@@ -1,8 +1,5 @@
 // TU: kyoshin/realtimeevt/CREvtEffect
-// Class: CREvtEffect
-// Vtable at 0x805322D8 (main) + 0x28 (secondary callback interface)
-// Inherits from cf::CREvtObj (offset 0x00)
-// Secondary callback interface at offset 0x14
+// Class: cf::CREvtEffect (CREvtObj + private CScheduleChild at 0x14), size 0x144
 
 #include <types.h>
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -27,123 +24,89 @@ __declspec(section ".sdata2") const double lbl_eu_80667950 = 0x4330000080000000l
 // section there). This TU still defines the CREvt* functions below.
 
 // ============================================================================
-// Constructor: __ct__CREvtEffect (0x80185F54)
+// Constructor (0x80185F54): CREvtObj(1) (effect kind), then the effect fields.
+// mNodeB4/B8/BC and mEffects[] are left uninitialized (retail).
 // ============================================================================
-extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) {
-    // Call CREvtObj base constructor with arg=1
-    __ct__Q22cf8CREvtObjFi((cf::CREvtObj*)self, 1);
+cf::CREvtEffect::CREvtEffect(CREvtParam* param)
+    : CREvtObj(1), mPtr18(0), mParam1C(param), mModel(0), mMaterial(0), mAnim28(0),
+      mBdatEntry(0), mEffectCount(0), mNodeIdC0(-1), mNodeIdC4(-1), mNodeIdC8(-1) {
+    mAnm1Translate[0] = lbl_eu_8066793C;
+    mAnm1Translate[1] = lbl_eu_8066793C;
+    mAnm1Translate[2] = lbl_eu_8066793C;
+    mAnm1Rotate[0] = lbl_eu_8066793C;
+    mAnm1Rotate[1] = lbl_eu_8066793C;
+    mAnm1Rotate[2] = lbl_eu_8066793C;
+    mAnm1Scale[0] = lbl_eu_8066793C;
+    mAnm1Scale[1] = lbl_eu_8066793C;
+    mAnm1Scale[2] = lbl_eu_8066793C;
 
-    // Set vtable pointers (main + secondary callback interface at +0x28)
-    *(u32**)self = (u32*)((void*)lbl_eu_805322D8);
-    self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
+    mAnm2Scale[0] = lbl_eu_80667940;
+    mAnm2Scale[1] = lbl_eu_80667940;
+    mAnm2Scale[2] = lbl_eu_80667940;
 
-    // Initialize fields
-    self->mPtr18 = 0;
-    self->mParam1C = param;
-    self->mModel = 0;
-    self->mMaterial = 0;
-    self->mAnim28 = 0;
-    self->mBdatEntry = 0;
-    self->mEffectCount = 0;
+    mAnm2Rotate[0] = lbl_eu_8066793C;
+    mAnm2Rotate[1] = lbl_eu_8066793C;
+    mAnm2Rotate[2] = lbl_eu_8066793C;
+    mAnm2Translate[0] = lbl_eu_8066793C;
+    mAnm2Translate[1] = lbl_eu_8066793C;
+    mAnm2Translate[2] = lbl_eu_8066793C;
+    mAnm3Translate[0] = lbl_eu_8066793C;
+    mAnm3Translate[1] = lbl_eu_8066793C;
+    mAnm3Translate[2] = lbl_eu_8066793C;
 
-    // Node IDs to -1 (mNodeB4/B8/BC and mEffects[] are left uninitialized)
-    self->mNodeIdC0 = -1;
-    self->mNodeIdC4 = -1;
-    self->mNodeIdC8 = -1;
+    mAnm3Scale[0] = lbl_eu_80667940;
+    mAnm3Scale[1] = lbl_eu_80667940;
+    mAnm3Scale[2] = lbl_eu_80667940;
+    mFloat12C = lbl_eu_80667940;
 
-    // Animation defaults: translate/rotate/scale groups = 1.0
-    self->mAnm1Translate[0] = lbl_eu_8066793C;
-    self->mAnm1Translate[1] = lbl_eu_8066793C;
-    self->mAnm1Translate[2] = lbl_eu_8066793C;
-    self->mAnm1Rotate[0] = lbl_eu_8066793C;
-    self->mAnm1Rotate[1] = lbl_eu_8066793C;
-    self->mAnm1Rotate[2] = lbl_eu_8066793C;
-    self->mAnm1Scale[0] = lbl_eu_8066793C;
-    self->mAnm1Scale[1] = lbl_eu_8066793C;
-    self->mAnm1Scale[2] = lbl_eu_8066793C;
-
-    self->mAnm2Scale[0] = lbl_eu_80667940;
-    self->mAnm2Scale[1] = lbl_eu_80667940;
-    self->mAnm2Scale[2] = lbl_eu_80667940;
-
-    self->mAnm2Rotate[0] = lbl_eu_8066793C;
-    self->mAnm2Rotate[1] = lbl_eu_8066793C;
-    self->mAnm2Rotate[2] = lbl_eu_8066793C;
-    self->mAnm2Translate[0] = lbl_eu_8066793C;
-    self->mAnm2Translate[1] = lbl_eu_8066793C;
-    self->mAnm2Translate[2] = lbl_eu_8066793C;
-    self->mAnm3Translate[0] = lbl_eu_8066793C;
-    self->mAnm3Translate[1] = lbl_eu_8066793C;
-    self->mAnm3Translate[2] = lbl_eu_8066793C;
-
-    self->mAnm3Scale[0] = lbl_eu_80667940;
-    self->mAnm3Scale[1] = lbl_eu_80667940;
-    self->mAnm3Scale[2] = lbl_eu_80667940;
-    self->mFloat12C = lbl_eu_80667940;
-
-    self->mLastFrame = -1;
-    self->mFlag134 = 0;
-    self->mBdatData = 0;
-    self->mTime = 0;
-    self->mType = 0;
+    mLastFrame = -1;
+    mFlag134 = 0;
+    mBdatData = 0;
+    mTime = 0;
+    mType = 0;
 
     // Load the bdat block for the param's effect id and register it
-    void* bdatData = EvtSeqResolveListEntryAddr(param->mBdatId);
-    self->mBdatData = bdatData;
+    void* bdatData = (void*)EvtSeqResolveListEntryAddr(param->mBdatId);
+    mBdatData = bdatData;
     if (bdatData != 0) {
         EffSched_LookupA(&lbl_eu_8065FC18, bdatData);
     }
-
-    return self;
 }
 
 // ============================================================================
-// Destructor: __ct__80184C3C (0x8018607C)
-// r3 = this, r4 = dealloc_flag
+// Destructor (0x8018607C). The CREvtObj base dtor and class operator delete
+// follow implicitly.
 // ============================================================================
-extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
-    if (self != 0) {
-        // Restore the vtables, then dispatch EvtFx_FreeAnim through the main vtable
-        *(u32**)self = (u32*)((void*)lbl_eu_805322D8);
-        self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
-        ((void (**)(CREvtEffect*))lbl_eu_805322D8)[4](self);
+cf::CREvtEffect::~CREvtEffect() {
+    vfunc_08();
 
-        // Wait for the effect system to release all running effects
-        while (self->mEffectCount != 0) {
-            schedClearFlag15Update(self->mEffects[0]);
-        }
-
-        // Release the bdat block, material and model
-        if (self->mBdatData != 0) {
-            EffSched_LookupB(&lbl_eu_8065FC18, self->mBdatData);
-        }
-        if (self->mMaterial != 0) {
-            Scn_IsAnimActiveOrNull(self->mMaterial);
-            self->mMaterial = 0;
-        }
-        if (self->mModel != 0) {
-            Scn_IsAnimActiveOrNull(self->mModel);
-            self->mModel = 0;
-        }
-
-        // Destroy the CREvtObj base, then free the allocation if requested
-        __dt__Q22cf8CREvtObjFv((cf::CREvtObj*)self, 0);
-        if (dealloc_flag > 0) {
-            cf::CREvtObj::operator delete(self);
-        }
+    // Wait for the effect system to release all running effects
+    while (mEffectCount != 0) {
+        schedClearFlag15Update(mEffects[0]);
     }
 
-    return self;
+    // Release the bdat block, material and model
+    if (mBdatData != 0) {
+        EffSched_LookupB(&lbl_eu_8065FC18, mBdatData);
+    }
+    if (mMaterial != 0) {
+        Scn_IsAnimActiveOrNull(mMaterial);
+        mMaterial = 0;
+    }
+    if (mModel != 0) {
+        Scn_IsAnimActiveOrNull(mModel);
+        mModel = 0;
+    }
 }
 
 // ============================================================================
 // EvtFx_FreeAnim (0x80186158)
 // Frees mAnim28 resource
 // ============================================================================
-extern "C" void EvtFx_FreeAnim(CREvtEffect* self) {
-    if (self->mAnim28 != 0) {
-        Scn_IsAnimActiveOrNull(self->mAnim28);
-        self->mAnim28 = 0;
+void cf::CREvtEffect::vfunc_08() {
+    if (mAnim28 != 0) {
+        Scn_IsAnimActiveOrNull(mAnim28);
+        mAnim28 = 0;
     }
 }
 
@@ -151,66 +114,66 @@ extern "C" void EvtFx_FreeAnim(CREvtEffect* self) {
 // EvtFx_StepAnims (0x8018619C)
 // Calls EvtFx_RefreshChrAnim then EvtFx_UpdateEffects
 // ============================================================================
-extern "C" void EvtFx_StepAnims(CREvtEffect* self) {
-    EvtFx_RefreshChrAnim(self);
-    EvtFx_UpdateEffects(self);
+void cf::CREvtEffect::vfunc_1C() {
+    refreshChrAnim();
+    updateEffects();
 }
 
 // ============================================================================
 // EvtFx_RefreshChrAnim (0x801861D0)
 // Updates animation from model's chr results
 // ============================================================================
-extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self) {
-    if (self->mMaterial == 0) {
+void cf::CREvtEffect::refreshChrAnim() {
+    if (mMaterial == 0) {
         return;
     }
 
-    void* model = self->mModel;
+    void* model = mModel;
 
     // Distinct result locals per anim group: each dies after its Get*
     // trio so model (live across all three) can claim r31 (retail).
     nw4r::g3d::ChrAnmResult* resultEff =
-        scnImN4AnimFn(model, lbl_eu_80662478, (f32)EvtSeqGetCounter100());
-    resultEff->GetTranslate((nw4r::math::VEC3*)self->mAnm2Translate);
-    resultEff->GetRotateDeg((nw4r::math::VEC3*)self->mAnm2Rotate);
-    resultEff->GetScale((nw4r::math::VEC3*)self->mAnm2Scale);
+        scnImN4AnimFn(model, lbl_eu_80662478, (f32)(int)EvtSeqGetCounter100());
+    resultEff->GetTranslate((nw4r::math::VEC3*)mAnm2Translate);
+    resultEff->GetRotateDeg((nw4r::math::VEC3*)mAnm2Rotate);
+    resultEff->GetScale((nw4r::math::VEC3*)mAnm2Scale);
 
     nw4r::g3d::ChrAnmResult* resultAtr =
-        scnImN4AnimFn(model, lbl_eu_80662474, (f32)EvtSeqGetCounter100());
-    resultAtr->GetTranslate((nw4r::math::VEC3*)self->mAnm1Translate);
-    resultAtr->GetRotateDeg((nw4r::math::VEC3*)self->mAnm1Rotate);
-    resultAtr->GetScale((nw4r::math::VEC3*)self->mAnm1Scale);
+        scnImN4AnimFn(model, lbl_eu_80662474, (f32)(int)EvtSeqGetCounter100());
+    resultAtr->GetTranslate((nw4r::math::VEC3*)mAnm1Translate);
+    resultAtr->GetRotateDeg((nw4r::math::VEC3*)mAnm1Rotate);
+    resultAtr->GetScale((nw4r::math::VEC3*)mAnm1Scale);
 
     // Normalize the alpha in mAnm1Scale.z: keep the integer part and drop the
     // fractional part once it falls below the epsilon threshold.
-    f32 alpha = self->mAnm1Scale[2];
+    f32 alpha = mAnm1Scale[2];
     if (alpha > lbl_eu_8066793C) {
         int intPart = (int)alpha;
         f32 fracPart = alpha - (f32)intPart;
         if (fracPart > lbl_eu_80667944) {
             fracPart = lbl_eu_80667940;
         }
-        self->mAnm1Scale[2] = (f32)(int)self->mAnm1Scale[2] + fracPart;
+        mAnm1Scale[2] = (f32)(int)mAnm1Scale[2] + fracPart;
     }
 
     // Copy rotate into mAnm3Scale and translate.z into mFloat12C
-    self->mAnm3Scale[0] = self->mAnm1Rotate[0];
-    self->mAnm3Scale[1] = self->mAnm1Rotate[1];
-    self->mAnm3Scale[2] = self->mAnm1Rotate[2];
-    self->mFloat12C = self->mAnm1Translate[2];
+    mAnm3Scale[0] = mAnm1Rotate[0];
+    mAnm3Scale[1] = mAnm1Rotate[1];
+    mAnm3Scale[2] = mAnm1Rotate[2];
+    mFloat12C = mAnm1Translate[2];
 
     // "effTgt" animation -> mAnm3Translate
     nw4r::g3d::ChrAnmResult* resultTgt =
-        scnImN4AnimFn(model, lbl_eu_80662470, (f32)EvtSeqGetCounter100());
-    resultTgt->GetTranslate((nw4r::math::VEC3*)self->mAnm3Translate);
+        scnImN4AnimFn(model, lbl_eu_80662470, (f32)(int)EvtSeqGetCounter100());
+    resultTgt->GetTranslate((nw4r::math::VEC3*)mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
-    if (self->mAnm1Translate[1] > lbl_eu_80667948) {
-        if (self->mLastFrame != EvtSeqGetCounter100()) {
+    if (mAnm1Translate[1] > lbl_eu_80667948) {
+        if (mLastFrame != EvtSeqGetCounter100()) {
             if (Scn_GetFrameDelta(lbl_eu_80663E14) >= lbl_eu_8066794C ||
                 (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
-                 self->mFlag134 == 0)) {
-                EvtFx_SpawnEffect(self);
+                 mFlag134 == 0)) {
+                spawnEffect();
             }
         }
     }
@@ -220,12 +183,12 @@ extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self) {
 // EvtFx_SpawnEffect (0x801863D0)
 // Spawns an effect
 // ============================================================================
-extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
+bool cf::CREvtEffect::spawnEffect() {
     // Max 32 concurrent effects
-    if (self->mEffectCount >= 32) {
+    if (mEffectCount >= 32) {
         return 0;
     }
-    if (self->mBdatData == 0) {
+    if (mBdatData == 0) {
         return 0;
     }
 
@@ -237,31 +200,27 @@ extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
     }
 
     // The bdat entry may declare a specific language (bits 24-31)
-    u32 langByte = self->mParam1C->mLangInfo >> 24;
+    u32 langByte = mParam1C->mLangInfo >> 24;
     if (langByte != (lang & 0xFF) && langByte != 0xFF && langByte != 0) {
         return 0;
     }
 
     // Create the effect instance and register it in the slot array
     CEffectInst* effect = (CEffectInst*)EffRoot_AddSchedReq(
-        &lbl_eu_8065FC18, self->mBdatData, lbl_eu_80663E14, 0, 1, 0);
+        &lbl_eu_8065FC18, mBdatData, lbl_eu_80663E14, 0, 1, 0);
     if (effect == 0) {
         return 0;
     }
 
-    int count = self->mEffectCount;
-    self->mEffects[count] = effect;
-    self->mEffectCount = count + 1;
+    int count = mEffectCount;
+    mEffects[count] = effect;
+    mEffectCount = count + 1;
 
     // Bind to the callback sub-object (self+0x14), null-guarded like retail
-    void* parent = (char*)self;
-    if (self != 0) {
-        parent = (char*)self + 0x14;
-    }
-    schedAttachChildSlot(effect, parent);
+    schedAttachChildSlot(effect, static_cast<CScheduleChild*>(this));
 
     // Scale: mAnm1Scale.y clamped below -1.0 to 0.0
-    f32 scale = self->mAnm1Scale[1];
+    f32 scale = mAnm1Scale[1];
     if (scale < lbl_eu_80667958) {
         scale = lbl_eu_80667940;
     }
@@ -271,15 +230,15 @@ extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
         effect->mField59 = 7;
     }
 
-    schedSetStepIntervals(effect, self->mAnm1Scale[0], scale);
+    schedSetStepIntervals(effect, mAnm1Scale[0], scale);
 
     // Priority from the bdat entry
-    if (((CBdatEntry*)self->mBdatEntry)->mPriority >= 0) {
-        effect->mPriority = (u8)((CBdatEntry*)self->mBdatEntry)->mPriority;
+    if (((CBdatEntry*)mBdatEntry)->mPriority >= 0) {
+        effect->mPriority = (u8)((CBdatEntry*)mBdatEntry)->mPriority;
     }
 
     // Copy the entry's name into a local buffer
-    void* nameObj = EvtSeqFindEventByNameData(((CBdatEntry*)self->mBdatEntry)->mNameData);
+    void* nameObj = EvtSeqFindEventByNameData(((CBdatEntry*)mBdatEntry)->mNameData);
     char nameBuf[32];
     u32 nameLen;
     nameBuf[0] = 0;
@@ -292,12 +251,12 @@ extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
     }
 
     // Mark the effect as spawned this frame
-    self->mFlag134 = 1;
-    self->mLastFrame = EvtSeqGetCounter100();
+    mFlag134 = 1;
+    mLastFrame = EvtSeqGetCounter100();
 
     // Per-type duration mode
-    if (self->mTime == 1) {
-        switch (self->mType) {
+    if (mTime == 1) {
+        switch (mType) {
         case 0:
             effect->mMode = 1;
             break;
@@ -319,11 +278,11 @@ extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
 // EvtFx_UpdateEffects (0x801865E4)
 // Updates all effects
 // ============================================================================
-extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
-    if (self->mBdatEntry != 0) {
+void cf::CREvtEffect::updateEffects() {
+    if (mBdatEntry != 0) {
         // Resolve the entry's name object; used for parent binding below.
         void* nameObj = 0;
-        void* nameData = ((CBdatEntry*)self->mBdatEntry)->mNameData;
+        void* nameData = ((CBdatEntry*)mBdatEntry)->mNameData;
         if ((s32)nameData >= 0) {
             nameObj = EvtSeqFindEventByNameData(nameData);
         }
@@ -333,20 +292,20 @@ extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
 
         // Push the current anim state into every running effect.
         int i = 0;
-        while (i < self->mEffectCount) {
-            CEffectInst* effect = (CEffectInst*)self->mEffects[i];
+        while (i < mEffectCount) {
+            CEffectInst* effect = (CEffectInst*)mEffects[i];
 
-            effect->mPosX = self->mAnm1Translate[0];
+            effect->mPosX = mAnm1Translate[0];
 
             // Rotation params: raw word copies of mAnm2Translate.
-            effect->mRot[0] = *(s32*)&self->mAnm2Translate[0];
-            effect->mRot[1] = *(s32*)&self->mAnm2Translate[1];
-            effect->mRot[2] = *(s32*)&self->mAnm2Translate[2];
+            effect->mRot[0] = *(s32*)&mAnm2Translate[0];
+            effect->mRot[1] = *(s32*)&mAnm2Translate[1];
+            effect->mRot[2] = *(s32*)&mAnm2Translate[2];
 
             // Rotation scaled by the frame-rate divisor. VEC3Scale is an nw4r
             // inline whose ASM emits the retail psq_l/ps_muls0/psq_st sequence.
             nw4r::math::VEC3 rot;
-            VEC3Scale(&rot, (const nw4r::math::VEC3*)self->mAnm2Rotate, fpsDiv);
+            VEC3Scale(&rot, (const nw4r::math::VEC3*)mAnm2Rotate, fpsDiv);
             f32 rot0 = rot.x;
             f32 rot1 = rot.y;
             f32 rot2 = rot.z;
@@ -354,17 +313,17 @@ extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
             effect->mRotScaled[1] = *(s32*)&rot1;
             effect->mRotScaled[2] = *(s32*)&rot2;
 
-            effect->mScale[0] = *(s32*)&self->mAnm2Scale[0];
-            effect->mScale[1] = *(s32*)&self->mAnm2Scale[1];
-            effect->mScale[2] = *(s32*)&self->mAnm2Scale[2];
-            effect->mScale2[0] = *(s32*)&self->mAnm3Scale[0];
-            effect->mScale2[1] = *(s32*)&self->mAnm3Scale[1];
-            effect->mScale2[2] = *(s32*)&self->mAnm3Scale[2];
-            effect->mFloat4C = *(s32*)&self->mFloat12C;
+            effect->mScale[0] = *(s32*)&mAnm2Scale[0];
+            effect->mScale[1] = *(s32*)&mAnm2Scale[1];
+            effect->mScale[2] = *(s32*)&mAnm2Scale[2];
+            effect->mScale2[0] = *(s32*)&mAnm3Scale[0];
+            effect->mScale2[1] = *(s32*)&mAnm3Scale[1];
+            effect->mScale2[2] = *(s32*)&mAnm3Scale[2];
+            effect->mFloat4C = *(s32*)&mFloat12C;
 
             // Alpha byte, rounded up by 0.5.
-            if (self->mAnm1Scale[2] > half) {
-                effect->mField59 = (u8)(int)(half + self->mAnm1Scale[2]);
+            if (mAnm1Scale[2] > half) {
+                effect->mField59 = (u8)(int)(half + mAnm1Scale[2]);
             }
 
             // Bind the effect to the name object's model when it accepts it.
@@ -380,15 +339,15 @@ extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
         }
 
         // Random chance to clear the spawn flag.
-        if (self->mFlag134 != 0 &&
+        if (mFlag134 != 0 &&
             Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C) {
-            self->mFlag134 = 0;
+            mFlag134 = 0;
         }
 
         // Invalidate the last-frame cache once per new frame.
         if (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
-            self->mLastFrame != EvtSeqGetCounter100()) {
-            self->mLastFrame = -1;
+            mLastFrame != EvtSeqGetCounter100()) {
+            mLastFrame = -1;
         }
     }
 }
@@ -398,72 +357,72 @@ extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
 // Initializes with model and bdat data
 // r3 = this, r4 = src, r5 = bdatEntry
 // ============================================================================
-extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* bdatEntry) {
-    if (self->mMaterial != 0) {
+void cf::CREvtEffect::initModel(void* src, void* bdatEntry) {
+    if (mMaterial != 0) {
         // Release the previous animation resource (virtual, vtable[4]).
-        ((void (*)(CREvtEffect*))(*(void***)self)[4])(self);
+        vfunc_08();
 
-        self->mAnim28 = self->mMaterial;
-        self->mMaterial = 0;
+        mAnim28 = mMaterial;
+        mMaterial = 0;
 
         // Drain remaining effects unless the event system is already doing so.
         if (!REvtCam_GetFieldA5Flag()) {
-            while (self->mEffectCount != 0) {
-                schedClearFlag15Update(self->mEffects[0]);
+            while (mEffectCount != 0) {
+                schedClearFlag15Update(mEffects[0]);
             }
         }
 
-        self->mLastFrame = -1;
+        mLastFrame = -1;
 
         // Free the old model when no new source is provided.
-        if (src == 0 && self->mModel != 0) {
-            Scn_IsAnimActiveOrNull(self->mModel);
-            self->mModel = 0;
+        if (src == 0 && mModel != 0) {
+            Scn_IsAnimActiveOrNull(mModel);
+            mModel = 0;
         }
     }
 
     if (src != 0) {
-        if (self->mModel == 0) {
+        if (mModel == 0) {
             // Load the monochrome layout model from the static archive.
             void* handle;
             getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
                 &lbl_eu_80503800[0], &handle, 0);
 
-            self->mModel = scnImN4BuildByIdx(lbl_eu_80663E14, handle, 1, 1, 0, 0x50);
-            simSetLeafDist7B0(self->mModel, lbl_eu_8066793C);
-            ((CLibLayoutModel*)self->mModel)->mFlags |= 4;
+            mModel = scnImN4BuildByIdx(lbl_eu_80663E14, handle, 1, 1, 0, 0x50);
+            simSetLeafDist7B0(mModel, lbl_eu_8066793C);
+            ((CLibLayoutModel*)mModel)->mFlags |= 4;
 
             // Bind the three anim nodes by name.
-            self->mNodeB4 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)self->mModel)->vtable)[15])((CLibLayoutModel*)self->mModel, lbl_eu_80662474);
-            self->mNodeB8 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)self->mModel)->vtable)[15])((CLibLayoutModel*)self->mModel, lbl_eu_80662478);
-            self->mNodeBC = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)self->mModel)->vtable)[15])((CLibLayoutModel*)self->mModel, lbl_eu_80662470);
+            mNodeB4 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662474);
+            mNodeB8 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662478);
+            mNodeBC = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662470);
 
             // Cache the anim node ids; retail keeps the model in a register
             // across all three calls.
-            CLibLayoutModel* animModel = (CLibLayoutModel*)self->mModel;
-            self->mNodeIdC0 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662478);
-            self->mNodeIdC4 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662474);
-            self->mNodeIdC8 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662470);
+            CLibLayoutModel* animModel = (CLibLayoutModel*)mModel;
+            mNodeIdC0 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662478);
+            mNodeIdC4 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662474);
+            mNodeIdC8 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662470);
 
-            simSetFlag2000Chain(self->mModel, 1);
+            simSetFlag2000Chain(mModel, 1);
         }
 
         // Load the material entry for the source.
         void* material = Scn_InitGlobalA(lbl_eu_80663E14, src, 0);
-        self->mMaterial = material;
+        mMaterial = material;
         if (material != 0) {
-            simBindChrAnim(self->mModel, material, 0, 0, 0, 1, -1);
+            simBindChrAnim(mModel, material, 0, 0, 0, 1, -1);
 
             // Read the duration/type properties from the entry (retail reloads
             // mMaterial for each call rather than keeping a local alive).
-            self->mTime = 0;
-            self->mType = 0;
-            EvtSeqResolveAnmChr(self->mMaterial, &lbl_eu_80503800[4], &self->mTime);
-            EvtSeqResolveAnmChr(self->mMaterial, &lbl_eu_80503800[0xF], &self->mType);
+            mTime = 0;
+            mType = 0;
+            EvtSeqResolveAnmChr((u8*)mMaterial, &lbl_eu_80503800[4], &mTime);
+            EvtSeqResolveAnmChr((u8*)mMaterial, &lbl_eu_80503800[0xF], &mType);
         }
     }
 
-    self->mBdatEntry = bdatEntry;
+    mBdatEntry = bdatEntry;
 }
 
 // ============================================================================
@@ -471,21 +430,17 @@ extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* bdatEntry) {
 // Removes an effect by pointer from the array
 // r3 = this, r4 = effect pointer
 // ============================================================================
-extern "C" void EvtFx_DetachEffect(CREvtEffect* self, void* effect) {
-    for (int i = 0; i < self->mEffectCount; i++) {
-        if (self->mEffects[i] == effect) {
+void cf::CREvtEffect::OnScheduleDelete(CSchedule* effect) {
+    for (int i = 0; i < mEffectCount; i++) {
+        if (mEffects[i] == effect) {
             // Detach from the callback sub-object (self+0x14), null-guarded like retail
-            void* parent = (char*)self;
-            if (self != 0) {
-                parent = (char*)&self->mSecondaryVtable;
-            }
-            schedDetachChildSlot(effect, parent);
+            schedDetachChildSlot(effect, static_cast<CScheduleChild*>(this));
 
             // Shift the remaining effects down and drop the count
-            for (; i < self->mEffectCount - 1; i++) {
-                self->mEffects[i] = self->mEffects[i + 1];
+            for (; i < mEffectCount - 1; i++) {
+                mEffects[i] = mEffects[i + 1];
             }
-            self->mEffectCount = self->mEffectCount - 1;
+            mEffectCount = mEffectCount - 1;
             break;
         }
     }
@@ -495,25 +450,14 @@ extern "C" void EvtFx_DetachEffect(CREvtEffect* self, void* effect) {
 // EvtFx_GetModel (0x80186AFC)
 // Returns mModel
 // ============================================================================
-extern "C" u32 EvtFx_GetModel(CREvtEffect* self) {
-    return (u32)self->mModel;
+int cf::CREvtEffect::vfunc_0C() {
+    return (int)mModel;
 }
 
 // ============================================================================
 // EvtFx_Noop (0x80186B04)
 // Empty function
 // ============================================================================
-extern "C" void EvtFx_Noop() {
+void cf::CREvtEffect::vfunc_04() {
 }
 
-// ============================================================================
-// EvtFx_ThunkDetach (0x80186B08)
-// Adjustor thunk: adjusts this by -0x14 and calls EvtFx_DetachEffect
-// ============================================================================
-extern "C" void EvtFx_ThunkDetach(void* self) { ((void(*)(void*))EvtFx_DetachEffect)((char*)self - 0x14); }
-
-// ============================================================================
-// EvtFx_ThunkDtor (0x80186B10)
-// Adjustor thunk: adjusts this by -0x14 and calls __ct__80184C3C (destructor)
-// ============================================================================
-extern "C" void EvtFx_ThunkDtor(void* self) { ((void(*)(void*))__ct__80184C3C)((char*)self - 0x14); }

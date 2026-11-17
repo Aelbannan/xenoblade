@@ -9,7 +9,6 @@
 // ---------------------------------------------------------------------------
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void CScrollBar_loadLayoutArc(void*);
 // Sub-object ctor/dtor/body-copy imports for CArtsList::CArtsList's temp
 // copy-init (retail emits the unmangled names at the call sites).
 extern "C" void __ct__10CScrollBarFUc(CScrollBar* self, int arg);
@@ -28,7 +27,6 @@ extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
-extern "C" u32 CScrollBar_isVisible(void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
@@ -124,7 +122,6 @@ extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self);
 extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self);
 extern "C" void setPaneVisible(void* p, u32 v);
 // Scrollbar cursor refresh (defined in CScrollBar.cpp; C-linkage retail name).
-extern "C" void CScrollBar_PlaceThumb(void* p, u16 v);
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self);
 
@@ -191,16 +188,11 @@ extern "C" u32 CSysWin_getUnk34(void* self);
 // Drive/refresh helper (same TU, defined below; C-name for reloc parity).
 extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self);
 
-extern "C" void CScrollBar_UpdateDispatch(void* obj34);
 // Scroll-bar scroll-out request (CMenuArtsSet_completeLayoutOut state-4 tail).
-extern "C" void CScrollBar_requestScrollOut(void* obj34);
 // Scroll-bar scroll-in with a 3-float init vector, and the tick that
 // consumes it (CMenuArtsSet_completeLayoutIn). Declared here rather than including
 // CMenuPlayAward.hpp (same signature-clash reason as that header documents).
-extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
-extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
 // Scroll-bar teardown (CMenuArtsSet_teardown).
-extern "C" void CScrollBar_Teardown(void* obj34);
 extern "C" void CArtsInfo_UpdateAnims(CArtsInfo* self);
 extern "C" void sysWinDispatchPhase(CSysWin* self);
 extern "C" void ArtsLayoutPair_advancePhases(SArts306F0* obj148);
@@ -266,7 +258,7 @@ extern const float lbl_eu_80668654;
 // .sdata2 zero float for ArtsTableLayout_load's pane-translate reset (SArtsVec2).
 extern const float lbl_eu_80668658;
 // .sdata2 floats for CMenuArtsSet_completeLayoutIn's scroll-in vector (stack temp fed to
-// CScrollBar_InitRootPane).
+// CScrollBar::InitRootPane).
 extern const float lbl_eu_80668678;
 extern const float lbl_eu_8066867C;
 
@@ -298,7 +290,6 @@ struct SArts320C0Block {
 };
 extern const SArts320C0Block lbl_eu_8050ABFC;
 // Scrollbar list rebuild (artsFillTable tail).
-extern "C" void CScrollBar_UpdateThumb(void* scrollBar, u32 pageSize, u8 count);
 
 // String-table lookup (artsAvailFlag) and learn-arts flag-grid query
 // (artsAvailFlag); C-linkage retail symbols.
@@ -314,9 +305,6 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 extern "C" char* BdatTouchStringCell(char* a, char* b, u32 count);
 extern "C" void sysWinSetKindContent(CSysWin* self, char* str, u32 flag);
 extern "C" void sysWinOpenPhase1(CSysWin* self);
-
-// lib/lyt draw (CScrollBar_UpdateDispatch).
-extern "C" void CScrollBar_draw(void* obj34, nw4r::lyt::DrawInfo* info);
 
 // AnimRewindFrame is a flat C symbol (anim-frame check helper).
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);

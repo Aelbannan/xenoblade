@@ -1,272 +1,163 @@
-// CSortMenu - sort menu UI widget
-// High-level C/C++ reconstruction from retail PPC
+// CSortMenu - pop-up sort-order list widget
 
-#include "kyoshin/harness_catalog.hpp"
-#include "monolib/lib/CLibLayout.hpp"
+// Inline-empty ~IWorkEvent: retail ~CSortMenu elides the base call (same as
+// CScrollBar / CBattery).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CSortMenu.hpp"
+
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/device.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 
-// External symbols
-extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
+#include <cstdio>
+
+// Pane-position helper from code_80135FDC (retail-unmangled).
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+
 void closeFileHandle(CFileHandle**);
+extern "C" u16 CItemBlock_getFlag120EC(int);
 
-// Intra-TU forward declarations (definitions in this file; pre-existing missing
-// declarations - required for the TU to compile under -lang=c++)
-// noinline: retail calls the state handlers via bl from sortMenuDispatchState;
-// without it MWCC -inline auto inlines them there and bloats the TU.
-extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu*);
-extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu*);
-extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu*);
-extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu*);
-// noinline: retail calls sortMenuRefreshSlotText via bl from every caller; without it MWCC
-// -inline auto inlines the loop body into each caller and bloats the TU.
-extern "C" __declspec(noinline) void sortMenuRefreshSlotText(CSortMenu*);
+// Text panes of the five visible rows.
+static const char* sRowPaneNames[] = {
+    "txt_menu01_01", "txt_menu01_02", "txt_menu01_03", "txt_menu01_04", "txt_menu01_05",
+};
 
-// Retail-named SDA2 constants.
+CSortMenu::CSortMenu()
+    : mMemRegion(), mFileHandle(NULL), mArcResAcc(NULL), mpLayout(NULL), mpAnimTrans0(NULL),
+      mpAnimTrans1(NULL), mOpen(0), mLoaded(0), mState(0), mIdle(1), mScrollBar(0), mCount(0),
+      mCursor(0), mTop(0) {}
 
-// ============================================================================
-// CSortMenu constructor
-// ============================================================================
-extern "C" CSortMenu* __ct__CSortMenu(CSortMenu* _this) {
-    // Vtable + embedded sub-object first (retail: stw vtable, then the
-    // UnkClass_8045F564 ctor at +4), then the scalar fields, the scrollbar,
-    // and the tail counters.
-    *(void**)_this = (void*)lbl_eu_805349D0;
-    __ct__17UnkClass_8045F564Fv(&_this->_04[0]);
-    _this->mFileHandle = NULL;
-    _this->mArcResAcc = NULL;
-    _this->mpLayout = NULL;
-    _this->mpAnimTrans0 = NULL;
-    _this->mpAnimTrans1 = NULL;
-    _this->field_0x28 = 0;
-    _this->field_0x29 = 0;
-    _this->field_0x2A = 0;
-    _this->field_0x2B = 1;
-    __ct__10CScrollBarFUc((u8*)_this + 0x2C, 0);
-    _this->mCount = 0;
-    _this->mPage = 0;
-    _this->mSubPage = 0;
-    return _this;
+CSortMenu::~CSortMenu() {}
+
+void CSortMenu::Init() {
+    mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), "menu/jp/SortMenu.arc",
+                                        this, 0, 0);
+    CDeviceFile::setHandleFlag1(mFileHandle);
+    mScrollBar = CScrollBar(2);
+    mScrollBar.loadLayoutArc();
 }
 
-// ============================================================================
-// CSortMenu destructor
-// ============================================================================
-extern "C" CSortMenu* __dt__9CSortMenuFv(CSortMenu* _this, int flags) {
-    if (_this != NULL) {
-        __dt__10CScrollBarFv((u8*)_this + 0x2C, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)_this + 0x04, -1);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+void CSortMenu::Move() {
+    if (mOpen == 0) return;
 
-// ============================================================================
-// sortMenuInitFileRead: Init sort menu - read file, create scrollbar data
-// ============================================================================
-extern "C" void sortMenuInitFileRead(CSortMenu* _this) {
-    void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    _this->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)handle, lbl_eu_8050624C + 0x00, _this, 0, 0);
-    setHandleFlag1__11CDeviceFileFP11CFileHandle(_this->mFileHandle);
-
-    // Build a temporary CScrollBar that carries the initial data for the member.
-    CScrollBarData temp;
-    __ct__10CScrollBarFUc(&temp, 2);
-
-    // Copy the constructed body into the member (retail omits the vtable at +0x0).
-    _this->mScrollBar.mMemRegion[0] = temp.mMemRegion[0];
-    _this->mScrollBar.mMemRegion[1] = temp.mMemRegion[1];
-    _this->mScrollBar.mMemRegion[2] = temp.mMemRegion[2];
-    _this->mScrollBar.mMemRegion[3] = temp.mMemRegion[3];
-    _this->mScrollBar.mFileHandle = temp.mFileHandle;
-    _this->mScrollBar.mAccessor = temp.mAccessor;
-    _this->mScrollBar.mLayout = temp.mLayout;
-    _this->mScrollBar.mAnimTrans = temp.mAnimTrans;
-    _this->mScrollBar.mReady = temp.mReady;
-    _this->mScrollBar.mVisible = temp.mVisible;
-    _this->mScrollBar.mState = temp.mState;
-    _this->mScrollBar.mActive = temp.mActive;
-    _this->mScrollBar.mAnimOffset = temp.mAnimOffset;
-    _this->mScrollBar.mScrollPosY = temp.mScrollPosY;
-    _this->mScrollBar.mScrollRatio = temp.mScrollRatio;
-    _this->mScrollBar.mThumbHeight = temp.mThumbHeight;
-    _this->mScrollBar.mContentHeight = temp.mContentHeight;
-    _this->mScrollBar.mDirection = temp.mDirection;
-
-    __dt__10CScrollBarFv(&temp, -1);
-    CScrollBar_loadLayoutArc(&_this->mScrollBar);
-}
-
-// ============================================================================
-// sortMenuDispatchState: Move - state machine dispatch
-// ============================================================================
-extern "C" void sortMenuDispatchState(CSortMenu* _this) {
-    if (_this->field_0x28 == 0) return;
-
-    switch (_this->field_0x2A) {
+    switch (mState) {
     case 1:
-        sortMenuState1Opening(_this);
+        StateOpen();
         break;
     case 2:
-        sortMenuState2WaitAnim(_this);
+        StateOpenInfo();
         break;
     case 4:
-        sortMenuState4Scroll(_this);
+        StateCloseInfo();
         break;
     case 5:
-        sortMenuState5Closing(_this);
+        StateClose();
         break;
     }
 
-    _this->mpLayout->Animate(0);
-    CScrollBar_UpdateDispatch(&_this->mScrollBar);
+    mpLayout->Animate(0);
+    mScrollBar.UpdateDispatch();
 }
 
-// ============================================================================
-// sortMenuDraw: Draw
-// ============================================================================
-extern "C" void sortMenuDraw(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
-    if (_this->field_0x28 == 0) return;
-    drawLayout(_this->mpLayout, drawInfo, 0, 1);
-    if (_this->mCount > 5) {
-        CScrollBar_draw((u8*)_this + 0x2C, drawInfo);
+void CSortMenu::Draw(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mOpen == 0) return;
+    drawLayout(mpLayout, drawInfo, 0, 1);
+    if (mCount > 5) {
+        mScrollBar.draw(drawInfo);
     }
 }
 
-// ============================================================================
-// sortMenuTermCleanup: Term - cleanup
-// ============================================================================
-extern "C" void sortMenuTermCleanup(CSortMenu* _this) {
-    closeFileHandle(&_this->mFileHandle);
-    _this->field_0x28 = 0;
-    if (_this->mpLayout != NULL) {
-        // Retail calls the virtual deleting destructor (vtable slot +0x8, r4=1).
-        delete _this->mpLayout;
-        _this->mpLayout = NULL;
+void CSortMenu::Term() {
+    closeFileHandle(&mFileHandle);
+    mOpen = 0;
+    if (mpLayout != NULL) {
+        delete mpLayout;
+        mpLayout = NULL;
     }
-    releaseArcResourceAccessor(_this->mArcResAcc);
-    _this->mArcResAcc = NULL;
-    deleteRegion__17UnkClass_8045F564Fv((u8*)_this + 0x04);
-    CScrollBar_Teardown((u8*)_this + 0x2C);
+    releaseArcResourceAccessor(mArcResAcc);
+    mArcResAcc = NULL;
+    mMemRegion.deleteRegion();
+    mScrollBar.Teardown();
 }
 
-// ============================================================================
-// sortMenuIsScrollbarVisible: Check if scrollbar is visible
-// ============================================================================
-extern "C" u8 sortMenuIsScrollbarVisible(CSortMenu* _this) {
-    if (CScrollBar_isVisible((u8*)_this + 0x2C) != 0) {
-        return _this->field_0x29;
+int CSortMenu::IsReady() {
+    if (mScrollBar.isVisible() != 0) {
+        return mLoaded;
     }
     return 0;
 }
 
-// ============================================================================
-// sortMenuIsVisible28: Get field_0x28
-// ============================================================================
-extern "C" u8 sortMenuIsVisible28(CSortMenu* _this) {
-    return _this->field_0x28;
+int CSortMenu::IsOpen() {
+    return mOpen;
 }
 
-// ============================================================================
-// sortMenuGetFlag2B: Get field_0x2B
-// ============================================================================
-extern "C" u8 sortMenuGetFlag2B(CSortMenu* _this) {
-    return _this->field_0x2B;
+int CSortMenu::IsIdle() {
+    return mIdle;
 }
 
-// ============================================================================
-// sortMenuOpenInit: Open / initialize sort menu
-// Each GetRootPane() is spelled out fresh - retail reloads mpLayout from the
-// object before every use instead of caching the root pane.
-// ============================================================================
-extern "C" void sortMenuOpenInit(CSortMenu* _this) {
-    if (_this->field_0x2A != 0) return;
+// Each GetRootPane() is spelled out fresh - retail reloads mpLayout before
+// every use instead of caching the root pane.
+void CSortMenu::Open() {
+    if (mState != 0) return;
 
-    _this->field_0x2A = 1;
-    _this->field_0x2B = 0;
-    _this->field_0x28 = 1;
+    mState = 1;
+    mIdle = 0;
+    mOpen = 1;
 
-    char* s = lbl_eu_8050624C;
-    nw4r::lyt::Pane* paneTxt1 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x15, true);
-    nw4r::lyt::Pane* paneTxt2 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x1d, true);
-    f32 textBuf[3];
-    ScalePaneWorldPos(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
+    nw4r::lyt::Pane* paneScr = mpLayout->GetRootPane()->FindPaneByName("nul_scr", true);
+    nw4r::lyt::Pane* paneProp = mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
+    nw4r::math::VEC3 pos;
+    ScalePaneWorldPos(&pos, paneScr, paneProp, mpLayout->GetRootPane());
 
-    CScrollBar_InitRootPane(&_this->mScrollBar, &textBuf);
-    CScrollBar_UpdateThumb(&_this->mScrollBar, 5, _this->mCount);
-    CScrollBar_requestScrollIn(&_this->mScrollBar);
+    mScrollBar.InitRootPane(&pos);
+    mScrollBar.UpdateThumb(5, mCount);
+    mScrollBar.requestScrollIn();
 
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuToState4Page: Set state to 4 (scroll down page)
-// ============================================================================
-extern "C" void sortMenuToState4Page(CSortMenu* _this) {
-    if (_this->field_0x2A != 3) return;
-    _this->field_0x2A = 4;
-    _this->field_0x2B = 0;
-    CScrollBar_requestScrollOut(&_this->mScrollBar);
+void CSortMenu::Close() {
+    if (mState != 3) return;
+    mState = 4;
+    mIdle = 0;
+    mScrollBar.requestScrollOut();
 }
 
-// ============================================================================
-// sortMenuSetLayoutPos: Set layout position
-// ============================================================================
-extern "C" void sortMenuSetLayoutPos(CSortMenu* _this, const nw4r::math::VEC3* pos) {
-    nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
+void CSortMenu::SetPos(const nw4r::math::VEC3* pos) {
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     rootPane->SetTranslate(*pos);
 }
 
-// ============================================================================
-// sortMenuFormatPaneText: Update pane text with formatted string
-// Declare-then-assign keeps the lis/addi pairs in retail order (strTable ->
-// r4, string base -> r31); the first rootPane stays live as the 4th arg while
-// the second FindPaneByName reloads it fresh.
-// ============================================================================
-extern "C" void sortMenuFormatPaneText(u8* textObj, CSortMenu* _this) {
-    char buf[0x1c];
-    void** strTable;
-    char* s;
-    strTable = lbl_eu_805349B8;
-    s = lbl_eu_8050624C;
+// World position of the cursor row (returned by value: the result pointer
+// arrives in r3, this in r4).
+nw4r::math::VEC3 CSortMenu::GetCursorPos() {
+    nw4r::math::VEC3 pos;
+    char name[0x1c];
+    sprintf(name, "%s", sRowPaneNames[(s8)mCursor]);
 
-    sprintf(buf, s + 0x2c, strTable[(s8)_this->mPage]);
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    nw4r::lyt::Pane* paneProp = rootPane->FindPaneByName("nul_proportion", true);
+    nw4r::lyt::Pane* paneRow = mpLayout->GetRootPane()->FindPaneByName(name, true);
 
-    nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(s + 0x1d, true);
-    nw4r::lyt::Pane* pane2 = _this->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-
-    ScalePaneWorldPos(textObj, pane2, pane1, rootPane);
+    ScalePaneWorldPos(&pos, paneRow, paneProp, rootPane);
+    return pos;
 }
 
-// ============================================================================
-// sortMenuResetCount: Reset count to 0
-// ============================================================================
-extern "C" void sortMenuResetCount(CSortMenu* _this) {
-    _this->mCount = 0;
+void CSortMenu::Clear() {
+    mCount = 0;
 }
 
-// ============================================================================
-// func_801D3518: Add a value to the array
-// ============================================================================
-extern "C" void func_801D3518(CSortMenu* _this, int value) {
-    u8 count = _this->mCount;
-    if (count >= 32) return;
-    _this->mArray[count] = value;
-    _this->mCount = count + 1;
+void CSortMenu::Add(const char* entry) {
+    if (mCount < 32) {
+        mEntries[mCount++] = entry;
+    }
 }
 
-// ============================================================================
-// sortMenuSetPage: Set page
-// ============================================================================
-extern "C" void sortMenuSetPage(CSortMenu* _this, s8 page) {
-    nw4r::lyt::Pane* pane =
-        _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
+void CSortMenu::SetSelect(u8 select) {
+    nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName("win_sortmenu01", true);
 
     // Local copy of the pane size region; member-wise so MWCC emits an
     // lfs/stfs pair (a whole-struct copy collapses to lwz).
@@ -276,302 +167,223 @@ extern "C" void sortMenuSetPage(CSortMenu* _this, s8 page) {
     size.width = paneView->width;
     size.height = paneView->height;
 
-    // Visible rows: 5 unless fewer items remain (signed: retail converts
-    // via the xoris sign-flip path).
-    s32 rows = (_this->mCount < 5) ? (s32)_this->mCount : 5;
-
-    // (f32)rows: MWCC seeds 0x4330xxxx on the stack and subtracts the
-    // int->double conversion magic via lfd (retail loads it from the shared
-    // DOL pool slot lbl_eu_80667FF8; UNIT_RULES retargets the TU-local
-    // literal there).
+    // Visible rows: 5 unless fewer entries exist.
+    s32 rows = (mCount < 5) ? (s32)mCount : 5;
     size.height = 21.6f * (f32)rows;
     paneView->width = size.width;
     paneView->height = size.height;
 
-    _this->mPage = page;
-    _this->mSubPage = 0;
+    mCursor = select;
+    mTop = 0;
 
-    if (page >= 5) {
-        _this->mSubPage = page - 4;
-        _this->mPage = 4;
+    if ((s8)select >= 5) {
+        mTop = select - 4;
+        mCursor = 4;
     }
 
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuScrollUp: Scroll up
-// ============================================================================
-extern "C" void sortMenuScrollUp(CSortMenu* _this) {
-    _this->mPage = (u8)(_this->mPage - 1);
-    if ((s8)_this->mPage < 0) {
-        _this->mPage = 0;
-        _this->mSubPage = (u8)(_this->mSubPage - 1);
+void CSortMenu::CursorUp() {
+    mCursor = (u8)(mCursor - 1);
+    if ((s8)mCursor < 0) {
+        mCursor = 0;
+        mTop = (u8)(mTop - 1);
 
-        if ((s8)_this->mSubPage < 0) {
-            u8 count = _this->mCount;
+        if ((s8)mTop < 0) {
+            u8 count = mCount;
             if (count >= 5) {
-                _this->mPage = 4;
-                _this->mSubPage = count - 5;
+                mCursor = 4;
+                mTop = count - 5;
             } else {
-                _this->mPage = (u8)(count - 1);
-                _this->mSubPage = 0;
-                if ((s8)_this->mPage < 0) {
-                    _this->mPage = 0;
+                mCursor = (u8)(count - 1);
+                mTop = 0;
+                if ((s8)mCursor < 0) {
+                    mCursor = 0;
                 }
             }
         }
     }
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuScrollDown: Scroll down
-// ============================================================================
-extern "C" void sortMenuScrollDown(CSortMenu* _this) {
-    u8 count = _this->mCount;
+void CSortMenu::CursorDown() {
+    u8 count = mCount;
     if (count >= 5) {
-        u8 pageU = (u8)(_this->mPage + 1);
-        _this->mPage = pageU;
-        s8 page = (s8)pageU;
-        if (page >= 5) {
-            _this->mPage = 4;
-            s32 sp = (s32)_this->mSubPage + 1;
-            _this->mSubPage = (u8)sp;
-            u8 spu = (u8)sp;
-            s8 sps = (s8)spu;
-            if (sps > (s32)(count - 5)) {
-                _this->mPage = 0;
-                _this->mSubPage = 0;
+        u8 cursorU = (u8)(mCursor + 1);
+        mCursor = cursorU;
+        s8 cursor = (s8)cursorU;
+        if (cursor >= 5) {
+            mCursor = 4;
+            s32 top = (s32)mTop + 1;
+            mTop = (u8)top;
+            u8 topU = (u8)top;
+            s8 topS = (s8)topU;
+            if (topS > (s32)(count - 5)) {
+                mCursor = 0;
+                mTop = 0;
             }
         }
     } else {
-        u8 pageU = (u8)(_this->mPage + 1);
-        _this->mPage = pageU;
-        s8 page = (s8)pageU;
-        if (page >= count) {
-            _this->mPage = 0;
-            _this->mSubPage = 0;
+        u8 cursorU = (u8)(mCursor + 1);
+        mCursor = cursorU;
+        s8 cursor = (s8)cursorU;
+        if (cursor >= count) {
+            mCursor = 0;
+            mTop = 0;
         }
     }
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuPageUpStep: Page up
-// ============================================================================
-extern "C" void sortMenuPageUpStep(CSortMenu* _this) {
-    u8 count = _this->mCount;
+void CSortMenu::PageUp() {
+    u8 count = mCount;
     if (count >= 5) {
-        u8 subU8 = (u8)(_this->mSubPage - 5);
-        _this->mSubPage = subU8;
-        if ((s8)subU8 < 0) {
-            _this->mPage = (u8)(subU8 + 4);
-            _this->mSubPage = 0;
-            if ((s8)(u8)(subU8 + 4) < 0) {
-                _this->mPage = 0;
+        u8 topU = (u8)(mTop - 5);
+        mTop = topU;
+        if ((s8)topU < 0) {
+            mCursor = (u8)(topU + 4);
+            mTop = 0;
+            if ((s8)(u8)(topU + 4) < 0) {
+                mCursor = 0;
             }
         }
     } else {
-        _this->mPage = 0;
-        _this->mSubPage = 0;
+        mCursor = 0;
+        mTop = 0;
     }
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuPageDownStep: Page down
-// ============================================================================
-extern "C" void sortMenuPageDownStep(CSortMenu* _this) {
-    u8 count = _this->mCount;
+void CSortMenu::PageDown() {
+    u8 count = mCount;
     if (count >= 5) {
-        s32 maxSub = (s32)(count - 5);
-        s32 sp5 = (s32)_this->mSubPage + 5;
-        _this->mSubPage = (u8)sp5;
-        u8 sp5u = (u8)sp5;
-        if ((s8)sp5u > maxSub) {
-            // New page comes from the truncated byte, not the sign-extended sum.
-            s32 newPage = (s32)sp5u - maxSub;
-            _this->mPage = (u8)newPage;
-            _this->mSubPage = (u8)maxSub;
-            if ((s8)_this->mPage >= 5) {
-                _this->mPage = 4;
+        s32 maxTop = (s32)(count - 5);
+        s32 top = (s32)mTop + 5;
+        mTop = (u8)top;
+        u8 topU = (u8)top;
+        if ((s8)topU > maxTop) {
+            // New cursor comes from the truncated byte, not the sign-extended sum.
+            s32 cursor = (s32)topU - maxTop;
+            mCursor = (u8)cursor;
+            mTop = (u8)maxTop;
+            if ((s8)mCursor >= 5) {
+                mCursor = 4;
             }
         }
     } else {
-        _this->mPage = (u8)(count - 1);
-        _this->mSubPage = 0;
-        if ((s8)_this->mPage < 0) {
-            _this->mPage = 0;
+        mCursor = (u8)(count - 1);
+        mTop = 0;
+        if ((s8)mCursor < 0) {
+            mCursor = 0;
         }
     }
-    sortMenuRefreshSlotText(_this);
+    Refresh();
 }
 
-// ============================================================================
-// sortMenuGetPageSum: Get page + subPage
-// ============================================================================
-extern "C" u8 sortMenuGetPageSum(CSortMenu* _this) {
-    return _this->mPage + _this->mSubPage;
+u8 CSortMenu::GetSelect() {
+    return mCursor + mTop;
 }
 
-// ============================================================================
-// sortMenuGetPageIdx: Get page
-// ============================================================================
-extern "C" u8 sortMenuGetPageIdx(CSortMenu* _this) {
-    return _this->mPage;
+int CSortMenu::GetCursor() {
+    return mCursor;
 }
 
-// ============================================================================
-// sortMenuGetSubPageIdx: Get subPage
-// ============================================================================
-extern "C" u8 sortMenuGetSubPageIdx(CSortMenu* _this) {
-    return _this->mSubPage;
+int CSortMenu::GetTop() {
+    return mTop;
 }
 
-// ============================================================================
-// sortMenuValueToPage: Convert sort value to page+subpage
-// ============================================================================
-#pragma optimize_for_size on
-extern "C" void sortMenuValueToPage(CSortMenu* _this, int value, u8* outPage, u8* outSubPage) {
-    *outPage = CItemBlock_getFlag120EC(value);
-    *outSubPage = 0;
-    if ((s8)*outPage >= 5) {
-        *outSubPage = *outPage - 4;
-        *outPage = 4;
-    }
-}
-#pragma optimize_for_size off
-
-// ============================================================================
-// sortMenuState1Opening: State 1 handler - opening animation
-// ============================================================================
-extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu* _this) {
-    if (advanceAnimTransform(_this->mpAnimTrans0, 1.0f) != 0) {
-        _this->field_0x2A = 2;
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, true);
-        _this->mpLayout->Animate(0);
+// Split a category's stored sort index into cursor row + first visible entry.
+void CSortMenu::CalcSelect(int category, u8* outCursor, u8* outTop) {
+    *outCursor = CItemBlock_getFlag120EC(category);
+    *outTop = 0;
+    if ((s8)*outCursor >= 5) {
+        *outTop = *outCursor - 4;
+        *outCursor = 4;
     }
 }
 
-// ============================================================================
-// sortMenuState2WaitAnim: State 2 handler - wait for anim1
-// ============================================================================
-extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu* _this) {
-    if (advanceAnimTransform(_this->mpAnimTrans1, 1.0f) != 0) {
-        _this->field_0x2A = 3;
-        _this->field_0x2B = 1;
+__declspec(noinline) void CSortMenu::StateOpen() {
+    if (advanceAnimTransform(mpAnimTrans0, 1.0f) != 0) {
+        mState = 2;
+        mpLayout->SetAnimationEnable(mpAnimTrans0, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans1, true);
+        mpLayout->Animate(0);
     }
 }
 
-// ============================================================================
-// sortMenuState4Scroll: State 4 handler - scroll animation
-// ============================================================================
-extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu* _this) {
-    if (AnimRewindFrame(_this->mpAnimTrans1, 1.0f) != 0) {
-        _this->field_0x2A = 5;
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
-        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
-        _this->mpLayout->Animate(0);
+__declspec(noinline) void CSortMenu::StateOpenInfo() {
+    if (advanceAnimTransform(mpAnimTrans1, 1.0f) != 0) {
+        mState = 3;
+        mIdle = 1;
     }
 }
 
-// ============================================================================
-// sortMenuState5Closing: State 5 handler - closing animation
-// ============================================================================
-extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu* _this) {
-    if (AnimRewindFrame(_this->mpAnimTrans0, 1.0f) != 0) {
-        _this->field_0x2A = 0;
-        _this->field_0x2B = 1;
-        _this->field_0x28 = 0;
+__declspec(noinline) void CSortMenu::StateCloseInfo() {
+    if (AnimRewindFrame(mpAnimTrans1, 1.0f) != 0) {
+        mState = 5;
+        mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+        mpLayout->Animate(0);
     }
 }
 
-// ============================================================================
-// sortMenuRefreshSlotText: Update pane text for all 5 slots
-// optimize_for_size: retail uses an stmw r28/lmw r28 block-save frame.
-// ============================================================================
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void sortMenuRefreshSlotText(CSortMenu* _this) {
-    // Declare-then-assign: resBase is born first (takes r31), but strTable's
-    // lis/addi must be EMITTED first (retail schedule) into r30.
-    char* resBase;
-    void** strTable = lbl_eu_805349B8;
-    resBase = lbl_eu_8050624C;
-    // Slots past the entry count fall back to the shared "no item" string.
+__declspec(noinline) void CSortMenu::StateClose() {
+    if (AnimRewindFrame(mpAnimTrans0, 1.0f) != 0) {
+        mState = 0;
+        mIdle = 1;
+        mOpen = 0;
+    }
+}
+
+// noinline (here and on the State* handlers): retail calls these via bl from
+// every caller; MWCC -inline auto otherwise inlines them.
+// Slots past the entry count show an empty string.
+__declspec(noinline) void CSortMenu::Refresh() {
     // u8 counter: retail masks i to 8 bits at every use (clrlwi/clrlslwi).
     for (u8 i = 0; i < 5; i++) {
-        int idx = i + (s8)_this->mSubPage;
-        if (idx >= (int)_this->mCount) {
-            LayoutSetTextBoxFmtValue(_this->mpLayout, (char*)strTable[i], resBase + 0x3e, 0);
+        int idx = i + (s8)mTop;
+        if (idx >= (int)mCount) {
+            LayoutSetTextBoxFmtValue(mpLayout, (char*)sRowPaneNames[i], "", 0);
         } else {
-            LayoutSetTextBoxFmtValue(_this->mpLayout, (char*)strTable[i], (char*)_this->mArray[idx], 0);
+            LayoutSetTextBoxFmtValue(mpLayout, (char*)sRowPaneNames[i], (char*)mEntries[idx], 0);
         }
     }
-    // Single vreg for the converted value keeps the lbz/extsb/clrlwi chain
-    // in one register (retail does not split it across r0/r4).
-    // OPEN: still lbz/extsb in r0 then rlwinm→r4 (93.3%); CMenuArtsSet sibling
-    // has the same split. Convert-in-arg + u32 prototype were neutral.
-    u32 subPage = (u16)(s8)_this->mSubPage;
-    CScrollBarData* scrollBar = &_this->mScrollBar;
-    CScrollBar_PlaceThumb(scrollBar, subPage);
+    // OPEN: still lbz/extsb in r0 then rlwinm->r4 (93.3%); CMenuArtsSet sibling
+    // has the same split.
+    mScrollBar.PlaceThumb((s8)mTop);
 }
-#pragma optimize_for_size off
 
-// ============================================================================
-// CSortMenu::OnFileEvent - file load completion callback
-// optimize_for_size: retail uses an stmw r29 block-save frame.
-// ============================================================================
-#pragma optimize_for_size on
-int CSortMenu::OnFileEvent(CEventFile* event) {
-    if (mFileHandle == event->mFileHandle) {
-        char* s = lbl_eu_8050624C;  // resource-name string table base (r31)
+bool CSortMenu::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle == pEventFile->mFileHandle) {
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000, "CSortMenu", 1);
+        Class_8045F858 region = Class_8045F858(&mMemRegion);
 
-        createRegion__17UnkClass_8045F564FiiPCci(&_04[0],
-                                  (int)getHandleMEM2__Q23mtl10MemManagerFv(),
-                                  0x2000, s + 0x3f, 1);
-
-        u8 sp8[8];  // Class_8045F858 is 8 bytes (UnkClass* + u32)
-        __ct__14Class_8045F858FP17UnkClass_8045F564(sp8, &_04[0]);
-
-        // Save the file data buffer and clear the handle's reference to it.
         void* fileData = mFileHandle->getData();
 
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
-        mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)CLibLayout::createArcResourceAccessor();
-        mArcResAcc->Attach(fileData, s + 0x49);
+        mtl::MemManager::setMemInitFlag(false);
+        mArcResAcc = CLibLayout::createArcResourceAccessor();
+        mArcResAcc->Attach(fileData, "arc");
 
-        buildLayout(&mpLayout, mArcResAcc, s + 0x4d);
-        bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, s + 0x63);
-        bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, s + 0x7c);
+        buildLayout(&mpLayout, mArcResAcc, "mf00_reg00_sort.brlyt");
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, "mf00_reg00_sort_in.brlan");
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc,
+                                "mf00_reg00_sort_info_in.brlan");
 
-    // Root pane sits at Layout + 0x10, read via the non-virtual inline
-    // accessor (no out-of-line call, same direct load as retail).
-    // Retail order: load mpLayout, materialize the font-id constant,
-    // then read the root pane before calling the font builder.
-    nw4r::lyt::Layout* lyt = mpLayout;
-    int fontId = 1;
-    nw4r::lyt::Pane* rootPane = lyt->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
-        // Virtual call through the font object's vtable slot +0x24.
-        u32 result = ((CDeviceFontItf*)fontObj)->getResource();
-        ApplyFontToTxtPanes(rootPane, result);
+        ApplyFontToTxtPanes(mpLayout->GetRootPane(),
+                            ((CDeviceFontItf*)CDeviceFont::getFontInfo(1, mpLayout))->getResource());
 
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
         mpLayout->SetAnimationEnable(mpAnimTrans0, true);
         mpLayout->Animate(0);
 
         if (mpLayout != NULL) {
-            field_0x29 = 1;
+            mLoaded = 1;
         }
 
         mFileHandle = NULL;
-        validateHeap__17UnkClass_8045F564Fv(&_04[0]);
-        __dt__14Class_8045F858Fv(sp8, -1);
-
-        return 1;
+        mMemRegion.validateHeap();
+        return true;
     }
-    return 0;
+    return false;
 }
-#pragma optimize_for_size off

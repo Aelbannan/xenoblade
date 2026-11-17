@@ -379,7 +379,6 @@ struct CFloorMapRowList {
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
 extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
-extern "C" void CScrollBar_Teardown(void* scrollBar);    // CScrollBar teardown
 extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
@@ -389,7 +388,6 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall
 // at +0x08 matches retail.)
 
-extern "C" void CScrollBar_UpdateDispatch(void* scrollBar);   // CScrollBar per-frame update
 extern "C" void Cur_Update(void* cursor);      // CCur18 per-frame update
 extern "C" void sysWinDispatchPhase(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
@@ -471,7 +469,6 @@ extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);
-extern "C" void CScrollBar_PlaceThumb(void*, u16);
 // C linkage so the same-TU definition emits the retail symbol
 // FloorMap_RefreshCursorRows instead of the mangled C++ name at every call site.
 extern "C" void FloorMap_RefreshCursorRows(void*);
@@ -518,10 +515,7 @@ extern "C" s32 BdatGetS8Direct(const void*, const void*, s32);
 // Height thresholds picking which of the three status panes lights up.
 extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;
-extern "C" void CScrollBar_requestScrollIn(void*);
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
-extern "C" void CScrollBar_InitRootPane(void*, const float*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3*, void*, u8);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" int atoi(const char*);

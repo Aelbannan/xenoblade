@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/CItemBoxLine.hpp"
+
 #include <types.h>
 
 #include <monolib/util/FixStr.hpp>
@@ -8,7 +10,6 @@
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 
-class CItemBoxLine;
 class CScn;
 class IScnRender;
 
@@ -157,7 +158,6 @@ struct CMIExPadData {
 // func_ helpers; isIdle keeps its C++ mangling). int returns keep the caller's
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
-extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 
 // 0x10-byte region copy helper used by the CBgTex copy routine (and the other
@@ -185,11 +185,7 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine* self, int flags);
-extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
-extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
-extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 extern "C" void ClearListSlots(CItemBoxGrid* self);
@@ -200,8 +196,6 @@ extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-d
 extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animation
 extern "C" int isInitialized(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
-extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);      // line ready query
-extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);     // finish line load
 extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
@@ -220,7 +214,6 @@ extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
-extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
@@ -230,22 +223,6 @@ extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int MenuTutorialIsCreated();
-extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
-extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
-extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ResolveEntry(CItemBoxLine* self);
-extern "C" int ItemBoxLine_GetArmedFlag(CItemBoxLine* self);
-extern "C" u16 ItemBoxLine_TouchTabEntryItem(CItemBoxLine* self);     // selected line entry
-extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageBack(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ShowDetailWin(CItemBoxLine* self);
-extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
-extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
 extern "C" int func_801CCAF0(CItemBoxGrid* self);
 extern "C" int IsItemBoxActive(CItemBoxGrid* self);
 extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
@@ -264,7 +241,6 @@ extern "C" int GetField52D(CItemBoxGrid* self);
 
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);          // bg per-frame update
-extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);    // line per-frame update
 extern "C" void UpdateItemBox(CItemBoxGrid* self);    // grid per-frame update
 extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);     // grid ready query (phase 4)
@@ -273,7 +249,6 @@ extern "C" void InitItemDisplay(CItemBoxGrid* self);    // grid refresh
 extern "C" void MenuShopSellCopyCursor(void*, void*);          // CBaseCur body copy
 extern "C" void ShopBuy_CopyData(void*, void*);          // page-table copy helper
 extern "C" void InfoCfCopyObjD4(void*, void*);          // CNumSelectFull copy
-extern "C" void copyScrollBarData(void*, void*);          // scroll-bar copy
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505324[];   // split1 .rodata string pool (Init title name)

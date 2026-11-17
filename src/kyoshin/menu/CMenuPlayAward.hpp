@@ -310,22 +310,11 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // under C linkage so calls bind the literal identifier).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
-// CScrollBar imports keep their retail-unmangled names (US retail strips the
-// mangling; the member declarations in CScrollBar.hpp would mangle the relocs,
-// e.g. CScrollBar_requestScrollIn__10CScrollBarFv), so they are C-linkage here.
-extern "C" void CScrollBar_requestScrollIn(CScrollBar* scrollBar);
-
-// Scroll-bar init (retail-unmangled; 2nd arg is a 3-float vector, cf. CMapSel).
-extern "C" void CScrollBar_InitRootPane(CScrollBar* scrollBar, const float* vec);
-
-// CScrollBar draw + cursor draw imports (retail-unmangled names; same reason
-// as CScrollBar_requestScrollIn -- the CScrollBar.hpp member decl would mangle them).
-extern "C" void CScrollBar_draw(CScrollBar* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
+// Cursor draw import (retail-unmangled name).
 extern "C" void Cur_DrawLayout(CBaseCur* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
 extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
-extern "C" void CScrollBar_requestScrollOut(CScrollBar* scrollBar);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
@@ -336,11 +325,6 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; see above).
-extern "C" void CScrollBar_loadLayoutArc(CScrollBar* scrollBar);
-extern "C" void CScrollBar_Teardown(CScrollBar* scrollBar);
-extern "C" void CScrollBar_UpdateDispatch(CScrollBar* scrollBar);
-extern "C" void CScrollBar_UpdateThumb(CScrollBar* scrollBar, int, int);
-extern "C" void CScrollBar_PlaceThumb(CScrollBar* scrollBar, u16 val);
 extern "C" void Cur_Update(CBaseCur* cursor);
 
 // Class_8045F858 scratch-region RAII guard used by OnFileEvent around the

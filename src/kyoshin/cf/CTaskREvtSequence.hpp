@@ -43,9 +43,6 @@ extern "C" void gmWalkByMask(void* arg);
 // so C++ linkage mangles it back to the retail isEventPending__Fv).
 u32 isEventPending();
 
-// Name-string helper for realtime-event entries (CREvtModel.cpp): returns
-// entry->field_0x1C + 0x10 as a C string.
-extern "C" void* evtModelDataPtr(void* self);
 // CProcess base destructor (retail __dt__8CProcessFv).
 class CProcess;
 extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
@@ -53,6 +50,7 @@ extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
 #include "kyoshin/realtimeevt/CREvtMem.hpp"
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
+#include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 // .sbss presentation/mode flag (co-op secondary mode bitfield)
 extern u32 lbl_eu_80663E28;
@@ -126,13 +124,10 @@ extern "C" bool ScnCamDepthUp(UnkEvtPlayer* obj);
 // object setup helpers (kyoshin/realtimeevt/*.cpp). The third argument is the
 // address of the id-list element (the callees store it into +0x43C/+0x1C
 // etc.).
-struct CREvtEffect;
 struct CREvtMovie;
 struct CREvtMovieScript;
-struct CREvtParam;
 extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData,
                               void* elemAddr);
-extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* elemAddr);
 extern "C" void CREvtLight_SetResource(cf::CREvtLight* self, const char* resourceName,
                               u32 elemAddr);
 extern "C" void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
@@ -141,11 +136,8 @@ extern "C" void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 // helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
 // (CMenuVision.cpp).
 extern "C" void* __nw__Q22cf8CREvtObjFUl(void* size);
-extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self,
-                                          CREvtParam* param);
 extern "C" CREvtMovie* __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
     CREvtMovie* self, CREvtMovieScript* scriptData);
-extern "C" void* createEvtModelObj(void* self);
 extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
 extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv();
 extern "C" u32 isVisionMenuActive();
@@ -421,9 +413,6 @@ struct EvtBdabModel {
     int SeqProbeEvtSlot(u32* out);
 };
 
-// Readiness probe called by EvtSeqProbeEvtSlot (retail resolves it as the flat
-// symbol isEvtDataFlagSet).
-extern "C" int isEvtDataFlagSet(EvtBdabModel* self);
 
 // View of the buffer at UnkState_80664268::field_0xC4 exposing the slot
 // table base word at +0x80 (EvtSeqProbeEvtSlot compares slot ids against it).
@@ -759,7 +748,7 @@ public:
     u8 gap00[0x10];
     u32 field_0x10;  // 0x10 (CTTask/CProcess vtable written by the ctor)
     u8 gap14[0x0C];  // 0x14-0x1F
-    u32 field_0x20;  // at 0x20, accessed by getField20
+    u32 field_0x20;  // at 0x20
     u8 gap24[0x18];  // 0x24-0x3C
     u32 field_0x3C;  // 0x3C (CTTask mMoveFunc slot; Init installs a ptmf here)
     u32 field_0x40;  // 0x40
@@ -830,7 +819,6 @@ public:
 
     void Draw();
     bool OnFileEvent(CEventFile* ev);
-    u32 getField20();
 };
 } // namespace cf
 

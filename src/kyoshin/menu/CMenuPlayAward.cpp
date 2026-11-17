@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CScrollBar.hpp"
 #include <stdio.h>   // sprintf (award pane names)
 #include "monolib/lib/CLibLayout.hpp"
 #include <revolution/gx/GXPixel.h>  // GXSetZMode
@@ -400,7 +401,7 @@ void PlayAward_LoadLayouts(CPlayAwardList* self) {
         mtl::MemManager::getHandleMEM2(), &lbl_eu_8050E7C0[0x5a], self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
-    CScrollBar_loadLayoutArc(&self->mScrollBar);
+    self->mScrollBar.loadLayoutArc();
     self->field_0x8A = 0;
 }
 
@@ -425,7 +426,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
         }
         self->mLayout20->Animate(0);
         Cur_Update(&self->mCursor);
-        CScrollBar_UpdateDispatch(&self->mScrollBar);
+        self->mScrollBar.UpdateDispatch();
     }
 }
 
@@ -434,7 +435,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
 void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
-        CScrollBar_draw(&self->mScrollBar, drawInfo);
+        self->mScrollBar.draw(drawInfo);
         Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
@@ -456,17 +457,16 @@ void PlayAward_ReleaseList(CPlayAwardList* self) {
     }
     releaseArcResourceAccessor(self->mArcAccessor1C);
     self->mCursor.cleanup();
-    CScrollBar_Teardown(&self->mScrollBar);
+    self->mScrollBar.Teardown();
     self->mMemRegion.deleteRegion();
 }
 
-extern "C" bool CScrollBar_isVisible(void*);
 
 // Award list "ready to show" query: visible when the embedded scroll bar is
 // visible AND the flag byte at 0x8A is set. Int return so callers compare
 // with cmpwi directly (cf. CMenuTutorialList.hpp).
 int PlayAward_IsListReady(CPlayAwardList* self) {
-    if (CScrollBar_isVisible(&self->mScrollBar)) {
+    if (self->mScrollBar.isVisible()) {
         return self->field_0x8A;
     }
     return 0;
@@ -485,10 +485,9 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     vec[0] = lbl_eu_806689B8;
     vec[1] = lbl_eu_806689BC;
     vec[2] = lbl_eu_806689A8;
-    CScrollBar_InitRootPane(&self->mScrollBar, vec);
+    self->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
-    CScrollBar_UpdateThumb(&self->mScrollBar, 9,
-                  self->mEntryArray.field_1008[self->mEntryArray.mPageIndex]);
+    self->mScrollBar.UpdateThumb(9, self->mEntryArray.field_1008[self->mEntryArray.mPageIndex]);
 
     // Restore the scroll position from the entry-array state (reads as u16,
     // stored into the s16 fields; the >= 9 clamp compares the sign-extended
@@ -502,7 +501,7 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     if (self->field_0x8E < 0) self->field_0x8E = 0;
 
     self->field_0x90 = self->mEntryArray.mPageIndex;
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -517,7 +516,7 @@ void PlayAward_RequestClose(CPlayAwardList* self) {
         self->field_0x8B = 0;
         PlayAward_BindOpenAnims(self);
         Cur_SetVisible(&self->mCursor, 0);
-        CScrollBar_requestScrollOut(&self->mScrollBar);
+        self->mScrollBar.requestScrollOut();
         playUISound(6);
     }
 }
@@ -548,7 +547,7 @@ void PlayAward_MoveCursorUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     playUISound(1);
 }
 
@@ -581,7 +580,7 @@ void PlayAward_MoveCursorDown(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     playUISound(1);
 }
 
@@ -605,7 +604,7 @@ void PlayAward_ScrollPageUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     playUISound(1);
 }
 
@@ -635,7 +634,7 @@ void PlayAward_ScrollPageDown(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     playUISound(1);
 }
 
@@ -653,8 +652,8 @@ void PlayAward_FlipPage(CPlayAwardList* self) {
         self->mEntryArray.mPageIndex = page;
     }
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
-    CScrollBar_UpdateThumb(&self->mScrollBar, 9, count);
-    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
+    self->mScrollBar.UpdateThumb(9, count);
+    self->mScrollBar.PlaceThumb(self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -671,7 +670,7 @@ void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
     if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 2;
         PlayAward_BindOpenAnims(self);
-        CScrollBar_requestScrollIn(&self->mScrollBar);
+        self->mScrollBar.requestScrollIn();
     }
 }
 

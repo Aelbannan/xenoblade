@@ -11577,6 +11577,36 @@ Follow-up from converting more units (same day):
   the caller past the inliner's size limit and none is inlined. Needs
   `CItemBoxLine`/`CItemBoxGrid` as real classes to test.
 
+## Implicit operator= of a polymorphic widget is out of line and nothrow (CScrollBar, 2026-11-18)
+
+- Making `CScrollBar` a real `IWorkEvent` subclass made its implicit
+  `operator=` non-trivial. MWCC emits it as a weak out-of-line
+  `__as__10CScrollBarFRC10CScrollBar` (memberwise, vptr skipped, 0xB4 bytes)
+  right after its first user — that is the retail "copyScrollBarData" at
+  0x8011D474 behind `CMenuQuestLog::Init`. Renamed, scope:weak.
+- Calls to compiler-generated functions are known nothrow: `CMenuQuestLog::Init`
+  written as `mQstLogList = CQstLogList((u16)field_2280);` has no extab actions
+  (retail `0808000000000000`), as long as every nested copy is compiler
+  generated too. One remaining `extern "C" __as__17UnkClass_8045F564…` call in
+  the CSortMenu mirror's inline `operator=` added a destroy-temp action;
+  replacing it with a real `UnkClass_8045F564` assignment removed it.
+- Explicit padding members copied by the implicit `operator=` (CQstLogList
+  `pad_0171`) break the match: delete them. An 8-byte record with a
+  destructor (CQstLogList QstInfo, retail dtor `__dt__80227030`) is copied
+  fieldwise (`lhz` + six `lbz`), i.e. memberwise, not as two words.
+- Inlining is not uniform: the out-of-line call to `__as__10CScrollBar…` stays
+  out of line in `CMenuQuestLog::Init` (nested in another implicit op=) and in
+  `CTutorialList::CTutorialList` (-O4,s TU), but MWCC inlines it at the direct
+  `mScrollBar = CScrollBar(1)` in `CQstLogList::CQstLogList` (default-flag TU
+  with `#pragma optimize_for_size`) and in `ItemEx_CopyLine`, where retail
+  calls it. Same for the QstInfo copy (`copyQstInfo` out of line in the
+  retail CQstLogList ctor, inlined in retail Init). `#pragma auto_inline off`
+  had no effect; `#pragma dont_inline on` outlines everything (too much).
+  Open; suspect per-TU inliner flags.
+- Explicit `p->~CScrollBar()` on a raw buffer becomes a virtual call once the
+  class is polymorphic; use `p->CScrollBar::~CScrollBar()` or, better, a real
+  temporary.
+
 ## Locals in destructors change the exception table, not the code (2026-11-18)
 
 Found while making `cf::CREvtLight` and `cf::CREvtCamera` real subclasses of
@@ -11594,3 +11624,126 @@ record differed.
   base's `__RTTI__` is the derived class's base list and belongs to its unit
   (it had been split into the following unit, `CBgTex`, and reproduced there
   by a hand-written array).
+
+## CSortMenu as a real class; by-value returns with `this` in r4; implicit-copy limits (2026-11-18)
+
+- `CSortMenu` is a real `IWorkEvent` subclass (29/30, .data/.rodata/.sdata/.sdata2 and
+  extab all MATCH with compiler-emitted vtable, RTTI, row-name table and string pool).
+  All 28 pseudo-members were renamed to mangled member names.
+- A retail function whose first argument is an output buffer and second is the object
+  (`sortMenuFormatPaneText(VEC3* out, CSortMenu*)`) is a member *returning a struct by
+  value*: MWCC passes the hidden result pointer in r3 and `this` in r4. Callers match
+  with `nw4r::math::VEC3 pos = menu.GetCursorPos();` at the point of use; assigning to
+  an earlier-declared local adds a 0xC copy.
+- Getter return types are visible in callers: retail tail-calls/`or r0,r3` the
+  flag getters (`int`), while `GetSelect` (`mCursor + mTop`) ends in `clrlwi` (`u8`).
+  `SetSelect` takes `u8` (callers pass `lbz` without `extsb`; the callee casts `(s8)`).
+- `CSortMenu::Add`: `if (mCount < 32) mEntries[mCount++] = entry;` is the retail form
+  (the hoisted-local version swaps registers).
+- `-O4,s` still auto-inlines the State*/Refresh helpers that retail calls with `bl`;
+  `-inline noauto` does not inline the State* handlers but still inlines `Refresh`.
+  Kept `__declspec(noinline)` (open).
+- `CTutorialIdTable` has an empty out-of-line destructor (retail `__dt__802ACBF0`,
+  named by DESTROYMEMBER actions in the CTutorialList ctor/dtor records). Declaring it
+  made the CTutorialList ctor/dtor extab records match.
+- QstInfo/QstData (CMenuQstCnt) evidence: `copyQstInfo` is the weak implicit
+  `QstInfo::operator=` (emitted right after its first user `QstCnt_RefreshRecords`);
+  `QstCnt_CopyInfoA/B` (after `QstCnt_SortRecords`) look like out-of-line copies used
+  for swap temporaries. Making QstInfo a class with ctor/dtor inlined the copy ctor
+  (A/B vanish) and default-constructed the swap temps, so the conversion was reverted;
+  needs the original swap shape. CQstLogList under `-O4,s`: the ctor differs only by the
+  inlined element-copy loop (retail calls `copyQstInfo`), the dtor by the out-of-line
+  QstData dtor call (retail inlines it with the `this+0x182` null check); the
+  per-function `optimize_for_size` pragmas were redundant and were removed.
+- Declaring `virtual ~CCur07();` etc. (so owners call `__dt__6CCur07Fv` instead of
+  inlining `~CBaseCur`) gives CCur.cpp ctor extab records retail does not have; not done.
+
+## cf::CREvtModel family (CREvtModel / Map / Obj / Pc / CREvtEffect)
+
+- Private bases are left out of the RTTI base list. CREvtModelMap/Pc/Obj base lists
+  name only `cf::CREvtModel`, so `IWorkEvent` and `CScheduleChild` are private bases.
+- In MWCC data order a class's `[vtable][base list]` means the base list starts the
+  next unit's `.data` split. Example: the CScnMaruShadowNw4r base list (weak RTTI from
+  the `dynamic_cast` in `setupShadow`) at 0x80531670 is the first CREvtModel object.
+- When a virtual overrides only a secondary-base slot, the secondary vtable gets an
+  `@<adj>@name` thunk and the whole vtable object also gets a direct slot appended at
+  its end. Thunks are emitted at the end of the TU.
+- A pointer-to-member constant `{0,-1,fn}` is emitted once per use, as an `@N` object
+  in `.data` in first-use order. Retail names these `lbl_eu_*`, so functions that use
+  them stay ✗ at 100% bytes because only the reloc name differs. Seen in Obj's ctor and
+  vfunc_10, and in Pc's ctor, isBusy, loadFiles and checkLoaded.
+- Compiler RTTI and string literals come after all user-defined data, so hand-placed
+  data cannot be interleaved with them.
+- `CScheduleChild` is `{ virtual ~CScheduleChild(){}; virtual void
+  OnScheduleDelete(CSchedule*) = 0; }`. Its implicit inline dtor makes each user TU
+  emit a weak `__dt__14CScheduleChildFv` and `__vt__14CScheduleChild`, and adds
+  destroy-base extab actions. This is why CREvtEffect `.data` is 0x58 vs 0x48 and has
+  one extra extab record. Retail's out-of-line copy is `__dt__80081C20` (the
+  CfGameManagerUnityHelpers DEFINE_POD_DTOR). It has not been renamed yet.
+- `mFlags` reload: retail reloads `this->mFlags` between `if (mFlags & X)` and the
+  `mFlags |= / &= X` that follows. This happens in CREvtModel::vfunc_1C, Obj
+  releaseAnims/stepProbe and Pc releaseAnims/initCounter. Plain source caches the
+  value. `volatile u32 mFlags` reproduces the reload, and all five functions reach
+  100%. The cost is the CREvtModel ctor: retail `mFlags(0)` + `mFlags |= 8` folds to
+  `ori r0,r4,8`, which volatile cannot produce, so the ctor scores 69.7% (scheduling
+  and register order only). The real access shape is still open; it may be an inline
+  flag accessor. The old code used `*(volatile u32*)` casts for the same effect.
+
+## Cursor dtors, CMCCrystalBox/CMCCrystalInfo as real classes (2026-11-18)
+
+- `CCur07/09/11/14/15/16`: retail vtables have no destructor slot and `__dt__6CCurNNFv`
+  is strong in CCur.cpp, so the dtor is a declared **non-virtual** `~CCurNN();` defined
+  out of line as `CCurNN::~CCurNN() {}` in CCur.cpp. CCur stays 46/46 with extab and data
+  MATCH (the earlier attempt with `virtual ~CCurNN()` added ctor extab records and a
+  vtable slot). Owners now call `__dt__6CCurNNFv` for member/temporary destruction
+  (CMCCrystalBox dtor 41% -> 100%) and no longer emit weak copies.
+- `CMCCrystalBox : public IWorkEvent` with typed members: the 15 zeroed words at
+  +0x24..+0x5C are stored in the ctor *before* the first cursor ctor, so they are
+  separate pointer members in the init list (3 file handles, 2 arc accessors, layout,
+  9 anim transforms), not an array assigned in the body. Ctor/dtor 100%, `.data`
+  (compiler vtable + base list) MATCH. Real ctor has no placement-new null check.
+- The dtor's DESTROYMEMBER actions name three more members with destructors:
+  +0x2D6 (ctor `initCrystalBoxParamTbl`, dtor `__dt__80213E4C`), +0x3D8
+  `CMCCrystalData` (ctor `MakeCrystal_ResetTable`, dtor `__dt__80213530` in
+  code_80213488), +0x1480 box-head scratch (ctor `initCrystalBoxScratch`, dtor
+  `__dt__80213ECC`). Retail's ctor record has no action for `CSysWin` or these three,
+  so their ctors are nothrow-known; still pseudo-functions here, hence the ctor
+  record keeps one extra CSysWin range.
+- A retail `bl setVec3; lwz/stw x3` copy from **r3** is copy-initialisation from the
+  returned pointer (`VEC3 v = *(VEC3*)setVec3(&tmp, …)`); assigning `v = tmp` instead
+  made MWCC outline `__as__Q34nw4r4math4VEC3…` (OnFileEvent 73% -> 97%).
+- Cursor re-init in `CMCCrystalBox::OnFileEvent` calls `MenuShopSellCopyCursor`
+  (global, 0x34 bytes), which is really `CBaseCur::operator=`; with that symbol name
+  the blocks can only be typed locals (`{ CCur07 t(acc); MenuShopSellCopyCursor(&mCur07, &t); }`),
+  not `mCur07 = CCur07(acc);`. Renaming it touches ~20 TUs.
+- `CMCCrystalInfo` tail +0x52..+0x63 (16 bytes, 2-aligned, copied as two
+  double-buffered word pairs by the implicit `operator=`) declared as `s16[4]` x2.
+  Its real ctor/dtor (with `IWORK_EVENT_INLINE_DTOR`) match and fix its extab.
+
+## CItemBoxLine as a real IWorkEvent class; layout evidence for its members (2026-11-18)
+
+- `CItemBoxLine : IWorkEvent` (retail RTTI "CItemBoxLine", vtable slot +0x10 =
+  `OnFileEvent`). With typed members (`UnkClass_8045F564` x2, `CCur18` x2,
+  `CIBLTabCur`, `CSubCur`, `CItemBoxInfo2`, `CNumSelect`, `CScrollBar`, `CSysWin`) and
+  `#define IWORK_EVENT_INLINE_DTOR`, the empty `~CItemBoxLine() {}` matches retail 100%
+  (the +0xA0 member's null-guarded `__dt__8CBaseCurFv(p, 0)` is the inlined
+  `~CIBLTabCur`). Without the macro MWCC adds an out-of-line `~IWorkEvent` call.
+- `CIBLTabCur` is a real retail class name (RTTI string at 0x80507188). Its vtable has
+  no destructor slot (`~CBaseCur` is non-virtual) and its `initLayout` was the
+  splitter-named `ItemBoxLine_BuildLineLayout`.
+- `CItemBoxInfo2` is 0x20C bytes in retail (CItemBoxLine +0xD0..+0x2DC), but
+  CItemBoxInfo.hpp only declares the leading 0xD8; owners reserve the rest.
+- The 0x158-byte block copied by `ShopBuy_CopyData` appears twice inside
+  CItemBoxLine (+0x180 inside CItemBoxInfo2, +0x4E0 at the end of CItemBoxLine:
+  u16[12], VEC3[12], u8[12], u8[12], s16[12], u8, u8[0x80]); +0x4E0 + 0x15C =
+  retail sizeof 0x63C. Likely one page-table struct whose out-of-line weak
+  `operator=` is `ShopBuy_CopyData` (unverified).
+- Callers' `ItemBoxLine_IsReadyFlag/GetSelectReady/IsBusy/GetArmedFlag` results are
+  compared without `clrlwi`: the members return `int`, not `u8`.
+- `SetPaneVisible(u32 index, bool)` / `ResetCursorB8(u32)` / `RefreshTabLabels(u32)`:
+  retail callers load r4, so these take the parameter; the old free-function forms
+  hid it behind C-linkage overloads.
+- Raw-storage owners that call `new (buf) CItemBoxLine(a, b)` get the placement-new
+  null check retail lacks (CMenuShopBuy ctor 100% -> 27.6%); the fix is a real
+  `CItemBoxLine` member, blocked on the owners' `Init` temp-copy blocks, which need
+  CItemBoxInfo2/CNumSelect as real classes.

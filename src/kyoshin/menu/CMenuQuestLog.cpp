@@ -42,50 +42,7 @@ void CMenuQuestLog::Init() {
     mTitleAHelp = CTitleAHelp(name, 0x3c);
     mTitleAHelp.CTitleAHelp_load();
 
-    {
-        // Should read `mQstLogList = CQstLogList((u16)field_2280);`. The
-        // implicit CQstLogList::operator= expands CScrollBar's implicit
-        // operator= inline here, but retail calls it out of line
-        // (copyScrollBarData below, the weak CScrollBar::operator=). That
-        // needs a user-declared `CScrollBar& operator=(const CScrollBar&)` in
-        // CScrollBar.hpp (verified: with it Init is 0x3b8 bytes vs retail's
-        // 0x3c4; without it 0x438 and the unit exceeds its split budget).
-        // Until then the fields are copied by hand from a real temporary.
-        CQstLogList tmpList((u16)field_2280);
-        mQstLogList.mMemRegion = tmpList.mMemRegion;
-        mQstLogList.mFileHandle = tmpList.mFileHandle;
-        mQstLogList.mArcResAcc = tmpList.mArcResAcc;
-        mQstLogList.mpLayout = tmpList.mpLayout;
-        mQstLogList.mpAnim0 = tmpList.mpAnim0;
-        mQstLogList.mpAnim1 = tmpList.mpAnim1;
-        mQstLogList.mCur18 = tmpList.mCur18;
-        copyScrollBarData(&mQstLogList.mScrollBar, &tmpList.mScrollBar);
-        mQstLogList.mSortMenuData = tmpList.mSortMenuData;
-        mQstLogList.field_0x170 = tmpList.field_0x170;
-        mQstLogList.field_0x174 = tmpList.field_0x174;
-        mQstLogList.field_0x178 = tmpList.field_0x178;
-        mQstLogList.mSortEnabled = tmpList.mSortEnabled;
-        mQstLogList.mSortDescending = tmpList.mSortDescending;
-        mQstLogList.field_0x17B = tmpList.field_0x17B;
-        mQstLogList.field_0x17C = tmpList.field_0x17C;
-        mQstLogList.field_0x17D = tmpList.field_0x17D;
-        mQstLogList.field_0x17E = tmpList.field_0x17E;
-        mQstLogList.field_0x180 = tmpList.field_0x180;
-        // Quest-info records copied fieldwise (u16 + 6 bytes each) - inlined
-        // here, unlike the out-of-line copyQstInfo calls in the list ctor.
-        CQstLogListQstInfo* qDst = (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
-        CQstLogListQstInfo* qSrc = (CQstLogListQstInfo*)&tmpList.mQstData.mList[0];
-        CQstLogListQstInfo* qEnd = (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
-        do {
-            *qDst = *qSrc;
-            qDst++;
-            qSrc++;
-        } while (qDst < qEnd);
-        mQstLogList.mQstData.field_2000 = tmpList.mQstData.field_2000;
-        mQstLogList.mQstData.field_2002 = tmpList.mQstData.field_2002;
-        mQstLogList.mQstData.field_2004 = tmpList.mQstData.field_2004;
-        mQstLogList.mQstData.field_2005 = tmpList.mQstData.field_2005;
-    }
+    mQstLogList = CQstLogList((u16)field_2280);
     mQstLogList.LoadArc();
 
     mQstLogInfo = CQstLogInfo();
@@ -93,30 +50,6 @@ void CMenuQuestLog::Init() {
 
     // Register the render callback (IScnRender base at +0x58).
     reinterpret_cast<CScn*>(mScene)->addRenderCB(this, 0x10, 0);
-}
-
-// CScrollBar copy helper (inlined copy constructor): constructs the
-// mem-region sub-object at +0x04 from the source, then copies the remaining
-// scalar fields one at a time. Retail keeps `this` in r3, so this is written
-// with a pointer return; src is read through a volatile ref so the compiler
-// cannot hoist the loads (retail reloads the source per field).
-extern "C" CScrollBar* copyScrollBarData(CScrollBar* dst, const CScrollBar* src) {
-    dst->mMemRegion = src->mMemRegion;
-    dst->mFileHandle = src->mFileHandle;
-    dst->mAccessor = src->mAccessor;
-    dst->mLayout = src->mLayout;
-    dst->mAnimTransform = src->mAnimTransform;
-    dst->mReady = src->mReady;
-    dst->mVisible = src->mVisible;
-    dst->mState = src->mState;
-    dst->mActive = src->mActive;
-    dst->mAnimOffset = src->mAnimOffset;
-    dst->mScrollPosY = src->mScrollPosY;
-    dst->mScrollRatio = src->mScrollRatio;
-    dst->mThumbHeight = src->mThumbHeight;
-    dst->mContentHeight = src->mContentHeight;
-    dst->mDirection = src->mDirection;
-    return dst;
 }
 
 // ---------------------------------------------------------------------------

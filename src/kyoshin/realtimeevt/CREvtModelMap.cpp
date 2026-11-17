@@ -1,4 +1,5 @@
 // Decompiled CREvtModelMap - realtime event model map
+#define IWORK_EVENT_INLINE_DTOR
 // High-level C++ reconstruction.
 
 #include <string.h>
@@ -61,37 +62,14 @@ public:
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
-// ---------------------------------------------------------------------------
-// Action table entries - {startTime, creatureId, callback}
-// ---------------------------------------------------------------------------
-struct ActionEntry {
-    s32 startTime;
-    s32 creatureId;
-    void* callback;
-};
-
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CEventFile.hpp"
-
-// Forward decls for labels and helpers
 #include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
 
 extern "C" {
-extern ActionEntry lbl_eu_80531D20[];
-extern ActionEntry lbl_eu_80531D2C[];
-extern u32 lbl_eu_80531D38[];
-extern ActionEntry lbl_eu_80531D68[];
-extern ActionEntry lbl_eu_80531D74[];
-extern const char lbl_eu_8050372C[];
-extern const char lbl_eu_80503718[];
-
 void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-// (memberized: MapModel_ClaimFileData -> CREvtModelMap::ClaimFileData; declaration moved into class CREvtModelMap)
-// (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
-// (memberized: EvtSeqProbeEvtSlot -> EvtBdabModel::SeqProbeEvtSlot; declaration moved into class EvtBdabModel)
 u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
-// (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
 u32 REvtCam_IsField98Set();
 s32 REvtCam_IsMode2B0Eq1();
 s32 REvtCam_IsMode2B0Eq2();
@@ -108,229 +86,142 @@ void simRefreshFlag8(void* pEmote, float time);
 void scnLgtRemoveLgtItem(void* pData);
 void* scnLgtCreateEnvController(void* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
-void __ct__80172668(CREvtModelMap* self, int dealloc);
-void getField20();
-void EvtModelSetEventData();
-void EvtModelReleaseAnims(CREvtModelMap* self, int flag);
-void EvtModelUpdate();
-void EvtModelResetPose();
-void releaseEvtAnim28();
-void CREvtObjVfunc24Default();
-void isEvtFlagBit4Set();
-void isEvtFlagBit0Set();
-void zeroEvtModelHook();
-void emptyEvtModelHook();
-void EvtModelSetVisible();
-void EvtModelReleaseAnimsOnce(CREvtModelMap* self);
-void func_80172668();
-void MapModel_ThunkCtor38(void* self, int dealloc);
-extern CREvtModelMap* lbl_eu_806642B0;
-extern CREvtModelMap* lbl_eu_806642B4;
-extern float lbl_eu_806678C0;
-extern double lbl_eu_806678C8;
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
 extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
-extern void __ct__CREvtModel(void* self, void* pData, int pArg);
 extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-extern u8 lbl_eu_80531D80[];
 }
 
-__declspec(section ".rodata") const unsigned char rodata_all[48] __attribute__((used, aligned(1))) = {
-    0x63,0x66,0x3a,0x3a,0x43,0x52,0x45,0x76,0x74,0x4d,0x6f,0x64,0x65,0x6c,0x4d,0x61,
-    0x70,0x00,0x00,0x00,0x2e,0x6c,0x6f,0x64,0x00,0x2f,0x6f,0x62,0x6a,0x2f,0x00,0x2e,
-    0x6d,0x61,0x70,0x00,0x2e,0x6c,0x67,0x74,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
-#define lbl_eu_80503718 ((const char*)rodata_all)
-#define lbl_eu_8050372C ((const char*)(rodata_all+20))
-__declspec(section ".data") __attribute__((used, aligned(8))) const unsigned char __data_CREvtModelMap[0x140] = {
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xC8,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
-extern const unsigned char rodata_all[48];
-extern const unsigned char __data_CREvtModelMap[0x140];
-__declspec(section ".sdata") __attribute__((used, aligned(8))) const void* __sdata_CREvtModelMap[2] = {
-    (const void*)rodata_all, (const void*)(__data_CREvtModelMap + 0x140)
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8))) const unsigned char __sdata2_CREvtModelMap[0x10] = {
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x43,0x30,0x00,0x00,0x80,0x00,0x00,0x00
-};
-__attribute__((used, aligned(8))) unsigned char __sbss_CREvtModelMap[8];
-DECOMP_FORCEACTIVE(CREvtModelMap_sbss, __sbss_CREvtModelMap);
+namespace cf {
 
-extern "C" {
+CREvtModelMap* CREvtModelMap::sLoadingGuest;
+CREvtModelMap* CREvtModelMap::sVisibleModel;
 
-CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
+CREvtModelMap::CREvtModelMap(void* pData)
+    : CREvtModel(pData, 1),
+      mVisible(1),
+      mIsGuest(0),
+      mFileHandle1(0),
+      mFileData1(0),
+      mFileHandle2(0),
+      mFileData2(0),
+      mFileHandle3(0),
+      mFileData3(0),
+      mLoadedModelData(0),
+      mEmoteModel(0),
+      mCreatureCount(0),
+      mCreatureId(-1)
 {
-    __ct__CREvtModel(self, parent, 1);
-    *(u32**)self = (u32*)((void*)lbl_eu_80531D80);
-    self->vtableIWork = (u8*)lbl_eu_80531D80 + 0x44;
-    self->mVisible = 1;
-    self->mIsGuest = 0;
-    self->mFileHandle1 = 0;
-    self->mFileData1 = 0;
-    self->mFileHandle2 = 0;
-    self->mFileData2 = 0;
-    self->mBasePath[0] = 0;
-    self->mBasePathLen = 0;
-    self->mFileHandle3 = 0;
-    self->mFileData3 = 0;
-    self->mPad9C = 0;
-    self->mUnkDC = 0;
-    self->mLoadedModelData = 0;
-    self->mEmoteModel = 0;
-    self->mCreatureCount = 0;
-    self->mCreatureId = -1;
-    memset(self->mModelName, 0, sizeof(self->mModelName));
+    memset(mCreatureState, 0, sizeof(mCreatureState));
     u32 out0, out1, out2, out3;
-    Tok_Unpack(*(u32*)((char*)self->mPtr1C + 0x20), &out0, &out1, &out2, &out3);
+    Tok_Unpack(*(u32*)((char*)mPtr1C + 0x20), &out0, &out1, &out2, &out3);
     if (out0 == 1) {
-        self->mIsGuest = 1;
-        u32 w1, w2, w0;
-        u32* src = (u32*)lbl_eu_80531D20;
-        w0 = *src++;
-        w1 = *src++;
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        w2 = *src++;
-        self->mCallback[2] = w2;
-        self->mFlags |= 0x10;
-        lbl_eu_806642B4 = self;
+        mIsGuest = 1;
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::loadFiles);
+        mFlags |= 0x10;
+        sVisibleModel = this;
     } else {
-        u32 w1, w2, w0;
-        u32* src = (u32*)lbl_eu_80531D2C;
-        w0 = *src++;
-        w1 = *src++;
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        w2 = *src++;
-        self->mCallback[2] = w2;
-        reinterpret_cast<UnkEvtListEntry*>(self)->SeqInsertRtEvent();
-        if (*(s32*)((char*)self->mPtr1C + 0x30) != 0) {
-            self->mFlags |= 0x30;
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::probeSlot);
+        reinterpret_cast<UnkEvtListEntry*>(this)->SeqInsertRtEvent();
+        if (*(s32*)((char*)mPtr1C + 0x30) != 0) {
+            mFlags |= 0x30;
         }
     }
-    return self;
 }
 
-CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
+CREvtModelMap::~CREvtModelMap()
 {
-    if (self) {
-        *(u32**)self = (u32*)((void*)lbl_eu_80531D80);
-        self->vtableIWork = (u8*)lbl_eu_80531D80 + 0x44;
-        if (self->mIsGuest) {
-            reinterpret_cast<CREvtModel*>(self)->setVisible(0);
-            if (cf::CfGameManager::getGameSubManager()) {
-                reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getGameSubManager())->setPointEnabled(1);
-            }
-            enableLOD__8CTaskLODFv();
-            if (self->mCreatureCount > 0) {
-                s32 i = 0;
-                CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;
-                CCreatureNode* it = head->next;
-                while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
-                    u8 v = (u8)self->mModelName[i];
-                    reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(!v);
-                    it = it->next;
-                    i++;
-                }
-            }
-            lbl_eu_806642B0 = 0;
-            if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
-                getMapEffectManager__Q22cf13CfGameManagerFv();
-                MapFx_SetPointEnabled(1);
+    if (mIsGuest) {
+        setVisible(0);
+        if (cf::CfGameManager::getGameSubManager()) {
+            reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getGameSubManager())->setPointEnabled(1);
+        }
+        enableLOD__8CTaskLODFv();
+        if (mCreatureCount > 0) {
+            CCreatureNode* it;
+            s32 i = 0;
+            for (it = ((CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4)->next;
+                 it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;
+                 it = it->next, i++) {
+                reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(mCreatureState[i] != 0);
             }
         }
-        reinterpret_cast<CREvtModel*>(self)->reset();
-        restorePrimaryLOD__8CTaskLODFv();
-        __ct__80172668(self, 0);
-        if (dealloc > 0) {
-            cf::CREvtObj::operator delete(self);
+        sLoadingGuest = 0;
+        if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
+            getMapEffectManager__Q22cf13CfGameManagerFv();
+            MapFx_SetPointEnabled(1);
         }
     }
-    return self;
+    reset();
+    restorePrimaryLOD__8CTaskLODFv();
 }
 
-int MapModel_CheckMagicMA(void* self) {
-    s8* info = (s8*)((CREvtModelMap*)self)->mPtr1C;
+int CREvtModelMap::isMapModel() {
+    s8* info = (s8*)mPtr1C;
     return (info[0x10] == 0x6D && info[0x11] == 0x61) ? 1 : 0;
 }
 
-bool MapModel_Busy(CREvtModelMap* self)
+bool CREvtModelMap::isBusy()
 {
-    return self->mFileHandle1 || self->mFileHandle2 || self->mFileHandle3;
+    return mFileHandle1 || mFileHandle2 || mFileHandle3;
 }
 
-bool func_80180CBC(CREvtModelMap* self)
+int CREvtModelMap::reset()
 {
-    if (self->mFlags & 0x80) {
+    if (mFlags & 0x80) {
         return 0;
     }
-    EvtModelReleaseAnimsOnce(self);
-    if (self->mEmoteModel) {
-        Scn_IsAnimActiveOrNull(self->mEmoteModel);
-        self->mEmoteModel = nullptr;
+    CREvtModel::reset();
+    if (mEmoteModel) {
+        Scn_IsAnimActiveOrNull(mEmoteModel);
+        mEmoteModel = nullptr;
     }
-    if (self->mLoadedModelData) {
+    if (mLoadedModelData) {
         scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
-        self->mLoadedModelData = nullptr;
+        mLoadedModelData = nullptr;
     }
-    void* p1 = self->mFileData1;
+    void* p1 = mFileData1;
     if (p1) {
         if (p1) {
             mtl::MemManager::deallocate(p1);
-            self->mFileData1 = 0;
+            mFileData1 = 0;
         }
     }
-    void* p2 = self->mFileData2;
+    void* p2 = mFileData2;
     if (p2) {
         if (p2) {
             mtl::MemManager::deallocate(p2);
-            self->mFileData2 = 0;
+            mFileData2 = 0;
         }
     }
-    void* p3 = self->mFileData3;
+    void* p3 = mFileData3;
     if (p3) {
         if (p3) {
             mtl::MemManager::deallocate(p3);
-            self->mFileData3 = 0;
+            mFileData3 = 0;
         }
     }
-    if (self->mFileHandle1) {
-        CDeviceFile::cancel(self->mFileHandle1);
+    if (mFileHandle1) {
+        CDeviceFile::cancel(mFileHandle1);
     }
-    if (self->mFileHandle2) {
-        CDeviceFile::cancel(self->mFileHandle2);
+    if (mFileHandle2) {
+        CDeviceFile::cancel(mFileHandle2);
     }
-    if (self->mFileHandle3) {
-        CDeviceFile::cancel(self->mFileHandle3);
+    if (mFileHandle3) {
+        CDeviceFile::cancel(mFileHandle3);
     }
-    self->mFileHandle1 = 0;
-    self->mFileHandle2 = 0;
-    self->mFileHandle3 = 0;
+    mFileHandle1 = 0;
+    mFileHandle2 = 0;
+    mFileHandle3 = 0;
     return 1;
 }
 
-void MapModel_DisablePoints()
+} // namespace cf
+
+// No `this`: called from CTaskREvtSequence.cpp under these C names
+// (likely static members of CREvtModelMap; callers not owned here).
+extern "C" void MapModel_DisablePoints()
 {
-    if (lbl_eu_806642B0) {
+    if (CREvtModelMap::sLoadingGuest) {
         return;
     }
     if (cf::CfGameManager::getGameSubManager()) {
@@ -340,9 +231,9 @@ void MapModel_DisablePoints()
     }
 }
 
-void MapModel_EnablePoints()
+extern "C" void MapModel_EnablePoints()
 {
-    if (lbl_eu_806642B0) {
+    if (CREvtModelMap::sLoadingGuest) {
         return;
     }
     cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
@@ -350,186 +241,144 @@ void MapModel_EnablePoints()
     enableLOD__8CTaskLODFv();
 }
 
-void MapModel_ProbeSlot(CREvtModelMap* self)
+namespace cf {
+
+void CREvtModelMap::probeSlot()
 {
-    s32* pId = &self->mCreatureId;
+    s32* pId = &mCreatureId;
     *pId = -1;
-    if (reinterpret_cast<EvtBdabModel*>(self)->SeqProbeEvtSlot(reinterpret_cast<u32*>(pId))) {
-        u32 w1, w2, w0;
-        u32* src = (u32*)lbl_eu_80531D38;
-        w0 = *src++;
-        w1 = *src++;
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        w2 = *src++;
-        self->mCallback[2] = w2;
+    if (reinterpret_cast<EvtBdabModel*>(this)->SeqProbeEvtSlot(reinterpret_cast<u32*>(pId))) {
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::loadFiles);
     }
 }
 
-void MapModel_LoadFiles(CREvtModelMap* self)
+void CREvtModelMap::loadFiles()
 {
-    u32* tbl = (u32*)lbl_eu_80531D20;
-    u32 flags = self->mFlags | 0x40;
-    if (self->mIsGuest) {
-        lbl_eu_806642B0 = self;
+    u32 flags = mFlags | 0x40;
+    if (mIsGuest) {
+        sLoadingGuest = this;
         flags |= 0x11;
-        u32 w0 = tbl[9];
-        u32 w1 = tbl[10];
-        u32 w2 = tbl[11];
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        self->mCallback[2] = w2;
-        self->mFlags = flags;
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::update);
+        mFlags = flags;
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-        Tok_FormatStr(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
-        s32 len = strlen(&lbl_eu_8050372C[0]);
-        strcat(self->mBasePath, &lbl_eu_8050372C[0]);
-        self->mBasePathLen += len;
+        Tok_FormatStr(mBasePath, mgr->unk70, 1, 0);
+        mBasePath += ".lod";
     } else {
         ml::FixStr<32> baseBuf;
         ml::FixStr<32> filePath;
-        const char* base = &lbl_eu_8050372C[0];
-        baseBuf = base + 5;
+        baseBuf = "/obj/";
         filePath = baseBuf;
-        filePath += ((CREvtModelMapNameInfo*)self->mPtr1C)->mName;
-        filePath += base + 0xB;
+        filePath += ((CREvtModelMapNameInfo*)mPtr1C)->mName;
+        filePath += ".map";
         if (CDeviceFile::getFileSize(filePath.mString) > 0) {
-            u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
+            u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
             if ((innerFlags & 2) && !(innerFlags & 0x40)) {
-                self->mFileHandle1 = CDeviceFile::readFile(
-                    lbl_eu_80663E14->getAllocHandle(), filePath.mString,
-                    (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM2());
+                mFileHandle1 = CDeviceFile::readFile(
+                    lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, mtl::MemManager::getHandleMEM2());
             } else {
-                self->mFileHandle1 = CDeviceFile::readFile(
-                    mtl::MemManager::getHandleMEM2(), filePath.mString,
-                    (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, lbl_eu_80663E14->getAllocHandle());
+                mFileHandle1 = CDeviceFile::readFile(
+                    mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, lbl_eu_80663E14->getAllocHandle());
             }
             if (EvtSeqGetStateBit5()) {
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, getScnCounter__Fv());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, getScnCounter__Fv());
             }
-            setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM1());
-            if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
-                CDeviceFile::setHandleFlag1(self->mFileHandle1);
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, mtl::MemManager::getHandleMEM1());
+            if (((CREvtModelMapNameInfo*)mPtr1C)->field_0x58 & 1) {
+                CDeviceFile::setHandleFlag1(mFileHandle1);
             }
             filePath = baseBuf;
-            filePath += ((CREvtModelMapNameInfo*)self->mPtr1C)->mName;
-            filePath += &lbl_eu_8050372C[0];
+            filePath += ((CREvtModelMapNameInfo*)mPtr1C)->mName;
+            filePath += ".lod";
             if (CDeviceFile::getFileSize(filePath.mString) > 0) {
-                u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
+                u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
-                    self->mFileHandle2 = CDeviceFile::readFile(
-                        lbl_eu_80663E14->getAllocHandle(), filePath.mString,
-                        (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM2());
+                    mFileHandle2 = CDeviceFile::readFile(
+                        lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, mtl::MemManager::getHandleMEM2());
                 } else {
-                    self->mFileHandle2 = CDeviceFile::readFile(
-                        mtl::MemManager::getHandleMEM2(), filePath.mString,
-                        (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, lbl_eu_80663E14->getAllocHandle());
+                    mFileHandle2 = CDeviceFile::readFile(
+                        mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, lbl_eu_80663E14->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, getScnCounter__Fv());
                 }
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM1());
-                if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
-                    CDeviceFile::setHandleFlag1(self->mFileHandle2);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, mtl::MemManager::getHandleMEM1());
+                if (((CREvtModelMapNameInfo*)mPtr1C)->field_0x58 & 1) {
+                    CDeviceFile::setHandleFlag1(mFileHandle2);
                 }
             }
             filePath = baseBuf;
-            filePath += ((CREvtModelMapNameInfo*)self->mPtr1C)->mName;
-            filePath += base + 0x10;
+            filePath += ((CREvtModelMapNameInfo*)mPtr1C)->mName;
+            filePath += ".lgt";
             if (CDeviceFile::getFileSize(filePath.mString) > 0) {
-                u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
+                u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
-                    self->mFileHandle3 = CDeviceFile::readFile(
-                        lbl_eu_80663E14->getAllocHandle(), filePath.mString,
-                        (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM2());
+                    mFileHandle3 = CDeviceFile::readFile(
+                        lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, mtl::MemManager::getHandleMEM2());
                 } else {
-                    self->mFileHandle3 = CDeviceFile::readFile(
-                        mtl::MemManager::getHandleMEM2(), filePath.mString,
-                        (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, lbl_eu_80663E14->getAllocHandle());
+                    mFileHandle3 = CDeviceFile::readFile(
+                        mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, lbl_eu_80663E14->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, getScnCounter__Fv());
                 }
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM1());
-                if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
-                    CDeviceFile::setHandleFlag1(self->mFileHandle3);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, mtl::MemManager::getHandleMEM1());
+                if (((CREvtModelMapNameInfo*)mPtr1C)->field_0x58 & 1) {
+                    CDeviceFile::setHandleFlag1(mFileHandle3);
                 }
             }
-            self->mFlags |= 0x2;
-            u32 w0 = tbl[12];
-            u32 w1 = tbl[13];
-            u32 w2 = tbl[14];
-            self->mCallback[1] = w1;
-            self->mCallback[0] = w0;
-            self->mCallback[2] = w2;
+            mFlags |= 0x2;
+            mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::finishLoad);
         } else {
-            self->mFlags |= 0x11;
-            u32 w0 = tbl[15];
-            u32 w1 = tbl[16];
-            u32 w2 = tbl[17];
-            self->mCallback[1] = w1;
-            self->mCallback[0] = w0;
-            self->mCallback[2] = w2;
+            mFlags |= 0x11;
+            mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::update);
         }
     }
 }
 
-void MapModel_FinishLoad(CREvtModelMap* self)
+void CREvtModelMap::finishLoad()
 {
-    if (self->mFlags & 2) {
-        if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
-            self->mEmoteModel = (CScnItemModel*)Scn_SetupAnim(lbl_eu_80663E14, self->mFileData1, 7, 1);
-            simSetFlag2OnTree(self->mEmoteModel, 0);
-            simSetLeafDist7B0(self->mEmoteModel, lbl_eu_806678C0);
-            reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->flags7A8 |= 4;
-            self->mVisible = 0;
-            if (lbl_eu_806642B4 == self) {
-                lbl_eu_806642B4 = 0;
+    if (mFlags & 2) {
+        if (!mFileHandle1 && mFileData1 && !mEmoteModel) {
+            mEmoteModel = (CScnItemModel*)Scn_SetupAnim(lbl_eu_80663E14, mFileData1, 7, 1);
+            simSetFlag2OnTree(mEmoteModel, 0);
+            simSetLeafDist7B0(mEmoteModel, 0.0f);
+            mEmoteModel->flags7A8 |= 4;
+            mVisible = 0;
+            if (sVisibleModel == this) {
+                sVisibleModel = 0;
             }
         }
-        if (self->mFileHandle2 || self->mFileHandle3 || self->mFileHandle1) {
-            if (!(self->mFlags & 4)) {
+        if (mFileHandle2 || mFileHandle3 || mFileHandle1) {
+            if (!(mFlags & 4)) {
                 return;
             }
         }
-        self->mFlags |= 0x11;
-        u32* src = (u32*)lbl_eu_80531D68;
-        u32 w0 = *src++;
-        u32 w1 = *src++;
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        u32 w2 = *src++;
-        self->mCallback[2] = w2;
+        mFlags |= 0x11;
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::update);
     } else {
-        u32* src = (u32*)lbl_eu_80531D74;
-        u32 w0 = *src++;
-        u32 w1 = *src++;
-        self->mCallback[1] = w1;
-        self->mCallback[0] = w0;
-        u32 w2 = *src++;
-        self->mCallback[2] = w2;
+        mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::update);
     }
 }
 
-void MapModel_Update(CREvtModelMap* self)
+void CREvtModelMap::update()
 {
-    if (self->mEmoteModel) {
+    if (mEmoteModel) {
         f32 fTime = (f32)(s32)EvtSeqGetCounter100();
-        simRefreshFlag8(self->mEmoteModel, fTime);
+        simRefreshFlag8(mEmoteModel, fTime);
     }
-    reinterpret_cast<CREvtModel*>(self)->setVisible(REvtCam_IsField98Set());
-    reinterpret_cast<UnkObj80168514*>(self)->EvtSeqCheckEventRunGuard();
+    setVisible(REvtCam_IsField98Set());
+    reinterpret_cast<UnkObj80168514*>(this)->EvtSeqCheckEventRunGuard();
 }
 
-void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
+void CREvtModelMap::onEvent(u32 visible)
 {
-    if (self->mIsGuest) {
+    if (mIsGuest) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             if (REvtCam_IsMode2B0Eq1()) {
@@ -539,21 +388,21 @@ void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
             }
         }
     }
-    if (self->mVisible == visible) {
+    if (mVisible == visible) {
         goto set_guest_flags;
     }
-    if (self->mIsGuest) {
+    if (mIsGuest) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(visible);
         }
         if (visible) {
             restorePrimaryLOD__8CTaskLODFv();
-            lbl_eu_806642B4 = self;
+            sVisibleModel = this;
         } else {
-            if (lbl_eu_806642B4 == self) {
+            if (sVisibleModel == this) {
                 disableLOD__8CTaskLODFv();
-                lbl_eu_806642B4 = 0;
+                sVisibleModel = 0;
             }
         }
         if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
@@ -566,43 +415,42 @@ void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
         while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
             if (!visible) {
                 int v = reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_checkSubReady();
-                self->mModelName[i] = (char)v;
-                self->mCreatureCount++;
+                mCreatureState[i] = (u8)v;
+                mCreatureCount++;
                 reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(0);
             } else {
-                u8 v = (u8)self->mModelName[i];
-                reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(!v);
+                reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(mCreatureState[i] != 0);
             }
             it = it->next;
             i++;
         }
         if (visible) {
-            self->mCreatureCount = 0;
+            mCreatureCount = 0;
         }
         goto visible_store;
     }
-    if (self->mEmoteModel) {
+    if (mEmoteModel) {
         if (visible) {
-            if (self->mFileData2) {
-                acquireLODResource__8CTaskLODFv(self->mFileData2, 1);
+            if (mFileData2) {
+                acquireLODResource__8CTaskLODFv(mFileData2, 1);
             }
-            if (self->mFileData3) {
-                self->mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), self->mFileData3, 7);
+            if (mFileData3) {
+                mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), mFileData3, 7);
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
                     fx->v24(0);
                 }
             }
-            lbl_eu_806642B4 = self;
+            sVisibleModel = this;
         } else {
-            if (lbl_eu_806642B4 == self) {
+            if (sVisibleModel == this) {
                 disableLOD__8CTaskLODFv();
-                lbl_eu_806642B4 = 0;
+                sVisibleModel = 0;
             }
-            if (self->mLoadedModelData) {
+            if (mLoadedModelData) {
                 scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
-                self->mLoadedModelData = 0;
+                mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
@@ -610,12 +458,12 @@ void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
                 }
             }
         }
-        simSetFlag2OnTree(self->mEmoteModel, visible);
+        simSetFlag2OnTree(mEmoteModel, visible);
     }
 visible_store:
-    self->mVisible = (u8)visible;
+    mVisible = (u8)visible;
 set_guest_flags:
-    if (self->mIsGuest) {
+    if (mIsGuest) {
         s32 isZero = (REvtCam_IsMode2B0Eq2() == 0);
         UnkClass_80083298* m3 = cf::CfGameManager::getGameSubManager();
         if (isZero) {
@@ -626,9 +474,9 @@ set_guest_flags:
     }
 }
 
-void MapModel_ApplyVisible(CREvtModelMap* self, int visible)
+void CREvtModelMap::setVisible(int visible)
 {
-    if (self->mIsGuest) {
+    if (mIsGuest) {
         if (cf::CfGameManager::getGameSubManager()) {
             cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
             reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(visible);
@@ -638,48 +486,39 @@ void MapModel_ApplyVisible(CREvtModelMap* self, int visible)
         }
         u8* taskState = (u8*)(*(void**)((u8*)lbl_eu_80663E14 + 0x78));
         taskState[0x28] = visible;
-    } else if (self->mEmoteModel) {
-        reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->vfuncB4(REvtCam_IsField98Set());
+    } else if (mEmoteModel) {
+        mEmoteModel->vfuncB4(REvtCam_IsField98Set());
     }
 }
 
-int MapModel_VisFlag3(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
+int CREvtModelMap::vfunc_20() { return mIsGuest != 0 ? 0 : 3; }
 
-bool CREvtModelMap::ClaimFileData(CEventFile* pEvent)
+bool CREvtModelMap::OnFileEvent(CEventFile* pEvent)
 {
-    if (pEvent->mFileHandle == this->mFileHandle1) {
+    if (pEvent->mFileHandle == mFileHandle1) {
         if (pEvent->unk0 == 1) {
-            this->mFileData1 = this->mFileHandle1->getData();
+            mFileData1 = mFileHandle1->getData();
         } else {
-            this->mFlags |= 4;
+            mFlags |= 4;
         }
-        this->mFileHandle1 = 0;
+        mFileHandle1 = 0;
         return 1;
     }
-    if (pEvent->mFileHandle == this->mFileHandle2) {
+    if (pEvent->mFileHandle == mFileHandle2) {
         if (pEvent->unk0 == 1) {
-            this->mFileData2 = this->mFileHandle2->getData();
+            mFileData2 = mFileHandle2->getData();
         }
-        this->mFileHandle2 = 0;
+        mFileHandle2 = 0;
         return 1;
     }
-    if (pEvent->mFileHandle == this->mFileHandle3) {
+    if (pEvent->mFileHandle == mFileHandle3) {
         if (pEvent->unk0 == 1) {
-            this->mFileData3 = this->mFileHandle3->getData();
+            mFileData3 = mFileHandle3->getData();
         }
-        this->mFileHandle3 = 0;
+        mFileHandle3 = 0;
         return 1;
     }
     return 0;
 }
 
-bool OnFileEvent__13CREvtModelMapFP10CEventFile(IWorkEvent* self, CEventFile* ev)
-{
-    return (reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38))->ClaimFileData(ev);
-}
-
-void MapModel_ThunkCtor38(void* self, int dealloc) {
-    __ct__80180B00((CREvtModelMap*)((char*)self - 0x38), dealloc);
-}
-
-} // extern "C"
+} // namespace cf

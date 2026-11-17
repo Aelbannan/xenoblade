@@ -19,9 +19,13 @@ struct ScheduleEntry {
     u16 flags;
 };
 
-// Base for child objects with virtual destructors at vtable[3]
+// Interface of objects registered on a CSchedule (schedAttachChildSlot /
+// schedDetachChildSlot). ~CSchedule calls OnScheduleDelete(this) on every
+// registered child. Implemented (as a private base, so it does not appear in
+// the RTTI base lists) by cf::CREvtEffect (+0x14) and cf::CREvtModelObj (+0x3C).
 struct CScheduleChild {
     virtual ~CScheduleChild() {}
+    virtual void OnScheduleDelete(CSchedule* pSchedule) = 0;
 };
 
 // CSchedule manages a list of schedule entries, resolving each to a handle.

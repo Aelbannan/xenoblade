@@ -351,14 +351,6 @@ void sysWinDispatchPhase(void* syswin);                                     // C
 char* BdatGetPtrDirect(const void*, const void*, int);                   // code_80135FDC.cpp
 int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
-int CScrollBar_isVisible(void* scrollbar);                             // CScrollBar.cpp
-extern "C" int CScrollBar_isActive(void* scrollbar);                                    // CScrollBar.cpp
-extern "C" void CScrollBar_InitRootPane(void* scrollbar, ml::CVec3* vec);                 // CScrollBar.cpp
-extern "C" void CScrollBar_UpdateThumb(void* scrollbar, int count, u32 value);           // CScrollBar.cpp
-extern "C" void CScrollBar_requestScrollIn(void* scrollbar);                                 // CScrollBar.cpp
-extern "C" void CScrollBar_UpdateDispatch(void* scrollbar);                                 // CScrollBar.cpp
-extern "C" void CScrollBar_requestScrollOut(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
-extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void Cur_Update(void* cursor);                                     // CCur.cpp
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();                                              // CCur.cpp (vtable source for __ct__CCur18)
@@ -388,7 +380,6 @@ void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
 extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__7CSysWinFUc(void* self, int arg);                              // CSysWin ctor (retail short name)
-extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
 
@@ -452,8 +443,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" void CScrollBar_Teardown(CScrollBar* scrollbar);                    // scrollbar destroy
-extern "C" void CScrollBar_draw(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
 extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
 extern u32 lbl_eu_80663E28;  // .sbss mode bitfield (bit 0x400000 gates hint draws)

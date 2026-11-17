@@ -30,19 +30,16 @@ extern const float lbl_eu_80667764;         // CActorParam_applyDamage 0xFC/0x10
 
 extern const float lbl_eu_80667768;         // CActorParam_applyDamage 0x100 decay add
 
-extern const float lbl_eu_80667770;         // code-orphaned tail float (touch-anchored)
 
-extern const float lbl_eu_80667774;         // code-orphaned tail float (touch-anchored)
 
-extern const float lbl_eu_80667778;         // code-orphaned tail float (touch-anchored)
 
 // ptmf constant (3 words: this-offset / fn / this) compared against
 // CBattleManager+0x28354 by CActorParam_applyDamage.
 extern const u32 lbl_eu_80531090[3];
 
-// vtable-group symbol the CfObjectActor constructor copies its four vtable
-// pointers from (retail label; the implicit __vt symbol sits -32 bytes away).
-extern u8 lbl_eu_8053109C[];
+// cf::CfObjectActor vtable group (hand-built in CfObjectActor.cpp until the
+// class is polymorphic); the constructor copies its four vtable pointers from it.
+extern "C" const void* __vt__Q22cf13CfObjectActor[];
 
 // Battle-side initializers called by the CfObjectActor constructor.
 // NOTE: dispatchItemLoad is declared here in its LOCAL 5-arg form inside
@@ -228,7 +225,7 @@ namespace cf {
     };
 
     // vtable-pointer slots written explicitly by the CfObjectActor
-    // constructor from the lbl_eu_8053109C group via direct *(void**)
+    // constructor from the __vt__Q22cf13CfObjectActor group via direct *(void**)
     // stores in the .cpp (offsets 0x0 / 0x8 / 0x3380 / 0x3E9C).
 
     // View of CfObjectActor's pointer at absolute offset 0x04 (the

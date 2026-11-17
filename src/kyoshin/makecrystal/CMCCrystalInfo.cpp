@@ -1,6 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/makecrystal/CMCCrystalInfo
 // Replace stubs with high-level C/C++ during decomp.
 
+// Inline-empty ~IWorkEvent: the retail destructor elides the base call.
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -29,45 +31,14 @@ extern u32 lbl_eu_806640D8;
 
 void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
 
-// The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
-// (not a mangled member name), so it is written as a C-linkage function that
-// explicitly sets the vptr and constructs the UnkClass sub-objects.
-extern "C" CMCCrystalInfo* __ct__CMCCrystalInfo(CMCCrystalInfo* self)
-{
-    *(void**)self = (void*)lbl_eu_80535CF8;   // vptr at +0x00
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion1);
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion2);
+CMCCrystalInfo::CMCCrystalInfo()
+    : mFileHandle1(0), mFileHandle2(0), mArcResAccessor(0), mField30(0), mLayout(0),
+      mAnimTransform1(0), mAnimTransform2(0), mAnimTransform3(0), mAnimTransform4(0),
+      mEnabled(0), mState(0), mIsActive(0), mField51(1) {}
 
-    self->mFileHandle1 = 0;
-    self->mFileHandle2 = 0;
-    self->mArcResAccessor = 0;
-    self->mField30 = 0;
-    self->mLayout = 0;
-    self->mAnimTransform1 = 0;
-    self->mAnimTransform2 = 0;
-    self->mAnimTransform3 = 0;
-    self->mAnimTransform4 = 0;
-    self->mEnabled = 0;
-    self->mState = 0;
-    self->mIsActive = 0;
-    self->mField51 = 1;
-    return self;
-}
-
-// The retail dtor is emitted under the mangled symbol `__dt__14CMCCrystalInfoFv`.
-// Written as a C-linkage function (CItemBoxInfo precedent) for byte-exact
-// control over the null/delete-flag checks.
 #pragma push
 #pragma optimize_for_size on
-extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 flags)
-{
-    if (self != NULL) {
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion2, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion1, -1);
-        if (flags > 0) operator delete(self);
-    }
-    return self;
-}
+CMCCrystalInfo::~CMCCrystalInfo() {}
 #pragma pop
 
 #pragma push

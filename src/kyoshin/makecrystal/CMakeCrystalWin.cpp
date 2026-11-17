@@ -30,7 +30,7 @@ extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 ar
     _this->mThread = 0;
     __ct__11CTitleAHelpFPcUc(&_this->mTitleAHelp, 0, 0);
     __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(&_this->mModelDispArea[0]), 0);
-    __ct__CMCCrystalBox(&_this->mCrystalBox, 0);
+    __ct__13CMCCrystalBoxFUc(&_this->mCrystalBox, 0);
     __ct__CLoad(&_this->mLoad, 0);
     _this->field_4360 = 0;
     _this->field_4361 = 0;
@@ -83,7 +83,7 @@ void mkCrystalTeardown(CMakeCrystalWin* self) {
 
     teardown(&self->mTitleAHelp);
     MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
-    teardownCrystalBox(&self->mCrystalBox);
+    self->mCrystalBox.teardownCrystalBox();
     CLoadTeardownLayout(&self->mLoad);
 
     CScn* scene2 = self->mScene;
@@ -117,7 +117,7 @@ int CMakeCrystalWin::mkCrystalIsBusyState() {
     if (MenuTutorialIsCreated() != 0) {
         return 1;
     }
-    if (getCrystalBoxSysWin(&this->mCrystalBox) != 0) {
+    if (this->mCrystalBox.getCrystalBoxSysWin() != 0) {
         return 1;
     }
     u8 state = this->field_4360;
@@ -134,10 +134,10 @@ u32 mkCrystalGetWord10(void* self) { return (u32)((CMakeCrystalWin*)self)->mScen
 // ready, dismiss them, mark the window state as 1 and play the crystal sound.
 void mkCrystalDismissToState1(CMakeCrystalWin* self) {
     if (isInitialized(&self->mTitleAHelp) != 0) {
-        if (isCrystalBoxReady(&self->mCrystalBox) != 0) {
+        if (self->mCrystalBox.isCrystalBoxReady() != 0) {
             if (CLoadIsLoadReady(&self->mLoad) != 0) {
                 func_801C412C(&self->mTitleAHelp);
-                openCrystalBox(&self->mCrystalBox);
+                self->mCrystalBox.openCrystalBox();
                 self->field_4360 = 1;
                 playUISound(0x6d);
             }
@@ -149,7 +149,7 @@ void mkCrystalDismissToState1(CMakeCrystalWin* self) {
 // is active, mark the window state as 2.
 void mkCrystalToState2Idle(CMakeCrystalWin* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
+        if (self->mCrystalBox.getCrystalBoxActive() != 0) {
             self->field_4360 = 2;
         }
     }
@@ -161,7 +161,7 @@ void mkCrystalToState3Box(){}
 // state byte (field_4361) instead.
 void mkCrystalSetFlag4361(CMakeCrystalWin* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
+        if (self->mCrystalBox.getCrystalBoxActive() != 0) {
             self->field_4361 = 1;
         }
     }
@@ -170,7 +170,7 @@ void mkCrystalSetFlag4361(CMakeCrystalWin* self) {
 // Retail 0x80214D7C: when the crystal box is active, switch the title-help
 // banner to mode 0x37 and set the window state to 5.
 void mkCrystalToState5Banner(CMakeCrystalWin* self) {
-    if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
+    if (self->mCrystalBox.getCrystalBoxActive() != 0) {
         func_801C41E8(&self->mTitleAHelp, 0x37);
         self->field_4360 = 5;
     }
@@ -181,7 +181,7 @@ void mkCrystalToState6Box(){}
 // Retail 0x80214F58: same gate as mkCrystalToState5Banner but with banner mode 0x34
 // and window state 2.
 void mkCrystalToState2Banner(CMakeCrystalWin* self) {
-    if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
+    if (self->mCrystalBox.getCrystalBoxActive() != 0) {
         func_801C41E8(&self->mTitleAHelp, 0x34);
         self->field_4360 = 2;
     }
@@ -192,12 +192,12 @@ void mkCrystalToState2Banner(CMakeCrystalWin* self) {
 // the load overlay when either selection index reaches 3.
 void mkCrystalToState8Box(CMakeCrystalWin* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
-            teardownCrystalBox(&self->mCrystalBox);
-            u32 cursor = rebuildCrystalBoxSelTable(&self->mCrystalBox);
+        if (self->mCrystalBox.getCrystalBoxActive() != 0) {
+            self->mCrystalBox.teardownCrystalBox();
+            u32 cursor = (u32)self->mCrystalBox.rebuildCrystalBoxSelTable();
             setCrystalCursor(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), cursor);
-            u8 a = getCrystalBoxKindA(&self->mCrystalBox);
-            u8 b = getCrystalBoxKindB(&self->mCrystalBox);
+            u8 a = self->mCrystalBox.getCrystalBoxKindA();
+            u8 b = self->mCrystalBox.getCrystalBoxKindB();
             MakeCrystal_UnlinkFileSlot(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), a, b);
             if ((u32)a >= 3 || (u32)b >= 3) {
                 CLoadStartFadeInStep(&self->mLoad);
@@ -255,10 +255,10 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
             // CModelDispMakeCrystal temp (retail +0x8) is declared last.
             u8 boxTemp[0x1508];    // CMCCrystalBox temp at +0x2DE0
             u8 dispTemp[0x2DD8];   // CModelDispMakeCrystal temp at +0x8
-            __ct__CMCCrystalBox(reinterpret_cast<CMCCrystalBox*>(boxTemp), 0);
+            __ct__13CMCCrystalBoxFUc(reinterpret_cast<CMCCrystalBox*>(boxTemp), 0);
             MakeCrystalCopyBox(&self->mCrystalBox, reinterpret_cast<const CMCCrystalBox*>(boxTemp));
             __dt__13CMCCrystalBoxFv(reinterpret_cast<CMCCrystalBox*>(boxTemp), -1);
-            initCrystalBoxResources(&self->mCrystalBox);
+            self->mCrystalBox.initCrystalBoxResources();
 
             // Rebuild the model display the same way (temp constructed with
             // the owning scene, copied in, destroyed).
@@ -287,7 +287,7 @@ void CMakeCrystalWin::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     MakeCrystal_DrawAll(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), &drawInfo);
-    drawCrystalBox(&mCrystalBox, &drawInfo);
+    mCrystalBox.drawCrystalBox(&drawInfo);
     CLoadDrawIfVisible(&mLoad, &drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
 }

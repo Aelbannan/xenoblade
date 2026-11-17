@@ -678,7 +678,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalList.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCEffStart.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/CMenuQstCnt.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CQstLogList.cpp"),
+            Object(NonMatching, "kyoshin/CQstLogList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CQstLogInfo.cpp"),
             Object(NonMatching, "kyoshin/CSysWin.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CSelShopWin.cpp"),

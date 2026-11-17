@@ -18,6 +18,17 @@
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 #include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
+extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
+extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
+extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
+extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
+extern "C" void SplitU32ToS16s(short*, unsigned long);
+extern "C" u32 BdatGetItemId(u32);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
+extern "C" void* CUICfManager_getPackedFont9C(void);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 void playUISound(u32);

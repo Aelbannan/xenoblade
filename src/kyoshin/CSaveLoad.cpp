@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 extern "C" {
@@ -49,7 +50,6 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 // External function declarations
-extern "C" void CScrollBar_requestScrollOut(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
 void playUISound(u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // AnimRewindFrame declared in code_80135FDC.hpp
@@ -568,7 +568,7 @@ CSaveLoad::~CSaveLoad() {
 void CSaveLoad::loadSaveData() {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
-    CScrollBar_loadLayoutArc(mScrollbar);
+    reinterpret_cast<CScrollBar*>(mScrollbar)->loadLayoutArc();
 
     // Virtual call on CSysWin-like objects at offsets 0x98 and 0xD4
     // Use virtual dispatch through CSysWinProxy to match retail r12 pattern
@@ -590,7 +590,7 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField120 == 0) return;
 
     drawLayout(self->mLayout, drawInfo, 0, 1);
-    CScrollBar_draw(self->mScrollbar, drawInfo);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->draw(drawInfo);
 
     // Cursor pane is only drawn while both windows are idle
     if (CSysWin_getUnk34(&self->mSysWin98) == 0 &&
@@ -647,7 +647,7 @@ void CSaveLoad_reset(CSaveLoad* self) {
     }
     
     CSLCur_destroy((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
-    CScrollBar_Teardown(self->mScrollbar);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->Teardown();
     sysWinTermLayout(&self->mSysWin98);
     self->mCur40.cleanup();
     sysWinTermLayout(&self->mSysWinD4);
@@ -657,7 +657,7 @@ void CSaveLoad_reset(CSaveLoad* self) {
 }
 
 u8 CSaveLoad_isReady(CSaveLoad* p) {
-    if (!CScrollBar_isVisible(p->mScrollbar)) return 0;
+    if (!reinterpret_cast<CScrollBar*>(p->mScrollbar)->isVisible()) return 0;
     if (!CSysWin_isReady((void*)&p->mSysWin98)) return 0;
     if (!CSysWin_isReady((void*)&p->mSysWinD4)) return 0;
     // Use function pointer to prevent inlining
@@ -699,10 +699,10 @@ void CSaveLoad_open(CSaveLoad* p) {
     vec[0] = lbl_eu_80668B70;
     vec[1] = lbl_eu_80668B74;
     vec[2] = lbl_eu_80668B6C;
-    CScrollBar_InitRootPane(p->mScrollbar, vec);
+    reinterpret_cast<CScrollBar*>(p->mScrollbar)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
     int val = (int)(u16)lbl_eu_80662AC8;
-    CScrollBar_UpdateThumb(p->mScrollbar, 3, val);
+    reinterpret_cast<CScrollBar*>(p->mScrollbar)->UpdateThumb(3, val);
 
     {
         void (*fn90994)(CSaveLoad*) = CSaveLoad_renderSlots;
@@ -718,7 +718,7 @@ extern "C" void CSaveLoad_close(CSaveLoad* p) {
     // Function pointer cast prevents inlining of CSaveLoad_enAnimB's body
     ((void (*)(CSaveLoad*))CSaveLoad_enAnimB)(p);
     p->mField3C = 0;
-    CScrollBar_requestScrollOut(p->mScrollbar);
+    reinterpret_cast<CScrollBar*>(p->mScrollbar)->requestScrollOut();
     playUISound(6);
 }
 #pragma optimize_for_size off
@@ -775,7 +775,7 @@ void CSaveLoad_curUp(CSaveLoad* self) {
     
 normalPath:
     CSaveLoad_refresh(self);
-    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
     playUISound(1);
 }
 
@@ -828,7 +828,7 @@ void CSaveLoad_curDown(CSaveLoad* self) {
 
 updatePath:
     CSaveLoad_refresh(self);
-    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
     playUISound(1);
 }
 
@@ -858,7 +858,7 @@ void CSaveLoad_pageUp(CSaveLoad* p) {
     }
 
     CSaveLoad_refresh(p);
-    CScrollBar_PlaceThumb(p->mScrollbar, p->mField126);
+    reinterpret_cast<CScrollBar*>(p->mScrollbar)->PlaceThumb(p->mField126);
     playUISound(1);
 }
 
@@ -894,7 +894,7 @@ extern "C" void CSaveLoad_pageDown(CSaveLoad* self) {
     }
 
     CSaveLoad_refresh(self);
-    CScrollBar_PlaceThumb(self->mScrollbar, self->mField126);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
     playUISound(1);
 }
 
@@ -1335,7 +1335,7 @@ void CSaveLoad_update(CSaveLoad* self) {
 
     ((UnkVtblObj*)self->mLayout)->vf14(0);
     CSLCur_update((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
-    CScrollBar_UpdateDispatch(self->mScrollbar);
+    reinterpret_cast<CScrollBar*>(self->mScrollbar)->UpdateDispatch();
     sysWinDispatchPhase(&self->mSysWin98);
     Cur_Update(&self->mCur40);
     sysWinDispatchPhase(&self->mSysWinD4);

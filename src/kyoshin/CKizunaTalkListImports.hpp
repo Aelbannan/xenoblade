@@ -17,20 +17,11 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void CScrollBar_loadLayoutArc(void*);
-extern "C" void CScrollBar_draw(void*, void*);
-extern "C" void CScrollBar_InitRootPane(void*, void*);
-extern "C" void CScrollBar_requestScrollIn(void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
-extern "C" void CScrollBar_UpdateDispatch(void*);
-extern "C" void CScrollBar_PlaceThumb(void*, u16);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void CScrollBar_Teardown(void*);
 extern "C" void deleteRegion(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
@@ -38,7 +29,7 @@ extern "C" void deleteRegion(UnkClass_8045F564* self);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
@@ -72,6 +63,5 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self);
 
 // Misc helpers used by the row-draw / visibility paths.
-extern "C" int CScrollBar_isVisible(void*);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 r4);

@@ -64,36 +64,42 @@ public:
 class CCur07 : public CBaseCur {
 public:
     CCur07(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur07();
     virtual void initLayout();
 };
 
 class CCur09 : public CBaseCur {
 public:
     CCur09(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur09();
     virtual void initLayout();
 };
 
 class CCur11 : public CBaseCur {
 public:
     CCur11(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur11();
     virtual void initLayout();
 };
 
 class CCur14 : public CBaseCur {
 public:
     CCur14(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur14();
     virtual void initLayout();
 };
 
 class CCur15 : public CBaseCur {
 public:
     CCur15(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur15();
     virtual void initLayout();
 };
 
 class CCur16 : public CBaseCur {
 public:
     CCur16(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CCur16();
     virtual void initLayout();
 };
 

@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
@@ -1558,7 +1559,7 @@ extern "C" __declspec(noinline) void ArtsTable_scrollUp(SArts322BC* self) {
         }
     }
     // Args evaluated right-to-left: cursor byte first, scrollbar second.
-    CScrollBar_PlaceThumb(self->field_0x28, self->field_0x21);
+    reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb(self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
@@ -1594,7 +1595,7 @@ extern "C" __declspec(noinline) void ArtsTable_scrollDown(SArts322BC* self) {
     // arg-2 register), scrollbar pointer second.
     u16 c = self->field_0x21;
     u8* sb = self->field_0x28;
-    CScrollBar_PlaceThumb(sb, c);
+    reinterpret_cast<CScrollBar*>(sb)->PlaceThumb(c);
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
@@ -1628,7 +1629,7 @@ extern "C" __declspec(noinline) void ArtsTable_pageUp(SArts322BC* self) {
     // arg-2 register), scrollbar pointer second.
     u16 c = self->field_0x21;
     u8* sb = self->field_0x28;
-    CScrollBar_PlaceThumb(sb, c);
+    reinterpret_cast<CScrollBar*>(sb)->PlaceThumb(c);
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
@@ -1658,7 +1659,7 @@ extern "C" __declspec(noinline) void ArtsTable_pageDown(SArts322BC* self) {
     // Sibling 80231F60: cursor byte first so the (s8) load births in r4.
     s8 page = self->field_0x21;
     u8* sb = self->field_0x28;
-    CScrollBar_PlaceThumb(sb, (u16)page);
+    reinterpret_cast<CScrollBar*>(sb)->PlaceThumb((u16)page);
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
@@ -1718,8 +1719,8 @@ extern "C" __declspec(noinline) void artsFillTable(SArts322BC* self, u8 arg) {
         row[8] = f7 != 0;
         row[9] = f6 != 0;
     }
-    CScrollBar_UpdateThumb(self->field_0x28, 5, self->field_0x12C);
-    CScrollBar_PlaceThumb(self->field_0x28, (u16)self->field_0x21);
+    reinterpret_cast<CScrollBar*>(self->field_0x28)->UpdateThumb(5, self->field_0x12C);
+    reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb((u16)self->field_0x21);
     artsRenderRow((SArts327B0*)self);
     ArtsTableCursor_refresh((SArts327B0*)self);
 }
@@ -1909,10 +1910,9 @@ extern "C" __declspec(noinline) int ArtsTable_isAtBottom(SArts322BC* self) {
 #pragma pop
 
 extern "C" __declspec(noinline) void ArtsTable_resetCursor(SArts327B0* self) {
-    extern void CScrollBar_PlaceThumb(void*, u32);
     self->field_0x20 = 0;
     self->field_0x21 = 0;
-    CScrollBar_PlaceThumb(self->field_0x28, 0);
+    reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb(0);
     ArtsTableCursor_refresh(self);
     artsRenderRow(self);
 }
@@ -1929,7 +1929,7 @@ extern "C" __declspec(noinline) void artsCursorFix(SArts322BC* self) {
         self->field_0x21 = 0;
         self->field_0x20 = count - (count > 0);
     }
-    CScrollBar_PlaceThumb(self->field_0x28, (u16)(s8)self->field_0x21);
+    reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb((u16)(s8)self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
@@ -2290,7 +2290,7 @@ __declspec(noinline) void CArtsList_startLoad(CArtsList* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->field_0x14 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)handle, lbl_eu_8050AC70 + 0x2ba, self, 0, 0);
-    CScrollBar_loadLayoutArc(&self->mScrollBar);
+    self->mScrollBar.loadLayoutArc();
     CArtsInfo_LoadFiles(&self->mSubObj74);
     ((SArtsWinE8*)&self->mSysWinE8)->v32();
 }
@@ -2305,7 +2305,7 @@ __declspec(noinline) void artsStepState(CArtsList* self) {
             case 6: CMenuArtsSet_returnFromInfo(self); break;
         }
         self->field_0x1C->v14(0);
-        CScrollBar_UpdateDispatch(&self->mScrollBar);
+        self->mScrollBar.UpdateDispatch();
         CArtsInfo_UpdateAnims(&self->mSubObj74);
         sysWinDispatchPhase(&self->mSysWinE8);
         ArtsLayoutPair_advance((SArts2FDF4*)&self->mSubObj124);
@@ -2325,7 +2325,7 @@ __declspec(noinline) void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo
     if (self->field_0x28 == 0) return;
     if (self->field_0x2C == 0) return;
     drawLayout((nw4r::lyt::Layout*)self->field_0x1C, info, 0, 1);
-    CScrollBar_draw(&self->mScrollBar, info);
+    self->mScrollBar.draw(info);
     u8 v = 0;
     if (CSysWin_getUnk34(&self->mSysWinE8) == 0) {
         if (self->mSubObj124.field_0x15 == 0) {
@@ -2366,13 +2366,13 @@ __declspec(noinline) void CMenuArtsSet_teardown(CArtsList* self) {
     releaseArcResourceAccessor(self->field_0x18);
     self->field_0x18 = 0;
     self->mMemRegion.deleteRegion();
-    CScrollBar_Teardown(&self->mScrollBar);
+    self->mScrollBar.Teardown();
     CArtsInfo_Cleanup(&self->mSubObj74);
     sysWinTermLayout(&self->mSysWinE8);
 }
 
 __declspec(noinline) u8 CArtsList_isReady(CArtsList* self) {
-    if (CScrollBar_isVisible(&self->mScrollBar) == 0) return 0;
+    if (self->mScrollBar.isVisible() == 0) return 0;
     if (CArtsInfo_GetFlag48(&self->mSubObj74) == 0) return 0;
     if (CSysWin_isReady(&self->mSysWinE8) != 0) {
         return self->field_0x30;
@@ -3101,8 +3101,8 @@ void CMenuArtsSet_completeLayoutIn(CArtsList* self) {
     vec[0] = lbl_eu_80668678;
     vec[1] = lbl_eu_8066867C;
     vec[2] = lbl_eu_8066864C;
-    CScrollBar_InitRootPane((u8*)&self->mScrollBar, vec);
-    CScrollBar_requestScrollIn((u8*)&self->mScrollBar);
+    reinterpret_cast<CScrollBar*>((u8*)&self->mScrollBar)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+    reinterpret_cast<CScrollBar*>((u8*)&self->mScrollBar)->requestScrollIn();
 }
 
 extern "C" __declspec(noinline) void CMenuArtsSet_enterInteract(CArtsList* self) {
@@ -3125,7 +3125,7 @@ __declspec(noinline) void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
         self->field_0x1C->v11(self->field_0x20, 1);
         self->field_0x2C = 5;
         ArtsSubCursor_setVisible((SArtsSub8022FA58*)&self->mSubObj148, 0);
-        CScrollBar_requestScrollOut(&self->mScrollBar);
+        self->mScrollBar.requestScrollOut();
     }
 }
 

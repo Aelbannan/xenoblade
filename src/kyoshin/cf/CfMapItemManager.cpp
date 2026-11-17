@@ -23,18 +23,11 @@ char lbl_eu_805033C0[0x78] =
     "posX\0posY\0posZ\0Radius\0snap\0popNum\0mapID\0popTime\0"
     "wtrType\0questID\0quest_STFLG\0gimmickID\0S_FLG_MIN\0S_FLG_MAX\0e_repoptime";
 
-// Forward decls: 80503334 lives in another TU; 805316E8 is the .data RTTI
+// Forward decl: 805316E8 is the .data RTTI
 // descriptor owned below (referenced by the .sdata table that follows).
-extern char lbl_eu_80503334[];
 extern const void* lbl_eu_805316E8[4];
 
-// .sdata 0x30: RTTI pair, key strings, scratch keys, RTTI pairs.
-__declspec(section ".sdata") __attribute__((used))
-const void* __RTTI__Q22cf8CREvtObj[2] = { lbl_eu_80503334, 0 };
-__declspec(section ".sdata") __attribute__((used))
-char lbl_eu_80662418[4] = "ref";
-__declspec(section ".sdata") __attribute__((used))
-char lbl_eu_8066241C[4] = "ref";
+// .sdata 0x20: scratch keys, RTTI pairs.
 __declspec(section ".sdata") __attribute__((used))
 char lbl_eu_80662420[8] = "itm?ID";
 __declspec(section ".sdata") __attribute__((used))
@@ -60,8 +53,6 @@ void MapItemIsEventActive();
 void rollItemLottery();
 void getMapItemTable();
 }
-__declspec(section ".data") __attribute__((used))
-const void* lbl_eu_805316C0[4] = { __RTTI__Q22cf8CREvtObj, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_805316D0[6] = {
     __RTTI__Q22cf18CfValueItemManager, 0,

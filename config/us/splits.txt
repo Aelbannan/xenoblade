@@ -1054,14 +1054,14 @@ kyoshin/cf/object/CfObjectActor.cpp:
 	extabindex  start:0x80029464 end:0x8002950C
 	.text       start:0x80171264 end:0x801739E0
 
-	.data        start:0x80531090 end:0x8053109C
+	.data        start:0x80531090 end:0x80531670
 	.sdata2     start:0x80667738 end:0x80667770
 kyoshin/realtimeevt/CREvtModel.cpp:
 	extab       start:0x8000E2D4 end:0x8000E370
 	extabindex  start:0x8002950C end:0x80029590
 	.text       start:0x801739E0 end:0x801745B0
 
-	.data        start:0x8053109c end:0x805316c0
+	.data        start:0x80531670 end:0x805316d0
 	.rodata        start:0x80503300 end:0x80503390
 	.sdata        start:0x806623F0 end:0x80662420
 	.sdata2     start:0x80667770 end:0x80667780
@@ -1070,7 +1070,7 @@ kyoshin/cf/CfMapItemManager.cpp:
 	extabindex  start:0x80029590 end:0x80029668
 	.text       start:0x801745B0 end:0x80176660
 
-	.data        start:0x805316c0 end:0x80531730
+	.data        start:0x805316d0 end:0x80531730
 	.rodata        start:0x80503390 end:0x80503438
 	.sdata        start:0x80662420 end:0x80662440
 	.sdata2        start:0x80667780 end:0x806677E0
@@ -1107,7 +1107,7 @@ kyoshin/realtimeevt/CREvtModelMap.cpp:
 	extabindex  start:0x800298F0 end:0x80029974
 	.text       start:0x80181DB4 end:0x80182E64
 
-	.data        start:0x80531d20 end:0x80531e50
+	.data        start:0x80531d20 end:0x80531e64
 	.rodata        start:0x80503718 end:0x80503748
 	.sbss        start:0x806642b0 end:0x806642b8
 	.sdata        start:0x80662458 end:0x80662460
@@ -1117,7 +1117,7 @@ kyoshin/realtimeevt/CREvtModelObj.cpp:
 	extabindex  start:0x80029974 end:0x80029A10
 	.text       start:0x80182E64 end:0x80184B40
 
-	.data        start:0x80531e50 end:0x80532084
+	.data        start:0x80531e64 end:0x805320b4
 	.rodata        start:0x80503748 end:0x805037a8
 	.sbss        start:0x806642b8 end:0x806642c8
 	.sdata        start:0x80662460 end:0x80662468
@@ -1127,7 +1127,7 @@ kyoshin/realtimeevt/CREvtModelPc.cpp:
 	extabindex  start:0x80029A10 end:0x80029AA0
 	.text       start:0x80184B40 end:0x80185F54
 
-	.data        start:0x80532084 end:0x805322c0
+	.data        start:0x805320b4 end:0x805322d8
 	.rodata        start:0x805037a8 end:0x805037f0
 	.sdata        start:0x80662468 end:0x80662470
 	.sdata2        start:0x80667918 end:0x80667928
@@ -1136,7 +1136,7 @@ kyoshin/realtimeevt/CREvtEffect.cpp:
 	extabindex  start:0x80029AA0 end:0x80029B0C
 	.text       start:0x80185F54 end:0x80186B18
 
-	.data        start:0x805322c0 end:0x80532320
+	.data        start:0x805322d8 end:0x80532320
 	.rodata        start:0x805037f0 end:0x80503818
 	.sdata        start:0x80662470 end:0x80662488
 	.sdata2        start:0x80667928 end:0x80667968
@@ -1550,7 +1550,7 @@ kyoshin/CScrollBar.cpp:
 	.text       start:0x801F50CC end:0x801F589C
 
 	.data        start:0x80534da8 end:0x80534e70
-	.rodata        start:0x80507998 end:0x80507b3c
+	.rodata        start:0x80507998 end:0x80507aa0
 	.sdata        start:0x806626f8 end:0x80662700
 	.sdata2        start:0x80668138 end:0x80668158
 kyoshin/code_801F3BE0.cpp:
@@ -1566,6 +1566,7 @@ kyoshin/cf/CfGimmickObject.cpp:
 	.text       start:0x801F6C24 end:0x801FA970
 
 	.data        start:0x80534e70 end:0x80534f70
+	.rodata        start:0x80507aa0 end:0x80507b3c
 	.sdata2     start:0x80668168 end:0x806681d0
 kyoshin/cf/object/CfObjectTbox.cpp:
 	extab       start:0x80012498 end:0x800124D8

@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CSortMenu.hpp"
 #include <monolib/work/CEventFile.hpp>  // CEventFile (OnFileEvent param)
 
 // CEquipItemBox vtable (lbl_eu_80538658)
@@ -170,8 +171,7 @@ struct CEquipItemBox {
     u8 pagecur[0x18];   // 0x5C..0x73 (CEIBPageCur region)
     CCur18 ccur18;      // 0x74..0x8B
 
-    // +0x8C: CSortMenu (0xF0 bytes)
-    u8 _padSortMenu[0xF0];
+    CSortMenu mSortMenu;    // 0x8C..0x17B
 
     // +0x17C: CSysWin (0x3C bytes)
     u8 _padSysWin1[0x3C];
@@ -505,7 +505,6 @@ struct CEquipItemBoxEnumList {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, int);
-extern "C" u32 sortMenuIsScrollbarVisible(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void BuildSlotItemLists(void*);
 extern "C" u8 GetCollectedFlagByte(u32);
@@ -557,7 +556,6 @@ extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void sortMenuTermCleanup(void*);
 extern "C" void sysWinTermLayout(void*);
 extern "C" u16 BdatGetItemId(u32);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
@@ -580,9 +578,6 @@ void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" int sortMenuIsVisible28(void*);
-extern "C" int sortMenuGetFlag2B(void*);
-extern "C" void sortMenuPageDownStep(void*);
 extern "C" void setPaneVisible(void*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching eibHandleSubPage's reloc site).
@@ -644,29 +639,13 @@ extern "C" void sortEIBByVf90(CEquipItemGrid* grid);
 extern "C" void* getEIBItemObj(CEquipItemGrid* grid, u16 idx);
 extern "C" char* fmtEIBItemName(CEquipItemGrid* grid, u32 param);
 extern "C" void dispatchEIBKind(CEquipItemBox* self, int a, int b);
-extern "C" void sortMenuOpenInit(void*);
-extern "C" void sortMenuScrollUp(void*);
-extern "C" void sortMenuToState4Page(void*);
-extern "C" void sortMenuSetLayoutPos(void*, const nw4r::math::VEC3*);
-extern "C" void sortMenuFormatPaneText(void*, void*);
-extern "C" void sortMenuSetPage(void*, u8);
-// Sort-menu page-list helpers (CSortMenu TU, retail plain names).
-// sortMenuValueToPage(menu, page, &outCount, &outRemain): writes CItemBlock_getFlag120EC(page)
-// (clamped to >= 4) into outCount and (0 or count-4) into outRemain.
-extern "C" void sortMenuValueToPage(void*, u8, u8*, u8*);
-extern "C" void sortMenuResetCount(void*);
-extern "C" void func_801D3518(void*, void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
-extern "C" void sortMenuInitFileRead(void*);
 extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void Cur_Update(void*);
-extern "C" void sortMenuDispatchState(void*);
 extern "C" void sysWinDispatchPhase(void*);
 // Sub-window / cursor / sort-menu draw helpers (retail plain names).
-extern "C" void sortMenuDraw(void*, nw4r::lyt::DrawInfo*);
 extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_DrawLayout(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
@@ -714,18 +693,12 @@ extern "C" u32 getEIBItemKind(CEquipItemGrid* grid, u16 idx);
 extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-// Sort-menu commit helpers + name-table pointer globals (handleEIBConfirm).
-extern "C" int sortMenuGetPageSum(void*);
-extern "C" u8 sortMenuGetPageIdx(void*);
-extern "C" u8 sortMenuGetSubPageIdx(void*);
+// Name-table pointer globals (handleEIBConfirm).
 extern "C" void incrementEventCounter(u32);
 extern u32 lbl_eu_80668B3C;
 extern u16 lbl_eu_80668B40;
 // 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
 extern u8 lbl_eu_8050EF84;
-// Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
-extern "C" void sortMenuScrollDown(void*);
-extern "C" void sortMenuPageUpStep(void*);
 // SysWin sub-window text setters used by handleEIBNamePane's name-pane confirm.
 extern "C" void sysWinSwitchKindPane(void*, u32);
 extern "C" void sysWinSetKindContent(void*, void*, u32);
@@ -817,34 +790,15 @@ extern "C" u32 BdatGetItemType(u32);
 // Sub-object destructors invoked by ~CEquipItemBox (retail C-ABI names; the
 // member-class dtors live in their own TUs as extern "C" free functions).
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void* __dt__80285C44(void*, int);
 
 // Constructor imports (retail C-ABI names; the member ctors live in their
 // own TUs as extern "C" free functions).
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void InfoCfCopySysWin(void* dst, void* src);
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
 extern "C" void ItemBlockSetDefaultFlags();
 
-/* Partial-copy views used by the ctor: the member CSortMenu is populated
-   from a destroyed stack temp one sub-object at a time (the first 0x10 bytes
-   after the vtable go through the __as__17UnkClass_8045F564FRC17UnkClass_8045F564 copy ctor; the
-   rest are scalar-copied; the vtable word is never copied). */
-struct CEquipItemBoxSortMenuBlock {
-    void* vtable;               // 0x00 (never copied)
-    u8 field_04[0x10];          // 0x04 UnkClass_8011C974 sub-object
-    u32 field_14;               // 0x14
-    u32 field_18;               // 0x18
-    u32 field_1C;               // 0x1C
-    u32 field_20;               // 0x20
-    u32 field_24;               // 0x24
-    u8 field_28;                // 0x28
-    u8 field_29;                // 0x29
-    u8 field_2A;                // 0x2A
-    u8 field_2B;                // 0x2B
-};

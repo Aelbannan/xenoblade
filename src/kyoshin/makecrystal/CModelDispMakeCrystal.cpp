@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/CTaskGameApi.hpp"
@@ -145,25 +146,20 @@ float scaleByGlobal(float val);
 void initCrystalData(unsigned char* p);
 int CSysWin_isActive(void* self);
 int CSysWin_isReady(void* self);
-int CScrollBar_isVisible(void* self);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 int isMCGetItemBoxActive(void* self);
 int crystalListGetDataFlag(void* self);
 void crystalListState3To4(void* self);
-void CScrollBar_requestScrollOut(void* self);
 void crystalListDrawIfActive(void*, void*);
 void crystalListDispatch(void* self);
 void CrySupTickAnim(void* self);
 void CrySupUnloadLayout(void* self);
 void CrySupDrawLayout(void*, void*);
 void Cur_DrawLayout(void*, void*);
-void CScrollBar_draw(void*, void*);
 void drawMCGetItemBox(void*, void*);
 void sysWinDrawLayout(void*, void*);
 void updateMCGetItemBox(void* self);
 void Cur_Update(void* self);
-void CScrollBar_UpdateDispatch(void* self);
-void CScrollBar_Teardown(void* self);
 void sysWinDispatchPhase(void* self);
 void Cur_SetVisible(void*, u8);
 void sysWinGetPaneScreenPos(void* out, void* csyswin, u8);
@@ -217,7 +213,6 @@ void sysWinSetTwoTextValues(void*, void*, void*);
 void sysWinApplyKind(void*, int);
 void sysWinOpenPhase1(void*);
 void sysWinAdvancePhase3(void*);
-void CScrollBar_loadLayoutArc(void*);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 int isFinished__FPv(void*);
@@ -298,9 +293,6 @@ void setNumber__11CMCEffUpPrmFUlUc(CMCEffUpPrm*, u32, u16);
 void loadMCGetItemBoxFiles(void*);
 void* Scn_FindCamItem(void*, int);
 void ScnCamPointAt(void*, void*, void*);
-void CScrollBar_InitRootPane(void*, void*);
-void CScrollBar_UpdateThumb(void*, u8, u8);
-void CScrollBar_requestScrollIn(void*);
 s32 getInstance__Q22ml6MTRandFv();
 s32 rand31__Q22ml6MTRandFv();
 u16 LookupRelateValue(u8, u8);
@@ -927,7 +919,7 @@ void MakeCrystal_InitFiles(CModelDispMakeCrystal* self)
         readFile__11CDeviceFileFUlPCcP10IWorkEventii(
             getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805090FC[0x25], self, 0, 0);
     crystalListLoadFiles(base + 0xc18);
-    CScrollBar_loadLayoutArc(base + 0xe38);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->loadLayoutArc();
     reinterpret_cast<CSysWin*>(base + 0xe78)->loadSystemArc();
     base[0xbe9] = 0;
     base[0xbdd] = 0;
@@ -970,7 +962,7 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     reinterpret_cast<CMCEffStart*>(base + 0xde4)->update();
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->update();
     Cur_Update(base + 0xe20);
-    CScrollBar_UpdateDispatch(base + 0xe38);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateDispatch();
     sysWinDispatchPhase(base + 0xe78);
     Cur_Update(base + 0xeb4);
     updateMCGetItemBox(base + 0xecc);
@@ -1010,7 +1002,7 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     draw(reinterpret_cast<CMCEffStart*>(base + 0xde4), drawInfo);
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->draw(drawInfo);
     Cur_DrawLayout(base + 0xe20, drawInfo);
-    CScrollBar_draw(base + 0xe38, drawInfo);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->draw(drawInfo);
     drawMCGetItemBox(base + 0xecc, drawInfo);
     sysWinDrawLayout(base + 0xe78, drawInfo);
     Cur_DrawLayout(base + 0xeb4, drawInfo);
@@ -1031,7 +1023,7 @@ int MakeCrystal_CheckReady(CModelDispMakeCrystal* self)
     if (base[0xbe9] == 0) return 0;
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
     if (crystalListGetDataFlag(base + 0xc18) == 0) return 0;
-    if (CScrollBar_isVisible(base + 0xe38) == 0) return 0;
+    if (reinterpret_cast<CScrollBar*>(base + 0xe38)->isVisible() == 0) return 0;
     if (CSysWin_isReady(base + 0xe78) == 0) return 0;
     return isMCGetItemBoxActive(base + 0xecc);
 }
@@ -1062,9 +1054,9 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     v.x = lbl_eu_806684C4;
     v.y = lbl_eu_806684C8;
     v.z = lbl_eu_806684A4;
-    CScrollBar_InitRootPane(base + 0xe38, &v);
-    CScrollBar_UpdateThumb(base + 0xe38, 8, entries[0]);
-    CScrollBar_requestScrollIn(base + 0xe38);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(&v));
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateThumb(8, entries[0]);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->requestScrollIn();
     MakeCrystal_ResetSlotList(reinterpret_cast<CModelDispMakeCrystal*>(base), 0);
     u8 bbc = base[0xbbc];
     GetCollectedFlagByte(base[0x5f0]);
@@ -1852,7 +1844,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             crystalListAlignSlot(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            reinterpret_cast<CScrollBar*>(base + 0xe38)->PlaceThumb((u16)(s8)base[0x2dc2]);
             playUISound(1);
         }
     } else if (bDir) {
@@ -1884,7 +1876,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             crystalListAlignSlot(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            reinterpret_cast<CScrollBar*>(base + 0xe38)->PlaceThumb((u16)(s8)base[0x2dc2]);
             playUISound(1);
         }
     } else if (bConfirm) {
@@ -1909,7 +1901,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             crystalListAlignSlot(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            reinterpret_cast<CScrollBar*>(base + 0xe38)->PlaceThumb((u16)(s8)base[0x2dc2]);
             playUISound(1);
         }
     } else if (bMenu) {
@@ -1936,7 +1928,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             crystalListAlignSlot(local, base + 0xc18, base[0x2dc1]);
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
-            CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
+            reinterpret_cast<CScrollBar*>(base + 0xe38)->PlaceThumb((u16)(s8)base[0x2dc2]);
             playUISound(1);
         }
     } else if (trigger3) {
@@ -2061,8 +2053,8 @@ void __declspec(noinline) MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* se
     crystalListAlignSlot(buf, (u8*)self + 0xc18, 0);
     reinterpret_cast<CBaseCur*>((u8*)self + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
     MakeCrystal_ResetSlotList(self, 1);
-    CScrollBar_UpdateThumb((u8*)self + 0xe38, 8, entries[0]);
-    CScrollBar_PlaceThumb((u8*)self + 0xe38, (u16)(s8)((u8*)self)[0x2dc2]);
+    reinterpret_cast<CScrollBar*>((u8*)self + 0xe38)->UpdateThumb(8, entries[0]);
+    reinterpret_cast<CScrollBar*>((u8*)self + 0xe38)->PlaceThumb((u16)(s8)((u8*)self)[0x2dc2]);
     playUISound(0xb1);
     if (entries[0] != 0 &&
         reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel() != 0) {
@@ -2197,7 +2189,7 @@ void __declspec(noinline) MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* se
         if (crystalListIsActive(base + 0xc18)) {
             base[0xbdd] = 0x16;
             crystalListState3To4(base + 0xc18);
-            CScrollBar_requestScrollOut(base + 0xe38);
+            reinterpret_cast<CScrollBar*>(base + 0xe38)->requestScrollOut();
             Cur_SetVisible(base + 0xe20, 0);
         }
     }
@@ -3073,7 +3065,7 @@ void MakeCrystal_AppendItemSteps(void* selfp)
     MakeCrystal_ClearSlotParam(entries, 0);
     func_8021E888(entries);
     MakeCrystal_ResetSlotList(reinterpret_cast<CModelDispMakeCrystal*>(selfp), 0);
-    CScrollBar_UpdateThumb(base + 0xe38, 8, entries[0]);
+    reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateThumb(8, entries[0]);
     crystalListResetAnim4Play(base + 0xc18);
 }
 
@@ -3142,7 +3134,7 @@ void MakeCrystal_TeardownUI(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCEffStart*>(base + 0xde4)->destroy();
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->destroy();
         reinterpret_cast<CBaseCur*>(base + 0xe20)->cleanup();
-        CScrollBar_Teardown(base + 0xe38);
+        reinterpret_cast<CScrollBar*>(base + 0xe38)->Teardown();
         base[0x2dd4] = 1;
     }
 }

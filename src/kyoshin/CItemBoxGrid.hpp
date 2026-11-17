@@ -219,16 +219,13 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
-extern "C" u32 BdatGetItemId(u32);
 // CfGameManager.hpp (included transitively) now declares the unified
 // pointer-arg form, matching every call site here directly - no cast needed.
-extern "C" u32 sortMenuIsVisible28(void*);
 extern "C" void CItemData_initFromFamily(void*, u32);
 extern "C" u32 GridSubMenu_IsOpenedFlag(void*);
 extern "C" void GridSubMenu_GetCursorPos(void*, void*);
 extern "C" void getPresentPaneWorldPos(void*, void*);
 extern "C" void ExWin_CopyPanePair(void*, void*, u8);
-extern "C" u32 sortMenuIsScrollbarVisible(void*);
 extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
 extern "C" u32 NumSel_GetField2D_B018(void*);
 extern "C" u32 CSysWin_isReady(void*);
@@ -245,18 +242,8 @@ extern "C" char* FormatCellItemName(void*, u16);
 extern "C" void MoveTabPage(void*, int);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" int getLanguage__9CDeviceSCFv();
-extern "C" u32 sortMenuGetFlag2B(void*);
-extern "C" void sortMenuFormatPaneText(void*, void*);
-extern "C" void sortMenuSetLayoutPos(void*, void*);
-extern "C" void sortMenuSetPage(void*, u8);
-extern "C" void sortMenuOpenInit(void*);
 extern "C" u32 formatItemBoxName(void*, u32);
 extern "C" void setItemCounts(void*, u32, u32);
-extern "C" void sortMenuScrollUp(void*);
-extern "C" void sortMenuScrollDown(void*);
-extern "C" void sortMenuPageUpStep(void*);
-extern "C" void sortMenuPageDownStep(void*);
-extern "C" void sortMenuToState4Page(void*);
 extern "C" u32 NumSel_GetField2E_B028(void*);
 extern "C" void NumSel_FormatPicName_B064(void*, u32);
 extern "C" void NumSel_SetCaptionNum_B04C(void*, u8);
@@ -293,11 +280,8 @@ extern "C" void renderItemBoxByKind(void*, u32, u32, u32);
 extern "C" u32 startItemBoxOpen(void*);
 extern "C" void setItemBoxResultPane(void*, u32);
 extern "C" void setPaneVisible(void*, u32);
-extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void copyVEC3(void*, const void*);
@@ -314,8 +298,6 @@ extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
-extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void PushUniqueItemId(void*, u32);
 extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" u32 LookupItemTypeTable(u32);
@@ -325,8 +307,6 @@ extern "C" u32 GridSubMenu_MoveSelectionPrev(void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
-extern "C" void SplitU32ToS16s(short*, unsigned long);
 extern "C" u32 GetCellKind(CItemBoxGridFull*, u16);
 extern "C" void* GetCellItemPtr(CItemBoxGridFull*, u16);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
@@ -359,25 +339,21 @@ extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, 
 extern "C" void renderItemBox(void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sortMenuDraw(void*, void*);
 extern "C" void GridSubMenu_DrawLayoutGated(void*, int);
 extern "C" void ExWin_DrawLayout(void*, int);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void drawPresentWin(void*, int);
 extern "C" void NumSel_DrawLayout_AF7C(void*, void*);
 extern "C" void Cur_Update(void*);
-extern "C" void sortMenuDispatchState(void*);
 extern "C" void updateItemBoxAnims(void*);
 extern "C" void NumSel_DispatchState_AED4(void*);
 extern "C" void GridSubMenu_Move(void*);
 extern "C" void ExWin_TickUpdate(void*);
 extern "C" void updatePresentWin(void*);
 extern "C" void sysWinDispatchPhase(void*);
-extern "C" void sortMenuInitFileRead(void*);
 extern "C" void loadItemBoxFiles(void*);
 extern "C" void NumSel_LoadArchive_AE8C(void*);
 extern "C" void ExWin_LoadFile(void*);
-extern "C" void sortMenuTermCleanup(void*);
 extern "C" void closeItemBox1(void*);
 extern "C" void NumSel_Teardown_AF9C(void*);
 extern "C" void GridSubMenu_TermLayout(void*);
@@ -398,9 +374,6 @@ extern "C" void openPresentWin(void*);
 extern "C" void showPresentRank(void*);
 extern "C" u32 getPresentRankA(void*);
 extern "C" u32 getPresentRankB(void*);
-extern "C" u32 sortMenuGetPageSum(void*);
-extern "C" u32 sortMenuGetPageIdx(void*);
-extern "C" u32 sortMenuGetSubPageIdx(void*);
 extern "C" void ExWin_RequestOpen(void*);
 extern "C" void ExWin_SetTwoTexts(void*, char*, u32);
 extern "C" void GridSubMenu_BeginOpenAnim(void*);
@@ -423,12 +396,9 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* getPackedFont__Fv(void);
-extern "C" void* CUICfManager_getPackedFont9C(void);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void BuildSlotItemLists(u32);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Pane-colour vector returned by value from PaneMatGetS16Quad/PaneMatGetS16QuadByName
 // (r3:r4 pair); same layout as CEquipItemBox.hpp's CEquipBoxFourShorts,
@@ -439,7 +409,6 @@ struct CEquipBoxFourShorts {
 extern "C" CEquipBoxFourShorts PaneMatGetS16QuadByName(void*, const char*, u32);  // returns 4x s16 colour by value (r3:r4 pair)
 extern "C" void CopyVec4s(void*, void*);
 extern "C" CBaseCur* __ct__CCur07(void*, void*);
-extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CItemBoxInfo(void*, int, int);
 extern "C" void __ct__CNumSelect(void*, int);
 extern "C" void __ct__CItemBoxGridSubMenu(void*);
@@ -463,7 +432,6 @@ extern "C" void __dt__12CExchangeWinFv(void*, int);
 extern "C" void __dt__19CItemBoxGridSubMenuFv(void*, int);
 extern "C" void __dt__10CNumSelectFv(void*, int);
 extern "C" void __dt__12CItemBoxInfoFv(void*, int);
-extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void MenuShopSellCopyData(void*, void*);
@@ -495,13 +463,9 @@ struct CItemBoxGridMoveObj {
     u16 field_3f28;
 };
 // ---- CItemBoxGrid ctor: mirror shapes of the sub-blocks copied by value out
-// of the CSortMenu/CItemBoxInfo/CNumSelect/CExchangeWin stack temporaries and
+// of the CItemBoxInfo/CNumSelect/CExchangeWin stack temporaries and
 // the 801C5514 sub-grid temp. Named scalars lower to individual moves while
 // array members lower to paired lwzu/stwu bdnz loops, matching retail.
-struct CibgSortBlk1 {  // CSortMenu temp +0x04, size 0x28
-    u32 a, b, c, d, e;
-    u8 f, g, h, i;
-};
 struct CibgWords16 {
     u32 w[16];
 };
@@ -509,13 +473,6 @@ struct CibgWords6 { u32 w[6]; };
 struct CibgWords3 { u32 w[3]; };
 struct CibgBytes64 { u8 b[0x40]; };
 struct CibgBytes32 { u8 b[0x20]; };
-struct CibgSortBlk2 {  // CSortMenu temp +0x30, size 0xAC (tail array loops)
-    u32 a, b, c, dd;
-    u8 e0, e1, e2, e3;
-    float f0, f1, f2, f3, f4;
-    u8 last;
-    CibgWords16 tail;
-};
 struct CibgThreeBytes {
     u8 a, b, c;
 };
@@ -587,18 +544,6 @@ struct CibgSkip4 {
 // Whole copied members: one struct assignment per temp region reproduces
 // retail's scheduling (copy-ctor bls, early loop-pointer setup, interleaved
 // scalar moves). Explicit pad fields mark the uncopied holes.
-struct CibgSortMember {   // p+0xec..0x1d3 <- CSortMenu temp +4
-    CibgUnk16 unk;
-    u32 a, b, c, dd, e;
-    u8 f, g, h, i;
-    CibgSkip4 pad28;
-    CibgUnk16 unk2;
-    u32 w0, w1, w2, w3;
-    u8 b0, b1, b2, b3;
-    float f0, f1, f2, f3, f4;
-    u8 last;
-    CibgWords16 tail;
-};
 struct CibgInfoMember {   // p+0x1dc.. <- CItemBoxInfo temp +4
     CibgUnk16 unk1;
     CibgUnk16 unk2;

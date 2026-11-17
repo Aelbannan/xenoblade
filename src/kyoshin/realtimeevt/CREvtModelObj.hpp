@@ -1,117 +1,82 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/realtimeevt/CREvtModel.hpp"
+#include "monolib/core/CSchedule.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/CEventFile.hpp"
 
-class CREvtModel;
-struct ParentTask;
-struct EvtRefOwner;
+namespace cf {
 
-// Primary vtable layout for CREvtModelObj (retail lbl_eu_80531FA0).
-// Entry 15 (0x3C) is dispatched virtually by the reset path.
-struct CREvtModelObjVtbl {
-    void* entries[15];              // 0x00-0x38
-    void (*func3C)(void* self);     // 0x3C
-};
-extern CREvtModelObjVtbl lbl_eu_80531FA0[];
-
-// Owner of a loaded-resource reference counted at 0x48/0x4C.
-struct EvtRefOwner {
-    u8 _pad00[0x48];
-    u32 mFlag48;   // 0x48
-    u32 mRefCount; // 0x4C
+// Event data block at CREvtModel::mPtr1C as seen by the object model.
+struct CREvtModelObjData {
+    /* 0x00 */ u8 _pad00[0x10];
+    /* 0x10 */ char mName[0x10];      // model name (appended to "/chr/jp/np/")
+    /* 0x20 */ u32 mResId;            // packed resource token
+    /* 0x24 */ u8 _pad24[0x28 - 0x24];
+    /* 0x28 */ u32 mKind;             // 2..6: model category
+    /* 0x2C */ u8 _pad2C[0x30 - 0x2C];
+    /* 0x30 */ u32 mField30;          // 0xFFFF0000-range: standalone mode
+    /* 0x34 */ u8 _pad34[0x48 - 0x34];
+    /* 0x48 */ char mSuffix[0x10];    // event-name suffix key
+    /* 0x58 */ u32 mFlags;
+    /* 0x5C */ struct { s16 mStart; s16 mPeer; } mSlots[4];
 };
 
-// CREvtModelObj class layout (manual field layout)
-// Inherits: CREvtModel (at 0x00), IWorkEvent (at 0x38), UnknownInterface (at 0x3C)
-struct CREvtModelObj {
-    // 0x00: CREvtModel base
-    void* vtable;          // 0x00
-    u32 mType;             // 0x04
-    u32 mCallback[3];      // 0x08: __ptmf triplet
-    u32 mField14;          // 0x14
-    u32 mFlags;            // 0x18
-    ParentTask* mParent;   // 0x1C
-    void* mModel;          // 0x20
-    void* mData24;         // 0x24
-    u8 _pad28[0x38 - 0x28];
-    // 0x38: IWorkEvent vtable ptr - kept void*
-    void* mIWorkVtbl;
-    // 0x3C: other interface vtable ptr - kept void*
-    void* mOtherVtbl;
-    // 0x40: CFileHandle* - current file load handle
-    CFileHandle* mFileHandle;
-    // 0x44: u32 - file load state (0=none, 1=allocating, 2=archive read, 3=file read)
-    u32 mFileState;
-    // 0x48: u8* - allocated data
-    u8* mAllocData;
-    // 0x4C: s32 (signed: retail emits bc 4,1 "<= 0 continue" for this check)
-    s32 mField4C;
-    // 0x50: u32 - model type (1=arc, 2=chr, 3=?)
-    u32 mModelType;
-    // 0x54: owner holding a refcount on our resource
-    EvtRefOwner* mRefOwner;
-    // 0x58: s32 - file id (-1 = none)
-    s32 mFileId;
-    // 0x5C: u32 - resource id
-    u32 mResId5C;
-    // 0x60: u32 - resource id
-    u32 mResId60;
-    // 0x64: u8 - flag
-    u8 mFlag64;
-    u8 _pad65[3];
-    // 0x68: u8* - extracted data pointer
-    u8* mExtractData;
-    // 0x6C: CFileHandle* - secondary file handle
-    CFileHandle* mFileHandle2;
-    // 0x70: u8* - allocated data
-    u8* mAllocData2;
-    // 0x74: s32 - id (-1 = none)
-    s32 mField74;
-    // 0x78: u8* - allocated data
-    u8* mAllocData3;
-    // 0x7C: CFileHandle* - event file handle
-    CFileHandle* mFileHandle3;
-    // 0x80: u32 - ref count
-    u32 mCount80;
-    // 0x84: u32 - state
-    u32 mState84;
+// cf::CREvtModelObj - realtime-event object model (kind 3, 0x88 bytes).
+// Bases (retail vtable 0x80531FA0 + RTTI base list): public cf::CREvtModel
+// at 0x00, private IWorkEvent at 0x38, private CScheduleChild at 0x3C (the
+// object registers itself with schedAttachChildSlot). OnFileEvent and
+// OnScheduleDelete override secondary-base slots only, so MWCC appends their
+// direct entries after the secondary vtables.
+class CREvtModelObj : public CREvtModel, IWorkEvent, CScheduleChild {
+public:
+    CREvtModelObj(void* pData);
+    virtual ~CREvtModelObj();
+    virtual int vfunc_10();          // waiting in stepProbe / stepUpdate
+    virtual int vfunc_14();          // flags 0x1 and 0x40 both set
+    virtual bool isBusy();           // walk slot reached while loading
+    virtual int vfunc_20();          // returns 1
+    virtual void vfunc_24();         // clears flag 0x20
+    virtual void setEventData(void* pData, void* pModelData);
+    virtual int reset();
+    virtual void releaseAnims();
+    virtual bool OnFileEvent(CEventFile* pEvent);
+    virtual void OnScheduleDelete(CSchedule* pSchedule);
 
-    int EvtObj_CheckWalkEvt();
-    int EvtObj_CheckFlags140();
-    void func_801835C4();
-    bool EvtObj_AlwaysTrue();
+    // mCallback states (non-virtual, installed as ptmf constants)
+    void stepProbe();
+    void stepLoad();
+    void stepSetup();
+    void stepNone();
+    void stepUpdate();
+    void scanPlayers();
+
+    CREvtModelObjData* evtData() { return static_cast<CREvtModelObjData*>(mPtr1C); }
+
+    // IWorkEvent at 0x38, CScheduleChild at 0x3C
+    /* 0x40 */ CFileHandle* mFileHandle;
+    /* 0x44 */ s32 mFileState;       // 0 none, 1 evt mem, 2 heap node, 3 file read
+    /* 0x48 */ u8* mAllocData;
+    /* 0x4C */ s32 mRefCount;        // users borrowing mAllocData
+    /* 0x50 */ u32 mModelType;       // 1 arc, 2 chr, 3 ?
+    /* 0x54 */ CREvtModelObj* mRefOwner; // model whose mAllocData we borrow
+    /* 0x58 */ s32 mFileId;          // -1 = none
+    /* 0x5C */ u32 mResId5C;
+    /* 0x60 */ u32 mResId60;
+    /* 0x64 */ u8 mFlag64;
+    /* 0x68 */ u8* mExtractData;
+    /* 0x6C */ CFileHandle* mFileHandle2;
+    /* 0x70 */ u8* mAllocData2;
+    /* 0x74 */ s32 mField74;
+    /* 0x78 */ void* mAllocData3;
+    /* 0x7C */ CSchedule* mSchedule;  // cleared by OnScheduleDelete
+    /* 0x80 */ u32 mCount80;
+    /* 0x84 */ s32 mState84;
 };
 
-// Parent task object (referenced at offset 0x1C in CREvtModel)
-struct ParentTask {
-    u8 _pad00[0x28];
-    u32 mField28; // 0x28
-    u8 _pad2C[0x30 - 0x2C];
-    u32 mField30; // 0x30
-    u8 _pad34[0x48 - 0x34];
-    u8* mField48; // 0x48
-    s32 mField4C; // 0x4C (signed: retail compares > 0 with bng/bc 4,1)
-    u8 _pad50[0x58 - 0x50];
-    u32 mField58; // 0x58
-    u8 _pad5C[0x5C - 0x58];
-    s16 mField5C; // 0x5C
-    s16 mField5E; // 0x5E
-    u32 mField60; // 0x60
-};
+} // namespace cf
 
-// __ptmf structure (12 bytes); code/vtable anchors kept void*.
-struct Ptmf {
-    void* mFunc; // 0x00
-    void* mThisAdj; // 0x04
-    void* mVtblAdj; // 0x08
-};
-
-// CEventFile structure (from monolib)
-// Already defined in CEventFile.hpp, but we need the fields
-// 0x00: BOOL unk0
-// 0x04: CFileHandle* mFileHandle
-// 0x14: u32 field_14
+using cf::CREvtModelObj;

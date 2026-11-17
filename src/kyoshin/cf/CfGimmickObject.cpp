@@ -44,30 +44,12 @@ int GimObjDriveStepActivation(cf::CfGimmickObject* self);
 int GimObjTickCountdownSteps(cf::CfGimmickObject* self);
 int GimObjTickSpawnSteps(cf::CfGimmickObject* self);
 int GimObjRefreshStepState(cf::CfGimmickObject* self);
-// Shared column-name strings owned by other TUs (targets of the pointer
-// tables below).
-extern char lbl_eu_80507AA0[];
-extern char lbl_eu_80507AB0[];
-extern char lbl_eu_80507AC0[];
-extern char lbl_eu_80507AD0[];
-extern char lbl_eu_80507AE0[];
-extern char lbl_eu_80507AEC[];
-extern char lbl_eu_80507AFC[];
-extern char lbl_eu_80507B0C[];
-extern char lbl_eu_80507B18[];
-extern char lbl_eu_80507B24[];
-extern char lbl_eu_80507B30[];
-extern char lbl_eu_80668168[];
-extern char lbl_eu_80668170[];
-extern char lbl_eu_80668178[];
-extern char lbl_eu_80668180[];
-extern char lbl_eu_80668188[];
-extern char lbl_eu_80668190[];
-extern char lbl_eu_80668198[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/scn/code_804BC9EC.hpp"
 
-// .data 0xD8: PMF dispatch tables and column-name pointer tables. They
+// .data 0xD8: PMF dispatch tables and column-name pointer tables (the
+// column names are unpooled literals: long ones in .rodata 80507AA0-80507B3C,
+// those of 8 bytes or fewer in .sdata2; the loader patches their digit). They
 // come before the code so MWCC's compiler-generated GimObjDispatchStateRefresh dispatch
 // table lands after them at 0xD8, exactly like retail (zeros + section
 // relocs in the .o). Every object sits on an aligned offset.
@@ -91,14 +73,14 @@ CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
 };
 __declspec(section ".data") __attribute__((used))
 const char* lbl_eu_80534F00[8] = {
-    lbl_eu_80507AA0, lbl_eu_80507AB0, lbl_eu_80507AC0, lbl_eu_80507AD0,
-    lbl_eu_80507AE0, lbl_eu_80507AEC, lbl_eu_80668168, lbl_eu_80507AFC,
+    "r1_quest_FLG", "r1_quest_STFLG", "r1_S_FLG_MIN", "r1_S_FLG_MAX",
+    "r1_gimID", "r1_named_FLG", "r1_item", "r1_item_lost",
 };
 __declspec(section ".data") __attribute__((used))
 char* lbl_eu_80534F20[10] = {
-    lbl_eu_80507B0C, lbl_eu_80668170, lbl_eu_80668178, lbl_eu_80507B18,
-    lbl_eu_80507B24, lbl_eu_80668180, lbl_eu_80668188, lbl_eu_80668190,
-    lbl_eu_80668198, lbl_eu_80507B30,
+    "s1pcwait", "s1camID", "s1ACT", "s1LODtype",
+    "s1LODsub", "s1EF", "s1EFATR", "s1SE",
+    "s1SEATR", "s1LODSTOP",
 };
 
 

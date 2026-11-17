@@ -4,6 +4,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 extern "C" {
     void closeFileHandle__FPP11CFileHandle(void*);
@@ -19,8 +20,11 @@ extern "C" {
 #include "kyoshin/code_80135FDC.hpp"
 #undef lbl_eu_80526324
 #include "monolib/work/CEventFile.hpp"
+#include "monolib/device.hpp"
+#include "monolib/util/MemManager.hpp"
 
 #include <stdio.h>
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 int CQstLogList::IsSortEnabled() { return mSortEnabled; }
 
@@ -28,25 +32,22 @@ int CQstLogList::IsSortEnabled() { return mSortEnabled; }
 // Struct assignment reproduces retail exactly (MWCC emits the counted loop
 // with lwzu/stwu update addressing); optimize_for_size suppresses the
 // -O4,p unroll (MWCC_CASES line 226).
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
     *pDst = *pSrc;
     return pDst;
 }
-#pragma pop
 
 
 int CQstLogList::IsSortDescending() { return mSortDescending; }
 
 // Returns the quest-list's own "layout loaded" byte only when the scroll bar
-// AND the sort menu are both visible (mirrors CSortMenu::sortMenuIsScrollbarVisible's
+// AND the sort menu are both visible (mirrors CSortMenu::IsReady's
 // scrollbar-gate pattern).
 int CQstLogList::ScrollFlag() {
-    if (CScrollBar_isVisible(&mScrollBar) == 0) {
+    if (mScrollBar.isVisible() == 0) {
         return 0;
     }
-    if (sortMenuIsScrollbarVisible(&mSortMenuData) != 0) {
+    if (mSortMenu.IsReady() != 0) {
         return field_0x178;
     }
     return 0;
@@ -59,7 +60,7 @@ int CQstLogList::ScrollFlag() {
 // (lbl_eu_8066472C).
 void CQstLogList::ScrollDown() {
     if (mSortDescending != 0) {
-        sortMenuScrollDown(&mSortMenuData);
+        mSortMenu.CursorDown();
         MoveCursor();
     } else {
         if (lbl_eu_8066472C >= 10) {
@@ -84,7 +85,7 @@ void CQstLogList::ScrollDown() {
         }
         RefreshRows();
         MoveCursor();
-        CScrollBar_PlaceThumb(&mScrollBar, (u16)field_0x17E);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
     }
     playUISound(1);
 }
@@ -93,7 +94,7 @@ void CQstLogList::ScrollDown() {
 // otherwise step the scroll position (field_0x17E) back by a page of 10.
 void CQstLogList::PageUp() {
     if (mSortDescending != 0) {
-        sortMenuPageUpStep(&mSortMenuData);
+        mSortMenu.PageUp();
         MoveCursor();
     } else {
         if (lbl_eu_8066472C >= 10) {
@@ -112,7 +113,7 @@ void CQstLogList::PageUp() {
         }
         RefreshRows();
         MoveCursor();
-        CScrollBar_PlaceThumb(&mScrollBar, (u16)field_0x17E);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
     }
     playUISound(1);
 }
@@ -121,7 +122,7 @@ void CQstLogList::PageUp() {
 // options; otherwise step the scroll position forward by a page of 10.
 void CQstLogList::PageDown() {
     if (mSortDescending != 0) {
-        sortMenuPageDownStep(&mSortMenuData);
+        mSortMenu.PageDown();
         MoveCursor();
     } else {
         if (lbl_eu_8066472C >= 10) {
@@ -144,7 +145,7 @@ void CQstLogList::PageDown() {
         }
         RefreshRows();
         MoveCursor();
-        CScrollBar_PlaceThumb(&mScrollBar, (u16)field_0x17E);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
     }
     playUISound(1);
 }
@@ -153,16 +154,13 @@ void CQstLogList::PageDown() {
 // Quest-log sort toggle. With the sort menu active, closing the menu (current
 // direction descending) resets the direction and rebuilds; otherwise the
 // sort-menu cursor is positioned under the list and the direction is enabled.
-// pragma optimize_for_size: retail saves r28-r31 via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 void CQstLogList::ToggleSort() {
-    if (sortMenuGetFlag2B(&mSortMenuData) == 0) {
+    if (mSortMenu.IsIdle() == 0) {
         return;
     }
     if (mSortDescending != 0) {
         Cur_SetVisible(&mCur18, 1);
-        sortMenuToState4Page(&mSortMenuData);
+        mSortMenu.Close();
         mSortDescending = 0;
         RefreshHeader();
         MoveCursor();
@@ -178,27 +176,23 @@ void CQstLogList::ToggleSort() {
         nw4r::lyt::Pane* root = mpLayout->GetRootPane();
         ScalePaneWorldPos(&pos, root->FindPaneByName(&s[0x2a], true),
                       root->FindPaneByName(&s[0x33], true), root);
-        sortMenuSetLayoutPos(&mSortMenuData, &pos);
+        mSortMenu.SetPos(&pos);
         FillSortMenu();
         Cur_SetVisible(&mCur18, 1);
-        sortMenuOpenInit(&mSortMenuData);
+        mSortMenu.Open();
         mSortDescending = 1;
         MoveCursor();
         playUISound(2);
     }
 }
-#pragma pop
 
 // Sort-menu confirm/select: rebuilds the quest list (QstLogList_RefreshHeader) and
 // re-sorts (QstLogList_MoveCursor) when the sort menu reports an active button.
 // noinline: retail keeps this an out-of-line call from QstLogList_ApplySortSelection.
-// pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CQstLogList::ConfirmSort(int flag) {
-    if (sortMenuGetFlag2B(&mSortMenuData) != 0) {
+    if (mSortMenu.IsIdle() != 0) {
         Cur_SetVisible(&mCur18, 1);
-        sortMenuToState4Page(&mSortMenuData);
+        mSortMenu.Close();
         mSortDescending = 0;
         RefreshHeader();
         MoveCursor();
@@ -207,7 +201,6 @@ __declspec(noinline) void CQstLogList::ConfirmSort(int flag) {
         }
     }
 }
-#pragma pop
 
 // retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
 u32 CQstLogList::GetSelectedQuestLo() { return lbl_eu_80664730 & 0xFFFF; }
@@ -329,10 +322,6 @@ iconDone:
 
 // Resets the ten quest-row panes: formats each pane name, clears its text
 // and hides empty panes.
-// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw; plain -O4,p
-// emits reversed individual stw's (MWCC_CASES CPartyState/CTagProcessor).
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CQstLogList::ClearRows() {
     char buf[0x20];
     // No explicit pool-base local: MWCC CSEs the lbl_eu_80509AB4 base into
@@ -359,7 +348,6 @@ __declspec(noinline) void CQstLogList::ClearRows() {
         }
     } while (++i <= 10);
 }
-#pragma pop
 
 // Scroll-bar/page refresh helper (retail name unmangled - extern "C" keeps
 // the bl relocs from the scroll/page handlers bound to the retail symbol).
@@ -400,8 +388,8 @@ __declspec(noinline) void CQstLogList::RefreshRows() {
         }
     }
     lbl_eu_8066472C = (u16)total;
-    if (CScrollBar_isVisible(&mScrollBar)) {
-        CScrollBar_UpdateThumb(&mScrollBar, 10, (u16)lbl_eu_8066472C);
+    if (mScrollBar.isVisible()) {
+        mScrollBar.UpdateThumb(10, (u16)lbl_eu_8066472C);
     }
 }
 
@@ -410,16 +398,11 @@ __declspec(noinline) void CQstLogList::RefreshRows() {
 // the icon against the proportion pane and move the cursor to it.
 // Locals are declared buf/pos/tmp so the stack slots land at the retail
 // offsets (buf 0x20, pos 0x14, tmp 0x08) keeping r29/r30/r31 live (stmw).
-// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CQstLogList::MoveCursor() {
     char buf[0x20];
     nw4r::math::VEC3 pos;
-    nw4r::math::VEC3 tmp;
     if (mSortDescending != 0) {
-        sortMenuFormatPaneText(&tmp,
-                      &mSortMenuData);
+        nw4r::math::VEC3 tmp = mSortMenu.GetCursorPos();
         mCur18.setRootPaneTranslate(&tmp);
     } else {
         char* const s = lbl_eu_80509AB4;
@@ -432,26 +415,20 @@ __declspec(noinline) void CQstLogList::MoveCursor() {
         mCur18.setRootPaneTranslate(&pos);
     }
 }
-#pragma pop
 
 // Re-populate the embedded sort menu's array from the shared quest text table
 // (one entry per logged quest) and select the current page.
 // noinline: retail keeps this an out-of-line call from QstLogList_ToggleSort.
-// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CQstLogList::FillSortMenu() {
-    if (sortMenuIsScrollbarVisible(&mSortMenuData) == 0) {
+    if (mSortMenu.IsReady() == 0) {
         return;
     }
-    sortMenuResetCount(&mSortMenuData);
+    mSortMenu.Clear();
     for (u8 i = 0; i < (int)lbl_eu_80664728; i++) {
-        func_801D3518(&mSortMenuData, &lbl_eu_80576670[i * 0x22] + 2);
+        mSortMenu.Add(&lbl_eu_80576670[i * 0x22] + 2);
     }
-    sortMenuSetPage(&mSortMenuData,
-                  (u8)(field_0x17B + field_0x17C));
+    mSortMenu.SetSelect((u8)(field_0x17B + field_0x17C));
 }
-#pragma pop
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
 // quest text pane name and loads the entry text (LayoutSetTextBoxText).
@@ -481,10 +458,10 @@ extern "C" void sinit_80229378() {
 // Loads the quest-log arc file (lbl_eu_80509AB4+0x13) into the mem2 handle,
 // then primes the scroll bar and sort menu layouts.
 void CQstLogList::LoadArc() {
-    mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80509AB4[0x13], this, 0, 0);
-    CScrollBar_loadLayoutArc(&mScrollBar);
-    sortMenuInitFileRead(&mSortMenuData);
+    mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), &lbl_eu_80509AB4[0x13],
+                                        this, 0, 0);
+    mScrollBar.loadLayoutArc();
+    mSortMenu.Init();
     field_0x178 = 0;
 }
 
@@ -508,7 +485,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     // Scratch heap region (RAII Class_8045F858 guard), then detach the file
     // buffer and attach it to the layout arc resource accessor. The handle
     // is fetched before the string-pool base is materialized (retail order).
-    void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 mem2 = mtl::MemManager::getHandleMEM2();
     char* const s = lbl_eu_80509AB4;
     mMemRegion.createRegion((int)mem2, 0x10000, &s[0x112], 0);
     Class_8045F858 regionGuard(&mMemRegion);
@@ -516,7 +493,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     // Detach the file buffer before the accessor is created; it is attached
     // to the layout arc resource accessor below.
     void* fileData = mFileHandle->getData();
-    setMemInitFlag__Q23mtl10MemManagerFb(false);
+    mtl::MemManager::setMemInitFlag(false);
     mArcResAcc =
         (nw4r::lyt::ArcResourceAccessor*)CLibLayout::createArcResourceAccessor();
     mArcResAcc->Attach(fileData, &s[0x11e]);
@@ -527,8 +504,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
 
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
-    void* fontObj =
-        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+    void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
     ApplyFontToTxtPanes(rootPane, fontResult);
 
@@ -689,18 +665,14 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
 
 // Draws the layout plus the scroll bar, sort menu and cursor when the
 // quest-log layout is loaded (field_0x170).
-// pragma optimize_for_size: retail saves r30-r31 via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 void CQstLogList::Draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_0x170 != 0) {
         drawLayout(mpLayout, drawInfo, 0, 1);
-        CScrollBar_draw(&mScrollBar, drawInfo);
-        sortMenuDraw(&mSortMenuData, drawInfo);
+        mScrollBar.draw(drawInfo);
+        mSortMenu.Draw(drawInfo);
         Cur_DrawLayout(&mCur18, drawInfo);
     }
 }
-#pragma pop
 
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
@@ -713,8 +685,8 @@ void CQstLogList::Teardown() {
     }
     releaseArcResourceAccessor(mArcResAcc);
     mCur18.cleanup();
-    CScrollBar_Teardown(&mScrollBar);
-    sortMenuTermCleanup(&mSortMenuData);
+    mScrollBar.Teardown();
+    mSortMenu.Term();
     mMemRegion.deleteRegion();
 }
 
@@ -730,10 +702,10 @@ void CQstLogList::BeginSortOpen() {
         pos[0] = lbl_eu_80668578;
         pos[1] = lbl_eu_8066857C;
         pos[2] = lbl_eu_80668580;
-        CScrollBar_InitRootPane(&mScrollBar, pos);
-        CScrollBar_UpdateThumb(&mScrollBar, 10, (u16)lbl_eu_8066472C);
-        CScrollBar_PlaceThumb(&mScrollBar, (u16)field_0x17E);
-        CScrollBar_requestScrollIn(&mScrollBar);
+        mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(pos));
+        mScrollBar.UpdateThumb(10, (u16)lbl_eu_8066472C);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
+        mScrollBar.requestScrollIn();
     }
 }
 
@@ -741,11 +713,11 @@ void CQstLogList::BeginSortOpen() {
 // reset the row cursor and rebuild; otherwise clear sorting once entries exist.
 void CQstLogList::ApplySortSelection() {
     if (mSortDescending != 0) {
-        if (sortMenuGetFlag2B(&mSortMenuData) == 0) {
+        if (mSortMenu.IsIdle() == 0) {
             return;
         }
-        field_0x17B = sortMenuGetPageIdx(&mSortMenuData);
-        field_0x17C = sortMenuGetSubPageIdx(&mSortMenuData);
+        field_0x17B = mSortMenu.GetCursor();
+        field_0x17C = mSortMenu.GetTop();
         field_0x17D = 0;
         field_0x17E = 0;
         ConfirmSort(1);
@@ -778,36 +750,32 @@ void CQstLogList::FrameUpdate() {
         }
         mpLayout->Animate(0);
         Cur_Update(&mCur18);
-        CScrollBar_UpdateDispatch(&mScrollBar);
-        sortMenuDispatchState(&mSortMenuData);
+        mScrollBar.UpdateDispatch();
+        mSortMenu.Move();
     }
 }
 
 // Sort-menu exit callback: when the sort menu is closing (mode 3) switch to
 // mode 4, disable sorting and request scroll-bar out.
-// pragma optimize_for_size: retail saves r30-r31 (self + flag) via stmw/lmw.
-#pragma push
-#pragma optimize_for_size on
 void CQstLogList::EndSortMode(int flag) {
     if (field_0x174 == 3) {
         field_0x174 = 4;
         mSortEnabled = 0;
         ShowSortAnim();
         Cur_SetVisible(&mCur18, 0);
-        CScrollBar_requestScrollOut(&mScrollBar);
+        mScrollBar.requestScrollOut();
         if (flag != 0) {
             playUISound(6);
         }
     }
 }
-#pragma pop
 
 // Quest-log scroll up. With the sort menu open, scroll up through its
 // options; otherwise step the row index (field_0x17D) back, wrapping through
 // the scroll position (field_0x17E) against the shared boundary.
 void CQstLogList::ScrollUp() {
     if (mSortDescending != 0) {
-        sortMenuScrollUp(&mSortMenuData);
+        mSortMenu.CursorUp();
         MoveCursor();
     } else {
         u8 d = field_0x17D - 1;
@@ -831,23 +799,16 @@ void CQstLogList::ScrollUp() {
         }
         RefreshRows();
         MoveCursor();
-        CScrollBar_PlaceThumb(&mScrollBar, (u16)field_0x17E);
+        mScrollBar.PlaceThumb((u16)field_0x17E);
     }
     playUISound(1);
 }
 
-#pragma push
-#pragma optimize_for_size on
 CQstLogList::~CQstLogList() {}
-#pragma pop
 
 // Quest-log list constructor. Members come up in declaration order (the
 // CSortMenu/QstData wrappers run the retail ctor calls); the three re-init
 // blocks are assignments from temporaries, like the menu Init functions.
-// pragma optimize_for_size: retail keeps the sort-menu region copy rolled
-// (mtctr/bdnz); -O4,p fully unrolls it.
-#pragma push
-#pragma optimize_for_size on
 CQstLogList::CQstLogList(u16 arg2)
     : mFileHandle(0), mArcResAcc(0), mpLayout(0), mpAnim0(0), mpAnim1(0),
       mCur18(0), mScrollBar(0), field_0x170(0), field_0x174(0), field_0x178(0),
@@ -868,13 +829,9 @@ CQstLogList::CQstLogList(u16 arg2)
 
     lbl_eu_80664728 = 0;
 
-    // Retail copies the temp through the out-of-line CScrollBar copy helper
-    // (copyScrollBarData); an inlined `mScrollBar = CScrollBar(1)` would expand it.
-    {
-        CScrollBar tmpScrollBar(1);
-        copyScrollBarData(&mScrollBar, &tmpScrollBar);
-    }
-    mSortMenuData = CSortMenu();
+    // CScrollBar's implicit operator= is emitted out of line (weak
+    // __as__10CScrollBarFRC10CScrollBar) because the class is polymorphic.
+    mScrollBar = CScrollBar(1);
+    mSortMenu = CSortMenu();
     mQstData = CQstLogListQstData();
 }
-#pragma pop

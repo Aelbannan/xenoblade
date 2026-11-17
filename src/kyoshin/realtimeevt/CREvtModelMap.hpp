@@ -6,6 +6,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "monolib/util/FixStr.hpp"
 
 // Name/script info block pointed to by CREvtModelMap::mPtr1C; the 2-char
 // model name sits at +0x10 (isMapModel tests it for "ma"), a flags word at
@@ -45,61 +46,53 @@ struct CCreatureNode {
 // Emote model is a CScnItemModel (real owner of 0xB4 vfuncB4 and +0x7A8
 // flags7A8).
 
-// Flattened layout of the retail CREvtModelMap object. The retail class
-// inherits cf::CREvtObj / CREvtModel / IWorkEvent; the base headers are
-// declared with a member-function-pointer field whose compiled size (16
-// bytes) does not match retail's 12-byte __ptmf, so inheriting them shifts
-// every field by +4. Declaring the base region explicitly keeps the retail
-// offsets (vtable 0x00, ptmf 0x08, flags 0x18, IWorkEvent vtable 0x38).
-class CREvtModelMap {
+namespace cf {
+
+// cf::CREvtModelMap - realtime-event map model (kind 1, 0x1F0 bytes).
+// Bases (from the retail vtable 0x80531D80 and RTTI base list): public
+// cf::CREvtModel at 0x00, private IWorkEvent at 0x38 (private bases are not
+// listed in MWCC's RTTI base list). OnFileEvent overrides only the
+// IWorkEvent slot, so MWCC appends its direct entry after the IWorkEvent
+// vtable (the secondary slot holds the @56@ thunk).
+class CREvtModelMap : public CREvtModel, IWorkEvent {
 public:
-    // cf::CREvtObj base region (0x00-0x13)
-    /* 0x00 */ void* vtable;        // CREvtModelMap vtable (lbl_eu_80531D80)
-    /* 0x04 */ u32 field_04;
-    /* 0x08 */ u32 mCallback[3];    // __ptmf triplet (12 bytes)
+    CREvtModelMap(void* pData);
+    virtual ~CREvtModelMap();
+    int isMapModel();
+    virtual bool isBusy();
+    virtual int reset();
+    void probeSlot();
+    void loadFiles();
+    void finishLoad();
+    void update();
+    virtual void onEvent(u32 visible);
+    virtual void setVisible(int visible);
+    virtual int vfunc_20();
+    virtual bool OnFileEvent(CEventFile* pEvent);
 
-    // CREvtModel base region (0x14-0x37)
-    /* 0x14 */ u32 mField14;
-    /* 0x18 */ u32 mFlags;
-    /* 0x1C */ void* mPtr1C;
-    /* 0x20 */ void* mModel;         // model pointer
-    /* 0x24 */ void* mData;          // animation data
-    /* 0x28 */ void* mPtr28;
-    /* 0x2C */ s32 mField2C;
-    /* 0x30 */ s32 mField30;
-    /* 0x34 */ s32 mField34;         // animation index counter
-
-    // IWorkEvent subobject + derived fields
-    /* 0x38 */ void* vtableIWork;    // IWorkEvent vtable (lbl_eu_80531D80 + 0x44)
+    // IWorkEvent subobject at 0x38
     /* 0x3C */ u8 mVisible;
     /* 0x3D */ u8 mIsGuest;
-    /* 0x3E */ u8 _pad3E[2];
-    /* 0x40 */ CFileHandle* mFileHandle1;
+    /* 0x40 */ CFileHandle* mFileHandle1;   // .map
     /* 0x44 */ void* mFileData1;
-    /* 0x48 */ CFileHandle* mFileHandle2;
+    /* 0x48 */ CFileHandle* mFileHandle2;   // .lod
     /* 0x4C */ void* mFileData2;
-    /* 0x50 */ char mBasePath[0x40];  // guest path buffer (0x50-0x8F)
-    /* 0x90 */ u32 mBasePathLen;       // length of mBasePath
-    /* 0x94 */ CFileHandle* mFileHandle3;
+    /* 0x50 */ ml::FixStr<64> mBasePath;    // guest path
+    /* 0x94 */ CFileHandle* mFileHandle3;   // .lgt
     /* 0x98 */ void* mFileData3;
-    /* 0x9C */ u8 mPad9C;
-    /* 0x9D */ u8 _pad9D[0x3F];
-    /* 0xDC */ void* mUnkDC;
+    /* 0x9C */ ml::FixStr<64> mStr9C;       // only constructed in this TU
     /* 0xE0 */ void* mLoadedModelData;
     /* 0xE4 */ CScnItemModel* mEmoteModel;
-    /* 0xE8 */ char mModelName[0x100];
+    /* 0xE8 */ u8 mCreatureState[0x100];   // per-creature point state saved while hidden
     /* 0x1E8 */ s32 mCreatureCount;
     /* 0x1EC */ s32 mCreatureId;
-    /* 0x1F4 */ u32 mPtmf[3]; // ptmf triplet (func/this-adj/vtbl-adj)
 
-    // Non-virtual helpers (retail names are C-linkage free functions in the
-    // .cpp; these members are legacy/compile-only and not matched).
-    bool isMapModel();
-    bool isBusy();
-    int getGuestState();
-    void setGuestModeOn();
-    bool ClaimFileData(CEventFile* pEvent);
+    static CREvtModelMap* sLoadingGuest;   // 0x806642B0
+    static CREvtModelMap* sVisibleModel;   // 0x806642B4
 };
 
-// CREvtModelMap vtable (0x80531D80; main 0x44 bytes + IWorkEvent 0x80).
-extern u8 lbl_eu_80531D80[];
+} // namespace cf
+
+using cf::CREvtModelMap;
+
+

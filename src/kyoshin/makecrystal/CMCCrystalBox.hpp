@@ -2,6 +2,14 @@
 
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CSortMenu.hpp"
+#include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 class CBaseCur;
 class CEventFile;
 
@@ -67,97 +75,8 @@ struct MCAggPair {
 // definition use C linkage.
 extern "C" void copyCrystalAggPair(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src);
 
-// Mirror of the CScrollBar layout (0x40 bytes) for the copy-init in
-// initCrystalBoxResources (copyScrollBarData); the real CScrollBar.hpp cannot be included
-// here (conflicting ctor stubs). Layout identical to CSortMenu.hpp's mirror.
-struct CScrollBarData {
-    void* mVtbl;         // +0x00
-    u32 mMemRegion[4];   // +0x04
-    void* mFileHandle;   // +0x14
-    void* mAccessor;     // +0x18
-    void* mLayout;       // +0x1C
-    void* mAnimTrans;    // +0x20
-    u8 mReady;           // +0x24
-    u8 mVisible;         // +0x25
-    u8 mState;           // +0x26
-    u8 mActive;          // +0x27
-    f32 mAnimOffset;     // +0x28
-    f32 mScrollPosY;     // +0x2C
-    f32 mScrollRatio;    // +0x30
-    f32 mThumbHeight;    // +0x34
-    f32 mContentHeight;  // +0x38
-    u8 mDirection;       // +0x3C
-};
 
-// Sort-menu sub-object at CMCCrystalBox+0xFC (implemented in CSortMenu.cpp).
-// Full layout mirror of CSortMenu.hpp's class (0xF0 bytes); the temp
-// copy-init in initCrystalBoxResources copies every member except the +0x6C array.
-struct CSortMenu {
-    u32 mVtable;             // +0x00
-    u8  mUnk04[0x10];        // +0x04 (UnkClass_8045F564)
-    void* mFileHandle;       // +0x14
-    void* mArcResAcc;        // +0x18
-    void* mpLayout;          // +0x1C
-    void* mpAnimTrans0;      // +0x20
-    void* mpAnimTrans1;      // +0x24
-    u8 field_0x28;           // +0x28 (active flag)
-    u8 field_0x29;           // +0x29 (layout loaded flag)
-    u8 field_0x2A;           // +0x2A (state)
-    u8 field_0x2B;           // +0x2B (button flag)
-    u8 mScrollBar[0x40];     // +0x2C (CScrollBar, copied via copyScrollBarData)
-    struct { s32 w[32]; } mArray; // +0x6C (0x80 bytes; NOT copied by the ctor); struct-wrapped so assignment lowers to MWCC's rolled word-copy loop
-    u8 mCount;               // +0xEC
-    u8 mPage;                // +0xED
-    u8 mSubPage;             // +0xEE
-};
 
-// Crystal-info sub-object at CMCCrystalBox+0x1EC (implemented in
-// CMCCrystalInfo.cpp). Layout mirror of CMCCrystalInfo.hpp's class; the tail
-// words at +0x52..+0x61 are copied word-wise by initCrystalBoxResources's copy-init.
-struct CMCCrystalInfo {
-    u32 mVtable;             // +0x00
-    u8  mMemRegion1[0x10];   // +0x04 (UnkClass_8045F564)
-    u8  mMemRegion2[0x10];   // +0x14 (UnkClass_8045F564)
-    u32 mFileHandle1;        // +0x24
-    u32 mFileHandle2;        // +0x28
-    void* mArcResAccessor;   // +0x2C
-    u32 mField30;            // +0x30
-    void* mLayout;           // +0x34
-    void* mAnimTransform1;   // +0x38
-    void* mAnimTransform2;   // +0x3C
-    void* mAnimTransform3;   // +0x40
-    void* mAnimTransform4;   // +0x44
-    u8 mEnabled;             // +0x48
-    s32 mState;              // +0x4C
-    u8 mIsActive;            // +0x50
-    u8 mField51;             // +0x51
-    u8 field52[4];           // +0x52 (unaligned tail words, copied word-wise)
-    u8 field56[4];           // +0x56
-    u8 field5A[4];           // +0x5A
-    u8 field5E[4];           // +0x5E
-};
-
-// Mirror of the CSysWin body at CMCCrystalBox+0x290 (opaque region). Used by
-// initCrystalBoxResources's copy-init from a stack temp. Layout matches CSysWin.hpp.
-struct CSysWinData {
-    void* mVtbl;             // +0x00
-    u8 mMemRegion[0x10];     // +0x04 (UnkClass_8045F564)
-    void* mFileHandle;       // +0x14
-    void* mTagProcessor;     // +0x18
-    void* mArcAccessor;      // +0x1C
-    void* mLayout;           // +0x20
-    void* mAnimTrans;        // +0x24
-    u8 field_28;             // +0x28 (ready flag)
-    u8 _29[3];               // +0x29
-    u32 field_2C;            // +0x2C
-    u32 field_30;            // +0x30
-    u8 field_34;             // +0x34 (open flag)
-    u8 field_35;             // +0x35
-    u8 field_36;             // +0x36
-    u8 field_37;             // +0x37
-    u8 field_38;             // +0x38
-    u8 field_39;             // +0x39
-};
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 bound into the layout's font pane
@@ -193,11 +112,6 @@ struct CMCCrystalData {
     char name[0x10C8 - 0x1005];         // +0x1005 (buffer passed to sprintf)
 };
 
-// Crystal-box constructor support: retail stores this .data vtable object
-// (owned by another unit) into the implicit vptr; the class is novtable so
-// the ctor writes it explicitly through this anchor.
-extern char lbl_eu_80535C60[];
-struct VtblSlot { void* vtbl; };
 
 // Stack scratch initialised by initCrystalBoxScratch inside loadCrystalBoxArchive: the
 // helper views it as a bare box head (8 zeroed words at +0x00, count byte
@@ -214,41 +128,113 @@ struct CrystalBoxScratch {
     u8  flag6A;              // +0x6A
 };
 
-// novtable: retail's dtor emits NO class-vtable store (the retail vtable is
-// a .data object in another unit); without it MWCC emits the lis/addi/stw
-// __vt__13CMCCrystalBox reset (+3 insns) before the dtor body.
-class __declspec(novtable) CMCCrystalBox {
+// Crystal-box list widget of the make-crystal window (retail vtable
+// lbl_eu_80535C60 -> __vt__13CMCCrystalBox: IWorkEvent with ~CMCCrystalBox and
+// OnFileEvent overridden; RTTI base list names only IWorkEvent).
+class CMCCrystalBox : public IWorkEvent {
 public:
     CMCCrystalBox(u8 parentType);
     virtual ~CMCCrystalBox();
-    bool OnFileEvent(CEventFile* event);
+    virtual bool OnFileEvent(CEventFile* event);
 
-    // Fields - vtable at +0x00 (implicit), user fields start at +0x04
-    u8 pad_00[0x1C];                    // +0x04 to +0x1F
-    u8 unk20;                           // +0x20: entry count (0 = no entries)
-    u8 pad_21[0x24 - 0x21];
-    nw4r::lyt::AnimTransform* subObjPtrs[0x0F]; // +0x24 to +0x5F: array of 15 sub-object pointers
+    void refreshCrystalBoxName();
+    void setCrystalNameLabel();
+    void initCrystalBoxResources();
+    void updateCrystalBoxState();
+    void drawCrystalBox(nw4r::lyt::DrawInfo* di);
+    void teardownCrystalBox();
+    int isCrystalBoxReady();
+    int getCrystalBoxActive();
+    u8 isCrystalBoxBusy();
+    int getCrystalBoxSysWin();
+    void openCrystalBox();
+    void enterCrystalBoxState4();
+    void enterCrystalBoxState6();
+    void enterCrystalBoxState8();
+    void enterCrystalBoxState13();
+    void stepCrystalBoxCursorPrev();
+    void stepCrystalBoxCursorNext();
+    void stepCrystalBoxPageBack();
+    void pageCrystalBoxCursorFwd();
+    void confirmCrystalSelect();
+    void confirmCrystalUnselect();
+    void toggleCrystalSortMenu();
+    void advanceCrystalBoxSortMenu(int a);
+    u8* rebuildCrystalBoxSelTable();
+    u8 getCrystalBoxKindA();
+    u8 getCrystalBoxKindB();
+    void tickCrystalBoxPageFwd();
+    void tickCrystalBoxPageBack();
+    void refreshCrystalPagePair(int dir);
+    void initCrystalPageLabels();
+    void updateCrystalBoxSysWin();
+    int getCrystalBoxAction();
+    void deselectCrystalBoxItem();
+    void onCrystalAnimToState2();
+    void onCrystalAnimToState3();
+    void onCrystalAnimToState5();
+    void onCrystalAnimToIdle();
+    void onCrystalAnim14Idle();
+    void onCrystalAnimToState9();
+    void onCrystalAnim9ToState3();
+    void onCrystalAnim11State3();
+    void onCrystalAnim12State3();
+    void onCrystalAnim13State3();
+    void onCrystalAnimToState14();
+    void onCrystalAnimResetState3();
+    void loadCrystalBoxArchive();
+    void setCrystalSlotTexture(u16 id, unsigned int* item, u8 i);
+    void setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i);
+    void setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i);
+    void setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i);
+    void updateCrystalBoxRows();
+    void rebuildCrystalSortMenu();
+    void placeCrystalBoxSlots();
+    void refreshCrystalBoxCursors();
+    void rebuildCrystalGridTable();
+    void playCrystalAnim6();
+    void playCrystalAnim7();
+    void playCrystalAnim8();
+    void playCrystalAnim9();
+    void playCrystalAnim10();
+    void playCrystalAnim11();
+    void playCrystalAnim12();
+    void playCrystalAnim13();
+    void playCrystalAnim14();
+    void showCrystalBoxStatus();
+    s64 getCrystalSelTopCount();
+
+    UnkClass_8045F564 mMemRegion1;      // +0x04
+    UnkClass_8045F564 mMemRegion2;      // +0x14
+    CFileHandle* mFileHandle0;          // +0x24 sort-menu archive
+    CFileHandle* mFileHandle1;          // +0x28 crystal-info archive
+    CFileHandle* mFileHandle2;          // +0x2C common archive
+    nw4r::lyt::ArcResourceAccessor* mArcAcc0; // +0x30
+    nw4r::lyt::ArcResourceAccessor* mArcAcc1; // +0x34
+    nw4r::lyt::Layout* mLayout;         // +0x38
+    nw4r::lyt::AnimTransform* mAnim0;   // +0x3C
+    nw4r::lyt::AnimTransform* mAnim1;   // +0x40
+    nw4r::lyt::AnimTransform* mAnim2;   // +0x44
+    nw4r::lyt::AnimTransform* mAnim3;   // +0x48
+    nw4r::lyt::AnimTransform* mAnim4;   // +0x4C
+    nw4r::lyt::AnimTransform* mAnim5;   // +0x50
+    nw4r::lyt::AnimTransform* mAnim6;   // +0x54
+    nw4r::lyt::AnimTransform* mAnim7;   // +0x58
+    nw4r::lyt::AnimTransform* mAnim8;   // +0x5C
     u8 unk60;                           // +0x60
-    u8 pad_61_pad_63[3];
     s32 unk64;                          // +0x64: state/status
     u8 unk68;                           // +0x68
     u8 unk69;                           // +0x69: active flag
-    u8 pad_6A[0x6C - 0x6A];
-    // +0x6C: CCur07
-    // +0x84: CCur09
-    // +0x9C: CCur18
-    // +0xB4: CCur11
-    // +0xCC: CCur16
-    // +0xE4: CCur18
-    // +0xFC: CSortMenu
-    // +0x1EC: CMCCrystalInfo
-    // +0x250: CScrollBar
-    // +0x290: CSysWin
-    u8 pad_6C[0xFC - 0x6C];
+    CCur07 mCur07;                      // +0x6C
+    CCur09 mCur09;                      // +0x84
+    CCur18 mCur18A;                     // +0x9C
+    CCur11 mCur11;                      // +0xB4
+    CCur16 mCur16;                      // +0xCC
+    CCur18 mCur18B;                     // +0xE4
     CSortMenu sortMenu;                 // +0xFC
     CMCCrystalInfo crystalInfo;         // +0x1EC
-    u8 pad_250[0x290 - 0x250];       // +0x250 to +0x28F (CScrollBar region)
-    u8 sysWin[0x2CC - 0x290];        // +0x290 to +0x2CB (opaque CSysWin)
+    CScrollBar mScrollBar;              // +0x250
+    CSysWin sysWin;                     // +0x290
     u8 unk2CC;                          // +0x2CC
     s8 unk2CD;                          // +0x2CD
     u8 unk2CE;                          // +0x2CE
@@ -301,26 +287,6 @@ public:
     virtual char* getName(void* slot) = 0;   // vtable slot 0x20
 };
 
-// Fake-SI dispatch views for the sub-object vtables (never instantiated).
-// Real virtual calls make MWCC emit the retail lwz r12,off; addi r3; lwz
-// r12,slot; mtctr; bctrl sequence; cast-calls through ((void***)p)[n] emit an
-// extra scratch load. CCurVf0C targets vtable slot 0x0C (second user virtual,
-// after the two RTTI slots + one filler), CLytVf08 targets slot 0x08.
-class CCurVf0C {
-public:
-    virtual void vf_00() = 0;   // slot 0x08
-    virtual void vf_04() = 0;   // slot 0x0C
-};
-class CLytVf08 {
-public:
-    virtual void vf_00(int) = 0;   // slot 0x08
-};
-class CCurVf10 {   // virtual at vtable slot 0x10 (user slot 2)
-public:
-    virtual void vf_00() = 0;   // slot 0x08
-    virtual void vf_04() = 0;   // slot 0x0C
-    virtual void vf_08(void*) = 0;   // slot 0x10
-};
 
 // Item-implementation vtable view up to slot 0x64 (GetName/GetFlag) for the
 // selection loop in rebuildCrystalBoxSelTable. Never instantiated; pure virtuals keep the
@@ -410,28 +376,6 @@ public:
     virtual int GetQuantity(void* item, u8 idx) = 0;   // slot 0x64
 };
 
-// CSysWin vtable view: virtual at vtable slot 0x88 (user slot 32), reached
-// by initCrystalBoxResources's tail call. 32 fillers keep the target at the right slot.
-class CSysWinVf88 {
-public:
-    virtual void vf_00() = 0; virtual void vf_04() = 0;
-    virtual void vf_08() = 0; virtual void vf_0C() = 0;
-    virtual void vf_10() = 0; virtual void vf_14() = 0;
-    virtual void vf_18() = 0; virtual void vf_1C() = 0;
-    virtual void vf_20() = 0; virtual void vf_24() = 0;
-    virtual void vf_28() = 0; virtual void vf_2C() = 0;
-    virtual void vf_30() = 0; virtual void vf_34() = 0;
-    virtual void vf_38() = 0; virtual void vf_3C() = 0;
-    virtual void vf_40() = 0; virtual void vf_44() = 0;
-    virtual void vf_48() = 0; virtual void vf_4C() = 0;
-    virtual void vf_50() = 0; virtual void vf_54() = 0;
-    virtual void vf_58() = 0; virtual void vf_5C() = 0;
-    virtual void vf_60() = 0; virtual void vf_64() = 0;
-    virtual void vf_68() = 0; virtual void vf_6C() = 0;
-    virtual void vf_70() = 0; virtual void vf_74() = 0;
-    virtual void vf_78() = 0; virtual void vf_7C() = 0;
-    virtual void vf_88() = 0;   // vtable slot 0x88
-};
 class CLytVf38 {   // virtual at vtable slot 0x38 (user slot 12)
 public:
     virtual void vf_00() = 0; virtual void vf_04() = 0;
@@ -486,26 +430,22 @@ public:
 extern "C" float* code80135FDC_setVec3(float*, float, float, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void Cur_SetVisible(void*, u8);  // retail symbol is unmangled
-extern "C" u32 sortMenuIsScrollbarVisible(void*);
 extern "C" int func_8021A8EC(void*);
-extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void MCCrystal_PlayAnim3B(void*);
 extern "C" void MCCrystal_PlayOutro(void*);
 extern "C" void MCCrystal_PlayAnim3A(void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
 extern "C" char lbl_eu_8050888C[];
 extern "C" unsigned long lbl_eu_80508870[];
 // BDAT table pointer loaded via sda21 at the BdatGetPtrDirect call sites.
 extern unsigned long lbl_eu_806646D0;
-extern "C" __declspec(noinline) void initCrystalBoxScratch(CMCCrystalBox* self);
+extern "C" __declspec(noinline) void initCrystalBoxScratch(CrystalBoxScratch* scratch);
+// Selection-table helpers on the +0x1480 box-head scratch (not CMCCrystalBox).
+extern "C" void releaseCrystalBoxSlot(CrystalBoxScratch* scratch);
+extern "C" void buildCrystalBoxIdList(CrystalBoxScratch* scratch);
 extern "C" void MakeCrystal_CollectByTarget(void*, u8);
 extern "C" unsigned long getSelectTableWord(unsigned long*, unsigned int);
-extern "C" void setCrystalSlotTexAlt(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
-extern "C" void setCrystalSlotCapAlt(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
 // Crystal-slot refresh callbacks (defined in this TU).
-extern "C" void setCrystalSlotTexture(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
-extern "C" void setCrystalSlotCapacity(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
 // Item-kind check (defined in this TU); noinline keeps the bl in the slot
 // refresh callbacks instead of inlining the two-word test.
 extern "C" __declspec(noinline) int isCrystalKindGem(void*);
@@ -518,18 +458,8 @@ extern "C" void MCCrystal_PlayAnim4(void*);
 extern "C" void MCCrystal_OpenFromClosed(void*);
 extern "C" void MCCrystal_DrawLayout(void*, void*);
 extern "C" void MCCrystal_ShowItem(void*, unsigned short, void*);
-extern "C" int sortMenuIsVisible28(void*);
-extern "C" void sortMenuDraw(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sortMenuResetCount(void*);
-extern "C" void func_801D3518(void*, void*);
-extern "C" void sortMenuSetPage(void*, u8);
-extern "C" void CScrollBar_draw(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" void CScrollBar_InitRootPane(void*, const float*);
-extern "C" void CScrollBar_UpdateThumb(void*, unsigned long, unsigned long);
-extern "C" void CScrollBar_PlaceThumb(void*, u16);
-extern "C" void CScrollBar_requestScrollIn(void*);
 extern "C" void MCCrystal_ClearSlots(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
 extern "C" void MCCrystal_FillSlot(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
 // Item-impl singleton import: CfGameManager.hpp (pulled in via
@@ -568,39 +498,12 @@ extern "C" int MakeCrystal_GetFlag(void*, unsigned char);
 extern "C" void* MakeCrystal_GetItemObject(void*, unsigned char);
 extern "C" unsigned short MakeCrystal_GetSubCategory(void*, unsigned char);
 extern "C" void swapCrystalDataEntry(int, void*, void*);
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__14CMCCrystalInfoFv(void*, int);
-extern "C" void __dt__9CSortMenuFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
-extern "C" void __dt__6CCur16Fv(void*, int);
-extern "C" void __dt__6CCur11Fv(void*, int);
-extern "C" void __dt__6CCur09Fv(void*, int);
-extern "C" void __dt__6CCur07Fv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" CBaseCur* __ct__CCur07(void*, void*);
-extern "C" CBaseCur* __ct__CCur09(void*, void*);
-extern "C" void __ct__CCur18(void*, void*);
-extern "C" CBaseCur* __ct__CCur11(void*, void*);
-extern "C" CBaseCur* __ct__CCur16(void*, void*);
-extern "C" void __ct__CSortMenu(void*);
-extern "C" void __ct__CMCCrystalInfo(void*);
-extern "C" void __ct__10CScrollBarFUc(void*, int);
-extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void BuildSlotItemLists(u32);
-extern "C" void sortMenuTermCleanup(void*);
 extern "C" void MCCrystal_Teardown(void*);
-extern "C" void CScrollBar_Teardown(void*);
 extern "C" void sysWinTermLayout(void*);
-extern "C" int  sortMenuGetFlag2B(void*);
-extern "C" void sortMenuToState4Page(void*);
-extern "C" void sortMenuOpenInit(void*);
-extern "C" void sortMenuSetLayoutPos(void*, void*);
-extern "C" void sortMenuFormatPaneText(void*, void*);
 extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
@@ -610,51 +513,19 @@ extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinApplyKind(void*, int);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void sortMenuDispatchState(void*);
 extern "C" void MCCrystal_StepState(void*);
 extern "C" void Cur_Update(void*);
-extern "C" void CScrollBar_UpdateDispatch(void*);
 extern "C" void sysWinDispatchPhase(void*);
 extern "C" void MakeCrystal_ResetTable(void*);
 extern "C" u32  IsSkillItem(void*);
 extern "C" u16 BdatGetItemId(u32);
-extern "C" void refreshCrystalBoxName(CMCCrystalBox* self);
-extern "C" void enterCrystalBoxState6(CMCCrystalBox* self);
-extern "C" int getCrystalBoxAction(CMCCrystalBox* self);
-extern "C" void playCrystalAnim7(CMCCrystalBox* self);
-extern "C" void buildCrystalBoxIdList(CMCCrystalBox* self);
-extern "C" void refreshCrystalBoxCursors(CMCCrystalBox* self);
-extern "C" void playCrystalAnim6(CMCCrystalBox* self);
-extern "C" void playCrystalAnim8(CMCCrystalBox* self);
-extern "C" void playCrystalAnim9(CMCCrystalBox* self);
-extern "C" void playCrystalAnim10(CMCCrystalBox* self);
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
 // unmangled like retail; noinline keeps the bodies out-of-line.
-extern "C" void updateCrystalBoxState(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToState2(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToState3(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToState5(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToIdle(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void playCrystalAnim14(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnim14Idle(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToState9(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnim9ToState3(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnim11State3(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnim12State3(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnim13State3(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimToState14(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void onCrystalAnimResetState3(CMCCrystalBox* self);
-extern "C" void refreshCrystalPagePair(CMCCrystalBox* self, int);
-extern "C" __declspec(noinline) void initCrystalPageLabels(CMCCrystalBox* self);
 extern "C" void MakeCrystal_AdvanceCursor(void* self);
-extern "C" void loadCrystalBoxArchive(CMCCrystalBox* self);
 extern "C" void func_802137B4(void* self);
 extern "C" void MakeCrystal_SetFlag(void*, int, unsigned char);
 extern "C" int getCrystalSelectEntry(void*);
-extern "C" void releaseCrystalBoxSlot(CMCCrystalBox* self);
-extern "C" void placeCrystalBoxSlots(CMCCrystalBox* self);
-extern "C" void playCrystalAnim13(CMCCrystalBox* self);
 extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
 extern "C" void AccumPaneWorldPos(char*, nw4r::lyt::Pane*);
 extern "C" void Cur_ShowTwoPanes(void*, unsigned char);
@@ -669,36 +540,19 @@ extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;
 extern float lbl_eu_80668484;
-extern "C" void updateCrystalBoxRows(CMCCrystalBox* self);
-extern "C" void setCrystalNameLabel(CMCCrystalBox* self);
-extern "C" void rebuildCrystalGridTable(CMCCrystalBox* self);
-extern "C" void rebuildCrystalSortMenu(CMCCrystalBox* self);
 
 // Selection/refresh helpers for the update callbacks and the ctor copy-init.
 // Retail symbols are unmangled; declared here so the call relocs bind to the
 // retail names. copyCrystalParamRet returns its first argument (callers chain it as
 // the copy source for copyCrystalBoxParam); its definition lives in this TU under
 // the name copyCrystalParamRet (linked by address via symbols.txt).
-extern "C" void sortMenuScrollDown(void*);   // sort menu: scroll down
-extern "C" void sortMenuScrollUp(void*);   // sort menu: scroll up one entry
-// (sortMenuPageUpStep / sortMenuPageDownStep are the page-up / page-down variants)
-extern "C" void sortMenuPageUpStep(void*);
-extern "C" void sortMenuPageDownStep(void*);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int MakeCrystal_AllFlagsSet(void*);   // all-flags-set check (code_80213488.cpp)
-extern "C" void showCrystalBoxStatus(CMCCrystalBox* self);
 // Retail's epilogue extends the result to 64 bits (subfc/subfze); every
 // call site reads the value truncated to the int in r3, hence the (int)
 // casts at the use sites.
-extern "C" s64 getCrystalSelTopCount(CMCCrystalBox* self);
-extern "C" void advanceCrystalBoxSortMenu(CMCCrystalBox* self, int);
-extern "C" __declspec(noinline) void confirmCrystalSelect(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void confirmCrystalUnselect(CMCCrystalBox* self);
 // noinline: these update-callback helpers must stay out-of-line (retail
 // emits bl to them); without it MWCC inlines their bodies into the callers.
-extern "C" __declspec(noinline) void tickCrystalBoxPageFwd(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void tickCrystalBoxPageBack(CMCCrystalBox* self);
-extern "C" __declspec(noinline) void playCrystalAnim12(CMCCrystalBox* self);
 
 // initCrystalBoxResources (ctor-style copy-init) imports.
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
@@ -707,11 +561,7 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, con
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);   // 4-word mem-region copy
-// (copyScrollBarData is the CScrollBar-data copy; retail symbol is unmangled)
-extern "C" void copyScrollBarData(void*, void*);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void MCCrystal_LoadLayouts(void*);   // crystal-info file-load (CMCCrystalInfo.cpp)
-extern "C" void sortMenuInitFileRead(void*);   // sort-menu layout read (CSortMenu.cpp)
-extern "C" void CScrollBar_loadLayoutArc(void*);   // scrollbar layout read (CScrollBar.cpp)
 extern "C" u8* initCrystalBoxParamTbl(u8*);      // param-table init (this TU)
 extern "C" CMCCrystalBoxParam* copyCrystalParamRet(CMCCrystalBoxParam*, const CMCCrystalBoxParam*);

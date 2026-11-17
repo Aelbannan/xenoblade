@@ -49,7 +49,7 @@ public:
     u8 mField3C;                                         // 0x3C
     char _pad_3D[0x40 - 0x3D];                          // 0x3D-0x3F
     CCur18 mCur40;                                      // 0x40-0x57
-    u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (passed to CScrollBar_loadLayoutArc/CScrollBar_requestScrollOut)
+    u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (a CScrollBar)
     char mSysWin98[0xD4 - 0x98];                           // 0x98-0xD3 - first CSysWin-like object
     char mSysWinD4[0x11C - 0xD4];                          // 0xD4-0x11B - second CSysWin-like object
     u8 mField11C;                                        // 0x11C
@@ -295,24 +295,17 @@ extern "C" s32 lbl_eu_80662AC8;
 extern "C" u32 lbl_eu_80662ACC;
 extern "C" int CSysWin_isActive(void*);
 extern "C" u32 CSysWin_isReady(void*);
-extern "C" int CScrollBar_isVisible(void*);
 extern "C" void requestLandTelop();
 extern "C" void MenuUpdate_SignalGlobalField64();
 extern "C" void CMenuGetItem_SetField54();
 extern "C" void invalidateQstFlag();
 extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
-extern "C" void CScrollBar_loadLayoutArc(void*);
-extern "C" void CScrollBar_InitRootPane(void*, void*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
-extern "C" void CScrollBar_PlaceThumb(void*, u16);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" void CScrollBar_UpdateDispatch(void*);   // CScrollBar per-frame update
 extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
 extern "C" void Cur_Update(void*);   // CCur per-frame update
-extern "C" void CScrollBar_draw(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
@@ -363,7 +356,6 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void CSLSub_bindPane(UnkTwoPtr*);
 extern "C" void DevFile_SetByteA9(int);
-extern "C" void CScrollBar_Teardown(void*);
 extern "C" void sysWinTermLayout(void*);
 extern "C" void CSaveLoad_onFile(int, int, int, u8);
 extern "C" void NandQueueChk860(int, void*);

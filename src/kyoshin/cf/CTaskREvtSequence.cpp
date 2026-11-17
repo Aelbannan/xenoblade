@@ -85,6 +85,7 @@ public:
 // CX streaming-uncompression context (EvtSeqOnFileEvent / EvtSeqPumpCxStream).
 #include "revolution/cx/CXStreamingUncompression.h"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "kyoshin/realtimeevt/CREvtModel.hpp"
 // Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
 // decl). Declared here: this TU does not include that header.
 extern "C" void Scn_ReleaseUnk80(void* scene, int index, void* vec);
@@ -92,8 +93,6 @@ extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
 
 namespace cf {
-    u32 CTaskREvtSequence::getField20() { return field_0x20; }
-
     bool CTaskREvtSequence::OnFileEvent(CEventFile* ev) {
         // IWorkEvent dispatch thunk: the IWorkEvent subobject sits at +0x54 of
         // the cf::CTaskREvtSequence; adjust and forward to EvtSeqOnFileEvent.
@@ -676,7 +675,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
             }
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(
-                createEvtModelObj(entry));
+                cf::CREvtModel::create(entry));
             self->field_0xA8 = idx + 1;
             i++;
         }
@@ -692,11 +691,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                 reinterpret_cast<EvtSeqWalkEntry*>(self->field_0xD8)
                         ->field_0x4 *
                     i);
-            CREvtEffect* obj = reinterpret_cast<CREvtEffect*>(
-                __nw__Q22cf8CREvtObjFUl(reinterpret_cast<void*>(0x144)));
-            if (obj != 0) {
-                __ct__CREvtEffect(obj, reinterpret_cast<CREvtParam*>(entry));
-            }
+            CREvtEffect* obj = new CREvtEffect(reinterpret_cast<CREvtParam*>(entry));
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(obj);
             self->field_0xA8 = idx + 1;
@@ -1564,7 +1559,7 @@ void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx) {
     }
 }
 
-void CREvtObjVfunc24Default() {}
+void cf::CREvtModel::vfunc_24() {}
 
 void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
     // Event-sequence dispatch. The walk header's table pointers are cached
@@ -1683,8 +1678,8 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k3);
             n++;
             k3 += 4;
-            EvtFx_InitModel(reinterpret_cast<CREvtEffect*>(e), (void*)arg,
-                          (void*)((u8*)self->field_0x240 + off3));
+            reinterpret_cast<CREvtEffect*>(e)->initModel(
+                (void*)arg, (void*)((u8*)self->field_0x240 + off3));
             off3 += 0xC;
             i3++;
         }
@@ -1792,6 +1787,8 @@ extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
     }
     return 0;
 }
+
+int cf::CREvtModel::vfunc_0C() { return (int)mModel; }
 
 u32 EvtSeqGetCounter100() {
     UnkState_80664268* p = lbl_eu_80664268;
@@ -2244,8 +2241,8 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 &&
             entry != reinterpret_cast<UnkEvtListEntry*>(self)) {
-            nameEntry = (const char*)evtModelDataPtr(entry);
-            if (strcmp((const char*)evtModelDataPtr(self), nameEntry) == 0) {
+            nameEntry = (const char*)reinterpret_cast<cf::CREvtModel*>(entry)->evtModelDataPtr();
+            if (strcmp((const char*)reinterpret_cast<cf::CREvtModel*>(self)->evtModelDataPtr(), nameEntry) == 0) {
                 return entry;
             }
         }
@@ -2281,8 +2278,8 @@ int UnkEvtListEntry::SeqIsSameNameType3Busy() {
         u8* abase = (u8*)cur->field_0xA4;
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 && entry != this) {
-            nameEntry = (const char*)evtModelDataPtr(entry);
-            if (strcmp((const char*)evtModelDataPtr(this), nameEntry) == 0) {
+            nameEntry = (const char*)reinterpret_cast<cf::CREvtModel*>(entry)->evtModelDataPtr();
+            if (strcmp((const char*)reinterpret_cast<cf::CREvtModel*>(this)->evtModelDataPtr(), nameEntry) == 0) {
                 int busy =
                     entry->field_0x48 != 0 || entry->field_0x40 != 0;
                 if (busy) {
@@ -2724,7 +2721,7 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
                     (u8*)self->field_0xF0 +
                     self->field_0xF0->field_0x4 * j);
                 if (strcmp(&e->mName[0],
-                           (const char*)evtModelDataPtr(entry)) == 0) {
+                           (const char*)reinterpret_cast<cf::CREvtModel*>(entry)->evtModelDataPtr()) == 0) {
                     if (e->field_0x9 == 0xFF) {
                         e->field_0x9 =
                             (u8)getLODData__8CTaskLODFv(e->field_0xA);
@@ -2904,7 +2901,7 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     // live (< 8) counter byte triggers the advance. Then a second, unweighted
     // backward scan accepts any live counter byte.
     sum = 0;
-    if (isEvtDataFlagSet(this) == 0) {
+    if (reinterpret_cast<cf::CREvtModel*>(this)->isEvtDataFlagSet() == 0) {
         // Re-read the shared state and this model's slot object after the
         // probe call - neither is kept live across the call.
         UnkState_80664268* post = lbl_eu_80664268;

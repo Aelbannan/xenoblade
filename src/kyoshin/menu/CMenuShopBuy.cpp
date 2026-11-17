@@ -25,7 +25,7 @@ extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src);
  */
 CMenuShopBuy::CMenuShopBuy(CScn* scene, u32 arg)
     : mScene(scene), mField60(arg), mBgTex(0), mTitleAHelp(0, 0) {
-    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0, 0);
+    new (mItemBoxLine) CItemBoxLine(0, 0);
 
     mState = 0;
     mFloat6FC = lbl_eu_80667A20;
@@ -37,7 +37,7 @@ CMenuShopBuy::CMenuShopBuy(CScn* scene, u32 arg)
  * are destroyed by the compiler after this body.
  */
 CMenuShopBuy::~CMenuShopBuy() {
-    __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), -1);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->CItemBoxLine::~CItemBoxLine();
 }
 
 void CMenuShopBuy::Init() {
@@ -61,7 +61,7 @@ void CMenuShopBuy::Init() {
     // typed temp and union member keep every access self/sp-relative so MWCC
     // needs no cached base pointers (retail saves only r30/r31).
     ShopBuyItemBoxLine tmpLine;
-    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(&tmpLine), (u16)mField60, 1);
+    new (&tmpLine) CItemBoxLine((u16)mField60, 1);
 
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion04, &tmpLine.mData.mRegion04);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion14, &tmpLine.mData.mRegion14);
@@ -201,15 +201,15 @@ void CMenuShopBuy::Init() {
 
     // Reset the real member and register the render callback (same
     // `if (this)` IScnRender idiom as Term).
-    ItemBoxLine_ResetTabBytes(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 2);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 4);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 5);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 6);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 7);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 8);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0xd);
-    ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->ResetTabBytes();
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(2);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(4);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(5);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(6);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(7);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(8);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(0xd);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->LoadFiles();
 
     addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 0xd, 0);
 }
@@ -225,7 +225,7 @@ void CMenuShopBuy::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    ItemBoxLine_UnloadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->UnloadFiles();
 
     lbl_eu_806642F8 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -256,7 +256,7 @@ void CMenuShopBuy::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    ItemBoxLine_UpdateStates(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->UpdateStates();
     updateHelp(&mTitleAHelp);
 }
 
@@ -270,7 +270,7 @@ void CMenuShopBuy::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-    ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), &drawInfo);
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->DrawLayout(&drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
 }
 
@@ -320,9 +320,9 @@ extern "C" bool ShopBuy_HasInstance() { return lbl_eu_806642F8 != 0; }
 extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
         if (isInitialized(&self->mTitleAHelp) != 0) {
-            if (ItemBoxLine_GetSelectReady(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->GetSelectReady() != 0) {
                 func_801C412C(&self->mTitleAHelp);
-                ItemBoxLine_OpenLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->OpenLine();
                 self->mState = 1;
                 playUISound(0x6d);
             }
@@ -334,7 +334,7 @@ extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
 // is ready, move to the next phase.
 extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
             self->mState = 2;
         }
     }
@@ -355,86 +355,86 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
         // Pointer input enabled: turbo flags move the cursor, pressed flags
         // run the confirm/cancel flow. The item-box pointer is recomputed per
         // call (addi r3,r31,0xbc) exactly like retail - no cached local.
-        ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(0);
         if ((pad->mTurboFlags & 0x02000000) &&
-            ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
             code80135FDC_getByte_64077() > 1) {
-            ItemBoxLine_Info2SelectPrev(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectPrev();
         } else if ((pad->mTurboFlags & 0x04000000) &&
-                   ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+                   reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
                    code80135FDC_getByte_64077() > 1) {
-            ItemBoxLine_Info2SelectNext(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectNext();
         } else if (pad->mPressedFlags & 0x00200000) {
-            ItemBoxLine_ResolveEntry(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveEntry();
         } else if (pad->mPressedFlags & 0x00400000) {
-            if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
-                ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() != 0) {
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ConfirmOverlayOrHint();
             } else {
                 beginClose(&self->mTitleAHelp);
-                ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->LeaveState3();
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
-            ItemBoxLine_CursorPageBack(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageBack();
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            ItemBoxLine_CursorPageDown(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDown();
         } else if (pad->mTurboFlags & 0x2001) {
-            ItemBoxLine_CursorPageUp(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageUp();
         } else if (pad->mTurboFlags & 0x4002) {
-            ItemBoxLine_CursorPageDownRow(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDownRow();
         } else if (pad->mPressedFlags & 0x200) {
-            ItemBoxLine_ShowDetailWin(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ShowDetailWin();
         } else if (pad->mPressedFlags & 0x400) {
-            ItemBoxLine_RefreshTabSelect(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->RefreshTabSelect();
         }
     } else {
         // Pointer input disabled: pad-held/pressed bits drive the flow, and
         // the inner A/B chain exits straight to the shared refresh.
-        ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0);
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(0);
         if ((pad->mHeldFlags & 0x1000) &&
-            ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
             code80135FDC_getByte_64077() > 1) {
             if (self->mFloat6FC > lbl_eu_80667A24) playUISound(2);
             self->mFloat6FC = lbl_eu_80667A20;
-            ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 1);
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(1);
             if (pad->mTurboFlags & 0x2001) {
-                ItemBoxLine_Info2SelectPrev(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectPrev();
             } else if (pad->mTurboFlags & 0x4002) {
-                ItemBoxLine_Info2SelectNext(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectNext();
             }
         } else if (pad->mPressedFlags & 0x10) {
-            ItemBoxLine_ResolveEntry(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveEntry();
         } else if (pad->mPressedFlags & 0x20) {
-            if (ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
-                ItemBoxLine_ConfirmOverlayOrHint(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() != 0) {
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ConfirmOverlayOrHint();
             } else {
                 beginClose(&self->mTitleAHelp);
-                ItemBoxLine_LeaveState3(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->LeaveState3();
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
-            ItemBoxLine_CursorPageBack(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageBack();
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            ItemBoxLine_CursorPageDown(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDown();
         } else if (pad->mTurboFlags & 0x2001) {
-            ItemBoxLine_CursorPageUp(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageUp();
         } else if (pad->mTurboFlags & 0x4002) {
-            ItemBoxLine_CursorPageDownRow(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDownRow();
         } else if (pad->mPressedFlags & 0x200) {
-            ItemBoxLine_ShowDetailWin(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ShowDetailWin();
         } else if (pad->mPressedFlags & 0x40) {
-            ItemBoxLine_RefreshTabSelect(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->RefreshTabSelect();
         }
     }
     func_801C41E8(&self->mTitleAHelp,
-                  ItemBoxLine_ResolveFocusId(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
+                  reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveFocusId());
 }
 
 // Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
             self->mField54 = 1;
         }
     }

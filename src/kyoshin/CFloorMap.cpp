@@ -45,7 +45,6 @@ extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" void CScrollBar_draw(void* scrollBar, void* drawInfo);
 extern "C" void sysWinDrawLayout(void* sysWin, void* drawInfo);
 extern "C" void Cur_DrawLayout(void* cursor, void* drawInfo);
 
@@ -164,7 +163,7 @@ void FloorMap_CursorDown(void* self) {
             ->pane->SetTranslate(*(nw4r::math::VEC3*)&dest);
     }
 
-    CScrollBar_PlaceThumb(cur->field_3134, cur->field_0B);
+    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb(cur->field_0B);
 }
 
 // Retail keeps this helper's symbol unmangled.
@@ -217,7 +216,7 @@ extern "C" void FloorMap_CursorPageDown(void* self) {
         target->pane->SetTranslate(dest);
     }
 
-    CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
+    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
 }
 
 // Select the floor-map row whose map-row id matches val
@@ -286,7 +285,7 @@ void FloorMap_SetCursorState(void* self, u16 val) {
                 target->pane->SetTranslate(dest);
             }
 
-            CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
+            reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
             break;
         }
         i++;
@@ -525,13 +524,12 @@ void FloorMap_RebuildMarkers(void* self) {
         vec[0] = lbl_eu_80668768;
         vec[1] = lbl_eu_8066876C;
         vec[2] = lbl_eu_80668764;
-        CScrollBar_InitRootPane(cur->field_3134, vec);
+        reinterpret_cast<CScrollBar*>(cur->field_3134)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
         CFloorMapFloorEntry* entries2 = (CFloorMapFloorEntry*)cur->_0C;
-        CScrollBar_UpdateThumb(cur->field_3134, 5,
-                      reinterpret_cast<CFloorMapFloorEntryView*>(&entries2[cur->field_09])->count);
-        CScrollBar_PlaceThumb(cur->field_3134, 0);
+        reinterpret_cast<CScrollBar*>(cur->field_3134)->UpdateThumb(5, reinterpret_cast<CFloorMapFloorEntryView*>(&entries2[cur->field_09])->count);
+        reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb(0);
     }
-    CScrollBar_requestScrollIn(cur->field_3134);
+    reinterpret_cast<CScrollBar*>(cur->field_3134)->requestScrollIn();
 }
 
 // Stub for the floor-map cursor refresh (retail 0x802483B8, not a target).
@@ -2730,7 +2728,7 @@ CFloorMap::CFloorMap() {
         dst->mThumbHeight = sb->mThumbHeight;
         dst->mContentHeight = sb->mContentHeight;
         dst->mDirection = sb->mDirection;
-        sb->~CScrollBar();
+        sb->CScrollBar::~CScrollBar();
     }
 
     // Rebuild the +0xB8 system window from a stack temp (kind 3).
@@ -2927,7 +2925,7 @@ void FloorMap_UpdateFrame(void* self) {
         if (t <= lbl_eu_80668764) p->field_41 = 1;
     }
 
-    CScrollBar_UpdateDispatch(&p->mScrollBar);
+    reinterpret_cast<CScrollBar*>(&p->mScrollBar)->UpdateDispatch();
     Cur_Update(&p->mCursor);
     sysWinDispatchPhase(&p->mSysWinB8);
     sysWinDispatchPhase(&p->mSysWinF4);
@@ -3089,7 +3087,7 @@ void FloorMap_Draw(void* self, void* drawInfo) {
             drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
     if (p->field_208)
-        CScrollBar_draw((void*)&p->mScrollBar, drawInfo);
+        reinterpret_cast<CScrollBar*>(&p->mScrollBar)->draw(static_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     if (p->field_333C && p->mLayout3334)
         drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     sysWinDrawLayout((void*)&p->mSysWinB8, drawInfo);
@@ -3129,7 +3127,7 @@ void FloorMap_Teardown(CFloorMapFull* p) {
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->deleteRegion();
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->deleteRegion();
 
-        CScrollBar_Teardown((void*)p->mScrollBar);
+        reinterpret_cast<CScrollBar*>((void*)p->mScrollBar)->Teardown();
         ((CBaseCur*)&p->mCursor)->cleanup();
         sysWinTermLayout((void*)&p->mSysWinB8);
         sysWinTermLayout((void*)&p->mSysWinF4);
@@ -3183,8 +3181,7 @@ void FloorMap_Teardown(CFloorMapFull* p) {
 }
 
 u8 FloorMap_GetField42Gated(void* self) {
-    extern int CScrollBar_isVisible(void*);
-    if (CScrollBar_isVisible((u8*)self + 0x60)) {
+    if (reinterpret_cast<CScrollBar*>((u8*)self + 0x60)->isVisible()) {
         return *(u8*)((u8*)self + 0x42);
     }
     return 0;
@@ -3234,9 +3231,9 @@ void FloorMap_UpdateRowPanePos(void* self) {
         scl[0] = lbl_eu_80668768;
         scl[1] = lbl_eu_8066876C;
         scl[2] = lbl_eu_80668764;
-        CScrollBar_InitRootPane((void*)p->field_3330, scl);
-        CScrollBar_UpdateThumb((void*)p->field_3330, 5, FM_FLOOR(p)->field_514);
-        CScrollBar_PlaceThumb((void*)p->field_3330, 0);
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(scl));
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->UpdateThumb(5, FM_FLOOR(p)->field_514);
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb(0);
     }
 
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
@@ -3342,10 +3339,9 @@ void FloorMap_CursorNextFloor(void* self) {
 
     if (p->field_3330) {
         f32 vec[3] = {lbl_eu_80668768, lbl_eu_8066876C, lbl_eu_80668764};
-        CScrollBar_InitRootPane((void*)p->field_3330, vec);
-        CScrollBar_UpdateThumb((void*)p->field_3330, 5,
-                      ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_514);
-        CScrollBar_PlaceThumb((void*)p->field_3330, 0);
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->UpdateThumb(5, ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_514);
+        reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb(0);
     }
 
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
@@ -3718,7 +3714,7 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
         ((CFloorMapLayoutHolder*)p->mLayout3304)->pane->SetTranslate(
             *(nw4r::math::VEC3*)&dest);
 
-    CScrollBar_PlaceThumb((void*)p->field_3330, (u16)(s8)p->field_207);
+    reinterpret_cast<CScrollBar*>((void*)p->field_3330)->PlaceThumb((u16)(s8)p->field_207);
 
     // Resolve the map-row id under the cursor (0 when the page index wrapped).
     u16 rowId = 0;
@@ -4243,7 +4239,6 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void CScrollBar_loadLayoutArc(void*);
 
 // Size-optimized region: the shared string-table copy below must keep its
 // rolled mtctr/bdnz + lwzu/stwu form (under -O4,p it unrolls).
@@ -4279,7 +4274,7 @@ void FloorMap_LoadMapFiles(void* self) {
     handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     u8 idx = lbl_eu_80664798;
     *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, namebuf[idx - 1], self, 0, 0);
-    CScrollBar_loadLayoutArc(p + 0x60);
+    reinterpret_cast<CScrollBar*>(p + 0x60)->loadLayoutArc();
     // Invoke loadSystemArc (vtable +0x88) on each embedded sys-win subobject.
     ((CSysWin*)(p + 0xB8))->loadSystemArc();
     ((CSysWin*)(p + 0xF4))->loadSystemArc();
@@ -5149,5 +5144,5 @@ void FloorMap_CursorUp(void* self) {
         target->pane->SetTranslate(dest);
     }
 
-    CScrollBar_PlaceThumb(cur->field_3134, (u16)cur->field_0B);
+    reinterpret_cast<CScrollBar*>(cur->field_3134)->PlaceThumb((u16)cur->field_0B);
 }

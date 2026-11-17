@@ -3,6 +3,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuItemExchange.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CTaskGame.hpp"
 
 #include <revolution/GX.h>
@@ -68,7 +69,7 @@ __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
 
     __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__11CTitleAHelpFPcUc(&self->mTitleAHelp, 0, 0);
-    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0, 0);
+    new (self->mItemBoxLine) CItemBoxLine(0, 0);
     __ct__CItemBoxGrid(&self->mItemBoxGrid, 0, 0, 0, 1);
 
     const f32 initTimer = lbl_eu_80667E78;
@@ -132,22 +133,22 @@ void CMenuItemExchange::Init() {
     // tab entries (retail call order 2,4,5,6,7,8,0xb,3,0xa) and finish the
     // line setup.
     u8 tmpLineRaw[0x63C];
-    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(tmpLineRaw), (u16)mField74, 2);
+    new (tmpLineRaw) CItemBoxLine((u16)mField74, 2);
     ItemEx_CopyLine(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]),
                   reinterpret_cast<CItemBoxLine*>(tmpLineRaw));
     __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(tmpLineRaw), -1);
 
-    ItemBoxLine_ResetTabBytes(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 2);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 4);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 5);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 6);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 7);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 8);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xb);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 3);
-    ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]), 0xa);
-    ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0]));
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->ResetTabBytes();
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(2);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(4);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(5);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(6);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(7);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(8);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(0xb);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(3);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->PushTabByte(0xa);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->LoadFiles();
 
     // Item-box grid: temp CItemBoxGrid -> copy -> destroy, then register the
     // two tab lists.
@@ -255,7 +256,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     ShopBuy_CopyData(&dest->info2D0[0xB0], &src->info2D0[0xB0]);
 
     InfoCfCopyObjD4(&dest->numSel2DC[0], &src->numSel2DC[0]);
-    copyScrollBarData(&dest->scrollBar310[0], &src->scrollBar310[0]);
+    *reinterpret_cast<CScrollBar*>(&dest->scrollBar310[0]) = *reinterpret_cast<const CScrollBar*>(&src->scrollBar310[0]);
     InfoCfCopySysWin(&dest->sysWin350[0], &src->sysWin350[0]);
 
     // Tab-page state block.
@@ -296,7 +297,6 @@ extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBo
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void BgTex_Release_3D9C(void*);
 extern "C" void teardown(void*);
-extern "C" void ItemBoxLine_UnloadFiles(void*);
 extern "C" void UnloadItemBox(void*);
 extern u32 lbl_eu_80664428;
 
@@ -309,7 +309,7 @@ void CMenuItemExchange::Term() {
     mScene->removeRenderCB(render);
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    ItemBoxLine_UnloadFiles(&mItemBoxLine[0]);
+    reinterpret_cast<CItemBoxLine*>(&mItemBoxLine[0])->UnloadFiles();
     UnloadItemBox(&mItemBoxGrid);
     lbl_eu_80664428 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -357,7 +357,7 @@ body:
     case 8: ItemEx_GateFrom8(this); break;
     }
     BgTex_Tick_3D54(&mBgTex);
-    ItemBoxLine_UpdateStates(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
+    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->UpdateStates();
     UpdateItemBox(&mItemBoxGrid);
     updateHelp(&mTitleAHelp);
 }
@@ -383,8 +383,7 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-        ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine),
-                      &drawInfo);
+        reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->DrawLayout(&drawInfo);
         DrawItemBoxGrid(&mItemBoxGrid, &drawInfo);
         drawHelp(&mTitleAHelp, &drawInfo);
     }
@@ -422,9 +421,9 @@ u8 ItemEx_GetFlagByte() { return lbl_eu_8066442C; }
 __declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
         isInitialized(&self->mTitleAHelp) != 0 &&
-        ItemBoxLine_GetSelectReady(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->GetSelectReady() != 0) {
         func_801C412C(&self->mTitleAHelp);
-        ItemBoxLine_OpenLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->OpenLine();
         LoadItemBoxFiles(&self->mItemBoxGrid);
         self->field_5118 = 1;
         playUISound(0x6d);
@@ -435,7 +434,7 @@ __declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
  * line is ready, advance the menu to phase 2 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom1(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
         self->field_5118 = 2;
     }
 }
@@ -446,7 +445,7 @@ __declspec(noinline) void ItemEx_Phase2Idle(CMenuItemExchange* self){}
  * advances the menu to phase 1 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->field_64 = 1;
     }
@@ -457,14 +456,14 @@ __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
  * advance to phase 5, kicking menu-op 0x6d. */
 __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0 &&
         IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
         if (!(self->mFloat5120 <= lbl_eu_80667E7C)) {
             self->mFloat5120 = lbl_eu_80667E78;
             func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
             SetInfoMsgId(&self->mItemBoxGrid,
-                          ItemBoxLine_TouchTabEntryItem(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
+                          reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->TouchTabEntryItem());
             reopenFromClose(&self->mTitleAHelp);
             InitItemDisplay(&self->mItemBoxGrid);
             self->field_5118 = 5;
@@ -552,7 +551,7 @@ __declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
         GetField61(&self->mItemBoxGrid) != 0) {
         func_801C41E8(&self->mTitleAHelp, 0);
         reopenFromClose(&self->mTitleAHelp);
-        ItemBoxLine_OpenLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->OpenLine();
         self->field_5118 = 8;
     }
 }
@@ -561,7 +560,7 @@ __declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
  * item-box line) advancing the menu to phase 2. */
 __declspec(noinline) void ItemEx_GateFrom8(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
         self->field_5118 = 2;
     }
 }

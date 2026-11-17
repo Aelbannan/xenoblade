@@ -4,8 +4,6 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
-// vtable at lbl_eu_80535CF8
-extern "C" void* lbl_eu_80535CF8[];
 
 // Opaque item-object handle. `void*` is banned by TU lint; a typedef of
 // void keeps MWCC's mangled form (`Pv`) and emitted bytes identical.
@@ -114,6 +112,8 @@ public:
     /* 0x50 */ u8 mIsActive;               // Active flag; set when layout initialised
     u8 func_8021A8EC() const { return mIsActive; }
     /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0->1
+    /* 0x52 */ s16 mUnk52[4];              // not touched by this class's code (copied by
+    /* 0x5A */ s16 mUnk5A[4];              // CMCCrystalBox's implicit assignment)
 };
 
 // ---------------------------------------------------------------------------
@@ -148,8 +148,6 @@ extern s16 lbl_eu_806646F8[4];
 extern s16 lbl_eu_80664700[4];
 extern s16 lbl_eu_80664708[4];
 extern s16 lbl_eu_80664710[4];
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).

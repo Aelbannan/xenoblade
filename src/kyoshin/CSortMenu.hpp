@@ -3,31 +3,12 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
+#include "kyoshin/CScrollBar.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+
 class CFileHandle;
 class CEventFile;
-class CScrollBar;
-
-// Mirror of the CScrollBar layout (0x40 bytes) for raw field access in
-// CSortMenu; the real CScrollBar.hpp cannot be included here (its extern
-// ctor stub conflicts with the member ctor from UnkClass_8045F564.hpp).
-struct CScrollBarData {
-    void* mVtbl;         // +0x00
-    u32 mMemRegion[4];   // +0x04 (UnkClass_8045F564)
-    void* mFileHandle;   // +0x14
-    void* mAccessor;     // +0x18
-    void* mLayout;       // +0x1C
-    void* mAnimTrans;    // +0x20
-    u8 mReady;           // +0x24
-    u8 mVisible;         // +0x25
-    u8 mState;           // +0x26
-    u8 mActive;          // +0x27
-    f32 mAnimOffset;     // +0x28
-    f32 mScrollPosY;     // +0x2C
-    f32 mScrollRatio;    // +0x30
-    f32 mThumbHeight;    // +0x34
-    f32 mContentHeight;  // +0x38
-    u8 mDirection;       // +0x3C
-};
 
 // Mirror of nw4r::lyt::Pane's size fields (mSize @ +0x4C: width, height).
 // nw4r hides these members (protected); used for raw field access in matching.
@@ -59,84 +40,61 @@ public:
     virtual u32 getResource();  // +0x24
 };
 
-class CSortMenu {
+/* Pop-up sort-order list (up to 32 entries, 5 visible rows) with its own
+layout archive and scroll bar. Receives the archive through
+IWorkEvent::OnFileEvent (retail __RTTI__9CSortMenu, IWorkEvent base list).
+
+mState: 0 closed, 1 opening, 2 open-info anim, 3 open/idle, 4 closing-info,
+5 closing. */
+class CSortMenu : public IWorkEvent {
 public:
-    CSortMenu();
-    virtual ~CSortMenu();
-    void func_801D3518(int value);
-    u8 sortMenuIsVisible28();
-    u8 sortMenuGetFlag2B();
-    int OnFileEvent(CEventFile* event);
-    u8 sortMenuGetPageSum();
-    u8 sortMenuGetPageIdx();
-    u8 sortMenuGetSubPageIdx();
-
-    // Layout (from retail ASM):
-    // +0x00: vtable (IWorkEvent / CSortMenu shared)
-    // +0x04: UnkClass_8045F564 sub-object (0x10 bytes)
-    // +0x14: CFileHandle* mFileHandle
-    // +0x18: ArcResourceAccessor* mArcResAcc
-    // +0x1C: Layout* mpLayout
-    // +0x20: AnimTransform* mpAnimTrans0
-    // +0x24: AnimTransform* mpAnimTrans1
-    // +0x28: u8 field_0x28 (active flag)
-    // +0x29: u8 field_0x29 (layout loaded flag)
-    // +0x2A: u8 field_0x2A (state)
-    // +0x2B: u8 field_0x2B (button flag)
-    // +0x2C: CScrollBar mScrollBar (0x40 bytes)
-    // +0x6C: s32 mArray[32] (0x80 bytes)
-    // +0xEC: u8 mCount
-    // +0xED: u8 mPage
-    // +0xEE: u8 mSubPage
-
-    u8 _04[0x10];               // +0x04: UnkClass_8045F564
-    CFileHandle* mFileHandle;   // +0x14
+    UnkClass_8045F564 mMemRegion;               // +0x04
+    CFileHandle* mFileHandle;                   // +0x14
     nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x18
     nw4r::lyt::Layout* mpLayout;                // +0x1C
-    nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x20
-    nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x24
-    u8 field_0x28;              // +0x28
-    u8 field_0x29;              // +0x29
-    u8 field_0x2A;              // +0x2A
-    u8 field_0x2B;              // +0x2B
-    CScrollBarData mScrollBar;  // +0x2C: CScrollBar
-    s32 mArray[32];             // +0x6C: 32 entries
-    u8 mCount;                  // +0xEC
-    u8 mPage;                   // +0xED
-    u8 mSubPage;                // +0xEE
+    nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x20 open/close
+    nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x24 info in/out
+    u8 mOpen;                                   // +0x28 visible / running
+    u8 mLoaded;                                 // +0x29 layout built
+    u8 mState;                                  // +0x2A
+    u8 mIdle;                                   // +0x2B accepts input
+    CScrollBar mScrollBar;                      // +0x2C
+    const char* mEntries[32];                   // +0x6C
+    u8 mCount;                                  // +0xEC
+    u8 mCursor;                                 // +0xED visible row
+    u8 mTop;                                    // +0xEE first visible entry
+
+    CSortMenu();
+    virtual ~CSortMenu();
+
+    void Init();
+    void Move();
+    void Draw(nw4r::lyt::DrawInfo* drawInfo);
+    void Term();
+    int IsReady();
+    int IsOpen();
+    int IsIdle();
+    void Open();
+    void Close();
+    void SetPos(const nw4r::math::VEC3* pos);
+    nw4r::math::VEC3 GetCursorPos();
+    void Clear();
+    void Add(const char* entry);
+    void SetSelect(u8 select);
+    void CursorUp();
+    void CursorDown();
+    void PageUp();
+    void PageDown();
+    u8 GetSelect();
+    int GetCursor();
+    int GetTop();
+    void CalcSelect(int category, u8* outCursor, u8* outTop);
+    void StateOpen();
+    void StateOpenInfo();
+    void StateCloseInfo();
+    void StateClose();
+    void Refresh();
+
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 };
 
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* lbl_eu_805349D0[];  // CSortMenu vtable
-extern "C" void* lbl_eu_805349B8[];  // String table for sort menu pane names
-
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" u32 CItemBlock_getFlag120EC(int);
-
-// CScrollBar functions
-extern "C" void __ct__10CScrollBarFUc(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void CScrollBar_loadLayoutArc(void*);
-extern "C" void CScrollBar_UpdateDispatch(void*);
-extern "C" void CScrollBar_draw(void*, void*);
-extern "C" void CScrollBar_Teardown(void*);
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" void CScrollBar_InitRootPane(void*, void*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
-extern "C" void CScrollBar_requestScrollIn(void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_PlaceThumb(void*, int);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);

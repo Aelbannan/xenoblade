@@ -8,6 +8,7 @@
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "kyoshin/CScrollBar.hpp"       // CScrollBar (real class: ctor/dtor emitted by the compiler)
+#include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/CBaseCur.hpp"         // CCur18 cursor member
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
@@ -15,38 +16,6 @@
 
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
 void playUISound(u32);
-
-// Minimal CSortMenu: the full class (CSortMenu.hpp) cannot be included here
-// because its extern "C" UnkClass_8045F564 stubs collide with the real
-// UnkClass header. Field layout matches CSortMenu.hpp (0xF0 bytes). The retail
-// ctor symbol is the unmangled __ct__CSortMenu (called from the inline ctor);
-// the dtor is the out-of-line retail __dt__9CSortMenuFv.
-extern "C" void __ct__CSortMenu(void* self);
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src);
-
-class CSortMenu {
-public:
-    CSortMenu() { __ct__CSortMenu(this); }
-    ~CSortMenu();
-
-    void* mVtbl;                // 0x00
-    u8 mRegion[0x10];           // 0x04: UnkClass_8045F564
-    void* mFileHandle;          // 0x14
-    void* mArcResAcc;           // 0x18
-    void* mLayout;              // 0x1C
-    void* mAnim0;               // 0x20
-    void* mAnim1;               // 0x24
-    u8 mFlag28;                 // 0x28
-    u8 mFlag29;                 // 0x29
-    u8 mFlag2A;                 // 0x2A
-    u8 mFlag2B;                 // 0x2B
-    u8 mScrollBar[0x40];        // 0x2C: CScrollBar body
-    u32 mArray[32];             // 0x6C
-    u8 mCount;                  // 0xEC
-    u8 mPage;                   // 0xED
-    u8 mSubPage;                // 0xEE
-    u8 mPad;                    // 0xEF
-};
 
 // Tutorial id table: the ids of every unlocked tutorial in display order plus
 // the page/scroll split of the selected entry.
@@ -57,6 +26,7 @@ struct CTutorialIdTable {
     s16 mScrollBase;  // 0x104: scroll offset of the selected entry's page
 
     CTutorialIdTable();
+    ~CTutorialIdTable();
     void Rebuild(u16 target, int filter);
     u16 GetEntryIdAt(u16 index);
 };
@@ -115,7 +85,7 @@ public:
     nw4r::lyt::AnimTransform* mAnim28;    // 0x28
     CCur18 mCursor;                       // 0x2C
     CScrollBar mScrollBar;                // 0x44
-    CSortMenu mSortMenu;         // 0x84: CSortMenu (0xF0)
+    CSortMenu mSortMenu;                  // 0x84
     u8 mField174;                         // 0x174: run/visible gate byte
     u8 mState175;                         // 0x175: anim/state byte
     u8 mField176;                         // 0x176: visible-selection byte

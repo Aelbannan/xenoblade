@@ -21,7 +21,7 @@
   "main/kyoshin/menu/CMenuBattleChain": 3,
   "main/kyoshin/menu/CMenuOption": 2,
   "main/kyoshin/menu/CMenuPTState": 1,
-  "main/kyoshin/realtimeevt/CREvtLight": 2,
+  "main/kyoshin/realtimeevt/CREvtLight": 1,
   "main/monolib/src/lib/CLibCriMoviePlay": 5,
   "main/monolib/src/lib/CLibCriStreamingPlay": 4,
   "main/monolib/src/lib/CLibLayout": 1,

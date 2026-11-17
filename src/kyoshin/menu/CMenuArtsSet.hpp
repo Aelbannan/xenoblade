@@ -198,7 +198,7 @@ public:
     u8  field_0x25;
     u8  field_0x26;
     u8  field_0x27;
-    u8* field_0x28;     // 0x28 scrollbar/table object passed to CScrollBar_PlaceThumb
+    u8* field_0x28;     // 0x28 scrollbar/table object (CScrollBar::PlaceThumb this)
     u8 mTable[0x100];   // 0x2C-0x12B
     u8 field_0x12C;     // 0x12C
     u8 field_0x12D;     // 0x12D

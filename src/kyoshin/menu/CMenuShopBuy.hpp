@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/CItemBoxLine.hpp"
+
 #include <types.h>
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
@@ -12,7 +14,6 @@
 // CMenuBattleEnd); the CItemBoxLine storage member is an opaque byte region
 // because CItemBoxLine's declared sizeof differs from its retail extent.
 class CScn;
-class CItemBoxLine;
 
 // 8-byte pane-colour vector: CItemBoxLine.hpp references this type but relies
 // on includers having seen it first (CEquipItemBox.hpp owns the canonical
@@ -198,37 +199,15 @@ extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);
-extern "C" void ItemBoxLine_UnloadFiles(CItemBoxLine* self);
-extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);
 
 // ShopBuy_HandleInput pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int MenuTutorialIsCreated();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
-extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
-extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ResolveEntry(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
-extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageBack(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
-extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ShowDetailWin(CItemBoxLine* self);
-extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
-extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
-extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
-extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
-extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
-extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
@@ -239,7 +218,6 @@ extern const f32 lbl_eu_80667A24;  // .sdata2 float pool constants (timer inc/cl
 extern const f32 lbl_eu_80667A28;
 
 // Subobject ctors/dtors (retail keeps the unmangled names).
-extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine*, int);
 
 // Subobject draw/update hooks called by Move / cbRenderBefore (retail names
@@ -248,8 +226,6 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);
-extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // DrawInfo setup helper (C++ mangled name).
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);

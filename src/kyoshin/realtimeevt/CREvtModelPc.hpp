@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/realtimeevt/CREvtModel.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -8,50 +9,49 @@
 
 class CScnItemModel;
 
-// Flattened layout of the retail CREvtModelPc object. The retail class
-// inherits cf::CREvtObj / CREvtModel / IWorkEvent, but the base headers'
-// member-function-pointer field compiles to 16 bytes vs retail's 12-byte
-// __ptmf (same issue as CREvtModelMap), so the base region is declared
-// explicitly to hold the retail offsets.
-class CREvtModelPc {
+namespace cf {
+
+// cf::CREvtModelPc - realtime-event party-character model (kind 2, 0xB4
+// bytes). Bases (retail vtable 0x805321F0 + RTTI base list): public
+// cf::CREvtModel at 0x00, private IWorkEvent at 0x38. OnFileEvent overrides
+// only the IWorkEvent slot, so MWCC appends its direct entry after the
+// IWorkEvent vtable (the secondary slot holds the @56@ thunk).
+//
+// Six file slots (0 = model, 1-4 = parts, 5 = optional extra): packed
+// resource token, pending read request, loaded data and load status
+// (1 = arena, 2 = archive heap, 3 = streamed MEM2).
+class CREvtModelPc : public CREvtModel, IWorkEvent {
 public:
-    // cf::CREvtObj base region (0x00-0x13)
-    /* 0x00 */ void* vtable;
-    /* 0x04 */ u32 mType;
-    /* 0x08 */ u32 mCallback[3];      // __ptmf triplet
+    CREvtModelPc(void* pData);
+    virtual ~CREvtModelPc();
+    virtual int vfunc_0C();
+    virtual int vfunc_14();
+    virtual bool isBusy();
+    virtual int vfunc_20();
+    virtual void vfunc_24();
+    virtual void setEventData(void* pData, void* pModelData);
+    virtual int reset();
+    virtual void releaseAnims();
+    virtual bool OnFileEvent(CEventFile* pEvent);
 
-    // CREvtModel base region (0x14-0x37)
-    /* 0x14 */ u32 mField14;
-    /* 0x18 */ u32 mFlags;
-    /* 0x1C */ void* mParent;
-    /* 0x20 */ CScnItemModel* mModel;
-    /* 0x24 */ void* mData24;
-    /* 0x28 */ void* mPtr28;
-    /* 0x2C */ s32 mField2C;
-    /* 0x30 */ s32 mField30;
-    /* 0x34 */ s32 mField34;
+    // mCallback states (installed as ptmf constants).
+    void initCounter();
+    void loadFiles();
+    void checkLoaded();
+    void updatePos();
 
-    // IWorkEvent subobject + derived fields
-    /* 0x38 */ void* vtableIWork;     // IWorkEvent vtable (primary + 0x44)
+    void createModel();
 
-    void EvtModelPc_Reset();
-    void EvtModelPc_InitCounter();
-    void EvtModelPc_LoadFiles();
-    void EvtModelPc_CheckLoaded();
-    void EvtModelPc_UpdatePos();
-    void EvtModelPc_CreateModel();
-    void EvtModelPc_Dispatch(int r4, int r5);
-    int EvtModelPc_IsFileLoaded();
-    int EvtModelPc_IsReady();
-    int EvtModelPc_Cancel();
-    int EvtModelPc_IsActive();
-
-    // File slots (6 slots: 0..5)
-    CFileHandle* mFileHandle[6]; // 0x3C
-    CFileHandle* mFileReq[6];    // 0x54
-    void* mData[6];              // 0x6C
-    u32 mStatus[6];              // 0x84
-    f32 mSpeed;                  // 0xA8
-    u8 mLoaded;                  // 0xAC
-    s32 mCounter;                // 0xB0
+    /* 0x3C */ u32 mFileHandle[6];      // packed resource tokens
+    /* 0x54 */ CFileHandle* mFileReq[6];
+    /* 0x6C */ void* mData[6];
+    /* 0x84 */ s32 mStatus[6];
+    /* 0x9C */ u8 _pad9C[0xA8 - 0x9C];  // never accessed by this TU
+    /* 0xA8 */ f32 mSpeed;
+    /* 0xAC */ u8 mLoaded;
+    /* 0xB0 */ s32 mCounter;
 };
+
+} // namespace cf
+
+using cf::CREvtModelPc;

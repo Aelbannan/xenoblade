@@ -2,6 +2,7 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/CCol6CheckBat.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/CTaskGame.hpp"
 // Forward-declare cf::CfGameManager before the include chain pulls in
@@ -405,40 +406,9 @@ void CCol6Hint::Init() {
     mField88 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_80662358, evt, 0, 0);
 
-    // Raw-storage temp so the retail (short) CScrollBar ctor symbol binds at
-    // the call site (CScrollBar.hpp's member ctor would emit the mangled
-    // __ct__10CScrollBarFb name instead of retail's __ct__10CScrollBarFUc). The
-    // explicit ~CScrollBar() call emits the 1-arg __dt__10CScrollBarFv form.
-    u8 sbStorage[0x40];
-    __ct__10CScrollBarFUc(reinterpret_cast<CScrollBar*>(sbStorage), 3);
-    // Memberwise copy skipping the vptr (retail copies +0x04..+0x3C).
-    mScrollBar.mMemRegion.unk0 =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk0;
-    mScrollBar.mMemRegion.unk4 =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk4;
-    mScrollBar.mMemRegion.unk8 =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk8;
-    mScrollBar.mMemRegion.unkC =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unkC;
-    mScrollBar.mFileHandle = reinterpret_cast<CScrollBar*>(sbStorage)->mFileHandle;
-    mScrollBar.mAccessor = reinterpret_cast<CScrollBar*>(sbStorage)->mAccessor;
-    mScrollBar.mLayout = reinterpret_cast<CScrollBar*>(sbStorage)->mLayout;
-    mScrollBar.mAnimTransform =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mAnimTransform;
-    mScrollBar.mReady = reinterpret_cast<CScrollBar*>(sbStorage)->mReady;
-    mScrollBar.mVisible = reinterpret_cast<CScrollBar*>(sbStorage)->mVisible;
-    mScrollBar.mState = reinterpret_cast<CScrollBar*>(sbStorage)->mState;
-    mScrollBar.mActive = reinterpret_cast<CScrollBar*>(sbStorage)->mActive;
-    mScrollBar.mAnimOffset = reinterpret_cast<CScrollBar*>(sbStorage)->mAnimOffset;
-    mScrollBar.mScrollPosY = reinterpret_cast<CScrollBar*>(sbStorage)->mScrollPosY;
-    mScrollBar.mScrollRatio = reinterpret_cast<CScrollBar*>(sbStorage)->mScrollRatio;
-    mScrollBar.mThumbHeight = reinterpret_cast<CScrollBar*>(sbStorage)->mThumbHeight;
-    mScrollBar.mContentHeight =
-        reinterpret_cast<CScrollBar*>(sbStorage)->mContentHeight;
-    mScrollBar.mDirection = reinterpret_cast<CScrollBar*>(sbStorage)->mDirection;
-    reinterpret_cast<CScrollBar*>(sbStorage)->~CScrollBar();
+    mScrollBar = CScrollBar(3);
 
-    CScrollBar_loadLayoutArc(&mScrollBar);
+    mScrollBar.loadLayoutArc();
 }
 
 void CCol6Hint::Term() {
@@ -453,7 +423,7 @@ void CCol6Hint::Term() {
     reinterpret_cast<CScn*>(mParentPtr)->removeRenderCB(render);
 
     mFlag98 = 0;
-    CScrollBar_Teardown(&mScrollBar);
+    mScrollBar.Teardown();
     mCur18.cleanup();
 
     // D2-inlined double null-check artifact around the anim-host release:
@@ -479,7 +449,7 @@ void CCol6Hint::Move() {
     // Three-term short-circuit gate: retail emits beq/beq for the first two
     // conditions and an inverted bne-body / b-over-exit pair for the last.
     if (IsMenuState621F0() == 0 || mFlag98 == 0 ||
-        CScrollBar_isVisible(&mScrollBar) == 0) {
+        mScrollBar.isVisible() == 0) {
         return;
     }
     switch (mState) {
@@ -497,20 +467,20 @@ void CCol6Hint::Move() {
             mState = 2;
             {
                 ml::CVec3 vec3(lbl_eu_8066755C, lbl_eu_80667560, lbl_eu_80667564);
-                CScrollBar_InitRootPane(&mScrollBar, &vec3);
+                mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(&vec3));
             }
-            CScrollBar_UpdateThumb(&mScrollBar, 5, (u16)mField11C);
+            mScrollBar.UpdateThumb(5, (u16)mField11C);
             // Retail issues requestScrollIn twice in a row (two consecutive
             // bls at +0x0124/+0x012c); not a cleanup candidate.
-            CScrollBar_requestScrollIn(&mScrollBar);
-            CScrollBar_requestScrollIn(&mScrollBar);
+            mScrollBar.requestScrollIn();
+            mScrollBar.requestScrollIn();
             break;
 
         case 2:
             // Scroll bar fully in: label the pane with the player index and
             // position the cursor between the label panes.
             if (advanceAnimTransform(mField94, lbl_eu_80667558) == 0) break;
-            if (CScrollBar_isActive(&mScrollBar) == 0) break;
+            if (mScrollBar.isActive() == 0) break;
             mState = 3;
             Cur_SetVisible(&mCur18, 1);
             {
@@ -535,7 +505,7 @@ void CCol6Hint::Move() {
         case 4:
             // Scroll bar sliding out: swap the anims back and wait for done.
             if (AnimRewindFrame(mField94, lbl_eu_80667558) == 0) break;
-            if (CScrollBar_isActive(&mScrollBar) == 0) break;
+            if (mScrollBar.isActive() == 0) break;
             mAnimHost->setAnim(mField94, 0);
             mAnimHost->setAnim(mField90, 1);
             mState = 5;
@@ -565,7 +535,7 @@ void CCol6Hint::Move() {
         // Common tail: per-frame updates.
         mAnimHost->update(0);
         Cur_Update(&mCur18);
-        CScrollBar_UpdateDispatch(&mScrollBar);
+        mScrollBar.UpdateDispatch();
 }
 
 // Col6_HintOnFile_DB08 - CCol6Hint file-load completion handler: create the scratch
@@ -639,7 +609,7 @@ body:
     // visibility branch as bne-draw / b-over-return (a flat ||-chain would
     // collapse it to a single beq like the other gates).
     if (IsMenuState621F0() != 0 && mFlag98 != 0) {
-        if (CScrollBar_isVisible(&mScrollBar) != 0) {
+        if (mScrollBar.isVisible() != 0) {
             goto draw;
         }
     }
@@ -651,7 +621,7 @@ draw:
     SetWideLocAdjust(&drawInfo);
     drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
                   &drawInfo, 0, 1);
-    CScrollBar_draw(&mScrollBar, &drawInfo);
+    mScrollBar.draw(&drawInfo);
     Cur_DrawLayout(&mCur18, &drawInfo);
 }
 
@@ -819,12 +789,12 @@ extern "C" void col6HintInput(CCol6Hint* self) {
     if (up) {
         self->mState = 4;
         Cur_SetVisible(&self->mCur18, 0);
-        CScrollBar_requestScrollOut(&self->mScrollBar);
+        self->mScrollBar.requestScrollOut();
         playUISound(3);
     } else if (down) {
         self->mState = 4;
         Cur_SetVisible(&self->mCur18, 0);
-        CScrollBar_requestScrollOut(&self->mScrollBar);
+        self->mScrollBar.requestScrollOut();
         if (self->mField11C >= 5) {
             self->mField120 = 4;
             self->mField121 = (u8)(self->mField11C - 5);
@@ -885,7 +855,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         self->mCur18.setRootPaneTranslate(&vec);
-        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
+        self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
     } else if (down2) {
         // Row up with wrap: increment the row pair, resetting to 0/0 when the
@@ -937,7 +907,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         self->mCur18.setRootPaneTranslate(&vec);
-        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
+        self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
     } else if (confirm) {
         // Page down: jump one page back with wrap.
@@ -985,7 +955,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         self->mCur18.setRootPaneTranslate(&vec);
-        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
+        self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
     } else if (up2) {
         // Page up: jump one page forward with wrap.
@@ -1037,7 +1007,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         self->mCur18.setRootPaneTranslate(&vec);
-        CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
+        self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
     }
 }

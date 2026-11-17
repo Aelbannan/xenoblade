@@ -188,7 +188,6 @@ extern "C" void CItem_initKind9Rec(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
-extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 index);
 extern "C" void MakeCrystal_ClearSlotParam(void* entries, u16 idx);
 extern "C" void func_8021E888(void* entries);
 

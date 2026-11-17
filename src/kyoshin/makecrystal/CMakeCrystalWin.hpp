@@ -65,16 +65,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
 void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
 void MakeCrystalCopyDispArea(u8* dst, const u8* src);
 int MenuTutorialIsCreated();
-int getCrystalBoxSysWin(CMCCrystalBox* self);
-int isCrystalBoxReady(CMCCrystalBox* self);
-void openCrystalBox(CMCCrystalBox* self);
-void teardownCrystalBox(CMCCrystalBox* self);
-void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* drawInfo);
-int rebuildCrystalBoxSelTable(CMCCrystalBox* self);
-u8 getCrystalBoxKindA(CMCCrystalBox* self);
-u8 getCrystalBoxKindB(CMCCrystalBox* self);
 void MakeCrystalCopyBox(CMCCrystalBox* self, const CMCCrystalBox* src);
-void initCrystalBoxResources(CMCCrystalBox* self);
 int isInitialized(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);
 void beginClose(CTitleAHelp* self);
@@ -84,7 +75,9 @@ int IsMenuState621F0();
 void unregisterEffectScene(CScn* scene);
 void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene);
-void __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType);
+// CMakeCrystalWin is still a hand-built object: its ctor/dtor construct the
+// embedded CMCCrystalBox through the real member symbols.
+CMCCrystalBox* __ct__13CMCCrystalBoxFUc(CMCCrystalBox* self, u8 parentType);
 extern "C" void __ct__CLoad(CLoad* self, u8 arg);
 void __dt__21CModelDispMakeCrystalFv(CModelDispMakeCrystal* self, int flags);
 void __dt__5CLoadFv(CLoad* self, int flags);
@@ -94,7 +87,6 @@ void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 
 // C-linkage imports. The retail DOL symbols are unmangled (per the retail
 // relocs), so C++-linkage declarations would re-mangle the reloc names.
-extern "C" int getCrystalBoxActive(CMCCrystalBox* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);

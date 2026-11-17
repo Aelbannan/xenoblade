@@ -23,7 +23,7 @@ extern const float lbl_eu_80668544;
 extern const float lbl_eu_80668548;
 
 // Layout text/pane bind helper (retail 0x80137924).
-void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
+void ScalePaneWorldPos(void*, void*, void*, void*);
 
 // Pane texture/anim bind helpers used by crystalListUpdateSlot.
 extern "C" void AnimResetToFirst(void* pane, void* animRes);

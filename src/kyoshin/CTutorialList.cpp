@@ -8,6 +8,7 @@
 // keep the char decls unrenamed and rename every later (u8) expansion away.
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
 #define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
@@ -31,40 +32,8 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int KyoshinHeap_GetField44();
 
-// CScrollBar / CSortMenu / CCur18 helpers (retail stripped names; the
-// widgets are not yet real classes at these call sites, so C linkage).
-extern "C" void CScrollBar_loadLayoutArc(void*);
-extern "C" void CScrollBar_UpdateDispatch(void*);
-extern "C" void CScrollBar_draw(void*, void*);
-extern "C" void CScrollBar_Teardown(void*);
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" void CScrollBar_InitRootPane(void*, void*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
-extern "C" void CScrollBar_requestScrollIn(void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_PlaceThumb(void*, int);
 extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
-extern "C" CScrollBar* copyScrollBarData(CScrollBar* dst, const CScrollBar* src);
 
-extern "C" u32 sortMenuIsScrollbarVisible(void*);
-extern "C" int sortMenuIsVisible28(void*);
-extern "C" int sortMenuGetFlag2B(void*);
-extern "C" void sortMenuInitFileRead(void*);
-extern "C" void sortMenuDispatchState(void*);
-extern "C" void sortMenuToState4Page(void*);
-extern "C" void sortMenuPageUpStep(void*);
-extern "C" void sortMenuScrollUp(void*);
-extern "C" void sortMenuPageDownStep(void*);
-extern "C" void sortMenuScrollDown(void*);
-extern "C" void sortMenuSetLayoutPos(void*, void*);
-extern "C" void sortMenuOpenInit(void*);
-extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3*, void*);
-extern "C" u32 sortMenuGetPageIdx(void*);
-extern "C" void sortMenuResetCount(void*);
-extern "C" void func_801D3518(void*, void*);
-extern "C" void sortMenuSetPage(void*, u8);
-extern "C" void sortMenuTermCleanup(void*);
-extern "C" void sortMenuDraw(void*, void*);
 
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_SetVisible(void*, int);
@@ -103,14 +72,7 @@ __declspec(noinline) CTutorialIdTable::CTutorialIdTable() {
     mScrollBase = 0;
 }
 
-// Deleting destructor (retail __dt__802ACBF0): free self when mode > 0,
-// return self.
-extern "C" void* __dt__802ACBF0(void* self, int mode) {
-    if (self != 0 && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+CTutorialIdTable::~CTutorialIdTable() {}
 
 // Rebuild the tutorial id table: collect every active tutorial whose BDAT
 // category matches the filter (all of them when filter==0), sort ascending by
@@ -192,34 +154,8 @@ CTutorialList::CTutorialList(u16 count)
       mAnim24(0), mAnim28(0), mCursor(0), mScrollBar(0), mSortMenu(),
       mField174(0), mState175(0), mField176(0), mInitialized(1),
       mField178(0), mField17A(0), mField17C(count), mField17E(0), mIdTable() {
-    {
-        CScrollBar tmpScrollBar(1);
-        copyScrollBarData(&mScrollBar, &tmpScrollBar);
-    }
-    {
-        CSortMenu tmpMenu;
-        __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mSortMenu.mRegion, tmpMenu.mRegion);
-        mSortMenu.mFileHandle = tmpMenu.mFileHandle;
-        mSortMenu.mArcResAcc = tmpMenu.mArcResAcc;
-        mSortMenu.mLayout = tmpMenu.mLayout;
-        mSortMenu.mAnim0 = tmpMenu.mAnim0;
-        mSortMenu.mAnim1 = tmpMenu.mAnim1;
-        mSortMenu.mFlag28 = tmpMenu.mFlag28;
-        mSortMenu.mFlag29 = tmpMenu.mFlag29;
-        mSortMenu.mFlag2A = tmpMenu.mFlag2A;
-        mSortMenu.mFlag2B = tmpMenu.mFlag2B;
-        copyScrollBarData((CScrollBar*)mSortMenu.mScrollBar, (const CScrollBar*)tmpMenu.mScrollBar);
-        {
-            struct MenuArrayBlock {
-                u32 words[32];
-            };
-            *reinterpret_cast<MenuArrayBlock*>(mSortMenu.mArray) =
-                *reinterpret_cast<const MenuArrayBlock*>(tmpMenu.mArray);
-        }
-        mSortMenu.mCount = tmpMenu.mCount;
-        mSortMenu.mPage = tmpMenu.mPage;
-        mSortMenu.mSubPage = tmpMenu.mSubPage;
-    }
+    mScrollBar = CScrollBar(1);
+    mSortMenu = CSortMenu();
     mIdTable = CTutorialIdTable();
 }
 #pragma pop
@@ -234,8 +170,8 @@ void CTutorialList::TutorialList_LoadLayoutFiles() {
     mFileHandle1 = CDeviceFile::readCommonArchiveFile(
         (mtl::ALLOC_HANDLE)KyoshinHeap_GetField44(),
         "/common/jp/bdat_menu_ttrl.bin", this, 0, 0);
-    CScrollBar_loadLayoutArc(&mScrollBar);
-    sortMenuInitFileRead(&mSortMenu);
+    mScrollBar.loadLayoutArc();
+    mSortMenu.Init();
     mField176 = 0;
 }
 
@@ -259,8 +195,8 @@ void CTutorialList::TutorialList_UpdatePerFrame() {
     }
     mLayout->Animate(0);
     Cur_Update(&mCursor);
-    CScrollBar_UpdateDispatch(&mScrollBar);
-    sortMenuDispatchState(&mSortMenu);
+    mScrollBar.UpdateDispatch();
+    mSortMenu.Move();
 }
 
 // Render the tutorial list when the visible gate byte is set: draw the
@@ -270,8 +206,8 @@ void CTutorialList::TutorialList_UpdatePerFrame() {
 void CTutorialList::TutorialList_DrawVisible(nw4r::lyt::DrawInfo* drawInfo) {
     if (mField174 != 0) {
         drawLayout(mLayout, drawInfo, 0, 1);
-        CScrollBar_draw(&mScrollBar, drawInfo);
-        sortMenuDraw(&mSortMenu, drawInfo);
+        mScrollBar.draw(drawInfo);
+        mSortMenu.Draw(drawInfo);
         Cur_DrawLayout(&mCursor, drawInfo);
     }
 }
@@ -292,16 +228,16 @@ void CTutorialList::TutorialList_ReleaseResources() {
     releaseArcResourceAccessor(mAccessor);
     lbl_eu_80664BF0 = 0;
     mCursor.cleanup();
-    CScrollBar_Teardown(&mScrollBar);
-    sortMenuTermCleanup(&mSortMenu);
+    mScrollBar.Teardown();
+    mSortMenu.Term();
     mRegion.deleteRegion();
 }
 
 int CTutorialList::TutorialList_IsListVisible() {
     // Inner test written as != so MWCC emits beq-forward + li-tail like retail.
-    if (CScrollBar_isVisible(&mScrollBar) == 0)
+    if (mScrollBar.isVisible() == 0)
         return 0;
-    if (sortMenuIsScrollbarVisible(&mSortMenu) != 0)
+    if (mSortMenu.IsReady() != 0)
         return mField176;
     return 0;
 }
@@ -321,9 +257,9 @@ void CTutorialList::TutorialList_OpenListInit() {
     v[0] = 144.0f;
     v[1] = 108.0f;
     v[2] = 0.0f;
-    CScrollBar_InitRootPane(&mScrollBar, v);
-    CScrollBar_UpdateThumb(&mScrollBar, 0xa, mIdTable.mCount);
-    CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+    mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(v));
+    mScrollBar.UpdateThumb(0xa, mIdTable.mCount);
+    mScrollBar.PlaceThumb(mField17A);
     TutorialList_UpdateRowTexts();
     TutorialList_MoveCursorToRow();
 }
@@ -337,7 +273,7 @@ void CTutorialList::TutorialList_BeginClose() {
         mInitialized = 0;
         TutorialList_EnableCloseAnims();
         Cur_SetVisible(&mCursor, 0);
-        CScrollBar_requestScrollOut(&mScrollBar);
+        mScrollBar.requestScrollOut();
         playUISound(6);
     }
 }
@@ -346,12 +282,11 @@ void CTutorialList::TutorialList_BeginClose() {
 // still animating, decrement the page byte and wrap to the previous 10-row
 // block of the content.
 void CTutorialList::TutorialList_PageUpIdle() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) {
-        if (sortMenuGetFlag2B(&mSortMenu) == 0)
+    if (mSortMenu.IsOpen() != 0) {
+        if (mSortMenu.IsIdle() == 0)
             return;
-        nw4r::math::VEC3 pos;
-        sortMenuScrollUp(&mSortMenu);
-        sortMenuFormatPaneText(&pos, &mSortMenu);
+        mSortMenu.CursorUp();
+        nw4r::math::VEC3 pos = mSortMenu.GetCursorPos();
         mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-up: wrap to the previous 10-row block of the content
@@ -379,7 +314,7 @@ void CTutorialList::TutorialList_PageUpIdle() {
         }
         TutorialList_UpdateRowTexts();
         TutorialList_MoveCursorToRow();
-        CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+        mScrollBar.PlaceThumb(mField17A);
     }
     playUISound(1);
 }
@@ -387,12 +322,11 @@ void CTutorialList::TutorialList_PageUpIdle() {
 // Page up (alt): same gate shape as PageUpIdle but with different wrap
 // arithmetic on the page/selection bytes.
 void CTutorialList::TutorialList_PageUpWrap() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) {
-        if (sortMenuGetFlag2B(&mSortMenu) == 0)
+    if (mSortMenu.IsOpen() != 0) {
+        if (mSortMenu.IsIdle() == 0)
             return;
-        nw4r::math::VEC3 pos;
-        sortMenuScrollDown(&mSortMenu);
-        sortMenuFormatPaneText(&pos, &mSortMenu);
+        mSortMenu.CursorDown();
+        nw4r::math::VEC3 pos = mSortMenu.GetCursorPos();
         mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-up: step the page byte and wrap to the previous block
@@ -417,7 +351,7 @@ void CTutorialList::TutorialList_PageUpWrap() {
         }
         TutorialList_UpdateRowTexts();
         TutorialList_MoveCursorToRow();
-        CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+        mScrollBar.PlaceThumb(mField17A);
     }
     playUISound(1);
 }
@@ -425,12 +359,11 @@ void CTutorialList::TutorialList_PageUpWrap() {
 // Page down: advance one page while the sort menu is busy; otherwise wheel it
 // forward and move the cursor onto the new entry.
 void CTutorialList::TutorialList_PageDownStep() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) {
-        if (sortMenuGetFlag2B(&mSortMenu) == 0)
+    if (mSortMenu.IsOpen() != 0) {
+        if (mSortMenu.IsIdle() == 0)
             return;
-        nw4r::math::VEC3 pos;
-        sortMenuPageUpStep(&mSortMenu);
-        sortMenuFormatPaneText(&pos, &mSortMenu);
+        mSortMenu.PageUp();
+        nw4r::math::VEC3 pos = mSortMenu.GetCursorPos();
         mCursor.setRootPaneTranslate(&pos);
     } else {
         u8 count = (u8)mIdTable.mCount;
@@ -452,7 +385,7 @@ void CTutorialList::TutorialList_PageDownStep() {
         }
         TutorialList_UpdateRowTexts();
         TutorialList_MoveCursorToRow();
-        CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+        mScrollBar.PlaceThumb(mField17A);
     }
     playUISound(1);
 }
@@ -460,12 +393,11 @@ void CTutorialList::TutorialList_PageDownStep() {
 // Page down (alt): busy path wheels the menu forward; idle path advances the
 // selection by 10 and re-derives the page byte.
 void CTutorialList::TutorialList_PageDownBlock() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) {
-        if (sortMenuGetFlag2B(&mSortMenu) == 0)
+    if (mSortMenu.IsOpen() != 0) {
+        if (mSortMenu.IsIdle() == 0)
             return;
-        nw4r::math::VEC3 pos;
-        sortMenuPageDownStep(&mSortMenu);
-        sortMenuFormatPaneText(&pos, &mSortMenu);
+        mSortMenu.PageDown();
+        nw4r::math::VEC3 pos = mSortMenu.GetCursorPos();
         mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-down: advance one full 10-row block
@@ -492,7 +424,7 @@ void CTutorialList::TutorialList_PageDownBlock() {
         }
         TutorialList_UpdateRowTexts();
         TutorialList_MoveCursorToRow();
-        CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+        mScrollBar.PlaceThumb(mField17A);
     }
     playUISound(1);
 }
@@ -508,11 +440,11 @@ void CTutorialList::TutorialList_RefreshRowTexts() { TutorialList_UpdateRowTexts
 // place the sort menu there, rebuild its entries and move the cursor onto the
 // selected row.
 void CTutorialList::TutorialList_ConfirmOpenMenu() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) {
-        if (sortMenuGetFlag2B(&mSortMenu) == 0)
+    if (mSortMenu.IsOpen() != 0) {
+        if (mSortMenu.IsIdle() == 0)
             return;
         Cur_SetVisible(&mCursor, 1);
-        sortMenuToState4Page(&mSortMenu);
+        mSortMenu.Close();
         TutorialList_UpdateTitleText();
         TutorialList_MoveCursorToRow();
         playUISound(6);
@@ -526,27 +458,26 @@ void CTutorialList::TutorialList_ConfirmOpenMenu() {
                   root->FindPaneByName("nul_btn", true),
                   root->FindPaneByName("nul_proportion", true),
                   root);
-    sortMenuSetLayoutPos(&mSortMenu, &pos);
+    mSortMenu.SetPos(&pos);
     TutorialList_RebuildSortEntries();
     Cur_SetVisible(&mCursor, 1);
-    sortMenuOpenInit(&mSortMenu);
-    nw4r::math::VEC3 curPos;
-    sortMenuFormatPaneText(&curPos, &mSortMenu);
+    mSortMenu.Open();
+    nw4r::math::VEC3 curPos = mSortMenu.GetCursorPos();
     mCursor.setRootPaneTranslate(&curPos);
     playUISound(2);
 }
 
 // Tail-calls the sort menu's visibility query on the embedded sort menu.
-int CTutorialList::TutorialList_IsSortMenuActive() { return sortMenuIsVisible28(&mSortMenu); }
+int CTutorialList::TutorialList_IsSortMenuActive() { return mSortMenu.IsOpen(); }
 
 // Advance the list: gate on the sort-menu active/button flags, move the
 // cursor, refresh the sort menu, run the per-frame helpers and (when
 // requested) play the confirm sound.
 __declspec(noinline) void CTutorialList::TutorialList_AdvanceSelection(int arg) {
-    if (sortMenuIsVisible28(&mSortMenu) == 0) return;
-    if (sortMenuGetFlag2B(&mSortMenu) == 0) return;
+    if (mSortMenu.IsOpen() == 0) return;
+    if (mSortMenu.IsIdle() == 0) return;
     Cur_SetVisible(&mCursor, 1);
-    sortMenuToState4Page(&mSortMenu);
+    mSortMenu.Close();
     TutorialList_UpdateTitleText();
     TutorialList_MoveCursorToRow();
     if (arg == 0) {
@@ -559,22 +490,22 @@ __declspec(noinline) void CTutorialList::TutorialList_AdvanceSelection(int arg) 
 // reset the page/selection ids, size the scrollbar to the content and play
 // the confirm sound.
 void CTutorialList::TutorialList_RebuildAfterLoad() {
-    if (sortMenuIsVisible28(&mSortMenu) == 0) return;
-    if (sortMenuGetFlag2B(&mSortMenu) == 0) return;
-    s32 page = sortMenuGetPageIdx(&mSortMenu);
+    if (mSortMenu.IsOpen() == 0) return;
+    if (mSortMenu.IsIdle() == 0) return;
+    s32 page = mSortMenu.GetCursor();
     mField17E = (s8)page;
     mIdTable.Rebuild(0, (u8)page);
     mField178 = 0;
     mField17A = 0;
-    CScrollBar_UpdateThumb(&mScrollBar, 0xa, mIdTable.mCount);
-    CScrollBar_PlaceThumb(&mScrollBar, mField17A);
+    mScrollBar.UpdateThumb(0xa, mIdTable.mCount);
+    mScrollBar.PlaceThumb(mField17A);
     TutorialList_AdvanceSelection(1);
     TutorialList_UpdateRowTexts();
     playUISound(3);
 }
 
 int CTutorialList::TutorialList_GetMenuStateCode() {
-    return (sortMenuIsVisible28(&mSortMenu) != 0) + 0x73;
+    return (mSortMenu.IsOpen() != 0) + 0x73;
 }
 
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
@@ -583,7 +514,7 @@ __declspec(noinline) void CTutorialList::TutorialList_OnOpenAnimDone() {
     if (advanceAnimTransform(mAnim24, 1.0f) != 0) {
         mState175 = 2;
         TutorialList_EnableCloseAnims();
-        CScrollBar_requestScrollIn(&mScrollBar);
+        mScrollBar.requestScrollIn();
     }
 }
 
@@ -680,13 +611,13 @@ __declspec(noinline) void CTutorialList::TutorialList_MoveCursorToRow() {
 // labels (text ids 0x25-0x28) and select the current page.
 // noinline: retail calls this from ConfirmOpenMenu rather than inlining.
 __declspec(noinline) void CTutorialList::TutorialList_RebuildSortEntries() {
-    if (sortMenuIsVisible28(&mSortMenu) != 0) return;
-    sortMenuResetCount(&mSortMenu);
-    func_801D3518(&mSortMenu, BdatTouchStringCell("MNU_main", "name", 0x25));
-    func_801D3518(&mSortMenu, BdatTouchStringCell("MNU_main", "name", 0x26));
-    func_801D3518(&mSortMenu, BdatTouchStringCell("MNU_main", "name", 0x27));
-    func_801D3518(&mSortMenu, BdatTouchStringCell("MNU_main", "name", 0x28));
-    sortMenuSetPage(&mSortMenu, mField17E);
+    if (mSortMenu.IsOpen() != 0) return;
+    mSortMenu.Clear();
+    mSortMenu.Add(BdatTouchStringCell("MNU_main", "name", 0x25));
+    mSortMenu.Add(BdatTouchStringCell("MNU_main", "name", 0x26));
+    mSortMenu.Add(BdatTouchStringCell("MNU_main", "name", 0x27));
+    mSortMenu.Add(BdatTouchStringCell("MNU_main", "name", 0x28));
+    mSortMenu.SetSelect(mField17E);
 }
 
 __declspec(noinline) void CTutorialList::TutorialList_UpdateTitleText() {

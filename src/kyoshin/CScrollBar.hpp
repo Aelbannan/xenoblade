@@ -5,29 +5,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 #include <nw4r/lyt.h>
-
-// IWorkEvent-compatible vtable for CScrollBar (split1 .data).
-extern "C" void* lbl_eu_80534DD8[];
-
-// Scroll-bar arc file path (split1 .rodata).
-extern "C" char lbl_eu_80507A4C[];
-
-// Pane-name tables for the scroll-bar layout (split1 .data).
-// tbl_80534DC0[mDirection] is the drag thumb; tbl_80534DA8[] are the 6
-// scroll-position/bar panes hidden while idle.
-extern "C" const char* lbl_eu_80534DC0[];
-extern "C" const char* lbl_eu_80534DA8[];
-
-// Sdata2 constants for the scroll animation (split2 .sdata2 80668138-58).
-// Kept const: the TU's float uses schedule correctly only as const loads.
-extern const float lbl_eu_80668138; // 0.0 - zero / reset offset
-extern const float lbl_eu_8066813C; // 4.0 - scroll-stick ratio lower clamp
-extern const double lbl_eu_80668140; // 2^52 - u32->float debias magic
-extern const double lbl_eu_80668148; // 2^52+2^31 - s16->float debias magic
-extern const float lbl_eu_80668150; // 1.0 - scroll animation frame step
-extern const float lbl_eu_80668154; // 5.0 - entering-done threshold
 
 // Cross-TU layout helpers (kyoshin .text). Retail references these by their
 // unmangled C names (US split strips the C++ mangling), so they need C
@@ -35,19 +15,9 @@ extern const float lbl_eu_80668154; // 5.0 - entering-done threshold
 extern "C" void TagCopyVec2f(float* dst, float* src); // copy 2 floats (VEC2)
 extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag
 
-/* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order:
-vtable store first, then the member ctor). Same idiom as CBatteryVtblBase. */
-struct CScrollBarVtblBase {
-    void* mVtbl; // 0x0 - lbl_eu_80534DD8
-
-    CScrollBarVtblBase() {
-        mVtbl = lbl_eu_80534DD8;
-    }
-};
-
-/* Vertical/horizontal scroll bar widget. Layout-compatible with IWorkEvent
-(vptr @ +0) for CDeviceFile::readFile, but not a C++ IWorkEvent subclass
-(avoids emitting weak default stubs into this TU's .text).
+/* Vertical/horizontal scroll bar widget; receives the layout archive through
+IWorkEvent::OnFileEvent (retail __RTTI__10CScrollBar, IWorkEvent base list;
+the ctor's exception record destroys the IWorkEvent base).
 
 State machine (mState):
   - 0: hidden / idle (not visible)
@@ -56,7 +26,8 @@ State machine (mState):
   - 3: leaving (animating out)
 
 mActive is 1 when idle/complete, 0 during transitions. */
-struct CScrollBar : CScrollBarVtblBase {
+class CScrollBar : public IWorkEvent {
+public:
     UnkClass_8045F564 mMemRegion; // 0x4 - scratch region for layout build
     CFileHandle* mFileHandle; // 0x14
     nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x18
@@ -74,14 +45,22 @@ struct CScrollBar : CScrollBarVtblBase {
     u8 mDirection; // 0x3C - 0=horizontal, 1=vertical (constructor param)
 
     CScrollBar(u8 direction);
-    ~CScrollBar();
-    bool OnFileEvent(CEventFile* pEventFile);
-
-    u8 isVisible();
-    u8 isActive();
+    virtual ~CScrollBar();
 
     void loadLayoutArc();
+    void UpdateDispatch();
     void draw(nw4r::lyt::DrawInfo* drawInfo);
+    void Teardown();
+    int isVisible();
+    int isActive();
+    void InitRootPane(const nw4r::math::VEC3* pos);
     void requestScrollIn();
     void requestScrollOut();
+    void UpdateThumb(u32 scrollFrom, u32 scrollTo);
+    void PlaceThumb(u16 count);
+    void StepScrollIn();
+    void StepScrollOut();
+    void MarkLayoutReady();
+
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 };

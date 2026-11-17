@@ -199,7 +199,7 @@ void startMapSelLoad(CMapSel* self) {
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mGridData[0x21] = 1;
     loadSelectedMapResource(self);
-    CScrollBar_loadLayoutArc(&self->mScrollBar[0]);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->loadLayoutArc();
 }
 
 /* updateMapSel - Per-frame update: drive the state machine, then animate the
@@ -227,7 +227,7 @@ extern "C" void __declspec(noinline) updateMapSel(CMapSel* self) {
             break;
         }
         self->mLayout->Animate(0);
-        CScrollBar_UpdateDispatch(self->mScrollBar);
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->UpdateDispatch();
         Cur_Update(&self->mCursor);
     }
 }
@@ -243,7 +243,7 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void drawMapSel(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
-        CScrollBar_draw(self->mScrollBar, drawInfo);
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->draw(drawInfo);
         Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
@@ -271,15 +271,14 @@ extern "C" void __declspec(noinline) termMapSel(CMapSel* self) {
     }
     releaseArcResourceAccessor(self->mArcAccessor);
     reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->deleteRegion();
-    CScrollBar_Teardown(self->mScrollBar);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->Teardown();
     self->mCursor.cleanup();
 }
 
 // Scrollbar-visible check: when the scrollbar at +0x34 is visible, return
 // the +0x32 flag (lbz), else 0.
-extern "C" int CScrollBar_isVisible(void* scrollbar);
 extern "C" u8 getMapSelVisibleFlag(void* self) {
-    if (CScrollBar_isVisible((u8*)self + 0x34) != 0) {
+    if (reinterpret_cast<CScrollBar*>((u8*)self + 0x34)->isVisible() != 0) {
         return *(u8*)((u8*)self + 0x32);
     }
     return 0;
@@ -355,7 +354,7 @@ extern "C" void __declspec(noinline) moveMapSelUp(CMapSel* self) {
     refreshMapGridText(self);
     updateMapSelCursor(self);
     s8 cur = self->mSelX;
-    CScrollBar_PlaceThumb(self->mScrollBar, (u16)cur);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->PlaceThumb((u16)cur);
     noopMapSelPostMove(self);
     playUISound(1);
 }
@@ -387,7 +386,7 @@ extern "C" void __declspec(noinline) moveMapSelSelection(CMapSel* self) {
     }
     refreshMapGridText(self);
     updateMapSelCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->PlaceThumb(self->mSelX);
     noopMapSelPostMove(self);
     playUISound(1);
 }
@@ -411,7 +410,7 @@ extern "C" void __declspec(noinline) moveMapSelPageUp(CMapSel* self) {
     }
     refreshMapGridText(self);
     updateMapSelCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->PlaceThumb(self->mSelX);
     noopMapSelPostMove(self);
     playUISound(1);
 }
@@ -440,7 +439,7 @@ extern "C" void __declspec(noinline) moveMapSelPageDown(CMapSel* self) {
     }
     refreshMapGridText(self);
     updateMapSelCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
+    reinterpret_cast<CScrollBar*>(self->mScrollBar)->PlaceThumb(self->mSelX);
     noopMapSelPostMove(self);
     playUISound(1);
 }
@@ -464,11 +463,11 @@ extern "C" void __declspec(noinline) finishMapSelLoad(CMapSel* self) {
         vec[1] = lbl_eu_80668744;
         u8* sb = &self->mScrollBar[0];
         vec[2] = lbl_eu_80668738;
-        CScrollBar_InitRootPane(sb, vec);
-        CScrollBar_UpdateThumb(self->mScrollBar, 10, self->mGridData[0x20]);
+        reinterpret_cast<CScrollBar*>(sb)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->UpdateThumb(10, self->mGridData[0x20]);
         s8 selX = self->mSelX;
-        CScrollBar_PlaceThumb(self->mScrollBar, (u16)selX);
-        CScrollBar_requestScrollIn(self->mScrollBar);
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->PlaceThumb((u16)selX);
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->requestScrollIn();
     }
 }
 
@@ -491,7 +490,7 @@ extern "C" void __declspec(noinline) finishMapSelClose(CMapSel* self) {
         self->mLayout->SetAnimationEnable(self->mAnimTransform2, false);
         self->mLayout->SetAnimationEnable(self->mAnimTransform1, true);
         self->mState = 5;
-        CScrollBar_requestScrollOut(self->mScrollBar);
+        reinterpret_cast<CScrollBar*>(self->mScrollBar)->requestScrollOut();
     }
 }
 

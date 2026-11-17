@@ -173,12 +173,7 @@ CCur07::CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur07 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur07Fv(CCur07* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur07::~CCur07() {}
 
 // ============================================================================
 // CCur07::initLayout: Load layout curs07 and two anim transforms
@@ -199,12 +194,7 @@ CCur09::CCur09(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur09 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur09Fv(CCur09* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur09::~CCur09() {}
 
 // ============================================================================
 // CCur09::initLayout: Load layout curs09 and one anim transform
@@ -235,12 +225,7 @@ CCur11::CCur11(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur11 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur11Fv(CCur11* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur11::~CCur11() {}
 
 // ============================================================================
 // CCur11::initLayout: Load layout curs11 and two anim transforms
@@ -271,12 +256,7 @@ CCur14::CCur14(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur14 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur14Fv(CCur14* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur14::~CCur14() {}
 
 // ============================================================================
 // CCur14::initLayout: Load layout curs14 and two anim transforms
@@ -297,12 +277,7 @@ CCur15::CCur15(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur15 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur15Fv(CCur15* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur15::~CCur15() {}
 
 // ============================================================================
 // CCur15::initLayout: Load layout curs15 and two anim transforms
@@ -323,12 +298,7 @@ CCur16::CCur16(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) 
 // ============================================================================
 // CCur16 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur16Fv(CCur16* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur16::~CCur16() {}
 
 // ============================================================================
 // CCur16::initLayout: Load layout curs16 and two anim transforms

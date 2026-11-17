@@ -2,22 +2,8 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "monolib/core/CSchedule.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-
-// CREvtEffect - realtime event effect controller
-//
-// Layout:
-//   0x00-0x13: cf::CREvtObj base fields (vtable ptr + field_04 + __ptmf[3])
-//   0x14:      secondary vtable pointer (callback interface for effect system)
-//   0x18-0x143: effect-specific fields
-//
-// The secondary vtable at offset 0x14 is a callback interface used by the
-// effect system. It has 3 virtual functions:
-//   vtable[0]: dtor (thunk: EvtFx_ThunkDtor, adjusts this by -0x14)
-//   vtable[1]: callback (thunk: EvtFx_ThunkDetach, adjusts this by -0x14)
-//   vtable[2]: callback (direct: EvtFx_DetachEffect)
-//
-// Total size: 0x144
 
 // ---------------------------------------------------------------------------
 // Opaque helper objects touched by this TU (only the fields used here are
@@ -67,16 +53,29 @@ struct CBdatEntry {
     /* 0x08 */ void* mNameData;
 };
 
-struct CREvtEffect {
-    // cf::CREvtObj base at offset 0x00
-    /* 0x00 */ void* vtable;
-    /* 0x04 */ u32 field_04;
-    /* 0x08 */ u32 ptmf[3];
+namespace cf {
 
-    // Secondary vtable pointer (callback interface at offset 0x14)
-    /* 0x14 */ void* mSecondaryVtable;
+// cf::CREvtEffect - realtime-event effect (kind 1, 0x144 bytes).
+// Bases (retail vtable 0x805322D8 + RTTI base list 0x80532314): public
+// cf::CREvtObj at 0x00, private CScheduleChild at 0x14 (it registers itself
+// on the effects it spawns; ~CSchedule calls OnScheduleDelete). The direct
+// OnScheduleDelete entry is appended after the CScheduleChild vtable.
+class CREvtEffect : public CREvtObj, CScheduleChild {
+public:
+    CREvtEffect(CREvtParam* param);
+    virtual ~CREvtEffect();
+    virtual void vfunc_04();
+    virtual void vfunc_08();
+    virtual int vfunc_0C();
+    virtual void vfunc_1C();
+    virtual void OnScheduleDelete(CSchedule* pSchedule);
 
-    // Effect-specific fields
+    void refreshChrAnim();
+    bool spawnEffect();
+    void updateEffects();
+    void initModel(void* src, void* bdatEntry);
+
+    // CScheduleChild subobject at 0x14
     /* 0x18 */ void* mPtr18;
     /* 0x1C */ CREvtParam* mParam1C;
     /* 0x20 */ void* mModel;          // CLibLayoutModel*
@@ -107,6 +106,10 @@ struct CREvtEffect {
     /* 0x140 */ s32 mType;
 };
 
+} // namespace cf
+
+using cf::CREvtEffect;
+
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - do not "fix" the mangled forms).
 // Relocated from CREvtEffect.cpp so every TU that uses these symbols gets them
@@ -119,18 +122,13 @@ struct ChrAnmResult;
 }
 } // namespace nw4r::g3d
 
-// CREvtObj base-class functions
-// (defined in kyoshin/realtimeevt/CREvtObj.cpp / code_80185754 TU)
-extern "C" void __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg);
-extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-
 // Bdat / data loading
-extern "C" void* EvtSeqResolveListEntryAddr(u32 arg);
+extern "C" u32 EvtSeqResolveListEntryAddr(int idx);
 extern "C" void* EvtSeqFindEventByNameData(void* ptr);
-extern "C" int EvtSeqGetCounter100();
-extern "C" bool EvtSeqIsSlotIndexFour();
-extern "C" bool REvtCam_GetFieldA5Flag();
-extern "C" void EvtSeqResolveAnmChr(void* obj, const char* name, s32* out);
+extern "C" u32 EvtSeqGetCounter100();
+extern "C" u32 EvtSeqIsSlotIndexFour();
+extern "C" unsigned char REvtCam_GetFieldA5Flag();
+extern "C" int EvtSeqResolveAnmChr(u8* data, const char* name, s32* out);
 
 // Effect system
 extern "C" void EffSched_LookupA(void* mgr, void* data);
@@ -161,7 +159,6 @@ extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
 
 // Globals (retail linker symbols)
 extern "C" {
-    extern void* lbl_eu_805322D8[];
     extern u32 lbl_eu_8065FC18[];    // effect-singleton manager object (array forces @ha/@l)
     extern const char* lbl_eu_80662470;  // "effTgt"
     extern const char* lbl_eu_80662474;  // "effAtr"
@@ -177,9 +174,3 @@ extern "C" {
     extern const f32 lbl_eu_8066795C;    // frame rate divisor
     extern const f32 lbl_eu_80667960;    // 0.5f
 }
-
-// Same-TU forward declarations (functions defined in CREvtEffect.cpp; extern
-// "C" keeps callers emitting real unmangled bl branches to the retail symbols)
-extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self);
-extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self);
-extern "C" void EvtFx_UpdateEffects(CREvtEffect* self);

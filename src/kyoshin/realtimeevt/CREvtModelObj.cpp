@@ -1,929 +1,785 @@
-// CREvtModelObj - Model object event handler
-// High-level C/C++ reconstruction
+// TU: kyoshin/realtimeevt/CREvtModelObj
+// Class: cf::CREvtModelObj (derives from cf::CREvtModel, kind 3) - object
+// model of a realtime event. Loads the model archive (".kp"/".chr"), sets
+// the scene model up and drives it through the mCallback state ptmfs
+// (stepProbe -> stepLoad -> stepSetup -> stepUpdate).
+
+// Retail ~CREvtModelObj elides the empty IWorkEvent base-dtor call.
+#define IWORK_EVENT_INLINE_DTOR
 
 #include <string.h>
-#include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/realtimeevt/CREvtModelObj.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
-#include "monolib/work/CEventFile.hpp"
-#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "monolib/util/FixStr.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CEventFile.hpp"
 
-// Pure-virtual view of slot 0x3C so MWCC emits the retail r12 vtable
-// dispatch (CQuestWindow / CArtsInfo scheme). Never constructed.
-struct CREvtModelObjResetView {
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;  // MWCC prefix+13*4 = retail +0x3C
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
+
+extern "C" {
+// CTaskREvtSequence.cpp helpers that take the model as `this` (still C-linkage there).
+extern cf::CREvtModelObj* EvtSeqFindSameNameType3(void* self);
+extern int EvtSeqGetCounter104(void);
+extern int EvtSeqGetWalkIndex(void);
+extern int EvtSeqGetStateBit14(void);
+extern int EvtSeqGetStateBit5(void);
+extern int evtLookupEntryWord(const char* key, int slot);
+
+extern void* KyoshinHeap_AllocNode(int size, int enable);
+extern void KyoshinHeap_Free78(void* p, int);
+extern char* Tok_FormatRes(u32 packed);
+extern int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern void* CfRes_tryResolveToken(u32 packed, s32* outKind);
+extern int CfRes_tryDelegateLoad1(u32 packed, int);
+extern int getFileSize__11CDeviceFileFPCc(const char* path, int param);
+extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle* handle, u32 param);
+extern u32 getScnCounter__Fv(void);
+
+
+extern CScnItemModel* Scn_SetupAnim(CScn* scn, void* data, int priority, int);
+extern void simRefreshFlag8(CScnItemModel* model, float frame);
+extern void simSetFlag2OnTree(CScnItemModel* model, int flag);
+extern void simCoupleModel(CScnItemModel* model, void* data);
+extern int labs(int);
+
+// Shared strings owned by other units.
+extern char lbl_eu_806623C0[2];      // directory separator
+extern char lbl_eu_8052637C[];   // nw4r assert file
+extern char lbl_eu_80526354[];   // nw4r assert message
+}
+
+// Archive entry ("KYP" header: count at +0x8, 0x10-byte entries at +0x10).
+struct KypEntry {
+    /* 0x0 */ u32 mOffset;
+    /* 0x4 */ u32 mSize;
+    /* 0x8 */ char mName[8];
 };
 
-// External function declarations
-#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
+// Model archive section names tried in stepSetup.
+static const char* sModelExts[] = {"en", "np", "oj", nullptr};
+// Weapon model names; the two digits select the player slot.
+static const char* sWeaponNames[] = {"wp42", "wp82", "wp83", "wp84", "np62"};
 
-extern "C" {
-    extern void __ct__CREvtModel(void* self, void* pData, int flag);
-    extern void __ct__80172668(void* self, int);
-    extern void EvtModelSetEventData(void* self, void* pData, void* pModelData);
-    extern void EvtModelReleaseAnimsOnce(void* self);
-    extern void EvtModelReleaseAnims(void* self);
-    // (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
-    // (memberized: EvtSeqProbeEvtSlot -> EvtBdabModel::SeqProbeEvtSlot; declaration moved into class EvtBdabModel)
-    // (memberized: EvtSeqIsSameNameType3Busy -> UnkEvtListEntry::SeqIsSameNameType3Busy; declaration moved into class UnkEvtListEntry)
-    extern void* EvtSeqFindSameNameType3(void* self);
-    extern int EvtSeqGetCounter100(void* self);
-    extern int EvtSeqGetCounter104(void);
-    extern int EvtSeqGetWalkIndex(void);
-    // (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
-    extern void EvtObj_ScanPlayers(void* self);
-    extern void func_801836CC(void* self, unsigned long value);
-    extern int EvtSeqGetStateBit14(void);
-    extern int EvtSeqGetStateBit5(void);
-    extern void* KyoshinHeap_AllocNode(int, int);
-    extern void KyoshinHeap_Free78(void*, int);
-    extern char* Tok_FormatRes(void* handle);
-    extern void CfRes_tryResolveToken(void* packed, void* out);
-    extern int CfRes_tryDelegateLoad1(void* handle, int);
-    extern void schedClearFlag15Update(void*);
-    extern void schedAttachChildSlot(void*, void*);
-    extern void schedSetStepIntervals(void*, float, float);
-    extern "C" void* EffRoot_AddSchedReq(void*, u32, u32, int, int, int);
-    extern void EffSched_LookupA(void*);
-    extern void EffSched_LookupB(void* mgr, void* key);
-    extern void* Scn_SetupAnim(u32, void*, int, int);
-    extern void simSetLeafDist7B0(void*, float);
-    extern void simRefreshFlag8(void*, float);
-    extern void simSetFlag2OnTree(void*, int);
-    extern void simCoupleModel(void*, void*);
-    extern void* getScnCounter__Fv(void);
-    extern void* CLibLayout_getAllocHandle(void);
-    extern int __ptmf_cmpr(void* a, void* b);
-    extern void* evtLookupEntryWord(void*, int);
-    extern int Tok_FormatStr(const char*, u32, int, int);
-    extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
-    extern int setHandleParam__11CDeviceFileFP11CFileHandleUl(void*, u32);
-    extern int isStandbyReady__11CDeviceFileFv(void);
-    extern void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-    extern void closeFileHandle__FPP11CFileHandle(void**);
-    extern int labs(int);
-}
+// Weapon effect file shared by all object models.
+static void* sWeaponData;
+static CFileHandle* sWeaponFile;
+static s32 sWeaponUsers;
 
-// External globals
-extern "C" {
-    // lbl_eu_80531FA0 declared as CREvtModelObjVtbl[] in CREvtModelObj.hpp
-    extern u32 lbl_eu_80531F08[];    // extension list (strings)
-    extern u32 lbl_eu_80531F1C[];     // ptmf constant
-    extern u32 lbl_eu_80531F28[];     // ptmf constant
-    extern u32 lbl_eu_80531F34[];     // ptmf constant
-    extern u32 lbl_eu_80531F40[];     // ptmf constant
-    extern u32 lbl_eu_80531F4C[];     // ptmf constant
-    extern u32 lbl_eu_80531F58[];     // ptmf constant
-    extern u32 lbl_eu_80531F64[];     // ptmf constant
-    extern u32 lbl_eu_80531F88[];     // ptmf constant
-    extern u32 lbl_eu_80531F94[];     // ptmf constant
-    extern u32 lbl_eu_80531EF8[];     // various data
-    extern char lbl_eu_8050375C[];   // string base
-    extern char lbl_eu_806623C0[];   // string
-    extern void* lbl_eu_806642B8;    // global data ptr
-    extern void* lbl_eu_806642BC;    // global file handle
-    extern s32 lbl_eu_806642C0;      // global counter
-    // lbl_eu_8065FC18 declared u32[] in CfGameManager.hpp (included above)
-    extern float lbl_eu_80667904;    // float constant
-    extern float lbl_eu_80667908;    // float constant
-    extern float lbl_eu_8066790C;    // float constant
-    extern double lbl_eu_80667910;   // double constant (int-to-float conversion)
-}
+namespace cf {
 
-// Helper macros for field access
-#define FLD(type, base, off) (*(type*)((char*)(base) + (off)))
-#define FLDP(type, base, off) ((type*)((char*)(base) + (off)))
+typedef void (CREvtObj::*EvtStep)();
 
-// ============================================================
-// __ct__CREvtModelObj (us-80182e64) - Constructor
-// ============================================================
-extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
-    // Base: CREvtModel constructor (mode 3 = model-object variant)
-    __ct__CREvtModel(self, 0, 3);
+CREvtModelObj::CREvtModelObj(void* pData)
+    : CREvtModel(pData, 3), mFileHandle(nullptr), mFileState(0), mAllocData(nullptr), mRefCount(0),
+      mModelType(0), mRefOwner(nullptr), mFileId(-1), mResId5C(0), mResId60(0), mFlag64(0),
+      mExtractData(nullptr), mFileHandle2(nullptr), mAllocData2(nullptr), mField74(-1),
+      mAllocData3(nullptr), mSchedule(nullptr), mCount80(0), mState84(0) {
+    mCallback = static_cast<EvtStep>(&CREvtModelObj::stepProbe);
+    reinterpret_cast<UnkEvtListEntry*>(this)->SeqInsertRtEvent();
 
-    // Install vtable and interface pointers (primary vtbl, +0x44, +0xCC)
-    char* vt = (char*)lbl_eu_80531FA0;
-    *(u32**)self = (u32*)(vt);
-    self->mIWorkVtbl = vt + 0x44;
-    self->mOtherVtbl = vt + 0xCC;
-
-    // Initialize fields to zero (-1 for the two ids)
-    self->mFileHandle = 0;
-    self->mFileState = 0;
-    self->mAllocData = 0;
-    self->mField4C = 0;
-    self->mModelType = 0;
-    self->mRefOwner = 0;
-    self->mFileId = -1;
-    self->mResId5C = 0;
-    self->mResId60 = 0;
-    self->mFlag64 = 0;
-    self->mExtractData = 0;
-    self->mFileHandle2 = 0;
-    self->mAllocData2 = 0;
-    self->mField74 = -1;
-    self->mAllocData3 = 0;
-    self->mFileHandle3 = 0;
-    self->mCount80 = 0;
-    self->mState84 = 0;
-
-    // Install the default __ptmf callback from the constant pool
-    u32* p = lbl_eu_80531F1C;
-    self->mCallback[0] = *p++;
-    self->mCallback[1] = *p++;
-    self->mCallback[2] = *p;
-
-    reinterpret_cast<UnkEvtListEntry*>(self)->SeqInsertRtEvent();
-
-    // Pick the update callback based on the parent task's mode field:
-    // -1 -> standalone mode (0x50 flags + alternate ptmf), other nonzero -> 0x30
-    ParentTask* parent = self->mParent;
-    u32 field30 = parent->mField30;
-
-    // Standalone mode marker: field30 == 0xFFFFFFFF (tested as +0x10000 == 0xFFFF)
-    if (field30 + 0x10000 == 0xFFFF) {
-        self->mFlags |= 0x50;
-        const u32* p2 = lbl_eu_80531F28;
-        self->mCallback[0] = *p2++;
-        self->mCallback[1] = *p2++;
-        self->mCallback[2] = *p2;
-    } else if (field30 != 0) {
-        self->mFlags |= 0x30;
+    u32 mode = evtData()->mField30;
+    if (mode == 0xFFFFFFFF) {
+        mFlags |= 0x50;
+        mCallback = static_cast<EvtStep>(&CREvtModelObj::stepUpdate);
+    } else if (mode != 0) {
+        mFlags |= 0x30;
     }
 }
 
-// ============================================================
-// __ct__80181B74 (us-80182f7c) - Destructor-style reset (flag = run finalizer)
-// ============================================================
-extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
-    if (self != 0) {
-        // Reinstall vtable and interface pointers
-        char* vt = (char*)lbl_eu_80531FA0;
-        CFileHandle* oldHandle = self->mFileHandle3;
-        *(u32**)self = (u32*)(vt);
-        self->mIWorkVtbl = vt + 0x44;
-        self->mOtherVtbl = vt + 0xCC;
+CREvtModelObj::~CREvtModelObj() {
+    if (mSchedule != nullptr) {
+        schedClearFlag15Update(mSchedule);
+        mSchedule = nullptr;
+    }
 
-        if (oldHandle != 0) {
-            schedClearFlag15Update(oldHandle);
-            self->mFileHandle3 = 0;
-        }
+    if (sWeaponFile != nullptr) {
+        CDeviceFile::cancel(sWeaponFile);
+        sWeaponFile = nullptr;
+    }
 
-        if (lbl_eu_806642BC != 0) {
-            CDeviceFile::cancel((CFileHandle*)lbl_eu_806642BC);
-            lbl_eu_806642BC = 0;
-        }
+    reset();
 
-        // Real virtual call: lwz r12, 0(r30) / lwz r12, 0x3C(r12) / bctrl
-        static_cast<CREvtModelObjResetView*>(static_cast<void*>(self))->v13();
-
-        if (self->mCount80 != 0) {
-            if (lbl_eu_806642C0 > 0) {
-                // Decrement the shared-buffer refcount; release on reaching zero
-                if (--lbl_eu_806642C0 == 0) {
-                    if (lbl_eu_806642B8 != 0) {
-                        EffSched_LookupB(&lbl_eu_8065FC18, lbl_eu_806642B8);
-                        if (lbl_eu_806642B8 != 0) {
-                            mtl::MemManager::deallocate(lbl_eu_806642B8);
-                            lbl_eu_806642B8 = 0;
-                        }
+    if (mCount80 != 0) {
+        if (sWeaponUsers > 0) {
+            if (--sWeaponUsers == 0) {
+                if (sWeaponData != nullptr) {
+                    EffSched_LookupB(&lbl_eu_8065FC18, sWeaponData);
+                    if (sWeaponData != nullptr) {
+                        mtl::MemManager::deallocate(sWeaponData);
+                        sWeaponData = nullptr;
                     }
                 }
             }
-            self->mCount80 = 0;
         }
-
-        __ct__80172668(self, 0);
-
-        if (flag > 0) {
-            cf::CREvtObj::operator delete(self);
-        }
+        mCount80 = 0;
     }
-
-    return self;
 }
 
-// ============================================================
-// EvtObj_SetupPlayer (us-80183098) - Per-player event file setup
-// ============================================================
-extern "C" void EvtObj_SetupPlayer(CREvtModelObj* self, void* pData, void* pModelData) {
-    if (self->mFileHandle3 != 0) {
-        schedClearFlag15Update(self->mFileHandle3);
-        self->mFileHandle3 = 0;
+void CREvtModelObj::setEventData(void* pData, void* pModelData) {
+    if (mSchedule != nullptr) {
+        schedClearFlag15Update(mSchedule);
+        mSchedule = nullptr;
     }
 
-    EvtModelSetEventData(self, pData, pModelData);
+    CREvtModel::setEventData(pData, pModelData);
 
-    if ((int)self->mState84 == 1) {
-        if (lbl_eu_806642B8 != 0 && self->mModel != 0 && pData != 0 &&
-            self->mFileHandle3 == 0 && self->mCount80 != 0) {
-            // Open a per-player event file slot (player index = count-1)
-            CFileHandle* handle = (CFileHandle*)EffRoot_AddSchedReq(
-                &lbl_eu_8065FC18, (u32)lbl_eu_80663E14, self->mCount80 - 1, 1, 0, 0);
-            self->mFileHandle3 = handle;
-
-            if (handle != 0) {
-                schedAttachChildSlot(handle, self != 0 ? (void*)&self->mOtherVtbl : 0);
-
-                // Pull the current position value from the model (vtable 0xA8)
-                void* model = self->mModel;
-                void** modelVtbl = *(void***)model;
-                u32 val = ((u32 (*)(void*))modelVtbl[0xA8 / 4])(model);
-                handle->unk14 = val;
-
-                schedSetStepIntervals(handle, lbl_eu_80667904, lbl_eu_80667908);
+    if (mState84 == 1) {
+        if (sWeaponData != nullptr && mModel != nullptr && pData != nullptr && mSchedule == nullptr &&
+            mCount80 != 0) {
+            mSchedule = static_cast<CSchedule*>(
+            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, lbl_eu_80663E14, mCount80 - 1, 1, 0));
+            if (mSchedule != nullptr) {
+                schedAttachChildSlot(mSchedule, static_cast<CScheduleChild*>(this));
+                mSchedule->field_0x14 = mModel->vfuncA8();
+                schedSetStepIntervals(mSchedule, 40.0f, 1.0f);
             }
         }
     }
 
-    // Refresh the model when the parent requests player-specific handling
-    if ((self->mParent->mField58 & 0x80) != 0 && self->mModel != 0) {
-        if (isVisionPackLoaded__Q22cf13CfGameManagerFv() != 0) {
-            simSetFlag2OnTree(self->mModel, 0);
+    if ((evtData()->mFlags & 0x80) && mModel != nullptr) {
+        if (isVisionPackLoaded__Q22cf13CfGameManagerFv()) {
+            simSetFlag2OnTree(mModel, 0);
         }
     }
 }
 
-// ============================================================
-// EvtObj_Cancel (us-801831e4) - Stop/cleanup function
-// ============================================================
-extern "C" int EvtObj_Cancel(CREvtModelObj* self) {
-    // Busy or still-referenced objects cannot be stopped
-    if (self->mFlags & 0x80) {
+int CREvtModelObj::reset() {
+    if (mFlags & 0x80) {
         return 0;
-    } else if (self->mField4C > 0) {
+    } else if (mRefCount > 0) {
         return 0;
     }
 
-    if (self->mFileHandle3 != 0) {
-        schedClearFlag15Update(self->mFileHandle3);
-        self->mFileHandle3 = 0;
+    if (mSchedule != nullptr) {
+        schedClearFlag15Update(mSchedule);
+        mSchedule = nullptr;
     }
 
-    EvtModelReleaseAnimsOnce(self);
+    CREvtModel::reset();
 
-    // Release loaded data according to the file load state.
-    // (The duplicated null checks mirror the retail binary.)
-    const int fileState = (int)self->mFileState;
-    if (fileState == 3) {
-        if (self->mAllocData != 0) {
-            if (self->mAllocData != 0) {
-                mtl::MemManager::deallocate(self->mAllocData);
-                self->mAllocData = 0;
+    if (mFileState == 3) {
+        if (mAllocData != nullptr) {
+            if (mAllocData != nullptr) {
+                mtl::MemManager::deallocate(mAllocData);
+                mAllocData = nullptr;
             }
         }
-    } else if (fileState == 2) {
-        if (self->mAllocData3 != 0) {
-            KyoshinHeap_Free78(self->mAllocData3, 0);
-            self->mAllocData3 = 0;
-            self->mAllocData = 0;
+    } else if (mFileState == 2) {
+        if (mAllocData3 != nullptr) {
+            KyoshinHeap_Free78(mAllocData3, 0);
+            mAllocData3 = nullptr;
+            mAllocData = nullptr;
         }
     } else {
-        self->mAllocData = 0;
+        mAllocData = nullptr;
     }
 
-    if (self->mFileHandle != 0) {
-        CDeviceFile::cancel(self->mFileHandle);
-        self->mFileHandle = 0;
+    if (mFileHandle != nullptr) {
+        CDeviceFile::cancel(mFileHandle);
+        mFileHandle = nullptr;
     }
 
-    if (self->mAllocData2 != 0) {
-        if (self->mAllocData2 != 0) {
-            mtl::MemManager::deallocate(self->mAllocData2);
-            self->mAllocData2 = 0;
+    if (mAllocData2 != nullptr) {
+        if (mAllocData2 != nullptr) {
+            mtl::MemManager::deallocate(mAllocData2);
+            mAllocData2 = nullptr;
         }
     }
 
-    if (self->mFileHandle2 != 0) {
-        CDeviceFile::cancel(self->mFileHandle2);
-        self->mFileHandle2 = 0;
+    if (mFileHandle2 != nullptr) {
+        CDeviceFile::cancel(mFileHandle2);
+        mFileHandle2 = nullptr;
     }
 
-    // Drop our reference on the owner's resource
-    if (self->mRefOwner != 0) {
-        if (self->mRefOwner->mFlag48 != 0) {
-            self->mRefOwner->mRefCount -= 1;
+    if (mRefOwner != nullptr) {
+        if (mRefOwner->mAllocData != nullptr) {
+            mRefOwner->mRefCount--;
         }
-        self->mRefOwner = 0;
+        mRefOwner = nullptr;
     }
 
     return 1;
 }
 
-// ============================================================
-// EvtObj_ResetState (us-80183330) - Reset function
-// ============================================================
-extern "C" void EvtObj_ResetState(void* self) {
-    char* s = (char*)self;
+void CREvtModelObj::releaseAnims() {
+    if (mFileState == 1) return;
+    if (mFlags & 0x100) return;
+    if (mRefCount > 0) return;
 
-    // Bail out if a file load is in progress (state 1), the reset flag is
-    // already set, or the reference count is positive.
-    if (FLD(s32, s, 0x44) == 1) return;
-    if (FLD(u32, s, 0x18) & 0x100) return;
-    if (FLD(s32, s, 0x4C) > 0) return;
-
-    void* handle = FLD(void*, s, 0x7C);
-    *(volatile u32*)(s + 0x18) |= 0x100;
-
-    if (handle != 0) {
-        schedClearFlag15Update(handle);
-        FLD(u32, s, 0x7C) = 0;
+    CSchedule* sched = mSchedule;
+    mFlags |= 0x100;
+    if (sched != nullptr) {
+        schedClearFlag15Update(sched);
+        mSchedule = nullptr;
     }
 
-    EvtModelReleaseAnims(self);
+    CREvtModel::releaseAnims();
 
-    // Free the loaded/archived data depending on the file state. The
-    // status-3 path carries the duplicated null check (two consecutive beq)
-    // like the matched EvtModelPc_Cancel.
-    s32 fileState = FLD(s32, s, 0x44);
-    if (fileState == 3) {
-        void* data = FLD(void*, s, 0x48);
-        if (data != 0) {
-            if (data != 0) {
-                mtl::MemManager::deallocate(data);
-                FLD(u32, s, 0x48) = 0;
+    if (mFileState == 3) {
+        if (mAllocData != nullptr) {
+            if (mAllocData != nullptr) {
+                mtl::MemManager::deallocate(mAllocData);
+                mAllocData = nullptr;
             }
         }
-    } else if (fileState == 2) {
-        void* data = FLD(void*, s, 0x78);
-        if (data != 0) {
-            KyoshinHeap_Free78(data, 0);
-            FLD(u32, s, 0x78) = 0;
-            FLD(u32, s, 0x48) = 0;
+    } else if (mFileState == 2) {
+        if (mAllocData3 != nullptr) {
+            KyoshinHeap_Free78(mAllocData3, 0);
+            mAllocData3 = nullptr;
+            mAllocData = nullptr;
         }
     } else {
-        FLD(u32, s, 0x48) = 0;
+        mAllocData = nullptr;
     }
 
-    void* data2 = FLD(void*, s, 0x70);
-    if (data2 != 0) {
-        if (data2 != 0) {
-            mtl::MemManager::deallocate(data2);
-            FLD(u32, s, 0x70) = 0;
+    if (mAllocData2 != nullptr) {
+        if (mAllocData2 != nullptr) {
+            mtl::MemManager::deallocate(mAllocData2);
+            mAllocData2 = nullptr;
         }
     }
 
-    void* parentModel = FLD(void*, s, 0x54);
-    if (parentModel != 0) {
-        if (FLD(u32, parentModel, 0x48) != 0) {
-            FLD(u32, parentModel, 0x4C) -= 1;
+    if (mRefOwner != nullptr) {
+        if (mRefOwner->mAllocData != nullptr) {
+            mRefOwner->mRefCount--;
         }
-        FLD(u32, s, 0x54) = 0;
+        mRefOwner = nullptr;
     }
 
-    FLD(u32, s, 0x68) = 0;
-
-    // Install the reset ptmf callback (loads w0,w1 via *src++ then stores
-    // +0xC,+0x8; w2 late) and clear bits 0x243 while setting 0x30.
-    u32 result = (FLD(u32, s, 0x18) | 0x30) & ~0x243;
-    // Declared before src so Chaitin colors w1->r4, w0->r5, ptmf base->r6
-    u32 w1, w0, flagsResult, w2;
-    u32* src = lbl_eu_80531F34;
-    w0 = *src++;
-    w1 = *src++;
-    flagsResult = (FLD(u32, s, 0x18) | 0x30) & ~0x243;
-    FLD(u32, s, 0x0C) = w1;
-    FLD(u32, s, 0x08) = w0;
-    w2 = *src++;
-    FLD(u32, s, 0x10) = w2;
-    FLD(u32, s, 0x18) = flagsResult;
+    mExtractData = nullptr;
+    mCallback = static_cast<EvtStep>(&CREvtModelObj::stepProbe);
+    mFlags = (mFlags | 0x30) & ~0x243;
 }
 
-// ============================================================
-// EvtObj_ResetStateB (us-8018348c) - Reset function 2
-// ============================================================
-extern "C" void EvtObj_ResetStateB(void* self) {
-    char* s = (char*)self;
-
-    EvtObj_ScanPlayers(self);
-
-    FLD(s32, s, 0x74) = -1;
-
-    int result = reinterpret_cast<EvtBdabModel*>(self)->SeqProbeEvtSlot(reinterpret_cast<u32*>(s + 0x74));
-    if (result != 0) {
-        if (FLD(u32, s, 0x18) & 0x100) {
-            *(volatile u32*)(s + 0x18) &= ~0x100;
+void CREvtModelObj::stepProbe() {
+    scanPlayers();
+    mField74 = -1;
+    if (reinterpret_cast<EvtBdabModel*>(this)->SeqProbeEvtSlot(reinterpret_cast<u32*>(&mField74))) {
+        if (mFlags & 0x100) {
+            mFlags &= ~0x100;
         }
-
-        u32 v0;
-        u32* p = (u32*)lbl_eu_80531F40;
-        v0 = p[0];
-        FLD(u32, s, 0x0C) = p[1];
-        FLD(u32, s, 0x08) = v0;
-        FLD(u32, s, 0x10) = p[2];
+        mCallback = static_cast<EvtStep>(&CREvtModelObj::stepLoad);
     }
 }
 
-// ============================================================
-// EvtObj_CheckEvtHandler (us-80183508) - Event handler check
-// ============================================================
-extern "C" int EvtObj_CheckEvtHandler(void* self) {
-    char* s = (char*)self;
+int CREvtModelObj::vfunc_10() {
     int result = 0;
-
-    if (FLD(u32, s, 0x18) & 0x10) {
-        if (__ptmf_cmpr(s + 0x08, lbl_eu_80531F4C) == 0 ||
-            __ptmf_cmpr(s + 0x08, lbl_eu_80531F58) == 0) {
+    if (mFlags & 0x10) {
+        if (mCallback == static_cast<EvtStep>(&CREvtModelObj::stepProbe) ||
+            mCallback == static_cast<EvtStep>(&CREvtModelObj::stepUpdate)) {
             result = 1;
         }
     }
-
     return result;
 }
 
-// ============================================================
-// EvtObj_StartLoad (us-80183580) - Load/init function
-// ============================================================
-extern "C" void EvtObj_StartLoad(void* self) {
-    char* s = (char*)self;
-
-    EvtObj_ScanPlayers(self);
-
-    FLD(u32, s, 0x18) |= 0x40;
-
-    u32* ptmf = lbl_eu_80531F64;
-    FLD(u32, s, 0x0C) = ptmf[1];
-    FLD(u32, s, 0x08) = ptmf[0];
-    FLD(u32, s, 0x10) = ptmf[2];
-
-    void* parent = FLD(void*, s, 0x1C);
-    FLD(u32, s, 0x5C) = FLD(u32, parent, 0x20);
-
-    // Parse resource info
-    u32 resourceId = FLD(u32, s, 0x5C);
-    // Retail compares these fields signed (cmpwi), so they are int here.
-    int resKind, charIdx, subId, extKind;
-    Tok_Unpack(resourceId, reinterpret_cast<u32*>(&resKind), reinterpret_cast<u32*>(&charIdx),
-               reinterpret_cast<u32*>(&subId), reinterpret_cast<u32*>(&extKind));
-
-    if (resKind == 3) {
-        if (extKind == 9) {
-            u32 combined = (resKind << 27) | (charIdx << 20) | (subId << 10) | 1;
-            FLD(u32, s, 0x5C) = combined;
-            void* parent2 = FLD(void*, s, 0x1C);
-            FLD(u32, s, 0x60) = FLD(u32, parent2, 0x20);
+// Lets the scene allocator take large requests, falling back to MEM2/MEM1.
+static inline void setFileHeaps(CFileHandle* handle, u32 flags, u32 scnLimit) {
+    if (flags & 2) {
+        if (mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle()) > scnLimit) {
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
+        }
+        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
+    } else if (flags & 0x20) {
+        if (mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1()) > 0x40000) {
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM1());
+        }
+        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
+        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
+    } else {
+        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
+        if (mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle()) > 0x40000) {
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
         }
     }
-
-    if (resKind == 5) {
-        u32 resId = FLD(u32, s, 0x5C);
-        u32 newResId = EvtSeqResolvePackedResId(resId);
-        if (newResId != resId) {
-            FLD(u32, s, 0x5C) = newResId;
-        }
-
-        void* parent3 = FLD(void*, s, 0x1C);
-        char* charStr = (char*)parent3 + 0x48;
-        if (charStr[0] != 0) {
-            int charId = charIdx;
-            int index = (int)((unsigned int)(charId * 0xCCCD) >> 19);
-            void* result = evtLookupEntryWord(charStr, index);
-            if (result != 0) {
-                FLD(u32, s, 0x5C) = (u32)result;
-            }
-        }
-    }
-
-    // Build filename
-    char filename[0x100];
-    char nameBuf[0x100];
-    int nameLen = 0;
-    int extLen;
-    int foundIdx;
-
-    // First part: search for extension in filename
-    // Build from resource ID
-    filename[0] = 0;
-    FLD(int, filename, 0x1C0) = 0;
-
-    // Get the filename from resource ID
-    char* source = Tok_FormatRes((void*)resourceId);
-    int srcLen = strlen(source);
-    FLD(int, filename, 0x84) = srcLen;
-
-    // Copy to name buffer
-    strcpy(filename, source);
-    FLD(u8, filename, 0x40) = 0;
-    FLD(int, filename, 0x60) = 0;
-
-    int nameBufLen = strlen(filename);
-    FLD(int, filename, 0x60) = nameBufLen;
-    strcpy(nameBuf, filename);
-    nameLen = FLD(int, filename, 0x60);
-
-    // This is getting complex. Let me just set up the basic flow.
-    // The full implementation would need careful string handling.
-    (void)nameBufLen;
-    (void)nameLen;
-    (void)extLen;
-    (void)foundIdx;
-
-    // The rest of the function handles file loading and setup
-    // For now, let me just complete the basic structure.
+    setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM1());
 }
 
-// ============================================================
-// EvtObj_SetupModel (us-80183f48) - Main update function
-// (stub - needs full implementation)
-// ============================================================
-extern "C" void EvtObj_SetupModel(void* self) {
-    char* s = (char*)self;
+void CREvtModelObj::stepLoad() {
+    scanPlayers();
+    mFlags |= 0x40;
+    mCallback = static_cast<EvtStep>(&CREvtModelObj::stepSetup);
+    mResId5C = evtData()->mResId;
 
-    EvtObj_ScanPlayers(self);
+    u32 kind, chara, sub, ext;
+    Tok_Unpack(mResId5C, &kind, &chara, &sub, &ext);
+    if (kind == 3 && ext == 9) {
+        mResId5C = (kind << 27) | (chara << 20) | (sub << 10) | 1;
+        mResId60 = evtData()->mResId;
+    }
 
-    if (FLD(u32, s, 0x6C) != 0) return;
-
-    u32 flags = FLD(u32, s, 0x18);
-
-    if (flags & 0x2) {
-        if (flags & 0x200) {
-            if (reinterpret_cast<UnkEvtListEntry*>(self)->SeqIsSameNameType3Busy() == 0) {
-                FLD(u32, s, 0x18) &= ~0x100;
-                u32* base = (u32*)((char*)lbl_eu_80531EF8 + 0x78);
-                FLD(u32, s, 0x0C) = base[1];
-                FLD(u32, s, 0x08) = base[0];
-                FLD(u32, s, 0x10) = base[2];
+    if (kind == 5) {
+        u32 resId = EvtSeqResolvePackedResId(mResId5C);
+        if (resId != mResId5C) {
+            mResId5C = resId;
+        }
+        char* suffix = evtData()->mSuffix;
+        if (suffix[0] != 0) {
+            int word = evtLookupEntryWord(suffix, chara / 10);
+            if (word != 0) {
+                mResId5C = word;
             }
+        }
+    }
+
+    ml::FixStr<64> name(true);
+    if (Tok_FormatStr(name, mResId5C, 0, 0)) {
+        for (u32 i = 0; i < 5; i++) {
+            if (strstr(name.c_str(), sWeaponNames[i]) != nullptr) {
+                if (mCount80 == 0) {
+                    sWeaponUsers++;
+                }
+                mCount80 = (sWeaponNames[i][2] - '0') * 10 + (sWeaponNames[i][3] - '0');
+                if (sWeaponFile == nullptr && sWeaponData == nullptr) {
+                    sWeaponFile = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), "eff/rec/ev/evwpn01.rec",
+                                                        this, 0, 0);
+                    CDeviceFile::tryUpdateJobPriority(sWeaponFile, 3);
+                    if (EvtSeqGetStateBit14()) {
+                        CDeviceFile::setHandleFlag2(sWeaponFile);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    int delegated = 0;
+    if (evtData()->mKind != 2) {
+        s32 resKind;
+        delegated = CfRes_tryDelegateLoad1(mResId5C, 4);
+        CfRes_tryResolveToken(mResId5C, &resKind);
+    }
+
+    if (delegated == 0) {
+        ml::FixStr<32> resName(Tok_FormatRes(mResId5C));
+        mFlags |= 2;
+        ml::FixStr<32> base(true);
+        base = resName;
+        int sep = base.rfind(lbl_eu_806623C0, -1);
+        if (sep != -1 && sep != 0) {
+            base = ml::FixStr<32>(base, 0, sep);
+        }
+
+        u32 type = evtData()->mKind;
+        if (type - 3 <= 3) {
+            ml::FixStr<64> path(true);
+            if (evtData()->mKind == 4) {
+                path = "/chr/jp/en/";
+                mModelType = 2;
+            } else if (evtData()->mKind == 3) {
+                path = "/chr/jp/np/";
+                mModelType = 1;
+            } else if (evtData()->mKind == 5) {
+                path = "/chr/jp/wp/";
+                mModelType = 1;
+            } else {
+                path = "/obj/";
+                mModelType = 1;
+            }
+            path += base.c_str();
+
+            ml::FixStr<64> kpPath = path;
+            kpPath += ".kp";
+            int kpSize = getFileSize__11CDeviceFileFPCc(kpPath.c_str(), 1);
+            ml::FixStr<64> chrPath = path;
+            chrPath += ".chr";
+            int size = getFileSize__11CDeviceFileFPCc(chrPath.c_str(), 1);
+            if (size <= 0) {
+                path += ".kp";
+                size = kpSize;
+            } else {
+                path += ".chr";
+            }
+
+            if (size < 0) {
+                mFlags |= 4;
+            } else if (reinterpret_cast<UnkEvtListEntry*>(this)->SeqIsSameNameType3Busy() == 0) {
+                void* buf = allocEvtMemAligned(size, 0x20, 0);
+                if (buf != nullptr) {
+                    mFileState = 1;
+                } else {
+                    buf = KyoshinHeap_AllocNode(size, 1) != nullptr ? KyoshinHeap_AllocNode(size, 0) : nullptr;
+                    if (buf != nullptr) {
+                        mAllocData3 = buf;
+                        mFileState = 2;
+                    }
+                }
+
+                if (buf != nullptr) {
+                    mFileHandle = CDeviceFile::readCommonArchiveFile((mtl::ALLOC_HANDLE)buf, path.c_str(), this, 0, 0);
+                } else {
+                    mFileHandle = CDeviceFile::readFile(CLibLayout::getAllocHandle(), path.c_str(), this, 0, 0);
+                    if (EvtSeqGetStateBit5()) {
+                        setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle, getScnCounter__Fv());
+                    }
+                    setFileHeaps(mFileHandle, evtData()->mFlags, 0x40000);
+                    if (evtData()->mFlags & 1) {
+                        CDeviceFile::setHandleFlag1(mFileHandle);
+                    }
+                    if (EvtSeqGetStateBit14()) {
+                        CDeviceFile::setHandleFlag2(mFileHandle);
+                    }
+                    mFileState = 3;
+                }
+
+                if (mFileHandle == nullptr) {
+                    mFlags |= 4;
+                }
+            } else {
+                mFlags |= 0x200;
+            }
+        } else {
+            mFlags |= 4;
+        }
+    }
+
+    if (mResId60 != 0 && evtData()->mKind == 3) {
+        ml::FixStr<64> path(true);
+        path = "/chr/jp/np/";
+        path += evtData()->mName;
+        path += ".chr";
+        mFileHandle2 = CDeviceFile::readFile(CLibLayout::getAllocHandle(), path.c_str(), this, 0, 0);
+        setFileHeaps(mFileHandle2, evtData()->mFlags, 0x20000);
+        if (evtData()->mFlags & 1) {
+            CDeviceFile::setHandleFlag1(mFileHandle2);
+        }
+        if (EvtSeqGetStateBit14()) {
+            CDeviceFile::setHandleFlag2(mFileHandle2);
+        }
+    }
+}
+
+void CREvtModelObj::stepSetup() {
+    scanPlayers();
+    if (mFileHandle2 != nullptr) return;
+
+    if (mFlags & 2) {
+        if ((mFlags & 0x200) && reinterpret_cast<UnkEvtListEntry*>(this)->SeqIsSameNameType3Busy() == 0) {
+            mFlags &= ~0x200;
+            mCallback = static_cast<EvtStep>(&CREvtModelObj::stepLoad);
             return;
         }
 
-        void* parentModel = EvtSeqFindSameNameType3(self);
-        void* parentModelData = 0;
-        if (parentModel != 0) {
-            parentModelData = FLD(void*, parentModel, 0x48);
+        CREvtModelObj* other = EvtSeqFindSameNameType3(this);
+        u8* otherData = nullptr;
+        if (other != nullptr) {
+            otherData = other->mAllocData;
         }
+        if ((mFileHandle == nullptr && mAllocData != nullptr) || otherData != nullptr) {
+            if (mFileHandle2 != nullptr) return;
 
-        if (FLD(u32, s, 0x40) == 0 && FLD(u32, s, 0x48) == 0 && parentModelData == 0) {
-            return;
-        }
+            u8* data = mAllocData;
+            mFlags |= 0x11;
+            if (data == nullptr) {
+                CREvtModelObj* owner = EvtSeqFindSameNameType3(this);
+                mRefOwner = owner;
+                if (owner->mAllocData == nullptr) {
+                    data = nullptr;
+                } else {
+                    owner->mRefCount++;
+                    data = owner->mAllocData;
+                }
+            }
 
-        if (FLD(u32, s, 0x6C) != 0) return;
+            if ((u32)data & 0x1F) {
+                nw4r::db::Panic(lbl_eu_8052637C, 0x3C, lbl_eu_80526354);
+            }
 
-        // Get data ptr
-        void* dataPtr = FLD(void*, s, 0x48);
-        if (dataPtr == 0) {
-            dataPtr = parentModelData;
-        }
-
-        // Check if data is KYP archive
-        if (dataPtr != 0) {
-            u8* bytes = (u8*)dataPtr;
-            if (bytes[0] == 'K' && bytes[1] == 'Y' && bytes[2] == 'P') {
-                // Parse KYP entries
-                u32 entryCount = *(u32*)(bytes + 0x08);
-                u8* entries = bytes + 0x10;
-                int j;
-                for (j = 0; j < (int)entryCount; j++) {
-                    u8* entry = entries + j * 0x10;
-                    int k;
-                    for (k = 0; ; k++) {
-                        const char* name = (const char*)lbl_eu_80531F08[k];
-                        if (name == 0) break;
-                        int nameLen = strlen(name);
-                        if (memcmp(entry + 0x08, name, nameLen) == 0) {
-                            FLD(u32, s, 0x68) = (u32)dataPtr + *(u32*)(entry + 0x00);
+            if (data[0] == 'K' && data[1] == 'Y' && data[2] == 'P') {
+                KypEntry* entry = reinterpret_cast<KypEntry*>(data + 0x10);
+                for (u32 i = 0; i < *reinterpret_cast<u32*>(data + 8); i++, entry++) {
+                    for (const char** ext = sModelExts; *ext != nullptr; ext++) {
+                        if (memcmp(entry->mName, *ext, strlen(*ext)) == 0) {
+                            mExtractData = entry->mOffset + data;
                             break;
                         }
                     }
-                    if (FLD(u32, s, 0x68) != (u32)dataPtr) break;
+                    if (mExtractData != data) break;
                 }
-                FLD(u8, s, 0x64) = 1;
+                mFlag64 = 1;
             }
 
-            // If extracted data not found, use original data
-            if (FLD(u32, s, 0x68) == 0) {
-                FLD(u32, s, 0x68) = (u32)dataPtr;
+            if (mExtractData == nullptr) {
+                mExtractData = data;
             }
 
-            // Create model
-            u32 allocHandle = (u32)lbl_eu_80663E14;
-            void* parent2 = FLD(void*, s, 0x1C);
-            u32 parentFlags2 = FLD(u32, parent2, 0x58);
+            CScn* scn = lbl_eu_80663E14;
+            u8* modelData = mExtractData;
             int priority = 7;
-            if (parentFlags2 & 0x40) {
+            if (evtData()->mFlags & 4) {
                 priority = 8;
             }
-
-            void* model = Scn_SetupAnim(allocHandle, FLD(void*, s, 0x68), priority, 1);
-            FLD(u32, s, 0x20) = (u32)model;
-
-            if (model != 0) {
-                // Setup model
-                FLD(u32, model, 0x7A4) |= 0x20000000;
-                simSetLeafDist7B0(model, lbl_eu_8066790C);
-
-                FLD(u32, model, 0x7A8) |= 4;
-
-                // Check parent flags
-                u32 pFlags = FLD(u32, parent2, 0x58);
-                if (pFlags & 0x10) {
-                    FLD(u32, model, 0x7A8) |= 0x80;
+            mModel = Scn_SetupAnim(scn, modelData, priority, 1);
+            if (mModel != nullptr) {
+                mModel->flags7A4 |= 0x20000000;
+                simSetLeafDist7B0(mModel, 0.0f);
+                mModel->flags7A8 |= 4;
+                CScnItemModel* model = mModel;
+                if (evtData()->mFlags & 8) {
+                    model->flags7A8 |= 0x80;
                 } else {
-                    FLD(u32, model, 0x7A8) &= ~0x80;
+                    model->flags7A8 &= ~0x80;
                 }
-
-                // Set model type
-                u32 type = FLD(u32, parent2, 0x28);
-                if (type == 2 || type == 3) {
-                    if (pFlags & 0x20) {
-                        void** modelVtbl = *(void***)model;
-                        void (*setAnim)(void*, int) = (void (*)(void*, int))modelVtbl[0x64 / 4];
-                        setAnim(model, 4);
+                if (evtData()->mKind - 2 <= 1) {
+                    if (evtData()->mFlags & 0x400) {
+                        mModel->vfunc64(4);
                     } else {
-                        void** modelVtbl = *(void***)model;
-                        void (*setAnim)(void*, int) = (void (*)(void*, int))modelVtbl[0x64 / 4];
-                        setAnim(model, 0);
+                        mModel->vfunc64(0);
                     }
                 }
+                if (mModel->flags7A4 & 0x800000) {
+                    if (CfGameManager::getGameSubManager() != nullptr &&
+                        reinterpret_cast<void**>(CfGameManager::getGameSubManager())[0x98 / 4] != nullptr) {
+                        mModel->vfunc78(reinterpret_cast<void**>(CfGameManager::getGameSubManager())[0x98 / 4]);
+                    }
+                }
+                if (mAllocData2 != nullptr) {
+                    simCoupleModel(mModel, mAllocData2);
+                    mModel->vfunc64(4);
+                }
+                if (mCount80 == 0 && !(evtData()->mFlags & 8)) {
+                    mModel->vfunc84(1);
+                }
+                simSetFlag2OnTree(mModel, 0);
+            }
 
-                // Check model flags
-                u32 modelFlags = FLD(u32, model, 0x7A4);
-                if (modelFlags & 0x100) {
-                    void* gm = cf::CfGameManager::getGameSubManager();
-                    if (gm != 0) {
-                        void* view = FLD(void*, gm, 0x98);
-                        if (view != 0) {
-                            void** modelVtbl2 = *(void***)model;
-                            void (*setView)(void*, void*) = (void (*)(void*, void*))modelVtbl2[0x78 / 4];
-                            setView(model, view);
+            u32 kind, chara, sub, ext;
+            Tok_Unpack(mResId5C, &kind, &chara, &sub, &ext);
+            if (kind - 2 <= 1) {
+                mModelType = 1;
+            } else if (kind == 4) {
+                mModelType = 2;
+            } else if (kind == 6) {
+                mModelType = 3;
+            }
+        } else {
+            if (!(mFlags & 4)) return;
+            mFlags |= 0x11;
+        }
+    } else {
+        s32 resKind;
+        u8* data = static_cast<u8*>(CfRes_tryResolveToken(mResId5C, &resKind));
+        if (resKind == -1) {
+            mFlags |= 0x11;
+        } else {
+            if (resKind == 0) return;
+            mFlags |= 0x11;
+
+            u8* base = data;
+            if (data[0] == 'K' && data[1] == 'Y' && data[2] == 'P') {
+                u32 count = *reinterpret_cast<u32*>(data + 8);
+                KypEntry* entry = reinterpret_cast<KypEntry*>(data + 0x10);
+                for (u32 i = 0; i < count; i++, entry++) {
+                    for (const char** ext = sModelExts; *ext != nullptr; ext++) {
+                        if (memcmp(entry->mName, *ext, strlen(*ext)) == 0) {
+                            data = data + entry->mOffset;
+                            break;
                         }
                     }
+                    if (data != base) break;
                 }
+                mFlag64 = 1;
+            }
 
-                // Handle loaded data callback
-                if (FLD(u32, s, 0x70) != 0) {
-                    simCoupleModel(model, FLD(void*, s, 0x70));
-                    void** modelVtbl3 = *(void***)model;
-                    void (*setAnim)(void*, int) = (void (*)(void*, int))modelVtbl3[0x64 / 4];
-                    setAnim(model, 4);
-                }
+            if (mExtractData == nullptr) {
+                mExtractData = data;
+            }
 
-                // Set visibility
-                if (FLD(u32, s, 0x80) == 0) {
-                    u32 pFlags3 = FLD(u32, parent2, 0x58);
-                    if (!(pFlags3 & 0x10)) {
-                        void** modelVtbl4 = *(void***)model;
-                        void (*setVisible)(void*, int) = (void (*)(void*, int))modelVtbl4[0x84 / 4];
-                        setVisible(model, 1);
+            mModel = Scn_SetupAnim(lbl_eu_80663E14, mExtractData, -1, 1);
+            if (mModel != nullptr) {
+                simSetLeafDist7B0(mModel, 0.0f);
+                mModel->flags7A4 |= 0x20000000;
+                mModel->flags7A8 |= 4;
+                if (evtData()->mKind - 2 <= 1) {
+                    if (evtData()->mFlags & 0x400) {
+                        mModel->vfunc64(4);
+                    } else {
+                        mModel->vfunc64(0);
                     }
                 }
-
-                simSetFlag2OnTree(model, 0);
-            }
-
-            // Parse resource info
-            u32 resId = FLD(u32, s, 0x5C);
-            u32 resKindB, charIdxB, subIdB, variantB;
-            Tok_Unpack(resId, &resKindB, &charIdxB, &subIdB, &variantB);
-
-            u32 resKindU = (u32)resKindB;
-            if (resKindU == 2 || resKindU == 3) {
-                FLD(u32, s, 0x50) = 1;
-            } else if (resKindU == 4) {
-                FLD(u32, s, 0x50) = 2;
-            } else if (resKindU == 6) {
-                FLD(u32, s, 0x50) = 3;
-            }
-        }
-
-        // Handle model type
-        if (FLD(u32, s, 0x20) != 0) {
-            u32 modelType = FLD(u32, s, 0x50);
-            if (modelType <= 1) {
-                void** modelVtbl = *(void***)FLD(u32, s, 0x20);
-                void (*setType)(void*, int, int) = (void (*)(void*, int, int))modelVtbl[0x9C / 4];
-                setType(FLD(void*, s, 0x20), 0, 0);
-            } else if (modelType == 2) {
-                void** modelVtbl = *(void***)FLD(u32, s, 0x20);
-                void (*setType)(void*, int, int) = (void (*)(void*, int, int))modelVtbl[0x9C / 4];
-                setType(FLD(void*, s, 0x20), 1, 0);
-            } else if (modelType == 3) {
-                void** modelVtbl = *(void***)FLD(u32, s, 0x20);
-                void (*setType)(void*, int, int) = (void (*)(void*, int, int))modelVtbl[0x9C / 4];
-                setType(FLD(void*, s, 0x20), 2, 0);
-            }
-        }
-
-        // Copy ptmf from lbl_eu_80531EF8 + 0x84
-        u32* data2 = (u32*)((char*)lbl_eu_80531EF8 + 0x84);
-        FLD(u32, s, 0x0C) = data2[1];
-        FLD(u32, s, 0x08) = data2[0];
-        FLD(u32, s, 0x10) = data2[2];
-    } else {
-        // Other path: parse resource info and handle
-        u32 resId = FLD(u32, s, 0x5C);
-        u32 resKindC, charIdxC, subIdC, variantC;
-        Tok_Unpack(resId, &resKindC, &charIdxC, &subIdC, &variantC);
-        int r0cVal = variantC;
-
-        if (r0cVal == -1) {
-            FLD(u32, s, 0x18) |= 0x11;
-            return;
-        }
-
-        if (r0cVal == 0) return;
-
-        FLD(u32, s, 0x18) |= 0x11;
-
-        // Check if data is KYP archive
-        u8* bytes = (u8*)resKindC;
-        // Wait, r18c is the result from CfRes_tryResolveToken...
-        // Actually, CfRes_tryResolveToken takes the resource ID and returns a pointer
-
-        // This path needs more careful analysis
-        // For now, let me just set up the basic structure
-    }
-}
-
-// ============================================================
-// EvtObj_TickUpdate (us-80184684) - Update function
-// ============================================================
-extern "C" void EvtObj_TickUpdate(void* self) {
-    char* s = (char*)self;
-
-    if (FLD(u32, s, 0x20) != 0) {
-        int val = EvtSeqGetCounter100(self);
-        // Builtin i2f is required: instructions come out byte-identical to
-        // retail incl. schedule. Residual (open item): MWCC pools the
-        // 0x4330000080000000 magic TU-locally (@N) where retail lfds the
-        // shared blob lbl_eu_80667910 -- single SDA21 reloc-name drift.
-        // §7i manual pattern regresses here (adds frsp / reschedules;
-        // 3 non-improving attempts, see attempts.jsonl).
-        float ft = (float)val;
-        simRefreshFlag8(FLD(void*, s, 0x20), ft);
-    }
-
-    reinterpret_cast<UnkObj80168514*>(self)->EvtSeqCheckEventRunGuard();
-    EvtObj_ScanPlayers(self);
-}
-
-// ============================================================
-// EvtObj_ScanPlayers (us-801846f0) - State check function
-// ============================================================
-extern "C" void EvtObj_ScanPlayers(void* self) {
-    char* s = (char*)self;
-
-    if (lbl_eu_806642B8 == 0) return;
-    if (FLD(u32, s, 0x80) == 0) return;
-
-    // State 0 or 2: scan for a player joining. Any other state: scan for a
-    // player leaving. Both scans always run all 4 slots (no early exit).
-    u32 state = FLD(u32, s, 0x84);
-    if (state != 0 && state != 2) {
-        for (int i = 0; i < 4; i++) {
-            char* entry = *(char**)(s + 0x1C) + i * 4;
-            short v = *(s16*)(entry + 0x5C);
-            if (v < 0 && labs(v) == EvtSeqGetCounter104() + 1) {
-                CFileHandle* h = FLD(CFileHandle*, s, 0x7C);
-                FLD(u32, s, 0x84) = 2;
-                if (h == 0) return;
-                short peer = *(s16*)(*(char**)(s + 0x1C) + i * 4 + 0x5E);
-                if (peer != 0) {
-                    // Keep the handle but flag the peer slot
-                    *(u8*)((char*)h + 0x59) = 1;
-                } else {
-                    schedClearFlag15Update(h);
-                    FLD(u32, s, 0x7C) = 0;
+                if (mModel->flags7A4 & 0x800000) {
+                    if (CfGameManager::getGameSubManager() != nullptr &&
+                        reinterpret_cast<void**>(CfGameManager::getGameSubManager())[0x98 / 4] != nullptr) {
+                        mModel->vfunc78(reinterpret_cast<void**>(CfGameManager::getGameSubManager())[0x98 / 4]);
+                    }
                 }
-                return;
+                if (mAllocData2 != nullptr) {
+                    simCoupleModel(mModel, mAllocData2);
+                    mModel->vfunc64(4);
+                }
+                if (mCount80 == 0 && !(evtData()->mFlags & 8)) {
+                    mModel->vfunc84(1);
+                }
+                simSetFlag2OnTree(mModel, 0);
+            }
+
+            u32 kind, chara, sub, ext;
+            Tok_Unpack(mResId5C, &kind, &chara, &sub, &ext);
+            if (kind - 2 <= 1) {
+                mModelType = 1;
+            } else if (kind == 4) {
+                mModelType = 2;
+            } else if (kind == 6) {
+                mModelType = 3;
             }
         }
+    }
+
+    if (mModel != nullptr) {
+        if (mModelType <= 1) {
+            mModel->vfunc9C(0, 0);
+        } else if (mModelType == 2) {
+            mModel->vfunc9C(1, 0);
+        } else if (mModelType == 3) {
+            mModel->vfunc9C(2, 0);
+        }
+    }
+    mCallback = static_cast<EvtStep>(&CREvtModelObj::stepUpdate);
+}
+
+void CREvtModelObj::stepNone() {}
+
+void CREvtModelObj::stepUpdate() {
+    if (mModel != nullptr) {
+        simRefreshFlag8(mModel, (int)EvtSeqGetCounter100());
+    }
+    reinterpret_cast<UnkObj80168514*>(this)->EvtSeqCheckEventRunGuard();
+    scanPlayers();
+}
+
+void CREvtModelObj::scanPlayers() {
+    if (sWeaponData == nullptr || mCount80 == 0) {
         return;
     }
 
-    if (FLD(u32, s, 0x7C) != 0) return;
+    // State 0 or 2: scan for a player joining. Any other state: scan for a
+    // player leaving. Both scans always run all 4 slots (no early exit).
+    if (mState84 == 0 || mState84 == 2) {
+        if (mSchedule != nullptr) return;
 
-    int found = 0;
-    int foundId = -1;
-    for (int i = 0; i < 4; i++) {
-        char* entry = *(char**)(s + 0x1C) + i * 4;
-        short v = *(s16*)(entry + 0x5C);
-        if (v > 0) {
-            if (v <= EvtSeqGetCounter104() + 1) {
+        int found = 0;
+        int peer = -1;
+        for (int i = 0; i < 4; i++) {
+            s16 start = evtData()->mSlots[i].mStart;
+            if (start > 0 && start <= EvtSeqGetCounter104() + 1) {
                 found = 1;
-                foundId = *(s16*)(*(char**)(s + 0x1C) + i * 4 + 0x5E);
-            }
-        } else if (v < 0) {
-            if (labs(v) <= EvtSeqGetCounter104() + 1) {
-                found = 0;
+                peer = evtData()->mSlots[i].mPeer;
+            } else if (start < 0) {
+                int count = labs(start);
+                if (count <= EvtSeqGetCounter104() + 1) {
+                    found = 0;
+                }
             }
         }
-    }
-    if (!found) return;
+        if (!found) return;
 
-    void* model = FLD(void*, s, 0x20);
-    FLD(u32, s, 0x84) = 1;
-    if (model == 0) return;
-    if (FLD(u32, s, 0x24) == 0) return;
+        mState84 = 1;
+        if (mModel == nullptr || mData == nullptr) {
+            return;
+        }
 
-    CFileHandle* h = (CFileHandle*)EffRoot_AddSchedReq(
-        &lbl_eu_8065FC18, (u32)lbl_eu_806642B8, (u32)lbl_eu_80663E14,
-        FLD(u32, s, 0x80) - 1, 1, 0);
-    FLD(u32, s, 0x7C) = (u32)h;
-    if (h == 0) return;
+        mSchedule = static_cast<CSchedule*>(
+            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, lbl_eu_80663E14, mCount80 - 1, 1, 0));
+        if (mSchedule == nullptr) return;
 
-    schedAttachChildSlot(h, (self != 0) ? (void*)(s + 0x3C) : 0);
-
-    // Signed-int -> float via the manual 0x4330000080000000 bit pattern so
-    // the scale subtract references the retail pool symbol lbl_eu_80667910
-    // instead of a TU-local anonymous @N pool slot (MWCC_PATTERNS 7i).
-    union { double d; u32 w[2]; } conv;
-    conv.w[1] = (u32)foundId ^ 0x80000000;
-    conv.w[0] = 0x43300000;
-    if (conv.d - lbl_eu_80667910 > lbl_eu_80667908) {
-        schedSetStepIntervals((void*)h, (float)(conv.d - lbl_eu_80667910),
-                      (float)lbl_eu_80667908);
+        schedAttachChildSlot(mSchedule, static_cast<CScheduleChild*>(this));
+        if ((float)peer > 1.0f) {
+            schedSetStepIntervals(mSchedule, (float)peer, 1.0f);
+        }
+        mSchedule->field_0x14 = mModel->vfuncA8();
+        return;
     }
 
-    // Pull the current position value from the model (vtable 0xA8)
-    u32 val = ((u32 (*)(void*))(*(void***)model)[0xA8 / 4])(model);
-    h->unk14 = val;
+    for (int i = 0; i < 4; i++) {
+        s16 start = evtData()->mSlots[i].mStart;
+        if (start >= 0) continue;
+        int count = labs(start);
+        if (count == EvtSeqGetCounter104() + 1) {
+            CSchedule* sched = mSchedule;
+            mState84 = 2;
+            if (sched == nullptr) return;
+            if (evtData()->mSlots[i].mPeer != 0) {
+                sched->field_0x59 = 1;
+            } else {
+                schedClearFlag15Update(sched);
+                mSchedule = nullptr;
+            }
+            return;
+        }
+    }
 }
 
-// ============================================================
-// EvtObj_CheckWalkEvt (us-80184938) - Event handler check
-// ============================================================
-int CREvtModelObj::EvtObj_CheckWalkEvt() {
+bool CREvtModelObj::isBusy() {
     if (mField74 != EvtSeqGetWalkIndex() + 1) {
-        return 0;
+        return false;
     }
 
-    int result;
+    bool result;
     // Only active while multiple players are running
-    if ((u32)mParent->mField30 <= 1) {
-        result = 0;
+    if (evtData()->mField30 <= 1) {
+        result = false;
     } else {
-        result = __ptmf_cmpr((void*)mCallback, lbl_eu_80531F88) == 0 ||
-                 __ptmf_cmpr((void*)mCallback, lbl_eu_80531F94) == 0;
+        result = mCallback == static_cast<EvtStep>(&CREvtModelObj::stepLoad) ||
+                 mCallback == static_cast<EvtStep>(&CREvtModelObj::stepSetup);
     }
     return result;
 }
 
-// ============================================================
-// EvtObj_OnFileEvent (us-801849f0) - OnFileEvent handler
-// ============================================================
-extern "C" int EvtObj_OnFileEvent(void* self, CEventFile* ev) {
-    char* s = (char*)self;
+int CREvtModelObj::vfunc_20() { return 1; }
 
-    CFileHandle* fh = FLD(CFileHandle*, s, 0x40);
-    if (ev->mFileHandle == fh) {
-        if (ev->unk0 == 1) {
-            void* data = fh->getData();
-            FLD(u32, s, 0x48) = (u32)data;
-            FLD(u32, s, 0x58) = ev->field_14;
-        } else {
-            FLD(u32, s, 0x18) |= 4;
-        }
-        FLD(u32, s, 0x40) = 0;
-        return 1;
-    }
-
-    CFileHandle* fh2 = FLD(CFileHandle*, s, 0x6C);
-    if (ev->mFileHandle == fh2) {
-        if (ev->unk0 == 1) {
-            void* data = fh2->getData();
-            FLD(u32, s, 0x70) = (u32)data;
-        } else {
-            FLD(u32, s, 0x18) |= 4;
-        }
-        FLD(u32, s, 0x6C) = 0;
-        return 1;
-    }
-
-    if (ev->mFileHandle == (CFileHandle*)lbl_eu_806642BC) {
-        if (ev->unk0 == 1) {
-            void* data = ((CFileHandle*)lbl_eu_806642BC)->getData();
-            lbl_eu_806642B8 = data;
-            EffSched_LookupA(&lbl_eu_8065FC18);
-        }
-        lbl_eu_806642BC = 0;
-    }
-
-    return 0;
+void CREvtModelObj::vfunc_24() {
+    mFlags &= ~0x20;
 }
 
-// ============================================================
-// EvtObj_CheckFlags140 (us-80184b00) - Check function
-// ============================================================
-int CREvtModelObj::EvtObj_CheckFlags140() {
+bool CREvtModelObj::OnFileEvent(CEventFile* pEvent) {
+    if (pEvent->mFileHandle == mFileHandle) {
+        if (pEvent->unk0 == 1) {
+            mAllocData = static_cast<u8*>(mFileHandle->getData());
+            mFileId = pEvent->field_14;
+        } else {
+            mFlags |= 4;
+        }
+        mFileHandle = nullptr;
+        return true;
+    }
+
+    if (pEvent->mFileHandle == mFileHandle2) {
+        if (pEvent->unk0 == 1) {
+            mAllocData2 = static_cast<u8*>(mFileHandle2->getData());
+        } else {
+            mFlags |= 4;
+        }
+        mFileHandle2 = nullptr;
+        return true;
+    }
+
+    if (pEvent->mFileHandle == sWeaponFile) {
+        if (pEvent->unk0 == 1) {
+            sWeaponData = sWeaponFile->getData();
+            EffSched_LookupA(&lbl_eu_8065FC18, sWeaponData);
+        }
+        sWeaponFile = nullptr;
+    }
+
+    return false;
+}
+
+void CREvtModelObj::OnScheduleDelete(CSchedule* pSchedule) {
+    if (mSchedule == pSchedule) {
+        mSchedule = nullptr;
+    }
+}
+
+int CREvtModelObj::vfunc_14() {
     u32 flags = mFlags;
     int result = 0;
     if (flags & 1) {
@@ -934,46 +790,4 @@ int CREvtModelObj::EvtObj_CheckFlags140() {
     return result;
 }
 
-// ============================================================
-// func_80183264 (us-80184680) - empty lifecycle hook (retail: blr only).
-// ============================================================
-extern "C" void func_80183264() {}
-
-// ============================================================
-// func_801835C4 (us-801849e0) - clear bit 0x20 of mFlags (+0x18).
-// Retail: lwz / rlwinm (strip bit 26) / stw.
-// ============================================================
-void CREvtModelObj::func_801835C4() {
-    mFlags &= ~0x20u;
-}
-
-// ============================================================
-// func_801836CC (us-80184ae8) - clear the +0x7C word when it holds `value`.
-// Retail: lwz / cmplw-bnelr / li / stw.
-// ============================================================
-extern "C" void func_801836CC(void* self, unsigned long value) {
-    u32* slot = (u32*)&((CREvtModelObj*)self)->mFileHandle3;
-    if (*slot == (u32)value)
-        *slot = 0;
-}
-
-// ============================================================
-// Thunks
-// ============================================================
-extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) {
-    ((void(*)(void*))EvtObj_OnFileEvent)((char*)self - 0x38);
-}
-
-extern "C" void EvtObj_ThunkCtor38(void* self) {
-    ((void(*)(void*))__ct__80181B74)((char*)self - 0x38);
-}
-
-extern "C" void EvtObj_ThunkInit3C(void* self) {
-    ((void(*)(void*))func_801836CC)((char*)self - 0x3C);
-}
-
-extern "C" void EvtObj_ThunkCtor3C(void* self) {
-    ((void(*)(void*))__ct__80181B74)((char*)self - 0x3C);
-}
-// retail: li r3,1; blr -- returns true
-bool CREvtModelObj::EvtObj_AlwaysTrue() { return true; }
+} // namespace cf

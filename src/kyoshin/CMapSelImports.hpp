@@ -31,8 +31,6 @@ public:
 };
 
 // Scrollbar destroy / layout-read helpers (unmangled retail symbols).
-extern "C" void CScrollBar_Teardown(void* scrollbar);
-extern "C" void CScrollBar_loadLayoutArc(void* scrollbar);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__10CScrollBarFv(void*, int);
@@ -42,16 +40,9 @@ extern "C" void __ct__10CScrollBarFUc(void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void CScrollBar_draw(void*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_UpdateDispatch(void*);                    // scrollbar per-frame update
 // Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
 extern "C" void Cur_Update(void*);                  // cursor per-frame update
-extern "C" void CScrollBar_InitRootPane(void*, const float*);      // scrollbar init (3-float vec)
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);          // scrollbar range setup
-extern "C" void CScrollBar_PlaceThumb(void*, u16);                // scrollbar thumb position
-extern "C" void CScrollBar_requestScrollIn(void*);                    // scrollbar show
 // Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
 // defines CODE_80135FDC_CPP before including that header, so those exports are
 // skipped there and the declarations below apply (retail CMapSel callers pass

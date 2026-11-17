@@ -12,27 +12,17 @@
 
 // CFloorMap.hpp and CMapSel.hpp declare overlapping helpers with different
 // signatures; rename CFloorMap's versions while its header is processed.
-#define CScrollBar_UpdateDispatch CScrollBar_UpdateDispatchFloorMap
 #define Cur_Update Cur_UpdateFloorMap
 #define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
-#define CScrollBar_PlaceThumb CScrollBar_PlaceThumbFloorMap
 #define ApplyFontToTxtPanes ApplyFontToTxtPanesFloorMap
-#define CScrollBar_requestScrollIn CScrollBar_requestScrollInFloorMap
-#define CScrollBar_InitRootPane CScrollBar_InitRootPaneFloorMap
-#define CScrollBar_UpdateThumb CScrollBar_UpdateThumbFloorMap
 #define Bdat_GetMaxRow_B1EC Bdat_GetMaxRow_B1ECFloorMap
 #define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
 #define BdatTouchStringCell BdatTouchStringCellFloorMap
 #define PaneSetTexPaletteByName PaneSetTexPaletteByNameFloorMap
 #include "kyoshin/CFloorMap.hpp"
-#undef CScrollBar_UpdateDispatch
 #undef Cur_Update
 #undef sysWinDispatchPhase
-#undef CScrollBar_PlaceThumb
 #undef ApplyFontToTxtPanes
-#undef CScrollBar_requestScrollIn
-#undef CScrollBar_InitRootPane
-#undef CScrollBar_UpdateThumb
 #undef Bdat_GetMaxRow_B1EC
 #undef lbl_eu_806640A8
 #undef BdatTouchStringCell

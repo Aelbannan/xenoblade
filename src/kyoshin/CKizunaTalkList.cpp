@@ -3,6 +3,7 @@
 
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CKizunaTalkList.hpp"
+#include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -57,7 +58,7 @@ void CKizunaTalkList::initTalkList() {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     this->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], this, 0, 0);
     this->mBdatHandle = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], this, 0, 0);
-    CScrollBar_loadLayoutArc(&this->mScrollBar);
+    this->mScrollBar.loadLayoutArc();
     this->mUnknown86 = 0;
 }
 
@@ -89,7 +90,7 @@ void CKizunaTalkList::updateTalkList() {
 
         this->mpLayout20->Animate(0);
         Cur_Update(&this->mCursor);
-        CScrollBar_UpdateDispatch(&this->mScrollBar);
+        this->mScrollBar.UpdateDispatch();
     }
 }
 
@@ -98,7 +99,7 @@ void CKizunaTalkList::updateTalkList() {
 void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
     if (this->mState84 != 0) {
         drawLayout(this->mpLayout20, pDrawInfo, 0, 1);
-        CScrollBar_draw(&this->mScrollBar, (void*)pDrawInfo);
+        this->mScrollBar.draw(pDrawInfo);
         Cur_DrawLayout(&this->mCursor, (void*)pDrawInfo);
     }
 }
@@ -118,7 +119,7 @@ void CKizunaTalkList::teardownTalkList() {
     this->mAccessor = NULL;
 
     this->mCursor.cleanup();
-    CScrollBar_Teardown(&this->mScrollBar);
+    this->mScrollBar.Teardown();
     deleteRegion(&this->mMemRegion);
     lbl_eu_806648B8 = NULL;
 }
@@ -359,7 +360,7 @@ void buildTalkList(TalkListEntryArray* arr) {
 // Whether the talk-list has anything to show (retail hasVisibleTalks): returns
 // the unknown-0x86 state byte when the scroll bar is visible, else 0.
 bool CKizunaTalkList::hasVisibleTalks() {
-    if (CScrollBar_isVisible(&this->mScrollBar)) {
+    if (this->mScrollBar.isVisible()) {
         return this->mUnknown86;
     }
     return 0;
@@ -378,9 +379,9 @@ void CKizunaTalkList::showTalkList() {
         vec[0] = lbl_eu_806689C8;
         vec[1] = lbl_eu_806689CC;
         vec[2] = lbl_eu_806689D0;
-        CScrollBar_InitRootPane(&this->mScrollBar, vec);
-        CScrollBar_UpdateThumb(&this->mScrollBar, 7, this->mEntryArray.mCount);
-        CScrollBar_requestScrollIn(&this->mScrollBar);
+        this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+        this->mScrollBar.UpdateThumb(7, this->mEntryArray.mCount);
+        this->mScrollBar.requestScrollIn();
     }
 }
 
@@ -392,7 +393,7 @@ void CKizunaTalkList::hideTalkList() {
         this->mNeedsRebuild = 0;
         bindScrollInAnims(this);
         Cur_SetVisible(&this->mCursor, 0);
-        CScrollBar_requestScrollOut(&this->mScrollBar);
+        this->mScrollBar.requestScrollOut();
         playUISound(6);
     }
 }
@@ -421,7 +422,7 @@ void CKizunaTalkList::scrollTalkListUp() {
     }
     renderTalkRows(this);
     moveTalkCursor(this);
-    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
+    this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
 
@@ -448,7 +449,7 @@ void CKizunaTalkList::scrollTalkListDown() {
     }
     renderTalkRows(this);
     moveTalkCursor(this);
-    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
+    this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
 
@@ -470,7 +471,7 @@ void CKizunaTalkList::pageTalkListUp() {
     }
     renderTalkRows(this);
     moveTalkCursor(this);
-    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
+    this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
 
@@ -494,7 +495,7 @@ void CKizunaTalkList::pageTalkListDown() {
     }
     renderTalkRows(this);
     moveTalkCursor(this);
-    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
+    this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
 

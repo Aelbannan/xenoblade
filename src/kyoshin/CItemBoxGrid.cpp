@@ -9,6 +9,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/CSortMenu.hpp"
+#include <new>
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -60,6 +62,20 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+
+// Retail helper forms used by this TU (kept out of CItemBoxGrid.hpp: owners
+// that also include CItemBoxInfo.hpp declare them with other parameter types).
+extern "C" u32 BdatGetItemId(u32);
+extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
+extern "C" char* BdatTouchStringCell(const void*, const void*, int);
+extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
+extern "C" void SplitU32ToS16s(short*, unsigned long);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
+extern "C" void* CUICfManager_getPackedFont9C(void);
+extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 void playUISound(u32);
 
 // Forward declarations for external functions
@@ -256,7 +272,7 @@ struct CibgOuterSlots {
     CCur18 mA0;     // +0xA0
     u8 mB8[0x18];   // +0xB8
     u8 mD0[0x18];   // +0xD0
-    u8 mE8[0xF0];   // +0xE8
+    CSortMenu mSortMenu; // +0xE8
     u8 m1D8[0x20C]; // +0x1D8
     u8 m3E4[0x34];  // +0x3E4
     u8 m418[0x28];  // +0x418
@@ -2543,7 +2559,6 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     u8 tmpWin1[0x3c];
     u8 tmpEx[0x28];
     u8 tmpNum[0x38];
-    u8 tmpSort[0xf0];
     u8 tmpGrid[0x44c0];
     u8 tmpInfo[0x20c];
 
@@ -2578,7 +2593,9 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     __ct__CCur18((CCur18*)(p + 0xa0), 0);
     __ct__CCur16(p + 0xb8, 0);
     __ct__CCur11(p + 0xd0, 0);
-    __ct__CSortMenu(p + 0xe8);
+    // TODO: real member construction once this is CItemBoxGrid::CItemBoxGrid;
+    // placement new adds a null check retail does not have.
+    new (&((CibgOuterSlots*)p)->mSortMenu) CSortMenu;
     __ct__CItemBoxInfo(p + 0x1d8, 0, 0);
     __ct__CNumSelect(p + 0x3e4, 1);
     __ct__CItemBoxGridSubMenu(p + 0x418);
@@ -2612,13 +2629,8 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     __ct__801C5514(p + 0x54c);
     memset(p + 0x62, 0, 0xc);
 
-    // sort-menu temp: copy its config sub-blocks by value into the members.
-    // Scalar fields are copied load-store interleaved; trailing word runs use
-    // rolled pointer-walk loops (retail lwzu/stwu bdnz shape, pointers
-    // biased -4 from the array start).
-    __ct__CSortMenu(tmpSort);
-    *(CibgSortMember*)(p + 0xec) = *(CibgSortMember*)(tmpSort + 4);
-    __dt__9CSortMenuFv(tmpSort, -1);
+    // sort-menu re-init: assignment from a temporary (implicit operator=).
+    ((CibgOuterSlots*)p)->mSortMenu = CSortMenu();
 
     // item-info temp (mode-derived init)
     int modeId = 0;
@@ -2703,7 +2715,7 @@ __dt__12CExchangeWinFv(((CibgOuterSlots*)self)->m440, -1);
 __dt__19CItemBoxGridSubMenuFv(((CibgOuterSlots*)self)->m418, -1);
 __dt__10CNumSelectFv(((CibgOuterSlots*)self)->m3E4, -1);
 __dt__12CItemBoxInfoFv(((CibgOuterSlots*)self)->m1D8, -1);
-__dt__9CSortMenuFv(((CibgOuterSlots*)self)->mE8, -1);
+((CibgOuterSlots*)self)->mSortMenu.CSortMenu::~CSortMenu();
 __dt__6CCur11Fv(((CibgOuterSlots*)self)->mD0, -1);
 __dt__6CCur16Fv(((CibgOuterSlots*)self)->mB8, -1);
 __dt__6CCur18Fv(&((CibgOuterSlots*)self)->mA0, -1);
@@ -2753,7 +2765,7 @@ extern "C" void LoadItemBoxFiles(void* self, int reserved) {
         lbl_eu_80664510 = (u32)getFP(strs + 0x2ee);
     }
 
-    sortMenuInitFileRead(p + 0xe8);
+    ((CSortMenu*)(p + 0xe8))->Init();
     loadItemBoxFiles(p + 0x1d8);
     NumSel_LoadArchive_AE8C(p + 0x3e4);
 
@@ -2855,7 +2867,7 @@ FinishSysWin((CItemBoxGrid*)self);
     Cur_Update(p + 0xa0);
     Cur_Update(p + 0xb8);
     Cur_Update(p + 0xd0);
-    sortMenuDispatchState(p + 0xe8);
+    ((CSortMenu*)(p + 0xe8))->Move();
     updateItemBoxAnims(p + 0x1d8);
     NumSel_DispatchState_AED4(p + 0x3e4);
     GridSubMenu_Move(p + 0x418);
@@ -2882,7 +2894,7 @@ extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
         Cur_DrawLayout(p + 0x88, (void*)drawInfo);
     }
 
-    sortMenuDraw(p + 0xe8, (void*)drawInfo);
+    ((CSortMenu*)(p + 0xe8))->Draw((nw4r::lyt::DrawInfo*)drawInfo);
     GridSubMenu_DrawLayoutGated(p + 0x418, drawInfo);
     ExWin_DrawLayout(p + 0x440, drawInfo);
     sysWinDrawLayout(p + 0x4ac, (void*)drawInfo);
@@ -2948,7 +2960,7 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
     ((CBaseCur*)(p + 0xb8))->cleanup();
     ((CBaseCur*)(p + 0xd0))->cleanup();
 
-    sortMenuTermCleanup(p + 0xe8);
+    ((CSortMenu*)(p + 0xe8))->Term();
     closeItemBox1(p + 0x1d8);
     NumSel_Teardown_AF9C(p + 0x3e4);
     GridSubMenu_TermLayout(p + 0x418);
@@ -2961,7 +2973,7 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
 // Check if item grid is fully ready.
 extern "C" u32 IsItemBoxReady(void* self) {
     u8* p = (u8*)self;
-    if (!sortMenuIsScrollbarVisible(p + 0xe8)) return 0;
+    if (!((CSortMenu*)(p + 0xe8))->IsReady()) return 0;
     if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
     if (!NumSel_GetField2D_B018(p + 0x3e4)) return 0;
     if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
@@ -2978,7 +2990,7 @@ extern "C" u32 IsItemBoxActive(void* self) {
     if (CSysWin_getUnk34(p + 0x4ac)) return 1;
     if (CSysWin_getUnk34(p + 0x4e8)) return 1;
     if (p[0x544]) return 1;
-    return sortMenuIsVisible28(p + 0xe8);
+    return ((CSortMenu*)(p + 0xe8))->IsOpen();
 }
 
 // Get field depending on window state.
@@ -3032,7 +3044,7 @@ void InitItemDisplay(void* self) {
 extern "C" void AdvanceBoxState(void* self) {
     u8* p = (u8*)self;
     if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     ((CItemBoxGridHeadView*)p)->field_58 = 4;
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 0);
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
@@ -3068,7 +3080,7 @@ void CItemBoxGrid::PushToList(unsigned char val) {
 // Increment list counter with wrap.
 extern "C" __declspec(noinline) void IncListIndex(void* self) {
     u8* p = (u8*)self;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
     u8 idx = p[0x6f] + 1;
     p[0x6f] = idx;
@@ -3083,7 +3095,7 @@ extern "C" __declspec(noinline) void IncListIndex(void* self) {
 // Decrement a list counter with wrap.
 extern "C" __declspec(noinline) void DecListIndex(void* self) {
     u8* p = (u8*)self;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
     u8 idx = p[0x6f] - 1;
     p[0x6f] = idx;
@@ -3124,7 +3136,7 @@ void GridMoveCursorLeft(void* self) {
     if (isPresentActive(p + 0x468)) return;
     // Negated so the p544/p528/p527 chain nests in the false arm (retail
     // branches forward past the D3328 block instead of jumping to a shared end).
-    if (!sortMenuIsVisible28(p + 0xe8)) {
+    if (!((CSortMenu*)(p + 0xe8))->IsOpen()) {
     if (p[0x544]) {
         void* arr = p + 0x288;
         // Retail scans candidate indices downward from p546-1 (wrapping to 3)
@@ -3197,11 +3209,10 @@ void GridMoveCursorLeft(void* self) {
         RefreshSelectedCellText(self);
     }
     } else {
-        if (sortMenuGetFlag2B(p + 0xe8)) {
-            sortMenuScrollUp(p + 0xe8);
-            u8 temp[12];
-            sortMenuFormatPaneText(temp, p + 0xe8);
-            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
+        if (((CSortMenu*)(p + 0xe8))->IsIdle()) {
+            ((CSortMenu*)(p + 0xe8))->CursorUp();
+            nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
             goto sound_and_return;
         }
         return;
@@ -3270,12 +3281,11 @@ void GridMoveCursorRight(void* self) {
         return;
     }
     if (isPresentActive(p + 0x468)) return;
-    if (sortMenuIsVisible28(p + 0xe8)) {
-        if (sortMenuGetFlag2B(p + 0xe8)) {
-            sortMenuScrollDown(p + 0xe8);
-            u32 buf20[3];
-            sortMenuFormatPaneText(buf20, p + 0xe8);
-            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf20));
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+        if (((CSortMenu*)(p + 0xe8))->IsIdle()) {
+            ((CSortMenu*)(p + 0xe8))->CursorDown();
+            nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
             goto sound_and_return2;
         }
         return;
@@ -3361,9 +3371,6 @@ void GridMoveCursorDown(void* self) {
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
     u8* sub;
-    // One contiguous 24-byte region: retail uses sp+0x08 (buf) and sp+0x14 (tmp),
-    // i.e. two adjacent 12-byte slots of a single stack block.
-    u32 sbuf[6];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3397,11 +3404,11 @@ void GridMoveCursorDown(void* self) {
         playUISound(1);
         return;
     }
-    if (sortMenuIsVisible28(p + 0xe8)) {
-        if (!sortMenuGetFlag2B(p + 0xe8)) return;
-        sortMenuPageUpStep(p + 0xe8);
-        sortMenuFormatPaneText(sbuf + 3, p + 0xe8);
-        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf + 3));
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+        if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
+        ((CSortMenu*)(p + 0xe8))->PageUp();
+        nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
         playUISound(1);
         return;
     }
@@ -3416,6 +3423,7 @@ void GridMoveCursorDown(void* self) {
                 break;
             }
         }
+        u32 sbuf[3];
         CopyTabSlotVec(sbuf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf));
         playUISound(1);
@@ -3448,8 +3456,6 @@ void GridMoveCursorUp(void* self) {
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
     u8* sub;
-    u32 tmp[3];
-    u32 buf[3];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3482,11 +3488,11 @@ void GridMoveCursorUp(void* self) {
         playUISound(1);
         return;
     }
-    if (sortMenuIsVisible28(p + 0xe8)) {
-        if (!sortMenuGetFlag2B(p + 0xe8)) return;
-        sortMenuPageDownStep(p + 0xe8);
-        sortMenuFormatPaneText(tmp, p + 0xe8);
-        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)tmp);
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+        if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
+        ((CSortMenu*)(p + 0xe8))->PageDown();
+        nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
         playUISound(1);
         return;
     }
@@ -3501,6 +3507,7 @@ void GridMoveCursorUp(void* self) {
             u16 val = ArrayGet12((const u16*)sub, (u8)(p[0x546] + (u8)idx * 4));
             if (val) { p[0x545] = (u8)idx; break; }
         }
+        u32 buf[3];
         CopyTabSlotVec(buf, sub, (u8)(p[0x546] + (u8)p[0x545] * 4));
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
         playUISound(1);
@@ -3533,7 +3540,7 @@ NextGridPage((CItemBoxGrid*)self);
 __declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
@@ -3557,7 +3564,7 @@ __declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
 __declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
@@ -3579,24 +3586,20 @@ __declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
 // the epilogue), so express the checks as one && chain.
 void OpenSortMenu(CItemBoxGrid* self) {
     u8* p = (u8*)self;
-    // one shared stack buffer: the merge result lands in words [3] and is
-    // consumed before sortMenuFormatPaneText overwrites the whole array (retail
-    // reuses the same frame slots).
-    u32 buf[5];
     if (!((CItemBoxGridHeadView*)p)->field_542 && !((CItemBoxGridHeadView*)p)->field_528 && !CSysWin_getUnk34(p + 0x4ac) &&
         !CSysWin_getUnk34(p + 0x4e8) && !GridSubMenu_IsVisibleFlag(p + 0x418) &&
         !isPresentActive(p + 0x468) && !((CItemBoxGridHeadView*)p)->field_544) {
-        if (sortMenuIsVisible28(p + 0xe8)) {
-            if (!sortMenuGetFlag2B(p + 0xe8)) return;
+        if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+            if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
             UpdateCursors(self);
             Cur_SetVisible(p + 0xa0, 0);
-            sortMenuToState4Page(p + 0xe8);
+            ((CSortMenu*)(p + 0xe8))->Close();
             playUISound(6);
             return;
         }
         // state word is compared signed (retail cmpwi)
         if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
-        if (!sortMenuGetFlag2B(p + 0xe8)) return;
+        if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
         // fetch the layout pane and resolve two tag strings through its
         // vtable+0x3C accessor, then merge them back into the window text.
         nw4r::lyt::Layout* obj = ((CItemBoxGridHeadView*)p)->field_44;
@@ -3604,16 +3607,17 @@ void OpenSortMenu(CItemBoxGrid* self) {
         nw4r::lyt::Pane* pane = obj->GetRootPane();
         // MWCC evaluates args right-to-left, so listing the 0x301 fetch as
         // the third argument makes it execute first, matching retail.
-        ScalePaneWorldPos(&buf[3], pane->FindPaneByName((char*)&lbl_eu_8050566C[0x2f8], 1),
+        nw4r::math::VEC3 basePos;
+        ScalePaneWorldPos(&basePos, pane->FindPaneByName((char*)&lbl_eu_8050566C[0x2f8], 1),
                       pane->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1), pane);
-        sortMenuSetLayoutPos(p + 0xe8, &buf[3]);
-        sortMenuSetPage(p + 0xe8, (u8)(((CItemBoxGridHeadView*)p)->field_547 + ((CItemBoxGridHeadView*)p)->field_548));
-        sortMenuFormatPaneText(buf, p + 0xe8);
-        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
+        ((CSortMenu*)(p + 0xe8))->SetPos(&basePos);
+        ((CSortMenu*)(p + 0xe8))->SetSelect((u8)(((CItemBoxGridHeadView*)p)->field_547 + ((CItemBoxGridHeadView*)p)->field_548));
+        nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
         Cur_SetVisible(p + 0xa0, 1);
         Cur_SetVisible(p + 0x70, 0);
         Cur_SetVisible(p + 0xb8, 0);
-        sortMenuOpenInit(p + 0xe8);
+        ((CSortMenu*)(p + 0xe8))->Open();
         ((CItemBoxGridHeadView*)p)->field_526 = 0;
         playUISound(2);
     }
@@ -3699,11 +3703,11 @@ void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
         Cur_SetVisible(p + 0xa0, 0);
         goto check_tail;
     }
-    if (sortMenuIsVisible28(p + 0xe8)) {
-        if (!sortMenuGetFlag2B(p + 0xe8)) goto exit;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+        if (!((CSortMenu*)(p + 0xe8))->IsIdle()) goto exit;
         UpdateCursors(self);
         Cur_SetVisible(p + 0xa0, 0);
-        sortMenuToState4Page(p + 0xe8);
+        ((CSortMenu*)(p + 0xe8))->Close();
     } else if (((CItemBoxGridHeadView*)p)->field_527 == 4) {
         ((CItemBoxGridHeadView*)p)->field_525 = -2;
         UpdateCursors(self);
@@ -3851,12 +3855,12 @@ void func_801CCAF0(void* self) {
         playUISound(3);
         return;
     }
-    if (sortMenuIsVisible28(p + 0xe8)) {
-        if (sortMenuGetFlag2B(p + 0xe8)) {
-            u32 val = sortMenuGetPageSum(p + 0xe8);
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
+        if (((CSortMenu*)(p + 0xe8))->IsIdle()) {
+            u32 val = ((CSortMenu*)(p + 0xe8))->GetSelect();
             CItemBlock_setFlag120EC((p + (s8)p[0x6f])[0x62], val & 0xFF);
-            p[0x547] = (u8)sortMenuGetPageIdx(p + 0xe8);
-            p[0x548] = (u8)sortMenuGetSubPageIdx(p + 0xe8);
+            p[0x547] = (u8)((CSortMenu*)(p + 0xe8))->GetCursor();
+            p[0x548] = (u8)((CSortMenu*)(p + 0xe8))->GetTop();
 HandleCancelBtn((CItemBoxGrid*)p, 1);
             p[0x524] = 0;
             if ((s8)p[0x525] > 0) p[0x525] = 0;
@@ -4152,7 +4156,7 @@ void TickItemBoxGrid(void* self) {
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
     if (isPresentActive(p + 0x468)) return;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x544]) {
         if (CSysWin_getUnk34(p + 0x4e8)) {
             if (!CSysWin_isActive(p + 0x4e8)) return;
@@ -4222,7 +4226,7 @@ extern "C" void SelectCatRow(void* self) {
     if (CSysWin_getUnk34(p + 0x4e8)) return;
     if (GridSubMenu_IsVisibleFlag(p + 0x418)) return;
     if (isPresentActive(p + 0x468)) return;
-    if (sortMenuIsVisible28(p + 0xe8)) return;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (((CItemBoxGridHeadView*)p)->field_544) return;
     ((CItemBoxGridHeadView*)p)->field_525 = -1;
     UpdateCursors(self);
@@ -4243,7 +4247,7 @@ extern "C" u32 GetPromptState(void* self) {
     if (isPresentActive(p + 0x468)) return 0;
     if (CSysWin_getUnk34(p + 0x4ac)) return 0;
     if (CSysWin_getUnk34(p + 0x4e8)) return 0;
-    if (sortMenuIsVisible28(p + 0xe8)) return 2;
+    if (((CSortMenu*)(p + 0xe8))->IsOpen()) return 2;
     if (p[0x544]) return 5;
     u32 cat = p[0x527];
     if (cat == 4) return 0x76;

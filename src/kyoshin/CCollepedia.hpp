@@ -242,7 +242,6 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" void* CUICfManager_getPackedFont9C();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void MenuShopSellCopyCursor(void* dst, void* src);     // cursor body copy
 
 // Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to
 // member-wise copy a stack-constructed CSysWin into the embedded window at

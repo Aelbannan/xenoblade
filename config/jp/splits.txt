@@ -1778,21 +1778,15 @@ kyoshin/makecrystal/CMakeCrystalWin.cpp:
 	.sdata      start:0x806650C8 end:0x806650D0
 	.sdata2     start:0x8066AD10 end:0x8066AD18
 
-kyoshin/makecrystal/code_80213488.cpp:
-	extab       start:0x8001356C end:0x80013594
-	extabindex  start:0x8002D404 end:0x8002D440
-	.text       start:0x80213488 end:0x802138B8
-	.sdata2     start:0x8066AD18 end:0x8066AD30
-
 kyoshin/makecrystal/CMCCrystalBox.cpp:
-	extab       start:0x80013594 end:0x80013E0C
-	extabindex  start:0x8002D440 end:0x8002D7A0
-	.text       start:0x802138B8 end:0x8021A634
+	extab       start:0x8001356C end:0x80013E0C
+	extabindex  start:0x8002D404 end:0x8002D7A0
+	.text       start:0x80213488 end:0x8021A634
 	.rodata     start:0x80503F90 end:0x80504500
 	.data       start:0x805393D8 end:0x805394B0
 	.sdata      start:0x806650D0 end:0x806650D8
 	.sbss       start:0x80666FC0 end:0x80666FC8
-	.sdata2     start:0x8066AD30 end:0x8066AD58
+	.sdata2     start:0x8066AD18 end:0x8066AD58
 
 kyoshin/makecrystal/CMCCrystalInfo.cpp:
 	extab       start:0x80013E0C end:0x80013F30

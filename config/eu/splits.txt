@@ -1032,15 +1032,10 @@ kyoshin/makecrystal/CMakeCrystalWin.cpp:
 	extabindex  start:0x8002D5B0 end:0x8002D694
 	.text       start:0x8021435C end:0x802152E0
 
-kyoshin/makecrystal/code_80213488.cpp:
-	extab       start:0x8001360C end:0x80013634
-	extabindex  start:0x8002D694 end:0x8002D6D0
-	.text       start:0x802152E0 end:0x80215710
-
 kyoshin/makecrystal/CMCCrystalBox.cpp:
-	extab       start:0x80013634 end:0x80013EAC
-	extabindex  start:0x8002D6D0 end:0x8002DA30
-	.text       start:0x80215710 end:0x8021C48C
+	extab       start:0x8001360C end:0x80013EAC
+	extabindex  start:0x8002D694 end:0x8002DA30
+	.text       start:0x802152E0 end:0x8021C48C
 
 kyoshin/makecrystal/CMCCrystalInfo.cpp:
 	extab       start:0x80013EAC end:0x80013FD0

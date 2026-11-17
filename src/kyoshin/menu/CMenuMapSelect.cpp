@@ -254,6 +254,13 @@ inline CMenuMapSelect::CMenuMapSelect(CProcess* parentRef)
 
 CMenuMapSelect::~CMenuMapSelect() {}
 
+// Real cause of the out-of-line copies (MWCC_CASES "two rules", rule B):
+// retail's mFloorMap = CFloorMap() assignment is a 0x494-byte implicit
+// CFloorMap::operator= (FloorMapCopy, weak __as__9CFloorMapFRC9CFloorMap),
+// which puts Init over the inlining budget, so every assignment in Init is
+// called out of line. CFloorMap is not a real class yet (byte-array layout,
+// hand-written FloorMapCopy), so the budget cannot be reproduced and
+// dont_inline stands in for it. Remove once CFloorMap has its real members.
 #pragma push
 #pragma dont_inline on
 void CMenuMapSelect::Init() {

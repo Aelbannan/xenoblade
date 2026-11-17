@@ -113,7 +113,6 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int MenuTutorialIsCreated();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);

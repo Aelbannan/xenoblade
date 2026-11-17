@@ -69,7 +69,7 @@ void CMenuCollepedia::Init() {
     mCollepedia.field_50 = *(u8*)(tempCollepedia + 0x50);
     mCollepedia.field_51 = *(u8*)(tempCollepedia + 0x51);
     // Copy the 0x54 sub-object region via the 0x10-byte copy helper.
-    MenuShopSellCopyCursor((u8*)&mCollepedia + 0x54, tempCollepedia + 0x54);
+    *reinterpret_cast<CBaseCur*>((u8*)&mCollepedia + 0x54) = *reinterpret_cast<const CBaseCur*>(tempCollepedia + 0x54);
     // Region inside the 0x54 sub-object pad: copied as raw words/bytes.
     *(u32*)((u8*)&mCollepedia + 0x70) = *(u32*)(tempCollepedia + 0x70);
     *(u32*)((u8*)&mCollepedia + 0x74) = *(u32*)(tempCollepedia + 0x74);
@@ -78,7 +78,7 @@ void CMenuCollepedia::Init() {
     *(u8*)((u8*)&mCollepedia + 0x80) = *(u8*)(tempCollepedia + 0x80);
     *(u8*)((u8*)&mCollepedia + 0x81) = *(u8*)(tempCollepedia + 0x81);
     // Copy the 0x84 sub-object region via the same helper.
-    MenuShopSellCopyCursor((u8*)&mCollepedia + 0x84, tempCollepedia + 0x84);
+    *reinterpret_cast<CBaseCur*>((u8*)&mCollepedia + 0x84) = *reinterpret_cast<const CBaseCur*>(tempCollepedia + 0x84);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)&mCollepedia + 0xA0, tempCollepedia + 0xA0);
     // Tail of the pre-loop region (+0xB0..+0xE9), then the sub-array loop.
     *(u32*)((u8*)&mCollepedia + 0xB0) = *(u32*)(tempCollepedia + 0xB0);

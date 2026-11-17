@@ -2565,28 +2565,16 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         *(s16*)&lbl_eu_80664640[6] = *(s16*)&lbl_eu_80664620[6];
 
         // Build the four embedded cursors from stack temps (copy + teardown).
-        {
-            CCur18 cur70(CUICfManager_getArcResourceAccessor());
-            MenuShopSellCopyCursor(&this->mCur70, &cur70);
-        }
+        this->mCur70 = CCur18(CUICfManager_getArcResourceAccessor());
         this->mCur70.initLayout();
 
-        {
-            CCur18 cur88(CUICfManager_getArcResourceAccessor());
-            MenuShopSellCopyCursor(&this->mCur88, &cur88);
-        }
+        this->mCur88 = CCur18(CUICfManager_getArcResourceAccessor());
         this->mCur88.initLayout();
 
-        {
-            CIBLTabCur curA0((nw4r::lyt::ArcResourceAccessor*)this->field38);
-            MenuShopSellCopyCursor(&this->mCurA0, &curA0);
-        }
+        this->mCurA0 = CIBLTabCur((nw4r::lyt::ArcResourceAccessor*)this->field38);
         this->mCurA0.initLayout();
 
-        {
-            CSubCur curB8((nw4r::lyt::ArcResourceAccessor*)this->field38);
-            MenuShopSellCopyCursor(&this->mCurB8, &curB8);
-        }
+        this->mCurB8 = CSubCur((nw4r::lyt::ArcResourceAccessor*)this->field38);
         ((CBaseCur*)&this->mCurB8)->initLayout();
 
         Cur_ShowTwoSubPanes(&this->mCurB8, 0);

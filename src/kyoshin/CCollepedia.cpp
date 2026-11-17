@@ -1817,17 +1817,13 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         clpSetupDetPg(reinterpret_cast<CLPPageSetup*>(&field_28EC[0]));
 
         // +0x84 cursor (CCur18): stack-build, copy, refresh.
-        CCur18 tmpCur18;
-        __ct__CCur18(&tmpCur18, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x84, &tmpCur18);
-        __dt__6CCur18Fv(&tmpCur18, -1);
+        *reinterpret_cast<CCur18*>(reinterpret_cast<u8*>(this) + 0x84) =
+            CCur18(CUICfManager_getArcResourceAccessor());
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x84))->initLayout();
 
         // +0x54 cursor (CCur07): same pattern.
-        u8 tmpCur07[0x18];
-        __ct__CCur07(tmpCur07, field_30);
-        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x54, tmpCur07);
-        __dt__6CCur07Fv(tmpCur07, -1);
+        *reinterpret_cast<CCur07*>(reinterpret_cast<u8*>(this) + 0x54) =
+            CCur07((nw4r::lyt::ArcResourceAccessor*)field_30);
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x54))->initLayout();
 
         clpTryShow(this);

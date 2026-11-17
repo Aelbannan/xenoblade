@@ -207,6 +207,12 @@ extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src) {
  * copied individually, the four embedded cursors and the info2 / num-select /
  * scroll-bar / sys-win sub-objects go through their copy helpers, and the two
  * tab-name strings via FixStr::operator= (strlen + strcpy). */
+// Stand-in for the compiler-generated CItemBoxLine::operator= (out of line
+// in retail, see MWCC_CASES "two rules"); inside it retail calls the nested
+// CBaseCur / CSysWin copies out of line. dont_inline reproduces those calls
+// until Init is written with real assignments.
+#pragma push
+#pragma dont_inline on
 extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CItemBoxLine* srcArg) {
     CItemBoxLineView* dest = reinterpret_cast<CItemBoxLineView*>(destArg);
     CItemBoxLineView* src = reinterpret_cast<CItemBoxLineView*>(srcArg);
@@ -241,10 +247,10 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     }
     dest->field6D = src->field6D;
 
-    MenuShopSellCopyCursor(&dest->cur70[0], &src->cur70[0]);
-    MenuShopSellCopyCursor(&dest->cur88[0], &src->cur88[0]);
-    MenuShopSellCopyCursor(&dest->curA0[0], &src->curA0[0]);
-    MenuShopSellCopyCursor(&dest->curB8[0], &src->curB8[0]);
+    *reinterpret_cast<CBaseCur*>(&dest->cur70[0]) = *reinterpret_cast<const CBaseCur*>(&src->cur70[0]);
+    *reinterpret_cast<CBaseCur*>(&dest->cur88[0]) = *reinterpret_cast<const CBaseCur*>(&src->cur88[0]);
+    *reinterpret_cast<CBaseCur*>(&dest->curA0[0]) = *reinterpret_cast<const CBaseCur*>(&src->curA0[0]);
+    *reinterpret_cast<CBaseCur*>(&dest->curB8[0]) = *reinterpret_cast<const CBaseCur*>(&src->curB8[0]);
 
     // Item-box-info2 state region: two typed sub-regions + raw body.
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->info2D0[0x4], &src->info2D0[0x4]);
@@ -256,7 +262,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
 
     InfoCfCopyObjD4(&dest->numSel2DC[0], &src->numSel2DC[0]);
     *reinterpret_cast<CScrollBar*>(&dest->scrollBar310[0]) = *reinterpret_cast<const CScrollBar*>(&src->scrollBar310[0]);
-    InfoCfCopySysWin(&dest->sysWin350[0], &src->sysWin350[0]);
+    *reinterpret_cast<CSysWin*>(&dest->sysWin350[0]) = *reinterpret_cast<const CSysWin*>(&src->sysWin350[0]);
 
     // Tab-page state block.
     dest->unk38C = src->unk38C;
@@ -287,6 +293,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
 
     *reinterpret_cast<CItemBoxPage*>(&dest->pageWords4E0[0]) = *reinterpret_cast<const CItemBoxPage*>(&src->pageWords4E0[0]);
 }
+#pragma pop
 
 extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src) {
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(dest) + 4, reinterpret_cast<u8*>(src) + 4);

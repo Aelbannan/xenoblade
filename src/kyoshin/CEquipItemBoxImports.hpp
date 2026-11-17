@@ -79,7 +79,6 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" CEquipItemBoxFourShorts PaneMatGetS16QuadByName(void*, void*, u32);
 extern "C" CEquipItemBoxFourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" void CopyVec4s(void*, const void*);
-extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
@@ -513,6 +512,5 @@ extern "C" void* __dt__80285C44(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
-extern "C" void InfoCfCopySysWin(void* dst, void* src);
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
 extern "C" void ItemBlockSetDefaultFlags();

@@ -138,6 +138,11 @@ extern "C" __declspec(noinline) u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src)
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape;
 // plain -O4,p emits two stw's - same fix as PartyStateWin_PickAllocHandle).
 #pragma optimize_for_size on
+// Stand-in for a compiler-generated operator= of a class that is not real
+// yet. In retail the nested CBaseCur copies are out-of-line calls of the weak
+// __as__8CBaseCurFRC8CBaseCur (MWCC_CASES "two rules", rule B inside the
+// generated copy); dont_inline reproduces that until the owner class is real.
+#pragma dont_inline on
 __declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                      CPartyStateWinBlob58* src) {
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->field_0x4[0], &src->field_0x4[0]);
@@ -150,7 +155,7 @@ __declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyS
     self->field_0x2C = src->field_0x2C;
     self->field_0x30 = src->field_0x30;
     self->field_0x31 = src->field_0x31;
-    MenuShopSellCopyCursor(&self->field_0x34, &src->field_0x34);
+    *reinterpret_cast<CBaseCur*>(&self->field_0x34) = *reinterpret_cast<const CBaseCur*>(&src->field_0x34);
     self->field_0x4C = src->field_0x4C;
     self->field_0x4D = src->field_0x4D;
     self->field_0x4E = src->field_0x4E;
@@ -161,6 +166,7 @@ __declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyS
     self->field_0x57 = src->field_0x57;
     return self;
 }
+#pragma dont_inline reset
 #pragma optimize_for_size off
 
 // Copy helper (retail C-linkage): copies a 0x10C0-byte state blob from src
@@ -238,6 +244,11 @@ __declspec(noinline) CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartySt
 // mtctr/bdnz shape); the retail _savegpr_29 prologue remains a known
 // residual under this flag (MWCC_CASES wall #6/#13).
 #pragma optimize_for_size on
+// Stand-in for a compiler-generated operator= of a class that is not real
+// yet. In retail the nested CBaseCur copies are out-of-line calls of the weak
+// __as__8CBaseCurFRC8CBaseCur (MWCC_CASES "two rules", rule B inside the
+// generated copy); dont_inline reproduces that until the owner class is real.
+#pragma dont_inline on
 extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
                                                     CEquipChange* srcP) {
     // Full copy of the embedded CEquipChange state (retail size 0x2A58):
@@ -256,9 +267,9 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     self->f48 = src->f48;
     self->f4c = src->f4c;
     self->f4d = src->f4d;
-    MenuShopSellCopyCursor(&self->f50[0], &src->f50[0]);
-    MenuShopSellCopyCursor(&self->f68[0], &src->f68[0]);
-    MenuShopSellCopyCursor(&self->f80[0], &src->f80[0]);
+    *reinterpret_cast<CBaseCur*>(&self->f50[0]) = *reinterpret_cast<const CBaseCur*>(&src->f50[0]);
+    *reinterpret_cast<CBaseCur*>(&self->f68[0]) = *reinterpret_cast<const CBaseCur*>(&src->f68[0]);
+    *reinterpret_cast<CBaseCur*>(&self->f80[0]) = *reinterpret_cast<const CBaseCur*>(&src->f80[0]);
     self->f98 = src->f98;
     self->f99 = src->f99;
     // Adjacent word pairs copy as one 2-load/2-reverse-store unit.
@@ -295,9 +306,9 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     for (int i = 0; i < 4; i++) {
         self->f2f0[i] = src->f2f0[i];
     }
-    PartyStateWin_CopySlotRec(&self->f2f4[0], &src->f2f4[0]);
-    PartyStateWin_CopySlotRec(&self->f30c[0], &src->f30c[0]);
-    MenuShopSellCopyCursor(&self->f324[0], &src->f324[0]);
+    *reinterpret_cast<CEIBCur*>(&self->f2f4[0]) = *reinterpret_cast<const CEIBCur*>(&src->f2f4[0]);
+    *reinterpret_cast<CEIBCur*>(&self->f30c[0]) = *reinterpret_cast<const CEIBCur*>(&src->f30c[0]);
+    *reinterpret_cast<CBaseCur*>(&self->f324[0]) = *reinterpret_cast<const CBaseCur*>(&src->f324[0]);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f340[0], &src->f340[0]);
     for (int i = 0; i < 5; i++) {
         self->f350[i] = src->f350[i];
@@ -330,8 +341,8 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     for (int i = 0; i < 3; i++) {
         self->f428[i] = src->f428[i];
     }
-    InfoCfCopySysWin(&self->f42c[0], &src->f42c[0]);
-    InfoCfCopySysWin(&self->f468[0], &src->f468[0]);
+    *reinterpret_cast<CSysWin*>(&self->f42c[0]) = *reinterpret_cast<const CSysWin*>(&src->f42c[0]);
+    *reinterpret_cast<CSysWin*>(&self->f468[0]) = *reinterpret_cast<const CSysWin*>(&src->f468[0]);
     for (int i = 0; i < 3; i++) {
         self->f4a4[i] = src->f4a4[i];
     }
@@ -381,20 +392,11 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     }
     self->f2a54 = src->f2a54;
 }
+#pragma dont_inline reset
 #pragma optimize_for_size off
 
-extern "C" void PartyStateWin_CopySlotRec(u8* dst, const u8* src) {
-    unsigned int* destWords = (unsigned int*)(dst + 4);
-    const unsigned int* srcWords = (const unsigned int*)(src + 4);
-    destWords[0] = srcWords[0];
-    destWords[1] = srcWords[1];
-    destWords[2] = srcWords[2];
-    destWords[3] = srcWords[3];
-    char* destBytes = (char*)dst;
-    const char* srcBytes = (const char*)src;
-    destBytes[0x14] = srcBytes[0x14];
-    destBytes[0x15] = srcBytes[0x15];
-}
+// PartyStateWin_CopySlotRec is the weak implicit CEIBCur::operator=, emitted
+// here after its first use in PartyStateWin_CopyEquipChange.
 
 // us-801fbf10 | PartyStateWin_TeardownWindow
 // Window teardown: wait for the draw callback, switch the mem allocator off
@@ -1536,7 +1538,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     reinterpret_cast<CEquipChange*>(&self->_pad4150)->LoadFiles();
 
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(sysWinTmp), 0);
-    InfoCfCopySysWin(&self->_pad6BA8[0], reinterpret_cast<const u8*>(sysWinTmp));
+    *reinterpret_cast<CSysWin*>(&self->_pad6BA8[0]) = *reinterpret_cast<const CSysWin*>(reinterpret_cast<const u8*>(sysWinTmp));
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(sysWinTmp), -1);
 
     // Retail dispatches vtable slot +0x88 on the embedded CSysWin.

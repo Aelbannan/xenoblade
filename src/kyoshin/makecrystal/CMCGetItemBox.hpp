@@ -292,7 +292,6 @@ extern "C" void __dt__7CSysWinFv(void* syswin, int flags);
 // ---------------------------------------------------------------------------
 // OnFileEvent / getMCItemSubText imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void* __ct__CCur07(void*, void*);
 extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);

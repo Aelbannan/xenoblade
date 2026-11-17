@@ -2653,8 +2653,8 @@ CItemBoxGrid::CItemBoxGrid(u8 mode, u16 unk5, u32 unk6, u8 unk7)
         mExchangeWin = CExchangeWin();
     }
 
-    InfoCfCopySysWin(&mSysWin4AC, (void*)&(const CSysWin&)CSysWin(2));
-    InfoCfCopySysWin(&mSysWin4E8, (void*)&(const CSysWin&)CSysWin(0));
+    mSysWin4AC = CSysWin(2);
+    mSysWin4E8 = CSysWin(0);
 
     lbl_eu_80664508 = 0;
     lbl_eu_8066450C = 0;
@@ -5583,15 +5583,9 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     *(s16*)((u8*)&lbl_eu_806644C8 + 6) = colAW;
     *(s16*)((u8*)&lbl_eu_806644D0 + 6) = colBW;
     // Build each cursor from a stack temporary handed to the attach helper.
-    {
-        CCur07 cur07Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
-        MenuShopSellCopyCursor(p + 0x70, &cur07Buf);
-    }
+    *reinterpret_cast<CCur07*>(p + 0x70) = CCur07((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
     ((CBaseCur*)(p + 0x70))->initLayout();
-    {
-        CCur09 cur09Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
-        MenuShopSellCopyCursor(p + 0x88, &cur09Buf);
-    }
+    *reinterpret_cast<CCur09*>(p + 0x88) = CCur09((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
     ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
     CibgVec3 vecMin;
@@ -5599,20 +5593,11 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     CibgVec3 vecMax;
     code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMax), lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
     Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
-    {
-        CCur18 cur18Buf(CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(p + 0xa0, &cur18Buf);
-    }
+    *reinterpret_cast<CCur18*>(p + 0xa0) = CCur18(CUICfManager_getArcResourceAccessor());
     ((CBaseCur*)(p + 0xa0))->initLayout();
-    {
-        CCur16 cur16Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
-        MenuShopSellCopyCursor(p + 0xb8, &cur16Buf);
-    }
+    *reinterpret_cast<CCur16*>(p + 0xb8) = CCur16((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
     ((CBaseCur*)(p + 0xb8))->initLayout();
-    {
-        CCur11 cur11Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
-        MenuShopSellCopyCursor(p + 0xd0, &cur11Buf);
-    }
+    *reinterpret_cast<CCur11*>(p + 0xd0) = CCur11((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
     ((CBaseCur*)(p + 0xd0))->initLayout();
     initPresentWin(p + 0x468, *(void**)(p + 0x3c));
     ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_InitLayout(*(nw4r::lyt::ArcResourceAccessor**)(p + 0x3c));

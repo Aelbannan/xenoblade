@@ -40,19 +40,6 @@ struct ShopSellData {
     u16 mField804;                // +0x804
 };
 
-/* 0x18-byte cursor object. MenuShopSellCopyCursor copies the +0x4..+0x15 region
- * (4 words + 2 bytes); callers pass the object base, so member offsets are
- * absolute within the object. */
-struct ShopSellCursor18 {
-    u32 field_0x0;    // +0x0 (not copied)
-    u32 field_0x4;    // +0x4
-    u32 field_0x8;    // +0x8
-    u32 field_0xC;    // +0xC
-    u32 field_0x10;   // +0x10
-    u8 field_0x14;    // +0x14
-    u8 field_0x15;    // +0x15
-};
-
 /* Local shim for cf::CfPadData - only the flag words MenuShopSellHandlePhase2 reads
  * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
  * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
@@ -117,27 +104,9 @@ CMenuShopSell::~CMenuShopSell() {
 
 void CMenuShopSell::Init() {}
 
-// Copies the +0x4..+0x15 region (4 words + 2 bytes) of a 0x18-byte cursor
-// object. The source fields are read into locals first so MWCC holds all six
-// loads before the stores (retail load-all/store-all shape). Declared extern
-// "C" in CItemBoxGrid.hpp (retail keeps the bare func_ name; CMenuShopBuy's
-// item-box-line copy passes &cursors[i]).
-void MenuShopSellCopyCursor(void* dst, void* src) {
-    ShopSellCursor18* d = static_cast<ShopSellCursor18*>(dst);
-    const volatile ShopSellCursor18* s = static_cast<const volatile ShopSellCursor18*>(src);
-    u32 v4 = s->field_0x4;
-    u32 v8 = s->field_0x8;
-    u32 vC = s->field_0xC;
-    u32 v10 = s->field_0x10;
-    u8 v14 = s->field_0x14;
-    u8 v15 = s->field_0x15;
-    d->field_0x4 = v4;
-    d->field_0x8 = v8;
-    d->field_0xC = vC;
-    d->field_0x10 = v10;
-    d->field_0x14 = v14;
-    d->field_0x15 = v15;
-}
+// Retail emits the weak implicit CBaseCur::operator= (__as__8CBaseCurFRC8CBaseCur)
+// here, right after its first use in Init. Init is not decompiled yet (empty
+// stub), so this TU does not emit it until Init's cursor assignments exist.
 
 // Copies the 0x806-byte sell data blob: the 256 x 8-byte item array at +0x4
 // (the mItems struct assignment lowers to the retail mtctr/lwzu/stwu counted

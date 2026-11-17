@@ -30,7 +30,6 @@
 #include "kyoshin/CEquipChange.hpp"
 #include "kyoshin/CEquipItemBoxImports.hpp"
 // Out-of-line CCur copy (weak CBaseCur-family operator=, deduped into CMenuShopSell).
-extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
 #undef CItem_kindPtr
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -1308,22 +1307,13 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // Build each cursor from a stack temporary, copy it into place, run
         // its reset hook, then advance to the next one. Retail reloads the
         // accessor from field_2C at every use (never cached in a register).
-        {
-            CCur14 tmp14(field_2C);
-            MenuShopSellCopyCursor(&mCur14, &tmp14);
-        }
+        mCur14 = CCur14(field_2C);
         mCur14.initLayout();
 
-        {
-            CCur15 tmp15(field_2C);
-            MenuShopSellCopyCursor(&mCur15, &tmp15);
-        }
+        mCur15 = CCur15(field_2C);
         mCur15.initLayout();
 
-        {
-            CSubCur tmpSub(field_2C);
-            MenuShopSellCopyCursor(&mSubCur, &tmpSub);
-        }
+        mSubCur = CSubCur(field_2C);
         mSubCur.initLayout();
 
         Cur_ShowTwoSubPanes(&mSubCur, 0);

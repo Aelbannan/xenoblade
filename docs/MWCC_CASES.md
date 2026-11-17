@@ -11947,3 +11947,48 @@ TU is not inlined anywhere.**
 - Unresolved: in the CEquipChange ctor's `mEquipItemBox = CEquipItemBox()`, the implicit box `operator=` calls `__as__7CEIBCur` out of line for both cursors but inlines the CCur18 copy (+0x74). Retail calls `MenuShopSellCopyCursor` there. This is the same CBaseCur header issue as CMenuSave above. The ctor is 49.9% only because of this +0x24-byte shift, plus one `lwz r5` scheduling slot later in the CItemBoxPage tail.
 - Converting `grid->member` bodies to members: watch parameters and locals that shadow members (`u16 idx` vs member `idx`, `u32 cat`, a local `count`). The text rewrite silently changes semantics. In retail, three "box" helpers (getEIBProgress, hasEIBSlotFlag, getEIBNameKey) receive the grid as `this`, so they are CEquipItemGrid members.
 - Box getters that retail CEquipChange tests unmasked (getEIBOpenFlag, eibWindowsReady, takeEIBAction, getEIBSelCat, ...) return `int`. The callee is unchanged (`lbz; blr`).
+
+## Shared copy helpers are implicit operator=; rule A reads the end-of-TU size state (2026-11-18)
+
+- `MenuShopSellCopyCursor` (0x34, CMenuShopSell, after Init) is the weak
+  implicit `CBaseCur::operator=` (`__as__8CBaseCurFRC8CBaseCur`). CBaseCur needs
+  no user declaration: assigning any `CCurNN` temporary (`mCur07 = CCur07(acc);`)
+  inlines the trivial derived `operator=` and calls the base one. In a -O4,s TU
+  with several cursor assignments the base copy has several sites, so rule A
+  puts it out of line. CMCCrystalBox / CEquipChange / CItemBoxLine /
+  CMCGetItemBox now use real assignments; CEquipChange ctor 95.4% -> 99.3%,
+  CMenuOption Init 100%. CMenuShopSell's own Init is still an empty stub, so
+  that TU no longer emits the copy (it shows as missing there).
+- `InfoCfCopySysWin` (0xA4, CMenuItem) is the weak implicit
+  `CSysWin::operator=` (`__as__7CSysWinFRC7CSysWin`): the decomp's implicit
+  copy matches it byte for byte (load-all/store-all, mMemRegion inlined).
+- `PartyStateWin_CopySlotRec` is the weak implicit `CEIBCur::operator=`. It is
+  emitted after its first use in the CEquipChange copy (CPartyStateWin), and the
+  CEquipItemBox ctor calls it as `mCur44 = temp; mPageCur = temp;`.
+- **Rule A is applied at the end of the TU, using the `optimize_for_size` state
+  in force there, not the state at the caller.** CSaveLoad was built -O4,p with
+  `#pragma optimize_for_size on` regions. Its ctor (inside such a region)
+  inlined both `CSysWin` copies. Switching the unit to `-O4,s` while the file
+  still ended in `optimize_for_size off` (the cf::CfAward tail) still inlined
+  them. With the unit at `-O4,s` and the CfAward tail wrapped in
+  `push / optimize_for_size off / pop`, so that the TU ends in size mode, the
+  two copies become calls (2 sites), the single `CScrollBar` copy stays inline,
+  and the ctor is 100%. Diagnostic: a unit that needs many
+  `optimize_for_size on` pragmas is a -O4,s unit, and its speed-optimised part is
+  probably a second source file that shares the split (here cf::CfAward).
+- The `-O4,s` setting alone does not cover a TU whose source copies are still
+  hand-written stand-ins of generated `operator=` bodies (CPartyStateWin,
+  CMenuItemExchange's `ItemEx_CopyLine`). In retail, rule B keeps the nested
+  copies out of line inside those big generated functions. Those stand-ins are
+  wrapped in `#pragma dont_inline on`, with a comment, until the owner classes
+  are real.
+- CMenuMapSelectSC Init: retail calls `__as__7CSysWin` twice, for the two
+  CSysWin members of CFloorMap at +0xB8/+0xF4. The hand copy had dropped the
+  second one. With both written, the copy has 2 sites and goes out of line.
+- `~CMCCrystalData` conflict resolved: code_80213488 (CMCCrystalData members,
+  0x802152E0..0x80215710) is the head of the CMCCrystalBox TU. The text,
+  extab, extabindex and sdata2 ranges are contiguous with CMCCrystalBox, and
+  CMCCrystalBox.cpp already held the rest of CMCCrystalData. Merged the split
+  (us/eu/jp). The out-of-line empty dtor is now inlined into `~CMCCrystalBox`
+  (same TU, `-ipa file`) and still emitted as a global. All 11 former
+  code_80213488 functions still match, and `__dt__13CMCCrystalBoxFv` is 100%.

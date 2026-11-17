@@ -74,7 +74,6 @@ extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
 extern "C" void clpStartLoads(CCollepedia* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 

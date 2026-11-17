@@ -222,7 +222,6 @@ extern "C" int MenuTutorialIsCreated();
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);          // bg per-frame update
 extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
-extern "C" void MenuShopSellCopyCursor(void*, void*);          // CBaseCur body copy
 extern "C" void InfoCfCopyObjD4(void*, void*);          // CNumSelectFull copy
 
 // Shared data imports (MWCC does not mangle global-scope data names).

@@ -44,7 +44,6 @@ public:
     u8 mState;                       // 0x4AC4
 };
 
-extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void MenuShopSellCopyData(void*, void*);
 extern "C" bool MenuShopSellIsCreated();
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self);

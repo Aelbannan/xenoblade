@@ -269,7 +269,6 @@ void CrySupBuildLayout(void*);
 void MakeCrystalCopyParamBlock(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void MenuShopSellCopyCursor(void*, void*);
 void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
 void EffSched_LookupA(void*);
@@ -652,7 +651,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 
     // --- re-init the embedded system window from an arg-2 temp ---
     __ct__7CSysWinFUc(swTmp, 2);
-    InfoCfCopySysWin(base + 0xe78, swTmp);
+    *reinterpret_cast<CSysWin*>(base + 0xe78) = *reinterpret_cast<const CSysWin*>(swTmp);
     __dt__7CSysWinFv(swTmp, -1);
 
     // --- re-init the embedded item box from a default temp ---
@@ -674,11 +673,11 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     *reinterpret_cast<void**>(base + 0xf1c) = *reinterpret_cast<void**>(boxTmp + 0x50);
     base[0xf20] = boxTmp[0x54];
     base[0xf21] = boxTmp[0x55];
-    MenuShopSellCopyCursor(base + 0xf24, boxTmp + 0x58);
-    MenuShopSellCopyCursor(base + 0xf3c, boxTmp + 0x70);
-    MenuShopSellCopyCursor(base + 0xf54, boxTmp + 0x88);
-    MenuShopSellCopyCursor(base + 0xf6c, boxTmp + 0xa0);
-    InfoCfCopySysWin(base + 0xf84, boxTmp + 0xb8);
+    *reinterpret_cast<CBaseCur*>(base + 0xf24) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x58);
+    *reinterpret_cast<CBaseCur*>(base + 0xf3c) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x70);
+    *reinterpret_cast<CBaseCur*>(base + 0xf54) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x88);
+    *reinterpret_cast<CBaseCur*>(base + 0xf6c) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0xa0);
+    *reinterpret_cast<CSysWin*>(base + 0xf84) = *reinterpret_cast<const CSysWin*>(boxTmp + 0xb8);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfc4, boxTmp + 0xf8);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfd4, boxTmp + 0x108);
     // itemBox tail members (memberwise words/bytes).
@@ -3681,11 +3680,11 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->init();
         // Cursor objects: build on stack, install via MenuShopSellCopyCursor, destroy.
         __ct__CCur18(&cur1, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(base + 0xe20, &cur1);
+        *reinterpret_cast<CBaseCur*>(base + 0xe20) = *reinterpret_cast<const CBaseCur*>(&cur1);
         __dt__6CCur18Fv(&cur1, -1);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->initLayout();
         __ct__CCur18(&cur2, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(base + 0xeb4, &cur2);
+        *reinterpret_cast<CBaseCur*>(base + 0xeb4) = *reinterpret_cast<const CBaseCur*>(&cur2);
         __dt__6CCur18Fv(&cur2, -1);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->initLayout();
         *reinterpret_cast<void**>(base + 0x3c) = 0;

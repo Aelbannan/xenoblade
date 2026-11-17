@@ -385,13 +385,10 @@ extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, cons
 // Cursor sub-object copy helper (retail unmangled; also declared in
 // COption.hpp / CItemBoxGrid.hpp). Copies the +0x4..+0x15 region of a
 // 0x18-byte cursor object; PartyStateWin_CopyStateBlob58 passes its +0x34 sub-object.
-extern "C" void MenuShopSellCopyCursor(void* dst, const void* src);
 
 // Copy helpers used by PartyStateWin_CopyEquipChange / PartyStateWin_OpenWindow (retail unmangled names;
 // owning TU headers cannot be included here).
 extern "C" void __as__12CItemBoxPageFRC12CItemBoxPage(u8* dst, const u8* src); // weak CItemBoxPage::operator=
-extern "C" void PartyStateWin_CopySlotRec(u8* dst, const u8* src);
-extern "C" void InfoCfCopySysWin(u8* dst, const u8* src);
 
 // Byte-offset view of the embedded CEquipChange sub-object (retail size
 // 0x2A58) as copied by PartyStateWin_CopyEquipChange. Regions handled by copy helpers are

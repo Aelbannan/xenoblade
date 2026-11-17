@@ -1398,16 +1398,10 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // Cursor sub-objects: construct on the stack with the arc accessor,
         // copy into the embedded storage, destroy the temp, then run the
         // embedded cursor's slot-2 virtual (update).
-        u8 cur07Buf[0x18];
-        __ct__CCur07(cur07Buf, this->arcAcc1);
-        MenuShopSellCopyCursor(&this->subObj_58, cur07Buf);
-        __dt__6CCur07Fv(cur07Buf, -1);
+        this->subObj_58 = CCur07(this->arcAcc1);
         this->subObj_58.initLayout();
 
-        u8 cur09Buf[0x18];
-        __ct__CCur09(cur09Buf, this->arcAcc1);
-        MenuShopSellCopyCursor(&this->subObj_70, cur09Buf);
-        __dt__6CCur09Fv(cur09Buf, -1);
+        this->subObj_70 = CCur09(this->arcAcc1);
         this->subObj_70.initLayout();
 
         // Two anchor vectors on cursor 09: the second pair swaps the x base.
@@ -1421,16 +1415,10 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         v2 = s2;
         Cur_SetTwoPanes09(&this->subObj_70, &v2, &v1);
 
-        u8 cur16Buf[0x18];
-        __ct__CCur16(cur16Buf, this->arcAcc1);
-        MenuShopSellCopyCursor(&this->subObj_88, cur16Buf);
-        __dt__6CCur16Fv(cur16Buf, -1);
+        this->subObj_88 = CCur16(this->arcAcc1);
         this->subObj_88.initLayout();
 
-        CCur18 cur18Buf;
-        __ct__CCur18(&cur18Buf, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->subObj_A0, &cur18Buf);
-        __dt__6CCur18Fv(&cur18Buf, -1);
+        this->subObj_A0 = CCur18(CUICfManager_getArcResourceAccessor());
         this->subObj_A0.initLayout();
 
         activateMCGetItemBox(this);

@@ -214,7 +214,6 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
-extern "C" void MenuShopSellCopyCursor(void*, void*);               // copy stack cursor temp into member
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);

@@ -1359,11 +1359,11 @@ CEquipItemBox::CEquipItemBox()
     mSortMenu = CSortMenu();
     {
         CSysWin temp(2);
-        InfoCfCopySysWin(&mSysWin1, &temp);
+        mSysWin1 = temp;
     }
     {
         CSysWin temp(0);
-        InfoCfCopySysWin(&mSysWin2, &temp);
+        mSysWin2 = temp;
     }
     ItemBlockSetDefaultFlags();
     mGrid = CEquipItemGrid();
@@ -3713,18 +3713,18 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         lbl_eu_80664958[3] = v1c;
         lbl_eu_80664960[3] = v0c;
         lbl_eu_80664968[3] = v1c;
-        // Cursor objects: construct stack temps and copy them in through the
-        // out-of-line 0x18-byte copy (retail PartyStateWin_CopySlotRec), then
+        // Cursor objects: construct stack temps and assign them (the implicit
+        // CEIBCur::operator= is called out of line, weak in CPartyStateWin), then
         // dispatch initLayout (CEIBCur's empty dtor inlines away; the
         // page-cur temp keeps its out-of-line dtor call).
         {
             CEIBCur temp(field_30);
-            PartyStateWin_CopySlotRec((u8*)&mCur44, (const u8*)&temp);
+            mCur44 = temp;
         }
         mCur44.initLayout();
         {
             CEIBPageCur temp(field_30);
-            PartyStateWin_CopySlotRec((u8*)&mPageCur, (const u8*)&temp);
+            mPageCur = temp;
         }
         mPageCur.initLayout();
         ccur18 = CCur18(CUICfManager_getArcResourceAccessor());

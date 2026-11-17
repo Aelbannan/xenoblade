@@ -465,13 +465,13 @@ u32 getPackedFont();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" void MenuShopSellCopyCursor(void*, void*);   // cursor copy (Cur_SetTwoPanes09 sibling)
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
 extern "C" float lbl_eu_80668488;
 extern "C" float lbl_eu_8066848C;
 extern "C" float lbl_eu_80668490;
 extern "C" void* CItem_kindPtr(u32, s16);
+extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);

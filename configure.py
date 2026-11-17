@@ -670,7 +670,6 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfGimmickItem.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMenuMakeCrystal.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/makecrystal/CMakeCrystalWin.cpp"),
-            Object(Matching, "kyoshin/makecrystal/code_80213488.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail MakeCrystal_ResetTable keeps the stmw/rolled-loop size form (was pragma optimize_for_size); -func_align 4 kills inter-function padding
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalBox.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalInfo.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp", extra_cflags=["-O4,s"]),
@@ -723,7 +722,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/chain/CChainActorPc.cpp"),
             Object(NonMatching, "kyoshin/CEquipItemBox.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuSave.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CSaveLoad.cpp"),
+            Object(NonMatching, "kyoshin/CSaveLoad.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuPTChangeNotice.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/cf/chain/CChainCombo.cpp"),
             Object(NonMatching, "kyoshin/CSysWinSave.cpp"),

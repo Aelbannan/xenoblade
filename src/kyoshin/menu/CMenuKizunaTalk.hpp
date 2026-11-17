@@ -108,6 +108,15 @@ public:
     virtual void v20() = 0;  // index 32 -> vtable +0x88
 };
 
+// KEEP: this TU defines its own IWorkEvent POD (above), so it cannot include
+// kyoshin/CSysWin.hpp. This declaration-only view gives the panel copy the
+// real mangled callee (the weak implicit CSysWin::operator=, emitted in
+// CMenuItem). Remove when the TU uses the monolib IWorkEvent.
+class CSysWin {
+public:
+    CSysWin& operator=(const CSysWin&);
+};
+
 // kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
@@ -205,7 +214,6 @@ extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(v
 extern "C" void sysWinTermLayout(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
-extern "C" void InfoCfCopySysWin(void*, void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();

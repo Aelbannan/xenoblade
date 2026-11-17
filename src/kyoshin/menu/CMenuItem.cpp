@@ -510,8 +510,6 @@ extern "C" void InfoCfCopyObjD4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
 extern "C" void InfoCfCopyObj60(CInfoCfObj60* dst, const CInfoCfObj60* src);
 extern "C" void InfoCfCopyObjE4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
 extern "C" void InfoCfCopyObj368(CInfoCfObj368* dst, const CInfoCfObj368* src);
-// InfoCfCopySysWin is declared by CItemBoxGrid.hpp (retail-unmangled name,
-// void* ABI); the typed object views are passed straight through.
 extern "C" void InfoCfCopyObj4D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src);
 
 // The grid is opaque storage (see CMenuItem.hpp), so its destructor is called
@@ -590,8 +588,8 @@ void CMenuItem::Init() {
     InfoCfCopyObj60(&dstBody->obj418, &srcBody->obj418);
     InfoCfCopyObjE4(&dstBody->obj440, &srcBody->obj440);
     InfoCfCopyObj368(&dstBody->obj468, &srcBody->obj468);
-    InfoCfCopySysWin(&dstBody->obj4AC, (void*)&srcBody->obj4AC);
-    InfoCfCopySysWin(&dstBody->obj4E8, (void*)&srcBody->obj4E8);
+    *reinterpret_cast<CSysWin*>(&dstBody->obj4AC) = *reinterpret_cast<const CSysWin*>((void*)&srcBody->obj4AC);
+    *reinterpret_cast<CSysWin*>(&dstBody->obj4E8) = *reinterpret_cast<const CSysWin*>((void*)&srcBody->obj4E8);
     dstBody->tail524.field_524 = srcBody->tail524.field_524;
     dstBody->tail524.field_525 = srcBody->tail524.field_525;
     dstBody->tail524.field_526 = srcBody->tail524.field_526;
@@ -721,50 +719,6 @@ extern "C" void InfoCfCopyObj368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
     *(u32*)&dst->tail[0] = v39;
     *(u32*)&dst->tail[4] = v3D;
     dst->tail[8] = v41;
-}
-
-// CSysWin body copy: every field from +0x04..+0x39 except the 0x29-0x2B
-// alignment gap (implicit padding in CInfoCfSysWinBody, not copied by the
-// struct assignment - matching retail).
-void InfoCfCopySysWin(void* dstV, void* srcV) {
-    CInfoCfObjSysWin* dst = (CInfoCfObjSysWin*)dstV;
-    const CInfoCfObjSysWin* src = (const CInfoCfObjSysWin*)srcV;
-    u8 t28 = src->body.field_28;
-    u32 t04 = src->body.field_04;
-    u32 t08 = src->body.field_08;
-    u32 t0C = src->body.field_0C;
-    u32 t10 = src->body.field_10;
-    u32 t14 = src->body.field_14;
-    u32 t18 = src->body.field_18;
-    u32 t1C = src->body.field_1C;
-    u32 t20 = src->body.field_20;
-    u32 t24 = src->body.field_24;
-    u32 t2C = src->body.field_2C;
-    u32 t30 = src->body.field_30;
-    u8 t34 = src->body.field_34;
-    u8 t35 = src->body.field_35;
-    u8 t36 = src->body.field_36;
-    u8 t37 = src->body.field_37;
-    u8 t38 = src->body.field_38;
-    u8 t39 = src->body.field_39;
-    dst->body.field_04 = t04;
-    dst->body.field_08 = t08;
-    dst->body.field_0C = t0C;
-    dst->body.field_10 = t10;
-    dst->body.field_14 = t14;
-    dst->body.field_18 = t18;
-    dst->body.field_1C = t1C;
-    dst->body.field_20 = t20;
-    dst->body.field_24 = t24;
-    dst->body.field_28 = t28;
-    dst->body.field_2C = t2C;
-    dst->body.field_30 = t30;
-    dst->body.field_34 = t34;
-    dst->body.field_35 = t35;
-    dst->body.field_36 = t36;
-    dst->body.field_37 = t37;
-    dst->body.field_38 = t38;
-    dst->body.field_39 = t39;
 }
 
 // Copy the 0x44C0-byte info-screen object (vtable slot included) region by

@@ -191,7 +191,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
         __ct__7CSysWinFUc(&scratch.mWin0[0], 0);
-        InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin0[0]);
+        *reinterpret_cast<CSysWin*>(&self->mSysWin[0]) = *reinterpret_cast<const CSysWin*>(&scratch.mWin0[0]);
         __dt__7CSysWinFv(&scratch.mWin0[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
         break;
@@ -209,7 +209,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     }
     case 2: {
         __ct__7CSysWinFUc(&scratch.mWin2[0], 3);
-        InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin2[0]);
+        *reinterpret_cast<CSysWin*>(&self->mSysWin[0]) = *reinterpret_cast<const CSysWin*>(&scratch.mWin2[0]);
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
 

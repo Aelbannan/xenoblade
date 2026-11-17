@@ -3,6 +3,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers);
@@ -89,7 +90,6 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
-extern "C" void InfoCfCopySysWin(void* dest, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void __dt__9CFloorMapFv(CFloorMap* _this, int flags);
 extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
@@ -234,7 +234,8 @@ void CMenuMapSelectSC::Init() {
     *(u8*)((u8*)this + 0x174) = *(u8*)(tempFloor + 0xb4);
     *(u8*)((u8*)this + 0x175) = *(u8*)(tempFloor + 0xb5);
 
-    InfoCfCopySysWin((u8*)this + 0x178, tempFloor + 0xb8);
+    *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinB8) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xb8);
+    *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinF4) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xf4);
 
     // Layout pointer array (member 0x130-0x14C) + 20 8-byte entries.
     *(u32*)((u8*)this + 0x1f0) = *(u32*)(tempFloor + 0x130);

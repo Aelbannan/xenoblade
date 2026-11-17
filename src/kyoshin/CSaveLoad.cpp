@@ -133,7 +133,6 @@ extern void* lbl_eu_806640A8;
 
 extern CSLData* lbl_eu_806649F0;
 extern CSaveLoad* lbl_eu_806649F4;
-extern "C" void InfoCfCopySysWin(void* dst, void* src);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 #pragma push
@@ -154,14 +153,12 @@ CSLData::CSLData() {
 CSLData::~CSLData() {}
 
 // Allocate the three 0xA000-byte slot header buffers from MEM2
-#pragma optimize_for_size on
 __declspec(noinline) void CSLData::allocBufs() {
     lbl_eu_806649F0 = this;
     mBuf[0] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
     mBuf[1] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
     mBuf[2] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
 }
-#pragma optimize_for_size off
 
 __declspec(noinline) void CSLData::freeBufs() {
     mtl::MemManager::deallocate(mBuf[0]);
@@ -170,7 +167,6 @@ __declspec(noinline) void CSLData::freeBufs() {
     lbl_eu_806649F0 = nullptr;
 }
 
-#pragma optimize_for_size on
 __declspec(noinline) void CSLData::bindSlots() {
     NandRegHeapCb(mBuf[0], 1, onSlotRead);
     NandRegHeapCb(mBuf[1], 2, onSlotRead);
@@ -182,7 +178,6 @@ __declspec(noinline) void CSLData::bindSlots() {
     mValid[1] = 0;
     mValid[2] = 0;
 }
-#pragma optimize_for_size off
 
 __declspec(noinline) int CSLData::isReady() {
     int result = 0;
@@ -223,8 +218,6 @@ CSLCur::CSLCur(nw4r::lyt::ArcResourceAccessor* accessor)
 
 CSLCur::~CSLCur() {}
 
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSLCur::createLayout() {
     buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC);
     bindLayoutAnimTransform(mLayout, &mAnimLoop, mAccessor, (char*)&lbl_eu_8050F7CC[0x18]);
@@ -232,7 +225,6 @@ __declspec(noinline) void CSLCur::createLayout() {
     mLayout->UnbindAllAnimation();
     bindPane();
 }
-#pragma pop
 
 __declspec(noinline) void CSLCur::update() {
     if (mLayout == nullptr) return;
@@ -292,8 +284,6 @@ CSLSub::CSLSub(nw4r::lyt::ArcResourceAccessor* accessor)
 
 CSLSub::~CSLSub() {}
 
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSLSub::create() {
     buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
     bindLayoutAnimTransform(mLayout, &mAnimTrans, mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
@@ -302,7 +292,6 @@ __declspec(noinline) void CSLSub::create() {
                             CDeviceFont::getFontInfo(1, mLayout))->getFont());
     bindPane();
 }
-#pragma pop
 
 __declspec(noinline) void CSLSub::update() {
     if (mLayout == nullptr) return;
@@ -354,8 +343,6 @@ __declspec(noinline) void CSLSub::bindPane() {
 
 // Sub-objects are built in the init list; the scroll bar and both windows
 // are then rebuilt from temporaries with their own construction arguments.
-#pragma push
-#pragma optimize_for_size on
 CSaveLoad::CSaveLoad(u8 load, u8 arg)
     : mFileHandle(nullptr), mArcAccessor(nullptr), mLayout(nullptr), mAnimTransA(nullptr),
       mAnimTransB(nullptr), mCur(nullptr), mCur40(nullptr), mScrollBar(0), mSysWin98(0),
@@ -371,18 +358,15 @@ CSaveLoad::CSaveLoad(u8 load, u8 arg)
     }
     {
         CSysWin win(2);
-        InfoCfCopySysWin(&mSysWin98, &win);
+        mSysWin98 = win;
     }
     {
         CSysWin win(0);
-        InfoCfCopySysWin(&mSysWinD4, &win);
+        mSysWinD4 = win;
     }
 }
-#pragma pop
 
-#pragma optimize_for_size on
 CSaveLoad::~CSaveLoad() {}
-#pragma optimize_for_size off
 
 void CSaveLoad::loadSaveData() {
     mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
@@ -397,7 +381,6 @@ void CSaveLoad::loadSaveData() {
 
 // Per-frame update: dispatch on mField121 state, then refresh layout,
 // cursor, scrollbar, both syswins and the sub-cursor.
-#pragma optimize_for_size on
 void CSaveLoad::update() {
     if (mField120 == 0) return;
 
@@ -450,11 +433,8 @@ void CSaveLoad::update() {
     sysWinDispatchPhase(&mSysWinD4);
     mSub.update();
 }
-#pragma optimize_for_size off
 
 // Draw the save/load screen layout and all sub-windows.
-#pragma push
-#pragma optimize_for_size on
 void CSaveLoad::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mField120 == 0) return;
 
@@ -475,7 +455,6 @@ void CSaveLoad::draw(nw4r::lyt::DrawInfo* drawInfo) {
         drawLayout(mSub.mLayout, drawInfo, 0, 1);
     }
 }
-#pragma pop
 
 // Cleanup/reset function for CSaveLoad
 void CSaveLoad::reset() {
@@ -558,7 +537,6 @@ void CSaveLoad::open() {
     renderSlots();
 }
 
-#pragma optimize_for_size on
 void CSaveLoad::close() {
     if (mField121 != 3) return;
     mField121 = 4;
@@ -568,7 +546,6 @@ void CSaveLoad::close() {
     mScrollBar.requestScrollOut();
     playUISound(6);
 }
-#pragma optimize_for_size off
 
 // Handle cursor up/left movement in save/load screen.
 // Decrements cursor position with wrap-around logic for both rows and columns.
@@ -747,8 +724,6 @@ void CSaveLoad::pageDown() {
 
 // Handle window state transitions for save/load screen.
 // Checks syswin at 0x98 and 0xD4, sets up cursor strings and state.
-#pragma push
-#pragma optimize_for_size on
 void CSaveLoad::confirm() {
     char* s1;
     char* s2;
@@ -812,7 +787,6 @@ common:
     mField121 = 6;
     playUISound(3);
 }
-#pragma pop
 
 // Handle window close event: if the first syswin is active and ready,
 // close it, reset the sub-object state, and update status fields
@@ -831,7 +805,6 @@ void CSaveLoad::cancel() {
 int CSaveLoad::getDone() { return mField12A; }
 
 // Open the delete-confirm window for the selected slot.
-#pragma optimize_for_size on
 void CSaveLoad::openDel() {
     if (mField121 != 3) return;
     if (CSysWin_getUnk34(&mSysWin98) != 0) return;
@@ -851,7 +824,6 @@ void CSaveLoad::openDel() {
     mField121 = 6;
     playUISound(3);
 }
-#pragma optimize_for_size off
 
 // Check save/load state and return a status code:
 // 0 = not ready (state mismatch, window active, or sub-window active)
@@ -915,8 +887,6 @@ __declspec(noinline) void CSaveLoad::tickConf() {
 
 // Handle save/load operation execution (state 5).
 // Checks window state, cursor status, and dispatches to delete/load/save logic.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSaveLoad::execOp() {
     if (CSysWin_isActive(&mSysWin98) == 0) return;
 
@@ -978,7 +948,6 @@ __declspec(noinline) void CSaveLoad::execOp() {
 
     playUISound(0x80);
 }
-#pragma pop
 
 __declspec(noinline) void CSaveLoad::finish() {
     if (!CSysWin_isActive(&mSysWinD4)) return;
@@ -1017,8 +986,6 @@ __declspec(noinline) void CSaveLoad::tickWait() {
 // Handle save/load window state machine.
 // Checks mSub.mIdle, mField12E, mField12C, mField129, mField12B
 // and sets up the appropriate syswin with strings.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSaveLoad::tickWindow() {
     char* s1;
     char* s2;
@@ -1110,7 +1077,6 @@ clear12E:
     lbl_eu_80662ACC = (u32)(s8)mField124;
     playUISound(0x28);
 }
-#pragma pop
 
 __declspec(noinline) void CSaveLoad::tickSlot() {
     if (mData.isReady() != 0) {
@@ -1134,8 +1100,6 @@ __declspec(noinline) void CSaveLoad::enAnimB() {
 }
 
 // Refresh cursor/button display state for the save/load screen.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSaveLoad::refresh() {
     if (CSysWin_getUnk34(&mSysWin98) != 0) {
         // Window open: refresh the L/R button highlight on the cursor object
@@ -1156,7 +1120,6 @@ __declspec(noinline) void CSaveLoad::refresh() {
         mCur.setPos(reinterpret_cast<nw4r::math::VEC3*>(paneBuf));
     }
 }
-#pragma pop
 
 // Render the save/load screen for all 3 slots.
 // Gets localized strings, sets up text elements, buttons, and scrollbar
@@ -1380,7 +1343,6 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
 // TU-local view of the CSLCur_getSlot record (+0x20 into the slot object):
 // priority fields at +2/+3 (bytes), +4/+6 (halfwords), +8/+9 (bytes).
 struct SaveSlotView { u8 b00; u8 b01; u8 b02; u8 b03; u16 w04; u16 w06; u8 b08; u8 b09; };
-#pragma optimize_for_size on
 __declspec(noinline) void CSaveLoad::bestSlot() {
     s32 globalVal = (s32)lbl_eu_80662ACC;
     if (globalVal >= 0) {
@@ -1432,7 +1394,6 @@ __declspec(noinline) void CSaveLoad::bestSlot() {
         mField124 = (u8)best;
     }
 }
-#pragma optimize_for_size off
 
 // Load global CSaveLoad* from lbl_eu_806649F4. Takes 4 parameters (r3-r6)
 // but only uses r5 (flag: non-zero = handle mField12C/mField129 branches + play sound)
@@ -1473,8 +1434,6 @@ void CSaveLoad::onFile(int, int, int completed, int msgKind) {
 
 // Builds the layout from the loaded archive, then rebuilds the cursor,
 // sub-window and slot-data members from temporaries bound to the accessor.
-#pragma push
-#pragma optimize_for_size on
 bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
@@ -1570,13 +1529,21 @@ bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
-#pragma pop
 
 u32 getSaveLoadOp(void) {
     extern u32 lbl_eu_80662AD0;
     return lbl_eu_80662AD0;
 }
 
+// The cf::CfAward code from here to the end of the split is speed-optimised in
+// retail (-O4,p shapes), unlike the -O4,s CSaveLoad code above; it is most
+// likely a separate source file sharing this split. push/pop restores -O4,s
+// at the end of the TU, which is where MWCC applies the -O4,s inlining rule
+// (MWCC_CASES "two rules", rule A): with the state left "off" the two
+// CSysWin copies in the ctor are inlined instead of calling the weak
+// __as__7CSysWinFRC7CSysWin.
+#pragma push
+#pragma optimize_for_size off
 cf::CfAward::~CfAward() {
     // Restore vtable to the complete object vtable before destruction
     void* base = (void*)&lbl_eu_80538858;
@@ -2256,4 +2223,4 @@ extern "C" void sinit_802930E0() {
     CtrlRemote_ResetSlotArrayObj(&lbl_eu_806649F8);
     __register_global_object(&lbl_eu_806649F8, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
-
+#pragma pop

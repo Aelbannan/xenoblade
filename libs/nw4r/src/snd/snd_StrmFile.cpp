@@ -68,6 +68,14 @@ inline const StrmFileReader* LoaderReaderPtr(const StrmFileLoader* pLoader) {
         &reinterpret_cast<const StrmLoaderLayout*>(pLoader)->readerHeader);
 }
 
+// Head-block accessor: the embedded reader's mHeadBlock lives at loader+0x8.
+// Written as a per-use expression so MWCC rematerializes the load at each
+// ref resolution (retail schedule), instead of caching it in a register.
+inline const StrmFile::HeadBlock*
+LoaderReaderHeadBlock(const StrmFileLoader* pLoader) {
+    return reinterpret_cast<const StrmLoaderLayout*>(pLoader)->readerHeadBlock;
+}
+
 inline bool LoaderReaderAvailable(const StrmFileLoader* pLoader) {
     return reinterpret_cast<const StrmLoaderLayout*>(pLoader)->readerHeader !=
            NULL;
@@ -94,7 +102,9 @@ inline bool StrmFileReader::IsValidFileHeader(
     return true;
 }
 
+
 StrmFileReader::StrmFileReader() : mHeader(NULL), mHeadBlock(NULL) {}
+
 
 inline void StrmFileReader::Setup(const StrmFile::Header* pStrmBin) {
     if (!IsValidFileHeader(&pStrmBin->fileHeader)) {
@@ -113,76 +123,6 @@ inline void StrmFileReader::Setup(const StrmFile::Header* pStrmBin) {
         &mHeadBlock->refDataHeader);
 }
 
-// NOTE: StrmFileReader::ReadStrmInfo / ReadStrmTrackInfo and the StrmFileLoader
-// read entry points below are emitted with their retail mangled names via C
-// linkage: their signatures use the nested types
-// StrmFileReader::StrmInfo / StrmFileReader::StrmTrackInfo, which the locked
-// header cannot declare as member functions.
-//
-// StrmFileReader::ReadAdpcmInfo has no retail symbol in this unit (retail
-// resolves ADPCM channel params through StrmFileLoader::ReadAdpcmInfo only),
-// so it is not defined here.
-
-bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
-    u8 headerArea[HEADER_ALIGNED_SIZE + 32];
-    u32 bytesRead;
-
-    mStream.Seek(0, ut::FileStream::SEEK_ORIGIN_BEG);
-    bytesRead = mStream.Read(ut::RoundUp(headerArea, 32), HEADER_ALIGNED_SIZE);
-    if (bytesRead != HEADER_ALIGNED_SIZE) {
-        return false;
-    }
-
-    StrmFile::Header* pHeader =
-        static_cast<StrmFile::Header*>(ut::RoundUp(headerArea, 32));
-
-    StrmFileReader reader;
-
-    if (!reader.IsValidFileHeader(&pHeader->fileHeader)) {
-        return false;
-    }
-
-    if (pHeader->adpcBlockOffset > size) {
-        return false;
-    }
-
-    u32 loadSize = pHeader->headBlockOffset + pHeader->headBlockSize;
-
-    mStream.Seek(0, ut::FileStream::SEEK_ORIGIN_BEG);
-    bytesRead = mStream.Read(pStrmBin, loadSize);
-    if (bytesRead != loadSize) {
-        return false;
-    }
-
-    mReader.Setup(static_cast<StrmFile::Header*>(pStrmBin));
-
-    return true;
-}
-
-bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
-                                       int channels) {
-    if (!mReader.IsAvailable()) {
-        return false;
-    }
-
-    s32 offset = mReader.GetAdpcBlockOffset() +
-                 block * channels * (2 * sizeof(u16)) +
-                 sizeof(ut::BinaryBlockHeader);
-
-    mStream.Seek(offset, ut::FileStream::SEEK_ORIGIN_BEG);
-
-    u16 buffer[StrmPlayer::StrmHeader::STRM_CHANNEL_MAX * 2] ALIGN(32);
-    if (mStream.Read(buffer, sizeof(buffer)) != sizeof(buffer)) {
-        return false;
-    }
-
-    for (int i = 0; i < channels; i++) {
-        pYN1[i] = buffer[i * 2];
-        pYN2[i] = buffer[i * 2 + 1];
-    }
-
-    return true;
-}
 
 // ---------------------------------------------------------------------------
 // Retail C-linkage entry points (fixed ABI, nested-type signatures that the
@@ -237,6 +177,8 @@ extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6d
     pStrmInfo->adpcmDataSize = pStrmData->adpcmDataSize;
     return true;
 }
+
+
 
 // StrmFileReader::ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo*, int)
 extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
@@ -302,6 +244,73 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3
     return true;
 }
 
+
+
+// NOTE: StrmFileReader::ReadStrmInfo / ReadStrmTrackInfo and the StrmFileLoader
+// read entry points below are emitted with their retail mangled names via C
+// linkage: their signatures use the nested types
+// StrmFileReader::StrmInfo / StrmFileReader::StrmTrackInfo, which the locked
+// header cannot declare as member functions.
+//
+// StrmFileReader::ReadAdpcmInfo has no retail symbol in this unit (retail
+// resolves ADPCM channel params through StrmFileLoader::ReadAdpcmInfo only),
+// so it is not defined here.
+
+bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
+    u8 headerArea[HEADER_ALIGNED_SIZE + 32];
+    u32 bytesRead;
+
+    mStream.Seek(0, ut::FileStream::SEEK_ORIGIN_BEG);
+    bytesRead = mStream.Read(ut::RoundUp(headerArea, 32), HEADER_ALIGNED_SIZE);
+    if (bytesRead != HEADER_ALIGNED_SIZE) {
+        return false;
+    }
+
+    StrmFile::Header* pHeader =
+        static_cast<StrmFile::Header*>(ut::RoundUp(headerArea, 32));
+
+    StrmFileReader reader;
+
+    if (!reader.IsValidFileHeader(&pHeader->fileHeader)) {
+        return false;
+    }
+
+    if (pHeader->adpcBlockOffset > size) {
+        return false;
+    }
+
+    u32 loadSize = pHeader->headBlockOffset + pHeader->headBlockSize;
+
+    mStream.Seek(0, ut::FileStream::SEEK_ORIGIN_BEG);
+    bytesRead = mStream.Read(pStrmBin, loadSize);
+    if (bytesRead != loadSize) {
+        return false;
+    }
+
+    mReader.Setup(static_cast<StrmFile::Header*>(pStrmBin));
+
+    return true;
+}
+
+
+
+// StrmFileLoader::GetChannelCount()
+extern "C" int GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(
+    const StrmFileLoader* ths) {
+    if (!LoaderReaderAvailable(ths)) {
+        return 0;
+    }
+
+    const StrmFile::HeadBlock* pHead =
+        reinterpret_cast<const StrmLoaderLayout*>(ths)->readerHeadBlock;
+    const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
+        pHead->refChannelTable, &pHead->refDataHeader);
+
+    return pChannelTable->channelCount;
+}
+
+
+
 // StrmFileLoader::ReadStrmInfo(StrmFileReader::StrmInfo*)
 extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
     const StrmFileLoader* ths, StrmInfoLayout* pStrmInfo) {
@@ -319,6 +328,8 @@ extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6d
         pReader, pStrmInfo);
     return true;
 }
+
+
 
 // StrmFileLoader::ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo*, int)
 extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
@@ -339,28 +350,7 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3
     return true;
 }
 
-// StrmFileLoader::GetChannelCount()
-extern "C" int GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(
-    const StrmFileLoader* ths) {
-    if (!LoaderReaderAvailable(ths)) {
-        return 0;
-    }
 
-    const StrmFile::HeadBlock* pHead =
-        reinterpret_cast<const StrmLoaderLayout*>(ths)->readerHeadBlock;
-    const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
-        pHead->refChannelTable, &pHead->refDataHeader);
-
-    return pChannelTable->channelCount;
-}
-
-// Head-block accessor: the embedded reader's mHeadBlock lives at loader+0x8.
-// Written as a per-use expression so MWCC rematerializes the load at each
-// ref resolution (retail schedule), instead of caching it in a register.
-inline const StrmFile::HeadBlock*
-LoaderReaderHeadBlock(const StrmFileLoader* pLoader) {
-    return reinterpret_cast<const StrmLoaderLayout*>(pLoader)->readerHeadBlock;
-}
 
 // StrmFileLoader::ReadAdpcmInfo(AdpcmParam*, AdpcmLoopParam*, int)
 extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
@@ -395,6 +385,36 @@ extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6
     }
     return true;
 }
+
+
+
+
+
+bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
+                                       int channels) {
+    if (!mReader.IsAvailable()) {
+        return false;
+    }
+
+    s32 offset = mReader.GetAdpcBlockOffset() +
+                 block * channels * (2 * sizeof(u16)) +
+                 sizeof(ut::BinaryBlockHeader);
+
+    mStream.Seek(offset, ut::FileStream::SEEK_ORIGIN_BEG);
+
+    u16 buffer[StrmPlayer::StrmHeader::STRM_CHANNEL_MAX * 2] ALIGN(32);
+    if (mStream.Read(buffer, sizeof(buffer)) != sizeof(buffer)) {
+        return false;
+    }
+
+    for (int i = 0; i < channels; i++) {
+        pYN1[i] = buffer[i * 2];
+        pYN2[i] = buffer[i * 2 + 1];
+    }
+
+    return true;
+}
+
 
 } // namespace detail
 } // namespace snd

@@ -8,15 +8,13 @@
 #include <nw4r/db/db_assert.h>
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Free-function imports previously supplied by the trimmed chain headers
 // (CChainTimer.hpp / CfObjectImplEne.hpp / CBattleManager.hpp). extern "C"
 // keeps the call-site relocs at the retail unmangled names.
 extern "C" int checkArtsFull(void* param, void* actor, int flags);
 extern "C" int isBattleStatusActive(void* obj, int id);
-extern "C" void CTaskGame_enumListCtor(void* holder);
-extern "C" void* CTaskGame_enumListGet(void* holder);
-extern "C" void __dt__80043E88(void* holder, int tags);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void* MapFx_ResolveOwner(void* src);
@@ -314,8 +312,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         f32 f31 = p->unk60;
                         int splashKind = p->unk5E;
                         f32 f27 = 0.0f;
-                        u8 holder[8];
-                        CTaskGame_enumListCtor(holder);
+                        CfEnumListHolder holder;
                         f30 = (f32)p->unk64 * ml::deg2rad;
                         int idx = (obj->field_3F00 & 2) ? 0 : 4;
                         int tblWord = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
@@ -390,83 +387,83 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         }
                         switch (splashKind) {
                         case 1: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
                             f32 f28 = obj->v364();
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             rebuildByDistanceCone(list, vec70, f31, f30, f28, dmgKind);
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 2: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FB044(list, f31, vec70, 0);
                             f32 f28 = obj->v364() + ml::pi;
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             rebuildByDistanceCone(list, vec70, f31, f30, f28, dmgKind);
                             break;
                         }
                         case 3: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
                             f32 v1 = obj->v364();
                             f32 f28 = v1 + ml::pi * lbl_eu_8066746C;
                             f32 f29 = v1 - ml::pi * lbl_eu_8066746C;
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, dmgKind);
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 4: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
                         case 5: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
                             f32 f27b = (f32)p->unk64 / lbl_eu_8066747C;
                             f32 f28 = obj->v364();
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FBA18(list, f31, f27b, f28, dmgKind);
-                            list = CTaskGame_enumListGet(holder);
+                            list = holder.get();
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 6: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
-                                void* list = CTaskGame_enumListGet(holder);
+                                void* list = holder.get();
                                 startEnumObjects(list, tblWord, 0x1000);
                             } else {
                                 void* idObj = obj->mSub.s17();
-                                void* list = CTaskGame_enumListGet(holder);
+                                void* list = holder.get();
                                 appendObjectById(list, (int)idObj);
                             }
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
                         case 7: {
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             startEnumObjects(list, tblWord, 0x1000);
                             break;
                         }
                         default: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
-                                void* list = CTaskGame_enumListGet(holder);
+                                void* list = holder.get();
                                 startEnumObjects(list, tblWord, 0x1000);
                             } else {
                                 void* idObj = obj->mSub.s17();
-                                void* list = CTaskGame_enumListGet(holder);
+                                void* list = holder.get();
                                 appendObjectById(list, (int)idObj);
                             }
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
@@ -482,15 +479,15 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             sum[0] = off[0] + base[0];
                             sum[1] = off[4] + base[4];
                             sum[2] = off[8] + base[8];
-                            void* list = CTaskGame_enumListGet(holder);
+                            void* list = holder.get();
                             __ct__800FAE3C(list, sum, 0);
                         }
                         int validCount = 0;
                         int reject = 0;
                         int i = 0;
-                        void* list = CTaskGame_enumListGet(holder);
+                        void* list = holder.get();
                         while (i < *(u32*)((u8*)list + 0x620)) {
-                            void* list2 = CTaskGame_enumListGet(holder);
+                            void* list2 = holder.get();
                             void* target = getObjectAt(list2, i);
                             if (target != 0 && MapFx_ResolveOwner(target) != 0) {
                                 if (!(p->unk78 & 2)) {
@@ -528,7 +525,6 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             result |= 0x20;
                         }
                         if (validCount == 0) result |= 0x20;
-                        __dt__80043E88(holder, -1);
                     }
                 }
             }
@@ -607,13 +603,11 @@ int checkArtsFull(void* param, void* actor, int flags) {
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 6) {
             if (p->unk48 == 0xf8) {
-                u8 holder2[8];
-                CTaskGame_enumListCtor(holder2);
-                void* list = CTaskGame_enumListGet(holder2);
+                CfEnumListHolder holder2;
+                void* list = holder2.get();
                 startEnumObjects(list, 0x20, 0x800);
-                list = CTaskGame_enumListGet(holder2);
+                list = holder2.get();
                 if (*(u32*)((u8*)list + 0x620) <= 1) result |= 0x80;
-                __dt__80043E88(holder2, -1);
             }
             if (p->unk48 == 0x119 && obj->v192() < 3) result |= 0x80;
         }

@@ -206,13 +206,13 @@ extern "C" int playFaintVoice(CVoiceHandle* self) {
 // zeroes these sections in the link-time reloc.o. The retail split object
 // genuinely carries them (0x50/0x18/0x8, reconstructed byte-identical
 // below), so that rule entry is stale and should be removed; until then
-// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the link keeps resolving these labels as UNDEF. __RTTI__Q22cf10CVS_THREAD lives in
 // the CCharVoiceMan range and is referenced, not defined, here.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662D00[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf16CVS_THREAD_FAINT[2];
 
 extern const char lbl_eu_80510780[0x18] = "cf::CVS_THREAD_FAINT";
 
@@ -235,7 +235,7 @@ u32 lbl_eu_80539B70[3] = {
 };
 
 u32 lbl_eu_80539B7C[7] = {
-    (u32)lbl_eu_80662D00,
+    (u32)__RTTI__Q22cf16CVS_THREAD_FAINT,
     0,
     (u32)PlayThreadVoice,
     (u32)removeFaintVoice,
@@ -245,13 +245,13 @@ u32 lbl_eu_80539B7C[7] = {
 };
 
 u32 lbl_eu_80539B98[4] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662D00[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf16CVS_THREAD_FAINT[2] = {
     (u32)lbl_eu_80510780,
     (u32)lbl_eu_80539B98,
 };

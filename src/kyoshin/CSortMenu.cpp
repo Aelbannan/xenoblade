@@ -10,7 +10,6 @@
 
 // External symbols
 extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
-extern const float lbl_eu_80668000;  // 1.0f literal pool (SDA21): animation completion threshold
 void closeFileHandle(CFileHandle**);
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
@@ -26,7 +25,6 @@ extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu*);
 extern "C" __declspec(noinline) void sortMenuRefreshSlotText(CSortMenu*);
 
 // Retail-named SDA2 constants.
-extern const float lbl_eu_80667FF0;  // row height (SDA21)
 
 // ============================================================================
 // CSortMenu constructor
@@ -286,7 +284,7 @@ extern "C" void sortMenuSetPage(CSortMenu* _this, s8 page) {
     // int->double conversion magic via lfd (retail loads it from the shared
     // DOL pool slot lbl_eu_80667FF8; UNIT_RULES retargets the TU-local
     // literal there).
-    size.height = lbl_eu_80667FF0 * (f32)rows;
+    size.height = 21.6f * (f32)rows;
     paneView->width = size.width;
     paneView->height = size.height;
 
@@ -449,7 +447,7 @@ extern "C" void sortMenuValueToPage(CSortMenu* _this, int value, u8* outPage, u8
 // sortMenuState1Opening: State 1 handler - opening animation
 // ============================================================================
 extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu* _this) {
-    if (advanceAnimTransform(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
+    if (advanceAnimTransform(_this->mpAnimTrans0, 1.0f) != 0) {
         _this->field_0x2A = 2;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, true);
@@ -471,7 +469,7 @@ extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu* _this) {
 // sortMenuState4Scroll: State 4 handler - scroll animation
 // ============================================================================
 extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu* _this) {
-    if (AnimRewindFrame(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
+    if (AnimRewindFrame(_this->mpAnimTrans1, 1.0f) != 0) {
         _this->field_0x2A = 5;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);

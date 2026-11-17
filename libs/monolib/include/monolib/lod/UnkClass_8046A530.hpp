@@ -40,6 +40,7 @@ public:
 private:
     // Opaque padding up to offset 0xa44 where the LODMemMan sub-object starts.
     u8 mPad_00[0xa44];
+    u8 mTail[0x1220 - 0xa44];
     // LOD::LODMemMan sub-object lives here at offset 0xa44.
 };
 

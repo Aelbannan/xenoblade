@@ -30,10 +30,8 @@ extern CESinCosEntry lbl_eu_80660B78[360]; // cos table
 
 // Retail sdata2 literals (named from the EU map). const so MWCC hoists the
 // loads like retail (cf. MWCC_CASES extern-const float hoist note).
-extern const f32 lbl_eu_8066B260; // 57.29578f (180/pi)
 extern f32 lbl_eu_8066B270; // 1.0f
 extern f32 lbl_eu_8066B274; // 0.0f
-extern const f32 lbl_eu_8066B278; // pi/180
 extern f64 lbl_eu_8066B280; // 0x4330000080000000 (2^52+2^31), pool copy used
                             // by the table initializer's int->float path
 
@@ -43,7 +41,7 @@ extern f64 lbl_eu_8066B280; // 0x4330000080000000 (2^52+2^31), pool copy used
 
 // Table based sincos + rotation build.
 static void CERotTrig(Mtx m, f32 rad, char axis) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     f32 frac = deg - (f32)n;
     int idx = n % 360;
@@ -60,7 +58,7 @@ static void CERotTrig(Mtx m, f32 rad, char axis) {
 // result before the (float)n cast flips MWCC's scratch coloring for callers
 // whose register context needs mulhw r3 / xoris r0 (CERot_AxisToMatrix).
 static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -76,7 +74,7 @@ static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
 // z-axis idx-first clone: distinct call site text so MWCC schedules the
 // inlined body independently in CERotEulerXYZ's tail.
 static void CERotTrigIdxFirstZ(Mtx m, f32 rad) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -92,7 +90,7 @@ static void CERotTrigIdxFirstZ(Mtx m, f32 rad) {
 // y-axis idx-first clone: distinct call site text so MWCC schedules the
 // inlined body independently in CERotEulerZXY's tail (cf. CERotTrigIdxFirstZ).
 static void CERotTrigIdxFirstY(Mtx m, f32 rad) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -108,7 +106,7 @@ static void CERotTrigIdxFirstY(Mtx m, f32 rad) {
 // x-axis idx-first clone: distinct call site text so MWCC schedules the
 // inlined body independently (cf. CERotTrigIdxFirstZ/Y).
 static void CERotTrigIdxFirstX(Mtx m, f32 rad) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -126,7 +124,7 @@ static void CERotTrigIdxFirstX(Mtx m, f32 rad) {
 // IdxFirst forms, so they cannot reorder the float loads. Kept (not deleted)
 // to preserve TU line numbers for -ipa file codegen stability (Aug 2026).
 static void CERotTrigThirdZ(Mtx m, f32 rad) {
-    f32 deg = rad * lbl_eu_8066B260;
+    f32 deg = rad * 57.29578f;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -140,7 +138,7 @@ static void CERotTrigThirdZ(Mtx m, f32 rad) {
 }
 
 static void CERotTrigThirdY(Mtx m, f32 rad) {
-    f32 deg = rad * lbl_eu_8066B260;
+    f32 deg = rad * 57.29578f;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -154,7 +152,7 @@ static void CERotTrigThirdY(Mtx m, f32 rad) {
 }
 
 static void CERotTrigThirdX(Mtx m, f32 rad) {
-    f32 deg = rad * lbl_eu_8066B260;
+    f32 deg = rad * 57.29578f;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -176,7 +174,7 @@ extern "C" {
 // Cardinal axis rotation builders: build a 4x4 matrix rotating about the
 // given axis by `rad` radians (table-interpolated sin/cos).
 void CERotXMatrix(Mtx mtx, f32 rad) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -192,7 +190,7 @@ void CERotXMatrix(Mtx mtx, f32 rad) {
 // Dedicated y-axis helper: MWCC's inliner schedules the body differently
 // than textual source in CERotYMatrix.
 static void CERotTrigY(Mtx m, f32 rad) {
-    f32 deg = lbl_eu_8066B260 * rad;
+    f32 deg = 57.29578f * rad;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -455,8 +453,8 @@ void CEBuildSinCos(void) {
     f32 prevCos;
     int i;
     for (i = 0; i < 360; i++) {
-        lbl_eu_80660038[i].value = (f32)sin(lbl_eu_8066B278 * (f32)i);
-        lbl_eu_80660B78[i].value = (f32)cos(lbl_eu_8066B278 * (f32)i);
+        lbl_eu_80660038[i].value = (f32)sin(0.017453292f * (f32)i);
+        lbl_eu_80660B78[i].value = (f32)cos(0.017453292f * (f32)i);
         if (i != 0) {
             lbl_eu_80660038[i - 1].delta = lbl_eu_80660038[i].value - prevSin;
             lbl_eu_80660B78[i - 1].delta = lbl_eu_80660B78[i].value - prevCos;

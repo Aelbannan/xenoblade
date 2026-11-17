@@ -3,198 +3,119 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
-#include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, CScrollBar_requestScrollIn
-#include "kyoshin/CBaseCur.hpp"         // CBaseCur (embedded cursor virtuals)
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CEventFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include "kyoshin/CScrollBar.hpp"       // CScrollBar (real class: ctor/dtor emitted by the compiler)
+#include "kyoshin/CBaseCur.hpp"         // CCur18 cursor member
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
-#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, HpVoice_MapSubState/802A330C/802A3D54
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle (TutorialList_PlayTutorialVoice)
 
-/* CTutorialList -- tutorial list widget.
-   Vtable at lbl_eu_8053A2A8 (split1 .data). Layout-compatible with IWorkEvent
-   via vptr at +0x00 for CDeviceFile::readFile, but not a C++ IWorkEvent
-   subclass (avoids emitting weak default stubs into this TU's .text).
-
-   Field layout (from retail __ct__13CTutorialListFUs 802AF55C + matched call sites):
-   +0x00 vptr | +0x04 UnkClass_8045F564 (0x10) | +0x14 six pointers
-   (+0x20 Layout*, +0x24/+0x28 AnimTransform*) | +0x2C CCur (0x18)
-   | +0x44 CScrollBar (0x40) | +0x84 CSortMenu sub-object | +0x175 control bytes
-   | +0x177 mInitialized | +0x17E s8 | +0x180 opaque sub-object | +0x280 u16s
-   | +0x288 total size (matches CMenuTutorialList's embedded 0x288 buffer). */
-struct CTutorialListLayout {
-    void* mVtbl;            // 0x00
-
-    // 0x04-0x83 -- UnkClass_8045F564 (0x10), 6 pointers, CCur (0x18), CScrollBar (0x40)
-    u8 gap04[0x80];
-
-    // 0x84 -- CSortMenu sub-object (in-place, ~0x68 bytes)
-    u8 mSortMenu[4];        // minimal placeholder for address-of
-
-    // 0x88-0x176 -- copy proxies, data blocks, control flags
-    u8 gap88[0xEF];
-
-    u8 mInitialized;        // 0x177 -- non-zero after construction
-};
-
-// Data imports (retail symbol names; global data is not C++-mangled).
-extern const float lbl_eu_80668DE4;  // anim finish frame bound (.sdata2, sda21)
-extern const float lbl_eu_80668DD8;  // scrollbar fade colour set (.sdata2, sda21)
-extern const float lbl_eu_80668DDC;
-extern const float lbl_eu_80668DE0;
-extern char lbl_eu_80510B78[];       // string pool base
-
-class CTutorialList;
-
-// CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
-extern "C" u32 sortMenuIsScrollbarVisible(void*);
-extern "C" int sortMenuIsVisible28(void*);
-extern "C" int sortMenuGetFlag2B(void*);
-extern "C" void sortMenuInitFileRead(void*);
-extern "C" void sortMenuDispatchState(void*);
-extern "C" void sortMenuToState4Page(void*);
-extern "C" void Cur_Update(void*);
-extern "C" void sortMenuPageUpStep(void*);                     // CSortMenu page up
-extern "C" void sortMenuScrollUp(void*);                     // CSortMenu page down
-extern "C" void sortMenuPageDownStep(void*);                     // CSortMenu page down (alt)
-extern "C" void sortMenuScrollDown(void*);                     // CSortMenu page up (alt)
-extern "C" void sortMenuSetLayoutPos(void*, void*);              // set sort-menu anchor pos
-extern "C" void sortMenuOpenInit(void*);                     // rebuild sort menu
-extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3*, void*);  // copy cursor target
-extern "C" void Cur_SetVisible(void*, int);
-// Device/memory helper (retail unmangled C symbol).
-extern "C" int KyoshinHeap_GetField44();
-void closeFileHandle(CFileHandle**);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
 void playUISound(u32);
 
-// Sort-menu sub-object helpers (retail unmangled C symbols; same declarations
-// as CItemBoxGrid.hpp / CMCCrystalBox.hpp, declared here to avoid pulling
-// those TUs' headers into this one).
-extern "C" u32 sortMenuGetPageIdx(void*);
-extern "C" void sortMenuResetCount(void*);
-extern "C" void func_801D3518(void*, void*);
-extern "C" void sortMenuSetPage(void*, u8);
-extern "C" void sortMenuTermCleanup(void*);
-// CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
-
-// Global term/active flag cleared by TutorialList_ReleaseResources (.sbss word, sda21).
-extern u32 lbl_eu_80664BF0;
-
-// Embedded sub-object destructors used by ~CTutorialList (retail unmangled
-// symbols; same pattern as CQstLogList.hpp).
-extern "C" void __dt__9CSortMenuFv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-
-// Constructor imports (retail short/mangled names; same set as
-// CQstLogList.hpp).
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" u32 lbl_eu_8053A2A8[];   // CTutorialList vtable (.data; array -> lis/addi)
+// Minimal CSortMenu: the full class (CSortMenu.hpp) cannot be included here
+// because its extern "C" UnkClass_8045F564 stubs collide with the real
+// UnkClass header. Field layout matches CSortMenu.hpp (0xF0 bytes). The retail
+// ctor symbol is the unmangled __ct__CSortMenu (called from the inline ctor);
+// the dtor is the out-of-line retail __dt__9CSortMenuFv.
 extern "C" void __ct__CSortMenu(void* self);
-extern "C" void __ct__UnkClass_8011C974(void* dest, const u32* src);  // 4-word mem-region copy
-extern "C" void copyScrollBarData(CScrollBarData* dst, const CScrollBarData* src);  // CScrollBar copy
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src);
 
-// Mirror of the CSortMenu body (0xF0 bytes) followed by the tutorial-list
-// extension (id table + summary halfwords), used by the constructor's
-// temp-to-member copies. Pointer fields are opaque storage.
-struct CTutorialListMenuData {
-    u32 mVtbl;                 // +0x00 (not copied)
-    u8  mUnk04[0x10];          // +0x04 UnkClass_8045F564 (__ct__UnkClass_8011C974)
-    u32 mFileHandle;           // +0x14
-    u32 mArcResAcc;            // +0x18
-    u32 mpLayout;              // +0x1C
-    u32 mpAnimTrans0;          // +0x20
-    u32 mpAnimTrans1;          // +0x24
-    u8  field_28;              // +0x28
-    u8  field_29;              // +0x29
-    u8  field_2A;              // +0x2A
-    u8  field_2B;              // +0x2B
-    u8  mScrollBar[0x40];      // +0x2C CScrollBar (copied via copyScrollBarData)
-    u32 mArray[32];            // +0x6C (0x80-byte block copy)
-    u8  mCount;                // +0xEC
-    u8  mPage;                 // +0xED
-    u8  mSubPage;              // +0xEE
-    u8  mPadEF;                // +0xEF (keeps mTable at +0xF0)
-    u8  mTable[0x100];         // +0xF0 tutorial id table (zero-seeded + copied)
-    u16 mField1F0;             // +0x1F0 content size
-    s16 mField1F2;             // +0x1F2 row id
-    s16 mField1F4;             // +0x1F4 selection id
+class CSortMenu {
+public:
+    CSortMenu() { __ct__CSortMenu(this); }
+    ~CSortMenu();
+
+    void* mVtbl;                // 0x00
+    u8 mRegion[0x10];           // 0x04: UnkClass_8045F564
+    void* mFileHandle;          // 0x14
+    void* mArcResAcc;           // 0x18
+    void* mLayout;              // 0x1C
+    void* mAnim0;               // 0x20
+    void* mAnim1;               // 0x24
+    u8 mFlag28;                 // 0x28
+    u8 mFlag29;                 // 0x29
+    u8 mFlag2A;                 // 0x2A
+    u8 mFlag2B;                 // 0x2B
+    u8 mScrollBar[0x40];        // 0x2C: CScrollBar body
+    u32 mArray[32];             // 0x6C
+    u8 mCount;                  // 0xEC
+    u8 mPage;                   // 0xED
+    u8 mSubPage;                // 0xEE
+    u8 mPad;                    // 0xEF
 };
 
-// File-load / layout-build imports with unmangled retail names (same set as
-// CKizunaTalkList.hpp; these retail symbols are not C++-mangled).
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
-extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
-extern "C" void* Bdat_GetTable_AA34();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-// .sdata2 int->float conversion magic double (0x4330000000000000) referenced
-// by the u16 pane-size conversions in OnFileEvent.
-extern const double lbl_eu_80668DE8;
+// Tutorial id table: the ids of every unlocked tutorial in display order plus
+// the page/scroll split of the selected entry.
+struct CTutorialIdTable {
+    u16 mIds[0x80];   // 0x00: collected tutorial ids
+    u16 mCount;       // 0x100: number of entries
+    s16 mSelRow;      // 0x102: row of the selected entry within its page
+    s16 mScrollBase;  // 0x104: scroll offset of the selected entry's page
 
-// Overlay structs for OnFileEvent's 'timg' message resource (same pattern
-// as CQstLogList.hpp): the resource object holds a chain whose first field
-// points at the u16 row/column pair used to size the message panes.
-struct CTutorialCoords {
-    u16 c0;  // 0x0 column
-    u16 c2;  // 0x2 row
-};
-struct CTutorialMsgChain {
-    CTutorialCoords* pCoords;  // 0x0
-};
-struct CTutorialMsgObj {
-    u8 gap[0x8];
-    CTutorialMsgChain* chain;  // 0x8
+    CTutorialIdTable();
+    void Rebuild(u16 target, int filter);
+    u16 GetEntryIdAt(u16 index);
 };
 
-// (Font dispatch goes through IDeviceFontInfo::getFont from
-// monolib/device/CDeviceFont.hpp; no local view needed.)
-
-// Same-TU widget helpers. Retail strips the C++ mangling for these (bare
-// func_ names), so they are defined under C linkage and call sites bind the
-// literal retail symbols.
-extern "C" void TutorialList_OnOpenAnimDone(CTutorialList*);
-extern "C" void TutorialList_OnIdleAnimDone(CTutorialList*);
-extern "C" void TutorialList_OnCloseAnimRewind(CTutorialList*);
-extern "C" void TutorialList_OnShutdownAnimRewind(CTutorialList*);
-extern "C" void TutorialList_EnableOpenAnims(CTutorialList*);
-extern "C" void TutorialList_EnableCloseAnims(CTutorialList*);
-extern "C" void TutorialList_UpdateRowTexts(CTutorialList*);
-extern "C" void TutorialList_UpdateTitleText(CTutorialList*);
-extern "C" void TutorialList_MoveCursorToRow(CTutorialList*);
-extern "C" void TutorialList_RebuildSortEntries(CTutorialList*);
-extern "C" void TutorialList_RebuildIdTable(u8*, u16, int);
-
-class CTutorialList {
+/* CTutorialList -- tutorial list widget (IWorkEvent: receives archive
+   completion through OnFileEvent). Retail layout (ctor 802AF55C):
+   +0x00 vptr | +0x04 UnkClass_8045F564 | +0x14 two CFileHandle*, accessor,
+   layout, two AnimTransform* | +0x2C CCur18 | +0x44 CScrollBar (0x40)
+   | +0x84 CSortMenu (0xF0) | +0x174 control bytes | +0x180 id table
+   | +0x288 total size (the embedded object in CMenuTutorialList). */
+class CTutorialList : public IWorkEvent {
 public:
     CTutorialList(u16 count);
-    int OnFileEvent(CEventFile* event);
+    virtual ~CTutorialList();
+    virtual bool OnFileEvent(CEventFile* event);
 
-    u8 TutorialList_IsInitialized();
+    void TutorialList_LoadLayoutFiles();
+    void TutorialList_UpdatePerFrame();
+    void TutorialList_DrawVisible(nw4r::lyt::DrawInfo* drawInfo);
+    void TutorialList_ReleaseResources();
+    int TutorialList_IsListVisible();
+    int TutorialList_IsInitialized();
+    void TutorialList_OpenListInit();
+    void TutorialList_BeginClose();
+    void TutorialList_PageUpIdle();
+    void TutorialList_PageUpWrap();
+    void TutorialList_PageDownStep();
+    void TutorialList_PageDownBlock();
+    u16 TutorialList_GetSelectedEntryId();
+    void TutorialList_RefreshRowTexts();
+    void TutorialList_ConfirmOpenMenu();
     int TutorialList_IsSortMenuActive();
-    u8 TutorialList_IsListVisible();
+    void TutorialList_AdvanceSelection(int arg);
+    void TutorialList_RebuildAfterLoad();
+    int TutorialList_GetMenuStateCode();
+    void TutorialList_OnOpenAnimDone();
+    void TutorialList_OnIdleAnimDone();
+    void TutorialList_OnCloseAnimRewind();
+    void TutorialList_OnShutdownAnimRewind();
+    void TutorialList_EnableOpenAnims();
+    void TutorialList_EnableCloseAnims();
+    void TutorialList_UpdateRowTexts();
+    void TutorialList_MoveCursorToRow();
+    void TutorialList_RebuildSortEntries();
+    void TutorialList_UpdateTitleText();
+    void TutorialList_OpenAfterFilesReady();
 
-    // Fields are public: the retail widget functions are C-linkage free
-    // functions (TutorialList_OpenListInit etc.) that need raw member access.
-    // Retail stores the vtable label explicitly (non-polymorphic view),
-    // matching CQstLogList.
-    void* mVtbl;                          // 0x00 vtable (lbl_eu_8053A2A8)
-    u8 mGap04[0x10];                      // 0x04: UnkClass_8045F564 (0x10)
-    void* mField14;                       // 0x14: CFileHandle*
-    void* mField18;                       // 0x18: ArcResourceAccessor*
-    void* mField1C;                       // 0x1C: Layout*
-    nw4r::lyt::Layout* mLayout20;         // 0x20
+    // Fields are public: the owning menu embeds the widget by value and the
+    // retail callers poke the state bytes directly.
+    UnkClass_8045F564 mRegion;            // 0x04: layout build region (0x10000)
+    CFileHandle* mFileHandle0;            // 0x14: list layout arc
+    CFileHandle* mFileHandle1;            // 0x18: common bdat archive
+    nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x1C
+    nw4r::lyt::Layout* mLayout;           // 0x20
     nw4r::lyt::AnimTransform* mAnim24;    // 0x24
     nw4r::lyt::AnimTransform* mAnim28;    // 0x28
     CCur18 mCursor;                       // 0x2C
-    CScrollBarData mScrollBar;            // 0x44: CScrollBar (0x40 bytes)
-    u8 mSortMenu84[0xF0];                 // 0x84: CSortMenu sub-object (opaque)
+    CScrollBar mScrollBar;                // 0x44
+    CSortMenu mSortMenu;         // 0x84: CSortMenu (0xF0)
     u8 mField174;                         // 0x174: run/visible gate byte
     u8 mState175;                         // 0x175: anim/state byte
     u8 mField176;                         // 0x176: visible-selection byte
@@ -203,10 +124,5 @@ public:
     u16 mField17A;                        // 0x17A: selection id (halfword)
     u16 mField17C;                        // 0x17C: count/limit (halfword)
     s8 mField17E;                         // 0x17E: sign-extended counter base
-    u8 mPad17F;                           // 0x17F: padding (retail sub-object at 0x180)
-    u8 mSubObj180[0x100];                 // 0x180: opaque sub-object (TutorialList_RebuildIdTable)
-    u16 mField280;                        // 0x280: content size (halfword)
-    s16 mField282;                        // 0x282: sign-extended row id
-    s16 mField284;                        // 0x284: sign-extended selection id
-    u8 mGap286[2];                        // 0x286-0x287: pad to 0x288 total size
+    CTutorialIdTable mIdTable;            // 0x180: id table (0x106 bytes, padded to 0x288 total)
 };

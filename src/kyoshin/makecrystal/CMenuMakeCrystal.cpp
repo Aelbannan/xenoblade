@@ -12,19 +12,17 @@
 // Render-gate mode bitfield (.sbss); bit 21 set means rendering is blocked.
 extern u32 lbl_eu_80663E28;
 
-// Singleton instance pointer for the crystal-crafting menu process.
-extern void* lbl_eu_806646C8;
-
-// Retail-unmangled data symbols (global-scope var names are not mangled).
-extern char lbl_eu_8052BF70[];   // interim CProcess composite vtable
-extern char lbl_eu_80535AD0[];   // composite vtable (IScnRender sub-vtable at +0x24)
-extern u32 __ptmf_null[3];       // null pointer-to-member-function constant
-
-// CProcess base ctor (retail mangled symbol; C linkage binds it literally).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-
-// Constructor (defined below; retail symbol is the unmangled global).
-extern "C" CMenuMakeCrystal* __ct__CMenuMakeCrystal(CMenuMakeCrystal* pThis, void* param);
+// Data block copied by MakeCrystalCopyParamBlock (fields +0x4..+0x14 only; +0x0 is not
+// part of the copy). Two bytes, three words, one byte - meaning unknown.
+struct CMakeCrystalCopyBlock {
+    u32 field_0x0;   // +0x00 (not copied)
+    u8  field_0x4;   // +0x04
+    u8  field_0x5;   // +0x05
+    u32 field_0x8;   // +0x08
+    u32 field_0xC;   // +0x0C
+    u32 field_0x10;  // +0x10
+    u8  field_0x14;  // +0x14
+};
 
 // ---------------------------------------------------------------------------
 // Retail-unmangled callees bound literally (US relocs carry stripped names;
@@ -43,7 +41,7 @@ void mkCrystalTick(void* self);                            // CMakeCrystalWin ti
 int  CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 void __ct__6CBgTexFUc(void* self, int arg);
-void __ct__UnkClass_8011C974(void* self, const void* src);
+void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src);
 void Scn_SetPauseFlag(void*, int);
 void BgTex_Release_3D9C(void*);
 void mkCrystalTeardown(void*);
@@ -63,10 +61,8 @@ void MiniMapSetActiveFlag();
 void CCharVoiceMan_FlushAll();
 void MenuSnd_StopAllSlots_89C88();
 void CTaskGame_stopVision();
-void cbRenderBefore__16CMenuMakeCrystalFv(void*);
-void* __dt__15CMakeCrystalWinFv(void*, int);
+void* __dt__15CMakeCrystalWinFv(void*, int); // Init's stack temporary
 void __dt__6CBgTexFv(void*, int);
-void __dt__800FED0C(void*, int);
 void __ct__CMakeCrystalWin(void* self, u32 arg4, u32 arg5);
 }
 
@@ -74,46 +70,6 @@ void __ct__CMakeCrystalWin(void* self, u32 arg4, u32 arg5);
 void playUISound(u32 op);
 // MakeCrystalInitWin helper: init the CBgTex sub-object and arm the state byte.
 // (declared extern "C" above -- retail symbol is unmangled)
-
-// ---------------------------------------------------------------------------
-// Factory: create the singleton CMenuMakeCrystal under `parent`.
-// Returns NULL when the singleton already exists; otherwise allocates the
-// 0x43E8-byte object from work memory, constructs it, registers it and
-// returns the stored singleton (reloaded from the global after Regist).
-// ---------------------------------------------------------------------------
-CMenuMakeCrystal* MakeCrystalCreate(CProcess* parent, void* arg) {
-    if (lbl_eu_806646C8 != 0) {
-        return 0;
-    }
-    CMenuMakeCrystal* obj = reinterpret_cast<CMenuMakeCrystal*>(
-        mtl::MemManager::allocate(0x43e8, CWorkThreadSystem::getWorkMem()));
-    if (obj != 0) {
-        // The ctor returns its argument, so the checked pointer flows straight
-        // into the singleton store (retail keeps it live in r3).
-        obj = __ct__CMenuMakeCrystal(obj, arg);
-    }
-    lbl_eu_806646C8 = obj;
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
-    return static_cast<CMenuMakeCrystal*>(lbl_eu_806646C8);
-}
-
-// extern "C" free-function form (CCol6CheckBat precedent): retail calls the
-// sub-object dtors at +0x80 (CMakeCrystalWin), +0x60 (CBgTex), then the
-// +0x00 embedded dtor (flags 0), then the flags-based delete; stmw/lmw frame.
-#pragma push
-#pragma optimize_for_size on
-extern "C" void* __dt__16CMenuMakeCrystalFv(void* self, int flags) {
-    if (self != 0) {
-        __dt__15CMakeCrystalWinFv((u8*)self + 0x80, -1);
-        __dt__6CBgTexFv((u8*)self + 0x60, -1);
-        __dt__800FED0C(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-#pragma pop
 
 // Stack temporaries used by Init(). The retail frame is 0x43A0 bytes; these
 // mirror the local objects at their frame offsets so the callee calls see the
@@ -160,6 +116,17 @@ struct MCRecTail {
     u8 b31;
 };
 
+// Builds the IUICf task base (CProcess + composite vtables + null PTMF callbacks
+// are done by the compiler), stores the owning scene, constructs CBgTex and the
+// raw CMakeCrystalWin block, then arms the state bytes.
+CMenuMakeCrystal::CMenuMakeCrystal(CScn* scene) : mScene(scene), mBgTex(0) {
+    __ct__CMakeCrystalWin(&mCrystalWin, 0, 0);
+    mField43E4 = 0;
+    mField43E5 = 1;
+}
+
+CMenuMakeCrystal::~CMenuMakeCrystal() {}
+
 void CMenuMakeCrystal::Init() {
     CCharVoiceMan_FlushAll();
     MenuSnd_StopAllSlots_89C88();
@@ -170,7 +137,7 @@ void CMenuMakeCrystal::Init() {
     // plus its scalar fields into this+0x74..+0x7E, then destroy the temp.
     MCBgTemp bg;
     __ct__6CBgTexFUc(&bg, 0);
-    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(this) + 0x64, bg.unk);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(this) + 0x64, bg.unk);
     reinterpret_cast<MCTailState*>(this)->field_0x74 = bg.field_0x14;
     reinterpret_cast<MCTailState*>(this)->field_0x78 = bg.field_0x18;
     reinterpret_cast<MCTailState*>(this)->field_0x7C = bg.field_0x1C;
@@ -267,7 +234,7 @@ struct MCStateRecord {
 };
 
 MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRecord* src) {
-    __ct__UnkClass_8011C974(dst->base, (const void*)src->base);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(dst->base, (const void*)src->base);
     dst->words.w0 = src->words.w0;
     dst->words.w1 = src->words.w1;
     dst->words.w2 = src->words.w2;
@@ -283,14 +250,6 @@ MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRe
 }
 
 #include "monolib/scn/CScn.hpp"
-
-// Declaration-only view of the +0x80 sub-object's class (full definition in
-// makecrystal/CMakeCrystalWin.hpp, which pulls CMCCrystalBox.hpp whose
-// __ct__UnkClass_8011C974 extern "C" import conflicts with this TU's).
-class CMakeCrystalWin {
-public:
-    int mkCrystalIsBusyState();
-};
 
 // Typed view over the +0x58..+0x80 sub-objects (exact layout, explicit
 // pads): render anchor, owning scene, CBgTex block, CMakeCrystalWin head.
@@ -311,7 +270,7 @@ void CMenuMakeCrystal::Term() {
     reinterpret_cast<MCSubObjView*>(this)->scene5C->removeRenderCB((IScnRender*)render);
     BgTex_Release_3D9C(reinterpret_cast<MCSubObjView*>(this)->bg60);
     mkCrystalTeardown(&reinterpret_cast<MCSubObjView*>(this)->win80);
-    lbl_eu_806646C8 = 0;
+    sInstance = nullptr;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -385,60 +344,28 @@ void CMenuMakeCrystal::cbRenderBefore() {
     BgTex_Draw_3D7C(reinterpret_cast<u8*>(this) + 0x60, &drawInfo);
 }
 
-// Constructor (retail unmangled `__ct__CMenuMakeCrystal`; written as a C-ABI
-// global like CTaskGameEvt because the retail symbol carries no class-length
-// mangling). Builds the CProcess base, sets the interim composite vtable,
-// clears both null-PTMF callback slots (+0x3C/+0x48) and the trailing bytes,
-// installs the IScnRender sub-vtable (+0x58 = lbl_eu_80535AD0 + 0x24), stores
-// the scene param (+0x5C), then constructs CBgTex (+0x60) and
-// CMakeCrystalWin (+0x80) and arms the state bytes.
-extern "C" CMenuMakeCrystal* __ct__CMenuMakeCrystal(CMenuMakeCrystal* pThis, void* param) {
-    __ct__8CProcessFv(pThis);
-    // IScnRender sub-vtable: base label + 0x24 (kept live to the 0x58 store).
-    char* vtBase = lbl_eu_80535AD0;
-    u32 scnVt = reinterpret_cast<u32>(vtBase) + 0x24;
-    u32* p = reinterpret_cast<u32*>(pThis);
-    u8* self = reinterpret_cast<u8*>(pThis);
+// Singleton instance of the crystal-crafting menu.
+CMenuMakeCrystal* CMenuMakeCrystal::sInstance;
 
-    // Interim composite vtable (pre-PMF copy).
-    p[4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
+// Factory: create the singleton under `parent`. Returns NULL when it already
+// exists; otherwise allocates the object from work memory, constructs it,
+// registers it and returns the stored singleton.
+CMenuMakeCrystal* CMenuMakeCrystal::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
+    }
 
-    // NULL PTMF -> callback slots at 0x3C / 0x48 (retail store order
-    // 0x40,0x3C,0x44 then 0x4C,0x48,0x50; post-increment derefs fold the
-    // first load into `lwzu`, cf. CTaskGameEvt).
-    u32 w1 = __ptmf_null[1];
-    u32 w0 = __ptmf_null[0];
-    u32 w2 = __ptmf_null[2];
-    p[0x10] = w1; // 0x40
-    p[0xF] = w0;  // 0x3C
-    p[0x11] = w2; // 0x44
-    w1 = __ptmf_null[1];
-    w0 = __ptmf_null[0];
-    w2 = __ptmf_null[2];
-    p[0x13] = w0; // 0x48
-    p[0x12] = w1; // 0x4C
-    p[0x14] = w2; // 0x50
-
-    self[0x54] = 0;
-    self[0x55] = 0;
-    p[0x16] = scnVt;                        // 0x58: IScnRender sub-vtable
-    p[0x17] = reinterpret_cast<u32>(param); // 0x5C: owning scene
-
-    __ct__6CBgTexFUc(self + 0x60, 0);
-    __ct__CMakeCrystalWin(self + 0x80, 0, 0);
-    self[0x43E4] = 0;
-    self[0x43E5] = 1;
-    return pThis;
+    CMenuMakeCrystal* menu = new (CWorkThreadSystem::getWorkMem()) CMenuMakeCrystal(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
-// (lbl_eu_806646C8 != 0)
-bool MakeCrystalIsCreated() { return lbl_eu_806646C8 != 0; }
-
-void* lbl_eu_806646C8;
+bool MakeCrystalIsCreated() { return CMenuMakeCrystal::sInstance != nullptr; }
 void* mkCrystalGetWord10(void*);
 
 void* MakeCrystalGetWinData() {
-    unsigned char* p = static_cast<unsigned char*>(lbl_eu_806646C8);
+    unsigned char* p = reinterpret_cast<unsigned char*>(CMenuMakeCrystal::sInstance);
     if (p != 0) {
         return mkCrystalGetWord10(p + 0x80);
     }
@@ -454,15 +381,4 @@ extern "C" void MakeCrystalInitWin(void* self) {
         mkCrystalBuildWin((u8*)self + 0x80);
         *(u8*)((u8*)self + 0x43E4) = 1;
     }
-}
-
-// IScnRender vtable this-adjusting thunk for cbRenderBefore.
-// IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.
-extern "C" void MakeCrystalRenderThunk58(void* self) {
-    ((void(*)(void*))cbRenderBefore__16CMenuMakeCrystalFv)((char*)self - 0x58);
-}
-
-// IScnRender vtable this-adjusting thunk for destructor.
-extern "C" void MakeCrystalDtorThunk58(void* self) {
-    ((void(*)(void*))__dt__16CMenuMakeCrystalFv)((char*)self - 0x58);
 }

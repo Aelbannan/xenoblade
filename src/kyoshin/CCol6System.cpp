@@ -647,18 +647,12 @@ body:
 draw:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
-    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls (a C++
-    // local would virtual-dispatch its scope-exit destructor). The pointer is
-    // re-formed at each use so MWCC keeps it in r1-relative addis instead of
-    // a callee-saved register.
-    u8 drawInfo[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
-                  reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), 0, 1);
-    CScrollBar_draw(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    Cur_DrawLayout(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
+                  &drawInfo, 0, 1);
+    CScrollBar_draw(&mScrollBar, &drawInfo);
+    Cur_DrawLayout(&mCur18, &drawInfo);
 }
 
 // IUIWindow return type for the window factories below (declared extern "C"
@@ -714,10 +708,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
     reinterpret_cast<CCol6AnimHostView*>(self->mAnimHost)->update(0);
 
     // Rebuild the embedded cursor from a stack temp (data fields only).
-    CCur18 tempC;
-    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
-    self->mCur18 = tempC;
-    __dt__6CCur18Fv(&tempC, -1);
+    self->mCur18 = CCur18(CUICfManager_getArcResourceAccessor());
     self->mCur18.initLayout();
 
     // Label the two count panes.
@@ -1141,8 +1132,8 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     self->mPadA5[1] = 0;
     __ct__CCur18(&self->mCur1, 0);
     __ct__CCur18(&self->mCur2, 0);
-    __ct__CSysWin(self->mSysWin1, 0);
-    __ct__CSysWin(self->mSysWin2, 0);
+    __ct__7CSysWinFUc(self->mSysWin1, 0);
+    __ct__7CSysWinFUc(self->mSysWin2, 0);
 
     // Camera/vector block: every CVec3 is built from a stack temp
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
@@ -1213,7 +1204,7 @@ void CCol6System::Init() {
     // Rebuild window 1 (direction 2): copy every non-vtable field so MWCC
     // emits the retail lwz/stw + lbz/stb sequence (skips +0x29..0x2B padding).
     u8 tempW[0x3C];
-    __ct__CSysWin(tempW, 2);
+    __ct__7CSysWinFUc(tempW, 2);
     CSysWinData* w1 = reinterpret_cast<CSysWinData*>(mSysWin1);
     CSysWinData* t1 = reinterpret_cast<CSysWinData*>(tempW);
     w1->f_04 = t1->f_04;
@@ -1239,7 +1230,7 @@ void CCol6System::Init() {
 
     // Rebuild window 2 the same way (direction 0).
     u8 tempW2[0x3C];
-    __ct__CSysWin(tempW2, 0);
+    __ct__7CSysWinFUc(tempW2, 0);
     CSysWinData* w2 = reinterpret_cast<CSysWinData*>(mSysWin2);
     CSysWinData* t2 = reinterpret_cast<CSysWinData*>(tempW2);
     w2->f_04 = t2->f_04;
@@ -1932,17 +1923,11 @@ extern "C" void col6SysLayout(CCol6System* self) {
     reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)->update(0);
 
     // Rebuild cursor 1 (mCur1 at +0xA8) from a stack temp (data fields only).
-    CCur18 tempC;
-    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
-    self->mCur1 = tempC;
-    __dt__6CCur18Fv(&tempC, -1);
+    self->mCur1 = CCur18(CUICfManager_getArcResourceAccessor());
     self->mCur1.initLayout();
 
     // Rebuild cursor 2 (mCur2 at +0xC0) from a stack temp (data fields only).
-    CCur18 tempC2;
-    __ct__CCur18(&tempC2, CUICfManager_getArcResourceAccessor());
-    self->mCur2 = tempC2;
-    __dt__6CCur18Fv(&tempC2, -1);
+    self->mCur2 = CCur18(CUICfManager_getArcResourceAccessor());
     self->mCur2.initLayout();
 
     // Label the two count panes.

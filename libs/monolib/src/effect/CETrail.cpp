@@ -1022,9 +1022,6 @@ extern "C" void Trail_RestoreFog(void) {
 
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.bss] 0x8065FD00-0x8065FE30 (304B): unknown zero-fill object.
-__declspec(align(8)) u8 lbl_eu_8065FD00[0x130];
-
 // [.sbss] 0x806659BC-0x806659C8 (12B): retail tail global (8B span).
 extern "C" __declspec(align(4)) s32 lbl_eu_806659BC = 0;
 extern "C" __declspec(align(4)) u32 lbl_eu_806659C0 = 0;

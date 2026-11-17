@@ -37,7 +37,6 @@ extern u32 lbl_eu_8052E7B0[];
 extern u32 lbl_eu_805013C8[];
 extern u32 lbl_eu_80664198;
 extern u32 lbl_eu_806640E0;
-extern const f32 lbl_eu_806673A0;
 extern u32 lbl_eu_806673A8[];
 extern u32 lbl_eu_806673AC[];
 extern u32 lbl_eu_806673B0[];
@@ -138,7 +137,7 @@ extern "C" void* __ct__CMenuUpdate(void* self, u32 pScene, u32 type, u32 arg1, u
     __ct__8014274C(entryEnd);
 
     obj->mMode = 2;
-    f32 zero = lbl_eu_806673A0;
+    f32 zero = 0.0f;
     obj->mFloat128 = zero;
     obj->mFloat12C = zero;
     memset(obj->mEntries, 0, 0x80);
@@ -651,7 +650,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     // Start the active animation from its initial frame.
     obj->mLayout->BindAnimation(obj->mActiveAnim);
     obj->mLayout->SetAnimationEnable(obj->mActiveAnim, true);
-    setFieldFloat10(obj->mActiveAnim, lbl_eu_806673A0);
+    setFieldFloat10(obj->mActiveAnim, 0.0f);
     obj->mLayout->Animate(0);
 }
 
@@ -798,11 +797,11 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
     if (isKizunaTalkActive()) return 1;
     if (SkipTimer_IsActiveFlag()) return 1;
     // Clamp: subtract the fade step into the field, then clamp.
-    // lbl_eu_806673A0 is const-qualified so the load may hoist above the
+    // 0.0f is const-qualified so the load may hoist above the
     // member store, reproducing retail's sub/store/cmp/store order.
     obj->mFloat12C = obj->mFloat12C - lbl_eu_806673C4;
-    if (obj->mFloat12C < lbl_eu_806673A0) {
-        obj->mFloat12C = lbl_eu_806673A0;
+    if (obj->mFloat12C < 0.0f) {
+        obj->mFloat12C = 0.0f;
     }
     return 0;
 }
@@ -822,7 +821,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
         // Active-window maintenance: compact the table around the active
         // entries (types 4/5) and re-file the saved header block after them.
         obj->mMode = 2;
-        setFieldFloat10(obj->mActiveAnim, lbl_eu_806673A0);
+        setFieldFloat10(obj->mActiveAnim, 0.0f);
 
         u8 iA, nAct, nRest, iB, k, w, j;
         CMenuUpdate_8014274C act[8]; // sp+0xa8
@@ -890,7 +889,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
                 // Retail tests each failure condition with a cror merge
                 // ((v >= C4), (mFloat12C <= 0)) and exits to the common tail
                 // when either negated test holds.
-                if (!(v >= lbl_eu_806673C4) || !(obj->mFloat12C <= lbl_eu_806673A0)) {
+                if (!(v >= lbl_eu_806673C4) || !(obj->mFloat12C <= 0.0f)) {
                 } else {
                     switch (obj->mState) {
                     case 1: CUICfManager_queueQuestLogMenu(obj->mSubState & 0xFFFF); break;
@@ -929,7 +928,7 @@ extern "C" __declspec(noinline) void MenuUpdate_GuardFirstEntry(void* self) {
         return;
     }
 
-    obj->mFloat128 = lbl_eu_806673A0;
+    obj->mFloat128 = 0.0f;
     obj->mMode = 0;
     // Stash the closing entry in the header block, then blank slot 0.
     MenuUpdate_CopyQuadWord((u32*)&obj->mState, (u32*)&obj->mEntries[0].field_0);

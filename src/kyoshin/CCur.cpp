@@ -13,7 +13,6 @@ extern char lbl_eu_80505DE8[];
 // 0x80667F30-0x80667FA4); this TU's .text loads it as an extern symbol
 // (retail .text relocs), so no local pool is emitted and our .sdata2 is
 // exactly the split's 0x4C.
-extern const f32 lbl_eu_80667FA0;
 
 // Pane visibility helper (retail bare symbol; canonical extern "C" decl).
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
@@ -25,28 +24,11 @@ extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 // padding, so the honest source shape is a single object: a struct whose
 // first member is the 0.0f. The struct itself carries the retail name
 // (linker/frontier care about offset+section, not the C++ type); code
-// reads the float as lbl_eu_80667FA4.f0, which MWCC loads via sda21
+// reads the float as 0.0f, which MWCC loads via sda21
 // exactly like a standalone extern float. The struct is non-const so the
 // .f0 reads cannot be const-folded into a trailing pool (verified trap).
 // A standalone loose float does NOT work: MWCC 8-aligns a following
 // aggregate, inserting 4 pad bytes (measured 0x50 vs retail 0x4C).
-struct Sdata2_CCur {
-    f32 f0;             // +0x00 (retail FA4 slot) 0.0f
-    char s_CSubCur[8];  // +0x04
-    char s_CCur22[8];   // +0x0C
-    char s_CCur18[8];   // +0x14
-    char s_CCur16[8];   // +0x1C
-    char s_CCur15[8];   // +0x24
-    char s_CCur14[8];   // +0x2C
-    char s_CCur11[8];   // +0x34
-    char s_CCur09[8];   // +0x3C
-    char s_CCur07[8];   // +0x44
-};
-__declspec(section ".sdata2") __attribute__((used))
-Sdata2_CCur lbl_eu_80667FA4 = {
-    0.0f, "CSubCur", "CCur22", "CCur18", "CCur16", "CCur15",
-    "CCur14", "CCur11", "CCur09", "CCur07",
-};
 
 
 // (CBaseCur now carries the real virtuals; Cur_Update dispatches
@@ -55,25 +37,16 @@ Sdata2_CCur lbl_eu_80667FA4 = {
 // ============================================================================
 // CBaseCur constructor
 // ============================================================================
-extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    _this->vtbl() = (void*)lbl_eu_805349A0;
-    _this->mArcResAcc = arcResAcc;
-    _this->mpLayout = nullptr;
-    _this->mpAnimTrans0 = nullptr;
-    _this->mpAnimTrans1 = nullptr;
-    _this->mActive = 0;
-    _this->mVisible = 0;
+CBaseCur::CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    mArcResAcc = arcResAcc;
+    mpLayout = nullptr;
+    mpAnimTrans0 = nullptr;
+    mpAnimTrans1 = nullptr;
+    mActive = 0;
+    mVisible = 0;
 }
 
-// ============================================================================
-// CBaseCur destructor
-// ============================================================================
-extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CBaseCur::~CBaseCur() {}
 
 // ============================================================================
 // Cur_Update: Per-frame cursor update
@@ -91,7 +64,7 @@ extern "C" void Cur_Update(CBaseCur* cur) {
         goto animate;
     }
 zero:
-    advanceAnimTransform(cur->mpAnimTrans0, lbl_eu_80667FA0);
+    advanceAnimTransform(cur->mpAnimTrans0, 1.0f);
     goto animate;
 one:
     cur->checkDeactivate();
@@ -124,8 +97,8 @@ void CBaseCur::cleanup() {
 // ============================================================================
 // CBaseCur::setRootPaneTranslate: Forward translation to root pane
 // ============================================================================
-extern "C" void setRootPaneTranslate__8CBaseCurFv(CBaseCur* cur, const nw4r::math::VEC3* trans) {
-    Cur_SetPaneTranslate(cur->mpLayout->GetRootPane(), trans);
+void CBaseCur::setRootPaneTranslate(const nw4r::math::VEC3* trans) {
+    Cur_SetPaneTranslate(mpLayout->GetRootPane(), trans);
 }
 
 // ============================================================================
@@ -156,7 +129,7 @@ extern "C" void Cur_SetActive(CBaseCur* cur) {
 // CBaseCur::checkDeactivate: Check anim finish and deactivate
 // ============================================================================
 void CBaseCur::checkDeactivate() {
-    if (advanceAnimTransform(mpAnimTrans1, lbl_eu_80667FA0) != 0) {
+    if (advanceAnimTransform(mpAnimTrans1, 1.0f) != 0) {
         mActive = 0;
         Cur_DeactivateTail(this);
     }
@@ -174,7 +147,7 @@ extern "C" __declspec(noinline) void Cur_DeactivateTail(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
-    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4.f0);
+    cur->mpAnimTrans0->SetFrame(0.0f);
     cur->mpLayout->Animate(0);
 }
 
@@ -188,18 +161,14 @@ extern "C" __declspec(noinline) void Cur_ActivateTail(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
-    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4.f0);
+    cur->mpAnimTrans1->SetFrame(0.0f);
     cur->mpLayout->Animate(0);
 }
 
 // ============================================================================
 // CCur07 constructor
 // ============================================================================
-extern "C" CCur07* __ct__CCur07(CCur07* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534978;
-    return _this;
-}
+CCur07::CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur07 destructor
@@ -225,11 +194,7 @@ void CCur07::initLayout() {
 // ============================================================================
 // CCur09 constructor
 // ============================================================================
-extern "C" CCur09* __ct__CCur09(CCur09* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534950;
-    return _this;
-}
+CCur09::CCur09(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur09 destructor
@@ -265,11 +230,7 @@ extern "C" void Cur_SetTwoPanes09(CBaseCur* cur, const nw4r::math::VEC3* trans0,
 // ============================================================================
 // CCur11 constructor
 // ============================================================================
-extern "C" CCur11* __ct__CCur11(CCur11* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534928;
-    return _this;
-}
+CCur11::CCur11(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur11 destructor
@@ -305,11 +266,7 @@ extern "C" void Cur_ShowTwoPanes(CBaseCur* cur, u8 visible) {
 // ============================================================================
 // CCur14 constructor
 // ============================================================================
-extern "C" CCur14* __ct__CCur14(CCur14* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534900;
-    return _this;
-}
+CCur14::CCur14(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur14 destructor
@@ -335,11 +292,7 @@ void CCur14::initLayout() {
 // ============================================================================
 // CCur15 constructor
 // ============================================================================
-extern "C" CCur15* __ct__CCur15(CCur15* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_805348D8;
-    return _this;
-}
+CCur15::CCur15(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur15 destructor
@@ -365,11 +318,7 @@ void CCur15::initLayout() {
 // ============================================================================
 // CCur16 constructor
 // ============================================================================
-extern "C" CCur16* __ct__CCur16(CCur16* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_805348B0;
-    return _this;
-}
+CCur16::CCur16(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur16 destructor
@@ -395,21 +344,12 @@ void CCur16::initLayout() {
 // ============================================================================
 // CCur18 constructor
 // ============================================================================
-extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534884;
-    return _this;
-}
+CCur18::CCur18(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur18 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur18::~CCur18() {}
 
 // ============================================================================
 // CCur18::initLayout: Load layout curs18 and two anim transforms
@@ -425,21 +365,12 @@ void CCur18::initLayout() {
 // ============================================================================
 // CCur22 constructor
 // ============================================================================
-extern "C" CCur22* __ct__CCur22(CCur22* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_8053485C;
-    return _this;
-}
+CCur22::CCur22(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CCur22 destructor
 // ============================================================================
-extern "C" void* __dt__6CCur22Fv(CCur22* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CCur22::~CCur22() {}
 
 // ============================================================================
 // CCur22::initLayout: Load layout curs22 and two anim transforms
@@ -493,21 +424,12 @@ extern "C" void Cur_ShowPane(CBaseCur* cur, u8 index) {
 // ============================================================================
 // CSubCur constructor
 // ============================================================================
-extern "C" CSubCur* __ct__CSubCur(CSubCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->vtbl() = (void*)lbl_eu_80534838;
-    return _this;
-}
+CSubCur::CSubCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {}
 
 // ============================================================================
 // CSubCur destructor
 // ============================================================================
-extern "C" void* __dt__7CSubCurFv(CSubCur* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
-}
+CSubCur::~CSubCur() {}
 
 // ============================================================================
 // CSubCur::initLayout: Load layout subcur and two anim transforms
@@ -563,9 +485,9 @@ extern "C" u8 Cur_BothSubPanesOn(CBaseCur* cur) {
 //   the base blob and every descriptor point at CMenuArtsSelect's 61DD8.
 // - .sdata: 9 {name, base} typeinfo pairs (CScrollBar-626F8 idiom): name ->
 //   the TU's own .sdata2 class-name string, base -> the .data descriptor.
-// - .sdata2: the 0.0f SetFrame constant (retail lbl_eu_80667FA4 slot) plus
+// - .sdata2: the 0.0f SetFrame constant (retail 0.0f slot) plus
 //   the 9 class-name strings (0x4C, byte-exact). The 1.0f operand loads
-//   CItemBoxGrid's lbl_eu_80667FA0 as extern (retail .text reloc shape), so
+//   CItemBoxGrid's 1.0f as extern (retail .text reloc shape), so
 //   no local pool is emitted.
 // The frozen CCur.o rule entry (pool 1.0f rename + .sdata2 strip) was
 // retired with this change: with source-owned sections there is nothing to
@@ -657,25 +579,6 @@ char lbl_eu_80505DE8[0x408] =
     "pic_arrow_l00\0"
     "pic_arrow_r00\0";
 
-// --- .sdata (retail 0x48): {name, base} typeinfo pairs ---
-__declspec(section ".sdata") __attribute__((used, aligned(8)))
-void* lbl_eu_80662680[2] = { (void*)lbl_eu_80667FA4.s_CSubCur, lbl_eu_80534850 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662688[2] = { (void*)lbl_eu_80667FA4.s_CCur22, lbl_eu_80534878 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662690[2] = { (void*)lbl_eu_80667FA4.s_CCur18, lbl_eu_805348A0 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662698[2] = { (void*)lbl_eu_80667FA4.s_CCur16, lbl_eu_805348C8 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626A0[2] = { (void*)lbl_eu_80667FA4.s_CCur15, lbl_eu_805348F0 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626A8[2] = { (void*)lbl_eu_80667FA4.s_CCur14, lbl_eu_80534918 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626B0[2] = { (void*)lbl_eu_80667FA4.s_CCur11, lbl_eu_80534940 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626B8[2] = { (void*)lbl_eu_80667FA4.s_CCur09, lbl_eu_80534968 };
-__declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626C0[2] = { (void*)lbl_eu_80667FA4.s_CCur07, lbl_eu_80534990 };
 // --- .data (retail 0x190): pane quad + vtables + descriptors, retail order ---
 // (defined without extern "C": MWCC does not mangle global data names, so
 // this merges with the header's extern "C" declaration; combining
@@ -683,84 +586,4 @@ void* lbl_eu_806626C0[2] = { (void*)lbl_eu_80667FA4.s_CCur07, lbl_eu_80534990 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const char* lbl_eu_80534828[4] = {
     lbl_eu_80505DB8, lbl_eu_80505DC4, lbl_eu_80505DD0, lbl_eu_80505DDC,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534838[6] = {
-    lbl_eu_80662680, 0,
-    (void*)&initLayout__7CSubCurFv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534850[3] = { lbl_eu_80661DD8, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_8053485C[7] = {
-    lbl_eu_80662688, 0,
-    (void*)&initLayout__6CCur22Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-    (void*)&__dt__6CCur22Fv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534878[3] = { lbl_eu_80661DD8, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534884[7] = {
-    lbl_eu_80662690, 0,
-    (void*)&initLayout__6CCur18Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-    (void*)&__dt__6CCur18Fv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805348A0[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805348B0[6] = {
-    lbl_eu_80662698, 0,
-    (void*)&initLayout__6CCur16Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805348C8[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805348D8[6] = {
-    lbl_eu_806626A0, 0,
-    (void*)&initLayout__6CCur15Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805348F0[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534900[6] = {
-    lbl_eu_806626A8, 0,
-    (void*)&initLayout__6CCur14Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534918[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534928[6] = {
-    lbl_eu_806626B0, 0,
-    (void*)&initLayout__6CCur11Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534940[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534950[6] = {
-    lbl_eu_806626B8, 0,
-    (void*)&initLayout__6CCur09Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534968[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534978[6] = {
-    lbl_eu_806626C0, 0,
-    (void*)&initLayout__6CCur07Fv, (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
-};
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534990[4] = { lbl_eu_80661DD8, 0, 0, 0 };
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_805349A0[6] = {
-    lbl_eu_80661DD8, 0, 0,
-    (void*)&cleanup__8CBaseCurFv,
-    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
 };

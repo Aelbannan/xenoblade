@@ -16,14 +16,11 @@
 
 #include <cstring>
 #include "kyoshin/cf/chain/CChainActorListImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Retail float pools live in CMenuGetItem's sdata2; reference them as
 // externs so this TU emits no local sdata2 (raw .data MATCH needs empty
 // sdata2; the magic doubles dissolve via UNIT_RULES renames).
-extern const float lbl_eu_80667428;  // 0.0f
-extern const float lbl_eu_80667434;  // 10.0f
-extern const float lbl_eu_80667454;  // 1.0f
-extern const float lbl_eu_8066745C;  // 0.2f
 
 // Batch 2026-07-14e: aiaction-ctor owns CAIAction::CAIAction()
 // Batch 2026-07-14f: aiaction-vfunc1 owns CAIAction_UnkVirtualFunc1 (Fv)
@@ -606,11 +603,11 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (e[5] == 0xE || e[7] == 0xE) {
         out->unk14 = ((cf::CActorParam*)party)->CActorParam_getArtsPower();
     } else if (e[5] == 0xB || e[5] == 0xD) {
-        out->unk14 = (f32)(u32)e[6] / lbl_eu_80667434;
+        out->unk14 = (f32)(u32)e[6] / 10.0f;
     } else if (e[5] == 0xA || e[5] == 0xC) {
         out->unk14 = (f32)(u32)e[6];
     } else if (e[7] == 0xB || e[7] == 0xD) {
-        out->unk14 = (f32)(u32)e[8] / lbl_eu_80667434;
+        out->unk14 = (f32)(u32)e[8] / 10.0f;
     } else if (e[7] == 0xA || e[7] == 0xC) {
         out->unk14 = (f32)(u32)e[8];
     }
@@ -647,38 +644,38 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             break;
         case 4: case 5: case 6: {
             // Enumerator limit gate (selector 0x20 normally / 0x8000 on flag).
-            CAIActionEnumHolder h;
-            CTaskGame_enumListCtor(&h);
-            u32 sel = (party->move.moveFlags & 4) ? 0x8000 : 0x20;
-            startEnumObjects(CTaskGame_enumListGet(&h), sel, 0x800);
-            CAIEnumIter* it = (CAIEnumIter*)CTaskGame_enumListGet(&h);
             bool fail;
-            if (k == 4)
-                fail = (b[i] != it->field620);
-            else if (k == 5)
-                fail = (it->field620 < b[i]);
-            else
-                fail = (it->field620 > b[i]);
-            __dt__80043E88(&h, -1);
+            {
+                CfEnumListHolder h;
+                u32 sel = (party->move.moveFlags & 4) ? 0x8000 : 0x20;
+                startEnumObjects(h.get(), sel, 0x800);
+                CAIEnumIter* it = (CAIEnumIter*)h.get();
+                if (k == 4)
+                    fail = (b[i] != it->field620);
+                else if (k == 5)
+                    fail = (it->field620 < b[i]);
+                else
+                    fail = (it->field620 > b[i]);
+            }
             if (fail)
                 return 0;
             break;
         }
         case 1: case 2: case 3: {
             // Same gate with inverted selector and keys 1..3.
-            CAIActionEnumHolder h;
-            CTaskGame_enumListCtor(&h);
-            u32 sel = (party->move.moveFlags & 4) ? 0x20 : 0x8000;
-            startEnumObjects(CTaskGame_enumListGet(&h), sel, 0x800);
-            CAIEnumIter* it = (CAIEnumIter*)CTaskGame_enumListGet(&h);
             bool fail;
-            if (k == 1)
-                fail = (b[i] != it->field620);
-            else if (k == 2)
-                fail = (it->field620 < b[i]);
-            else
-                fail = (it->field620 > b[i]);
-            __dt__80043E88(&h, -1);
+            {
+                CfEnumListHolder h;
+                u32 sel = (party->move.moveFlags & 4) ? 0x20 : 0x8000;
+                startEnumObjects(h.get(), sel, 0x800);
+                CAIEnumIter* it = (CAIEnumIter*)h.get();
+                if (k == 1)
+                    fail = (b[i] != it->field620);
+                else if (k == 2)
+                    fail = (it->field620 < b[i]);
+                else
+                    fail = (it->field620 > b[i]);
+            }
             if (fail)
                 return 0;
             break;
@@ -849,28 +846,24 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
         // Sweep the enumerator: every tagged member must pass the move probe.
         if (!(*(u32*)((u8*)party + 0x3F00) & 2)) {
-            CAIActionEnumHolder h;
-            CTaskGame_enumListCtor(&h);
-            startEnumObjects(CTaskGame_enumListGet(&h), 0x20, 0x800);
-            for (u32 i = 0; i < ((CAIEnumIter*)CTaskGame_enumListGet(&h))->field620; i++) {
-                void* obj = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&h), i));
+            CfEnumListHolder h;
+            startEnumObjects(h.get(), 0x20, 0x800);
+            for (u32 i = 0; i < ((CAIEnumIter*)h.get())->field620; i++) {
+                void* obj = MapFx_ResolveOwner(getObjectAt(h.get(), i));
                 if (obj == 0)
                     continue;
                 u32 v;
                 u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
                 v = *p;
                 if (testActorStatus(p, &v, 0x1F) != 0) {
-                    __dt__80043E88(&h, -1);
                     return 0;
                 }
                 void* mo = (u8*)obj + 0x3E9C;
                 s32 mv = ((s32(*)(void*, u32)) *(void**)((u8*)mo + 0xC)) (mo, 0x800);
                 if (mv != 0) {
-                    __dt__80043E88(&h, -1);
                     return 0;
                 }
             }
-            __dt__80043E88(&h, -1);
         }
 
         if (isBattleStatusActive((u8*)party + 8, 0xC) != 0)
@@ -1144,10 +1137,9 @@ extern "C" int aiTagDispatch(cf::CAIAction* self, CAIActionQuery* in) {
 // query's flags set in two pre-dispatch paths.
 
 extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
-    CAIActionEnumHolder holder;
     void* result;
 
-    CTaskGame_enumListCtor(&holder);
+    CfEnumListHolder holder;
 
     CAIQueryTarget* tgt = in->unk18;
     if (tgt != 0 && tgt->unk3C != 3 && tgt->unk3C != 4) {
@@ -1163,7 +1155,6 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
 
     if (in->unk06 == 0x25) {
         result = (void*)in->unk00;
-        __dt__80043E88(&holder, -1);
         return result;
     }
 
@@ -1178,7 +1169,6 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
             if (result != 0) {
                 void* obj = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
-                    __dt__80043E88(&holder, -1);
                     return 0;
                 }
                 // Cross-pair exclusion: party bit 2 (0x2) blocks when the
@@ -1201,7 +1191,6 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
             if (result != 0) {
                 void* obj = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
-                    __dt__80043E88(&holder, -1);
                     return 0;
                 }
                 // Same-pair exclusion: matching bits suppress the fallback.
@@ -1217,7 +1206,6 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
 
     if (result == 0)
         in->unk1C = 6;
-    __dt__80043E88(&holder, -1);
     return result;
 }
 
@@ -1257,7 +1245,6 @@ static inline void* aiMoveBaseSelfId(void* partyBase) {
 }
 
 extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
-    CAIActionEnumHolder holder;
     const void* c = cmd;
 
     s32 op = (s32)((const u8*)c)[7];  // dispatch key A -- the "command"
@@ -1265,17 +1252,17 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     u32 countBefore;
     void* result = 0;
 
-    CTaskGame_enumListCtor(&holder);
+    CfEnumListHolder holder;
 
     switch (sel) {
     case 6: {
         if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             void* o = findBattleStatusEntry((u8*)self->unkB14 + 8, 0x11);
-            appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)o + 0x10));
+            appendObjectById(holder.get(), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
             if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
-                appendObjectById(CTaskGame_enumListGet(&holder), (u32)self->unkB18);
+                appendObjectById(holder.get(), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
         } else {
@@ -1285,9 +1272,9 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 u32 mf = *(u32*)(moveBase + 0x64);
                 if (mf & 0x2) {
                     if (!(*(u32*)((u8*)v + 0x3F00) & 0x2))
-                        appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
+                        appendObjectById(holder.get(), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
                 } else if (!(*(u32*)((u8*)v + 0x3F00) & 0x4)) {
-                    appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
+                    appendObjectById(holder.get(), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
                 }
             }
         }
@@ -1295,13 +1282,13 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     case 35:
-        appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((const u8*)c + 0x00));
+        appendObjectById(holder.get(), *(u32*)((const u8*)c + 0x00));
         break;
 
     case 36: {
         void* v = MapFx_ResolveOwner(findObjectById(*(u32*)((const u8*)c + 0x00)));
         if (v)
-            appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)v));
+            appendObjectById(holder.get(), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)v));
         break;
     }
 
@@ -1309,45 +1296,45 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 10: {
         if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             void* o = findBattleStatusEntry((u8*)self->unkB14 + 8, 0x11);
-            appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)o + 0x10));
+            appendObjectById(holder.get(), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
             if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
-                appendObjectById(CTaskGame_enumListGet(&holder), (u32)self->unkB18);
+                appendObjectById(holder.get(), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
         } else {
             u32 filter = 0x80000000;
             if (!(*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4))
                 filter = 0x20;
-            startEnumObjects(CTaskGame_enumListGet(&holder), filter, 0x800);
-            if (aiListCount(CTaskGame_enumListGet(&holder)) == 0)
-                appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
+            startEnumObjects(holder.get(), filter, 0x800);
+            if (aiListCount(holder.get()) == 0)
+                appendObjectById(holder.get(), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
         }
         break;
     }
 
     case 2:
-        appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)self->unkB14 + 0x3F10));
+        appendObjectById(holder.get(), *(u32*)((u8*)self->unkB14 + 0x3F10));
         break;
 
     case 4:
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x10, 0);
+        startEnumObjects(holder.get(), 0x10, 0);
         break;
 
     case 5: {
-        CAIActionEnumHolder h2;
         void* obj;
-        CTaskGame_enumListCtor(&h2);
-        startEnumObjects(CTaskGame_enumListGet(&h2), 0x10, 0);
-        if (aiListCount(CTaskGame_enumListGet(&h2)) != 0) {
-            obj = getObjectAt(CTaskGame_enumListGet(&h2), 0);
-            if (obj)
-                obj = (u8*)obj - 0x3E9C;
-            // unconditional lwzu deref (retail null path quirk).
-            appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId(obj));
+        {
+            CfEnumListHolder h2;
+            startEnumObjects(h2.get(), 0x10, 0);
+            if (aiListCount(h2.get()) != 0) {
+                obj = getObjectAt(h2.get(), 0);
+                if (obj)
+                    obj = (u8*)obj - 0x3E9C;
+                // unconditional lwzu deref (retail null path quirk).
+                appendObjectById(holder.get(), (u32)(uintptr_t)aiMoveBaseSelfId(obj));
+            }
         }
-        __dt__80043E88(&h2, -1);
         break;
     }
 
@@ -1356,7 +1343,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         u32 filter = 0x20;
         if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
             filter = 0x80000000;
-        startEnumObjects(CTaskGame_enumListGet(&holder), filter, 0);
+        startEnumObjects(holder.get(), filter, 0);
         break;
     }
 
@@ -1365,39 +1352,39 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         u32 filter = 0x20;
         if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
             filter = 0x80000000;
-        startEnumObjects(CTaskGame_enumListGet(&holder), filter, 0);
-        for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
-            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
+        startEnumObjects(holder.get(), filter, 0);
+        for (i = 0; i < aiListCount(holder.get()); i++) {
+            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (obj && obj == (void*)self->unkB14) {
                 slot->unk18 = slot->unk18 | 0x70;
                 break;
             }
         }
-        __ct__800FD250(CTaskGame_enumListGet(&holder));
+        __ct__800FD250(holder.get());
         break;
     }
 
     case 11: {
-        CAIActionEnumHolder h2;
         u32 i;
-        CTaskGame_enumListCtor(&h2);
         {
-            u32 filter = 0x20;
-            if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
-                filter = 0x80000000;
-            startEnumObjects(CTaskGame_enumListGet(&h2), filter, 0);
+            CfEnumListHolder h2;
+            {
+                u32 filter = 0x20;
+                if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4)
+                    filter = 0x80000000;
+                startEnumObjects(h2.get(), filter, 0);
+            }
+            appendObjectById(holder.get(), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
+            for (i = 0; i < aiListCount(h2.get()); i++) {
+                void* sub = getObjectAt(h2.get(), i);
+                void* base = sub;
+                if (sub)
+                    base = (u8*)sub - 0x3E9C;
+                if (base != (void*)self->unkB14)
+                    appendObjectById(holder.get(), (u32)(uintptr_t)aiMoveBaseSelfId(base));
+            }
         }
-        appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
-        for (i = 0; i < aiListCount(CTaskGame_enumListGet(&h2)); i++) {
-            void* sub = getObjectAt(CTaskGame_enumListGet(&h2), i);
-            void* base = sub;
-            if (sub)
-                base = (u8*)sub - 0x3E9C;
-            if (base != (void*)self->unkB14)
-                appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId(base));
-        }
-        __dt__80043E88(&h2, -1);
         break;
     }
 
@@ -1406,7 +1393,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x00);
             if (val != 0)
-                appendObjectById(CTaskGame_enumListGet(&holder), val);
+                appendObjectById(holder.get(), val);
         }
         break;
     }
@@ -1416,7 +1403,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x04);
             if (val != 0)
-                appendObjectById(CTaskGame_enumListGet(&holder), val);
+                appendObjectById(holder.get(), val);
         }
         break;
     }
@@ -1433,7 +1420,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         s32 want = (s32)sel - 13;
         while (node) {
             if (want == (s32)(u16)*(u16*)((u8*)node + 0x8C)) {
-                appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)node + 0x74));
+                appendObjectById(holder.get(), *(u32*)((u8*)node + 0x74));
                 break;
             }
             node = nextReslistB28(getInstance(), node);
@@ -1445,8 +1432,8 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         u32 filter = 0x80000000;
         if (!(*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4))
             filter = 0x20;
-        startEnumObjects(CTaskGame_enumListGet(&holder), filter, 0x800);
-        __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x10000000, 0);
+        startEnumObjects(holder.get(), filter, 0x800);
+        __ct__800FC19C(holder.get(), 0x10000000, 0);
         break;
     }
 
@@ -1455,11 +1442,10 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     // ---- .L_80153344 : common pre-dispatch check ------------------------
-    if (aiListCount(CTaskGame_enumListGet(&holder)) == 0) {
-        __dt__80043E88(&holder, -1);
+    if (aiListCount(holder.get()) == 0) {
         return 0;
     }
-    countBefore = aiListCount(CTaskGame_enumListGet(&holder));
+    countBefore = aiListCount(holder.get());
 
     // ---- second dispatch on op (byte 7), 0..178 -------------------------
     switch (op) {
@@ -1472,16 +1458,16 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 150:
     case 151: {
         u32 i;
-        void* list = CTaskGame_enumListGet(&holder);
+        void* list = holder.get();
         if (aiListCount(list) != 0) {
-            for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
-                CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
+            for (i = 0; i < aiListCount(holder.get()); i++) {
+                CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
                 void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
                 if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x2) &&
                       (op - 143) == (s32)*(u16*)((u8*)obj + 0x3F28)))
                     slot->unk18 = slot->unk18 | 0x70;
             }
-            __ct__800FD250(CTaskGame_enumListGet(&holder));
+            __ct__800FD250(holder.get());
         }
         break;
     }
@@ -1498,12 +1484,12 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 161:
     case 162:
     case 163: {
-        if (aiListCount(CTaskGame_enumListGet(&holder)) != 0) {
-            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
+        if (aiListCount(holder.get()) != 0) {
+            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), 0);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x4) &&
                   ((cf::CActorParam*)obj)->CActorParam_getActorType() == (s32)(op - 151)))
-                aiListClear(CTaskGame_enumListGet(&holder));
+                aiListClear(holder.get());
         }
         break;
     }
@@ -1511,7 +1497,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 1: {
         void* obj;
         if (!isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
-            aiListClear(CTaskGame_enumListGet(&holder));
+            aiListClear(holder.get());
             obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMaxGaugeEntry();
             if (obj == 0) {
                 obj = aiMoveBaseSelfId((u8*)self->unkB14);
@@ -1527,7 +1513,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                     obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
             }
         done1:
-            appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)obj);
+            appendObjectById(holder.get(), (u32)(uintptr_t)obj);
         }
         break;
     }
@@ -1535,7 +1521,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 2: {
         void* obj;
         if (!isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
-            aiListClear(CTaskGame_enumListGet(&holder));
+            aiListClear(holder.get());
             obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMinGaugeEntry();
             if (obj == 0) {
                 obj = aiMoveBaseSelfId((u8*)self->unkB14);
@@ -1551,7 +1537,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                     obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
             }
         done2:
-            appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)obj);
+            appendObjectById(holder.get(), (u32)(uintptr_t)obj);
         }
         break;
     }
@@ -1565,7 +1551,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 25:
     case 26:
     case 27:
-        __ct__800FC648(CTaskGame_enumListGet(&holder), 0, (f32)(s32)(op - 18) / 10.0f);
+        __ct__800FC648(holder.get(), 0, (f32)(s32)(op - 18) / 10.0f);
         break;
 
     case 28:
@@ -1577,12 +1563,12 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 34:
     case 35:
     case 36:
-        __ct__800FC4FC(CTaskGame_enumListGet(&holder), 0, (f32)(s32)(op - 27) / 10.0f);
-        __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x1C, 2);
+        __ct__800FC4FC(holder.get(), 0, (f32)(s32)(op - 27) / 10.0f);
+        __ct__800FC19C(holder.get(), 0x1C, 2);
         break;
 
     case 37:
-        __ct__800FC648(CTaskGame_enumListGet(&holder), 0, 1.0f);
+        __ct__800FC648(holder.get(), 0, 1.0f);
         break;
 
     case 38:
@@ -1594,7 +1580,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 44:
     case 45:
     case 46:
-        __ct__800FC8DC(CTaskGame_enumListGet(&holder), 0, (f32)(s32)(op - 37) / 10.0f);
+        __ct__800FC8DC(holder.get(), 0, (f32)(s32)(op - 37) / 10.0f);
         break;
 
     case 47:
@@ -1606,60 +1592,60 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 53:
     case 54:
     case 55:
-        __ct__800FC790(CTaskGame_enumListGet(&holder), 0, (f32)(s32)(op - 46) / 10.0f);
+        __ct__800FC790(holder.get(), 0, (f32)(s32)(op - 46) / 10.0f);
         break;
 
     case 56:
-        __ct__800FC8DC(CTaskGame_enumListGet(&holder), 0, 1.0f);
+        __ct__800FC8DC(holder.get(), 0, 1.0f);
         break;
 
     case 57: {
         void* moveBase = (u8*)self->unkB14 + 0x3E9C;
-        sortEntriesByDistance(CTaskGame_enumListGet(&holder), ((cf::CfObject*)moveBase)->CfObject_getPosVector());
+        sortEntriesByDistance(holder.get(), ((cf::CfObject*)moveBase)->CfObject_getPosVector());
         break;
     }
 
     case 59:
-        resortByActorValue(CTaskGame_enumListGet(&holder));
-        __ct__800FC4FC(CTaskGame_enumListGet(&holder), 0, 0.2f);
-        __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x1C, 2);
+        resortByActorValue(holder.get());
+        __ct__800FC4FC(holder.get(), 0, 0.2f);
+        __ct__800FC19C(holder.get(), 0x1C, 2);
         break;
 
     case 60:
-        resortByActorValue(CTaskGame_enumListGet(&holder));
-        __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x1C, 0);
+        resortByActorValue(holder.get());
+        __ct__800FC19C(holder.get(), 0x1C, 0);
         break;
 
-    case 61: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 1, 0); break;
-    case 62: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 2, 0); break;
-    case 63: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 3, 0); break;
-    case 64: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 4, 0); break;
-    case 65: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 5, 0); break;
-    case 66: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 6, 0); break;
-    case 67: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 7, 0); break;
-    case 68: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 8, 0); break;
-    case 69: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 9, 0); break;
-    case 70: __ct__800FCF1C(CTaskGame_enumListGet(&holder), 10, 0); break;
+    case 61: __ct__800FCF1C(holder.get(), 1, 0); break;
+    case 62: __ct__800FCF1C(holder.get(), 2, 0); break;
+    case 63: __ct__800FCF1C(holder.get(), 3, 0); break;
+    case 64: __ct__800FCF1C(holder.get(), 4, 0); break;
+    case 65: __ct__800FCF1C(holder.get(), 5, 0); break;
+    case 66: __ct__800FCF1C(holder.get(), 6, 0); break;
+    case 67: __ct__800FCF1C(holder.get(), 7, 0); break;
+    case 68: __ct__800FCF1C(holder.get(), 8, 0); break;
+    case 69: __ct__800FCF1C(holder.get(), 9, 0); break;
+    case 70: __ct__800FCF1C(holder.get(), 10, 0); break;
 
     case 71:
-        __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x806, 0);
+        __ct__800FC19C(holder.get(), 0x806, 0);
         break;
 
     case 72:
-        __ct__800FC040(CTaskGame_enumListGet(&holder), 0xF, 0x9, 0);
+        __ct__800FC040(holder.get(), 0xF, 0x9, 0);
         break;
 
     case 73:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x10, 0);
+        __ct__800FBF08(holder.get(), 0x10, 0);
         break;
 
     case 74:
     case 88:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x132, 0);
+        __ct__800FBF08(holder.get(), 0x132, 0);
         break;
 
     case 81:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x131, 0);
+        __ct__800FBF08(holder.get(), 0x131, 0);
         break;
 
     case 75:
@@ -1668,7 +1654,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 78:
     case 79:
     case 80:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), op + 0xEE, 0);
+        __ct__800FBF08(holder.get(), op + 0xEE, 0);
         break;
 
     case 82:
@@ -1677,178 +1663,178 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 85:
     case 86:
     case 87:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), op + 0xED, 0);
+        __ct__800FBF08(holder.get(), op + 0xED, 0);
         break;
 
     case 89:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xCE, 0);
+        __ct__800FBF08(holder.get(), 0xCE, 0);
         break;
 
     case 90:
-        __ct__800FC040(CTaskGame_enumListGet(&holder), 0xCF, 0xD0, 0);
+        __ct__800FC040(holder.get(), 0xCF, 0xD0, 0);
         break;
 
     case 91:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xD1, 0);
+        __ct__800FBF08(holder.get(), 0xD1, 0);
         break;
 
     case 95:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x34, 0);
+        __ct__800FBF08(holder.get(), 0x34, 0);
         break;
 
     case 96:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x36, 0);
+        __ct__800FBF08(holder.get(), 0x36, 0);
         break;
 
     case 94:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xF8, 0);
+        __ct__800FBF08(holder.get(), 0xF8, 0);
         break;
 
     case 97:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x33, 0);
+        __ct__800FBF08(holder.get(), 0x33, 0);
         break;
 
     case 98:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xD7, 0);
+        __ct__800FBF08(holder.get(), 0xD7, 0);
         break;
 
     case 99:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x58, 0);
+        __ct__800FBF08(holder.get(), 0x58, 0);
         break;
 
     case 100:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x52, 0);
+        __ct__800FBF08(holder.get(), 0x52, 0);
         break;
 
     case 101:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x59, 0);
+        __ct__800FBF08(holder.get(), 0x59, 0);
         break;
 
     case 102:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x53, 0);
+        __ct__800FBF08(holder.get(), 0x53, 0);
         break;
 
     case 103:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x5A, 0);
+        __ct__800FBF08(holder.get(), 0x5A, 0);
         break;
 
     case 104:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x54, 0);
+        __ct__800FBF08(holder.get(), 0x54, 0);
         break;
 
     case 105:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x57, 0);
+        __ct__800FBF08(holder.get(), 0x57, 0);
         break;
 
     case 106:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x44, 0);
+        __ct__800FBF08(holder.get(), 0x44, 0);
         break;
 
     case 107:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x3C, 0);
+        __ct__800FBF08(holder.get(), 0x3C, 0);
         break;
 
     case 108:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x45, 0);
+        __ct__800FBF08(holder.get(), 0x45, 0);
         break;
 
     case 109:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x3D, 0);
+        __ct__800FBF08(holder.get(), 0x3D, 0);
         break;
 
     case 110:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x9, 0);
+        __ct__800FBF08(holder.get(), 0x9, 0);
         break;
 
     case 111:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xB, 0);
+        __ct__800FBF08(holder.get(), 0xB, 0);
         break;
 
     case 112:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0xC, 0);
+        __ct__800FBF08(holder.get(), 0xC, 0);
         break;
 
     case 116:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x4, 0);
+        __ct__800FBF08(holder.get(), 0x4, 0);
         break;
 
     case 117:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x2, 0);
+        __ct__800FBF08(holder.get(), 0x2, 0);
         break;
 
     case 118:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x7, 0);
+        __ct__800FBF08(holder.get(), 0x7, 0);
         break;
 
     case 119:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x5, 0);
+        __ct__800FBF08(holder.get(), 0x5, 0);
         break;
 
     case 120:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x6, 0);
+        __ct__800FBF08(holder.get(), 0x6, 0);
         break;
 
     case 121:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x8, 0);
+        __ct__800FBF08(holder.get(), 0x8, 0);
         break;
 
     case 123:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x2A, 0);
+        __ct__800FBF08(holder.get(), 0x2A, 0);
         break;
 
     case 124:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x2B, 0);
+        __ct__800FBF08(holder.get(), 0x2B, 0);
         break;
 
     case 125:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x2C, 0);
+        __ct__800FBF08(holder.get(), 0x2C, 0);
         break;
 
     case 126:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x2D, 0);
+        __ct__800FBF08(holder.get(), 0x2D, 0);
         break;
 
     case 127:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x11, 0);
+        __ct__800FBF08(holder.get(), 0x11, 0);
         break;
 
     case 128:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x12, 0);
+        __ct__800FBF08(holder.get(), 0x12, 0);
         break;
 
     case 129:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x131, 2);
+        __ct__800FBF08(holder.get(), 0x131, 2);
         break;
 
     case 130:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x132, 2);
+        __ct__800FBF08(holder.get(), 0x132, 2);
         break;
 
     case 131:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x111, 0);
+        __ct__800FBF08(holder.get(), 0x111, 0);
         break;
 
     case 132:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x112, 0);
+        __ct__800FBF08(holder.get(), 0x112, 0);
         break;
 
     case 133:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x111, 2);
+        __ct__800FBF08(holder.get(), 0x111, 2);
         break;
 
     case 134:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x112, 2);
+        __ct__800FBF08(holder.get(), 0x112, 2);
         break;
 
     case 176:
-        __ct__800FBF08(CTaskGame_enumListGet(&holder), 0x117, 2);
+        __ct__800FBF08(holder.get(), 0x117, 2);
         break;
 
     case 177:
     case 178: {
         u32 i;
-        for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
-            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
+        for (i = 0; i < aiListCount(holder.get()); i++) {
+            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj)
                 slot->unk18 = slot->unk18 | 0x70;
@@ -1872,15 +1858,15 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                 slot->unk18 = slot->unk18 | 0x70;
             }
         }
-        __ct__800FD250(CTaskGame_enumListGet(&holder));
+        __ct__800FD250(holder.get());
         break;
     }
 
     case 135:
     case 136: {
         u32 i;
-        for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
-            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
+        for (i = 0; i < aiListCount(holder.get()); i++) {
+            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj) {
                 slot->unk18 = slot->unk18 | 0x70;
@@ -1892,7 +1878,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                     slot->unk18 = slot->unk18 | 0x70;
             }
         }
-        __ct__800FD250(CTaskGame_enumListGet(&holder));
+        __ct__800FD250(holder.get());
         break;
     }
 
@@ -1902,8 +1888,8 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 174:
     case 175: {
         u32 i;
-        for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
-            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
+        for (i = 0; i < aiListCount(holder.get()); i++) {
+            CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(holder.get(), i);
             void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                 slot->unk18 = slot->unk18 | 0x70;
@@ -1942,20 +1928,20 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
         next137:
             ;
         }
-        __ct__800FD250(CTaskGame_enumListGet(&holder));
+        __ct__800FD250(holder.get());
         break;
     }
 
     case 139:
-        __ct__800FCD10(CTaskGame_enumListGet(&holder), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCD10(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
         break;
 
     case 141:
-        __ct__800FCA24(CTaskGame_enumListGet(&holder), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCA24(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
         break;
 
     case 142:
-        __ct__800FCB80(CTaskGame_enumListGet(&holder), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
+        __ct__800FCB80(holder.get(), *(void**)((u8*)self->unkB14 + 0x3F10), 0);
         break;
 
     case 164:
@@ -1968,9 +1954,9 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     case 171: {
         if (findObjB28ById((s32)op - 163) != 0) {
             void* node = findObjB28ById((s32)(op - 163));
-            __ct__800FCA24(CTaskGame_enumListGet(&holder), *(void**)((u8*)node + 0x3F10), 0);
+            __ct__800FCA24(holder.get(), *(void**)((u8*)node + 0x3F10), 0);
         } else {
-            aiListClear(CTaskGame_enumListGet(&holder));
+            aiListClear(holder.get());
         }
         break;
     }
@@ -1981,14 +1967,12 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
 
     // ---- .L_801541A4 : epilogue checks ---------------------------------
     if (sel >= 9 && sel <= 10) {
-        if (aiListCount(CTaskGame_enumListGet(&holder)) != countBefore) {
-            __dt__80043E88(&holder, -1);
+        if (aiListCount(holder.get()) != countBefore) {
             return 0;
         }
     }
-    if (aiListCount(CTaskGame_enumListGet(&holder)) != 0)
-        result = findFirstCleanObjectId(CTaskGame_enumListGet(&holder));
-    __dt__80043E88(&holder, -1);
+    if (aiListCount(holder.get()) != 0)
+        result = findFirstCleanObjectId(holder.get());
     return result;
 }
 
@@ -2007,7 +1991,6 @@ struct CfObjBase {
 };
 
 extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
-    CAIActionEnumHolder it;
     const u8* qb = (const u8*)q;
     u8 b5  = qb[5];   // 2nd switch key (0..178)
     u8 b6  = qb[6];   // 1st switch key
@@ -2018,20 +2001,20 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
     u32 result = 0;
     u32 savedCount = 0;
 
-    CTaskGame_enumListCtor(&it);
+    CfEnumListHolder it;
 
     // ---- first switch: action class ---------------------------------------
     if (b6 == 2) {
         // +0x605C
-        appendObjectById(CTaskGame_enumListGet(&it), ((CfObjBase*)self->unkB14)->unk3F10);
+        appendObjectById(it.get(), ((CfObjBase*)self->unkB14)->unk3F10);
     } else if (b6 == 7 || b6 == 9) {
         // +0x6084
         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
-        startEnumObjects(CTaskGame_enumListGet(&it), filter, 0);
+        startEnumObjects(it.get(), filter, 0);
     } else if (b6 == 8) {
         // +0x60BC : filter, then mark the entry whose object is self, commit.
         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
-        void* list = CTaskGame_enumListGet(&it);
+        void* list = it.get();
         startEnumObjects(list, filter, 0);
         for (u32 i = 0; i < aiListCount(list); i++) {
             CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
@@ -2041,14 +2024,14 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
             e->unk18 = e->unk18 | 0x70;
             break;
         }
-        __ct__800FD250(CTaskGame_enumListGet(&it));
+        __ct__800FD250(it.get());
     } else if (b6 >= 14 && b6 <= 21) {
         // +0x6178 : scan singleton node list (reslist at +0xB28) for tag b6-13
         getInstance();                       // singleton acquire (retail discards result)
         void* node = firstReslistB28(getInstance());          // &singleton->unkB28
         while (node != 0) {
             if (*(u16*)((u8*)node + 0x8C) == (u16)(b6 - 13)) {
-                appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)node + 0x74));
+                appendObjectById(it.get(), *(u32*)((u8*)node + 0x74));
                 break;
             }
             getInstance();
@@ -2058,13 +2041,13 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
         // +0x61D0 : battle vision object's field +4
         void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (vision != 0 && *(u32*)((u8*)vision + 4) != 0) {
-            appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)vision + 4));
+            appendObjectById(it.get(), *(u32*)((u8*)vision + 4));
         }
     } else {
         // +0x6200 default
         if (isBattleStatusActive((u8*)self->unkB14 + 8, 274)) {
             void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 274);
-            appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
+            appendObjectById(it.get(), *(u32*)((u8*)tag + 0x10));
         } else if (b6 <= 34) {
             // ---- sub-switch (jumptable_eu_8052F1AC, 35 entries 0..34) ----
             switch (b6) {
@@ -2080,13 +2063,13 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x6410
                 if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) {
                     void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 17);
-                    appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
+                    appendObjectById(it.get(), *(u32*)((u8*)tag + 0x10));
                     break;
                 }
                 if (self->unkB18 != 0) {
                     void* obj = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-                        appendObjectById(CTaskGame_enumListGet(&it), self->unkB18);
+                        appendObjectById(it.get(), self->unkB18);
                     } else {
                         self->unkB18 = 0;
                     }
@@ -2095,11 +2078,11 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x64A4
                 {
                     u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
-                    void* list = CTaskGame_enumListGet(&it);
+                    void* list = it.get();
                     startEnumObjects(list, filter, 0x800);
                     if (aiListCount(list) != 0) {
                         void* id = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                        appendObjectById(CTaskGame_enumListGet(&it), (u32)(uintptr_t)id);
+                        appendObjectById(it.get(), (u32)(uintptr_t)id);
                     }
                 }
                 break;
@@ -2107,23 +2090,23 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 
             case 4:
                 // +0x6510
-                startEnumObjects(CTaskGame_enumListGet(&it), 16, 0);
+                startEnumObjects(it.get(), 16, 0);
                 break;
 
             case 5: {
                 // +0x6528 : secondary holder; filter; add move target of first
                 //           entry's second word.
-                CAIActionEnumHolder it2;
-                CTaskGame_enumListCtor(&it2);
-                void* l2 = CTaskGame_enumListGet(&it2);
-                startEnumObjects(l2, 16, 0);
-                if (aiListCount(l2) != 0) {
-                    void* base = getObjectAt(l2, 0);   // entries[0][1]
-                    if (base) base = (u8*)base - 0x3E9C;
-                    u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
-                    appendObjectById(CTaskGame_enumListGet(&it), id);
+                {
+                    CfEnumListHolder it2;
+                    void* l2 = it2.get();
+                    startEnumObjects(l2, 16, 0);
+                    if (aiListCount(l2) != 0) {
+                        void* base = getObjectAt(l2, 0);   // entries[0][1]
+                        if (base) base = (u8*)base - 0x3E9C;
+                        u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
+                        appendObjectById(it.get(), id);
+                    }
                 }
-                __dt__80043E88(&it2, -1);
                 break;
             }
 
@@ -2131,13 +2114,13 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x6260
                 if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) {
                     void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 17);
-                    appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
+                    appendObjectById(it.get(), *(u32*)((u8*)tag + 0x10));
                     break;
                 }
                 if (self->unkB18 != 0) {
                     void* obj = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-                        appendObjectById(CTaskGame_enumListGet(&it), self->unkB18);
+                        appendObjectById(it.get(), self->unkB18);
                     } else {
                         self->unkB18 = 0;
                     }
@@ -2149,40 +2132,40 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     CfObjBase* obj = (CfObjBase*)MapFx_ResolveOwner(findObjectById((int)id));
                     if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
-                        startEnumObjects(CTaskGame_enumListGet(&it), filter, 0x800);
+                        startEnumObjects(it.get(), filter, 0x800);
                         break;
                     }
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         if (obj->moveFlags & 0x2) break;
                         u32 id2 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                        appendObjectById(CTaskGame_enumListGet(&it), id2);
+                        appendObjectById(it.get(), id2);
                         break;
                     }
                     if (obj->moveFlags & 0x4) break;
                     u32 id3 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                    appendObjectById(CTaskGame_enumListGet(&it), id3);
+                    appendObjectById(it.get(), id3);
                 }
                 break;
             }
 
             case 11: {
                 // +0x65A8 : filter + add move targets of every list-3 entry
-                CAIActionEnumHolder it3;
-                CTaskGame_enumListCtor(&it3);
-                void* l3 = CTaskGame_enumListGet(&it3);
-                u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
-                startEnumObjects(l3, filter, 0);
-                u32 id0 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                appendObjectById(CTaskGame_enumListGet(&it), id0);
-                for (u32 i = 0; i < aiListCount(l3); i++) {
-                    void* base = getObjectAt(l3, i);
-                    if (base) base = (u8*)base - 0x3E9C;
-                    if (base != ((CfObjBase*)self->unkB14)) {
-                        u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
-                        appendObjectById(CTaskGame_enumListGet(&it), id);
+                {
+                    CfEnumListHolder it3;
+                    void* l3 = it3.get();
+                    u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
+                    startEnumObjects(l3, filter, 0);
+                    u32 id0 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
+                    appendObjectById(it.get(), id0);
+                    for (u32 i = 0; i < aiListCount(l3); i++) {
+                        void* base = getObjectAt(l3, i);
+                        if (base) base = (u8*)base - 0x3E9C;
+                        if (base != ((CfObjBase*)self->unkB14)) {
+                            u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
+                            appendObjectById(it.get(), id);
+                        }
                     }
                 }
-                __dt__80043E88(&it3, -1);
                 break;
             }
 
@@ -2190,7 +2173,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x6680
                 void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
                 if (vision != 0 && *(u32*)((u8*)vision + 0) != 0) {
-                    appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)vision + 0));
+                    appendObjectById(it.get(), *(u32*)((u8*)vision + 0));
                 }
                 break;
             }
@@ -2199,9 +2182,9 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x66B0 : filter + queue "0x1000" action
                 {
                     u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
-                    void* list = CTaskGame_enumListGet(&it);
+                    void* list = it.get();
                     startEnumObjects(list, filter, 0x800);
-                    __ct__800FC19C(CTaskGame_enumListGet(&it), 0x1000, 0);
+                    __ct__800FC19C(it.get(), 0x1000, 0);
                 }
                 break;
             }
@@ -2210,9 +2193,8 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 
     // ---- second switch setup (+0x66F0) ------------------------------------
     {
-        void* list = CTaskGame_enumListGet(&it);
+        void* list = it.get();
         if (aiListCount(list) == 0) {
-            __dt__80043E88(&it, -1);
             return 0;
         }
         savedCount = aiListCount(list);   // retail keeps it in r22
@@ -2229,7 +2211,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
             // +0x6744
             if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) break;
             if (self->unkB18 != 0) break;
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             ((CAIEnumList*)list)->count = 0;
             ((CAIEnumList*)list)->unk3030 = 0;
             void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_findMaxGaugeEntry();
@@ -2244,7 +2226,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     }
                 }
             }
-            appendObjectById(CTaskGame_enumListGet(&it), id);
+            appendObjectById(it.get(), id);
             break;
         }
 
@@ -2252,7 +2234,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
             // +0x6828 (same as case 1 but vtable slot 0x2EC)
             if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) break;
             if (self->unkB18 != 0) break;
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             ((CAIEnumList*)list)->count = 0;
             ((CAIEnumList*)list)->unk3030 = 0;
             void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_findMinGaugeEntry();
@@ -2267,147 +2249,147 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     }
                 }
             }
-            appendObjectById(CTaskGame_enumListGet(&it), id);
+            appendObjectById(it.get(), id);
             break;
         }
 
         case 19: case 20: case 21: case 22: case 23:
         case 24: case 25: case 26: case 27:
             // +0x690C
-            __ct__800FC648(CTaskGame_enumListGet(&it), 0, (f32)(b5 - 18) / 10.0f);
+            __ct__800FC648(it.get(), 0, (f32)(b5 - 18) / 10.0f);
             break;
 
         case 28: case 29: case 30: case 31: case 32:
         case 33: case 34: case 35: case 36:
             // +0x6940
-            __ct__800FC4FC(CTaskGame_enumListGet(&it), 0, (f32)(b5 - 27) / 10.0f);
-            __ct__800FC19C(CTaskGame_enumListGet(&it), 28, 2);
+            __ct__800FC4FC(it.get(), 0, (f32)(b5 - 27) / 10.0f);
+            __ct__800FC19C(it.get(), 28, 2);
             break;
 
         case 37:
             // +0x6988
-            __ct__800FC648(CTaskGame_enumListGet(&it), 0, 1.0f);
+            __ct__800FC648(it.get(), 0, 1.0f);
             break;
 
         case 38: case 39: case 40: case 41: case 42: case 43:
         case 44: case 45: case 46:
             // +0x69A0
-            __ct__800FC8DC(CTaskGame_enumListGet(&it), 0, (f32)(b5 - 37) / 10.0f);
+            __ct__800FC8DC(it.get(), 0, (f32)(b5 - 37) / 10.0f);
             break;
 
         case 47: case 48: case 49: case 50: case 51: case 52:
         case 53: case 54: case 55:
             // +0x69D4
-            __ct__800FC790(CTaskGame_enumListGet(&it), 0, (f32)(b5 - 46) / 10.0f);
+            __ct__800FC790(it.get(), 0, (f32)(b5 - 46) / 10.0f);
             break;
 
         case 56:
             // +0x6A08
-            __ct__800FC8DC(CTaskGame_enumListGet(&it), 0, 1.0f);
+            __ct__800FC8DC(it.get(), 0, 1.0f);
             break;
 
         case 57: {
             // +0x6A20 : position-based action
             void* pos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
-            sortEntriesByDistance(CTaskGame_enumListGet(&it), pos);
+            sortEntriesByDistance(it.get(), pos);
             break;
         }
 
         case 59:
             // +0x6A4C
-            resortByActorValue(CTaskGame_enumListGet(&it));
-            __ct__800FC4FC(CTaskGame_enumListGet(&it), 0, 0.2f);
-            __ct__800FC19C(CTaskGame_enumListGet(&it), 28, 2);
+            resortByActorValue(it.get());
+            __ct__800FC4FC(it.get(), 0, 0.2f);
+            __ct__800FC19C(it.get(), 28, 2);
             break;
 
         case 60:
             // +0x6A84
-            resortByActorValue(CTaskGame_enumListGet(&it));
-            __ct__800FC19C(CTaskGame_enumListGet(&it), 28, 0);
+            resortByActorValue(it.get());
+            __ct__800FC19C(it.get(), 28, 0);
             break;
 
-        case 61: __ct__800FCF1C(CTaskGame_enumListGet(&it), 1, 0); break;
-        case 62: __ct__800FCF1C(CTaskGame_enumListGet(&it), 2, 0); break;
-        case 63: __ct__800FCF1C(CTaskGame_enumListGet(&it), 3, 0); break;
-        case 64: __ct__800FCF1C(CTaskGame_enumListGet(&it), 4, 0); break;
-        case 65: __ct__800FCF1C(CTaskGame_enumListGet(&it), 5, 0); break;
-        case 66: __ct__800FCF1C(CTaskGame_enumListGet(&it), 6, 0); break;
-        case 67: __ct__800FCF1C(CTaskGame_enumListGet(&it), 7, 0); break;
-        case 68: __ct__800FCF1C(CTaskGame_enumListGet(&it), 8, 0); break;
-        case 69: __ct__800FCF1C(CTaskGame_enumListGet(&it), 9, 0); break;
-        case 70: __ct__800FCF1C(CTaskGame_enumListGet(&it), 10, 0); break;
+        case 61: __ct__800FCF1C(it.get(), 1, 0); break;
+        case 62: __ct__800FCF1C(it.get(), 2, 0); break;
+        case 63: __ct__800FCF1C(it.get(), 3, 0); break;
+        case 64: __ct__800FCF1C(it.get(), 4, 0); break;
+        case 65: __ct__800FCF1C(it.get(), 5, 0); break;
+        case 66: __ct__800FCF1C(it.get(), 6, 0); break;
+        case 67: __ct__800FCF1C(it.get(), 7, 0); break;
+        case 68: __ct__800FCF1C(it.get(), 8, 0); break;
+        case 69: __ct__800FCF1C(it.get(), 9, 0); break;
+        case 70: __ct__800FCF1C(it.get(), 10, 0); break;
 
         case 71:
             // +0x6B98
-            __ct__800FC19C(CTaskGame_enumListGet(&it), 2054, 0);
+            __ct__800FC19C(it.get(), 2054, 0);
             break;
 
         case 72:
             // +0x6BB0
-            __ct__800FC040(CTaskGame_enumListGet(&it), 15, 9, 0);
+            __ct__800FC040(it.get(), 15, 9, 0);
             break;
 
-        case 73:  __ct__800FBF08(CTaskGame_enumListGet(&it), 16, 0);  break;
-        case 74:  __ct__800FBF08(CTaskGame_enumListGet(&it), 306, 0); break;
+        case 73:  __ct__800FBF08(it.get(), 16, 0);  break;
+        case 74:  __ct__800FBF08(it.get(), 306, 0); break;
         case 75: case 76: case 77: case 78: case 79: case 80:
             // +0x6C14
-            __ct__800FBF08(CTaskGame_enumListGet(&it), b5 + 238, 0);
+            __ct__800FBF08(it.get(), b5 + 238, 0);
             break;
-        case 81:  __ct__800FBF08(CTaskGame_enumListGet(&it), 305, 0); break;
+        case 81:  __ct__800FBF08(it.get(), 305, 0); break;
         case 82: case 83: case 84: case 85: case 86: case 87:
             // +0x6C2C
-            __ct__800FBF08(CTaskGame_enumListGet(&it), b5 + 237, 0);
+            __ct__800FBF08(it.get(), b5 + 237, 0);
             break;
-        case 88:  __ct__800FBF08(CTaskGame_enumListGet(&it), 306, 0); break;
-        case 89:  __ct__800FBF08(CTaskGame_enumListGet(&it), 206, 0); break;
+        case 88:  __ct__800FBF08(it.get(), 306, 0); break;
+        case 89:  __ct__800FBF08(it.get(), 206, 0); break;
         case 90:
             // +0x6C5C
-            __ct__800FC040(CTaskGame_enumListGet(&it), 207, 208, 0);
+            __ct__800FC040(it.get(), 207, 208, 0);
             break;
-        case 91:  __ct__800FBF08(CTaskGame_enumListGet(&it), 209, 0); break;
-        case 94:  __ct__800FBF08(CTaskGame_enumListGet(&it), 248, 0); break;
-        case 95:  __ct__800FBF08(CTaskGame_enumListGet(&it), 52, 0);  break;
-        case 96:  __ct__800FBF08(CTaskGame_enumListGet(&it), 54, 0);  break;
-        case 97:  __ct__800FBF08(CTaskGame_enumListGet(&it), 51, 0);  break;
-        case 98:  __ct__800FBF08(CTaskGame_enumListGet(&it), 215, 0); break;
-        case 99:  __ct__800FBF08(CTaskGame_enumListGet(&it), 88, 0);  break;
-        case 100: __ct__800FBF08(CTaskGame_enumListGet(&it), 82, 0);  break;
-        case 101: __ct__800FBF08(CTaskGame_enumListGet(&it), 89, 0);  break;
-        case 102: __ct__800FBF08(CTaskGame_enumListGet(&it), 83, 0);  break;
-        case 103: __ct__800FBF08(CTaskGame_enumListGet(&it), 90, 0);  break;
-        case 104: __ct__800FBF08(CTaskGame_enumListGet(&it), 84, 0);  break;
-        case 105: __ct__800FBF08(CTaskGame_enumListGet(&it), 87, 0);  break;
-        case 106: __ct__800FBF08(CTaskGame_enumListGet(&it), 68, 0);  break;
-        case 107: __ct__800FBF08(CTaskGame_enumListGet(&it), 60, 0);  break;
-        case 108: __ct__800FBF08(CTaskGame_enumListGet(&it), 69, 0);  break;
-        case 109: __ct__800FBF08(CTaskGame_enumListGet(&it), 61, 0);  break;
-        case 110: __ct__800FBF08(CTaskGame_enumListGet(&it), 9, 0);   break;
-        case 111: __ct__800FBF08(CTaskGame_enumListGet(&it), 11, 0);  break;
-        case 112: __ct__800FBF08(CTaskGame_enumListGet(&it), 12, 0);  break;
-        case 116: __ct__800FBF08(CTaskGame_enumListGet(&it), 4, 0);   break;
-        case 117: __ct__800FBF08(CTaskGame_enumListGet(&it), 2, 0);   break;
-        case 118: __ct__800FBF08(CTaskGame_enumListGet(&it), 7, 0);   break;
-        case 119: __ct__800FBF08(CTaskGame_enumListGet(&it), 5, 0);   break;
-        case 120: __ct__800FBF08(CTaskGame_enumListGet(&it), 6, 0);   break;
-        case 121: __ct__800FBF08(CTaskGame_enumListGet(&it), 8, 0);   break;
-        case 123: __ct__800FBF08(CTaskGame_enumListGet(&it), 42, 0);  break;
-        case 124: __ct__800FBF08(CTaskGame_enumListGet(&it), 43, 0);  break;
-        case 125: __ct__800FBF08(CTaskGame_enumListGet(&it), 44, 0);  break;
-        case 126: __ct__800FBF08(CTaskGame_enumListGet(&it), 45, 0);  break;
-        case 127: __ct__800FBF08(CTaskGame_enumListGet(&it), 17, 0);  break;
-        case 128: __ct__800FBF08(CTaskGame_enumListGet(&it), 18, 0);  break;
-        case 129: __ct__800FBF08(CTaskGame_enumListGet(&it), 305, 2); break;
-        case 130: __ct__800FBF08(CTaskGame_enumListGet(&it), 306, 2); break;
-        case 131: __ct__800FBF08(CTaskGame_enumListGet(&it), 273, 0); break;
-        case 132: __ct__800FBF08(CTaskGame_enumListGet(&it), 274, 0); break;
-        case 133: __ct__800FBF08(CTaskGame_enumListGet(&it), 273, 2); break;
-        case 134: __ct__800FBF08(CTaskGame_enumListGet(&it), 274, 2); break;
-        case 171: __ct__800FBF08(CTaskGame_enumListGet(&it), 235, 0); break;
-        case 175: __ct__800FBF08(CTaskGame_enumListGet(&it), 279, 2); break;
+        case 91:  __ct__800FBF08(it.get(), 209, 0); break;
+        case 94:  __ct__800FBF08(it.get(), 248, 0); break;
+        case 95:  __ct__800FBF08(it.get(), 52, 0);  break;
+        case 96:  __ct__800FBF08(it.get(), 54, 0);  break;
+        case 97:  __ct__800FBF08(it.get(), 51, 0);  break;
+        case 98:  __ct__800FBF08(it.get(), 215, 0); break;
+        case 99:  __ct__800FBF08(it.get(), 88, 0);  break;
+        case 100: __ct__800FBF08(it.get(), 82, 0);  break;
+        case 101: __ct__800FBF08(it.get(), 89, 0);  break;
+        case 102: __ct__800FBF08(it.get(), 83, 0);  break;
+        case 103: __ct__800FBF08(it.get(), 90, 0);  break;
+        case 104: __ct__800FBF08(it.get(), 84, 0);  break;
+        case 105: __ct__800FBF08(it.get(), 87, 0);  break;
+        case 106: __ct__800FBF08(it.get(), 68, 0);  break;
+        case 107: __ct__800FBF08(it.get(), 60, 0);  break;
+        case 108: __ct__800FBF08(it.get(), 69, 0);  break;
+        case 109: __ct__800FBF08(it.get(), 61, 0);  break;
+        case 110: __ct__800FBF08(it.get(), 9, 0);   break;
+        case 111: __ct__800FBF08(it.get(), 11, 0);  break;
+        case 112: __ct__800FBF08(it.get(), 12, 0);  break;
+        case 116: __ct__800FBF08(it.get(), 4, 0);   break;
+        case 117: __ct__800FBF08(it.get(), 2, 0);   break;
+        case 118: __ct__800FBF08(it.get(), 7, 0);   break;
+        case 119: __ct__800FBF08(it.get(), 5, 0);   break;
+        case 120: __ct__800FBF08(it.get(), 6, 0);   break;
+        case 121: __ct__800FBF08(it.get(), 8, 0);   break;
+        case 123: __ct__800FBF08(it.get(), 42, 0);  break;
+        case 124: __ct__800FBF08(it.get(), 43, 0);  break;
+        case 125: __ct__800FBF08(it.get(), 44, 0);  break;
+        case 126: __ct__800FBF08(it.get(), 45, 0);  break;
+        case 127: __ct__800FBF08(it.get(), 17, 0);  break;
+        case 128: __ct__800FBF08(it.get(), 18, 0);  break;
+        case 129: __ct__800FBF08(it.get(), 305, 2); break;
+        case 130: __ct__800FBF08(it.get(), 306, 2); break;
+        case 131: __ct__800FBF08(it.get(), 273, 0); break;
+        case 132: __ct__800FBF08(it.get(), 274, 0); break;
+        case 133: __ct__800FBF08(it.get(), 273, 2); break;
+        case 134: __ct__800FBF08(it.get(), 274, 2); break;
+        case 171: __ct__800FBF08(it.get(), 235, 0); break;
+        case 175: __ct__800FBF08(it.get(), 279, 2); break;
 
         case 135: case 136: {
             // +0x7184 : mark entries by obj->unk1530
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
                 CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
@@ -2421,13 +2403,13 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     if (obj->unk1530 != 0) e->unk18 = e->unk18 | 0x70;
                 }
             }
-            __ct__800FD250(CTaskGame_enumListGet(&it));
+            __ct__800FD250(it.get());
             break;
         }
 
         case 137: case 138: case 172: case 173: case 174: {
             // +0x723C : mark entries by obj state (vt[0x308]) and liveness
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
                 CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
@@ -2442,23 +2424,23 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 else if (b5 == 138) { if (state >= 2) e->unk18 = e->unk18 | 0x70; }
                 else if (b5 == 175) { if (state >= 1) e->unk18 = e->unk18 | 0x70; }
             }
-            __ct__800FD250(CTaskGame_enumListGet(&it));
+            __ct__800FD250(it.get());
             break;
         }
 
         case 139:
             // +0x73D4
-            __ct__800FCD10(CTaskGame_enumListGet(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            __ct__800FCD10(it.get(), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
             break;
 
         case 141:
             // +0x73F0
-            __ct__800FCA24(CTaskGame_enumListGet(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            __ct__800FCA24(it.get(), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
             break;
 
         case 142:
             // +0x740C
-            __ct__800FCB80(CTaskGame_enumListGet(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            __ct__800FCB80(it.get(), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
             break;
 
         case 163: case 164: case 165: case 166: case 167:
@@ -2466,9 +2448,9 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
             // +0x7428
             CfObjBase* obj = (CfObjBase*)findObjB28ById((int)b5 - 163);
             if (obj != 0) {
-                __ct__800FCA24(CTaskGame_enumListGet(&it), (void*)(uintptr_t)obj->unk3F10, 0);
+                __ct__800FCA24(it.get(), (void*)(uintptr_t)obj->unk3F10, 0);
             } else {
-                void* list = CTaskGame_enumListGet(&it);
+                void* list = it.get();
                 ((CAIEnumList*)list)->count = 0;
                 ((CAIEnumList*)list)->unk3030 = 0;
             }
@@ -2477,7 +2459,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 
         case 176: case 177: case 178: {
             // +0x7038 : mark entries by tags 279/110..113 and unk3374
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
                 CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
@@ -2501,7 +2483,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     }
                 }
             }
-            __ct__800FD250(CTaskGame_enumListGet(&it));
+            __ct__800FD250(it.get());
             break;
         }
     }
@@ -2514,7 +2496,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
             // stack array {q9,q11} / {q10,q12} and iterates the pair twice:
             //   pair A: word = q[9]  (b9),  other/threshold = q[10] (b10)
             //   pair B: word = q[11] (b11), other/threshold = q[12] (b12)
-            void* list = CTaskGame_enumListGet(&it);
+            void* list = it.get();
             for (u32 pair = 0; pair < 2; pair++) {
                 u32 word = (pair == 0) ? b9 : b11;
                 u32 other = (pair == 0) ? b10 : b12;
@@ -2642,25 +2624,23 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                     }
                 }
             }
-            __ct__800FD250(CTaskGame_enumListGet(&it));
+            __ct__800FD250(it.get());
         }
     }
 
     // ---- finalization (+0x7A08) -------------------------------------------
     if (b6 == 9 || b6 == 10) {
-        void* list = CTaskGame_enumListGet(&it);
+        void* list = it.get();
         if (savedCount != aiListCount(list)) {
-            __dt__80043E88(&it, -1);
             return 0;
         }
     }
     {
-        void* list = CTaskGame_enumListGet(&it);
+        void* list = it.get();
         if (aiListCount(list) != 0) {
-            result = (u32)(uintptr_t)findFirstCleanObjectId(CTaskGame_enumListGet(&it));
+            result = (u32)(uintptr_t)findFirstCleanObjectId(it.get());
         }
     }
-    __dt__80043E88(&it, -1);
     return (void*)result;
 }}
 

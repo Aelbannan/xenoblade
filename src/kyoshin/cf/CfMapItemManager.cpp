@@ -40,9 +40,9 @@ char lbl_eu_80662420[8] = "itm?ID";
 __declspec(section ".sdata") __attribute__((used))
 char lbl_eu_80662428[8] = "itm?Per";
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80662430[2] = { lbl_eu_80503390, lbl_eu_805316E8 };
+const void* __RTTI__Q22cf18CfValueItemManager[2] = { lbl_eu_80503390, lbl_eu_805316E8 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80662438[2] = { lbl_eu_805033A8, 0 };
+const void* __RTTI__Q22cf16CfMapItemManager[2] = { lbl_eu_805033A8, 0 };
 
 // .data 0x50: RTTI descriptors and hand-built vtables. They come before
 // the code so MWCC's compiler-generated testActorStatus dispatch table lands
@@ -64,15 +64,15 @@ __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_805316C0[4] = { __RTTI__Q22cf8CREvtObj, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_805316D0[6] = {
-    lbl_eu_80662430, 0,
+    __RTTI__Q22cf18CfValueItemManager, 0,
     (const void*)collectValueItems, (const void*)ValueItemIsEventActive,
     (const void*)placeValueItem, (const void*)getValueItemTable,
 };
 __declspec(section ".data") __attribute__((used))
-const void* lbl_eu_805316E8[4] = { lbl_eu_80662438, 0, 0, 0 };
+const void* lbl_eu_805316E8[4] = { __RTTI__Q22cf16CfMapItemManager, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_805316F8[6] = {
-    (void*)lbl_eu_80662438, 0,
+    (void*)__RTTI__Q22cf16CfMapItemManager, 0,
     (void*)collectMapItems, (void*)MapItemIsEventActive,
     (void*)rollItemLottery, (void*)getMapItemTable,
 };
@@ -225,11 +225,11 @@ struct MapItemBuffer {
 
 // Real class tree, recovered from the retail tables in split1.s:
 //   lbl_eu_805316F8 (JP __vt__Q22cf17CfMapItemManager), size 0x18,
-//       RTTI lbl_eu_80662438 -> typestr "cf::CfMapItemManager", no base:
+//       RTTI __RTTI__Q22cf16CfMapItemManager -> typestr "cf::CfMapItemManager", no base:
 //       +0x08 collectMapItems  +0x0C MapItemIsEventActive
 //       +0x10 rollItemLottery  +0x14 getMapItemTable
 //   lbl_eu_805316D0 (JP __vt__Q22cf19CfValueItemManager), size 0x18,
-//       RTTI lbl_eu_80662430 -> typestr "cf::CfValueItemManager",
+//       RTTI __RTTI__Q22cf18CfValueItemManager -> typestr "cf::CfValueItemManager",
 //       hierarchy lists CfMapItemManager as base; all four slots overridden:
 //       +0x08 collectValueItems  +0x0C ValueItemIsEventActive
 //       +0x10 placeValueItem  +0x14 getValueItemTable

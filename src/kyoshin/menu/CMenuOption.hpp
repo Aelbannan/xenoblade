@@ -4,42 +4,31 @@
 #include <monolib/scn/IScnRender.hpp>
 #include <monolib/work/CProcess.hpp>
 
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/COption.hpp"
 
 /*
- * Option (settings) menu screen process.
+ * Option (settings) menu screen process (IUICf task + IScnRender render callback).
  *
- * Layout (constructor/destructor + Init):
- *   0x00: CProcess          -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8                -- phase/state flag (written by flagOptionPhase1)
- *   0x58: IScnRender        -- render-callback subobject (vptr)
- *   0x5C: CProcess*         -- parent process reference
- *   0x60: CBgTex            -- background layout widget
- *   0x80: CTitleAHelp       -- title/help bar
- *   0xB8: COption           -- core option menu logic (0x104 bytes)
- *  0x1BC: u8 mState         -- phase/state indicator (0..4)
- *  0x1BD: u8 mArg           -- constructor argument
+ * Offsets:
+ *   0x00: CTTask<IUICf> base   -- task header, null move/draw slots
+ *   0x54: u8 mField54          -- phase/state flag (IUICf)
+ *   0x55: u8 mField55          (IUICf)
+ *   0x58: IScnRender           -- render-callback subobject (vptr)
+ *   0x5C: CProcess* mParentRef -- parent process reference
+ *   0x60: CBgTex mBgTex        -- background layout widget
+ *   0x80: CTitleAHelp          -- title/help bar
+ *   0xB8: COption storage      -- core option menu logic (0x104 bytes; its
+ *                                 ctor/dtor are the flat retail symbols, so the
+ *                                 bytes are constructed/destroyed by hand)
+ *  0x1BC: u8 mState            -- phase/state indicator (0..4)
+ *  0x1BD: u8 mArg              -- constructor argument
  */
-// Named slot view of the manually-installed vtable pointers: the CProcess
-// compiler-managed vptr at +0x10 (re-stored temp -> composite by the ctor)
-// and the IScnRender subobject vptr at +0x58 (composite vtable + 0x24).
-struct CMenuOptionVtblView {
-    u8 _head[0x10];      // 0x00 CProcess storage head (CDoubleListNode)
-    u32* mProcVtable;    // 0x10 CProcess vtable slot
-    u8 _mid[0x58 - 0x14];
-    u32* mScnRenderVt;   // 0x58 IScnRender subobject vptr
-};
-
-class CMenuOption : public CProcess {
+class CMenuOption : public IUICf, public IScnRender {
 public:
-    // NOTE: no member ctor definition - the retail ctor symbol is the flat
-    // unmangled __ct__CMenuOption (declared below); a member form would emit
-    // a mangled __ct__11CMenuOptionFP8CProcessUl that cannot bind to it.
-    // The virtual dtor declaration must stay: without it MWCC redirects the
-    // base-dtor call inside __dt__11CMenuOptionFv to the library D1 symbol
-    // __dt__8CProcessFv instead of the retail D2 wrapper __dt__800FED0C.
+    CMenuOption(CProcess* parent, u32 arg);
     virtual ~CMenuOption();
 
     // CProcess overrides
@@ -47,133 +36,18 @@ public:
     virtual void Term();
     virtual void Move();
 
-    // Render callback (dispatched through the IScnRender subobject vtable)
-    void cbRenderBefore();
+    // Render callback (dispatched through the IScnRender subobject)
+    virtual void cbRenderBefore();
 
-    u32 mPtmfCallbacks[6];        // 0x3C-0x53: null PMF callback slots (two 3-word groups)
-    u8 mField54;                  // 0x54: phase flag
-    u8 mField55;                  // 0x55
-    u8 _pad56[2];                 // 0x56-0x57
-    IScnRender mIScnRender;       // 0x58: render-callback subobject (vptr)
     CProcess* mParentRef;         // 0x5C: parent process reference
-    // Real embedded widgets (CMenuCollepedia idiom). Ctors/dtors still invoked
-    // via retail free-function symbols; members give typed field access.
     CBgTex mBgTex;                // 0x60
     CTitleAHelp mTitleAHelp;      // 0x80
-    COption mOption;              // 0xB8 (0x104 bytes)
+    u8 mOption[0x104];            // 0xB8: COption storage (see class comment)
     u8 mState;                    // 0x1BC
     u8 mArg;                      // 0x1BD
 };
 
-// Singleton factory (retail unmangled symbol).
+// Singleton factory (retail unmangled symbol; called from CUICfManager).
 extern "C" CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg);
 // Live-instance check (flat retail name; defined in this TU).
 extern "C" u32 hasOptionMenu();
-// Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
-extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
-// Retail constructor symbol (unmangled flat form; defined in CMenuOption.cpp).
-CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg);
-
-
-// IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void CMenuOption_renderBeforeAdj58(IScnRender* self);
-void CMenuOption_dtorAdj58(IScnRender* self);
-
-// Option-menu helper entry points (retail-unmangled callee names).
-extern "C" void advanceOptionPhase2(CMenuOption* self);
-extern "C" void flagOptionPhase1(CMenuOption* self);
-extern "C" void advanceOptionPhase1(CMenuOption* self);
-extern "C" void handleOptionInput(CMenuOption* self);
-
-// Move()/cbRenderBefore() callees.
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void COptionTickState(COption* self);
-extern "C" void COptionDraw(COption* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
-// Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-extern u32 lbl_eu_80663E28;
-extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
-
-// Ready/idle-check and animation helpers for the embedded sub-widgets
-// (retail unmangles these member helpers; int returns so callers compare
-// with cmpwi directly, no byte mask - matching retail).
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int COptionIsWindowReady(COption* self);
-extern "C" void COptionBeginScrollSetup(COption* self);
-
-// Ctor/Init re-init helpers (retail-unmangled callee names - US strips
-// mangling for these __ct__/func_ helpers).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__COption(COption* self, u8 arg);
-// __ct__UnkClass_8011C974 is declared by COption.hpp; BdatTouchStringCell by CFloorMap.hpp.
-extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void COptionRebuildWidgets(COption* self);
-
-// Option-menu input-handler callees (retail-unmangled func_ names).
-extern "C" void COptionHandleLeft(COption* self);
-extern "C" void COptionHandleRightAccept(COption* self, int arg);
-extern "C" void COptionCursorUp(COption* self);
-extern "C" void COptionCursorDown(COption* self);
-extern "C" void COptionPageUp(COption* self);
-extern "C" void COptionPageDown(COption* self);
-extern "C" void COptionOpenConfigDialog(COption* self);
-extern "C" int COptionGetNavCode(COption* self);
-extern "C" void COptionConfirmSelection(COption* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" int CMainMenu_GetInstancePtr();
-extern "C" void ArtsInfo_SetReadyFlag();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-
-// Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
-// cmpwi directly (no byte mask), matching retail.
-extern "C" void COptionTeardown(COption* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-// CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
-
-// D2-form subobject/base destructor helpers (explicit delete flags), used by
-// the free-function form of ~CMenuOption. All are declared extern "C" so the
-// literal retail symbol names are emitted (a plain C++ declaration would make
-// MWCC append a __F<params> suffix). __dt__800FED0C is the CProcess base dtor
-// retail symbol (0x800FF7F4 - the game-side D2 wrapper, distinct from the
-// library D1 __dt__8CProcessFv at 0x804474D0).
-extern "C" void __dt__7COptionFv(COption* _this, int flags);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
-extern "C" void __dt__6CBgTexFv(CBgTex* _this, int flags);
-extern "C" void __dt__800FED0C(CProcess* _this, int flags);
-
-// Shared singleton state flag (cleared by Term).
-extern u32 lbl_eu_80664A38[2];
-
-// Data imports (MWCC does not mangle global-scope data names).
-extern u8 lbl_eu_8052BF70[];    // CMenuOption temporary vtable (pre-PMF copy)
-extern u32 lbl_eu_805392C8[14];   // CMenuOption final vtable; IScnRender vtable at +0x24
-extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
-extern char lbl_eu_805103C4[];  // option title/help string table base
-
-/*
- * CfPadData overlay for the option-menu input handler (retail handleOptionInput).
- * Retail reads the current-pad pressed flags at +0x04 and the turbo-press
- * flags at +0x104 (the latter lives past CPad, in CfPadData's own flags
- * region; cf. CMenuMapSelect's CfPadDataLocal).
- */
-struct CMenuOptionPadData {
-    u32 mPadHeldFlags;           // 0x00 - CPad::mHeldButtonFlags
-    u32 mPadPressedFlags;        // 0x04 - CPad::mPressedButtonFlags
-    u8 _pad[0x104 - 0x08];       // 0x08-0x103
-    u32 mTurboPressButtonFlags;  // 0x104 - CfPadData::mTurboPressButtonFlags
-};

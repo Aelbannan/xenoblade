@@ -1,5 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -324,7 +325,7 @@ void SysWinLog_PollBattleEnd() {
 // CSysWinScenarioLog::cbRenderBefore (us-80280dc0)
 // Draw the scenario-log layout behind the scene while the game is live: same
 // gate chain as Move() but testing bit 10 of the pause word, then Z-off and
-// a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
+// a layout draw with a stack DrawInfo.
 // noinline keeps the this-adjusting vtable thunk SysWinLog_RenderThunk70 a two-instruction
 // subi + tail-call instead of a full inline copy.
 // ---------------------------------------------------------------------------
@@ -349,15 +350,10 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls so
-    // the body keeps retail's direct bl sequence.
-    u8 drawInfo[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     drawLayout(mpLayout,
-                  reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(
-        reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+                  &drawInfo, 0, 1);
 }
 
 // ---------------------------------------------------------------------------

@@ -304,8 +304,6 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self,
                                                  UnkClass_8045F564* base);
 void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
-void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int GetSysStateFlag24();
 int IsMenuState621F0();

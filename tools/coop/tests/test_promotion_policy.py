@@ -432,6 +432,7 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
             symbol="f",
             equivalence=None,
             policy=_config(automatic_promotion=False),
+            full_match_verified=True,
         )
         self.assertEqual(status, "FULL_MATCH")
 

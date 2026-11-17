@@ -410,18 +410,18 @@ namespace MPFDrawBlob {
 extern "C" void deallocate__Q26mpfsys18MPFDrawDisplayListFv();
 extern "C" void destroy__Q26mpfsys18MPFDrawDisplayListFv();
 }
-extern "C" u32 lbl_eu_80663868[2];  // .sdata RTTI locators (defined below)
-extern "C" u32 lbl_eu_80663870[2];
+extern "C" u32 __RTTI__Q26mpfsys18MPFDrawDisplayList[2];  // .sdata RTTI locators (defined below)
+extern "C" u32 __RTTI__Q26mpfsys7MPFDraw[2];
 extern "C" u32 lbl_eu_8056DBA0[4] = {
-    (u32)&lbl_eu_80663868, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys18MPFDrawDisplayList, 0x00000000,
     (u32)&MPFDrawBlob::deallocate__Q26mpfsys18MPFDrawDisplayListFv,
     (u32)&MPFDrawBlob::destroy__Q26mpfsys18MPFDrawDisplayListFv,
 };
 extern "C" u32 lbl_eu_8056DBB0[4] = {
-    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
 };
-extern "C" u32 lbl_eu_80663868[2] = { (u32)&lbl_eu_80523D98, (u32)&lbl_eu_8056DBB0 };
-extern "C" u32 lbl_eu_80663870[2] = { (u32)&lbl_eu_80523DB8, 0x00000000 };
+extern "C" u32 __RTTI__Q26mpfsys18MPFDrawDisplayList[2] = { (u32)&lbl_eu_80523D98, (u32)&lbl_eu_8056DBB0 };
+extern "C" u32 __RTTI__Q26mpfsys7MPFDraw[2] = { (u32)&lbl_eu_80523DB8, 0x00000000 };
 
 // Prototype instance body defined by monolibdata2 (.data, 0x10 bytes).
 struct MPFDrawProto {

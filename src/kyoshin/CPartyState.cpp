@@ -19,8 +19,7 @@ CPartyState::CPartyState()
     : mVtbl((void*)lbl_eu_805353C8),
       mFileHandle(0), mArcResAcc(0), mLayout(0),
       mAnimTrans1(0), mAnimTrans0(0),
-      field_0x28(0), field_0x2C(0), field_0x30(0), field_0x31(1) {
-    __ct__CCur22(&mCur22, 0);
+      field_0x28(0), field_0x2C(0), field_0x30(0), field_0x31(1), mCur22(nullptr) {
     field_0x4C = 0;
     field_0x4D = -1;
     field_0x4E = 0;
@@ -554,7 +553,6 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
     char buf68[0x20];
     char buf48[0x20];
     char buf28[0x20];
-    CBaseCur tmp;
     if (mFileHandle == pEventFile->mFileHandle) {
         // Set up the scratch heap region and attach the exchanged file data as
         // the nw4r layout archive, then build the layout + two animations.
@@ -619,15 +617,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         char* s9 = BdatTouchStringCell(strs + 0x1ba, strs + 0x1c4, 9);
         LayoutSetTextBoxFmtValue(mLayout, strs + 0x17b, s9, 0);
 
-        // Build the embedded cursor on the stack and copy its state into place.
-        __ct__CCur22(&tmp, mArcResAcc);
-        mCur22.mArcResAcc = tmp.mArcResAcc;
-        mCur22.mpLayout = tmp.mpLayout;
-        mCur22.mpAnimTrans0 = tmp.mpAnimTrans0;
-        mCur22.mpAnimTrans1 = tmp.mpAnimTrans1;
-        mCur22.mActive = tmp.mActive;
-        mCur22.mVisible = tmp.mVisible;
-        __dt__6CCur22Fv(&tmp, -1);
+        mCur22 = CCur22(mArcResAcc);
         reinterpret_cast<CPartyStateCur*>(&mCur22)->vfn0();
 
         refreshPartyPanel(this);

@@ -49,7 +49,7 @@ extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
     self->field_1C = 0;
     self->field_20 = 0;
     self->field_24 = 0;
-    self->field_28 = lbl_eu_8066B360;
+    self->field_28 = 0.0f;
     self->value2C = 1;
     return self;
 }
@@ -129,7 +129,7 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
     if (self->field_1C == 0) return;
     f32 scale = simGetLeafDist7B0(self->field_04);
     if (self->field_04->field_0x7A8 & 4) {
-        scale = lbl_eu_8066B364;
+        scale = 1.0f;
     }
     f32 dt = Scn_GetFrameDelta(self->field_04->field_04);
     f32 v = self->field_28 + scale * dt;
@@ -137,8 +137,8 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
     switch (self->field_20) {
     case 0:
         if (self->value2C == 1) return;
-        if (v >= lbl_eu_8066B368 || self->value2C == 2 || self->value2C == 3) {
-            self->field_28 = lbl_eu_8066B360;
+        if (v >= 10.0f || self->value2C == 2 || self->value2C == 3) {
+            self->field_28 = 0.0f;
             if (ml::math::mtRand(10) != 4 && self->value2C == 0) {
                 s32 r = ml::math::mtRand(7) + 12;
                 self->field_24 = self->field_24 + 1;
@@ -149,14 +149,14 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
         }
         break;
     case 1:
-        if (self->value2C != 3 && v >= lbl_eu_8066B36C) {
-            self->field_28 = lbl_eu_8066B360;
+        if (self->value2C != 3 && v >= 0.2f) {
+            self->field_28 = 0.0f;
             self->field_20 = self->field_20 + 1;
         }
         break;
     case 2:
-        if (v > lbl_eu_8066B36C && self->value2C != 2) {
-            self->field_28 = lbl_eu_8066B360;
+        if (v > 0.2f && self->value2C != 2) {
+            self->field_28 = 0.0f;
             self->field_20 = 0;
         }
         break;
@@ -170,20 +170,20 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
         nw4r::math::MTX34 mtx;
         if (self->field_18[i] == 0) {
             f32 ang = lbl_eu_805247E8[self->field_20];
-            mtx._00 = lbl_eu_8066B364; mtx._01 = lbl_eu_8066B360; mtx._02 = lbl_eu_8066B360;
-            mtx._03 = lbl_eu_8066B360;
-            mtx._10 = lbl_eu_8066B360; mtx._11 = lbl_eu_8066B364; mtx._12 = lbl_eu_8066B360;
+            mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
+            mtx._03 = 0.0f;
+            mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
             mtx._13 = ang;
-            mtx._20 = lbl_eu_8066B360; mtx._21 = lbl_eu_8066B360; mtx._22 = lbl_eu_8066B364;
-            mtx._23 = lbl_eu_8066B360;
+            mtx._20 = 0.0f; mtx._21 = 0.0f; mtx._22 = 1.0f;
+            mtx._23 = 0.0f;
         } else {
             f32 ang = lbl_eu_805247F4[self->field_20];
-            mtx._00 = lbl_eu_8066B364; mtx._01 = lbl_eu_8066B360; mtx._02 = lbl_eu_8066B360;
+            mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
             mtx._03 = -ang;
-            mtx._10 = lbl_eu_8066B360; mtx._11 = lbl_eu_8066B364; mtx._12 = lbl_eu_8066B360;
-            mtx._13 = lbl_eu_8066B360;
-            mtx._20 = lbl_eu_8066B360; mtx._21 = lbl_eu_8066B360; mtx._22 = lbl_eu_8066B364;
-            mtx._23 = lbl_eu_8066B360;
+            mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
+            mtx._13 = 0.0f;
+            mtx._20 = 0.0f; mtx._21 = 0.0f; mtx._22 = 1.0f;
+            mtx._23 = 0.0f;
         }
         texSrt.SetEffectMtx(0, &mtx);
         texSrt.SetEffectMtx(1, &mtx);
@@ -193,7 +193,7 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x805701D0-0x805701E0 (16B): CMdlAnmEye vtable {RTTI locator
-// lbl_eu_80663C90, 0, dtor, 0}. The class keeps virtual machinery declared in
+// __RTTI__10CMdlAnmEye, 0, dtor, 0}. The class keeps virtual machinery declared in
 // the hpp but the ctor/dtor are defined as fragments above so MWCC emits no
 // auto vtable/RTTI for the class.
 
@@ -208,12 +208,12 @@ extern const char lbl_eu_80524800[0x10] = "CMdlAnmEye";
 extern const char lbl_eu_8066B358[];
 const char* lbl_eu_80663C88 = lbl_eu_8066B358;
 extern __declspec(section ".sdata") const u32 lbl_eu_80663C8C = 0x00000000;
-extern "C" const void* lbl_eu_80663C90[2] = { (const void*)lbl_eu_80524800, 0 };
+extern "C" const void* __RTTI__10CMdlAnmEye[2] = { (const void*)lbl_eu_80524800, 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C98[4] = { 0x72,0x65,0x66,0x00 };
 extern __declspec(section ".sdata") const u32 lbl_eu_80663C9C = 0x00000000;
 // [.data] vtable.
 extern "C" u32 lbl_eu_805701D0[4] = {
-    (u32)&lbl_eu_80663C90, 0x00000000,
+    (u32)&__RTTI__10CMdlAnmEye, 0x00000000,
     (u32)&__dt__10CMdlAnmEyeFv, 0x00000000,
 };
 // Every data symbol above is referenced either by live code or by the

@@ -246,7 +246,7 @@ bool CLibLayout::wkStandbyLogin() {
         u8* pData = static_cast<u8*>(mtl::MemManager::getMaxAllocData(h));
         mRangeStart = reinterpret_cast<u32>(pData);
         mRangeEnd = mRangeStart + 0x3FFE0;
-        lbl_eu_80665478 = &mAllocator;
+        nw4r::lyt::Layout::SetAllocator(&mAllocator);
         return CWorkThread::wkStandbyLogin();
     }
     return false;
@@ -351,7 +351,7 @@ u32 lbl_eu_8066571C;
 // Forward decls (definition order follows the retail address order).
 // Global-scope variables are not C++-mangled, so plain extern decls emit the
 // exact retail lbl_eu_* symbols (no extern "C" needed).
-extern u32 lbl_eu_806637D8[2];           // [.sdata] RTTI locator
+extern u32 __RTTI__10CLibLayout[2];           // [.sdata] RTTI locator
 extern const char lbl_eu_805231B0[0xC]; // [.rodata] "CLibLayout" name
 // The base typeinfo objects are declared inside a namespace: at global scope
 // MWCC 10322 ("illegal name overloading") rejects the __RTTI__* spelling in
@@ -366,7 +366,7 @@ extern "C" void* __RTTI__11CWorkThread;
 // [.data] 0x8056D350-0x8056D3F0 (0xA0): __vt__10CLibLayout. Base class
 // CWorkThread is novtable in retail, so the vtable/RTTI are all manual.
 u32 lbl_eu_8056D350[40] = {
-    (u32)&lbl_eu_806637D8, 0x00000000, (u32)&__dt__10CLibLayoutFv,
+    (u32)&__RTTI__10CLibLayout, 0x00000000, (u32)&__dt__10CLibLayoutFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,
@@ -395,7 +395,7 @@ u32 lbl_eu_8056D3F0[6] = {
     0x00000000, 0x00000000, 0x00000000,
 };
 // [.sdata] 0x806637D8-0x806637E0 (0x8): __RTTI__10CLibLayout locator.
-u32 lbl_eu_806637D8[2] = { (u32)&lbl_eu_805231B0, (u32)&lbl_eu_8056D3F0 };
+u32 __RTTI__10CLibLayout[2] = { (u32)&lbl_eu_805231B0, (u32)&lbl_eu_8056D3F0 };
 
 // [.rodata] 0x805231B0-0x805231BC (0xC): "CLibLayout" RTTI name string + pad.
 // NOTE: no __declspec(align(8)) here -- retail emits this 0xB-byte string

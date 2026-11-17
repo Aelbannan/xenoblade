@@ -72,7 +72,7 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Pane* unk48; // +0x48: "Txt_Dr"
     nw4r::lyt::Pane* unk4C; // +0x4C: "Txt_LvNum"
     nw4r::lyt::Pane* unk50; // +0x50: "N_HpGauge"
-    nw4r::lyt::Pane* unk54; // +0x54: "N_HpGauge_Max"
+    nw4r::lyt::Pane* mField54; // +0x54: "N_HpGauge_Max"
     nw4r::lyt::Pane* unk58; // +0x58: "N_Tension"
     nw4r::lyt::Pane* unk5C; // +0x5C: "N_Tension_Gauge"
     nw4r::lyt::Pane* unk60; // +0x60: "N_PartyOn"
@@ -122,14 +122,14 @@ struct CMenuBattlePlayerStateSlot {
 };
 
 // IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4.
-class CMenuBattlePlayerStateBase : public IUICf {
-public:
-    u8 unk54; // 0x54
-    u8 unk55; // 0x55
-    u8 pad56[2];
-};
 
-class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
+
+
+
+
+
+
+class CMenuBattlePlayerState : public IUICf,
                                public IWorkEvent,
                                public IScnRender {
 public:

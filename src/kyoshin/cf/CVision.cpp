@@ -16,8 +16,8 @@ namespace cf { class CfGameManager; }
 // getPlayer__Q22cf13CfGameManagerFi needs no guard: all headers in this
 // TU's chain now share the extern "C" void*(int) form (CfObjectImplMove.hpp
 // was converted from C++ linkage).
-// Shield-clearing note (H3): the enum-list helper family (CTaskGame_enumListCtor /
-// CTaskGame_enumListGet / getObjectAt / __dt__80043E88 / startEnumObjects) carries
+// Shield-clearing note (H3): the enum-list helper family (__ct__16CfEnumListHolderFv /
+// get__16CfEnumListHolderFv / getObjectAt / __dt__16CfEnumListHolderFv / startEnumObjects) carries
 // ONE identical extern "C" void* form on every header in this TU's include
 // chain now -- CAIAction.hpp, CVision.hpp and CfObjectImplMove.hpp all agree
 // (return types, parameter lists and linkage) -- so the former
@@ -78,6 +78,7 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 // CBattleManager.hpp pulls CfObjectActor.hpp; its declarations of the
 // enum-list family and MapFx_ResolveOwner/CfCode_GetSubObject no longer diverge from
@@ -89,16 +90,13 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // The explicit extern "C" declarations below stay: they are identical
 // duplicates of the chain-header forms (legal redeclaration) and act as
 // this TU's visible import anchors.
-// Removed here: #undef MapFx_ResolveOwner, #undef CfCode_GetSubObject, #undef CTaskGame_enumListCtor,
-// #undef CTaskGame_enumListGet, #undef getObjectAt, #undef __dt__80043E88, #undef startEnumObjects.
+// Removed here: #undef MapFx_ResolveOwner, #undef CfCode_GetSubObject, #undef __ct__16CfEnumListHolderFv,
+// #undef get__16CfEnumListHolderFv, #undef getObjectAt, #undef __dt__16CfEnumListHolderFv, #undef startEnumObjects.
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
 #undef CBattleMan_FetchVisionObj // active since line 4 (CfObjectActor.hpp); CVision.hpp:633 was renamed too
 extern "C" void* CBattleMan_FetchVisionObj(void* self); // retail C decl
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern "C" void CTaskGame_enumListCtor(void* list);
-extern "C" void* CTaskGame_enumListGet(void* list);
-extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
@@ -147,7 +145,6 @@ extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D54 = 0.1f;
 // Unsigned int->float magic (2^52 = 4503599627370496.0).
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D58 = 4503599627370496.0;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D60 = 1.0f;
 
 // Most C-linkage pseudo-imports for this TU now live in the "C-linkage
 // imports" section of kyoshin/cf/CVision.hpp (real imports). The few kept
@@ -425,6 +422,7 @@ struct CVisionFusion {
 
 extern "C" u32 lbl_eu_805332D0[];
 
+
 extern "C" void __ct__Q22cf7CVisionFv(cf::CVision* self) {
     // novtable class: store the retail vtable manually (MWCC's auto store
     // resolves to the IObjectInfo base vtable -> reloc name drift).
@@ -531,6 +529,8 @@ extern "C" void __ct__Q22cf7CVisionFv(cf::CVision* self) {
     self->field_261A0 = f194;
     __ptmf_test(&cb);
 }
+
+
 // ---------------------------------------------------------------------------
 // us-801a4acc: CVisionSlot constructor (retail __ct__801A33AC).
 // Each 0x4818-byte vision slot carries a CBattleState, two resetMapMarker
@@ -655,6 +655,59 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
     return self;
 }
 
+
+
+// ---------------------------------------------------------------------------
+// us-801a4df0: UnkClass_801A36D0 deleting destructor (__dt__801A36D0).
+// Clears the sub-object at +0x3d8c (fields at +0x3f90/+0x3f94), then frees.
+// ---------------------------------------------------------------------------
+extern "C" void* __dt__801A36D0(UnkClass_801A36D0* self, int deleting) {
+    if (self != 0) {
+        if ((char*)self + 0x3d8c != 0) {
+            *(u32*)((char*)self + 0x3f94) = 0;
+            *(u32*)((char*)self + 0x3f90) = 0;
+        }
+        if (deleting > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a4e48: UnkClass_801A3728 deleting destructor (__dt__801A3728).
+// Clears field_68/field_64, then frees when the deleting flag is set.
+// ---------------------------------------------------------------------------
+extern "C" void* __dt__801A3728(UnkClass_801A3728* self, int deleting) {
+    if (self != 0) {
+        self->field_68 = 0;
+        self->field_64 = 0;
+        if (deleting > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
+
+
+
+cf::CVision::~CVision() {
+    *(u32**)this = lbl_eu_805332D0;
+    vt_34();
+    if (&this->unk261C4 != NULL) {
+        this->unk261C4.field_68 = 0;
+        this->unk261C4.field_64 = 0;
+    }
+    __destroy_arr(&this->unk20D4[0],
+                  reinterpret_cast<ConstructorDestructor*>(
+                      const_cast<void*>(reinterpret_cast<const void*>(&__dt__801A36D0))),
+                  sizeof(CVisionSlot), 8);
+}
+
+
+
 // ---------------------------------------------------------------------------
 // us-801a4f2c: Initialise all vision slots / effects (retail initVisionSlots).
 // Retail keeps self+0x20000 hoisted into a saved GPR for the tail fields and
@@ -760,6 +813,8 @@ extern "C" void initVisionSlots(CVision* self) {
         s = c + 1;
     }
 }
+
+
 
 // ---------------------------------------------------------------------------
 // us-801a50f8: Drive the vision-slot FX update loop from the ring element
@@ -879,6 +934,8 @@ extern "C" void driveVisionRingFx(CVision* self) {
     }
 }
 
+
+
 extern "C" void openVisionPairEngage(CVision* self) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
@@ -939,25 +996,24 @@ extern "C" void openVisionPairEngage(CVision* self) {
         w4 = 0;
     }
     if (w4) {
-        u8 vdlist[8];
-        CTaskGame_enumListCtor(vdlist);
-        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
-        u32 i = 0;
-        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-            void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-            if (obj == 0) {
-                self->vt_20(1);
-                __dt__80043E88(vdlist, -1);
-                return;
+        {
+            CfEnumListHolder vdlist;
+            startEnumObjects(vdlist.get(), 0x328, 0);
+            u32 i = 0;
+            while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
+                void* elem = getObjectAt(vdlist.get(), i);
+                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                if (obj == 0) {
+                    self->vt_20(1);
+                    return;
+                }
+                u32 id = *(u32*)((u8*)obj + 0x74);
+                if (id != sub->field_00 && id != sub->field_04) {
+                    ((void (*)(void*, u32))(*(void***)obj)[0x190 / 4])(obj, 1);
+                }
+                i++;
             }
-            u32 id = *(u32*)((u8*)obj + 0x74);
-            if (id != sub->field_00 && id != sub->field_04) {
-                ((void (*)(void*, u32))(*(void***)obj)[0x190 / 4])(obj, 1);
-            }
-            i++;
         }
-        __dt__80043E88(vdlist, -1);
         if (getGlobalSda() != 0) {
             getGlobalSda()[0xa8] = 1;
         }
@@ -979,6 +1035,8 @@ extern "C" void openVisionPairEngage(CVision* self) {
         self->vt_1C();
     }
 }
+
+
 
 // ---------------------------------------------------------------------------
 // us-801a5c98: Per-player vision callback management (retail manageVisionPlayerCallbacks).
@@ -1067,6 +1125,8 @@ extern "C" void manageVisionPlayerCallbacks(CVision* self) {
     }
 }
 
+
+
 extern "C" void openVisionForPairs(CVision* self) {
     CVisionFusion* p2 = 0;
     CVisionFusion* p1 = 0;
@@ -1129,25 +1189,24 @@ extern "C" void openVisionForPairs(CVision* self) {
         w4 = 0;
     }
     if (w4) {
-        u8 vdlist[8];
-        CTaskGame_enumListCtor(vdlist);
-        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0x1);
-        u32 i = 0;
-        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-            void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-            if (obj == 0) {
-                self->vt_20(1);
-                __dt__80043E88(vdlist, -1);
-                return;
+        {
+            CfEnumListHolder vdlist;
+            startEnumObjects(vdlist.get(), 0x328, 0x1);
+            u32 i = 0;
+            while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
+                void* elem = getObjectAt(vdlist.get(), i);
+                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                if (obj == 0) {
+                    self->vt_20(1);
+                    return;
+                }
+                u32 id = *(u32*)((u8*)obj + 0x74);
+                if (sub->field_00 != id && sub->field_04 != id) {
+                    ((CVisionEnumElem*)obj)->vf190(1);
+                }
+                i++;
             }
-            u32 id = *(u32*)((u8*)obj + 0x74);
-            if (sub->field_00 != id && sub->field_04 != id) {
-                ((CVisionEnumElem*)obj)->vf190(1);
-            }
-            i++;
         }
-        __dt__80043E88(vdlist, -1);
         if (getGlobalSda() != 0) {
             u8* sda = getGlobalSda();
             sda[0xa8] = 1;
@@ -1181,6 +1240,8 @@ extern "C" void openVisionForPairs(CVision* self) {
     }
 }
 
+
+
 extern "C" void runVisionIdleWindows(CVision* self) {
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
@@ -1212,6 +1273,8 @@ extern "C" void runVisionIdleWindows(CVision* self) {
         self->vt_20(0);
     }
 }
+
+
 
 extern "C" void resumeVisionFromFader(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
@@ -1309,6 +1372,8 @@ extern "C" void resumeVisionFromFader(CVision* self) {
     }
 }
 
+
+
 // ---------------------------------------------------------------------------
 // us-801a678c: Second-fusion vision check. When the fusion's 0x2 flag is up,
 // cancel vision if the remaining time is short, then run the D08/CE4 timer
@@ -1387,6 +1452,21 @@ extern "C" void checkSecondFusionVision(CVision* self) {
     }
 }
 
+
+// Parameter objects traversed by gateVisionByFusionParam via the fusion vtable.
+class CVisionPrmHolder {
+public:
+    u8 unk0[0x50];
+    CVisionPrm* field_50;   // 0x50
+};
+
+class CVisionPrm {
+public:
+    u8 unk0[0x44];
+    u8 b_44;                // 0x44 (retail lbz: unsigned byte)
+};
+
+
 extern "C" void func_801A5260(CVision* self) {
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
@@ -1420,6 +1500,8 @@ extern "C" void func_801A5260(CVision* self) {
     }
 }
 
+
+
 extern "C" void runVisionTierWindows(CVision* self) {
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
@@ -1446,6 +1528,8 @@ extern "C" void runVisionTierWindows(CVision* self) {
         self->vt_1C();
     }
 }
+
+
 
 // us-801a6b64: Match the vision sub-object's model against `obj`; when it
 // matches one of the callback identities, install the associated vision FX
@@ -1590,18 +1674,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
     __ptmf_test(&cb);
 }
 
-// Parameter objects traversed by gateVisionByFusionParam via the fusion vtable.
-class CVisionPrmHolder {
-public:
-    u8 unk0[0x50];
-    CVisionPrm* field_50;   // 0x50
-};
 
-class CVisionPrm {
-public:
-    u8 unk0[0x44];
-    u8 b_44;                // 0x44 (retail lbz: unsigned byte)
-};
 
 extern "C" void gateVisionByFusionParam(CVision* self) {
     // Reverse-declaration coloring (see forwardVisionShowRequests): the parameter is
@@ -1715,6 +1788,8 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
     }
 }
 
+
+
 // ---------------------------------------------------------------------------
 // us-801a7578: When the vision field is active, ask each player's battle
 // state whether it should show, and forward it to CUICfManager_queueFactoryMenu (retail
@@ -1800,6 +1875,9 @@ extern "C" void forwardVisionShowRequests(CVision* self) {
     }
 }
 
+
+
+
 extern "C" void runVisionResetWindows(CVision* self) {
     // Retail hoists the first threshold into an FPR before anything else.
     f32 t1 = lbl_eu_80667CD4;
@@ -1825,24 +1903,23 @@ extern "C" void runVisionResetWindows(CVision* self) {
         w2 = 0;
     }
     if (w2) {
-        u8 vdlist[8];
-        CTaskGame_enumListCtor(vdlist);
-        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
-        // Flag every matching player object; bail out with vt_20(1) if the
-        // cast fails mid-iteration.
-        u32 i = 0;
-        while (i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620)) {
-            void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-            void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-            if (obj == 0) {
-                self->vt_20(1);
-                __dt__80043E88(vdlist, -1);
-                return;
+        {
+            CfEnumListHolder vdlist;
+            startEnumObjects(vdlist.get(), 0x328, 0);
+            // Flag every matching player object; bail out with vt_20(1) if the
+            // cast fails mid-iteration.
+            u32 i = 0;
+            while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
+                void* elem = getObjectAt(vdlist.get(), i);
+                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                if (obj == 0) {
+                    self->vt_20(1);
+                    return;
+                }
+                ((void (*)(void*, u32))((void**)obj)[0x190 / 4])(obj, 0);
+                i++;
             }
-            ((void (*)(void*, u32))((void**)obj)[0x190 / 4])(obj, 0);
-            i++;
         }
-        __dt__80043E88(vdlist, -1);
         if (getGlobalSda() != 0) {
             getGlobalSda()[0xa8] = 0;
         }
@@ -1873,6 +1950,8 @@ extern "C" void runVisionResetWindows(CVision* self) {
         __ptmf_test(&cb);
     }
 }
+
+
 
 extern "C" void evalVisionTrigger(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
@@ -1913,6 +1992,1050 @@ extern "C" void evalVisionTrigger(CVision* self) {
         self->vt_1C();
     }
 }
+
+
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a7c18: Release the zero/zero slot of the battle manager's vision
+// sub-object (retail pollVisionSlots).
+// ---------------------------------------------------------------------------
+extern "C" void pollVisionSlots() {
+    if (CBattleManager::getInstance() &&
+        &CBattleManager::getInstance()->mVision) {
+        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, (void*)0, (void*)0);
+    }
+}
+
+
+
+// us-801a7c60: Manage vision FX on the sub-object. When the fade timer is at
+// baseline (field_2619C == 0) only the D48 release-window check runs;
+// otherwise the FX setup path drives the fusion's parameter block and either
+// finishes immediately (B8BC == 0) or programs the battle object state and
+// queues ring events 1..5 before falling into the same window check.
+extern "C" void driveSubVisionFx(CVision* self) {
+    CVisionSub* sub = (self->sub.field_00 != 0) ? &self->sub : 0;
+    if (sub == 0) {
+        self->vt_20(1);
+        return;
+    }
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+    if (fu == 0) {
+        self->vt_20(1);
+        return;
+    }
+
+    if (lbl_eu_80667CD4 != self->field_2619C) {
+        // Setup path: begin driving the FX on the fusion parameter block.
+        refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CD4, 0x13);
+        sub->field_824 |= 0x100000;
+        aiRebootAction(&((CVisionFusion*)fu)->field_3380);
+        CVisionFxParam p;
+        memset(&p.mid, 0, sizeof(p.mid));
+        memset(&p, 0, sizeof(p));
+        if (sub->field_0C != 0) {
+            p.mid.b_0D = 0x5a;
+            p.h_12 = *((u8*)sub->field_0C + 0x77);
+        } else {
+            p.mid.b_0D = 0xd;
+            p.h_12 = -1;
+        }
+        p.f_14 = lbl_eu_80667CD4;
+        p.mid.h_10 = 0;
+        p.mid.b_06 = 6;
+        aiRingPrepend(&((CVisionFusion*)fu)->field_3380, &p);
+        CfObjectMove_setAnimModeArgs((u8*)fu + 0x3e9c, 1, 0, -1, 1);
+        if (aiFetchAction(&((CVisionFusion*)fu)->field_3380, &p) == 0) {
+            aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
+            refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
+            // Install the lbl_eu_805331E8 callback with the fader fields reset.
+            CVisionPtmf cb;
+            cb.mPfn = lbl_eu_805331E8[0];
+            cb.mObj = lbl_eu_805331E8[1];
+            cb.mDelta = lbl_eu_805331E8[2];
+            f32 f_6194 = self->field_26194;
+            f32 f_cd4 = lbl_eu_80667CD4;
+            self->mPtmf.mPfn = cb.mPfn;
+            self->mPtmf.mObj = cb.mObj;
+            self->mPtmf.mDelta = cb.mDelta;
+            self->field_2619C = f_cd4;
+            self->field_261A0 = f_6194;
+            __ptmf_test(&cb);
+            return;
+        }
+
+        // Program the battle object from the filled-in parameter block.
+        fu->vf298()->w_04 = p.w_00;
+        fu->vf298()->w_50 = (u32)p.obj18;
+        fu->vf298()->w_74pair[1] &= ~0xC00u;
+        if (p.obj18->field_78 & 1) {
+            fu->vf298()->w_74pair[1] |= 0x40000000 | 0x800;
+        } else {
+            fu->vf298()->w_74pair[1] |= 0x40000000 | 0x400;
+        }
+        sub->field_04 = p.w_00;
+        sub->field_0C = p.obj18;
+
+        aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
+        u32 outC;
+        u32 out8;
+        previewBattleDamage(CBattleManager::getInstance(), sub, fu, &outC, &out8);
+        sub->field_830 = lbl_eu_80667CD4;
+
+        // Queue FX events 1..5 on the vision ring at step-increasing times.
+        // The time accumulator deliberately lives across the isVisionSlotAnimating
+        // call (retail keeps it in f31).
+        f32 t = lbl_eu_80667CE4;
+        if (isVisionSlotAnimating(1) == 0) {
+            // Build the five ring events (ids 1..5 at step-increasing times),
+            // then enqueue them; MWCC fuses the two loops. Ring fields are
+            // reached as far-offset CVision members (retail emits a fresh
+            // addis/lwz pair per access, no cached base pointer).
+            CVisionU32F32U32 ev[5];
+            int k;
+            for (k = 0; k < 5; k++) {
+                ev[k].a = k + 1;
+                ev[k].b = t;
+                ev[k].c = 0;
+                t += lbl_eu_80667CD4;
+            }
+            for (k = 0; k < 5; k++) {
+                CVisionU32F32U32* el = &self->unk261C4.arr[
+                    (self->unk261C4.field_64 + self->unk261C4.field_68) % self->unk261C4.w6C];
+                *el = ev[k];
+                self->unk261C4.field_68 = self->unk261C4.field_68 + 1;
+            }
+        }
+    }
+
+    // Release window check shared by the baseline path and post-setup.
+    int w;
+    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D48 &&
+        lbl_eu_80667D48 < self->field_26194 - self->field_261A0) {
+        w = 1;
+    } else {
+        w = 0;
+    }
+    if (w) {
+        refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
+        // Install the lbl_eu_805331F4 callback with the fader fields reset.
+        CVisionPtmf cb;
+        cb.mPfn = lbl_eu_805331F4[0];
+        cb.mObj = lbl_eu_805331F4[1];
+        cb.mDelta = lbl_eu_805331F4[2];
+        f32 f_6194 = self->field_26194;
+        f32 f_cd4 = lbl_eu_80667CD4;
+        self->mPtmf.mPfn = cb.mPfn;
+        self->mPtmf.mObj = cb.mObj;
+        self->mPtmf.mDelta = cb.mDelta;
+        self->field_2619C = f_cd4;
+        self->field_261A0 = f_6194;
+        __ptmf_test(&cb);
+    }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a819c: Validate a battle object / slot and, when it passes, install
+// the state-change callback (retail installVisionStateCallback).
+// ---------------------------------------------------------------------------
+extern "C" int installVisionStateCallback(CVision* self, CVisionObj* obj) {
+    if (__ptmf_test(&self->mPtmf) == 0) {
+        return 0;
+    }
+    if ((obj->field_3F00 & 0x4) == 0) {
+        return 0;
+    }
+    CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
+    if (sub == 0) {
+        return 0;
+    }
+    if (obj->field_3F10 != sub->field_00) {
+        return 0;
+    }
+    if (isBattleStatusActive(&obj->field_08, 0x113) == 0 &&
+        isBattleStatusActive(&obj->field_08, 0x114) == 0 &&
+        isBattleStatusActive(&obj->field_08, 0x115) == 0) {
+        return 0;
+    }
+    if ((sub->field_824 & 0x4000) == 0) {
+        return 0;
+    }
+    CVisionPtmf cb;
+    u32* src = lbl_eu_80533200;
+    u32 t1 = *src++;
+    u32 t2 = *src++;
+    u32 dlt = *src++;
+    cb.mPfn = t1;
+    cb.mObj = t2;
+    cb.mDelta = dlt;
+    f32 f_6194 = self->field_26194;
+    f32 f_cd4 = lbl_eu_80667CD4;
+    self->mPtmf.mPfn = t1;
+    self->mPtmf.mObj = t2;
+    self->mPtmf.mDelta = cb.mDelta;
+    self->field_2619C = f_cd4;
+    self->field_261A0 = f_6194;
+    __ptmf_test(&cb);
+    return 1;
+}
+
+
+
+// us-801a82ec: Guard chain deciding whether a vision cutscene may engage on
+// `obj` (with `r5` supplying the target actor), then HP/damage timing checks
+// and the vision-callback install via vt_14. Returns 1 on success.
+extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* targetObj) {
+    if ((obj->field_3F00 & 0x4) == 0) {
+        return 0;
+    }
+    if (obj->vt2BC() != 0) {
+        return 0;
+    }
+    if (getAnimGate() != 0) {
+        return 0;
+    }
+    u32 nc = *((u8*)CBattleManager::getInstance() + 0x1aa);
+    // Bitwise AND of bools keeps the closest-to-retail two-compare shape.
+    bool hi = nc <= 0x18;
+    bool outOfRange = (nc >= 1) & hi;
+    if (outOfRange) {
+        return 0;
+    }
+    if (*(s16*)((u8*)CBattleManager::getInstance() + 0x20c8) != 0) {
+        return 0;
+    }
+    getInstance__Q22cf13CfGameManagerFv();
+    if (isGlobalCamFlagSet__Fi(0x40000)) {
+        return 0;
+    }
+    getInstance__Q22cf13CfGameManagerFv();
+    if (CfRes_getE24Bit22() != 0) {
+        return 0;
+    }
+    getInstance__Q22cf13CfGameManagerFv();
+    if (isGlobalCamFlagSet__Fi(0x200) != 0) {
+        return 0;
+    }
+    if (CBattleManager::getInstance()->CheckUnk84Flag(0x200) != 0) {
+        return 0;
+    }
+    if (GetItemMulti_IsActiveFlag() != 0) {
+        return 0;
+    }
+
+    // Active-callback gate: retail normalizes each runtime-helper result via
+    // '!' (cntlzw), and rejects only callbacks matching NEITHER known identity.
+    CVisionPtmf cur = self->mPtmf;
+    if (!__ptmf_test(&cur)) {
+        // No callback installed: proceed.
+    } else {
+        CVisionPtmf t1;
+        u32* src1 = lbl_eu_8053320C;
+        u32 s11 = *src1++;
+        u32 s12 = *src1++;
+        u32 s13 = *src1++;
+        t1.mPfn = s11;
+        t1.mObj = s12;
+        t1.mDelta = s13;
+        if (!__ptmf_cmpr(&self->mPtmf, &t1)) {
+            // lbl_eu_8053320C identity: allowed.
+        } else {
+            CVisionPtmf t2;
+            u32* src2 = lbl_eu_80533218;
+            u32 s21 = *src2++;
+            u32 s22 = *src2++;
+            u32 s23 = *src2++;
+            t2.mPfn = s21;
+            t2.mObj = s22;
+            t2.mDelta = s23;
+            if (!__ptmf_cmpr(&self->mPtmf, &t2)) {
+                // lbl_eu_80533218 terminal identity: allowed.
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    // Target fusion from `r5` (+4 id, +0x50 actor requirement).
+    CVisionActor50* actor = targetObj->field_50;
+    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById__Fi(targetObj->field_04));
+    if (target == NULL || actor == NULL) {
+        return 0;
+    }
+    if (MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)) == NULL) {
+        return 0;
+    }
+
+    int engage = 0;
+    if (CBattleManager::getInstance()->CheckUnk84Flag(0x100) == 0) {
+        // Movie/dialogue mode gates: the pending-event id must be clear and the
+        // current event must be an accepted type (or the damage preview failed).
+        if (CtrlRemote_TouchBitByArg(0x335e) != 0) {
+            return 0;
+        }
+        s32 mode = CtrlRemote_TouchBitByArg(0x20);
+        f32 outDamage;
+        u32 outCount;
+        s32 ok = CtrlObjectParam_FindSlotTypeIndex(CtrlObjectParam_GetSlotTableBase(), 1, (int*)&outDamage, (int*)&outCount);
+        if (ok == 0 && mode != 0x166) {
+            return 0;
+        }
+        void* row = CtrlObjectParam_GetCharEntry(1);
+        if (CtrlObjectParam_GetRowColumnByte(row) != 0) {
+            return 0;
+        }
+        if (mode <= 0x1f) {
+            return 0;
+        }
+        if (mode > 0x16a && mode < 0x178) {
+            return 0;
+        }
+    } else {
+        if (actor->field_3C != 0) {
+            return 0;
+        }
+    }
+
+    // Cancel while the target's remaining-HP delta falls below the threshold.
+    if (target->field_3F00 & 0x2) {
+        bool cancel;
+        if (target == NULL || target->field_3F60 == NULL) {
+            cancel = true;
+        } else {
+            f32 f_ret = *(f32*)((u8*)target->emb.vfAC() + 4);
+            f32 diff = target->field_3F60->f_3E8 - f_ret;
+            cancel = diff < lbl_eu_80667CD0;
+        }
+        if (cancel) {
+            return 0;
+        }
+    }
+
+    if ((actor->field_78 & 0x1000) != 0) {
+        engage = 1;
+    } else if (CBattleManager::getInstance()->CheckUnk84Flag(0x100) != 0) {
+        engage = 1;
+    } else {
+        // The active vision slot (if any) must already hold this model id.
+        CVisionSub* active = self->sub.field_00 != 0 ? &self->sub : NULL;
+        if (active != NULL && active->field_00 == obj->field_3F10) {
+            engage = 1;
+        }
+    }
+
+    // Damage timing: engage when incoming damage would exceed max HP or drop
+    // the HP fraction below the lbl_eu_80667D4C threshold.
+    if (obj != (CVisionObjV*)target) {
+        f32 total = lbl_eu_80667CD4;
+        u32 hits = 0;
+        CBattleManager_preCalcTotalDamage(getInstance__Q22cf14CBattleManagerFv(), obj, &total, &hits);
+        if (hits != 0 && total > lbl_eu_80667CD4) {
+            f32 hpMax = target->vt128();
+            if (total >= hpMax) {
+                engage = 1;
+            }
+            f32 hpDen = target->vt12C();
+            f32 hpCur = target->vt128();
+            f32 frac = (hpCur - total) / hpDen;
+            if (frac <= lbl_eu_80667D4C) {
+                engage = 1;
+            }
+        }
+    }
+    if (engage != 0) {
+        if (self->func_801A5444(obj, target) == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+
+
+extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
+    if (obj == 0) {
+        self->vt_20(1);
+        return 0;
+    }
+    CVisionObj* o = (CVisionObj*)obj;
+    CVisionSubRef* eff = *(CVisionSubRef**)((u8*)obj + 0x3e74);
+    if (eff == 0) {
+        self->vt_20(1);
+        return 0;
+    }
+    // Active vision slot (or none): if one exists it must either be fading
+    // out (0x8000) or already own this model id.
+    CVisionSub* sub;
+    if (self->sub.field_00 == 0) {
+        sub = 0;
+    } else {
+        sub = &self->sub;
+    }
+    if (sub != 0) {
+        if (eff->field_78 & 0x8000) {
+            self->vt_1C();
+        } else if (sub->field_00 != o->field_3F10) {
+            return 0;
+        }
+    }
+    if (sub == 0) {
+        // Claim a free slot. A slot already holding this id cancels instead.
+        // The scans walk a cursor anchored at `self' (id sits at +0x04) while
+        // the hit is materialised from the live index.
+        u32 want = o->field_3F10;
+        CVisionSub* dup;
+        if (want == 0) {
+            dup = 0;
+        } else {
+            CVisionSlotScan* walk = (CVisionSlotScan*)self;
+            int i = 0;
+            while (1) {
+                if (walk->id == want) {
+                    dup = &self->sub + i;
+                    break;
+                }
+                walk++;
+                i++;
+                if (i == 4) {
+                    dup = 0;
+                    break;
+                }
+            }
+        }
+        if (dup != 0) {
+            sub = 0;
+        } else {
+            CVisionSlotScan* walk = (CVisionSlotScan*)self;
+            int j = 0;
+            while (1) {
+                if (walk->id == 0) {
+                    sub = &self->sub + j;
+                    break;
+                }
+                walk++;
+                j++;
+                if (j == 4) {
+                    sub = 0;
+                    break;
+                }
+            }
+        }    }
+    if (sub == 0) {
+        return 0;
+    }
+    // Remaining-vision ratio; zero denominator means the full default.
+    f32 denom = eff->field_2C;
+    f32 ratio;
+    if (denom == lbl_eu_80667CD4) {
+        ratio = lbl_eu_80667CD8;
+    } else {
+        ratio = eff->field_7C / denom;
+    }
+    if (lbl_eu_80667CD4 == ratio) {
+        return 0;
+    }
+    ScMain_Reset(sub);
+    sub->field_00 = o->field_3F10;
+    sub->field_04 = ((CVisionObj*)obj2)->field_3F10;
+    sub->field_0C = eff;
+    if (eff->field_78 & 0x8000) {
+        sub->field_824 |= 0x20000;
+        CtrlRemote_SetSharedBit(0x30e3, 0);
+        UIWin_BuildFlagBuf(0x375);
+        UIWin_FlagBufClear();
+    }
+    if (o->field_3F00 & 0x4) {
+        u16 h = o->field_3F28;
+        if (h == 0x967 || h == 0x96b || h == 0x96c || h == 0x969) {
+            sub->field_824 |= 0x40000;
+        }
+    }
+    eff->field_7C = eff->field_2C;
+    Vision_CopyEngageActor(obj, (u8*)self + 0x20d4);
+    if (obj2 != 0 && obj2 != obj) {
+        Vision_CopyEngageActor(obj2, (u8*)self + 0x68ec);
+    }
+    // Clear the engaged flag on every other battle actor and refresh its
+    // per-slot vision parameter block.
+    {
+        CfEnumListHolder vdlist;
+        startEnumObjects(vdlist.get(), 0x20, 0);
+        for (u32 i = 0; i < ((CVisionEnumList*)vdlist.get())->count; i++) {
+            void* elem = getObjectAt(vdlist.get(), i);
+            void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+            if (actor != obj && actor != obj2) {
+                CVisionActor3388* a = (CVisionActor3388*)actor;
+                a->field_3388 &= ~0x8u;
+                Vision_CopyEngageActor(actor, (u8*)self + i * 0x4818 + 0xB104);
+            }
+        }
+    }
+    eff->field_7C = lbl_eu_80667D10;
+    self->field_26194 = lbl_eu_80667CD4;
+    self->field_26198 = lbl_eu_80667CD4;
+    lbl_eu_80663DA0 |= 0x1;
+    lbl_eu_80663E24 |= 0x400;
+    CCharVoiceMan_PushFreshSoundNode(obj, obj2);
+    // Install the fade-in / fade-out resume callback depending on the
+    // auto-vision flag captured above.
+    if (sub->field_824 & 0x40000) {
+        CVisionPtmf cb;
+        u32* src = lbl_eu_80533224;
+        cb.mPfn = *src++;
+        cb.mObj = *src++;
+        cb.mDelta = *src;
+        f32 f194 = self->field_26194;
+        self->mPtmf.mPfn = cb.mPfn;
+        self->mPtmf.mObj = cb.mObj;
+        self->mPtmf.mDelta = cb.mDelta;
+        self->field_2619C = lbl_eu_80667CD4;
+        self->field_261A0 = f194;
+        __ptmf_test(&cb);
+    } else {
+        CVisionPtmf cb;
+        u32* src = lbl_eu_80533230;
+        cb.mPfn = *src++;
+        cb.mObj = *src++;
+        cb.mDelta = *src;
+        f32 f194 = self->field_26194;
+        self->mPtmf.mPfn = cb.mPfn;
+        self->mPtmf.mObj = cb.mObj;
+        self->mPtmf.mDelta = cb.mDelta;
+        self->field_2619C = lbl_eu_80667CD4;
+        self->field_261A0 = f194;
+        __ptmf_test(&cb);
+    }
+    return 1;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a8c10: Vision state check. If the installed callback matches the
+// 0x114 table entry, clear the vision field; otherwise branch on the 0x120
+// entry (retail checkVisionCallbackState).
+// ---------------------------------------------------------------------------
+extern "C" void checkVisionCallbackState(CVision* self) {
+    u32* tbl = &lbl_eu_80533128[0];
+    CVisionPtmf cb114;
+    cb114.mPfn = tbl[0x45];
+    cb114.mObj = tbl[0x46];
+    cb114.mDelta = tbl[0x47];
+    if (__ptmf_cmpr(&self->mPtmf, &cb114) != 0) {
+        // Not the 0x114 entry: branch on the 0x120 entry.
+        CVisionPtmf cb120;
+        cb120.mPfn = tbl[0x48];
+        cb120.mObj = tbl[0x49];
+        cb120.mDelta = tbl[0x4A];
+        if (__ptmf_cmpr(&self->mPtmf, &cb120) == 0) {
+            self->vt_20(0);
+        } else {
+            self->vt_20(1);
+        }
+        return;
+    }
+    // 0x114 entry matched: clear the vision field.
+    self->field_26194 = lbl_eu_80667CD4;
+        // Clear the two global state bytes/words (bit-range masks).
+        u8 da0 = lbl_eu_80663DA0;
+        lbl_eu_80663DA0 = da0 & 0x7E;
+        u32 e24 = lbl_eu_80663E24;
+        lbl_eu_80663E24 = e24 & 0xFBFFFFFF;
+        CVisionSub* sub;
+        if (self->sub.field_00 == 0) {
+            sub = 0;
+        } else {
+            sub = &self->sub;
+        }
+        if (sub->field_824 & 0x20000) {
+            CtrlRemote_SetSharedBit(0x30e3, 1);
+        }
+        // Per-player: the fusion-state query runs twice (test then fetch);
+        // the stat is passed as a plain float through the NAMED 0x4330
+        // double magic lbl_eu_80667D28 (union keeps MWCC from emitting a
+        // TU-local @N pool copy of the magic).
+        int i = 0;
+        do {
+            void* p = MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
+            if (p != 0) {
+                if (((s32 (*)(void*))((void**)p)[0x290 / 4])(p) != 0) {
+                    void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
+                    s32 out;
+                    if (IdTable_GetSum(r, 0x39, &out) != 0) {
+                        union {
+                            u32 w[2];
+                            double d;
+                        } convOut;
+                        convOut.w[0] = 0x43300000u;
+                        convOut.w[1] = (u32)out ^ 0x80000000u;
+                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(convOut.d - lbl_eu_80667D28));
+                    }
+                }
+            }
+            i++;
+        } while (i < 3);
+        CVisionPtmf cb;
+        cb.mPfn = tbl[0x4B];
+        cb.mObj = tbl[0x4C];
+        cb.mDelta = tbl[0x4D];
+        self->mPtmf = cb;
+        self->field_2619C = lbl_eu_80667CD4;
+        self->field_261A0 = self->field_26194;
+        __ptmf_test(&cb);
+}
+
+
+
+// us-801a8e38: Drive vision FX updates on the two sub-object fusions and on
+// every other in-play actor, then run the per-slot FX / flag management.
+extern "C" void driveVisionFxUpdates(CVision* self) {
+    CVisionSub* sub;
+    if (self->sub.field_00 == 0) {
+        sub = 0;
+    } else {
+        sub = &self->sub;
+    }
+    CVisionBattleObj* p1 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+    CVisionBattleObj* p2 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+    if (p1 == 0) {
+        self->vt_20(1);
+        return;
+    }
+    if (p2 == 0) {
+        self->vt_20(1);
+        return;
+    }
+    p1->sub8.s30(0x10);
+    Vision_CopyFxActor(p1, &self->unk20D4[0]);
+    if (p2 != 0 && p1 != p2) {
+        p2->sub8.s30(0x10);
+        Vision_CopyFxActor(p2, &self->unk20D4[1]);
+        requestItemLoad(p2, 0x40);
+    }
+
+    {
+        CfEnumListHolder vdlist;
+        startEnumObjects(vdlist.get(), 0x20, 0);
+        u32 off, i;
+        i = 0;
+        off = 0;
+        for (; i < ((CVisionEnumList*)vdlist.get())->count; off += 0x4818, i++) {
+            void* elem = getObjectAt(vdlist.get(), i);
+            void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+            if (obj == (void*)p1 || obj == (void*)p2) {
+                continue;
+            }
+            Vision_CopyFxActor(obj, (u8*)self + (off + 0x10000) - 0x4efc);
+            requestItemLoad(obj, 0x40);
+        }
+    }
+    refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CD4, 3);
+
+    // Push the five sub-item blocks onto the fusion, then copy the first
+    // block back into the fusion's own second block.
+    CVisionInitBlock* src = sub->items;
+    int n = 0;
+    do {
+        *p1->vf29C(n) = *src;
+        n++;
+        src++;
+    } while (n < 5);
+    *p1->vf2A4() = *p1->vf29C(0);
+    if (p1 != p2) {
+        p1->vf2C4(p2, lbl_eu_80667CD4, lbl_eu_80667D50, lbl_eu_80667CD4);
+    }
+    sub->field_0C->field_7C = lbl_eu_80667CFC;
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
+    CCharVoiceMan_ReleaseVoices(0);
+
+    // Enumerate the 0x8000000-tagged list; raise a state flag on every
+    // actor whose battle-state id is outside [0xa1,0xa4] and != 0xb8.
+    CfEnumListHolder vdlist2;
+    startEnumObjects(vdlist2.get(), 0x80000, 0);
+    for (u32 i = 0; i < ((CVisionEnumList*)vdlist2.get())->count; i++) {
+        void* elem = getObjectAt(vdlist2.get(), i);
+        void* obj = __dynamic_cast(elem, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+        if (obj == 0) {
+            self->vt_20(1);
+            return;
+        }
+        CVisionActorRef* act = (CVisionActorRef*)obj;
+        if (((CVisionBattleObj*)obj)->vf1A4(2) != 0 && act->field_8C != 0xb8) {
+            if (act->field_8C < 0xa1 || act->field_8C > 0xa4) {
+                act->field_68 |= 0x40;
+            }
+        }
+    }
+}
+
+
+
+extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
+    CVisionSub* sub;
+    if (self->sub.field_00 == 0) {
+        sub = 0;
+    } else {
+        sub = &self->sub;
+    }
+    CfEnumListHolder vdlist;
+    startEnumObjects(vdlist.get(), 0x328, 0);
+    for (u32 i = 0; i < ((CVisionEnumList*)vdlist.get())->count; i++) {
+        void* elem = getObjectAt(vdlist.get(), i);
+        void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+        if (obj == 0) {
+            self->vt_20(1);
+            return;
+        }
+        // Virtual dispatch through vtable slot 0x190.
+        ((CVisionEnumElem*)obj)->vf190(0);
+    }
+    if (getGlobalSda() != 0) {
+        getGlobalSda()[0xa8] = 0;
+    }
+    self->vt_30(1);
+    if (releaseFx != 0) {
+        lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
+        cfCam_pushStateToActive();
+    }
+    refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
+    resetVisionSlots(0);
+    if (sub != 0) {
+        CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
+        CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
+        if (p1 != 0) {
+            p1->field_3388 &= 0xFFFD;
+            p1->field_04->v20(0x4000);
+        }
+        if (p2 != 0) {
+            p2->field_3388 &= 0xFFFD;
+            p2->field_04->v20(0x4000);
+        }
+        ScMain_Reset(sub);
+    }
+    startEnumObjects(vdlist.get(), 0x20, 0);
+    for (u32 i = 0; i < *(u32*)((u8*)vdlist.get() + 0x620); i++) {
+        void* elem = getObjectAt(vdlist.get(), i);
+        CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+        actor->field_3388 &= 0xFFFD;
+        actor->field_04->v20(0x4000);
+    }
+    self->field_26194 = lbl_eu_80667CD4;
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
+    CCharVoiceMan_ReleaseVoices(0);
+    CVisionPtmf cb;
+    cb.mPfn = __ptmf_null[0];
+    cb.mObj = __ptmf_null[1];
+    cb.mDelta = __ptmf_null[2];
+    lbl_eu_80663E24 &= 0xFFFFFFC0;
+    lbl_eu_80663DA0 &= 0x7F;
+    self->mPtmf = cb;
+    self->field_2619C = lbl_eu_80667CD4;
+    self->field_261A0 = self->field_26194;
+    __ptmf_test(&cb);
+}
+
+
+
+extern "C" int* getNonZeroSlot1(int* param) {
+    if (param[1] == 0) {
+        return 0;
+    }
+    return &param[1];
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a97c0: Lazily create the vision effect at `index` and record the
+// owning CVision back-pointer (retail createVisionEffect).
+// ---------------------------------------------------------------------------
+extern "C" void createVisionEffect(CVision* self, int index) {
+    // Scaled index materialized before the object base is referenced: MWCC
+    // colors/creates the value nodes in statement order, which reproduces the
+    // retail rlwinm-before-addis schedule.
+    u32 addr = (u32)index * 4;
+    CVisionEffect** slot =
+        (CVisionEffect**)(addr + (u32)self->effectArray);
+    if (*slot != 0) {
+        return;
+    }
+    CVisionEffect* eff =
+        (CVisionEffect*)bindIndexedEffect(lbl_eu_80503F60[index].field_00, 0);
+    *slot = eff;
+    if (eff != 0) {
+        eff->field_B0 = (u32)self;
+    }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a9830: Clear the vision effect at `index` (retail clearVisionEffect).
+// ---------------------------------------------------------------------------
+extern "C" void clearVisionEffect(CVision* self, int index) {
+    if (self->effectArray[index] != 0) {
+        self->effectArray[index]->field_B0 = 0;
+        self->effectArray[index]->field_68 |= 0x40;
+    }
+    self->effectArray[index] = 0;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a986c: Clear all four vision effect slots (retail clearAllVisionEffects).
+// ---------------------------------------------------------------------------
+extern "C" void clearAllVisionEffects(CVision* self) {
+    for (int i = 0; i < 4; i++) {
+        if (self->effectArray[i] != 0) {
+            self->effectArray[i]->field_B0 = 0;
+            self->effectArray[i]->field_68 |= 0x40;
+        }
+        self->effectArray[i] = 0;
+    }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801a9930: Null out the first effect whose object identity matches
+// `value` (retail detachVisionEffect).
+// ---------------------------------------------------------------------------
+extern "C" void detachVisionEffect(CVision* self, u32 value) {
+    for (int i = 0; i < 4; i++) {
+        if (self->effectArray[i] == (CVisionEffect*)value) {
+            self->effectArray[i] = 0;
+            return;
+        }
+    }
+}
+
+
+
+// us-801a9978: Validate a battle slot against the vision state and, per the
+// mode `r26`, either route its FX type or engage per-player FX on it.
+// r26 is the vision mode: 0 = refresh only, 1..5 = escalating FX tiers with
+// fall-through (tier N also re-arms every lower tier). `stage` tracks how
+// many element-array pushes have happened so far; each push appends a
+// {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
+void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled, int voiceArg) {
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_00));
+    MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_04));
+    if (fu == 0) {
+        self->vt_20(1);
+        return;
+    }
+    int engaged = 0;
+    int stage = 0;
+    CVisionBtlSlot* slot = (CVisionBtlSlot*)slotPtr;
+    // Tier gate: modes 1-3 refuse to re-engage while their flag bit is set.
+    switch (mode) {
+    case 1:
+        if (slot->w_824 & 0x8) return;
+        break;
+    case 2:
+        if (slot->w_824 & 0x4) return;
+        break;
+    case 3:
+        if (slot->w_824 & 0x40) return;
+        break;
+    }
+    if (mode != 0) {
+        self->unk261C4.field_68 = 0;
+        self->unk261C4.field_64 = 0;
+    }
+    if (mode != 0) {
+        CfEnumListHolder vdlist;
+        startEnumObjects(vdlist.get(), 0x20, 0);
+        for (u32 i = 0; i < ((CVisionEnumList*)vdlist.get())->count; i++) {
+            CVisionBattleObj* obj = (CVisionBattleObj*)MapFx_ResolveOwner(getObjectAt(vdlist.get(), i));
+            if (obj->vf308() == 3) {
+                obj->vf304(4);
+            } else if (obj->vf308() == 0) {
+                obj->vf304(2);
+            }
+        }
+    }
+    if (mode != 0) {
+        if (voiceEnabled != 0) {
+            CCharVoiceMan_EnqueuePendingActionVoice(mode, voiceArg, fu);
+        }
+        SysWinLog_AdvanceTiers(mode);
+    }
+
+    // Per-mode FX routing. Cases fall through; each block sets its flag bit
+    // (and clears the bit the next tier owns), lazily engages the gauge once,
+    // then pushes a ring entry while r26 < 4.
+    switch (mode) {
+    case 5:
+        slot->w_824 |= 0x1;
+        restartVisionSlots(1);
+        ScMain_Reset(slot);
+        PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+        func_800F3970(CBattleManager::getInstance(), fu, 0, 0x17, 0);
+        engaged = 1;
+    case 4:
+        slot->w_824 = (slot->w_824 | 0x2) & ~0x40;
+        restartVisionSlots(2);
+        if (engaged == 0) {
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x18, 0);
+            engaged = 1;
+        }
+    case 3:
+        slot->w_824 = (slot->w_824 | 0x4) & ~0x80;
+        restartVisionSlots(4);
+        if (engaged == 0) {
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x19, 0);
+            engaged = 1;
+        }
+        if (mode < 4) {
+            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
+            u32 idx = sum % self->unk261C4.w6C;
+            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
+            CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage3;
+            convStage3.w[0] = 0x43300000u;
+            convStage3.w[1] = (u32)stage ^ 0x80000000u;
+            e.a = 3;
+            e.b = lbl_eu_80667CE4 * (convStage3.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.c = 0;
+            arr[idx] = e;
+            self->unk261C4.field_68++;
+        }
+        stage = 1;
+    case 2:
+        slot->w_824 = (slot->w_824 | 0x8) & ~0x100;
+        restartVisionSlots(8);
+        // Track the actor's fusion-readiness bit in the tier-2 flag word.
+        if (slot->w_88 & 0x1000) {
+            slot->w_824 |= 0x400;
+        } else {
+            slot->w_824 &= ~0x400;
+        }
+        if (engaged == 0) {
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1a, 0);
+            engaged = 1;
+        }
+        if (mode < 4) {
+            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
+            u32 idx = sum % self->unk261C4.w6C;
+            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
+            CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage4;
+            convStage4.w[0] = 0x43300000u;
+            convStage4.w[1] = (u32)stage ^ 0x80000000u;
+            e.a = 4;
+            e.b = lbl_eu_80667CE4 * (convStage4.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.c = 0;
+            arr[idx] = e;
+            self->unk261C4.field_68++;
+        }
+        stage = stage + 1;
+    case 1:
+        slot->w_824 = ((slot->w_824 | 0x10) & ~0x200) | 0x4000;
+        restartVisionSlots(0x10);
+        if (engaged == 0) {
+            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1b, 0);
+        }
+        {
+            CBattleManager* bm = CBattleManager::getInstance();
+            // vtable +0x34: fade the vision gauge by mode/8 seconds.
+            // (double)mode runs through the NAMED 0x4330 magic
+            // lbl_eu_80667D28; the union keeps MWCC from emitting a
+            // TU-local @N pool copy of the magic.
+            union {
+                u32 w[2];
+                double d;
+            } convMode;
+            convMode.w[0] = 0x43300000u;
+            convMode.w[1] = (u32)mode ^ 0x80000000u;
+            ((void (*)(void*, u32, f32, f32))(*(void***)bm)[0x34 / 4])(
+                bm, 0x13, lbl_eu_80667D54,
+                lbl_eu_80667CE4 * (convMode.d - lbl_eu_80667D28));
+        }
+        if (mode < 4) {
+            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
+            u32 idx = sum % self->unk261C4.w6C;
+            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
+            CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage5;
+            convStage5.w[0] = 0x43300000u;
+            convStage5.w[1] = (u32)stage ^ 0x80000000u;
+            e.a = 5;
+            e.b = lbl_eu_80667CE4 * (convStage5.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.c = 0;
+            arr[idx] = e;
+            self->unk261C4.field_68++;
+        }
+    default:
+        break;
+    }
+
+    lbl_eu_80663E28 |= 0x8;
+    if (mode != 5) {
+        return;
+    }
+    // Full-tier engage: fire vf1E8 on the slot and spawn a vision effect for
+    // each player whose fusion state passes the Counter_TestBit probe.
+    {
+        CVisionArg5 data = *(CVisionArg5*)lbl_eu_80503F80;
+        for (int i = 0; i < 3; i++) {
+            CVisionBattleObj* pl = (CVisionBattleObj*)MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
+            if (pl == 0) continue;
+            if (pl->vf290() == 0) continue;
+            if (Counter_TestBit((void*)pl->vf290(), 0x8c) == 0) continue;
+            u16 objId = ((CVisionObjV*)pl)->field_3F28;
+            u32 rv = (u32)fu->vf1E8(data);
+            // Unsigned int -> double through the NAMED 2^52 magic
+            // lbl_eu_80667D58 (no sign-bit xor); the union keeps MWCC from
+            // emitting a TU-local @N pool copy of the magic.
+            union {
+                u32 w[2];
+                double d;
+            } convRv;
+            convRv.w[0] = 0x43300000u;
+            convRv.w[1] = rv;
+            s32 n = (s32)(data.f[4] * (convRv.d - lbl_eu_80667D58));
+            void* handle = CtrlObjectParam_GetCharEntry(objId);
+            CtrlObjectParam_RunPartyArtsFlow(handle, n, 0, (int)fu->vf108(), 0, 0, 1);
+        }
+    }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// us-801aa050: Release an arbitrary slot of the battle manager's vision
+// sub-object (retail releaseVisionSlot). Args are forwarded untouched.
+// ---------------------------------------------------------------------------
+void releaseVisionSlot(void* a, int b) {
+    if (CBattleManager::getInstance() &&
+        &CBattleManager::getInstance()->mVision) {
+        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, a, (void*)b);
+    }
+}
+
+
 
 // us-801aa0b0: Manage per-battle-slot vision FX. With `slot` set, validate
 // the matching battle slot (timing/rounding/state checks) and re-engage FX via
@@ -2136,1070 +3259,6 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
 }
 
 
-// us-801a7c60: Manage vision FX on the sub-object. When the fade timer is at
-// baseline (field_2619C == 0) only the D48 release-window check runs;
-// otherwise the FX setup path drives the fusion's parameter block and either
-// finishes immediately (B8BC == 0) or programs the battle object state and
-// queues ring events 1..5 before falling into the same window check.
-extern "C" void driveSubVisionFx(CVision* self) {
-    CVisionSub* sub = (self->sub.field_00 != 0) ? &self->sub : 0;
-    if (sub == 0) {
-        self->vt_20(1);
-        return;
-    }
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    if (fu == 0) {
-        self->vt_20(1);
-        return;
-    }
-
-    if (lbl_eu_80667CD4 != self->field_2619C) {
-        // Setup path: begin driving the FX on the fusion parameter block.
-        refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CD4, 0x13);
-        sub->field_824 |= 0x100000;
-        aiRebootAction(&((CVisionFusion*)fu)->field_3380);
-        CVisionFxParam p;
-        memset(&p.mid, 0, sizeof(p.mid));
-        memset(&p, 0, sizeof(p));
-        if (sub->field_0C != 0) {
-            p.mid.b_0D = 0x5a;
-            p.h_12 = *((u8*)sub->field_0C + 0x77);
-        } else {
-            p.mid.b_0D = 0xd;
-            p.h_12 = -1;
-        }
-        p.f_14 = lbl_eu_80667CD4;
-        p.mid.h_10 = 0;
-        p.mid.b_06 = 6;
-        aiRingPrepend(&((CVisionFusion*)fu)->field_3380, &p);
-        CfObjectMove_setAnimModeArgs((u8*)fu + 0x3e9c, 1, 0, -1, 1);
-        if (aiFetchAction(&((CVisionFusion*)fu)->field_3380, &p) == 0) {
-            aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
-            refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-            // Install the lbl_eu_805331E8 callback with the fader fields reset.
-            CVisionPtmf cb;
-            cb.mPfn = lbl_eu_805331E8[0];
-            cb.mObj = lbl_eu_805331E8[1];
-            cb.mDelta = lbl_eu_805331E8[2];
-            f32 f_6194 = self->field_26194;
-            f32 f_cd4 = lbl_eu_80667CD4;
-            self->mPtmf.mPfn = cb.mPfn;
-            self->mPtmf.mObj = cb.mObj;
-            self->mPtmf.mDelta = cb.mDelta;
-            self->field_2619C = f_cd4;
-            self->field_261A0 = f_6194;
-            __ptmf_test(&cb);
-            return;
-        }
-
-        // Program the battle object from the filled-in parameter block.
-        fu->vf298()->w_04 = p.w_00;
-        fu->vf298()->w_50 = (u32)p.obj18;
-        fu->vf298()->w_74pair[1] &= ~0xC00u;
-        if (p.obj18->field_78 & 1) {
-            fu->vf298()->w_74pair[1] |= 0x40000000 | 0x800;
-        } else {
-            fu->vf298()->w_74pair[1] |= 0x40000000 | 0x400;
-        }
-        sub->field_04 = p.w_00;
-        sub->field_0C = p.obj18;
-
-        aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
-        u32 outC;
-        u32 out8;
-        previewBattleDamage(CBattleManager::getInstance(), sub, fu, &outC, &out8);
-        sub->field_830 = lbl_eu_80667CD4;
-
-        // Queue FX events 1..5 on the vision ring at step-increasing times.
-        // The time accumulator deliberately lives across the isVisionSlotAnimating
-        // call (retail keeps it in f31).
-        f32 t = lbl_eu_80667CE4;
-        if (isVisionSlotAnimating(1) == 0) {
-            // Build the five ring events (ids 1..5 at step-increasing times),
-            // then enqueue them; MWCC fuses the two loops. Ring fields are
-            // reached as far-offset CVision members (retail emits a fresh
-            // addis/lwz pair per access, no cached base pointer).
-            CVisionU32F32U32 ev[5];
-            int k;
-            for (k = 0; k < 5; k++) {
-                ev[k].a = k + 1;
-                ev[k].b = t;
-                ev[k].c = 0;
-                t += lbl_eu_80667CD4;
-            }
-            for (k = 0; k < 5; k++) {
-                CVisionU32F32U32* el = &self->unk261C4.arr[
-                    (self->unk261C4.field_64 + self->unk261C4.field_68) % self->unk261C4.w6C];
-                *el = ev[k];
-                self->unk261C4.field_68 = self->unk261C4.field_68 + 1;
-            }
-        }
-    }
-
-    // Release window check shared by the baseline path and post-setup.
-    int w;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D48 &&
-        lbl_eu_80667D48 < self->field_26194 - self->field_261A0) {
-        w = 1;
-    } else {
-        w = 0;
-    }
-    if (w) {
-        refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-        // Install the lbl_eu_805331F4 callback with the fader fields reset.
-        CVisionPtmf cb;
-        cb.mPfn = lbl_eu_805331F4[0];
-        cb.mObj = lbl_eu_805331F4[1];
-        cb.mDelta = lbl_eu_805331F4[2];
-        f32 f_6194 = self->field_26194;
-        f32 f_cd4 = lbl_eu_80667CD4;
-        self->mPtmf.mPfn = cb.mPfn;
-        self->mPtmf.mObj = cb.mObj;
-        self->mPtmf.mDelta = cb.mDelta;
-        self->field_2619C = f_cd4;
-        self->field_261A0 = f_6194;
-        __ptmf_test(&cb);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// us-801a819c: Validate a battle object / slot and, when it passes, install
-// the state-change callback (retail installVisionStateCallback).
-// ---------------------------------------------------------------------------
-extern "C" int installVisionStateCallback(CVision* self, CVisionObj* obj) {
-    if (__ptmf_test(&self->mPtmf) == 0) {
-        return 0;
-    }
-    if ((obj->field_3F00 & 0x4) == 0) {
-        return 0;
-    }
-    CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
-    if (sub == 0) {
-        return 0;
-    }
-    if (obj->field_3F10 != sub->field_00) {
-        return 0;
-    }
-    if (isBattleStatusActive(&obj->field_08, 0x113) == 0 &&
-        isBattleStatusActive(&obj->field_08, 0x114) == 0 &&
-        isBattleStatusActive(&obj->field_08, 0x115) == 0) {
-        return 0;
-    }
-    if ((sub->field_824 & 0x4000) == 0) {
-        return 0;
-    }
-    CVisionPtmf cb;
-    u32* src = lbl_eu_80533200;
-    u32 t1 = *src++;
-    u32 t2 = *src++;
-    u32 dlt = *src++;
-    cb.mPfn = t1;
-    cb.mObj = t2;
-    cb.mDelta = dlt;
-    f32 f_6194 = self->field_26194;
-    f32 f_cd4 = lbl_eu_80667CD4;
-    self->mPtmf.mPfn = t1;
-    self->mPtmf.mObj = t2;
-    self->mPtmf.mDelta = cb.mDelta;
-    self->field_2619C = f_cd4;
-    self->field_261A0 = f_6194;
-    __ptmf_test(&cb);
-    return 1;
-}
-
-
-
-// us-801a82ec: Guard chain deciding whether a vision cutscene may engage on
-// `obj` (with `r5` supplying the target actor), then HP/damage timing checks
-// and the vision-callback install via vt_14. Returns 1 on success.
-extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* targetObj) {
-    if ((obj->field_3F00 & 0x4) == 0) {
-        return 0;
-    }
-    if (obj->vt2BC() != 0) {
-        return 0;
-    }
-    if (getAnimGate() != 0) {
-        return 0;
-    }
-    u32 nc = *((u8*)CBattleManager::getInstance() + 0x1aa);
-    // Bitwise AND of bools keeps the closest-to-retail two-compare shape.
-    bool hi = nc <= 0x18;
-    bool outOfRange = (nc >= 1) & hi;
-    if (outOfRange) {
-        return 0;
-    }
-    if (*(s16*)((u8*)CBattleManager::getInstance() + 0x20c8) != 0) {
-        return 0;
-    }
-    getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x40000)) {
-        return 0;
-    }
-    getInstance__Q22cf13CfGameManagerFv();
-    if (CfRes_getE24Bit22() != 0) {
-        return 0;
-    }
-    getInstance__Q22cf13CfGameManagerFv();
-    if (isGlobalCamFlagSet__Fi(0x200) != 0) {
-        return 0;
-    }
-    if (CBattleManager::getInstance()->CheckUnk84Flag(0x200) != 0) {
-        return 0;
-    }
-    if (GetItemMulti_IsActiveFlag() != 0) {
-        return 0;
-    }
-
-    // Active-callback gate: retail normalizes each runtime-helper result via
-    // '!' (cntlzw), and rejects only callbacks matching NEITHER known identity.
-    CVisionPtmf cur = self->mPtmf;
-    if (!__ptmf_test(&cur)) {
-        // No callback installed: proceed.
-    } else {
-        CVisionPtmf t1;
-        u32* src1 = lbl_eu_8053320C;
-        u32 s11 = *src1++;
-        u32 s12 = *src1++;
-        u32 s13 = *src1++;
-        t1.mPfn = s11;
-        t1.mObj = s12;
-        t1.mDelta = s13;
-        if (!__ptmf_cmpr(&self->mPtmf, &t1)) {
-            // lbl_eu_8053320C identity: allowed.
-        } else {
-            CVisionPtmf t2;
-            u32* src2 = lbl_eu_80533218;
-            u32 s21 = *src2++;
-            u32 s22 = *src2++;
-            u32 s23 = *src2++;
-            t2.mPfn = s21;
-            t2.mObj = s22;
-            t2.mDelta = s23;
-            if (!__ptmf_cmpr(&self->mPtmf, &t2)) {
-                // lbl_eu_80533218 terminal identity: allowed.
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    // Target fusion from `r5` (+4 id, +0x50 actor requirement).
-    CVisionActor50* actor = targetObj->field_50;
-    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById__Fi(targetObj->field_04));
-    if (target == NULL || actor == NULL) {
-        return 0;
-    }
-    if (MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)) == NULL) {
-        return 0;
-    }
-
-    int engage = 0;
-    if (CBattleManager::getInstance()->CheckUnk84Flag(0x100) == 0) {
-        // Movie/dialogue mode gates: the pending-event id must be clear and the
-        // current event must be an accepted type (or the damage preview failed).
-        if (CtrlRemote_TouchBitByArg(0x335e) != 0) {
-            return 0;
-        }
-        s32 mode = CtrlRemote_TouchBitByArg(0x20);
-        f32 outDamage;
-        u32 outCount;
-        s32 ok = CtrlObjectParam_FindSlotTypeIndex(CtrlObjectParam_GetSlotTableBase(), 1, (int*)&outDamage, (int*)&outCount);
-        if (ok == 0 && mode != 0x166) {
-            return 0;
-        }
-        void* row = CtrlObjectParam_GetCharEntry(1);
-        if (CtrlObjectParam_GetRowColumnByte(row) != 0) {
-            return 0;
-        }
-        if (mode <= 0x1f) {
-            return 0;
-        }
-        if (mode > 0x16a && mode < 0x178) {
-            return 0;
-        }
-    } else {
-        if (actor->field_3C != 0) {
-            return 0;
-        }
-    }
-
-    // Cancel while the target's remaining-HP delta falls below the threshold.
-    if (target->field_3F00 & 0x2) {
-        bool cancel;
-        if (target == NULL || target->field_3F60 == NULL) {
-            cancel = true;
-        } else {
-            f32 f_ret = *(f32*)((u8*)target->emb.vfAC() + 4);
-            f32 diff = target->field_3F60->f_3E8 - f_ret;
-            cancel = diff < lbl_eu_80667CD0;
-        }
-        if (cancel) {
-            return 0;
-        }
-    }
-
-    if ((actor->field_78 & 0x1000) != 0) {
-        engage = 1;
-    } else if (CBattleManager::getInstance()->CheckUnk84Flag(0x100) != 0) {
-        engage = 1;
-    } else {
-        // The active vision slot (if any) must already hold this model id.
-        CVisionSub* active = self->sub.field_00 != 0 ? &self->sub : NULL;
-        if (active != NULL && active->field_00 == obj->field_3F10) {
-            engage = 1;
-        }
-    }
-
-    // Damage timing: engage when incoming damage would exceed max HP or drop
-    // the HP fraction below the lbl_eu_80667D4C threshold.
-    if (obj != (CVisionObjV*)target) {
-        f32 total = lbl_eu_80667CD4;
-        u32 hits = 0;
-        CBattleManager_preCalcTotalDamage(getInstance__Q22cf14CBattleManagerFv(), obj, &total, &hits);
-        if (hits != 0 && total > lbl_eu_80667CD4) {
-            f32 hpMax = target->vt128();
-            if (total >= hpMax) {
-                engage = 1;
-            }
-            f32 hpDen = target->vt12C();
-            f32 hpCur = target->vt128();
-            f32 frac = (hpCur - total) / hpDen;
-            if (frac <= lbl_eu_80667D4C) {
-                engage = 1;
-            }
-        }
-    }
-    if (engage != 0) {
-        if (self->func_801A5444(obj, target) == 0) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
-    if (obj == 0) {
-        self->vt_20(1);
-        return 0;
-    }
-    CVisionObj* o = (CVisionObj*)obj;
-    CVisionSubRef* eff = *(CVisionSubRef**)((u8*)obj + 0x3e74);
-    if (eff == 0) {
-        self->vt_20(1);
-        return 0;
-    }
-    // Active vision slot (or none): if one exists it must either be fading
-    // out (0x8000) or already own this model id.
-    CVisionSub* sub;
-    if (self->sub.field_00 == 0) {
-        sub = 0;
-    } else {
-        sub = &self->sub;
-    }
-    if (sub != 0) {
-        if (eff->field_78 & 0x8000) {
-            self->vt_1C();
-        } else if (sub->field_00 != o->field_3F10) {
-            return 0;
-        }
-    }
-    if (sub == 0) {
-        // Claim a free slot. A slot already holding this id cancels instead.
-        // The scans walk a cursor anchored at `self' (id sits at +0x04) while
-        // the hit is materialised from the live index.
-        u32 want = o->field_3F10;
-        CVisionSub* dup;
-        if (want == 0) {
-            dup = 0;
-        } else {
-            CVisionSlotScan* walk = (CVisionSlotScan*)self;
-            int i = 0;
-            while (1) {
-                if (walk->id == want) {
-                    dup = &self->sub + i;
-                    break;
-                }
-                walk++;
-                i++;
-                if (i == 4) {
-                    dup = 0;
-                    break;
-                }
-            }
-        }
-        if (dup != 0) {
-            sub = 0;
-        } else {
-            CVisionSlotScan* walk = (CVisionSlotScan*)self;
-            int j = 0;
-            while (1) {
-                if (walk->id == 0) {
-                    sub = &self->sub + j;
-                    break;
-                }
-                walk++;
-                j++;
-                if (j == 4) {
-                    sub = 0;
-                    break;
-                }
-            }
-        }    }
-    if (sub == 0) {
-        return 0;
-    }
-    // Remaining-vision ratio; zero denominator means the full default.
-    f32 denom = eff->field_2C;
-    f32 ratio;
-    if (denom == lbl_eu_80667CD4) {
-        ratio = lbl_eu_80667CD8;
-    } else {
-        ratio = eff->field_7C / denom;
-    }
-    if (lbl_eu_80667CD4 == ratio) {
-        return 0;
-    }
-    ScMain_Reset(sub);
-    sub->field_00 = o->field_3F10;
-    sub->field_04 = ((CVisionObj*)obj2)->field_3F10;
-    sub->field_0C = eff;
-    if (eff->field_78 & 0x8000) {
-        sub->field_824 |= 0x20000;
-        CtrlRemote_SetSharedBit(0x30e3, 0);
-        UIWin_BuildFlagBuf(0x375);
-        UIWin_FlagBufClear();
-    }
-    if (o->field_3F00 & 0x4) {
-        u16 h = o->field_3F28;
-        if (h == 0x967 || h == 0x96b || h == 0x96c || h == 0x969) {
-            sub->field_824 |= 0x40000;
-        }
-    }
-    eff->field_7C = eff->field_2C;
-    Vision_CopyEngageActor(obj, (u8*)self + 0x20d4);
-    if (obj2 != 0 && obj2 != obj) {
-        Vision_CopyEngageActor(obj2, (u8*)self + 0x68ec);
-    }
-    // Clear the engaged flag on every other battle actor and refresh its
-    // per-slot vision parameter block.
-    u8 vdlist[8];
-    CTaskGame_enumListCtor(vdlist);
-    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-        void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
-        if (actor != obj && actor != obj2) {
-            CVisionActor3388* a = (CVisionActor3388*)actor;
-            a->field_3388 &= ~0x8u;
-            Vision_CopyEngageActor(actor, (u8*)self + i * 0x4818 + 0xB104);
-        }
-    }
-    __dt__80043E88(vdlist, -1);
-    eff->field_7C = lbl_eu_80667D10;
-    self->field_26194 = lbl_eu_80667CD4;
-    self->field_26198 = lbl_eu_80667CD4;
-    lbl_eu_80663DA0 |= 0x1;
-    lbl_eu_80663E24 |= 0x400;
-    CCharVoiceMan_PushFreshSoundNode(obj, obj2);
-    // Install the fade-in / fade-out resume callback depending on the
-    // auto-vision flag captured above.
-    if (sub->field_824 & 0x40000) {
-        CVisionPtmf cb;
-        u32* src = lbl_eu_80533224;
-        cb.mPfn = *src++;
-        cb.mObj = *src++;
-        cb.mDelta = *src;
-        f32 f194 = self->field_26194;
-        self->mPtmf.mPfn = cb.mPfn;
-        self->mPtmf.mObj = cb.mObj;
-        self->mPtmf.mDelta = cb.mDelta;
-        self->field_2619C = lbl_eu_80667CD4;
-        self->field_261A0 = f194;
-        __ptmf_test(&cb);
-    } else {
-        CVisionPtmf cb;
-        u32* src = lbl_eu_80533230;
-        cb.mPfn = *src++;
-        cb.mObj = *src++;
-        cb.mDelta = *src;
-        f32 f194 = self->field_26194;
-        self->mPtmf.mPfn = cb.mPfn;
-        self->mPtmf.mObj = cb.mObj;
-        self->mPtmf.mDelta = cb.mDelta;
-        self->field_2619C = lbl_eu_80667CD4;
-        self->field_261A0 = f194;
-        __ptmf_test(&cb);
-    }
-    return 1;
-}
-
-// ---------------------------------------------------------------------------
-// us-801a8c10: Vision state check. If the installed callback matches the
-// 0x114 table entry, clear the vision field; otherwise branch on the 0x120
-// entry (retail checkVisionCallbackState).
-// ---------------------------------------------------------------------------
-extern "C" void checkVisionCallbackState(CVision* self) {
-    u32* tbl = &lbl_eu_80533128[0];
-    CVisionPtmf cb114;
-    cb114.mPfn = tbl[0x45];
-    cb114.mObj = tbl[0x46];
-    cb114.mDelta = tbl[0x47];
-    if (__ptmf_cmpr(&self->mPtmf, &cb114) != 0) {
-        // Not the 0x114 entry: branch on the 0x120 entry.
-        CVisionPtmf cb120;
-        cb120.mPfn = tbl[0x48];
-        cb120.mObj = tbl[0x49];
-        cb120.mDelta = tbl[0x4A];
-        if (__ptmf_cmpr(&self->mPtmf, &cb120) == 0) {
-            self->vt_20(0);
-        } else {
-            self->vt_20(1);
-        }
-        return;
-    }
-    // 0x114 entry matched: clear the vision field.
-    self->field_26194 = lbl_eu_80667CD4;
-        // Clear the two global state bytes/words (bit-range masks).
-        u8 da0 = lbl_eu_80663DA0;
-        lbl_eu_80663DA0 = da0 & 0x7E;
-        u32 e24 = lbl_eu_80663E24;
-        lbl_eu_80663E24 = e24 & 0xFBFFFFFF;
-        CVisionSub* sub;
-        if (self->sub.field_00 == 0) {
-            sub = 0;
-        } else {
-            sub = &self->sub;
-        }
-        if (sub->field_824 & 0x20000) {
-            CtrlRemote_SetSharedBit(0x30e3, 1);
-        }
-        // Per-player: the fusion-state query runs twice (test then fetch);
-        // the stat is passed as a plain float through the NAMED 0x4330
-        // double magic lbl_eu_80667D28 (union keeps MWCC from emitting a
-        // TU-local @N pool copy of the magic).
-        int i = 0;
-        do {
-            void* p = MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
-            if (p != 0) {
-                if (((s32 (*)(void*))((void**)p)[0x290 / 4])(p) != 0) {
-                    void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
-                    s32 out;
-                    if (IdTable_GetSum(r, 0x39, &out) != 0) {
-                        union {
-                            u32 w[2];
-                            double d;
-                        } convOut;
-                        convOut.w[0] = 0x43300000u;
-                        convOut.w[1] = (u32)out ^ 0x80000000u;
-                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(convOut.d - lbl_eu_80667D28));
-                    }
-                }
-            }
-            i++;
-        } while (i < 3);
-        CVisionPtmf cb;
-        cb.mPfn = tbl[0x4B];
-        cb.mObj = tbl[0x4C];
-        cb.mDelta = tbl[0x4D];
-        self->mPtmf = cb;
-        self->field_2619C = lbl_eu_80667CD4;
-        self->field_261A0 = self->field_26194;
-        __ptmf_test(&cb);
-}
-
-// us-801a8e38: Drive vision FX updates on the two sub-object fusions and on
-// every other in-play actor, then run the per-slot FX / flag management.
-extern "C" void driveVisionFxUpdates(CVision* self) {
-    CVisionSub* sub;
-    if (self->sub.field_00 == 0) {
-        sub = 0;
-    } else {
-        sub = &self->sub;
-    }
-    CVisionBattleObj* p1 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-    CVisionBattleObj* p2 = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
-    if (p1 == 0) {
-        self->vt_20(1);
-        return;
-    }
-    if (p2 == 0) {
-        self->vt_20(1);
-        return;
-    }
-    p1->sub8.s30(0x10);
-    Vision_CopyFxActor(p1, &self->unk20D4[0]);
-    if (p2 != 0 && p1 != p2) {
-        p2->sub8.s30(0x10);
-        Vision_CopyFxActor(p2, &self->unk20D4[1]);
-        requestItemLoad(p2, 0x40);
-    }
-
-    u8 vdlist[8];
-    CTaskGame_enumListCtor(vdlist);
-    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
-    u32 off, i;
-    i = 0;
-    off = 0;
-    for (; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; off += 0x4818, i++) {
-        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-        void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
-        if (obj == (void*)p1 || obj == (void*)p2) {
-            continue;
-        }
-        Vision_CopyFxActor(obj, (u8*)self + (off + 0x10000) - 0x4efc);
-        requestItemLoad(obj, 0x40);
-    }
-    __dt__80043E88(vdlist, -1);
-    refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CD4, 3);
-
-    // Push the five sub-item blocks onto the fusion, then copy the first
-    // block back into the fusion's own second block.
-    CVisionInitBlock* src = sub->items;
-    int n = 0;
-    do {
-        *p1->vf29C(n) = *src;
-        n++;
-        src++;
-    } while (n < 5);
-    *p1->vf2A4() = *p1->vf29C(0);
-    if (p1 != p2) {
-        p1->vf2C4(p2, lbl_eu_80667CD4, lbl_eu_80667D50, lbl_eu_80667CD4);
-    }
-    sub->field_0C->field_7C = lbl_eu_80667CFC;
-    CfSoundMan_ClearFxEffect(0, 0);
-    CfSoundMan_ClearFxEffect(1, 0);
-    CCharVoiceMan_ReleaseVoices(0);
-
-    // Enumerate the 0x8000000-tagged list; raise a state flag on every
-    // actor whose battle-state id is outside [0xa1,0xa4] and != 0xb8.
-    u8 vdlist2[8];
-    CTaskGame_enumListCtor(vdlist2);
-    startEnumObjects(CTaskGame_enumListGet(vdlist2), 0x80000, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist2))->count; i++) {
-        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist2), i);
-        void* obj = __dynamic_cast(elem, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
-        if (obj == 0) {
-            self->vt_20(1);
-            __dt__80043E88(vdlist2, -1);
-            return;
-        }
-        CVisionActorRef* act = (CVisionActorRef*)obj;
-        if (((CVisionBattleObj*)obj)->vf1A4(2) != 0 && act->field_8C != 0xb8) {
-            if (act->field_8C < 0xa1 || act->field_8C > 0xa4) {
-                act->field_68 |= 0x40;
-            }
-        }
-    }
-    __dt__80043E88(vdlist2, -1);
-}
-
-
-extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
-    CVisionSub* sub;
-    if (self->sub.field_00 == 0) {
-        sub = 0;
-    } else {
-        sub = &self->sub;
-    }
-    u8 vdlist[8];
-    CTaskGame_enumListCtor(vdlist);
-    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x328, 0);
-    for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-        void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-        if (obj == 0) {
-            self->vt_20(1);
-            __dt__80043E88(vdlist, -1);
-            return;
-        }
-        // Virtual dispatch through vtable slot 0x190.
-        ((CVisionEnumElem*)obj)->vf190(0);
-    }
-    if (getGlobalSda() != 0) {
-        getGlobalSda()[0xa8] = 0;
-    }
-    self->vt_30(1);
-    if (releaseFx != 0) {
-        lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
-        cfCam_pushStateToActive();
-    }
-    refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-    resetVisionSlots(0);
-    if (sub != 0) {
-        CVisionFusion* p1 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
-        CVisionFusion* p2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
-        if (p1 != 0) {
-            p1->field_3388 &= 0xFFFD;
-            p1->field_04->v20(0x4000);
-        }
-        if (p2 != 0) {
-            p2->field_3388 &= 0xFFFD;
-            p2->field_04->v20(0x4000);
-        }
-        ScMain_Reset(sub);
-    }
-    startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
-    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(vdlist) + 0x620); i++) {
-        void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
-        CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
-        actor->field_3388 &= 0xFFFD;
-        actor->field_04->v20(0x4000);
-    }
-    self->field_26194 = lbl_eu_80667CD4;
-    CfSoundMan_ClearFxEffect(0, 0);
-    CfSoundMan_ClearFxEffect(1, 0);
-    CCharVoiceMan_ReleaseVoices(0);
-    CVisionPtmf cb;
-    cb.mPfn = __ptmf_null[0];
-    cb.mObj = __ptmf_null[1];
-    cb.mDelta = __ptmf_null[2];
-    lbl_eu_80663E24 &= 0xFFFFFFC0;
-    lbl_eu_80663DA0 &= 0x7F;
-    self->mPtmf = cb;
-    self->field_2619C = lbl_eu_80667CD4;
-    self->field_261A0 = self->field_26194;
-    __ptmf_test(&cb);
-    __dt__80043E88(vdlist, -1);
-}
-
-extern "C" int* getNonZeroSlot1(int* param) {
-    if (param[1] == 0) {
-        return 0;
-    }
-    return &param[1];
-}
-
-// ---------------------------------------------------------------------------
-// us-801a986c: Clear all four vision effect slots (retail clearAllVisionEffects).
-// ---------------------------------------------------------------------------
-extern "C" void clearAllVisionEffects(CVision* self) {
-    for (int i = 0; i < 4; i++) {
-        if (self->effectArray[i] != 0) {
-            self->effectArray[i]->field_B0 = 0;
-            self->effectArray[i]->field_68 |= 0x40;
-        }
-        self->effectArray[i] = 0;
-    }
-}
-
-// us-801a9978: Validate a battle slot against the vision state and, per the
-// mode `r26`, either route its FX type or engage per-player FX on it.
-// r26 is the vision mode: 0 = refresh only, 1..5 = escalating FX tiers with
-// fall-through (tier N also re-arms every lower tier). `stage` tracks how
-// many element-array pushes have happened so far; each push appends a
-// {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
-void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled, int voiceArg) {
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_00));
-    MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_04));
-    if (fu == 0) {
-        self->vt_20(1);
-        return;
-    }
-    int engaged = 0;
-    int stage = 0;
-    CVisionBtlSlot* slot = (CVisionBtlSlot*)slotPtr;
-    // Tier gate: modes 1-3 refuse to re-engage while their flag bit is set.
-    switch (mode) {
-    case 1:
-        if (slot->w_824 & 0x8) return;
-        break;
-    case 2:
-        if (slot->w_824 & 0x4) return;
-        break;
-    case 3:
-        if (slot->w_824 & 0x40) return;
-        break;
-    }
-    if (mode != 0) {
-        self->unk261C4.field_68 = 0;
-        self->unk261C4.field_64 = 0;
-    }
-    if (mode != 0) {
-        u8 vdlist[8];
-        CTaskGame_enumListCtor(vdlist);
-        startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
-        for (u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; i++) {
-            CVisionBattleObj* obj = (CVisionBattleObj*)MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(vdlist), i));
-            if (obj->vf308() == 3) {
-                obj->vf304(4);
-            } else if (obj->vf308() == 0) {
-                obj->vf304(2);
-            }
-        }
-        __dt__80043E88(vdlist, -1);
-    }
-    if (mode != 0) {
-        if (voiceEnabled != 0) {
-            CCharVoiceMan_EnqueuePendingActionVoice(mode, voiceArg, fu);
-        }
-        SysWinLog_AdvanceTiers(mode);
-    }
-
-    // Per-mode FX routing. Cases fall through; each block sets its flag bit
-    // (and clears the bit the next tier owns), lazily engages the gauge once,
-    // then pushes a ring entry while r26 < 4.
-    switch (mode) {
-    case 5:
-        slot->w_824 |= 0x1;
-        restartVisionSlots(1);
-        ScMain_Reset(slot);
-        PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
-        func_800F3970(CBattleManager::getInstance(), fu, 0, 0x17, 0);
-        engaged = 1;
-    case 4:
-        slot->w_824 = (slot->w_824 | 0x2) & ~0x40;
-        restartVisionSlots(2);
-        if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
-            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x18, 0);
-            engaged = 1;
-        }
-    case 3:
-        slot->w_824 = (slot->w_824 | 0x4) & ~0x80;
-        restartVisionSlots(4);
-        if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
-            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x19, 0);
-            engaged = 1;
-        }
-        if (mode < 4) {
-            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
-            u32 idx = sum % self->unk261C4.w6C;
-            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
-            CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage3;
-            convStage3.w[0] = 0x43300000u;
-            convStage3.w[1] = (u32)stage ^ 0x80000000u;
-            e.a = 3;
-            e.b = lbl_eu_80667CE4 * (convStage3.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
-            e.c = 0;
-            arr[idx] = e;
-            self->unk261C4.field_68++;
-        }
-        stage = 1;
-    case 2:
-        slot->w_824 = (slot->w_824 | 0x8) & ~0x100;
-        restartVisionSlots(8);
-        // Track the actor's fusion-readiness bit in the tier-2 flag word.
-        if (slot->w_88 & 0x1000) {
-            slot->w_824 |= 0x400;
-        } else {
-            slot->w_824 &= ~0x400;
-        }
-        if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
-            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1a, 0);
-            engaged = 1;
-        }
-        if (mode < 4) {
-            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
-            u32 idx = sum % self->unk261C4.w6C;
-            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
-            CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage4;
-            convStage4.w[0] = 0x43300000u;
-            convStage4.w[1] = (u32)stage ^ 0x80000000u;
-            e.a = 4;
-            e.b = lbl_eu_80667CE4 * (convStage4.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
-            e.c = 0;
-            arr[idx] = e;
-            self->unk261C4.field_68++;
-        }
-        stage = stage + 1;
-    case 1:
-        slot->w_824 = ((slot->w_824 | 0x10) & ~0x200) | 0x4000;
-        restartVisionSlots(0x10);
-        if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
-            func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1b, 0);
-        }
-        {
-            CBattleManager* bm = CBattleManager::getInstance();
-            // vtable +0x34: fade the vision gauge by mode/8 seconds.
-            // (double)mode runs through the NAMED 0x4330 magic
-            // lbl_eu_80667D28; the union keeps MWCC from emitting a
-            // TU-local @N pool copy of the magic.
-            union {
-                u32 w[2];
-                double d;
-            } convMode;
-            convMode.w[0] = 0x43300000u;
-            convMode.w[1] = (u32)mode ^ 0x80000000u;
-            ((void (*)(void*, u32, f32, f32))(*(void***)bm)[0x34 / 4])(
-                bm, 0x13, lbl_eu_80667D54,
-                lbl_eu_80667CE4 * (convMode.d - lbl_eu_80667D28));
-        }
-        if (mode < 4) {
-            u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
-            u32 idx = sum % self->unk261C4.w6C;
-            CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
-            CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage5;
-            convStage5.w[0] = 0x43300000u;
-            convStage5.w[1] = (u32)stage ^ 0x80000000u;
-            e.a = 5;
-            e.b = lbl_eu_80667CE4 * (convStage5.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
-            e.c = 0;
-            arr[idx] = e;
-            self->unk261C4.field_68++;
-        }
-    default:
-        break;
-    }
-
-    lbl_eu_80663E28 |= 0x8;
-    if (mode != 5) {
-        return;
-    }
-    // Full-tier engage: fire vf1E8 on the slot and spawn a vision effect for
-    // each player whose fusion state passes the Counter_TestBit probe.
-    {
-        CVisionArg5 data = *(CVisionArg5*)lbl_eu_80503F80;
-        for (int i = 0; i < 3; i++) {
-            CVisionBattleObj* pl = (CVisionBattleObj*)MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
-            if (pl == 0) continue;
-            if (pl->vf290() == 0) continue;
-            if (Counter_TestBit((void*)pl->vf290(), 0x8c) == 0) continue;
-            u16 objId = ((CVisionObjV*)pl)->field_3F28;
-            u32 rv = (u32)fu->vf1E8(data);
-            // Unsigned int -> double through the NAMED 2^52 magic
-            // lbl_eu_80667D58 (no sign-bit xor); the union keeps MWCC from
-            // emitting a TU-local @N pool copy of the magic.
-            union {
-                u32 w[2];
-                double d;
-            } convRv;
-            convRv.w[0] = 0x43300000u;
-            convRv.w[1] = rv;
-            s32 n = (s32)(data.f[4] * (convRv.d - lbl_eu_80667D58));
-            void* handle = CtrlObjectParam_GetCharEntry(objId);
-            CtrlObjectParam_RunPartyArtsFlow(handle, n, 0, (int)fu->vf108(), 0, 0, 1);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// us-801a4df0: UnkClass_801A36D0 deleting destructor (__dt__801A36D0).
-// Clears the sub-object at +0x3d8c (fields at +0x3f90/+0x3f94), then frees.
-// ---------------------------------------------------------------------------
-extern "C" void* __dt__801A36D0(UnkClass_801A36D0* self, int deleting) {
-    if (self != 0) {
-        if ((char*)self + 0x3d8c != 0) {
-            *(u32*)((char*)self + 0x3f94) = 0;
-            *(u32*)((char*)self + 0x3f90) = 0;
-        }
-        if (deleting > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
-// ---------------------------------------------------------------------------
-// us-801a4e48: UnkClass_801A3728 deleting destructor (__dt__801A3728).
-// Clears field_68/field_64, then frees when the deleting flag is set.
-// ---------------------------------------------------------------------------
-extern "C" void* __dt__801A3728(UnkClass_801A3728* self, int deleting) {
-    if (self != 0) {
-        self->field_68 = 0;
-        self->field_64 = 0;
-        if (deleting > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
-cf::CVision::~CVision() {
-    *(u32**)this = lbl_eu_805332D0;
-    vt_34();
-    if (&this->unk261C4 != NULL) {
-        this->unk261C4.field_68 = 0;
-        this->unk261C4.field_64 = 0;
-    }
-    __destroy_arr(&this->unk20D4[0],
-                  reinterpret_cast<ConstructorDestructor*>(
-                      const_cast<void*>(reinterpret_cast<const void*>(&__dt__801A36D0))),
-                  sizeof(CVisionSlot), 8);
-}
-
-// ---------------------------------------------------------------------------
-// us-801a7c18: Release the zero/zero slot of the battle manager's vision
-// sub-object (retail pollVisionSlots).
-// ---------------------------------------------------------------------------
-extern "C" void pollVisionSlots() {
-    if (CBattleManager::getInstance() &&
-        &CBattleManager::getInstance()->mVision) {
-        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, (void*)0, (void*)0);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// us-801aa050: Release an arbitrary slot of the battle manager's vision
-// sub-object (retail releaseVisionSlot). Args are forwarded untouched.
-// ---------------------------------------------------------------------------
-void releaseVisionSlot(void* a, int b) {
-    if (CBattleManager::getInstance() &&
-        &CBattleManager::getInstance()->mVision) {
-        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, a, (void*)b);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// us-801a97c0: Lazily create the vision effect at `index` and record the
-// owning CVision back-pointer (retail createVisionEffect).
-// ---------------------------------------------------------------------------
-extern "C" void createVisionEffect(CVision* self, int index) {
-    // Scaled index materialized before the object base is referenced: MWCC
-    // colors/creates the value nodes in statement order, which reproduces the
-    // retail rlwinm-before-addis schedule.
-    u32 addr = (u32)index * 4;
-    CVisionEffect** slot =
-        (CVisionEffect**)(addr + (u32)self->effectArray);
-    if (*slot != 0) {
-        return;
-    }
-    CVisionEffect* eff =
-        (CVisionEffect*)bindIndexedEffect(lbl_eu_80503F60[index].field_00, 0);
-    *slot = eff;
-    if (eff != 0) {
-        eff->field_B0 = (u32)self;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// us-801a9830: Clear the vision effect at `index` (retail clearVisionEffect).
-// ---------------------------------------------------------------------------
-extern "C" void clearVisionEffect(CVision* self, int index) {
-    if (self->effectArray[index] != 0) {
-        self->effectArray[index]->field_B0 = 0;
-        self->effectArray[index]->field_68 |= 0x40;
-    }
-    self->effectArray[index] = 0;
-}
-
-// ---------------------------------------------------------------------------
-// us-801a9930: Null out the first effect whose object identity matches
-// `value` (retail detachVisionEffect).
-// ---------------------------------------------------------------------------
-extern "C" void detachVisionEffect(CVision* self, u32 value) {
-    for (int i = 0; i < 4; i++) {
-        if (self->effectArray[i] == (CVisionEffect*)value) {
-            self->effectArray[i] = 0;
-            return;
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 // us-801aa980: Like detachVisionEffect, but also clears the effect's owning
@@ -3216,6 +3275,8 @@ extern "C" void releaseVisionEffect(CVision* self, u32 value) {
     }
 }
 
+
+
 void cf::CVision::setEffectScale(u32 active) {
     f32 scl = (active != 0) ? lbl_eu_80667CD4 : lbl_eu_80667CF0;
     for (int i = 0; i < 4; i++) {
@@ -3227,6 +3288,7 @@ void cf::CVision::setEffectScale(u32 active) {
         }
     }
 }
+
 // ===========================================================================
 // Retail section reconstruction (appended at EOF: -ipa file codegen is
 // line-sensitive, so no existing line above may shift).
@@ -3250,15 +3312,15 @@ void cf::CVision::setEffectScale(u32 active) {
 // triplets keep their struct shape so .mPfn uses still compile.
 
 // Extern data slots referenced by the tables (u8 decl: only the address matters).
-extern "C" u8 lbl_eu_806618B8[];
-extern "C" u8 lbl_eu_806618C0[];
-extern "C" u8 lbl_eu_806618C8[];
-extern "C" u8 lbl_eu_806618D0[];
+extern "C" u8 __RTTI__Q22cf11CActorParam[];
+extern "C" u8 __RTTI__Q22cf11CDebugState[];
+extern "C" u8 __RTTI__Q22cf11CActorState[];
+extern "C" u8 __RTTI__Q22cf12CBattleState[];
 extern "C" u8 lbl_eu_806618D8[];
 extern "C" u8 lbl_eu_806618E0[];
-extern "C" u8 lbl_eu_806618F8[];
-extern "C" u8 lbl_eu_80661900[];
-extern "C" u8 lbl_eu_80662578[];
+extern "C" u8 __RTTI__Q22cf12CObjectParam[];
+extern "C" u8 __RTTI__Q22cf12CObjectState[];
+extern "C" u8 __RTTI__Q22cf7CVision[];
 extern "C" u8 __RTTI__Q22cf11IObjectInfo[];
 extern "C" void BattleWork_MarkSlotFFFF(void);
 // Address-of view of the member dtor for the vtable slot (cf. the
@@ -3288,16 +3350,16 @@ extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_8053320C
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533218[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533224[3] = {0, 0xFFFFFFFF, (u32)&manageVisionPlayerCallbacks};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533230[40] = {
-    0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 16028, (u32)lbl_eu_806618F8, 16028, (u32)&lbl_eu_806618F0, 16028, (u32)&lbl_eu_806618E8, 16028, (u32)lbl_eu_806618D8, 16028, (u32)lbl_eu_806618E0, 13184, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, (u32)lbl_eu_806618B8, 0, 0};
+    0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 16028, (u32)__RTTI__Q22cf12CObjectParam, 16028, (u32)&lbl_eu_806618F0, 16028, (u32)&lbl_eu_806618E8, 16028, (u32)lbl_eu_806618D8, 16028, (u32)lbl_eu_806618E0, 13184, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, (u32)__RTTI__Q22cf11CActorParam, 0, 0};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805332D0[14] = {
-    (u32)lbl_eu_80662578, 0, (u32)&__dt__Q22cf7CVisionFv, (u32)&releaseVisionEffect, (u32)&tryEngageVisionCutscene, (u32)&setupVisionEngagement, (u32)&driveVisionFxUpdates, (u32)&checkVisionCallbackState, (u32)&teardownVisionFx, (u32)&detachVisionEffect, (u32)&matchVisionModelCallback, (u32)&createVisionEffect, (u32)&clearVisionEffect, (u32)&clearAllVisionEffects};
+    (u32)__RTTI__Q22cf7CVision, 0, (u32)&__dt__Q22cf7CVisionFv, (u32)&releaseVisionEffect, (u32)&tryEngageVisionCutscene, (u32)&setupVisionEngagement, (u32)&driveVisionFxUpdates, (u32)&checkVisionCallbackState, (u32)&teardownVisionFx, (u32)&detachVisionEffect, (u32)&matchVisionModelCallback, (u32)&createVisionEffect, (u32)&clearVisionEffect, (u32)&clearAllVisionEffects};
 struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
     u32 w30; u32 w34; u32 w38; u32 w3c; u32 w40; u32 w44; u32 w48; u32 w4c;
     u32 w50; u32 w54; u32 w58; u32 w5c; u32 w60; u32 w64; u32 w68; u32 w6c;
     u32 w70; u32 w74; u32 w78; u32 w7c; u32 w80; u32 w84; u32 w88; u32 w8c;
     u32 w90; u32 w94; u32 w98; u32 w9c[15]; };
 extern "C" __declspec(section ".data") __attribute__((used)) VisionBlk33308 lbl_eu_80533308 = {
-    (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, 0, (u32)lbl_eu_80661900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333E0[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333EC[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 

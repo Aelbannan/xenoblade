@@ -11,33 +11,26 @@
 #include "monolib/scn/CScn.hpp"
 
 #include "monolib/work/CProcess.hpp"
+#include "kyoshin/IUICf.hpp"
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CQstLogList.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
 
-/* Quest-log menu process.
- *
- * MI layout mirrors CMenuTutorialList: CProcess base at 0x00 (primary vptr
- * lands at +0x10), compiler PMF callback slots at 0x3C/0x48, IScnRender
- * render-callback subobject at +0x58, owning scene pointer at +0x5C, then the
- * embedded widgets CBgTex (0x60) / CTitleAHelp (0x80) / CQstLogList (0xB8) /
- * CQstLogInfo (0x2240) and the state bytes at 0x2280/0x2284. */
-class CMenuQuestLog : public CProcess {
+/* Quest-log menu. IUICf task base (0x00-0x57), the IScnRender render-callback
+ * subobject at +0x58, owning scene pointer at +0x5C, then the embedded widgets
+ * CBgTex (0x60) / CTitleAHelp (0x80) / CQstLogList (0xB8) / CQstLogInfo
+ * (0x2240) and the state byte at 0x2284. */
+class CMenuQuestLog : public IUICf, public IScnRender {
 public:
+    CMenuQuestLog(CProcess* parent, u32 arg2);
     virtual ~CMenuQuestLog();
     virtual void Init();
     virtual void Term();
-    void Move();
-    void cbRenderBefore();
+    virtual void Move();
+    virtual void cbRenderBefore();
 
-    u32 ptmf0[3];             // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];             // 0x48-0x53: null PMF callback slot group 2
-    u8 mField54;              // 0x54: closing flag (set on close request)
-    u8 mField55;              // 0x55
-    u8 _pad56[2];             // 0x56-0x57
-    IScnRender mIScnRender;   // 0x58-0x5B: render-callback subobject (vptr)
     CProcess* mScene;         // 0x5C: owning scene/parent process
     CBgTex mBgTex;            // 0x60-0x7F: background layout widget
     CTitleAHelp mTitleAHelp;  // 0x80-0xB7: title/help bar
@@ -70,15 +63,6 @@ public:
 
 // Quest-log sub-object helpers. Retail uses the unmangled func_ names, so
 // declare them with C linkage (a C++ member call would re-mangle the reloc).
-extern "C" void QstLogList_ApplySortSelection(CQstLogList* self);
-extern "C" void QstLogList_EndSortMode(CQstLogList* self, int arg);
-extern "C" int QstLogList_IsSortDescending(CQstLogList* self);
-extern "C" void QstLogList_ConfirmSort(CQstLogList* self, int arg);
-extern "C" void QstLogList_ScrollUp(CQstLogList* self);
-extern "C" void QstLogList_ScrollDown(CQstLogList* self);
-extern "C" void QstLogList_PageUp(CQstLogList* self);
-extern "C" void QstLogList_PageDown(CQstLogList* self);
-extern "C" void QstLogList_ToggleSort(CQstLogList* self);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" bool QstLogInfo_GetLoadedMark(CQstLogInfo* self);
 extern "C" bool QstLogInfo_GetReadyMark(CQstLogInfo* self);
@@ -92,7 +76,6 @@ struct CQuestLogPadData {
     u32 mTurboPressButtonFlags; // +0x104
 };
 extern "C" void QstLogInfo_Start(CQstLogInfo* self);
-extern "C" void QstLogList_BeginSortOpen(CQstLogList* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void reopenFromClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
@@ -102,28 +85,20 @@ extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void QstLogList_LoadArc(CQstLogList* self);
 extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-extern "C" void __dt__11CQstLogListFv(CQstLogList* self, int flags);
 extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
 
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void QstLogList_Teardown(CQstLogList* self);
 extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 
 // Term tail helpers.
 extern "C" u8 DecMenuCounter64080();
 extern "C" void CUICfManager_setTimeout30();
 extern "C" u8 code80135FDC_getByte_64080();
-
-// Retail constructor symbol (unmangled global, 2 args after `this`). The
-// factory (createQuestLogMenu) calls it out-of-line; the stub definition in the
-// .cpp inherits C linkage from this declaration.
-extern "C" CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2);
 
 // Singleton pointer for the quest-log menu (.sbss).
 extern CMenuQuestLog* lbl_eu_80663FC0[2];
@@ -134,8 +109,6 @@ extern CMenuQuestLog* lbl_eu_80663FC0[2];
 extern u32 lbl_eu_80663E28;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" bool QstLogList_IsSortEnabled(void*);
-extern "C" unsigned int QstLogList_GetSelectedQuestLo(void*);
 extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);
 extern "C" void QstLogInfo_LoadCommonArchive(void*);
 
@@ -145,23 +118,12 @@ extern "C" void QstLogInfo_LoadCommonArchive(void*);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int QstLogList_ScrollFlag(CQstLogList* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void QstLogList_FrameUpdate(CQstLogList* self);
-extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
-
-// Embedded-widget ctors called by the member constructor (US retail strips
-// these manglings; C-ABI wrappers for the opaque embedded storages).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 mode);
-extern "C" void __ct__11CQstLogListFUs(CQstLogList* self, u16 arg);
-extern "C" void __ct__11CQstLogInfoFv(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
@@ -171,8 +133,3 @@ extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 // Frame counter post-increment helper (code_80135FDC.cpp).
 extern "C" void code80135FDC_postIncByte_64080();
-
-// vtable / PMF / shared data (MWCC does not mangle global-scope data names).
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8052BF70[];    // CProcess primary vtable (pre-PMF copy)
-extern void* lbl_eu_8052CC38[];    // CMenuQuestLog composite vtable

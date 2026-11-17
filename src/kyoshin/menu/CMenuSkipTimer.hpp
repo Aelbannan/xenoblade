@@ -5,38 +5,24 @@
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CSkipTimer.hpp"
+#include "monolib/scn/IScnRender.hpp"
 #include <types.h>
 
-// Intermediate base: adds two flag bytes after IUICf/CTTask<IUICf> (0x54 bytes).
-// Keep this named class: its auto dtor is what MWCC emits for the CProcess
-// teardown call (byte-identical to retail); reloc-map equates the symbol to
-// retail __dt__800FED0C.
-class CMenuSkipTimerBase : public IUICf {
-public:
-    u8 mFlag1; // 0x54
-    u8 mFlag2; // 0x55
-    // 0x56-0x57: padding
-};
-
-// Render-callback interface subobject at +0x58 (secondary vtable).
-// IScnRender without a virtual destructor (CMenuSkipTimer.cpp defines
-// ISCN_RENDER_NO_DTOR, same as CMenuFade): the retail composite vtable
-// (lbl_eu_80539780) fills the dtor slot with the manual SkipTimer_ThunkDtor58
-// adjuster, and a virtual dtor would make MWCC emit an extra
-// @88@__dt__14CMenuSkipTimerFv thunk that retail does not have. cbRenderBefore
-// stays virtual so MWCC auto-emits the @88@cbRenderBefore__14CMenuSkipTimerFv
-// this-adjusting thunk.
-#include "monolib/scn/IScnRender.hpp"
-
 // Skip-timer widget shown during cutscene skipping.
-// Retail layout: CProcess/CTTask base (vptr @0x10), the render-callback
-// subobject at +0x58, then the embedded widgets.
-class CMenuSkipTimer : public CMenuSkipTimerBase, public IScnRender {
+// IUICf task base (0x00-0x57), the IScnRender render-callback subobject at
+// +0x58, then the embedded widgets.
+class CMenuSkipTimer : public IUICf, public IScnRender {
 public:
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    CMenuSkipTimer(CProcess* parent);
+    virtual ~CMenuSkipTimer();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    static CMenuSkipTimer* create(CProcess* self, CProcess* parent);
+    static CMenuSkipTimer* sInstance;
 
     // --- member fields ---
     CProcess* mParentRef;          // 0x5C - scn/parent reference (removeRenderCB target)
@@ -45,85 +31,3 @@ public:
     CSkipTimer mTimerData;         // 0xB8
     u8 mFlag3;                     // 0x150
 };
-
-// Retail-unmangled same-TU helpers (C linkage; the definitions live in
-// CMenuSkipTimer.cpp and emit the verbatim retail symbols).
-extern "C" CMenuSkipTimer* __ct__CMenuSkipTimer(CMenuSkipTimer* self, CProcess* parent);
-extern "C" CMenuSkipTimer* __dt__14CMenuSkipTimerFv(CMenuSkipTimer* self, int flags);
-extern "C" CMenuSkipTimer* SkipTimer_CreateInstance(CProcess* self, CProcess* parent);
-extern "C" void SkipTimer_ThunkDtor58(IScnRender* sub);
-extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
-extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self);
-extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self);
-
-// Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// int returns so the caller's `!= 0` stays a plain cmpwi (retail emits no u8 mask).
-extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
-extern "C" void CSkipTimerTeardown(CSkipTimer* self);
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-
-// Shared singleton pointer for the active skip-timer widget.
-extern unsigned long lbl_eu_80664A48;
-
-// Secondary mode bitfield (bit 21 / IBM bit 10 = realtime event busy).
-extern u32 lbl_eu_80663E28;
-
-// Retail-unmangled same-unit CSkipTimer / CMenuSkipTimer helpers referenced by
-// Move/Init. Declared extern "C" so calls bind the literal (un)mangled retail
-// symbol (US strips mangling for these func_ names). int returns keep the
-// caller's `!= 0` a plain cmpwi (retail emits no u8 mask; the defining TU's u8
-// return is ABI-compatible, value in r3).
-extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
-extern "C" void CSkipTimerTick(CSkipTimer* self);
-extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
-extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-// Retail-unmangled CW helpers used by Init()'s temporary-object re-init pattern.
-extern "C" void __ct__6CBgTexFUc(void*, int);
-extern "C" void __dt__6CBgTexFv(void*, int);
-extern "C" void __ct__UnkClass_8011C974(void*, void*);
-extern "C" void __ct__CTitleAHelp(void*, char*, int);
-extern "C" void __dt__11CTitleAHelpFv(void*, int);
-extern "C" void __dt__10CSkipTimerFv(void*, int);
-extern "C" char* BdatTouchStringCell(char*, char*, int);
-extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-// Game-side CProcess dtor wrapper (D2 form; defined in CMainMenu.cpp).
-extern "C" void __dt__800FED0C(void* self, int flags);
-// Draw/advance helpers for cbRenderBefore / SkipTimer_Phase2PollPad (retail keeps the
-// bare func_ names at these call sites; int returns keep `!= 0` as cmpwi).
-extern "C" int CSkipTimerIsReady(CSkipTimer* self);
-extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
-extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
-extern "C" void CSkipTimerNextKey(CSkipTimer* self);
-extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
-extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
-extern "C" int isSkipActive(CSkipTimer* self);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-// Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
-// DrawInfo setup helper; the C++ declaration mangles to the retail name
-// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-// CProcess base ctor (C-ABI, retail C-linkage symbol name).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-// Scene-active gate for HUD draws (retail-unmangled; code_80135FDC.cpp).
-extern "C" int IsMenuState621F0();
-// Vtable data / null-PTMF constant (defined in .data / .rodata splits).
-extern char lbl_eu_8052BF70[];
-extern char lbl_eu_80539780[];
-extern u32 __ptmf_null[3];
-// String-table base for the skip-timer title/help name lookup.
-extern char lbl_eu_80510540[];
-// Retail-mangled CfGameManager helper that accepts a pad-channel arg (keeps the
-// `li r3, -1` materialisation that retail emits; cf::CfGameManager's inline s16
-// overload discards it). Declared extern "C" so the call binds the verbatim
-// retail symbol.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

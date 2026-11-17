@@ -5,11 +5,8 @@
 #include <cwchar>
 
 // Shared nw4r data symbols referenced by retail.
-extern MEMAllocator* lbl_eu_80665478; // Layout allocator (mspAllocator)
-extern const f32 lbl_eu_80669D68;    // 0.0f
+
 extern const f64 lbl_eu_80669D70;    // 0x4330000080000000 (signed int->f32 magic)
-extern const f32 lbl_eu_80669D78;    // 0.5f
-extern const f32 lbl_eu_80669D7C;    // 1.0f
 extern "C" wchar_t lbl_eu_806634C0[2] = { 0x000A, 0 }; // L"\n" literal pool (.sdata)
 
 // int -> f32 conversion matching retail: build the 2^52+x double on the stack
@@ -59,16 +56,16 @@ int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
     ut::CharStrmReader reader = pWriter->GetFont()->GetCharStrmReader();
 
     // Retail reloads the shared 0.0f constant around each call.
-    pRect->left = lbl_eu_80669D68;
-    pRect->right = lbl_eu_80669D68;
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
 
-    f32 lineWidth = lbl_eu_80669D68;
+    f32 lineWidth = 0.0f;
     bool charSpace = false;
     // Initial stream position (NULL until reader.Set below).
     const T* pPrevStream = static_cast<const T*>(reader.GetCurrentPos());
 
-    pRect->top = ut::Min(lbl_eu_80669D68, pWriter->GetLineHeight());
-    pRect->bottom = ut::Max(lbl_eu_80669D68, pWriter->GetLineHeight());
+    pRect->top = ut::Min(0.0f, pWriter->GetLineHeight());
+    pRect->bottom = ut::Max(0.0f, pWriter->GetLineHeight());
 
     *pHasNextLine = false;
     reader.Set(pStr);
@@ -77,8 +74,8 @@ int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 
     while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
         if (ch < ' ') {
-            ut::Rect r(lineWidth, lbl_eu_80669D68, lbl_eu_80669D68,
-                       lbl_eu_80669D68);
+            ut::Rect r(lineWidth, 0.0f, 0.0f,
+                       0.0f);
 
             context.str = static_cast<const T*>(reader.GetCurrentPos());
             context.flags = charSpace ? 0 : ut::PrintContext<T>::FLAGS_CHARSPACE;
@@ -310,8 +307,8 @@ extern "C" nw4r::lyt::TextBox* __ct__Q34nw4r3lyt7TextBoxFUs(
 
     // Retail clears the font size directly here, then writes it again
     // through a stack temporary further down.
-    rFields.fontSizeWidth = lbl_eu_80669D68;
-    rFields.fontSizeHeight = lbl_eu_80669D68;
+    rFields.fontSizeWidth = 0.0f;
+    rFields.fontSizeHeight = 0.0f;
 
     rFields.mTextBuf = NULL;
     rFields.mTextBufBytes = 0;
@@ -324,10 +321,10 @@ extern "C" nw4r::lyt::TextBox* __ct__Q34nw4r3lyt7TextBoxFUs(
     detail::SetVerticalPosition(&rFields.textPosition,
                                 VERTICALPOSITION_CENTER);
 
-    StoreFontSize(rFields, nw4r::lyt::Size(lbl_eu_80669D68, lbl_eu_80669D68));
+    StoreFontSize(rFields, nw4r::lyt::Size(0.0f, 0.0f));
 
-    rFields.mLineSpace = lbl_eu_80669D68;
-    rFields.mCharSpace = lbl_eu_80669D68;
+    rFields.mLineSpace = 0.0f;
+    rFields.mCharSpace = 0.0f;
 
     rFields.mpTagProcessor = NULL;
 
@@ -339,7 +336,7 @@ extern "C" nw4r::lyt::TextBox* __ct__Q34nw4r3lyt7TextBoxFUs(
 
     nw4r::lyt::Material* pMaterialBuf = static_cast<nw4r::lyt::Material*>(
         // Retail references the layout allocator by its retail label here.
-        MEMAllocFromAllocator(lbl_eu_80665478, sizeof(nw4r::lyt::Material)));
+        Layout::AllocMemory(sizeof(nw4r::lyt::Material)));
 
     nw4r::lyt::Material* pMaterial;
     if (pMaterialBuf != NULL) {
@@ -463,7 +460,7 @@ void TextBox::SetFont(const ut::Font* pFont) {
 
         if (pOldFont != NULL) {
             pOldFont->~Font();
-            MEMFreeToAllocator(lbl_eu_80665478, pOldFont);
+            Layout::FreeMemory(pOldFont);
         }
 
         mBits.bAllocFont = false;
@@ -476,7 +473,7 @@ void TextBox::SetFont(const ut::Font* pFont) {
         // pFont->GetHeight() runs first, then GetWidth via a fresh mpFont load.
         SetFontSize(Size(mpFont->GetWidth(), pFont->GetHeight()));
     } else {
-        SetFontSize(Size(lbl_eu_80669D68, lbl_eu_80669D68));
+        SetFontSize(Size(0.0f, 0.0f));
     }
 }
 
@@ -489,7 +486,7 @@ TextBox::~TextBox() {
 
         if (pOldFont != NULL) {
             pOldFont->~Font();
-            MEMFreeToAllocator(lbl_eu_80665478, pOldFont);
+            Layout::FreeMemory(pOldFont);
         }
 
         mBits.bAllocFont = false;
@@ -498,7 +495,7 @@ TextBox::~TextBox() {
     mpFont = NULL;
 
     if (mpFont != NULL) {
-        Size size(lbl_eu_80669D68, lbl_eu_80669D68);
+        Size size(0.0f, 0.0f);
 
         // Right-to-left argument evaluation: height first, then width via a
         // fresh mpFont load. Each conversion lands in the temp before the
@@ -508,13 +505,13 @@ TextBox::~TextBox() {
 
         mFontSize = size;
     } else {
-        mFontSize = Size(lbl_eu_80669D68, lbl_eu_80669D68);
+        mFontSize = Size(0.0f, 0.0f);
     }
 
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
         mpMaterial->~Material();
         // Retail references the layout allocator by its label here.
-        MEMFreeToAllocator(lbl_eu_80665478, mpMaterial);
+        Layout::FreeMemory(mpMaterial);
         mpMaterial = NULL;
     }
 
@@ -599,17 +596,17 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     default: {
         switch (rFlags.position % 3) {
         default: {
-            magH = lbl_eu_80669D68;
+            magH = 0.0f;
             break;
         }
 
         case 1: {
-            magH = lbl_eu_80669D78;
+            magH = 0.5f;
             break;
         }
 
         case 2: {
-            magH = lbl_eu_80669D7C;
+            magH = 1.0f;
             break;
         }
         }
@@ -617,17 +614,17 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     }
 
     case 1: {
-        magH = lbl_eu_80669D68;
+        magH = 0.0f;
         break;
     }
 
     case 2: {
-        magH = lbl_eu_80669D78;
+        magH = 0.5f;
         break;
     }
 
     case 3: {
-        magH = lbl_eu_80669D7C;
+        magH = 1.0f;
         break;
     }
     }
@@ -643,10 +640,10 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     while (remaining > 0) {
         ut::Rect lineRect;
         // Retail reloads the shared 0.0f constant around these stores.
-        lineRect.left = lbl_eu_80669D68;
-        lineRect.top = lbl_eu_80669D68;
-        lineRect.right = lbl_eu_80669D68;
-        lineRect.bottom = lbl_eu_80669D68;
+        lineRect.left = 0.0f;
+        lineRect.top = 0.0f;
+        lineRect.right = 0.0f;
+        lineRect.bottom = 0.0f;
 
         bool hasNextLine;
         int length;
@@ -691,8 +688,8 @@ void TextBox::AllocStringBuffer(u16 len) {
 
         u16 chars = len + 1;
 
-        wchar_t* pBuf = static_cast<wchar_t*>(MEMAllocFromAllocator(
-            lbl_eu_80665478, chars * sizeof(wchar_t)));
+        wchar_t* pBuf = static_cast<wchar_t*>(Layout::AllocMemory(
+            chars * sizeof(wchar_t)));
 
         // Zero-fill; retail re-tests the cursor inside the loop.
         if (pBuf != NULL) {
@@ -719,7 +716,7 @@ void TextBox::FreeStringBuffer() {
             // Layout::FreeMemory spelled out so the allocator is referenced by
             // its retail label (lbl_eu_80665478) instead of the mangled
             // static-member name (mspAllocator -> lbl_eu_80665488 postprocess).
-            MEMFreeToAllocator(lbl_eu_80665478, mTextBuf);
+            Layout::FreeMemory(mTextBuf);
         }
         mTextBuf = NULL;
         mTextBufBytes = 0;
@@ -820,17 +817,17 @@ ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
     f32 magH;
     switch (GetTextPositionH()) {
     case HORIZONTALPOSITION_CENTER: {
-        magH = lbl_eu_80669D78;
+        magH = 0.5f;
         break;
     }
 
     case HORIZONTALPOSITION_RIGHT: {
-        magH = lbl_eu_80669D7C;
+        magH = 1.0f;
         break;
     }
 
     default: {
-        magH = lbl_eu_80669D68;
+        magH = 0.0f;
         break;
     }
     }
@@ -843,17 +840,17 @@ ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
     f32 magV;
     switch (GetTextPositionH()) {
     case HORIZONTALPOSITION_CENTER: {
-        magV = lbl_eu_80669D78;
+        magV = 0.5f;
         break;
     }
 
     case HORIZONTALPOSITION_RIGHT: {
-        magV = lbl_eu_80669D7C;
+        magV = 1.0f;
         break;
     }
 
     default: {
-        magV = lbl_eu_80669D68;
+        magV = 0.0f;
         break;
     }
     }
@@ -984,10 +981,10 @@ void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(
 namespace nw4r {
 namespace lyt {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488(&lbl_eu_80665470);
+NW4R_UT_RTTI_DEF_DERIVED(TextBox, Pane);
 
 const nw4r::ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {
-    return &lbl_eu_80665488;
+    return &typeInfo;
 }
 
 } // namespace lyt

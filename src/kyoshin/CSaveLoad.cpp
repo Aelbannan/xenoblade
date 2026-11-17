@@ -453,10 +453,10 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     extern void __ct__17UnkClass_8045F564Fv(void*);
     extern void __ct__CSLCur(CSLCur*, int);
     extern void __ct__10CScrollBarFUc(void*, int);
-    extern void __ct__CSysWin(void*, int);
+    extern void __ct__7CSysWinFUc(void*, int);
     extern void CSLSub_init(void*, int);
     extern void CSLCur_reset(CSLCur*);
-    extern void __ct__UnkClass_8011C974(void*, void*);
+    extern void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
     extern void __dt__10CScrollBarFv(void*, int);
     extern void InfoCfCopySysWin(void*, void*);
     extern void __dt__7CSysWinFv(void*, int);
@@ -484,8 +484,8 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
 
     __ct__10CScrollBarFUc(self->mScrollbar, 0);
 
-    __ct__CSysWin(&self->mSysWin98, 0);
-    __ct__CSysWin(&self->mSysWinD4, 0);
+    __ct__7CSysWinFUc(&self->mSysWin98, 0);
+    __ct__7CSysWinFUc(&self->mSysWinD4, 0);
 
     CSLSub_init((u8*)self + 0x110, 0);
 
@@ -513,7 +513,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     // Temporary CScrollBar for copy initialization
     __ct__10CScrollBarFUc(tempScrollbar, 1);
 
-    __ct__UnkClass_8011C974((u8*)self + 0x5C, tempScrollbar + 4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)self + 0x5C, tempScrollbar + 4);
 
     // Copy scalar tail from tempScrollbar+0x14 into self+0x6C
     *(u32*)((u8*)self + 0x6C) = *(u32*)(tempScrollbar + 0x14);
@@ -534,12 +534,12 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     __dt__10CScrollBarFv(tempScrollbar, -1);
 
     // Temporary CSysWin for copy initialization of mSysWin98
-    __ct__CSysWin(tempSysWin2, 2);
+    __ct__7CSysWinFUc(tempSysWin2, 2);
     InfoCfCopySysWin(&self->mSysWin98, tempSysWin2);
     __dt__7CSysWinFv(tempSysWin2, -1);
 
     // Temporary CSysWin for copy initialization of mSysWinD4
-    __ct__CSysWin(tempSysWin0, 0);
+    __ct__7CSysWinFUc(tempSysWin0, 0);
     InfoCfCopySysWin(&self->mSysWinD4, tempSysWin0);
     __dt__7CSysWinFv(tempSysWin0, -1);
 
@@ -557,7 +557,6 @@ CSaveLoad::~CSaveLoad() {
         __dt__7CSysWinFv((u8*)self + 0xD4, -1);
         __dt__7CSysWinFv((u8*)self + 0x98, -1);
         __dt__10CScrollBarFv((u8*)self + 0x58, -1);
-        __dt__6CCur18Fv(&self->mCur40, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
             operator delete((u8*)self);

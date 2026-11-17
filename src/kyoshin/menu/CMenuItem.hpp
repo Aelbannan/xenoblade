@@ -2,102 +2,57 @@
 
 #include <types.h>
 
-#include "monolib/work/CProcess.hpp"
+#include "kyoshin/IUICf.hpp"
+#include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CBgTex.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 
 class CScn;
-class CTitleAHelp;
 class CItemBoxGrid;
 
-// MWCC pointer-to-member-function triple (copied around by value in ctors).
-struct CMenuPtmf {
-    u32 func;
-    u32 delta;
-    u32 vindex;
-};
+// The 4-argument CItemBoxGrid constructor (retail unmangled name).
+extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 arg1, u32 arg2,
+                                   u32 arg3, u32 arg4);
 
 /*
  * Menu item-screen process (in-game item menu singleton).
  *
- * Layout mirrors cf::CInfoCf's CMenuItem notes / CMenuGetItem:
- *   0x00: CProcess head (CDoubleListNode), vptr at 0x10 written by
- *         __ct__8CProcessFv, then swapped temp -> composite vtable here.
- *   0x3C/0x48: Move/Draw callback pointer-to-member slots (__ptmf_null).
- *   0x58: IScnRender subobject vptr (composite vtable + 0x24).
- *   0x60: CBgTex, 0x80: CTitleAHelp, 0xB8: CItemBoxGrid.
+ *   0x00: CProcess head, 0x3C/0x48: CTTask Move/Draw pmf slots
+ *   0x58: IScnRender subobject (secondary base)
+ *   0x60: CBgTex, 0x80: CTitleAHelp, 0xB8: CItemBoxGrid (opaque)
  *   0x4AC4-0x4AC6: state / config flag bytes.
  */
-class CMenuItem {
+class CMenuItem : public IUICf, public IScnRender {
 public:
-    CMenuItem();
-    ~CMenuItem();
-    void Init();
-    void Term();
-    void Move();
+    CMenuItem(CScn* scene, u8 flag5, u8 flag6)
+        : mScene(scene), mBgTex(0), mTitleAHelp(0, 0) {
+        // mItemBoxGrid is opaque storage; its constructor is called by the
+        // C-ABI name (the 4-arg form has no C++ declaration).
+        __ct__CItemBoxGrid(grid(), 0, 0, 0, 1);
+        mState = 0;
+        mField4AC5 = flag5;
+        mField4AC6 = flag6;
+    }
+    virtual ~CMenuItem();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 
-    u8 mProcess[0x10];         // 0x00 CProcess storage head (CDoubleListNode)
-    u32 mVtable10;             // 0x10 CProcess vtable slot (temp, then composite)
-    u8 mProcRest[0x39 - 0x14]; // 0x14..0x38 CProcess tail (CChildListNode)
-    u8 mIsRemove;              // 0x39 CProcess::mIsRemove
-    u8 mIsDisableMove;         // 0x3A
-    u8 mIsDisableDraw;         // 0x3B
-    u32 ptmfCallbacks[6];      // 0x3C - Move (0-2) / Draw (3-5) callback pmfs
-    u8 mField54;               // 0x54
-    u8 mField55;               // 0x55
-    u8 _pad56[2];              // 0x56
-    u32 mIScnRenderVt;         // 0x58 - IScnRender subobject vtable slot
-    CScn* mScene;              // 0x5C - owning scene
-    CBgTex mBgTex;             // 0x60 - background layout widget
-    u8 mTitleAHelp[0x38];      // 0x80 - title/help bar (opaque storage)
+    static CMenuItem* create(CProcess* parent, CScn* scene, u8 flag5, u8 flag6);
+
+    static CMenuItem* sInstance;
+
+    // CItemBoxGrid is not a complete class yet (kyoshin/CItemBoxGrid.cpp is
+    // still built from C-style pieces), so the grid is opaque storage here.
+    CItemBoxGrid* grid() { return reinterpret_cast<CItemBoxGrid*>(mItemBoxGrid); }
+
+    CScn* mScene;                  // 0x5C - owning scene
+    CBgTex mBgTex;                 // 0x60 - background layout widget
+    CTitleAHelp mTitleAHelp;       // 0x80 - title/help bar
     u8 mItemBoxGrid[0x4AC4 - 0xB8]; // 0xB8..0x4AC3 - item grid (opaque storage)
-    u8 mState;                 // 0x4AC4
-    u8 mField4AC5;             // 0x4AC5
-    u8 mField4AC6;             // 0x4AC6
+    u8 mState;                     // 0x4AC4
+    u8 mField4AC5;                 // 0x4AC5
+    u8 mField4AC6;                 // 0x4AC6
+    u8 _pad4AC7[1];                // 0x4AC7
 };
-
-// Singleton instance pointer (retail sbss; cleared by CInfoCf-side code).
-extern u32 lbl_eu_80664258;
-
-// cf::CfPadData view: only the flag words the menu input handler reads
-// (+0x00 held, +0x04 pressed, +0x104 turbo/short-press).
-struct CfMenuPadData {
-    u32 mHeldFlags;                  // +0x00
-    u32 mPressedFlags;               // +0x04
-    u8 _pad08[0x104 - 0x08];         // 0x08..0x103
-    u32 mTurboFlags;                 // +0x104
-};
-
-// Input-handler callees (retail unmangled names).
-extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801CCAF0(CItemBoxGrid* self);
-extern "C" u32 IsItemBoxActive(CItemBoxGrid* self);
-extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
-extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
-extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
-extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
-extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
-extern "C" void OpenSortMenu(CItemBoxGrid* self);
-extern "C" void TickItemBoxGrid(CItemBoxGrid* self);
-extern "C" void SelectCatRow(CItemBoxGrid* self);
-extern "C" u8 GetPromptState(CItemBoxGrid* self);
-
-// Temp (CProcess) vtable pre-PMF copy; composite vtable whose IScnRender
-// sub-vtable sits at +0x24.
-extern char lbl_eu_8052BF70[];
-extern char lbl_eu_805309C0[];
-
-// Null pointer-to-member-function constant (3 words).
-extern u32 __ptmf_null[3];
-
-// C-ABI imports: CProcess is abstract so its ctor is called by retail name,
-// and the US build strips the widget ctor manglings (see CInfoCf.hpp).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
-extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 arg1, u32 arg2,
-                                   u32 arg3, u32 arg4);

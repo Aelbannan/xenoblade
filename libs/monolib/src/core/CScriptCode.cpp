@@ -48,13 +48,13 @@ u32 lbl_eu_8056B4B8[6] = {
 };
 
 // RTTI locator (.sdata, 8 bytes): { name, base-list }.
-u32 lbl_eu_80663558[2] = { (u32)lbl_eu_80522540, (u32)lbl_eu_8056B4B8 };
+u32 __RTTI__11CScriptCode[2] = { (u32)lbl_eu_80522540, (u32)lbl_eu_8056B4B8 };
 
 // CScriptCode vtable (.data, 0xA0): [rtti locator, 0, dtor, IWorkEvent 1-31,
 // wkUpdate/wkRender/wkRenderAfter/wkStandbyLogin (CWorkThread slots),
 // wkStandbyLogout (CScriptCode), wkStandbyExceptionRetry].
 u32 lbl_eu_8056B418[0xA0 / 4] = {
-    (u32)&lbl_eu_80663558, 0, (u32)&__dt__11CScriptCodeFv,
+    (u32)&__RTTI__11CScriptCode, 0, (u32)&__dt__11CScriptCodeFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,

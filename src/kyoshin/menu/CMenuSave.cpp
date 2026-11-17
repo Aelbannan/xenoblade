@@ -1,6 +1,7 @@
 // Decomp of kyoshin/menu/CMenuSave.
-// Menu save/load screen process (CProcess + IScnRender MI).
+// Menu save/load screen process (IUICf task + IScnRender MI).
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuSave.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
@@ -11,67 +12,113 @@
 #include "monolib/util/MemManager.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
-// Retail constructor symbol (unmangled global in US). Kept as a free function
-// so the factory (createSaveMenu) emits a real bl to it, and returns `this` in
-// r3 like a real constructor (retail relies on it).
-extern "C" __declspec(noinline) CMenuSave* __ct__CMenuSave(
-    CMenuSave* self, CProcess* parent, u32 arg208, u32 arg209, u32 arg20A) {
-    __ct__8CProcessFv((CProcess*)self);
+class CSaveLoad;
 
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    self->ptmf0[0] = __ptmf_null[0];
-    self->ptmf0[1] = __ptmf_null[1];
-    self->ptmf0[2] = __ptmf_null[2];
-    self->ptmf1[0] = __ptmf_null[0];
-    self->ptmf1[1] = __ptmf_null[1];
-    self->ptmf1[2] = __ptmf_null[2];
-    self->mField54 = 0;
-    self->mField55 = 0;
+// Flat view of cf::CfPadData exposing only the flag words handleSaveMenuInput reads:
+// CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
+// +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
+struct MenuSavePadData {
+    u32 mPadHeldFlags;          // 0x00 - CPad::mHeldButtonFlags
+    u32 mPadPressedFlags;       // 0x04 - CPad::mPressedButtonFlags
+    u8 _pad[0xFC];              // 0x08-0x103 - rest of the pad data
+    u32 mTurboPressButtonFlags; // 0x104
+};
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80538710;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80538710 + 0x24;
-    self->mParentRef = parent;
+// Message table base used by Init's CTitleAHelp name lookup (+0xb string).
+extern char lbl_eu_8050F7B0[];
+// Render-gate mode bitfield (.sbss; bit 21 = realtime event busy).
+extern u32 lbl_eu_80663E28;
 
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CSaveLoad(reinterpret_cast<CSaveLoad*>(self->mSaveLoad), 0, 0);
+// Retail-unmangled callee names (US strips mangling for these func_ helpers).
+// isIdle/BgTex_IsLoaded_3E34/... are declared int (not u8) so callers compare with
+// cmpwi directly (no byte mask), matching retail.
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+extern "C" int CSaveLoad_getIdle(CSaveLoad* self);
+extern "C" int CSaveLoad_isReady(CSaveLoad* self);
+extern "C" u8 func_8028FFD4(CSaveLoad* self);
+extern "C" void CSaveLoad_reset(CSaveLoad* self);
+extern "C" void CSaveLoad_open(CSaveLoad* self);
+extern "C" void NandTeardown();
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
-    self->mField208 = arg208;
-    self->mField209 = arg209;
-    self->mField20A = arg20A;
-    self->mState = 0;
-    if (arg20A != 0) {
+// Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
+// (retail symbols are unmangled / non-namespace, so C linkage is required).
+extern "C" int IsMenuState621F0();
+extern "C" void openSaveMenu(CMenuSave* self);
+extern "C" void advanceSaveMenuPhase(CMenuSave* self);
+extern "C" void handleSaveMenuInput(CMenuSave* self);
+extern "C" void flagSaveMenuReady(CMenuSave* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Acquire_3C14(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
+extern "C" void CSaveLoad_update(CSaveLoad* self);
+extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int CSaveLoad_isBusy(CSaveLoad* self);
+extern "C" int CSaveLoad_getDone(CSaveLoad* self);
+extern "C" void CSaveLoad_confirm(CSaveLoad* self);
+extern "C" void CSaveLoad_cancel(CSaveLoad* self);
+extern "C" void CSaveLoad_close(CSaveLoad* self);
+extern "C" void CSaveLoad_openDel(CSaveLoad* self);
+extern "C" void CSaveLoad_curUp(CSaveLoad* self);
+extern "C" void CSaveLoad_curDown(CSaveLoad* self);
+extern "C" void CSaveLoad_pageUp(CSaveLoad* self);
+extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
+extern "C" void loadSaveData__9CSaveLoadFv(CSaveLoad* self);
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+extern "C" void __ct__6CBgTexFUc(void* self, int arg);
+extern "C" void __ct__11CTitleAHelpFPcUc(void* self, char* name, int id);
+extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
+extern "C" void NandAllocBufs();
+extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
+extern "C" void InfoCfCopySysWin(void* dest, void* src);
+extern "C" CSaveLoad* __dt__9CSaveLoadFv(CSaveLoad* self, int flags);
+extern "C" CTitleAHelp* __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
+extern "C" CBgTex* __dt__6CBgTexFv(CBgTex* self, int flags);
+
+// DrawInfo helper - retail emits the mangled nw4r form
+// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
+// global function to let MWCC mangle it - NOT inside the extern "C" block.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
+
+/*
+ * Constructor. The CBgTex / CTitleAHelp members are real members built by the
+ * initialiser list; the CSaveLoad region is raw storage, so its constructor is
+ * called by hand. The trailing stores and the presentation flag follow it.
+ */
+CMenuSave::CMenuSave(CProcess* parent, u32 arg208, u32 arg209, u32 arg20A)
+    : mParentRef(parent), mBgTex(0), mTitleAHelp(0, 0) {
+    __ct__CSaveLoad(reinterpret_cast<CSaveLoad*>(mSaveLoad), 0, 0);
+
+    mField208 = arg208;
+    mField209 = arg209;
+    mField20A = arg20A;
+    mState = 0;
+    if ((u8)arg20A != 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
-    return self;
 }
 
 /*
- * Destructor (retail D2 form, symbol keeps its C++ mangling in US).
- *
- * Written with an explicit flags parameter so the base-class destruction can
- * target the retail CProcess dtor symbol __dt__800FED0C (0x800FF7F4, the
- * game-side D2 wrapper). A real member destructor would make MWCC auto-emit
- * __dt__8CProcessFv (the library D1 at 0x804474D0) for the base call, which
- * cannot match the retail reloc name at the call site. Subobjects are
- * destroyed in reverse construction order, then conditional operator delete
- * when flags > 0 (same shape as CSysWinSave's dtor).
+ * Destructor. The raw CSaveLoad region is torn down here; the compiler then
+ * destroys mTitleAHelp, mBgTex and the IUICf base in reverse order.
  */
-extern "C" CMenuSave* __dt__9CMenuSaveFv(CMenuSave* _this, int flags) {
-    if (_this != 0) {
-        __dt__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(_this->mSaveLoad), -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&_this->mBgTex, -1);
-        __dt__800FED0C(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
+CMenuSave::~CMenuSave() {
+    __dt__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(mSaveLoad), -1);
 }
 
 /*
@@ -93,7 +140,7 @@ void CMenuSave::Init() {
     u8 tempBgTex[0x20];
     __ct__6CBgTexFUc(tempBgTex, 0);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x64, tempBgTex + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x64, tempBgTex + 0x4);
     *(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);
     *(u32*)((u8*)this + 0x78) = *(u32*)(tempBgTex + 0x18);
     *(u8*)((u8*)this + 0x7c)  = *(u8*)(tempBgTex + 0x1c);
@@ -108,9 +155,9 @@ void CMenuSave::Init() {
                                 mField208 != 0 ? 0x49 : 0x48);
 
     u8 tempTitle[0x38];
-    __ct__CTitleAHelp(tempTitle, name, mField208 != 0 ? 0x6b : 0x69);
+    __ct__11CTitleAHelpFPcUc(tempTitle, name, mField208 != 0 ? 0x6b : 0x69);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x84, tempTitle + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x84, tempTitle + 0x4);
     *(u32*)((u8*)this + 0x94) = *(u32*)(tempTitle + 0x14);
     *(u32*)((u8*)this + 0x98) = *(u32*)(tempTitle + 0x18);
     *(u32*)((u8*)this + 0x9c) = *(u32*)(tempTitle + 0x1c);
@@ -131,7 +178,7 @@ void CMenuSave::Init() {
     u8 tempSave[0x150];
     __ct__CSaveLoad(tempSave, mField208, mField209);
 
-    __ct__UnkClass_8011C974((u8*)this + 0xbc, tempSave + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xbc, tempSave + 0x4);
     *(u32*)((u8*)this + 0xcc) = *(u32*)(tempSave + 0x14);
     *(u32*)((u8*)this + 0xd0) = *(u32*)(tempSave + 0x18);
     *(u32*)((u8*)this + 0xd4) = *(u32*)(tempSave + 0x1c);
@@ -150,7 +197,7 @@ void CMenuSave::Init() {
     *(u8*)((u8*)this + 0x10c)  = *(u8*)(tempSave + 0x54);
     *(u8*)((u8*)this + 0x10d)  = *(u8*)(tempSave + 0x55);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x114, tempSave + 0x5c);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x114, tempSave + 0x5c);
     *(u32*)((u8*)this + 0x124) = *(u32*)(tempSave + 0x6c);
     *(u32*)((u8*)this + 0x128) = *(u32*)(tempSave + 0x70);
     *(u32*)((u8*)this + 0x12c) = *(u32*)(tempSave + 0x74);
@@ -205,30 +252,20 @@ void CMenuSave::Init() {
 
     loadSaveData__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 
-    // Register this screen as a render callback on the parent scene (the
-    // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 0);
+    // Register this screen as a render callback on the parent scene.
+    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(this, 0xd, 0);
 }
 
 void CMenuSave::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
+    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     CSaveLoad_reset(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 
-    lbl_eu_806649E8 = 0;
+    sInstance = nullptr;
 
     if (mField208 == 0) {
         NandTeardown();
@@ -276,38 +313,53 @@ void CMenuSave::cbRenderBefore() {
     if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // (a C++ local would virtual-dispatch its scope-exit destructor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     CSaveLoad_draw(reinterpret_cast<CSaveLoad*>(mSaveLoad),
-                  (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+                  &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
+
+CMenuSave* CMenuSave::sInstance;
 
 /*
  * Factory: lazily allocate + construct the single save-menu instance and
- * register it as a child of `parent`. Returns the stored instance (or 0 if it
- * already exists). The 4 extra args are forwarded to the CMenuSave ctor.
+ * register it as a child of `parent`. Returns the stored instance (or NULL if it
+ * already exists). The last three args are forwarded to the constructor, with
+ * `parentRef` becoming mParentRef.
  */
-extern "C" CMenuSave* createSaveMenu(CProcess* parent, CProcess* arg2, u32 arg3, u32 arg4, u32 arg5) {
-    if (lbl_eu_806649E8 != 0) {
-        return 0;
+CMenuSave* CMenuSave::create(CProcess* parent, CProcess* parentRef, u32 arg208,
+                             u32 arg209, u32 arg20A) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
-    CMenuSave* obj = (CMenuSave*)mtl::MemManager::allocate(
-        sizeof(CMenuSave), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuSave(obj, arg2, arg3, arg4, arg5);
-    }
-    lbl_eu_806649E8 = (unsigned long)obj;
-    obj->Regist(parent, 0x0);
-    return (CMenuSave*)lbl_eu_806649E8;
+
+    CMenuSave* menu = new (CWorkThreadSystem::getWorkMem())
+        CMenuSave(parentRef, arg208, arg209, arg20A);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 void stub_us_802908bc() {}
+
+extern "C" unsigned long isSaveMenuActive(void) { return CMenuSave::sInstance != nullptr; }
+
+/* Once the background, title bar and save-load panel are all ready, pull the
+ * save-slot data, update the title bar, and play the open sound. */
+extern "C" void openSaveMenu(CMenuSave* self) {
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
+        isInitialized(&self->mTitleAHelp) != 0 &&
+        CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
+        u8 slot = func_8028FFD4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+        func_801C41E8(&self->mTitleAHelp, slot);
+        func_801C412C(&self->mTitleAHelp);
+        CSaveLoad_open(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
+        self->mState = 1;
+        playUISound(0x6d);
+    }
+}
 
 /* Advance the save menu to phase 2 once the title bar is idle and the
  * save-load panel has finished its intro (writes the state byte at 0x20B). */
@@ -420,47 +472,5 @@ extern "C" void flagSaveMenuReady(CMenuSave* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mField54 = 1;
-    }
-}
-
-/*
- * IScnRender vtable this-adjusting thunk for cbRenderBefore.
- *
- * The IScnRender subobject sits at +0x58 within CMenuSave; vtable dispatch
- * through that subobject passes 'this' pointing at +0x58, so the thunk
- * subtracts it back and tail-calls the real implementation.
- *
- * Retail: subi r3, r3, 0x58; b cbRenderBefore__9CMenuSaveFv
- */
-extern "C" void fwdSaveMenuCbRender(void* self) {
-    cbRenderBefore__9CMenuSaveFv((char*)self - 0x58);
-}
-
-/*
- * IScnRender vtable this-adjusting thunk for ~CMenuSave.
- *
- * Same adjustment as fwdSaveMenuCbRender but forwards to the destructor, leaving
- * r4 (delete flag) as caller leftover.
- *
- * Retail: subi r3, r3, 0x58; b __dt__9CMenuSaveFv
- */
-extern "C" void fwdSaveMenuDtor(void* self) {
-    ((void(*)(void*))__dt__9CMenuSaveFv)((char*)self - 0x58);
-}
-
-extern "C" unsigned long isSaveMenuActive(void) { return lbl_eu_806649E8 != 0; }
-
-/* Once the background, title bar and save-load panel are all ready, pull the
- * save-slot data, update the title bar, and play the open sound. */
-extern "C" void openSaveMenu(CMenuSave* self) {
-    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
-        isInitialized(&self->mTitleAHelp) != 0 &&
-        CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
-        u8 slot = func_8028FFD4(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
-        func_801C41E8(&self->mTitleAHelp, slot);
-        func_801C412C(&self->mTitleAHelp);
-        CSaveLoad_open(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
-        self->mState = 1;
-        playUISound(0x6d);
     }
 }

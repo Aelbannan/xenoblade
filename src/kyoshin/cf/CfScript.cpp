@@ -684,14 +684,14 @@ extern "C" u32 __RTTI__10IWorkEvent[];
 
 // CfRes-owned .sdata descriptor words referenced by the tables below
 // (8-byte objects; array-of-u32 is the neutral spelling, cf. IResInfo.cpp).
-extern u32 lbl_eu_80661A80[2];
-extern u32 lbl_eu_80661A88[2];
-extern u32 lbl_eu_80661A90[2];
-extern u32 lbl_eu_80661A98[2];
-extern u32 lbl_eu_80661AA0[2];
-extern u32 lbl_eu_80661AA8[2];
-extern u32 lbl_eu_80661AB0[2];
-extern u32 lbl_eu_80661AB8[2];
+extern u32 __RTTI__Q22cf12IResInfoTBox[2];
+extern u32 __RTTI__Q22cf10IResInfoSe[2];
+extern u32 __RTTI__Q22cf14IResInfoEffect[2];
+extern u32 __RTTI__Q22cf11IResInfoLOD[2];
+extern u32 __RTTI__Q22cf10IResInfoID[2];
+extern u32 __RTTI__Q22cf18IResInfoPreloadMap[2];
+extern u32 __RTTI__Q22cf11IResInfoMap[2];
+extern u32 __RTTI__Q22cf8IResInfo[2];
 // Forward declaration for the .sdata typeinfo initializer below
 // (defined in the .data block, retail order).
 extern u32 lbl_eu_80526E70[4];
@@ -722,7 +722,7 @@ char lbl_eu_804FB3A4[0x34] =
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 char* lbl_eu_80661AC0 = (char*)lbl_eu_804FB388;
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-void* lbl_eu_80661AC8[2] = { lbl_eu_804FB394, lbl_eu_80526E70 };
+void* __RTTI__Q22cf8CfScript[2] = { lbl_eu_804FB394, lbl_eu_80526E70 };
 __declspec(section ".sdata") __attribute__((used))
 // Sized [8]: the 2-byte "." string plus the section's 6-byte tail fill
 // (retail sh_size 0x18 over 0x12 content; same tail-fill idiom as
@@ -732,7 +732,7 @@ char lbl_eu_80661AD0[8] = ".";
 // --- .data (retail 0x350): descriptor tables in retail order ---
 __declspec(section ".data") __attribute__((used, aligned(8)))
 void* lbl_eu_80526B30[20] = {
-    lbl_eu_80661A80, 0,
+    __RTTI__Q22cf12IResInfoTBox, 0,
     (void*)&CfRes_getLazyField50, (void*)&CfRes_getLimit512b,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -744,10 +744,10 @@ void* lbl_eu_80526B30[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526B80[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526B80[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526B90[20] = {
-    lbl_eu_80661A88, 0,
+    __RTTI__Q22cf10IResInfoSe, 0,
     (void*)&CfRes_dispatchTypeA, (void*)&CfRes_getLimit512c,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -759,10 +759,10 @@ void* lbl_eu_80526B90[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526BE0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526BE0[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526BF0[20] = {
-    lbl_eu_80661A90, 0,
+    __RTTI__Q22cf14IResInfoEffect, 0,
     (void*)&CfRes_getLazyFieldAC, (void*)&CfRes_getLimit32,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -774,10 +774,10 @@ void* lbl_eu_80526BF0[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526C40[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526C40[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526C50[20] = {
-    lbl_eu_80661A98, 0,
+    __RTTI__Q22cf11IResInfoLOD, 0,
     (void*)&CfRes_getLazyField18, (void*)&CfRes_getLimit512d,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -789,10 +789,10 @@ void* lbl_eu_80526C50[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526CA0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526CA0[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526CB0[20] = {
-    lbl_eu_80661AA0, 0,
+    __RTTI__Q22cf10IResInfoID, 0,
     (void*)&CfRes_getLazyField20b, (void*)&CfRes_getLimit512e,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -804,10 +804,10 @@ void* lbl_eu_80526CB0[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526D00[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526D00[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526D10[20] = {
-    lbl_eu_80661AA8, 0,
+    __RTTI__Q22cf18IResInfoPreloadMap, 0,
     (void*)&CfRes_getLazyDeviceBuf, (void*)&CfRes_getLimit512f,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -819,10 +819,10 @@ void* lbl_eu_80526D10[20] = {
     (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526D60[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526D60[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526D70[20] = {
-    lbl_eu_80661AB0, 0,
+    __RTTI__Q22cf11IResInfoMap, 0,
     (void*)&CfRes_getLazyField10b, (void*)&getResMaxCount,
     (void*)&isResFlag1, (void*)&resNoop,
     (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
@@ -834,14 +834,14 @@ void* lbl_eu_80526D70[20] = {
     (void*)&CfRes_vcall16, (void*)&isResFlag0,
 };
 __declspec(section ".data") __attribute__((used))
-void* lbl_eu_80526DC0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+void* lbl_eu_80526DC0[4] = { __RTTI__Q22cf8IResInfo, 0, 0, 0 };
 // PMF dispatch pair selected by mWaitCount (retail bytes {0,-1,func} x2).
 __declspec(section ".data") __attribute__((used))
 CfScriptPMF lbl_eu_80526DD0[2] = { &cf::CfScript::waitLoad, &cf::CfScript::update };
 // CfScript IWorkEvent vtable blob [ti, 0, dtor, ...] (retail 0x88).
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80526DE8[34] = {
-    lbl_eu_80661AC8, 0,
+    __RTTI__Q22cf8CfScript, 0,
     (void*)&__dt__Q22cf8CfScriptFv,
     (void*)&WorkEvent1__10IWorkEventFPvPCc,
     (void*)&OnFileEvent__8CfScriptFP10CEventFile,

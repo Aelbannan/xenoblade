@@ -1,89 +1,33 @@
 // TU: kyoshin/realtimeevt/CREvtObj
-// Class: cf::CREvtObj (namespace cf)
-// Vtable at 0x80532320
-// Size: 0x14 (vtable ptr + mType + __ptmf[3])
+// Class: cf::CREvtObj (namespace cf) - base of the realtime-event objects
+// (camera, effect, light, model, movie). Size 0x14.
 //
-// Retail symbols in this split (.text 0x80186B18..0x80186BE8):
-//   __ct__Q22cf8CREvtObjFi       0x30  base constructor
-//   __dt__Q22cf8CREvtObjFv  0x40  base destructor
-//   vfunc_1C__Q22cf8CREvtObjFv   0x48  run the callback ptmf if set
-//   EvtObj_AllocBlock           0x0C  allocate a realtime-ev block (CREvtMem)
-//   __dl__Q22cf8CREvtObjFPv          0x04  free a realtime-ev block (CREvtMem)
-//   vfunc_0C__Q22cf8CREvtObjFv   0x08  constant-0 predicate
-//
-// Matching notes (why the ctor/dtor are C-linkage functions, not members):
-//   * __ct__Q22cf8CREvtObjFi is the retail SHORT constructor form (no parameter
-//     suffix). MWCC 1.1 full-mangles member ctors (__ct__Q22cf8CREvtObjFiFi), so
-//     the ctor is written as a C-linkage function carrying the exact retail
-//     name (MWCC_CASES "Constructor symbol name: MWCC 1.1 emits full
-//     mangling, retail has short form").
-//   * __dt__Q22cf8CREvtObjFv is Fv-mangled but reads the MWCC dtor delete
-//     flag in r4: the flag-guarded call is freeEvtMemPtr (CREvtMem free),
-//     not operator delete, so the two-arg C-linkage form reproduces the
-//     retail body (MWCC_CASES "Extern-C for Fv-mangled functions that
-//     take hidden parameters").
+// Objects live in the CREvtMem arena: the class has its own operator
+// new/delete, so the deleting destructor releases through freeEvtMemPtr.
 
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 
-// ============================================================================
-// __ct__Q22cf8CREvtObjFi (0x80186B18)
-// Base ctor: stores the object kind (r4) at +0x04, installs the cf::CREvtObj
-// vtable at +0x00, and resets the callback ptmf at +0x08 to the null
-// sentinel. Derived realtime-ev ctors pass their kind (0..4).
-// ============================================================================
-extern "C" void __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg) {
-    self->mType = arg;
-    *(u32**)self = lbl_eu_80532320;
-    self->mCallback = __ptmf_null;
-}
+namespace cf {
 
-// ============================================================================
-// __dt__Q22cf8CREvtObjFv (0x80186B48)
-// Two-arg dtor form returning `this` (MWCC dtor ABI). When the delete flag is
-// set (r4 > 0), the instance is released through the realtime-ev memory
-// manager (freeEvtMemPtr) instead of operator delete, so CREvtObj-family
-// objects stay inside the CREvtMem arena.
-// ============================================================================
-extern "C" cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFlag) {
-    if (self != nullptr && deleteFlag > 0) {
-        freeEvtMemPtr(reinterpret_cast<u8*>(self));
-    }
-    return self;
-}
+CREvtObj::CREvtObj(int type) : mType(type), mCallback(nullptr) {}
 
-// ============================================================================
-// CREvtObj::vfunc_1C (0x80186B88)
-// Runs the stored callback (mCallback) when it is non-null; used by the
-// per-frame step of derived realtime-ev objects (e.g. CREvtModel).
-// ============================================================================
-void cf::CREvtObj::vfunc_1C() {
+CREvtObj::~CREvtObj() {}
+
+// Runs the stored callback when one is set.
+void CREvtObj::vfunc_1C() {
     if (mCallback) {
         (this->*mCallback)();
     }
 }
 
-// ============================================================================
-// EvtObj_AllocBlock (0x80186BD0)
-// Allocates a realtime-ev block of `ptr` bytes via allocEvtMemAligned (4-byte
-// aligned, MEM1 heap). Called by the CREvtModel factory with the derived
-// class sizes (0x1F0 / 0xB4 / 0x88) before running the derived ctor.
-// ============================================================================
-extern "C" void* EvtObj_AllocBlock(u32 size) {
-    // First arg is a byte count (callers pass 0x1F0/0xB4/0x88), not a pointer.
+void* CREvtObj::operator new(size_t size) {
     return allocEvtMemAligned(size, 4, 1);
 }
 
-// ============================================================================
-// __dl__Q22cf8CREvtObjFPv (0x80186BDC)
-// Deleting-dtor alias: a 4-byte tail-call to freeEvtMemPtr. Derived-class
-// deleting-dtor epilogues call this to release the base through CREvtMem.
-// ============================================================================
-extern "C" void __dl__Q22cf8CREvtObjFPv(u8* block) {
-    freeEvtMemPtr(block);
+void CREvtObj::operator delete(void* p) {
+    freeEvtMemPtr(static_cast<u8*>(p));
 }
 
-// ============================================================================
-// CREvtObj::vfunc_0C (0x80186BE0)
-// Constant-0 predicate (li r3,0 / blr).
-// ============================================================================
-int cf::CREvtObj::vfunc_0C() { return 0; }
+int CREvtObj::vfunc_0C() { return 0; }
+
+} // namespace cf

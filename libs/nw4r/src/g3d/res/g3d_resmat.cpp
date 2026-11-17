@@ -7,20 +7,9 @@
 #include <nw4r/g3d.h>
 #undef GXGetIndTexMtx
 
-// Retail .sdata2 pool constants used by GXGetIndTexMtx (retail .sdata2 labels, owning TU or extern).
-// Per MWCC_PATTERNS.md section 1b: declare as scalars and reference verbatim
-// at each site so MWCC emits lfs/lfd lbl@sda21(r0) pool loads.
-extern "C" const f32 lbl_eu_80669A68; // 0.0f
-extern "C" const f32 lbl_eu_80669A6C; // 1.0f
-extern "C" const f32 lbl_eu_80669A88; // 1/1024.0f
-extern "C" const f32 lbl_eu_80669A80; // 2.0f
-extern "C" const f32 lbl_eu_80669A84; // 0.5f
-extern "C" const f32 lbl_eu_80669A98; // 1024.0f (first float of lbl_eu_80669A98)
-extern "C" const f64 lbl_eu_80669A90; // 2^52 + 2^31 (MWCC s32 -> f64 conversion magic)
-extern "C" const f64 lbl_eu_80669A70; // 0.6 (ResMatFur::GetLyrRate pow exponent)
-
 namespace nw4r {
 namespace g3d {
+
 
 /******************************************************************************
  *
@@ -30,6 +19,8 @@ namespace g3d {
 ResMdl ResMat::GetParent() {
     return ofs_to_obj<ResMdl>(ref().toResMdlData);
 }
+
+
 
 /******************************************************************************
  *
@@ -46,6 +37,8 @@ void ResMatPix::DCStore(bool sync) {
     }
 }
 
+
+
 void ResMatTevColor::DCStore(bool sync) {
     ResTevColorDL& r = ref();
 
@@ -55,6 +48,8 @@ void ResMatTevColor::DCStore(bool sync) {
         DC::StoreRangeNoSync(&r, sizeof(ResTevColorDL));
     }
 }
+
+
 
 void ResMatIndMtxAndScale::DCStore(bool sync) {
     ResIndMtxAndScaleDL& r = ref();
@@ -66,6 +61,8 @@ void ResMatIndMtxAndScale::DCStore(bool sync) {
     }
 }
 
+
+
 void ResMatTexCoordGen::DCStore(bool sync) {
     ResTexCoordGenDL& r = ref();
 
@@ -75,6 +72,8 @@ void ResMatTexCoordGen::DCStore(bool sync) {
         DC::StoreRangeNoSync(&r, sizeof(ResTexCoordGenDL));
     }
 }
+
+
 
 /******************************************************************************
  *
@@ -91,6 +90,8 @@ void ResMatPix::CallDisplayList(bool sync) const {
     }
 }
 
+
+
 void ResMatTevColor::CallDisplayList(bool sync) const {
     const ResTevColorDL& r = ref();
 
@@ -103,6 +104,8 @@ void ResMatTevColor::CallDisplayList(bool sync) const {
     }
 }
 
+
+
 /******************************************************************************
  *
  * CopyTo
@@ -113,20 +116,28 @@ ResMatPix ResMatPix::CopyTo(void* pDst) const {
     return ResMatPix(pDst);
 }
 
+
+
 ResMatTevColor ResMatTevColor::CopyTo(void* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResTevColorDL));
     return ResMatTevColor(pDst);
 }
+
+
 
 ResMatIndMtxAndScale ResMatIndMtxAndScale::CopyTo(void* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResIndMtxAndScaleDL));
     return ResMatIndMtxAndScale(pDst);
 }
 
+
+
 ResMatTexCoordGen ResMatTexCoordGen::CopyTo(void* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResTexCoordGenDL));
     return ResMatTexCoordGen(pDst);
 }
+
+
 
 /******************************************************************************
  *
@@ -141,6 +152,8 @@ const GXTexObj* ResTexObj::GetTexObj(GXTexMapID id) const {
     return NULL;
 }
 
+
+
 GXTexObj* ResTexObj::GetTexObj(GXTexMapID id) {
     if (IsValid() && id >= GX_TEXMAP0 && id <= GX_TEXMAP7) {
         return &ptr()->texObj[id];
@@ -149,6 +162,8 @@ GXTexObj* ResTexObj::GetTexObj(GXTexMapID id) {
     return NULL;
 }
 
+
+
 bool ResTexObj::IsValidTexObj(GXTexMapID id) const {
     if (IsValid() && id >= GX_TEXMAP0 && id <= GX_TEXMAP7) {
         return ptr()->flagUsedTexMapID & (1 << id);
@@ -156,6 +171,7 @@ bool ResTexObj::IsValidTexObj(GXTexMapID id) const {
 
     return false;
 }
+
 
 inline void ResTexObj::Validate(GXTexMapID id) {
     if (IsValid() && id >= GX_TEXMAP0 && id <= GX_TEXMAP7) {
@@ -168,6 +184,7 @@ inline void ResTexObj::Invalidate(GXTexMapID id) {
         ptr()->flagUsedTexMapID &= ~(1 << id);
     }
 }
+
 
 ResTexObj ResTexObj::CopyTo(void* pDst) const {
     ResTexObjData* pData = static_cast<ResTexObjData*>(pDst);
@@ -190,6 +207,8 @@ ResTexObj ResTexObj::CopyTo(void* pDst) const {
     return ResTexObj(pData);
 }
 
+
+
 /******************************************************************************
  *
  * ResTlutObj
@@ -203,6 +222,8 @@ const GXTlutObj* ResTlutObj::GetTlut(GXTlut tlut) const {
     return NULL;
 }
 
+
+
 GXTlutObj* ResTlutObj::GetTlut(GXTlut tlut) {
     if (IsValid() && tlut >= GX_TLUT0 && tlut <= GX_TLUT7) {
         return &ptr()->tlutObj[tlut];
@@ -211,6 +232,8 @@ GXTlutObj* ResTlutObj::GetTlut(GXTlut tlut) {
     return NULL;
 }
 
+
+
 bool ResTlutObj::IsValidTlut(GXTlut tlut) const {
     if (IsValid() && tlut >= GX_TLUT0 && tlut <= GX_TLUT7) {
         return ptr()->flagUsedTlutID & (1 << tlut);
@@ -218,6 +241,7 @@ bool ResTlutObj::IsValidTlut(GXTlut tlut) const {
 
     return false;
 }
+
 
 inline void ResTlutObj::Validate(GXTlut tlut) {
     if (IsValid() && tlut >= GX_TLUT0 && tlut <= GX_TLUT7) {
@@ -230,6 +254,7 @@ inline void ResTlutObj::Invalidate(GXTlut tlut) {
         ptr()->flagUsedTlutID &= ~(1 << tlut);
     }
 }
+
 
 ResTlutObj ResTlutObj::CopyTo(void* pDst) const {
     ResTlutObjData* pData = static_cast<ResTlutObjData*>(pDst);
@@ -258,6 +283,8 @@ ResTlutObj ResTlutObj::CopyTo(void* pDst) const {
 
     return ResTlutObj(pData);
 }
+
+
 
 /******************************************************************************
  *
@@ -302,6 +329,8 @@ ResTexSrt ResTexSrt::CopyTo(void* pDst) const {
     return ResTexSrt(pData);
 }
 
+
+
 bool ResTexSrt::SetEffectMtx(u32 id, const math::MTX34* pMtx) {
     if (id < ResTexSrtData::NUM_OF_TEXTURE) {
         TexMtxEffect& rEffect = ref().effect[id];
@@ -323,6 +352,7 @@ bool ResTexSrt::SetEffectMtx(u32 id, const math::MTX34* pMtx) {
 
     return false;
 }
+
 
 inline bool ResTexSrt::GetEffectMtx(u32 id, math::MTX34* pMtx) const {
     if (pMtx != NULL && id < ResTexSrtData::NUM_OF_TEXTURE) {
@@ -401,11 +431,13 @@ inline void ResGenMode::GXSetNumChans(u8 num) {
     }
 }
 
+
 void ResGenMode::GXSetNumTevStages(u8 num) {
     if (IsValid()) {
         ref().nTevs = num;
     }
 }
+
 
 inline void ResGenMode::GXSetNumIndStages(u8 num) {
     if (IsValid()) {
@@ -413,11 +445,14 @@ inline void ResGenMode::GXSetNumIndStages(u8 num) {
     }
 }
 
+
 void ResGenMode::GXSetCullMode(GXCullMode mode) {
     if (IsValid()) {
         ref().cullMode = mode;
     }
 }
+
+
 
 ResGenMode ResGenMode::CopyTo(void* pDst) const {
     ResGenModeData* pData = static_cast<ResGenModeData*>(pDst);
@@ -426,6 +461,8 @@ ResGenMode ResGenMode::CopyTo(void* pDst) const {
     *pData = r;
     return ResGenMode(pData);
 }
+
+
 
 /******************************************************************************
  *
@@ -440,6 +477,8 @@ GXBool ResMatMisc::GXGetZCompLoc() const {
     return FALSE;
 }
 
+
+
 int ResMatMisc::GetLightSetIdx() const {
     if (IsValid()) {
         return ptr()->light_set_idx;
@@ -448,6 +487,8 @@ int ResMatMisc::GetLightSetIdx() const {
     return -1;
 }
 
+
+
 int ResMatMisc::GetFogIdx() const {
     if (IsValid()) {
         return ptr()->fog_idx;
@@ -455,6 +496,8 @@ int ResMatMisc::GetFogIdx() const {
 
     return -1;
 }
+
+
 
 void ResMatMisc::GetIndirectTexMtxCalcMethod(
     GXIndTexMtxID id, ResMatMiscData::IndirectMethod* pMethod, s8* pLightRef) {
@@ -473,6 +516,8 @@ void ResMatMisc::GetIndirectTexMtxCalcMethod(
     }
 }
 
+
+
 ResMatMisc ResMatMisc::CopyTo(void* pDst) const {
     ResMatMiscData* pData = static_cast<ResMatMiscData*>(pDst);
     const ResMatMiscData& r = ref();
@@ -480,6 +525,32 @@ ResMatMisc ResMatMisc::CopyTo(void* pDst) const {
     *pData = r;
     return ResMatMisc(pData);
 }
+
+
+
+/******************************************************************************
+ *
+ * ResMatFur
+ *
+ ******************************************************************************/
+f32 ResMatFur::GetLyrRate(u32 layer) const {
+    if (IsValid()) {
+        u32 value = ref().value;
+
+        switch (ref().type) {
+        case 0:
+            return (f32)(layer + 1) / (f32)value;
+        case 1:
+            return (f32)pow((f32)(layer + 1) / (f32)value, 0.6f);
+        default:
+            return 0.0f;
+        }
+    }
+
+    return 0.0f;
+}
+
+
 
 /******************************************************************************
  *
@@ -525,19 +596,6 @@ bool ResMatPix::GXGetAlphaCompare(GXCompare* pComp0, u8* pRef0,
     return true;
 }
 
-void ResMatPix::GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
-                                  GXCompare comp1, u8 ref1) {
-    u8* pCmd = ref().dl.alphaCompare;
-
-    u32 reg = ref0 << GX_BP_ALPHACOMPARE_REF0_SHIFT |
-              ref1 << GX_BP_ALPHACOMPARE_REF1_SHIFT |
-              comp0 << GX_BP_ALPHACOMPARE_COMP0_SHIFT |
-              comp1 << GX_BP_ALPHACOMPARE_COMP1_SHIFT |
-              logic << GX_BP_ALPHACOMPARE_LOGIC_SHIFT |
-              GX_BP_REG_ALPHACOMPARE << GX_BP_OPCODE_SHIFT;
-
-    detail::ResWriteBPCmd(pCmd, reg);
-}
 
 inline bool ResMatPix::GXGetZMode(GXBool* pTest, GXCompare* pCompare,
                            GXBool* pUpdate) const {
@@ -577,6 +635,23 @@ inline void ResMatPix::GXSetZMode(GXBool test, GXCompare compare, GXBool update)
 
     detail::ResWriteBPCmd(pCmd, reg);
 }
+
+
+void ResMatPix::GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
+                                  GXCompare comp1, u8 ref1) {
+    u8* pCmd = ref().dl.alphaCompare;
+
+    u32 reg = ref0 << GX_BP_ALPHACOMPARE_REF0_SHIFT |
+              ref1 << GX_BP_ALPHACOMPARE_REF1_SHIFT |
+              comp0 << GX_BP_ALPHACOMPARE_COMP0_SHIFT |
+              comp1 << GX_BP_ALPHACOMPARE_COMP1_SHIFT |
+              logic << GX_BP_ALPHACOMPARE_LOGIC_SHIFT |
+              GX_BP_REG_ALPHACOMPARE << GX_BP_OPCODE_SHIFT;
+
+    detail::ResWriteBPCmd(pCmd, reg);
+}
+
+
 
 bool ResMatPix::GXGetBlendMode(GXBlendMode* pMode, GXBlendFactor* pSrcFactor,
                                GXBlendFactor* pDstFactor,
@@ -628,27 +703,6 @@ bool ResMatPix::GXGetBlendMode(GXBlendMode* pMode, GXBlendFactor* pSrcFactor,
     return true;
 }
 
-void ResMatPix::GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
-                               GXBlendFactor dstFactor, GXLogicOp logic) {
-    u8* pCmd = ref().dl.blendMode;
-
-    // clang-format off
-    detail::ResWriteSSMask(&pCmd[GX_BP_CMD_SZ * 0],
-        GX_BP_BLENDMODE_BLEND_ENABLE_MASK | GX_BP_BLENDMODE_LOGIC_OP_ENABLE_MASK |
-        GX_BP_BLENDMODE_DST_FACTOR_MASK   | GX_BP_BLENDMODE_SRC_FACTOR_MASK      |
-        GX_BP_BLENDMODE_SUBTRACT_MASK     | GX_BP_BLENDMODE_LOGIC_MODE_MASK);
-
-    u32 reg = static_cast<u32>(mode == GX_BM_BLEND || mode == GX_BM_SUBTRACT) << GX_BP_BLENDMODE_BLEND_ENABLE_SHIFT    |
-              static_cast<u32>(mode == GX_BM_LOGIC)                           << GX_BP_BLENDMODE_LOGIC_OP_ENABLE_SHIFT |
-              static_cast<u32>(dstFactor)                                     << GX_BP_BLENDMODE_DST_FACTOR_SHIFT      |
-              static_cast<u32>(srcFactor)                                     << GX_BP_BLENDMODE_SRC_FACTOR_SHIFT      |
-              static_cast<u32>(mode == GX_BM_SUBTRACT)                        << GX_BP_BLENDMODE_SUBTRACT_SHIFT        |
-              static_cast<u32>(logic)                                         << GX_BP_BLENDMODE_LOGIC_MODE_SHIFT      |
-              static_cast<u32>(GX_BP_REG_BLENDMODE)                           << GX_BP_OPCODE_SHIFT;
-    // clang-format on
-
-    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], reg);
-}
 
 inline bool ResMatPix::GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const {
     const u8* pCmd = ref().dl.setDstAlpha;
@@ -685,6 +739,31 @@ inline void ResMatPix::GXSetDstAlpha(GXBool enable, u8 alpha) {
     detail::ResWriteBPCmd(pCmd, reg);
 }
 
+
+void ResMatPix::GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
+                               GXBlendFactor dstFactor, GXLogicOp logic) {
+    u8* pCmd = ref().dl.blendMode;
+
+    // clang-format off
+    detail::ResWriteSSMask(&pCmd[GX_BP_CMD_SZ * 0],
+        GX_BP_BLENDMODE_BLEND_ENABLE_MASK | GX_BP_BLENDMODE_LOGIC_OP_ENABLE_MASK |
+        GX_BP_BLENDMODE_DST_FACTOR_MASK   | GX_BP_BLENDMODE_SRC_FACTOR_MASK      |
+        GX_BP_BLENDMODE_SUBTRACT_MASK     | GX_BP_BLENDMODE_LOGIC_MODE_MASK);
+
+    u32 reg = static_cast<u32>(mode == GX_BM_BLEND || mode == GX_BM_SUBTRACT) << GX_BP_BLENDMODE_BLEND_ENABLE_SHIFT    |
+              static_cast<u32>(mode == GX_BM_LOGIC)                           << GX_BP_BLENDMODE_LOGIC_OP_ENABLE_SHIFT |
+              static_cast<u32>(dstFactor)                                     << GX_BP_BLENDMODE_DST_FACTOR_SHIFT      |
+              static_cast<u32>(srcFactor)                                     << GX_BP_BLENDMODE_SRC_FACTOR_SHIFT      |
+              static_cast<u32>(mode == GX_BM_SUBTRACT)                        << GX_BP_BLENDMODE_SUBTRACT_SHIFT        |
+              static_cast<u32>(logic)                                         << GX_BP_BLENDMODE_LOGIC_MODE_SHIFT      |
+              static_cast<u32>(GX_BP_REG_BLENDMODE)                           << GX_BP_OPCODE_SHIFT;
+    // clang-format on
+
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], reg);
+}
+
+
+
 /******************************************************************************
  *
  * ResMatTevColor
@@ -711,24 +790,6 @@ bool ResMatTevColor::GXGetTevColor(GXTevRegID id, GXColor* pColor) const {
     return true;
 }
 
-void ResMatTevColor::GXSetTevColor(GXTevRegID id, GXColor color) {
-    u8* pCmd = ref().dl.tevColor[id - 1];
-
-    u32 regRA = color.r << GX_BP_TEVREGLO_RED_SHIFT |
-                color.a << GX_BP_TEVREGLO_ALPHA_SHIFT |
-                GX_TEVREG_COLOR << GX_BP_TEVREGLO_TYPE_SHIFT |
-                (id * 2 + GX_BP_REG_TEVREG0LO) << GX_BP_OPCODE_SHIFT;
-
-    u32 regBG = color.b << GX_BP_TEVREGHI_BLUE_SHIFT |
-                color.g << GX_BP_TEVREGHI_GREEN_SHIFT |
-                GX_TEVREG_COLOR << GX_BP_TEVREGHI_TYPE_SHIFT |
-                (id * 2 + GX_BP_REG_TEVREG0HI) << GX_BP_OPCODE_SHIFT;
-
-    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 0], regRA);
-    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], regBG);
-    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 2], regBG);
-    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 3], regBG);
-}
 
 inline bool ResMatTevColor::GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const {
     const u8* pCmd = ref().dl.tevColor[id - 1];
@@ -779,6 +840,28 @@ inline void ResMatTevColor::GXSetTevColorS10(GXTevRegID id, GXColorS10 color) {
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 3], regBG);
 }
 
+
+void ResMatTevColor::GXSetTevColor(GXTevRegID id, GXColor color) {
+    u8* pCmd = ref().dl.tevColor[id - 1];
+
+    u32 regRA = color.r << GX_BP_TEVREGLO_RED_SHIFT |
+                color.a << GX_BP_TEVREGLO_ALPHA_SHIFT |
+                GX_TEVREG_COLOR << GX_BP_TEVREGLO_TYPE_SHIFT |
+                (id * 2 + GX_BP_REG_TEVREG0LO) << GX_BP_OPCODE_SHIFT;
+
+    u32 regBG = color.b << GX_BP_TEVREGHI_BLUE_SHIFT |
+                color.g << GX_BP_TEVREGHI_GREEN_SHIFT |
+                GX_TEVREG_COLOR << GX_BP_TEVREGHI_TYPE_SHIFT |
+                (id * 2 + GX_BP_REG_TEVREG0HI) << GX_BP_OPCODE_SHIFT;
+
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 0], regRA);
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], regBG);
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 2], regBG);
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 3], regBG);
+}
+
+
+
 bool ResMatTevColor::GXGetTevKColor(GXTevKColorID id, GXColor* pColor) const {
     const u8* pCmd = ref().dl.tevKColor[id];
     if (pCmd[0] == 0) {
@@ -800,6 +883,8 @@ bool ResMatTevColor::GXGetTevKColor(GXTevKColorID id, GXColor* pColor) const {
     return true;
 }
 
+
+
 void ResMatTevColor::GXSetTevKColor(GXTevKColorID id, GXColor color) {
     u8* pCmd = ref().dl.tevKColor[id];
 
@@ -816,6 +901,8 @@ void ResMatTevColor::GXSetTevKColor(GXTevKColorID id, GXColor color) {
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 0], regRA);
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], regBG);
 }
+
+
 
 /******************************************************************************
  *
@@ -837,6 +924,8 @@ void ResMatIndMtxAndScale::CallDisplayList(u8 indNum, bool sync) const {
                               sizeof(ResIndMtxAndScaleDL));
     }
 }
+
+
 
 bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id,
                                           math::MTX34* pMtx) const {
@@ -887,43 +976,42 @@ bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id,
     scaleExp = static_cast<s8>(scaleExpReg - 17);
 
     // Exponent to value
-    f32 scale = lbl_eu_80669A6C;
+    f32 scale = 1.0f;
     if (scaleExp > 0) {
         while (scaleExp != 0) {
             scaleExp--;
-            scale *= lbl_eu_80669A80;
+            scale *= 2.0f;
         }
     } else if (scaleExp < 0) {
         while (scaleExp != 0) {
             scaleExp++;
-            scale *= lbl_eu_80669A84;
+            scale *= 0.5f;
         }
     }
 
     if (pMtx != NULL) {
         // clang-format off
-        pMtx->_00 = scale * static_cast<f32>(static_cast<int>((regA >> GX_BP_INDMTXA_M00_SHIFT & GX_BP_INDMTXA_M00_LMASK) << (32 - GX_BP_INDMTXA_M00_SZ)) >> (32 - GX_BP_INDMTXA_M00_SZ)) * lbl_eu_80669A88;
-        pMtx->_01 = scale * static_cast<f32>(static_cast<int>((regB >> GX_BP_INDMTXB_M01_SHIFT & GX_BP_INDMTXB_M01_LMASK) << (32 - GX_BP_INDMTXB_M01_SZ)) >> (32 - GX_BP_INDMTXB_M01_SZ)) * lbl_eu_80669A88;
-        pMtx->_02 = scale * static_cast<f32>(static_cast<int>((regC >> GX_BP_INDMTXC_M02_SHIFT & GX_BP_INDMTXC_M02_LMASK) << (32 - GX_BP_INDMTXC_M02_SZ)) >> (32 - GX_BP_INDMTXC_M02_SZ)) * lbl_eu_80669A88;
-        pMtx->_03 = lbl_eu_80669A68;
+        pMtx->_00 = scale * static_cast<f32>(static_cast<int>((regA >> GX_BP_INDMTXA_M00_SHIFT & GX_BP_INDMTXA_M00_LMASK) << (32 - GX_BP_INDMTXA_M00_SZ)) >> (32 - GX_BP_INDMTXA_M00_SZ)) * (1.0f / 1024.0f);
+        pMtx->_01 = scale * static_cast<f32>(static_cast<int>((regB >> GX_BP_INDMTXB_M01_SHIFT & GX_BP_INDMTXB_M01_LMASK) << (32 - GX_BP_INDMTXB_M01_SZ)) >> (32 - GX_BP_INDMTXB_M01_SZ)) * (1.0f / 1024.0f);
+        pMtx->_02 = scale * static_cast<f32>(static_cast<int>((regC >> GX_BP_INDMTXC_M02_SHIFT & GX_BP_INDMTXC_M02_LMASK) << (32 - GX_BP_INDMTXC_M02_SZ)) >> (32 - GX_BP_INDMTXC_M02_SZ)) * (1.0f / 1024.0f);
+        pMtx->_03 = 0.0f;
 
-        pMtx->_10 = scale * static_cast<f32>(static_cast<int>((regA >> GX_BP_INDMTXA_M10_SHIFT & GX_BP_INDMTXA_M10_LMASK) << (32 - GX_BP_INDMTXA_M10_SZ)) >> (32 - GX_BP_INDMTXA_M00_SZ)) * lbl_eu_80669A88;
-        pMtx->_11 = scale * static_cast<f32>(static_cast<int>((regB >> GX_BP_INDMTXB_M11_SHIFT & GX_BP_INDMTXB_M11_LMASK) << (32 - GX_BP_INDMTXB_M11_SZ)) >> (32 - GX_BP_INDMTXB_M11_SZ)) * lbl_eu_80669A88;
-        pMtx->_12 = scale * static_cast<f32>(static_cast<int>((regC >> GX_BP_INDMTXC_M12_SHIFT & GX_BP_INDMTXC_M12_LMASK) << (32 - GX_BP_INDMTXC_M12_SZ)) >> (32 - GX_BP_INDMTXC_M12_SZ)) * lbl_eu_80669A88;
-        pMtx->_13 = lbl_eu_80669A68;
+        pMtx->_10 = scale * static_cast<f32>(static_cast<int>((regA >> GX_BP_INDMTXA_M10_SHIFT & GX_BP_INDMTXA_M10_LMASK) << (32 - GX_BP_INDMTXA_M10_SZ)) >> (32 - GX_BP_INDMTXA_M00_SZ)) * (1.0f / 1024.0f);
+        pMtx->_11 = scale * static_cast<f32>(static_cast<int>((regB >> GX_BP_INDMTXB_M11_SHIFT & GX_BP_INDMTXB_M11_LMASK) << (32 - GX_BP_INDMTXB_M11_SZ)) >> (32 - GX_BP_INDMTXB_M11_SZ)) * (1.0f / 1024.0f);
+        pMtx->_12 = scale * static_cast<f32>(static_cast<int>((regC >> GX_BP_INDMTXC_M12_SHIFT & GX_BP_INDMTXC_M12_LMASK) << (32 - GX_BP_INDMTXC_M12_SZ)) >> (32 - GX_BP_INDMTXC_M12_SZ)) * (1.0f / 1024.0f);
+        pMtx->_13 = 0.0f;
 
-        pMtx->_20 = lbl_eu_80669A68;
-        pMtx->_21 = lbl_eu_80669A68;
-        pMtx->_22 = lbl_eu_80669A6C;
-        pMtx->_23 = lbl_eu_80669A68;
+        pMtx->_20 = 0.0f;
+        pMtx->_21 = 0.0f;
+        pMtx->_22 = 1.0f;
+        pMtx->_23 = 0.0f;
         // clang-format on
     }
 
     return true;
 }
 
-// MWCC lowers s32 -> f64 via the classic 2^52 exponent trick; the (2^52 +
-// 2^31) bias constant lives in the retail sdata2 pool (lbl_eu_80669A90).
+
 
 bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx,
                                           s8* pScaleExp) const {
@@ -979,26 +1067,49 @@ bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx,
     if (pMtx != NULL) {
         // Mantissa fields: row 0 occupies bits 10-0, row 1 bits 21-31 (both
         // sign-extended); the 1/1024 fixed-point scale comes from the pool.
-        pMtx->_00 = lbl_eu_80669A88 * (f32)((s32)(regA << 21) >> 21);
-        pMtx->_01 = lbl_eu_80669A88 * (f32)((s32)(regB << 21) >> 21);
-        pMtx->_02 = lbl_eu_80669A88 * (f32)((s32)(regC << 21) >> 21);
-        pMtx->_03 = lbl_eu_80669A68;
+        pMtx->_00 = (1.0f / 1024.0f) * (f32)((s32)(regA << 21) >> 21);
+        pMtx->_01 = (1.0f / 1024.0f) * (f32)((s32)(regB << 21) >> 21);
+        pMtx->_02 = (1.0f / 1024.0f) * (f32)((s32)(regC << 21) >> 21);
+        pMtx->_03 = 0.0f;
 
         // Row-1 fields sit in bits 21-31: retail extracts them left-justified
         // via rlwinm rotl(10) & top-mask before the sign-extending srawi.
-        pMtx->_10 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regA, 10, 0, 10) >> 21);
-        pMtx->_11 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regB, 10, 0, 10) >> 21);
-        pMtx->_12 = lbl_eu_80669A88 * (f32)((s32)__rlwinm(regC, 10, 0, 10) >> 21);
-        pMtx->_13 = lbl_eu_80669A68;
+        pMtx->_10 = (1.0f / 1024.0f) * (f32)((s32)__rlwinm(regA, 10, 0, 10) >> 21);
+        pMtx->_11 = (1.0f / 1024.0f) * (f32)((s32)__rlwinm(regB, 10, 0, 10) >> 21);
+        pMtx->_12 = (1.0f / 1024.0f) * (f32)((s32)__rlwinm(regC, 10, 0, 10) >> 21);
+        pMtx->_13 = 0.0f;
 
-        pMtx->_20 = lbl_eu_80669A68;
-        pMtx->_21 = lbl_eu_80669A68;
-        pMtx->_22 = lbl_eu_80669A6C;
-        pMtx->_23 = lbl_eu_80669A68;
+        pMtx->_20 = 0.0f;
+        pMtx->_21 = 0.0f;
+        pMtx->_22 = 1.0f;
+        pMtx->_23 = 0.0f;
     }
 
     return true;
 }
+
+
+/******************************************************************************
+ *
+ * ResMatChan
+ *
+ ******************************************************************************/
+inline void ResMatChan::GXSetChanMatColor(GXChannelID id, GXColor color) {
+    GXColor& rMatColor = ref().chan[id & 1].matColor;
+
+    if ((id & 2) == 0) {
+        rMatColor.r = color.r;
+        rMatColor.g = color.g;
+        rMatColor.b = color.b;
+
+        if (id == GX_COLOR0A0 || id == GX_COLOR1A1) {
+            rMatColor.a = color.a;
+        }
+    } else {
+        rMatColor.a = color.a;
+    }
+}
+
 
 void ResMatIndMtxAndScale::GXSetIndTexMtx(GXIndTexMtxID id,
                                           const math::MTX34& rMtx,
@@ -1036,61 +1147,25 @@ void ResMatIndMtxAndScale::GXSetIndTexMtx(GXIndTexMtxID id,
 
     // clang-format off
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 0],
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._00) & GX_BP_INDMTXA_M00_LMASK) << GX_BP_INDMTXA_M00_SHIFT) |
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._10) & GX_BP_INDMTXA_M10_LMASK) << GX_BP_INDMTXA_M10_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._00) & GX_BP_INDMTXA_M00_LMASK) << GX_BP_INDMTXA_M00_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._10) & GX_BP_INDMTXA_M10_LMASK) << GX_BP_INDMTXA_M10_SHIFT) |
         static_cast<u32>((scaleExp >> 0 & GX_BP_INDMTXA_EXP_LMASK) << GX_BP_INDMTXA_EXP_SHIFT) |
         static_cast<u32>((offset + GX_BP_REG_INDMTX0A) << GX_BP_OPCODE_SHIFT));
 
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1],
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._01) & GX_BP_INDMTXB_M01_LMASK) << GX_BP_INDMTXB_M01_SHIFT) |
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._11) & GX_BP_INDMTXB_M11_LMASK) << GX_BP_INDMTXB_M11_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._01) & GX_BP_INDMTXB_M01_LMASK) << GX_BP_INDMTXB_M01_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._11) & GX_BP_INDMTXB_M11_LMASK) << GX_BP_INDMTXB_M11_SHIFT) |
         static_cast<u32>((scaleExp >> 2 & GX_BP_INDMTXB_EXP_LMASK) << GX_BP_INDMTXB_EXP_SHIFT) |
         static_cast<u32>((offset + GX_BP_REG_INDMTX0B) << GX_BP_OPCODE_SHIFT));
 
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 2],
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._02) & GX_BP_INDMTXC_M02_LMASK) << GX_BP_INDMTXC_M02_SHIFT) |
-        static_cast<u32>((static_cast<int>(lbl_eu_80669A98 * rMtx._12) & GX_BP_INDMTXC_M12_LMASK) << GX_BP_INDMTXC_M12_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._02) & GX_BP_INDMTXC_M02_LMASK) << GX_BP_INDMTXC_M02_SHIFT) |
+        static_cast<u32>((static_cast<int>(1024.0f * rMtx._12) & GX_BP_INDMTXC_M12_LMASK) << GX_BP_INDMTXC_M12_SHIFT) |
         static_cast<u32>((scaleExp >> 4 & GX_BP_INDMTXC_EXP_LMASK) << GX_BP_INDMTXC_EXP_SHIFT) |
         static_cast<u32>((offset + GX_BP_REG_INDMTX0C) << GX_BP_OPCODE_SHIFT));
     // clang-format on
 }
 
-/******************************************************************************
- *
- * ResMatChan
- *
- ******************************************************************************/
-inline void ResMatChan::GXSetChanMatColor(GXChannelID id, GXColor color) {
-    GXColor& rMatColor = ref().chan[id & 1].matColor;
-
-    if ((id & 2) == 0) {
-        rMatColor.r = color.r;
-        rMatColor.g = color.g;
-        rMatColor.b = color.b;
-
-        if (id == GX_COLOR0A0 || id == GX_COLOR1A1) {
-            rMatColor.a = color.a;
-        }
-    } else {
-        rMatColor.a = color.a;
-    }
-}
-
-void ResMatChan::GXSetChanAmbColor(GXChannelID id, GXColor color) {
-    GXColor& rAmbColor = ref().chan[id & 1].ambColor;
-
-    if ((id & 2) == 0) {
-        rAmbColor.r = color.r;
-        rAmbColor.g = color.g;
-        rAmbColor.b = color.b;
-
-        if (id == GX_COLOR0A0 || id == GX_COLOR1A1) {
-            rAmbColor.a = color.a;
-        }
-    } else {
-        rAmbColor.a = color.a;
-    }
-}
 
 inline void ResMatChan::GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
                                GXColorSrc matSrc, GXLightID lightMask,
@@ -1122,15 +1197,38 @@ inline void ResMatChan::GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc 
     }
 }
 
+
+void ResMatChan::GXSetChanAmbColor(GXChannelID id, GXColor color) {
+    GXColor& rAmbColor = ref().chan[id & 1].ambColor;
+
+    if ((id & 2) == 0) {
+        rAmbColor.r = color.r;
+        rAmbColor.g = color.g;
+        rAmbColor.b = color.b;
+
+        if (id == GX_COLOR0A0 || id == GX_COLOR1A1) {
+            rAmbColor.a = color.a;
+        }
+    } else {
+        rAmbColor.a = color.a;
+    }
+}
+
+
+
 bool ResMatChan::GXGetChanMatColor(GXChannelID id, GXColor* pColor) const {
     *pColor = ref().chan[id & 1].matColor;
     return true;
 }
 
+
+
 bool ResMatChan::GXGetChanAmbColor(GXChannelID id, GXColor* pColor) const {
     *pColor = ref().chan[id & 1].ambColor;
     return true;
 }
+
+
 
 bool ResMatChan::GXGetChanCtrl(GXChannelID id, GXBool* pEnable,
                                GXColorSrc* pAmbSrc, GXColorSrc* pMatSrc,
@@ -1205,6 +1303,8 @@ bool ResMatChan::GXGetChanCtrl(GXChannelID id, GXBool* pEnable,
     return true;
 }
 
+
+
 ResMatChan ResMatChan::CopyTo(void* pDst) const {
     ResChanData* pData = static_cast<ResChanData*>(pDst);
     const ResChanData& r = ref();
@@ -1213,42 +1313,6 @@ ResMatChan ResMatChan::CopyTo(void* pDst) const {
     return ResMatChan(pData);
 }
 
-/******************************************************************************
- *
- * ResMatTexCoordGen
- *
- ******************************************************************************/
-void ResMatTexCoordGen::CallDisplayList(u8 numGens, bool sync) const {
-    if (numGens == 0) {
-        return;
-    }
-
-    const ResTexCoordGenDL& r = ref();
-
-    if (sync) {
-        if (numGens < 2) {
-            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 32);
-        } else if (numGens < 4) {
-            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 64);
-        } else if (numGens < 8) {
-            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 128);
-        } else {
-            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r),
-                              sizeof(ResTexCoordGenDL));
-        }
-    } else {
-        if (numGens < 2) {
-            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 32);
-        } else if (numGens < 4) {
-            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 64);
-        } else if (numGens < 8) {
-            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 128);
-        } else {
-            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r),
-                                  sizeof(ResTexCoordGenDL));
-        }
-    }
-}
 
 inline bool ResMatTexCoordGen::GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
                                           GXTexGenSrc* pParam,
@@ -1552,6 +1616,46 @@ inline void ResMatTexCoordGen::GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType f
     // clang-format on
 }
 
+
+/******************************************************************************
+ *
+ * ResMatTexCoordGen
+ *
+ ******************************************************************************/
+void ResMatTexCoordGen::CallDisplayList(u8 numGens, bool sync) const {
+    if (numGens == 0) {
+        return;
+    }
+
+    const ResTexCoordGenDL& r = ref();
+
+    if (sync) {
+        if (numGens < 2) {
+            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 32);
+        } else if (numGens < 4) {
+            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 64);
+        } else if (numGens < 8) {
+            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 128);
+        } else {
+            GXCallDisplayList(const_cast<ResTexCoordGenDL*>(&r),
+                              sizeof(ResTexCoordGenDL));
+        }
+    } else {
+        if (numGens < 2) {
+            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 32);
+        } else if (numGens < 4) {
+            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 64);
+        } else if (numGens < 8) {
+            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r), 128);
+        } else {
+            GXFastCallDisplayList(const_cast<ResTexCoordGenDL*>(&r),
+                                  sizeof(ResTexCoordGenDL));
+        }
+    }
+}
+
+
+
 /******************************************************************************
  *
  * ResMat
@@ -1571,6 +1675,8 @@ bool ResMat::Bind(const ResFile file) {
     return bindNum == texPlttInfoNum;
 }
 
+
+
 void ResMat::Release() {
     u32 i;
 
@@ -1580,10 +1686,10 @@ void ResMat::Release() {
     }
 }
 
+
 void ResMat::Init() {
     DC::StoreRangeNoSync(GetResMatDLData(), sizeof(ResMatDLData));
 }
-
 ResTev ResMat::GetResTev() {
     return ofs_to_obj<ResTev>(ref().toResTevData);
 }
@@ -1592,14 +1698,9 @@ inline ResTev ResMat::GetResTev() const {
     return ofs_to_obj<ResTev>(ref().toResTevData);
 }
 
-/******************************************************************************
- *
- * ResTexPlttInfo
- *
- ******************************************************************************/
-ResTex ResTexPlttInfo::GetResTex() const {
-    return ResTex(ptr()->pTexData);
-}
+
+
+
 
 inline void ResTexPlttInfo::BindTex_(const ResTex tex, ResTexObj texObj) {
     ResTexPlttInfoData& r = ref();
@@ -1649,6 +1750,35 @@ inline void ResTexPlttInfo::BindPltt_(const ResPltt pltt, ResTlutObj tlutObj) {
     tlutObj.Validate(static_cast<GXTlut>(r.mapID));
 }
 
+
+/******************************************************************************
+ *
+ * ResMat (fur / user data accessors)
+ *
+ ******************************************************************************/
+ResMatFur ResMat::GetResMatFur() {
+    return ResMatFur(ofs_to_ptr<ResMatFurData>(ref().toResMatFurData));
+}
+
+
+inline void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
+    ResTexPlttInfoData& r = ref();
+
+    r.pTexData = NULL;
+    r.pPlttData = NULL;
+
+    texObj.Invalidate(r.mapID);
+    // @bug Shouldn't this be the TLUT id?
+    tlutObj.Invalidate(static_cast<GXTlut>(r.mapID));
+}
+
+
+void* ResMat::GetResUserData() {
+    return ofs_to_ptr<void>(ref().toResUserData);
+}
+
+
+
 bool ResTexPlttInfo::Bind(const ResFile file, ResTexObj texObj,
                           ResTlutObj tlutObj) {
     bool success = true;
@@ -1681,136 +1811,17 @@ bool ResTexPlttInfo::Bind(const ResFile file, ResTexObj texObj,
     return success;
 }
 
-inline void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
-    ResTexPlttInfoData& r = ref();
 
-    r.pTexData = NULL;
-    r.pPlttData = NULL;
-
-    texObj.Invalidate(r.mapID);
-    // @bug Shouldn't this be the TLUT id?
-    tlutObj.Invalidate(static_cast<GXTlut>(r.mapID));
-}
 
 /******************************************************************************
  *
- * ResMatFur
+ * ResTexPlttInfo
  *
  ******************************************************************************/
-f32 ResMatFur::GetLyrRate(u32 layer) const {
-    if (IsValid()) {
-        u32 value = ref().value;
-
-        switch (ref().type) {
-        case 0:
-            return (f32)(layer + 1) / (f32)value;
-        case 1:
-            return (f32)pow((f32)(layer + 1) / (f32)value, lbl_eu_80669A70);
-        default:
-            return 0.0f;
-        }
-    }
-
-    return 0.0f;
+ResTex ResTexPlttInfo::GetResTex() const {
+    return ResTex(ptr()->pTexData);
 }
 
-/******************************************************************************
- *
- * ResMat (fur / user data accessors)
- *
- ******************************************************************************/
-ResMatFur ResMat::GetResMatFur() {
-    return ResMatFur(ofs_to_ptr<ResMatFurData>(ref().toResMatFurData));
-}
-
-void* ResMat::GetResUserData() {
-    return ofs_to_ptr<void>(ref().toResUserData);
-}
 
 } // namespace g3d
 } // namespace nw4r
-
-
-// Retail nw4r_data.s .sdata2 pool 0x80669A68-0x8066A178 (0x710 bytes),
-// absorbed into this TU. Other TUs reference the lbl_eu_80669Exx pool words
-// (math_arithmetic FrSqrt, math_triangular trig, snd_BasicSound, ...), so
-// they are defined here as real globals at their retail offsets rather than
-// kept inside one opaque array. The two 0.0f words (0x80669E24/0x80669EEC)
-// cannot be their own source objects: MWCC sends every all-zero read-only
-// initializer to .sbss2, never .sdata2. Their bytes stay inside the two
-// filler arrays below, whose symbols the unit rule's add_symbols entries
-// re-point onto the zero words.
-
-// Retail .sdata2 pool head, split into the retail labels other units
-// reference (the unit rule only aliases the ones this TU itself uses).
-// Filler pieces keep every surviving byte at its retail offset; the
-// leading 0x18 bytes are MWCC's front pool, which the unit rule drops.
-#pragma section data_type ".sdata2" ".sdata2"
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_000[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_004[4] = {
-    0x3F, 0x80, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_008[4] = {
-    0x3F, 0xE3, 0x33, 0x33,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_00C[4] = {
-    0x40, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char lbl_eu_80669A78[8] = {
-    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_018[4] = {
-    0x40, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_01C[4] = {
-    0x3F, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_020[4] = {
-    0x3A, 0x80, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_024[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_028[4] = {
-    0x43, 0x30, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_02C[4] = {
-    0x80, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_030[4] = {
-    0x44, 0x80, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_034[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
-
-
-

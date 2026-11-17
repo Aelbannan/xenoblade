@@ -5,22 +5,16 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp pulls CTaskGameEff.hpp -> CfObjectImplMove/Walker.hpp,
-// whose C++-linkage typed CTaskGame_enumListCtor / ScnRes_VertRayForward_E398 decls clash with the
+// whose C++-linkage typed __ct__16CfEnumListHolderFv / ScnRes_VertRayForward_E398 decls clash with the
 // canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
 // this TU (our call sites use the canonical extern "C" ABI).
-#define CTaskGame_enumListCtor CTaskGame_enumListCtor_altdecl
 #define aiActionClearBlockADC aiActionClearBlockADC_altdecl
-#define CTaskGame_enumListGet CTaskGame_enumListGet_altdecl
 #define func_80043E88 func_80043E88_altdecl
-#define __dt__80043E88 __dt__80043E88_altdecl
 #define findFirstCleanObjectId findFirstCleanObjectId_altdecl
 #define startEnumObjects startEnumObjects_altdecl
 #include "kyoshin/harness_catalog.hpp"
-#undef CTaskGame_enumListCtor
 #undef aiActionClearBlockADC
-#undef CTaskGame_enumListGet
 #undef func_80043E88
-#undef __dt__80043E88
 #undef findFirstCleanObjectId
 #undef startEnumObjects
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -29,6 +23,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 #include "kyoshin/cf/CArtsSet.hpp"  // real cf::CAttackParam (vptr at +0x84; slot +0x0C/+0x14)
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Retail CAttackParam_getArtsGaugeMax__Q22cf12CAttackParamFv lives in this
 // TU's absorbed split (CtrlAct.s @ 800D34CC), so its out-of-line definition
@@ -2169,10 +2164,9 @@ extern "C" void aimNearestFoe(CtrlActView* self) {
         for (int i = 0; i < 3; i++) {
             void* candidate = 0;
             CfEnumListHolder holder;
-            CTaskGame_enumListCtor(&holder);
-            CfEnumList* lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
+            CfEnumList* lst = (CfEnumList*)holder.get();
             startEnumObjects(lst, data[i], 0);
-            lst = (CfEnumList*)CTaskGame_enumListGet(&holder);
+            lst = (CfEnumList*)holder.get();
             int id = (int)(intptr_t)findFirstCleanObjectId(lst);
             if (id != 0) {
                 void* actor = findObjectById(id);
@@ -2196,7 +2190,6 @@ extern "C" void aimNearestFoe(CtrlActView* self) {
                 mags[count] = PSVECMag((const Vec*)&vecs[count]);
                 count++;
             }
-            __dt__80043E88(&holder, -1);
         }
         if (count == 0) {
             if (ml::math::mtRand(2) == 0) {

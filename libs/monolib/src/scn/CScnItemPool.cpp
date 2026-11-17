@@ -824,7 +824,7 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
 // other TUs). cleanupACPool__12CScnItemPoolFv is this TU's own member -- the
 // extern "C" spelling matches its C++ mangled symbol exactly.
 extern "C" {
-extern u32 lbl_eu_80663938[];  // RTTI locator ti(CScnItemPool) (.sdata)
+extern u32 __RTTI__12CScnItemPool[];  // RTTI locator ti(CScnItemPool) (.sdata)
 extern u32 lbl_eu_80663618[];  // RTTI locator ti(reslist<CScnItem*>) (.sdata)
 extern u32 lbl_eu_80663940[];  // RTTI locator (reslist<CScnItem*> base-list head)
 extern u32 lbl_eu_80663948[];  // RTTI locator ti(_reslist_base<CScnItem*>) (.sdata)
@@ -836,7 +836,7 @@ extern void cleanupACPool__12CScnItemPoolFv();
 }
 
 // [.rodata] 0x80523F18 (0xD + 3 align pad): CScnItemPool RTTI class-name
-// string, referenced by the .sdata locator lbl_eu_80663938 (monolibdata2).
+// string, referenced by the .sdata locator __RTTI__12CScnItemPool (monolibdata2).
 // Sized 0x10 so the retail align pad lands inside the definition.
 extern "C" const char lbl_eu_80523F18[0x10] = "CScnItemPool";
 
@@ -844,7 +844,7 @@ extern "C" const char lbl_eu_80523F18[0x10] = "CScnItemPool";
 // ([rtti, 0, dtor, IWorkEvent 1-31]) followed by the CDeviceVICb sub-vtable
 // group ([rtti, -4, 5 slots]).
 extern "C" u32 lbl_eu_8056E488[41] = {
-    (u32)&lbl_eu_80663938, 0x00000000,
+    (u32)&__RTTI__12CScnItemPool, 0x00000000,
     (u32)&__dt__12CScnItemPoolFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
@@ -863,7 +863,7 @@ extern "C" u32 lbl_eu_8056E488[41] = {
     (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
     (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
     // CDeviceVICb sub-vtable group (this -4)
-    (u32)&lbl_eu_80663938, 0xFFFFFFFC,
+    (u32)&__RTTI__12CScnItemPool, 0xFFFFFFFC,
     (u32)&vicbDtorThunk__12CScnItemPoolFv,
     (u32)&viBeforeDrawDone__11CDeviceVICbFv,
     (u32)&vicbCleanupAC__12CScnItemPoolFv,

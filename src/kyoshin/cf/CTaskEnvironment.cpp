@@ -54,13 +54,13 @@ extern "C" {
 extern void Reset__14CChildListNodeFv();
 extern void Tail__8CProcessFv();
 extern void Draw__16CTaskEnvironmentFv();
-extern u32 lbl_eu_80661958[2];
-extern u32 lbl_eu_80661950[2];
-extern u32 lbl_eu_80661948[2];
+extern u32 __RTTI__15CDoubleListNode[2];
+extern u32 __RTTI__14CChildListNode[2];
+extern u32 __RTTI__8CProcess[2];
 }
 // Forward declarations: the .sdata pairs below are referenced by the .data
 // vtables above (CMCEffStart.cpp precedent).
-extern "C" u32 lbl_eu_806619C8[2];
+extern "C" u32 __RTTI__16CTaskEnvironment[2];
 extern "C" u32 lbl_eu_806619D0[2];
 
 // .data: NW4R assert strings.
@@ -73,7 +73,7 @@ char lbl_eu_8052637C[] = "g3d_resfile_ac.h";
 // auto-emit are zero here and bound by inject_relocs; the Draw slot uses
 // its extern "C" declaration above.
 extern "C" u32 lbl_eu_80526390[9] = {
-    (u32)&lbl_eu_806619C8, 0,
+    (u32)&__RTTI__16CTaskEnvironment, 0,
     0, /* +0x44 __dt__16CTaskEnvironmentFv (injected) */
     (u32)&Reset__14CChildListNodeFv,
     0, /* +0x4C Init__16CTaskEnvironmentFv (injected) */
@@ -84,7 +84,7 @@ extern "C" u32 lbl_eu_80526390[9] = {
 };
 // .data: CProcess-family RTTI base table (0x24).
 extern "C" u32 lbl_eu_805263B4[9] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0,
+    (u32)&__RTTI__15CDoubleListNode, 0, (u32)&__RTTI__14CChildListNode, 0, (u32)&__RTTI__8CProcess, 0,
     (u32)&lbl_eu_806619D0, 0, 0
 };
 // .data: interim CTTask<CTaskEnvironment> vtable (0x24). Template slots
@@ -100,11 +100,11 @@ extern "C" u32 lbl_eu_805263D8[9] = {
 };
 // .data: CTTask RTTI base table (0x1C).
 extern "C" u32 lbl_eu_805263FC[7] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0, 0
+    (u32)&__RTTI__15CDoubleListNode, 0, (u32)&__RTTI__14CChildListNode, 0, (u32)&__RTTI__8CProcess, 0, 0
 };
 
 // .sdata: RTTI typeinfo pairs { name, base }.
-extern "C" u32 lbl_eu_806619C8[2] = { (u32)&lbl_eu_804FB098, (u32)&lbl_eu_805263B4 };
+extern "C" u32 __RTTI__16CTaskEnvironment[2] = { (u32)&lbl_eu_804FB098, (u32)&lbl_eu_805263B4 };
 extern "C" u32 lbl_eu_806619D0[2] = { (u32)&lbl_eu_804FB0AC, (u32)&lbl_eu_805263FC };
 
 // .sbss: global environment manager pointer (CTaskManager.cpp precedent:

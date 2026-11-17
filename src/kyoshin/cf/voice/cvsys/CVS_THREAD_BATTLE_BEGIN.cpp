@@ -258,18 +258,18 @@ extern "C" int BtlBeg_IsVoiceBit_03A4() {
 // zeroes these sections in the link-time reloc.o. The retail split object
 // genuinely carries them (0x80/0x48/0x18, reconstructed byte-identical
 // below), so that rule entry is stale and should be removed; until then
-// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the link keeps resolving these labels as UNDEF. __RTTI__Q22cf10CVS_THREAD lives in
 // the CCharVoiceMan range and is referenced, not defined, here.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CC0[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 lbl_eu_8053ACA0[3];
 extern u32 lbl_eu_8053ACD8[8];
 extern u32 lbl_eu_8053ACF8[4];
-extern u32 lbl_eu_80662E10[2];
-extern u32 lbl_eu_80662E18[2];
-extern u32 lbl_eu_80662E20[2];
+extern u32 __RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN[2];
+extern u32 __RTTI__Q22cf14EVS_THREAD_LIB[2];
+extern u32 __RTTI__Q22cf14CVS_THREAD_LIB[2];
 
 extern const char lbl_eu_805134A8[] = "cf::CVS_THREAD_BATTLE_BEGIN";
 extern const char lbl_eu_805134C4[0x14] = "cf::EVS_THREAD_LIB";
@@ -300,7 +300,7 @@ u32 lbl_eu_8053ACAC[3] = {
 };
 
 u32 lbl_eu_8053ACB8[8] = {
-    (u32)lbl_eu_80662E10,
+    (u32)__RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN,
     0,
     (u32)PlayThreadVoice,
     (u32)BtlBeg_RemoveVoice_01B0,
@@ -311,34 +311,34 @@ u32 lbl_eu_8053ACB8[8] = {
 };
 
 u32 lbl_eu_8053ACD8[8] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
-    (u32)lbl_eu_80662E18,
+    (u32)__RTTI__Q22cf14EVS_THREAD_LIB,
     0x80000021,
     1,
-    (u32)lbl_eu_80662E20,
+    (u32)__RTTI__Q22cf14CVS_THREAD_LIB,
     0x21,
     0,
 };
 
 u32 lbl_eu_8053ACF8[4] = {
-    (u32)lbl_eu_80662E20,
+    (u32)__RTTI__Q22cf14CVS_THREAD_LIB,
     0,
     0,
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662E10[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN[2] = {
     (u32)lbl_eu_805134A8,
     (u32)lbl_eu_8053ACD8,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662E18[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf14EVS_THREAD_LIB[2] = {
     (u32)lbl_eu_805134C4,
     (u32)lbl_eu_8053ACF8,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662E20[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf14CVS_THREAD_LIB[2] = {
     (u32)lbl_eu_805134D8,
     0,
 };

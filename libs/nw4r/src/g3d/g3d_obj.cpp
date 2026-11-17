@@ -8,17 +8,6 @@ namespace g3d {
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")>
     lbl_eu_8051D640;
 
-bool G3dObj::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D640);
-}
-
-const G3dObj::TypeObj G3dObj::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D640);
-}
-
-const char* G3dObj::GetTypeName() const {
-    return GetTypeObj().GetTypeName();
-}
 
 G3dObj::~G3dObj() {
     // Retail dtor stores the vtable pointer right after the null check; with
@@ -26,6 +15,8 @@ G3dObj::~G3dObj() {
     *(void**)this = (void*)lbl_eu_805695B0;
     MEMFreeToAllocator(mpHeap, this);
 }
+
+
 
 void G3dObj::Destroy() {
     G3dObj* pParent = GetParent();
@@ -36,6 +27,25 @@ void G3dObj::Destroy() {
 
     delete this;
 }
+
+
+
+bool G3dObj::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D640);
+}
+
+
+
+const char* G3dObj::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+
+const G3dObj::TypeObj G3dObj::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D640);
+}
+
 
 extern "C" void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj();
 extern "C" void __dt__Q34nw4r3g3d6G3dObjFv();

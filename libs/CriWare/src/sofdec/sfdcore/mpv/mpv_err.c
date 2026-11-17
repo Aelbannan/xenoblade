@@ -34,30 +34,6 @@ void MPVERR_InitErrInf(MPVErrInf* inf) {
     inf->field_0x10 = 0;
 }
 
-// Record an error code and dispatch it through the registered callback.
-// A NULL handle selects the global registration block instead.
-s32 MPVERR_SetCode(s32 val, u32 err_code) {
-    SFD_MPV* mpv = (SFD_MPV*)val;
-    if (mpv == NULL) {
-        lbl_eu_80602A78[2] = err_code;
-        if (err_code != 0) {
-            MPVErrCallback cb = (MPVErrCallback)lbl_eu_80602A78[0];
-            if (cb != NULL) {
-                cb(lbl_eu_80602A78[1]);
-            }
-        }
-    } else {
-        mpv->errInf.code = err_code;
-        if (err_code != 0) {
-            MPVErrCallback cb = mpv->errInf.func;
-            if (cb != NULL) {
-                cb(mpv->errInf.user);
-            }
-        }
-    }
-    return err_code;
-}
-
 // Register (or clear, with cb == NULL) the user error callback either on a
 // decoder handle or, when the handle is NULL, in the global block.
 // The callback/argument pair lands at errInf+0/+4; an invalid handle is
@@ -83,4 +59,28 @@ s32 MPV_SetErrFunc(SFD_MPV* mpv, MPVErrCallback cb, u8* arg) {
     dst[0] = (u32)cb;
     dst[1] = (u32)arg;
     return 0;
+}
+
+// Record an error code and dispatch it through the registered callback.
+// A NULL handle selects the global registration block instead.
+s32 MPVERR_SetCode(s32 val, u32 err_code) {
+    SFD_MPV* mpv = (SFD_MPV*)val;
+    if (mpv == NULL) {
+        lbl_eu_80602A78[2] = err_code;
+        if (err_code != 0) {
+            MPVErrCallback cb = (MPVErrCallback)lbl_eu_80602A78[0];
+            if (cb != NULL) {
+                cb(lbl_eu_80602A78[1]);
+            }
+        }
+    } else {
+        mpv->errInf.code = err_code;
+        if (err_code != 0) {
+            MPVErrCallback cb = mpv->errInf.func;
+            if (cb != NULL) {
+                cb(mpv->errInf.user);
+            }
+        }
+    }
+    return err_code;
 }

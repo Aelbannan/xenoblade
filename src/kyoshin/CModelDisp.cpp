@@ -3,22 +3,17 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
-// CfObjectImplMove.hpp (via harness_catalog) now declares canonical extern "C"
-// void* forms of CTaskGame_enumListCtor/CTaskGame_enumListGet/startEnumObjects; CModelDispEquip.hpp
-// re-declares them with typed prototypes, which MWCC rejects as an illegal
-// extern-"C" overload. Rename the typed decls out of the way for the include;
-// call sites below then bind to the canonical void* forms (same retail names).
-#define CTaskGame_enumListCtor dispEnumListCtor_typed
-#define CTaskGame_enumListGet dispEnumListGet_typed
+// CfObjectImplMove.hpp (via harness_catalog) declares the canonical extern "C"
+// void* form of startEnumObjects; CModelDispEquip.hpp re-declares it with a
+// typed prototype, which MWCC rejects as an illegal extern-"C" overload.
+// Rename the typed decl out of the way for the include; call sites below then
+// bind to the canonical void* form (same retail name).
 #define startEnumObjects dispEnumListFill_typed
-#define __dt__80043E88 dispEnumListDtor_typed
 #define getPlayer__Q22cf13CfGameManagerFi dispGetPlayer_typed
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
-#undef CTaskGame_enumListCtor
-#undef CTaskGame_enumListGet
 #undef startEnumObjects
-#undef __dt__80043E88
 #undef getPlayer__Q22cf13CfGameManagerFi
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Cross-TU calls (retail unmangled symbols; declared in CModelDisp.hpp)
 extern "C" void ModelDispUpdateSlots(CModelDisp* self);
@@ -266,17 +261,14 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
     names[2] = *src++;
     for (u8 i = 0; i < 3; i++) {
         CActParamHolder* h = (CActParamHolder*)((u8*)self + i * 0xFF0 + 8);
-        CModelDispListHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
-        if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 == 0) {
+        CfEnumListHolder holder;
+        startEnumObjects((CModelDispEnumList*)holder.get(), names[i], 0);
+        if (((CModelDispEnumList*)holder.get())->field_620 == 0) {
             ModelDispTeardownSlot(self, h);
-            __dt__80043E88(&holder, -1);
             continue;
         }
-        CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
+        CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)holder.get(), 0);
         if (slot->field_04 == NULL) {
-            __dt__80043E88(&holder, -1);
             continue;
         }
         CModelDispActor* actor = getCfObjectPc(slot->field_04);
@@ -436,7 +428,6 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
         } else if (h->field_0x00 != NULL && ok == false) {
             ModelDispTeardownSlot(self, h);
         }
-        __dt__80043E88(&holder, -1);
     }
 }
 #pragma pop
@@ -512,11 +503,10 @@ void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
             names[0] = *src++;
             names[1] = *src++;
             names[2] = *src++;
-            CModelDispListHolder holder;
-            CTaskGame_enumListCtor(&holder);
-            startEnumObjects((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
-            if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 >= 1) {
-                CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)CTaskGame_enumListGet(&holder), 0);
+            CfEnumListHolder holder;
+            startEnumObjects((CModelDispEnumList*)holder.get(), names[i], 0);
+            if (((CModelDispEnumList*)holder.get())->field_620 >= 1) {
+                CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)holder.get(), 0);
                 if (slot->field_04 != NULL) {
                     CModelDispActor* actor = getCfObjectPc(slot->field_04);
                     CModelDispNameParam* res = NULL; // name param from the lookup
@@ -557,7 +547,6 @@ void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                     }
                 }
             }
-            __dt__80043E88(&holder, -1);
             return;
         }
     }

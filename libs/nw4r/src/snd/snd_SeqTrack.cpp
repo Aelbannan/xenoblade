@@ -2,8 +2,6 @@
 #include <nw4r/ut.h>
 
 // Shared retail sdata2 float pool entries referenced by InitParam.
-extern "C" const f32 lbl_eu_8066A018; // 1.0f
-extern "C" const f32 lbl_eu_8066A01C; // 0.0f
 
 namespace nw4r {
 namespace snd {
@@ -123,11 +121,11 @@ SeqTrack::~SeqTrack() {
 void SeqTrack::InitParam() {
     SeqTrackParamView* v = (SeqTrackParamView*)this;
 
-    mExtVolume = lbl_eu_8066A018;
-    mExtPitch = lbl_eu_8066A018;
-    mExtPan = lbl_eu_8066A01C;
-    mExtSurroundPan = lbl_eu_8066A01C;
-    mPanRange = lbl_eu_8066A018;
+    mExtVolume = 1.0f;
+    mExtPitch = 1.0f;
+    mExtPan = 0.0f;
+    mExtSurroundPan = 0.0f;
+    mPanRange = 1.0f;
     // Retail stores bit-pattern zero via integer registers here.
     v->seqBase = NULL;
     v->seqCursor = NULL;
@@ -150,7 +148,7 @@ void SeqTrack::InitParam() {
     v->lfo.Init();
 
     v->b68 = 0;
-    v->f6C = lbl_eu_8066A01C;
+    v->f6C = 0.0f;
     v->rampA0 = 127;
     v->rampA1 = 127;
     v->rampTgt0 = 0;
@@ -181,9 +179,9 @@ void SeqTrack::InitParam() {
     v->b93 = 0;
     v->b94 = 0;
     v->b95 = 0;
-    v->f98 = lbl_eu_8066A01C;
+    v->f98 = 0.0f;
     v->b96 = 0;
-    v->f9C = lbl_eu_8066A01C;
+    v->f9C = 0.0f;
 
     volatile s16* variables = v->variables;
     for (int i = 0; i < VARIABLE_NUM; i++) {

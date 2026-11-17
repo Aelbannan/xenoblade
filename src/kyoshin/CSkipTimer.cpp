@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CSkipTimer
 // High-level C/C++ reconstruction.
 
@@ -5,16 +6,18 @@
 extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(void*); }
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 
 #include <cstdio>
+#include "kyoshin/CSkipTimerImports.hpp"
+extern "C" u32 CUICfManager_getPackedFontD8();
 void playUISound(u32);
 
 // .sdata2 float constant used as the "animation reached frame" bound.
-extern const float lbl_eu_80668C30;
 // (AnimRewindFrame stays as declared in code_80135FDC.hpp - read-only header)
 // CfT_PlayClockSnapshot is declared extern "C" in code_80135FDC.hpp.
 // CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone / CSkipTimer_UpdateSlotFrame / CSkipTimerBindAnim24 /
@@ -30,30 +33,22 @@ extern "C" __declspec(noinline) void CSkipTimerStampSlotText(CSkipTimer* self, i
 // unit's -O4,p splits it into individual stw/lwz (+4 bytes).
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
-__declspec(noinline) CSkipTimer2* __ct__CSkipTimer2(CSkipTimer2* self, void* parent) {
-    self->mVtbl = lbl_eu_80539884;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mParent = parent;
-    self->mField18 = 0;
-    self->mAnimTransform = 0;
-    self->mField20 = 0;
-    self->mField21 = 0;
-    self->mField22 = 0;
-    self->mField23 = 1;
-    self->mField24 = 0;
-    // Retail returns the object pointer (callers ignore it).
-    return self;
-}
+CSkipTimer2::CSkipTimer2(void* parent)
+    : mParent(parent),
+      mField18(nullptr),
+      mAnimTransform(nullptr),
+      mField20(0),
+      mField21(0),
+      mField22(0),
+      mField23(1),
+      mField24(0) {}
 #pragma pop
-#pragma optimize_for_size off
 
 // ============================================================================
 // CSkipTimer2 destructor
 // ============================================================================
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
 CSkipTimer2::~CSkipTimer2() {
     // member mMemRegion destroyed implicitly (retail emits external call)
 }
@@ -87,7 +82,6 @@ void CSkipTimer2Reset(CSkipTimer2* self) {
 // optimize_for_size selects the stmw/lmw save pair like retail; noinline
 // keeps the body out of CSkipTimer2Start (retail emits a direct `bl`).
 #pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
     setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true),
@@ -163,7 +157,7 @@ __declspec(noinline) void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer2OnFwdDone(CSkipTimer2* self) {
-    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_80668C30) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform, 1.0f) != 0) {
         self->mField21 = 2;
         self->mField23 = 1;
     }
@@ -183,7 +177,7 @@ void CSkipTimer2OnFwdDone(CSkipTimer2* self) {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
-    if (AnimRewindFrame(self->mAnimTransform, lbl_eu_80668C30) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform, 1.0f) != 0) {
         self->mField21 = 0;
         self->mField23 = 1;
         setPaneVisible(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
@@ -220,7 +214,7 @@ void CSkipTimer_UpdateSlotFrame(CSkipTimer* self) {
     self->mLayout2->Animate(0);
     // Retail passes the CSkipTimer2 sub-controller (+0x70): its mField18 layout
     // is the pane stamped by CSkipTimerStampSlotText.
-    CSkipTimerStampSlotText(reinterpret_cast<CSkipTimer*>(&self->mSkipTimer2Data[0]),
+    CSkipTimerStampSlotText(reinterpret_cast<CSkipTimer*>(&self->mSkipTimer2),
                   self->mField2C, (s16)self->mField2E);
 }
 #pragma pop
@@ -229,7 +223,6 @@ void CSkipTimer_UpdateSlotFrame(CSkipTimer* self) {
 // optimize_for_size selects the stmw r30/lmw r30 save pair like retail; the
 // unit's -O4,p would emit individual stw/lwz (+4 bytes, shifting all bl sites).
 #pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void CSkipTimerStampSlotText(CSkipTimer* self, int arg1, int arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_80510568[0x4a], arg1, arg2);
@@ -242,50 +235,27 @@ extern "C" __declspec(noinline) void CSkipTimerStampSlotText(CSkipTimer* self, i
 // __ct__CSkipTimer, cf. MWCC_CASES sec. 3824 / __ct__CSkipTimer2 above), so it
 // is defined as a C-linkage function carrying the exact retail name. Retail
 // also returns the object pointer (callers ignore it).
-extern "C" CSkipTimer* __ct__CSkipTimer(CSkipTimer* self) {
-    self->mVtbl = lbl_eu_805397F0;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = 0;
-    self->mLayout = 0;
-    self->mLayout2 = 0;
-    self->mAnimTransform20 = 0;
-    self->mAnimTransform24 = 0;
-    self->mField28 = 0;
-    self->mField29 = 0;
-    self->mField2A = 0;
-    self->mField2B = 1;
-    self->mField2C = 0;
-    self->mField2E = 0;
-    self->mActive = 0;
-    // Retail calls the C-linkage ctor symbol __ct__CSysWin; the C++ placement
-    // new would emit MWCC's natural __ct__7CSysWinFv instead.
-    __ct__CSysWin(&self->mSysWinData[0], 0);
-    __ct__CSkipTimer2(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]), 0);
-    return self;
-}
+CSkipTimer::CSkipTimer()
+    : mFileHandle(nullptr),
+      mLayout(nullptr),
+      mLayout2(nullptr),
+      mAnimTransform20(nullptr),
+      mAnimTransform24(nullptr),
+      mField28(0),
+      mField29(0),
+      mField2A(0),
+      mField2B(1),
+      mField2C(0),
+      mField2E(0),
+      mActive(0),
+      mSysWin(0),
+      mSkipTimer2(nullptr) {}
 
 // CSkipTimer destructor.
 // Member dtors and operator delete (retail names). UnkClass_8045F564's dtor
 // is declared as a real C++ member in its header; the call below goes
 // through the class to keep the __dt__17UnkClass_8045F564Fv reloc.
-extern "C" void __dt__11CSkipTimer2Fv(void* self, int flags);
-extern "C" void __dt__7CSysWinFv(void* self, int flags);
-
-// Retail dtor is a plain free function: destroys mSkipTimer2 (0x70), CSysWin
-// (0x34) and mMemRegion (0x04), then frees the object when the delete flag
-// is positive.
-#pragma optimize_for_size on
-extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
-    if (self != 0) {
-        __dt__11CSkipTimer2Fv((u8*)self + 0x70, -1);
-        __dt__7CSysWinFv((u8*)self + 0x34, -1);
-        ((UnkClass_8045F564*)((u8*)self + 0x04))->~UnkClass_8045F564();
-        if (flags > 0)
-            operator delete(self);
-    }
-    return self;
-}
-#pragma optimize_for_size off
+CSkipTimer::~CSkipTimer() {}
 
 // CSkipTimerOnFwdGate: forward-anim gate for CSkipTimer.
 // auto_inline off: retail callers (CSkipTimerTick) emit direct `bl`s to the
@@ -293,13 +263,13 @@ extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::OnFwdGate() {
-    if (advanceAnimTransform(this->mAnimTransform20, lbl_eu_80668C30) != 0) {
+    if (advanceAnimTransform(this->mAnimTransform20, 1.0f) != 0) {
         this->mField29 = 2;
         CSkipTimerBindAnim24(this);
         // Intermediate local: retail keeps the action id in r0 across the
         // sub-controller address computation before the u8 conversion.
         int action = CSkipTimerMapKeyToAction(this);
-        CSkipTimer2Start(reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]),
+        CSkipTimer2Start(&this->mSkipTimer2,
                       static_cast<u8>(action));
     }
 }
@@ -309,7 +279,7 @@ void CSkipTimer::OnFwdGate() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::OnReverseDone() {
-    if (AnimRewindFrame(this->mAnimTransform20, lbl_eu_80668C30) != 0) {
+    if (AnimRewindFrame(this->mAnimTransform20, 1.0f) != 0) {
         this->mField29 = 0;
         this->mField2B = 1;
     }
@@ -434,46 +404,9 @@ void CSkipTimer_BeginLoad(CSkipTimer* self) {
         mtl::MemManager::getHandleMEM2(), &lbl_eu_80510568[0x99],
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
 
-    // Stack temporary CSysWin (raw buffer: CSysWin's embedded mem region has a
-    // nontrivial dtor, so an automatic object would emit an extra dtor call).
-    // No cached src/dst pointers: retail folds every address to r31/sp-relative
-    // inline (a held pointer would cost a callee-saved register).
-    u8 temp[0x3A];
-    __ct__CSysWin(temp, 0);
-    __ct__UnkClass_8011C974(
-        &reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mMemRegion,
-        &reinterpret_cast<CSysWin*>(temp)->mMemRegion);
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mFileHandle =
-        reinterpret_cast<CSysWin*>(temp)->mFileHandle;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mTagProcessor =
-        reinterpret_cast<CSysWin*>(temp)->mTagProcessor;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mArcAccessor =
-        reinterpret_cast<CSysWin*>(temp)->mArcAccessor;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mLayout =
-        reinterpret_cast<CSysWin*>(temp)->mLayout;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->mAnimTrans =
-        reinterpret_cast<CSysWin*>(temp)->mAnimTrans;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_28 =
-        reinterpret_cast<CSysWin*>(temp)->field_28;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_2C =
-        reinterpret_cast<CSysWin*>(temp)->field_2C;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_30 =
-        reinterpret_cast<CSysWin*>(temp)->field_30;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_34 =
-        reinterpret_cast<CSysWin*>(temp)->field_34;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_35 =
-        reinterpret_cast<CSysWin*>(temp)->field_35;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_36 =
-        reinterpret_cast<CSysWin*>(temp)->field_36;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_37 =
-        reinterpret_cast<CSysWin*>(temp)->field_37;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_38 =
-        reinterpret_cast<CSysWin*>(temp)->field_38;
-    reinterpret_cast<CSysWin*>(&self->mSysWinData[0])->field_39 =
-        reinterpret_cast<CSysWin*>(temp)->field_39;
-    __dt__7CSysWinFv(temp, -1);
+    self->mSysWin = CSysWin(0);
 
-    reinterpret_cast<SysWinSlot88View*>(&self->mSysWinData[0])->onLayoutLoaded();
+    self->mSysWin.loadSystemArc();
     self->mField2A = 0;
 }
 
@@ -504,7 +437,7 @@ void CSkipTimerTick(CSkipTimer* self) {
         // Intermediate local: retail keeps the action id in r0 across the
         // sub-controller address computation before the u8 conversion.
         int action = CSkipTimerMapKeyToAction(self);
-        CSkipTimer2HoldRelease(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]),
+        CSkipTimer2HoldRelease(&self->mSkipTimer2,
                       static_cast<u8>(action));
         break;
     }
@@ -522,8 +455,8 @@ void CSkipTimerTick(CSkipTimer* self) {
         break;
     }
     self->mLayout2->Animate(0);
-    CSkipTimer2DriveState(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
-    sysWinDispatchPhase(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]));
+    CSkipTimer2DriveState(&self->mSkipTimer2);
+    sysWinDispatchPhase(&self->mSysWin);
 }
 
 // CSkipTimerDraw (CSkipTimer): draw helper - render both layouts + syswin.
@@ -532,17 +465,16 @@ void CSkipTimerTick(CSkipTimer* self) {
 // Retail saves r30/r31 with a single stmw; the unit's -O4,p would split them
 // (+8 bytes) - per-function optimize_for_size selects the stmw/lmw pair.
 #pragma push
-#pragma optimize_for_size on
 void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField28 == 0) return;
     drawLayout(self->mLayout2, drawInfo, 0, 1);
-    if (reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0])->mField20 != 0) {
+    if (self->mSkipTimer2.mField20 != 0) {
         drawLayout(
             reinterpret_cast<nw4r::lyt::Layout*>(
-                reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0])->mField18),
+                self->mSkipTimer2.mField18),
             drawInfo, 0, 1);
     }
-    sysWinDrawLayout(&self->mSysWinData[0], drawInfo);
+    sysWinDrawLayout(&self->mSysWin, drawInfo);
 }
 #pragma pop
 
@@ -555,16 +487,16 @@ void CSkipTimerTeardown(CSkipTimer* self) {
         delete layout;
         self->mLayout2 = 0;
     }
-    CSkipTimer2Reset(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
+    CSkipTimer2Reset(&self->mSkipTimer2);
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
     self->mLayout = 0;
-    sysWinTermLayout(&self->mSysWinData[0]);
+    sysWinTermLayout(&self->mSysWin);
     self->mMemRegion.deleteRegion();
 }
 
 // CSkipTimerIsReady: return the syswin panel's ready flag when ready, else 0.
 u8 CSkipTimerIsReady(CSkipTimer* self) {
-    if (CSysWin_isReady(&self->mSysWinData[0]) != 0) {
+    if (CSysWin_isReady(&self->mSysWin) != 0) {
         return self->mField2A;
     }
     return 0;
@@ -573,7 +505,7 @@ u8 CSkipTimerIsReady(CSkipTimer* self) {
 // CSkipTimerGetSkipButton: return the skip button state only while the sub-controller is
 // mid-anim (mField23), else the "released" value 0.
 u8 CSkipTimerGetSkipButton(CSkipTimer* self) {
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    CSkipTimer2* sub = &self->mSkipTimer2;
     if (sub->mField23 != 0) {
         return self->mField2B;
     }
@@ -583,7 +515,7 @@ u8 CSkipTimerGetSkipButton(CSkipTimer* self) {
 // CSkipTimerNextKey (CSkipTimer): advance the switch key (wrap up) + cue sound.
 void CSkipTimerNextKey(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) return;
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     s16 t = self->mField2C + 1;
     self->mField2C = t;
     if (t > 0x17) self->mField2C = 0;
@@ -594,7 +526,7 @@ void CSkipTimerNextKey(CSkipTimer* self) {
 // CSkipTimerPrevKey (CSkipTimer): retreat the switch key (wrap down) + cue sound.
 void CSkipTimerPrevKey(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) return;
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     s16 t = self->mField2C - 1;
     self->mField2C = t;
     if (t < 0) self->mField2C = 0x17;
@@ -612,7 +544,7 @@ void CSkipTimerFlagButton(u8* obj) {
 // controller's anim fields, and raise the leave sound.
 void CSkipTimerLeaveSkip(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    CSkipTimer2* sub = &self->mSkipTimer2;
     self->mField29 = 4;
     self->mField2B = 0;
     sub->mField21 = 3;
@@ -627,11 +559,11 @@ void CSkipTimerLeaveSkip(CSkipTimer* self) {
 // text built by BdatTouchStringCell and advance the window kind, then sfx 3.
 extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) {
-        if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
+        if (CSysWin_isActive(&self->mSysWin) == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        sysWinAdvancePhase3(&self->mSysWinData[0]);
+        sysWinAdvancePhase3(&self->mSysWin);
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
         if (CMainMenu_GetInstancePtr() != 0) {
@@ -642,9 +574,9 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         self->mField29 = 6;
         self->mField2B = 0;
         char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
-        sysWinSetKindContent(&self->mSysWinData[0], msg, 0);
-        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
-        sysWinOpenPhase1(&self->mSysWinData[0]);
+        sysWinSetKindContent(&self->mSysWin, msg, 0);
+        sysWinApplyKind(&self->mSysWin, 1);
+        sysWinOpenPhase1(&self->mSysWin);
         playUISound(3);
     }
 }
@@ -654,11 +586,11 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
 // active and cue sfx 6.
 void CSkipTimerEngageSkip(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) {
-        if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
+        if (CSysWin_isActive(&self->mSysWin) == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        sysWinAdvancePhase3(&self->mSysWinData[0]);
+        sysWinAdvancePhase3(&self->mSysWin);
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
         if (CMainMenu_GetInstancePtr() != 0) {
@@ -674,7 +606,7 @@ void CSkipTimerEngageSkip(CSkipTimer* self) {
 // CSkipTimerIsEngaged: report 1 while the syswin panel is engaged (getUnk34 != 0),
 // otherwise the plain active flag at +0x30.
 u8 CSkipTimerIsEngaged(CSkipTimer* self) {
-    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) {
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
         return 1;
     }
     return self->mActive;
@@ -684,7 +616,7 @@ u8 CSkipTimerIsEngaged(CSkipTimer* self) {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::ReengageInput() {
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]);
+    CSkipTimer2* sub = &this->mSkipTimer2;
     if (sub->mField23 == 0) return;
     this->mField29 = 3;
     this->mField2B = 1;
@@ -695,7 +627,7 @@ void CSkipTimer::ReengageInput() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::EndSkip() {
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]);
+    CSkipTimer2* sub = &this->mSkipTimer2;
     if (sub->mField23 == 0) return;
     this->mField29 = 5;
     CSkipTimerBindAnim20(this);
@@ -707,7 +639,7 @@ void CSkipTimer::EndSkip() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::ActivateSkipUI() {
-    if (CSysWin_isActive(&this->mSysWinData[0]) == 0) return;
+    if (CSysWin_isActive(&this->mSysWin) == 0) return;
     this->mField29 = 3;
     this->mField2B = 1;
 }
@@ -717,7 +649,7 @@ void CSkipTimer::ActivateSkipUI() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::LockSkipButton() {
-    if (CSysWin_isActive(&this->mSysWinData[0]) == 0) return;
+    if (CSysWin_isActive(&this->mSysWin) == 0) return;
     this->mField2B = 1;
     this->mActive = 1;
 }
@@ -744,13 +676,12 @@ extern "C" void CSkipTimer2HoldRelease(CSkipTimer2* self, u8 arg) {
 // auto_inline off is insufficient because optimize_for_size re-enables
 // inlining.
 #pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CSkipTimerActivateTimer(CSkipTimer* self) {
     if (self->mLayout == 0) return;
     CSkipTimerBindAnim24(self);
     self->mField2C = 0;
     self->mField2E = 0;
-    CfT_PlayClockSnapshot(reinterpret_cast<u16*>(&self->mField2C), &self->mField2E);
+    CfT_PlayClockSnapshot(reinterpret_cast<u16*>(&self->mField2C), reinterpret_cast<u16*>(&self->mField2E));
     self->mField2E = 0;
     CSkipTimer_UpdateSlotFrame(self);
     CSkipTimerBindAnim20(self);
@@ -772,7 +703,6 @@ __declspec(noinline) void CSkipTimerActivateTimer(CSkipTimer* self) {
 // would split them into four stw's (+12B). Callees with auto_inline off
 // (ctor/dtor/CSkipTimerBindAnim24/CSkipTimerActivateTimer) stay out-of-line.
 #pragma push
-#pragma optimize_for_size on
 bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
@@ -795,38 +725,8 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
                       &lbl_eu_80510568[0x101]);
         CSkipTimerBindAnim20(this);
 
-        // Copy-initialize the embedded sub-controller from a stack temporary
-        // (CMenuSave/CMenuCollepedia widget-rebuild pattern): build the temp via
-        // the C-linkage ctor, copy the mem region through the UnkClass_8011C974
-        // helper, then the remaining fields, then destroy the temp.
-        // No cached temp/sub pointers: retail folds every address to sp/r28
-        // relative (a pointer variable would be materialised in a saved reg).
-        u8 temp[0x28];
-        __ct__CSkipTimer2(reinterpret_cast<CSkipTimer2*>(temp), mLayout);
-        __ct__UnkClass_8011C974(
-            &reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mMemRegion,
-            &reinterpret_cast<CSkipTimer2*>(temp)->mMemRegion);
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mParent =
-            reinterpret_cast<CSkipTimer2*>(temp)->mParent;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField18 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField18;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mAnimTransform =
-            reinterpret_cast<CSkipTimer2*>(temp)->mAnimTransform;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField20 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField20;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField21 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField21;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField22 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField22;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField23 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField23;
-        reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->mField24 =
-            reinterpret_cast<CSkipTimer2*>(temp)->mField24;
-        // Direct out-of-line dtor call: an explicit ->~CSkipTimer2() on the raw
-        // buffer makes MWCC inline the (trivial) body as a member-dtor call;
-        // retail emits bl __dt__11CSkipTimer2Fv.
-        __dt__11CSkipTimer2Fv(temp, -1);
-        CSkipTimer2RebuildLayout(reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0]));
+        mSkipTimer2 = CSkipTimer2(mLayout);
+        CSkipTimer2RebuildLayout(&mSkipTimer2);
         CSkipTimerActivateTimer(this);
         mFileHandle = 0;
         mMemRegion.validateHeap();
@@ -852,7 +752,6 @@ void sinit_802A07D8() {
 // re-enables inlining.
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
 __declspec(noinline) void CSkipTimer2RebuildLayout(CSkipTimer2* self) {
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
                                   lbl_eu_80510568, 0);
@@ -877,4 +776,3 @@ __declspec(noinline) void CSkipTimer2RebuildLayout(CSkipTimer2* self) {
     self->mMemRegion.validateHeap();
 }
 #pragma pop
-#pragma optimize_for_size off

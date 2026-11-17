@@ -352,16 +352,16 @@ void CfCamDirectionIntf_update();
 void CfCamDirectionIntf_setPos();
 void CfCamDirectionIntf_setDir();
 void CfCamDirectionIntf_setLookat();
-extern char lbl_eu_80661B28[];
+extern char __RTTI__Q22cf11CfCamFollow[];
 extern char lbl_eu_80661B30[];
 extern char lbl_eu_80666288[];
 extern char lbl_eu_80666290[];
 extern char lbl_eu_80666298[];
 extern const void* lbl_eu_80661B00[];
-extern const void* lbl_eu_80661B08[];
-extern const void* lbl_eu_80661B10[];
-extern const void* lbl_eu_80661B18[];
-extern const void* lbl_eu_80661B20[];
+extern const void* __RTTI__Q22cf15CfCamTargetIntf[];
+extern const void* __RTTI__Q22cf15CfCamLookatIntf[];
+extern const void* __RTTI__Q22cf18CfCamDirectionIntf[];
+extern const void* __RTTI__Q22cf9CfCamIntf[];
 }
 
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B00[2] = {
@@ -369,22 +369,22 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
     (void*)lbl_eu_805270C0
 };
 
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B08[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf15CfCamTargetIntf[2] = {
     (void*)lbl_eu_804FB480,
     (void*)lbl_eu_805270F0
 };
 
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B10[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf15CfCamLookatIntf[2] = {
     (void*)lbl_eu_804FB494,
     (void*)lbl_eu_80527120
 };
 
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B18[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf18CfCamDirectionIntf[2] = {
     (void*)lbl_eu_804FB4A8,
     (void*)lbl_eu_80527148
 };
 
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80661B20[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf9CfCamIntf[2] = {
     (void*)lbl_eu_804FB4C0,
     0
 };

@@ -3,6 +3,18 @@
 namespace nw4r {
 namespace g3d {
 
+
+/******************************************************************************
+ *
+ * GetParent
+ *
+ ******************************************************************************/
+ResFile ResMdl::GetParent() {
+    return ofs_to_obj<ResFile>(ref().toResFileData);
+}
+
+
+
 /******************************************************************************
  *
  * ResByteCode
@@ -11,6 +23,8 @@ namespace g3d {
 const u8* ResMdl::GetResByteCode(const char* pName) const {
     return static_cast<u8*>(ofs_to_obj<ResDic>(ref().toResByteCodeDic)[pName]);
 }
+
+
 
 /******************************************************************************
  *
@@ -21,21 +35,24 @@ ResNode ResMdl::GetResNode(const char* pName) const {
     return ResNode(ofs_to_obj<ResDic>(ref().toResNodeDic)[pName]);
 }
 
+
+
 ResNode ResMdl::GetResNode(const ResName name) const {
     return ResNode(ofs_to_obj<ResDic>(ref().toResNodeDic)[name]);
 }
+
+
 
 ResNode ResMdl::GetResNode(int idx) const {
     return ResNode(ofs_to_obj<ResDic>(ref().toResNodeDic)[idx]);
 }
 
+
+
 ResNode ResMdl::GetResNode(u32 idx) const {
     return ResNode(ofs_to_obj<ResDic>(ref().toResNodeDic)[idx]);
 }
 
-u32 ResMdl::GetResNodeNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResNodeDic).GetNumData();
-}
 
 /******************************************************************************
  *
@@ -47,17 +64,23 @@ inline ResVtxPos ResMdl::GetResVtxPos(const ResName name) const {
     return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[name]);
 }
 
+
+u32 ResMdl::GetResNodeNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResNodeDic).GetNumData();
+}
+
+
+
 ResVtxPos ResMdl::GetResVtxPos(int idx) const {
     return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[idx]);
 }
+
+
 
 ResVtxPos ResMdl::GetResVtxPos(u32 idx) const {
     return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[idx]);
 }
 
-u32 ResMdl::GetResVtxPosNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResVtxPosDic).GetNumData();
-}
 
 /******************************************************************************
  *
@@ -69,17 +92,23 @@ inline ResVtxNrm ResMdl::GetResVtxNrm(const ResName name) const {
     return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[name]);
 }
 
+
+u32 ResMdl::GetResVtxPosNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxPosDic).GetNumData();
+}
+
+
+
 ResVtxNrm ResMdl::GetResVtxNrm(int idx) const {
     return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[idx]);
 }
+
+
 
 ResVtxNrm ResMdl::GetResVtxNrm(u32 idx) const {
     return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[idx]);
 }
 
-u32 ResMdl::GetResVtxNrmNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResVtxNrmDic).GetNumData();
-}
 
 /******************************************************************************
  *
@@ -91,17 +120,35 @@ inline ResVtxClr ResMdl::GetResVtxClr(const ResName name) const {
     return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[name]);
 }
 
+
+u32 ResMdl::GetResVtxNrmNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxNrmDic).GetNumData();
+}
+
+
+
 ResVtxClr ResMdl::GetResVtxClr(int idx) const {
     return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[idx]);
 }
+
+
 
 ResVtxClr ResMdl::GetResVtxClr(u32 idx) const {
     return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[idx]);
 }
 
+
+
 u32 ResMdl::GetResVtxClrNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxClrDic).GetNumData();
 }
+
+
+// Not in retail (retail has GetResVtxTexCoord(CFi) only) - inline.
+inline u32 ResMdl::GetResVtxTexCoordNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic).GetNumData();
+}
+
 
 /******************************************************************************
  *
@@ -112,10 +159,19 @@ ResVtxTexCoord ResMdl::GetResVtxTexCoord(int idx) const {
     return ResVtxTexCoord(ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic)[idx]);
 }
 
-// Not in retail (retail has GetResVtxTexCoord(CFi) only) - inline.
-inline u32 ResMdl::GetResVtxTexCoordNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic).GetNumData();
+
+
+/******************************************************************************
+ *
+ * GetResVtxFurPos
+ *
+ ******************************************************************************/
+ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
+    return ResVtxFurPos(
+        ofs_to_obj<ResDic>(ref().toResVtxFurPosDic)[idx]);
 }
+
+
 
 /******************************************************************************
  *
@@ -126,21 +182,18 @@ ResMat ResMdl::GetResMat(const char* pName) const {
     return ResMat(ofs_to_obj<ResDic>(ref().toResMatDic)[pName]);
 }
 
+
+
 ResMat ResMdl::GetResMat(const ResName name) const {
     return ResMat(ofs_to_obj<ResDic>(ref().toResMatDic)[name]);
 }
+
+
 
 ResMat ResMdl::GetResMat(int idx) const {
     return ResMat(ofs_to_obj<ResDic>(ref().toResMatDic)[idx]);
 }
 
-ResMat ResMdl::GetResMat(u32 idx) const {
-    return ResMat(ofs_to_obj<ResDic>(ref().toResMatDic)[idx]);
-}
-
-u32 ResMdl::GetResMatNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResMatDic).GetNumData();
-}
 
 /******************************************************************************
  *
@@ -152,17 +205,29 @@ inline ResShp ResMdl::GetResShp(const char* pName) const {
     return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[pName]);
 }
 
-ResShp ResMdl::GetResShp(int idx) const {
-    return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[idx]);
+
+ResMat ResMdl::GetResMat(u32 idx) const {
+    return ResMat(ofs_to_obj<ResDic>(ref().toResMatDic)[idx]);
 }
 
-ResShp ResMdl::GetResShp(u32 idx) const {
-    return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[idx]);
+
+
+u32 ResMdl::GetResMatNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResMatDic).GetNumData();
 }
 
-u32 ResMdl::GetResShpNumEntries() const {
-    return ofs_to_obj<ResDic>(ref().toResShpDic).GetNumData();
+
+
+/******************************************************************************
+ *
+ * GetResTev
+ *
+ ******************************************************************************/
+ResTev ResMdl::GetResTev(u32 idx) const {
+    return ResTev(
+        ofs_to_obj<ResDic>(ref().toResTevDic)[idx]);
 }
+
 
 /******************************************************************************
  *
@@ -175,14 +240,37 @@ inline ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(int idx) const 
         ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
 }
 
+
+ResShp ResMdl::GetResShp(int idx) const {
+    return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[idx]);
+}
+
+
+
+ResShp ResMdl::GetResShp(u32 idx) const {
+    return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[idx]);
+}
+
+
+
+u32 ResMdl::GetResShpNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResShpDic).GetNumData();
+}
+
+
+
 ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(unsigned long idx) const {
     return ResTexPlttInfo(
         ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
 }
 
+
+
 u32 ResMdl::GetResTexPlttInfoOffsetFromTexNameNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic).GetNumData();
 }
+
+
 
 /******************************************************************************
  *
@@ -201,6 +289,8 @@ bool ResMdl::Bind(const ResFile file) {
     return success;
 }
 
+
+
 void ResMdl::Release() {
     u32 i;
 
@@ -209,6 +299,8 @@ void ResMdl::Release() {
         GetResMat(i).Release();
     }
 }
+
+
 
 void ResMdl::Init() {
     u32 i;
@@ -254,33 +346,6 @@ void ResMdl::Init() {
     }
 }
 
-void ResMdl::Terminate() {
-    u32 i;
-
-    u32 shpNum = GetResShpNumEntries();
-    for (i = 0; i < shpNum; i++) {
-        GetResShp(i).Terminate();
-    }
-}
-
-/******************************************************************************
- *
- * GetParent
- *
- ******************************************************************************/
-ResFile ResMdl::GetParent() {
-    return ofs_to_obj<ResFile>(ref().toResFileData);
-}
-
-/******************************************************************************
- *
- * GetResVtxFurPos
- *
- ******************************************************************************/
-ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
-    return ResVtxFurPos(
-        ofs_to_obj<ResDic>(ref().toResVtxFurPosDic)[idx]);
-}
 
 /******************************************************************************
  *
@@ -303,15 +368,16 @@ inline u32 ResMdl::GetResVtxFurPosNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxFurPosDic).GetNumData();
 }
 
-/******************************************************************************
- *
- * GetResTev
- *
- ******************************************************************************/
-ResTev ResMdl::GetResTev(u32 idx) const {
-    return ResTev(
-        ofs_to_obj<ResDic>(ref().toResTevDic)[idx]);
+
+void ResMdl::Terminate() {
+    u32 i;
+
+    u32 shpNum = GetResShpNumEntries();
+    for (i = 0; i < shpNum; i++) {
+        GetResShp(i).Terminate();
+    }
 }
+
 
 } // namespace g3d
 } // namespace nw4r

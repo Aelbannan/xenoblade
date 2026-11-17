@@ -56,7 +56,7 @@ char lbl_eu_80532FA0[0x40] = {
 };
 // .sdata typeinfo pair (RTTI name + dispatch block).
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* lbl_eu_80662560[2] = { lbl_eu_80503E00, lbl_eu_80532FA0 };
+const void* __RTTI__17CSimpleEveTalkWin[2] = { lbl_eu_80503E00, lbl_eu_80532FA0 };
 // .sdata2 float pool in retail order, frozen in a struct (CfGimmickElv
 // recipe): MWCC merges same-valued individual scalars (dedup) and exiles
 // zero-valued mutable scalars to .sbss2, but struct members keep exact
@@ -389,14 +389,9 @@ void CSimpleEveTalkWin::cbRenderBefore() {
     if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch its
-    // scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mpLayout, &drawInfo, 0, 1);
 }
 
 // Creates the singleton CSimpleEveTalkWin on the work heap and registers it as

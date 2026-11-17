@@ -106,8 +106,6 @@ extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__11CSelShopWinFv(void*);

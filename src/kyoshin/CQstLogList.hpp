@@ -4,8 +4,19 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CScrollBar.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CEventFile.hpp"
 
-#include "kyoshin/CSortMenu.hpp"  // CScrollBarData (0x40-byte scrollbar), CSortMenu, CScrollBar_isVisible
+// The shared header's CSortMenu is a mirror of a class whose ctor/dtor are
+// C-linkage free functions (see CSortMenu.cpp); embedding it by value would
+// reference a ctor symbol that does not exist in retail. It is renamed aside
+// here and a CSortMenu with the right dtor symbol (__dt__9CSortMenuFv) is
+// declared below. Remove once CSortMenu is a real class.
+#define CSortMenu CSortMenuSharedView
+#include "kyoshin/CSortMenu.hpp"  // CScrollBarData (0x40-byte scrollbar), CScrollBar_isVisible
+#undef CSortMenu
 
 namespace nw4r { namespace math { struct VEC3; } }
 
@@ -28,6 +39,17 @@ struct CQstLogListQstInfo {
     u8  f7;              // 0x7
 };
 
+struct CQstLogListQstData;
+struct CSortMenu;
+// Imports used by the member wrappers below (retail C-linkage names).
+extern "C" void QstCnt_InitRecords_6FAC(u8*);               // QstData construct (8x0x400)
+extern "C" void copyQstInfo(u8*, const u8*);      // 8-byte QstInfo copy
+extern "C" void __destroy_arr(void*, void*, int, int);
+extern "C" void* __dt__80227030(void*, int);      // 0x400-byte QstInfo element dtor
+extern "C" void __ct__CSortMenu(CSortMenu*);
+extern "C" CScrollBar* copyScrollBarData(CScrollBar* dst, const CScrollBar* src);  // CScrollBar copy (out of line)
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src);
+
 // Quest-info buffer maintained by QstCnt_InitRecords_6FAC (mirror of QstData in
 // CMenuQstCnt.cpp): an 8x0x400 array whose elements are destroyed via
 // __dt__80227030, plus a 6-byte tail.
@@ -37,12 +59,36 @@ struct CQstLogListQstData {
     s16  field_2002;        // 0x2002
     u8   field_2004;        // 0x2004
     u8   field_2005;        // 0x2005
+
+    // QstData is its own class in retail (ctor QstCnt_InitRecords_6FAC, element
+    // dtor __dt__80227030 inlined here with the member-array null guard).
+    CQstLogListQstData() { QstCnt_InitRecords_6FAC(&mList[0]); }
+    ~CQstLogListQstData() {
+        __destroy_arr(&mList[0], (void*)&__dt__80227030, 8, 0x400);
+    }
+    // Record-wise copy (copyQstInfo per 8-byte record, then the 6-byte tail).
+#pragma always_inline on
+    CQstLogListQstData& operator=(const CQstLogListQstData& rhs) {
+        u8* pDst = &mList[0];
+        const u8* pSrc = &rhs.mList[0];
+        do {
+            copyQstInfo(pDst, pSrc);
+            pDst += 8;
+            pSrc += 8;
+        } while (pDst < &mList[8 * 0x400]);
+        field_2000 = rhs.field_2000;
+        field_2002 = rhs.field_2002;
+        field_2004 = rhs.field_2004;
+        field_2005 = rhs.field_2005;
+        return *this;
+    }
+#pragma always_inline off
 };
 
 // Mirror of the CSortMenu body (0xF0 bytes) for raw field copies in the
 // constructor (the real CSortMenu class cannot be embedded - include
 // conflict). Pointer fields are u32 because the region is opaque storage.
-struct CQstLogListSortMenuData {
+struct CSortMenu {
     u32 mVtbl;                 // +0x00
     u8  mUnk04[0x10];          // +0x04 UnkClass_8045F564
     u32 mFileHandle;           // +0x14
@@ -59,6 +105,35 @@ struct CQstLogListSortMenuData {
     u8  mCount;                // +0xEC
     u8  mPage;                 // +0xED
     u8  mSubPage;              // +0xEE
+
+    // The ctor goes through the retail C-linkage function __ct__CSortMenu;
+    // operator= is the member-wise copy that skips the vtable word.
+    CSortMenu() { __ct__CSortMenu(this); }
+    ~CSortMenu();  // retail __dt__9CSortMenuFv (CSortMenu.o)
+#pragma always_inline on
+    CSortMenu& operator=(const CSortMenu& rhs) {
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mUnk04[0], &rhs.mUnk04[0]);
+        mFileHandle = rhs.mFileHandle;
+        mArcResAcc = rhs.mArcResAcc;
+        mpLayout = rhs.mpLayout;
+        mpAnimTrans0 = rhs.mpAnimTrans0;
+        mpAnimTrans1 = rhs.mpAnimTrans1;
+        field_0x28 = rhs.field_0x28;
+        field_0x29 = rhs.field_0x29;
+        field_0x2A = rhs.field_0x2A;
+        field_0x2B = rhs.field_0x2B;
+        copyScrollBarData(reinterpret_cast<CScrollBar*>(&mScrollBar), reinterpret_cast<const CScrollBar*>(&rhs.mScrollBar));
+        // 0x80-byte block struct assign: MWCC emits its canonical
+        // lwz/lwzu + stw/stwu mtctr loop for whole-struct copies.
+        struct SortMenuRegion { u8 bytes[0x80]; };
+        *reinterpret_cast<SortMenuRegion*>(reinterpret_cast<char*>(this) + 0x6C) =
+            *reinterpret_cast<const SortMenuRegion*>(reinterpret_cast<const char*>(&rhs) + 0x6C);
+        mCount = rhs.mCount;
+        mPage = rhs.mPage;
+        mSubPage = rhs.mSubPage;
+        return *this;
+    }
+#pragma always_inline off
 };
 
 /* Quest log list widget. Owned by CMenuQuestLog.
@@ -92,23 +167,51 @@ struct CQstLogListMsgObj {
     CQstLogListMsgChain* chain;  // 0x8
 };
 
-struct CQstLogList {
-    CQstLogList(u16 arg2);   // retail symbol __ct__11CQstLogListFUs (unmangled ctor)
-    u8 QstLogList_IsSortEnabled();
-    u8 QstLogList_IsSortDescending();
-    int OnFileEvent(CEventFile* event);   // file-load completion callback
-    ~CQstLogList();
+class CQstLogList : public IWorkEvent {
+public:
+    CQstLogList(u16 arg2);
+    virtual ~CQstLogList();
+    virtual bool OnFileEvent(CEventFile* event);   // file-load completion callback
 
-    u32 mVtable;                     // 0x00..0x03 (vtable pointer)
-    u8 mUnk04[0x10];                 // 0x04..0x13 UnkClass_8045F564
+    int IsSortEnabled();
+    int IsSortDescending();
+    int ScrollFlag();
+    void LoadArc();
+    void FrameUpdate();
+    void Draw(nw4r::lyt::DrawInfo* drawInfo);
+    void Teardown();
+    void BeginSortOpen();
+    void EndSortMode(int flag);
+    void ScrollUp();
+    void ScrollDown();
+    void PageUp();
+    void PageDown();
+    void ToggleSort();
+    void ConfirmSort(int flag);
+    void ApplySortSelection();
+    u32 GetSelectedQuestLo();
+    void StepOpenAnim();
+    void StepSortAnim();
+    void RewindSortAnim();
+    void RewindOpenAnim();
+    void ShowOpenAnim();
+    void ShowSortAnim();
+    void RefreshRows();
+    void DrawRow(const char* name, int questId, int index, int mode, u8 a6, u8 a7);
+    void ClearRows();
+    void MoveCursor();
+    void FillSortMenu();
+    void RefreshHeader();
+
+    UnkClass_8045F564 mMemRegion;    // 0x04..0x13
     CFileHandle* mFileHandle;        // 0x14 - loaded arc file handle
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x18 - resource accessor
     nw4r::lyt::Layout* mpLayout;     // 0x1C - layout (LayoutSetTextBoxText target)
     nw4r::lyt::AnimTransform* mpAnim0;  // 0x20 - animation transform 0
     nw4r::lyt::AnimTransform* mpAnim1;  // 0x24 - animation transform 1
     CCur18 mCur18;                   // 0x28..0x3F
-    CScrollBarData mScrollBar;       // 0x40..0x7F - quest list scroll bar
-    CQstLogListSortMenuData mSortMenuData;  // 0x80..0x16F CSortMenu (mirror storage)
+    CScrollBar mScrollBar;           // 0x40..0x7F - quest list scroll bar
+    CSortMenu mSortMenuData;  // 0x80..0x16F CSortMenu (mirror storage)
     u8 field_0x170;                  // 0x170 - layout loaded flag
     u8 pad_0171[0x174 - 0x171];      // 0x171..0x173
     s32 field_0x174;                 // 0x174 - mode (0/2/5 set by anim checks)
@@ -123,17 +226,6 @@ struct CQstLogList {
     CQstLogListQstData mQstData;     // 0x182..0x2187 quest-info buffer (0x2006)
 };
 
-// In-TU helper functions. Retail symbols are unmangled (C linkage), so the
-// declarations must be extern "C" to bind the bl reloc to the retail name.
-extern "C" void QstLogList_ShowOpenAnim(CQstLogList* self);
-extern "C" void QstLogList_ShowSortAnim(CQstLogList* self);
-extern "C" void QstLogList_RefreshRows(CQstLogList* self);
-extern "C" void QstLogList_MoveCursor(CQstLogList* self);
-extern "C" void QstLogList_DrawRow(CQstLogList* self, const char* name, int questId,
-                              int index, int mode, u8 a6, u8 a7);
-extern "C" void QstLogList_ClearRows(CQstLogList* self);
-extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
-extern "C" void QstLogList_RefreshHeader(CQstLogList* self);
 extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
 
 // Sort-menu scroll/page handlers (defined in CSortMenu.cpp). Retail names are
@@ -150,8 +242,8 @@ extern "C" void sortMenuResetCount(void*);                  // sort-menu array r
 extern "C" void func_801D3518(void*, void*);            // sort-menu array append
 extern "C" void sortMenuSetPage(void*, u8);               // sort-menu page set
 extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void sortMenuSetLayoutPos(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
-extern "C" void sortMenuOpenInit(CQstLogListSortMenuData*);
+extern "C" void sortMenuSetLayoutPos(CSortMenu*, const nw4r::math::VEC3*);
+extern "C" void sortMenuOpenInit(CSortMenu*);
 extern "C" void Cur_Update(void*);                 // CCur18 per-frame update
 extern "C" void sortMenuDispatchState(void*);                 // CSortMenu per-frame update
 extern "C" void sortMenuTermCleanup(void*);                 // CSortMenu destroy
@@ -165,20 +257,8 @@ extern "C" void sortMenuDraw(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sortMenuToState4Page(void*);
 extern "C" int sortMenuGetFlag2B(void*);
-extern "C" void __dt__9CSortMenuFv(void*, int);
-extern "C" void __destroy_arr(void*, void*, int, int);
-extern "C" void* __dt__80227030(void*, int);      // 0x400-byte QstInfo element dtor
-
-// Sub-object constructor imports (retail C-linkage names).
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__10CScrollBarFUc(void*, int);
-extern "C" void __ct__CSortMenu(CQstLogListSortMenuData*);
-extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src);   // 4-word mem-region copy
-extern "C" void copyScrollBarData(CScrollBarData*, const CScrollBarData*);  // CScrollBar copy
 
 // Quest-info buffer helpers (defined in CMenuQstCnt.cpp).
-extern "C" void QstCnt_InitRecords_6FAC(u8*);               // QstData construct (8x0x400)
-extern "C" void copyQstInfo(u8*, const u8*);      // 8-byte QstInfo copy
 extern "C" void QstCnt_SortRecords(u8*, u32, u32);
 extern "C" u16 selectQstIndex(const u8*);
 extern "C" CQstLogListQstInfo* QstCnt_GetInfoAt_76F4(u8*, u16);
@@ -198,7 +278,7 @@ extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
+extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // C++ free functions - MWCC mangles these to the retail names
@@ -218,7 +298,6 @@ extern u32 lbl_eu_80664738;      // current quest resource (.sbss)
 extern u32 lbl_eu_80662860;      // quest pane color (.sbss)
 extern u8* lbl_eu_806640A8;      // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80573D18[];    // quest name table (split1 .rodata)
-extern "C" u32 lbl_eu_80536288[];  // CQstLogList vtable (.data; array -> lis/addi)
 // const routes into readonly sdata2 - MWCC hoists the lfs above the frame
 // stores (MWCC_CASES:8787); plain extern float schedules it late.
 extern const float lbl_eu_80668584;  // anim frame target (sda21)

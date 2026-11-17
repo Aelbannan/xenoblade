@@ -24,7 +24,7 @@ CWorkThread* __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const char
 // RTTI name strings (.rodata).
 extern const char lbl_eu_80522528[];
 // RTTI locator (.sdata, 8 bytes): { name, base-list }.
-extern void* lbl_eu_80663550[2];
+extern void* __RTTI__9CRsrcData[2];
 
 const char lbl_eu_80522528[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
 const char lbl_eu_80522534[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
@@ -33,7 +33,7 @@ const char lbl_eu_80522534[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0
 // (CRsrcData), wkRender/wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout
 // (CRsrcData), wkStandbyExceptionRetry].
 u32 lbl_eu_8056B360[0xA0 / 4] = {
-    (u32)&lbl_eu_80663550, 0, (u32)&__dt__9CRsrcDataFv,
+    (u32)&__RTTI__9CRsrcData, 0, (u32)&__dt__9CRsrcDataFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,
@@ -60,7 +60,7 @@ u32 lbl_eu_8056B400[6] = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-void* lbl_eu_80663550[2] = { (void*)lbl_eu_80522528, (void*)lbl_eu_8056B400 };
+void* __RTTI__9CRsrcData[2] = { (void*)lbl_eu_80522528, (void*)lbl_eu_8056B400 };
 
 extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* pName,
                                           CWorkThread* pParent) {

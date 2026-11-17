@@ -526,6 +526,20 @@ def locked_targets_document(
         yield data, _write
 
 
+def _verify_full_row(config, row):
+    """History/scores cannot promote a function without a current byte check."""
+    from tools.coop.lib.full_match import check_unit_function
+    from tools.coop.lib.project import Project
+    project = Project(config)
+    if not row.get("unit") or not row.get("symbol"):
+        raise ValueError("FULL_MATCH requires a function identity and byte evidence")
+    unit = project.resolve_unit(row["unit"])
+    comparison = check_unit_function(project, unit, row["symbol"])
+    if not comparison.match:
+        raise ValueError(f"FULL_MATCH byte verification failed for {row.get('id')}: "
+                         + "; ".join(comparison.reasons))
+
+
 def update_target_result(
     config: CoopConfig,
     target_id: str,
@@ -552,6 +566,9 @@ def update_target_result(
         for row in data.get("targets", []):
             if row.get("id") != target_id:
                 continue
+            if status == "FULL_MATCH":
+                _verify_full_row(config, row)
+                instruction_match = 100.0
             row["status"] = status
             if instruction_match is not None:
                 row["instruction_match"] = round(float(instruction_match), 3)
@@ -602,13 +619,20 @@ def sync_results_from_attempts(config: CoopConfig, attempts: Iterable[Dict[str, 
                 row.get("equivalence_status"),
             )
             status = str(attempt.get("status", row.get("status", "NOT_STARTED")))
+            if status == "FULL_MATCH":
+                try:
+                    _verify_full_row(config, row)
+                except (OSError, ValueError, RuntimeError):
+                    # Do not resurrect an invalidated FULL from append-only
+                    # history. Keep the current, revalidated registry result.
+                    continue
             row["status"] = status
             if attempt.get("instruction_match") is not None:
                 raw_match = attempt["instruction_match"]
                 if isinstance(raw_match, str):
                     match = re.search(r"-?\d+(?:\.\d+)?", raw_match)
                     raw_match = match.group(0) if match else 0.0
-                row["instruction_match"] = round(float(raw_match), 3)
+                row["instruction_match"] = 100.0 if status == "FULL_MATCH" else round(float(raw_match), 3)
             if attempt.get("equivalence_status"):
                 row["equivalence_status"] = attempt["equivalence_status"]
             if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:

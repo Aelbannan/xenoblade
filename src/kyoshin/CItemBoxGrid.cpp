@@ -43,6 +43,7 @@
 #define sysWinApplyKind sysWinApplyKind_csys_dup
 #define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
 #undef ScalePaneWorldPos
@@ -58,6 +59,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 void playUISound(u32);
 
 // Forward declarations for external functions
@@ -2582,8 +2584,8 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     __ct__CItemBoxGridSubMenu(p + 0x418);
     __ct__CExchangeWin(p + 0x440);
     __ct__CPresentWin(p + 0x468);
-    __ct__CSysWin(p + 0x4ac, 0);
-    __ct__CSysWin(p + 0x4e8, 0);
+    __ct__7CSysWinFUc(p + 0x4ac, 0);
+    __ct__7CSysWinFUc(p + 0x4e8, 0);
 
     p[0x524] = 0;
     p[0x525] = 0;
@@ -2639,10 +2641,10 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     }
 
     // sys-win temps copied via InfoCfCopySysWin
-    __ct__CSysWin(tmpWin1, 2);
+    __ct__7CSysWinFUc(tmpWin1, 2);
     InfoCfCopySysWin(p + 0x4ac, tmpWin1);
     __dt__7CSysWinFv(tmpWin1, -1);
-    __ct__CSysWin(tmpWin2, 0);
+    __ct__7CSysWinFUc(tmpWin2, 0);
     InfoCfCopySysWin(p + 0x4e8, tmpWin2);
     __dt__7CSysWinFv(tmpWin2, -1);
 
@@ -5405,18 +5407,18 @@ void UnequipPartyItem(void* self, int kind, int id) {
         // Camera pass: filter the scene enum list by this player and detach
         // its move object when the player index matches.
         CtrlObjectParam_SyncParamFromActor((void*)found);
-        CItemBoxGridEnumHolder holder;
+        u32 names[3];
         const u32* src = (const u32*)lbl_eu_80505628;
-        holder.names[0] = *src++;
-        holder.names[1] = *src++;
-        holder.names[2] = *src++;
-        CTaskGame_enumListCtor(&holder);
+        names[0] = *src++;
+        names[1] = *src++;
+        names[2] = *src++;
+        CfEnumListHolder holder;
         u8 i;
         for (i = 0; i < 3; i++) {
-            startEnumObjects(CTaskGame_enumListGet(&holder), holder.names[i], 0);
-            CItemBoxGridEnumList* list = (CItemBoxGridEnumList*)CTaskGame_enumListGet(&holder);
+            startEnumObjects(holder.get(), names[i], 0);
+            CItemBoxGridEnumList* list = (CItemBoxGridEnumList*)holder.get();
             if (list->field_620 >= 1) {
-                list = (CItemBoxGridEnumList*)CTaskGame_enumListGet(&holder);
+                list = (CItemBoxGridEnumList*)holder.get();
                 CItemBoxGridEnumSlot* slot =
                     (CItemBoxGridEnumSlot*)getEntryAt(list, 0);
                 if (slot->field_04) {
@@ -5429,7 +5431,6 @@ void UnequipPartyItem(void* self, int kind, int id) {
                 }
             }
         }
-        __dt__80043E88(&holder, -1);
         return;
     }
 }
@@ -5810,15 +5811,15 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     *(s16*)((u8*)&lbl_eu_806644C8 + 6) = colAW;
     *(s16*)((u8*)&lbl_eu_806644D0 + 6) = colBW;
     // Build each cursor from a stack temporary handed to the attach helper.
-    u8 cur07Buf[0x18];
-    __ct__CCur07(cur07Buf, *(void**)(p + 0x3c));
-    MenuShopSellCopyCursor(p + 0x70, cur07Buf);
-    __dt__6CCur07Fv(cur07Buf, -1);
+    {
+        CCur07 cur07Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
+        MenuShopSellCopyCursor(p + 0x70, &cur07Buf);
+    }
     ((CBaseCur*)(p + 0x70))->initLayout();
-    u8 cur09Buf[0x18];
-    __ct__CCur09(cur09Buf, *(void**)(p + 0x3c));
-    MenuShopSellCopyCursor(p + 0x88, cur09Buf);
-    __dt__6CCur09Fv(cur09Buf, -1);
+    {
+        CCur09 cur09Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
+        MenuShopSellCopyCursor(p + 0x88, &cur09Buf);
+    }
     ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
     CibgVec3 vecMin;
@@ -5826,20 +5827,20 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     CibgVec3 vecMax;
     code80135FDC_setVec3((float*)&vecMax, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
     Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
-    CCur18 cur18Buf;
-    __ct__CCur18(&cur18Buf, CUICfManager_getArcResourceAccessor());
-    MenuShopSellCopyCursor(p + 0xa0, &cur18Buf);
-    __dt__6CCur18Fv(&cur18Buf, -1);
+    {
+        CCur18 cur18Buf(CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(p + 0xa0, &cur18Buf);
+    }
     ((CBaseCur*)(p + 0xa0))->initLayout();
-    u8 cur16Buf[0x18];
-    __ct__CCur16(cur16Buf, *(void**)(p + 0x3c));
-    MenuShopSellCopyCursor(p + 0xb8, cur16Buf);
-    __dt__6CCur16Fv(cur16Buf, -1);
+    {
+        CCur16 cur16Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
+        MenuShopSellCopyCursor(p + 0xb8, &cur16Buf);
+    }
     ((CBaseCur*)(p + 0xb8))->initLayout();
-    u8 cur11Buf[0x18];
-    __ct__CCur11(cur11Buf, *(void**)(p + 0x3c));
-    MenuShopSellCopyCursor(p + 0xd0, cur11Buf);
-    __dt__6CCur11Fv(cur11Buf, -1);
+    {
+        CCur11 cur11Buf((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));
+        MenuShopSellCopyCursor(p + 0xd0, &cur11Buf);
+    }
     ((CBaseCur*)(p + 0xd0))->initLayout();
     initPresentWin(p + 0x468, *(void**)(p + 0x3c));
     GridSubMenu_InitLayout(p + 0x418, *(void**)(p + 0x3c));

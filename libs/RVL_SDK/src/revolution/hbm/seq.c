@@ -75,6 +75,8 @@ typedef struct _HBMMIDICHUNK {
     s16 division;    /* 0x0C */
 } HBMMIDICHUNK;
 
+extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state);
+
 #pragma push
 #pragma auto_inline off
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
@@ -171,67 +173,6 @@ static u32 HBMSEQReadVarInt(u8 **pp)
         v = (v << 7) + (b & 0x7F);
     }
     return v;
-}
-
-extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state)
-{
-    u32 intr;
-
-    switch (state) {
-    case 1:
-    case 2:
-        if (seq->state == 0) {
-            u32 v;
-            HBMSEQTRACK *track;
-            u8 b;
-            int i;
-
-            intr = OSDisableInterrupts();
-            track = &seq->tracks[0];
-            for (i = 0; i < seq->num_tracks; i++) {
-                track->cur = track->start;
-                track->delay_count = track->field_0x18;
-
-                /* Read a MIDI variable-length quantity (consumes the final
-                   byte, so cur ends one past the value). */
-                b = *track->cur;
-                v = b & 0x7F;
-                while (b & 0x80) {
-                    track->cur++;
-                    b = *track->cur;
-                    v = (v << 7) + (b & 0x7F);
-                }
-                track->cur++;
-
-                track->delay = v << 16;
-                track->sub_state = 1;
-                track++;
-            }
-            seq->field_0x0C = seq->num_tracks;
-            OSRestoreInterrupts(intr);
-        }
-        seq->field_0x10 = 0;
-        break;
-
-    case 0:
-    case 3:
-        {
-            u8 data[3];
-            int j;
-
-            for (j = 0; j < 16; j++) {
-                u32 intr2 = OSDisableInterrupts();
-                data[0] = 0xB0 | j;
-                data[1] = 0x7B;
-                data[2] = 0;
-                HBMSYNMidiInput(&seq->midi_input, data);
-                OSRestoreInterrupts(intr2);
-            }
-        }
-        break;
-    }
-
-    seq->state = state;
 }
 
 extern "C" void HBMSEQRunAudioFrame(void)
@@ -448,6 +389,67 @@ extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE *seq)
     }
     OSRestoreInterrupts(intr);
     HBMSYNQuitSynth(&seq->midi_input);
+}
+
+extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state)
+{
+    u32 intr;
+
+    switch (state) {
+    case 1:
+    case 2:
+        if (seq->state == 0) {
+            u32 v;
+            HBMSEQTRACK *track;
+            u8 b;
+            int i;
+
+            intr = OSDisableInterrupts();
+            track = &seq->tracks[0];
+            for (i = 0; i < seq->num_tracks; i++) {
+                track->cur = track->start;
+                track->delay_count = track->field_0x18;
+
+                /* Read a MIDI variable-length quantity (consumes the final
+                   byte, so cur ends one past the value). */
+                b = *track->cur;
+                v = b & 0x7F;
+                while (b & 0x80) {
+                    track->cur++;
+                    b = *track->cur;
+                    v = (v << 7) + (b & 0x7F);
+                }
+                track->cur++;
+
+                track->delay = v << 16;
+                track->sub_state = 1;
+                track++;
+            }
+            seq->field_0x0C = seq->num_tracks;
+            OSRestoreInterrupts(intr);
+        }
+        seq->field_0x10 = 0;
+        break;
+
+    case 0:
+    case 3:
+        {
+            u8 data[3];
+            int j;
+
+            for (j = 0; j < 16; j++) {
+                u32 intr2 = OSDisableInterrupts();
+                data[0] = 0xB0 | j;
+                data[1] = 0x7B;
+                data[2] = 0;
+                HBMSYNMidiInput(&seq->midi_input, data);
+                OSRestoreInterrupts(intr2);
+            }
+        }
+        break;
+    }
+
+    seq->state = state;
 }
 
 extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE *seq) { return seq->state; }

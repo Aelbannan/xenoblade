@@ -81,7 +81,7 @@ __declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem
     // Embedded subobject ctors (retail C-ABI names - the members have no C++
     // member ctor, so the retail C-linkage ctors are called directly).
     __ct__cf_CInfoCf(pInfo);
-    __ct__cf_CREvtMem(&pMem->mEvtMem);
+    __ct__Q22cf8CREvtMemFv(&pMem->mEvtMem);
 
     // Field initialization in retail store order.
     f32 f = lbl_eu_80667628;

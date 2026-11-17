@@ -15,6 +15,7 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const ::nw4
 namespace nw4r {
 namespace g3d {
 
+
 // This TU owns its .data since the nw4r_data.s absorb (splits 2026-08-29:
 // .data 0x805695F8-0x80569730). MWCC emits the switch jumptables and the
 // ScnGroup/ScnLeaf/ScnObj vtables here with retail-identical bytes; the
@@ -50,9 +51,13 @@ void ScnObj::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
     }
 }
 
+
+
 void ScnObj::CalcViewMtx(const math::MTX34* pCamera) {
     math::MTX34Mult(&mMtxArray[MTX_VIEW], pCamera, &mMtxArray[MTX_WORLD]);
 }
+
+
 
 ScnObj::ScnObj(MEMAllocator* pAllocator)
     : G3dObj(pAllocator, nullptr),
@@ -78,6 +83,8 @@ ScnObj::ScnObj(MEMAllocator* pAllocator)
     mAABB[BOUNDINGVOLUME_AABB_WORLD].max = math::VEC3(0.0f, 0.0f, 0.0f);
 }
 
+
+
 ScnObj::~ScnObj() {
     if (mpFuncObjExec == nullptr) {
         return;
@@ -90,6 +97,8 @@ ScnObj::~ScnObj() {
     }
     }
 }
+
+
 
 bool ScnObj::SetScnObjOption(u32 option, u32 value) {
     switch (option) {
@@ -145,6 +154,8 @@ bool ScnObj::SetScnObjOption(u32 option, u32 value) {
 
     return true;
 }
+
+
 
 bool ScnObj::GetScnObjOption(u32 option, u32* pValue) const {
     if (pValue == nullptr) {
@@ -205,6 +216,8 @@ bool ScnObj::GetScnObjOption(u32 option, u32* pValue) const {
     return true;
 }
 
+
+
 // The const-reference overload matches the retail symbol
 // SetMtx__Q34nw4r3g3d6ScnObjFQ44nw4r3g3d6ScnObj13ScnObjMtxTypeRCQ34nw4r4math5MTX34.
 bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34& pMtx) {
@@ -221,15 +234,21 @@ bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34& pMtx) {
     return false;
 }
 
+
+
 // GetMtx is not present in the retail split; retail code uses GetMtxPtr.
 // (definition removed; declaration kept in the header)
 f32 ScnObj::GetValueForSortOpa() const {
     return -mMtxArray[MTX_VIEW]._23;
 }
 
+
+
 f32 ScnObj::GetValueForSortXlu() const {
     return mMtxArray[MTX_VIEW]._23;
 }
+
+
 
 void ScnObj::EnableScnObjCallbackTiming(Timing timing) {
     if (timing & CALLBACK_TIMING_A) {
@@ -245,9 +264,13 @@ void ScnObj::EnableScnObjCallbackTiming(Timing timing) {
     }
 }
 
+
+
 void ScnObj::EnableScnObjCallbackExecOp(ExecOp op) {
     mCallbackExecOpMask |= static_cast<u16>(op);
 }
+
+
 
 bool ScnObj::SetBoundingVolume(ScnObjBoundingVolumeType type,
                                const math::AABB* pAABB) {
@@ -263,6 +286,8 @@ bool ScnObj::SetBoundingVolume(ScnObjBoundingVolumeType type,
     return SetScnObjOption(OPTID_ENABLE_CULLING, FALSE);
 }
 
+
+
 bool ScnObj::GetBoundingVolume(ScnObjBoundingVolumeType type,
                                math::AABB* pAABB) const {
     if (pAABB != nullptr) {
@@ -276,6 +301,8 @@ bool ScnObj::GetBoundingVolume(ScnObjBoundingVolumeType type,
 
     return false;
 }
+
+
 
 /******************************************************************************
  *
@@ -291,6 +318,8 @@ ScnObj::ForEachResult ScnLeaf::ForEach(ForEachFunc pFunc, void* pInfo,
                : FOREACHRESULT_CONTINUE;
 }
 
+
+
 bool ScnLeaf::SetScnObjOption(u32 option, u32 value) {
     switch (option) {
     case OPTID_DISABLE_DRAW_ALL: {
@@ -305,6 +334,8 @@ bool ScnLeaf::SetScnObjOption(u32 option, u32 value) {
 
     return true;
 }
+
+
 
 bool ScnLeaf::GetScnObjOption(u32 option, u32* pValue) const {
     if (pValue == nullptr) {
@@ -325,6 +356,8 @@ bool ScnLeaf::GetScnObjOption(u32 option, u32* pValue) const {
     return true;
 }
 
+
+
 void ScnLeaf::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
     if (pParam != nullptr && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
         *pParam &= ~SCNOBJFLAG_DISABLE_CALC_WORLD;
@@ -340,6 +373,8 @@ void ScnLeaf::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
     }
 }
 
+
+
 ScnLeaf::ScaleProperty ScnLeaf::GetScaleProperty() const {
     if (mScale.x == mScale.y) {
         if (mScale.y == mScale.z) {
@@ -353,6 +388,8 @@ ScnLeaf::ScaleProperty ScnLeaf::GetScaleProperty() const {
 
     return NONUNIFORM_SCALED;
 }
+
+
 
 void ScnLeaf::DefG3dProcScnLeaf(u32 task, u32 param, void* pInfo) {
     switch (task) {
@@ -399,6 +436,8 @@ void ScnLeaf::DefG3dProcScnLeaf(u32 task, u32 param, void* pInfo) {
     }
 }
 
+
+
 /******************************************************************************
  *
  * ScnGroup
@@ -432,6 +471,8 @@ ScnGroup* ScnGroup::Construct(MEMAllocator* pHeap, u32* pSize, u32 maxNumChildre
 
     return pObj;
 }
+
+
 
 ScnObj::ForEachResult ScnGroup::ForEach(ForEachFunc pFunc, void* pInfo,
                                         bool postOrder) {
@@ -469,6 +510,8 @@ ScnObj::ForEachResult ScnGroup::ForEach(ForEachFunc pFunc, void* pInfo,
     }
 }
 
+
+
 void ScnGroup::ScnGroup_G3DPROC_GATHER_SCNOBJ(u32 param,
                                               IScnObjGather* pCollection) {
     IScnObjGather::CullingStatus status =
@@ -492,6 +535,7 @@ void ScnGroup::ScnGroup_G3DPROC_GATHER_SCNOBJ(u32 param,
         lbl_eu_80665468 = pTemp;
     }
 }
+
 
 // These three G3DPROC helpers are only called from DefG3dProcScnGroup, where
 // MWCC inlines them; the retail split has no standalone copies, so they are
@@ -545,6 +589,7 @@ inline void ScnGroup::ScnGroup_G3DPROC_CALC_VIEW(
                             const_cast<math::MTX34*>(pCamera));
 }
 
+
 void ScnGroup::G3dProc(u32 task, u32 param, void* pInfo) {
     if (IsG3dProcDisabled(task)) {
         return;
@@ -552,6 +597,8 @@ void ScnGroup::G3dProc(u32 task, u32 param, void* pInfo) {
 
     DefG3dProcScnGroup(task, param, pInfo);
 }
+
+
 
 void ScnGroup::DefG3dProcScnGroup(u32 task, u32 param, void* pInfo) {
     switch (task) {
@@ -607,6 +654,8 @@ void ScnGroup::DefG3dProcScnGroup(u32 task, u32 param, void* pInfo) {
     }
 }
 
+
+
 bool ScnGroup::Insert(u32 idx, ScnObj* pObj) {
     if (idx <= mNumScnObj && mNumScnObj < mSizeScnObj && pObj != nullptr &&
         pObj->GetParent() == nullptr) {
@@ -624,6 +673,8 @@ bool ScnGroup::Insert(u32 idx, ScnObj* pObj) {
     return false;
 }
 
+
+
 ScnObj* ScnGroup::Remove(u32 idx) {
     if (idx < mNumScnObj) {
         ScnObj* pObj = mpScnObjArray[idx];
@@ -640,6 +691,8 @@ ScnObj* ScnGroup::Remove(u32 idx) {
     return nullptr;
 }
 
+
+
 bool ScnGroup::Remove(ScnObj* pObj) {
     ScnObj** ppObj = std::find(mpScnObjArray, mpScnObjArray + mNumScnObj, pObj);
 
@@ -649,6 +702,8 @@ bool ScnGroup::Remove(ScnObj* pObj) {
 
     return false;
 }
+
+
 
 ScnGroup::ScnGroup(MEMAllocator* pAllocator, ScnObj** ppObj, u32 capacity)
     : ScnObj(pAllocator),
@@ -660,9 +715,12 @@ ScnGroup::ScnGroup(MEMAllocator* pAllocator, ScnObj** ppObj, u32 capacity)
     SetScnObjFlag(SCNOBJFLAG_NOT_GATHER_DRAW_XLU, TRUE);
 }
 
+
+
 ScnGroup::~ScnGroup() {
     Clear();
 }
+
 
 // ScnObj's base-chain check (G3dObj). Kept as a static helper (not a virtual-call
 // chain) so MWCC inlines it and emits the retail parameter-reload pattern
@@ -671,21 +729,6 @@ static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
     return other == G3dObj::TypeObj(lbl_eu_8051D640);
 }
 
-bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other.GetTypeID() == TypeObj(lbl_eu_8051D768).GetTypeID()) {
-        return true;
-    }
-
-    return scnObjBaseIsDerivedFrom(other);
-}
-
-const G3dObj::TypeObj ScnObj::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D768);
-}
-
-const char* ScnObj::GetTypeName() const {
-    return GetTypeObj().GetTypeName();
-}
 
 // ScnGroup's derived-from chain (ScnGroup, ScnObj, then G3dObj) as one
 // flat ternary over explicit GetTypeID values. operator== against a
@@ -707,13 +750,40 @@ bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
          : (other.GetTypeID() == G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
 }
 
-const G3dObj::TypeObj ScnGroup::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D788);
+
+
+bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
+    if (other.GetTypeID() == TypeObj(lbl_eu_8051D768).GetTypeID()) {
+        return true;
+    }
+
+    return scnObjBaseIsDerivedFrom(other);
 }
+
+
 
 const char* ScnGroup::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
+
+
+
+const G3dObj::TypeObj ScnGroup::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D788);
+}
+
+
+
+const char* ScnObj::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+
+const G3dObj::TypeObj ScnObj::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D768);
+}
+
 } // namespace g3d
 } // namespace nw4r
 

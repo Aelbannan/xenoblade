@@ -33,9 +33,6 @@ extern char lbl_eu_80529658[];    // assert format
 extern const char lbl_eu_80524020[];    // memory-region name passed to MemManager::create
 
 // Shared .sdata2 float constants used by this unit (retail pool).
-extern const f32 lbl_eu_8066AA00;  // volume sentinel (nodes without volume)
-extern const f32 lbl_eu_8066AA04;  // 1.0f
-extern const f32 lbl_eu_8066AA08;  // 0.0f
 
 // Game-fork resource data: the nw4r ResMdlData/ResNodeData layouts in this
 // game add a node index at 0x10 and node-dictionary offsets at 0x5c/0x60/0x64
@@ -156,12 +153,12 @@ extern "C" int TexMan_GetDefaultXf_0A44(CScnTexWorkMan* self, ml::CVec3* pos,
     if (mdl.GetResNode(0).IsValid() == false) {
         return 0;
     }
-    pos->x = lbl_eu_8066AA04;
-    pos->y = lbl_eu_8066AA04;
-    pos->z = lbl_eu_8066AA04;
-    scale->x = lbl_eu_8066AA08;
-    scale->y = lbl_eu_8066AA08;
-    scale->z = lbl_eu_8066AA08;
+    pos->x = 1000000.0f;
+    pos->y = 1000000.0f;
+    pos->z = 1000000.0f;
+    scale->x = (-1000000.0f);
+    scale->y = (-1000000.0f);
+    scale->z = (-1000000.0f);
     CScnTexWorkMan* work = self->field_0x147c;
     nw4r::g3d::ResNode node = mdl.GetResNode(0);
     TexMan_ClampBoxes(work, &node, pos, scale);
@@ -412,32 +409,32 @@ void TexMan_CountSubtreeNodes(nw4r::g3d::ResNode* pNode, int* pCounter) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.x) goto L_count;
+    if (0.0f != pNode->ptr()->volume_min.x) goto L_count;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.y) goto L_count;
+    if (0.0f != pNode->ptr()->volume_min.y) goto L_count;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.z) goto L_count;
+    if (0.0f != pNode->ptr()->volume_min.z) goto L_count;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.x) goto L_count;
+    if (0.0f != pNode->ptr()->volume_max.x) goto L_count;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.y) goto L_count;
+    if (0.0f != pNode->ptr()->volume_max.y) goto L_count;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 == pNode->ptr()->volume_max.z) goto L_ok;
+    if (0.0f == pNode->ptr()->volume_max.z) goto L_ok;
 L_count:
     (*pCounter)++;
 L_ok:
@@ -459,32 +456,32 @@ L_ok:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.x) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.y) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.z) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_max.x) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_max.y) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
 L_countSib:
         (*pCounter)++;
 L_okSib:
@@ -511,32 +508,32 @@ L_okSib:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.x) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.y) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.z) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_countChild;
+        if (0.0f != child.ptr()->volume_max.x) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_countChild;
+        if (0.0f != child.ptr()->volume_max.y) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
 L_countChild:
         (*pCounter)++;
 L_okChild:
@@ -559,32 +556,32 @@ int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != node->volume_min.x) goto L_count;
+    if (0.0f != node->volume_min.x) goto L_count;
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != node->volume_min.y) goto L_count;
+    if (0.0f != node->volume_min.y) goto L_count;
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != node->volume_min.z) goto L_count;
+    if (0.0f != node->volume_min.z) goto L_count;
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != node->volume_max.x) goto L_count;
+    if (0.0f != node->volume_max.x) goto L_count;
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != node->volume_max.y) goto L_count;
+    if (0.0f != node->volume_max.y) goto L_count;
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 == node->volume_max.z) goto L_ok;
+    if (0.0f == node->volume_max.z) goto L_ok;
 L_count:
     counter++;
 L_ok:
@@ -606,32 +603,32 @@ L_ok:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.x) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.y) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_min.z) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_max.x) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_countSib;
+        if (0.0f != sib.ptr()->volume_max.y) goto L_countSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
 L_countSib:
         counter++;
 L_okSib:
@@ -658,32 +655,32 @@ L_okSib:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.x) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.y) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_countChild;
+        if (0.0f != child.ptr()->volume_min.z) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_countChild;
+        if (0.0f != child.ptr()->volume_max.x) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_countChild;
+        if (0.0f != child.ptr()->volume_max.y) goto L_countChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
 L_countChild:
         counter++;
 L_okChild:
@@ -705,32 +702,32 @@ void TexMan_CollectNodeIds(nw4r::g3d::ResNode* pNode, CScnTexWorkManNodeIdList* 
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.x) goto L_push;
+    if (0.0f != pNode->ptr()->volume_min.x) goto L_push;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.y) goto L_push;
+    if (0.0f != pNode->ptr()->volume_min.y) goto L_push;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.z) goto L_push;
+    if (0.0f != pNode->ptr()->volume_min.z) goto L_push;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.x) goto L_push;
+    if (0.0f != pNode->ptr()->volume_max.x) goto L_push;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.y) goto L_push;
+    if (0.0f != pNode->ptr()->volume_max.y) goto L_push;
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                         lbl_eu_80663910, lbl_eu_806639BC);
     }
-    if (lbl_eu_8066AA00 == pNode->ptr()->volume_max.z) goto L_ok;
+    if (0.0f == pNode->ptr()->volume_max.z) goto L_ok;
 L_push:
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -759,32 +756,32 @@ L_ok:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_pushSib;
+        if (0.0f != sib.ptr()->volume_min.x) goto L_pushSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_pushSib;
+        if (0.0f != sib.ptr()->volume_min.y) goto L_pushSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_pushSib;
+        if (0.0f != sib.ptr()->volume_min.z) goto L_pushSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_pushSib;
+        if (0.0f != sib.ptr()->volume_max.x) goto L_pushSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_pushSib;
+        if (0.0f != sib.ptr()->volume_max.y) goto L_pushSib;
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+        if (0.0f == sib.ptr()->volume_max.z) goto L_okSib;
 L_pushSib:
         if (sib.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -818,32 +815,32 @@ L_okSib:
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_pushChild;
+        if (0.0f != child.ptr()->volume_min.x) goto L_pushChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_pushChild;
+        if (0.0f != child.ptr()->volume_min.y) goto L_pushChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_pushChild;
+        if (0.0f != child.ptr()->volume_min.z) goto L_pushChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_pushChild;
+        if (0.0f != child.ptr()->volume_max.x) goto L_pushChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_pushChild;
+        if (0.0f != child.ptr()->volume_max.y) goto L_pushChild;
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_806639BC);
         }
-        if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+        if (0.0f == child.ptr()->volume_max.z) goto L_okChild;
 L_pushChild:
         if (child.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -872,12 +869,12 @@ extern "C" void __dt__16CScnVirtualLightFv();
 extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 }
-extern "C" u32 lbl_eu_806639B0; extern "C" u32 lbl_eu_80663618;
-extern "C" u32 lbl_eu_806639C0;
+extern "C" u32 __RTTI__14CScnTexWorkMan; extern "C" u32 lbl_eu_80663618;
+extern "C" u32 __RTTI__16CScnVirtualLight;
 
 // lbl_eu_8056E7D0 (24B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7D0[6] = {
-(u32)&lbl_eu_806639B0, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::onViAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
+(u32)&__RTTI__14CScnTexWorkMan, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::onViAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
 };
 // lbl_eu_8056E7E8 (16B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7E8[4] = {
@@ -893,7 +890,7 @@ extern "C" char lbl_eu_8056E834[28] = { 0x25, 0x73, 0x3A, 0x3A, 0x25, 0x73, 0x3A
 extern "C" char lbl_eu_8056E850[24] = { 0x67, 0x33, 0x64, 0x5F, 0x72, 0x65, 0x73, 0x6E, 0x6F, 0x64, 0x65, 0x5F, 0x61, 0x63, 0x2E, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 // lbl_eu_8056E868 (16B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E868[4] = {
-    (u32)&lbl_eu_806639C0, 0x00000000, (u32)&TWMBlob::__dt__16CScnVirtualLightFv, 0x00000000,
+    (u32)&__RTTI__16CScnVirtualLight, 0x00000000, (u32)&TWMBlob::__dt__16CScnVirtualLightFv, 0x00000000,
 };
 
 // [.rodata] 0x80524010-0x80524030 (32B)

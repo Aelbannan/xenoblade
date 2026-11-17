@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // CMenuLvUp - level-up menu task reconstruction.
 
 // Shield the chain's C++-linkage Scn_FindCamItem decl (CfCam.hpp form):
@@ -6,6 +7,7 @@
 #define Scn_FindCamItem Scn_FindCamItem_chain_hidden
 #define findObjectById findObjectById_chain_hidden
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -18,26 +20,172 @@
 
 #include "kyoshin/menu/CMenuLvUp.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/CTaskGame.hpp"
 
-// forward declarations for scaffold thunk references (extern "C": retail
-// symbols are flat, so the thunk call relocs must be unmangled)
-extern "C" void __dt__9CMenuLvUpFv(void*);
-extern "C" void cbRenderBefore__9CMenuLvUpFv(void*);
+// Unknown per-entry object, deleted via virtual dispatch (vtable+8, flag 1).
+// Only the virtual-dtor shape is required -- the real class lives in the
+// retail module that owns it.
+class CMenuLvUpEntryObj {
+public:
+    virtual ~CMenuLvUpEntryObj();
+};
 
-// ---------------------------------------------------------------------------
-// Destructor (D1/D2 merged). The UnkClass_8045F564 storage at +0x60 and the
-// CProcess region are destroyed by hand (the retail layout is manual, not
-// C++ inheritance); the nested null-checks reproduce the retail D2 guard
-// shape around the CProcess call.
-// ---------------------------------------------------------------------------
-CMenuLvUp::~CMenuLvUp() {
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->~UnkClass_8045F564();
-    if (this) {
-        if (this) {
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
+// Position components read from the actor->vfn12C(0x64) result (0x10-byte
+// stride: +0x0c / +0x1c / +0x2c).
+struct MenuLvUpObjPos;
+
+// Opaque view of the findObjectById(id) actor object (the real class lives in
+// the retail module that owns it). The two dispatched virtuals sit at +0xac
+// (slot 43) and +0x12c (slot 75): declaring them as real virtuals makes MWCC
+// emit the retail dispatch shape (`lwz r12,0(r3); lwz r12,slot(r12)`); a
+// cast-and-call helper allocates a temp register instead. Never
+// instantiated - only called through. field_0x64 is the actor's bit-1
+// "action source" flag read during teardown.
+class MenuLvUpActor {
+public:
+    virtual void vfn00() = 0;
+    virtual void vfn01() = 0;
+    virtual void vfn02() = 0;
+    virtual void vfn03() = 0;
+    virtual void vfn04() = 0;
+    virtual void vfn05() = 0;
+    virtual void vfn06() = 0;
+    virtual void vfn07() = 0;
+    virtual void vfn08() = 0;
+    virtual void vfn09() = 0;
+    virtual void vfn0A() = 0;
+    virtual void vfn0B() = 0;
+    virtual void vfn0C() = 0;
+    virtual void vfn0D() = 0;
+    virtual void vfn0E() = 0;
+    virtual void vfn0F() = 0;
+    virtual void vfn10() = 0;
+    virtual void vfn11() = 0;
+    virtual void vfn12() = 0;
+    virtual void vfn13() = 0;
+    virtual void vfn14() = 0;
+    virtual void vfn15() = 0;
+    virtual void vfn16() = 0;
+    virtual void vfn17() = 0;
+    virtual void vfn18() = 0;
+    virtual void vfn19() = 0;
+    virtual void vfn1A() = 0;
+    virtual void vfn1B() = 0;
+    virtual void vfn1C() = 0;
+    virtual void vfn1D() = 0;
+    virtual void vfn1E() = 0;
+    virtual void vfn1F() = 0;
+    virtual void vfn20() = 0;
+    virtual void vfn21() = 0;
+    virtual void vfn22() = 0;
+    virtual void vfn23() = 0;
+    virtual void vfn24() = 0;
+    virtual void vfn25() = 0;
+    virtual void vfn26() = 0;
+    virtual void vfn27() = 0;
+    virtual void vfn28() = 0;
+    virtual nw4r::math::VEC3* vfnAC() = 0;          // slot 43 (+0xac)
+    virtual void vfn44() = 0;
+    virtual void vfn45() = 0;
+    virtual void vfn46() = 0;
+    virtual void vfn47() = 0;
+    virtual void vfn48() = 0;
+    virtual void vfn49() = 0;
+    virtual void vfn4A() = 0;
+    virtual void vfn4B() = 0;
+    virtual void vfn4C() = 0;
+    virtual void vfn4D() = 0;
+    virtual void vfn4E() = 0;
+    virtual void vfn4F() = 0;
+    virtual void vfn50() = 0;
+    virtual void vfn51() = 0;
+    virtual void vfn52() = 0;
+    virtual void vfn53() = 0;
+    virtual void vfn54() = 0;
+    virtual void vfn55() = 0;
+    virtual void vfn56() = 0;
+    virtual void vfn57() = 0;
+    virtual void vfn58() = 0;
+    virtual void vfn59() = 0;
+    virtual void vfn5A() = 0;
+    virtual void vfn5B() = 0;
+    virtual void vfn5C() = 0;
+    virtual void vfn5D() = 0;
+    virtual void vfn5E() = 0;
+    virtual void vfn5F() = 0;
+    virtual void vfn60() = 0;
+    virtual void vfn61() = 0;
+    virtual void vfn62() = 0;
+    virtual MenuLvUpObjPos* vfn12C(int index) = 0;  // slot 75 (+0x12c)
+    u8 _04[0x64 - 0x04];                            // +0x04..0x63
+    u32 field_0x64;                                 // +0x64
+};
+
+// Opaque view of the nw4r root pane's trailing flag byte at +0xbb (retail
+// clears its low bit during per-entry teardown).
+struct MenuLvUpPaneFlag {
+    u8 _00[0xbb];
+    u8 field_0xbb; // +0xbb
+};
+
+// Opaque view of the Scn_FindCamItem(scene, -1) camera/pose block (retail reads
+// the two anchor VEC3s at +0x10c and +0x138).
+struct MenuLvUpPose {
+    u8 _00[0x10c];
+    nw4r::math::VEC3 field_0x10c; // +0x10c
+    u8 _118[0x138 - 0x118];
+    nw4r::math::VEC3 field_0x138; // +0x138
+};
+
+// Position components read from the actor->vfn12C(0x64) result (0x10-byte
+// stride: +0x0c / +0x1c / +0x2c).
+struct MenuLvUpObjPos {
+    u8 _00[0x0c];
+    f32 field_0x0c; // +0x0c
+    u8 _10[0x1c - 0x10];
+    f32 field_0x1c; // +0x1c
+    u8 _20[0x2c - 0x20];
+    f32 field_0x2c; // +0x2c
+};
+
+// Retail-symbol imports. Data keeps its plain name; functions need C linkage
+// so MWCC emits the unmangled retail names (same scheme as CMenuBattleEnd.hpp
+// / CMenuCollepedia.hpp). teardownLvUpEntry / placeLvUpEntry / driveLvUpEntryState are
+// the per-entry helpers driven by Move.
+extern "C" {
+void registerLvUpAction(CMenuLvUp* a, CMenuLvUp* b, int c);
+void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
+void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
+void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry);
+MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
+void CamMan_ProjectToScreen(nw4r::math::VEC3* out, MenuLvUpPose* pose,
+                   const nw4r::math::VEC3* in);
+int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
+                  const nw4r::math::VEC3* c);
+void CCharVoiceMan_PlayLevelUpVoice(int id);
+void waitForDrawDone__9CDeviceVIFv();
+void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
+void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
+bool isSceneLoading__Q22cf13CfGameManagerFv();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 }
+
+// C++-linkage imports (retail symbols are the Itanium-mangled forms).
+MenuLvUpActor* findObjectById(int id);
+void playUISound(u32);   // UI sound effect (playUISound__FUl)
+
+// C-linkage data imports (retail names; global-scope plain externs keep the
+// unmangled symbol -- MWCC does not mangle global variables).
+extern char lbl_eu_8050EC70[];   // layout/animation name string table
+extern f32 lbl_eu_80668A00;      // anim frame reset value
+extern f32 lbl_eu_80668A04;      // anim frame target for advanceAnimTransform
+extern f32 lbl_eu_80668A08;      // screen-position post-scale offset x
+extern f32 lbl_eu_80668A0C;      // screen-position post-scale offset y
+extern f32 lbl_eu_80668A10;      // screen-position post-scale factor y
+extern u32 lbl_eu_80663E28;      // task-state flag word (bit 21 gates the menu)
+
+
+CMenuLvUp::~CMenuLvUp() {}
 
 // ---------------------------------------------------------------------------
 // Init - allocate the layout region and build the two layout+anim pairs for
@@ -47,9 +195,8 @@ CMenuLvUp::~CMenuLvUp() {
 // ---------------------------------------------------------------------------
 void CMenuLvUp::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)
-        ->createRegion((int)handle, 0x3e00, lbl_eu_8050EC70, 0);
-    Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
+    mMemRegion.createRegion((int)handle, 0x3e00, lbl_eu_8050EC70, 0);
+    Class_8045F858 regionGuard(&mMemRegion);
 
     f32 resetFrame = lbl_eu_80668A00;
     for (u8 i = 0; i < 3; i++) {
@@ -74,24 +221,14 @@ void CMenuLvUp::Init() {
         entry->field_0x08->Animate(0);
     }
 
-    {
-        IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-        if (this != 0) {
-            cb = reinterpret_cast<IScnRender*>(&mIScnRenderVtbl);
-        }
-        addRenderCB__4CScnFP10IScnRenderUlUl(mScene, cb, 7, 0);
-    }
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 7, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->validateHeap();
+    mMemRegion.validateHeap();
 }
 
 void CMenuLvUp::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVtbl);
-    }
-    removeRenderCB__4CScnFP10IScnRender(mScene, cb);
+    removeRenderCB__4CScnFP10IScnRender(mScene, this);
     // Release the per-entry objects (virtual deleting-dtor dispatch, flag 1)
     // and re-null the slots.
     for (u8 i = 0; i < 3; i++) {
@@ -104,8 +241,8 @@ void CMenuLvUp::Term() {
             mEntries[i].field_0x08 = 0;
         }
     }
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
-    lbl_eu_80664900 = 0;
+    mMemRegion.deleteRegion();
+    CMenuLvUp::sInstance = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,9 +302,7 @@ void CMenuLvUp::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// cbRenderBefore - draws the three entries' layouts through a raw-storage
-// DrawInfo (built/destroyed via the C-ABI ct/dt calls so the scope-exit
-// destructor is not virtual-dispatched; same scheme as CSystemWindow).
+// cbRenderBefore - draws the three entries' layouts through a stack DrawInfo.
 // ---------------------------------------------------------------------------
 void CMenuLvUp::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
@@ -179,94 +314,76 @@ void CMenuLvUp::cbRenderBefore() {
     if (mField11C == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     for (u8 i = 0; i < 3; i++) {
-        drawLayout(mEntries[i].field_0x00, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-        drawLayout(mEntries[i].field_0x08, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+        drawLayout(mEntries[i].field_0x00, &drawInfo, 0, 1);
+        drawLayout(mEntries[i].field_0x08, &drawInfo, 0, 1);
     }
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
 // ---------------------------------------------------------------------------
-// Allocating factory (retail unmangled symbol __ct__CMenuLvUp). If an
-// instance already exists the request is dropped (returns 0); otherwise the
-// 0x120-byte object is allocated on the work heap, CProcess's ctor runs, the
-// CProcess-style fields + dispatch vtables are filled by hand, and the new
-// task is registered under `parent`. The scene pointer is stored at +0x70.
+// Constructor (retail: the single allocating function __ct__CMenuLvUp). The
+// IUICf/CTTask base chain and the IWorkEvent/IScnRender sub-vtables are set
+// up by the compiler; the scene pointer is stored at +0x70 and the three
+// entry slots are zeroed. Defined inline here, used only by create().
 // ---------------------------------------------------------------------------
-extern "C" CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene) {
-    CMenuLvUp* obj;
-    if (lbl_eu_80664900 != 0) {
-        return 0;
-    }
-
-    obj = (CMenuLvUp*)mtl::MemManager::allocate(
-        0x120, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        obj->mVtable10 = (u32)lbl_eu_8052BF70;
-        obj->mPtMf3C[0] = __ptmf_null[0];
-        obj->mPtMf3C[1] = __ptmf_null[1];
-        obj->mPtMf3C[2] = __ptmf_null[2];
-        obj->mPtMf48[0] = __ptmf_null[0];
-        obj->mPtMf48[1] = __ptmf_null[1];
-        obj->mPtMf48[2] = __ptmf_null[2];
-        obj->mField54 = 0;
-        obj->mField55 = 0;
-        obj->mVtable10 = (u32)lbl_eu_805380C8;
-        obj->mIWorkEventVtbl = (u32)lbl_eu_805380C8 + 0x24;
-        obj->mIScnRenderVtbl = (u32)lbl_eu_805380C8 + 0xac;
-
-        __ct__17UnkClass_8045F564Fv(
-            reinterpret_cast<UnkClass_8045F564*>(&obj->mMemRegion[0]));
-        obj->mScene = scene;
-
-        // Zero every entry: head words/bytes explicitly, tail via memset
-        // (retail emits the pointer-count mtctr/bdnz expansion, i.e. the
-        // runtime-length form, for the 0x17..0x36 region).
-        for (CMenuLvUpEntry* p = &obj->mEntries[0]; p < &obj->mEntries[3]; p++) {
-            p->field_0x00 = 0;
-            p->field_0x04 = 0;
-            p->field_0x08 = 0;
-            p->field_0x0C = 0;
-            p->field_0x10 = 0;
-            p->field_0x14 = 0;
-            p->field_0x15 = 0;
-            p->field_0x16[0] = 0;
-            u8* dst = &p->field_0x16[1];
-            u8* end = &p->field_0x16[0x20];
-            memset(dst, 0, end - dst);
+inline CMenuLvUp::CMenuLvUp(CScn* scene) : mScene(scene) {
+    // Zero every entry; the queued-state list is cleared with a pointer loop.
+    CMenuLvUpEntry* p = &mEntries[0];
+    do {
+        p->field_0x00 = 0;
+        p->field_0x04 = 0;
+        p->field_0x08 = 0;
+        p->field_0x0C = 0;
+        p->field_0x10 = 0;
+        p->field_0x14 = 0;
+        p->field_0x15 = 0;
+        p->field_0x16[0] = 0;
+        // Residual: retail's unroll guard recomputes the start pointer
+        // (begin <= end test); this spelling is the closest found so far.
+        for (u8* q = &p->field_0x16[1]; q < &p->field_0x16[0x20]; q++) {
+            *q = 0;
         }
-        obj->mField11C = 0;
-    }
-
-    lbl_eu_80664900 = obj;
-    Regist__8CProcessFP8CProcessb((CProcess*)obj, parent, 0);
-    return lbl_eu_80664900;
+        p++;
+    } while (p < &mEntries[3]);
+    mField11C = 0;
 }
 
-void fireLvUpCombo(CMenuLvUp* self, u32 flag) {
-    if (lbl_eu_80664900 != 0) {
-        registerLvUpAction(lbl_eu_80664900, self, 1);
-        registerLvUpAction(lbl_eu_80664900, self, 2);
+CMenuLvUp* CMenuLvUp::sInstance;
+
+// Only one level-up menu exists at a time. A request made while an instance
+// exists is dropped (returns nullptr).
+CMenuLvUp* CMenuLvUp::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
+    }
+
+    CMenuLvUp* menu = new (CWorkThreadSystem::getWorkMem()) CMenuLvUp(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
+}
+
+extern "C" void fireLvUpCombo(CMenuLvUp* self, u32 flag) {
+    if (CMenuLvUp::sInstance != 0) {
+        registerLvUpAction(CMenuLvUp::sInstance, self, 1);
+        registerLvUpAction(CMenuLvUp::sInstance, self, 2);
         if (flag != 0) {
-            registerLvUpAction(lbl_eu_80664900, self, 3);
+            registerLvUpAction(CMenuLvUp::sInstance, self, 3);
         }
     }
 }
 
-void fireLvUpMode2(CMenuLvUp* self) {
-    if (lbl_eu_80664900 != 0) {
-        registerLvUpAction(lbl_eu_80664900, self, 2);
+extern "C" void fireLvUpMode2(CMenuLvUp* self) {
+    if (CMenuLvUp::sInstance != 0) {
+        registerLvUpAction(CMenuLvUp::sInstance, self, 2);
     }
 }
 
-void fireLvUpMode4(CMenuLvUp* self) {
-    if (lbl_eu_80664900 != 0) {
-        registerLvUpAction(lbl_eu_80664900, self, 4);
+extern "C" void fireLvUpMode4(CMenuLvUp* self) {
+    if (CMenuLvUp::sInstance != 0) {
+        registerLvUpAction(CMenuLvUp::sInstance, self, 4);
     }
 }
 
@@ -526,9 +643,3 @@ extern "C" void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         entry->field_0x14 = 0;
     }
 }
-
-void CMenuLvUp_dtorAdj58(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x58); }
-
-void CMenuLvUp_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuLvUpFv)((char*)self - 0x5c); }
-
-void CMenuLvUp_dtorAdj5C(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x5c); }

@@ -15,14 +15,14 @@ CVirtualLightAmb::~CVirtualLightAmb() {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056E878-0x8056E898 (32B): CVirtualLightAmb vtable (typeinfo pair
-// lbl_eu_806639C8 and base label lbl_eu_806639D0 live in a foreign TU).
-extern "C" u32 lbl_eu_806639C8;
-extern "C" u32 lbl_eu_806639D0;
+// __RTTI__16CVirtualLightAmb and base label __RTTI__16CVirtualLightObj live in a foreign TU).
+extern "C" u32 __RTTI__16CVirtualLightAmb;
+extern "C" u32 __RTTI__16CVirtualLightObj;
 extern "C" void __dt__16CVirtualLightAmbFv();
 extern "C" void getVirtualLightColor();
 extern "C" void getVirtualLightSentinel();
 extern "C" u32 lbl_eu_8056E878[5] = {
-    (u32)&lbl_eu_806639C8, 0x00000000,
+    (u32)&__RTTI__16CVirtualLightAmb, 0x00000000,
     (u32)&__dt__16CVirtualLightAmbFv,
     (u32)&getVirtualLightColor,
     (u32)&getVirtualLightSentinel,
@@ -31,7 +31,7 @@ extern "C" u32 lbl_eu_8056E878[5] = {
 // slots); retail holds this tail under its own label (referenced by
 // CScnItemCamera). Split point 0x14: u32+reloc tails pack at 4 (CScnMem).
 extern "C" u32 lbl_eu_8056E88C[3] = {
-    (u32)&lbl_eu_806639D0,
+    (u32)&__RTTI__16CVirtualLightObj,
     0x00000000, 0x00000000,
 };
 

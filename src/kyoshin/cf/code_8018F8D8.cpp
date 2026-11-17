@@ -7,13 +7,8 @@
 // ml::tau while several headers declare it extern "C"; rename the
 // identifier out of the way per include group (this TU never uses it).
 
-// PartyStateWin_OpenWindow's shared header declares it with (self, u32, u32), but the
-// CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
-// 3-arg declaration during include and re-declare the 1-arg form below.
-#define PartyStateWin_OpenWindow PartyStateWin_OpenWindow_3arg_unused
 #define create__8CScnNw4rFv create__8CScnNw4rFv_party_shadow
 #include "kyoshin/cf/code_8018F8D8.hpp"
-#undef PartyStateWin_OpenWindow
 #undef create__8CScnNw4rFv
 
 #include "kyoshin/CTaskGameImports.hpp"
@@ -37,6 +32,8 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Imports used only by CfCmd_PickChain.
 extern float lbl_eu_80667A94;
@@ -46,10 +43,7 @@ extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
-    // Defined later in this TU (state-blob copy used by Init).
-    void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src);
     extern u32 lbl_eu_80663E28;
-    extern u32 lbl_eu_80664300;
     extern float lbl_eu_80667A70;
     extern float lbl_eu_80667A74;
     extern u16 lbl_eu_80663E3C;
@@ -64,7 +58,6 @@ extern "C" {
     u32  CtrlRemote_TouchBitByArg(u32 resource);
     int  isBattleStatusActive(void* obj, int id);
     int  ChainTmr_StartUsable_E018(volatile s16* obj, FuncActorRef* arg);
-    void __dt__80043E88(void* holder, int flag);
     int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     void CfScript_ClearReq2();
@@ -82,37 +75,26 @@ extern "C" {
     void UIBattleReleaseAll();
     int  CfRes_lookupLocalIndex(s32 arg);
     int  CCharVoiceMan_IsNodeActive(u32 value);
-    void CUICfManager_setTimeout30();
-    int  Scn_SetPauseFlag(CScn* scn, int flag);
     void func_8009EB2C(int a, int b, u8* c);
     int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     bool CfRes_markKey(UnkClass_80085334* obj, u32 mode);
-    void BgTex_Release_3D9C(u8* obj);
-    void PartyStateWin_TeardownWindow(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     int  isSceneReadyForInput__Q22cf13CfGameManagerFv();
     int  resetCameraManager__Q22cf13CfGameManagerFv();
-    void processEventList__Q22cf13CfGameManagerFv();
-    void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-    void processEffectList__Q22cf13CfGameManagerFv();
     void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate);
 
     long GetZealObjPtr();
     // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
     int CBattleMan_FetchVisionObj();
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
-    void CTaskGame_enumListFill(CfEnumListHolder90940* holder, int cap, int mode);
-    // CTaskGame_enumListGet: canonical void*(void*) decl comes from CPartyStateWin.hpp
+    // get__16CfEnumListHolderFv: canonical void*(void*) decl comes from CPartyStateWin.hpp
     // (included via code_8018F8D8.hpp); call sites cast to CfEnumList90940*.
     u8* getObjectAt(CfEnumList90940* list, int idx);
 }
 
 namespace cf {}
 using namespace cf;
-
-// 1-arg view of PartyStateWin_OpenWindow for Move's call site (r4/r5 unset in retail).
-extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
 
 int CfCmd_Gate8000Fwd(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (lbl_eu_80663E24 & 0x8000) {
@@ -699,8 +681,7 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     }
 
     self->field_0008 = 0;
-    CfEnumListHolder90940 holder;
-    CTaskGame_enumListFill(&holder, 0x20, 0);
+    CfEnumListHolder holder(0x20, 0);
 
     float dists[2];       // sp+0x38
     FuncActorRef* cands[2]; // sp+0x40
@@ -710,12 +691,12 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     // each candidate's bias float). The two-slot arrays intentionally overlap
     // later stack slots like retail when more than two entries appear.
     int count = 0;
-    for (int i = 0; i < (int)((CfEnumList90940*)CTaskGame_enumListGet(&holder))->count; i++) {
+    for (int i = 0; i < (int)((CfEnumList90940*)holder.get())->count; i++) {
         u8* basePos = actor ? reinterpret_cast<u8*>(&actor->field_3e9c)
                             : reinterpret_cast<u8*>(NULL);
-        u8* data = getObjectAt((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
+        u8* data = getObjectAt((CfEnumList90940*)holder.get(), i);
         if (data == basePos) continue;
-        data = getObjectAt((CfEnumList90940*)CTaskGame_enumListGet(&holder), i);
+        data = getObjectAt((CfEnumList90940*)holder.get(), i);
         FuncActorRef* cand = (data != NULL)
             ? reinterpret_cast<FuncActorRef*>(data - 0x3e9c)
             : static_cast<FuncActorRef*>(NULL);
@@ -753,7 +734,6 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
         self->field_000c = cand;                                               \
         if (subFlagSet) self->field_0008 = 1;                                  \
         self->field_0004 = (v);                                                \
-        __dt__80043E88(&holder, -1);                                           \
         return (v);                                                            \
     } while (0)
 
@@ -831,7 +811,6 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
         if (gate == 2) {
             if (count == 0) {
                 self->field_0004 = 0;
-                __dt__80043E88(&holder, -1);
                 return 0;
             }
             const float thr = lbl_eu_80667A90;
@@ -866,717 +845,6 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
 
     {
         int res = self->field_0004;
-        __dt__80043E88(&holder, -1);
         return res;
     }
-}
-
-// Member dtors (~CPartyStateWin, ~CBgTex) and the CProcess base dtor are
-// compiler-generated here, matching retail's guard structure.
-CMenuPTState::~CMenuPTState() {}
-
-// Party-menu state initialization: rebuild the background texture and the
-// party-state window on the stack, copy them member-by-member into the
-// persistent fields (region layout per CMenuPTWinCopyView), then register
-// the IScnRender sub-object as a render callback at priority 0xd.
-void CMenuPTState::Init() {
-    setPresentationFlag__Q22cf13CfGameManagerFv(true);
-    processEffectList__Q22cf13CfGameManagerFv();
-    {
-        // Retail builds both temporaries via the unmangled slice ctor symbols,
-        // so they are constructed into raw storage under C linkage. The view
-        // macros re-derive the addresses at every statement: retail keeps no
-        // cached pointers in callee-saved registers across the copy.
-        u32 bgStore[sizeof(CBgTex) / 4];
-#define bgTemp reinterpret_cast<CBgTex*>(bgStore)
-        __ct__6CBgTexFUc(bgTemp, 0);
-        field_0x60.mMemRegion = bgTemp->mMemRegion;
-        field_0x60.mFileHandle = bgTemp->mFileHandle;
-        field_0x60.mLayout = bgTemp->mLayout;
-        field_0x60.mLayoutReady = bgTemp->mLayoutReady;
-        field_0x60.mLoaded = bgTemp->mLoaded;
-        field_0x60.mPtmMode = bgTemp->mPtmMode;
-        __dt__6CBgTexFv(bgTemp, -1);
-#undef bgTemp
-    }
-    BgTex_Acquire_3C14(&field_0x60);
-
-    u32 winStore[sizeof(CPartyStateWin) / 4];
-#define winTmp reinterpret_cast<CPartyStateWin*>(winStore)
-#define d reinterpret_cast<CMenuPTWinCopyView*>(&field_0x80)
-#define s reinterpret_cast<CMenuPTWinCopyView*>(winStore)
-    __ct__14CPartyStateWinFUlUl(winTmp, (u32)this, (u32)field_0x5C);
-    // Memberwise copy of the freshly built window into the persistent member.
-
-    d->v0008 = s->v0008;
-    d->v000c = s->v000c;
-    d->v0010 = s->v0010;
-    d->v0014 = s->v0014;
-    d->v001c = s->v001c;
-    d->v0020 = s->v0020;
-    d->v0024 = s->v0024;
-    d->v0028 = s->v0028;
-    d->v002c = s->v002c;
-    d->v0030 = s->v0030;
-    d->v0034 = s->v0034;
-    d->v0038 = s->v0038;
-    d->v003c = s->v003c;
-    d->v0040 = s->v0040;
-    d->v0044 = s->v0044;
-    d->v0048 = s->v0048;
-    d->v004c = s->v004c;
-    d->v004d = s->v004d;
-    d->v004e = s->v004e;
-    d->v004f = s->v004f;
-    d->v0054 = s->v0054;
-    d->v0058 = s->v0058;
-    d->v005c = s->v005c;
-    d->v0060 = s->v0060;
-    // CopyPTSubBlob is imported under C linkage with opaque u8* parameters
-    // (see CPartyStateWin.hpp); call sites pass the blob sub-objects.
-    CopyPTSubBlob((u8*)&d->blob0064, (const u8*)&s->blob0064);
-    CopyPTSubBlob((u8*)&d->blob05a8, (const u8*)&s->blob05a8);
-    CopyPTSubBlob((u8*)&d->blob0ae4, (const u8*)&s->blob0ae4);
-    d->v1020 = s->v1020;
-    d->v1024 = s->v1024;
-    d->v1028 = s->v1028;
-    d->v102c = s->v102c;
-    d->v1030 = s->v1030;
-    d->v1034 = s->v1034;
-    d->v1038 = s->v1038;
-    d->v103c = s->v103c;
-    d->v1040 = s->v1040;
-    d->v1044 = s->v1044;
-    d->v1048 = s->v1048;
-    d->v104c = s->v104c;
-    d->v1050 = s->v1050;
-    CopyPTSubBlob((u8*)&d->blob1054, (const u8*)&s->blob1054);
-    d->v1590 = s->v1590;
-    d->v1594 = s->v1594;
-    CopyPTSubBlob((u8*)&d->blob1598, (const u8*)&s->blob1598);
-    CopyPTSubBlob((u8*)&d->blob1ad4, (const u8*)&s->blob1ad4);
-    d->v2010 = s->v2010;
-    d->v2014 = s->v2014;
-    d->v2018 = s->v2018;
-    d->v201c = s->v201c;
-    d->v2020 = s->v2020;
-    d->v2024 = s->v2024;
-    d->v2028 = s->v2028;
-    d->v202c = s->v202c;
-    d->v2030 = s->v2030;
-    d->v2034 = s->v2034;
-    d->v2038 = s->v2038;
-    d->v203c = s->v203c;
-    d->v2040 = s->v2040;
-    CopyPTSubBlob((u8*)&d->blob2044, (const u8*)&s->blob2044);
-    d->v2580 = s->v2580;
-    d->v2584 = s->v2584;
-    CopyPTSubBlob((u8*)&d->blob2588, (const u8*)&s->blob2588);
-    CopyPTSubBlob((u8*)&d->blob2ac4, (const u8*)&s->blob2ac4);
-    d->v3000 = s->v3000;
-    d->v3004 = s->v3004;
-    d->v3008 = s->v3008;
-    d->v300c = s->v300c;
-    d->v3010 = s->v3010;
-    d->v3014 = s->v3014;
-    d->v3018 = s->v3018;
-    d->v301c = s->v301c;
-    d->v3020 = s->v3020;
-    d->v3024 = s->v3024;
-    d->v3028 = s->v3028;
-    d->v302c = s->v302c;
-    d->v3030 = s->v3030;
-    d->v3034 = s->v3034;
-    d->v303c = s->v303c;
-    d->v3040 = s->v3040;
-    d->v3044 = s->v3044;
-    d->v3048 = s->v3048;
-    d->v304c = s->v304c;
-    d->v3050 = s->v3050;
-    d->v3054 = s->v3054;
-    d->v3058 = s->v3058;
-    d->v305c = s->v305c;
-    d->v3060 = s->v3060;
-    d->v3064 = s->v3064;
-    d->v3068 = s->v3068;
-    d->v3069 = s->v3069;
-    d->kpack3084.v3087 = s->kpack3084.v3087;
-    d->v3070 = s->v3070;
-    d->v3074 = s->v3074;
-    d->v3078 = s->v3078;
-    d->v307c = s->v307c;
-    d->v3080 = s->v3080;
-    d->v3081 = s->v3081;
-    d->kpack3084.b3084 = s->kpack3084.b3084;
-    d->kpack3084.b3085 = s->kpack3084.b3085;
-    d->kpack3084.b3086 = s->kpack3084.b3086;
-    d->kpack3084.h308b = s->kpack3084.h308b;
-    d->kpack3084.b308d = s->kpack3084.b308d;
-    d->kpack3084.b308e = s->kpack3084.b308e;
-    d->kpack3084.b308f = s->kpack3084.b308f;
-    d->v309c = s->v309c;
-    d->v30a0 = s->v30a0;
-    d->v30a4 = s->v30a4;
-    d->v30a8 = s->v30a8;
-    CopyPTSubBlob((u8*)&d->blob30ac, (const u8*)&s->blob30ac);
-    d->v35e8 = s->v35e8;
-    d->v35ec = s->v35ec;
-    CopyPTSubBlob((u8*)&d->blob35f0, (const u8*)&s->blob35f0);
-    CopyPTSubBlob((u8*)&d->blob3b2c, (const u8*)&s->blob3b2c);
-    {
-        // 15-word run, fully unrolled (retail emits lwz/stw per element).
-        d->v4068[0] = s->v4068[0];
-        d->v4068[1] = s->v4068[1];
-        d->v4068[2] = s->v4068[2];
-        d->v4068[3] = s->v4068[3];
-        d->v4068[4] = s->v4068[4];
-        d->v4068[5] = s->v4068[5];
-        d->v4068[6] = s->v4068[6];
-        d->v4068[7] = s->v4068[7];
-        d->v4068[8] = s->v4068[8];
-        d->v4068[9] = s->v4068[9];
-        d->v4068[10] = s->v4068[10];
-        d->v4068[11] = s->v4068[11];
-        d->v4068[12] = s->v4068[12];
-        d->v4068[13] = s->v4068[13];
-        d->v4068[14] = s->v4068[14];
-    }
-    d->v40a4 = s->v40a4;
-    d->v40a8 = s->v40a8;
-    d->v40ac = s->v40ac;
-    d->v40b0 = s->v40b0;
-    d->v40b1 = s->v40b1;
-    // 13-record 8-byte pair walk (retail lwzu/stwu mtctr/bdnz loop) plus the
-    // trailing word copied after the loop.
-    u32* sp13 = (u32*)&s->pairs13[0].lo - 1;
-    u32* dp13 = (u32*)&d->pairs13[0].lo - 1;
-    for (int n = 13; n != 0; n--) {
-        u32 lo = *(sp13 + 1);
-        u32 hi = *(sp13 + 2);
-        *(dp13 + 1) = lo;
-        *(dp13 + 2) = hi;
-        sp13 += 2;
-        dp13 += 2;
-    }
-    *(dp13 + 1) = *(sp13 + 1);
-    d->v4120 = s->v4120;
-    d->v4124 = s->v4124;
-    d->v4128 = s->v4128;
-    d->v412c = s->v412c;
-    d->v4130 = s->v4130;
-    d->v4134 = s->v4134;
-    d->v4138 = s->v4138;
-    d->v413c = s->v413c;
-    d->v4140 = s->v4140;
-    d->v4144 = s->v4144;
-    d->v4148 = s->v4148;
-    d->v414c = s->v414c;
-    d->v4154 = s->v4154;
-    d->v4158 = s->v4158;
-    d->v415c = s->v415c;
-    d->v4160 = s->v4160;
-    d->v4164 = s->v4164;
-    d->v4168 = s->v4168;
-    d->v416c = s->v416c;
-    d->v4170 = s->v4170;
-    d->v4174 = s->v4174;
-    d->v4178 = s->v4178;
-    d->v417c = s->v417c;
-    d->v4180 = s->v4180;
-    d->v4184 = s->v4184;
-    d->v4188 = s->v4188;
-    d->v418c = s->v418c;
-    d->v4198 = s->v4198;
-    d->v419c = s->v419c;
-    d->v419d = s->v419d;
-    d->v41a4 = s->v41a4;
-    d->v41a8 = s->v41a8;
-    d->v41ac = s->v41ac;
-    d->v41b0 = s->v41b0;
-    d->v41b4 = s->v41b4;
-    d->v41b5 = s->v41b5;
-    d->v41bc = s->v41bc;
-    d->v41c0 = s->v41c0;
-    d->v41c4 = s->v41c4;
-    d->v41c8 = s->v41c8;
-    d->v41cc = s->v41cc;
-    d->v41cd = s->v41cd;
-    d->v41d4 = s->v41d4;
-    d->v41d8 = s->v41d8;
-    d->v41dc = s->v41dc;
-    d->v41e0 = s->v41e0;
-    d->opack41e8.v41e8 = s->opack41e8.v41e8;
-    d->opack41e8.v41e9 = s->opack41e8.v41e9;
-    d->opack41e8.v41ea = s->opack41e8.v41ea;
-    d->opack41e8.v41ee = s->opack41e8.v41ee;
-    InfoCfCopyObjF80(&d->f41f4, &s->f41f4);
-    CopyPTStateBlob(&d->blob4400, &s->blob4400);
-    // Tail run (CSysWin flags + window timer float).
-    d->v6bac = s->v6bac;
-    d->v6bb0 = s->v6bb0;
-    d->v6bb4 = s->v6bb4;
-    d->v6bb8 = s->v6bb8;
-    d->v6bbc = s->v6bbc;
-    d->v6bc0 = s->v6bc0;
-    d->v6bc4 = s->v6bc4;
-    d->v6bc8 = s->v6bc8;
-    d->v6bcc = s->v6bcc;
-    d->v6bd0 = s->v6bd0;
-    d->v6bd4 = s->v6bd4;
-    d->v6bd8 = s->v6bd8;
-    d->v6bdc = s->v6bdc;
-    d->v6bdd = s->v6bdd;
-    d->v6bde = s->v6bde;
-    d->v6bdf = s->v6bdf;
-    d->v6be0 = s->v6be0;
-    d->v6be1 = s->v6be1;
-    d->v6be4 = s->v6be4;
-    d->v6be5 = s->v6be5;
-    d->v6be8 = s->v6be8;
-
-    __dt__14CPartyStateWinFv(winTmp, -1);
-#undef winTmp
-#undef d
-#undef s
-
-    field_0x5C->addRenderCB(this, 0xd, 1);
-    Scn_SetPauseFlag(field_0x5C, 0);
-}
-
-// Memberwise copy of the SCopy_80191C88 state blob from src to dst, in the
-// exact order retail reads them (regions 0x00/0x10/0x39/0x499/0x4db are not
-// copied). The three 8-byte runs compile to mtctr/bdnz lwzu+stwu copy loops
-// (loop counts: 52, 16, 16). Retail is size-optimized here: under unit -O4,p
-// the long runs unroll and the float copies get batched into f14-f31 (which
-// drags in _savegpr/_restgpr prologue code retail doesn't have), so this one
-// function compiles with optimize_for_size like other rolled-copy sites
-// (retail keeps the three pair runs rolled as mtctr/bdnz lwzu+stwu loops;
-// under the unit default -O4,p the runs unroll and bloat .text by ~0x2E8).
-// The vu*/vf* volatile field types force the retail load/store program order.
-#pragma optimize_for_size on
-void CopyPTSubBlob(SCopy_80191C88* dst, const SCopy_80191C88* src) {
-    dst->f_04 = src->f_04;
-    dst->f_08 = src->f_08;
-    dst->f_0c = src->f_0c;
-    dst->f_14 = src->f_14;
-    dst->f_18 = src->f_18;
-    dst->f_1c = src->f_1c;
-    dst->f_20 = src->f_20;
-    dst->f_24 = src->f_24;
-    dst->f_28 = src->f_28;
-    dst->f_2c = src->f_2c;
-    dst->f_30 = src->f_30;
-    dst->f_34 = src->f_34;
-    dst->b_38 = src->b_38;
-    dst->f_3c = src->f_3c;
-
-    // Biased one element back so the accesses fuse into lwzu/stwu forms
-    // (retail mtctr/bdnz walk shape).
-    u32* sA = (u32*)&src->arrA[0].lo - 1;
-    u32* dA = (u32*)&dst->arrA[0].lo - 1;
-    for (int n = 52; n != 0; n--) {
-        u32 lo = *(sA + 1);
-        u32 hi = *(sA + 2);
-        *(dA + 1) = lo;
-        *(dA + 2) = hi;
-        sA += 2;
-        dA += 2;
-    }
-
-    dst->f_1e0 = src->f_1e0; dst->f_1e4 = src->f_1e4;
-    dst->f_1e8 = src->f_1e8; dst->f_1ec = src->f_1ec;
-    dst->f_1f0 = src->f_1f0; dst->f_1f4 = src->f_1f4;
-    dst->f_1f8 = src->f_1f8; dst->f_1fc = src->f_1fc;
-    dst->f_200 = src->f_200; dst->f_204 = src->f_204;
-    dst->f_208 = src->f_208; dst->f_20c = src->f_20c;
-    dst->f_210 = src->f_210; dst->f_214 = src->f_214;
-    dst->f_218 = src->f_218; dst->f_21c = src->f_21c;
-    dst->f_220 = src->f_220;
-    dst->b_224 = src->b_224; dst->b_225 = src->b_225;
-    dst->b_226 = src->b_226;
-
-    dst->f_228 = src->f_228; dst->f_22c = src->f_22c;
-    dst->f_230 = src->f_230; dst->f_234 = src->f_234;
-    dst->f_238 = src->f_238; dst->f_23c = src->f_23c;
-    dst->f_240 = src->f_240; dst->f_244 = src->f_244;
-    dst->f_248 = src->f_248; dst->f_24c = src->f_24c;
-    dst->f_250 = src->f_250; dst->f_254 = src->f_254;
-    dst->f_258 = src->f_258; dst->f_25c = src->f_25c;
-    dst->f_260 = src->f_260; dst->f_264 = src->f_264;
-    dst->f_268 = src->f_268;
-    dst->f_26c = src->f_26c;
-
-    // Biased walks matching retail (bases 0x26C/0x2EC, count 16 each).
-    u32* sB = (u32*)&src->arrB[0].lo - 1;
-    u32* dB = (u32*)&dst->arrB[0].lo - 1;
-    for (int n = 16; n != 0; n--) {
-        u32 lo = *(sB + 1);
-        u32 hi = *(sB + 2);
-        *(dB + 1) = lo;
-        *(dB + 2) = hi;
-        sB += 2;
-        dB += 2;
-    }
-    u32* sC = (u32*)&src->arrC[0].lo - 1;
-    u32* dC = (u32*)&dst->arrC[0].lo - 1;
-    for (int n = 16; n != 0; n--) {
-        u32 lo = *(sC + 1);
-        u32 hi = *(sC + 2);
-        *(dC + 1) = lo;
-        *(dC + 2) = hi;
-        sC += 2;
-        dC += 2;
-    }
-
-    dst->f_370 = src->f_370; dst->f_374 = src->f_374;
-    dst->f_378 = src->f_378; dst->f_37c = src->f_37c;
-    dst->f_380 = src->f_380; dst->f_384 = src->f_384;
-    dst->f_388 = src->f_388; dst->f_38c = src->f_38c;
-    dst->f_390 = src->f_390; dst->f_394 = src->f_394;
-    dst->f_398 = src->f_398; dst->f_39c = src->f_39c;
-
-    dst->f_3a0 = src->f_3a0; dst->f_3a4 = src->f_3a4;
-    dst->f_3a8 = src->f_3a8; dst->f_3ac = src->f_3ac;
-    dst->f_3b0 = src->f_3b0; dst->f_3b4 = src->f_3b4;
-    dst->f_3b8 = src->f_3b8; dst->f_3bc = src->f_3bc;
-    dst->f_3c0 = src->f_3c0; dst->f_3c4 = src->f_3c4;
-    dst->f_3c8 = src->f_3c8; dst->f_3cc = src->f_3cc;
-    dst->f_3d0 = src->f_3d0; dst->f_3d4 = src->f_3d4;
-    dst->f_3d8 = src->f_3d8; dst->f_3dc = src->f_3dc;
-    dst->f_3e0 = src->f_3e0; dst->f_3e4 = src->f_3e4;
-    dst->f_3e8 = src->f_3e8; dst->f_3ec = src->f_3ec;
-    dst->f_3f0 = src->f_3f0; dst->f_3f4 = src->f_3f4;
-    dst->f_3f8 = src->f_3f8; dst->f_3fc = src->f_3fc;
-    dst->f_400 = src->f_400; dst->f_404 = src->f_404;
-    dst->f_408 = src->f_408; dst->f_40c = src->f_40c;
-    dst->f_410 = src->f_410; dst->f_414 = src->f_414;
-    dst->f_418 = src->f_418; dst->f_41c = src->f_41c;
-    dst->f_420 = src->f_420; dst->f_424 = src->f_424;
-    dst->f_428 = src->f_428; dst->f_42c = src->f_42c;
-
-    dst->f_430 = src->f_430; dst->f_434 = src->f_434;
-    dst->f_438 = src->f_438; dst->f_43c = src->f_43c;
-    dst->f_440 = src->f_440; dst->f_444 = src->f_444;
-    dst->f_448 = src->f_448; dst->f_44c = src->f_44c;
-    dst->f_450 = src->f_450; dst->f_454 = src->f_454;
-    dst->f_458 = src->f_458; dst->f_45c = src->f_45c;
-    dst->f_460 = src->f_460; dst->f_464 = src->f_464;
-    dst->f_468 = src->f_468; dst->f_46c = src->f_46c;
-    dst->f_470 = src->f_470; dst->f_474 = src->f_474;
-    dst->f_478 = src->f_478; dst->f_47c = src->f_47c;
-    dst->f_480 = src->f_480; dst->f_484 = src->f_484;
-    dst->f_488 = src->f_488; dst->f_48c = src->f_48c;
-    dst->f_490 = src->f_490; dst->f_494 = src->f_494;
-    dst->b_498 = src->b_498;
-    dst->f_49c = src->f_49c; dst->f_4a0 = src->f_4a0;
-    dst->f_4a4 = src->f_4a4;
-
-    dst->f_4a8 = src->f_4a8; dst->f_4ac = src->f_4ac;
-    dst->f_4b0 = src->f_4b0; dst->f_4b4 = src->f_4b4;
-    dst->f_4b8 = src->f_4b8;
-    dst->b_4bc = src->b_4bc; dst->b_4bd = src->b_4bd;
-    dst->b_4be = src->b_4be; dst->b_4bf = src->b_4bf;
-    dst->f_4c0 = src->f_4c0; dst->f_4c4 = src->f_4c4;
-    dst->f_4c8 = src->f_4c8;
-    dst->f_4cc = src->f_4cc; dst->f_4d0 = src->f_4d0;
-    dst->h_4d4 = src->h_4d4; dst->h_4d6 = src->h_4d6;
-    dst->h_4d8 = src->h_4d8;
-    dst->b_4da = src->b_4da;
-    dst->h_4dc = src->h_4dc;
-    dst->f_4e0 = src->f_4e0; dst->f_4e4 = src->f_4e4;
-    dst->f_4e8 = src->f_4e8; dst->f_4ec = src->f_4ec;
-    dst->f_4f0 = src->f_4f0; dst->f_4f4 = src->f_4f4;
-    dst->f_4f8 = src->f_4f8; dst->f_4fc = src->f_4fc;
-    dst->f_500 = src->f_500; dst->f_504 = src->f_504;
-    dst->f_508 = src->f_508; dst->f_50c = src->f_50c;
-    dst->f_510 = src->f_510;
-    dst->f_514 = src->f_514; dst->f_518 = src->f_518;
-    dst->f_51c = src->f_51c; dst->f_520 = src->f_520;
-    dst->f_524 = src->f_524; dst->f_528 = src->f_528;
-    dst->f_52c = src->f_52c;
-    dst->h_530 = src->h_530;
-    dst->h_532 = src->h_532; dst->h_534 = src->h_534;
-    dst->h_536 = src->h_536; dst->h_538 = src->h_538;
-}
-#pragma optimize_for_size off
-
-// Per-field copy of a large (~0x27A8-byte) state blob from src to dst, in the
-// exact order retail reads them. The five runs of 8-byte elements compile to
-// mtctr/bdnz lwzu+stwu copy loops (loop counts: 16, 18, 16, 0x400, 0x80).
-// Same size story as CopyPTSubBlob above: retail keeps the runs rolled, so
-// this function also compiles with optimize_for_size (saves ~0x400 .text).
-// __declspec(noinline): retail Init keeps a real bl to this symbol; without
-// it MWCC inlines the shrunken body into Init's single call site (+0x5C8).
-#pragma optimize_for_size on
-__declspec(noinline) void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src) {
-    dst->f_04 = src->f_04; dst->f_08 = src->f_08;
-    dst->f_0c = src->f_0c; dst->f_10 = src->f_10;
-    dst->f_14 = src->f_14; dst->f_18 = src->f_18;
-    dst->f_1c = src->f_1c; dst->f_20 = src->f_20;
-    dst->f_24 = src->f_24; dst->f_28 = src->f_28;
-    dst->f_2c = src->f_2c; dst->f_30 = src->f_30;
-    dst->f_34 = src->f_34; dst->f_38 = src->f_38;
-    dst->f_3c = src->f_3c;
-
-    dst->b_40 = src->b_40; dst->b_41 = src->b_41;
-    dst->b_42 = src->b_42; dst->b_43 = src->b_43;
-
-    dst->f_48 = src->f_48; dst->f_4c = src->f_4c;
-    dst->f_50 = src->f_50; dst->f_54 = src->f_54;
-    dst->b_58 = src->b_58; dst->b_59 = src->b_59;
-
-    dst->f_60 = src->f_60; dst->f_64 = src->f_64;
-    dst->f_68 = src->f_68; dst->f_6c = src->f_6c;
-    dst->b_70 = src->b_70; dst->b_71 = src->b_71;
-
-    dst->f_78 = src->f_78; dst->f_7c = src->f_7c;
-    dst->f_80 = src->f_80; dst->f_84 = src->f_84;
-    dst->b_88 = src->b_88; dst->b_89 = src->b_89;
-
-    dst->f_90 = src->f_90; dst->f_94 = src->f_94;
-    dst->f_98 = src->f_98; dst->f_9c = src->f_9c;
-    dst->f_a0 = src->f_a0; dst->f_a4 = src->f_a4;
-    dst->f_a8 = src->f_a8; dst->f_ac = src->f_ac;
-    dst->f_b0 = src->f_b0;
-
-    dst->b_b4 = src->b_b4; dst->b_b5 = src->b_b5;
-    dst->b_b6 = src->b_b6; dst->b_b7 = src->b_b7;
-
-    dst->f_bc = src->f_bc; dst->f_c0 = src->f_c0;
-    dst->f_c4 = src->f_c4; dst->f_c8 = src->f_c8;
-    dst->f_cc = src->f_cc; dst->f_d0 = src->f_d0;
-    dst->f_d4 = src->f_d4; dst->f_d8 = src->f_d8;
-    dst->b_dc = src->b_dc; dst->b_dd = src->b_dd;
-    dst->b_de = src->b_de; dst->b_df = src->b_df;
-
-    dst->f_e0 = src->f_e0; dst->f_e4 = src->f_e4;
-    dst->f_e8 = src->f_e8; dst->f_ec = src->f_ec;
-    dst->f_f0 = src->f_f0;
-    dst->b_f4 = src->b_f4;
-
-    // Biased one element back so the accesses fuse into lwzu/stwu forms
-    // (retail mtctr/bdnz walk shape, base 0xF4, count 16).
-    u32* sA1 = (u32*)&src->arr1[0].lo - 1;
-    u32* dA1 = (u32*)&dst->arr1[0].lo - 1;
-    for (int n = 16; n != 0; n--) {
-        u32 lo = *(sA1 + 1);
-        u32 hi = *(sA1 + 2);
-        *(dA1 + 1) = lo;
-        *(dA1 + 2) = hi;
-        sA1 += 2;
-        dA1 += 2;
-    }
-
-    dst->b_178 = src->b_178; dst->b_179 = src->b_179;
-    dst->b_17a = src->b_17a;
-
-    dst->f_180 = src->f_180; dst->f_184 = src->f_184;
-    dst->f_188 = src->f_188; dst->f_18c = src->f_18c;
-    dst->f_190 = src->f_190; dst->f_194 = src->f_194;
-    dst->f_198 = src->f_198; dst->f_19c = src->f_19c;
-    dst->f_1a0 = src->f_1a0;
-    dst->b_1a4 = src->b_1a4;
-    dst->f_1a8 = src->f_1a8; dst->f_1ac = src->f_1ac;
-
-    dst->b_1b0 = src->b_1b0; dst->b_1b1 = src->b_1b1;
-    dst->b_1b2 = src->b_1b2; dst->b_1b3 = src->b_1b3;
-    dst->b_1b4 = src->b_1b4; dst->b_1b5 = src->b_1b5;
-
-    dst->f_1bc = src->f_1bc; dst->f_1c0 = src->f_1c0;
-    dst->f_1c4 = src->f_1c4; dst->f_1c8 = src->f_1c8;
-    dst->f_1cc = src->f_1cc; dst->f_1d0 = src->f_1d0;
-    dst->f_1d4 = src->f_1d4; dst->f_1d8 = src->f_1d8;
-    dst->f_1dc = src->f_1dc;
-    dst->b_1e0 = src->b_1e0;
-    dst->f_1e4 = src->f_1e4; dst->f_1e8 = src->f_1e8;
-
-    dst->b_1ec = src->b_1ec; dst->b_1ed = src->b_1ed;
-    dst->b_1ee = src->b_1ee; dst->b_1ef = src->b_1ef;
-    dst->b_1f0 = src->b_1f0; dst->b_1f1 = src->b_1f1;
-
-    dst->b_1f4 = src->b_1f4; dst->b_1f5 = src->b_1f5;
-    dst->b_1f6 = src->b_1f6;
-    dst->h_1f8 = src->h_1f8; dst->h_1fa = src->h_1fa;
-    dst->h_1fc = src->h_1fc;
-    dst->b_1fe = src->b_1fe;
-
-    dst->f_200 = src->f_200; dst->f_204 = src->f_204;
-    dst->f_208 = src->f_208; dst->f_20c = src->f_20c;
-    dst->f_210 = src->f_210; dst->f_214 = src->f_214;
-    dst->f_218 = src->f_218; dst->f_21c = src->f_21c;
-    dst->f_220 = src->f_220;
-    dst->f_224 = src->f_224;
-
-    // Same biased walk shape (retail base 0x224, count 18).
-    u32* sA2 = (u32*)&src->arr2[0].lo - 1;
-    u32* dA2 = (u32*)&dst->arr2[0].lo - 1;
-    for (int n = 18; n != 0; n--) {
-        u32 lo = *(sA2 + 1);
-        u32 hi = *(sA2 + 2);
-        *(dA2 + 1) = lo;
-        *(dA2 + 2) = hi;
-        sA2 += 2;
-        dA2 += 2;
-    }
-
-    dst->f_2b8 = src->f_2b8; dst->f_2bc = src->f_2bc;
-    dst->f_2c0 = src->f_2c0; dst->f_2c4 = src->f_2c4;
-    dst->f_2c8 = src->f_2c8; dst->f_2cc = src->f_2cc;
-    dst->f_2d0 = src->f_2d0; dst->f_2d4 = src->f_2d4;
-    dst->f_2d8 = src->f_2d8; dst->f_2dc = src->f_2dc;
-    dst->f_2e0 = src->f_2e0; dst->f_2e4 = src->f_2e4;
-    dst->b_2e8 = src->b_2e8;
-
-    // Retail-misaligned run: biased base 0x2E5, count 16.
-    u32* sA3 = (u32*)&src->arr3.items[0].lo - 1;
-    u32* dA3 = (u32*)&dst->arr3.items[0].lo - 1;
-    for (int n = 16; n != 0; n--) {
-        u32 lo = *(sA3 + 1);
-        u32 hi = *(sA3 + 2);
-        *(dA3 + 1) = lo;
-        *(dA3 + 2) = hi;
-        sA3 += 2;
-        dA3 += 2;
-    }
-
-    dst->f_36c = src->f_36c;
-    dst->h_370 = src->h_370;
-    dst->b_372 = src->b_372; dst->b_373 = src->b_373;
-    dst->b_374 = src->b_374; dst->b_375 = src->b_375;
-    dst->b_376 = src->b_376; dst->b_377 = src->b_377;
-    dst->b_378 = src->b_378; dst->b_379 = src->b_379;
-    dst->b_37a = src->b_37a; dst->b_37b = src->b_37b;
-    dst->b_37c = src->b_37c;
-
-    // Retail-misaligned big run: biased base 0x37A, count 0x400.
-    u32* sA4 = (u32*)&src->arr4.items[0].lo - 1;
-    u32* dA4 = (u32*)&dst->arr4.items[0].lo - 1;
-    for (int n = 1024; n != 0; n--) {
-        u32 lo = *(sA4 + 1);
-        u32 hi = *(sA4 + 2);
-        *(dA4 + 1) = lo;
-        *(dA4 + 2) = hi;
-        sA4 += 2;
-        dA4 += 2;
-    }
-
-    dst->h_237e = src->h_237e;
-    dst->b_2380 = src->b_2380; dst->b_2381 = src->b_2381;
-    dst->b_2382 = src->b_2382; dst->b_2383 = src->b_2383;
-    dst->f_2384 = src->f_2384; dst->f_2388 = src->f_2388;
-    dst->f_238c = src->f_238c; dst->f_2390 = src->f_2390;
-    dst->f_2394 = src->f_2394; dst->f_2398 = src->f_2398;
-    dst->f_239c = src->f_239c; dst->f_23a0 = src->f_23a0;
-
-    // Same biased walk shape (retail base 0x23A0, count 0x80).
-    u32* sA5 = (u32*)&src->arr5[0].lo - 1;
-    u32* dA5 = (u32*)&dst->arr5[0].lo - 1;
-    for (int n = 128; n != 0; n--) {
-        u32 lo = *(sA5 + 1);
-        u32 hi = *(sA5 + 2);
-        *(dA5 + 1) = lo;
-        *(dA5 + 2) = hi;
-        sA5 += 2;
-        dA5 += 2;
-    }
-
-    dst->f_27a4 = src->f_27a4;
-}
-#pragma optimize_for_size off
-
-void CMenuPTState::Term() {
-    CDeviceVI::waitForDrawDone();
-    Scn_SetPauseFlag(field_0x5C, 1);
-    field_0x5C->removeRenderCB(this);
-    BgTex_Release_3D9C((u8*)&field_0x60);
-    PartyStateWin_TeardownWindow((u8*)&field_0x80);
-    lbl_eu_80664300 = 0;
-    processEventList__Q22cf13CfGameManagerFv();
-    setPresentationFlag__Q22cf13CfGameManagerFv(false);
-    CUICfManager_setTimeout30();
-}
-
-// Minimal view of the pad word block returned by getCurrentPad() (only the
-// +4 button word is read by CMenuPTState::Move).
-struct MenuPTPadView {
-    u8 _0[4];
-    u32 buttons; // 0x4
-};
-
-// Per-frame party-menu update: gate on task state, run the open/close input
-// edge while the window is settling, then advance the 4-state phase byte.
-void CMenuPTState::Move() {
-    CTaskGame::getInstance();
-    // OR-combined guard: retail emits bne-exit for the first disjunct and a
-    // beq-body / b-exit pair for the second (same shape as cbRenderBefore).
-    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000) != 0) {
-        return;
-    }
-    {
-        if ((u8)(field_0x6C6C + 0xff) <= 1) {
-            if (PartyStateWin_QueryMenuClose(&field_0x80) == 0) {
-                MenuPTPadView* pad = reinterpret_cast<MenuPTPadView*>(
-                    cf::CfGameManager::getCurrentPad());
-                int accept;
-                // Retail extracts single bits via rotate-left forms.
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
-                    accept = (pad->buttons >> 23) & 1;
-                } else {
-                    accept = (pad->buttons >> 10) & 1;
-                }
-                if (accept != 0) {
-                    PartyStateWin_StepPartySub(&field_0x80);
-                    if (CMainMenu_GetInstancePtr() != 0) {
-                        ArtsInfo_SetReadyFlag();
-                        playUISound(6);
-                    }
-                    field_0x6C6C = 3;
-                }
-            }
-        }
-        switch (field_0x6C6C) {
-        case 0:
-            // Background layout finished loading -> start the window open-in.
-            if (BgTex_IsLoaded_3E34(&field_0x60) != 0) {
-                // Retail leaves arg2/arg3 (r4/r5) unset at this call site.
-                PartyStateWin_OpenWindow(&field_0x80);
-                field_0x6C6C = 1;
-            }
-            break;
-        case 1:
-            field_0x6C6C = 2;
-            break;
-        case 2:
-            if (PartyStateWin_GetLatchFlag(&field_0x80) != 0) {
-                field_0x6C6C = 3;
-            }
-            break;
-        case 3:
-            // System window opened over us: flag completion on the owner.
-            if (UIBattleGetFlagE8() != 0) {
-                field_0x54 = 1;
-            }
-            break;
-        }
-        BgTex_Tick_3D54(&field_0x60);
-        if (field_0x6C6C != 3) {
-            PartyStateWin_FrameStep(&field_0x80);
-        }
-    }
-}
-
-void CMenuPTState::cbRenderBefore() {
-    // OR-combined guard: MWCC emits the retail beq-body/b-exit pair for the
-    // second disjunct (MWCC_CASES "OR-combined guard" pattern).
-    CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
-        return;
-    }
-    if (IsMenuState621F0() == 0) {
-        return;
-    }
-    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    BgTex_Draw_3D7C(&field_0x60, &drawInfo);
 }

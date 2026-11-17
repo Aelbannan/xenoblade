@@ -36,7 +36,7 @@ extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" u32 __RTTI__10IWorkEvent;
-extern "C" char lbl_eu_80662230[];
+extern "C" char __RTTI__Q22cf6CfBdat[];
 
 // Typed .rodata (retail 0x420): type name + bdat table-name pool + face names.
 // Sizes are retail gaps so the section packs exactly.
@@ -161,7 +161,7 @@ extern "C" u32 lbl_eu_8052E6F0[10] = {
     (u32)&sdata2_CfBdat.exHL, (u32)&sdata2_CfBdat.exHR, (u32)&sdata2_CfBdat.exHR, 0x00000000,
 };
 extern "C" u32 lbl_eu_8052E718[34] = {
-    (u32)&lbl_eu_80662230, 0x00000000, (u32)&__dt__Q22cf6CfBdatFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&__RTTI__Q22cf6CfBdat, 0x00000000, (u32)&__dt__Q22cf6CfBdatFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
     (u32)&OnFileEvent__Q22cf6CfBdatFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv,
     (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
     (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,

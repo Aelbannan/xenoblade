@@ -23,6 +23,11 @@ typedef struct CvFsErrArg CvFsErrArg;
 // cvFs error handler: forward every message to the ADX error func.
 void adxwii_err_dvd(CvFsErrArg* arg, const char* msg);
 
+void adxwii_err_dvd(CvFsErrArg* arg, const char* msg) {
+    (void)arg;
+    ADXERR_CallErrFunc1_(msg);
+}
+
 void ADXWII_SetupDvdFs(int media) {
     // Dead read kept for retail parity (see note above).
     (void)*(volatile const char* const*)&lbl_eu_80519744;
@@ -38,9 +43,4 @@ void ADXWII_SetupDvdFs(int media) {
     } else {
         gcCiSetRdMode(0, 0, 0, 0);
     }
-}
-
-void adxwii_err_dvd(CvFsErrArg* arg, const char* msg) {
-    (void)arg;
-    ADXERR_CallErrFunc1_(msg);
 }

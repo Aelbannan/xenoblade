@@ -8,9 +8,9 @@
  * Layout (size 0x1494):
  *   +0x00: IWorkEvent (vtable + virtual event handlers)
  *   +0x04: UnkClass_8045F564 - memory region for entries
- *   +0x14: mEntryCount (or part of header)
- *   +0x18: mUnknown18
- *   +0x1C: mUnknown1C
+ *   +0x14: mFileHandle - talk-list layout archive handle
+ *   +0x18: mBdatHandle - shared BDAT archive handle
+ *   +0x1C: mAccessor - layout ArcResourceAccessor
  *   +0x20: mUnknown20
  *   +0x24: mUnknown24
  *   +0x28: mUnknown28
@@ -29,20 +29,11 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
-class CBaseCur;
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
-// IWorkEvent-compatible vtable for CKizunaTalkList (split1 .data).
-extern "C" void* lbl_eu_80537D28[];
-
-/* Sets mVtbl before anything else (retail ctor stores lbl_eu_80537D28 first).
-   Same idiom as CScrollBarVtblBase: deriving directly would emit the TU-local
-   __vt__ symbol instead of the retail vtable label. */
-struct CKizunaTalkListVtblBase {
-    void* mVtbl; // 0x0 - lbl_eu_80537D28
-    CKizunaTalkListVtblBase() { mVtbl = lbl_eu_80537D28; }
-};
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/device/CFileHandle.hpp"
 
 // Talk list entry (0x14 bytes each, 256 max)
 struct TalkListEntry {
@@ -53,41 +44,53 @@ struct TalkListEntry {
     s16 field_10;   // 0x10
     s8 field_12;    // 0x12, initialised to -1
     u8 field_13;    // 0x13
+
+    TalkListEntry() {
+        field_00 = 0;
+        field_04 = 0;
+        field_08 = 0;
+        field_0C = 0;
+        field_10 = 0;
+        field_12 = -1;
+        field_13 = 0;
+    }
+    ~TalkListEntry() {}
 };
 
-// Array container holding up to 256 entries
+// Array container holding up to 256 entries; mParent is the layout's
+// resource accessor used to resolve the entry icons.
 struct TalkListEntryArray {
-    TalkListEntry mEntries[256]; // 0x000-0x13FF
-    u8 mCount;                   // 0x1400
-    u32 mParent;                 // 0x1404
+    TalkListEntry mEntries[256];                  // 0x000-0x13FF
+    u8 mCount;                                    // 0x1400
+    nw4r::lyt::ArcResourceAccessor* mParent;      // 0x1404
+
+    TalkListEntryArray(nw4r::lyt::ArcResourceAccessor* parent);
 };
 
-class CKizunaTalkList : public CKizunaTalkListVtblBase {
+// Kizuna (affinity) talk list widget; receives archive completion through IWorkEvent.
+class CKizunaTalkList : public IWorkEvent {
 public:
-    /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
-    /* 0x14 */ u32 mEntryCount;     // number of valid entries
-    /* 0x18 */ u32 mUnknown18;
-    /* 0x1C */ u32 mUnknown1C;
-    /* 0x20 */ nw4r::lyt::Layout* mpLayout20; // layout used for BindAnim-style anim control
+    /* 0x04 */ UnkClass_8045F564 mMemRegion;
+    /* 0x14 */ CFileHandle* mFileHandle;            // talk-list layout archive
+    /* 0x18 */ CFileHandle* mBdatHandle;            // shared BDAT archive
+    /* 0x1C */ nw4r::lyt::ArcResourceAccessor* mAccessor;
+    /* 0x20 */ nw4r::lyt::Layout* mpLayout20;
     /* 0x24 */ nw4r::lyt::AnimTransform* mpAnim24;
     /* 0x28 */ nw4r::lyt::AnimTransform* mpAnim28;
     /* 0x2C */ CCur18 mCursor;
-    /* 0x44 */ u8 mScrollBar[0x40];  // CScrollBar widget; constructed/copied
-                                     // explicitly in the ctor (retail calls
-                                     // __ct__10CScrollBarFUc in the body, so the
-                                     // member is held as raw storage)
+    /* 0x44 */ CScrollBar mScrollBar;
     /* 0x84 */ u8 mState84;
     /* 0x85 */ u8 mState85;         // state machine progression flag
-    /* 0x86 */ u8 mUnknown86;
+    /* 0x86 */ bool mUnknown86;   // talk data built and visible
     /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
     u8 needsRebuild() const { return mNeedsRebuild; }
     /* 0x88 */ s8 mUnknown88;
-    /* 0x89 */ u8 _pad89;           // padding
     /* 0x8A */ s16 mUnknown8A;
     /* 0x8C */ TalkListEntryArray mEntryArray;
-    CKizunaTalkList();
-    ~CKizunaTalkList();
-    bool OnFileEvent(CEventFile* pEventFile);
+
+    CKizunaTalkList(int);
+    virtual ~CKizunaTalkList();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
     void hideTalkList();
     void scrollTalkListUp();
     void scrollTalkListDown();
@@ -96,91 +99,8 @@ public:
     void initTalkList();
     int needsTalkRebuild();
     void teardownTalkList();
-    u8 hasVisibleTalks();
+    bool hasVisibleTalks();
     void showTalkList();
     void drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo);
     void updateTalkList();
 };
-
-// ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names - do not "fix" the mangled forms).
-// Relocated from CKizunaTalkList.cpp so every TU that uses these symbols gets
-// them from this header instead of inline pseudo-import declarations.
-// ---------------------------------------------------------------------------
-
-// External helpers (C-linkage retail symbols) for file loading, scrollbar /
-// cursor widgets and sound effects.
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" int KyoshinHeap_GetField44();
-extern "C" void CScrollBar_loadLayoutArc(void*);
-extern "C" void CScrollBar_draw(void*, void*);
-extern "C" void CScrollBar_InitRootPane(void*, void*);
-extern "C" void CScrollBar_requestScrollIn(void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_UpdateThumb(void*, int, int);
-extern "C" void CScrollBar_UpdateDispatch(void*);
-extern "C" void CScrollBar_PlaceThumb(void*, u16);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void Cur_Update(void*);
-extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
-extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int n);
-extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-void closeFileHandle(CFileHandle**);
-extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void CScrollBar_Teardown(void*);
-extern "C" void deleteRegion(UnkClass_8045F564* self);
-
-// Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
-// symbol names so the reloc targets line up).
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);
-extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
-extern "C" void* Bdat_GetTable_AA34();
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
-extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" int sprintf(char* str, const char* fmt, ...);
-
-// Data/build helpers used by buildTalkList.
-extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u16 LookupRelateValue(u8 a, u8 b);
-u32 findTalkIcon(TalkListEntryArray* self, u8 v);
-extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer
-
-// data / rodata labels
-extern "C" char lbl_eu_8050E990[];            // file-name table (target 7)
-extern "C" void* lbl_eu_80664090;            // .sbss shared BDAT character table (target 7)
-extern "C" void* lbl_eu_806648B8;             // .sbss loaded file pointer (target 8); assigned from void* getFP -> kept void*
-extern "C" void* lbl_eu_806648C0;             // .sbss colour entries (target 8) - address anchor
-// lbl_eu_806648C0/C8/D0/D8 are address anchors (&lbl used directly): keep void*.
-extern "C" void* lbl_eu_806648C8;
-extern "C" void* lbl_eu_806648D0;
-extern "C" void* lbl_eu_806648D8;
-extern "C" f32 lbl_eu_806689C8;               // .sdata2 float constants (target 10)
-extern "C" f32 lbl_eu_806689CC;
-extern "C" f32 lbl_eu_806689D0;
-extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entry show/hide
-
-// State-transition helpers for CKizunaTalkList (defined in CKizunaTalkList.cpp;
-// extern "C" + noinline keeps callers emitting real unmangled bl branches -
-// retail keeps them as separate out-of-line functions in this TU).
-extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self);
-
-// Misc helpers used by the row-draw / visibility paths.
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" void setPaneVisible(void*, u32);
-extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 r4);
-
-

@@ -3,10 +3,6 @@
 #include <types.h>
 
 // sdata2 float constants referenced by this TU (retail labels)
-extern const f32 lbl_eu_8066B360; // 0.0f - anim reset / off-diagonal
-extern const f32 lbl_eu_8066B364; // 1.0f - diagonal scale
-extern const f32 lbl_eu_8066B368; // speed threshold (close timer)
-extern const f32 lbl_eu_8066B36C; // speed threshold (open timer)
 
 // Eye-blink angle tables (3 entries each, indexed by field_20).
 extern const f32 lbl_eu_805247E8[3]; // left eye: {0.0, +0.336f, +0.672f}

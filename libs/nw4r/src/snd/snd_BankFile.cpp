@@ -23,7 +23,6 @@
 // Retail .sdata2 pool constant 1.0f referenced by ReadInstInfo's legacy
 // (pre-1.1) path; referenced by name so the SDA21 float reloc matches the
 // stripped retail object.
-extern const f32 lbl_eu_80669ED8;
 
 namespace nw4r {
 namespace snd {
@@ -324,7 +323,7 @@ bool BankFileReader::ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
         pOut->tune = pData->tune;
     } else {
         pOut->volume = 127;
-        pOut->tune = lbl_eu_80669ED8;
+        pOut->tune = 1.0f;
     }
 
     switch (pData->field_0xa) {

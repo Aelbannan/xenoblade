@@ -4,6 +4,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/IResInfo.hpp"  // real CResLookup owner (getResourceBase/isInUse/cmpField4Eq)
@@ -264,7 +265,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         if (self->field_0xE4 != 0) {
             acquireLODResource__8CTaskLODFv(self->field_0xE4, 0);
             bindTaskToLOD__8CTaskLODFv(*reinterpret_cast<void**>(&self->field_0x90[8]));
-            notifyLODTick__8CTaskLODFv(lbl_eu_80666A38);
+            CTaskLOD::notifyLODTick(lbl_eu_80666A38);
         }
         if (self->field_0xE8 != 0) {
             CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
@@ -325,7 +326,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     if (&self->field_0xF0 != 0) {
         setMpfFloatParam__17UnkClass_8047BB54Fv(&self->field_0xF0, value);
     }
-    updateLODFrame__8CTaskLODFv(value);
+    CTaskLOD::updateLODFrame(value);
     u32 v = getReloadParam2();
     if (getUnk80664658()->mFlags & 0x80) {
         v = getUnk80664658()->field_0x210 & 0xFFFF;

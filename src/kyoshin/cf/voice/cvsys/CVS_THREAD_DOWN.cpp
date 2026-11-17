@@ -184,7 +184,7 @@ extern "C" int downVoiceFixed240() {
 // The EHP callbacks are defined extern "C" in CVS_THREAD_EHP.cpp; the
 // protos below mirror those definitions (incomplete struct keeps the EHP
 // header, and its inline bodies, out of this TU). lbl_eu_80539A58 /
-// lbl_eu_80539B48 / lbl_eu_80662CC0 live in the CHAIN / EHP /
+// lbl_eu_80539B48 / __RTTI__Q22cf10CVS_THREAD live in the CHAIN / EHP /
 // CCharVoiceMan ranges and are referenced, not defined, here.
 struct CVS_THREAD_EHP;
 extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self);
@@ -196,14 +196,14 @@ extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 lbl_eu_80539A58[4];
 extern u32 lbl_eu_80539B48[4];
-extern u32 lbl_eu_80662CC0[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 lbl_eu_80539AB8[3];
 extern u32 lbl_eu_80539AC4[3];
 extern u32 lbl_eu_80539AD0[3];
 extern "C" u32 lbl_eu_80539ADC[3];
-extern u32 lbl_eu_80662CE8[2];
-extern u32 lbl_eu_80662CF0[2];
-extern u32 lbl_eu_80662CF8[2];
+extern u32 __RTTI__Q22cf16CVS_THREAD_CHAIN[2];
+extern u32 __RTTI__Q22cf15CVS_THREAD_DOWN[2];
+extern u32 __RTTI__Q22cf14CVS_THREAD_EHP[2];
 
 extern const char lbl_eu_80510738[0x18] = "cf::CVS_THREAD_CHAIN";
 extern const char lbl_eu_80510750[0x18] = "cf::CVS_THREAD_DOWN";
@@ -228,7 +228,7 @@ u32 lbl_eu_80539A80[3] = {
 };
 
 u32 lbl_eu_80539A8C[7] = {
-    (u32)lbl_eu_80662CF0,
+    (u32)__RTTI__Q22cf15CVS_THREAD_DOWN,
     0,
     (u32)PlayThreadVoice,
     (u32)downVoiceRemoveByPtr,
@@ -238,7 +238,7 @@ u32 lbl_eu_80539A8C[7] = {
 };
 
 u32 lbl_eu_80539AA8[4] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
     0,
@@ -268,17 +268,17 @@ extern "C" u32 lbl_eu_80539ADC[3] = {
     (u32)advanceEhpSlotIndex,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CE8[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf16CVS_THREAD_CHAIN[2] = {
     (u32)lbl_eu_80510738,
     (u32)lbl_eu_80539A58,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CF0[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf15CVS_THREAD_DOWN[2] = {
     (u32)lbl_eu_80510750,
     (u32)lbl_eu_80539AA8,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CF8[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf14CVS_THREAD_EHP[2] = {
     (u32)lbl_eu_80510768,
     (u32)lbl_eu_80539B48,
 };

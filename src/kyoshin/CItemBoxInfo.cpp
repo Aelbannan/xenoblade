@@ -73,10 +73,10 @@ extern "C" char lbl_eu_8050639C[];
 extern "C" char lbl_eu_805063AC[];
 extern "C" const void* lbl_eu_80534B18[];
 extern "C" const void* lbl_eu_80534BB0[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806626D0[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__13CItemBoxInfo2[2] = {
     lbl_eu_8050639C, lbl_eu_80534B18
 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806626D8[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__12CItemBoxInfo[2] = {
     lbl_eu_805063AC, lbl_eu_80534BB0
 };
 
@@ -149,7 +149,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
 char* BdatTouchStringCell(char*, char*, u32);
-extern "C" char* BdatGetPtrDirect(void*, char*);
+extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 u32 func_801392C0();
 
 // Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10). Spelled through
@@ -753,14 +753,12 @@ __declspec(noinline) CItemBoxLabelRec getItemBoxLabelRec(CItemBoxInfo* info, u32
     r.a = (u8)BdatGetU8Direct((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
     char* base = (char*)&lbl_eu_805063BC;
     r.b = BdatTouchStringCell(base + 0x219, base + 0x139, r.a);
-    // Residual: retail narrows this result into r5, we pick r0 - a
-    // scheduler-driven compare-temp allocation choice insensitive to every
-    // source shape tried (named local, raw+cast, assign-in-cond, & 0xFF).
+    // The label ID is also the row key passed to BdatGetPtrDirect.
     r.c = (u8)BdatGetU8Direct((u32)tbl, base + 0x225, cat);
     if (r.c == 0x1A) {
         r.d = BdatTouchStringCell(base + 0x219, base + 0x139, 0x14);
     } else {
-        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139);
+        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139, r.c);
     }
     // Returned by value: the caller's hidden result pointer receives the
     // record as four lwz/stw pairs.
@@ -3886,7 +3884,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 copyVEC3((void*)((u8*)info + 0xC8 + (u8)idx * 12),
                          (void*)dstWords);
             }
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
             if (val == 0) {
                 LayoutSetTextBoxFmtValue(info->state.layout,
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
@@ -5320,14 +5318,12 @@ __declspec(noinline) CItemBoxLabelRec getItemBox2LabelRec(CItemBoxInfo2* info, u
     r.a = (u8)BdatGetU8Direct((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
     char* base = (char*)&lbl_eu_805063BC;
     r.b = BdatTouchStringCell(base + 0x219, base + 0x139, r.a);
-    // Residual: retail narrows this result into r5, we pick r0 - a
-    // scheduler-driven compare-temp allocation choice insensitive to every
-    // source shape tried (named local, raw+cast, assign-in-cond, & 0xFF).
+    // The label ID is also the row key passed to BdatGetPtrDirect.
     r.c = (u8)BdatGetU8Direct((u32)tbl, base + 0x225, cat);
     if (r.c == 0x1A) {
         r.d = BdatTouchStringCell(base + 0x219, base + 0x139, 0x14);
     } else {
-        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139);
+        r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139, r.c);
     }
     // Returned by value: the caller's hidden result pointer receives the
     // record as four lwz/stw pairs.
@@ -5436,48 +5432,23 @@ __declspec(noinline) void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, voi
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(paneName, base + 0x303, (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, paneName, color);
-        // Default vertex colours carry data only in the alpha channel
-        // (info+0xA2 / info+0xAA); the selected-slot pair comes from
-        // info+0x9C/0xA4 when the slot is active.
-        s16 vA2 = info->state.quadA.s[3];
-        s16 vAA = info->state.quadB.s[3];
-        // defAA declared first: retail keeps the vAA colour in the lower
-        // frame slot pair (sp+0x08) and the vA2 colour above it (sp+0x10).
-        CItemBoxQuadColor defAA;
-        defAA.b = 0;
-        defAA.g = 0;
-        defAA.r = 0;
-        defAA.a = vAA;
-        CItemBoxQuadColor defA2;
-        defA2.b = 0;
-        defA2.g = 0;
-        defA2.r = 0;
-        defA2.a = vA2;
-        u32 args[4];
-        args[0] = 0;
-        args[1] = 0;
-        args[2] = 0;
-        args[3] = 0;
-        if (flag != 0) {
-            args[0] = info->state.quadA.w[0];
-            args[1] = info->state.quadA.w[1];
-        } else {
-            args[0] = *(u32*)&defA2.r;
-            args[1] = *(u32*)&defA2.a;
-        }
-        if (flag != 0) {
-            args[2] = info->state.quadB.w[0];
-            args[3] = info->state.quadB.w[1];
-        } else {
-            args[2] = *(u32*)&defAA.r;
-            args[3] = *(u32*)&defAA.a;
-        }
-        sprintf(paneName, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
+        // Unselected rows keep only the alpha of the highlight colours.
+        CItemBoxQuadColorView dimA;
+        dimA.s[0] = dimA.s[1] = dimA.s[2] = 0;
+        dimA.s[3] = info->state.quadA.s[3];
+        CItemBoxQuadColorView dimB;
+        dimB.s[0] = dimB.s[1] = dimB.s[2] = 0;
+        dimB.s[3] = info->state.quadB.s[3];
+        CItemBoxQuadColorView colors[2] = {
+            flag ? info->state.quadA : dimA,
+            flag ? info->state.quadB : dimB,
+        };
+        sprintf(paneName, &lbl_eu_805063BC[0x161], (u8)i + 1);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(paneName, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
-                setItemBoxVtxColor(obj, (u8)j, (u8*)args + (u8)j * 8);
+                setItemBoxVtxColor(obj, (u8)j, &colors[(u8)j]);
             }
         }
         if (flag != 0 && (arg2 != NULL || arg1 != 0)) {
@@ -5529,10 +5500,6 @@ __declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, vo
     // record, ours sit lowest - offsets inside the staging block differ).
     char buf[0x20];
     char bufName[0x20];
-    u32 args[4];
-    CItemBoxColorRaw cols[2];
-    CItemBoxColorBlock selB;
-    CItemBoxColorBlock selA;
     CItemBoxSlotFlags record = buildItemBox2SlotFlags(info, arg2);
     char* base = (char*)&lbl_eu_805063BC;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
@@ -5545,40 +5512,23 @@ __declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, vo
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
-        s16 vA2 = info->state.quadA.s[3];
-        s16 vAA = info->state.quadB.s[3];
-        // Retail builds cols[1] first, then cols[0], each as three zero
-        // halfwords plus the alpha from the info block.
-        cols[1].r = 0; cols[1].g = 0; cols[1].b = 0; cols[1].a = vA2;
-        cols[0].r = 0; cols[0].g = 0; cols[0].b = 0; cols[0].a = vAA;
-        args[0] = 0;
-        args[1] = 0;
-        args[2] = 0;
-        args[3] = 0;
-        // Selected colour is staged through the named temp then reloaded into
-        // the sprintf argument block (retail stores to sp+0xa8/sp+0xb0 first).
-        if (flag != 0) {
-            selA.w[0] = info->state.quadA.w[0];
-            selA.w[1] = info->state.quadA.w[1];
-        } else {
-            selA = *(CItemBoxColorBlock*)&cols[1];
-        }
-        args[0] = selA.w[0];
-        args[1] = selA.w[1];
-        if (flag != 0) {
-            selB.w[0] = info->state.quadB.w[0];
-            selB.w[1] = info->state.quadB.w[1];
-        } else {
-            selB = *(CItemBoxColorBlock*)&cols[0];
-        }
-        args[2] = selB.w[0];
-        args[3] = selB.w[1];
-        sprintf(buf, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
+        // Unselected rows keep only the alpha of the highlight colours.
+        CItemBoxQuadColorView dimA;
+        dimA.s[0] = dimA.s[1] = dimA.s[2] = 0;
+        dimA.s[3] = info->state.quadA.s[3];
+        CItemBoxQuadColorView dimB;
+        dimB.s[0] = dimB.s[1] = dimB.s[2] = 0;
+        dimB.s[3] = info->state.quadB.s[3];
+        CItemBoxQuadColorView colors[2] = {
+            flag ? info->state.quadA : dimA,
+            flag ? info->state.quadB : dimB,
+        };
+        sprintf(buf, &lbl_eu_805063BC[0x161], (u8)i + 1);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
-                setItemBoxVtxColor(obj, (u8)j, (u8*)args + (u32)j * 8);
+                setItemBoxVtxColor(obj, (u8)j, &colors[(u8)j]);
             }
         }
         if (flag != 0 && (arg3 != NULL || arg2 != 0)) {
@@ -6281,7 +6231,7 @@ extern "C" void setupItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    LayoutSetTextBoxFmtValue(info->state.layout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+    LayoutSetTextBoxFmtValue(info->state.layout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_805063BC[0x139], member), 0);
     setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
 setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt(info->state.slotPanes[0], hp1);
@@ -7377,7 +7327,7 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 f32 dst[3] = {v0, v1, v2};
                 copyVEC3((void*)((u8*)info + 0xC8 + idx * 12), (void*)dst);
             }
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
             if (val == 0) {
                 LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
             } else {
@@ -8193,7 +8143,7 @@ extern void OnFileEvent__12CItemBoxInfoFP10CEventFile(int);
 // .data 0x88: CItemBoxInfo2 vtable (RTTI + dtor + IWorkEvent slots).
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
 void* lbl_eu_80534A90[34] = {
-    (void*)lbl_eu_806626D0, 0, (void*)__dt__13CItemBoxInfo2Fv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0x28+0
+    (void*)__RTTI__13CItemBoxInfo2, 0, (void*)__dt__13CItemBoxInfo2Fv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0x28+0
     (void*)OnFileEvent__13CItemBoxInfo2FP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0x28+10
     (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0x28+20
     (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0x28+30
@@ -8213,7 +8163,7 @@ const void* lbl_eu_80534B18[4] = {
 // .data 0x88: CItemBoxInfo vtable.
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80534B28[34] = {
-    (void*)lbl_eu_806626D8, 0, (void*)__dt__12CItemBoxInfoFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xC0+0
+    (void*)__RTTI__12CItemBoxInfo, 0, (void*)__dt__12CItemBoxInfoFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xC0+0
     (void*)OnFileEvent__12CItemBoxInfoFP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0xC0+10
     (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0xC0+20
     (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0xC0+30

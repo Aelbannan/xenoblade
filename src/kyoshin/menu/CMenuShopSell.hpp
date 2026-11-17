@@ -1,186 +1,53 @@
 #pragma once
 
 #include <types.h>
-#include <monolib/work/CProcess.hpp>
-#include <monolib/scn/IScnRender.hpp>
+#include "kyoshin/IUICf.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
-#include "kyoshin/CItemBoxGrid.hpp"
 
+class CProcess;
 class CScn;
-
-/* 8-byte copy unit used by the sell-screen data blob. MenuShopSellCopyData copies
- * the 256-item array as one struct assignment, which MWCC lowers to the
- * retail `mtctr` + `lwzu/stwu` counted loop (same shape as CMenuShopBuy's
- * ShopBuyDataItem blob copies). */
-struct ShopSellDataItem {
-    u32 lo;  // +0x0
-    u32 hi;  // +0x4
-};
-
-/* 0x800-byte array wrapper (whole-struct assignment emits the counted copy
- * loop; C arrays are not assignable directly). */
-struct ShopSellDataItems {
-    ShopSellDataItem v[256];  // 0x800 bytes
-};
-
-/* 0x806-byte sell data blob: the item array lives at +0x4 (offset +0x0 is
- * skipped by MenuShopSellCopyData) with a trailing u16 at +0x804. */
-struct ShopSellData {
-    u32 mCount;                   // +0x0 (not copied)
-    ShopSellDataItems mItems;     // +0x4..+0x803
-    u16 mField804;                // +0x804
-};
-
-/* 0x18-byte cursor object. MenuShopSellCopyCursor copies the +0x4..+0x15 region
- * (4 words + 2 bytes); callers pass the object base, so member offsets are
- * absolute within the object. */
-struct ShopSellCursor18 {
-    u32 field_0x0;    // +0x0 (not copied)
-    u32 field_0x4;    // +0x4
-    u32 field_0x8;    // +0x8
-    u32 field_0xC;    // +0xC
-    u32 field_0x10;   // +0x10
-    u8 field_0x14;    // +0x14
-    u8 field_0x15;    // +0x15
-};
+class CItemBoxGrid;
 
 /*
- * Shop sell menu screen process.
+ * Shop sell menu screen process (singleton, built by create()).
  *
- * Layout mirrors the CMenuGCItem skeleton (retail offsets):
- *   0x00: CProcess -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8 mField54 -- closing-state flag (MenuShopSellHandlePhase3)
- *   0x58: IScnRender -- render-callback subobject (member, vptr)
+ * Layout (retail offsets):
+ *   0x00: IUICf task base (CTTask<IUICf>, mField54/mField55 at 0x54/0x55)
+ *   0x58: IScnRender render-callback subobject (sub-vtable)
  *   0x5C: CScn* mScene -- owning scene (removeRenderCB target in Term)
- *   0x60: CBgTex -- background layout widget (0x20 bytes)
- *   0x80: CTitleAHelp -- title/help bar (0x38 bytes)
- *   0xB8: CItemBoxGrid -- item grid (vptr subobject; storage padded below)
+ *   0x60: CBgTex mBgTex -- background layout widget (0x20 bytes)
+ *   0x80: CTitleAHelp mTitleAHelp -- title/help bar (0x38 bytes)
+ *   0xB8: CItemBoxGrid storage (raw; built and destroyed through its C-ABI ctor/dtor)
  *  0x4AC4: u8 mState -- phase/state indicator (MenuShopSellHandlePhase1)
  */
-class CMenuShopSell : public CProcess {
+class CMenuShopSell : public IUICf, public IScnRender {
 public:
-    CMenuShopSell();
+    CMenuShopSell(CScn* scene);
     virtual ~CMenuShopSell();
     virtual void Init();
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
 
-    // IScnRender vtable this-adjusting thunks
-    void MenuShopSellRenderThunk58();
-    void MenuShopSellDtorThunk58();
+    static CMenuShopSell* create(CProcess* parent, CScn* scene);
+    static CMenuShopSell* sInstance;
 
-    // CProcess base occupies 0x00-0x3B; vtable pointer-to-member data follows.
-    u32 ptmf0[3];               // 0x3C-0x47: vtable pointer-to-member data
-    u32 ptmf1[3];               // 0x48-0x53: vtable pointer-to-member data
-    u8 mField54;                // 0x54: closing-state flag
-    u8 mField55;                // 0x55
-    u8 _pad56[2];               // 0x56-0x57
-    IScnRender mIScnRender;     // 0x58: render-callback subobject (vptr)
-    CScn* mScene;               // 0x5C: owning scene
-    CBgTex mBgTex;              // 0x60
-    CTitleAHelp mTitleAHelp;    // 0x80
-    CItemBoxGrid mItemBoxGrid;  // 0xB8 (vptr-only subobject; storage padded below)
-    u8 _padGrid[0x4AC4 - 0xBC]; // 0xBC-0x4AC3
-    u8 mState;                  // 0x4AC4
+    CItemBoxGrid* itemBoxGrid() { return reinterpret_cast<CItemBoxGrid*>(mItemBoxGrid); }
+
+    CScn* mScene;                    // 0x5C
+    CBgTex mBgTex;                   // 0x60
+    CTitleAHelp mTitleAHelp;         // 0x80
+    u8 mItemBoxGrid[0x4AC4 - 0xB8];  // 0xB8: CItemBoxGrid storage
+    u8 mState;                       // 0x4AC4
 };
 
-extern "C" __declspec(noinline) CMenuShopSell* __ct__CMenuShopSell(CMenuShopSell* self, CScn* scene);
-extern "C" CMenuShopSell* __dt__13CMenuShopSellFv(CMenuShopSell* self, int flags);
-extern "C" void Init__13CMenuShopSellFv();
-extern "C" void Term__13CMenuShopSellFv();
-extern "C" void Move__13CMenuShopSellFv();
-extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self);
 extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void MenuShopSellCopyData(void*, void*);
-extern "C" CMenuShopSell* MenuShopSellCreateSingleton(CProcess* parent, CScn* scene);
 extern "C" bool MenuShopSellIsCreated();
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self);
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self);
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* self);
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self);
-
-// Base/subobject ctors (retail keeps the unmangled names at these call sites).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 id);
-extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
-
-// vtable / PMF shared data (MWCC does not mangle global-scope data names).
-extern u32 __ptmf_null[3];            // null pointer-to-member-function constant
-// Temporary (CProcess) vtable, pre-PMF copy; overwritten by the composite vtable.
-extern char lbl_eu_8052BF70[];
-// CMenuShopSell composite vtable; IScnRender sub-vtable at +0x24.
-extern char lbl_eu_80532650[];
-
-/* Local shim for cf::CfPadData - only the flag words MenuShopSellHandlePhase2 reads
- * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
- * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
-struct ShopSellPadData {
-    u32 mHeldFlags;                   // +0x00 (CPad::mHeldButtonFlags)
-    u32 mPressedFlags;                // +0x04 (CPad::mPressedButtonFlags)
-    u8 _pad08[0x104 - 0x08];          // 0x08..0x103
-    u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
-};
-
-// MenuShopSellHandlePhase2 pad/flag callees (retail unmangled names). IsItemBoxActive is
-// declared int so the caller compares with cmpwi directly; GetPromptState is
-// declared int so the (u8) cast at the tail emits the retail clrlwi.
-extern "C" int MenuTutorialIsCreated();
-extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void func_801CCAF0(CItemBoxGrid* self);
-extern "C" int IsItemBoxActive(CItemBoxGrid* self);
-extern "C" void HandleCancelBtn(CItemBoxGrid* self, u32 arg);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
-extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
-extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
-extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
-extern "C" void OpenSortMenu(CItemBoxGrid* self);
-extern "C" void TickItemBoxGrid(CItemBoxGrid* self);
-extern "C" void SelectCatRow(CItemBoxGrid* self);
-extern "C" int GetPromptState(CItemBoxGrid* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-
-// Retail-unmangled callee names (US strips the member manglings for these
-// func_ helpers; GetField61 keeps its bare name too). int returns keep the
-// caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void UnloadItemBox(CItemBoxGrid* self);
-extern "C" int GetField61(CItemBoxGrid* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int IsItemBoxReady(CItemBoxGrid* self);
-extern "C" void InitItemDisplay(CItemBoxGrid* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void UpdateItemBox(CItemBoxGrid* self);
-extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
-
-// Subobject dtors (retail keeps the C++ mangled names) and the game-side
-// CProcess dtor wrapper (defined in CMainMenu.cpp).
-extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
-extern "C" void __dt__800FED0C(void* self, int flags);
-
-// nw4r DrawInfo C-ABI ct/dt (retail emits the direct calls; a C++ local would
-// virtual-dispatch its scope-exit destructor). SetWideLocAdjust keeps its mangled
-// nw4r form, so it is declared outside extern "C" for MWCC to re-mangle it.
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-
-// Shop-sell singleton flag (.sbss; cleared by Term).
-extern u32 lbl_eu_806642F0;
-// Render-gate mode bitfield (.sbss; bit 21 = busy).
-extern u32 lbl_eu_80663E28;

@@ -45,6 +45,9 @@ public:
     void Set(TPLPalette* pPalette, u32 id);
     void Set(const TPLDescriptor* pDesc);
 
+    void ReplaceImage(TPLPalette* pPalette, u32 id);
+    void ReplaceImage(const TPLDescriptor* pDesc);
+
     void SetNoWrap(const TexMap& rOther);
     void SetNoWrap(const TPLDescriptor* pDesc);
 

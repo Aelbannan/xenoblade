@@ -217,14 +217,7 @@ public:
 
 } // namespace cf
 
-// 8-byte stack holder around a CfObjEnumList* (CTaskGame_enumListCtor ctor /
-// __dt__80043E88 dtor; CTaskGame_enumListGet reads the wrapped list pointer).
-struct CfEnumListHolder {
-    void* list;  // 0x0
-    u32 handle;  // 0x4
-};
-
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by CfEnumListHolder::get(): element count at +0x620.
 struct CfEnumList {
     u8 _00[0x620];
     u32 count;  // 0x620
@@ -259,11 +252,8 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Direct (non-inlinable) call to the CtrlPc destructor (retail symbol name).
 extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).
-extern "C" void CTaskGame_enumListCtor(void* holder);
-extern "C" void* CTaskGame_enumListGet(void* holder);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* __ct__800FB044(void* list, f32 radius, void* pos, int arg);
-extern "C" void __dt__80043E88(void* holder, int flags);
 extern "C" void* getObjectIdAt(void* list, int index);
 // CBattleManager singleton + actor-id query helper (retail C-ABI names).
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.

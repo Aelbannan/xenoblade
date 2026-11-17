@@ -82,7 +82,7 @@ public:
     CCur18 mCursor;                          // +0x174
     u8 mSystemWindow[0x3C];                  // +0x18C CSysWin storage (raw;
                                              // ctor/dtor driven via C-ABI
-                                             // __ct__CSysWin/__dt__7CSysWinFv)
+                                             // __ct__7CSysWinFUc/__dt__7CSysWinFv)
     u8 mMaxVisibleItems;                     // +0x1C8
     u8 mHasSpecialItem;                      // +0x1C9
     u8 mPaneVisible[6];                      // +0x1CA

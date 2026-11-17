@@ -162,7 +162,7 @@ extern "C" int GetField61(CItemBoxGrid* self);
 
 // 0x10-byte region copy helper used by the CBgTex copy routine (and the other
 // menu widget copy ctors); retail keeps the unmangled name.
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 
 // CBgTex field-by-field copy helper (retail func_ name; symbol map resolves
 // the C-linkage name back to the unmangled ItemEx_CopyBgTex).
@@ -179,7 +179,7 @@ extern "C" void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src);
 extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
+extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void beginClose(CTitleAHelp* self);
@@ -215,12 +215,9 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
 extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg);
 
-// cbRenderBefore gates / draw pipeline (retail verbatim names; the DrawInfo
- // ct/dt keep their pre-mangled forms - a C++ local would virtual-dispatch).
+// cbRenderBefore gates / draw pipeline (retail verbatim names).
 extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
 extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);

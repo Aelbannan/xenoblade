@@ -103,7 +103,7 @@ extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
 extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
 extern "C" u32 lbl_eu_8056C700[];  // forward (incomplete): see .data note
 extern "C" u32 lbl_eu_8056C728[];  // forward (incomplete): see .data note
-extern "C" u32 lbl_eu_80663700[2] = { (u32)&lbl_eu_80522D90, (u32)&lbl_eu_8056C700 };
+extern "C" u32 __RTTI__11CDeviceFont[2] = { (u32)&lbl_eu_80522D90, (u32)&lbl_eu_8056C700 };
 extern "C" u32 lbl_eu_80663708[2] = { (u32)&lbl_eu_80522D9C, (u32)&lbl_eu_8056C728 };
 extern "C" u32 lbl_eu_80663710[2] = { (u32)&lbl_eu_80522DB8, 0x00000000 };
 
@@ -155,7 +155,7 @@ CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
 // === .data definitions (moved below the ctor: see incomplete-decl note) ===
 // CDeviceFont vtable (160B): IWorkEvent dispatcher + CWorkThread overrides.
 extern "C" u32 lbl_eu_8056C660[40] = {
-    (u32)&lbl_eu_80663700, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&__RTTI__11CDeviceFont, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
     (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
     (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
     (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,

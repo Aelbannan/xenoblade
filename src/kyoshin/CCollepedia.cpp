@@ -11,6 +11,7 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 void playUISound(u32);
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
@@ -840,7 +841,7 @@ CCollepedia::CCollepedia() {
     __ct__CCur07((u8*)this + 0x54, nullptr);
     __ct__CCLPCur((CCLPCur*)((u8*)this + 0x6C), nullptr);
     __ct__CCur18((CCur18*)((u8*)this + 0x84), nullptr);
-    __ct__CSysWin((CSysWin*)((u8*)this + 0x9C), 0);
+    __ct__7CSysWinFUc((CSysWin*)((u8*)this + 0x9C), 0);
 
     field_D8 = 0;
     field_D9 = 0;
@@ -851,7 +852,7 @@ CCollepedia::CCollepedia() {
     // Stack temporary window, re-initialized then copied over the embedded
     // window body (everything after the vtable pointer).
     u8 wt[0x3C];
-    __ct__CSysWin((CSysWin*)wt, 0);
+    __ct__7CSysWinFUc((CSysWin*)wt, 0);
     *(CLPSysWinBody*)((u8*)this + 0xA0) = *(CLPSysWinBody*)&wt[4];
     __dt__7CSysWinFv(wt, -1);
 

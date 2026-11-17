@@ -178,7 +178,7 @@ def check_object_size(
         spare = budget - decomp_text
         notes.append(f"within split budget (0x{spare:X} spare)")
     if excluded:
-        notes.append(f"{len(excluded)} weak-dedup exclusion(s)")
+        notes.append(f"{len(excluded)} linked-view exclusion(s)")
 
     return ObjectSizeCheck(
         unit_hint=unit_hint,

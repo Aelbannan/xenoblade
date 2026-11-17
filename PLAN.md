@@ -267,7 +267,7 @@ Adopted **Option C, transitioned through Option A labelling**
   constants (e.g. `ml::pi` in `MathConstants.cpp`, defined with an `extern const` in scope).
   Fix boundaries rather than labelling units code-only for `.sdata2`.
 
-### 17.8 Linker weak dedup in the unit gates (decision 2026-10-24)
+### 17.8 Linker weak dedup and dead-stripping in the unit gates (decisions 2026-10-24, 2026-11-17)
 
 Retail split objects and `splits.txt` budgets come from the **linked** DOL. mwld keeps one copy of
 each weak definition (the first one it links) and discards the others. It then dead-strips data
@@ -285,18 +285,42 @@ extab lines:
 
 - A decomp symbol is excluded **only** if it is `STB_WEAK`, defined in the object, and the same
   name is in `config/<region>/symbols.txt` at an address that `splits.txt` assigns to a
-  **different** unit. Global and local symbols are never excluded. Neither are weak symbols that
-  retail places in this unit or whose address belongs to no split unit.
+  **different** unit. Weak symbols that retail places in this unit, or whose address belongs to no
+  split unit, are not deduplicated.
 - Local data is also excluded when **every** relocation that references it comes from an excluded
-  range. This is computed from relocations to a fixpoint, with no name lists. It covers the RTTI
-  name string, and the `extabindex` triple and `extab` record of an excluded function.
+  weak copy. This is computed from relocations to a fixpoint, with no name lists. It covers the
+  RTTI name string, and the `extabindex` triple and `extab` record of an excluded function.
+- **Dead-stripping (2026-11-17).** mwld also garbage-collects functions nothing references:
+  compiler-generated destructors of header classes (`ut::LinkListNode`, `ut::LinkList<T,N>`, an
+  anonymous-namespace `NonCopyable`) and real out-of-line functions that were inlined into every
+  caller. Source must keep these in their original shape; marking them `inline` (or deleting
+  them) to fit the split is not allowed. A function symbol of any binding is excluded as link-dead
+  when all of these hold:
+  - its name (or a `retail__suffix` flat spelling of it) is nowhere in `symbols.txt`;
+  - nothing the object retains references it. This is a reachability pass over the object's
+    relocations. A function's own `extabindex`/`extab` records do not keep it alive, and a
+    global/weak data object with no retail name only passes liveness on from what references it;
+  - MWCC did not flag it force-active in `.comment` (`__declspec(force_export)`,
+    `#pragma force_active`); such symbols are roots, as they are for mwld;
+  - **every** retail symbol in this unit's `.text` range is defined by the same name in the
+    object. In a unit that fails this, an unknown decomp name may be a retail function under
+    another spelling, so nothing in it is treated as link-dead.
+- A link-dead function takes its `extabindex` triple and `extab` record with it. It also takes a
+  global/weak data object with no retail name (the base-class vtable only a dead ctor installs)
+  when every reference to that object comes from an excluded range **and** every retail symbol
+  in this unit's slice of that data section is spelled the same way in the object. **Local** data
+  of a link-dead function stays: retail keeps the statics and literals of functions it stripped
+  (`dvd_broadway` keeps `coverStatus`/`coverRegister`).
+- The rule only removes what retail demonstrably lacks. A pin function added to keep data alive
+  is now excluded like any other unreferenced function, so it no longer counts toward the split.
 - References to an excluded weak symbol become UNDEF references by name. They resolve through
   `symbols.txt` to the surviving retail copy, as in the link.
 - Retail-only **link tail padding** is accepted in `data_match.check_data_sections`. A retail data
   section may run past the decomp section by fewer bytes than the retail section alignment, if
   those bytes are zero, carry no relocation, and end on that alignment. This is the padding mwld
   inserts before the next object.
-- Every exclusion is printed (hexdiff `weak-dedup: excluded ...`, `data diff`) and is never silent.
+- Every exclusion is printed with its reason (`linked-view: excluded ...` in hexdiff, `run.py size`
+  and `data diff`) and is never silent. The cached linked object is keyed on the exclusion set.
   `run.py link-gate` stays the end-to-end check that mwld resolves the deduplicated copies.
   Tests: `tools/coop/tests/test_weak_dedup.py`.
 

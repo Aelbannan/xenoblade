@@ -1,8 +1,6 @@
-#define ISCN_RENDER_NO_DTOR // see CMenuSkipTimer.hpp
 // Skip-timer widget: shown during cutscene skips.
-// Matches CMenuTutorial's pattern (CProcess + render-callback MI, free
-// adjuster thunks).
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuSkipTimer.hpp"
 
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -14,185 +12,27 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/core/CPadManager.hpp"
+#include "kyoshin/CSkipTimerImports.hpp"
+#include "kyoshin/menu/CMenuSkipTimerImports.hpp"
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
 
-// ---------- CMenuSkipTimer ctor/dtor ----------
+CMenuSkipTimer::CMenuSkipTimer(CProcess* parent)
+    : mParentRef(parent), mBgTex(0), mTitleAHelp(0, 0), mFlag3(0) {}
 
-/* Retail constructor symbol (unmangled global in US). Written as a C-linkage
- * free function (CTaskGameEvt / CQuestWindow idiom) so the factory
- * (SkipTimer_CreateInstance) emits a real bl to it, and returns `this` in r3 like a
- * real constructor (retail relies on it). A member constructor would mangle
- * to __ct__14CMenuSkipTimerFPC8CProcess and trigger vtable emission; the
- * free-function form reproduces the retail byte-for-byte store sequence. */
-extern "C" __declspec(noinline) CMenuSkipTimer* __ct__CMenuSkipTimer(CMenuSkipTimer* self, CProcess* parent) {
-    // Base CProcess ctor (the CTTask<IUICf> inline ctor is inlined below).
-    __ct__8CProcessFv(self);
+CMenuSkipTimer::~CMenuSkipTimer() {}
 
-    u32* p = reinterpret_cast<u32*>(self);
-
-    // Interim CTTask<IUICf> vtable at +0x10 (overwritten by the final store).
-    p[4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
-
-    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48) in the retail store
-    // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50 (lwzu base-establish + load-both
-    // / store-swapped idiom; cf. CTaskGameEvt).
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    p[0x10] = w1;        // 0x40 mMoveFunc[1]
-    p[0xF] = w0;         // 0x3C mMoveFunc[0]
-    u32 w2 = *src++;     // load [2] after the w1 store (retail loads it late)
-    p[0x11] = w2;        // 0x44 mMoveFunc[2]
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    p[0x13] = w0;        // 0x4C mDrawFunc[1]
-    p[0x12] = w1;        // 0x48 mDrawFunc[0]
-    w2 = *src++;
-    p[0x14] = w2;        // 0x50 mDrawFunc[2]
-
-    // Intermediate flag bytes (CMenuSkipTimerBase), then the final vtable +
-    // IScnRender sub-vtable + parent reference.
-    self->mFlag1 = 0;
-    self->mFlag2 = 0;
-    char* vtbl = lbl_eu_80539780;
-    p[4] = (u32)vtbl;
-    p[0x16] = (u32)(vtbl + 0x24);   // 0x58 render-callback vtable
-    self->mParentRef = parent;
-
-    // Embedded widget construction.
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CSkipTimer(&self->mTimerData);
-
-    self->mFlag3 = 0;
-
-    return self;
-}
-
-/* Retail destructor symbol (member-mangled name emitted verbatim through C
- * linkage). Written as a free function with an explicit flags parameter (same
- * scheme as CMenuPlayAward / CMenuOption / CMenuSave): a real member
- * destructor would make MWCC auto-emit the class vtable, the implicit base
- * dtors and an @88@__dt__ this-adjusting thunk, none of which exist in the
- * retail object. Subobjects are destroyed in reverse construction order with
- * the -1 subobject flag, then the game-side CProcess dtor wrapper
- * __dt__800FED0C with flag 0, then conditional operator delete when flags > 0. */
-extern "C" CMenuSkipTimer* __dt__14CMenuSkipTimerFv(CMenuSkipTimer* self, int flags) {
-    if (self != 0) {
-        __dt__10CSkipTimerFv(&self->mTimerData, -1);
-        __dt__11CTitleAHelpFv(&self->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&self->mBgTex, -1);
-        __dt__800FED0C(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
-/* Re-initialise each embedded widget via a temporary object + field copy,
- * following CMenuTutorial::Init / CMenuKizunaTalkList::Init. Each widget is
- * constructed on the stack, its unk4 sub-region rebuilt with its copy-ctor,
- * the remaining scalar fields copied out, the temp destroyed, then the member's
- * load/readFile helper is invoked. Finally the widget is registered as an
- * IScnRender render callback on its parent scene. */
 void CMenuSkipTimer::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
-    // --- Re-initialise the embedded CBgTex via a temporary ---
-    // NOTE: the temp is viewed through per-statement casts, not a named
-    // CBgTex* local: a persistent local costs MWCC an extra callee-saved
-    // register (stmw vs stw prologue) and breaks the match.
-    u8 tempBgTex[0x20];
-    __ct__6CBgTexFUc(tempBgTex, 0);
-
-    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
-    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
-    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tempBgTex)->mLayout;
-    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tempBgTex)->mLayoutReady;
-    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tempBgTex)->mLoaded;
-    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tempBgTex)->mPtmMode;
-    __dt__6CBgTexFv(tempBgTex, -1);
-
+    mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = BdatTouchStringCell(lbl_eu_80510540, lbl_eu_80510540 + 9, 0x35);
-
-    u8 tempTitle[0x38];
-    __ct__CTitleAHelp(tempTitle, name, 0x75);
-
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
-    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
-    mTitleAHelp.mArcResourceAccessor = reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
-    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
-    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
-    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
-    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
-    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
-    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
-    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
-    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
-    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
-    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
-    __dt__11CTitleAHelpFv(tempTitle, -1);
-
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell(lbl_eu_80510540, lbl_eu_80510540 + 9, 0x35), 0x75);
     mTitleAHelp.CTitleAHelp_load();
 
-    // --- Re-initialise the embedded CSkipTimer via a temporary ---
-    u8 tempSkipTimer[0x98];
-    __ct__CSkipTimer((CSkipTimer*)tempSkipTimer);
-
-    // NOTE: the temp is viewed through per-statement casts, not a named
-    // CSkipTimer* local: a persistent local costs MWCC an extra callee-saved
-    // register (stmw vs stw prologue) and breaks the match. The two opaque
-    // sub-blobs (CSysWin panel / CSkipTimer2 controller) are copied through
-    // member-rooted array indexing for the same reason.
-    __ct__UnkClass_8011C974(&mTimerData.mMemRegion, &reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mMemRegion);
-    mTimerData.mFileHandle = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mFileHandle;
-    mTimerData.mLayout = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mLayout;
-    mTimerData.mLayout2 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mLayout2;
-    mTimerData.mAnimTransform20 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mAnimTransform20;
-    mTimerData.mAnimTransform24 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mAnimTransform24;
-    mTimerData.mField28 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField28;
-    mTimerData.mField29 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField29;
-    mTimerData.mField2A = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2A;
-    mTimerData.mField2B = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2B;
-    mTimerData.mField2C = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2C;
-    // s16 view: retail copies this halfword with a sign-extending load
-    // (lha), while the declared u16 field would emit lhz.
-    *(s16*)&mTimerData.mField2E = *(s16*)&tempSkipTimer[0x2e];
-    mTimerData.mActive = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mActive;
-
-    __ct__UnkClass_8011C974(&mTimerData.mSysWinData[4], &tempSkipTimer[0x38]);
-    *(u32*)&mTimerData.mSysWinData[0x14] = *(u32*)&tempSkipTimer[0x48];
-    *(u32*)&mTimerData.mSysWinData[0x18] = *(u32*)&tempSkipTimer[0x4c];
-    *(u32*)&mTimerData.mSysWinData[0x1c] = *(u32*)&tempSkipTimer[0x50];
-    *(u32*)&mTimerData.mSysWinData[0x20] = *(u32*)&tempSkipTimer[0x54];
-    *(u32*)&mTimerData.mSysWinData[0x24] = *(u32*)&tempSkipTimer[0x58];
-    mTimerData.mSysWinData[0x28] = tempSkipTimer[0x5c];
-    *(u32*)&mTimerData.mSysWinData[0x2c] = *(u32*)&tempSkipTimer[0x60];
-    *(u32*)&mTimerData.mSysWinData[0x30] = *(u32*)&tempSkipTimer[0x64];
-    mTimerData.mSysWinData[0x34] = tempSkipTimer[0x68];
-    mTimerData.mSysWinData[0x35] = tempSkipTimer[0x69];
-    mTimerData.mSysWinData[0x36] = tempSkipTimer[0x6a];
-    mTimerData.mSysWinData[0x37] = tempSkipTimer[0x6b];
-    mTimerData.mSysWinData[0x38] = tempSkipTimer[0x6c];
-    mTimerData.mSysWinData[0x39] = tempSkipTimer[0x6d];
-
-    __ct__UnkClass_8011C974(&mTimerData.mSkipTimer2Data[4], &tempSkipTimer[0x74]);
-    *(u32*)&mTimerData.mSkipTimer2Data[0x14] = *(u32*)&tempSkipTimer[0x84];
-    *(u32*)&mTimerData.mSkipTimer2Data[0x18] = *(u32*)&tempSkipTimer[0x88];
-    *(u32*)&mTimerData.mSkipTimer2Data[0x1c] = *(u32*)&tempSkipTimer[0x8c];
-    mTimerData.mSkipTimer2Data[0x20] = tempSkipTimer[0x90];
-    mTimerData.mSkipTimer2Data[0x21] = tempSkipTimer[0x91];
-    mTimerData.mSkipTimer2Data[0x22] = tempSkipTimer[0x92];
-    mTimerData.mSkipTimer2Data[0x23] = tempSkipTimer[0x93];
-    mTimerData.mSkipTimer2Data[0x24] = tempSkipTimer[0x94];
-    __dt__10CSkipTimerFv(tempSkipTimer, -1);
-
+    mTimerData = CSkipTimer();
     CSkipTimer_BeginLoad(&mTimerData);
 
     // Register the widget's IScnRender subobject as a render callback on its
@@ -209,7 +49,7 @@ void CMenuSkipTimer::Term() {
     teardown(&mTitleAHelp);
     CSkipTimerTeardown(&mTimerData);
 
-    lbl_eu_80664A48 = 0;
+    sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -241,7 +81,7 @@ void CMenuSkipTimer::Move() {
                 playUISound(6);
             }
             mFlag3 = 4;
-            mFlag1 = 1;
+            mField54 = 1;
         }
     }
 
@@ -264,38 +104,27 @@ void CMenuSkipTimer::cbRenderBefore() {
     if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // (a C++ local would virtual-dispatch its scope-exit destructor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    CSkipTimerDraw(&mTimerData, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
+    CSkipTimerDraw(&mTimerData, &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
 
 // ---------- Factory: lazily allocate + construct + register the widget ----------
 
-/* Retail ASM:
- *   if (lbl_eu_80664A48 != 0) return 0;
- *   obj = allocate(0x154, getWorkMem());
- *   if (obj != 0) obj = __ct__(obj, parent);
- *   lbl_eu_80664A48 = obj; obj->Regist(self, 0); return lbl_eu_80664A48;
- */
-extern "C" CMenuSkipTimer* SkipTimer_CreateInstance(CProcess* self, CProcess* parent) {
-    if (lbl_eu_80664A48 != 0) {
-        return 0;
+CMenuSkipTimer* CMenuSkipTimer::sInstance;
+
+CMenuSkipTimer* CMenuSkipTimer::create(CProcess* self, CProcess* parent) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
-    CMenuSkipTimer* obj = (CMenuSkipTimer*)mtl::MemManager::allocate(
-        0x154, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuSkipTimer(obj, parent);
-    }
-    lbl_eu_80664A48 = (unsigned long)obj;
-    obj->Regist(self, 0x0);
-    return (CMenuSkipTimer*)lbl_eu_80664A48;
+
+    CMenuSkipTimer* menu = new (CWorkThreadSystem::getWorkMem()) CMenuSkipTimer(parent);
+    sInstance = menu;
+    menu->Regist(self, false);
+    return sInstance;
 }
 
 
@@ -325,7 +154,7 @@ extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
     }
 }
 
-extern "C" unsigned long SkipTimer_IsActiveFlag(void) { return lbl_eu_80664A48 != 0; }
+extern "C" unsigned long SkipTimer_IsActiveFlag(void) { return CMenuSkipTimer::sInstance != 0; }
 
 // When the title/help bar is idle and the timer widget is mid-anim, mark the
 // widget as having reached phase 2 (mFlag3 at 0x150).
@@ -379,26 +208,10 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
     }
 }
 
-// Same idle+advance check, but advances to phase 1 (writes mFlag1 at 0x54).
+// Same idle+advance check, but advances to phase 1 (writes mField54 at 0x54).
 extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
-        self->mFlag1 = 1;
+        self->mField54 = 1;
     }
-}
-
-
-// ---------- IScnRender vtable this-adjusting thunks ----------
-
-/* The cbRenderBefore render-callback thunk is auto-generated by MWCC
- * (@88@cbRenderBefore__14CMenuSkipTimerFv) because cbRenderBefore is virtual
- * in the +0x58 IScnRender subobject.
-
- * Dtor this-adjusting thunk (retail SkipTimer_ThunkDtor58): subi r3, r3, 0x58;
- * b __dt__. Tail-calls the destructor, leaving r4 (delete flag) as caller
- * leftover (same shape as CMenuTutorialList's CMenuTutorialList_DtorThunk58). */
-extern "C" void SkipTimer_ThunkDtor58(IScnRender* sub) {
-    // Cast to a one-arg pointer so the call emits only the this-adjustment
-    // and leaves r4 as caller leftover.
-    ((void (*)(void*))__dt__14CMenuSkipTimerFv)((CMenuSkipTimer*)((char*)sub - 0x58));
 }

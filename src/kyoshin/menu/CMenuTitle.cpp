@@ -1,12 +1,16 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuTitle
 // Replace stubs with high-level C/C++ during decomp.
 
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
 
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include <revolution/gx/GXPixel.h>
+#include <nw4r/lyt.h>
 #include "kyoshin/menu/CMenuTitle.hpp"
 
 // CfPadData access shim - only holds the flags this handler reads (see CfPadData.hpp).
@@ -21,85 +25,104 @@ struct CfPadDataLocal {
     u8 mTimers[0x20];           // 0x108
 };
 
-// ---------------------------------------------------------------------------
-// __ct__CMenuTitle: allocating factory constructor (retail unmangled symbol).
-// Allocates a fresh 0xF0-byte CMenuTitle, builds it (CProcess base, the two
-// null task-callback ptmf records, the two secondary-base vtable pointers,
-// the embedded CTitle), registers it under `_this` and returns the stored
-// singleton. Returns 0 when a singleton already exists.
-// ---------------------------------------------------------------------------
-CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
-    if (lbl_eu_80664C30 != 0) {
-        return 0;
+// CTTask<CMenuTitle>::~CTTask (us-802b8638) - empty body; MWCC emits the null
+// check, CProcess base dtor call and conditional operator delete.
+template<>
+CTTask<CMenuTitle>::~CTTask() {}
+
+// CMenuTitle::~CMenuTitle (us-802b8690) - the CTitle member and the CProcess
+// base are destroyed implicitly.
+CMenuTitle::~CMenuTitle() {}
+
+// CMenuTitle::Init (us-802b8700) - attach the render callback, then start
+// loading the title layouts.
+void CMenuTitle::Init() {
+    IScnRender* render = this;
+    mScene->addRenderCB(render, 0xd, 1);
+    CTitle_startLoad(&mTitle);
+}
+
+// CMenuTitle::Term (us-802b8750) - wait for draw completion, detach the render
+// callback, release the title and clear the singleton.
+void CMenuTitle::Term() {
+    CDeviceVI::waitForDrawDone();
+    IScnRender* render = this;
+    mScene->removeRenderCB(render);
+    CTitle_teardown(&mTitle);
+    sInstance = 0;
+}
+
+// CMenuTitle::Move (us-802b87a4) - dispatch the state handler table, then
+// advance the title.
+void CMenuTitle::Move() {
+    (this->*sStateFuncs[mState])();
+    CTitle_update(&mTitle);
+}
+
+// CMenuTitle::cbRenderBefore (us-802b87f0) - when the input-enable byte is
+// set, disable Z testing and draw the title with a layout DrawInfo.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
+
+void CMenuTitle::cbRenderBefore() {
+    if (mInputEnable != 0) {
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        SetWideLocAdjust(&drawInfo);
+        CTitle_draw(&mTitle, &drawInfo);
+    }
+}
+
+// Constructor (retail: the single allocating function, i.e. create()). Defined
+// inline here, used only by create().
+inline CMenuTitle::CMenuTitle(CScn* scene, CTitleAction* action) : mScene(scene) {
+    mState = 0;
+    mInputEnable = 1;
+    mInputLock = 1;
+    mProgress = 10.0f;
+    mTitle.field_0x20 = action;
+}
+
+CMenuTitle* CMenuTitle::sInstance;
+
+// Allocates the title menu on the work heap and registers it under `parent`.
+// Returns null when a title menu already exists.
+CMenuTitle* CMenuTitle::create(CProcess* parent, CScn* scene, CTitleAction* action) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
 
-    CMenuTitleCtorShim* shim = (CMenuTitleCtorShim*)mtl::MemManager::allocate(
-        0xf0, CWorkThreadSystem::getWorkMem());
-
-    if (shim != 0) {
-        // CProcess base first; the vtable slot is then overwritten with the
-        // final CMenuTitle vtable (retail stores the intermediate vtable
-        // before the callbacks, the final one last).
-        __ct__8CProcessFv((CProcess*)shim);
-        shim->vtable = lbl_eu_8053B1AC;
-
-        // Two null member-function-pointer records (task callbacks): 12-byte
-        // struct copies from the compiler's __ptmf_null table (one per slot;
-        // single materialization of the table base, like retail).
-        struct PTMF12 { u32 w[3]; };
-        *(PTMF12*)&shim->callbacks[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
-        *(PTMF12*)&shim->callbacks[3] = *(PTMF12*)(uintptr_t)__ptmf_null;
-        char* vt54 = &lbl_eu_8053B0B8[0x24]; // secondary-base vtable slot +0x54
-        char* vt58 = &lbl_eu_8053B0B8[0xac]; // secondary-base vtable slot +0x58
-
-        shim->vtable = lbl_eu_8053B0B8;
-        shim->field54 = vt54;
-        shim->field58 = vt58;
-        shim->parent = parent;
-
-        __ct__CTitle(&shim->mTitle);
-        shim->field_e8 = 0;
-        shim->field_e9 = 1;
-        shim->field_ea = 1;
-        shim->field_ec = lbl_eu_80668FD0;
-        shim->mTitle.field_0x20 = (CTitleAction*)arg2;
-    }
-
-    // Store the singleton (possibly null) and register as a child of `_this`;
-    // the return value is the stored singleton, reloaded after the call.
-    lbl_eu_80664C30 = (CMenuTitle*)shim;
-    ((CProcess*)shim)->Regist(_this, false);
-    return lbl_eu_80664C30;
+    CMenuTitle* menu = new (CWorkThreadSystem::getWorkMem()) CMenuTitle(scene, action);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 // CfGameManager one-arg controller-type query, kept as the retail mangled
 // C symbol (extern "C" stops C++ `__Fi` param mangling). The inline header
 // wrapper drops the -1 argument, so it cannot be used here.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int controllerType);
-extern "C" void CTitle_showMenu(CMenuTitleSub*);
+void CMenuTitle::stateSetReady() { mState = 1; }
 
-extern "C" void TitleMenuSetFlagE8(void* self) { ((CMenuTitleInput*)self)->field_e8 = 1; }
-
-void TitleMenuOnLoadDone(CMenuTitleInput* self) {
+void CMenuTitle::stateOnLoadDone() {
     // Opening menu: query the +0x60 sub-menu, flag this menu when it opens.
-    if (CTitle_isLoadDone(&self->mSub)) {
-        self->field_e8 = 0x2;
+    if (CTitle_isLoadDone(&mTitle)) {
+        mState = 0x2;
     }
 }
 
-void TitleMenuShowSub(CMenuTitleInput* self) {
-    self->field_e8 = 3;
-    CTitle_showMenu(&self->mSub);
+void CMenuTitle::stateShowSub() {
+    mState = 3;
+    CTitle_showMenu(&mTitle);
 }
 
-void TitleMenuOnAnimDone4(CMenuTitleInput* self) {
+void CMenuTitle::stateOnAnimDone4() {
     // Non-zero sub-menu query -> open the sub-menu transition state.
-    if (CTitle_isAnimDone(&self->mSub)) {
-        self->field_e8 = 0x4;
+    if (CTitle_isAnimDone(&mTitle)) {
+        mState = 0x4;
     }
 }
 
-void TitleMenuPollPress5(CMenuTitleInput* self) {
+void CMenuTitle::statePollPress() {
     CfPadDataLocal* pad =
         (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
 
@@ -107,41 +130,41 @@ void TitleMenuPollPress5(CMenuTitleInput* self) {
     // add the right-stick trigger bits (0x1fe0060f) to the common button bits.
     u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? 0x1fe0060fU : 0x1effU;
     if (pad->mPadPressedFlags & mask) {
-        self->field_e8 = 5;
-        CTitle_beginMenuOutro(&self->mSub);
-        self->field_ec = lbl_eu_80668FD0;
+        mState = 5;
+        CTitle_beginMenuOutro(&mTitle);
+        mProgress = 10.0f;
     }
 }
 
-void TitleMenuAdvanceProgress(CMenuTitleInput* self) {
+void CMenuTitle::stateAdvanceProgress() {
     // Sub-menu still closed: poll input and open it on the activation mask.
-    if (CTitle_isAnimDone(&self->mSub) == 0) {
+    if (CTitle_isAnimDone(&mTitle) == 0) {
         CfPadDataLocal* pad =
             (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
         u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                        ? 0x1fe0060fU
                        : 0x1effU;
         if (pad->mPadPressedFlags & mask) {
-            CTitle_stepLogoMenu(&self->mSub);
+            CTitle_stepLogoMenu(&mTitle);
         }
-        self->field_ec = lbl_eu_80668FD4;
+        mProgress = 0.0f;
     } else {
         // Sub-menu open: advance the progress float toward its threshold.
-        self->field_ec += lbl_eu_80668FD8;
-        if (self->field_ec < lbl_eu_80668FD0) {
+        mProgress += 1.0f;
+        if (mProgress < 10.0f) {
             return;
         }
-        self->field_ec = lbl_eu_80668FD0;
-        self->field_e8 = 6;
+        mProgress = 10.0f;
+        mState = 6;
     }
 }
 
-void TitleMenuHandleInput(CMenuTitleInput* self) {
+void CMenuTitle::stateHandleInput() {
     // Only accept input while enabled (field_e9) and not in the transient
     // field_ea state (e.g. during an animation/transition). The || guard
     // makes MWCC emit the retail branch-over-branch on the last disjunct
     // (beq exit / beq body / b exit).
-    if (self->field_e9 == 0 || self->field_ea != 0) {
+    if (mInputEnable == 0 || mInputLock != 0) {
         return;
     }
 
@@ -180,40 +203,47 @@ void TitleMenuHandleInput(CMenuTitleInput* self) {
 
         // Each branch handles one input; every path falls through to the exit.
         if (trigger1 != 0) {
-            if (CTitle_confirmSelection(&self->mSub) != 0) {
-                self->field_e8 = 8;
+            if (CTitle_confirmSelection(&mTitle) != 0) {
+                mState = 8;
             }
         } else if (trigger2 != 0) {
-            self->field_e8 = 7;
-            CTitle_beginLogoOutro(&self->mSub);
+            mState = 7;
+            CTitle_beginLogoOutro(&mTitle);
         } else if (dirButton != 0) {
-            CTitle_moveCursorUp(&self->mSub);
+            CTitle_moveCursorUp(&mTitle);
         } else if (cancelButton != 0) {
-            CTitle_moveCursorDown(&self->mSub);
+            CTitle_moveCursorDown(&mTitle);
         }
     }
 }
 
-void TitleMenuOnAnimDone2(CMenuTitleInput* self) {
+void CMenuTitle::stateOnAnimDone2() {
     // Non-zero sub-menu query -> re-open the sub-menu transition state.
-    if (CTitle_isAnimDone(&self->mSub)) {
-        self->field_e8 = 0x2;
+    if (CTitle_isAnimDone(&mTitle)) {
+        mState = 0x2;
     }
 }
 
-void TitleMenuOnAnimDone9(CMenuTitleInput* self) {
-    if (CTitle_isAnimDone(&self->mSub)) {
-        self->field_e8 = 0x9;
+void CMenuTitle::stateOnAnimDone9() {
+    if (CTitle_isAnimDone(&mTitle)) {
+        mState = 0x9;
     }
 }
 
-extern "C" void TitleMenuNoop(void) {}
+void CMenuTitle::stateNoop() {}
 
-extern "C" void TitleMenuDtorThunk54(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x54); }
-
-extern "C" void TitleMenuRenderBeforeThunk58(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuTitleFv)((char*)self - 0x58); }
-
-extern "C" void TitleMenuDtorThunk58(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x58); }
+const CMenuTitle::StateFunc CMenuTitle::sStateFuncs[10] = {
+    &CMenuTitle::stateSetReady,
+    &CMenuTitle::stateOnLoadDone,
+    &CMenuTitle::stateShowSub,
+    &CMenuTitle::stateOnAnimDone4,
+    &CMenuTitle::statePollPress,
+    &CMenuTitle::stateAdvanceProgress,
+    &CMenuTitle::stateHandleInput,
+    &CMenuTitle::stateOnAnimDone2,
+    &CMenuTitle::stateOnAnimDone9,
+    &CMenuTitle::stateNoop,
+};
 
 // --- CTTask<CMenuTitle> out-of-line specializations ---
 // MWCC lowers the PTMF dispatch to the retail __ptmf_test / __ptmf_scall calls

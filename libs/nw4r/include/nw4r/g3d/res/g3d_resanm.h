@@ -3,9 +3,6 @@
 #include <nw4r/types_nw4r.h>
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" const float lbl_eu_80669AB0; // 1.0f
-extern "C" const float lbl_eu_80669AB4; // 2.0f
-extern "C" const float lbl_eu_80669AB8; // 3.0f
 
 namespace nw4r {
 namespace g3d {

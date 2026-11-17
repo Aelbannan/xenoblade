@@ -555,9 +555,9 @@ extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" u32 __RTTI__10IWorkEvent;
 }
-extern "C" u32 lbl_eu_80663A10[2];  // RTTI locator (owned by CScnItemCamera.cpp)
+extern "C" u32 __RTTI__13CScnCameraMan[2];  // RTTI locator (owned by CScnItemCamera.cpp)
 extern "C" u32 lbl_eu_8056EA40[38] = {
-    (u32)&lbl_eu_80663A10, 0x00000000,
+    (u32)&__RTTI__13CScnCameraMan, 0x00000000,
     (u32)&CScnCameraManBlob::__dt__13CScnCameraManFv,
     (u32)&CScnCameraManBlob::WorkEvent1__13CScnCameraManFPvPCc,
     (u32)&CScnCameraManBlob::OnFileEvent__10IWorkEventFP10CEventFile,

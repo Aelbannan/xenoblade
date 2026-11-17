@@ -40,7 +40,7 @@ public:
     u8 field_0x30;                              // 0x30
     u8 field_0x31;                              // 0x31
     u8 _32[0x34 - 0x32];                        // 0x32
-    CBaseCur mCur22;                            // 0x34 (0x18 bytes)
+    CCur22 mCur22;                              // 0x34 (0x18 bytes)
     u8 field_0x4C;                              // 0x4C
     s8 field_0x4D;                              // 0x4D
     u8 field_0x4E;                              // 0x4E
@@ -225,8 +225,7 @@ extern "C" void scalePartySlotPane(CPartyState*, u32, const char*);
 // Cursor per-frame update (defined in the CCur unit).
 extern "C" void Cur_Update(void*);
 
-// Embedded cursor ctor/dtor (defined in the CCur unit).
-extern "C" CBaseCur* __ct__CCur22(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
+// Embedded cursor dtor (defined in the CCur unit).
 extern "C" CBaseCur* __dt__6CCur22Fv(CBaseCur*, int);
 
 // Internal helpers of this unit (unmangled retail symbols).

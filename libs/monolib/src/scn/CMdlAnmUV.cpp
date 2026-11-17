@@ -274,7 +274,7 @@ extern "C" __declspec(align(4)) const char lbl_eu_805247DC[0xC] = {
 // [.sdata] 0x80663C74-0x80663C88 (20B, 5 words) -- defined as 5 separate scalars to satisfy header's scalar decl for lbl_eu_80663C74
 // Header declares lbl_eu_80663C74 as u32; we define it and the following 4 words as separate globals placed contiguously in .sdata
 extern "C" __declspec(section ".sdata") u32 lbl_eu_80663C74 = (u32)&lbl_eu_8066B348;
-extern "C" u32 lbl_eu_80663C78 = (u32)&lbl_eu_805247D0;
+extern "C" u32 __RTTI__9CMdlAnmUV = (u32)&lbl_eu_805247D0;
 // zero-init would land in .sbss; const + explicit section keeps it PROGBITS
 // in .sdata (same recipe as CMdlAnmEye.cpp)
 extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663C7C = 0;
@@ -286,6 +286,6 @@ extern "C" u32 mdlAnmUVGetGlobal74() { return lbl_eu_80663C74; }
 
 // [.data] 0x805701C0-0x805701D0 (16B): CMdlAnmUV vtable
 extern "C" u32 lbl_eu_805701C0[4] = {
-    (u32)&lbl_eu_80663C78, 0x00000000,
+    (u32)&__RTTI__9CMdlAnmUV, 0x00000000,
     (u32)&AUBlob::__dt__9CMdlAnmUVFv, 0x00000000,
 };

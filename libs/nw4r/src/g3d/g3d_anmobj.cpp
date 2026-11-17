@@ -4,7 +4,6 @@
 // Retail .sdata2 zero constant ships from the nw4r data unit (nw4r_data.s);
 // referenced by name so no local pool is emitted.
 extern "C" {
-    extern const f32 lbl_eu_80669BC0; // 0.0f
 }
 
 namespace nw4r {
@@ -20,12 +19,12 @@ f32 PlayPolicy_Onetime(f32 start, f32 end, f32 frame) {
 f32 PlayPolicy_Loop(f32 start, f32 end, f32 frame) {
     f32 length = end - start;
 
-    if (frame >= lbl_eu_80669BC0) {
+    if (frame >= 0.0f) {
         return math::FMod(frame, length);
     }
 
     f32 offset = math::FMod(frame + length, length);
-    return offset + math::FSelect(offset, lbl_eu_80669BC0, length);
+    return offset + math::FSelect(offset, 0.0f, length);
 }
 
 void AnmObj::SetAnmFlag(AnmFlag flag, bool value) {

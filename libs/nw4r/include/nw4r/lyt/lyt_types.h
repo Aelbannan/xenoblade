@@ -75,6 +75,39 @@ struct Size {
 
 /******************************************************************************
  *
+ * AnimationShareInfo
+ *
+ ******************************************************************************/
+struct AnimationShareInfo {
+    const char* GetSrcPaneName() const {
+        return srcPaneName;
+    }
+    const char* GetTargetGroupName() const {
+        return targetGroupName;
+    }
+
+    char srcPaneName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0x0
+    char targetGroupName[NW4R_LYT_RES_NAME_LEN + 1]; // at 0x11
+    u8 padding[2];                                   // at 0x22
+};
+
+/******************************************************************************
+ *
+ * AnimationGroupRef
+ *
+ ******************************************************************************/
+struct AnimationGroupRef {
+    const char* GetName() const {
+        return name;
+    }
+
+    char name[NW4R_LYT_RES_NAME_LEN + 1]; // at 0x0
+    u8 flag;                              // at 0x11
+    u8 padding[2];                        // at 0x12
+};
+
+/******************************************************************************
+ *
  * AnimationLink
  *
  ******************************************************************************/

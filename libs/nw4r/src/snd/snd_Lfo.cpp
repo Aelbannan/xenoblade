@@ -4,51 +4,38 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u8 lbl_eu_8051FF40[0x28] = {
-    0x00, 0x06, 0x0C, 0x13, 0x19, 0x1F, 0x25, 0x2B, 0x31, 0x36, 0x3C, 0x41,
-    0x47, 0x4C, 0x51, 0x55, 0x5A, 0x5E, 0x62, 0x66, 0x6A, 0x6D, 0x70, 0x73,
-    0x75, 0x78, 0x7A, 0x7B, 0x7D, 0x7E, 0x7E, 0x7F, 0x7F, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
-
-// Retail .sdata2 constants referenced by name so no local pool is emitted.
-extern "C" {
-    extern const f32 lbl_eu_80669FB0; // 0.0f
-    extern const f32 lbl_eu_80669FB4; // 6.25f
-    extern const f32 lbl_eu_80669FB8; // 1000.0f
-    extern const f32 lbl_eu_80669FC8; // 4.0f
-    extern const f32 lbl_eu_80669FCC; // 32.0f
-    extern const f32 lbl_eu_80669FD0; // 127.0f
-}
-
-// Retail inlines this into GetValue and never emits a standalone body.
-static const int kTableSize = 32;
-
 static s8 GetSinIdx(int idx) {
-    if (idx < kTableSize) {
-        return lbl_eu_8051FF40[idx];
+    static const int TABLE_SIZE = 32;
+    static const s8 sinTable[TABLE_SIZE + 1] = {
+        0,   6,   12,  19,  25,  31,  37,  43,  49,  54,  60,
+        65,  71,  76,  81,  85,  90,  94,  98,  102, 106, 109,
+        112, 115, 117, 120, 122, 123, 125, 126, 126, 127, 127
+    };
+
+    if (idx < TABLE_SIZE) {
+        return sinTable[idx];
     }
 
-    if (idx < kTableSize * 2) {
-        return lbl_eu_8051FF40[kTableSize - (idx - kTableSize)];
+    if (idx < TABLE_SIZE * 2) {
+        return sinTable[TABLE_SIZE - (idx - TABLE_SIZE)];
     }
 
-    if (idx < kTableSize * 3) {
-        return -lbl_eu_8051FF40[idx - kTableSize * 2];
+    if (idx < TABLE_SIZE * 3) {
+        return -sinTable[idx - TABLE_SIZE * 2];
     }
 
-    return -lbl_eu_8051FF40[kTableSize - (idx - kTableSize * 3)];
+    return -sinTable[TABLE_SIZE - (idx - TABLE_SIZE * 3)];
 }
 
 void LfoParam::Init() {
-    depth = lbl_eu_80669FB0;
+    depth = 0.0f;
     range = 1;
-    speed = lbl_eu_80669FB4;
+    speed = 6.25f;
     delay = 0;
 }
 
 void Lfo::Reset() {
-    mCounter = lbl_eu_80669FB0;
+    mCounter = 0.0f;
     mDelayCounter = 0;
 }
 
@@ -63,21 +50,21 @@ void Lfo::Update(int msec) {
         mDelayCounter = mParam.delay;
     }
 
-    mCounter += mParam.speed * msec / lbl_eu_80669FB8;
+    mCounter += mParam.speed * msec / 1000.0f;
     mCounter -= static_cast<int>(mCounter);
 }
 
 f32 Lfo::GetValue() const {
-    if (lbl_eu_80669FB0 == mParam.depth) {
-        return lbl_eu_80669FB0;
+    if (0.0f == mParam.depth) {
+        return 0.0f;
     }
 
     if (mDelayCounter < mParam.delay) {
-        return lbl_eu_80669FB0;
+        return 0.0f;
     }
 
-    f32 value = GetSinIdx(static_cast<int>(lbl_eu_80669FC8 * (lbl_eu_80669FCC * mCounter))) /
-                lbl_eu_80669FD0;
+    f32 value = GetSinIdx(static_cast<int>(4.0f * (32.0f * mCounter))) /
+                127.0f;
 
     value *= mParam.depth;
     value *= mParam.range;

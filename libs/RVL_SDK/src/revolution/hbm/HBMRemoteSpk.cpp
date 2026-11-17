@@ -11,6 +11,7 @@ namespace homebutton {
 
 RemoteSpk* RemoteSpk::spInstance = NULL;
 
+
 void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) {
     s16 pcmBuffer[40];
     u8 adpcmBuffer[20];
@@ -72,6 +73,8 @@ void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) 
     }
 }
 
+
+
 void RemoteSpk::ClearPcm() {
     info[0].in_pcm = NULL;
     info[0].seId = -1;
@@ -82,6 +85,8 @@ void RemoteSpk::ClearPcm() {
     info[3].in_pcm = NULL;
     info[3].seId = -1;
 }
+
+
 
 RemoteSpk::RemoteSpk(void* pSpkSeBuf) {
     spInstance = this;
@@ -103,6 +108,8 @@ RemoteSpk::RemoteSpk(void* pSpkSeBuf) {
     }
 }
 
+
+
 RemoteSpk::~RemoteSpk() {
     spInstance = NULL;
     available = false;
@@ -113,6 +120,8 @@ RemoteSpk::~RemoteSpk() {
         OSCancelAlarm(&info[i].alarm);
     }
 }
+
+
 
 void RemoteSpk::Start() {
     if (!available) {
@@ -133,6 +142,8 @@ void RemoteSpk::Start() {
     }
 }
 
+
+
 void RemoteSpk::Stop() {
     OSCancelAlarm(&speakerAlarm);
 
@@ -141,11 +152,15 @@ void RemoteSpk::Stop() {
     }
 }
 
+
+
 void RemoteSpk::DelaySpeakerOnCallback(OSAlarm* pAlarm,
                                        OSContext* /* pContext */) {
     s32 chan = reinterpret_cast<s32>(OSGetAlarmUserData(pAlarm));
     s32 result = WPADControlSpeaker(chan, WPAD_SPEAKER_ON, &SpeakerOnCallback);
 }
+
+
 
 void RemoteSpk::SpeakerOnCallback(s32 chan, s32 result) {
     RemoteSpk* pRmtSpk = spInstance;
@@ -171,43 +186,15 @@ void RemoteSpk::SpeakerOnCallback(s32 chan, s32 result) {
     }
 }
 
-void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
-    if (!available) {
-        return;
-    }
 
-    s16* pPcm;
-    int length;
-    ARCFileInfo af;
-    ARCFastOpen(&handle, seID, &af);
 
-    pPcm = static_cast<s16*>(ARCGetStartAddrInMem(&af));
-    length = ARCGetLength(&af);
-
-    ARCClose(&af);
-
-    info[chan].cannotSendCnt = 0;
-    info[chan].seId = seID;
-    info[chan].length = length;
-    info[chan].vol = vol;
-    info[chan].in_pcm = pPcm;
+void RemoteSpk::DelaySpeakerOffCallback(OSAlarm* pAlarm,
+                                        OSContext* /* pContext */) {
+    s32 chan = reinterpret_cast<s32>(OSGetAlarmUserData(pAlarm));
+    WPADControlSpeaker(chan, WPAD_SPEAKER_PLAY, &SpeakerOffCallback);
 }
 
-bool RemoteSpk::isPlaying(s32 chan) const {
-    return info[chan].in_pcm != NULL;
-}
 
-bool RemoteSpk::isPlayingId(s32 chan, int seId) const {
-    if (isPlaying(chan) && info[chan].seId == seId) {
-        return true;
-    }
-
-    return false;
-}
-
-bool RemoteSpk::isPlayReady(s32 chan) const {
-    return info[chan].playReady != false;
-}
 
 void RemoteSpk::SpeakerOffCallback(s32 chan, s32 result) {
     RemoteSpk* pRmtSpk = spInstance;
@@ -235,11 +222,7 @@ void RemoteSpk::SpeakerOffCallback(s32 chan, s32 result) {
     }
 }
 
-void RemoteSpk::DelaySpeakerOffCallback(OSAlarm* pAlarm,
-                                        OSContext* /* pContext */) {
-    s32 chan = reinterpret_cast<s32>(OSGetAlarmUserData(pAlarm));
-    WPADControlSpeaker(chan, WPAD_SPEAKER_PLAY, &SpeakerOffCallback);
-}
+
 
 void RemoteSpk::Disconnect(s32 chan) {
     if (!available) {
@@ -262,5 +245,52 @@ void RemoteSpk::Disconnect(s32 chan) {
     info[chan].first = true;
     info[chan].playReady = false;
 }
+
+
+
+void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
+    if (!available) {
+        return;
+    }
+
+    s16* pPcm;
+    int length;
+    ARCFileInfo af;
+    ARCFastOpen(&handle, seID, &af);
+
+    pPcm = static_cast<s16*>(ARCGetStartAddrInMem(&af));
+    length = ARCGetLength(&af);
+
+    ARCClose(&af);
+
+    info[chan].cannotSendCnt = 0;
+    info[chan].seId = seID;
+    info[chan].length = length;
+    info[chan].vol = vol;
+    info[chan].in_pcm = pPcm;
+}
+
+
+
+bool RemoteSpk::isPlaying(s32 chan) const {
+    return info[chan].in_pcm != NULL;
+}
+
+
+
+bool RemoteSpk::isPlayingId(s32 chan, int seId) const {
+    if (isPlaying(chan) && info[chan].seId == seId) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
+bool RemoteSpk::isPlayReady(s32 chan) const {
+    return info[chan].playReady != false;
+}
+
 
 } // namespace homebutton

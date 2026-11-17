@@ -175,10 +175,7 @@ void CMenuSelectShop::Init() {
     loadShopWinArc(&mSelShop);
 
     // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
-    CCur18 rawCur;
-    __ct__CCur18(&rawCur, CUICfManager_getArcResourceAccessor());
-    mCursor = rawCur;
-    __dt__6CCur18Fv(&rawCur, -1);
+    mCursor = CCur18(CUICfManager_getArcResourceAccessor());
 
     mCursor.initLayout();
 
@@ -393,15 +390,11 @@ void CMenuSelectShop::cbRenderBefore() {
         return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
-    // scope-exit destructor is not auto-emitted (CMenuShopBuy scheme).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
-    drawShopWin(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    drawShopWin(&mSelShop, &drawInfo);
     if ((s32)mSelIndex >= 0)
-        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+        Cur_DrawLayout(&mCursor, &drawInfo);
 }
 
 extern "C" u32 ShopSel_GetSingleton() { return (u32)lbl_eu_806642E8; }

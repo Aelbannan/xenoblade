@@ -1166,11 +1166,11 @@ void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv();
 }
-extern char lbl_eu_80661D08[];
+extern char __RTTI__Q22cf11CfObjectMap[];
 extern char lbl_eu_806618E8[];
 extern char lbl_eu_806618F0[];
-extern char lbl_eu_806618F8[];
-extern char lbl_eu_80661900[];
+extern char __RTTI__Q22cf12CObjectParam[];
+extern char __RTTI__Q22cf12CObjectState[];
 extern const void* lbl_eu_80529128[114];
 extern const void* lbl_eu_805292F0[10];
 extern const void* modelVtable29318[114];
@@ -1179,7 +1179,7 @@ extern const void* modelVtable294E0[94];
 // CfObjectMap-side vtable (0x1C8): sdata locator + CObjectState/Param slots,
 // CfObjectMap/CfObject slots, then the CfObjectModel tail.
 __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu_80529128[114] = {
-    lbl_eu_80661D08, 0,
+    __RTTI__Q22cf11CfObjectMap, 0,
     (const void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
     (const void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
     (const void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
@@ -1295,7 +1295,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
 };
 // RTTI locator list (0x28): sdata pairs + nulls.
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_805292F0[10] = {
-    lbl_eu_80661900, 0, lbl_eu_806618F8, 0, lbl_eu_806618F0, 0,
+    __RTTI__Q22cf12CObjectState, 0, __RTTI__Q22cf12CObjectParam, 0, lbl_eu_806618F0, 0,
     lbl_eu_806618E8, 0, 0, 0,
 };
 // CfObjectModel vtable (0x1C8) -> lbl_eu_80529318 via UNIT_RULES rename.

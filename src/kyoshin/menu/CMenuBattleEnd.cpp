@@ -1,6 +1,7 @@
 // Catalog TU for kyoshin/menu/CMenuBattleEnd
 // Battle-end (result) screen task reconstruction.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -203,14 +204,9 @@ void CMenuBattleEnd::cbRenderBefore() {
         return;
     if (!IsMenuState621F0()) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
-    // scope-exit destructor is not virtual-dispatched (same scheme as
-    // CSystemWindow::cbRenderBefore).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
 }
 
 // ---------------------------------------------------------------------------

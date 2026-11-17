@@ -347,13 +347,9 @@ void CMenuQstCnt::cbRenderBefore() {
     if (SysWinGetSingleton()) return;
     if (mField64 != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
-    // scope-exit destructor is not virtual-dispatched (CMenuBattleEnd scheme).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
 }
 
 // Quest-log menu factory/update. When the singleton already exists and is

@@ -11,12 +11,8 @@
 // just stores the label's address into the object's vptr.
 struct FxDelayDpl2Vtbl;
 extern FxDelayDpl2Vtbl lbl_eu_8056A7C0[];
-extern const f32 lbl_eu_80669F80; // 160.0f (delay / delayTimeMax default)
-extern const f32 lbl_eu_80669F84; // 0.4f  (feedback default)
-extern const f32 lbl_eu_80669F88; // 1.0f  (outGain / iir default)
 extern const f32 lbl_eu_80669F8C; // minDelay clamp bound
 extern const f32 lbl_eu_80669F90; // feedback clamp bound
-extern const f32 lbl_eu_80669F94; // feedback/iir/outGain upper + sendGain init
 
 namespace nw4r {
 namespace snd {
@@ -91,18 +87,18 @@ FxDelayDpl2::FxDelayDpl2() {
     mHeap = NULL;         // 0x14
     mAllocCount = 0;      // 0x18
 
-    mDelay = lbl_eu_80669F80;        // 0x1c, 160.0f
-    mFeedback = lbl_eu_80669F84;     // 0x20, 0.4f
-    mOutGain = lbl_eu_80669F88;      // 0x24, 1.0f
-    mDelayTimeMax = lbl_eu_80669F80; // 0x28, 160.0f
-    mIir = lbl_eu_80669F88;          // 0x2c, 1.0f
+    mDelay = 160.0f;        // 0x1c, 160.0f
+    mFeedback = 0.4f;     // 0x20, 0.4f
+    mOutGain = 1.0f;      // 0x24, 1.0f
+    mDelayTimeMax = 160.0f; // 0x28, 160.0f
+    mIir = 1.0f;          // 0x2c, 1.0f
 
     detail::FxDelayParam param;
-    param.delay = lbl_eu_80669F80;
-    param.feedback = lbl_eu_80669F84;
-    param.outGain = lbl_eu_80669F88;
-    param.delayTimeMax = lbl_eu_80669F80;
-    param.iir = lbl_eu_80669F88;
+    param.delay = 160.0f;
+    param.feedback = 0.4f;
+    param.outGain = 1.0f;
+    param.delayTimeMax = 160.0f;
+    param.iir = 1.0f;
     SetParam(param);
 }
 
@@ -176,7 +172,7 @@ void FxDelayDpl2::Shutdown() {
 // object: the delay/delayTimeMax lower bound is lbl_eu_80669F8C (0.0f), the
 // feedback cap is lbl_eu_80669F90 (0.9f). Referencing the blob labels
 // directly stops MWCC from value-merging them with the plain 0.0f/1.0f
-// literals (which retail pools separately as lbl_eu_80669F94 / 80669F88).
+// literals (which retail pools separately as 0.0f / 80669F88).
 extern "C" const f32 lbl_eu_80669F8C; // 0.0f
 extern "C" const f32 lbl_eu_80669F90; // 0.9f
 
@@ -207,26 +203,26 @@ bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
     mDelayExp.delayTime = clampedDelay;
 
     // Clamp feedback to [maxFeedback]
-    f32 clampedFeedback = ut::Clamp(rParam.feedback, lbl_eu_80669F90, lbl_eu_80669F94);
+    f32 clampedFeedback = ut::Clamp(rParam.feedback, lbl_eu_80669F90, 0.0f);
     mDelayExpDpl2.feedback = clampedFeedback;
     mDelayExp.feedback = clampedFeedback;
 
     // Clamp iir to [1, max]
-    f32 clampedIir = ut::Clamp(rParam.iir, lbl_eu_80669F88, lbl_eu_80669F94);
+    f32 clampedIir = ut::Clamp(rParam.iir, 1.0f, 0.0f);
     mDelayExpDpl2.iir = clampedIir;
     mDelayExp.iir = clampedIir;
 
     // Clamp outGain to [1, max]
-    f32 clampedOutGain = ut::Clamp(rParam.outGain, lbl_eu_80669F88, lbl_eu_80669F94);
+    f32 clampedOutGain = ut::Clamp(rParam.outGain, 1.0f, 0.0f);
     mDelayExpDpl2.outGain = clampedOutGain;
     mDelayExp.outGain = clampedOutGain;
 
     mDelayExp.busIn = NULL;
     mDelayExp.busOut = NULL;
-    mDelayExp.sendGain = lbl_eu_80669F94;
+    mDelayExp.sendGain = 0.0f;
     mDelayExpDpl2.busIn = NULL;
     mDelayExpDpl2.busOut = NULL;
-    mDelayExpDpl2.sendGain = lbl_eu_80669F94;
+    mDelayExpDpl2.sendGain = 0.0f;
 
     if (!mIsActive) {
         return true;

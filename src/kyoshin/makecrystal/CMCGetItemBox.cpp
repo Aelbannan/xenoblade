@@ -5,6 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/device/CDeviceSC.hpp"
@@ -374,7 +375,7 @@ __declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
 // Cursor pair for the rolled pointer-walk copies below.
 // C-ABI ctor (retail symbol __ct__CMCGetItemBox, no class-length mangling).
 // Free-function form so no implicit base-vptr store is emitted (same as
-// __ct__CSysWin / __ct__CEIBCur); the retail label goes in first via vtbl().
+// __ct__7CSysWinFUc / __ct__CEIBCur); the retail label goes in first via vtbl().
 extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     self->vtbl() = (void*)lbl_eu_80539128;
     __ct__17UnkClass_8045F564Fv(&self->memRegion1);
@@ -400,7 +401,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     __ct__CCur09(&self->subObj_70, 0);
     __ct__CCur16(&self->subObj_88, 0);
     __ct__CCur18(&self->subObj_A0, 0);
-    __ct__CSysWin(&self->sysWin_B8, 0);
+    __ct__7CSysWinFUc(&self->sysWin_B8, 0);
     __ct__CItemBoxInfo(self->itemBox, 0, 0);
 
     self->field_300 = 0;
@@ -424,7 +425,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     // --- default sys-win temp -> embedded window: one struct assignment ---
     {
         u8 winTmp[0x40];
-        __ct__CSysWin(winTmp, 0);
+        __ct__7CSysWinFUc(winTmp, 0);
         *(CMCSysWinMember*)&self->sysWin_B8.bytes[4] = *(CMCSysWinMember*)&winTmp[4];
         __dt__7CSysWinFv(winTmp, -1);
     }

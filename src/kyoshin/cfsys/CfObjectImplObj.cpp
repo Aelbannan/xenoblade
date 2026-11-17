@@ -10,18 +10,18 @@ extern "C" void MoveImplRunEffectVirtuals(void* self);
 // us-800caf20: per-frame prep - init via MoveImplInitFields, dispatch the
 // vtable 0xE4 query and feed its result + the +0x14/+0x18 sub-objects
 // into CharEffInit.
-void ObjImplPrepFrame(cf::CfObjectImplObj* self) {
+extern "C" void ObjImplPrepFrame(cf::CfObjectImplObj* self) {
     MoveImplInitFields(self);
     CharEffInit(self->vfE4(), self->field_14, self->field_18);
 }
 
-void* ObjImplGetUnk68(void* self) {
+extern "C" void* ObjImplGetUnk68(void* self) {
     return &static_cast<cf::CfObjectImplObj*>(self)->slot68;
 }
 
 // us-800caf74: dispatch the embedded event id via MoveImplPushEventId, then point
 // the +0x368 CPartsChange at the driver sub-object's +0x98 event id.
-void ObjImplPushEventResolve(cf::CfObjectImplObj* self) {
+extern "C" void ObjImplPushEventResolve(cf::CfObjectImplObj* self) {
     MoveImplPushEventId((CfObjectImplMoveObj*)self);
     CPartsChange_ResolveSlotNames(reinterpret_cast<cf::CPartsChange*>(self->mPartsChange), 0,
                   (PartsChangeIf*)self->field_14->field_0x98);
@@ -32,12 +32,12 @@ extern "C" void ObjImplSyncSlotState(void* self, void* b) {
     CPartsChange_SyncSlotState(static_cast<cf::CfObjectImplObj*>(self)->mPartsChange, b, 1);
 }
 
-void ObjImplNoop(void) {}
+extern "C" void ObjImplNoop(void) {}
 
 // us-800cafc4: command dispatch - when the driver's +0xC4 id matches, parse
 // the param's digit char (modes 0x10/0x11; atoi when '0'-'9') and issue the
 // driver's vtable 0x204 command (0x23, 0, parsed-value, 0, 0).
-void ObjImplDispatchCmd(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) {
+extern "C" void ObjImplDispatchCmd(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) {
     if (id != self->field_14->field_0xC4) {
         return;
     }

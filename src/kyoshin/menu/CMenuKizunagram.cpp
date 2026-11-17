@@ -12,32 +12,226 @@
 #include "monolib/core/CPadManager.hpp"   // CPad flag words (getCurrentPad)
 #include "kyoshin/cf/CfGameManager.hpp"   // cf::CfGameManager::getCurrentPad
 #include "kyoshin/cf/CfPadData.hpp"        // cf::CfPadData layout
+#include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CFade.hpp"
 
-extern "C" void cbRenderBefore__15CMenuKizunagramFv(void*);
+// Shield CLoad.hpp's C++-linkage helper declarations: this TU needs the
+// CLoad class, but declares the func_802AExxxx helpers itself below as
+// extern "C" so call relocs carry the retail UNMANGLED symbol names
+// (identical plain decls emit mangled __FP5CLoad refs). MWCC 10505.
+#define CLoadBeginFileRequest CLoadBeginFileRequest_CLoadHdr
+#define CLoadUpdateLayout CLoadUpdateLayout_CLoadHdr
+#define CLoadDrawIfVisible CLoadDrawIfVisible_CLoadHdr
+#define CLoadTeardownLayout CLoadTeardownLayout_CLoadHdr
+#define CLoadIsLoadReady CLoadIsLoadReady_CLoadHdr
+#define CLoadIsLoaded CLoadIsLoaded_CLoadHdr
+#define CLoadIsAnimSettled CLoadIsAnimSettled_CLoadHdr
+#define CLoadStartFadeInStep CLoadStartFadeInStep_CLoadHdr
+#define CLoadStartRetryStep CLoadStartRetryStep_CLoadHdr
+#define CLoadAdvanceFadeHold CLoadAdvanceFadeHold_CLoadHdr
+#define CLoadFinishRetryIdle CLoadFinishRetryIdle_CLoadHdr
+#include "kyoshin/CLoad.hpp"
+#undef CLoadBeginFileRequest
+#undef CLoadUpdateLayout
+#undef CLoadDrawIfVisible
+#undef CLoadTeardownLayout
+#undef CLoadIsLoadReady
+#undef CLoadIsLoaded
+#undef CLoadIsAnimSettled
+#undef CLoadStartFadeInStep
+#undef CLoadStartRetryStep
+#undef CLoadAdvanceFadeHold
+#undef CLoadFinishRetryIdle
+
+// CScn / CTaskGame forward declarations (their full headers pull broken
+// monolib umbrella headers; keep the pointers opaque, same scheme as
+// CMenuBattleEnd / CMenuMapSelectSC).
+class CScn;
+class CTaskGame;
+
+// Raw-storage slots of the CLoad / CFade members (constructed by hand).
+static inline CLoad* loadOf(CMenuKizunagram* self) { return reinterpret_cast<CLoad*>(self->mLoad); }
+static inline CFade* fadeOf(CMenuKizunagram* self) { return reinterpret_cast<CFade*>(self->mFade); }
+
+// Retail-unmangled callee names (US strips mangling for these func_ helpers);
+// declared extern "C" so call sites emit the literal retail reloc names.
+// Return types are int (not u8) so callers compare with cmpwi directly
+// (no byte mask), matching retail.
+extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
+extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
+extern "C" int CFade_IsReady(CFade* self);
+// (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
+
+// Additional retail-unmangled callee names for the kizuna-gram screen state
+// helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
+// are int where retail compares r3 with cmpwi directly (no byte mask);
+// kizChartStatus is u8 because retail masks its result with clrlwi.
+// Retail-unmangled views of the CLoad helpers (see include shield above).
+extern "C" int CLoadIsLoadReady(CLoad* self);
+extern "C" void CLoadStartFadeInStep(CLoad* self);
+extern "C" void CLoadStartRetryStep(CLoad* self);
+extern "C" int CFade_IsVisible(CFade* self);
+extern "C" void CFade_FadeOut(CFade* self);
+extern "C" int kizChartReady(UnkKizunaMenuSub98* self);
+extern "C" u8 kizChartStatus(UnkKizunaMenuSub98* self);
+extern "C" void kizStartChart(UnkKizunaMenuSub98* self);
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void reopenFromClose(CTitleAHelp* self);
+extern "C" void setNameText(CTitleAHelp* self, char* name);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
+
+extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
+extern "C" void __dt__5CLoadFv(CLoad* _this, int flags);
+extern "C" void __dt__13CPcKizunagramFv(UnkKizunaMenuPcSub* _this, int flags);
+extern "C" void __dt__11CKizunagramFv(UnkKizunaMenuSub98* _this, int flags);
+
+
+// C++-linkage helper - retail emits the mangled form playUISound__FUl.
+void playUISound(unsigned long op);
+
+// Scene/task-system helpers (retail-unmangled callee names).
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
+extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+
+// code_80135FDC helpers (retail-unmangled).
+extern "C" u8 DecMenuCounter64080();
+extern "C" u8 code80135FDC_getByte_64080();
+extern "C" void CUICfManager_createQueuedMenus();
+extern "C" int IsMenuState621F0();
+
+// CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
+// the mangling for these member helpers).
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void markReplayClose(CTitleAHelp* self);
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
+// (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
+
+// CLoad draw/reset helpers.
+extern "C" void CLoadTeardownLayout(CLoad* self);
+extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+
+// Kizuna-chart sub-object helpers (retail-unmangled; CKizunagram unit).
+extern "C" void teardownKizuna(UnkKizunaMenuSub98* self);
+extern "C" void drawKizLayouts(UnkKizunaMenuSub98* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void kizOpenWinNop(UnkKizunaMenuSub98* self);
+extern "C" int kizChartBusy(UnkKizunaMenuSub98* self);
+extern "C" int kizHasSelFlag(UnkKizunaMenuSub98* self);
+extern "C" void kizCloseChart(UnkKizunaMenuSub98* self, int arg);
+extern "C" void kizToggleHelp(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorHoldA(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorHoldB(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir1(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir2(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir3(UnkKizunaMenuSub98* self);
+extern "C" void kizCursorDir4(UnkKizunaMenuSub98* self);
+extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
+extern "C" void beginClose(CTitleAHelp* self);
+// CPcKizunagram helpers. Return types are int (not u8) so callers compare
+// with cmpwi directly (no byte mask), matching retail.
+extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramTerm(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramDraw(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void KizunagramOpen(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramClose(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorUp(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorDown(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorPageUp(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramCursorPageDown(UnkKizunaMenuPcSub* self);
+
+// Move() state-dispatch helpers (retail-unmangled; defined in this TU).
+// Declared extern "C" so the switch-dispatch call sites in Move() emit the
+// literal retail reloc names (the definitions below inherit C linkage).
+extern "C" void KizunagramBeginFadeIn(CMenuKizunagram* self);
+extern "C" void func_80257360(CMenuKizunagram* self);
+extern "C" void KizunagramConfirmChartAdvance(CMenuKizunagram* self);
+extern "C" void KizunagramOpenCharWindow(CMenuKizunagram* self);
+extern "C" void KizunagramDriveChart(CMenuKizunagram* self);
+extern "C" void KizunagramSetPhaseFlag54(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToPcWin(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToState9(CMenuKizunagram* self);
+extern "C" void KizunagramHandleCharInput(CMenuKizunagram* self);
+extern "C" void KizunagramAdvanceToState7(CMenuKizunagram* self);
+extern "C" void KizunagramReopenCharWindow(CMenuKizunagram* self);
+
+// Move() per-frame sub-object refresh helpers (retail-unmangled).
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
+extern "C" void KizunagramUpdateMainState(UnkKizunaMenuPcSub* self);
+extern "C" void CLoadUpdateLayout(CLoad* self);
+extern "C" void CFade_Update(CFade* self);
+
+// Sound helpers used by Move() (retail-unmangled).
+extern "C" int CMainMenu_GetInstancePtr();
+extern "C" void ArtsInfo_SetReadyFlag();
+
+extern "C" void __ct__CKizunagram(UnkKizunaMenuSub98* self, int arg);
+extern "C" void __ct__CPcKizunagram(UnkKizunaMenuPcSub* self);
+extern "C" void __ct__CLoad(CLoad* self, u8 arg);
+extern "C" void __ct__5CFadeFv(CFade* self);
+
+// Ctor tail helpers (retail-unmangled).
+extern "C" void CTaskGame_deleteLoad();
+extern "C" void MiniMapSetActiveFlag();
+
+// C++-linkage helper - retail emits the mangled form
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
+
+// Flat pad-data view exposing only the flag words KizunagramHandleCharInput reads:
+// CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
+// +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
+struct KizunaPadData {
+    u32 mPadHeldFlags;          // 0x00 - CPad::mHeldButtonFlags
+    u32 mPadPressedFlags;       // 0x04 - CPad::mPressedButtonFlags
+    u8 _pad[0xFC];              // 0x08-0x103 - rest of the pad data
+    u32 mTurboPressButtonFlags; // 0x104
+};
+extern "C" KizunaPadData* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+
+// Data imports (MWCC does not mangle global-scope data names).
+extern u32 lbl_eu_806647E0;    // CMenuKizunagram singleton pointer (sbss)
+extern char lbl_eu_8050CAB8[]; // kizuna-gram string pool base
+extern u32 lbl_eu_80663E28;    // global mode bitfield (bit 0x200000 = kizuna gate)
+
 
 // ---------------------------------------------------------------------------
-// ~CMenuKizunagram (us-80258c90) - complete-object dtor, retail D2 form.
-// Written with an explicit flags parameter so the base-class destruction can
-// target the retail CProcess dtor symbol __dt__800FED0C (the game-side D2
-// wrapper). A real member destructor would make MWCC auto-emit
-// __dt__8CProcessFv (the library D1) for the base call, which cannot match
-// the retail reloc name at the call site. Subobjects are destroyed in
-// reverse construction order, then conditional operator delete when flags
-// > 0 (same shape as CMenuMapSelectSC's dtor).
+// CMenuKizunagram::CMenuKizunagram (us-80258ba4) - constructor with two args:
+// `parentRef` becomes the parent-scene reference at 0x5C, `b` the byte at
+// 0x21E. The IUICf base (vtables, PMF slots, 0x54/0x55 flags) and the
+// IScnRender base are built by the compiler; the CTitleAHelp member is a real
+// member. The opaque sub-object regions are constructed by hand in ascending
+// address order.
 // ---------------------------------------------------------------------------
-extern "C" CMenuKizunagram* __dt__15CMenuKizunagramFv(CMenuKizunagram* _this, int flags) {
-    if (_this != 0) {
-        __dt__5CFadeFv(&_this->mFade, -1);
-        __dt__5CLoadFv(&_this->mLoad, -1);
-        __dt__13CPcKizunagramFv(&_this->mPcKizunagram, -1);
-        __dt__11CKizunagramFv(&_this->mSub98, -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__800FED0C(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
+CMenuKizunagram::CMenuKizunagram(CProcess* parentRef, int b)
+    : mParentRef(parentRef), mTitleAHelp(0, 0) {
+    __ct__CKizunagram(&mSub98, 0);
+    __ct__CPcKizunagram(&mPcKizunagram);
+    __ct__CLoad(loadOf(this), 0);
+    __ct__5CFadeFv(fadeOf(this));
+
+    field_0x21C = 0;
+    field_0x21D = 1;
+    field_0x21E = (u8)b;
+    CTaskGame_deleteLoad();
+    MiniMapSetActiveFlag();
+}
+
+// ---------------------------------------------------------------------------
+// ~CMenuKizunagram (us-80258c90). Opaque sub-objects are torn down by hand in
+// reverse construction order; the compiler then destroys mTitleAHelp and the
+// IUICf / IScnRender bases.
+// ---------------------------------------------------------------------------
+CMenuKizunagram::~CMenuKizunagram() {
+    __dt__5CFadeFv(fadeOf(this), -1);
+    __dt__5CLoadFv(loadOf(this), -1);
+    __dt__13CPcKizunagramFv(&mPcKizunagram, -1);
+    __dt__11CKizunagramFv(&mSub98, -1);
 }
 
 void CMenuKizunagram::Init() {}
@@ -46,18 +240,13 @@ void CMenuKizunagram::Term() {
     waitForDrawDone__9CDeviceVIFv();
     Scn_SetPauseFlag(reinterpret_cast<CScn*>(mParentRef), 1);
 
-    // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mParentRef), renderCB);
+    removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mParentRef), this);
 
     teardown(&mTitleAHelp);
     teardownKizuna(&mSub98);
     KizunagramTerm(&mPcKizunagram);
-    CLoadTeardownLayout(&mLoad);
-    (&mFade)->Unload();
+    CLoadTeardownLayout(loadOf(this));
+    (fadeOf(this))->Unload();
 
     lbl_eu_806647E0 = 0;
     DecMenuCounter64080();
@@ -98,7 +287,7 @@ body:
             }
             playUISound(6);
             field_0x21C = 8;
-            field_0x54 = 1;
+            mField54 = 1;
         }
     }
     // Per-state helpers (0..10), then per-frame sub-object refresh.
@@ -118,8 +307,8 @@ body:
     updateHelp(&mTitleAHelp);
     tickKizMain(&mSub98);
     KizunagramUpdateMainState(&mPcKizunagram);
-    CLoadUpdateLayout(&mLoad);
-    CFade_Update(&mFade);
+    CLoadUpdateLayout(loadOf(this));
+    CFade_Update(fadeOf(this));
 }
 
 void CMenuKizunagram::cbRenderBefore() {
@@ -139,22 +328,17 @@ body:
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
-    // calls to match the retail direct calls (a C++ local would
-    // virtual-dispatch its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawKizLayouts(&mSub98, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    KizunagramDraw(&mPcKizunagram, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawKizLayouts(&mSub98, &drawInfo);
+    KizunagramDraw(&mPcKizunagram, &drawInfo);
     // Draw the title/help bar once the per-character window is past the
     // opening phase (state >= 8) or when its visibility flag is set.
     if (field_0x21D != 0 || field_0x21C >= 8) {
-        drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        drawHelp(&mTitleAHelp, &drawInfo);
     }
-    CFade_Draw(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    CLoadDrawIfVisible(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    CFade_Draw(fadeOf(this), &drawInfo);
+    CLoadDrawIfVisible(loadOf(this), &drawInfo);
 end:
     ;
 }
@@ -165,74 +349,23 @@ end:
 // constructs it, stores the singleton and registers it as a CProcess child
 // of `parent`.
 // ---------------------------------------------------------------------------
-CMenuKizunagram* KizunagramCreateSingleton(CProcess* parent, int a, int b) {
+extern "C" CMenuKizunagram* KizunagramCreateSingleton(CProcess* parent, int a, int b) {
     if (lbl_eu_806647E0 != 0) {
         return 0;
     }
 
     CMenuKizunagram* obj = (CMenuKizunagram*)mtl::MemManager::allocate(
         0x220, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // The retail ctor returns the object in r3; assigning the result lets
-        // MWCC reuse r3 after the call instead of preserving `obj` in a
-        // callee-saved register (retail keeps only 3 saved regs here).
-        obj = __ct__CMenuKizunagram(obj, a, b);
-    }
+    // Placement-new performs the null check that guards the constructor call
+    // (retail's single `if (obj != 0)` branch); assigning the result lets MWCC
+    // reuse r3 after the call instead of preserving `obj` in a callee-saved
+    // register (retail keeps only 3 saved regs here).
+    obj = new (obj) CMenuKizunagram(reinterpret_cast<CProcess*>(a), b);
     lbl_eu_806647E0 = (u32)obj;
     obj->Regist(parent, false);
     return (CMenuKizunagram*)lbl_eu_806647E0;
 }
 
-// ---------------------------------------------------------------------------
-// __ct__CMenuKizunagram (us-80258ba4) - constructor with two explicit args:
-// `a` becomes the parent-scene reference at 0x5C, `b` the byte at 0x21E.
-// Written as a free function (retail unmangled global) so the base ctor call
-// and the vtable fixups land in the retail order; subobjects are constructed
-// in ascending address order.
-// ---------------------------------------------------------------------------
-extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, int b) {
-    __ct__8CProcessFv((CProcess*)self);
-
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    // Post-increment walk folds the first load into lwzu (btm_sco_init
-    // pattern); the second group re-reads the base with plain loads so MWCC
-    // reuses the already-materialised base register.
-    u32* src = __ptmf_null;
-    u32 pmfV0 = *src++;
-    u32 pmfV1 = *src++;
-    self->ptmf0[1] = pmfV1;
-    self->ptmf0[0] = pmfV0;
-    u32 pmfV2 = *src++;
-    self->ptmf0[2] = pmfV2;
-    u32* src2 = __ptmf_null;
-    u32 pmfU0 = src2[0];
-    u32 pmfU1 = src2[1];
-    self->ptmf1[1] = pmfU1;
-    self->ptmf1[0] = pmfU0;
-    u32 pmfU2 = src2[2];
-    self->ptmf1[2] = pmfU2;
-    self->field_0x54 = 0;
-    self->field_0x55 = 0;
-
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_805374B0;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_805374B0 + 0x24;
-    self->mParentRef = (CProcess*)a;
-
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CKizunagram(&self->mSub98, 0);
-    __ct__CPcKizunagram(&self->mPcKizunagram);
-    __ct__CLoad(&self->mLoad, 0);
-    __ct__5CFadeFv(&self->mFade);
-
-    self->field_0x21C = 0;
-    self->field_0x21D = 1;
-    self->field_0x21E = (u8)b;
-    CTaskGame_deleteLoad();
-    MiniMapSetActiveFlag();
-    return self;
-}
 
 
 // ---------------------------------------------------------------------------
@@ -241,9 +374,9 @@ extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, 
 // and start the fade-in animation.
 // ---------------------------------------------------------------------------
 void KizunagramBeginFadeIn(CMenuKizunagram* self) {
-    if (CFade_IsReady(&self->mFade) != 0) {
+    if (CFade_IsReady(fadeOf(self)) != 0) {
         self->field_0x21C = 1;
-        (&self->mFade)->In();
+        (fadeOf(self))->In();
     }
 }
 
@@ -252,9 +385,9 @@ void KizunagramBeginFadeIn(CMenuKizunagram* self) {
 // both ready, start the fade-out (state 2) and dismiss the overlay.
 // ---------------------------------------------------------------------------
 void func_80257360(CMenuKizunagram* self) {
-    if (CLoadIsLoadReady(&self->mLoad) != 0 && CFade_IsVisible(&self->mFade) != 0) {
+    if (CLoadIsLoadReady(loadOf(self)) != 0 && CFade_IsVisible(fadeOf(self)) != 0) {
         self->field_0x21C = 2;
-        CLoadStartFadeInStep(&self->mLoad);
+        CLoadStartFadeInStep(loadOf(self));
     }
 }
 
@@ -268,8 +401,8 @@ void KizunagramConfirmChartAdvance(CMenuKizunagram* self) {
         func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
         func_801C412C(&self->mTitleAHelp);
         kizStartChart(&self->mSub98);
-        CLoadStartRetryStep(&self->mLoad);
-        CFade_FadeOut(&self->mFade);
+        CLoadStartRetryStep(loadOf(self));
+        CFade_FadeOut(fadeOf(self));
         self->field_0x21C = 3;
         playUISound(0x6d);
     }
@@ -395,7 +528,7 @@ merged:
 void KizunagramSetPhaseFlag54(CMenuKizunagram* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         kizChartOpen(&self->mSub98) != 0) {
-        self->field_0x54 = 1;
+        self->mField54 = 1;
     }
 }
 
@@ -508,18 +641,6 @@ void KizunagramReopenCharWindow(CMenuKizunagram* self) {
         kizChartOpen(&self->mSub98) != 0) {
         self->field_0x21C = 4;
     }
-}
-
-// IScnRender vtable adjustor thunk for cbRenderBefore.
-// When IScnRender virtual functions dispatch through IScnRender*,
-// 'this' points to the IScnRender subobject at offset +0x58 within
-extern "C" void KizunagramRenderBeforeThunk(void* self) {
-    ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58);
-}
-
-// IScnRender vtable adjustor thunk for ~CMenuKizunagram.
-extern "C" void KizunagramDeleteDtorThunk(void* self) {
-    ((void(*)(void*))__dt__15CMenuKizunagramFv)((char*)self - 0x58);
 }
 
 extern "C" unsigned long KizunagramIsCreated(void) { return lbl_eu_806647E0 != 0; }

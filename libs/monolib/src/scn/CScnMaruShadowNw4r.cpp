@@ -29,7 +29,6 @@ extern "C" void GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
     float* maxLod, u8* lodBias);
 extern "C" void Scn_CopyCamProjMatrix(void* self, void* mtx, int id);
 
-extern const char lbl_eu_80523F94[];  // shadow static-data resource name
 extern const char lbl_eu_8052637C[];  // panic site file
 extern const char lbl_eu_80526354[];  // panic site fmt
 extern const char* lbl_eu_80663958;   // texture resource name
@@ -109,7 +108,7 @@ int MaruShadowSetupTexturePipe(void* self) {
     Mtx44 projMtx;
 
     if (getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
-            lbl_eu_80523F94, &handle, NULL) != 0) {
+            "SHA", &handle, NULL) != 0) {
         resFile = handle.data;
         if ((u32)resFile & 0x1F) {
             nw4r::db::Panic(lbl_eu_8052637C, 60, lbl_eu_80526354);
@@ -792,11 +791,11 @@ extern "C" void MaruShadowSetFlag40Store();
 extern "C" void MaruShadowSetFlag100();
 extern "C" void MaruShadowSetFlag80Store();
 }
-extern "C" u32 lbl_eu_806623F8;   // foreign .sdata
+extern "C" u32 __RTTI__18CScnMaruShadowNw4r;   // foreign .sdata
 
 // [.data] 0x8056E598-0x8056E5B8 (32B): CScnMaruShadowNw4r vtable
 extern "C" u32 lbl_eu_8056E598[8] = {
-    (u32)&lbl_eu_806623F8, 0x00000000,
+    (u32)&__RTTI__18CScnMaruShadowNw4r, 0x00000000,
     (u32)&MSBlob::MaruShadowPickScale,
     (u32)&MSBlob::MaruShadowStubTrue,
     (u32)&MSBlob::MaruShadowUpdate,

@@ -1,139 +1,50 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/work/CProcess.hpp"
-#include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CTutorial.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/CTitleAHelp.hpp"
 
-// IScnRender without a virtual destructor (CMenuTutorial.cpp defines
-// ISCN_RENDER_NO_DTOR): odr-using the inline `virtual ~IScnRender(){}` from this
-// TU makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
-// and blows the split budget (retail keeps that copy only in CTaskGame.o).
+// IScnRender keeps its default virtual dtor here (CMenuTutorial.cpp does not
+// define ISCN_RENDER_NO_DTOR): the IScnRender base cleanup is part of the
+// retail extab for the ctor/dtor.
 #include "monolib/scn/IScnRender.hpp"
 
 /*
- * Tutorial menu screen process (CProcess + IScnRender MI).
+ * Tutorial menu screen process (IUICf + IScnRender MI).
  *
- * Layout (constructor / destructor / extab):
- *   0x00: CProcess          -- task-system base
- *   0x3C: vtable PMF data   -- compiler-generated virtual dispatch entries
- *   0x54: u8 field_54       -- writable state byte
- *   0x58: IScnRender        -- render-callback subobject (member, vptr)
+ * Layout:
+ *   0x00: IUICf             -- CTTask<IUICf> base (0x54 bytes), mField54/mField55 at 0x54/0x55
+ *   0x58: IScnRender        -- render-callback subobject (sub-vtable)
  *   0x5C: CProcess*         -- parent process reference
  *   0x60: CTutorial         -- tutorial widget member (0x54 bytes -> 0xB4)
  *   0xB4: CTitleAHelp       -- title/help bar member (0x38 bytes -> 0xEC)
- *   0xEC: u8[3]             -- mIsInitialised, mType, mSomething
+ *   0xEC: u8 mIsInitialised, mType, mSomething; 0xEF pad
  *   0xF0: u32               -- saved input flags
  */
-class CMenuTutorial : public CProcess {
+class CMenuTutorial : public IUICf, public IScnRender {
 public:
+    CMenuTutorial(CProcess* parent, u32 arg2);
     virtual ~CMenuTutorial();
 
-    // CProcess overrides
+    // Lazily constructs the single tutorial menu instance and registers it as a
+    // child of `self`. Returns nullptr when one already exists.
+    static CMenuTutorial* create(CProcess* self, CProcess* parent, u32 arg2);
+
+    // CProcess overrides (Draw is inherited from CTTask<IUICf>)
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void Draw();
     void cbRenderBefore();
 
-    u32 ptmf0[3];             // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];             // 0x48-0x53: null PMF callback slot group 2
-    u8 field_54;              // 0x54: writable state byte
-    u8 field_55;              // 0x55
-    u8 _pad56[2];             // 0x56-0x57
-    // 0x58: render-callback subobject (vptr). Typed member against the
-    // body-less local IScnRender decl above (see note at top of this header).
-    IScnRender mIScnRender;   // 0x58
-    CProcess* mParentRef;     // 0x5C: owning process (cast to CScn* at call sites)
-    CTutorial mTutorial;      // 0x60-0xB3: tutorial widget
-    CTitleAHelp mTitleAHelp;  // 0xB4-0xEB: title/help bar
-    u8 mIsInitialised;        // 0xEC: initialisation flag
-    u8 mType;                 // 0xED: tutorial type
-    u8 mSomething;            // 0xEE
-    u8 _padEF;                // 0xEF
-    u32 mSavedInputFlags;     // 0xF0: input flags snapshot at construction
-    CMenuTutorial();
+    CProcess* mParentRef;            // 0x5C: owning process (cast to CScn* at call sites)
+    CTutorial mTutorial;             // 0x60: tutorial widget
+    CTitleAHelp mTitleAHelp;         // 0xB4: title/help bar
+    u8 mIsInitialised;               // 0xEC: initialisation flag
+    u8 mType;                        // 0xED: tutorial type
+    u8 mSomething;                   // 0xEE
+    u8 _padEF;                       // 0xEF
+    u32 mSavedInputFlags;            // 0xF0: input flags snapshot at construction
+
+    static CMenuTutorial* sInstance; // singleton instance
 };
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
-// Widget ctor/dtor / load helper and DrawInfo ct/dt are retail-unmangled (or
-// pre-mangled C names); declared extern "C" so calls bind to the literal
-// symbol instead of an Itanium re-derivation.
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CTutorial(CTutorial* self, u8 type, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __dt__9CTutorialFv(CTutorial* self, int dealloc);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-
-// CTitleAHelp widget callees (retail-unmangled func_ names).
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void setNameText(CTitleAHelp* self, char* str);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void beginClose(CTitleAHelp* self);
-// isIdle declared int (not u8) so callers compare with cmpwi directly.
-
-// CTutorial widget callees (retail-unmangled func_ names).
-extern "C" void Tutorial_DrawLayoutGated(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void Tutorial_Move(CTutorial* self);
-extern "C" void Tutorial_TeardownTutorial(CTutorial* self);
-extern "C" void Tutorial_LoadTutorialFiles(CTutorial* self);
-extern "C" void Tutorial_StartIfIdle(CTutorial* self);
-extern "C" u8 Tutorial_GetPageState(CTutorial* self);
-extern "C" int Tutorial_GetField46Mark(CTutorial* self);
-extern "C" int Tutorial_GetField47Mark(CTutorial* self);
-extern "C" int Tutorial_GetField52Mark(CTutorial* self);
-extern "C" void Tutorial_NextPage(CTutorial* self);
-extern "C" void Tutorial_AdvanceState3To4(CTutorial* self);
-extern "C" void Tutorial_PrevPage(CTutorial* self);
-
-// CF / ui helpers (retail-unmangled names).
-extern "C" int IsMenuState621F0();
-extern "C" u8 DecMenuCounter64080();
-extern "C" void CUICfManager_setTimeout30();
-extern "C" u8 code80135FDC_getByte_64080();
-extern "C" void code80135FDC_postIncByte_64080();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
-// CfGameManager controller-type query: retail loads r3=-1 into the symbol
-// (the no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-
-// DrawInfo layout setup (retail MANGLED name
-// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo; declared as plain C++ so MWCC
-// re-derives the same mangling).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-
-// This-unit phase handlers (retail-unmangled func_ names). extern "C" keeps
-// the call relocs bare (retail keeps the unmangled names at these call sites).
-extern "C" void MenuTutorialHandlePhase0(CMenuTutorial* self);
-extern "C" void MenuTutorialHandlePhase1(CMenuTutorial* self);
-extern "C" void MenuTutorialHandlePhase2(CMenuTutorial* self);
-extern "C" void MenuTutorialHandlePhase3(CMenuTutorial* self);
-
-// IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void MenuTutorialRenderThunk58(IScnRender* sub);
-void MenuTutorialDtorThunk58(IScnRender* sub, int flag);
-
-// Global (unmangled retail) accessors for the CMenuTutorial object.
-CMenuTutorial* MenuTutorialCreate(CProcess* self, CProcess* parent, u32 arg2);
-
-// CTaskGame statics (retail-mangled names). Imported flat because including
-// CTaskGame.hpp would pull monolib/scn.hpp and clash with the body-less
-// local IScnRender declaration above.
-
-// vtable / PMF / shared data (MWCC does not mangle global-scope data names).
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8052BF70[];   // CProcess primary vtable (pre-PMF copy)
-extern char lbl_eu_805391C0[];   // CMenuTutorial composite vtable
-extern u32 lbl_eu_80663E28;      // render-gate mode bitfield (bit 21 = busy)
-extern u32 lbl_eu_80664A28;      // singleton instance pointer (.sbss)
-extern char lbl_eu_80510260[];   // message-name string pool (Init title lookup)

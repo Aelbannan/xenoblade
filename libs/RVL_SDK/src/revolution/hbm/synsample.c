@@ -36,24 +36,6 @@ void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE*);
 void __HBMSYNSetupSample(HBMSYNVOICE*);
 
 // ---------------------------------------------------------------------------
-// __HBMSYNSetupSample
-// ---------------------------------------------------------------------------
-void __HBMSYNSetupSample(HBMSYNVOICE* voice)
-{
-    switch (*(u16*)voice->pRegion) {
-    case 0:
-        __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(voice);
-        break;
-    case 1:
-        __HBMSYNSetupPcm16__FP11HBMSYNVOICE(voice);
-        break;
-    case 2:
-        __HBMSYNSetupPcm8__FP11HBMSYNVOICE(voice);
-        break;
-    }
-}
-
-// ---------------------------------------------------------------------------
 // __HBMSYNSetupAdpcm__FP11HBMSYNVOICE
 // ---------------------------------------------------------------------------
 void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
@@ -217,6 +199,24 @@ void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
         u32 f = O_RU32(0x1C);
         f = (f & ~0x7800) | 0x8400;
         O_WU32(0x1C, f);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// __HBMSYNSetupSample
+// ---------------------------------------------------------------------------
+void __HBMSYNSetupSample(HBMSYNVOICE* voice)
+{
+    switch (*(u16*)voice->pRegion) {
+    case 0:
+        __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(voice);
+        break;
+    case 1:
+        __HBMSYNSetupPcm16__FP11HBMSYNVOICE(voice);
+        break;
+    case 2:
+        __HBMSYNSetupPcm8__FP11HBMSYNVOICE(voice);
+        break;
     }
 }
 

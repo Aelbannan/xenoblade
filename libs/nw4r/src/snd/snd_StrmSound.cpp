@@ -2,8 +2,6 @@
 #include <nw4r/ut.h>
 
 // Retail .sdata2 pool (US) - see the sibling decls in snd_StrmPlayer.cpp.
-extern const f32 lbl_eu_8066A088; // 1.0f
-extern const f32 lbl_eu_8066A08C; // move-value target set by InitParam
 
 namespace nw4r {
 namespace snd {
@@ -82,9 +80,9 @@ __ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44
     MoveValue<f32, int>* pBase = sv->moveValue;
     MoveValue<f32, int>* p = pBase + 1;
     MoveValue<f32, int>* pEnd = pBase + 8;
-    pBase->InitValue(lbl_eu_8066A088);
+    pBase->InitValue(0.0f);
     for (; p < pEnd; ++p) {
-        p->InitValue(lbl_eu_8066A088);
+        p->InitValue(0.0f);
     }
 
     return pSound;
@@ -103,13 +101,13 @@ void StrmSound::InitParam() {
     BasicSound::InitParam();
 
     // Each track's move value is first settled at 1.0f (InitValue), then a
-    // 1-frame move toward lbl_eu_8066A08C is started (SetTarget); SetTarget
+    // 1-frame move toward 1.0f is started (SetTarget); SetTarget
     // re-derives the origin from GetValue() (1.0f here since
     // counter==frame==0).
     StrmSoundRetail* self = reinterpret_cast<StrmSoundRetail*>(this);
     for (int i = 0; i < 8; i++) {
-        self->moveValue[i].InitValue(lbl_eu_8066A088);
-        self->moveValue[i].SetTarget(lbl_eu_8066A08C, 1);
+        self->moveValue[i].InitValue(0.0f);
+        self->moveValue[i].SetTarget(1.0f, 1);
     }
 }
 

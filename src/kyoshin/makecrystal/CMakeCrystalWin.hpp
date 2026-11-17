@@ -82,7 +82,7 @@ void teardown(CTitleAHelp* self);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 int IsMenuState621F0();
 void unregisterEffectScene(CScn* scene);
-void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
+void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene);
 void __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType);
 extern "C" void __ct__CLoad(CLoad* self, u8 arg);
@@ -90,8 +90,6 @@ void __dt__21CModelDispMakeCrystalFv(CModelDispMakeCrystal* self, int flags);
 void __dt__5CLoadFv(CLoad* self, int flags);
 void __dt__13CMCCrystalBoxFv(CMCCrystalBox* self, int flags);
 void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
-void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }
 
 // C-linkage imports. The retail DOL symbols are unmangled (per the retail

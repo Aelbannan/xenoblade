@@ -18,10 +18,6 @@ extern float lbl_eu_80668A80[2];
 // Retail object is 16 bytes (8 entries); the bound spells the retail size so
 // MWCC emits exactly one 0x10 object into .rodata (see the tables at EOF).
 extern unsigned short lbl_eu_8050EDD0[8];
-extern const float lbl_eu_80668A68;
-extern const float lbl_eu_80668A6C;
-extern const float lbl_eu_80668A70;
-extern const double lbl_eu_80668A78;
 extern "C" int lookupWorkAtAddr(void* addr);
 extern "C" int isBattleStatusActive(void*, int);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);

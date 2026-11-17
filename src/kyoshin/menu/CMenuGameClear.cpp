@@ -2,100 +2,115 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuGameClear.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include <revolution/GX.h>
 
-// forward declarations for scaffold thunk references (retail bare
-// symbols, so C linkage like the sibling TUs' thunk targets)
-extern "C" void cbRenderBefore__14CMenuGameClearFv(void*);
-extern "C" void __dt__14CMenuGameClearFv(void*);
+// CSysWin.hpp declares typed __ct__/__dt__17UnkClass_8045F564Fv forms that
+// clash with the void* forms in CItemBoxInfo.hpp (via CtrlObjectParam.hpp,
+// included by the header); hide them while CSysWin.hpp is processed so the
+// void* forms own the real names (same trick as CItemBoxGrid.cpp). This TU only
+// touches UnkClass_8045F564 storage through the void* free functions.
+#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
+#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
+#define ScalePaneWorldPos ScalePaneWorldPos_csys_dup
+#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
+#undef __dt__17UnkClass_8045F564Fv
+#undef __ct__17UnkClass_8045F564Fv
+#undef ScalePaneWorldPos
+
+// CfGameManager view for this TU (full header conflicts with CtrlObjectParam.hpp
+// data declarations).
+namespace cf {
+class CfGameManager {
+public:
+    static u32* getCfPadData();                 // getCfPadData__Q22cf13CfGameManagerFv
+    static int isClassicController(int arg);          // isClassicController__Q22cf13CfGameManagerFv
+    static void enablePadFlags(u32 flags, bool enable); // enablePadFlags__..FUlb
+};
+} // namespace cf
+
+// cf pad data view used by the input handlers (fields at +0x04/+0x104).
+struct CfPadDataView {
+    u8 _00[4];
+    u32 field_04;               // direction-flag word
+    u8 _08[0x104 - 0x08];
+    u32 field_104;              // button word
+};
+
+// DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
+
+// C-ABI imports (retail symbols are unmangled / pre-mangled C names).
+extern "C" {
+void deleteRegion__17UnkClass_8045F564Fv(void* region);
+void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
+void sysWinTermLayout(void* syswin);
+void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+void Cur_DrawLayout(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+int IsMenuState621F0();
+void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
+}
+
+// Global data imports (MWCC does not mangle global-scope data names).
+extern u32 lbl_eu_80664C10;              // game-clear state word (.sbss)
+extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
+
+// CSysWin / cursor helper imports (retail-unmangled C symbols; declared here
+// because the defining headers are not includable from this TU).
+extern "C" void* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" void sysWinAdvancePhase3(CSysWinFull* syswin);
+extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, void* syswin, u8 sel);
+extern "C" void Cur_SetVisible(void* cursor, int val);
+
+// CMenuGameClear singleton storage.
+CMenuGameClear* CMenuGameClear::sInstance;
+
+// The member-initialiser list covers the compiler-built members (scene, region,
+// state bytes, cursor); the CSysWin storage and the 14 CtrlObjectParam entries
+// are built here through the C-ABI ctor / init helpers.
+inline CMenuGameClear::CMenuGameClear(CScn* scene)
+    : mScene(scene), mMemRegion(), mField70(0), mField71(0), mSysWin(0), mCursor(nullptr) {
+    cf::CtrlObjectParamInit* p = &mParams[0];
+    cf::CtrlObjectParamInit* end = &mParams[14];
+    do {
+        CtrlObjectParam_InitEquipSlots(p);
+        p++;
+    } while (p < end);
+}
 
 /*
- * Singleton factory constructor (retail unmangled symbol). Allocates the
- * 0x12E60-byte game-clear screen, builds it (CProcess ctor, temp vtable,
- * null PMF triple copy, composite vtable + IScnRender sub-vtable at +0x58,
- * then the embedded widgets and the CtrlObjectParam entry array), registers
- * it under `registParent` and returns the stored instance (0 if one exists).
- *
- * r3 = registration parent (Regist), r4 = owning scene (stored at 0x5C).
+ * Singleton factory. Allocates the game-clear screen through the work-thread
+ * placement new (the ctor builds the IUICf base, the members and the
+ * CtrlObjectParam entry array), registers it under `parent` and returns the
+ * stored instance (0 if one already exists).
  */
-extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* scene) {
-    if (lbl_eu_80664C08 != 0) {
+CMenuGameClear* CMenuGameClear::create(CProcess* parent, CScn* scene) {
+    if (sInstance != 0) {
         return 0;
     }
 
-    CMenuGameClear* obj = (CMenuGameClear*)mtl::MemManager::allocate(
-        sizeof(CMenuGameClear), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // Temp (CProcess) vtable first, then the null PMF triple copy, then
-        // the composite vtable and the IScnRender sub-vtable at +0x58.
-        obj->mVtable10 = (u32)lbl_eu_8052BF70;
-        // Load [1] into a local first so MWCC hoists it above the [0] store
-        // (retail schedule: lwz [1], lwz [0], stw [0], stw [1], lwz/stw [2]).
-        u32* src = __ptmf_null;
-        u32 v;
-        v = src[1];
-        obj->mPtMf3C[0] = src[0];
-        obj->mPtMf3C[1] = v;
-        obj->mPtMf3C[2] = src[2];
-        v = src[1];
-        obj->mPtMf48[0] = src[0];
-        obj->mPtMf48[1] = v;
-        obj->mPtMf48[2] = src[2];
-
-        obj->mField54 = 0;
-        obj->mField55 = 0;
-
-        obj->mVtable10 = (u32)lbl_eu_8053AE20;
-        obj->mIScnRenderVtbl = (u32)lbl_eu_8053AE20 + 0x24;
-        obj->mScene = scene;
-
-        __ct__17UnkClass_8045F564Fv(
-            reinterpret_cast<UnkClass_8045F564*>(&obj->mMemRegion));
-        obj->mField70 = 0;
-        obj->mField71 = 0;
-        __ct__CSysWin(&obj->mSysWin, 0);
-        __ct__CCur18(&obj->mCursor, 0);
-
-        // Initialize the 14 CtrlObjectParam entries (0xCC stride each).
-        cf::CtrlObjectParamInit* p = &obj->mParams[0];
-        cf::CtrlObjectParamInit* end = &obj->mParams[14];
-        do {
-            CtrlObjectParam_InitEquipSlots(p);
-            p++;
-        } while (p < end);
-    }
-
-    lbl_eu_80664C08 = obj;
-    Regist__8CProcessFP8CProcessb((CProcess*)obj, registParent, false);
-    return lbl_eu_80664C08;
+    CMenuGameClear* menu = new (CWorkThreadSystem::getWorkMem()) CMenuGameClear(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 /*
- * Complete-object destructor. Subobjects destroyed in reverse construction
- * order: CCur18@0xB0, CSysWin@0x74, UnkClass_8045F564@0x60, then the CProcess
- * base (guarded by the nested double null-check, an MWCC artifact), then
- * conditional operator delete when the flags parameter is positive.
+ * Complete-object destructor. CCur18 and the region are destroyed by the
+ * compiler; the CSysWin storage is destroyed here through its C-ABI dtor.
  */
-CMenuGameClear::~CMenuGameClear() {
-    __dt__6CCur18Fv(&mCursor, -1);
-    __dt__7CSysWinFv(&mSysWin, -1);
-    __dt__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(&mMemRegion), -1);
-    if (this) {
-        if (this) {
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
-}
+CMenuGameClear::~CMenuGameClear() {}
 
 void CMenuGameClear::Init() {}
 
@@ -108,18 +123,13 @@ void CMenuGameClear::Init() {}
 void CMenuGameClear::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi +0x58.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVtbl);
-    }
-    mScene->removeRenderCB(render);
+    mScene->removeRenderCB(this);
 
     sysWinTermLayout(&mSysWin);
     ((CBaseCur*)&mCursor)->cleanup();
-    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion);
 
-    lbl_eu_80664C08 = 0;
+    sInstance = 0;
 
     cf::CfGameManager::enablePadFlags(-1, false);
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -150,19 +160,15 @@ end:
 body:
     if (IsMenuState621F0() != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
-        // calls (a C++ local would virtual-dispatch its scope-exit dtor).
-        u8 drawInfo[0x54];
-        __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+        nw4r::lyt::DrawInfo drawInfo;
+        SetWideLocAdjust(&drawInfo);
+        sysWinDrawLayout(&mSysWin, &drawInfo);
+        Cur_DrawLayout(&mCursor, &drawInfo);
     }
 }
 
 extern "C" unsigned long ClearMenu_IsPresent() {
-    return lbl_eu_80664C08 != 0;
+    return CMenuGameClear::sInstance != 0;
 }
 
 // Shared input-handler shape (ClearMenu_ConfirmInput selects -> state 4,
@@ -189,7 +195,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 4;
-        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
+        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin);
         Cur_SetVisible(&self->mCursor, 0);
         playUISound(3);
     } else if (down != 0) {
@@ -197,7 +203,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -205,7 +211,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
@@ -231,7 +237,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 8;
-        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
+        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin);
         Cur_SetVisible(&self->mCursor, 0);
         playUISound(3);
     } else if (down != 0) {
@@ -239,7 +245,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -247,15 +253,11 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
+        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
-
-void ClearMenu_ThunkRender58(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-
-void ClearMenu_ThunkDtor58(void* self) { ((void(*)(void*))__dt__14CMenuGameClearFv)((char*)self - 0x58); }
 
 extern "C" u32 ClearMenu_GetGlobal10() {
     return lbl_eu_80664C10;

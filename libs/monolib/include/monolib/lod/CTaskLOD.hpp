@@ -33,8 +33,8 @@ public:
     void disableLOD();
     void restorePrimaryLOD();
     void bindTaskToLOD(void* param);
-    void notifyLODTick();
-    void updateLODFrame();
+    static void notifyLODTick(float scale);
+    static void updateLODFrame(float scale);
     float getLODScale();
     void setLODFilterFlag(bool flag);
     void updateLODRange(bool flag);

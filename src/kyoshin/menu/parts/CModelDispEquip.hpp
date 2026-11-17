@@ -201,13 +201,7 @@ struct CModelDispActor {
     u32 field_3F34;           // +0x3F34
 };
 
-// 8-byte enum-list holder (CTaskGame_enumListCtor / __dt__80043E88).
-struct CModelDispListHolder {
-    u32 field_00;
-    u32 field_04;
-};
-
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
 struct CModelDispEnumList {
     u8 _pad00[0x620];
     u32 field_620; // +0x620
@@ -377,9 +371,6 @@ extern "C" void EffSched_LookupB(void* arg, void* data); // (manager, buffer): t
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 
 // ---- Enum-list / actor imports (ModelDispEquip_TeardownHolder / 801FFDC4 / 80200FB0) ----
-extern "C" CModelDispEnumList* CTaskGame_enumListCtor(CModelDispListHolder* holder);
-extern "C" CModelDispEnumList* CTaskGame_enumListGet(CModelDispListHolder* holder);
-extern "C" void __dt__80043E88(CModelDispListHolder* holder, int flag);
 extern "C" void startEnumObjects(CModelDispEnumList* list, u32 type, u32 filter);
 extern "C" CModelDispSlot* getEntryAt(CModelDispEnumList* list, u32 index);
 extern "C" void schedClearFlag15Update(CModelDispEffectView* effect);

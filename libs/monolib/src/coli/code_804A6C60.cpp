@@ -31,7 +31,7 @@ using nw4r::math::_VEC3;
 extern "C" u32 lbl_eu_8066AE30;   // .sdata2 float-const pool (CGXCache-owned)
 extern "C" u32 lbl_eu_80524408;   // .rodata RTTI name string (code_804B2FF0)
 extern "C" u32 lbl_eu_80524418;   // .rodata RTTI name string (code_804B2FF0)
-extern "C" u32 lbl_eu_80661C28;   // .data view-base object (CView-owned)
+extern "C" u32 __RTTI__9CColiProc;   // .data view-base object (CView-owned)
 extern "C" void ColiMoverUpdate();  // next-TU catalog stub
 
 // Forward declarations for the in-TU catalog functions referenced by the
@@ -82,24 +82,24 @@ extern "C" int ColiClipCentreRadius(CColiObject* self);
 // view-base word. lbl_eu_80663A90 is the 8-byte locator {name-ptr, 0}; the
 // decl below was widened to the array type and its read sites use word 0.
 u32 lbl_eu_80663A90[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
-extern "C" u32 lbl_eu_80663A98[2];
-extern "C" u32 lbl_eu_80663AA0[2];
+extern "C" u32 __RTTI__12CColiObjCall[2];
+extern "C" u32 __RTTI__12CColiResCall[2];
 extern "C" u32 lbl_eu_8056F38C[3];
 extern "C" u32 lbl_eu_8056F3B4[3];
 extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
 extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
-extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&lbl_eu_80663A98, 0x00000000, (u32)&ColiAccumScaledVec };
-extern "C" u32 lbl_eu_8056F38C[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056F398[0x4] = { (u32)&lbl_eu_80661C28, 0x00000000, (u32)&ColiNoop, 0x00000000 };
-extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&lbl_eu_80663AA0, 0x00000000, (u32)&ColiMoverUpdate };
-extern "C" u32 lbl_eu_8056F3B4[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&__RTTI__12CColiObjCall, 0x00000000, (u32)&ColiAccumScaledVec };
+extern "C" u32 lbl_eu_8056F38C[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056F398[0x4] = { (u32)&__RTTI__9CColiProc, 0x00000000, (u32)&ColiNoop, 0x00000000 };
+extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&__RTTI__12CColiResCall, 0x00000000, (u32)&ColiMoverUpdate };
+extern "C" u32 lbl_eu_8056F3B4[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056F3C0[0x5] = { 0x00040010, 0x000C0018, 0x00300008, 0x003C0014, 0x00180000 };
 extern "C" u32 lbl_eu_8056F3D4[0x5] = { 0x00140014, 0x001C001C, 0x00340034, 0x00740068, 0x00000000 };
 extern "C" u32 lbl_eu_8056F3E8[0x5] = { 0x00000000, 0x00010001, 0x00020002, 0x00030004, 0x00000000 };
 
 
-extern "C" u32 lbl_eu_80663A98[2] = { (u32)&lbl_eu_80524408, (u32)&lbl_eu_8056F38C };
-extern "C" u32 lbl_eu_80663AA0[2] = { (u32)&lbl_eu_80524418, (u32)&lbl_eu_8056F3B4 };
+extern "C" u32 __RTTI__12CColiObjCall[2] = { (u32)&lbl_eu_80524408, (u32)&lbl_eu_8056F38C };
+extern "C" u32 __RTTI__12CColiResCall[2] = { (u32)&lbl_eu_80524418, (u32)&lbl_eu_8056F3B4 };
 
 
 // 3-word sub-spec copied raw into the +0x44 point; full definition appears

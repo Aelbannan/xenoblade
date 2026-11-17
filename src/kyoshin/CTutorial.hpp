@@ -20,35 +20,15 @@ class Pane;
 class CEventFile;
 class CFileHandle;
 
-// Full object layout for CTutorial (used by C-linkage accessors)
-struct CTutorialFull {
-    u8 _00[0x46];
-    u8 field_46;
-    u8 field_47;
-    u8 _48[0x52 - 0x48];
-    u8 field_52;
-};
-
 // (Font-handle objects from CDeviceFont::getFontInfo dispatch through
 // IDeviceFontInfo::getFont at +0x24; see monolib/device/CDeviceFont.hpp.)
 
-// IWorkEvent-compatible vtable for CTutorial (split1 .data, shared pool).
-extern u8 lbl_eu_80539230[136];
-
-/* Empty base (no size, EBO): inline ctor makes MWCC emit the vptr store
-first, before the member region ctors (retail order). Paired with
-__declspec(novtable) on CTutorial so no TU-local __vt__9CTutorial is emitted -
-the store references the retail shared-pool label (COccCulling pattern). */
-struct CTutorialVtblBase {
-    CTutorialVtblBase() { *(void**)this = (void*)lbl_eu_80539230; }
-};
-
-// __declspec(novtable): suppresses the implicit __vt__9CTutorial emission.
-struct __declspec(novtable) CTutorial : CTutorialVtblBase {
+// Tutorial page viewer widget; receives file-load completion through IWorkEvent.
+class CTutorial : public IWorkEvent {
 public:
     CTutorial(u8 param_1, u8 param_2);
     virtual ~CTutorial();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     // Draw the tutorial layout when the active flag is set (tail-calls
     // drawLayout).
@@ -62,9 +42,9 @@ public:
     // Rewind-animation completion: state 0, visible.
     void Tutorial_FinishRewindAnim();
 
-    u8 Tutorial_GetField46Mark();
-    u8 Tutorial_GetField47Mark();
-    u8 Tutorial_GetField52Mark();
+    bool Tutorial_GetField46Mark();
+    bool Tutorial_GetField47Mark();
+    bool Tutorial_GetField52Mark();
 
     // Load / unload the three tutorial data files (retail Tutorial_LoadTutorialFiles /
     // Tutorial_TeardownTutorial).
@@ -81,8 +61,15 @@ public:
     void Tutorial_AdvanceState3To4();
     // Reset the 0x3340..0x33BE UI flag block (retail Tutorial_ResetSharedFlags).
     void Tutorial_ResetSharedFlags();
+    // Per-frame tick: drive the state machine's animation step, then animate.
+    void Tutorial_Move();
+    // Page-counter tick backwards (retail Tutorial_PrevPage).
+    void Tutorial_PrevPage();
+    // Validate the loaded resources and reset the page counters (retail
+    // Tutorial_ReloadTutorialData).
+    void Tutorial_ReloadTutorialData();
 
-    // IWorkEvent-compatible vtable (+0x00), then the widget data:
+    // IWorkEvent vptr (+0x00), then the widget data:
     UnkClass_8045F564 mRegion0;         // 0x04 - layout build region (0x1800)
     UnkClass_8045F564 mRegion1;         // 0x14 - data region (0x1000)
     CFileHandle* mFileHandle0;          // 0x24 - tutorial layout arc
@@ -95,68 +82,13 @@ public:
     nw4r::lyt::AnimTransform* mpAnimTrans1;  // 0x40
     u8 field_44;                              // 0x44: active/draw gate
     u8 field_45;                              // 0x45: state
-    u8 field_46;                              // 0x46
-    u8 field_47;                              // 0x47: visible flag
+    bool field_46;                              // 0x46
+    bool field_47;                              // 0x47: visible flag
     u8 field_48;                              // 0x48: current locale id
-    u8 _pad49[0x4C - 0x49];                  // 0x49-0x4B
+                                              // 0x49-0x4B: alignment padding
     u8* field_4C;                             // 0x4C: data buffer (deallocated on unload)
     s8 field_50;                              // 0x50: current page counter
     s8 field_51;                              // 0x51: page counter bound
-    u8 field_52;                              // 0x52
+    bool field_52;                              // 0x52
     u8 field_53;                              // 0x53: region/flags byte
 };
-
-// Layout draw helper (retail reloc is the mangled
-// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-// Fire a per-window sound/effect event by id (retail reloc
-// playUISound__FUl; declared with C++ linkage so MWCC mangles it).
-void playUISound(u32);
-// .sdata2 animation-frame bound shared by the tutorial widget animators.
-extern const float lbl_eu_80668C08;
-
-// Source string pool (split1 .rodata): arc path, sprintf formats and layout/
-// resource tags all live at offsets into this pool.
-extern char lbl_eu_80510290[];
-// Shared loaded-BDAT pointer used by the tutorial data loader.
-extern u32 lbl_eu_80664A30;
-
-// Font/sound helpers (retail reloc getPackedFont__Fv; C++ linkage so MWCC
-// mangles the free function).
-u32 getPackedFont();
-
-// Layout text-setter helper: retail reloc is the literal mangled name
-// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc; third param matches
-// code_80135FDC.hpp (u8) so TUs that include both headers do not 10197.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
-                                                        char*, u8);
-
-// Remaining helpers from the MenuStateInitFlags translation unit (same signatures
-// as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
-extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
-
-// Unmangled retail callees - C ABI. The retail reloc names for these are the
-// literal unmangled identifiers, so they must be declared with C linkage.
-extern "C" void* Bdat_GetTable_AA34();
-extern "C" void Tutorial_ReloadTutorialData(CTutorial* pTutorial);
-
-
-// Layout build helpers (retail relocs are the mangled C++ names).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
-                   const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
-                   nw4r::lyt::ArcResourceAccessor*, char*);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-// Root-pane font bind (retail reloc is the literal unmangled name).
-extern "C" void ApplyFontToTxtPanes(void*, u32);
-// BDAT field reader (retail reloc is the literal unmangled name).
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
-
-// Retail calls the language-flag query through its unmangled Fv symbol with a
-// dummy -1 argument that the callee ignores.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

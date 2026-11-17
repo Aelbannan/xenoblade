@@ -42,11 +42,9 @@ class __declspec(novtable) CTaskColiManager;
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
 extern u32 lbl_eu_8056F4F0[3];
 extern const f32 lbl_eu_8066AEC0;
-extern const f32 lbl_eu_8066AEA8;
 extern const f32 lbl_eu_8066AEB0;
 extern const f32 lbl_eu_8066AEC4;
 extern const f32 lbl_eu_8066AEC8;
-extern const f32 lbl_eu_8066AEB8;
 
 // C-linkage retail import (declared at global scope so MWCC emits the name
 // unmangled; the definition lives in the sibling coli unit).
@@ -107,7 +105,7 @@ void ColiMoverUpdate(CColiMover* self) {
     // evaluates when a source exists (short-circuit, matching retail's
     // early beq to the shared tail).
     if (self->src != NULL) {
-        if (self->off.y > lbl_eu_8066AEA8) {
+        if (self->off.y > 0.0f) {
             Vec tmp;
             Vec* pos = &self->pos;
             PSMTXMultVec((const f32 (*)[4])self->src->mtx1, pos, (Vec*)&tmp);
@@ -1075,7 +1073,7 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
 
     Vec v;
     v.x = lbl_eu_8066AEB0;
-    v.y = lbl_eu_8066AEB8;
+    v.y = 0.5f;
     v.z = lbl_eu_8066AEB0;
 
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
@@ -1115,7 +1113,7 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
                                     (const nw4r::math::MTX34*)tmp,
                                     (const nw4r::math::VEC3*)&v);
-    self->radius = lbl_eu_8066AEB8 * PSVECMag((const Vec*)&v);
+    self->radius = 0.5f * PSVECMag((const Vec*)&v);
     self->hd.flags |= 1;
 
     // Expand the global AABB around both endpoints swept by the radius, one
@@ -2035,9 +2033,9 @@ template<> void CTTask<CTaskColiManager>::Draw() {
 extern const char lbl_eu_80524428[17];
 extern const char lbl_eu_8052443C[25];
 extern const char lbl_eu_80524458[16];
-extern u32 lbl_eu_80663AB0[2];
+extern u32 __RTTI__16CTaskColiManager[2];
 extern u32 lbl_eu_80663AB8[2];
-extern u32 lbl_eu_80663AC0[2];
+extern u32 __RTTI__12CColiManCall[2];
 extern u32 lbl_eu_8056F48C[9];
 extern u32 lbl_eu_8056F4D4[7];
 extern u32 lbl_eu_8056F4FC[3];
@@ -2059,10 +2057,10 @@ extern "C" void cttask_ctm_dtor();
 extern "C" void cttask_ctm_move();
 extern "C" void cttask_ctm_draw();
 // Shared monolib RTTI hierarchy objects (other TUs / monolibdata splits).
-extern u8 lbl_eu_80661958[];
-extern u8 lbl_eu_80661950[];
-extern u8 lbl_eu_80661948[];
-extern u8 lbl_eu_80661C28[];
+extern u8 __RTTI__15CDoubleListNode[];
+extern u8 __RTTI__14CChildListNode[];
+extern u8 __RTTI__8CProcess[];
+extern u8 __RTTI__9CColiProc[];
 
 // .rodata 0x80524428..0x80524468: RTTI-name pool + dispatch name.
 extern __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80524428[17] =
@@ -2079,13 +2077,13 @@ extern __declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_
 // to lbl_eu_80663AA8 by UNIT_RULES exact_renames.
 enum { sdata_ref_needle_size = 4 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) const char sdata_ref_needle[sdata_ref_needle_size] = "ref";
-extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663AB0[2] = {
+extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__16CTaskColiManager[2] = {
     (u32)&lbl_eu_80524428, (u32)&lbl_eu_8056F48C,
 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663AB8[2] = {
     (u32)&lbl_eu_8052443C, (u32)&lbl_eu_8056F4D4,
 };
-extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663AC0[2] = {
+extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__12CColiManCall[2] = {
     (u32)&lbl_eu_80524458, (u32)&lbl_eu_8056F4FC,
 };
 
@@ -2107,15 +2105,15 @@ u32 lbl_eu_8056F444[9] = {
     (u32)&Coli_ExpandPoint, (u32)&ColiExpandPoint, (u32)&Coli_ExpandGlobalBox,
 };
 u32 lbl_eu_8056F468[9] = {
-    (u32)&lbl_eu_80663AB0, 0,
+    (u32)&__RTTI__16CTaskColiManager, 0,
     (u32)&__dt__16CTaskColiManagerFv, (u32)&Reset__14CChildListNodeFv,
     (u32)&Init__16CTaskColiManagerFv, (u32)&Term__16CTaskColiManagerFv,
     (u32)&Move__16CTaskColiManagerFv, (u32)&Draw__16CTaskColiManagerFv,
     (u32)&Tail__8CProcessFv,
 };
 u32 lbl_eu_8056F48C[9] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0,
-    (u32)&lbl_eu_80661948, 0, (u32)&lbl_eu_80663AB8, 0, 0,
+    (u32)&__RTTI__15CDoubleListNode, 0, (u32)&__RTTI__14CChildListNode, 0,
+    (u32)&__RTTI__8CProcess, 0, (u32)&lbl_eu_80663AB8, 0, 0,
 };
 u32 lbl_eu_8056F4B0[9] = {
     (u32)&lbl_eu_80663AB8, 0,
@@ -2125,14 +2123,14 @@ u32 lbl_eu_8056F4B0[9] = {
     (u32)&Tail__8CProcessFv,
 };
 u32 lbl_eu_8056F4D4[7] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0,
-    (u32)&lbl_eu_80661948, 0, 0,
+    (u32)&__RTTI__15CDoubleListNode, 0, (u32)&__RTTI__14CChildListNode, 0,
+    (u32)&__RTTI__8CProcess, 0, 0,
 };
 u32 lbl_eu_8056F4F0[3] = {
-    (u32)&lbl_eu_80663AC0, 0, (u32)&gateMoverMove,
+    (u32)&__RTTI__12CColiManCall, 0, (u32)&gateMoverMove,
 };
 u32 lbl_eu_8056F4FC[3] = {
-    (u32)&lbl_eu_80661C28, 0, 0,
+    (u32)&__RTTI__9CColiProc, 0, 0,
 };
 
 // .bss 0x8065D138..0x8065D1A0: shared collision walk state (+ tail pad).

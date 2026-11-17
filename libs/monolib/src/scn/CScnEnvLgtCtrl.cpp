@@ -4373,8 +4373,8 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056F9B8-0x8056FC10 (0x258): vtable + tail callback table.
 // In-TU functions (extern "C" above) carry the retail reloc names.
-extern "C" u32 lbl_eu_80663B08;  // .sdata RTTI locator
-extern "C" u32 lbl_eu_80663B10;  // .sdata locator (defined below)
+extern "C" u32 __RTTI__14CScnEnvLgtCtrl;  // .sdata RTTI locator
+extern "C" u32 __RTTI__10IScnEnvCtl;  // .sdata locator (defined below)
 extern "C" u32 lbl_eu_8056F96C;  // .data tail object (foreign)
 extern "C" u32 lbl_eu_8056FA58;  // .data tail object (foreign)
 extern "C" void __dt__14CScnEnvLgtCtrlFv();  // member dtor (this TU)
@@ -4479,12 +4479,12 @@ extern "C" u32 lbl_eu_805244A0;
 extern "C" u32 lbl_eu_805244B0;
 
 extern "C" u32 lbl_eu_8056F9B8[150] = {
-    (u32)&lbl_eu_80663B08, 0x00000000, (u32)&__dt__14CScnEnvLgtCtrlFv, (u32)&scnLgtFrameStep, (u32)&scnLgtBlendCurveSlots, (u32)&scnLgtSetDelta, (u32)&scnLgtGetDelta, (u32)&scnLgtGetTime,
+    (u32)&__RTTI__14CScnEnvLgtCtrl, 0x00000000, (u32)&__dt__14CScnEnvLgtCtrlFv, (u32)&scnLgtFrameStep, (u32)&scnLgtBlendCurveSlots, (u32)&scnLgtSetDelta, (u32)&scnLgtGetDelta, (u32)&scnLgtGetTime,
     (u32)&scnLgtSetTime, (u32)&scnLgtGetLimit, (u32)&scnLgtSetBound, (u32)&scnLgtRebuildSlots, (u32)&scnLgtApplyAmbColor, (u32)&scnLgtRefreshFogList, (u32)&scnLgtReadLightDataWords, (u32)&scnLgtReadLightDataRaw,
     (u32)&scnLgtCopyAmbBase, (u32)&scnLgtRefreshSlot, (u32)&scnLgtPushFogView0, (u32)&scnLgtPushFogView1, (u32)&scnLgtPushFogSlot0, (u32)&scnLgtBindType1Entry, (u32)&scnLgtBindType2Entry, (u32)&scnLgtBindType3Entry,
     (u32)&scnLgtSetFlashSlot, (u32)&scnLgtIsStepping, (u32)&scnLgtSetFlag31, (u32)&scnLgtSetFlag30, (u32)&scnLgtSetLightBit, (u32)&scnLgtStartFlash, (u32)&scnLgtGetFogCount, (u32)&scnLgtGetFlag28,
     (u32)&scnLgtGetFlag29, (u32)&scnLgtSetSlotBits, (u32)&scnLgtWriteSlotVecs, (u32)&scnLgtWriteSlotScale, (u32)&scnLgtClearSlotEn, (u32)&scnLgtSetSlotCurve, (u32)&scnLgtClrSlotCurve, (u32)&scnLgtToggleItemBit,
-    (u32)&lbl_eu_80663B10, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF18, 0x00000000,
+    (u32)&__RTTI__10IScnEnvCtl, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF18, 0x00000000,
     0xFFFFFFFF, (u32)&scnLgtPtmfSetF1C, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF20, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF24,
     0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF0, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF4, 0x00000000, 0xFFFFFFFF,
     (u32)&scnLgtPtmfStoreF8, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetSelf0C, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetSelf10, 0x00000000,

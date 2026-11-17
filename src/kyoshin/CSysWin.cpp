@@ -1,9 +1,11 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CSysWin
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -29,65 +31,28 @@ struct CSysWinPaneOverlay {
     f32 size[2];  // +0x4C - Pane::mSize (width, height)
 };
 
-// us-8022d450 - CSysWin constructor (US retail short C-linkage
-// symbol __ct__CSysWin; the class is novtable so MWCC never emits a
-// __vt__7CSysWin of its own). Stores the retail vtable BEFORE the embedded
-// UnkClass_8045F564 is constructed (retail ctor order), then zero/one-inits
-// the state fields and returns `this` in r3. optimize_for_size matches the
-// retail stmw/lmw prologue (MWCC_CASES #16); the UnkClass ctor is invoked
-// via its C-linkage symbol so no placement-new null check is emitted.
-#pragma push
-#pragma optimize_for_size on
-extern "C" CSysWin* __ct__CSysWin(CSysWin* self, int arg) {
-    self->vtbl() = lbl_eu_80536510;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = 0;
-    self->mTagProcessor = 0;
-    self->mArcAccessor = 0;
-    self->mLayout = 0;
-    self->mAnimTrans = 0;
-    self->field_28 = 1;
-    self->field_2C = 0;
-    self->field_30 = 0;
-    self->field_34 = 0;
-    self->field_35 = 0;
-    self->field_36 = 1;
-    self->field_37 = (u8)arg;
-    self->field_38 = 5;
-    self->field_39 = 0;
-    return self;
-}
-#pragma pop
+CSysWin::CSysWin(u8 kind)
+    : mFileHandle(nullptr),
+      mTagProcessor(nullptr),
+      mArcAccessor(nullptr),
+      mLayout(nullptr),
+      mAnimTrans(nullptr),
+      field_28(1),
+      field_2C(0),
+      field_30(0),
+      field_34(0),
+      field_35(0),
+      field_36(1),
+      field_37(kind),
+      field_38(5),
+      field_39(0) {}
 
-// us-8022d4d8 - complete-object destructor.
-// Written as the C-linkage free function the retail symbol names: null-check,
-// destroy the embedded UnkClass_8045F564 scratch region, then conditional
-// operator delete when flags > 0.
-#pragma push
-#pragma optimize_for_size on
-extern "C" CSysWin* __dt__7CSysWinFv(CSysWin* _this, int flags) {
-    if (_this != 0) {
-        __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
-#pragma pop
-
-// TEMP PROBE: two-register function to test save order codegen.
-extern "C" void probe_2reg(CSysWin* self, int kind) {
-    drawLayout(self->mLayout, 0, kind, 1);
-    drawLayout(self->mLayout, 0, kind, 2);
-}
+CSysWin::~CSysWin() {}
 
 // us-8022de64 - set the two window label texts from the shared
 // string pool (offsets +0x77 / +0x82) into the layout. optimize_for_size
 // matches the retail stmw/lmw prologue for the 3 callee-saved regs (r29-r31)
 // under the unit's -O4,p flags (see MWCC_CASES #16).
-#pragma push
-#pragma optimize_for_size on
 // retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail playUISound(0xE) }
 extern "C" void sysWinAdvancePhase3(void* self) {
     if (((CSysWin*)self)->field_35 == 2) {
@@ -97,13 +62,10 @@ extern "C" void sysWinAdvancePhase3(void* self) {
     }
 }
 
-#pragma push
-#pragma optimize_for_size on
 extern "C" void sysWinSetTwoTextValues(CSysWin* self, char* a, char* b) {
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x77, a, 0);
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_8050A478 + 0x82, b, 0);
 }
-#pragma pop
 
 // Stub for us-8022dec0 (sysWinApplyKind) - declared in CSysWin.hpp (C-linkage).
 // No definition here: an empty body would be inlined into callers and drop the
@@ -115,8 +77,6 @@ extern "C" void sysWinSetTwoTextValues(CSysWin* self, char* a, char* b) {
 // getShopWinPanePos / clpCalcCurPos: each GetRootPane() is a fresh load (retail
 // reloads window->mLayout per use). optimize_for_size matches the retail
 // stmw/lmw prologue for the 4 callee-saved regs (r28-r31).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* window, int idx) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050A478[0xde], idx + 1);
@@ -124,7 +84,6 @@ extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* window, i
     nw4r::lyt::Pane* pane2 = window->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0xeb], true);
     ScalePaneWorldPos(out, pane1, pane2, window->mLayout->GetRootPane());
 }
-#pragma pop
 
 // us-8022e150 - advance the window animation; mark it active (phase 2)
 // when the anim transform consumed the step.
@@ -167,8 +126,6 @@ extern "C" void sysWinRewindToPhase0(CSysWin* self) {
 // pane, then re-apply the current kind's pane visibility via sysWinSwitchKindPane.
 // optimize_for_size matches the retail stmw/lmw prologue + shared string
 // base for the 2 callee-saved regs (r30-r31) under the unit's -O4,p flags.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void sysWinSetupAfterLoad(CSysWin* self) {
     if (self->mLayout == 0) return;
     self->field_28 = 1;
@@ -225,7 +182,6 @@ extern "C" void sysWinSetupAfterLoad(CSysWin* self) {
     }
     sysWinSwitchKindPane(self, self->field_37);
 }
-#pragma pop
 
 // us-8022e43c - build the System window layout from the loaded arc
 // file (the mFileHandle match gate). Mirrors the CSelShopWin load path: mem
@@ -233,8 +189,6 @@ extern "C" void sysWinSetupAfterLoad(CSysWin* self) {
 // binding, then hand off to sysWinSetupAfterLoad and release the handle/region. The
 // Class_8045F858 stack guard destructs at scope end (after validateHeap).
 // optimize_for_size matches the retail stmw/lmw prologue (r29-r31).
-#pragma push
-#pragma optimize_for_size on
 bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         u32 handle = mtl::MemManager::getHandleMEM2();
@@ -266,16 +220,14 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
-#pragma pop
 
 // us-8022d52c - load the System.arc file (IWorkEvent callback = this)
 // into the window's file-handle slot, mark the handle, and clear the ready flag.
-extern "C" void sysWinInitFileRead(CSysWin* self) {
+void CSysWin::loadSystemArc() {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
-    self->mFileHandle = CDeviceFile::readFile(
-        allocHandle, lbl_eu_8050A478, reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    CDeviceFile::setHandleFlag1(self->mFileHandle);
-    self->field_28 = 0;
+    mFileHandle = CDeviceFile::readFile(allocHandle, lbl_eu_8050A478, this, 0, 0);
+    CDeviceFile::setHandleFlag1(mFileHandle);
+    field_28 = 0;
 }
 
 // us-8022d580 - per-frame update: run the phase handler for the
@@ -315,8 +267,6 @@ extern "C" void sysWinDrawLayout(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
 // us-8022d62c - tear down the window layout and free its resources.
 // The `if (x != 0) { delete x; x = 0; }` shape reproduces retail's double-beq
 // prologue check (same as CBattery::releaseLayout).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void sysWinTermLayout(CSysWin* self) {
     closeFileHandle(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout;
@@ -334,7 +284,6 @@ extern "C" void sysWinTermLayout(CSysWin* self) {
     }
     self->mMemRegion.deleteRegion();
 }
-#pragma pop
 
 // us-8022d6f0 - open the window (only when idle): mark phase 1 and
 // play the opening UI sound.
@@ -350,8 +299,6 @@ extern "C" void sysWinOpenPhase1(CSysWin* self) {
 // hide both panes first, then re-show the one selected by the 4-way switch
 // (each case keeps its own call site in retail - no fall-through merging).
 // optimize_for_size matches the retail stmw/lmw prologue (r30-r31).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind) {
     setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C), 0);
     setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30), 0);
@@ -371,7 +318,6 @@ extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind) {
         break;
     }
 }
-#pragma pop
 // us-8022d7ec - set the system-window content for one of the four
 // window kinds. Finds the shared label pane once, then per kind: writes the
 // label texts (cases 0/2/3 use the incoming strings), binds the tag processor

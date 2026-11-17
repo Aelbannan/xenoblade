@@ -5,7 +5,6 @@
 
 extern "C" {
     extern u32 lbl_eu_8056EB60[];   // CScnFilter vtable
-    extern const float lbl_eu_8066ABA0;   // 0.0f
     extern const double lbl_eu_8066ABA8;  // 0x4330000000000000 (int-to-float magic)
 }
 
@@ -13,7 +12,7 @@ extern "C" void __ct__CScnFilter(CScnFilter* self) {
     *(u32**)self = lbl_eu_8056EB60;
     self->mEnabled = 0;
     self->mUnk0C = 0;
-    self->mIntensity = lbl_eu_8066ABA0;
+    self->mIntensity = 0.0f;
     self->mUnk14 = 0;
     self->mFlags = (u32)self->mEnabled | 3;
 }
@@ -75,18 +74,18 @@ static BOOL check_over(CScnFilter* self) {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056EB60-0x8056EB78 (24B): CScnFilter vtable. The typeinfo pair
-// lbl_eu_806639F0 is owned by a foreign TU.
-extern "C" u32 lbl_eu_806639F0;
+// __RTTI__10CScnFilter is owned by a foreign TU.
+extern "C" u32 __RTTI__10CScnFilter;
 extern "C" void __dt__10CScnFilterFv();
 extern "C" u32 lbl_eu_8056EB60[6] = {
-    (u32)&lbl_eu_806639F0, 0x00000000,
+    (u32)&__RTTI__10CScnFilter, 0x00000000,
     (u32)&__dt__10CScnFilterFv,
     (u32)&FilterUpdateIntensity,
     0x00000000, 0x00000000,
 };
 
 // [.rodata] 0x805240AC-0x80524138 (140B, align 4): RTTI class-name strings.
-// Referenced by foreign typeinfo objects (lbl_eu_806639F0 et al.).
+// Referenced by foreign typeinfo objects (__RTTI__10CScnFilter et al.).
 extern "C" __declspec(align(4)) const char lbl_eu_805240AC[0xB] = { 0x43, 0x53, 0x63, 0x6E, 0x46, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x00 };
 extern "C" __declspec(align(4)) const char lbl_eu_805240B8[0xA] = { 0x43, 0x53, 0x63, 0x6E, 0x42, 0x6C, 0x6F, 0x6F, 0x6D, 0x00 };
 extern "C" __declspec(align(4)) const char lbl_eu_805240C4[0x14] = { 0x43, 0x53, 0x63, 0x6E, 0x42, 0x6C, 0x6F, 0x6F, 0x6D, 0x42, 0x61, 0x73, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };  // +6B tail pad (retail gap)

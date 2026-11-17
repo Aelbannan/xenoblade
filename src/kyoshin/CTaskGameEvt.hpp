@@ -2,70 +2,39 @@
 
 #include <types.h>
 
-#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CTTask.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
 class CEventFile;
+class CScn;
 
-#include "monolib/scn/CScn.hpp"
-
-// CProcess base constructor imported from another TU (C-ABI, retail C-linkage
-// symbol name - do not let C++ mangle its parameter list).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-
-// Retail vtable data / PTMF constant (imports; defined in .data/.rodata splits).
-// lbl_eu_80538C00 is the CTaskGameEvt vtable region; the secondary sub-object
-// vtables (field_54 at +0x24, the IScnRender member at +0xAC) live inside the
-// same block, so the constructor references them as offsets off this label.
-// lbl_eu_80538CE8 is the interim CTTask<CTaskGameEvt> vtable.
-extern char lbl_eu_80538C00[];     // CTaskGameEvt vtable region
-extern char lbl_eu_80538CE8[];     // CTTask<CTaskGameEvt> vtable
-// null pointer-to-member-function constant (3 words).
-extern u32 __ptmf_null[3];
-
-// Generic task wrapper - canonical monolib template (declared-only members so
-// the unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via
-// explicit `template<>` specializations).
-#include "monolib/work/CTTask.hpp"
-
-class CTaskGameEvt : public CTTask<CTaskGameEvt> {
+// Event task of the game scene: starts the queued event sequence once the
+// field task is idle.
+// The interface bases are private: retail's RTTI base list names only the
+// CTTask chain.
+class CTaskGameEvt : public CTTask<CTaskGameEvt>, IWorkEvent, IScnRender {
 public:
-    CTaskGameEvt(int arg);
+    enum {
+        FLAG_RUNNING = 1 << 0,
+        FLAG_ENABLED = 1 << 1,
+    };
+
+    CTaskGameEvt(CScn* scene);
     virtual ~CTaskGameEvt();
-    void Init();
-    void Term();
-    void Move();
-    void Draw();
-    static CTaskGameEvt* create(CProcess* pParent, int arg);
 
-    // 0x0-0x54: CTTask<CTaskGameEvt>
-    u32 field_54;          // 0x54
-    // 0x58 render callback subobject. Stored as raw bytes, not a typed
-    // IScnRender member: a typed member makes MWCC emit a standalone
-    // `__dt__10IScnRenderFv` strong copy (0x40) in every TU with an
-    // out-of-line dtor (retail keeps it only in CTaskGame.o).
-    u8 mRenderCB[4];     // 0x58
-    CScn* mScene;          // 0x5C
-    u32 mFlags;            // 0x60
+    void clearSeqState();
+    void teardownSeq();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void Draw();
+    virtual void cbRenderBefore();
+    virtual bool OnFileEvent(CEventFile* event);
+
+    static CTaskGameEvt* create(CProcess* parent, CScn* scene);
+
+    /* 0x5C */ CScn* mScene;
+    /* 0x60 */ u32 mFlags;
 }; // size: 0x64
-
-// Minimal declaration for the cf event-task singleton query (avoids pulling
-// in the full cf header).
-namespace cf {
-class CTaskGameCf {
-public:
-    static CTaskGameCf* getInstance();
-};
-} // namespace cf
-
-// Free-function imports defined in sibling TUs (cf/CTaskREvent.cpp).
-// These are genuine C-ABI functions (retail unmangled symbols), so they are
-// declared extern "C" here: `decltype`/member-reference would otherwise mangle
-// the call relocs to evtIsFullyIdle__Fv / evtBeginShuffledSeq__Fv and drift from the
-// retail reloc sites (evtIsFullyIdle / evtBeginShuffledSeq).
-extern "C" {
-void evtClearSeqStateBit9();
-void evtTeardownActive();
-int evtIsFullyIdle();
-int evtBeginShuffledSeq();
-}

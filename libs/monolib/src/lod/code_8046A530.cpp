@@ -5,6 +5,7 @@
 #include <PowerPC_EABI_Support/MSL_C/MSL_Common/rand.h>
 #include <revolution/MTX.h>
 #include <revolution/mtx/vec.h>
+#include "monolib/lod/UnkClass_8046A530.hpp"  // LOD::UnkClass_8046A530 definition
 #include "monolib/lod/LODMemMan.hpp"   // provides full LOD::LODMemMan definition
 #include "monolib/core/code_804E36DC.hpp"  // declares operator delete(C ABI)
 #include "monolib/math/CVec3.hpp"      // ml::CVec3 + nw4r math inlines (VEC3*, FrSqrt, Warning)

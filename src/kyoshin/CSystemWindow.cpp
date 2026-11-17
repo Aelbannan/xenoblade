@@ -2,6 +2,7 @@
 //
 // Matching session for unit kyoshin/CSystemWindow.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CSystemWindow.hpp"
 #include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -70,7 +71,7 @@ extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
     self->mScnRender = scnRender;
     self->mScene = scene;
 
-    __ct__CSysWin(&self->mSysWin[0], 0);
+    __ct__7CSysWinFUc(&self->mSysWin[0], 0);
 
     // Default window state + optional flags, then copy the two title strings
     // (empty-string cases zero the first byte to match strcpy(null-copy).
@@ -116,7 +117,7 @@ void CSystemWindow::Init() {
     // (the embedded vtable set by the ctor is retained), destroy the temp, then
     // dispatch the layout-build virtual at vtable+0x88.
     u8 temp[0x3A];
-    __ct__CSysWin(temp, field_B5);
+    __ct__7CSysWinFUc(temp, field_B5);
     CSysWinDataBuff* sw = reinterpret_cast<CSysWinDataBuff*>(&mSysWin[0]);
     CSysWinDataBuff* tw = reinterpret_cast<CSysWinDataBuff*>(temp);
     sw->f_04 = tw->f_04;
@@ -217,14 +218,9 @@ void CSystemWindow::cbRenderBefore() {
     if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls to
-    // match the retail direct calls (a C++ local would virtual-dispatch its
-    // scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    sysWinDrawLayout(&mSysWin[0], &drawInfo);
 }
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a

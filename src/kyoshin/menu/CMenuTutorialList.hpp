@@ -4,165 +4,41 @@
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
 
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CTutorial.hpp"
 #include "kyoshin/CTutorialList.hpp"
 
-// Forward declarations: the owning scene (CScn.hpp pulls broken monolib
-// umbrella headers; keep the pointer opaque, same scheme as CMenuCollepedia)
-// and the tutorial widget type (only pointer params in this header).
+// Forward declaration: the owning scene (CScn.hpp pulls broken monolib
+// umbrella headers; keep the pointer opaque, same scheme as CMenuCollepedia).
 class CScn;
-class CTutorial;
 
 /**
  * Tutorial list menu widget.
  *
- * MI layout: CProcess at 0x00, IScnRender subobject (member) at 0x58.
- * The thunk functions CMenuTutorialList_RenderThunk58 / CMenuTutorialList_DtorThunk58 adjust this by -0x58
- * when entering through the IScnRender vtable.
- *
- * Member offsets recovered from the retail constructor (802AE4E8):
- *   0x00-0x3B: CProcess base
- *   0x3C-0x53: compiler PMF (pointer-to-member) callback slots
- *   0x54/0x55: u8 flags
- *   0x58:      IScnRender subobject (vtable ptr)
- *   0x5C:      CScn* mScene
- *   0x60:      CBgTex (size 0x20)
- *   0x80:      CTitleAHelp (size 0x38)
- *   0xB8:      CTutorialList (size 0x288)
- *   0x340:     CTutorial (size 0x54)
- *   0x394:     f32 mTimer
- *   0x398:     u8 mFlag
- *   0x39A:     u16 mChoice
- * Total size: 0x39C
+ * Retail layout (ctor 802AE4E8): IUICf base (CProcess + 0x54/0x55 flags) at 0x00,
+ * IScnRender subobject at 0x58, members from 0x5C.
  */
-class CMenuTutorialList : public CProcess {
+class CMenuTutorialList : public IUICf, public IScnRender {
 public:
+    CMenuTutorialList(CScn* scene, u16 choice);
     virtual ~CMenuTutorialList();
+
     virtual void Init();
     virtual void Term();
     virtual void Move();
+    virtual void cbRenderBefore();
 
-    // Render callback (dispatched through the IScnRender subobject vtable)
-    void cbRenderBefore();
+    static CMenuTutorialList* create(CProcess* parent, CScn* scene, u32 choice);
+    static CMenuTutorialList* sInstance;
 
-    u32 ptmf0[3];             // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];             // 0x48-0x53: null PMF callback slot group 2
-    u8 mField54;              // 0x54: phase/state flag (written by CMenuTutorialList_PhaseClose)
-    u8 mField55;              // 0x55
-    u8 _pad56[2];             // 0x56-0x57
-    IScnRender mIScnRender;   // 0x58-0x5B: render-callback subobject (vptr)
-    CScn* mScene;             // 0x5C: owning scene
-    CBgTex mBgTex;            // 0x60-0x7F: background layout widget
-    CTitleAHelp mTitleAHelp;  // 0x80-0xB7: title/help bar
-    u8 mTutorialList[0x288];  // 0xB8-0x33F: CTutorialList (header type is layout-incomplete; opaque buffer)
-    u8 mTutorial[0x54];       // 0x340-0x393: CTutorial
-    f32 mTimer;               // 0x394
-    u8 mFlag;                 // 0x398: phase byte (state machine in Move)
-    u16 mChoice;              // 0x39A
-    CMenuTutorialList();
-};
-// Total size: 0x39C
-
-// Shared singleton / string pool (retail names; global-scope plain extern
-// keeps the symbols unmangled).
-extern unsigned long lbl_eu_80664BE8;  // menu-open singleton (0 = closed)
-extern char lbl_eu_80510B44[];         // title/help label string pool
-
-// IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void CMenuTutorialList_RenderThunk58(IScnRender* sub);
-void CMenuTutorialList_DtorThunk58(IScnRender* sub);
-
-// Retail-unmangled phase handlers (US keeps the bare func_ names; C linkage
-// so Move's dispatch calls and the definitions bind the literal symbols).
-extern "C" void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseAdvance(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseClose(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseOpenSeq(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseTurnPage(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self);
-extern "C" void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self);
-
-// Retail-unmangled callee names (US retail strips the mangling for these
-// widget helpers) -- C linkage so calls bind the literal retail symbol.
-// Return types are int (not u8) so callers compare with cmpwi directly.
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int TutorialList_IsInitialized(CTutorialList* self);
-extern "C" int TutorialList_IsListVisible(CTutorialList* self);
-extern "C" void TutorialList_OpenListInit(CTutorialList* self);
-extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
-extern "C" void applyPaneTevColors(CTitleAHelp* self);
-extern "C" void setNameText(CTitleAHelp* self, char* name);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" u16 TutorialList_GetSelectedEntryId(CTutorialList* self);
-extern "C" void TutorialList_RefreshRowTexts(CTutorialList* self);
-extern "C" void TutorialList_UpdatePerFrame(CTutorialList* self);
-extern "C" void TutorialList_DrawVisible(CTutorialList* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void TutorialList_ReleaseResources(CTutorialList* self);
-extern "C" int Tutorial_GetField46Mark(CTutorial* self);
-extern "C" int Tutorial_GetField47Mark(CTutorial* self);
-extern "C" int Tutorial_GetField52Mark(CTutorial* self);
-extern "C" u8 Tutorial_GetPageState(CTutorial* self);
-extern "C" void Tutorial_NextPage(CTutorial* self);
-extern "C" void Tutorial_AdvanceState3To4(CTutorial* self);
-extern "C" void Tutorial_PrevPage(CTutorial* self);
-extern "C" void Tutorial_DrawLayoutGated(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void Tutorial_Move(CTutorial* self);
-extern "C" void Tutorial_StartIfIdle(CTutorial* self);
-extern "C" void Tutorial_TeardownTutorial(CTutorial* self);
-extern "C" u8 DecMenuCounter64080();
-extern "C" u8 code80135FDC_getByte_64080();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-// CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
-// no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-// UI sound playback (retail unmangled C symbol; id + param).
-extern "C" void CtrlRemote_SetSharedBit(u32 soundId, u32 arg);
-// Save/skip system busy queries (retail unmangled).
-extern "C" int CMainMenu_GetInstancePtr();
-extern "C" void ArtsInfo_SetReadyFlag();
-// IScnRender-vtable thunk targets: the C++ members are emitted under their
-// mangled names; C linkage keeps the verbatim retail symbols and stops the
-// compiler from inlining the (same-TU) member bodies into the thunks.
-extern "C" void cbRenderBefore__17CMenuTutorialListFv(CMenuTutorialList* self);
-extern "C" CMenuTutorialList* __dt__17CMenuTutorialListFv(CMenuTutorialList* self, int flags);
-
-// Retail constructor symbol (unmangled global in US). Free-function form so
-// the factory emits a real bl to the bare retail symbol; returns `this` in r3
-// like retail.
-extern "C" CMenuTutorialList* __ct__CMenuTutorialList(CMenuTutorialList* self, CProcess* parent, u32 arg2);
-
-// Widget/base destructors called by the member dtor (US retail keeps the
-// mangled __dt__ names; the first two are C-ABI wrappers for the opaque
-// embedded widget storages).
-extern "C" void __dt__9CTutorialFv(CTutorial* self, int dealloc);
-extern "C" void __dt__13CTutorialListFv(CTutorialList* self, int dealloc);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
-extern "C" void __dt__6CBgTexFv(CBgTex* self, int dealloc);
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
-
-// Embedded-widget ctors called by the member ctor (US retail strips these
-// manglings; C-ABI wrappers for the opaque embedded storages).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__13CTutorialListFUs(CTutorialList* self, int arg);
-extern "C" void __ct__CTutorial(CTutorial* self, int arg, int arg2);
-
-// vtable / PMF / shared data (MWCC does not mangle global-scope data names).
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8052BF70[];    // CProcess primary vtable (pre-PMF copy)
-extern char lbl_eu_8053A238[];    // CMenuTutorialList composite vtable
-// Game-state flags word (bit 21 = menu blocked; shared with CMenuTutorial).
-extern u32 lbl_eu_80663E28;
-// Menu timer init constant (.sdata2 pool).
-extern const f32 lbl_eu_80668DC8;
+    /* 0x5C */ CScn* mScene;
+    /* 0x60 */ CBgTex mBgTex;                            // size 0x20
+    /* 0x80 */ CTitleAHelp mTitleAHelp;                  // size 0x38
+    /* 0xB8 */ CTutorialList mTutorialList;                      // size 0x288
+    /* 0x340 */ CTutorial mTutorial;                     // size 0x54
+    /* 0x394 */ f32 mTimer;
+    /* 0x398 */ u8 mFlag;   // phase state machine byte (Move)
+    /* 0x39A */ u16 mChoice;
+}; // size: 0x39C

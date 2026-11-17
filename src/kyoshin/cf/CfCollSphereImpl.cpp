@@ -31,16 +31,16 @@ __declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned c
 
 // .data 0x220 -- 113 pointer relocs, 23 immediates (all zero)
 extern "C" {
-extern char lbl_eu_80661C78[];
-extern char lbl_eu_80661C80[];
-extern char lbl_eu_80661C88[];
+extern char __RTTI__Q22cf12CfObjectColl[];
+extern char __RTTI__Q22cf17CfCollCapsuleImpl[];
+extern char __RTTI__Q22cf18CfCollCylinderImpl[];
 extern char lbl_eu_80661C90[];
-extern char lbl_eu_80661C98[];
-extern char lbl_eu_80661CA8[];
+extern char __RTTI__Q22cf16CfCollSphereImpl[];
+extern char __RTTI__Q22cf10CfCollImpl[];
 extern char lbl_eu_80661CB0[];
 extern char lbl_eu_806618F0[];
-extern char lbl_eu_806618F8[];
-extern char lbl_eu_80661900[];
+extern char __RTTI__Q22cf12CObjectParam[];
+extern char __RTTI__Q22cf12CObjectState[];
 extern void CObjectState_setStateBitMask__Q22cf12CObjectStateFv();
 extern void CObjectState_checkStateFlags__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv();
@@ -141,7 +141,7 @@ extern void CollAABB_DrawDebugShape();
 extern void CollAABB_RenderQuery();
 }
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data_CfCollSphereImpl[136] = {
-    &lbl_eu_80661C78, (void*)0,
+    &__RTTI__Q22cf12CfObjectColl, (void*)0,
     &CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
     &CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
@@ -234,18 +234,18 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv,
-    &lbl_eu_80661900, (void*)0,
-    &lbl_eu_806618F8, (void*)0,
+    &__RTTI__Q22cf12CObjectState, (void*)0,
+    &__RTTI__Q22cf12CObjectParam, (void*)0,
     &lbl_eu_806618F0, (void*)0,
     &lbl_eu_80661CB0, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C80, (void*)0, &CollCapsule_DrawDebugShape, &collCapsuleQueryOffset,
-    &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C88, (void*)0, &CollCylinder_DrawDebugShape, &collCylinderQueryOffset,
-    &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
+    &__RTTI__Q22cf17CfCollCapsuleImpl, (void*)0, &CollCapsule_DrawDebugShape, &collCapsuleQueryOffset,
+    &__RTTI__Q22cf10CfCollImpl, (void*)0, (void*)0, (void*)0,
+    &__RTTI__Q22cf18CfCollCylinderImpl, (void*)0, &CollCylinder_DrawDebugShape, &collCylinderQueryOffset,
+    &__RTTI__Q22cf10CfCollImpl, (void*)0, (void*)0, (void*)0,
     &lbl_eu_80661C90, (void*)0, &CollAABB_DrawDebugShape, &CollAABB_RenderQuery,
-    &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C98, (void*)0, &CfCollSphere_DebugDrawSimple, &CfCollSphere_DebugDrawXform,
-    &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
+    &__RTTI__Q22cf10CfCollImpl, (void*)0, (void*)0, (void*)0,
+    &__RTTI__Q22cf16CfCollSphereImpl, (void*)0, &CfCollSphere_DebugDrawSimple, &CfCollSphere_DebugDrawXform,
+    &__RTTI__Q22cf10CfCollImpl, (void*)0, (void*)0, (void*)0,
 };
 
 // .sdata 0x28 -- 10 pointer relocs

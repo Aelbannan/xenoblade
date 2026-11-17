@@ -1,16 +1,13 @@
-// kyoshin/menu/CMenuPause
-// Pause menu screen controller (decompiled).
-
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuPause.hpp"
 
-extern "C" void* __dt__10CMenuPauseFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -26,21 +23,82 @@ extern u32 lbl_eu_80663E28;
 // emits this under C linkage (`Pause_HandleExitInput`), so it must stay unmangled.
 extern "C" void Pause_HandleExitInput(CMenuPause* p);
 
+// ---- Declarations private to this unit ----
+
+// C-linkage imports (retail symbol names -- these identifiers are pre-mangled
+// or unmangled in retail, so they must keep C linkage to bind to the literal
+// name).
+
+
+// Mirror of the font object returned by CDeviceFont::getFontInfo.
+// vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
+// pane. Never instantiated, so no vtable is emitted; a genuine virtual call
+// makes MWCC emit the retail r12 dispatch sequence.
+struct CMenuPauseFontView {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable slot 9 (offset 0x24)
+};
+
+// Texture object returned by ArcResourceAccessor::GetResource for the 'timg'
+// tag. mChain (+0x08) -> mDims (+0x00) carries the 2D dimension header.
+struct CMenuPauseTexDims {
+    u16 field_0x0; // +0x00
+    u16 field_0x2; // +0x02
+};
+struct CMenuPauseTexChain {
+    CMenuPauseTexDims* mDims; // +0x00
+};
+struct CMenuPauseTexObj {
+    u8 _0[0x8];
+    CMenuPauseTexChain* mChain; // +0x08
+};
+
+extern "C" {
+    void MenuSnd_SetSlotsPause_8890(u32);
+    int isClassicController__Q22cf13CfGameManagerFv(int arg);
+    void CfSoundMan_PlayRequest(f32, int, int, int);
+    void MenuStateClear64064();
+    void func_800853C8__Q22cf13CfGameManagerFv();
+    void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
+
+    // CMenuPause factory constructor imports.
+    void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+    u32 getWorkMem__17CWorkThreadSystemFv();
+    void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+
+    // Init() resource/layout helpers.
+    void* getHandleMEM2__Q23mtl10MemManagerFv();
+    void* __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
+    void __dt__14Class_8045F858Fv(void*, int);
+    void setMemInitFlag__Q23mtl10MemManagerFb(bool);
+    void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+    void validateHeap__17UnkClass_8045F564Fv(void*);
+    void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
+    nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+}
+
+CMenuPause::~CMenuPause() {}
+
 void CMenuPause::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
     MenuSnd_SetSlotsPause_8890(1);
 
     // Scoped MEM2 region guard, then build the layout + animations.
     mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x2000,
-                            lbl_eu_8050C5C8, 0);
-    u8 regionBuf[4];
-    __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
+                            "CMenuPause", 0);
+    Class_8045F858 regionGuard(&mMemRegion);
     mtl::MemManager::setMemInitFlag(false);
 
-    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_8050C5C8[0xb]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf60_syswin13.brlyt");
     bindLayoutAnimTransform(mLayout,
-                  reinterpret_cast<nw4r::lyt::AnimTransform**>(&mField80),
-                  CUICfManager_getArcResourceAccessor(), &lbl_eu_8050C5C8[0x24]);
+                  &mAnim,
+                  CUICfManager_getArcResourceAccessor(), "mf70_cf60_syswin13_in.brlan");
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -49,18 +107,14 @@ void CMenuPause::Init() {
     ApplyFontToTxtPanes(rootPane, fontResult);
 
     mLayout->SetAnimationEnable(
-        reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80), true);
+        mAnim, true);
     mLayout->Animate(0);
 
     // Fill the two message-table text fields.
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x50],
-                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x40], &lbl_eu_8050C5C8[0x4b],
-                                8),
-                  0);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x70],
-                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
-                                0x6b),
-                  0);
+    char* title = BdatTouchStringCell("MNU_sysmes", "name", 8);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_titlemes", title, 0);
+    char* help0 = BdatTouchStringCell("MNU_kyeassign", "help", 0x6b);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes00", help0, 0);
 
     // ---- Cursor texture palette variants (classic vs remote pad). ----
     // Each: pick a message name by pad type, load the "timg" texture
@@ -68,14 +122,14 @@ void CMenuPause::Init() {
     // texture's 2D dimension header (u16 w/h converted via the 2^52 trick).
     {
         u16 msg = BdatGetU16ByTableKey(
-            &lbl_eu_8050C5C8[0x5d],
-            isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
-                                                      : &lbl_eu_8050C5C8[0x86],
+            "MNU_kyeassign",
+            isClassicController__Q22cf13CfGameManagerFv(-1) ? "fileID_2"
+                                                      : "fileID_1",
             0x6b);
         char* handle = MakeTplNameSysFile(msg);
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
+            PaneSetTexPaletteByName(mLayout, (void*)"pic_btn00", tex);
             // u16 -> f32 via MWCC's own 0x43300000 double-trick conversion:
             // the width/height reads are hoisted ahead of FindPaneByName and
             // the Size copy lands as two stfs pairs (pane + stack scratch).
@@ -84,45 +138,35 @@ void CMenuPause::Init() {
             u16 texHeight = dims->field_0x2;
             u16 texWidth = dims->field_0x0;
             nw4r::lyt::Pane* pane = mLayout->GetRootPane()
-                                         ->FindPaneByName(&lbl_eu_8050C5C8[0x8f],
+                                         ->FindPaneByName("pic_btn00",
                                                           true);
             if (pane != NULL) {
-                // Plain u16 -> float assignment: MWCC emits its own
-                // 0x43300000/fsubs conversion idiom for this shape.
-                nw4r::lyt::Size size;
-                size.width = texHeight;
-                size.height = texWidth;
-                pane->SetSize(size);
+                pane->SetSize(nw4r::lyt::Size(texHeight, texWidth));
             }
         }
     }
     // Middle message-table text field between the two cursor variants.
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x99],
-                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
-                                0x6c),
-                  0);
+    char* help1 = BdatTouchStringCell("MNU_kyeassign", "help", 0x6c);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes01", help1, 0);
     {
         u16 msg = BdatGetU16ByTableKey(
-            &lbl_eu_8050C5C8[0x5d],
-            isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
-                                                      : &lbl_eu_8050C5C8[0x86],
+            "MNU_kyeassign",
+            isClassicController__Q22cf13CfGameManagerFv(-1) ? "fileID_2"
+                                                      : "fileID_1",
             0x6c);
         char* handle = MakeTplNameSysFile(msg);
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
+            PaneSetTexPaletteByName(mLayout, (void*)"pic_btn01", tex);
             CMenuPauseTexDims* dims =
                 ((CMenuPauseTexObj*)tex)->mChain->mDims;
             u16 texHeight = dims->field_0x2;
             u16 texWidth = dims->field_0x0;
             nw4r::lyt::Pane* pane = mLayout->GetRootPane()
-                                         ->FindPaneByName(&lbl_eu_8050C5C8[0xa6],
+                                         ->FindPaneByName("pic_btn01",
                                                           true);
             if (pane != NULL) {
-                nw4r::lyt::Size size;
-                size.width = texHeight;
-                size.height = texWidth;
-                pane->SetSize(size);
+                pane->SetSize(nw4r::lyt::Size(texHeight, texWidth));
             }
         }
     }
@@ -130,29 +174,19 @@ void CMenuPause::Init() {
     mState = 1;
     playUISound(0xd);
 
-    *(u32*)mField74 = 0; // field 0x74 (single word store)
+    mField74 = 0;
 
     // Register as a scene render callback; IScnRender subobject lives at +0x5c.
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mRenderVtable);
-    }
-    mScene->addRenderCB(cb, 0x12, 0);
+    mScene->addRenderCB(this, 0x12, 0);
 
     mMemRegion.validateHeap();
-    // regionGuard destructor runs here.
-    __dt__14Class_8045F858Fv(regionBuf, -1);
 }
 
 
 void CMenuPause::Term() {
     CDeviceVI::waitForDrawDone();
 
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(&mRenderVtable);
-    }
-    mScene->removeRenderCB(renderCB);
+    mScene->removeRenderCB(this);
 
     if (mLayout != NULL) {
         delete mLayout;
@@ -161,7 +195,7 @@ void CMenuPause::Term() {
 
     mMemRegion.deleteRegion();
 
-    lbl_eu_806647C8 = NULL;
+    sInstance = nullptr;
     MenuSnd_SetSlotsPause_8890(0);
     setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
@@ -188,8 +222,8 @@ body:
     switch (mState) {
     case 1:
         // Opening animation: tick it forward; when it finishes arms state 2.
-        if (advanceAnimTransform(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
-                          lbl_eu_806687D8) != 0) {
+        if (advanceAnimTransform(mAnim,
+                          1.0f) != 0) {
             mState = 2;
         }
         break;
@@ -199,10 +233,10 @@ body:
         break;
     case 3:
         // Closing animation: when it finishes, reset to state 0 / clear flag.
-        if (AnimRewindFrame(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
-                          lbl_eu_806687D8) != 0) {
+        if (AnimRewindFrame(mAnim,
+                          1.0f) != 0) {
             mState = 0;
-            mBProcess[0x50] = 1; // field 0x54 flag
+            mField54 = 1;
         }
         break;
     }
@@ -235,121 +269,26 @@ body:
     }
 }
 
-// Raw byte shim over the embedded CProcess region + CMenuPause fields so the
-// factory constructor can fill the fixed-offset slots (vtable +0x10, PTMF
-// callbacks +0x3C..+0x53, flags +0x54/+0x55, subobject vtables) without pointer
-// arithmetic. Mirrors CProcess's layout (vtable 0x10 .. flags 0x55).
-struct CMenuPauseCtorShim {
-    u8 _00[0x10];
-    void* vtable;          // 0x10 -- CProcess vtable, overwritten by final vtable
-    u8 _14[0x28];          // 0x14-0x3B
-    u32 callbacks[6];      // 0x3C-0x53 -- PTMF callback slots (__ptmf_null copies)
-    u8 field54;            // 0x54
-    u8 field55;            // 0x55
-    void* iscnVtable1;     // 0x58 -- IScnRender subobject vtable
-    void* iscnVtable2;     // 0x5c -- IScnRender subobject vtable
-    CScn* mScene;          // 0x60
-    UnkClass_8045F564 mMemRegion; // 0x64 (0x10 bytes)
-    u8 _74[0x7c - 0x74];   // 0x74-0x7b
-    void* mLayout;         // 0x7c
-    u32 mField80;          // 0x80
-    u8 mState;             // 0x84
-};
+CMenuPause* CMenuPause::sInstance;
 
-// Singleton-factory constructor: only the first allocation sticks (subsequent
-// calls return NULL). Fill order mirrors retail: CProcess base ctor, provisional
-// CProcess vtable, the six PTMF callback slots, flags, final vtable, the two
-// IScnRender subobject vtables, mScene, then the memory-region ctor and zeros.
-// The PTMF slots are read through a volatile pointer: the intervening shim
-// stores must not let MWCC cache the loads, and retail re-reads slots 0/1/2 for
-// the second callback group (6 loads total).
-extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
-    if (lbl_eu_806647C8 != 0) {
-        return 0;
+// Only one pause menu exists at a time.
+CMenuPause* CMenuPause::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
 
-    u32 handle = getWorkMem__17CWorkThreadSystemFv();
-    CMenuPauseCtorShim* shim =
-        (CMenuPauseCtorShim*)allocate__Q23mtl10MemManagerFUlUl(0x88, handle);
-
-    if (shim != 0) {
-        __ct__8CProcessFv(shim);
-// The PTMF slots are read through a volatile u32* pointer: each read emits a
-// fresh load, matching retail's 6-load pattern (slots 0/1/2 re-read for the
-// second callback group). Slot 1 is read first to match retail's scheduling.
-        volatile u32* ptmf = (volatile u32*)__ptmf_null;
-        char* vtFinal = lbl_eu_805371A0;
-        shim->vtable = lbl_eu_8052BF70;
-
-        // Persistent zero used for all the flag/member zero-writes below; keeping
-        // it live across the sub-object ctor makes MWCC allocate a callee-saved
-        // register (retail r31).
-        u8 zero = 0;
-
-        char* iscnVtbl1 = vtFinal + 0x24;
-        char* iscnVtbl2 = vtFinal + 0xac;
-        // Both group-1 PTMF reads happen before the callback stores (retail
-        // scheduling); volatile keeps each read a real load.
-        u32 t1 = ptmf[1];
-        u32 t0 = ptmf[0];
-        shim->callbacks[0] = t0;
-        shim->callbacks[1] = t1;
-        u32 t2 = ptmf[2];
-        shim->callbacks[2] = t2;
-
-        t1 = ptmf[1];
-        t0 = ptmf[0];
-        shim->callbacks[3] = t0;
-        shim->callbacks[4] = t1;
-        t2 = ptmf[2];
-        shim->callbacks[5] = t2;
-
-        shim->field54 = zero;
-        shim->field55 = zero;
-
-        shim->vtable = vtFinal;
-        shim->iscnVtable1 = iscnVtbl1;
-        shim->iscnVtable2 = iscnVtbl2;
-        shim->mScene = (CScn*)parent2;
-
-        __ct__17UnkClass_8045F564Fv(&shim->mMemRegion);
-
-        shim->mLayout = 0;
-        shim->mField80 = 0;
-        shim->mState = zero;
-    }
-
-    lbl_eu_806647C8 = (CMenuPause*)shim;
-    Regist__8CProcessFP8CProcessb(shim, parent, 0);
-    return lbl_eu_806647C8;
+    CMenuPause* menu = new (CWorkThreadSystem::getWorkMem()) CMenuPause(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 unsigned long CMenuPause::isInitialized() {
-    return lbl_eu_806647C8 != NULL;
-}
-
-// Retail dtor shape: free-function form (extern-C mangled name, not the
-// class member) so MWCC emits no implicit vptr re-store, and sub-object
-// dtors called as free functions with the retail flags (-1 member, 0 base)
-// so the member call does not double-emit the implicit member destruction.
-// The duplicate `self != 0` guard reproduces retail's double beq.
-extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
-    if (self != 0) {
-        __dt__17UnkClass_8045F564Fv(&((CMenuPause*)self)->mMemRegion, -1);
-        if (self != 0) {
-            if (self != 0) {
-                __dt__8CProcessFv(self, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+    return sInstance != nullptr;
 }
 
 extern "C" unsigned long Pause_IsActive() {
-    CMenuPause* p = lbl_eu_806647C8;
+    CMenuPause* p = CMenuPause::sInstance;
     if (p == NULL) {
         return 0;
     }
@@ -371,8 +310,8 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
     if (first) {
         MenuStateClear64064();
         func_800853C8__Q22cf13CfGameManagerFv();
-        CfSoundMan_PlayRequest(lbl_eu_806687DC, 0, 3, 0);
-        CfSoundMan_PlayRequest(lbl_eu_806687DC, 0, 0xe, 0);
+        CfSoundMan_PlayRequest(0.6f, 0, 3, 0);
+        CfSoundMan_PlayRequest(0.6f, 0, 0xe, 0);
         p->mState = 3;
     } else if (second) {
         playUISound(6);
@@ -380,8 +319,3 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
         p->mState = 3;
     }
 }
-
-// IScnRender / IWorkEvent adjuster thunks (subobjects embedded in CMenuPause).
-extern "C" void Pause_ThunkDtor58(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
-extern "C" void Pause_ThunkRender5C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
-extern "C" void Pause_ThunkDtor5C(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }

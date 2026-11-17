@@ -182,10 +182,6 @@ extern u32 lbl_eu_80662DCC;
 // Font-pane helper (retail mangled name getPackedFont__Fv).
 u32 getPackedFont();
 
-// lyt DrawInfo lifetime helpers (retail pre-mangled symbol names).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int);
-
 // Result of CMenuArtsSelect_getSelectState: signed state bytes at +0x0/+0x1
 // (see cf::chain CArtsSelectStateView).
 struct CArtsSelectStateView {

@@ -521,10 +521,10 @@ void RootNw4r_AttachQueued(CScnRootNw4r* self) {
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056E768-0x8056E7D0 (104B): CScnRootNw4r vtable group.
-// lbl_eu_806639A0/80663998 (typeinfo pairs) live in foreign TUs; the
+// __RTTI__12CScnRootNw4r/80663998 (typeinfo pairs) live in foreign TUs; the
 // ExecCallback_* names are splitter-shortened nw4r template symbols.
-extern "C" u32 lbl_eu_806639A0;
-extern "C" u32 lbl_eu_80663998;
+extern "C" u32 __RTTI__12CScnRootNw4r;
+extern "C" u32 __RTTI__8CScnRoot;
 extern "C" void getScnRootGroupHandle();
 extern "C" void scnImN4GetWord4AC();
 extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
@@ -532,7 +532,7 @@ extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d
 extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
 extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
 extern "C" u32 lbl_eu_8056E768[23] = {
-    (u32)&lbl_eu_806639A0, 0x00000000,
+    (u32)&__RTTI__12CScnRootNw4r, 0x00000000,
     (u32)&__dt__12CScnRootNw4rFv,
     (u32)&RootNw4r_RemoveId,
     (u32)&RootNw4r_ApplyCamera,
@@ -545,7 +545,7 @@ extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&scnImN4GetWord4AC,
     (u32)&RootNw4r_GetAllocHandle,
     (u32)&RootNw4r_GetField14,
-    (u32)&lbl_eu_806639A0,
+    (u32)&__RTTI__12CScnRootNw4r,
     0xFFFFFFF4,
     (u32)&RootNw4r_ThunkDtor,
     (u32)&RootNw4r_ThunkFED8,
@@ -555,7 +555,7 @@ extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
     (u32)&RootNw4r_DispatchFrame,
 };
-extern "C" u32 lbl_eu_8056E7C4[3] = { (u32)&lbl_eu_80663998, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056E7C4[3] = { (u32)&__RTTI__8CScnRoot, 0x00000000, 0x00000000 };
 
 // [.rodata] 0x80523FD0-0x80524010 (64B): RTTI name + pooled heap names.
 extern "C" __declspec(align(8)) const char lbl_eu_80523FD0[0xD] = { 0x43,0x53,0x63,0x6E,0x52,0x6F,0x6F,0x74,0x4E,0x77,0x34,0x72,0x00 };

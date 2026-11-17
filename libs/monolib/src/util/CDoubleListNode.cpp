@@ -1,13 +1,13 @@
 #include "monolib/util.hpp"
 
 // ---- Retail data (blob monolibdata1d dissolve): CDoubleListNode vtable ----
-// 0x8056BB90: [RTTI CDoubleListNode (lbl_eu_80661958), 0, ~dtor, Reset].
-extern "C" void* lbl_eu_80661958;   // RTTI CDoubleListNode (sdata)
+// 0x8056BB90: [RTTI CDoubleListNode (__RTTI__15CDoubleListNode), 0, ~dtor, Reset].
+extern "C" void* __RTTI__15CDoubleListNode;   // RTTI CDoubleListNode (sdata)
 extern "C" void __dt__15CDoubleListNodeFv();
 extern "C" void Reset__15CDoubleListNodeFv();
 
 extern "C" void* lbl_eu_8056BB90[4] = {
-    (void*)&lbl_eu_80661958, 0,
+    (void*)&__RTTI__15CDoubleListNode, 0,
     (void*)&__dt__15CDoubleListNodeFv,
     (void*)&Reset__15CDoubleListNodeFv,
 };

@@ -54,6 +54,8 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 void playUISound(u32);
 #undef writeVec3f
 #undef func_8004B9D4
@@ -234,9 +236,6 @@ void forwardMCSubObj88(void*, int);
 void advanceMCGetItemBox(void*);
 char lbl_eu_805090FC[];
 int sprintf(char*, const char*, ...);
-void CTaskGame_enumListCtor(CMCryListHolder*);
-void* CTaskGame_enumListGet(CMCryListHolder*); // returns holder->list
-void __dt__80043E88(CMCryListHolder*, int);
 void startEnumObjects(void*, unsigned int, unsigned int);
 void* getEntryAt(void*, unsigned int); // &slot -> +0x4 holds the move ptr
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
@@ -253,7 +252,7 @@ void CItem_initSlot(void*, u16, u16, u8);
 void crystalListResetAnim4Play(void*);
 // OnFileEvent constructor/helper imports (retail reloc names)
 void __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCCrystalSupport(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__17CMCCrystalSupportFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffStart(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffUpRed(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffUpBlue(void*, nw4r::lyt::ArcResourceAccessor*);
@@ -360,7 +359,7 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_805090FC[0x114] 
 // .sdata: RTTI-ish pair (class name + .data RTTI pad, which stays in the
 // opaque .data absorb below, so the pad half stays an UNDEF read for now).
 extern "C" void* lbl_eu_80535F38[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806627E8[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__21CModelDispMakeCrystal[2] = {
     lbl_eu_805090E4, lbl_eu_80535F38
 };
 
@@ -522,7 +521,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     base[0xbe9] = 1;
     __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(base + 0xbec, 0);
     __ct__CMCCrystalList(base + 0xc18);
-    __ct__CMCCrystalSupport(base + 0xc70, 0);
+    __ct__17CMCCrystalSupportFPQ34nw4r3lyt19ArcResourceAccessor(base + 0xc70, 0);
     __ct__CMCEffStart(base + 0xc8c, 0);
     __ct__CMCEffUpRed(base + 0xca4, 0);
     __ct__CMCEffUpBlue(base + 0xcbc, 0);
@@ -537,7 +536,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     *reinterpret_cast<u32*>(base + 0xe1c) = 0;
     __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xe20), 0);
     __ct__10CScrollBarFUc(base + 0xe38, 0);
-    __ct__CSysWin(base + 0xe78, 0);
+    __ct__7CSysWinFUc(base + 0xe78, 0);
     __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xeb4), 0);
     __ct__CMCGetItemBox(base + 0xecc);
     base[0x13bf] = 0;
@@ -617,8 +616,8 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 
     // --- re-init the embedded crystal list from a default temp ---
     __ct__CMCCrystalList(listTmp);
-    __ct__UnkClass_8011C974(base + 0xc1c, listTmp + 0x4);
-    __ct__UnkClass_8011C974(base + 0xc2c, listTmp + 0x14);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xc1c, listTmp + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xc2c, listTmp + 0x14);
     *reinterpret_cast<void**>(base + 0xc3c) = *reinterpret_cast<void**>(listTmp + 0x24);
     *reinterpret_cast<void**>(base + 0xc40) = *reinterpret_cast<void**>(listTmp + 0x28);
     *reinterpret_cast<void**>(base + 0xc44) = *reinterpret_cast<void**>(listTmp + 0x2c);
@@ -644,7 +643,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 
     // --- re-init the embedded scroll bar from a default temp ---
     __ct__10CScrollBarFUc(sbTmp, 0);
-    __ct__UnkClass_8011C974(base + 0xe3c, sbTmp + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xe3c, sbTmp + 0x4);
     *reinterpret_cast<void**>(base + 0xe4c) = *reinterpret_cast<void**>(sbTmp + 0x14);
     *reinterpret_cast<void**>(base + 0xe50) = *reinterpret_cast<void**>(sbTmp + 0x18);
     *reinterpret_cast<void**>(base + 0xe54) = *reinterpret_cast<void**>(sbTmp + 0x1c);
@@ -662,14 +661,14 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     __dt__10CScrollBarFv(sbTmp, -1);
 
     // --- re-init the embedded system window from an arg-2 temp ---
-    __ct__CSysWin(swTmp, 2);
+    __ct__7CSysWinFUc(swTmp, 2);
     InfoCfCopySysWin(base + 0xe78, swTmp);
     __dt__7CSysWinFv(swTmp, -1);
 
     // --- re-init the embedded item box from a default temp ---
     __ct__CMCGetItemBox(boxTmp);
-    __ct__UnkClass_8011C974(base + 0xed0, boxTmp + 0x4);
-    __ct__UnkClass_8011C974(base + 0xee0, boxTmp + 0x14);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xed0, boxTmp + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xee0, boxTmp + 0x14);
     *reinterpret_cast<void**>(base + 0xef0) = *reinterpret_cast<void**>(boxTmp + 0x24);
     *reinterpret_cast<void**>(base + 0xef4) = *reinterpret_cast<void**>(boxTmp + 0x28);
     *reinterpret_cast<void**>(base + 0xef8) = *reinterpret_cast<void**>(boxTmp + 0x2c);
@@ -690,8 +689,8 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     MenuShopSellCopyCursor(base + 0xf54, boxTmp + 0x88);
     MenuShopSellCopyCursor(base + 0xf6c, boxTmp + 0xa0);
     InfoCfCopySysWin(base + 0xf84, boxTmp + 0xb8);
-    __ct__UnkClass_8011C974(base + 0xfc4, boxTmp + 0xf8);
-    __ct__UnkClass_8011C974(base + 0xfd4, boxTmp + 0x108);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfc4, boxTmp + 0xf8);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfd4, boxTmp + 0x108);
     // itemBox tail members (memberwise words/bytes).
     *reinterpret_cast<u32*>(base + 0xfe4) = *reinterpret_cast<u32*>(boxTmp + 0x118);
     *reinterpret_cast<u32*>(base + 0xfe8) = *reinterpret_cast<u32*>(boxTmp + 0x11c);
@@ -3317,23 +3316,20 @@ void MakeCrystal_BuildCrystalList(CModelDispMakeCrystal* self, CMCrystalDispSub*
     filters[1] = filt->v1;
     filters[2] = filt->v2;
 
-    CMCryListHolder holder;
-    CTaskGame_enumListCtor(&holder);
+    CfEnumListHolder holder;
 
     // Select the crystal list for the current char state and check it's loaded.
-    startEnumObjects(CTaskGame_enumListGet(&holder), filters[(s8)sub->field_5ac], 0);
-    if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(CTaskGame_enumListGet(&holder)) + 0x620) == 0) {
+    startEnumObjects(holder.get(), filters[(s8)sub->field_5ac], 0);
+    if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(holder.get()) + 0x620) == 0) {
         MakeCrystal_ReleaseAnimObj(self, reinterpret_cast<u8*>(sub));
-        __dt__80043E88(&holder, -1);
         return;
     }
 
     // Grab the first crystal object from the enum list.
     void* cfMove = *reinterpret_cast<void**>(
-        reinterpret_cast<u8*>(getEntryAt(CTaskGame_enumListGet(&holder), 0)) + 4);
+        reinterpret_cast<u8*>(getEntryAt(holder.get(), 0)) + 4);
     if (cfMove == nullptr) {
         MakeCrystal_ReleaseAnimObj(self, reinterpret_cast<u8*>(sub));
-        __dt__80043E88(&holder, -1);
         return;
     }
 
@@ -3409,7 +3405,6 @@ void MakeCrystal_BuildCrystalList(CModelDispMakeCrystal* self, CMCrystalDispSub*
         MakeCrystal_ReleaseAnimObj(self, reinterpret_cast<u8*>(sub));
     }
 
-    __dt__80043E88(&holder, -1);
 }
 
 // Retail 0x80223018: crystal display sub-struct release/rebuild path (state
@@ -3602,7 +3597,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__16CMCCylinderGaugeFv(cylGauge, -1);
         init__16CMCCylinderGaugeFv(base + 0xbec);
         // Crystal support: same build/copy/destroy pattern.
-        __ct__CMCCrystalSupport(
+        __ct__17CMCCrystalSupportFPQ34nw4r3lyt19ArcResourceAccessor(
             crySupport,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         *(u32*)(base + 0xc74) = *(u32*)(crySupport + 4);
@@ -3910,7 +3905,7 @@ extern "C" void MakeCrystal_ClearAnimSlot(void*, u32);
 // slots, then two secondaries at -4/-8).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80535E70[50] = {
-    (void*)lbl_eu_806627E8, 0, (void*)__dt__21CModelDispMakeCrystalFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xE0+0
+    (void*)__RTTI__21CModelDispMakeCrystal, 0, (void*)__dt__21CModelDispMakeCrystalFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xE0+0
     (void*)OnFileEvent__21CModelDispMakeCrystalFP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0xE0+10
     (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0xE0+20
     (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0xE0+30
@@ -3918,7 +3913,7 @@ const void* lbl_eu_80535E70[50] = {
     (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0xE0+50
     (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xE0+60
     (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xE0+70
-    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, (void*)lbl_eu_806627E8, (void*)0xFFFFFFFC, // +0xE0+80
+    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, (void*)__RTTI__21CModelDispMakeCrystal, (void*)0xFFFFFFFC, // +0xE0+80
 (void*)destroyCrystalDispThunk4,
     (void*)actParamNop3, (void*)actParamNop4, (void*)actParamNop7, (void*)actParamNop5, // +0xE0+A0
 (void*)destroyCrystalDispThunk8,

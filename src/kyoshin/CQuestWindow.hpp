@@ -244,8 +244,6 @@ u32 PTNotice_IsActive_3C10();                       // party-change notice scree
 u32 menuPTStateIsActive();                       // party-state screen active?
 void Cur_Update(void* cur);             // cursor per-frame update (CCur)
 void Cur_DrawLayout(void*, void*); // cursor draw
-void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
 u32 SearchThresholdIdx(u32 questId);             // quest id -> name-table index
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable

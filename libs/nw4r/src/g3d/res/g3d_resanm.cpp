@@ -4,8 +4,6 @@
 
 // Retail float-pool constants (SDA21 relocs must reference these names).
 // Global-scope externs: MWCC does not mangle global-scope variable names.
-extern const float lbl_eu_80669ABC; // 0.0f
-extern const float lbl_eu_80669AC0; // 32768.0f
 
 namespace nw4r {
 namespace g3d {
@@ -26,9 +24,9 @@ inline f32 HermiteInterpolation(f32 v0, f32 t0, f32 v1, f32 t1, f32 p, f32 d) {
 
     // Linear factors
     f32 s = p * invd;   // p / d
-    f32 s_1 = s - lbl_eu_80669AB0; // (p - d) / d
+    f32 s_1 = s - 1.0f; // (p - d) / d
 
-    return v0 + s * (s * ((lbl_eu_80669AB4 * s - lbl_eu_80669AB8) * (v0 - v1))) +
+    return v0 + s * (s * ((2.0f * s - 3.0f) * (v0 - v1))) +
            p * s_1 * (s_1 * t0 + s * t1);
 }
 
@@ -102,7 +100,7 @@ u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     f32 int32 = static_cast<f32>(intPart);
     int intFrame = static_cast<int>(int32);
 
-    if (lbl_eu_80669ABC == frac32) {
+    if (0.0f == frac32) {
         return pColorArray[intFrame];
     }
 
@@ -114,7 +112,7 @@ u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     *reinterpret_cast<u32*>(&left) = pColorArray[intFrame];
     *reinterpret_cast<u32*>(&right) = pColorArray[intFrame + 1];
 
-    f32 biasedRatio = lbl_eu_80669AC0 * frac32;
+    f32 biasedRatio = 32768.0f * frac32;
     s16 fpRatio = math::F32ToS16(biasedRatio);
 
     GXColor result;

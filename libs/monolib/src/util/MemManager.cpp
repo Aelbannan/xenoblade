@@ -11,9 +11,6 @@
 // symbol names/bytes exactly.
 extern "C" const char lbl_eu_8066A1A8[5];   // "Mem1" (.sdata2, FloatUtils-owned)
 extern "C" const char lbl_eu_8066A1B0[5];   // "Mem2" (.sdata2, FloatUtils-owned)
-extern "C" const double lbl_eu_8066A1B8;    // 1.0  (.sdata2, FloatUtils-owned)
-extern "C" const float lbl_eu_8066A1C0;     // 0.0f (.sdata2, FloatUtils-owned)
-extern "C" const float lbl_eu_8066A1C4;     // 100.0f (.sdata2, FloatUtils-owned)
 extern "C" const double lbl_eu_8066A1C8;    // 2^52 u32->double magic (.sdata2, FloatUtils-owned)
 
 extern "C" {
@@ -849,7 +846,7 @@ DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
         MemBlock::MAX_SIZE - sizeof(MemBlock) - 1) {
 
         //Since monolithsoft removed their log function, this calls the math log lol
-        log(lbl_eu_8066A1B8);
+        log(1.0);
     } else {
         region->mFreeBytes += block->size;
 
@@ -1026,14 +1023,14 @@ f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
 
     //No allocations have ever been performed
     if (region->mOldest == nullptr) {
-        return lbl_eu_8066A1C0;
+        return 0.0f;
     }
 
     // Plain u32->f32 casts: MWCC expands each as the store-0x43300000/lfd/
     // fsubs-2^52 idiom in single precision (retail keeps lbl_eu_8066A1C8 as
     // the shared .sdata2 correction constant).
     return (f32)(region->mSize - region->mFreeBytes) /
-        (f32)region->mSize * lbl_eu_8066A1C4;
+        (f32)region->mSize * 100.0f;
 }
 
 void MemManager::setRegionUnk6C(ALLOC_HANDLE handle, u8 value) {

@@ -133,7 +133,7 @@ struct CMdlDynamicsVtbl {
     u32 entry2;
 };
 extern "C" void __dt__12CMdlDynamicsFv(void* self, int flags);
-extern "C" u32 lbl_eu_80663CB0[2]; // .sdata RTTI locator (defined bottom)
+extern "C" u32 __RTTI__12CMdlDynamics[2]; // .sdata RTTI locator (defined bottom)
 extern "C" u32 lbl_eu_805701FC[19]; // .data vtable + strings (defined bottom)
 
 // Retail nw4r math kernels (PS-asm bodies in nw4r/src/math/math_types.cpp;
@@ -2730,7 +2730,7 @@ __declspec(noinline) u8* MdlDyn_ResolveSubData(CMdlDynHolder* self) {
 // retail packs the strings at offset 0xC, i.e. 4-aligned).
 extern "C" u32 lbl_eu_805701FC[19] = {
     // vtable: { RTTI locator, 0, dtor }
-    (u32)&lbl_eu_80663CB0, 0x00000000, (u32)&__dt__12CMdlDynamicsFv,
+    (u32)&__RTTI__12CMdlDynamics, 0x00000000, (u32)&__dt__12CMdlDynamicsFv,
     // "NW4R:Pointer must not be NULL (mpData)\0" (39B) + 1B pad, as words
     0x4E573452, 0x3A506F69, 0x6E746572, 0x206D7573, 0x74206E6F, 0x74206265,
     0x204E554C, 0x4C20286D, 0x70446174, 0x61290000,
@@ -2752,15 +2752,12 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524870[0x18] = {
     0x20,0x69,0x6E,0x20,0x22,0x25,0x73,0x22,0x20,0x6F,0x6E,0x20,0x6C,0x69,0x6E,0x65,
     0x20,0x25,0x64,0x2E,0x0A,0x00,0x00,0x00,
 };  // " in \"%s\" on line %d.\n\0" + 2B pad
-extern "C" __declspec(align(4)) const char lbl_eu_80524888[0xC] = {
-    0x62,0x61,0x6E,0x6E,0x65,0x72,0x2E,0x62,0x69,0x6E,0x00,0x00,
-};  // "banner.bin\0" + 1B pad
 
 // [.sdata] 0x80663CB0-0x80663CD0 (32B): RTTI locator + "ref" param strings.
 // The last "ref" slot carries 4 zero pad bytes (retail +0x1C tail); merging
 // them into a non-zero object keeps them in .sdata (a plain zero-init array
 // would land in .sbss).
-extern "C" u32 lbl_eu_80663CB0[2] = { (u32)&lbl_eu_80524830, 0x00000000 };
+extern "C" u32 __RTTI__12CMdlDynamics[2] = { (u32)&lbl_eu_80524830, 0x00000000 };
 extern char lbl_eu_80663CB8[4] = { 'r','e','f',0 };
 extern char lbl_eu_80663CBC[4] = { 'r','e','f',0 };
 extern char lbl_eu_80663CC0[4] = { 'r','e','f',0 };

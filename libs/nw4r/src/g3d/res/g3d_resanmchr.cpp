@@ -1,21 +1,9 @@
 #pragma fp_contract on
-
 #include <nw4r/g3d.h>
-
-// DEG_TO_FIDX (256/360 = 0.7111111f) lives in the retail sdata2 pool
-// (nw4r_data.s). Declared at global scope: MWCC does not mangle global
-// variable names, so the emitted symbol matches the retail name
-// (docs/MWCC_CASES.md 1a).
-extern const float lbl_eu_80669AE0;
-extern const float lbl_eu_80669AE4;
-extern const float lbl_eu_80669AE8;
-extern const float lbl_eu_80669AEC;
-extern const float lbl_eu_80669AF0;
-extern const double lbl_eu_80669AF8;
-extern const float lbl_eu_80669B00;
 
 namespace nw4r {
 namespace g3d {
+void* ResAnmChr::GetResUserData() { return ofs_to_ptr<void>(ref().toResUserData); }
 namespace {
 
 /******************************************************************************
@@ -24,9 +12,9 @@ namespace {
  *
  ******************************************************************************/
 inline f32 HermiteInterpolation(f32 v0, f32 t0, f32 v1, f32 t1, f32 s, f32 d) {
-    f32 s_1 = s - lbl_eu_80669AE4;
+    f32 s_1 = s - 1.0f;
 
-    return v0 + s * (s * ((lbl_eu_80669AE8 * s - lbl_eu_80669AEC) * (v0 - v1))) +
+    return v0 + s * (s * ((2.0f * s - 3.0f) * (v0 - v1))) +
            d * s_1 * (s_1 * t0 + s * t1);
 }
 
@@ -286,7 +274,7 @@ template <typename TTraits>
 f32 CalcAnimationCV(const ResAnmChrCVData* pCVData, u16 numFrame, f32 frame) {
     u16 frame_i = math::F32ToU16(frame);
 
-    if (frame <= lbl_eu_80669AE0) {
+    if (frame <= 0.0f) {
         return TTraits::GetAt(pCVData, 0);
     }
 
@@ -297,7 +285,7 @@ f32 CalcAnimationCV(const ResAnmChrCVData* pCVData, u16 numFrame, f32 frame) {
     f32 r = frame - static_cast<f32>(frame_i);
 
     f32 v0 = TTraits::GetAt(pCVData, frame_i);
-    if (lbl_eu_80669AE0 == r) {
+    if (0.0f == r) {
         return v0;
     }
 
@@ -463,9 +451,9 @@ GetAnmScale(math::VEC3* pResult, const ResAnmChrNodeData* pNodeData,
     }
 
     default: {
-        x = lbl_eu_80669AE0;
-        y = lbl_eu_80669AE0;
-        z = lbl_eu_80669AE0;
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
         break;
     }
     }
@@ -555,9 +543,9 @@ GetAnmRotation(math::MTX34* pResult, math::VEC3* pRawResult,
     }
 
     default: {
-        x = lbl_eu_80669AE0;
-        y = lbl_eu_80669AE0;
-        z = lbl_eu_80669AE0;
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
     }
     }
 
@@ -616,9 +604,9 @@ GetAnmTranslation(math::VEC3* pTrans, const ResAnmChrNodeData* pNodeData,
     }
 
     default: {
-        x = lbl_eu_80669AE0;
-        y = lbl_eu_80669AE0;
-        z = lbl_eu_80669AE0;
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
     }
     }
 
@@ -657,9 +645,9 @@ void GetAnmResult_(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 #pragma unused(pNodeData)
 #pragma unused(frame)
 
-    pResult->s.x = lbl_eu_80669AE4;
-    pResult->s.y = lbl_eu_80669AE4;
-    pResult->s.z = lbl_eu_80669AE4;
+    pResult->s.x = 1.0f;
+    pResult->s.y = 1.0f;
+    pResult->s.z = 1.0f;
     math::MTX34Identity(&pResult->rt);
 }
 
@@ -670,9 +658,9 @@ void GetAnmResult_T(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
     math::VEC3 t;
 
-    pResult->s.x = lbl_eu_80669AE4;
-    pResult->s.y = lbl_eu_80669AE4;
-    pResult->s.z = lbl_eu_80669AE4;
+    pResult->s.x = 1.0f;
+    pResult->s.y = 1.0f;
+    pResult->s.z = 1.0f;
     math::MTX34Identity(&pResult->rt);
 
     GetAnmTranslation(&t, pNodeData, pAnmData, frame);
@@ -687,18 +675,18 @@ void GetAnmResult_R(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
 
     // Rotation-only result: no scale channel, so the scale stays identity.
-    pResult->s.x = lbl_eu_80669AE4;
-    pResult->s.y = lbl_eu_80669AE4;
-    pResult->s.z = lbl_eu_80669AE4;
+    pResult->s.x = 1.0f;
+    pResult->s.y = 1.0f;
+    pResult->s.z = 1.0f;
 
     pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
                               pNodeData, pAnmData, frame);
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 
-    pResult->rt._03 = lbl_eu_80669AE0;
-    pResult->rt._13 = lbl_eu_80669AE0;
-    pResult->rt._23 = lbl_eu_80669AE0;
+    pResult->rt._03 = 0.0f;
+    pResult->rt._13 = 0.0f;
+    pResult->rt._23 = 0.0f;
 }
 
 void GetAnmResult_S(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
@@ -717,9 +705,9 @@ void GetAnmResult_RT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
     math::VEC3 t;
 
-    pResult->s.x = lbl_eu_80669AE4;
-    pResult->s.y = lbl_eu_80669AE4;
-    pResult->s.z = lbl_eu_80669AE4;
+    pResult->s.x = 1.0f;
+    pResult->s.y = 1.0f;
+    pResult->s.z = 1.0f;
 
     pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
                               pNodeData, pAnmData, frame);
@@ -744,9 +732,9 @@ void GetAnmResult_SR(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 
-    pResult->rt._03 = lbl_eu_80669AE0;
-    pResult->rt._13 = lbl_eu_80669AE0;
-    pResult->rt._23 = lbl_eu_80669AE0;
+    pResult->rt._03 = 0.0f;
+    pResult->rt._13 = 0.0f;
+    pResult->rt._23 = 0.0f;
 }
 
 void GetAnmResult_ST(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
@@ -841,9 +829,9 @@ void ResAnmChr::GetAnmResult(ChrAnmResult* pResult, u32 idx, f32 frame) const {
  ******************************************************************************/
 void ChrAnmResult::GetScale(math::VEC3* pScale) const {
     if (flags & FLAG_SCALE_ONE) {
-        pScale->x = lbl_eu_80669AE4;
-        pScale->y = lbl_eu_80669AE4;
-        pScale->z = lbl_eu_80669AE4;
+        pScale->x = 1.0f;
+        pScale->y = 1.0f;
+        pScale->z = 1.0f;
     } else {
         pScale->x = s.x;
         pScale->y = s.y;
@@ -853,9 +841,9 @@ void ChrAnmResult::GetScale(math::VEC3* pScale) const {
 
 bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
     if (flags & FLAG_ROT_ZERO) {
-        pRotate->x = lbl_eu_80669AE0;
-        pRotate->y = lbl_eu_80669AE0;
-        pRotate->z = lbl_eu_80669AE0;
+        pRotate->x = 0.0f;
+        pRotate->y = 0.0f;
+        pRotate->z = 0.0f;
         return true;
     }
 
@@ -866,14 +854,14 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
         return true;
     }
 
-    f32 ySquared = -(rt._20 * rt._20 - lbl_eu_80669AE4);
-    f32 y = ySquared <= lbl_eu_80669AE0
-                ? lbl_eu_80669AE0
+    f32 ySquared = -(rt._20 * rt._20 - 1.0f);
+    f32 y = ySquared <= 0.0f
+                ? 0.0f
                 : ySquared * math::FrSqrt(ySquared);
 
-    if (lbl_eu_80669AE0 == y) {
+    if (0.0f == y) {
         pRotate->x = math::Atan2Deg(rt._02 + rt._11, rt._12 + rt._01);
-        pRotate->y = math::FSelect(rt._20, lbl_eu_80669B08, lbl_eu_80669B04);
+        pRotate->y = math::FSelect(rt._20, -90.0f, 90.0f);
         pRotate->z = math::Atan2Deg(rt._02 + rt._11, rt._12 - rt._01);
     } else {
         pRotate->x = math::Atan2Deg(rt._21, rt._22);
@@ -886,9 +874,9 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
 
 void ChrAnmResult::GetTranslate(math::VEC3* pTrans) const {
     if (flags & FLAG_TRANS_ZERO) {
-        pTrans->x = lbl_eu_80669AE0;
-        pTrans->y = lbl_eu_80669AE0;
-        pTrans->z = lbl_eu_80669AE0;
+        pTrans->x = 0.0f;
+        pTrans->y = 0.0f;
+        pTrans->z = 0.0f;
     } else {
         pTrans->x = rt._03;
         pTrans->y = rt._13;
@@ -908,9 +896,9 @@ void ChrAnmResult::GetRotTrans(math::MTX34* pRotTrans) const {
         }
     } else if (flags & FLAG_TRANS_ZERO) {
         math::MTX34Copy(pRotTrans, &rt);
-        pRotTrans->_03 = lbl_eu_80669AE0;
-        pRotTrans->_13 = lbl_eu_80669AE0;
-        pRotTrans->_23 = lbl_eu_80669AE0;
+        pRotTrans->_03 = 0.0f;
+        pRotTrans->_13 = 0.0f;
+        pRotTrans->_23 = 0.0f;
     } else {
         math::MTX34Copy(pRotTrans, &rt);
     }
@@ -922,9 +910,9 @@ void ChrAnmResult::GetRotTrans(math::MTX34* pRotTrans) const {
 namespace nw4r {
 namespace g3d {
 
-void* ResAnmChr::GetResUserData() {
-    return ofs_to_ptr<void>(ref().toResUserData);
-}
+
+
+
 
 } // namespace g3d
 } // namespace nw4r
@@ -941,8 +929,8 @@ void ChrAnmResult::GetMtx(math::MTX34* pMtx) const {
 }
 
 void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
-    if (lbl_eu_80669AE0 == pRotate->x && lbl_eu_80669AE0 == pRotate->y &&
-        lbl_eu_80669AE0 == pRotate->z) {
+    if (0.0f == pRotate->x && 0.0f == pRotate->y &&
+        0.0f == pRotate->z) {
         u32 flag = FLAG_ROT_ZERO;
 
         if (flags & FLAG_TRANS_ZERO) {
@@ -956,15 +944,15 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
         flags |= flag;
 
         // 3x3 identity; the translation column is left untouched
-        rt._00 = lbl_eu_80669AE4;
-        rt._01 = lbl_eu_80669AE0;
-        rt._02 = lbl_eu_80669AE0;
-        rt._10 = lbl_eu_80669AE0;
-        rt._11 = lbl_eu_80669AE4;
-        rt._12 = lbl_eu_80669AE0;
-        rt._20 = lbl_eu_80669AE0;
-        rt._21 = lbl_eu_80669AE0;
-        rt._22 = lbl_eu_80669AE4;
+        rt._00 = 1.0f;
+        rt._01 = 0.0f;
+        rt._02 = 0.0f;
+        rt._10 = 0.0f;
+        rt._11 = 1.0f;
+        rt._12 = 0.0f;
+        rt._20 = 0.0f;
+        rt._21 = 0.0f;
+        rt._22 = 1.0f;
     } else {
         // MTX34RotXYZFIdx overwrites the translation column; preserve it in a
         // memory-backed local (retail spills it to the stack around the call)
@@ -982,7 +970,7 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
         f32 fy;
         f32 fz;
         fz = pRotate->z;
-        k = lbl_eu_80669AF0;
+        k = (256.0f / 360.0f);
         fy = pRotate->y;
         fx = pRotate->x;
 
@@ -1007,7 +995,7 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
 void ChrAnmResult::SetTranslate(const math::VEC3* pTrans) {
     // Load SDA zero before pTrans->* so fcmp FRA/FRB matches retail
     // (lfs f1,@zero; lfs f0,0(r4) -- not the reverse).
-    f32 zero = lbl_eu_80669AE0;
+    f32 zero = 0.0f;
     if (zero == pTrans->x && zero == pTrans->y && zero == pTrans->z) {
         u32 flag = FLAG_TRANS_ZERO;
 

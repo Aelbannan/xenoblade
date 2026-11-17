@@ -401,9 +401,9 @@ class FullMatchCertWithoutSmtTests(unittest.TestCase):
                 ),
             ),
         )
-        self.assertTrue(
+        self.assertFalse(
             _byte_identical_with_relocs(left, null_right),
-            "(null) retail reloc name is a wildcard when site/type/addend match",
+            "missing relocation names cannot prove equal targets without ELF evidence",
         )
 
     def test_pure_reg_swap_certifies_through_certify_unit_symbol(self) -> None:
@@ -1029,5 +1029,5 @@ class CanonicalSymbolsUnitPrefixTests(unittest.TestCase):
                 ),
             ),
         )
-        self.assertTrue(_byte_identical_with_relocs(left, right))
+        self.assertFalse(_byte_identical_with_relocs(left, right))
 

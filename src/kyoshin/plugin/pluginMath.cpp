@@ -10,7 +10,6 @@ extern "C" {
     // and is referenced from another unit (see link frontier).
     __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FB050[0x8] = "math";
     __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665E90[0x8] = "random";
-    __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80665E98 = 9.8f;
     __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_805261B8[2] = {
         { lbl_eu_80665E90, math_random },
         { 0, 0 },

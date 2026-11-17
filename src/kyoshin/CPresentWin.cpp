@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CPresentWin
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -137,10 +138,8 @@ extern "C" void setPresentAnimText(void* self, u16 idx) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
 }
 
-// Constructor: install the retail vtable, zero every field, except mField38
-// which starts at 1.
+// Constructor: zero every field, except mField38 which starts at 1.
 CPresentWin::CPresentWin() {
-    mVtable = lbl_eu_805366D8;
     mAccessor = NULL;
     mpLayout = NULL;
     mpAnimTrans0 = NULL;

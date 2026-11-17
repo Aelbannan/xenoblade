@@ -465,12 +465,12 @@ config.libs = [
             Object(NonMatching, "kyoshin/CTimeLightGrp.cpp"),
             Object(NonMatching, "kyoshin/cf/CActParamAnimGame.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginCam.cpp"),
-            Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp", extra_cflags=["-RTTI off"]),  # DL8-x1: class is __declspec(novtable); the TU's retail .data/.rodata/.sdata slice is hand-built in source with the retail lbl_eu_ names (CTaskEnvironment recipe); -RTTI off keeps MWCC from adding its own weak __RTTI__/type-name pools
+            Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
             Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
             Object(Matching, "kyoshin/cf/CfScript.cpp"),
-            Object(MatchingCodeOnly, "kyoshin/cf/CfTaskMain.cpp"),
+            Object(Matching, "kyoshin/cf/CfTaskMain.cpp"),
             Object(NonMatching, "kyoshin/cf/CfTFile.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCamEvent.cpp"),
             Object(Matching, "kyoshin/cf/CfCamDirectionIntf.cpp"),
@@ -496,7 +496,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCollCapsuleImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp", extra_cflags=["-RTTI off"]),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
-            Object(Matching, "kyoshin/cf/object/CfObjectEne.cpp"),
+            Object(NonMatching, "kyoshin/cf/object/CfObjectEne.cpp"),
             Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (isTypeId1to24 range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/tickSpeedPass only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes teardownGameMgr (0->108), lookupWorkAtAddr (0->20), testObj64bit15 (0->9), isTypeId1to24 (0->4); full sweep .scratch/version_sweep.py shows NO available version satisfies both families - TU split by mw_version is the next angle
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
@@ -509,7 +509,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplWalker.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplPc.cpp"),
             Object(Matching, "kyoshin/cfsys/CfObjectImplObj.cpp"),
-            Object(Matching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
+            Object(NonMatching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, ctrlActDispatchEntry 98.5%/stepActMotion 91.5%/testHeightGap 94.8% now pure reg-swap; split PASS 0x2C4 spare
@@ -580,13 +580,17 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_801862C0.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuPTGauge.cpp"),
             Object(NonMatching, "kyoshin/menu/code_80187F14.cpp"),
-            Object(Matching, "kyoshin/menu/CMenuSelectShop.cpp"),
+            # Demoted 2026-11-17: the pseudo-constructor calls the cursor ctor through the fake
+            # C name __ct__CCur18; retail calls CCur18::CCur18(ArcResourceAccessor*). Re-promote once
+            # CMenuSelectShop has a real constructor.
+            Object(NonMatching, "kyoshin/menu/CMenuSelectShop.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuShopSell.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuShopBuy.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/code_8018C5FC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResPcImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/code_8018F8D8.cpp"),
             Object(Matching, "kyoshin/menu/CMenuPTState.cpp"),
+            Object(Matching, "kyoshin/cf/code_80194310.cpp"),
             Object(NonMatching, "kyoshin/cf/CPartsChange.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMovePC.cpp"),
             Object(Matching, "kyoshin/cf/CtrlMoveNpc.cpp"),
@@ -649,7 +653,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_801F3BE0.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickObject.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectTbox.cpp"),
-            Object(Matching, "kyoshin/cf/CfResTboxImpl.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfResTboxImpl.cpp"),
             Object(NonMatching, "kyoshin/CPartyStateWin.cpp"),
             Object(NonMatching, "kyoshin/CModelDisp.cpp"),
             Object(NonMatching, "kyoshin/CPartyState.cpp", extra_cflags=["-O4,s"]),
@@ -676,7 +680,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuQstCnt.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CQstLogList.cpp"),
             Object(NonMatching, "kyoshin/CQstLogInfo.cpp"),
-            Object(NonMatching, "kyoshin/CSysWin.cpp"),
+            Object(NonMatching, "kyoshin/CSysWin.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CSelShopWin.cpp"),
             Object(NonMatching, "kyoshin/CExchangeWin.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CPresentWin.cpp"),
@@ -690,7 +694,7 @@ config.libs = [
             Object(Matching, "kyoshin/CFade.cpp"),
             Object(NonMatching, "kyoshin/CFloorMap.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuMapSelectSC.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuPause.cpp"),
+            Object(Matching, "kyoshin/menu/CMenuPause.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuCollepedia.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CCollepedia.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuKizunagram.cpp", extra_cflags=["-O4,s"]),
@@ -731,16 +735,16 @@ config.libs = [
             # kyoshin/realtimeevt/CREvtLight).
             Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
             Object(MatchingCodeOnly, "kyoshin/CTaskGamePic.cpp", extra_cflags=["-RTTI off", "-O4,s", "-func_align 4"]),  # retail has no __RTTI__/type-name pools in this TU (manual lbl_eu_ vtables ship from split-asm); -RTTI off drops the dead local RTTI so the stripped sections stop emitting @61xx pool UNDEFs
-            Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
+            Object(Matching, "kyoshin/CTaskGameEvt.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(Matching, "kyoshin/code_80296898.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
+            Object(Matching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(Matching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/COption.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/CSkipTimer.cpp"),
+            Object(NonMatching, "kyoshin/CSkipTimer.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/cf/chain/CChainEffect.cpp"),
             Object(Matching, "kyoshin/cf/voice/CCharVoice.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/CCharVoiceMan.cpp"),
@@ -1044,7 +1048,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
-            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),
             # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
             # Wii/1.1 (mwcc_43_151) floats li-before-lis / mr-before-stb scheduling
             # on cback-dispatch stores (rssi/link_quality/new_link_key soft-cap,
@@ -1055,7 +1059,7 @@ config.libs = [
             # bta_dm_api.c: retail bte compiled with GC/3.0a5.2 (see bta_dm_act /
             # btm_devctl notes); Wii/1.1 schedules mr-before-sth after the event
             # store and keeps the AddDevice loop counter in a volatile reg.
-            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),  # retail packed: -func_align 16 pads 0x98->0xA0, .text 0x8 over slice (0x160)
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
@@ -1064,14 +1068,14 @@ config.libs = [
             # -func_align 4 matches the bte family layout (retail packed, not
             # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # promoted 2026-08: -func_align 4 (bte-family packed convention) fixes bta_hh_cback 39.5%->100% and the 0x94 split overage; HID event enum corrected to hidh_api.h order (CTRL_DATC frees p_data) making .data byte+reloc exact — 18/18 FULL_MATCH (us-802e5ee8 cycle-certified) + data MATCH
-            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(MatchingCodeOnly, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             # btm_acl.c: retail bte built with GC/3.0a5.2 (see btm_devctl / bta_dm_act
             # notes); -func_align 4 matches the bte btm family (btm_sec/discovery)
             # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_CASES)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 4"]),  # retail packed: -func_align 16 pads 0x78->0x80 and 0x130->0x140, .text 0x10 over slice (0x134)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # GC/3.0a3.4 reproduces the BTM_StartInquiry retail constant-hoist (li r4,1 into the inqparms copy) byte-for-byte; a5.2 allocates r4 as the copy-pair reg and cannot hoist (MWCC_CASES constant-hoist note). -func_align 4 / -ipa off avoid the scheduling NOPs before mtctr-counted loops.
@@ -1079,7 +1083,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte family is packed (no 16-byte fn padding); -func_align 4 packs .text into the split budget (MWCC_CASES btm_devctl/btm_inq notes)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 removes the spurious ori nop before mtctr-counted loops and matches the bte btm family layout (MWCC_CASES btm_sco notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_CASES btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently; -ipa file (default) keeps forward TU function/pool emission vs retail (dropping -ipa off; see l2c_api.c/hidh_api.c MWCC_CASES)
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
                                                                                                                                                                                                             Object(Matching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC/3.0a5.2 (bte family, see bta_dm_act/btm_devctl notes); volatile handle keeps the failure-path handle=0 store so the 0 lives in r31 across calls — FULL_MATCH
             # gap_api.c: retail bte compiled with GC/3.0a5.2 (bte family, see
@@ -1092,7 +1096,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c"),
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_hh_act/btm_devctl notes); Wii/1.1 lowers the {0,2,3} set_now dispatch to a linear cmpwi chain instead of the retail cmpwi/bge tree; -func_align 4 packs the unit .text into the retail split (retail packed, not 16-aligned)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),  # retail bte built with GC 3.0a-family (see bta_hh_act/btm_devctl notes); Wii/1.1 lowers the {0,2,3} set_now dispatch to a linear cmpwi chain instead of the retail cmpwi/bge tree; -func_align 4 packs the unit .text into the retail split (retail packed, not 16-aligned)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see hidh_conn.c note); -func_align 4 removes the scheduling ori r0,r0,0 nop before mtctr-counted loops; -ipa off reverses the TU function/pool emission order vs retail (pooled-string immediates in HID_HostWriteDev / HID_HostSetSecurityLevel shift), so the unit needs -ipa file (forward pool) — same fix as l2c_api.c
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # FLAG TEST a3.4 (see btm_devctl/btm_inq); Wii/1.1 lowers the snd_data switch with a subi/cmpli range test instead of the retail cmpwi/bge chain; -func_align 4 removes the scheduling nop before mtctr-counted loops (see MWCC_CASES btm_inq/btm_sec notes)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_csm); -ipa off reverses the TU string-pool emission order vs retail (pooled-string immediates in DataWrite/Register/ConnectReq/ConnectRsp shift), so the unit needs -ipa file (forward pool) — verified 0 regressions on all 12 matched functions; Wii/1.1 schedules mr-before-stb floats on the ConfigReq fcr_present store (MWCC_CASES 7c2/gap_conn)
@@ -1106,15 +1110,15 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail rfcomm built with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 schedules the rfcomm_l2cap_if_init callback-struct stores with base-lis-first and an early stwu (retail hoists all lis, then stwu merges base+0x14)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail pool forward-ordered: -ipa off reverses the -str reuse string pool (MWCC_CASES l2c_api / hidh_api)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl); -func_align 4 removes inter-fn padding that blows the split (rfc_port_if pattern)
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split; GC/3.0a3.4 reproduces the RFCOMM_FlowReq call-arg schedule (12/12 FULL_MATCH, split 0x52C exact)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa file"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split; GC/3.0a3.4 reproduces the RFCOMM_FlowReq call-arg schedule (12/12 FULL_MATCH, split 0x52C exact)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 + -func_align 16 insert ori r0,r0,0 before the rfc_send_test shift loop and float mr/li arg setup in rfc_send_fcon/fcoff
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa file"]),  # -ipa file (forward pool): -ipa off reversed the TU function/pool emission order, shifting pooled-string immediates in rfc_port_closed (0x68/0x54/0x10 vs 0x18/0x28/0x3c) - us-80305588 FULL_MATCH at 100%; -func_align 16 variant inserts scheduling NOPs (keep 4)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 -func_align 16 inserts an alignment ori r0,r0,0 before the SDP_FindServiceInDb sub-attr loop
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa file"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 -func_align 16 + IPA inserts an alignment ori r0,r0,0 before the ARRAY_TO_STREAM loop in sdpu_build_uuid_seq
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 floats mr-before-stb call-arg scheduling on sdp_connect_ind cback-dispatch stores (KB ref:51910fc0cc)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 lowers the 3-case PDU dispatch switch to an equality chain instead of retail's compare tree
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA (see MWCC_CASES btm_inq / l2c_utils)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa file"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA (see MWCC_CASES btm_inq / l2c_utils)
         ],
     ),
     DolphinLib(
@@ -1632,7 +1636,10 @@ config.libs = [
             Object(Matching, "nw4r/src/g3d/res/g3d_resmdl.cpp"),
             Object(Matching, "nw4r/src/g3d/res/g3d_resshp.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_restev.cpp"),
-            Object(Matching, "nw4r/src/g3d/res/g3d_resmat.cpp"),
+            # Demoted 2026-11-17: literals replace the hand-built .sdata2 pool; the compiler pool differs
+            # from retail only in where 0.0f/1.0f sit (retail pools them before GetLyrRate's 0.6, which
+            # points at an earlier function the linker stripped and this source does not have yet).
+            Object(NonMatching, "nw4r/src/g3d/res/g3d_resmat.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resvtx.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_restex.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resnode.cpp"),
@@ -1845,7 +1852,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CToken.cpp"),
             Object(Matching, "monolib/src/work/CEvent1.cpp"),
             Object(NonMatching, "monolib/src/core/CSplitFrame.cpp"),
-            Object(Matching, "monolib/src/core/CTaskManager.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI data in this TU (rodata/sdata/sbss all 0; .data = CRootProc vtable only)
+            Object(Matching, "monolib/src/core/CTaskManager.cpp"),
             Object(NonMatching, "monolib/src/core/CView.cpp"),
             Object(NonMatching, "monolib/src/core/CViewFrame.cpp"),
             Object(NonMatching, "monolib/src/core/CViewRoot.cpp", extra_cflags=["-ipa off"]),  # data_vtables.hpp __RTTI__ collision (same as CView.cpp)
@@ -2009,7 +2016,9 @@ config.libs = [
             Object(Matching, "monolib/src/work/CWorkSystemCache.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804D9274.cpp"),
             Object(Matching, "monolib/src/nand/CNand.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(Matching, "monolib/src/nand/CNReqtaskSave.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail packed (fn sizes sum to the 0xB20 slice); align 16 inserts ori pads
+            Object(Matching, "monolib/src/nand/CNReqtask.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(Matching, "monolib/src/nand/CNRequest.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(Matching, "monolib/src/nand/CNReqtaskSave.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskLoad.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskReaddir.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskRemove.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
@@ -2033,11 +2042,8 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
             Object(Matching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/nand/CNBanner.cpp", extra_cflags=["-sdata 8"]),  # -sdata 8 (not 0): retail keeps lbl_eu_80665A98 in .sbss; with the default
-    # threshold the 4-byte pointer lands in .bss and the gate fails. Matched
-    # functions never touch small data, so codegen is unaffected (verified:
-     # only the FORCEACTIVE stub words differ).  # ALL 9 functions byte-match (code 100%); promotion blocked ONLY by +80B .text overhead from the inline ~IWorkEvent weak copy (see CNBanner.cpp tail note)
-            Object(Matching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
+            Object(Matching, "monolib/src/nand/CNBanner.cpp"),
+            Object(Matching, "monolib/src/nand/CNReqtaskCreatedir.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # EU/US only
         ],
     },
     {

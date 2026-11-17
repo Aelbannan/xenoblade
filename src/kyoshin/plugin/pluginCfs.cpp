@@ -40,8 +40,6 @@ extern const f64 lbl_eu_80665E40;
 extern "C" {
     extern unsigned long lbl_eu_80663E28;  // game state flags 2
     extern float lbl_eu_80663EDC;          // wait pop timer
-    extern float lbl_eu_80665E30;          // fixed-point divisor (4096.0f)
-    extern float lbl_eu_80665E34;          // 0.5f
     extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
     extern float lbl_eu_80665E3C;          // 1.0f
     extern float lbl_eu_80665E48;          // various constants
@@ -254,24 +252,24 @@ int setMapJumpArea(VMThread* pThread) {
     // Fixed-point -> float conversions in retail store order: min triple,
     // max triple, B triple, A triple, radius last. Radius stays live across
     // the manager fetch so MWCC colors it into callee-saved f31.
-    cornerMin.x = (float)(s32)dX / lbl_eu_80665E30;
-    cornerMin.y = (float)(s32)dY / lbl_eu_80665E30;
-    cornerMin.z = (float)(s32)dZ / lbl_eu_80665E30;
-    cornerMax.x = (float)(s32)cX / lbl_eu_80665E30;
-    cornerMax.y = (float)(s32)cY / lbl_eu_80665E30;
-    cornerMax.z = (float)(s32)cZ / lbl_eu_80665E30;
-    cornerB.x = (float)(s32)bX / lbl_eu_80665E30;
-    cornerB.y = (float)(s32)bY / lbl_eu_80665E30;
-    cornerB.z = (float)(s32)bZ / lbl_eu_80665E30;
-    cornerA.x = (float)(s32)aX / lbl_eu_80665E30;
-    cornerA.y = (float)(s32)aY / lbl_eu_80665E30;
-    cornerA.z = (float)(s32)aZ / lbl_eu_80665E30;
-    float warpH = (float)(s32)radius / lbl_eu_80665E30;
+    cornerMin.x = (float)(s32)dX / 4096.0f;
+    cornerMin.y = (float)(s32)dY / 4096.0f;
+    cornerMin.z = (float)(s32)dZ / 4096.0f;
+    cornerMax.x = (float)(s32)cX / 4096.0f;
+    cornerMax.y = (float)(s32)cY / 4096.0f;
+    cornerMax.z = (float)(s32)cZ / 4096.0f;
+    cornerB.x = (float)(s32)bX / 4096.0f;
+    cornerB.y = (float)(s32)bY / 4096.0f;
+    cornerB.z = (float)(s32)bZ / 4096.0f;
+    cornerA.x = (float)(s32)aX / 4096.0f;
+    cornerA.y = (float)(s32)aY / 4096.0f;
+    cornerA.z = (float)(s32)aZ / 4096.0f;
+    float warpH = (float)(s32)radius / 4096.0f;
 
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        CollObjSetupVecPair(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
+        CollObjSetupVecPair(mgr, warpH, 360.0f, &cornerB, &cornerA);
         CollObjSetupVecsState1(mgr, warpH, &cornerMin, &cornerMax);
 
         // Center of the min/max pair, duplicated, scaled, duplicated again.
@@ -394,20 +392,20 @@ int setMapJumpAreaBox(VMThread* pThread) {
 
     // Fixed-point -> float corners in retail store order: high triple,
     // mid triple, low triple.
-    corners[6] = (float)(s32)lowV[0] / lbl_eu_80665E30;
-    corners[7] = (float)(s32)lowV[1] / lbl_eu_80665E30;
-    corners[8] = (float)(s32)lowV[2] / lbl_eu_80665E30;
-    corners[3] = (float)(s32)midV[0] / lbl_eu_80665E30;
-    corners[4] = (float)(s32)midV[1] / lbl_eu_80665E30;
-    corners[5] = (float)(s32)midV[2] / lbl_eu_80665E30;
-    corners[0] = (float)(s32)highV[0] / lbl_eu_80665E30;
-    corners[1] = (float)(s32)highV[1] / lbl_eu_80665E30;
-    corners[2] = (float)(s32)highV[2] / lbl_eu_80665E30;
+    corners[6] = (float)(s32)lowV[0] / 4096.0f;
+    corners[7] = (float)(s32)lowV[1] / 4096.0f;
+    corners[8] = (float)(s32)lowV[2] / 4096.0f;
+    corners[3] = (float)(s32)midV[0] / 4096.0f;
+    corners[4] = (float)(s32)midV[1] / 4096.0f;
+    corners[5] = (float)(s32)midV[2] / 4096.0f;
+    corners[0] = (float)(s32)highV[0] / 4096.0f;
+    corners[1] = (float)(s32)highV[1] / 4096.0f;
+    corners[2] = (float)(s32)highV[2] / 4096.0f;
 
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        CollObjSetupVecPair(mgr, lbl_eu_80665E48, lbl_eu_80665E34, &corners[3], &corners[3]);
+        CollObjSetupVecPair(mgr, lbl_eu_80665E48, 360.0f, &corners[3], &corners[3]);
         CollObjSetupRotBoxFromAVec(lbl_eu_80665E4C, &corners[6], &corners[0]);
         CollObjSetResIdPairName(mgr, ids[1], ids[0], name);
 
@@ -522,25 +520,25 @@ int setWarpArea(VMThread* pThread) {
     ml::CVec3 cornerMax;
     ml::CVec3 cornerMin;
 
-    cornerMin.x = (float)(s32)fx / lbl_eu_80665E30;
-    cornerB.z = (float)(s32)b[2] / lbl_eu_80665E30;
-    cornerMin.z = (float)(s32)fz / lbl_eu_80665E30;
-    cornerMax.x = (float)(s32)fx / lbl_eu_80665E30;
-    cornerB.x = (float)(s32)b[0] / lbl_eu_80665E30;
-    cornerMax.z = (float)(s32)fz / lbl_eu_80665E30;
+    cornerMin.x = (float)(s32)fx / 4096.0f;
+    cornerB.z = (float)(s32)b[2] / 4096.0f;
+    cornerMin.z = (float)(s32)fz / 4096.0f;
+    cornerMax.x = (float)(s32)fx / 4096.0f;
+    cornerB.x = (float)(s32)b[0] / 4096.0f;
+    cornerMax.z = (float)(s32)fz / 4096.0f;
     cornerA = cornerB;
-    cornerMax.y = (float)(s32)fy / lbl_eu_80665E30 +
-                  (float)(s32)hTop / lbl_eu_80665E30;
-    cornerB.y = (float)(s32)b[1] / lbl_eu_80665E30;
-    cornerMin.y = (float)(s32)fy / lbl_eu_80665E30 -
-                  (float)(s32)mid / lbl_eu_80665E30;
-    float warpH = (float)(s32)fw / lbl_eu_80665E30;
+    cornerMax.y = (float)(s32)fy / 4096.0f +
+                  (float)(s32)hTop / 4096.0f;
+    cornerB.y = (float)(s32)b[1] / 4096.0f;
+    cornerMin.y = (float)(s32)fy / 4096.0f -
+                  (float)(s32)mid / 4096.0f;
+    float warpH = (float)(s32)fw / 4096.0f;
 
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         CollObjSetupVecsState6(mgr, warpH, &cornerMin, &cornerMax, g0, g1, g2, g3);
-        CollObjSetupVecPair(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
+        CollObjSetupVecPair(mgr, warpH, 360.0f, &cornerB, &cornerA);
 
         // Center of the min/max pair, duplicated, scaled, duplicated again.
         center.x = cornerMin.x + cornerMax.x;
@@ -593,13 +591,13 @@ int setMapPreloadArea(VMThread* pThread) {
 
     // Builtin biased int->float casts emit MWCC's 0x4330/xoris idiom; the
     // pooled magic resolves to the shared retail blob lbl_eu_80665E40.
-    boxMax[0] = (float)(s32)fx0 / lbl_eu_80665E30;
-    boxMax[1] = (float)(s32)fy0 / lbl_eu_80665E30;
-    boxMax[2] = (float)(s32)fz0 / lbl_eu_80665E30;
-    boxMin[0] = (float)(s32)fx1 / lbl_eu_80665E30;
-    boxMin[1] = (float)(s32)fy1 / lbl_eu_80665E30;
-    boxMin[2] = (float)(s32)fz1 / lbl_eu_80665E30;
-    float scale = (float)(s32)fw / lbl_eu_80665E30;
+    boxMax[0] = (float)(s32)fx0 / 4096.0f;
+    boxMax[1] = (float)(s32)fy0 / 4096.0f;
+    boxMax[2] = (float)(s32)fz0 / 4096.0f;
+    boxMin[0] = (float)(s32)fx1 / 4096.0f;
+    boxMin[1] = (float)(s32)fy1 / 4096.0f;
+    boxMin[2] = (float)(s32)fz1 / 4096.0f;
+    float scale = (float)(s32)fw / 4096.0f;
 
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
@@ -651,13 +649,13 @@ int mapJump(VMThread* pThread) {
     // Fixed-point -> float position (MWCC 0x4330/xoris conversion idiom);
     // separate assignments let each result die immediately (no FPR saves)
     float pt[3];
-    pt[0] = (float)(s32)fx / lbl_eu_80665E30;
-    pt[1] = (float)(s32)fy / lbl_eu_80665E30;
-    pt[2] = (float)(s32)fz / lbl_eu_80665E30;
+    pt[0] = (float)(s32)fx / 4096.0f;
+    pt[1] = (float)(s32)fy / 4096.0f;
+    pt[2] = (float)(s32)fz / 4096.0f;
 
     queueSceneEventA__Q22cf13CfGameManagerFv(areaId & 0xFFFF, subId & 0xFFFF,
                                            (u32)&pt[0], (u32)name,
-                                           (float)(s32)rot / lbl_eu_80665E30);
+                                           (float)(s32)rot / 4096.0f);
     func_8007C374__Q22cf13CfGameManagerFv(flag, frames, lbl_eu_80665E3C, 1);
     return 0;
 }
@@ -711,11 +709,11 @@ int setEventArea(VMThread* pThread) {
     // Fixed-point -> float conversions in retail store order; the three base
     // coordinates stay contiguous so the array can be passed by pointer.
     float box[3];
-    box[0] = (float)(s32)args[0] / lbl_eu_80665E30;
-    box[1] = (float)(s32)args[1] / lbl_eu_80665E30;
-    box[2] = (float)(s32)args[2] / lbl_eu_80665E30;
-    float top = (float)(s32)args[3] / lbl_eu_80665E30;
-    float bottom = (float)(s32)args[4] / lbl_eu_80665E30;
+    box[0] = (float)(s32)args[0] / 4096.0f;
+    box[1] = (float)(s32)args[1] / 4096.0f;
+    box[2] = (float)(s32)args[2] / 4096.0f;
+    float top = (float)(s32)args[3] / 4096.0f;
+    float bottom = (float)(s32)args[4] / 4096.0f;
 
     void* mgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
@@ -805,11 +803,11 @@ int setTownArea(VMThread* pThread) {
     ml::CVec3 box;
     float height;
     float topOff;
-    box.x = (float)(s32)a0 / lbl_eu_80665E30;
-    box.y = (float)(s32)a1 / lbl_eu_80665E30;
-    box.z = (float)(s32)a2 / lbl_eu_80665E30;
-    height = (float)(s32)fh / lbl_eu_80665E30;
-    topOff = (float)(s32)ft / lbl_eu_80665E30;
+    box.x = (float)(s32)a0 / 4096.0f;
+    box.y = (float)(s32)a1 / 4096.0f;
+    box.z = (float)(s32)a2 / 4096.0f;
+    height = (float)(s32)fh / 4096.0f;
+    topOff = (float)(s32)ft / 4096.0f;
 
     void* mgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
@@ -1609,10 +1607,10 @@ int setFade(VMThread* vmThread) {
     }
 
     float color[4];
-    color[0] = (float)(s32)fixedR / lbl_eu_80665E30;
-    color[1] = (float)(s32)fixedG / lbl_eu_80665E30;
-    color[2] = (float)(s32)fixedB / lbl_eu_80665E30;
-    color[3] = (float)(s32)fixedA / lbl_eu_80665E30;
+    color[0] = (float)(s32)fixedR / 4096.0f;
+    color[1] = (float)(s32)fixedG / 4096.0f;
+    color[2] = (float)(s32)fixedB / 4096.0f;
+    color[3] = (float)(s32)fixedA / 4096.0f;
 
     func_8008566C__Q22cf13CfGameManagerFv(frames & 0xFFFF, color, 1);
     return 0;

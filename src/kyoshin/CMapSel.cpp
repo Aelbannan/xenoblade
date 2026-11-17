@@ -638,13 +638,9 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         mLayout->SetAnimationEnable(mAnimTransform1, true);
         mLayout->Animate(0);
 
-        // Build a CCur18 on the stack and copy it into +0x74, skipping the
-        // vtable pointer (the embedded cursor keeps its own), then poke its
-        // first virtual and run the post-build hook.
-        CCur18 temp;
-        __ct__CCur18(&temp, CUICfManager_getArcResourceAccessor());
-        mCursor = temp;
-        __dt__6CCur18Fv(&temp, -1);
+        // Build the embedded cursor, then poke its first virtual and run the
+        // post-build hook.
+        mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         mCursor.initLayout();
         activateMapSel(this);
         mFileHandle = 0;

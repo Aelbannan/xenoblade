@@ -6,7 +6,7 @@
 // Retail name of lyt::Layout::mspAllocator (shared SDA storage). The static
 // member's mangled name (mspAllocator__Q34nw4r3lyt6Layout) cannot be renamed
 // from source, so the retail lbl label is referenced directly (PLAN.md §17.6).
-extern "C" MEMAllocator* lbl_eu_80665478;
+
 
 namespace nw4r {
 namespace lyt {
@@ -52,7 +52,7 @@ Group::~Group() {
         detail::PaneLink* pObj = &*it;
         if (pObj != NULL) {
             pObj->~PaneLink();
-            MEMFreeToAllocator(lbl_eu_80665478, pObj);
+            Layout::FreeMemory(pObj);
         }
     })
 }
@@ -61,7 +61,7 @@ inline void Group::AppendPane(Pane* pPane) {
     // Layout::NewObj<detail::PaneLink> spelled out against the retail
     // allocator label (see ~Group above); body mirrors the lyt_layout.h
     // template exactly so the schedule is unchanged.
-    void* pMem = MEMAllocFromAllocator(lbl_eu_80665478, sizeof(detail::PaneLink));
+    void* pMem = Layout::AllocMemory(sizeof(detail::PaneLink));
     detail::PaneLink* pLink;
     if (pMem != NULL) {
         pLink = new (pMem) detail::PaneLink();
@@ -92,7 +92,7 @@ GroupContainer::~GroupContainer() {
             // static-member name.
             if (pGroup != NULL) {
                 pGroup->~Group();
-                MEMFreeToAllocator(lbl_eu_80665478, pGroup);
+                Layout::FreeMemory(pGroup);
             }
         }
     })

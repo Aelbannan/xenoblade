@@ -84,6 +84,7 @@ public:
 #include "nw4r/db/db_assert.h"
 // CX streaming-uncompression context (EvtSeqOnFileEvent / EvtSeqPumpCxStream).
 #include "revolution/cx/CXStreamingUncompression.h"
+#include "kyoshin/realtimeevt/CREvtObj.hpp"
 // Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
 // decl). Declared here: this TU does not include that header.
 extern "C" void Scn_ReleaseUnk80(void* scene, int index, void* vec);
@@ -631,11 +632,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                 reinterpret_cast<EvtSeqWalkEntry*>(self->field_0xDC)
                         ->field_0x4 *
                     i);
-            CREvtCamera* obj = reinterpret_cast<CREvtCamera*>(
-                EvtObj_AllocBlock(reinterpret_cast<void*>(0x448)));
-            if (obj != 0) {
-                __ct__CREvtCamera(obj, reinterpret_cast<u32>(entry));
-            }
+            CREvtCamera* obj = new CREvtCamera(reinterpret_cast<u32>(entry));
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(obj);
             self->field_0xA8 = idx + 1;
@@ -696,7 +693,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtEffect* obj = reinterpret_cast<CREvtEffect*>(
-                EvtObj_AllocBlock(reinterpret_cast<void*>(0x144)));
+                __nw__Q22cf8CREvtObjFUl(reinterpret_cast<void*>(0x144)));
             if (obj != 0) {
                 __ct__CREvtEffect(obj, reinterpret_cast<CREvtParam*>(entry));
             }
@@ -717,11 +714,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                 reinterpret_cast<EvtSeqWalkEntry*>(self->field_0xEC)
                         ->field_0x4 *
                     i);
-            CREvtLight* obj = reinterpret_cast<CREvtLight*>(
-                EvtObj_AllocBlock(reinterpret_cast<void*>(0x24)));
-            if (obj != 0) {
-                __ct__CREvtLight(obj, reinterpret_cast<u32>(entry));
-            }
+            CREvtLight* obj = new CREvtLight(reinterpret_cast<u32>(entry));
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(obj);
             self->field_0xA8 = idx + 1;
@@ -740,7 +733,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                         ->field_0x4 *
                     i);
             CREvtMovie* obj = reinterpret_cast<CREvtMovie*>(
-                EvtObj_AllocBlock(reinterpret_cast<void*>(0x1C)));
+                __nw__Q22cf8CREvtObjFUl(reinterpret_cast<void*>(0x1C)));
             if (obj != 0) {
                 __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
                     obj, reinterpret_cast<CREvtMovieScript*>(entry));
@@ -874,7 +867,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     self->field_0x114 = 0;
 }
 
-int CREvtObjVfunc10Default(void* self) { return 1; }
+int cf::CREvtObj::vfunc_10() { return 1; }
 
 void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
     // CX stream pump + event-state update. While the stream-active flag (bit
@@ -1180,7 +1173,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
     self->field_0x5C |= 0x400;
 }
 
-int CREvtObjIsBusyDefault(void* self) { return 0; }
+bool cf::CREvtObj::isBusy() { return false; }
 
 void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     // 12-byte ptmf table overlay (retail copies these as struct reads).
@@ -1351,7 +1344,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     self->field_0x114 = 0;
 }
 
-void CREvtObjVfunc08Default() {}
+void cf::CREvtObj::vfunc_08() {}
 
 void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
     // Main event-sequence update: run the CX pump + event dispatch

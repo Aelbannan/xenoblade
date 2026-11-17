@@ -50,18 +50,14 @@ extern "C" {
 extern "C" CLibCri* lbl_eu_806656D8;
 extern "C" void (*lbl_eu_806656DC)(void);
 
-// Base-class helpers (retail flat names) for the extern "C" ctor/dtor/logins.
-extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(void* self, const char* name, void* parent, int capacity);
+// Base login entry points retain their retail signatures.
 extern "C" bool wkStandbyLogin__11CWorkThreadFv(void* self);
 extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
-extern "C" void __dt__11CDeviceVICbFv(void* self, int flag);
-extern "C" void __ct__11CDeviceVICbFv(void* self);
-extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
-// CLibCri full-object constructor. Retail exports it under the plain member
-// mangling (cross-TU callers construct via `new CLibCri(...)`), and the
-// defining unit must emit exactly that symbol, so the C linkage is fixed by
-// this declaration; the out-of-line definition below inherits it.
-extern "C" void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* pName, CWorkThread* pParent);
+namespace CriDestructor {
+extern "C" void* __dt__7CLibCriFv(CLibCri*, int);
+}
+using CriDestructor::__dt__7CLibCriFv;
+
 extern "C" u32 lbl_eu_8056CE58[52]; // CLibCri primary vtable (defined below)
 
 // Foreign vtable-slot symbols (retail flat names). The __RTTI__* typeinfo
@@ -131,8 +127,8 @@ extern "C" {
     void setStreamPause__20CLibCriStreamingPlayFv();
     void fadeStreamVolume__20CLibCriStreamingPlayFv();
     void getStreamVolume__20CLibCriStreamingPlayFv();
-    void func_8045C700__20CLibCriStreamingPlayFv();
     void setStreamVolume__20CLibCriStreamingPlayFv();
+    void setStreamVolumeScale__20CLibCriStreamingPlayFv();
     void getStreamPosition__20CLibCriStreamingPlayFv();
     void setStreamPanVolume__20CLibCriStreamingPlayFv();
     void calcStreamBufferSize__20CLibCriStreamingPlayFv();
@@ -176,56 +172,25 @@ struct CLibCriVptrView {
 // CLibCri constructor (see declaration above for why the retail symbol is a
 // flat full-object ctor).
 // ============================================================================
-void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* pName, CWorkThread* pParent) {
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(object, pName, pParent, 2);
-    __ct__11CDeviceVICbFv(&((CLibCriVptrView*)object)->vtViCb);
-    // full-object construction: restore the primary + both MI sub-vptrs.
-    // The two secondary slots point at the CDeviceVICb / IErrorWii
-    // sub-vtables carved out of the dissolved blob (+0xA0 / +0xB8), spelled
-    // as element indexes into the u32 word array.
-    CLibCriVptrView* vp = (CLibCriVptrView*)object;
+CLibCri::CLibCri(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 2) {
+    CLibCriVptrView* vp = (CLibCriVptrView*)this;
     vp->vtPrimary = &lbl_eu_8056CE58[0];
     vp->vtViCb = &lbl_eu_8056CE58[0xA0 / sizeof(u32)];
     vp->vtErrorWii = &lbl_eu_8056CE58[0xB8 / sizeof(u32)];
-    lbl_eu_806656D8 = object;
-    object->mType = CWorkThread::THREAD_CLIBCRI;
-    // Implicit guarded CLibCri* -> IErrorWii* conversion (null-check +
-    // this-adjust +0x1C8); do not spell the null check by hand. The ctor
-    // returns object (retail keeps it live across the call for the epilog).
-    CErrorWii::addCallback(static_cast<IErrorWii*>(object));
-    return object;
+    lbl_eu_806656D8 = this;
+    mType = CWorkThread::THREAD_CLIBCRI;
+    CErrorWii::addCallback(this);
 }
 
-// ============================================================================
-// CLibCri destructor (extern "C" free-function form, see ctor note).
-// ============================================================================
-// ============================================================================
-// auto_inline off: -ipa file would otherwise inline this dtor body into the
-// @452@/@456@ dtor thunks below (retail keeps them as 2-insn tail calls).
-// ============================================================================
 #pragma auto_inline off
-extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
-    if (self != nullptr) {
-        CLibCriVptrView* vp = (CLibCriVptrView*)self;
-        IErrorWii* errCb = reinterpret_cast<IErrorWii*>(self);
-        // full-object destruction: restore the primary + both MI sub-vptrs
-        // through the same typed view the ctor uses (RHS shapes kept retail-pinned).
-        vp->vtPrimary = &lbl_eu_8056CE58[0];
-        vp->vtViCb = &lbl_eu_8056CE58[0xA0 / sizeof(u32)];
-        vp->vtErrorWii = &lbl_eu_8056CE58[0xB8 / sizeof(u32)];
-        if (errCb != nullptr) {
-            // IErrorWii subobject lives at the vtErrorWii slot (0x1C8).
-            errCb = reinterpret_cast<IErrorWii*>(&vp->vtErrorWii);
-        }
-        CErrorWii::removeCallback(errCb);
-        lbl_eu_806656D8 = nullptr;
-        __dt__11CDeviceVICbFv(&vp->vtViCb, 0);
-        __dt__11CWorkThreadFv(self, 0);
-        if (flag > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+CLibCri::~CLibCri() {
+    CLibCriVptrView* vp = (CLibCriVptrView*)this;
+    vp->vtPrimary = &lbl_eu_8056CE58[0];
+    vp->vtViCb = &lbl_eu_8056CE58[0xA0 / sizeof(u32)];
+    vp->vtErrorWii = &lbl_eu_8056CE58[0xB8 / sizeof(u32)];
+    CErrorWii::removeCallback(this);
+    lbl_eu_806656D8 = nullptr;
 }
 #pragma auto_inline on
 
@@ -262,8 +227,8 @@ void CLibCri::stopAllStreams() { stopAllStreams__20CLibCriStreamingPlayFv(); }
 void CLibCri::setStreamPause() { setStreamPause__20CLibCriStreamingPlayFv(); }
 void CLibCri::fadeStreamVolume() { fadeStreamVolume__20CLibCriStreamingPlayFv(); }
 void CLibCri::getStreamVolume() { getStreamVolume__20CLibCriStreamingPlayFv(); }
-void CLibCri::setStreamVolume() { func_8045C700__20CLibCriStreamingPlayFv(); }
-void CLibCri::setStreamVolumeScale() { setStreamVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamVolume() { setStreamVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamVolumeScale() { setStreamVolumeScale__20CLibCriStreamingPlayFv(); }
 void CLibCri::getStreamPosition() { getStreamPosition__20CLibCriStreamingPlayFv(); }
 void CLibCri::setStreamPanVolume() { setStreamPanVolume__20CLibCriStreamingPlayFv(); }
 void CLibCri::calcStreamBufferSize() { calcStreamBufferSize__20CLibCriStreamingPlayFv(); }

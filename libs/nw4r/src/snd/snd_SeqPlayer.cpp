@@ -2,10 +2,7 @@
 #include <nw4r/ut.h>
 
 // .sdata2 constant-pool entries referenced by the functions below.
-extern const f32 lbl_eu_8066A000; // 1.0f
-extern const f32 lbl_eu_8066A004; // 0.0f
 extern const f64 lbl_eu_8066A008; // 2^52 (signed int -> float magic)
-extern const f32 lbl_eu_8066A010; // 60000.0f
 
 namespace {
 
@@ -110,11 +107,11 @@ SeqPlayer::SeqPlayer() {
     mPauseFlag = false;
     mReleasePriorityFixFlag = false;
 
-    mTempoRatio = lbl_eu_8066A000;
-    mTickFraction = lbl_eu_8066A004;
+    mTempoRatio = 1.0f;
+    mTickFraction = 0.0f;
     mSkipTickCounter = 0;
-    mSkipTimeCounter = lbl_eu_8066A004;
-    mPanRange = lbl_eu_8066A000;
+    mSkipTimeCounter = 0.0f;
+    mPanRange = 1.0f;
     mTickCounter = 0;
     mVoiceOutCount = 0;
 
@@ -161,10 +158,10 @@ void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
 
     mStartedFlag = false;
     mPauseFlag = false;
-    mTempoRatio = lbl_eu_8066A000;
+    mTempoRatio = 1.0f;
     mSkipTickCounter = 0;
-    mSkipTimeCounter = lbl_eu_8066A004;
-    mPanRange = lbl_eu_8066A000;
+    mSkipTimeCounter = 0.0f;
+    mPanRange = 1.0f;
     mTickCounter = 0;
     mVoiceOutCount = voices;
 
@@ -174,7 +171,7 @@ void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
     mParserParam.priority = 64;
     mParserParam.callback = pCallback;
 
-    mTickFraction = lbl_eu_8066A004;
+    mTickFraction = 0.0f;
 
     for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
         mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
@@ -492,7 +489,7 @@ void SeqPlayer::Update() {
         return;
     }
 
-    if (mSkipTickCounter != 0 || mSkipTimeCounter > lbl_eu_8066A004) {
+    if (mSkipTickCounter != 0 || mSkipTimeCounter > 0.0f) {
         SkipTick();
 
     } else if (!mPauseFlag) {
@@ -530,8 +527,8 @@ void SeqPlayer::UpdateTick(int msec) {
         (u32)(mParserParam.timebase * mParserParam.tempo) ^ 0x80000000;
     f32 tickPerMsec =
         mTempoRatio *
-        ((f32)(conv.d - lbl_eu_8066A008) / lbl_eu_8066A010);
-    if (lbl_eu_8066A004 == tickPerMsec) {
+        ((f32)(conv.d - lbl_eu_8066A008) / 60000.0f);
+    if (0.0f == tickPerMsec) {
         return;
     }
 
@@ -585,13 +582,13 @@ void SeqPlayer::UpdateTick(int msec) {
         // Multiply-last ordering keeps this tree distinct from the head
         // computation so MWCC's PRE pass cannot merge them.
         tickPerMsec =
-            ((f32)(conv.d - lbl_eu_8066A008) / lbl_eu_8066A010) *
+            ((f32)(conv.d - lbl_eu_8066A008) / 60000.0f) *
             mTempoRatio;
-        if (lbl_eu_8066A004 == tickPerMsec) {
+        if (0.0f == tickPerMsec) {
             return;
         }
 
-        nextMsec = lbl_eu_8066A000 / tickPerMsec;
+        nextMsec = 1.0f / tickPerMsec;
     }
 
     nextMsec -= restMsec;
@@ -624,8 +621,8 @@ void SeqPlayer::SkipTick() {
                                reinterpret_cast<SeqPlayerRetailSlots*>(this),
                                conv) -
                            lbl_eu_8066A008) /
-                     lbl_eu_8066A010)) >=
-               lbl_eu_8066A000) {
+                     60000.0f)) >=
+               1.0f) {
         if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->tickCounter >=
             MAX_SKIP_TICK_PER_FRAME) {
             return;
@@ -639,9 +636,9 @@ void SeqPlayer::SkipTick() {
             f64 d = LoadTempoProduct(
                 reinterpret_cast<SeqPlayerRetailSlots*>(this), conv);
             reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTimeCounter -=
-                lbl_eu_8066A000 /
+                1.0f /
                 (reinterpret_cast<SeqPlayerRetailSlots*>(this)->tempoRatio *
-                 ((f32)(d - lbl_eu_8066A008) / lbl_eu_8066A010));
+                 ((f32)(d - lbl_eu_8066A008) / 60000.0f));
         }
 
         if (ParseNextTick(false)) {
@@ -693,7 +690,7 @@ void SeqPlayer::SkipTick() {
     }
 
     reinterpret_cast<SeqPlayerRetailSlots*>(this)->skipTimeCounter =
-        lbl_eu_8066A004;
+        0.0f;
 }
 
 void SeqPlayer::InitGlobalVariable() {

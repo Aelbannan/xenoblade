@@ -36,9 +36,9 @@ extern "C" u32 lbl_eu_806635E0[2];   // RTTI TChildListHeader<CChildListNode>
 extern "C" u32 lbl_eu_806635E8[2];   // RTTI CDeviceRemotePad
 extern "C" u32 lbl_eu_806635F0[2];   // RTTI CDeviceBase
 extern "C" u32 lbl_eu_806635F8[2];   // RTTI CDeviceSC
-extern "C" u32 lbl_eu_80661948[2];   // RTTI CProcess
-extern "C" u32 lbl_eu_80661950[2];   // RTTI CChildListNode
-extern "C" u32 lbl_eu_80661958[2];   // RTTI CDoubleListNode
+extern "C" u32 __RTTI__8CProcess[2];   // RTTI CProcess
+extern "C" u32 __RTTI__14CChildListNode[2];   // RTTI CChildListNode
+extern "C" u32 __RTTI__15CDoubleListNode[2];   // RTTI CDoubleListNode
 extern "C" void* __RTTI__10IWorkEvent;
 extern "C" void* __RTTI__11CWorkThread;
 

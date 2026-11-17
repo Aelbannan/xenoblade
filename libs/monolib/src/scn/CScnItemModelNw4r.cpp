@@ -3280,11 +3280,10 @@ void scnImN4SetShadowNd(CScnItemModelNw4r* self, const char* name, u32 enable) {
 }
 // Retail-named float constant (.sdata2) used by scnImN4StampShadNd's u16
 // conversions.
-extern "C" const float lbl_eu_8066A8F8;
 
 // scnImN4StampShadNd: resolve `name` to a resource node and stamp its id into the
 // matching +0x17DC shadow-node slot (2 entries), also writing two u16 values
-// derived from the node via (u16)(lbl_eu_8066A8F8 * scaleA/B). No-op when
+// derived from the node via (u16)(100.0f * scaleA/B). No-op when
 // the node is absent; the second null test is retail's redundant validity
 // assert reusing the first compare's CR flags.
 extern "C" void scnImN4StampShadNd(CScnItemModelNw4r* self, const char* name,
@@ -3300,7 +3299,7 @@ extern "C" void scnImN4StampShadNd(CScnItemModelNw4r* self, const char* name,
     s32 nodeId = node.GetID();
     for (int i = 0; i < 2; i++) {
         if (nodeId == (s16)self->shadowNodes[i].id) {
-            f32 base = lbl_eu_8066A8F8;
+            f32 base = 100.0f;
             self->shadowNodes[i].field_0x18 = (u16)(base * scaleA);
             self->shadowNodes[i].field_0x1A = (u16)(base * scaleB);
             return;
@@ -3342,8 +3341,8 @@ extern "C" const char*  scnImN4GetResName(CScnItemModelNw4r* self) {
 // The vtable reloc slots reference the class dtor (defined in this TU),
 // foreign virtuals, and the nw4r callback template symbols.
 extern "C" void* lbl_eu_806624D8;
-extern "C" void* lbl_eu_806638D8;
-extern "C" void* lbl_eu_806638E0;
+extern "C" void* __RTTI__Q34nw4r3g3d15IScnObjCallback;
+extern "C" void* __RTTI__Q34nw4r3g3d18ICalcWorldCallback;
 extern "C" void* lbl_eu_806624C0;
 extern "C" void* lbl_eu_806624D0;
 extern "C" void ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld();
@@ -3362,7 +3361,7 @@ extern "C" void simGetRate858();
 extern "C" void simVtableTrue();
 extern "C" void simGetValue7E4();
 extern "C" void* lbl_eu_806624D8;
-extern "C" void* lbl_eu_806638D8;
+extern "C" void* __RTTI__Q34nw4r3g3d15IScnObjCallback;
 
 extern "C" u32 lbl_eu_8056DE80[386] = {
     (u32)&lbl_eu_806624C0, 0x00000000, (u32)&__dt__17CScnItemModelNw4rFv, (u32)&scnImN4UpdateVis, (u32)&ScnCamNw4r_EmptyHook48, (u32)&scnImN4UpdateXform,
@@ -3379,8 +3378,8 @@ extern "C" u32 lbl_eu_8056DE80[386] = {
     (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&scnImN4CbLgtHook, (u32)&scnImN4CbLgtMode, (u32)&scnImN4PoseHook, (u32)&scnImN4FeedLook, (u32)&scnImN4SyncShadow,
     (u32)&scnImN4UpdateBounds, (u32)&scnImN4LgtRefresh, (u32)&scnImN4LgtModeSw, (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806624D0,
     0x00000000, 0x00000000, (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
-    (u32)&lbl_eu_806638D8, 0x00000000, (u32)&__dt__Q34nw4r3g3d15IScnObjCallbackFv, (u32)&ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
-    (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&lbl_eu_806638E0, 0x00000000, (u32)&__dt__Q34nw4r3g3d18ICalcWorldCallbackFv, (u32)&ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld,
+    (u32)&__RTTI__Q34nw4r3g3d15IScnObjCallback, 0x00000000, (u32)&__dt__Q34nw4r3g3d15IScnObjCallbackFv, (u32)&ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&__RTTI__Q34nw4r3g3d18ICalcWorldCallback, 0x00000000, (u32)&__dt__Q34nw4r3g3d18ICalcWorldCallbackFv, (u32)&ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld,
     (u32)&ExecCallbackB__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d13WorldMtxManipQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld, (u32)&ExecCallbackC__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r4math5MTX34Q34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld, 0x4E573452, 0x3A506F69, 0x6E746572, 0x20457272,
     0x6F720A66, 0x756E6328, 0x3D257029, 0x20697320, 0x6E6F7420, 0x76616C69,
     0x6420706F, 0x696E7465, 0x722E0000, 0x6733645F, 0x616E6D6F, 0x626A2E68,

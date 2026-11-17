@@ -14,6 +14,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 // Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
 // Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
 // bool isPaneVisible(Pane*), Pane* PaneSetTexPalette, VEC3 ScalePaneWorldPos,
@@ -40,6 +41,7 @@ extern "C" nw4r::math::VEC3
 } // namespace passiveSkillVecView
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Value-returning spelling of ScalePaneWorldPos (passiveSkillVecView above);
 // ABI-identical to the sret form.
@@ -3433,16 +3435,15 @@ __declspec(noinline) void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine
     }
     CtrlObjectParam_SyncParamFromActor(data);
     if ((s8)self->field_F3 < 3) {
-        CPSkillEnumListHolder holder;
         u32 names[3];
         const u32* src = lbl_eu_8050DBB8;
         names[0] = *src++;
         names[1] = *src++;
         names[2] = *src++;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), names[(s8)self->field_F3], 0);
-        if (((CPSkillEnumListCount*)CTaskGame_enumListGet(&holder))->count >= 1) {
-            CPSkillEnumListSlot* slot = getEntryAt(CTaskGame_enumListGet(&holder), 0);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), names[(s8)self->field_F3], 0);
+        if (((CPSkillEnumListCount*)holder.get())->count >= 1) {
+            CPSkillEnumListSlot* slot = getEntryAt(holder.get(), 0);
             cf::CfObjectMove* move = slot->move;
             if (move != 0) {
                 cf::CfObjectMove* m = getCfObjectPc__FPQ22cf12CfObjectMove(move);
@@ -3451,7 +3452,6 @@ __declspec(noinline) void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine
                 }
             }
         }
-        __dt__80043E88(&holder, -1);
     }
 }
 #pragma optimize_for_size off
@@ -3604,7 +3604,7 @@ extern "C" void* __ct__UI_CPassiveSkill(UI::CPassiveSkill* self) {
     self->field_26 = 0;
     self->field_27 = 1;
     __ct__UI_CPassiveSkillLine(&self->mLine, 0);
-    __ct__CSysWin(&self->mSysWin, 0);
+    __ct__7CSysWinFUc(&self->mSysWin, 0);
     return self;
 }
 
@@ -3639,7 +3639,7 @@ extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
         KyoshinHeap_GetField44(), &lbl_eu_8050DC20[2550], (void*)self, 0, 0);
 
     u8 tempW[0x3C];
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(tempW), 2);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(tempW), 2);
     u32* dstW = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&self->mSysWin) + 4);
     u32* srcW = reinterpret_cast<u32*>(tempW + 4);
     dstW[0] = srcW[0];

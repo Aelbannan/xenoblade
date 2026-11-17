@@ -402,20 +402,20 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FACF0[8] = "e
 // CfObjectMove offset; a few differ), ending with a null pair. This is a
 // dynamic-cast dispatch table (type -> subobject offset). RESIDUAL: exact
 // source shape unknown; reproduced byte-faithfully.
-extern u32 lbl_eu_806618B8[];
-extern u32 lbl_eu_806618C0[];
-extern u32 lbl_eu_806618C8[];
-extern u32 lbl_eu_806618D0[];
+extern u32 __RTTI__Q22cf11CActorParam[];
+extern u32 __RTTI__Q22cf11CDebugState[];
+extern u32 __RTTI__Q22cf11CActorState[];
+extern u32 __RTTI__Q22cf12CBattleState[];
 extern u32 lbl_eu_806618E0[];
-extern u32 lbl_eu_806618F8[];
-extern u32 lbl_eu_80661900[];
+extern u32 __RTTI__Q22cf12CObjectParam[];
+extern u32 __RTTI__Q22cf12CObjectState[];
 struct EveTypeRef { const void* type; u32 subobjOff; };
 __declspec(section ".data") __attribute__((used)) EveTypeRef lbl_eu_80525E98[12] = {
-    { lbl_eu_80661900, 0x3E9C }, { lbl_eu_806618F8, 0x3E9C },
+    { __RTTI__Q22cf12CObjectState, 0x3E9C }, { __RTTI__Q22cf12CObjectParam, 0x3E9C },
     { &lbl_eu_806618F0, 0x3E9C }, { &lbl_eu_806618E8, 0x3E9C },
     { &lbl_eu_806618D8, 0x3E9C }, { lbl_eu_806618E0, 0x3380 },
-    { lbl_eu_806618C0, 0x15DC }, { lbl_eu_806618D0, 0x08 },
-    { lbl_eu_806618C8, 0 }, { lbl_eu_806618B8, 0 },
+    { __RTTI__Q22cf11CDebugState, 0x15DC }, { __RTTI__Q22cf12CBattleState, 0x08 },
+    { __RTTI__Q22cf11CActorState, 0 }, { __RTTI__Q22cf11CActorParam, 0 },
     { &__RTTI__Q22cf13CfObjectActor, 0 }, { 0, 0 },
 };
 // Note: the eve function table (80525EF8) uses the region-name string
@@ -447,8 +447,6 @@ __declspec(section ".sdata2") __attribute__((used, aligned(2)))
 char lbl_eu_80665E20[7] = "fadeIn";
 __declspec(section ".sdata2") __attribute__((used, aligned(2)))
 char scRegionNameMEM1__Q23mtl10MemManager[8] = "fadeOut";
-extern __declspec(section ".sdata2") f32 lbl_eu_80665E30 = 4096.0f;
-extern __declspec(section ".sdata2") f32 lbl_eu_80665E34 = 360.0f;
 #pragma section data_type ".data" ".data"
 
 // [.data] PluginFuncData table (80525EF8, 20 entries): method-name /

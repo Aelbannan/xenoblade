@@ -4,32 +4,26 @@
 
 using namespace ml;
 
-extern const f32 lbl_eu_8066AFA8;
-extern const f32 lbl_eu_8066AFB0;
-extern const f32 lbl_eu_8066AFB8;
-extern const f32 lbl_eu_8066AFBC;
-extern const f32 lbl_eu_8066AFAC;
-extern const f32 lbl_eu_8066AFB4;
 
 CLight::CLight(){
     u8* self = (u8*)this;
     extern char lbl_eu_8056F950[];
     void* lp = nullptr;
     *(void**)self = (void*)&lbl_eu_8056F950;
-    *(float*)(self + 0x04) = lbl_eu_8066AFA8;
-    *(float*)(self + 0x08) = lbl_eu_8066AFA8;
-    *(float*)(self + 0x0C) = lbl_eu_8066AFA8;
-    *(float*)(self + 0x10) = lbl_eu_8066AFAC;
-    *(float*)(self + 0x14) = lbl_eu_8066AFAC;
-    *(float*)(self + 0x18) = lbl_eu_8066AFAC;
-    *(float*)(self + 0x1C) = lbl_eu_8066AFB0;
-    *(float*)(self + 0x20) = lbl_eu_8066AFA8;
-    *(float*)(self + 0x24) = lbl_eu_8066AFA8;
-    *(float*)(self + 0x28) = lbl_eu_8066AFB0;
+    *(float*)(self + 0x04) = 0.0f;
+    *(float*)(self + 0x08) = 0.0f;
+    *(float*)(self + 0x0C) = 0.0f;
+    *(float*)(self + 0x10) = 0.5f;
+    *(float*)(self + 0x14) = 0.5f;
+    *(float*)(self + 0x18) = 0.5f;
+    *(float*)(self + 0x1C) = 1.0f;
+    *(float*)(self + 0x20) = 0.0f;
+    *(float*)(self + 0x24) = 0.0f;
+    *(float*)(self + 0x28) = 1.0f;
     *(u32*)(self + 0x2C) = (u32)lp;
     *(u32*)(self + 0x34) = (u32)lp;
-    *(float*)(self + 0x38) = lbl_eu_8066AFB0;
-    *(float*)(self + 0x3C) = lbl_eu_8066AFB4;
+    *(float*)(self + 0x38) = 1.0f;
+    *(float*)(self + 0x3C) = 10000.0f;
     this->unk30 = (u32)this->mpLightObj | 0xF;
 }
 
@@ -62,11 +56,11 @@ extern "C" void LightCtlSetAttnMode(CLight* self, int mode) {
     self->mpLightObj->Clear();
     switch (self->unk34) {
     case 1:
-        self->mpLightObj->InitLightAttnA(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
-        self->mpLightObj->InitLightAttnK(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
+        self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
+        self->mpLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);
         break;
     case 3:
-        self->mpLightObj->InitLightAttnA(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
+        self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
         break;
     case 0:
         self->mpLightObj->Disable();
@@ -99,7 +93,7 @@ extern "C" void LightCtlSetDir(CLight* self, const ml::CVec3* dir) {
     case 1: {
         ml::CVec3 tmp;
         ml::CVec3 pos;
-        const f32 dist = lbl_eu_8066AFB8;
+        const f32 dist = 1000000.0f;
         nw4r::math::VEC3Scale(tmp, *(const ml::CVec3*)&self->unk20, dist);
         pos.x = tmp.x;
         pos.y = tmp.y;
@@ -120,7 +114,7 @@ extern "C" void LightCtlSetDir(CLight* self, const ml::CVec3* dir) {
 // (X = angleY, Y = angleX, Z fixed at 0) and applying it to the +Z unit
 // vector. Input angles are in degrees (radians via ml::deg2rad); the
 // matrix math looks up nw4r trig from the radian values (index via
-// lbl_eu_8066AFBC).
+// 40.743664f).
 void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY) {
     // Euler angles in radians; angle.x gets the angleY contribution (X-axis
     // rotation) computed first so it spills to the frame like retail.
@@ -134,12 +128,12 @@ void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY) {
     ml::CVec3 base(0.0f, 0.0f, 1.0f);
 
     // XYZ rotation matrix elements (matches ml::CMat33::setRotXYZ layout).
-    f32 srr = nw4r::math::SinFIdx(lbl_eu_8066AFBC * angle.x);
-    f32 crr = nw4r::math::CosFIdx(lbl_eu_8066AFBC * angle.x);
-    f32 spy = nw4r::math::SinFIdx(lbl_eu_8066AFBC * angle.y);
-    f32 cpy = nw4r::math::CosFIdx(lbl_eu_8066AFBC * angle.y);
-    f32 sw = nw4r::math::SinFIdx(lbl_eu_8066AFBC * angle.z);
-    f32 cw = nw4r::math::CosFIdx(lbl_eu_8066AFBC * angle.z);
+    f32 srr = nw4r::math::SinFIdx(40.743664f * angle.x);
+    f32 crr = nw4r::math::CosFIdx(40.743664f * angle.x);
+    f32 spy = nw4r::math::SinFIdx(40.743664f * angle.y);
+    f32 cpy = nw4r::math::CosFIdx(40.743664f * angle.y);
+    f32 sw = nw4r::math::SinFIdx(40.743664f * angle.z);
+    f32 cw = nw4r::math::CosFIdx(40.743664f * angle.z);
 
     ml::CMat33 mat;
     mat.set(
@@ -160,7 +154,7 @@ void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY) {
     switch (self->unk34) {
     case 1: {
         // Scale the direction to a position distance and set the light position.
-        ml::CVec3 pos = ml::CVec3(self->unk20, self->unk24, self->unk28) * lbl_eu_8066AFB8;
+        ml::CVec3 pos = ml::CVec3(self->unk20, self->unk24, self->unk28) * 1000000.0f;
         self->unk4 = pos;
         self->mpLightObj->InitLightPos(pos.x, pos.y, pos.z);
         break;

@@ -158,7 +158,7 @@ void initTbox__Q22cf12CfObjectTboxFv(void);
 void initialize__Q22cf11CfObjectObjFv(void);
 void reset__Q22cf11CfObjectObjFv(void);
 }
-extern char lbl_eu_80662700[]; // .sdata RTTI (defined by CPartyStateWin.o)
+extern char __RTTI__Q22cf15CfGimmickObject[]; // .sdata RTTI (defined by CPartyStateWin.o)
 extern char __RTTI__Q22cf11IObjectInfo[];
 extern char __RTTI__Q22cf9CfGimmick[];
 
@@ -187,7 +187,7 @@ extern "C" int ResTbox_NegInUseState(CfResTboxImpl* ths) {
 // (selected by parent flag bits 0x20/0x10), clears flag bits 0x4/0x20000000,
 // dispatches the +0x168 anim setter and finally runs the +0x38/+0x98
 // sub-objects.
-void ResTbox_OpenResource(CfResTboxImpl* ths) {
+extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
     u32 outC;
     u32 out8;
     u8 buf64[0x44];
@@ -247,7 +247,7 @@ void ResTbox_OpenResource(CfResTboxImpl* ths) {
     }
 }
 
-void ResTbox_EmptyStub91B0(void) {}
+extern "C" void ResTbox_EmptyStub91B0(void) {}
 
 extern "C" void ResTbox_CacheNullPtmfOnce(CfResTboxImpl* ths) {
     if (lbl_eu_80664660[0] == 0) {
@@ -285,7 +285,7 @@ void ResTbox_SetCellBit40(unsigned char* base, int idx1, int idx2, int idx3) {
 // T1 (80534F70): CfGimmickObject 9-slot vtable (RTTI, null, dtor, 6 funcs).
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const void* lbl_eu_80534F70[9] = {
-    lbl_eu_80662700, 0, (const void*)__dt__Q22cf15CfGimmickObjectFv,
+    __RTTI__Q22cf15CfGimmickObject, 0, (const void*)__dt__Q22cf15CfGimmickObjectFv,
     (const void*)CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager,
     (const void*)GimObjDriveStepMachine, (const void*)GimObjSetBusyBit,
     (const void*)GimObjClearStepBits, (const void*)GimObjFinishStep,

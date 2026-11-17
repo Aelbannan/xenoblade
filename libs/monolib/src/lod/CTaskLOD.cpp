@@ -1,8 +1,3 @@
-// monolib/src/lod/CTaskLOD -- COMPLETE (Matching TU).
-// 38/38 functions FULL byte-match; data gate MATCH; split budget exact.
-// Retail data (vtables/RTTI/strings/singleton) is defined at the bottom of
-// this file. See docs/MWCC_CASES.md "CTaskLOD" for the matching notes.
-
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -11,41 +6,7 @@
 
 class CTaskLOD;
 
-// Minimal LOD::LODMemMan declaration for this TU.  Only the member functions
-// really called here are declared (with the exact signatures the retail
-// callers use; several take a trailing argument passed via r4 that the
-// read-only LODMemMan.hpp header omits).  Declared locally because the shared
-// header is outside this session's writable scope.
-namespace LOD {
-class LODMemMan {
-public:
-    LODMemMan();
-    void setLodScaleAndRefresh();
-    void func_8046E594(int enable);
-    void func_8046E5BC(CTaskLOD* source);
-    void setBaseScale(float a);
-    void func_8046F088(CTaskLOD* task);
-    void func_8046E920(CTaskLOD* task);
-    void func_8046EB50(CTaskLOD* task);
-    void func_8046EBEC(CTaskLOD* task);
-    void func_8046EEE8(CTaskLOD* task);
-    void* func_8046E8C8(CTaskLOD* task);
-    float func_8046EC88(CTaskLOD* task);
-    void* func_8046EE9C(CTaskLOD* task);
-    float func_8046EF30(CTaskLOD* task);
-    void* func_8046EF7C(CTaskLOD* task);
-    void clearManagers();
-    void updateLodTick();
-    void func_8046F024(int a, int b);
-
-private:
-    u8 _00[0x6c]; // unknown leading fields
-
-public:
-    u32 field_0x6c; // offset 0x6c (flag bits used by setLODFilterFlag)
-};
-} // namespace LOD
-
+#include "monolib/lod/UnkClass_8046D144.hpp"
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
 // +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
@@ -62,30 +23,20 @@ struct LODParam1Obj {
 //   0x00-0x53 : CTTask<CTaskLOD> base
 //   0x54 ..    : unknown state fields (not used by the matched delegates)
 //   0x1D40    : mpActiveLOD (points to the LODMemMan to delegate to)
-//
-// novtable: retail emits NO implicit vptr stores in the dtor (and the ctor
-// chain is inlined into create with the vptr written by explicit stores), so
-// the compiler-generated vptr init must be suppressed.
-class __declspec(novtable) CTaskLOD : public CTTask<CTaskLOD> {
+class CTaskLOD : public CTTask<CTaskLOD> {
 public:
+    CTaskLOD(LODParam1Obj* p1, void* p2, u32 handle, u32 size);
     virtual ~CTaskLOD();
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    virtual void Draw();
     void resetActiveLOD();
     void enableLOD();
-    // Inlined into create(): nulls the CTTask<CTaskLOD> Move/Draw member
-    // pointers (emits the retail __ptmf_null loads at the call site).
-    void initMemberPointers() {
-        mMoveFunc = nullptr;
-        mDrawFunc = nullptr;
-    }
     void disableLOD();
     void restorePrimaryLOD();
     void bindTaskToLOD();
-    void notifyLODTick();
-    void updateLODFrame();
+    static void notifyLODTick(float scale);
+    static void updateLODFrame(float scale);
     float getLODScale();
     void setLODFilterFlag();
     void updateLODRange();
@@ -104,10 +55,9 @@ public:
 
     LODParam1Obj* mParam1;              // 0x54
     void* mParam2;                      // 0x58
-    LOD::LODMemMan mLODMemMan;          // 0x5C (local class size 0x70)
-    u8 _5C_pad[0x1C70];                 // 0xCC .. 0x1D3C
-    LOD::LODMemMan* mpSecondaryLOD;     // 0x1D3C
-    LOD::LODMemMan* mpActiveLOD;        // 0x1D40
+    LOD::UnkClass_8046D144 mLODMemMan;          // 0x5C (local class size 0x70)
+    LOD::UnkClass_8046D144* mpSecondaryLOD;     // 0x1D3C
+    LOD::UnkClass_8046D144* mpActiveLOD;        // 0x1D40
 };
 
 // Global instance pointer referenced by the delegate wrappers.  Retail owns a
@@ -120,17 +70,10 @@ public:
 // emitting no storage)
 __attribute__((aligned(8))) CTaskLOD* lbl_eu_80665730[2];
 
-// Retail vtable data (defined at the bottom of this file; declared here so
-// create()'s vptr stores carry the exact retail reloc names).
-extern "C" u32 lbl_eu_8056D6C0[9];
-extern "C" u32 lbl_eu_8056D678[9];
-
 // Shared float pool owned by CTaskLOD's sibling split (values verified from
 // the retail object: 8066A5B8 = 1.0f, 8066A5BC = 0.0f). Referencing the
 // retail names keeps the SDA21 relocs right and leaves no TU-local .sdata2
 // pool (retail .sdata2 is empty); literals would pool anonymously here.
-extern "C" const f32 lbl_eu_8066A5B8;
-extern "C" const f32 lbl_eu_8066A5BC;
 
 // LODMemMan delegate entry points used by the wrappers below.  The retail
 // symbol map labels them `.Fv` (no-arg) even though the retail bodies take
@@ -139,47 +82,38 @@ extern "C" const f32 lbl_eu_8066A5BC;
 // declared with C linkage: MWCC emits the identifier verbatim, making both
 // the wrapper symbols and the tail-call relocs carry the exact retail names
 // (no reloc drift).  Same pattern as the accepted LODMemMan.cpp TU.
-extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
-extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
-extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
-extern "C" void linkTaskElements__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int value);
-extern "C" void setTimeParams__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a, void* b);
-extern "C" void clearElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void setElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void toggleElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
-extern "C" void setPauseFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
-extern "C" void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void* isElementFlagClear__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void configureFadeMode__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int a, int b);
-extern "C" void updateSubObject__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void setElementLodLevel__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void setElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void refreshElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" float getElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" float getBaseScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void* getElementState__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
-extern "C" void* updateSingleElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
+extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
+extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
+extern "C" void linkTaskElements__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int value);
+extern "C" void setTimeParams__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, void* a, void* b);
+extern "C" void clearElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void setElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void toggleElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
+extern "C" void setPauseFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param);
+extern "C" void attachSceneObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void* isElementFlagClear__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void configureFadeMode__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int a, int b);
+extern "C" void updateSubObject__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void setElementLodLevel__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void setElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void refreshElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" float getElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" float getBaseScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void* getElementState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void* updateSingleElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
-extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
-extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void __ct__8CProcessFv(CProcess* self);
-// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrl::CallLightV26; declaration moved into class CScnEnvLgtCtrl)
-extern "C" void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
-extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
-extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
-extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
-extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
-// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrl::CallLightV27; declaration moved into class CScnEnvLgtCtrl)
 
-// Overlay for the compiler-placed vptr slot at +0x10 (the CDoubleListNode
-// base occupies 0x00-0x10).  create() installs the retail vtable pointers
-// through this typed view instead of raw pointer arithmetic.
-struct CTaskLODVptrSlot {
-    u8 _00[0x10];
-    u32* vtable;  // +0x10
-};
+
+// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrl::CallLightV26; declaration moved into class CScnEnvLgtCtrl)
+extern "C" void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param);
+extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int a);
+extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, LODParam1Obj* p1);
+extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
+extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046D144* self, u32 a, u32 b);
+// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrl::CallLightV27; declaration moved into class CScnEnvLgtCtrl)
 
 // --- FULL_MATCH functions ---
 
@@ -188,25 +122,21 @@ struct CTaskLODVptrSlot {
 // (mpActiveLOD at 0x1D40).  The forwarding call is tail-call optimised by
 // MWCC into a `b` branch.
 //
-// setLodScaleAndRefresh / setBaseScale are genuinely no-arg (`.Fv`), matching
-// byte-for-byte.  func_8046E594 and func_8046E5BC take a real argument in
-// retail (passed via r4: `1`/`0`/`this`), but the shared symbol map labels
-// them `.Fv` (no-arg); MWCC refuses to pass an arg to a no-arg-declared
-// method, so these bodies are byte-identical with a branch-reloc NAME drift
+// notifyLODTick / updateLODFrame forward their float argument untouched.
+// func_8046E594 and func_8046E5BC take a real argument in retail (passed via
+// r4: `1`/`0`/`this`), but the shared symbol map labels them `.Fv` (no-arg),
+// so those bodies are byte-identical with a branch-reloc NAME drift
 // (`.Fi`/`.FP8CTaskLOD` vs retail `.Fv`).
 
-void CTaskLOD::notifyLODTick() {
+void CTaskLOD::notifyLODTick(float scale) {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setLodScaleAndRefresh();
+        lbl_eu_80665730[0]->mpActiveLOD->setLodScaleAndRefresh(scale);
     }
 }
 
-// The uninitialized `float d` out-arg is deliberate: retail discards the
-// delegate's float return the same way, and MWCC warning 10185 on this line
-// is expected -- do not "fix" it (any change here breaks the byte match).
-void CTaskLOD::updateLODFrame() {
+void CTaskLOD::updateLODFrame(float scale) {
     if (lbl_eu_80665730[0]) {
-        float d; lbl_eu_80665730[0]->mpActiveLOD->setBaseScale(d);
+        lbl_eu_80665730[0]->mpActiveLOD->setBaseScale(scale);
     }
 }
 
@@ -232,12 +162,15 @@ void CTaskLOD::bindTaskToLOD() {
 
 // --- Remaining harness stubs (empty bodies) ---
 
+template<>
+CTTask<CTaskLOD>::~CTTask() {}
+
 // Destroy the embedded LODMemMan member (retail calls its address-named dtor
 // __dt__8046D144 with the member-dtor flag -1); the base CProcess dtor call
 // (__dt__8CProcessFv) and the deleting-flag operator delete are emitted
 // automatically by MWCC.
 CTaskLOD::~CTaskLOD() {
-    __dt__8046D144(&mLODMemMan, -1);
+
 }
 
 void CTaskLOD::Init() {}
@@ -251,7 +184,7 @@ void CTaskLOD::Init() {}
 void CTaskLOD::Term() {
     if (mpSecondaryLOD) {
         if (mpSecondaryLOD) {
-            __dt__8046D144(mpSecondaryLOD, 1);
+            delete mpSecondaryLOD;
             mpSecondaryLOD = 0;
         }
     }
@@ -266,37 +199,18 @@ void CTaskLOD::Move() { mpActiveLOD->updateLodTick(); }
 // defining the empty override would add a 4-byte function retail lacks.
 // (declaration stays in the class; the virtual is never odr-used)
 
-// Factory: allocate a 0x1D44 CTaskLOD from work memory and fully initialise
-// it (the retail symbol is mislabeled `.Fv` but the body reads r4-r7).
+inline CTaskLOD::CTaskLOD(LODParam1Obj* p1, void* p2, u32 handle, u32 size)
+    : mParam1(p1), mParam2(p2), mpSecondaryLOD(0), mpActiveLOD(&mLODMemMan) {
+    if (size) {
+        allocPersistentBuffer__Q23LOD9LODMemManFv(handle, size);
+    }
+    getLodVisState__Q23LOD17UnkClass_8046A530Fv(mpActiveLOD, handle, size);
+}
+
+// Factory (the retail symbol is mislabeled `.Fv` but the body reads r4-r7).
 extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
                                           void* p2, u32 handle, u32 size) {
-    CTaskLOD* t = (CTaskLOD*)mtl::MemManager::allocate(
-        0x1d44, CWorkThreadSystem::getWorkMem());
-    if (t) {
-        // CProcess base ctor (out-of-line, abstract class so it cannot be
-        // placement-newed) plus the inlined CTTask<CTaskLOD> / CTaskLOD vptr
-        // and Move/Draw member-pointer stores (the retail ctor-chain
-        // sequence).  The vtable labels are referenced directly so the vptr
-        // stores carry the retail reloc names.
-        __ct__8CProcessFv(t);
-        ((CTaskLODVptrSlot*)t)->vtable = lbl_eu_8056D6C0;
-        t->initMemberPointers();
-        ((CTaskLODVptrSlot*)t)->vtable = lbl_eu_8056D678;
-        t->mParam1 = p1;
-        t->mParam2 = p2;
-        // Direct ctor-symbol call (same recipe as the __dt__8046D144 dtor
-        // calls in this TU): placement-new here makes MWCC emit its intrinsic
-        // null guard + addic. on &t->mLODMemMan, which retail does not have
-        // (the compiler there proved the address non-null via the t != 0
-        // check above).
-        __ct__Q23LOD9LODMemManFv(&t->mLODMemMan);
-        t->mpSecondaryLOD = 0;
-        t->mpActiveLOD = &t->mLODMemMan;
-        if (size) {
-            allocPersistentBuffer__Q23LOD9LODMemManFv(handle, size);
-        }
-        getLodVisState__Q23LOD17UnkClass_8046A530Fv(t->mpActiveLOD, handle, size);
-    }
+    CTaskLOD* t = new (CWorkThreadSystem::getWorkMem()) CTaskLOD(p1, p2, handle, size);
     t->Regist(parent, false);
     lbl_eu_80665730[0] = t;
     return t;
@@ -310,17 +224,17 @@ extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
             CTaskLOD* t = lbl_eu_80665730[0];
             if (t->mpSecondaryLOD) {
                 if (t->mpSecondaryLOD) {
-                    __dt__8046D144(t->mpSecondaryLOD, 1);
+                    delete t->mpSecondaryLOD;
                     t->mpSecondaryLOD = 0;
                 }
             }
-            LOD::LODMemMan* lod = (LOD::LODMemMan*)mtl::MemManager::allocate(
+            LOD::UnkClass_8046D144* lod = (LOD::UnkClass_8046D144*)mtl::MemManager::allocate(
                 0x1ce0, mtl::MemManager::getHandleMEM1());
             // No explicit null guard: MWCC's placement-new emits its own
             // (retail has exactly one beq here).  Re-assigning the result
             // keeps `lod` re-derived from the ctor return (retail keeps it
             // in r0 across the call instead of a saved register).
-            lod = new (lod) LOD::LODMemMan();
+            lod = new (lod) LOD::UnkClass_8046D144();
             t->mpSecondaryLOD = lod;
             t->mpActiveLOD = lod;
             setPauseFlag__Q23LOD9LODMemManFv(&t->mLODMemMan, 0);
@@ -341,7 +255,7 @@ void CTaskLOD::resetActiveLOD() {
         CTaskLOD* t = lbl_eu_80665730[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
-                __dt__8046D144(t->mpSecondaryLOD, 1);
+                delete t->mpSecondaryLOD;
                 t->mpSecondaryLOD = 0;
             }
         }
@@ -358,7 +272,7 @@ void CTaskLOD::restorePrimaryLOD() {
         CTaskLOD* t = lbl_eu_80665730[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
-                __dt__8046D144(t->mpSecondaryLOD, 1);
+                delete t->mpSecondaryLOD;
                 t->mpSecondaryLOD = 0;
             }
         }
@@ -374,14 +288,14 @@ float CTaskLOD::getLODScale() {
     if (lbl_eu_80665730[0]) {
         getBaseScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD);
     }
-    return lbl_eu_8066A5B8;
+    return 1.0f;
 }
 
 // Toggle the 0x40 flag bit on the active LODMemMan at offset 0x6c: set when
 // `this` is non-null, clear when null.
 void CTaskLOD::setLODFilterFlag() {
     if (lbl_eu_80665730[0]) {
-        LOD::LODMemMan* lod = lbl_eu_80665730[0]->mpActiveLOD;
+        LOD::UnkClass_8046D144* lod = lbl_eu_80665730[0]->mpActiveLOD;
         if (this) {
             lod->field_0x6c |= 0x40;
         } else {
@@ -496,7 +410,7 @@ float CTaskLOD::getLODDistance() {
     if (lbl_eu_80665730[0]) {
         return getElementScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
-    return lbl_eu_8066A5BC;
+    return 0.0f;
 }
 extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
@@ -532,7 +446,7 @@ float CTaskLOD::getLODLevel() {
     if (lbl_eu_80665730[0]) {
         return getElementCachedValue__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
-    return lbl_eu_8066A5BC;
+    return 0.0f;
 }
 
 // func_8046EF7C returns a pointer; when there is no active LOD the retail
@@ -561,93 +475,3 @@ void CTTask<CTaskLOD>::Draw() {
         (static_cast<CTaskLOD*>(this)->*mDrawFunc)();
     }
 }
-
-// Out-of-line dtor: emits the retail `__dt__17CTTask<8CTaskLOD>Fv` body
-// (base CProcess dtor call + conditional operator delete).
-template<>
-CTTask<CTaskLOD>::~CTTask() {}
-
-// ==== retail data owned by this TU (data-gate dissolve) ====
-// The retail split object carries this class's data: RTTI class-name strings
-// (.rodata), the CTaskLOD / CTTask<CTaskLOD> vtables and RTTI base tables
-// (.data), the typeinfo descriptors and pooled "ref" strings (.sdata), and
-// the singleton instance pointer (.sbss).  Each object is defined as an
-// explicit array (same recipe as CDesktop.cpp / CWorkSystem.cpp) so the
-// compiled sections reproduce retail bytes, relocation names, packing, and
-// alignment exactly.
-//
-// The CTTask<CTaskLOD> template members referenced by lbl_eu_8056D678 /
-// lbl_eu_8056D6C0 cannot be spelled in source (their mangled names contain
-// '<'), so those slots carry a stand-in Tail__8CProcessFv reloc that the
-// Section 17.6 UNIT_RULES retarget at the local .text definitions
-// (retarget_relocs_local).
-
-// Defined by this TU's member/destructor definitions under these exact
-// mangled assembler names (extern "C" keeps MWCC from appending parameter
-// encodings; only one definition exists at link time).
-extern "C" void __dt__8CTaskLODFv();
-extern "C" void Init__8CTaskLODFv();
-extern "C" void Term__8CTaskLODFv();
-extern "C" void Move__8CTaskLODFv();
-
-// External vtable slots + RTTI base descriptors (owned by other TUs).
-extern "C" void Reset__14CChildListNodeFv();
-extern "C" void Tail__8CProcessFv();
-extern "C" u32 lbl_eu_80661948[];  // RTTI CProcess descriptor
-extern "C" u32 lbl_eu_80661950[];  // RTTI CChildListNode descriptor
-extern "C" u32 lbl_eu_80661958[];  // RTTI CDoubleListNode descriptor
-extern "C" u32 lbl_eu_806637F8[2]; // RTTI CTaskLOD descriptor (.sdata, below)
-extern "C" u32 lbl_eu_80663800[2]; // RTTI CTTask<CTaskLOD> descriptor (.sdata, below)
-
-// .rodata 0x80523D60..0x80523D80: RTTI class-name strings (each sized to its
-// retail extent incl. tail padding).
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80523D60[12] = "CTaskLOD";
-extern "C" __declspec(section ".rodata") const char lbl_eu_80523D6C[20] = "CTTask<CTaskLOD>";
-
-// .data 0x8056D678..0x8056D700: vtables + RTTI base tables.
-//   lbl_eu_8056D678: __vt__8CTaskLOD          {ti, 0, dtor, Reset, Init, Term,
-//                                               Move, Draw17, Tail}
-//   lbl_eu_8056D69C: CTaskLOD base table      {CDoubleListNode, CChildListNode,
-//                                               CProcess, CTTask<CTaskLOD>}
-//   lbl_eu_8056D6C0: __vt__17CTTask<8CTaskLOD>{ti, 0, dtor17, Reset, 0, 0,
-//                                               Move17, Draw17, Tail}
-//   lbl_eu_8056D6E4: CTTask<CTaskLOD> bases   {CDoubleListNode, CChildListNode,
-//                                               CProcess}
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056D678[9] = {
-    (u32)&lbl_eu_806637F8, 0,
-    (u32)&__dt__8CTaskLODFv, (u32)&Reset__14CChildListNodeFv,
-    (u32)&Init__8CTaskLODFv, (u32)&Term__8CTaskLODFv,
-    (u32)&Move__8CTaskLODFv,
-    (u32)&Tail__8CProcessFv,  // Draw__17CTTask<8CTaskLOD>Fv (retargeted)
-    (u32)&Tail__8CProcessFv,
-};
-extern "C" __declspec(section ".data") u32 lbl_eu_8056D69C[9] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0,
-    (u32)&lbl_eu_80661948, 0, (u32)&lbl_eu_80663800, 0, 0,
-};
-extern "C" __declspec(section ".data") u32 lbl_eu_8056D6C0[9] = {
-    (u32)&lbl_eu_80663800, 0,
-    (u32)&Tail__8CProcessFv,  // __dt__17CTTask<8CTaskLOD>Fv (retargeted)
-    (u32)&Reset__14CChildListNodeFv,
-    0, 0,
-    (u32)&Tail__8CProcessFv,  // Move__17CTTask<8CTaskLOD>Fv (retargeted)
-    (u32)&Tail__8CProcessFv,  // Draw__17CTTask<8CTaskLOD>Fv (retargeted)
-    (u32)&Tail__8CProcessFv,
-};
-extern "C" __declspec(section ".data") u32 lbl_eu_8056D6E4[7] = {
-    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0,
-    (u32)&lbl_eu_80661948, 0, 0,
-};
-
-// .sdata 0x806637F8..0x80663820: RTTI type descriptors {name, base table},
-// the pooled "ref" strings (referenced by code_804645CC.cpp), and the retail
-// 4-byte section tail pad (folded into the last string's extent).
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_806637F8[2] = {
-    (u32)&lbl_eu_80523D60, (u32)&lbl_eu_8056D69C,
-};
-extern "C" __declspec(section ".sdata") u32 lbl_eu_80663800[2] = {
-    (u32)&lbl_eu_80523D6C, (u32)&lbl_eu_8056D6E4,
-};
-extern "C" __declspec(section ".sdata") char lbl_eu_80663808[4] = "ref";
-extern "C" __declspec(section ".sdata") char lbl_eu_8066380C[4] = "ref";
-extern "C" __declspec(section ".sdata") char lbl_eu_80663810[8] = "ref";

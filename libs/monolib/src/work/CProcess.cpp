@@ -16,7 +16,7 @@ const char lbl_eu_80522828[] = "TChildListHeader<CProcess>";
 u32 lbl_eu_806635D8[2] = { (u32)&lbl_eu_80522828, 0 };
 // data 0x8056BB60 (0x24): CProcess vtable {rtti, 0, dtor, Reset, 0,0,0,0, Tail}.
 u32 lbl_eu_8056BB60[9] = {
-    (u32)&lbl_eu_80661948, 0, (u32)&__dt__8CProcessFv,
+    (u32)&__RTTI__8CProcess, 0, (u32)&__dt__8CProcessFv,
     (u32)&Reset__14CChildListNodeFv, 0, 0, 0, 0, (u32)&Tail__8CProcessFv,
 };
 /* UNRESOLVED: lbl_eu_8056BB84 (0xC, TChildListHeader<CProcess> vtable

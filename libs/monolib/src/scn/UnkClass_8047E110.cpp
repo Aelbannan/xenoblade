@@ -69,9 +69,6 @@ struct ScnManagerLayout {
 // planting the conversion magic under its retail name lets MWCC's literal
 // pool unify the builtin int->float conversions onto it.
 const f32 lbl_eu_8066A890 = 1.0f; // box half-size / clearance radius
-extern const f32 lbl_eu_8066A8B0; // waypoint min-distance epsilon
-extern const f32 lbl_eu_8066A8B4; // waypoint table constant
-extern const f32 lbl_eu_8066A8BC; // forward-projection threshold
 // nw4r db Warning rodata strings
 extern const char lbl_eu_80526300[];
 extern const char lbl_eu_80526324[];
@@ -848,7 +845,7 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
     const ScnWalkNode& node = m.nodes[idx];
 
     if ((m.field_0x38 & 1) && (node.reserved8 & 2) &&
-        node.xPos - m.nodes[idx2].xPos >= lbl_eu_8066A8B0) {
+        node.xPos - m.nodes[idx2].xPos >= 2.0f) {
         const ScnWalkNode* nodes = m.nodes;
         u16 flags = node.reserved8;
         s32 sel = (flags >> 12) & 0xF;
@@ -856,7 +853,7 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
-            const f32 vDepth = lbl_eu_8066A8B4;
+            const f32 vDepth = (-1.0f);
             const f32 vFlat = lbl_eu_8066A8AC;
             ((f32*)lbl_eu_80658608)[0] = vFlat;
             f32* wp = (f32*)lbl_eu_80658608;
@@ -1522,7 +1519,7 @@ extern "C" s32 probeWalkerContact__17UnkClass_8047E110Fv(UnkClass_8047E110* self
     dx *= inv;
     dz *= inv;
     f32 proj = m.dir.x * dx + m.dir.z * dz;
-    if (lbl_eu_8066A8BC < proj) {
+    if (0.45f < proj) {
         m.field_0x6C = wx;
         m.field_0x70 = py;
         m.field_0x74 = wz;
@@ -1610,7 +1607,7 @@ extern "C" void rebuildWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     CVec3 dir = boxMin - boxMax;
     mgr.field_0x7C = paramF;
     mgr.field_0x80 = lbl_eu_8066A8AC;
-    mgr.field_0x84 = lbl_eu_8066A8B4;
+    mgr.field_0x84 = (-1.0f);
     mgr.dir = dir;
     if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
         f32 lenSq = mgr.dir.z * mgr.dir.z
@@ -1874,9 +1871,9 @@ extern "C" void ScnCamNw4r_GetField10Ptr();
 extern "C" void ScnCamNw4r_NullHook40();
 extern "C" void ScnCamNw4r_TestSphereHit();
 extern "C" void ScnCamNw4r_RefreshFrustumA();
-extern "C" u32 lbl_eu_806638A8;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 __RTTI__18CScnItemCameraNw4r;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
-extern "C" u32 lbl_eu_806638B0;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 __RTTI__14CScnItemCamera;   // .sdata RTTI locator (foreign unit)
 
 extern "C" u32 lbl_eu_8056DC68[3] = {
     0x00000000, 0xFFFFFFFF, (u32)&probeWalkerContact__17UnkClass_8047E110Fv,
@@ -1891,14 +1888,14 @@ extern "C" u32 lbl_eu_8056DC80[4] = {
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056DC90[10] = {
-    (u32)&lbl_eu_806638A8, 0x00000000,
+    (u32)&__RTTI__18CScnItemCameraNw4r, 0x00000000,
     (u32)&__dt__18CScnItemCameraNw4rFv, (u32)&ScnCam_NoopVFunc,
     (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamNw4r_RefreshFrustumB,
     (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
     (u32)&ScnCamNw4r_TestSphereHit, (u32)&ScnCamNw4r_RefreshFrustumA,
 };
 extern "C" u32 lbl_eu_8056DCB8[5] = {
-    (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806638B0, 0x00000000,
+    (u32)&lbl_eu_806624D8, 0x00000000, (u32)&__RTTI__14CScnItemCamera, 0x00000000,
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056DCCC[3] = { (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000 };

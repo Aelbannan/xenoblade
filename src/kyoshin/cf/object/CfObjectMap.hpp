@@ -62,8 +62,6 @@ extern "C" {
     void acquireLODResource__8CTaskLODFv(void* task, u32 value);
     void resetActiveLOD__8CTaskLODFv(void* task);
     void bindTaskToLOD__8CTaskLODFv(void* task);
-    void updateLODFrame__8CTaskLODFv(float value);
-    void notifyLODTick__8CTaskLODFv(float value);
     void setLODFilterFlag__8CTaskLODFv(void* task);
     void updateLODRange__8CTaskLODFv(u16 value, float amount);
     void syncLODTask__8CTaskLODFv(u32 value);

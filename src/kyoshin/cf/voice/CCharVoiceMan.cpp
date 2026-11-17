@@ -1499,9 +1499,9 @@ void chainClearLinkOnObjMatch();
 void __dt__Q22cf10CCharVoiceFv();
 void voiceNoop();
 }
-extern char lbl_eu_80662C90[];
+extern char __RTTI__Q22cf12CChainEffect[];
 extern char __RTTI__Q22cf11IObjectInfo[];
-extern char lbl_eu_80662CA0[];
+extern char __RTTI__Q22cf10CCharVoice[];
 struct VoiceVtableRow {
     const void* typeinfo; // +0x0 sdata locator
     u32 reserved;         // +0x4 zero
@@ -1510,14 +1510,14 @@ struct VoiceVtableRow {
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const VoiceVtableRow lbl_eu_80539890 = {
-    lbl_eu_80662C90, 0,
+    __RTTI__Q22cf12CChainEffect, 0,
     (const void*)__dt__Q22cf12CChainEffectFv, (const void*)chainClearLinkOnObjMatch,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const VoiceVtableRow lbl_eu_805398A0 = { __RTTI__Q22cf11IObjectInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const VoiceVtableRow lbl_eu_805398B0 = {
-    lbl_eu_80662CA0, 0, (const void*)__dt__Q22cf10CCharVoiceFv, 0,
+    __RTTI__Q22cf10CCharVoice, 0, (const void*)__dt__Q22cf10CCharVoiceFv, 0,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 VoicePmfEntry lbl_eu_805398C0 = {{0, 0xFFFFFFFFu, (u32)voiceNoop}};

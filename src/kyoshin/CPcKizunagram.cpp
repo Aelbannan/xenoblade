@@ -28,11 +28,6 @@ extern char lbl_eu_8050DB18[];
 // (memberized: KizunagramPersistSlotEntry -> CPcKizunagramBig::PersistSlotEntry; declaration moved into class CPcKizunagramBig)
 
 // Named float constants in .sdata2 referenced via @sda21 by KizunagramPulseRise/E5A8.
-extern const float lbl_eu_8066887C;
-extern const float lbl_eu_80668880;
-extern const float lbl_eu_80668890;
-extern const float lbl_eu_80668894;
-extern const float lbl_eu_80668878;
 
 // Layout / file helpers with C++ (mangled) retail names.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
@@ -51,12 +46,12 @@ u8 KizunagramIsHidden(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidde
 
 
 extern "C" void __declspec(noinline) KizunaCurAdvanceSwapAnim(CPcKizunaCur* self) {
-    if (advanceAnimTransform(self->mpAnim1, lbl_eu_8066887C) == 0) return;
+    if (advanceAnimTransform(self->mpAnim1, 1.0f) == 0) return;
     self->mField14 = 0;
     self->mField15 = 1;
     self->mpLayout->SetAnimationEnable(self->mpAnim1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnim0, true);
-    self->mpAnim0->SetFrame(lbl_eu_80668880);
+    self->mpAnim0->SetFrame(0.0f);
 }
 
 // Step the current sub-state of the cursor, then always re-animate its layout.
@@ -64,7 +59,7 @@ extern "C" void __declspec(noinline) KizunaCurUpdate(CPcKizunaCur* self) {
     if (self->mpLayout == 0) return;
     switch (self->mField14) {
     case 0:
-        advanceAnimTransform(self->mpAnim0, lbl_eu_8066887C);
+        advanceAnimTransform(self->mpAnim0, 1.0f);
         break;
     case 1:
         KizunaCurAdvanceSwapAnim(self);
@@ -166,7 +161,7 @@ CPcKizunagram::CPcKizunagram() {
     mField28 = 0;
     __ct__CPcKizunaCur(reinterpret_cast<CPcKizunaCur*>(mKizunaCur), 0);
     mByte44 = 0;
-    mFloat48 = lbl_eu_80668880;
+    mFloat48 = 0.0f;
 }
 
 extern "C" void KizunaTreeSetLeafPos(CPcKizunaTreeRoot* self, CPcKizunaVec3* src) {
@@ -224,7 +219,7 @@ void KizunagramCursorPageDown(CPcKizunagram* self) {
 }
 
 extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self) {
-    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_8066887C) == 0) return;
+    if (advanceAnimTransform(self->mAnimTransform, 1.0f) == 0) return;
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
     KizunagramPlaceCursor(self);
@@ -256,7 +251,7 @@ void KizunagramBeginFileRead(CPcKizunagram* self) {
 // When the opening animation (mAnimTransform at +0x20) finishes, mark the
 // window as open (sub-state 0, mIsOpen = 1).
 extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self) {
-    if (AnimRewindFrame(self->mAnimTransform, lbl_eu_8066887C) != 0) {
+    if (AnimRewindFrame(self->mAnimTransform, 1.0f) != 0) {
         self->mStateByte2 = 0;
         self->mIsOpen = 1;
     }
@@ -425,7 +420,7 @@ extern "C" void __declspec(noinline) KizunaCurInitLayout(CPcKizunaCur* self) {
     setPaneVisible(p1, 0);
     nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x5b, true);
     setPaneVisible(p2, 0);
-    self->mpLayout->GetRootPane()->SetScale(nw4r::math::VEC2(lbl_eu_80668878, lbl_eu_80668878));
+    self->mpLayout->GetRootPane()->SetScale(nw4r::math::VEC2(0.78f, 0.78f));
 }
 
 // Move the affinity-chart cursor by one row in the given direction (arg!=0
@@ -488,19 +483,19 @@ void __declspec(noinline) KizunagramPlaceCursor(CPcKizunagram* self) {
 }
 
 extern "C" void __declspec(noinline) KizunagramPulseRise(CPcKizunagram* self) {
-    self->mFloat48 += lbl_eu_8066887C;
-    if (self->mFloat48 >= lbl_eu_80668890) {
+    self->mFloat48 += 1.0f;
+    if (self->mFloat48 >= 17.0f) {
         self->mByte44 = 1;
-        self->mFloat48 = lbl_eu_80668880;
+        self->mFloat48 = 0.0f;
         KizunagramUpdateMoodIcons(self, 1);
     }
 }
 
 extern "C" void __declspec(noinline) KizunagramPulseFall(CPcKizunagram* self) {
-    self->mFloat48 += lbl_eu_8066887C;
-    if (self->mFloat48 >= lbl_eu_80668894) {
+    self->mFloat48 += 1.0f;
+    if (self->mFloat48 >= 9.0f) {
         self->mByte44 = 0;
-        self->mFloat48 = lbl_eu_80668880;
+        self->mFloat48 = 0.0f;
         KizunagramUpdateMoodIcons(self, 0);
     }
 }

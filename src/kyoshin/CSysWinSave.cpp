@@ -5,17 +5,17 @@
 // (forward decl for kChainGaugeTwo, defined below after the pooling functions).
 extern const volatile f64 kChainGaugeTwo;
 extern void* lbl_eu_80538A60[16];
-extern void* lbl_eu_80662B08[2];
-extern void* lbl_eu_80662B10[2];
+extern void* __RTTI__Q22cf11CChainCombo[2];
+extern void* __RTTI__11CSysWinSave[2];
 struct SaveDataA;
 extern struct SaveDataA lbl_eu_80538994;
 // (389A0 vtable lives at +12 inside the packed SaveDataA below.)
 #define lbl_eu_805389A0 ((void*)((char*)&lbl_eu_80538994 + 12))
-extern char lbl_eu_80661940[];
-extern char lbl_eu_80661948[];
-extern char lbl_eu_80661950[];
-extern char lbl_eu_80661958[];
-extern char lbl_eu_80661EC8[];
+extern char __RTTI__10IScnRender[];
+extern char __RTTI__8CProcess[];
+extern char __RTTI__14CChildListNode[];
+extern char __RTTI__15CDoubleListNode[];
+extern char __RTTI__9IUIWindow[];
 extern char lbl_eu_80661ED0[];
 extern char lbl_eu_8050FD6C[];
 extern char lbl_eu_8050FD60[];
@@ -184,7 +184,7 @@ void CSysWinSave::Init() {
     // (non-vtable fields, matching retail's memberwise lwz/stw+lbz/stb), then
     // destroy the temp and dispatch the layout-build virtual at vtable+0x88.
     u8 tempW[0x3C];
-    __ct__CSysWin(tempW, 2);
+    __ct__7CSysWinFUc(tempW, 2);
     CSysWinData* sw = reinterpret_cast<CSysWinData*>(&mSysWin[0]);
     CSysWinData* tw = reinterpret_cast<CSysWinData*>(tempW);
     sw->f_04 = tw->f_04;
@@ -209,10 +209,7 @@ void CSysWinSave::Init() {
     reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
 
     // Rebuild the embedded CCur18 cursor the same way (shared arc accessor).
-    CCur18 tempC;
-    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
-    mCur18 = tempC;
-    __dt__6CCur18Fv(&tempC, -1);
+    mCur18 = CCur18(CUICfManager_getArcResourceAccessor());
     mCur18.initLayout();
 
     mMemRegion.validateHeap();
@@ -348,15 +345,10 @@ body:
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch
-    // its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    sysWinDrawLayout(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    Cur_DrawLayout(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    sysWinDrawLayout(&mSysWin[0], &drawInfo);
+    Cur_DrawLayout(&mCur18, &drawInfo);
 }
 
 // ---------------------------------------------------------------------------
@@ -416,7 +408,7 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
         obj->mScene = scene;
 
         __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
-        __ct__CSysWin(&obj->mSysWin[0], 0);
+        __ct__7CSysWinFUc(&obj->mSysWin[0], 0);
         __ct__CCur18(&obj->mCur18, 0);
 
         obj->mFlagDC = 0;
@@ -433,10 +425,10 @@ __declspec(section ".rodata") char lbl_eu_8050FD60[0xc] = {0x43, 0x53, 0x79, 0x7
 __declspec(section ".rodata") char lbl_eu_8050FD6C[0x1c] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x73, 0x79, 0x73, 0x6d, 0x65, 0x73, 0x00, 0x6e, 0x61, 0x6d, 0x65, 0x00};
 struct SaveDataA { void* h[3]; void* v[48]; void* t[16]; };
 __declspec(section ".data") __attribute__((used))
-struct SaveDataA lbl_eu_80538994 = { { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80662B08, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF94, (void*)SysWinSaveDtorThunk6C, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)lbl_eu_80662B10, (void*)0xFFFFFF90, (void*)SysWinSaveDtorThunk70, (void*)SysWinSaveRenderThunk70, (void*)lbl_eu_80662B10 }, { (void*)lbl_eu_80661940, (void*)0x70, (void*)lbl_eu_80662B10, (void*)0x6c, (void*)lbl_eu_80661958, 0, (void*)lbl_eu_80661950, 0, (void*)lbl_eu_80661948, 0, (void*)lbl_eu_80661ED0, 0, (void*)lbl_eu_80661EC8, 0, 0, 0 } };
+struct SaveDataA lbl_eu_80538994 = { { (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__11CSysWinSave }, { (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)0xFFFFFF94, (void*)SysWinSaveDtorThunk6C, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)0xFFFFFF90, (void*)SysWinSaveDtorThunk70, (void*)SysWinSaveRenderThunk70, (void*)__RTTI__11CSysWinSave }, { (void*)__RTTI__10IScnRender, (void*)0x70, (void*)__RTTI__11CSysWinSave, (void*)0x6c, (void*)__RTTI__15CDoubleListNode, 0, (void*)__RTTI__14CChildListNode, 0, (void*)__RTTI__8CProcess, 0, (void*)lbl_eu_80661ED0, 0, (void*)__RTTI__9IUIWindow, 0, 0, 0 } };
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* lbl_eu_80662B08[2] = { (void*)lbl_eu_8050FD50, (void*)lbl_eu_8050FD50 };
+void* __RTTI__Q22cf11CChainCombo[2] = { (void*)lbl_eu_8050FD50, (void*)lbl_eu_8050FD50 };
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* lbl_eu_80662B10[2] = { (void*)lbl_eu_8050FD60, (void*)lbl_eu_80538A60 };
+void* __RTTI__11CSysWinSave[2] = { (void*)lbl_eu_8050FD60, (void*)lbl_eu_80538A60 };
 CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)

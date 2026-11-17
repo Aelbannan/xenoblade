@@ -211,8 +211,6 @@ void RFCOMM_ConfigInd(u16 lcid, u8* p_cfg) {
     }
 }
 
-void RFCOMM_QoSViolationInd(void) {}
-
 void RFCOMM_ConfigCnf(u16 lcid, u8* config) {
     int index = (int)lcid - 0x40;
     RfcMuxChannel* channel;
@@ -241,6 +239,8 @@ void RFCOMM_ConfigCnf(u16 lcid, u8* config) {
         rfc_mx_sm_execute(channel, 0xb, config);
     }
 }
+
+void RFCOMM_QoSViolationInd(void) {}
 
 void RFCOMM_DisconnectInd(u16 lcid, u8 response) {
     int index = (int)lcid - 0x40;

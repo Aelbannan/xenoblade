@@ -71,7 +71,7 @@ class NvSpillCertificateTests(unittest.TestCase):
 class ClassifyStatusTests(unittest.TestCase):
     def test_full_match_unchanged(self) -> None:
         self.assertEqual(
-            classify_status(100.0, _unit(), symbol="f"),
+            classify_status(100.0, _unit(), symbol="f", full_match_verified=True),
             "FULL_MATCH",
         )
 

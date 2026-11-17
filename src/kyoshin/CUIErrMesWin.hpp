@@ -17,9 +17,6 @@ extern "C" void __dt__12CUIErrMesWinFv();
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(void*);
 
-// +0x60 sub-object advance helper (retail C-linkage, defined in CTitle.cpp).
-extern "C" void CTitle_update(void*);
-
 // CSysWin advance helper (retail C-linkage; same declaration as CSystemWindow.hpp).
 extern "C" void sysWinDispatchPhase(void*);
 
@@ -46,10 +43,6 @@ struct CErrMesPad {
 
 
 extern "C" void sysWinTermLayout(void*);
-
-// CMenuTitle +0x60 sub-object advance/release helpers (retail C-linkage, CTitle.cpp).
-extern "C" void CTitle_startLoad(void*);
-extern "C" void CTitle_teardown(void*);
 
 // cf::CfGameManager helper. Retail names it with the no-arg Fv suffix, but the
 // call site passes three zero args; declare the retail symbol verbatim under
@@ -87,7 +80,6 @@ extern f32 lbl_eu_80668FC8;
 
 // Global window-active flags cleared by the Term functions (.sbss words).
 extern u32 lbl_eu_80664C28;
-extern u32 lbl_eu_80664C30;
 
 // Sub-object embedded at CErrMesEntry +0x09, managed by the func_802B5148 /
 // ErrWin_UpdateSub_515C / ErrWin_ClearAllLists_58A4 family. Its first byte is an active flag;
@@ -111,23 +103,8 @@ struct CErrMesEntry {
 // of an inlined stub body).
 extern "C" __declspec(noinline) void func_802B5148(CErrMesSub* self);
 
-// CMenuTitle +0x60 sub-object render helper (retail C-linkage, CTitle.cpp):
-// draws the title sub-object with a layout DrawInfo.
-extern "C" void CTitle_draw(u8* self, nw4r::lyt::DrawInfo* drawInfo);
-
-// CTitle sub-object destructor (retail C-linkage, CTitle.cpp).
-extern "C" void __dt__6CTitleFv(u8* self, int flags);
-
 // CSysWin sub-object destructor (retail C-linkage, CSysWin.cpp).
 extern "C" void __dt__7CSysWinFv(u8* self, int flags);
-
-// CUIErrMesWin dtor helper import: the layout DrawInfo constructor/destructor.
-// Retail emits direct bl __ct__Q34nw4r3lyt8DrawInfoFv / bl
-// __dt__Q34nw4r3lyt8DrawInfoFv (flag -1). A class-typed local would make MWCC
-// virtual-dispatch the explicit dtor or add a scope-exit call, so the storage
-// is a plain byte buffer with C-linkage ctor/dtor calls (CSysWinSave idiom).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 
 // Layout DrawInfo setup helper - retail emits the mangled name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.
@@ -279,7 +256,7 @@ void* Scn_FindCamItem(void* scene, int index);
 void* MapFx_ResolveOwner(void* source);
 int HpVoice_MapSubState(void* handle);
 void __ct__8CProcessFv(CProcess* self);
-void __ct__CSysWin(void* syswin, int arg);
+void __ct__7CSysWinFUc(void* syswin, int arg);
 void* CCharVoiceMan_DispatchById(int size, int align);
 int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
 }
@@ -302,9 +279,7 @@ extern char lbl_eu_8053AF08[];   // final CUIErrMesWin composite vtable
 // State-dispatch ptmf tables (retail .data). Indexed by the window state byte
 // (field_0x9C / field_0xE8); each entry is a 12-byte ptmf.
 class CUIErrMesWin;
-class CMenuTitle;
 extern void (CUIErrMesWin::*const lbl_eu_8053AEB0[])();
-extern void (CMenuTitle::*const lbl_eu_8053B040[])();
 
 class IScnRender;
 #include "monolib/scn/CScn.hpp"
@@ -327,27 +302,11 @@ public:
     /* 0x5C */ CScn* mScene;         // +0x5C - owning scene
     /* 0x60 */ u8 mSysWin[0x3C];     // +0x60 - CSysWin storage. Raw buffer (CSystemWindow
                                     //          idiom): retail drives the ctor/dtor via the
-                                    //          C-linkage __ct__CSysWin / __dt__7CSysWinFv,
+                                    //          C-linkage __ct__7CSysWinFUc / __dt__7CSysWinFv,
                                     //          so a CSysWin member would add an implicit
                                     //          member-destruction chain to the dtor.
     /* 0x9C */ u8 field_0x9C;        // window state byte (2=ready, 4=active)
     /* 0x9D */ u8 _9D;
     /* 0x9E */ u16 field_0x9E;       // message id (string-pool index)
     /* 0xA0 */ u8 field_0xA0;        // window kind
-};
-
-class __declspec(novtable) CMenuTitle : public CTTask<CMenuTitle> {
-public:
-    virtual ~CMenuTitle();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-
-    /* 0x54 */ u8 field_0x54[0x04];  // +0x54..+0x58 - unknown region
-    /* 0x58 */ u32 mScnRender;       // +0x58 - IScnRender vtable slot (render-callback subobject)
-    /* 0x5C */ CScn* mScene;         // +0x5C - owning scene
-    /* 0x60 */ u8 field_0x60[0x88];  // +0x60..+0xE8 - opaque region (CTitle_update target)
-    /* 0xE8 */ u8 field_0xE8;        // state byte (ptmf table index)
-    /* 0xE9 */ u8 field_0xE9;        // cbRenderBefore gate byte (non-zero = draw title)
 };

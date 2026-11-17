@@ -314,14 +314,9 @@ void CMenuLandTelop::cbRenderBefore() {
     if (cf::CfGameManager::isSceneLoading()) return;
     if (field_DA != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch
-    // its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(field_54, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(field_54, &drawInfo, 0, 1);
 }
 
 // Create the land-telop singleton under `parent`. While a battle is active

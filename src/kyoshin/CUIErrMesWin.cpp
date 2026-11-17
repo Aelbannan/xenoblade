@@ -11,6 +11,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CSysWinImports.hpp"
 
 // Forward declarations (retail functions defined later in this TU).
 // func_802B5148 is declared extern "C" + noinline in CUIErrMesWin.hpp so its
@@ -70,17 +71,14 @@ void CUIErrMesWin::Term() {
 }
 
 // CUIErrMesWin::cbRenderBefore (us-802b7804) - disable Z testing and draw
-// the embedded system window with a layout DrawInfo (raw 0x60-byte buffer
-// like CMenuTitle::cbRenderBefore; the dtor is called directly with -1).
+// the embedded system window with a layout DrawInfo.
 extern "C" void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 
 void CUIErrMesWin::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    u8 drawInfo[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    sysWinDrawLayout(mSysWin, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    sysWinDrawLayout(mSysWin, &drawInfo);
 }
 
 // CUIErrMesWin factory ctor (us-802b7864, retail stripped name
@@ -126,7 +124,7 @@ CUIErrMesWin* __ct__802B4DF4(CProcess* parent, u32 a, u16 b, u8 c) {
         v->field_0x54 = (u32)lbl_eu_8053AF08 + 0x24;
         v->field_0x58 = (u32)lbl_eu_8053AF08 + 0xac;
         v->field_0x5C = a;
-        __ct__CSysWin(v->mSysWin, 0);
+        __ct__7CSysWinFUc(v->mSysWin, 0);
         v->field_0x9C = 0;
         v->field_0x9E = b;
         v->field_0xA0 = c;
@@ -337,54 +335,6 @@ CUIErrMesWin::~CUIErrMesWin() {
     __dt__7CSysWinFv(mSysWin, -1);
 }
 
-// CMenuTitle::~CMenuTitle (us-802b8690) - destroy the +0x60 CTitle sub-object,
-// then the CProcess base, then conditional operator delete.
-CMenuTitle::~CMenuTitle() {
-    __dt__6CTitleFv(&field_0x60[0], -1);
-}
-
-// CMenuTitle::Init (us-802b8700) - attach the render callback, then initialize
-// the +0x60 sub-object.
-void CMenuTitle::Init() {
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
-    mScene->addRenderCB(render, 0xd, 1);
-    CTitle_startLoad(&field_0x60[0]);
-}
-
-// CMenuTitle::Term (us-802b8750) - wait for draw completion, detach the render
-// callback, release the +0x60 sub-object, and clear the global active flag.
-void CMenuTitle::Term() {
-    CDeviceVI::waitForDrawDone();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
-    mScene->removeRenderCB(render);
-    CTitle_teardown(&field_0x60[0]);
-    lbl_eu_80664C30 = 0;
-}
-
-// Dispatch the state ptmf table (lbl_eu_8053B040, indexed by the +0xE8 state
-// byte), then advance the +0x60 sub-object (CTitle_update).
-void CMenuTitle::Move() {
-    (this->*lbl_eu_8053B040[field_0xE8])();
-    CTitle_update(&field_0x60[0]);
-}
-
-// CMenuTitle::cbRenderBefore (us-802b87f0) - when the +0xE9 gate byte is set,
-// disable Z testing and draw the +0x60 title sub-object with a layout DrawInfo
-// (raw 0x64-byte buffer: MWCC would virtual-dispatch a class-typed local's
-// dtor, retail calls __dt__Q34nw4r3lyt8DrawInfoFv directly with -1).
-void CMenuTitle::cbRenderBefore() {
-    if (field_0xE9 != 0) {
-        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        u8 drawInfo[0x60];
-        __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-        SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-        CTitle_draw(&field_0x60[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-        __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
-    }
-}
-
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
 // specializations below emit the retail Move/Draw/dtor symbols.
@@ -406,9 +356,6 @@ template<> void CTTask<CUIErrMesWin>::Draw() {
         (static_cast<CUIErrMesWin*>(this)->*mDrawFunc)();
     }
 }
-class CMenuTitle;
-template<> CTTask<CMenuTitle>::~CTTask() {}
-
 // func_802B48A0 (us-802b7310) - reset an error-message record, then hand the
 // embedded sub-object to func_802B5148.
 void func_802B48A0(CErrMesEntry* self) {

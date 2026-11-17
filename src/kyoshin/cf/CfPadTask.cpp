@@ -12,11 +12,7 @@
 
 extern "C" {
     extern u32 lbl_eu_80663E28;
-    extern const float lbl_eu_80667EB0;
     extern const float lbl_eu_80667EA8; // 0.0f
-    extern const float lbl_eu_80667EAC; // 0.3f
-    extern const float lbl_eu_80667EB4; // 1.0f
-    extern const float lbl_eu_80667EB8; // 0.7f
     const wchar_t* getErrMesText04();
     const wchar_t* getErrMesText05();
     const wchar_t* getErrMesText06();
@@ -132,11 +128,11 @@ void CfPadTask::setButtonDisableTime(float f1) {
         padData->mPad = *pad;
 
         //Override the default deadzone check for the left stick for whatever reason
-        if(ml::math::abs(padData->mPad.mLStickXRaw) < lbl_eu_80667EB0){
+        if(ml::math::abs(padData->mPad.mLStickXRaw) < 0.5f){
             padData->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LSTICK_RIGHT);
         }
 
-        if(ml::math::abs(padData->mPad.mLStickYRaw) < lbl_eu_80667EB0){
+        if(ml::math::abs(padData->mPad.mLStickYRaw) < 0.5f){
             padData->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_LSTICK_DOWN);
         }
 
@@ -233,7 +229,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
 
         if(sInputDisableTimer > lbl_eu_80667EA8){
             enabledInputFlags = 0;
-            sInputDisableTimer -= lbl_eu_80667EB4;
+            sInputDisableTimer -= 1.0f;
             if(sInputDisableTimer <= lbl_eu_80667EA8){
                 sInputDisableTimer = lbl_eu_80667EA8;
             }
@@ -242,7 +238,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
         if(sButtonDisableTimer > lbl_eu_80667EA8){
             enabledInputFlags &= ~(PAD_INPUT_FLAG_CORE_A | PAD_INPUT_FLAG_CORE_B | PAD_INPUT_FLAG_1 | PAD_INPUT_FLAG_2 | PAD_INPUT_FLAG_PLUS
             | PAD_INPUT_FLAG_MINUS | PAD_INPUT_FLAG_CLASSIC_A | PAD_INPUT_FLAG_CLASSIC_B);
-            sButtonDisableTimer -= lbl_eu_80667EB4;
+            sButtonDisableTimer -= 1.0f;
             if(sButtonDisableTimer <= lbl_eu_80667EA8){
                 sButtonDisableTimer = lbl_eu_80667EA8;
             }
@@ -281,7 +277,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
                         CPadManager::setRightStickDeadzoneDefault();
                     }else if(mainPad->mPadType == PAD_TYPE_CLASSIC){
                         sMainPadType = PAD_TYPE_CLASSIC;
-                        CPadManager::setRightStickDeadzone(lbl_eu_80667EAC);
+                        CPadManager::setRightStickDeadzone(0.3f);
                     }else if(mainPad->mPadType == PAD_TYPE_CORE){
                         sMainPadType = PAD_TYPE_CORE;
                         CPadManager::setRightStickDeadzoneDefault();
@@ -295,7 +291,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
                 if(mainPad->mConnected && (mainPad->mPadType >= PAD_TYPE_CORE && mainPad->mPadType <= PAD_TYPE_CLASSIC)){
                     sMainPadType = mainPad->mPadType;
                     if(sMainPadType == PAD_TYPE_CLASSIC){
-                        CPadManager::setRightStickDeadzone(lbl_eu_80667EAC);
+                        CPadManager::setRightStickDeadzone(0.3f);
                     }else{
                         CPadManager::setRightStickDeadzoneDefault();
                     }
@@ -375,11 +371,11 @@ void CfPadTask::setButtonDisableTime(float f1) {
                         f32 stickX;
                         stickX = newPad.mRStickXRaw;
                         if(stickX >= 0.0f){
-                            newPad.mRStickXRaw = (stickX - lbl_eu_80667EAC)/lbl_eu_80667EB8;
+                            newPad.mRStickXRaw = (stickX - 0.3f)/0.7f;
                         }else{
                             // Force stack reload before fabs (retail lfs at +0x604).
                             volatile f32* stickXReload = &newPad.mRStickXRaw;
-                            newPad.mRStickXRaw = -(ml::math::abs(*stickXReload) - lbl_eu_80667EAC)/lbl_eu_80667EB8;
+                            newPad.mRStickXRaw = -(ml::math::abs(*stickXReload) - 0.3f)/0.7f;
                         }
                     }
 
@@ -391,11 +387,11 @@ void CfPadTask::setButtonDisableTime(float f1) {
                         f32 stickY;
                         stickY = newPad.mRStickYRaw;
                         if(stickY >= 0.0f){
-                            newPad.mRStickYRaw = (stickY - lbl_eu_80667EAC)/lbl_eu_80667EB8;
+                            newPad.mRStickYRaw = (stickY - 0.3f)/0.7f;
                         }else{
                             // Force stack reload before fabs (retail lfs at +0x654).
                             volatile f32* stickYReload = &newPad.mRStickYRaw;
-                            newPad.mRStickYRaw = -(ml::math::abs(*stickYReload) - lbl_eu_80667EAC)/lbl_eu_80667EB8;
+                            newPad.mRStickYRaw = -(ml::math::abs(*stickYReload) - 0.3f)/0.7f;
                         }
                     }
                 }

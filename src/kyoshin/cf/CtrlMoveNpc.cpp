@@ -112,29 +112,19 @@ extern u32 lbl_eu_80663D90;     // global value copied into mField78
 // CCtrlMoveNpc::CCtrlMoveNpc - constructor
 // ---------------------------------------------------------------------------
 namespace cf {
+
 CCtrlMoveNpc::CCtrlMoveNpc(void* owner) : CCtrlMoveBase(owner) {
     setVtable(lbl_eu_80532DB4);
     this->mStateFunc = __ptmf_null;
 }
+
 }
 
 // ---------------------------------------------------------------------------
 // NpcMove_DispatchState - dispatch the state ptmf if set; return "was set".
 // ---------------------------------------------------------------------------
 namespace cf {
-extern "C" int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
-    if (ths->mStateFunc) {
-        (ths->*ths->mStateFunc)();
-    }
-    return ths->mStateFunc != 0 ? 1 : 0;
-}
-}
 
-// ---------------------------------------------------------------------------
-// beginNpcMove - pick a movement target, initialise move fields and
-// set the state fn. Approached-fraction is clamped into [0, max].
-// ---------------------------------------------------------------------------
-namespace cf {
 extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
     ths->mField64 = 4;
     ths->mField58 = *vec;
@@ -180,7 +170,31 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     ths->mVelocity = ml::CVec3::zero;
     ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(lbl_eu_80532DA8);
 }
+
 }
+
+// ---------------------------------------------------------------------------
+// beginNpcMove - pick a movement target, initialise move fields and
+// set the state fn. Approached-fraction is clamped into [0, max].
+// ---------------------------------------------------------------------------
+namespace cf {
+
+extern "C" int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
+    if (ths->mStateFunc) {
+        (ths->*ths->mStateFunc)();
+    }
+    return ths->mStateFunc != 0 ? 1 : 0;
+}
+
+}
+
+
+// NpcMove_ClearRowBmp - clear the 16-byte Npc row bitmap.
+extern "C" void NpcMove_ClearRowBmp() {
+    memset(lbl_eu_805757E0, 0, 0x10);
+}
+
+
 
 // ---------------------------------------------------------------------------
 // isNpcRowUsable - range check an Npc table row against row/value
@@ -227,53 +241,6 @@ int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
     return flag1;
 }
 
-// ---------------------------------------------------------------------------
-// refreshNpcRowFlags - walk the table rows, toggling a per-row bit in the
-// bitmap and notifying LOD when the usable-flag flips.
-// C linkage inherited from the CfGameManager.hpp declaration
-// (retail symbol is the unmangled pre-mangled name).
-// ---------------------------------------------------------------------------
-extern "C" void refreshNpcRowFlags() {
-    Bdat_GetTable_AA34();
-    void* bdat = lbl_eu_806640B4;
-    cf::CfGameManager::getGameSubManager();
-
-    u32* bitmap;
-    const char* str;
-    s32 base = (s32)Bdat_GetRowBase_B41C(bdat);
-    s32 count = (s32)Bdat_GetMaxRow_B1EC(bdat);
-    bitmap = lbl_eu_805757E0;
-    str = lbl_eu_80503D30;
-    s32 end = base + count;
-
-    for (s32 idx = base; idx < end; idx++) {
-        // Byte-extract the row value: store the full call result to a stack
-        // slot (address-taken local) and read the low byte back with lbz,
-        // matching the retail shape (see CfGimmickSaveOff ctor pattern).
-        u32 vfull = getBdatStringColumnValue(bdat, &str[0x38], idx);
-        u8 v = *(u8*)&vfull;
-        if (isNpcRowUsable(idx, &str[0x6], &str[0xe], &str[0x17],
-                          &str[0x20], &str[0x26], &str[0x2c], &str[0x32]) != 0) {
-            s32 word = idx >> 5;
-            u32 w = bitmap[word];
-            u32 bit = 1u << (idx & 31);
-            if (w & bit) {
-                bitmap[word] = w & ~bit;
-                activateLOD__8CTaskLODFv(v);
-                ScnData_FwdB7D9C(getScnHandle(), v);
-            }
-        } else {
-            s32 word = idx >> 5;
-            u32 w = bitmap[word];
-            u32 bit = 1u << (idx & 31);
-            if (!(w & bit)) {
-                bitmap[word] = w | bit;
-                deactivateLOD__8CTaskLODFv(v);
-                ScnData_FwdB7DD4(getScnHandle(), v);
-            }
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Non-target functions kept from the scaffold so the unit still builds.
@@ -336,10 +303,55 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
 }
 }
 
-// NpcMove_ClearRowBmp - clear the 16-byte Npc row bitmap.
-extern "C" void NpcMove_ClearRowBmp() {
-    memset(lbl_eu_805757E0, 0, 0x10);
+
+// ---------------------------------------------------------------------------
+// refreshNpcRowFlags - walk the table rows, toggling a per-row bit in the
+// bitmap and notifying LOD when the usable-flag flips.
+// C linkage inherited from the CfGameManager.hpp declaration
+// (retail symbol is the unmangled pre-mangled name).
+// ---------------------------------------------------------------------------
+extern "C" void refreshNpcRowFlags() {
+    Bdat_GetTable_AA34();
+    void* bdat = lbl_eu_806640B4;
+    cf::CfGameManager::getGameSubManager();
+
+    u32* bitmap;
+    const char* str;
+    s32 base = (s32)Bdat_GetRowBase_B41C(bdat);
+    s32 count = (s32)Bdat_GetMaxRow_B1EC(bdat);
+    bitmap = lbl_eu_805757E0;
+    str = lbl_eu_80503D30;
+    s32 end = base + count;
+
+    for (s32 idx = base; idx < end; idx++) {
+        // Byte-extract the row value: store the full call result to a stack
+        // slot (address-taken local) and read the low byte back with lbz,
+        // matching the retail shape (see CfGimmickSaveOff ctor pattern).
+        u32 vfull = getBdatStringColumnValue(bdat, &str[0x38], idx);
+        u8 v = *(u8*)&vfull;
+        if (isNpcRowUsable(idx, &str[0x6], &str[0xe], &str[0x17],
+                          &str[0x20], &str[0x26], &str[0x2c], &str[0x32]) != 0) {
+            s32 word = idx >> 5;
+            u32 w = bitmap[word];
+            u32 bit = 1u << (idx & 31);
+            if (w & bit) {
+                bitmap[word] = w & ~bit;
+                activateLOD__8CTaskLODFv(v);
+                ScnData_FwdB7D9C(getScnHandle(), v);
+            }
+        } else {
+            s32 word = idx >> 5;
+            u32 w = bitmap[word];
+            u32 bit = 1u << (idx & 31);
+            if (!(w & bit)) {
+                bitmap[word] = w | bit;
+                deactivateLOD__8CTaskLODFv(v);
+                ScnData_FwdB7DD4(getScnHandle(), v);
+            }
+        }
+    }
 }
+
 // ============================================================================
 // Retail data owned by this TU. Defined here at EOF so -ipa codegen for
 // the functions above is unaffected.
@@ -347,8 +359,8 @@ extern "C" void NpcMove_ClearRowBmp() {
 
 // Cross-TU data slots (flat retail names).
 extern "C" void emptyMoveBaseHook();
-extern u32 lbl_eu_80661C18;
-extern u32 lbl_eu_80662548[];  // sdata word pair (defined below).
+extern u32 __RTTI__Q22cf12CtrlMoveBase;
+extern u32 __RTTI__Q22cf11CtrlMoveNpc[];  // sdata word pair (defined below).
 
 // [.data] 0x80532DA8-0x80532DB4 (12B): ptmf-shaped triple {0, -1, tickNpcMove}.
 // Named with the retail label: the word-typed declaration above round-trips
@@ -360,12 +372,12 @@ u32 lbl_eu_80532DA8[3] = {
 // [.data] 0x80532DB4-0x80532DC0 (12B): secondary vtable (sdata locator,
 // zero, base hook); stored at +0x48 by the ctor.
 void* lbl_eu_80532DB4[3] = {
-    (void*)&lbl_eu_80662548, (void*)0, (void*)&emptyMoveBaseHook,
+    (void*)&__RTTI__Q22cf11CtrlMoveNpc, (void*)0, (void*)&emptyMoveBaseHook,
 };
 
 // [.data] 0x80532DC0-0x80532DD0 (16B): sdata-referenced word + zero fill.
 u32 lbl_eu_80532DC0[4] = {
-    (u32)&lbl_eu_80661C18, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q22cf12CtrlMoveBase, 0x00000000, 0x00000000, 0x00000000,
 };
 
 // [.bss] 0x805757E0-0x80575918 (312B): movement state storage, five objects
@@ -392,7 +404,7 @@ const char lbl_eu_80503D30[0x40] = {
 
 // [.sdata] 0x80662548-0x80662550 (8B): rodata-name + data-tail locator pair.
 #pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") u32 lbl_eu_80662548[2] = { (u32)&lbl_eu_80503D20, (u32)&lbl_eu_80532DC0 };
+extern __declspec(section ".sdata") u32 __RTTI__Q22cf11CtrlMoveNpc[2] = { (u32)&lbl_eu_80503D20, (u32)&lbl_eu_80532DC0 };
 #pragma section data_type ".data" ".data"
 
 // [.sdata2] 0x80667C58-0x80667C80 (40B): movement float table in retail order

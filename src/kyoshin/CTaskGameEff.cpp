@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/cf/CTaskGameEffAfter.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceGX.hpp"
@@ -188,7 +189,7 @@ void CTaskGameEff::Init() {
 // with `scene`, register it under `parent`, then spin up the after-task factory
 // under the scene root process. Returns the new task (or null if the allocation
 // failed; Regist still runs on the null pointer - retail behaviour, same as the
-// __ct__CTaskGameEffAfter factory).
+// CTaskGameEffAfter::create).
 // optimize_for_size on: retail saves r29-r31 via stmw, not individual stw.
 #pragma optimize_for_size on
 extern "C" CTaskGameEff* createGameEffTask(CProcess* parent, CScn* scene) {
@@ -197,7 +198,7 @@ extern "C" CTaskGameEff* createGameEffTask(CProcess* parent, CScn* scene) {
         task = __ct__CTaskGameEff(task, scene);
     }
     task->Regist(parent, false);
-    __ct__CTaskGameEffAfter(CTaskManager::GetRootProcScn());
+    CTaskGameEffAfter::create(CTaskManager::GetRootProcScn());
     return task;
 }
 #pragma optimize_for_size off

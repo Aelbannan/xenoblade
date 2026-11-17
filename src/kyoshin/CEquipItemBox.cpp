@@ -14,6 +14,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 void playUISound(u32);
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
@@ -1398,8 +1399,8 @@ CEquipItemBox::CEquipItemBox() {
     __ct__CEIBPageCur((CEIBPageCur*)&pagecur[0], 0);
     __ct__CCur18(&ccur18, 0);
     __ct__CSortMenu(&_padSortMenu[0]);
-    __ct__CSysWin(&_padSysWin1[0], 0);
-    __ct__CSysWin(&_padSysWin2[0], 0);
+    __ct__7CSysWinFUc(&_padSysWin1[0], 0);
+    __ct__7CSysWinFUc(&_padSysWin2[0], 0);
     unk_1f4 = 0;
     unk_1f5 = 0;
     unk_1f6 = 0;
@@ -1434,7 +1435,7 @@ CEquipItemBox::CEquipItemBox() {
         CEquipItemBoxSortMenuBlock tempMenu;
         __ct__CSortMenu(&tempMenu);
         CEquipItemBoxSortMenuBlock* menu = (CEquipItemBoxSortMenuBlock*)&_padSortMenu[0];
-        __ct__UnkClass_8011C974(&menu->field_04[0], &tempMenu.field_04[0]);
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&menu->field_04[0], &tempMenu.field_04[0]);
         menu->field_14 = tempMenu.field_14;
         menu->field_18 = tempMenu.field_18;
         menu->field_1C = tempMenu.field_1C;
@@ -1448,13 +1449,13 @@ CEquipItemBox::CEquipItemBox() {
     }
     {
         u8 tempWin[0x44];
-        __ct__CSysWin(tempWin, 2);
+        __ct__7CSysWinFUc(tempWin, 2);
         InfoCfCopySysWin(&_padSysWin1[0], tempWin);
         __dt__7CSysWinFv(tempWin, -1);
     }
     {
         u8 tempWin[0x44];
-        __ct__CSysWin(tempWin, 0);
+        __ct__7CSysWinFUc(tempWin, 0);
         InfoCfCopySysWin(&_padSysWin2[0], tempWin);
         __dt__7CSysWinFv(tempWin, -1);
     }
@@ -3658,11 +3659,10 @@ extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
         // Move-list search: register the selected search type, take the first
         // resulting entry and resolve its CfObjectMove.
         CEquipItemBoxMoveTable tbl = lbl_eu_8050EFB4;
-        u8 holder[0x10];
-        CTaskGame_enumListCtor(holder);
-        void* list = CTaskGame_enumListGet(holder);
+        CfEnumListHolder holder;
+        void* list = holder.get();
         startEnumObjects(list, tbl.w[slot], 0);
-        list = CTaskGame_enumListGet(holder);
+        list = holder.get();
         if (((CEquipItemBoxEnumList*)list)->field_620 >= 1) {
             CEquipItemBoxMoveEntryView* entry =
                 (CEquipItemBoxMoveEntryView*)getEntryAt(list, 0);
@@ -3685,7 +3685,6 @@ extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
                 }
             }
         }
-        __dt__80043E88(holder, -1);
     }
     // Shared tail: copy the 12-byte category table and free the first slot
     // (across all six categories) that still holds the item id.
@@ -3838,10 +3837,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         PartyStateWin_CopySlotRec((u8*)&pagecur[0], (const u8*)temp2Buf);
         __dt__80285C44(temp2Buf, -1);
         ((CEIBPageCur*)&pagecur[0])->initLayout();
-        u8 tempCur[0x1A]; // retail frame reserves 0x1A bytes for the CCur18 temp
-        __ct__CCur18(reinterpret_cast<CCur18*>(tempCur), CUICfManager_getArcResourceAccessor());
-        ccur18 = *reinterpret_cast<CCur18*>(tempCur);
-        __dt__6CCur18Fv(reinterpret_cast<CCur18*>(tempCur), -1);
+        ccur18 = CCur18(CUICfManager_getArcResourceAccessor());
         ccur18.initLayout();
         char* msg3 = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);

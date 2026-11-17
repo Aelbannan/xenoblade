@@ -82,27 +82,22 @@ struct SInitBlk {
 };
 
 extern SInitBlk lbl_eu_8065FBE8[2];
-extern f32 lbl_eu_8066B088;  // 1.0f
-extern f32 lbl_eu_8066B08C;  // 0.0f
-extern f32 lbl_eu_8066B090;  // 0.8f
-extern f32 lbl_eu_8066B094;  // 5.0f
-extern f32 lbl_eu_8066B098;  // 393.0f
 
 extern "C" void sinit_804C86C0() {
     // Every block address flows through the single table pointer (see the
     // residual note above for why only 2 of retail's 4 GPR bases survive).
     SInitBlk* p = lbl_eu_8065FBE8;
-    p[0].head = lbl_eu_8066B088;
-    p[0].tail.x = lbl_eu_8066B08C;
-    p[0].tail.y = lbl_eu_8066B08C;
-    p[0].tail.z = lbl_eu_8066B090;
-    p[1].head = lbl_eu_8066B088;
-    p[1].tail.x = lbl_eu_8066B088;
-    p[1].tail.y = lbl_eu_8066B088;
-    p[1].tail.z = lbl_eu_8066B090;
-    p[2].head = lbl_eu_8066B094;
-    p[2].tail.x = lbl_eu_8066B098;
-    p[2].tail.y = lbl_eu_8066B08C;
+    p[0].head = 1.0f;
+    p[0].tail.x = 0.0f;
+    p[0].tail.y = 0.0f;
+    p[0].tail.z = 0.8f;
+    p[1].head = 1.0f;
+    p[1].tail.x = 1.0f;
+    p[1].tail.y = 1.0f;
+    p[1].tail.z = 0.8f;
+    p[2].head = 5.0f;
+    p[2].tail.x = 395.0f;
+    p[2].tail.y = 0.0f;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

@@ -837,7 +837,7 @@ public:
     u8 field_45B0;                   // 0x45B0
 };
 
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
 struct CfEnumList {
     u8 _pad00[0x620];                // 0x00-0x61F
     u32 field_620;                   // 0x620
@@ -988,10 +988,7 @@ void* MapFx_ResolveOwner(void* src); // canonical void* form (CAIAction/CtrlPc o
 void* getObjectAt(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
 void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
 void startEnumObjects(void* list, u32 type, u32 filter);
-void __dt__80043E88(void* holder, int flag);
 void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 void MoveImplGateEventCmd(void* self, u32 param); // canonical void* form (shared with CfObjectImplMove.hpp)
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);

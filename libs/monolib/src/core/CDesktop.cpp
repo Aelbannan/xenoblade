@@ -35,9 +35,6 @@ extern const char lbl_eu_80522F44[];
 // Retail .sdata2 color constants used by the ctor frame color and the
 // wkStandbyLogin clear-color fills.
 extern const f32 lbl_eu_8066A450[];
-extern const f32 lbl_eu_8066A458;
-extern const f32 lbl_eu_8066A460;
-extern const f32 lbl_eu_8066A45C;
 // Dissolved CDesktop vtable (ctor installs it by hand; novtable TU) plus the
 // two anonymous-namespace thread vtables used by wkStandbyLogin.
 extern "C" u32 lbl_eu_8056CBC8[40];
@@ -70,7 +67,7 @@ mView(nullptr) {
     lbl_eu_806656AC = this;
     *(u32**)this = (u32*)lbl_eu_8056CBC8;
     mType = THREAD_CDESKTOP;
-    unk1EC.set(lbl_eu_8066A458, lbl_eu_8066A458, lbl_eu_8066A458, lbl_eu_8066A45C);
+    unk1EC.set(0.5f, 0.5f, 0.5f, 1.0f);
     CView::setDefaultFrameColor(unk1EC);
 }
 
@@ -142,7 +139,7 @@ bool CDesktop::wkStandbyLogin(){
     // CDeviceFile that the desktop owns the file work threads.
     CGXCache* cache = CDeviceGX::getCacheInstance();
     CTaskGame_setVec4_tmp col1;
-    updateCmd2Color__8CGXCacheFv(cache, CTaskGame_setVec4(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
+    updateCmd2Color__8CGXCacheFv(cache, CTaskGame_setVec4(&col1, 0.0f, 0.0f, 0.0f, 1.0f), 1);
     setParent__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give
@@ -155,7 +152,7 @@ bool CDesktop::wkStandbyLogin(){
     mView = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
 
     ml::CVec4 col2;
-    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(&col2), lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
+    CTaskGame_setVec4(reinterpret_cast<CTaskGame_setVec4_tmp*>(&col2), 0.0f, 0.0f, 0.0f, 1.0f);
     mView->unk444 = col2;
 
     // Push a tag-3 context message (the drainer ORs unk278 with 0x3). Retail
@@ -416,7 +413,7 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) const char 
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663760[2] = { (u32)&lbl_eu_8066A450, 0 };
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663768[2] = { (u32)&lbl_eu_80522EE0, (u32)&lbl_eu_8056CAE8 };
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663770[2] = { (u32)&lbl_eu_80522F0C, (u32)&lbl_eu_8056CBA8 };
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663778[2] = { (u32)&lbl_eu_80522F38, (u32)&lbl_eu_8056CC68 };
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__8CDesktop[2] = { (u32)&lbl_eu_80522F38, (u32)&lbl_eu_8056CC68 };
 
 // .data 0x8056CA48..0x8056CC88: CDesktopException / CDesktopBackGround /
 // CDesktop vtables (40 words each) + monolib RTTI hierarchy tables (8 words).
@@ -477,7 +474,7 @@ extern "C" u32 lbl_eu_8056CBA8[8] __attribute__((aligned(8))) = {
     (u32)&RTTIExterns::__RTTI__5CProc, 0, 0, 0
 };
 extern "C" u32 lbl_eu_8056CBC8[40] __attribute__((aligned(8))) = {
-    (u32)&lbl_eu_80663778, 0,
+    (u32)&__RTTI__8CDesktop, 0,
     (u32)&__dt__8CDesktopFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__8CDesktopFP10CEventFile,
     (u32)&WorkEvent3__8CDesktopFPv, (u32)&WorkEvent4__10IWorkEventFv,

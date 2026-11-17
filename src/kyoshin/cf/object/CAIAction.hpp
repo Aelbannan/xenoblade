@@ -170,7 +170,7 @@ struct CAIPartyObj {
     u16 unk3F28;              // 0x3F28 current arts id
 };
 
-// Iterator object handed out by the CTaskGame_enumListGet family; limit word at +0x620.
+// Iterator object handed out by the get__16CfEnumListHolderFv family; limit word at +0x620.
 struct CAIEnumIter {
     u8 pad[0x620];
     u32 field620;             // 0x620 entry count / limit
@@ -263,12 +263,6 @@ struct CAIActionQuery {
     u32 unk1C;                // 0x1C set to 6 when result is null
 };
 
-// Stack-allocated 8-byte holder (list + handle).
-struct CAIActionEnumHolder {
-    void* list;               // 0x0
-    u32 handle;               // 0x4
-};
-
 // Canonical (void*, int*, int) form - MUST match code_802B8A3C.hpp and the
 // other ~30 TU-local declarations (divergent extern "C" type lists for one
 // symbol break every TU whose include chain pulls two of them together with
@@ -285,8 +279,6 @@ extern "C" void* MapFx_ResolveOwner(void*);          // -> MapFx_ResolveOwner
 // by CBattleManager.hpp). With both typed pointers visible in one TU, MWCC
 // reports (10197) illegal function overloading, breaking every TU that
 // includes both headers. ABI is unchanged (opaque pointer).
-extern "C" void CTaskGame_enumListCtor(void*);
-extern "C" void __dt__80043E88(void*, int);
 extern "C" void* aiQueryHandle(cf::CAIAction*, CAIActionQuery*);
 extern "C" void* aiTargetQuery(cf::CAIAction*, CAIActionQuery*);
 extern "C" int aiFetchAction(void* a, void* b);
@@ -295,7 +287,6 @@ extern "C" int aiJudgeAction(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
 void aiRingConsume(cf::CAIAction*, u32);
 
 // CfObjEnumList helper family (retail names unmangled -> extern "C").
-extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void appendObjectById(void*, u32);
 extern "C" void* findFirstCleanObjectId(void*);

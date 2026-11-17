@@ -79,7 +79,6 @@ extern "C" {
 extern CDeviceGX* lbl_eu_806656A0;
 extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
 extern const f64 lbl_eu_8066A448;  // int→double magic (signed)
-extern const f32 lbl_eu_8066A438;
 extern f32 lbl_eu_80665698;
 }
 
@@ -233,7 +232,7 @@ void CDeviceGX::viAfterDrawDone(){
         temp1 -= temp;
         temp2 = gxHeapSize - temp1;
     }
-    unk264 = ((f32)temp2 / (f32)gxHeapSize) * lbl_eu_8066A438;
+    unk264 = ((f32)temp2 / (f32)gxHeapSize) * 2.0f;
 }
 
 void CDeviceGX::viBeginFrame(){

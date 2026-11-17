@@ -3,16 +3,13 @@
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
+#include "monolib/work/IWorkEvent.hpp"
 
-class CPresentWin {
+class CPresentWin : public IWorkEvent {
 public:
     CPresentWin();
-    ~CPresentWin();
+    virtual ~CPresentWin();
 
-    // Explicit vtable pointer (retail vtable lives under the split-data name
-// lbl_eu_805366D8; storing it by hand keeps MWCC from emitting its own
-// __vt__11CPresentWin whose reloc name would drift).
-void* mVtable;                              // +0x00
     nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x04
     nw4r::lyt::Layout* mpLayout;              // 0x08
     nw4r::lyt::AnimTransform* mpAnimTrans0;    // 0x0C
@@ -69,7 +66,6 @@ struct CPresentTexObj {
 };
 
 // --- imports (retail linker names) ---
-extern void* lbl_eu_805366D8[]; // CPresentWin vtable
 extern char lbl_eu_8050A84C[]; // layout path + pane-name + message string pool
 extern const float lbl_eu_8066862C;    // animation advance delta (const -> sdata2 pool, lfs hoist)
 extern f64 lbl_eu_80668620;    // 2^52 double used by the u32->float conversion

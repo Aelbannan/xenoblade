@@ -271,9 +271,9 @@ public:
     void getEventCounterA();
     void setEventCounterA();
     void getGlobalFlag34();
-    void func_8007F9C4();
-    void refreshCameraIfCurrentView();
-    void resetCameraIfCurrentView();
+    static void func_8007F9C4();
+    static void refreshCameraIfCurrentView();
+    static void resetCameraIfCurrentView();
     void queueCameraRequest();
     void checkAvailableValue();
     void processBattleQueue();
@@ -649,7 +649,6 @@ extern "C" CProcess* GetRootProcGame__12CTaskManagerFv();
 extern "C" CProcess* create__Q22cf9CfPadTaskFP8CProcess(CProcess* parent,
                                                           void* scene);
 extern "C" CProcess* __ct__Q22cf5CfResFv(CProcess* parent, void* scene);
-extern "C" CProcess* __ct__800697E8(CProcess* parent, void* scene);
 extern "C" void func_800A7CDC();
 extern "C" void func_8019FB40();
 extern "C" void func_80068A80();

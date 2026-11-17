@@ -19,10 +19,10 @@ public:
     CREvtModel(void* pData, void* pArg);
     /* vtable 0x00 */ virtual ~CREvtModel(); // slot +0x00: __ct__80172668 (overrides __dt__Q22cf8CREvtObjFv)
     /* vtable 0x04 */ virtual void vfunc_04();           // slot +0x04: EvtModelResetPose (overrides base pure slot)
-    /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: releaseEvtAnim28 (overrides CREvtObjVfunc08Default)
+    /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: releaseEvtAnim28 (overrides vfunc_08__Q22cf8CREvtObjFv)
     /* vtable 0x0C */ virtual int vfunc_0C();            // slot +0x0C: getField20, cross-TU (overrides EvtObj_ConstFalse)
-    /* vtable 0x10 */ virtual void vfunc_10();           // slot +0x10: isEvtFlagBit4Set, tests (mFlags>>4)&1 (overrides CREvtObjVfunc10Default)
-    /* vtable 0x14 */ virtual void vfunc_14();           // slot +0x14: isEvtFlagBit0Set, tests mFlags&1 (overrides REvtCam_AlwaysTrue1)
+    /* vtable 0x10 */ virtual int vfunc_10();            // slot +0x10: isEvtFlagBit4Set, tests (mFlags>>4)&1 (overrides CREvtObjVfunc10Default)
+    /* vtable 0x14 */ virtual int vfunc_14();            // slot +0x14: isEvtFlagBit0Set, tests mFlags&1 (overrides REvtCam_AlwaysTrue1)
     /* vtable 0x18 */ virtual bool isBusy(); // slot +0x18: CREvtObjIsBusyDefault, same as base = inherited, cross-TU
     /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: EvtModelUpdate (overrides EvtObj_RunCallback)
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20

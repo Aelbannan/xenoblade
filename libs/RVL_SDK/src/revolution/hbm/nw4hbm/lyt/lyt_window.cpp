@@ -230,6 +230,7 @@ namespace lyt {
 
 NW4R_UT_RTTI_DEF_DERIVED(Window, Pane);
 
+
 /******************************************************************************
  *
  * Window
@@ -311,6 +312,8 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
     }
 }
 
+
+
 Window::~Window() {
     if (mFrames != nullptr) {
         for (int i = 0; i < mFrameNum; i++) {
@@ -329,6 +332,8 @@ Window::~Window() {
 
     mContent.texCoordAry.Free();
 }
+
+
 
 Material* Window::FindMaterialByName(const char* pName, bool recursive) {
     if (mpMaterial != nullptr &&
@@ -358,6 +363,8 @@ Material* Window::FindMaterialByName(const char* pName, bool recursive) {
     return nullptr;
 }
 
+
+
 AnimationLink* Window::FindAnimationLink(AnimTransform* pAnimTrans) {
     AnimationLink* pAnimLink = Pane::FindAnimationLink(pAnimTrans);
 
@@ -377,6 +384,8 @@ AnimationLink* Window::FindAnimationLink(AnimTransform* pAnimTrans) {
     return nullptr;
 }
 
+
+
 void Window::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
                                 bool recursive) {
 
@@ -387,21 +396,31 @@ void Window::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
     Pane::SetAnimationEnable(pAnimTrans, enable, recursive);
 }
 
+
+
 ut::Color Window::GetVtxColor(u32 idx) const {
     return mContent.vtxColors[idx];
 }
+
+
 
 void Window::SetVtxColor(u32 idx, ut::Color color) {
     mContent.vtxColors[idx] = color;
 }
 
+
+
 u8 Window::GetVtxColorElement(u32 idx) const {
     return detail::GetVtxColorElement(mContent.vtxColors, idx);
 }
 
+
+
 void Window::SetVtxColorElement(u32 idx, u8 value) {
     detail::SetVtxColorElement(mContent.vtxColors, idx, value);
 }
+
+
 
 void Window::DrawSelf(const DrawInfo& rInfo) {
     LoadMtx(rInfo);
@@ -428,6 +447,8 @@ void Window::DrawSelf(const DrawInfo& rInfo) {
     }
 }
 
+
+
 void Window::AnimateSelf(u32 option) {
     Pane::AnimateSelf(option);
 
@@ -438,6 +459,8 @@ void Window::AnimateSelf(u32 option) {
     }
 }
 
+
+
 void Window::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
     for (int i = 0; i < mFrameNum; i++) {
         mFrames[i].pMaterial->UnbindAnimation(pAnimTrans);
@@ -445,6 +468,8 @@ void Window::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
 
     Pane::UnbindAnimationSelf(pAnimTrans);
 }
+
+
 
 void Window::DrawContent(const math::VEC2& rBase,
                          const WindowFrameSize& rFrameSize, u8 alpha) {
@@ -469,6 +494,8 @@ void Window::DrawContent(const math::VEC2& rBase,
         alpha);
     // clang-format on
 }
+
+
 
 #pragma inline off
 
@@ -508,6 +535,8 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
 
 #undef DRAW_FRAME
 }
+
+
 
 void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
                         const WindowFrameSize& rFrameSize, u8 alpha) {
@@ -551,6 +580,8 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
 
 #undef DRAW_FRAME
 }
+
+
 
 void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
                         const WindowFrameSize& rFrameSize, u8 alpha) {
@@ -641,9 +672,7 @@ void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
 #undef DRAW_FRAME_EX
 }
 
-Material* Window::GetContentMaterial() const {
-    return GetMaterial();
-}
+
 
 Material* Window::GetFrameMaterial(u32 idx) const {
     if (idx >= mFrameNum)
@@ -651,11 +680,20 @@ Material* Window::GetFrameMaterial(u32 idx) const {
     return mFrames[idx].pMaterial;
 }
 
+
+
+Material* Window::GetContentMaterial() const {
+    return GetMaterial();
+}
+
+
 } // namespace lyt
-} // namespace nw4hbm
+}
+ // namespace nw4hbm
 
 extern "C" const nw4hbm::ut::detail::RuntimeTypeInfo*
 GetRuntimeTypeInfo__Q36nw4hbm3lyt6WindowCFv(void) {
     extern const nw4hbm::ut::detail::RuntimeTypeInfo typeInfo__Q36nw4hbm3lyt6Window;
     return &typeInfo__Q36nw4hbm3lyt6Window;
 }
+

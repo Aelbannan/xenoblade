@@ -182,6 +182,9 @@ public:
     const TevStage* GetTevStageAry() const;
     TevStage* GetTevStageAry();
 
+    TexMap* GetTexturePtr(u8 idx) {
+        return &GetTexMapAry()[idx];
+    }
     const TexMap& GetTexture(u8 idx) const {
         return GetTexMapAry()[idx];
     }

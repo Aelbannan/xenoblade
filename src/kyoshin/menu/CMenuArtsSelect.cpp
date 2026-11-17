@@ -64,6 +64,7 @@
 #include <revolution/GX.h>
 #include <stdio.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+#include "kyoshin/CfEnumListHolder.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
@@ -153,12 +154,7 @@ struct ArtsSelEnumIds {
     u32 id[3];
 };
 
-// 8-byte CfObjEnumList holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor).
-struct ArtsEnumHolder {
-    u8 _data[8];
-};
-
-// Enum-list handle returned by CTaskGame_enumListGet (element count at +0x620).
+// Enum-list handle returned by get__16CfEnumListHolderFv (element count at +0x620).
 struct ArtsEnumList {
     u8 _pad00[0x620];
     u32 mCount620;  // +0x620
@@ -247,9 +243,6 @@ void BtlDmg_CursorToState4(void*);
 void* findObjB28ById(s32 id);                 // actor-container lookup by id
 void* Scn_FindCamItem(void* scn, int index);   // matches CfCam.hpp decl
 void CamMan_ProjectToScreen(f32* out, void* pose, nw4r::math::VEC3* pos);
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
-void __dt__80043E88(void* holder, int flag);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void* getEntryAt(void* list, u32 index);
 extern const u32 lbl_eu_80666F54;  // mode-table word
@@ -2182,7 +2175,6 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
     // Stack locals laid out to mirror retail frame slots
     // (0x08 / 0x10 / 0x18 / 0x20 / 0x2c / 0x38).
     u8 order[3];            // candidate slot ids (retail +0x08)
-    ArtsEnumHolder holder;  // enum-list holder (retail +0x10)
     ArtsSelModeTbl tbl;     // mode-table copy (retail +0x18)
     ArtsSelEnumIds ids;     // enum id table copy (retail +0x20)
     f32 d;                  // distance temp (retail +0x2c)
@@ -2285,18 +2277,18 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
             }
             s32 matchIdx = 0;
             if (mv != NULL) {
-                CTaskGame_enumListCtor(&holder);
+                CfEnumListHolder holder;
                 ids.id[0] = lbl_eu_804FD128.id[0];
                 ids.id[1] = lbl_eu_804FD128.id[1];
                 ids.id[2] = lbl_eu_804FD128.id[2];
                 // Find which enum type matches the target's +0x8C object id.
                 for (s32 k = 0; k < 3; k++) {
                     ArtsEnumList* list =
-                        static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
+                        reinterpret_cast<ArtsEnumList*>(holder.get());
                     startEnumObjects(list, ids.id[k], 0);
-                    list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
+                    list = reinterpret_cast<ArtsEnumList*>(holder.get());
                     if (list->mCount620 == 0) continue;
-                    list = static_cast<ArtsEnumList*>(CTaskGame_enumListGet(&holder));
+                    list = reinterpret_cast<ArtsEnumList*>(holder.get());
                     ArtsEnumSlot* slot =
                         static_cast<ArtsEnumSlot*>(getEntryAt(list, 0));
                     if (slot->mObj == NULL) continue;
@@ -2305,7 +2297,6 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
                         break;
                     }
                 }
-                __dt__80043E88(&holder, -1);
             }
             s32 v = self->unk324;
             if (v > 4) v--;

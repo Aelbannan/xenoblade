@@ -287,13 +287,13 @@ extern "C" CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
 // zeroes these sections in the link-time reloc.o. The retail split object
 // genuinely carries them (0x298/0x140/0x8, reconstructed byte-identical
 // below), so that rule entry is stale and should be removed; until then
-// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the link keeps resolving these labels as UNDEF. __RTTI__Q22cf10CVS_THREAD lives in
 // the CCharVoiceMan range and is referenced, not defined, here.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662DD8[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2];
 
 // Packing helpers: MWCC 8-aligns file-scope objects of 8+ bytes, but the
 // retail tables pack records at 4-byte intervals. Wrapping 8-/16-byte
@@ -438,7 +438,7 @@ u32 lbl_eu_8053A1AC[3] = {
 };
 
 u32 lbl_eu_8053A1B8[7] = {
-    (u32)lbl_eu_80662DD8,
+    (u32)__RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP,
     0,
     (u32)PlayThreadVoice,
     (u32)CVSBattleEndSPRemoveVoice,
@@ -448,12 +448,12 @@ u32 lbl_eu_8053A1B8[7] = {
 };
 
 u32 lbl_eu_8053A1D4[3] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662DD8[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP[2] = {
     (u32)lbl_eu_80510AF0,
     (u32)lbl_eu_8053A1D4,
 };

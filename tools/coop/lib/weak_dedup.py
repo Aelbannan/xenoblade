@@ -15,11 +15,38 @@ remove exactly what mwld would remove before they compare.  The rule is narrow:
 * A decomp symbol is excluded only if it is **WEAK**, defined in the object, and
   the same name is in ``config/<region>/symbols.txt`` at a retail address
   that ``splits.txt`` assigns to a **different** unit.  Those are exactly
-  the copies mwld discarded.  Global and local symbols, and weak symbols that
-  retail places in this unit (or whose address belongs to no split unit),
-  are never excluded.
+  the copies mwld discarded.  Weak symbols that retail places in this unit
+  (or whose address belongs to no split unit) are not deduplicated.
+* A function is **dead-stripped** when mwld would have garbage-collected it:
+  it is defined in the object (any binding), its name has **no retail copy
+  anywhere** in ``config/<region>/symbols.txt``, and no relocation from a
+  retained range reaches it (computed to a fixpoint, so a dead function does
+  not keep its callees alive; a function's own ``extabindex``/``extab``
+  records do not count as references to it).  These are the functions retail
+  inlined into every caller and the compiler-generated destructors nothing
+  calls.  Because a decomp function may simply be *spelled* differently from
+  its retail symbol, the rule only runs in a unit where **every** retail
+  function that ``symbols.txt`` places in the unit's ``.text`` range is
+  defined by name in the object: then no retail function is left for an
+  unknown name to stand for.  A function that is referenced from retained
+  code or data, or whose name (or a ``name__suffix`` spelling of it) exists
+  in ``symbols.txt``, is never dead-stripped.
+* A global/weak data object (a vtable, say) with no retail name goes with the
+  dead functions when it is referenced and **every** reference comes from an
+  excluded range, and every retail symbol in this unit's slice of that data
+  section is spelled the same way in the object (otherwise the object may
+  simply name retail's copy differently).  Such data does not keep a function alive either: a
+  destructor named only by a vtable that only dead constructors install is
+  dead too.  A ``__vt__`` object with no retail name that **nothing** in the
+  object references is dropped as well (an abstract base's vtable emitted at
+  its key function; no constructor installs it).  **Local** data of a dead function stays, as it does in retail
+  (the statics and literals of an SDK function the game never calls are still
+  in the retail slice).
+* A symbol the compiler marked **force-active** (``#pragma force_active`` /
+  ``FORCEACTIVE``; the ``.comment`` section's per-symbol active flag) is a
+  root, as it is for mwld: it is never excluded.
 * Local (non-``.text``) data is also excluded when **every** relocation that
-  references it comes from an excluded range (worked out from relocations to
+  references it comes from an excluded **weak copy** (worked out from relocations to
   a fixpoint, with no name lists).  This covers the RTTI name string and the
   ``extabindex``/``extab`` records of an excluded function.
 
@@ -200,6 +227,199 @@ def _in(ranges: list[tuple[int, int]], off: int) -> bool:
     return any(a <= off < b for a, b in ranges)
 
 
+def _force_active(elf: _Elf) -> set[int]:
+    """Symbol indices MWCC flagged force-active in ``.comment`` (never link-dead)."""
+    ci = next((i for i, n in enumerate(elf.names) if n == ".comment"), None)
+    if ci is None:
+        return set()
+    raw = elf.contents[ci]
+    if len(raw) < 0x2C or raw[:11] != b"CodeWarrior":
+        return set()
+    head = 0x2C  # fixed MWCC .comment header, then 8 bytes per symbol (align:4, vis:1, active:1, pad:2)
+    out = set()
+    for i in range(1, len(elf.syms)):
+        off = head + 8 * i
+        if off + 8 > len(raw):
+            break
+        if raw[off + 5] & 0x08:
+            out.add(i)
+    return out
+
+
+def _has_retail_name(name: str, symbol_addrs: dict[str, int]) -> bool:
+    """True if *name*, or a ``retail__suffix`` spelling of it, is in symbols.txt.
+
+    Conservative on purpose: a hand-spelled flat symbol such as
+    ``Foo__3BarFv__FP3Bar`` stands for retail ``Foo__3BarFv`` and must never be
+    treated as link-dead.
+    """
+    if name in symbol_addrs:
+        return True
+    pos = name.find("__", 1)
+    while pos != -1:
+        if name[:pos] in symbol_addrs:
+            return True
+        pos = name.find("__", pos + 1)
+    return False
+
+
+def _all_retail_symbols_defined(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
+                                this_unit: str, section: str = ".text") -> bool:
+    """Every retail symbol in this unit's *section* range is defined by name here.
+
+    With no ``.text`` range there is nothing to compare against, so the answer
+    is no.  A data section the unit has no split for holds no retail symbol
+    that could be this object's under another name, so the answer is yes.
+    """
+    text = [(a, b) for u, sec, a, b in unit_ranges if u == this_unit and sec == section]
+    if not text:
+        return section != ".text"
+    defined = {elf.symnames[i] for i, s in enumerate(elf.syms)
+               if s[5] not in (SHN_UNDEF, SHN_ABS, SHN_COMMON) and elf.symnames[i]}
+    flat = set()
+    for name in defined:
+        pos = name.find("__", 1)
+        while pos != -1:
+            flat.add(name[:pos])
+            pos = name.find("__", pos + 1)
+    for name, addr in symbol_addrs.items():
+        if _in(text, addr) and name not in defined and name not in flat:
+            return False
+    return True
+
+
+def _dead_strip(elf: _Elf, ranges, unit_ranges, symbol_addrs: dict[str, int], this_unit: str,
+                excl: dict[int, list[tuple[int, int]]], weak: set[int]) -> list[int]:
+    """Function symbol indices mwld would garbage-collect (see module doc), in symbol order."""
+    if not _all_retail_symbols_defined(elf, unit_ranges, symbol_addrs, this_unit):
+        return []
+    named_cache: dict[str, bool] = {}
+
+    def named(section: str) -> bool:
+        if section not in named_cache:
+            named_cache[section] = _all_retail_symbols_defined(elf, unit_ranges, symbol_addrs, this_unit, section)
+        return named_cache[section]
+
+    active = _force_active(elf)
+    not_data = ("extab", "extabindex", ".ctors", ".dtors", ".comment", ".symtab", ".strtab", ".shstrtab")
+    cands: dict[int, tuple[int, int, int]] = {}
+    # Data that can only pass liveness on (never a root unless nothing names it):
+    # global/weak data objects with no retail name.  Local data is always live.
+    transit: set[int] = set()
+    for i, s in enumerate(elf.syms):
+        if i not in ranges or i in weak or i in active or s[5] >= elf.shnum:
+            continue
+        name = elf.symnames[i]
+        sec_name = elf.names[s[5]]
+        a, b = ranges[i]
+        if not name or b <= a or _in(excl.get(s[5], []), a):
+            continue
+        typ, bind = s[3] & 0xF, s[3] >> 4
+        if sec_name == ".text":
+            if typ != 2 or _has_retail_name(name, symbol_addrs):  # STT_FUNC only
+                continue
+        else:
+            if sec_name.startswith(".rela") or sec_name in not_data:
+                continue
+            if bind == STB_LOCAL or typ != 1 or _has_retail_name(name, symbol_addrs):
+                continue
+            if not named(elf.names[s[5]]):
+                continue
+            transit.add(i)
+        cands[i] = (s[5], a, b)
+    # A vtable is only ever named by its class's constructors and destructors.
+    # One that no relocation in its own (key-function) unit names and that has
+    # no retail symbol belongs to a class retail never constructs out of line
+    # (an abstract base whose derived constructors are all inlined): mwld drops
+    # it.  Unlike other nameless data it is not "left alone" below.
+    orphan_vt = {i for i in transit if elf.symnames[i].startswith("__vt__")}
+    if len(transit) == len(cands) and not orphan_vt:
+        return []
+    if not cands:
+        return []
+
+    by_sec: dict[int, list[tuple[int, int, int]]] = {}
+    for i, (sec, a, b) in cands.items():
+        by_sec.setdefault(sec, []).append((a, b, i))
+
+    def cand_at(sec: int, off: int) -> int | None:
+        for a, b, i in by_sec.get(sec, ()):
+            if a <= off < b:
+                return i
+        return None
+
+    refs = []  # (source section, source offset, target section, target offset)
+    for ri, src_sec in elf.rela_target.items():
+        for off, info, addend in elf.relas(ri):
+            sym = elf.syms[info >> 8] if (info >> 8) < len(elf.syms) else None
+            if sym is None or sym[5] in (SHN_UNDEF, SHN_ABS, SHN_COMMON):
+                continue
+            refs.append((src_sec, off, sym[5], sym[1] + addend))
+
+    # A function owns its extabindex triple and the extab record that triple names.
+    idx = next((i for i, n in enumerate(elf.names) if n == "extabindex"), None)
+    tab = next((i for i, n in enumerate(elf.names) if n == "extab"), None)
+    entry_owner: dict[int, int] = {}
+    record_owner: list[tuple[int, int]] = []  # (record start, owning candidate or -1)
+    if idx is not None:
+        for src, off, tsec, toff in refs:
+            if src == idx and off % 12 == 0:
+                owner = cand_at(tsec, toff)
+                entry_owner[off // 12] = -1 if owner is None else owner
+        if tab is not None:
+            for src, off, tsec, toff in refs:
+                if src == idx and off % 12 == 8 and tsec == tab:
+                    record_owner.append((toff, entry_owner.get(off // 12, -1)))
+            record_owner.sort()
+
+    LIVE, DEAD = -1, -2
+
+    def source_owner(sec: int, off: int) -> int:
+        """LIVE, DEAD, or the candidate index whose liveness this source inherits."""
+        if _in(excl.get(sec, []), off):
+            return DEAD
+        if sec == idx:
+            return entry_owner.get(off // 12, LIVE)
+        if sec == tab and record_owner:
+            owner = LIVE
+            for start, who in record_owner:
+                if start > off:
+                    break
+                owner = who
+            return owner
+        c = cand_at(sec, off)
+        return LIVE if c is None else c
+
+    edges: dict[int, set[int]] = {}
+    live: set[int] = set()
+    named: set[int] = set()
+    for src, off, tsec, toff in refs:
+        target = cand_at(tsec, toff)
+        if target is None:
+            continue
+        if src == idx and off % 12 == 0:
+            continue  # the function's own exception-table index entry
+        owner = source_owner(src, off)
+        if owner == target:
+            continue
+        named.add(target)
+        if owner == DEAD:
+            continue
+        if owner == LIVE:
+            live.add(target)
+        else:
+            edges.setdefault(owner, set()).add(target)
+    orphan_vt -= named
+    live |= transit - named - orphan_vt  # data nothing names is left alone (and keeps its referents)
+    work = list(live)
+    while work:
+        for nxt in edges.get(work.pop(), ()):
+            if nxt not in live:
+                live.add(nxt)
+                work.append(nxt)
+    return [i for i in cands if i not in live and (i not in transit or i in orphan_vt)]
+
+
 def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
                        this_unit: str | None) -> tuple[dict[int, list[tuple[int, int]]], list[str], set[int]]:
     """(section -> excluded ranges, descriptions, excluded weak symbol indices)."""
@@ -223,8 +443,6 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
         excl.setdefault(s[5], []).append((a, b))
         weak.add(i)
         notes.append(f"{elf.names[s[5]]} {name} 0x{b - a:X} (weak; retail keeps the copy in {owner})")
-    if not weak:
-        return excl, notes, weak
 
     # Every reloc as (source section, offset, target section, target offset).
     refs = []
@@ -234,7 +452,41 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
             if sym is None or sym[5] in (SHN_UNDEF, SHN_ABS, SHN_COMMON):
                 continue
             refs.append((tgt_sec, off, sym[5], sym[1] + addend))
+    active = _force_active(elf)
 
+    # Weak copies mwld discarded take their exception records and the local
+    # data only they reference (RTTI name strings) with them.
+    if weak:
+        _cascade(elf, ranges, refs, excl, notes, weak, active, symbol_addrs, local=True)
+
+    # Functions mwld garbage-collected take their exception records and any
+    # nameless global/weak data object (a vtable) only they reference.  Local
+    # data stays: retail keeps the statics and literals of a stripped function.
+    dead = _dead_strip(elf, ranges, unit_ranges, symbol_addrs, this_unit, excl, weak)
+    for i in dead:
+        s = elf.syms[i]
+        a, b = ranges[i]
+        excl.setdefault(s[5], []).append((a, b))
+        notes.append(f"{elf.names[s[5]]} {elf.symnames[i]} 0x{b - a:X} "
+                     f"(dead-strip; nothing retained references it and retail has no copy)")
+    if dead:
+        _cascade(elf, ranges, refs, excl, notes, weak, active, symbol_addrs, local=False,
+                 named=lambda sec: _all_retail_symbols_defined(elf, unit_ranges, symbol_addrs, this_unit, sec))
+    for sec in excl:
+        excl[sec] = _merge(excl[sec])
+    return excl, notes, weak
+
+
+def _cascade(elf: _Elf, ranges, refs, excl, notes: list[str], weak: set[int], active: set[int],
+             symbol_addrs: dict[str, int], *, local: bool, named=None) -> None:
+    """Exclude what only excluded ranges use: extab records, then data.
+
+    ``local=True`` strips local data; ``local=False`` strips only global/weak
+    data objects that have no retail name, and only in a section where
+    ``named(section)`` holds (every retail symbol of this unit's slice of that
+    section is spelled the same way here, so "no retail name" means "not in
+    retail" rather than "named differently").
+    """
     def excluded(sec: int, off: int) -> bool:
         return _in(excl.get(sec, []), off)
 
@@ -243,27 +495,35 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
     tab = next((i for i, n in enumerate(elf.names) if n == "extab"), None)
     if idx is not None:
         for src, off, tsec, toff in refs:
-            if src == idx and off % 12 == 0 and excluded(tsec, toff):
+            if src == idx and off % 12 == 0 and excluded(tsec, toff) and not excluded(idx, off):
                 excl.setdefault(idx, []).append((off, off + 12))
                 notes.append(f"extabindex entry +0x{off:X} (record of an excluded function)")
     if idx is not None and tab is not None:
         starts = sorted({toff for src, off, tsec, toff in refs if src == idx and tsec == tab and off % 12 == 8})
         bounds = starts + [elf.sh[tab][5]]
         for k, start in enumerate(starts):
+            if excluded(tab, start):
+                continue
             users = [(src, off) for src, off, tsec, toff in refs if src == idx and tsec == tab and toff == start]
             if users and all(excluded(src, off) for src, off in users):
                 excl.setdefault(tab, []).append((start, bounds[k + 1]))
                 notes.append(f"extab record +0x{start:X} 0x{bounds[k + 1] - start:X} (only an excluded function uses it)")
 
-    # Dead-strip: local non-.text data referenced only from excluded ranges.
     changed = True
     while changed:
         changed = False
         for i, s in enumerate(elf.syms):
-            if (s[3] >> 4) != STB_LOCAL or i not in ranges or i in weak:
+            if i not in ranges or i in weak or i in active or s[5] >= elf.shnum:
+                continue
+            is_local = (s[3] >> 4) == STB_LOCAL
+            if is_local != local:
+                continue
+            if not is_local and ((s[3] & 0xF) != 1 or _has_retail_name(elf.symnames[i], symbol_addrs)):
                 continue
             sec = s[5]
             if elf.names[sec] == ".text" or elf.names[sec].startswith(".rela"):
+                continue
+            if not is_local and named is not None and not named(elf.names[sec]):
                 continue
             a, b = ranges[i]
             if b <= a or _in(excl.get(sec, []), a):
@@ -273,9 +533,6 @@ def compute_exclusions(elf: _Elf, unit_ranges, symbol_addrs: dict[str, int],
                 excl.setdefault(sec, []).append((a, b))
                 notes.append(f"{elf.names[sec]} {elf.symnames[i]} 0x{b - a:X} (only excluded symbols reference it)")
                 changed = True
-    for sec in excl:
-        excl[sec] = _merge(excl[sec])
-    return excl, notes, weak
 
 
 def _merge(rs: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -300,9 +557,71 @@ def _mapper(rs: list[tuple[int, int]]):
     return m
 
 
+def _sym_aligns(elf: _Elf) -> dict[int, int]:
+    """Per-symbol alignment MWCC recorded in ``.comment`` (symbol index -> bytes)."""
+    ci = next((i for i, n in enumerate(elf.names) if n == ".comment"), None)
+    if ci is None:
+        return {}
+    raw = elf.contents[ci]
+    if len(raw) < 0x2C or raw[:11] != b"CodeWarrior":
+        return {}
+    out = {}
+    for i in range(1, len(elf.syms)):
+        off = 0x2C + 8 * i
+        if off + 8 > len(raw):
+            break
+        out[i] = struct.unpack_from(">I", raw, off)[0]
+    return out
+
+
+def _keep_alignment(elf: _Elf, excl: dict[int, list[tuple[int, int]]]):
+    """Trim excluded data ranges so the object after each one stays aligned.
+
+    mwld places every surviving object at its own alignment, so dropping a
+    12-byte neighbour in front of an 8-aligned string table leaves 4 bytes of
+    padding behind.  Returns (ranges, zero) where ``zero`` lists the bytes of
+    an excluded range that are kept as that padding.
+    """
+    aligns = _sym_aligns(elf)
+    starts: dict[int, dict[int, int]] = {}
+    for i, sy in enumerate(elf.syms):
+        if sy[5] >= elf.shnum or (sy[3] & 0xF) in (STT_SECTION, STT_FILE):
+            continue
+        al = aligns.get(i, 1)
+        if al > 1:
+            d = starts.setdefault(sy[5], {})
+            d[sy[1]] = max(d.get(sy[1], 1), al)
+    out: dict[int, list[tuple[int, int]]] = {}
+    zero: dict[int, list[tuple[int, int]]] = {}
+    for sec, rs in excl.items():
+        if elf.names[sec] == ".text" or sec not in starts:
+            out[sec] = rs
+            continue
+        cut, new = 0, []
+        for a, b in _merge(rs):
+            al = 1 if any(a2 <= b < b2 for a2, b2 in rs) else starts[sec].get(b, 1)
+            pad = (-(b - cut - (b - a))) % al
+            if pad and pad <= b - a:
+                zero.setdefault(sec, []).append((b - pad, b))
+                b -= pad
+            if b > a:
+                new.append((a, b))
+            cut += b - a
+        out[sec] = new
+    return out, zero
+
+
 def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -> bytes:
+    full = excl
+    excl, zero = _keep_alignment(elf, excl)
     maps = {sec: _mapper(rs) for sec, rs in excl.items()}
     contents = list(elf.contents)
+    for sec, zs in zero.items():
+        if elf.sh[sec][1] != SHT_NOBITS:
+            buf = bytearray(contents[sec])
+            for a, b in zs:
+                buf[a:b] = bytes(b - a)
+            contents[sec] = bytes(buf)
     sizes = [h[5] for h in elf.sh]
     for sec, rs in excl.items():
         removed = sum(b - a for a, b in rs)
@@ -323,7 +642,7 @@ def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -
         if i in weak:
             s[1], s[2], s[5] = 0, 0, SHN_UNDEF
         elif s[5] in excl:
-            if i in ranges and _in(excl[s[5]], ranges[i][0]) and (s[3] & 0xF) != STT_SECTION:
+            if i in ranges and _in(full[s[5]], ranges[i][0]) and (s[3] & 0xF) != STT_SECTION:
                 dead_local.add(i)
                 s[1], s[2], s[5] = 0, 0, SHN_UNDEF
             else:
@@ -334,7 +653,7 @@ def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -
     for ri, tgt in elf.rela_target.items():
         out = []
         for off, info, addend in elf.relas(ri):
-            if tgt in excl and _in(excl[tgt], off):
+            if tgt in full and _in(full[tgt], off):
                 continue
             new_off = maps[tgt](off) if tgt in excl else off
             si = info >> 8
@@ -374,6 +693,8 @@ def rewrite(elf: _Elf, excl: dict[int, list[tuple[int, int]]], weak: set[int]) -
 
 
 _VIEW_DIR = Path(tempfile.gettempdir()) / "xeno_weak_dedup"
+# Bump when rewrite() changes what it writes for the same exclusions.
+_REWRITE_VERSION = "2:keep-alignment"
 
 
 def linked_view(decomp_object: Path, project_root: Path, region: str, unit_hint: str) -> LinkedView:
@@ -393,9 +714,12 @@ def linked_view_for(decomp_object: Path, unit_ranges, symbol_addrs: dict[str, in
     data = decomp_object.read_bytes()
     elf = _Elf(data)
     excl, notes, weak = compute_exclusions(elf, unit_ranges, symbol_addrs, this_unit)
-    if not weak:
+    if not excl:
         return LinkedView(decomp_object)
-    digest = hashlib.sha1(data + this_unit.encode()).hexdigest()[:16]
+    # The exclusions are part of the key: a rule change must not reuse a view
+    # written under the old rule.
+    key = _REWRITE_VERSION + repr(sorted((s, tuple(rs)) for s, rs in excl.items())) + repr(sorted(weak))
+    digest = hashlib.sha1(data + this_unit.encode() + key.encode()).hexdigest()[:16]
     _VIEW_DIR.mkdir(parents=True, exist_ok=True)
     out = _VIEW_DIR / f"{decomp_object.stem}.{digest}.o"
     if not out.is_file():

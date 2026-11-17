@@ -612,10 +612,10 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
 void MapFx_ReleaseObject();
 void func_801A4194();
 extern "C" void __dt__Q22cf18CfMapEffectManagerFv(void* self);
-extern u8 lbl_eu_806623F0[];
+extern u8 __RTTI__Q22cf18CfMapEffectManager[];
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80531080[4] = {
-    lbl_eu_806623F0, 0,
+    __RTTI__Q22cf18CfMapEffectManager, 0,
     (const void*)__dt__Q22cf18CfMapEffectManagerFv,
     (const void*)MapFx_ReleaseObject
 };

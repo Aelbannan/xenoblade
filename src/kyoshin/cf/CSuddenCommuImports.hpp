@@ -73,13 +73,7 @@ struct CSuddenCommuVoiceCue {
 
 struct CSuddenCommuActBody;
 
-// 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
-// Derives from the shared CfMoveEnumHolder view so the C-linkage import
-// declared for the move TUs accepts this TU's holder without casts.
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
-struct CSuddenCommuEnumHolder : CfMoveEnumHolder {
-};
-
 // View of the CBattleManager actor list: the reslist sentinel pointer
 // (mActorList3.mHead) sits at +0x48.
 struct CSuddenCommuBmList {

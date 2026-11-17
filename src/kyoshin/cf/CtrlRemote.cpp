@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "kyoshin/CfEnumListHolder.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
@@ -1037,10 +1038,8 @@ void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
             if (sub3f60 != NULL && (sub3f60->mField4EC & 0x2) == 0) {
                 if (MapFx_ResolveOwner(handle) != 0) {
                     CfEnumListHolder holder;
-                    CTaskGame_enumListCtor(&holder);
-                    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 1);
+                    startEnumObjects(holder.get(), 0x20, 1);
                     self->mField4 |= 0x4;
-                    __dt__80043E88(&holder, -1);
                 }
                 return;
             }
@@ -1187,21 +1186,20 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
         if ((mf1 & mask1) != 0) {
             // Menu-state block 1: clear every actor accessor's combo word and the
             // 0x10 state bit, noting whether any accessor already had either set.
-            CfEnumListHolder holder1;
             bool flag = false;
-            CTaskGame_enumListCtor(&holder1);
+            CfEnumListHolder holder1;
             CtrlEnumListSweep* list =
-                reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder1));
+                reinterpret_cast<CtrlEnumListSweep*>(holder1.get());
             list->count = 0;
             list->mField3030 = 0;
-            startEnumObjects(CTaskGame_enumListGet(&holder1), 0x20, 0);
+            startEnumObjects(holder1.get(), 0x20, 0);
             for (s32 i = 0;
                  i < reinterpret_cast<CtrlEnumListSweep*>(
-                         CTaskGame_enumListGet(&holder1))
+                         holder1.get())
                          ->count;
                  i++) {
                 CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                    MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
+                    MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)holder1.get(), i)));
                 if (acc->mField3E98 != 0 || (acc->mField3388 & 0x10) != 0) {
                     flag = true;
                 }
@@ -1211,7 +1209,6 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
             if (flag) {
                 CCharVoiceMan_EnqueueOrderVoice1();
             }
-            __dt__80043E88(&holder1, -1);
         } else {
             u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[25]
@@ -1220,21 +1217,20 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
             if ((mf2 & mask2) != 0) {
                 // Menu-state block 2: restore each accessor's combo word to the
                 // voice handle's id, flagging accessors that were out of sync.
-                CfEnumListHolder holder2;
                 bool flag2 = false;
-                CTaskGame_enumListCtor(&holder2);
+                CfEnumListHolder holder2;
                 CtrlEnumListSweep* list2 =
-                    reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder2));
+                    reinterpret_cast<CtrlEnumListSweep*>(holder2.get());
                 list2->count = 0;
                 list2->mField3030 = 0;
-                startEnumObjects(CTaskGame_enumListGet(&holder2), 0x20, 0);
+                startEnumObjects(holder2.get(), 0x20, 0);
                 for (s32 i = 0;
                      i < reinterpret_cast<CtrlEnumListSweep*>(
-                             CTaskGame_enumListGet(&holder2))
+                             holder2.get())
                              ->count;
                      i++) {
                     CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                        MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
+                        MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)holder2.get(), i)));
                     // Retail reloads the voice handle id from the handle each
                     // iteration (lwz r4, 0x74(r31) inside the loop body).
                     u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
@@ -1254,7 +1250,6 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                     }
                     bindIndexedEffect(0xBC, arg);
                 }
-                __dt__80043E88(&holder2, -1);
             } else {
                 u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                 ? lbl_eu_80527F10[27]
@@ -1263,21 +1258,20 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                 if ((mf3 & mask3) != 0) {
                     // Menu-state block 3: zero every accessor's combo word and set
                     // the 0x10 state bit, then re-arm the voice chain.
-                    CfEnumListHolder holder3;
                     bool flag3 = false;
-                    CTaskGame_enumListCtor(&holder3);
+                    CfEnumListHolder holder3;
                     CtrlEnumListSweep* list3 =
-                        reinterpret_cast<CtrlEnumListSweep*>(CTaskGame_enumListGet(&holder3));
+                        reinterpret_cast<CtrlEnumListSweep*>(holder3.get());
                     list3->count = 0;
                     list3->mField3030 = 0;
-                    startEnumObjects(CTaskGame_enumListGet(&holder3), 0x20, 0);
+                    startEnumObjects(holder3.get(), 0x20, 0);
                     for (s32 i = 0;
                          i < reinterpret_cast<CtrlEnumListSweep*>(
-                                 CTaskGame_enumListGet(&holder3))
+                                 holder3.get())
                                  ->count;
                          i++) {
                         CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                            MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
+                            MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)holder3.get(), i)));
                         acc->mField3E98 = 0;
                         flag3 = true;
                         acc->mField3388 |= 0x10;
@@ -1291,7 +1285,6 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                         }
                         bindIndexedEffect(0xBC, arg);
                     }
-                    __dt__80043E88(&holder3, -1);
                 }
             }
         }

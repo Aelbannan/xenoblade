@@ -640,11 +640,10 @@ extern "C" int CtrlPad_QueryMoveBase(cf::CtrlPc* self, ml::CVec3* dst, u8* flagO
 // Float-fed move delegate (retail CtrlPad_Delegate899C0): loads the sdata2 constant
 // into f1 and tail-calls cachedMoveReq on the embedded CCtrlMovePC (+0x8C).
 // (Pre-clobber stub family name: delegateTo899C0.)
-extern const f32 lbl_eu_80666728;
 extern "C" void cachedMoveReq(void* self, float value);
 extern "C" int moveBaseRoute();
 extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
-    float c = lbl_eu_80666728;
+    float c = 30.0f;
     typedef void (*Fn)(void*, float);
     ((Fn)cachedMoveReq)(&self->mSubObj8C, c);
 }

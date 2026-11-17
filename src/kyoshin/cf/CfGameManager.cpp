@@ -9,6 +9,7 @@
 #undef __ct__Q22cf17UnkClass_8018EF3CFv
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/cf/CfPadTask.hpp"
+#include "kyoshin/cf/CfTaskMain.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -225,14 +226,12 @@ struct Unk407C8Color {
 };
 extern "C" Unk407C8Color* CTaskGame_setVec4(Unk407C8Color* self, float f1, float f2,
                                         float f3, float f4);
-extern const float lbl_eu_80666560;
 
 // data globals referenced by the target bodies (defined in other TUs)
 extern u16 lbl_eu_80663E46;
 extern u8 lbl_eu_80663E35;
 extern u16 lbl_eu_806642E0;
 extern u8 lbl_eu_80663DFC;
-extern const float lbl_eu_806664A4;
 extern float lbl_eu_80663E54;
 extern u16 lbl_eu_80663E36;
 extern u16 lbl_eu_80663E38;
@@ -353,8 +352,6 @@ void MenuSnd_StopSlot1_9424(float value);
 
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern void setMasterVolume(float value, float fadeTime);
-extern const float lbl_eu_8066650C;
-extern const float lbl_eu_80666510;
 extern const float lbl_eu_80666548;
 
 // func_80085978 imports.
@@ -1246,8 +1243,8 @@ void cf::CfGameManager::resetCameraIfCurrentView() {
 }
 
 void cf::CfGameManager::fadeOutGameEffects() {
-    setMasterVolume(lbl_eu_8066650C, lbl_eu_8066649C);
-    MenuSnd_SetMasterAndPush_9510(lbl_eu_80666510);
+    setMasterVolume(0.65f, lbl_eu_8066649C);
+    MenuSnd_SetMasterAndPush_9510(0.7f);
     MenuSnd_SetSeVolPush_95F4(lbl_eu_8066649C);
 }
 
@@ -1796,7 +1793,7 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     CProcess* gameRoot = GetRootProcGame__12CTaskManagerFv();
     lbl_eu_80663E18 = __ct__Q22cf5CfResFv(gameRoot, scene);
     gameRoot = GetRootProcGame__12CTaskManagerFv();
-    lbl_eu_80663E1C = __ct__800697E8(gameRoot, scene);
+    lbl_eu_80663E1C = cf::CfTaskMain::create(gameRoot, reinterpret_cast<CScn*>(scene));
     KyoshinHeap_Init();
     NpcMove_ClearRowBmp();
     gmCallInit1120();
@@ -2035,7 +2032,7 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                                      area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
-                    lbl_eu_80663E68 = lbl_eu_806664A4;
+                    lbl_eu_80663E68 = 60.0f;
                 }
             } else {
                 BdatTextEntry* entry = &lbl_eu_80571658[0];
@@ -2060,7 +2057,7 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                                      area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
-                    lbl_eu_80663E68 = lbl_eu_806664A4;
+                    lbl_eu_80663E68 = 60.0f;
                 }
             }
             if (updated != 0) {
@@ -3012,7 +3009,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
 
     // Fade-factor bookkeeping: zero the halfword mirrors, compare the incoming
     // factor against the shared threshold and stash it in the manager.
-    float threshold = lbl_eu_80666560;
+    float threshold = 360.0f;
     lbl_eu_80663E48[0] = 0;
     lbl_eu_80663E4C[0] = 0;
     struct Mgr24View {

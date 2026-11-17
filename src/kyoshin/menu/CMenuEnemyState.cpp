@@ -1,4 +1,86 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+
+// Unit-private imports (retail symbol names - keep linkage/signatures verbatim)
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* MapFx_ResolveOwner(void* r3);
+// Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
+extern "C" u32 CUICfManager_getPackedFontD8();
+// 4-short colour pairs read off a pane (unmangled retail symbol).
+extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
+extern "C" void* CUICfManager_getArcResourceAccessor();
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
+// Layout sound effect helper (retail symbol is unmangled).
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout* layout, const char* name,
+                              u32 value);
+// Apply a loaded texture to a pane (retail symbol is unmangled).
+extern "C" void PaneSetTexPalette(void* a, void* palette);
+// Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
+// declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
+// later plain redeclaration inherit it (same signature).
+extern "C" char* MakeTplNameSysFile(u32 id);
+// Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
+// (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
+extern "C" void* findObjB28ById(s32 a);
+// Unprototyped-style import shared by two callers in this TU.
+extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
+extern "C" int ScMain_GetSummedInt(void* self);
+extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
+extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
+extern "C" char* GetBdatNameByNumId(const char* s);
+extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
+extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
+extern "C" void* lookupCA0By45C0(void);
+int sprintf(char*, const char*, ...);
+// Retail linker name is the already-mangled C++ symbol.
+extern "C" void* getEffOwner____FPv(void* obj);
+void* getEffOwner(void* obj);
+
+// CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
+// (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
+// String pool base (EneSt_ScalePaneWidths pane names at +0xd3/+0xdd/+0x11d).
+extern char lbl_eu_804FDBF8[];
+// sdata2 constants used by the panel-highlight helpers.
+extern const f32 lbl_eu_80667008;
+extern const f32 lbl_eu_8066703C;
+extern const f32 lbl_eu_80667040;
+extern const f32 lbl_eu_80667044;
+extern const f32 lbl_eu_80667048;
+extern const f32 lbl_eu_8066704C;
+extern const f32 lbl_eu_80667050;
+extern const f32 lbl_eu_80667054;
+extern const f32 lbl_eu_80667038;
+// Enemy-data table pointer (sdata) used by the highlight-scan helpers.
+extern u8* lbl_eu_806640E0;
+// Texture-index table for the panel-highlight search (EneSt_SearchHighlightTexture).
+extern u32 lbl_eu_804FDBC8[];
+// sdata colour/scale quads + s16 pairs used by EneSt_RegisterPanel's pane setup.
+// Declared as 4-element s16 arrays so direct element access keeps the retail
+// sda21 addressing (li lbl@sda21 + halfword ops).
+extern s16 lbl_eu_80663F58[];
+extern u32 lbl_eu_80663F5C;
+extern s16 lbl_eu_80663F60[];
+extern u32 lbl_eu_80663F64;
+extern s16 lbl_eu_80663F68[];
+extern s16 lbl_eu_80663F70[];
+extern s16 lbl_eu_80663F78[];
+extern s16 lbl_eu_80663F80[];
+extern s16 lbl_eu_80663F88[];
+extern s16 lbl_eu_80663F90[];
+extern u32 lbl_eu_806640CC;
+// sdata2 constants used by the position-marker helpers.
+extern const f32 lbl_eu_80666FF0;
+extern const f32 lbl_eu_80666FF4;
+extern const f32 lbl_eu_80666FF8;
+extern const f32 lbl_eu_80666FFC;
+extern const f32 lbl_eu_80667000;
+extern const f32 lbl_eu_80667018;
+extern const f32 lbl_eu_8066701C;
+extern const f32 lbl_eu_80667020;
+extern const f32 lbl_eu_80667024;
+extern const f32 lbl_eu_80667028;
+
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
@@ -75,25 +157,6 @@ char lbl_eu_804FDBF8[0x2A0] =
 // Forward views: the .data RTTI area (defined at file end) plus sibling-TU
 // sdata locators and CfRes's "." separator -- UNDEF here, addresses only,
 // zero bytes in-file. (80661A40 is CfRes's char[8]; a const-char view here.)
-extern const void* lbl_eu_8052C4F8[];
-extern const void* lbl_eu_80661958[];
-extern const void* lbl_eu_80661950[];
-extern const void* lbl_eu_80661948[];
-extern const void* lbl_eu_80661DE8[];
-extern const void* lbl_eu_80661DE0[];
-extern const char lbl_eu_80661A40[];
-// The typeinfo object is declared inside a namespace: at global scope MWCC
-// 10322 ("illegal name overloading") rejects the __RTTI__* spelling under
-// -ipa file. extern "C" names are not mangled, so the table below still
-// references __RTTI__10IWorkEvent exactly (the same workaround as CView.cpp).
-namespace RTTIExterns {
-extern "C" const void* __RTTI__10IWorkEvent[];
-}
-// .sdata 0x10: RTTI typeinfo pairs.
-__declspec(section ".sdata") __attribute__((aligned(8), used))
-const void* lbl_eu_80661E28[2] = { lbl_eu_804FDBD8, lbl_eu_8052C4F8 };
-__declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661E30[2] = { lbl_eu_804FDBE8, 0 };
 // .sdata2 0x88: menu constants in retail order. Aggregate (not scalars):
 // MWCC -ipa file folds scalar consts into code (CfObjectModel precedent).
 // The trailing doubles stay compiler-pooled (as today: pool @0x88). Hpp keeps
@@ -123,7 +186,7 @@ f32 lbl_eu_80573A60[4];
 // .sbss 0x50: menu state (retail sizes; the u16 gaps at 5A/5E/62/66 ride
 // inside the s16[4] overlays, so 63F5C/64 stay UNDEF decls; 63F54 and the
 // 63F98 tail are unnamed).
-u32 lbl_eu_80663F50;
+CMenuEnemyState* CMenuEnemyState::sInstance;
 __attribute__((used))
 static u32 s_MESSbssPad54;
 s16 lbl_eu_80663F58[4];
@@ -323,178 +386,15 @@ struct AnimTransformOverlay {
 // cbRenderBefore above.
 // Batch 2026-07-14k: menu-enemy-ctor owns __ct__CMenuEnemyState exclusively.
 
-struct CMenuEnemyCtorProcess {
-    u8 unk00[0x10];
-    void* vtable; // 0x10
-    u8 unk14[0x28];
-    u32 callbacks[6]; // 0x3C / 0x48 PTMF blocks
-};
-
-extern "C" {
-char lbl_eu_8052BF70[];
-extern u32 __ptmf_null[3];
-void __ct__8CProcessFv(CProcess*);
-void __ct__17UnkClass_8045F564Fv(void*);
-void __dt__17UnkClass_8045F564Fv(void*, s16);
-
-extern const f32 lbl_eu_80666FEC;
-extern const f32 lbl_eu_80667004;
-}
-extern void* lbl_eu_8052C438[];
-extern void* lbl_eu_8052C534[];
 
 
-CMenuEnemyState::CMenuEnemyState(void* scn) {
-    // NV decl order targets retail homes: r31=this, r30=zero, r29=scn.
-    u32 zero;
-    CMenuEnemyCtorProcess* process;
-    u8* ptmfBase;
-    char* vtFinal;
-    u32 ptmfWord1;
-    u32 ptmfWord0;
-    u32 ptmfWord2;
-    MenuEnemyPanel* panel;
-    f32 panelMarker;
-    u8 one;
-    u8 tmp[0x48];
-    u32 copy;
-
-    process = reinterpret_cast<CMenuEnemyCtorProcess*>(this);
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-    ptmfBase = reinterpret_cast<u8*>(__ptmf_null);
-    process->vtable = lbl_eu_8052BF70;
-    ptmfWord1 = *reinterpret_cast<u32*>(ptmfBase + 4);
-    vtFinal = (char*)lbl_eu_8052C438;
-    ptmfWord0 = *reinterpret_cast<u32*>(ptmfBase + 0);
-    process->callbacks[1] = ptmfWord1;
-    process->callbacks[0] = ptmfWord0;
-    ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
-    process->callbacks[2] = ptmfWord2;
-    ptmfWord0 = *reinterpret_cast<u32*>(ptmfBase + 0);
-    ptmfWord1 = *reinterpret_cast<u32*>(ptmfBase + 4);
-    process->callbacks[4] = ptmfWord1;
-    process->callbacks[3] = ptmfWord0;
-    ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
-    process->callbacks[5] = ptmfWord2;
-    zero = 0;
-    unk54 = 0;
-    unk55 = 0;
-    process->vtable = vtFinal;
-    vtPtr1 = vtFinal + 0x24;
-    vtPtr2 = vtFinal + 0xac;
-    unk60 = scn;
-
-    __ct__17UnkClass_8045F564Fv(unk64);
-
-    unk74 = NULL;
-    // Retail hoists the loop bound (&panels[24]) into a temp and keeps the
-    // unk29 constant in a register for the whole loop (r3); defining `one`
-    // before the panel pointer pins that color order.
-    one = 1;
-    panel = panels;
-    panelMarker = lbl_eu_80666FEC;
-    unk78 = NULL;
-    field7C = zero;
-    field80 = zero;
-    field84 = zero;
-    field88 = zero;
-    field8C = zero;
-    field90 = zero;
-    field94 = zero;
-    field98 = zero;
-    field9C = zero;
-    fieldA0 = zero;
-
-    // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
-    // panelEnd/one r0/r3 Chaitin soft-cap - keep iterating in high-level C.
-    do {
-        panel->actorId = zero;
-        panel->layout1 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panel->unk08 = zero;
-        panel->layout2 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panel->unk10 = zero;
-        panel->drawLayout0Flag = 0;
-        panel->visible = 0;
-        panel->animMarker = panelMarker;
-        panel->unk1C = 0;
-        panel->unk1D = 0;
-        panel->unk1E = 0;
-        panel->unk1F = 0;
-        panel->unk20 = 0;
-        panel->unk21 = 0;
-        panel->unk22 = 0;
-        panel->unk24 = zero;
-        panel->panelType = 0;
-        panel->unk29 = one;
-        panel->obj1 = reinterpret_cast<void*>(zero);
-        panel->obj2 = reinterpret_cast<void*>(zero);
-        panel->obj3 = reinterpret_cast<void*>(zero);
-        panel->unk38 = zero;
-        panel->unk3C = zero;
-        panel->unk40 = zero;
-        panel->unk44 = zero;
-        panel->unk48 = zero;
-        panel++;
-    } while (panel < &panels[24]);
-
-    zero = 0;
-    field7C4 = 0;
-    field7C8 = panelMarker;
-    field7CC = panelMarker;
-    field7D0 = panelMarker;
-    field7D4 = zero;
-    field7D8 = panelMarker;
-    field7DC = zero;
-    field7E0 = zero;
-
-    __ct__15CPcSelectCursorFv(&selectCursor);
-
-    field82C = zero;
-    unk830 = zero;
-    unk834 = 0;
-    unk838 = lbl_eu_80667004;
-
-    __ct__15CPcSelectCursorFv(tmp);
-    {
-        CPcSelectCursorLayout* tmpSel = reinterpret_cast<CPcSelectCursorLayout*>(tmp);
-        copy = tmpSel->field04;
-        selectCursor.field04 = copy;
-        copy = tmpSel->field08;
-        selectCursor.field08 = copy;
-        copy = tmpSel->field0C;
-        selectCursor.field0C = copy;
-        copy = tmpSel->field10;
-        selectCursor.field10 = copy;
-        copy = tmpSel->field14;
-        selectCursor.field14 = copy;
-        copy = tmpSel->field18;
-        selectCursor.field18 = copy;
-        copy = reinterpret_cast<u32>(tmpSel->layout1C);
-        selectCursor.layout1C = reinterpret_cast<nw4r::lyt::Layout*>(copy);
-        copy = reinterpret_cast<u32>(tmpSel->anim20);
-        selectCursor.anim20 = reinterpret_cast<nw4r::lyt::AnimTransform*>(copy);
-        copy = reinterpret_cast<u32>(tmpSel->anim24);
-        selectCursor.anim24 = reinterpret_cast<nw4r::lyt::AnimTransform*>(copy);
-        copy = tmpSel->field28;
-        selectCursor.field28 = copy;
-        copy = tmpSel->field2C;
-        selectCursor.field2C = copy;
-        copy = tmpSel->field30;
-        selectCursor.field30 = copy;
-        copy = tmpSel->field34;
-        selectCursor.field34 = copy;
-        copy = tmpSel->field38;
-        selectCursor.field38 = copy;
-        copy = tmpSel->field3C;
-        selectCursor.field3C = copy;
-        selectCursor.byte40 = tmpSel->byte40;
-        selectCursor.byte41 = tmpSel->byte41;
-        copy = tmpSel->field44;
-        selectCursor.field44 = copy;
-    }
-    __dt__17UnkClass_8045F564Fv(tmp + 0x08, -1);
-
-    return;
+CMenuEnemyState::CMenuEnemyState(CScn* scn)
+    : unk60(scn), unk74(NULL), unk78(NULL), field7C(0), field80(0), field84(0),
+      field88(0), field8C(0), field90(0), field94(0), field98(0), field9C(0),
+      fieldA0(0), field7C4(0), field7C8(lbl_eu_80666FEC), field7CC(lbl_eu_80666FEC),
+      field7D0(lbl_eu_80666FEC), field7D4(0), field7D8(lbl_eu_80666FEC), field7DC(0),
+      field7E0(0), field82C(0), unk830(0), unk834(0), unk838(lbl_eu_80667004) {
+    selectCursor = CPcSelectCursor();
 }
 
 // ---------------------------------------------------------------------------
@@ -506,16 +406,6 @@ CMenuEnemyState::CMenuEnemyState(void* scn) {
 // the virtual dtor automatically.
 // ---------------------------------------------------------------------------
 CMenuEnemyState::~CMenuEnemyState() {
-    reinterpret_cast<CPcSelectCursor*>(&selectCursor)->~CPcSelectCursor();
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->~UnkClass_8045F564();
-    // Double null-guard reproduces the retail `cmpwi r30,0; beq; beq` before
-    // the base-dtor call (MWCC emits both guards against the one test); the
-    // explicit call passes flags 0 (base subobjects are never deleted).
-    if (this != 0) {
-        if (this != 0) {
-            __dt__8CProcessFv(this, 0);
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -527,7 +417,7 @@ CMenuEnemyState::~CMenuEnemyState() {
 // emitted anywhere.
 // ---------------------------------------------------------------------------
 CPcSelectCursor::CPcSelectCursor()
-    : field00((u32)lbl_eu_8052C534), field04(0), mem08() {
+    : field04(0), mem08() {
     field18 = 0;
     layout1C = NULL;
     anim20 = NULL;
@@ -611,14 +501,12 @@ extern const f64 lbl_eu_80667030; // damage-text double bias
 extern "C" void* MapFx_ResolveOwner(void* obj);
 // sdata2 member aliases (after the last local decl, before later uses).
 #define lbl_eu_80666FE8 (sdata2_MESPool.fE8)
-#define lbl_eu_80666FEC (sdata2_MESPool.fEC)
 #define lbl_eu_80666FF0 (sdata2_MESPool.fF0)
 #define lbl_eu_80666FF4 (sdata2_MESPool.fF4)
 #define lbl_eu_80666FF8 (sdata2_MESPool.fF8)
 #define lbl_eu_80666FFC (sdata2_MESPool.fFC)
 #define lbl_eu_80667000 (sdata2_MESPool.f00)
 #define lbl_eu_80667004 (sdata2_MESPool.f04)
-#define lbl_eu_80667008 (sdata2_MESPool.f08)
 #define lbl_eu_8066700C (sdata2_MESPool.f0C)
 #define lbl_eu_80667010 (sdata2_MESPool.f10)
 #define lbl_eu_80667014 (sdata2_MESPool.f14)
@@ -1201,7 +1089,7 @@ void CMenuEnemyState::Move() {
     }
 
     if (selectCursor.field44 != 0) {
-        ((CPcSelectCursorLayout*)(&selectCursor))->EneSt_CursorUpdate();
+        selectCursor.EneSt_CursorUpdate();
     }
 
     selectCursor.layout1C->Animate(0);
@@ -1276,7 +1164,7 @@ u8 EneSt_CursorGetFlag(CPcSelectCursor* self) {
 // EneSt_CursorSet41: stb + b EneSt_CursorUpdate).
 void EneSt_CursorSet41(CPcSelectCursor* self, u8 val) {
     self->byte41 = val;
-    return ((CPcSelectCursorLayout*)self)->EneSt_CursorUpdate();
+    return self->EneSt_CursorUpdate();
 }
 
 // EneSt_CursorToState4 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
@@ -1337,60 +1225,31 @@ void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     panel->layout1->Animate(0);
 }
 
-// Vtable adjustor thunks: retail "this" lands at the +0x5C subobject; back it
-// off to the CMenuEnemyState base and forward (subi r3,r3,0x5c; b <fn>).
-void EneSt_ThunkRenderBefore(void* self) {
-    reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x5c)->cbRenderBefore();
-}
-
-void EneSt_ThunkRenderDtor(void* self) {
-    // r4 (delete flag) passes through untouched, so call through a 1-arg
-    // pointer view.
-    typedef void* (*DtorFn)(CMenuEnemyState*);
-    ((DtorFn)__dt__15CMenuEnemyStateFv)(reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x5c));
-}
-
-// Vtable dtor thunk for the +0x58 subobject (retail func_801135C8):
-// subi r3,r3,0x58; b __dt__15CMenuEnemyStateFv (r4 passes through).
-void EneSt_DtorThunk58(void* self) {
-    typedef void* (*DtorFn)(CMenuEnemyState*);
-    ((DtorFn)__dt__15CMenuEnemyStateFv)(reinterpret_cast<CMenuEnemyState*>(reinterpret_cast<char*>(self) - 0x58));
-}
-
-// retail: lwz r3, lbl_eu_80663F50; blr
-extern "C" u32 EneSt_GetSingleton() { return (u32)lbl_eu_80663F50; }
+// retail: lwz r3, CMenuEnemyState::sInstance; blr
+extern "C" u32 EneSt_GetSingleton() { return (u32)CMenuEnemyState::sInstance; }
 
 // CMenuEnemyState +0x54 marker (retail bare EneSt_MarkUnk54).
 void EneSt_MarkUnk54(CMenuEnemyState* self) {
-    self->unk54 = 1;
+    self->mField54 = 1;
 }
 
-// EneSt_Create (us-801114b4): create-or-reuse the CMenuEnemyState singleton.
-// When it does not exist yet and the shared arc accessor is available,
-// allocate the object from the work heap, construct it with the scene,
-// register it under the parent process and stash it in lbl_eu_80663F50. If it
-// already exists, forward (existing, arg3) to EneSt_RegisterPanel. Returns the
-// singleton (or 0 when the accessor was missing).
-void* EneSt_Create(void* parent, u32 scn, void* arg3) {
-    if (lbl_eu_80663F50 == 0) {
+// Create-or-reuse the singleton. When it does not exist yet and the shared arc
+// accessor is available, allocate it from the work heap, construct it with the
+// scene and register it under the parent process. If it already exists,
+// forward (existing, arg3) to EneSt_RegisterPanel. Returns the singleton (or 0
+// when the accessor was missing).
+CMenuEnemyState* CMenuEnemyState::create(CProcess* parent, CScn* scene, void* arg3) {
+    if (sInstance == NULL) {
         if (CUICfManager_getArcResourceAccessor() == 0) {
-            return 0;
+            return NULL;
         }
-        CMenuEnemyState* p = (CMenuEnemyState*)mtl::MemManager::allocate(
-            0x83c, CWorkThreadSystem::getWorkMem());
-        if (p != 0) {
-            // The ctor returns `this`, so reassigning keeps p in r3 across the
-            // call (retail saves no extra register for it).
-            p = (CMenuEnemyState*)__ct__CMenuEnemyState(p, (void*)scn);
-        }
-        lbl_eu_80663F50 = (u32)p;
-        reinterpret_cast<CProcess*>(p)->Regist(
-            reinterpret_cast<CProcess*>(parent), false);
+        CMenuEnemyState* menu = new (CWorkThreadSystem::getWorkMem()) CMenuEnemyState(scene);
+        sInstance = menu;
+        menu->Regist(parent, false);
     } else {
-        EneSt_RegisterPanel(reinterpret_cast<CMenuEnemyState*>(lbl_eu_80663F50),
-                      reinterpret_cast<u32>(arg3));
+        EneSt_RegisterPanel(sInstance, reinterpret_cast<u32>(arg3));
     }
-    return (void*)lbl_eu_80663F50;
+    return sInstance;
 }
 
 // EneSt_RegisterPanel (us-80111554): register a new enemy indicator panel. Scans
@@ -1903,7 +1762,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
 // (findObjB28ById table entry by byte41, subobject at +0x3E9C): the cursor is
 // projected with the scene pose and its Y only moves downward toward the
 // enemy's live position.
-void CPcSelectCursorLayout::EneSt_CursorUpdate() {
+void CPcSelectCursor::EneSt_CursorUpdate() {
     // Retail reloads every pane field from the object (no pane locals).
     reinterpret_cast<ObjBBFlag*>(this->field28)->flagBB &= 0xFE;
     reinterpret_cast<ObjBBFlag*>(this->field34)->flagBB &= 0xFE;
@@ -2796,14 +2655,13 @@ void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* ac
 void CMenuEnemyState::Init() {
     // Scratch region for all menu layouts (freed by the RAII guard). Retail
     // re-derives this+0x64 at every use - no cached region pointer.
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->createRegion(
+    mem64.createRegion(
         mtl::MemManager::getHandleMEM2(), 0x3EC00, &lbl_eu_804FDBF8[0xa8], 0);
-    Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(unk64));
+    Class_8045F858 regionGuard(&mem64);
 
     // Loop-invariant values hoisted by retail before the loop (f30/f31 +
     // r21-r24): the anim marker, the marker y value, zero, one and the two
     // pane sound/colour constants.
-    f32 animMarker = lbl_eu_80666FEC;
     f32 markerY = lbl_eu_80667008;
     u32 zero = 0;
     u8 one = 1;
@@ -2813,65 +2671,7 @@ void CMenuEnemyState::Init() {
     for (u8 i = 0; i < 24; i++) {
         MenuEnemyPanel* panel = &panels[i];
         nw4r::lyt::Layout** pLayout1 = &panel->layout1;
-        // Volatile template copy: retail writes the same constant values to a
-        // dead stack panelData after the entry stores (3 hoisted into the
-        // index-computation latency, the rest after). volatile stops MWCC
-        // dead-store-eliminating the stack copy.
-        volatile MenuEnemyPanel panelData;
-
-        panel->actorId = zero;
-        panel->layout1 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panel->unk08 = zero;
-        panel->layout2 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panel->unk10 = zero;
-        panel->drawLayout0Flag = zero;
-        panel->visible = zero;
-        panel->animMarker = animMarker;
-        panel->unk1C = zero;
-        panel->unk1D = zero;
-        panel->unk1E = zero;
-        panel->unk1F = zero;
-        panel->unk20 = zero;
-        panel->unk21 = zero;
-        panel->unk22 = zero;
-        panel->unk24 = zero;
-        panel->panelType = zero;
-        panel->unk29 = one;
-        panel->obj1 = reinterpret_cast<void*>(zero);
-        panel->obj2 = reinterpret_cast<void*>(zero);
-        panel->obj3 = reinterpret_cast<void*>(zero);
-        panel->unk38 = zero;
-        panel->unk3C = zero;
-        panel->unk40 = zero;
-        panel->unk44 = zero;
-        panel->unk48 = zero;
-
-        panelData.actorId = zero;
-        panelData.layout1 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panelData.unk08 = zero;
-        panelData.layout2 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
-        panelData.unk10 = zero;
-        panelData.drawLayout0Flag = zero;
-        panelData.visible = zero;
-        panelData.animMarker = animMarker;
-        panelData.unk1C = zero;
-        panelData.unk1D = zero;
-        panelData.unk1E = zero;
-        panelData.unk1F = zero;
-        panelData.unk20 = zero;
-        panelData.unk21 = zero;
-        panelData.unk22 = zero;
-        panelData.unk24 = zero;
-        panelData.panelType = zero;
-        panelData.unk29 = one;
-        panelData.obj1 = reinterpret_cast<void*>(zero);
-        panelData.obj2 = reinterpret_cast<void*>(zero);
-        panelData.obj3 = reinterpret_cast<void*>(zero);
-        panelData.unk38 = zero;
-        panelData.unk3C = zero;
-        panelData.unk40 = zero;
-        panelData.unk44 = zero;
-        panelData.unk48 = zero;
+        *panel = MenuEnemyPanel();
 
         // ---- layout1 arc + panes ----
         buildLayout(pLayout1,
@@ -3024,15 +2824,9 @@ void CMenuEnemyState::Init() {
 
     field7C4 = 1;
 
-    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x5c
-    // for the IScnRender subobject passed to addRenderCB.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&vtPtr2);
-    }
-    reinterpret_cast<CScn*>(unk60)->addRenderCB(render, 8, 0);
+    reinterpret_cast<CScn*>(unk60)->addRenderCB(this, 8, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->validateHeap();
+    mem64.validateHeap();
 }
 
 // ---------------------------------------------------------------------------
@@ -3044,13 +2838,7 @@ void CMenuEnemyState::Init() {
 void CMenuEnemyState::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x5c
-    // for the IScnRender subobject passed to removeRenderCB.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&vtPtr2);
-    }
-    reinterpret_cast<CScn*>(unk60)->removeRenderCB(render);
+    reinterpret_cast<CScn*>(unk60)->removeRenderCB(this);
 
     for (u8 i = 0; i < 24; i++) {
         MenuEnemyPanel& p = panels[i];
@@ -3075,126 +2863,11 @@ void CMenuEnemyState::Term() {
         selectCursor.layout1C = 0;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&selectCursor.field08)->deleteRegion();
-    reinterpret_cast<UnkClass_8045F564*>(unk64)->deleteRegion();
-    lbl_eu_80663F50 = 0;
+    selectCursor.mem08.deleteRegion();
+    mem64.deleteRegion();
+    CMenuEnemyState::sInstance = 0;
 }
 
-// Typified .data (file end: every referenced symbol above is visible).
-// Address-taken extern "C" decls for member-defined slots (global scope never
-// collides with the class scope; ResObjImpl dtor precedent).
-// (destructor uses the hpp extern "C" decl.)
-// Address-taken extern "C" decls for member-defined slots (global scope never
-// collides with the class scope; signatures carry a dummy int so they cannot
-// be confused with the members -- a same-signature same-TU extern "C" decl
-// of a class member is MWCC 10322 poison (CNBanner pattern). Address-taken
-// only; the linker merges them onto the member definitions by name.
-extern "C" void Init__15CMenuEnemyStateFv(int);
-extern "C" void Term__15CMenuEnemyStateFv(int);
-extern "C" void Move__15CMenuEnemyStateFv(int);
-extern "C" void cbRenderBefore__15CMenuEnemyStateFv(int);
-// (EneSt_DtorThunk58's C++ definition above serves as the address-taken
-// decl for the vtable below; no extern "C" decl (linkage clash).
-extern "C" void Reset__14CChildListNodeFv();
-extern "C" void Tail__8CProcessFv();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-
-// IWorkEvent tail with sub-object offsets). The inherited CTTask<IUICf>::Draw
-// slot (0x20) has no C++ spelling; it stays a zero placeholder (retail
-// carries Draw__14CTTask<5IUICf>Fv there; reloc names are gate-ignored).
-__declspec(section ".data") __attribute__((aligned(8), used))
-void* lbl_eu_8052C438[48] = {
-    (void*)lbl_eu_80661E28,
-    0,
-    (void*)__dt__15CMenuEnemyStateFv,
-    (void*)Reset__14CChildListNodeFv,
-    (void*)Init__15CMenuEnemyStateFv,
-    (void*)Term__15CMenuEnemyStateFv,
-    (void*)Move__15CMenuEnemyStateFv,
-    0,
-    (void*)Tail__8CProcessFv,
-    (void*)lbl_eu_80661E28,
-    (void*)0xFFFFFFA8,
-    (void*)EneSt_DtorThunk58,
-    (void*)WorkEvent1__10IWorkEventFPvPCc,
-    (void*)OnFileEvent__10IWorkEventFP10CEventFile,
-    (void*)WorkEvent3__10IWorkEventFPv,
-    (void*)WorkEvent4__10IWorkEventFv,
-    (void*)OnPauseTrigger__10IWorkEventFb,
-    (void*)WorkEvent6__10IWorkEventFv,
-    (void*)WorkEvent7__10IWorkEventFv,
-    (void*)WorkEvent8__10IWorkEventFv,
-    (void*)WorkEvent9__10IWorkEventFv,
-    (void*)WorkEvent10__10IWorkEventFv,
-    (void*)WorkEvent11__10IWorkEventFv,
-    (void*)WorkEvent12__10IWorkEventFv,
-    (void*)WorkEvent13__10IWorkEventFv,
-    (void*)WorkEvent14__10IWorkEventFv,
-    (void*)WorkEvent15__10IWorkEventFv,
-    (void*)WorkEvent16__10IWorkEventFv,
-    (void*)WorkEvent17__10IWorkEventFv,
-    (void*)WorkEvent18__10IWorkEventFv,
-    (void*)WorkEvent19__10IWorkEventFv,
-    (void*)WorkEvent20__10IWorkEventFv,
-    (void*)WorkEvent21__10IWorkEventFv,
-    (void*)WorkEvent22__10IWorkEventFv,
-    (void*)WorkEvent23__10IWorkEventFv,
-    (void*)WorkEvent24__10IWorkEventFv,
-    (void*)WorkEvent25__10IWorkEventFv,
-    (void*)WorkEvent26__10IWorkEventFv,
-    (void*)WorkEvent27__10IWorkEventFv,
-    (void*)WorkEvent28__10IWorkEventFv,
-    (void*)WorkEvent29__10IWorkEventFv,
-    (void*)WorkEvent30__10IWorkEventFv,
-    (void*)WorkEvent31__10IWorkEventFv,
-    (void*)lbl_eu_80661E28,
-    (void*)0xFFFFFFA4,
-    (void*)EneSt_ThunkRenderDtor,
-    (void*)EneSt_ThunkRenderBefore,
-    (void*)cbRenderBefore__15CMenuEnemyStateFv,
-};
-// .data 0x3C: RTTI descriptor (sdata locators + small offsets).
-__declspec(section ".data") __attribute__((aligned(8), used))
-const void* lbl_eu_8052C4F8[15] = {
-    lbl_eu_80661A40, (const void*)0x5C, RTTIExterns::__RTTI__10IWorkEvent, (const void*)0x58,
-    lbl_eu_80661958, 0, lbl_eu_80661950, 0, lbl_eu_80661948, 0,
-    lbl_eu_80661DE8, 0, lbl_eu_80661DE0, 0, 0,
-};
-// .data 0x0C: CPcSelectCursor mini-vtable. (Dtor slot: a global-class member
-// dtor cannot take an extern "C" address decl without overloading it, so
-// this slot stays a zero placeholder like the Draw slot above.)
-__declspec(section ".data") __attribute__((aligned(8), used))
-void* lbl_eu_8052C534[3] = { (void*)lbl_eu_80661E30, 0, 0, };
 
 // --- restored from git history (base:gone); do not expand beyond these functions ---
 // from commit 6d2ef546718a needle=sinit_801134E8

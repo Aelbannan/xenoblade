@@ -352,11 +352,11 @@ extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" __declspec(align(4)) const char lbl_eu_805246FC[0xC] = {
     0x43,0x50,0x61,0x63,0x6B,0x49,0x74,0x65,0x6D,0x00,0x00,0x00,
 };
-extern "C" u32 lbl_eu_80663BF8[2] = { (u32)&lbl_eu_805246FC, 0 };
+extern "C" u32 __RTTI__9CPackItem[2] = { (u32)&lbl_eu_805246FC, 0 };
 
 // [.data] 0x8056FF58-0x8056FFE0 (0x88): CPackItem vtable
 extern "C" u32 lbl_eu_8056FF58[34] = {
-    (u32)&lbl_eu_80663BF8, 0x00000000,
+    (u32)&__RTTI__9CPackItem, 0x00000000,
     (u32)&CPackItemBlob::__dt__9CPackItemFv,
     (u32)&CPackItemBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&CPackItemBlob::OnFileEvent__9CPackItemFP10CEventFile,

@@ -1,4 +1,5 @@
 #include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -250,6 +251,29 @@ void CUICfManager::Term() {
 // (try/catch forces -0x80 / mr r31,r1 / stw r1 epilogue). Leaf body order
 // matches retail text: 221 -> 312c -> 7fc -> 22 -> 609.
 #include "monolib/util/reslist.hpp"
+#include "kyoshin/menu/CMenuItem.hpp"
+#include "kyoshin/menu/CMenuPause.hpp"
+#include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/menu/CMenuGameClear.hpp"
+#include "kyoshin/menu/CMenuKizunaTalkList.hpp"
+#include "kyoshin/menu/CMenuPassiveSkill.hpp"
+#include "kyoshin/menu/CMenuSave.hpp"
+#include "kyoshin/menu/CMenuSkipTimer.hpp"
+#include "kyoshin/menu/CMenuTutorial.hpp"
+#include "kyoshin/menu/CMenuTutorialList.hpp"
+#include "kyoshin/menu/CMenuZeal.hpp"
+#include "kyoshin/menu/CMenuBattleMode.hpp"
+#include "kyoshin/menu/CMenuGCItem.hpp"
+#include "kyoshin/menu/CMenuKeyAssign.hpp"
+#include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/menu/CMenuLvUp.hpp"
+#include "kyoshin/menu/CMenuPlayAward.hpp"
+#include "kyoshin/menu/CMenuShopSell.hpp"
+#include "kyoshin/menu/CMenuSymbolMark.hpp"
+#include "kyoshin/menu/CMenuMapSelect.hpp"
+#include "kyoshin/menu/CMenuPTState.hpp"
+#include "kyoshin/menu/CMenuArtsSet.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
 extern "C" {
 int lbl_eu_80664050;
@@ -260,33 +284,21 @@ int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 u32 createOptionMenu(CUICfUnk144*, u32, u32);
 u32 CMenuGetItem_CreateVariant(CUICfUnk144*, u32, u32);
 u32 createQuestLogMenu(CUICfUnk144*, u32, u32);
-u32 CMenuTutorialList_Create(CUICfUnk144*, u32, u32);
-u32 __ct__CMenuItem(CUICfUnk144*, u32, u32, u32);
 // Additional menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers.
-u32 __ct__CMenuPause(CUICfUnk144*, u32);
 // 6-arg factory: (ctx, scene, a, b, y, x) - CUICfManager_queueFadeMenu forwards its two
 // dead int params as args 3/4 (retail materializes them in the prologue).
 u32 createFadeMenu(CUICfUnk144*, u32, u32, u32, f32, f32);
 u32 MapSelectSCCreate(CUICfUnk144*, u32);
 // Menu factories used by the CUICfManager_queueSkipTimerMenu-family queue helpers below.
 // Local flat decls (same caller-shape as the defining TUs' headers:
-// CMenuSkipTimer.hpp / CMenuShopSell.hpp / CMenuPTState.cpp /
+// CMenuSkipTimer.hpp / CMenuShopSell.hpp /
 // CMenuMakeCrystal.cpp); including those headers here would pull
 // conflicting flat decls into this TU.
-u32 SkipTimer_CreateInstance(u32, u32);
-u32 MenuShopSellCreateSingleton(u32, u32);
 u32 ShopBuy_CreateMenu(u32, u32, u32);
-void* __ct__CMenuPTState(u32, u32);
-u32 MakeCrystalCreate(CUICfUnk144*, u32);
-void* __ct__CMenuArtsSet(u32, u32);
 // Factories for the remaining queue helpers (CUICfManager_queueMapSelectMenu family); same
 // caller-shape as the defining TUs' flat decls.
-u32 __ct__CMenuMapSelect(CUICfUnk144*, u32);
 u32 KizunagramCreateSingleton(CUICfUnk144*, u32, u32);
 u32 CollepediaCreateSingleton(CUICfUnk144*, u32);
-u32 createPassiveSkillMenu(CUICfUnk144*, u32);
-u32 PlayAward_CreateMenu(CUICfUnk144*, u32);
-u32 KizunaList_Create(CUICfUnk144*, u32);
 // cpp-only imports: declared here rather than in the .hpp because other
 // headers declare these same flat symbols with different signatures
 // (SysWinGetSingleton: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; MenuTutorialCreate:
@@ -296,7 +308,6 @@ u32 KizunaList_Create(CUICfUnk144*, u32);
 // declaration would break TUs that co-include those headers.
 extern "C" {
 u32 SysWinGetSingleton();
-void* MenuTutorialCreate(void* self, u32 parent, u32 arg2);
 // Local complete type for Scn_QueryUnk80State's result (canonical name per
 // CfGameManager.hpp fwd-decl; layout matches CTaskGame.hpp's view exactly).
 struct CTaskGameCamView {
@@ -360,17 +371,14 @@ int __declspec(noinline) CUICfManager_isWorldMapBusy(CUICfManagerCreateView* sin
     return (c - v) < c;
 }
 // Additional menu factories (CMenuGCItem / CMenuGetItem / CMenuSave TUs).
-u32 __ct__CMenuGCItem(CUICfUnk144*, u32, u8);
 u32 CMenuGetItem_CreateSingle(CUICfUnk144*, u32, u16);
-u32 createSaveMenu(CUICfUnk144*, u32, u32, u32, u32);
 void UIWin_CreateQuestWin(int, int, int);
-void* CtrlObjectParam_GetCharEntry(u16);
+void* CtrlObjectParam_GetCharEntry(u32);
 // Same caller-shape as the decl in include/kyoshin/cf/CfGameManager.hpp
 // (defining TU: cf/CtrlObjectParam.cpp); declared here because including
 // CfGameManager.hpp pulls conflicting flat decls into this TU.
 void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32);
 u8 BdatGetU8Direct(u32, const char*, u32);
-u16 BdatGetU16ByTableKey(char*, char*, u16);
 void* lbl_eu_80573D18[];
 u8 lbl_eu_805000A8[];
 u16 lbl_eu_804FFFDC[];
@@ -647,23 +655,6 @@ u32 lbl_eu_80663E28;
 f32 lbl_eu_806672CC;
 
 
-void* __ct__CMenuKeyAssign(void*, u32);
-void* EneSt_Create(void*, u32, void*); // create menu; r5=0 or enum object*
-void* SymMark_Create(void*, u32);
-void* __ct__CMenuBattleMode(void*, u32);
-void* __ct__CMenuLvUp(void*, u32);
-void* __ct__CMenuGameClear(void*, u32); // game-clear screen factory (CMenuGameClear.cpp)
-
-// Opaque 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
-struct CUICfEnumListHolder {
-    void* list; // 0x0
-    u32 handle; // 0x4
-};
-
-void CTaskGame_enumListCtor(CUICfEnumListHolder*);
-void CTaskGame_enumListFill(CUICfEnumListHolder*, int, int); // holder init (r4=0x20, r5=0x800)
-void* CTaskGame_enumListGet(CUICfEnumListHolder*); // returns holder->list
-void __dt__80043E88(CUICfEnumListHolder*, s16);
 void startEnumObjects(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* Scn_FindCamItem(void* obj, int index);
@@ -687,7 +678,6 @@ void CUICfManager::Move() {
     volatile void** home10;
     volatile void** home0C;
     volatile void** home08;
-    CUICfEnumListHolder holder;
     f32 posA[3];
     f32 posB[3];
     f32 posC[3];
@@ -787,7 +777,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xfff7);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home18 = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
+        *home18 = CMenuKeyAssign::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home18 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -833,7 +823,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffef);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home14 = EneSt_Create(inst->unk144, inst->unk11C, NULL);
+        *home14 = CMenuEnemyState::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), NULL);
         if (*home14 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -879,7 +869,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffdf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home10 = SymMark_Create(inst->unk144, inst->unk11C);
+        *home10 = CMenuSymbolMark::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home10 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -925,7 +915,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffbf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home0C = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
+        *home0C = CMenuBattleMode::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home0C != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -971,7 +961,7 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xff7f);
         inst = (CUICfManager*)lbl_eu_80664054;
-        *home08 = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
+        *home08 = CMenuLvUp::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home08 != NULL) {
             inst = (CUICfManager*)lbl_eu_80664054;
             i = 0;
@@ -1018,67 +1008,68 @@ after_flags:
         goto after_enum;
     }
 
-    CTaskGame_enumListCtor(&holder);
-    list = CTaskGame_enumListGet(&holder);
-    startEnumObjects(list, 0x130, 0);
-    party = cf::CfGameManager::getPlayer(0);
     {
-        void** vt = *reinterpret_cast<void***>(party);
-        partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
-    }
-    list = CTaskGame_enumListGet(&holder);
-    __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
+        CfEnumListHolder holder;
+        list = holder.get();
+        startEnumObjects(list, 0x130, 0);
+        party = cf::CfGameManager::getPlayer(0);
+        {
+            void** vt = *reinterpret_cast<void***>(party);
+            partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
+        }
+        list = holder.get();
+        __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
 
-    pose = Scn_FindCamItem((void*)unk11C, -1);
-    posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
-    posA[1] = *reinterpret_cast<f32*>((u8*)pose + 0x110);
-    posA[2] = *reinterpret_cast<f32*>((u8*)pose + 0x114);
-    posB[0] = *reinterpret_cast<f32*>((u8*)pose + 0x138);
-    posB[1] = *reinterpret_cast<f32*>((u8*)pose + 0x13c);
-    posB[2] = *reinterpret_cast<f32*>((u8*)pose + 0x140);
+        pose = Scn_FindCamItem((void*)unk11C, -1);
+        posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
+        posA[1] = *reinterpret_cast<f32*>((u8*)pose + 0x110);
+        posA[2] = *reinterpret_cast<f32*>((u8*)pose + 0x114);
+        posB[0] = *reinterpret_cast<f32*>((u8*)pose + 0x138);
+        posB[1] = *reinterpret_cast<f32*>((u8*)pose + 0x13c);
+        posB[2] = *reinterpret_cast<f32*>((u8*)pose + 0x140);
 
-    enumIdx = 0;
-    goto enum_check;
-enum_body:
-    list = CTaskGame_enumListGet(&holder);
-    slot = getEntryAt(list, enumIdx);
-    partyHandle = *(void**)((u8*)slot + 4);
-    if (partyHandle == NULL) {
-        goto enum_next;
-    }
-    {
-        void** vt = *reinterpret_cast<void***>(partyHandle);
-        if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(partyHandle) == 0) {
+        enumIdx = 0;
+        goto enum_check;
+    enum_body:
+        list = holder.get();
+        slot = getEntryAt(list, enumIdx);
+        partyHandle = *(void**)((u8*)slot + 4);
+        if (partyHandle == NULL) {
             goto enum_next;
         }
+        {
+            void** vt = *reinterpret_cast<void***>(partyHandle);
+            if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(partyHandle) == 0) {
+                goto enum_next;
+            }
+        }
+        if (lookupWorkAtAddr(partyHandle) == 0) {
+            goto enum_next;
+        }
+        list = holder.get();
+        slot = getEntryAt(list, enumIdx);
+        partyHandle = *(void**)((u8*)slot + 4);
+        {
+            void** vt = *reinterpret_cast<void***>(partyHandle);
+            qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(partyHandle);
+        }
+        posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
+        posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
+        posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
+        if (CheckViewAngle60(posA, posB, posC) == 0) {
+            goto enum_next;
+        }
+        list = holder.get();
+        createdArg = getObjectIdAt(list, enumIdx);
+        CMenuEnemyState::create(reinterpret_cast<CProcess*>(unk144), reinterpret_cast<CScn*>(unk11C), createdArg);
+    enum_next:
+        enumIdx++;
+    enum_check:
+        list = holder.get();
+        if ((u32)enumIdx < reinterpret_cast<CUICfEnumList620*>(list)->count) {
+            goto enum_body;
+        }
     }
-    if (lookupWorkAtAddr(partyHandle) == 0) {
-        goto enum_next;
-    }
-    list = CTaskGame_enumListGet(&holder);
-    slot = getEntryAt(list, enumIdx);
-    partyHandle = *(void**)((u8*)slot + 4);
-    {
-        void** vt = *reinterpret_cast<void***>(partyHandle);
-        qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(partyHandle);
-    }
-    posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
-    posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
-    posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
-    if (CheckViewAngle60(posA, posB, posC) == 0) {
-        goto enum_next;
-    }
-    list = CTaskGame_enumListGet(&holder);
-    createdArg = getObjectIdAt(list, enumIdx);
-    EneSt_Create(unk144, unk11C, createdArg);
-enum_next:
-    enumIdx++;
-enum_check:
-    list = CTaskGame_enumListGet(&holder);
-    if ((u32)enumIdx < reinterpret_cast<CUICfEnumList620*>(list)->count) {
-        goto enum_body;
-    }
-    __dt__80043E88(&holder, -1);
 
 after_enum:
     // Mark-from-head (retail reloads head only inside the set-loop).
@@ -1276,9 +1267,9 @@ extern "C" void* CUICfManager_getPackedFontD8() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFontD8();
 }
-extern "C" void* CUICfManager_getArcResourceAccessor() {
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    return m == 0 ? 0 : m->getArcResourceAccessor();
+    return m == 0 ? 0 : static_cast<nw4r::lyt::ArcResourceAccessor*>(m->getArcResourceAccessor());
 }
 // Retail linker name for the slot-reset helper below (flat); declaring it
 // extern "C" here makes the C++ definition emit the flat retail symbol.
@@ -1452,7 +1443,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
         inst = (CUICfManagerCreateView*)lbl_eu_80664054;
         u8 idx = slot->field_0x01;
         if (inst != NULL) {
-            u32 tempRet = (u32)MenuTutorialCreate(inst->field_0x144, inst->field_0x11C, idx);
+            u32 tempRet = reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), idx));
             savedRet = tempRet;
             if (tempRet != 0) {
                 inst = (CUICfManagerCreateView*)lbl_eu_80664054;
@@ -2369,7 +2360,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     }
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
-        u32 tempRet = (u32)CMainMenu_Create((u8*)inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = reinterpret_cast<u32>(CMainMenu::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2674,7 +2665,7 @@ u32 CUICfManager_queueBaseMenuItem() {
         return 0;
     }
     {
-        u32 tempRet = __ct__CMenuItem(inst->field_0x144, inst->field_0x11C, 0, 1);
+        u32 tempRet = reinterpret_cast<u32>(CMenuItem::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), 0, 1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2729,7 +2720,7 @@ u32 CUICfManager_queueTutorialListMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = CMenuTutorialList_Create(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = reinterpret_cast<u32>(CMenuTutorialList::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), (u16)arg));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2770,7 +2761,7 @@ slot_found:
     return savedRet;
 }
 
-// CUICfManager_queueEventMenu: create the event menu via EneSt_Create and queue it
+// CUICfManager_queueEventMenu: create the event menu via CMenuEnemyState::create and queue it
 // (mFlags bit 0x10; busy-bit and accessor gates, same as Move's flag path).
 extern "C" u32 CUICfManager_queueEventMenu() {
     CUICfManagerCreateView* inst;
@@ -2794,7 +2785,7 @@ extern "C" u32 CUICfManager_queueEventMenu() {
     inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xffef);
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
-        u32 tempRet = (u32)EneSt_Create(inst->field_0x144, inst->field_0x11C, 0);
+        u32 tempRet = (u32)CMenuEnemyState::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2895,7 +2886,7 @@ u32 CUICfManager_queueSkipTimerMenu() {
         return 0;
     }
     {
-        u32 tempRet = (u32)SkipTimer_CreateInstance(inst->field_144, inst->field_11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuSkipTimer::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CProcess*>(inst->field_11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2952,8 +2943,9 @@ u32 CUICfManager_queuePauseItemMenu(CUICfManager* self, u32 arg1, u32 arg2) {
         return 0;
     }
     {
-        u32 tempRet = __ct__CMenuItem(inst->field_0x144, arg1 != 0 ? arg1 : inst->field_0x11C,
-                                      (u8)self, arg2);
+        u32 tempRet = reinterpret_cast<u32>(CMenuItem::create(
+            reinterpret_cast<CProcess*>(inst->field_0x144),
+            reinterpret_cast<CScn*>(arg1 != 0 ? arg1 : inst->field_0x11C), (u8)self, arg2));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -2996,8 +2988,7 @@ slot_found:
 // us-80134a1c: create + queue a menu via ZealMenuCreateSingleton; the function's own
 // u32 param passes straight through as the factory's 3rd arg (kept live in
 // r5 across the singleton loads). Same shape as CUICfManager_queueMapSelectMenu otherwise.
-extern "C" void* ZealMenuCreateSingleton(u32, u32, u32);
-u32 CUICfManager_queueFactoryMenu(u32 param) {
+u32 CUICfManager_queueFactoryMenu(u32 param, f32 value) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3012,7 +3003,7 @@ u32 CUICfManager_queueFactoryMenu(u32 param) {
     }
     {
         u32 tempRet =
-            (u32)ZealMenuCreateSingleton((u32)inst->field_0x144, inst->field_0x11C, param);
+            reinterpret_cast<u32>(CMenuZeal::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), param, value));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3129,7 +3120,7 @@ u32 CUICfManager_queueShopSellMenu() {
         return 0;
     }
     {
-        u32 tempRet = MenuShopSellCreateSingleton(inst->field_144, inst->field_11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuShopSell::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CScn*>(inst->field_11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3173,7 +3164,7 @@ slot_found:
     return savedRet;
 }
 // us-80134cac: create + queue the CMenuPTState-style menu. Same create+queue
-// body as CUICfManager_queueShopSellMenu above; only the factory (__ct__CMenuPTState) differs.
+// body as CUICfManager_queueShopSellMenu above; only the factory (CMenuPTState::create) differs.
 u32 CUICfManager_queuePTStateMenu() {
     CUICfQueueMgrView* inst;
     volatile u32 savedRet;
@@ -3187,7 +3178,7 @@ u32 CUICfManager_queuePTStateMenu() {
         return 0;
     }
     {
-        u32 tempRet = (u32)__ct__CMenuPTState(inst->field_144, inst->field_11C);
+        u32 tempRet = (u32)CMenuPTState::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CProcess*>(inst->field_11C));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3246,7 +3237,7 @@ u32 CUICfManager_queueMakeCrystalMenu() {
         return 0;
     }
     {
-        u32 tempRet = MakeCrystalCreate(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuMakeCrystal::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3303,7 +3294,8 @@ u32 CUICfManager_queueArtsSetMenu() {
     }
     {
         u32 tempRet =
-            (u32)__ct__CMenuArtsSet((u32)inst->field_0x144, inst->field_0x11C);
+            reinterpret_cast<u32>(CMenuArtsSet::create(
+                reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3363,7 +3355,7 @@ u32 CUICfManager_queueMapSelectMenu() {
         return 0;
     }
     {
-        u32 tempRet = __ct__CMenuMapSelect(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuMapSelect::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3481,7 +3473,7 @@ u32 CUICfManager_queuePauseMenu() {
         return 0;
     }
     {
-        u32 tempRet = __ct__CMenuPause(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuPause::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3523,7 +3515,11 @@ slot_found:
 }
 // us-801351e8: create + queue the CMenuCollepedia-style menu.
 // Same create+queue body as CUICfManager_queueMapSelectMenu above; only the factory differs.
-#define CF_QUEUE_EXPLICIT(fn)                                                  \
+#define CF_QUEUE_EXPLICIT(fn) CF_QUEUE_BODY(fn(inst->field_0x144, inst->field_0x11C))
+#define CF_QUEUE_CREATE(cls, T)                                                \
+    CF_QUEUE_BODY(reinterpret_cast<u32>(cls::create(                           \
+        reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<T*>(inst->field_0x11C))))
+#define CF_QUEUE_BODY(createExpr)                                                  \
     CUICfManagerCreateView* inst = (CUICfManagerCreateView*)lbl_eu_80664054;   \
     volatile u32 savedRet;                                                     \
     int i;                                                                     \
@@ -3535,7 +3531,7 @@ slot_found:
         return 0;                                                              \
     }                                                                          \
     {                                                                          \
-        u32 tempRet = fn(inst->field_0x144, inst->field_0x11C);                \
+        u32 tempRet = createExpr;                                              \
         savedRet = tempRet;                                                    \
         if (tempRet == 0) {                                                    \
             return 0;                                                          \
@@ -3634,11 +3630,11 @@ slot_found:
     return savedRet;
 }
 // us-8013539c: create + queue the CMenuPassiveSkill-style menu.
-u32 CUICfManager_queuePassiveSkillMenu() { CF_QUEUE_EXPLICIT(createPassiveSkillMenu) }
+u32 CUICfManager_queuePassiveSkillMenu() { CF_QUEUE_CREATE(CMenuPassiveSkill, CScn) }
 // us-80135474: create + queue the CMenuPlayAward-style menu.
-u32 CUICfManager_queuePlayAwardMenu() { CF_QUEUE_EXPLICIT(PlayAward_CreateMenu) }
+u32 CUICfManager_queuePlayAwardMenu() { CF_QUEUE_CREATE(CMenuPlayAward, CScn) }
 // us-8013554c: create + queue the CMenuKizunaTalkList-style menu.
-u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_EXPLICIT(KizunaList_Create) }
+u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_CREATE(CMenuKizunaTalkList, CProcess) }
 // CUICfManager_queueSaveMenu: create the save menu and queue it, forwarding both own args
 // (retail keeps them in r6/r7 across the singleton check for the call).
 u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
@@ -3654,7 +3650,7 @@ u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
         return 0;
     }
     {
-        u32 tempRet = createSaveMenu(inst->field_0x144, inst->field_0x11C, 0, arg0, arg1);
+        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), 0, arg0, arg1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3709,7 +3705,7 @@ u32 CUICfManager_openSaveMenu() {
         return 0;
     }
     {
-        u32 tempRet = createSaveMenu(inst->field_0x144, inst->field_0x11C, 1, 0, 1);
+        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), 1, 0, 1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3781,7 +3777,7 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
         u32 tempRet =
-            (u32)MenuTutorialCreate(inst->field_0x144, a1 != 0 ? a1 : inst->field_0x11C, (u8)a0);
+            reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(a1 != 0 ? a1 : inst->field_0x11C), (u8)a0));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3837,7 +3833,7 @@ u32 CUICfManager_queueGameClearMenu() {
         return 0;
     }
     {
-        u32 tempRet = (u32)__ct__CMenuGameClear(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = reinterpret_cast<u32>(CMenuGameClear::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3892,7 +3888,7 @@ u32 CUICfManager_queueGCItemMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = __ct__CMenuGCItem(inst->field_0x144, inst->field_0x11C, (u8)arg);
+        u32 tempRet = reinterpret_cast<u32>(CMenuGCItem::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), (u8)arg));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -4152,7 +4148,6 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     (void)singleton;
     int count;
     int slotUsed;
-    CUICfEnumListHolder holder;
     CUICfEnumList620* enumList;
     CUICfPlayerView* px;
     CUICfObj3F60View* battleObj;
@@ -4176,15 +4171,15 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
             return 2;
         }
     }
-    CTaskGame_enumListFill(&holder, 0x20, 0x800);
-    enumList = reinterpret_cast<CUICfEnumList620*>(CTaskGame_enumListGet(&holder));
-    __ct__800FC32C(reinterpret_cast<u8*>(enumList), 3, 4, 0);
-    enumList = reinterpret_cast<CUICfEnumList620*>(CTaskGame_enumListGet(&holder));
-    if (enumList->count == 0) {
-        __dt__80043E88(&holder, -1);
-        return 2;
+    {
+        CfEnumListHolder holder(0x20, 0x800);
+        enumList = reinterpret_cast<CUICfEnumList620*>(holder.get());
+        __ct__800FC32C(reinterpret_cast<u8*>(enumList), 3, 4, 0);
+        enumList = reinterpret_cast<CUICfEnumList620*>(holder.get());
+        if (enumList->count == 0) {
+            return 2;
+        }
     }
-    __dt__80043E88(&holder, -1);
 
     {
         u32 g24a = lbl_eu_80663E24;

@@ -342,7 +342,7 @@ extern "C" const char lbl_eu_80524810[0x9];
 extern "C" u32 lbl_eu_8066B3C8;
 extern "C" u32 lbl_eu_8066B3C0;
 extern "C" u32 lbl_eu_8066B3B8;
-extern "C" u32 lbl_eu_80663CA0[0x2];
+extern "C" u32 __RTTI__8CMdlLook[0x2];
 // foreign function pointers (namespace-scoped extern "C" so the
 // declarations cannot collide with in-scope class members; the
 // C linkage keeps the emitted reloc names unmangled)
@@ -351,7 +351,7 @@ extern "C" void __dt__8CMdlLookFv();
 }
 
 // [.data] 0x805701E0-0x805701FC (28 bytes)
-extern "C" u32 lbl_eu_805701E0[0x4] = { (u32)&lbl_eu_80663CA0, 0x00000000, (u32)&D2Blob::__dt__8CMdlLookFv, 0x00000000 };
+extern "C" u32 lbl_eu_805701E0[0x4] = { (u32)&__RTTI__8CMdlLook, 0x00000000, (u32)&D2Blob::__dt__8CMdlLookFv, 0x00000000 };
 extern "C" u32 lbl_eu_805701F0[0x3] = { (u32)&lbl_eu_8066B3B8, (u32)&lbl_eu_8066B3C0, (u32)&lbl_eu_8066B3C8 };
 
 // [.rodata] 0x80524810-0x80524830 (32 bytes)
@@ -359,7 +359,7 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524810[0x9] = { 0x43, 0x4D, 
 extern "C" __declspec(align(4)) const char lbl_eu_8052481C[0x14] = { 0x4A, 0x55, 0x73, 0x70, 0x41, 0x00, 0x4A, 0x55, 0x68, 0x65, 0x61, 0x64, 0x00, 0x6D, 0x6F, 0x76, 0x65, 0x00, 0x00, 0x00 };
 
 // [.sdata] 0x80663CA0-0x80663CB0 (16 bytes)
-extern "C" u32 lbl_eu_80663CA0[0x2] = { (u32)&lbl_eu_80524810, 0x00000000 };
+extern "C" u32 __RTTI__8CMdlLook[0x2] = { (u32)&lbl_eu_80524810, 0x00000000 };
 extern "C" u32 lbl_eu_80663CA8[0x1] = { 0x72656600 };
 extern "C" u32 lbl_eu_80663CAC[0x1] = { 0x72656600 };
 

@@ -30,6 +30,7 @@
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 void playUISound(u32);
 
 // CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
@@ -167,7 +168,7 @@ char* getErrMesText15();
 char* getErrMesText16();
 void PaneSetVtxColorByName(nw4r::lyt::Layout*, char*, u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-CSysWin* __ct__CSysWin(CSysWin*, int);
+CSysWin* __ct__7CSysWinFUc(CSysWin*, int);
 CSysWin* __dt__7CSysWinFv(CSysWin*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858*, UnkClass_8045F564*);
 void __dt__14Class_8045F858Fv(Class_8045F858*, int);
@@ -282,7 +283,7 @@ CMenuGetItemMulti* __ct__CMenuGetItemMulti(
     pThis->mEntryCount = zero;
 
     __ct__CCur18(&pThis->mCursor, NULL);
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(&pThis->mSystemWindow[0]), 0);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&pThis->mSystemWindow[0]), 0);
 
     // Second zero constant for the tail clear (retail reuses the freed scn
     // register slot as a fresh zero, r24).
@@ -943,14 +944,11 @@ void CMenuGetItemMulti::Init() {
 
     GetItemMulti_ShowDetail(this, 0, 0);
 
-    CCur18 cursorTemp;
-    __ct__CCur18(&cursorTemp, CUICfManager_getArcResourceAccessor());
-    mCursor = cursorTemp;
-    __dt__6CCur18Fv(&cursorTemp, -1);
+    mCursor = CCur18(CUICfManager_getArcResourceAccessor());
     mCursor.initLayout();
 
     u8 systemWindowStorage[sizeof(CSysWin)];
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), 2);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), 2);
     reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk0 =
         reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk0;
     reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk4 =

@@ -1,17 +1,5 @@
 #include <nw4r/lyt.h>
 
-// Retail vtable lbl_eu_80569CA0 (0x18) now owned by this TU (absorbed from
-// nw4r_data.s). The class is novtable, so the ctor stores this label
-// explicitly; we emit the retail vtable here with relocs.
-extern "C" void __dt__Q34nw4r3lyt16ResourceAccessorFv();
-extern "C" void GetFont__Q34nw4r3lyt16ResourceAccessorFPCc();
-extern "C" {
-__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80569CA0[6] = {
-    0, 0, (u32)&__dt__Q34nw4r3lyt16ResourceAccessorFv, 0,
-    (u32)&GetFont__Q34nw4r3lyt16ResourceAccessorFPCc, 0
-};
-}
-
 namespace nw4r {
 namespace lyt {
 
@@ -25,16 +13,9 @@ namespace lyt {
  *
  ******************************************************************************/
 
-// Vptr at +0x0 (same idiom as CTaskLODVptrSlot / other Matching shape TUs).
-struct ResourceAccessorVptr {
-    u32* vtable;
-};
-
 ResourceAccessor::~ResourceAccessor() {}
 
-ResourceAccessor::ResourceAccessor() {
-    reinterpret_cast<ResourceAccessorVptr*>(this)->vtable = lbl_eu_80569CA0;
-}
+ResourceAccessor::ResourceAccessor() {}
 
 ut::Font* ResourceAccessor::GetFont(const char* /*pName*/) {
     // Default implementation: no named font available.

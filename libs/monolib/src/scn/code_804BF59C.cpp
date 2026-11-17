@@ -71,7 +71,7 @@ void ScnEnvLgt_Propagate(){}
 //
 // For each LightObj, calls Clear() and then masks FLAG_ENABLE_LIGHT (bit 2)
 // out of mFlag. The floating-point fields at 0x438-0x440 and 0x450-0x458
-// are reset to 0.0f (lbl_eu_8066AF80), and mActiveLightCount at 0x480 is
+// are reset to 0.0f (0.0f), and mActiveLightCount at 0x480 is
 // reset to 0.
 //
 // Implemented as a stand-alone function because CScnEnvLgtData does not
@@ -98,15 +98,14 @@ void CScnEnvLgtData::ClearLights() {
 
     // Reset the six float fields to 0.0f and the active-light count to 0.
     // The store order must match the retail (0x450 cluster first, then 0x438).
-    extern const f32 lbl_eu_8066AF80;
     f32* floats450 = this->mAmbColor;  // 0x450
-    floats450[0] = lbl_eu_8066AF80;
-    floats450[1] = lbl_eu_8066AF80;
-    floats450[2] = lbl_eu_8066AF80;
+    floats450[0] = 0.0f;
+    floats450[1] = 0.0f;
+    floats450[2] = 0.0f;
     f32* floats438 = this->mAmbColorBase;  // 0x438
-    floats438[0] = lbl_eu_8066AF80;
-    floats438[1] = lbl_eu_8066AF80;
-    floats438[2] = lbl_eu_8066AF80;
+    floats438[0] = 0.0f;
+    floats438[1] = 0.0f;
+    floats438[2] = 0.0f;
     this->mActiveLightCount = 0;
 }
 

@@ -29,7 +29,7 @@ extern "C" {
     extern float lbl_eu_8066A368; // 1.0f
     extern double lbl_eu_8066A370; // 4503599627370496.0
     // sdata class locators (retail .sdata)
-    extern u32 lbl_eu_80663600[2];
+    extern u32 __RTTI__9CDeviceVI[2];
     extern u32 lbl_eu_80663608[2];
     extern u32 lbl_eu_80663610[2];
     // data RTTI base lists and vtables
@@ -95,7 +95,7 @@ extern "C" {
 // Defined after gammaLevels to preserve .rodata order: int table (0x78) first, then strings.
 
 // sdata locators (retail .sdata 0x80663600 0x18)
-extern "C" u32 lbl_eu_80663600[2] = { (u32)&lbl_eu_80522A08, (u32)&lbl_eu_8056BF28 };
+extern "C" u32 __RTTI__9CDeviceVI[2] = { (u32)&lbl_eu_80522A08, (u32)&lbl_eu_8056BF28 };
 extern "C" u32 lbl_eu_80663608[2] = { (u32)&lbl_eu_80522A14, (u32)&lbl_eu_8056BF50 };
 extern "C" u32 lbl_eu_80663610[2] = { (u32)&lbl_eu_80522A2C, 0 };
 
@@ -129,7 +129,7 @@ extern "C" u32 lbl_eu_8056BE38[15] = {
 };
 // __vt__9CDeviceVI at 0x7C (0xB4)
 extern "C" u32 __vt__9CDeviceVI[45] = {
-    (u32)&lbl_eu_80663600, 0, (u32)&__dt__9CDeviceVIFv,
+    (u32)&__RTTI__9CDeviceVI, 0, (u32)&__dt__9CDeviceVIFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,
@@ -149,7 +149,7 @@ extern "C" u32 __vt__9CDeviceVI[45] = {
     (u32)&wkUpdate__9CDeviceVIFv, (u32)&wkRender__11CWorkThreadFv,
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CDeviceVIFv,
     (u32)&wkStandbyLogout__9CDeviceVIFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-    (u32)&lbl_eu_80663600, 0xFFFFFE38, (u32)&thunk_456_dt, (u32)&thunk_456_error, (u32)&errorWiiCB__9CDeviceVIFv
+    (u32)&__RTTI__9CDeviceVI, 0xFFFFFE38, (u32)&thunk_456_dt, (u32)&thunk_456_error, (u32)&errorWiiCB__9CDeviceVIFv
 };
 // lbl_eu_8056BF28 at 0x130 (0x1C)
 extern "C" u32 lbl_eu_8056BF28[7] = { (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, (u32)&lbl_eu_806635F0, 0, 0 };
@@ -808,7 +808,7 @@ void thunk_456_error(void* self) {
 
 
 
-// extern "C" u32 lbl_eu_80663600[2] = { 0x00000000, 0x00000000 };
+// extern "C" u32 __RTTI__9CDeviceVI[2] = { 0x00000000, 0x00000000 };
 // extern "C" u32 lbl_eu_80663608[2] = { 0x00000000, 0x00000000 };
 // extern "C" u32 lbl_eu_80663610[2] = { 0x00000000, 0x00000000 };
 

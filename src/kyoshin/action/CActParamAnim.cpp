@@ -70,7 +70,7 @@ void CActParamAnim::initAnimState() {
     view->field374 = 0;
     view->field378 = 0;
     view->field37C = -1;
-    view->field380 = lbl_eu_80665E98;
+    view->field380 = 9.8f;
     view->field384 = lbl_eu_80665E9C;
     view->field388 = lbl_eu_80665E9C;
     view->field38C = lbl_eu_80665E9C;

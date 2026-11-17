@@ -31,6 +31,13 @@ namespace cf { class CfObjectActor; }
 
 // Search helper for Chain_FindOrCreateActor: written with return-inside-loop so MWCC
 // inlines it with the retail two-branch shape (bne-next / b-merge).
+static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self);
+static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
+                           cf::CfObjectActor* target);
+static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self);
+static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key);
+extern "C" __declspec(noinline) void ChainList_PushBack(cf::CChainList* self, cf::CChainActor* p);
+
 static cf::CChainActor* searchActorByKey(cf::CChainActorList* self, u32 key);
 // Head-pointer variant used by Chain_FindOrCreateActor: taking the sentinel node
 // instead of the list keeps no live copy of `self` across the inline
@@ -45,35 +52,6 @@ extern "C" __declspec(noinline) void Chain_EmitTallyEvents(unsigned int param);
 extern "C" __declspec(noinline) void ChainList_Clear(cf::CChainList* self);
 
 namespace cf {
-    // Retail ctor stores the manual vtables, zeroes the CChainTemp-ish buffer
-    // and its flag byte. The dtor is the plain empty+delete shape (no base or
-    // member dtor calls), matching retail's 0x40-byte body.
-    CChainActorPc::CChainActorPc() {
-        this->mVTable = &lbl_eu_80538290; // +0x70 actor vtable (temp)
-        this->field_68 = &lbl_eu_80538338; // +0x68 sub-object vtable
-        std::memset(this->field_4, 0, 0x60);
-        this->field_64 = 0;
-        this->unk6C = 0;
-        this->unk0 = 0;
-        this->mVTable = &lbl_eu_805384E0; // final vtable
-        // Retail constructs the CChainEffect region at the END of the ctor
-        // body (no dtor is ever emitted for it); call the ctor via its alias.
-        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
-    }
-    CChainActorPc::~CChainActorPc() {}
-
-    CChainActorEne::CChainActorEne() {
-        this->mVTable = &lbl_eu_80538290; // +0x70 actor vtable (temp)
-        this->field_68 = &lbl_eu_80538338; // +0x68 sub-object vtable
-        std::memset(this->field_4, 0, 0x60);
-        this->field_64 = 0;
-        this->unk6C = 0;
-        this->unk0 = 0;
-        this->mVTable = &lbl_eu_80538458; // final vtable
-        // See CChainActorPc ctor comment: ctor alias call keeps the dtor empty.
-        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
-    }
-    CChainActorEne::~CChainActorEne() {}
 
     CChainActorList::CChainActorList(){
         mChainActorList.reserve(CWorkThreadSystem::getWorkMem(), 59);
@@ -95,6 +73,46 @@ namespace cf {
         ScnLog_ClearStateWords(this);
         unk1DA8[0] = 0;
     }
+
+
+    // Retail ctor stores the manual vtables, zeroes the CChainTemp-ish buffer
+    // and its flag byte. The dtor is the plain empty+delete shape (no base or
+    // member dtor calls), matching retail's 0x40-byte body.
+    CChainActorPc::CChainActorPc() {
+        this->mVTable = &lbl_eu_80538290; // +0x70 actor vtable (temp)
+        this->field_68 = &lbl_eu_80538338; // +0x68 sub-object vtable
+        std::memset(this->field_4, 0, 0x60);
+        this->field_64 = 0;
+        this->unk6C = 0;
+        this->unk0 = 0;
+        this->mVTable = &lbl_eu_805384E0; // final vtable
+        // Retail constructs the CChainEffect region at the END of the ctor
+        // body (no dtor is ever emitted for it); call the ctor via its alias.
+        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
+    }
+
+
+
+    CChainActorPc::~CChainActorPc() {}
+
+
+    CChainActorEne::CChainActorEne() {
+        this->mVTable = &lbl_eu_80538290; // +0x70 actor vtable (temp)
+        this->field_68 = &lbl_eu_80538338; // +0x68 sub-object vtable
+        std::memset(this->field_4, 0, 0x60);
+        this->field_64 = 0;
+        this->unk6C = 0;
+        this->unk0 = 0;
+        this->mVTable = &lbl_eu_80538458; // final vtable
+        // See CChainActorPc ctor comment: ctor alias call keeps the dtor empty.
+        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
+    }
+
+
+
+    CChainActorEne::~CChainActorEne() {}
+
+
 
     CChainActorList::~CChainActorList(){
         // Pass 1: destroy every actor through its manual vtable slot 17
@@ -130,23 +148,9 @@ namespace cf {
         }
         mChainActorList.mCapacity = 0;
     }
+
 }
 
-// Appends @p p to the actor list at index mCount, then increments mCount.
-// noinline + extern "C": retail callers emit a real bl to the bare symbol
-// ChainList_PushBack (MWCC_CASES §8720, §8717).
-extern "C" __declspec(noinline) void ChainList_PushBack(cf::CChainList* self, cf::CChainActor* p) {
-    self->mActors[self->mCount++] = p;
-}
-
-// Returns the list entry whose first u32 field matches @p key.
-extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
-    for (int i = 0; i < (int)self->mCount; i++) {
-        if (self->mActors[i]->unk0 == key)
-            return self->mActors[i];
-    }
-    return 0;
-}
 
 extern "C" void Chain_ClearAll(cf::CChainActorList* self){
     // Pass 1: call the vtable[5] (destroy/remove) hook on every actor.
@@ -170,6 +174,9 @@ extern "C" void Chain_ClearAll(cf::CChainActorList* self){
     ScnLog_ClearStateWords(self);
     self->unk1DA8[0] = 0;
 }
+
+
+
 // Removes every reslist actor whose referenced object is dead.
 extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node = self->mChainActorList.mStartNodePtr->mNext;
@@ -187,6 +194,9 @@ extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self){
         node = node->mNext;
     }
 }
+
+
+
 // Walks the actor reslist. For each contiguous run of actors where every
 // successor keeps vtable[17](first,next) nonzero, records the run members into
 // one of two local arrays (chainable via vtable[8] go to chainArr, the rest to
@@ -281,6 +291,8 @@ extern "C" void Chain_RebuildLinks(cf::CChainActorList* self){
         node = cur;
     }
 }
+
+
 extern "C" cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key){
     // Inlined search: testing the call result directly keeps the value in
     // the return register r3 at the merge, matching retail.
@@ -299,6 +311,8 @@ extern "C" cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u
         return found;
     }
 }
+
+
 // Removes the first actor whose unk0 matches @p key: destroys it via
 // vtable[5] and unlinks its reslist node. Returns 1 if found, else 0.
 extern "C" int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
@@ -317,6 +331,8 @@ extern "C" int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
     }
     return 0;
 }
+
+
 // Inserts @p actor into $self's reslist ordered by the actors' priority
 // values (vtable +0x54): walk from the head until an actor is chainable
 // against @p actor (vtable +0x44), then skip past actors whose priority is
@@ -359,6 +375,31 @@ place:;
     pre->mPrev->mNext = temp;
     pre->mPrev = temp;
 }
+
+
+extern "C" void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other,
+                   cf::CfObjectActor* target) {
+    // 1. Activate the resident actor whose unk0 references @p target.
+    cf::CChainActor* found = findActorByTarget((u32)target, self);
+    if (found != 0) found->CChain_noop_A9E8();
+    ChainList_Clear(other);
+    // 2. Sweep every actor; the ones chainable against target move into @p other.
+    sweepChainable(self, other, target);
+}
+
+
+// For each actor in @p list, ensures it is present in @p self's reslist
+// (adding it via Chain_InsertOrdered when missing), then clears @p list.
+extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list){
+    cf::CChainList* l = list;
+    for (int i = 0; i < (int)l->mCount; i++) {
+        cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
+        if (findActorForBB4C(actor->unk0, self) == 0)
+            Chain_InsertOrdered(self, actor);
+    }
+    ChainList_Clear(list);
+}
+
 // Removes slave/target actors that have become chainable against @p target.
 // First, if an actor directly references @p target (unk0 == target) it is
 // activated via its vtable slot 20 and @p other is cleared. Then every
@@ -400,68 +441,6 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     }
 }
 
-extern "C" void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other,
-                   cf::CfObjectActor* target) {
-    // 1. Activate the resident actor whose unk0 references @p target.
-    cf::CChainActor* found = findActorByTarget((u32)target, self);
-    if (found != 0) found->CChain_noop_A9E8();
-    ChainList_Clear(other);
-    // 2. Sweep every actor; the ones chainable against target move into @p other.
-    sweepChainable(self, other, target);
-}
-// Head-pointer search body (see forward declaration above).
-static cf::CChainActor* searchActorByHead(_reslist_node<cf::CChainActor*>* head,
-                                          u32 key) {
-    _reslist_node<cf::CChainActor*>* node = head->mNext;
-    while (node != head) {
-        if (key == node->mItem->unk0) return node->mItem;
-        node = node->mNext;
-    }
-    return 0;
-}
-// BB4C-private search: no head local, so the sentinel is an unnamed temp
-// colored into r6 while the walker takes r7 (retail shape). Best-known
-// shape (banked draft): structural bytes match retail exactly; the residual
-// is a fixed r6/r7 Chaitin swap between the sentinel and the walker inside
-// the inlined loop (see open-item notes).
-static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
-    _reslist_node<cf::CChainActor*>* node =
-        self->mChainActorList.mStartNodePtr->mNext;
-    _reslist_node<cf::CChainActor*>* head =
-        self->mChainActorList.mStartNodePtr;
-    cf::CChainActor* x;
-    while (node != head) {
-        x = node->mItem;
-        if (key == x->unk0) return x;
-        node = node->mNext;
-    }
-    return 0;
-}
-
-// For each actor in @p list, ensures it is present in @p self's reslist
-// (adding it via Chain_InsertOrdered when missing), then clears @p list.
-extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list){
-    cf::CChainList* l = list;
-    for (int i = 0; i < (int)l->mCount; i++) {
-        cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
-        if (findActorForBB4C(actor->unk0, self) == 0)
-            Chain_InsertOrdered(self, actor);
-    }
-    ChainList_Clear(list);
-}
-// Same-TU search helper inlined at Chain_CheckActivatable. Argument order (self, key)
-// reproduces retail's register coloring (the located actor lands in r31).
-static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
-    _reslist_node<cf::CChainActor*>* head =
-        self->mChainActorList.mStartNodePtr;
-    _reslist_node<cf::CChainActor*>* node = head->mNext;
-    while (node != head) {
-        cf::CChainActor* x = node->mItem;
-        if (key == x->unk0) return x;
-        node = node->mNext;
-    }
-    return 0;
-}
 
 // Chain-activation validator
 // when the candidate passes its activation gates AND at least two actors in
@@ -507,6 +486,37 @@ extern "C" int Chain_CheckActivatable(cf::CChainActorList* self, u32 key){
     int t = count ^ 1;
     return ((u32)((t >> 1) - (t & count))) >> 31;
 }
+
+// Head-pointer search body (see forward declaration above).
+static cf::CChainActor* searchActorByHead(_reslist_node<cf::CChainActor*>* head,
+                                          u32 key) {
+    _reslist_node<cf::CChainActor*>* node = head->mNext;
+    while (node != head) {
+        if (key == node->mItem->unk0) return node->mItem;
+        node = node->mNext;
+    }
+    return 0;
+}
+// BB4C-private search: no head local, so the sentinel is an unnamed temp
+// colored into r6 while the walker takes r7 (retail shape). Best-known
+// shape (banked draft): structural bytes match retail exactly; the residual
+// is a fixed r6/r7 Chaitin swap between the sentinel and the walker inside
+// the inlined loop (see open-item notes).
+static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
+    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mStartNodePtr->mNext;
+    _reslist_node<cf::CChainActor*>* head =
+        self->mChainActorList.mStartNodePtr;
+    cf::CChainActor* x;
+    while (node != head) {
+        x = node->mItem;
+        if (key == x->unk0) return x;
+        node = node->mNext;
+    }
+    return 0;
+}
+
+
 // Returns 1 if some reslist actor is a valid chain-activation target, else 0.
 // The target object (actor->unk0) is re-read before each probe so it stays in
 // temps across the isBattleStatusActive calls; only the post-check read lives in a
@@ -526,6 +536,22 @@ extern "C" int Chain_HasValidTarget(cf::CChainActorList* self){
     }
     return 0;
 }
+
+// Same-TU search helper inlined at Chain_CheckActivatable. Argument order (self, key)
+// reproduces retail's register coloring (the located actor lands in r31).
+static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
+    _reslist_node<cf::CChainActor*>* head =
+        self->mChainActorList.mStartNodePtr;
+    _reslist_node<cf::CChainActor*>* node = head->mNext;
+    while (node != head) {
+        cf::CChainActor* x = node->mItem;
+        if (key == x->unk0) return x;
+        node = node->mNext;
+    }
+    return 0;
+}
+
+
 // When the chain flag bit 1 is set, query a value and emit threshold events.
 extern "C" void Chain_EmitThresholdEvents(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {
@@ -546,6 +572,24 @@ extern "C" void Chain_EmitThresholdEvents(cf::CChainFlag* self) {
     }
 }
 
+
+// Emits chain-tally threshold events based on the accumulated counter.
+// Single bare-C definition matching retail's bytes; the noinline decl above
+// keeps the ChainCounter_Drain call a real bl instead of inlining it here.
+// Thresholds 0xBB8/0x7530/0x186A0 queue SysWin events 0x33/0x34/0x35.
+extern "C" void Chain_EmitTallyEvents(unsigned int param) {
+    if (param >= 0xBB8) {
+        SysWinLog_QueueEvent(0x33);
+    }
+    if (param >= 0x7530) {
+        SysWinLog_QueueEvent(0x34);
+    }
+    if (param >= 0x186A0) {
+        SysWinLog_QueueEvent(0x35);
+    }
+}
+
+
 extern "C" void Chain_EmitCountEvents(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {
         lbl_eu_80662A80++;
@@ -557,6 +601,9 @@ extern "C" void Chain_EmitCountEvents(cf::CChainFlag* self) {
         }
     }
 }
+
+
+
 // Resets the chain-chance state: clears the chain count, both step counters
 // and the step flag byte.
 extern "C" void ChainChance_Reset(cf::CChainChanceS* self) {
@@ -565,6 +612,8 @@ extern "C" void ChainChance_Reset(cf::CChainChanceS* self) {
     self->mField0A = 0;
     self->mField0C = 0;
 }
+
+
 // Decrements the chain count; plays the indexed chain sound at the wrap
 // point and advances the step counters (field_8 / field_A wraps at 4).
 extern "C" void Chain_TickChanceCount(cf::CChainChanceS* self) {
@@ -589,6 +638,23 @@ extern "C" void Chain_TickChanceCount(cf::CChainChanceS* self) {
         if ((s16)nextA >= 4) self->mField0A = 3;
     }
 }
+
+
+// Starts a chain message; writes 0xa to the message id on success.
+extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
+    // Retail's call site is a stale-register call: no arguments are set up.
+    // Route through an unprototyped pointer type so the call passes none;
+    // MWCC folds the constant function address back into a direct bl.
+    typedef int (*UnprotoChainRollFn)();
+    if (((UnprotoChainRollFn)Chain_CheckChanceRoll)() != 0) {
+        chainResolveMemberPtr(0xc3, 0);
+        self->field_0x0 = 0xa;
+        return 1;
+    }
+    return 0;
+}
+
+
 // Rolls the dice on a chain activation between battle objects @p objA and
 // @p objB under the chain state in @p self. The threshold comes from the
 // tuning-pool record selected by objA's vtable(+0x308) query, offset by one
@@ -619,54 +685,20 @@ int Chain_CheckChanceRoll(cf::CChainChanceS* self,
     int flagOff = ((-fv | fv) >> 31) & 0x14;
 
     u32 cnt = pair > 0x1388 ? 0x1388 : pair;
-    // u32->f64 via the 0x4330 biased-magic bit pattern; the pool double is the
-    // matching de-bias constant, so one fsubs finishes the conversion.
-    union { u32 w[2]; double d; } conv;
-    conv.w[1] = cnt;
-    conv.w[0] = 0x43300000;
-    double base = lbl_eu_80668A78;
     int off2 = (int)(val + tblOff) + flagOff;
-    int q1 = (int)(lbl_eu_80668A68 * (conv.d - base) / lbl_eu_80668A6C);
+    int q1 = (int)(30.0f * (double)cnt / 5000.0f);
     u32 acc = (u16)(off2 + q1);
     if (pair > 0x1388) {
         u32 over = pair - 0x1388;
-        conv.w[1] = over;
-        conv.w[0] = 0x43300000;
-        int q2 = (int)(lbl_eu_80668A70 * (conv.d - base) / lbl_eu_80668A6C);
+        int q2 = (int)(20.0f * (double)over / 5000.0f);
         acc = (u16)(acc + q2);
     }
     int rnd = ml::math::mtRand(100);
     int mixed = (int)acc ^ rnd;
     return (u32)((mixed >> 1) - (mixed & (int)acc)) >> 31;
 }
-// Starts a chain message; writes 0xa to the message id on success.
-extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
-    // Retail's call site is a stale-register call: no arguments are set up.
-    // Route through an unprototyped pointer type so the call passes none;
-    // MWCC folds the constant function address back into a direct bl.
-    typedef int (*UnprotoChainRollFn)();
-    if (((UnprotoChainRollFn)Chain_CheckChanceRoll)() != 0) {
-        chainResolveMemberPtr(0xc3, 0);
-        self->field_0x0 = 0xa;
-        return 1;
-    }
-    return 0;
-}
-// Emits chain-tally threshold events based on the accumulated counter.
-// Single bare-C definition matching retail's bytes; the noinline decl above
-// keeps the ChainCounter_Drain call a real bl instead of inlining it here.
-// Thresholds 0xBB8/0x7530/0x186A0 queue SysWin events 0x33/0x34/0x35.
-extern "C" void Chain_EmitTallyEvents(unsigned int param) {
-    if (param >= 0xBB8) {
-        SysWinLog_QueueEvent(0x33);
-    }
-    if (param >= 0x7530) {
-        SysWinLog_QueueEvent(0x34);
-    }
-    if (param >= 0x186A0) {
-        SysWinLog_QueueEvent(0x35);
-    }
-}
+
+
 // Reads the current pad press. If a chain-trigger button is held, performs the
 // action selected by GetZealResult; writes result to *out and returns 1.
 extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
@@ -703,6 +735,8 @@ extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
     }
     return 0;
 }
+
+
 // Zeroes the actor list: clears the pointer array, count, and flag.
 // noinline + extern "C": retail callers emit a real bl to the bare symbol
 // ChainList_Clear (MWCC_CASES §8720, §8717).
@@ -711,6 +745,8 @@ extern "C" __declspec(noinline) void ChainList_Clear(cf::CChainList* self) {
     self->mCount = 0;
     self->mFlag = 0;
 }
+
+
 // Removes from @p self every actor whose referenced object is dead
 // (lookupWorkAtAddr), calling vtable[5] and shifting the array down.
 extern "C" void ChainList_SweepDead(cf::CChainList* self){
@@ -733,6 +769,7 @@ extern "C" void ChainList_SweepDead(cf::CChainList* self){
     }
 }
 
+
 // Calls vtable[4] on every actor in the list (r12 bidirectional dispatch via
 // the manual vtable at +0x70).
 extern "C" void ChainList_UpdateAll(cf::CChainList* self) {
@@ -741,6 +778,17 @@ extern "C" void ChainList_UpdateAll(cf::CChainList* self) {
         a->CChainActor_CleanupVoiceEnd();
     }
 }
+
+
+// Appends @p p to the actor list at index mCount, then increments mCount.
+// noinline + extern "C": retail callers emit a real bl to the bare symbol
+// ChainList_PushBack (MWCC_CASES §8720, §8717).
+extern "C" __declspec(noinline) void ChainList_PushBack(cf::CChainList* self, cf::CChainActor* p) {
+    self->mActors[self->mCount++] = p;
+}
+
+
+
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
 extern "C" int ChainList_RemoveKey(cf::CChainList* self, u32 key){
     for (int i = 0; i < (int)self->mCount; i++) {
@@ -758,6 +806,7 @@ extern "C" int ChainList_RemoveKey(cf::CChainList* self, u32 key){
     }
     return 0;
 }
+
 
 // One chain-link step: fetch the actor at @p slotIdx (null when out of
 // range), compute the successor index (the retail min idiom saturates to 0,
@@ -813,6 +862,9 @@ extern "C" void Chain_LinkList(cf::CChainList* self, int target, int index){
         CHAIN_LINK_BODY(index, self->mActors[index]);
     }
 }
+
+
+
 // For each actor while @p target is nonzero, advances the chain combo
 // (vtable[6]) and if the actor is chainable (vtable[23]) and there is a
 // distinct next actor, accumulates the arts pair via addTableValueWithClamp.
@@ -833,6 +885,8 @@ extern "C" void ChainList_StepTargets(cf::CChainList* self, int target){
         }
     }
 }
+
+
 // Returns 1 if any resident actor's vtable[22] (+0x58) value matches @p key.
 extern "C" int ChainList_HasCount(cf::CChainList* self, int key) {
     for (int i = 0; i < (int)self->mCount; i++) {
@@ -842,6 +896,18 @@ extern "C" int ChainList_HasCount(cf::CChainList* self, int key) {
     }
     return 0;
 }
+
+
+// Returns the list entry whose first u32 field matches @p key.
+extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
+    for (int i = 0; i < (int)self->mCount; i++) {
+        if (self->mActors[i]->unk0 == key)
+            return self->mActors[i];
+    }
+    return 0;
+}
+
+
 // Checks (via testActorStatus) whether the resident actors satisfy @p condition;
 // the polarity of the result depends on @p check.
 extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int check){
@@ -868,6 +934,8 @@ extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int ch
     }
     return 1;
 }
+
+
 // If the counter is positive, runs chain update steps and resets it.
 extern "C" void ChainCounter_Drain(cf::CChainCounter* self) {
     if (self->field_0x0 > 0) {
@@ -878,6 +946,8 @@ extern "C" void ChainCounter_Drain(cf::CChainCounter* self) {
         self->field_0x0 = 0;
     }
 }
+
+
 // Copies the owner's arts-param tuning values into the 3x8 slot table and
 // marks it enabled.
 extern "C" void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
@@ -894,6 +964,8 @@ extern "C" void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj*
     }
     self->mEnabled = 1;
 }
+
+
 // Writes the 3x8 slot table back into the owner's arts-param tuning values
 // and clears the enable flag.
 extern "C" void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
@@ -908,6 +980,7 @@ extern "C" void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleO
     }
     self->mEnabled = 0;
 }
+
 // --- hand-built retail data (splits: .sdata2 80668A80-80668A88) ---
 // .sdata2 zero-float pair (retail lbl_eu_80668A80, 8 bytes). Defined at EOF
 // so the const value cannot propagate into the functions above (their lfs
@@ -946,14 +1019,14 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDF0[0x20] =
 // .sdata typeinfo pairs (retail order; E5's second word names the .data
 // triple lbl_eu_80538320, still rule-stripped, so it links UNDEF for now).
 extern u8 lbl_eu_80538320[];
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A40[2] = { lbl_eu_8050ED18, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A48[2] = { lbl_eu_8050ED30, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A50[2] = { lbl_eu_8050ED40, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A58[2] = { lbl_eu_8050ED58, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A60[2] = { lbl_eu_8050ED68, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainChance[2] = { lbl_eu_8050ED18, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainTimer[2] = { lbl_eu_8050ED30, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf12CChainMember[2] = { lbl_eu_8050ED40, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf11CChainActor[2] = { lbl_eu_8050ED58, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf15CChainActorList[2] = { lbl_eu_8050ED68, 0 };
 __declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A68[2] = { lbl_eu_8050ED7C, lbl_eu_80538320 };
 __declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A70[2] = { lbl_eu_8050ED98, 0 };
-__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A78[2] = { lbl_eu_8050EDBC, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* __RTTI__Q22cf10CChainTemp[2] = { lbl_eu_8050EDBC, 0 };
 // .sdata event counter (retail initial value 1; the trailing 4 bytes to
 // A88 are MWCC's alignment pad for the 8-byte pair that follows).
 extern "C" __declspec(section ".sdata") int lbl_eu_80662A80 = 1;
@@ -1011,15 +1084,15 @@ extern "C" int CChain_getZero_A9D0(void*);
 
 __declspec(section ".data") __attribute__((used, aligned(4)))
 void* lbl_eu_8053826C[3] = {
-    lbl_eu_80662A40, 0, (void*)__dt__Q22cf12CChainChanceFv,
+    __RTTI__Q22cf12CChainChance, 0, (void*)__dt__Q22cf12CChainChanceFv,
 };
 __declspec(section ".data") __attribute__((used, aligned(4)))
 void* lbl_eu_80538278[3] = {
-    lbl_eu_80662A48, 0, (void*)__dt__Q22cf11CChainTimerFv,
+    __RTTI__Q22cf11CChainTimer, 0, (void*)__dt__Q22cf11CChainTimerFv,
 };
 __declspec(section ".data") __attribute__((used, aligned(4)))
 void* lbl_eu_80538284[3] = {
-    lbl_eu_80662A50, 0, (void*)__dt__Q22cf12CChainMemberFv,
+    __RTTI__Q22cf12CChainMember, 0, (void*)__dt__Q22cf12CChainMemberFv,
 };
 // CChainActor vtable (0x78): header [RTTI, 0] + 28 slots, retail order.
 // MWCC aligns an object whose size is a multiple of 8 to 8 bytes, so a single
@@ -1029,7 +1102,7 @@ void* lbl_eu_80538284[3] = {
 // same table's slot 29 (see the wave-DL7 report).
 extern "C" __declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80538290[29] = {
-    (u32)lbl_eu_80662A58, 0, (u32)&__dt__Q22cf11CChainActorFv,
+    (u32)__RTTI__Q22cf11CChainActor, 0, (u32)&__dt__Q22cf11CChainActorFv,
     (u32)CChain_setFieldAndClear,      // +0x0C  (slot 2)
     (u32)CChainActor_CleanupVoiceEnd,  // +0x10
     (u32)CChainActor_ClearTargetRef,   // +0x14

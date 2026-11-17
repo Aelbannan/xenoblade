@@ -29,13 +29,9 @@
 
 #if defined(__MWERKS__) && !defined(NONMATCHING)
 
-// Singularity threshold shared by all three kernels.  Retail loads this via
-// lis/addi + psq_l from lbl_eu_80669B40 (= 1.0000000359391298e-36f), which
-// lives in the retail nw4r data pool (nw4r_data.o).  We reference the same
-// external symbol so relocations (and objdiff fuzzy) match retail exactly.
-extern "C" {
-extern const f32 lbl_eu_80669B40;
-}
+// Singularity threshold shared by all three kernels, loaded as a pair with
+// lis/addi + psq_l (only ps0 is compared).
+static const f32 scSingularEpsilon[2] = { 1.0e-36f, 0.0f };
 
 // Included inside namespace nw4r::g3d::detail (by g3d_transform.cpp), so this
 // file must NOT reopen the namespaces — doing so double-mangles the symbols.
@@ -58,10 +54,10 @@ asm bool CalcViewNrmMtx(register math::MTX33* pOut, register const math::MTX34* 
     ps_msub    f11, f1,  f7,  f11
     ps_mul     f12, f1,  f8
     ps_msub    f13, f3,  f8,  f13
-    lis        r12, lbl_eu_80669B40@ha
+    lis        r12, scSingularEpsilon@ha
     ps_msub    f12, f5,  f6,  f12
     ps_mul     f7,  f0,  f13
-    addi       r12, r12, lbl_eu_80669B40@l
+    addi       r12, r12, scSingularEpsilon@l
     ps_mul     f10, f3,  f4
     ps_madd    f7,  f2,  f12, f7
     psq_l      f6,  0x0(r12), 1, 0
@@ -121,10 +117,10 @@ asm bool CalcViewTexMtx(register math::MTX34* pOut, register const math::MTX34* 
     ps_msub    f11, f1,  f7,  f11
     ps_mul     f12, f1,  f8
     ps_msub    f13, f3,  f8,  f13
-    lis        r12, lbl_eu_80669B40@ha
+    lis        r12, scSingularEpsilon@ha
     ps_msub    f12, f5,  f6,  f12
     ps_mul     f7,  f0,  f13
-    addi       r12, r12, lbl_eu_80669B40@l
+    addi       r12, r12, scSingularEpsilon@l
     ps_mul     f10, f3,  f4
     ps_madd    f7,  f2,  f12, f7
     psq_l      f6,  0x0(r12), 1, 0
@@ -194,10 +190,10 @@ asm bool CalcInvWorldMtx(register math::MTX34* pOut, register const math::MTX34*
     ps_msub    f11, f1,  f7,  f11
     ps_mul     f12, f1,  f8
     ps_msub    f13, f3,  f8,  f13
-    lis        r12, lbl_eu_80669B40@ha
+    lis        r12, scSingularEpsilon@ha
     ps_msub    f12, f5,  f6,  f12
     ps_mul     f7,  f0,  f13
-    addi       r12, r12, lbl_eu_80669B40@l
+    addi       r12, r12, scSingularEpsilon@l
     ps_mul     f10, f3,  f4
     ps_madd    f7,  f2,  f12, f7
     psq_l      f6,  0x0(r12), 1, 0

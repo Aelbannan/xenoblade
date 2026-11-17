@@ -247,8 +247,6 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 int IsMenuState621F0();
-void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 void updateTalkWindow(CTalkWindow* self);
 void driveTalkIntro(CTalkWindow* self);
 void driveTalkMessage(CTalkWindow* self);

@@ -16,7 +16,7 @@ public:
 // Data owned by this TU (blob monolibdata1d dissolve):
 //   lbl_eu_80522678 (.rodata) = CWorkControl RTTI name string
 //   lbl_eu_80522688 (.rodata) = work-flow display-name pool (retail bytes)
-//   lbl_eu_806635B0 (.sdata)  = __RTTI__12CWorkControl {name, base-list}
+//   lbl_eu_806635B0 (.sdata)  = lbl_eu_806635B0 {name, base-list}
 //   lbl_eu_8056B7C8 (.data)   = CWorkControl vtable
 //   lbl_eu_8056B868 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
 //   lbl_eu_806655D8 (.sbss)   = spInstance singleton (word 0 in use)
@@ -33,7 +33,7 @@ extern "C" const char lbl_eu_80522688[0x80] =
 extern IWorkEventVtbl lbl_eu_8056B7C8;
 extern RttiBaseList2 lbl_eu_8056B868;
 
-// __RTTI__12CWorkControl = {name, base-list} (.sdata).
+// lbl_eu_806635B0 = {name, base-list} (.sdata).
 u32 lbl_eu_806635B0[2] = {(u32)lbl_eu_80522678, (u32)&lbl_eu_8056B868};
 
 IWorkEventVtbl lbl_eu_8056B7C8 = {

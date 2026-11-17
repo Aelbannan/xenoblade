@@ -111,7 +111,7 @@ public:
 // kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
-    CCur18 mCur;
+    u8 mCur[0x18];  // raw cursor frame slot (no ctor runs on the scratch)
     u8 mWin2[0x3C];
     u8 mWin0[0x3C];
 };

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/CfEnumListHolder.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the MoveImplGroundProbeA /
@@ -518,41 +519,41 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
         if (testActorStatus(actor, &vC, 0x800000) == 0)
             return;
     }
-    CfMoveEnumHolder holder;
-    CTaskGame_enumListCtor(&holder);
-    CTaskGame_enumListGet(&holder);
-    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
-    int handle = self->vf48();
-    sortEntriesByDistance(CTaskGame_enumListGet(&holder), (void*)handle);
-    if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
-        // Effects exist: clear the driver state and re-register the sub-object.
-        self->field_0x18->mst.field_214 = 0;
-        self->field_0x18->mst.field_210 = 0;
-        aiActionClearBlockADC(self->field_0x18->mst.buf);
-        CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
-    } else {
-        self->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
-        void* entry = getObjectAt(CTaskGame_enumListGet(&holder), 0);
-        void* arg = entry;
-        if (entry != nullptr)
-            arg = (u8*)entry - 0x3e9c;
-        self->field_0x18->vf2C4(arg, lbl_eu_80666C60, lbl_eu_80666C60,
-            lbl_eu_80666C60);
-        CfActorObj* act = self->field_0x18;
-        u32 vD = act->field_04->b30()->field_0;
-        if (testActorStatus(act, &vD, 0x806) != 0) {
-            aiActionClearBlockADC(act->mst.buf);
+    {
+        CfEnumListHolder holder;
+        holder.get();
+        startEnumObjects(holder.get(), 0x20, 0x800);
+        int handle = self->vf48();
+        sortEntriesByDistance(holder.get(), (void*)handle);
+        if (((CfMoveEnumList*)holder.get())->field_620 != 0) {
+            // Effects exist: clear the driver state and re-register the sub-object.
+            self->field_0x18->mst.field_214 = 0;
+            self->field_0x18->mst.field_210 = 0;
+            aiActionClearBlockADC(self->field_0x18->mst.buf);
+            CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
         } else {
-            dispatchItemLoad(act, 5);
-            act->f138();
-            int count = ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620;
-            for (int i = 0; i < count; i++) {
-                MapFx_ResolveOwner(
-                    getObjectAt(CTaskGame_enumListGet(&holder), i));
+            self->vf70(findFirstCleanObjectId(holder.get()));
+            void* entry = getObjectAt(holder.get(), 0);
+            void* arg = entry;
+            if (entry != nullptr)
+                arg = (u8*)entry - 0x3e9c;
+            self->field_0x18->vf2C4(arg, lbl_eu_80666C60, lbl_eu_80666C60,
+                lbl_eu_80666C60);
+            CfActorObj* act = self->field_0x18;
+            u32 vD = act->field_04->b30()->field_0;
+            if (testActorStatus(act, &vD, 0x806) != 0) {
+                aiActionClearBlockADC(act->mst.buf);
+            } else {
+                dispatchItemLoad(act, 5);
+                act->f138();
+                int count = ((CfMoveEnumList*)holder.get())->field_620;
+                for (int i = 0; i < count; i++) {
+                    MapFx_ResolveOwner(
+                        getObjectAt(holder.get(), i));
+                }
             }
         }
     }
-    __dt__80043E88(&holder, -1);
     actor = self->field_0x18;
     u32 vE = actor->field_04->b30()->field_0;
     if (testActorStatus(actor, &vE, 5) != 0) {
@@ -1417,24 +1418,22 @@ tail:
 void CfObjectImplMoveObj::SweepReposition() {
     this->field_0x18->field_04->b20(0x400000);
     this->field_0x18->field_04->b20(0x800000);
-    CfMoveEnumHolder holder;
-    CTaskGame_enumListCtor(&holder);
-    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
+    CfEnumListHolder holder;
+    startEnumObjects(holder.get(), 0x20, 0);
     u32 handle = this->vf48();
-    sortEntriesByDistance(CTaskGame_enumListGet(&holder), (void*)handle);
-    // The count is re-read through CTaskGame_enumListGet on every use (retail makes
+    sortEntriesByDistance(holder.get(), (void*)handle);
+    // The count is re-read through get__16CfEnumListHolderFv on every use (retail makes
     // a fresh call each time).
-    if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
-        for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
+    if (((CfMoveEnumList*)holder.get())->field_620 != 0) {
+        for (u32 i = 0; i < ((CfMoveEnumList*)holder.get())->field_620; i++) {
             void* entry =
-                MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                MapFx_ResolveOwner(getObjectAt(holder.get(), i));
             this->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
                 lbl_eu_80666C60);
         }
     }
-    this->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
+    this->vf70(findFirstCleanObjectId(holder.get()));
     this->vf80();
-    __dt__80043E88(&holder, -1);
 }
 
 // Move-state reset driver: probes the actor's vf29C item chain (up to three

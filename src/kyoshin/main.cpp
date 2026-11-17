@@ -206,7 +206,7 @@ int main(){
     // Keep .data base in a named local so MWCC relocates via sGameMainIcon
     // (not ...data.0) and can emit stmw r30/r31 like retail.
     char* dataBase = reinterpret_cast<char*>(&sGameMainIcon);
-    lbl_eu_8065FD00[0x125] = 0;
+    nand.setShare(false);
     CBdat::clearEntries();
     loadErrMesTable();
     NandData_SetupBanner_11C0();

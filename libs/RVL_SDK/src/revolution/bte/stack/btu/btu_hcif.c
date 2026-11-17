@@ -583,6 +583,98 @@ void btu_hcif_send_cmd(BT_HDR *p_buf)
     if (p_buf)
         GKI_enqueue (&btu_cb.cmd_xmit_q, p_buf);
 }
+/*******************************************************************************
+**
+** Function         btu_hcif_connection_comp_evt
+**
+** Description      Process HCI_CONNECTION_COMP_EVT. A connection has been
+**                  established (or failed); notify BTM and L2CAP (ACL) or the
+**                  SCO manager.
+**
+** Returns          void
+**
+*******************************************************************************/
+void btu_hcif_connection_comp_evt(UINT8 *p, UINT16 evt_len)
+{
+    UINT8           status;
+    UINT16          handle;
+    BD_ADDR         bda;
+    UINT8           link_type;
+    UINT8           enc_mode;
+    tBTM_ESCO_DATA  esco_data;
+
+    STREAM_TO_UINT8  (status, p);
+    STREAM_TO_UINT16 (handle, p);
+    STREAM_TO_BDADDR (bda, p);
+    STREAM_TO_UINT8  (link_type, p);
+    STREAM_TO_UINT8  (enc_mode, p);
+
+    handle = HCID_GET_HANDLE (handle);
+
+    if (link_type == HCI_LINK_TYPE_ACL)
+    {
+        btm_sec_connected (bda, handle, status, enc_mode);
+
+        l2c_link_hci_conn_comp (status, handle, bda);
+    }
+    else
+    {
+        /* For SCO/ESCO the link type member is already 0 (SCO) after the
+           zero-init; only the BD_ADDR needs copying in. */
+        memset (&esco_data, 0, sizeof(tBTM_ESCO_DATA));
+        memcpy (esco_data.bd_addr, bda, BD_ADDR_LEN);
+        btm_sco_connected (status, bda, handle, &esco_data);
+    }
+}
+/*******************************************************************************
+**
+** Function         btu_hcif_connection_request_evt
+**
+** Description      Process HCI_CONNECTION_REQUEST_EVT. The remote device is
+**                  asking to connect; route the request through the security
+**                  manager (ACL) or SCO manager depending on the link type.
+**
+** Returns          void
+**
+*******************************************************************************/
+void btu_hcif_connection_request_evt(UINT8 *p, UINT16 evt_len)
+{
+    BD_ADDR   bda;
+    DEV_CLASS dc;
+    UINT8     link_type;
+
+    STREAM_TO_BDADDR (bda, p);
+    STREAM_TO_DEVCLASS (dc, p);
+    STREAM_TO_UINT8  (link_type, p);
+
+    /* Pass the request to the security manager to check connect filters
+       before forwarding to L2CAP. */
+    if (link_type == HCI_LINK_TYPE_ACL)
+    {
+        btm_sec_conn_req (bda, dc);
+    }
+    else
+    {
+        btm_sco_conn_req (bda, dc, link_type);
+    }
+}
+/* Command-completion handlers in BTM (btm_acl / btm_inq / btm_devctl / btm_dev). */
+extern void btm_reset_complete(void);
+extern void btm_process_inq_complete(UINT8 status);
+extern void btm_event_filter_complete(UINT8* p);
+extern void btm_read_stored_link_key_complete(UINT8* p);
+extern void btm_write_stored_link_key_complete(UINT8* p);
+extern void btm_delete_stored_link_key_complete(UINT8* p);
+extern void btm_read_link_policy_complete(UINT8* p);
+extern void btm_read_hci_buf_size_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_version_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_features_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_name_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_addr_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_link_quality_complete(UINT8* p);
+extern void btm_read_rssi_complete(UINT8* p);
+extern void btm_vsc_complete(UINT8* p, UINT16 cc_opcode, UINT16 evt_len);
+
 void btu_hcif_qos_setup_comp_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT8     status;
@@ -604,6 +696,7 @@ void btu_hcif_qos_setup_comp_evt(UINT8 *p, UINT16 evt_len)
 
     btm_qos_setup_complete (status, handle, &flow);
 }
+
 /*******************************************************************************
 **
 ** Function         btu_hcif_esco_connection_comp_evt
@@ -643,22 +736,7 @@ void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len)
 
     btm_sco_connected (status, bda, handle, &esco_data);
 }
-/* Command-completion handlers in BTM (btm_acl / btm_inq / btm_devctl / btm_dev). */
-extern void btm_reset_complete(void);
-extern void btm_process_inq_complete(UINT8 status);
-extern void btm_event_filter_complete(UINT8* p);
-extern void btm_read_stored_link_key_complete(UINT8* p);
-extern void btm_write_stored_link_key_complete(UINT8* p);
-extern void btm_delete_stored_link_key_complete(UINT8* p);
-extern void btm_read_link_policy_complete(UINT8* p);
-extern void btm_read_hci_buf_size_complete(UINT8* p, UINT16 evt_len);
-extern void btm_read_local_version_complete(UINT8* p, UINT16 evt_len);
-extern void btm_read_local_features_complete(UINT8* p, UINT16 evt_len);
-extern void btm_read_local_name_complete(UINT8* p, UINT16 evt_len);
-extern void btm_read_local_addr_complete(UINT8* p, UINT16 evt_len);
-extern void btm_read_link_quality_complete(UINT8* p);
-extern void btm_read_rssi_complete(UINT8* p);
-extern void btm_vsc_complete(UINT8* p, UINT16 cc_opcode, UINT16 evt_len);
+extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);
 
 /* HCI command opcodes with completion handlers in this dispatch (hcidefs.h). */
 #define HCI_INQUIRY_CANCEL          0x0402
@@ -742,7 +820,6 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len)
         break;
     }
 }
-
 void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT16  cc_opcode;
@@ -790,7 +867,9 @@ void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
     btu_hcif_hdl_command_complete (cc_opcode, p + 3, evt_len - 3);
     btu_hcif_send_cmd (0);
 }
-extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);
+extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
+extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
+extern void btm_report_device_status(UINT8 status);
 
 void btu_hcif_hdl_command_status(UINT16 opcode, UINT8 num_hci_cmds, UINT8 *p_data)
 {
@@ -868,6 +947,7 @@ void btu_hcif_hdl_command_status(UINT16 opcode, UINT8 num_hci_cmds, UINT8 *p_dat
         break;
     }
 }
+
 void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT8   num_hci_cmds;
@@ -924,9 +1004,6 @@ void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
 
     btu_hcif_send_cmd (0);
 }
-extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
-extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
-extern void btm_report_device_status(UINT8 status);
 
 void btu_hcif_cmd_timeout(void)
 {
@@ -1000,81 +1077,4 @@ void btu_hcif_link_key_notification_evt(UINT8 *p, UINT16 evt_len)
     STREAM_TO_UINT8  (key_type, p);       /* p[22]    */
 
     btm_sec_link_key_notification (bda, key, key_type);
-}
-
-/*******************************************************************************
-**
-** Function         btu_hcif_connection_request_evt
-**
-** Description      Process HCI_CONNECTION_REQUEST_EVT. The remote device is
-**                  asking to connect; route the request through the security
-**                  manager (ACL) or SCO manager depending on the link type.
-**
-** Returns          void
-**
-*******************************************************************************/
-void btu_hcif_connection_request_evt(UINT8 *p, UINT16 evt_len)
-{
-    BD_ADDR   bda;
-    DEV_CLASS dc;
-    UINT8     link_type;
-
-    STREAM_TO_BDADDR (bda, p);
-    STREAM_TO_DEVCLASS (dc, p);
-    STREAM_TO_UINT8  (link_type, p);
-
-    /* Pass the request to the security manager to check connect filters
-       before forwarding to L2CAP. */
-    if (link_type == HCI_LINK_TYPE_ACL)
-    {
-        btm_sec_conn_req (bda, dc);
-    }
-    else
-    {
-        btm_sco_conn_req (bda, dc, link_type);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         btu_hcif_connection_comp_evt
-**
-** Description      Process HCI_CONNECTION_COMP_EVT. A connection has been
-**                  established (or failed); notify BTM and L2CAP (ACL) or the
-**                  SCO manager.
-**
-** Returns          void
-**
-*******************************************************************************/
-void btu_hcif_connection_comp_evt(UINT8 *p, UINT16 evt_len)
-{
-    UINT8           status;
-    UINT16          handle;
-    BD_ADDR         bda;
-    UINT8           link_type;
-    UINT8           enc_mode;
-    tBTM_ESCO_DATA  esco_data;
-
-    STREAM_TO_UINT8  (status, p);
-    STREAM_TO_UINT16 (handle, p);
-    STREAM_TO_BDADDR (bda, p);
-    STREAM_TO_UINT8  (link_type, p);
-    STREAM_TO_UINT8  (enc_mode, p);
-
-    handle = HCID_GET_HANDLE (handle);
-
-    if (link_type == HCI_LINK_TYPE_ACL)
-    {
-        btm_sec_connected (bda, handle, status, enc_mode);
-
-        l2c_link_hci_conn_comp (status, handle, bda);
-    }
-    else
-    {
-        /* For SCO/ESCO the link type member is already 0 (SCO) after the
-           zero-init; only the BD_ADDR needs copying in. */
-        memset (&esco_data, 0, sizeof(tBTM_ESCO_DATA));
-        memcpy (esco_data.bd_addr, bda, BD_ADDR_LEN);
-        btm_sco_connected (status, bda, handle, &esco_data);
-    }
 }

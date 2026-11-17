@@ -112,8 +112,6 @@ void __dt__17UnkClass_8045F564Fv(void*, int);
 void __dt__8CProcessFv(void*, int);
 void waitForDrawDone__9CDeviceVIFv();
 void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
-void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
 }
 

@@ -1589,9 +1589,6 @@ extern "C" void* get_u32_74__17UnkClass_805764CCFv(void* arg);
 extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
-extern "C" void CTaskGame_enumListCtor(void* holder);
-extern "C" void* CTaskGame_enumListGet(void* holder);
-extern "C" void __dt__80043E88(void* holder, int flag);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6E98(void* list, int index);
 extern "C" int getObjField620(void* list);

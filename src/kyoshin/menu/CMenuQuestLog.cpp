@@ -1,19 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuQuestLog
 // Replace stubs with high-level C/C++ during decomp.
 
-#define ISCN_RENDER_NO_DTOR // see CMenuQuestLog.hpp
 
-// Retail copyScrollBarData is a copy constructor that returns dst (r3), but the
-// shared headers still declare a void-returning scaffold. Rename that
-// declaration aside for this TU only so the real definition below can use the
-// retail signature; other TUs are unaffected (they ignore the return value).
-#define copyScrollBarData questlog_scaffold_void_copyScrollBarData
-// CQstLogList.hpp declares __ct__UnkClass_8011C974(void*, const u32*); rename
-// that aside so this TU can define the typed u32* dest form without overload clash.
-#define __ct__UnkClass_8011C974 questlog_void_ct_UnkClass_8011C974
 #include "kyoshin/menu/CMenuQuestLog.hpp"
-#undef copyScrollBarData
-#undef __ct__UnkClass_8011C974
 
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
@@ -25,240 +14,85 @@
 
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 
-extern "C" CMenuQuestLog* __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
-extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src);
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
-
-// CProcess primary vptr @ +0x10 (novtable base; same slot as other menus).
-struct CProcessPrimaryVptr {
-    u8 _00[0x10];
-    u32* mVtbl;
-};
-
-
-// Retail constructor symbol (unmangled global). Out-of-line stub so the
-// factory (createQuestLogMenu) emits a real `bl` to it; returns `this` in r3 like
-// a real constructor (retail relies on it). C linkage inherited from the
-// header declaration.
-__declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2) {
-    __ct__8CProcessFv(_this);
-
-    // Temp (CProcess) primary vtable.
-    reinterpret_cast<CProcessPrimaryVptr*>(_this)->mVtbl =
-        reinterpret_cast<u32*>(lbl_eu_8052BF70);
-
-    // Null PMF callback slot groups: materialize the __ptmf_null base once
-    // via an update-form first load (*n++), index remaining words relative to
-    // the advanced pointer; each group stores its second slot first.
-    u32* n = __ptmf_null;
-    u32 a0 = *n++;
-    u32 renderVt = (u32)lbl_eu_8052CC38 + 0x24;
-    u32 a1 = n[0];
-    _this->ptmf0[1] = a1;
-    _this->ptmf0[0] = a0;
-    u32 a2 = n[1];
-    _this->ptmf0[2] = a2;
-
-    a0 = n[-1];
-    a1 = n[0];
-    _this->ptmf1[1] = a1;
-    _this->ptmf1[0] = a0;
-    a2 = n[1];
-    _this->ptmf1[2] = a2;
-
-    _this->mField54 = 0;
-    _this->mField55 = 0;
-
-    reinterpret_cast<CProcessPrimaryVptr*>(_this)->mVtbl =
-        reinterpret_cast<u32*>(lbl_eu_8052CC38);
-    *(u32*)&_this->mIScnRender = renderVt;
-    _this->mScene = parent;
-
-    // Embedded widgets in construction order.
-    __ct__6CBgTexFUc(&_this->mBgTex, 0);
-    __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
-    __ct__11CQstLogListFUs(&_this->mQstLogList, 0);
-    __ct__11CQstLogInfoFv(&_this->mQstLogInfo);
-
-    _this->field_2280 = arg2;
-    _this->mState = 0;
+// Retail constructor: out-of-line, so the factory (createQuestLogMenu) emits a
+// real `bl` to it. The IUICf/CTTask base chain and the IScnRender vptr store
+// are emitted by the compiler.
+CMenuQuestLog::CMenuQuestLog(CProcess* parent, u32 arg2)
+    : mScene(parent), mBgTex(0), mTitleAHelp(0, 0), mQstLogList(0),
+      field_2280(arg2), mState(0) {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
     code80135FDC_postIncByte_64080();
-    return _this;
 }
 
-/*
- * Destructor (retail D2 form). Free-function with flags so the base call
- * relocates to __dt__800FED0C (game D2), not library __dt__8CProcessFv.
- * Subobjects destroyed in reverse construction order.
- */
-extern "C" CMenuQuestLog* __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int flags) {
-    if (ths != 0) {
-        __dt__11CQstLogInfoFv(&ths->mQstLogInfo, -1);
-        __dt__11CQstLogListFv(&ths->mQstLogList, -1);
-        __dt__11CTitleAHelpFv(&ths->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&ths->mBgTex, -1);
-        __dt__800FED0C(ths, 0);
-        if (flags > 0) {
-            operator delete(ths);
-        }
-    }
-    return ths;
-}
+CMenuQuestLog::~CMenuQuestLog() {}
 
 // ---------------------------------------------------------------------------
 // ---- CMenuQuestLog::Init (us-8011d08c) -------------------------------------
-// Rebuild each embedded widget by constructing a stack temporary and copying
-// its body into the embedded storage (same pattern as CMenuCollepedia::Init),
-// then register the render-callback sub-object on the owning scene.
+// Re-initialise each embedded widget by assigning a freshly constructed
+// temporary (same pattern as CMenuCollepedia::Init), then register the
+// render-callback sub-object on the owning scene.
 // ---------------------------------------------------------------------------
-// Retail signature copy helper (the scaffold decl is renamed aside at include
-// time; this prototype serves the Init() call sites).
-extern "C" CScrollBarData* copyScrollBarData(CScrollBarData* dst, CScrollBarData* src);
-
 void CMenuQuestLog::Init() {
-    // Stack temporaries packed into one aggregate so the slot layout matches
-    // retail exactly: bg @sp+0x8, info @sp+0x28, title @sp+0x68, list
-    // @sp+0xa0 (frame 0x2230).
-    struct {
-        u8 bg[0x20];
-        u8 info[0x40];
-        u8 title[0x38];
-        u8 list[0x2188];
-    } tmp;
-
-    // --- CBgTex ---
-    __ct__6CBgTexFUc((CBgTex*)tmp.bg, 0);
-    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mBgTex.mMemRegion), (const u32*)(tmp.bg + 0x4));
-    mBgTex.mFileHandle = *(CFileHandle**)(tmp.bg + 0x14);
-    mBgTex.mLayout = *(nw4r::lyt::Layout**)(tmp.bg + 0x18);
-    mBgTex.mLayoutReady = *(bool*)(tmp.bg + 0x1c);
-    mBgTex.mLoaded = tmp.bg[0x1d];
-    mBgTex.mPtmMode = tmp.bg[0x1e];
-    __dt__6CBgTexFv((CBgTex*)tmp.bg, -1);
+    mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    // --- CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
-    __ct__CTitleAHelp((CTitleAHelp*)tmp.title, name, 0x3c);
-    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mTitleAHelp.unk4), (const u32*)(tmp.title + 0x4));
-    mTitleAHelp.mFileHandle = *(CFileHandle**)(tmp.title + 0x14);
-    mTitleAHelp.mArcResourceAccessor =
-        *(nw4r::lyt::ArcResourceAccessor**)(tmp.title + 0x18);
-    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tmp.title + 0x1c);
-    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tmp.title + 0x20);
-    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tmp.title + 0x24);
-    mTitleAHelp.unk28 = tmp.title[0x28];
-    mTitleAHelp.unk2c = *(s32*)(tmp.title + 0x2c);
-    mTitleAHelp.mName = *(char**)(tmp.title + 0x30);
-    mTitleAHelp.unk34 = tmp.title[0x34];
-    mTitleAHelp.unk35 = tmp.title[0x35];
-    mTitleAHelp.unk36 = tmp.title[0x36];
-    mTitleAHelp.unk37 = tmp.title[0x37];
-    __dt__11CTitleAHelpFv((CTitleAHelp*)tmp.title, -1);
+    mTitleAHelp = CTitleAHelp(name, 0x3c);
     mTitleAHelp.CTitleAHelp_load();
 
-    // --- CQstLogList ---
-    __ct__11CQstLogListFUs((CQstLogList*)tmp.list, (u16)field_2280);
-    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mUnk04[0]), (const u32*)(tmp.list + 0x4));
-    mQstLogList.mFileHandle = *(CFileHandle**)(tmp.list + 0x14);
-    mQstLogList.mArcResAcc = *(nw4r::lyt::ArcResourceAccessor**)(tmp.list + 0x18);
-    mQstLogList.mpLayout = *(nw4r::lyt::Layout**)(tmp.list + 0x1c);
-    mQstLogList.mpAnim0 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x20);
-    mQstLogList.mpAnim1 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x24);
-    mQstLogList.mCur18 = reinterpret_cast<CQstLogList*>(tmp.list)->mCur18;
-    copyScrollBarData(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
-    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mSortMenuData.mUnk04[0]), (const u32*)(tmp.list + 0x84));
-    mQstLogList.mSortMenuData.mFileHandle = *(u32*)(tmp.list + 0x94);
-    mQstLogList.mSortMenuData.mArcResAcc = *(u32*)(tmp.list + 0x98);
-    mQstLogList.mSortMenuData.mpLayout = *(u32*)(tmp.list + 0x9c);
-    mQstLogList.mSortMenuData.mpAnimTrans0 = *(u32*)(tmp.list + 0xa0);
-    mQstLogList.mSortMenuData.mpAnimTrans1 = *(u32*)(tmp.list + 0xa4);
-    mQstLogList.mSortMenuData.field_0x28 = tmp.list[0xa8];
-    mQstLogList.mSortMenuData.field_0x29 = tmp.list[0xa9];
-    mQstLogList.mSortMenuData.field_0x2A = tmp.list[0xaa];
-    mQstLogList.mSortMenuData.field_0x2B = tmp.list[0xab];
-    copyScrollBarData(&mQstLogList.mSortMenuData.mScrollBar,
-                  (CScrollBarData*)(tmp.list + 0xac));
-    // Sort-menu entry table + quest-info buffer: aggregate assignments let
-    // MWCC emit its canonical copies (paired-update word loop; fieldwise
-    // record loop + halfword/byte tail).
     {
-        struct QstArrBlock { u32 words[32]; };
-        // mSortMenuData.mArray @ list+0xEC = this+0x1A4
-        *(QstArrBlock*)mQstLogList.mSortMenuData.mArray =
-            *(QstArrBlock*)(tmp.list + 0xec);
+        // Should read `mQstLogList = CQstLogList((u16)field_2280);`. The
+        // implicit CQstLogList::operator= expands CScrollBar's implicit
+        // operator= inline here, but retail calls it out of line
+        // (copyScrollBarData below, the weak CScrollBar::operator=). That
+        // needs a user-declared `CScrollBar& operator=(const CScrollBar&)` in
+        // CScrollBar.hpp (verified: with it Init is 0x3b8 bytes vs retail's
+        // 0x3c4; without it 0x438 and the unit exceeds its split budget).
+        // Until then the fields are copied by hand from a real temporary.
+        CQstLogList tmpList((u16)field_2280);
+        mQstLogList.mMemRegion = tmpList.mMemRegion;
+        mQstLogList.mFileHandle = tmpList.mFileHandle;
+        mQstLogList.mArcResAcc = tmpList.mArcResAcc;
+        mQstLogList.mpLayout = tmpList.mpLayout;
+        mQstLogList.mpAnim0 = tmpList.mpAnim0;
+        mQstLogList.mpAnim1 = tmpList.mpAnim1;
+        mQstLogList.mCur18 = tmpList.mCur18;
+        copyScrollBarData(&mQstLogList.mScrollBar, &tmpList.mScrollBar);
+        mQstLogList.mSortMenuData = tmpList.mSortMenuData;
+        mQstLogList.field_0x170 = tmpList.field_0x170;
+        mQstLogList.field_0x174 = tmpList.field_0x174;
+        mQstLogList.field_0x178 = tmpList.field_0x178;
+        mQstLogList.mSortEnabled = tmpList.mSortEnabled;
+        mQstLogList.mSortDescending = tmpList.mSortDescending;
+        mQstLogList.field_0x17B = tmpList.field_0x17B;
+        mQstLogList.field_0x17C = tmpList.field_0x17C;
+        mQstLogList.field_0x17D = tmpList.field_0x17D;
+        mQstLogList.field_0x17E = tmpList.field_0x17E;
+        mQstLogList.field_0x180 = tmpList.field_0x180;
+        // Quest-info records copied fieldwise (u16 + 6 bytes each) - inlined
+        // here, unlike the out-of-line copyQstInfo calls in the list ctor.
+        CQstLogListQstInfo* qDst = (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
+        CQstLogListQstInfo* qSrc = (CQstLogListQstInfo*)&tmpList.mQstData.mList[0];
+        CQstLogListQstInfo* qEnd = (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
+        do {
+            *qDst = *qSrc;
+            qDst++;
+            qSrc++;
+        } while (qDst < qEnd);
+        mQstLogList.mQstData.field_2000 = tmpList.mQstData.field_2000;
+        mQstLogList.mQstData.field_2002 = tmpList.mQstData.field_2002;
+        mQstLogList.mQstData.field_2004 = tmpList.mQstData.field_2004;
+        mQstLogList.mQstData.field_2005 = tmpList.mQstData.field_2005;
     }
-    // Sort/list state scalars.
-    mQstLogList.mSortMenuData.mCount = tmp.list[0x16c];
-    mQstLogList.mSortMenuData.mPage = tmp.list[0x16d];
-    mQstLogList.mSortMenuData.mSubPage = tmp.list[0x16e];
-    mQstLogList.field_0x170 = tmp.list[0x170];
-    mQstLogList.field_0x174 = *(s32*)(tmp.list + 0x174);
-    mQstLogList.field_0x178 = tmp.list[0x178];
-    mQstLogList.mSortEnabled = tmp.list[0x179];
-    mQstLogList.mSortDescending = tmp.list[0x17a];
-    mQstLogList.field_0x17B = tmp.list[0x17b];
-    mQstLogList.field_0x17C = tmp.list[0x17c];
-    mQstLogList.field_0x17D = tmp.list[0x17d];
-    mQstLogList.field_0x17E = *(s16*)(tmp.list + 0x17e);
-    mQstLogList.field_0x180 = *(u16*)(tmp.list + 0x180);
-    // Quest-info records copied fieldwise (u16 + 6 bytes each).
-    // Residual vs retail (pure reg-swap, see attempts.jsonl): retail colors
-    // the scalar temporaries r3 and the loop pointers qDst=qSrc=r5/qEnd=r0
-    // (qEnd reuses the dead r0 from the preceding block-copy loop); this
-    // shape yields temps=r0, qDst=r3, qSrc=r4, qEnd=r5.
-    CQstLogListQstInfo* qDst =
-        (CQstLogListQstInfo*)&mQstLogList.mQstData.mList[0];
-    CQstLogList* srcList = (CQstLogList*)tmp.list;
-    CQstLogListQstInfo* qSrc =
-        (CQstLogListQstInfo*)&srcList->mQstData.mList[0];
-    CQstLogListQstInfo* qEnd =
-        (CQstLogListQstInfo*)&mQstLogList.mQstData.field_2000;
-    do {
-        *qDst = *qSrc;
-        qDst++;
-        qSrc++;
-    } while (qDst < qEnd);
-    mQstLogList.mQstData.field_2000 = *(u16*)(tmp.list + 0x2182);
-    mQstLogList.mQstData.field_2002 = *(s16*)(tmp.list + 0x2184);
-    mQstLogList.mQstData.field_2004 = tmp.list[0x2186];
-    mQstLogList.mQstData.field_2005 = tmp.list[0x2187];
-    __dt__11CQstLogListFv((CQstLogList*)tmp.list, -1);
-    QstLogList_LoadArc(&mQstLogList);
+    mQstLogList.LoadArc();
 
-    // --- CQstLogInfo ---
-    __ct__11CQstLogInfoFv((CQstLogInfo*)tmp.info);
-    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogInfo.mMemRegion), (const u32*)(tmp.info + 0x4));
-    mQstLogInfo.mFileHandle = *(CFileHandle**)(tmp.info + 0x14);
-    mQstLogInfo.field_0x18 = *(CFileHandle**)(tmp.info + 0x18);
-    mQstLogInfo.field_0x1C = *(u32*)(tmp.info + 0x1c);
-    mQstLogInfo.mUnk20 = *(nw4r::lyt::Layout**)(tmp.info + 0x20);
-    mQstLogInfo.field_0x24 = *(nw4r::lyt::AnimTransform**)(tmp.info + 0x24);
-    mQstLogInfo.field_0x28 = *(nw4r::lyt::AnimTransform**)(tmp.info + 0x28);
-    mQstLogInfo.field_0x2C = *(u32*)(tmp.info + 0x2c);
-    mQstLogInfo.mUnk30 = tmp.info[0x30];
-    mQstLogInfo.field_0x34 = *(s32*)(tmp.info + 0x34);
-    mQstLogInfo.mField38 = tmp.info[0x38];
-    mQstLogInfo.mField39 = tmp.info[0x39];
-    mQstLogInfo.mField3A = *(u16*)(tmp.info + 0x3a);
-    mQstLogInfo.field_0x3C = *(u32*)(tmp.info + 0x3c);
-    __dt__11CQstLogInfoFv((CQstLogInfo*)tmp.info, -1);
+    mQstLogInfo = CQstLogInfo();
     QstLogInfo_LoadArcHandle(&mQstLogInfo);
 
-    // Register the render callback (this-adjusting IScnRender view at +0x58).
-    IScnRender* renderCb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) renderCb = reinterpret_cast<IScnRender*>(&mIScnRender);
-    reinterpret_cast<CScn*>(mScene)->addRenderCB(renderCb, 0x10, 0);
-}
-
-// retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
-extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src) {
-    dest[0] = src[0];
-    dest[1] = src[1];
-    dest[2] = src[2];
-    dest[3] = src[3];
+    // Register the render callback (IScnRender base at +0x58).
+    reinterpret_cast<CScn*>(mScene)->addRenderCB(this, 0x10, 0);
 }
 
 // CScrollBar copy helper (inlined copy constructor): constructs the
@@ -266,12 +100,12 @@ extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src) {
 // scalar fields one at a time. Retail keeps `this` in r3, so this is written
 // with a pointer return; src is read through a volatile ref so the compiler
 // cannot hoist the loads (retail reloads the source per field).
-extern "C" CScrollBarData* copyScrollBarData(CScrollBarData* dst, CScrollBarData* src) {
-    __ct__UnkClass_8011C974(&dst->mMemRegion[0], &src->mMemRegion[0]);
+extern "C" CScrollBar* copyScrollBarData(CScrollBar* dst, const CScrollBar* src) {
+    dst->mMemRegion = src->mMemRegion;
     dst->mFileHandle = src->mFileHandle;
     dst->mAccessor = src->mAccessor;
     dst->mLayout = src->mLayout;
-    dst->mAnimTrans = src->mAnimTrans;
+    dst->mAnimTransform = src->mAnimTransform;
     dst->mReady = src->mReady;
     dst->mVisible = src->mVisible;
     dst->mState = src->mState;
@@ -293,12 +127,10 @@ extern "C" CScrollBarData* copyScrollBarData(CScrollBarData* dst, CScrollBarData
 // ---------------------------------------------------------------------------
 void CMenuQuestLog::Term() {
     CDeviceVI::waitForDrawDone();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mIScnRender);
-    reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
+    reinterpret_cast<CScn*>(mScene)->removeRenderCB(this);
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    QstLogList_Teardown(&mQstLogList);
+    mQstLogList.Teardown();
     QstLogInfo_TeardownLayout(&mQstLogInfo);
     lbl_eu_80663FC0[0] = 0;
     DecMenuCounter64080();
@@ -375,7 +207,7 @@ body:
 
     BgTex_Tick_3D54(&mBgTex);
     updateHelp(&mTitleAHelp);
-    QstLogList_FrameUpdate(&mQstLogList);
+    mQstLogList.FrameUpdate();
     QstLogInfo_StepStateMachine(&mQstLogInfo);
 }
 
@@ -401,7 +233,7 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-        QstLogList_Draw(&mQstLogList, &drawInfo);
+        mQstLogList.Draw(&drawInfo);
         QstLogInfo_DrawLayoutTail(&mQstLogInfo, &drawInfo);
         drawHelp(&mTitleAHelp, &drawInfo);
     }
@@ -420,11 +252,7 @@ extern "C" CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u
     if (lbl_eu_80663FC0[0] != 0) {
         return 0;
     }
-    CMenuQuestLog* obj = (CMenuQuestLog*)mtl::MemManager::allocate(
-        0x2288, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuQuestLog(obj, parent, arg2);
-    }
+    CMenuQuestLog* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQuestLog(parent, arg2);
     lbl_eu_80663FC0[0] = obj;
     Regist__8CProcessFP8CProcessb(obj, self, false);
     return lbl_eu_80663FC0[0];
@@ -439,10 +267,10 @@ extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0[0] != 0; }
 extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex)) {
         if (isInitialized(&self->mTitleAHelp)) {
-            if (QstLogList_ScrollFlag(&self->mQstLogList)) {
+            if (self->mQstLogList.ScrollFlag()) {
                 if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
                     func_801C412C(&self->mTitleAHelp);
-                    QstLogList_BeginSortOpen(&self->mQstLogList);
+                    self->mQstLogList.BeginSortOpen();
                     self->mState = 1;
                     playUISound(0x6d);
                 }
@@ -454,7 +282,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
 extern "C" void gateQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList))
+    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled())
         self->mState = 2;
 }
 
@@ -491,48 +319,48 @@ extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
     }
 
     if (trigger1) {
-        QstLogList_ApplySortSelection(&self->mQstLogList);
-        if (!QstLogList_IsSortEnabled(&self->mQstLogList)) {
+        self->mQstLogList.ApplySortSelection();
+        if (!self->mQstLogList.IsSortEnabled()) {
             markReplayClose(&self->mTitleAHelp);
-            QstLogList_EndSortMode(&self->mQstLogList, 0);
+            self->mQstLogList.EndSortMode(0);
             self->mState = 4;
         } else {
             func_801C41E8(&self->mTitleAHelp, 0x3c);
         }
     } else if (trigger2) {
-        if (QstLogList_IsSortDescending(&self->mQstLogList)) {
-            QstLogList_ConfirmSort(&self->mQstLogList, 0);
+        if (self->mQstLogList.IsSortDescending()) {
+            self->mQstLogList.ConfirmSort(0);
             func_801C41E8(&self->mTitleAHelp, 0x3c);
         } else {
             beginClose(&self->mTitleAHelp);
-            QstLogList_EndSortMode(&self->mQstLogList, 1);
+            self->mQstLogList.EndSortMode(1);
             self->mState = 3;
         }
     } else if (cancel) {
-        QstLogList_ScrollUp(&self->mQstLogList);
+        self->mQstLogList.ScrollUp();
     } else if (dir) {
-        QstLogList_ScrollDown(&self->mQstLogList);
+        self->mQstLogList.ScrollDown();
     } else if (confirm) {
-        QstLogList_PageUp(&self->mQstLogList);
+        self->mQstLogList.PageUp();
     } else if (menu) {
-        QstLogList_PageDown(&self->mQstLogList);
+        self->mQstLogList.PageDown();
     } else if (trigger3) {
-        QstLogList_ToggleSort(&self->mQstLogList);
-        func_801C41E8(&self->mTitleAHelp, QstLogList_IsSortDescending(&self->mQstLogList) ? 0x3e : 0x3c);
+        self->mQstLogList.ToggleSort();
+        func_801C41E8(&self->mTitleAHelp, self->mQstLogList.IsSortDescending() ? 0x3e : 0x3c);
     }
 }
 
 // Same gate as gateQuestLogList but toggles the +0x54 byte to 1.
 extern "C" void flagQuestLogReady(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList))
+    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled())
         self->mField54 = 1;
 }
 
 extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 {
     CMenuQuestLog* base = self;
-    if (base->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&base->mQstLogList)) {
-        unsigned int value = QstLogList_GetSelectedQuestLo(&base->mQstLogList);
+    if (base->mTitleAHelp.isIdle() && base->mQstLogList.IsSortEnabled()) {
+        unsigned int value = base->mQstLogList.GetSelectedQuestLo();
         QstLogInfo_SetQuestIdSlot(&base->mQstLogInfo, static_cast<unsigned short>(value));
         QstLogInfo_LoadCommonArchive(&base->mQstLogInfo);
         base->mState = 5;
@@ -596,7 +424,7 @@ extern "C" void resortQuestLogList(CMenuQuestLog* self) {
     if (self->mTitleAHelp.isIdle() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3c);
         reopenFromClose(&self->mTitleAHelp);
-        QstLogList_BeginSortOpen(&self->mQstLogList);
+        self->mQstLogList.BeginSortOpen();
         self->mState = 9;
     }
 }
@@ -606,31 +434,9 @@ extern "C" void resortQuestLogList(CMenuQuestLog* self) {
 // When the title help is idle and sorting is enabled, advance to state 2.
 // ---------------------------------------------------------------------------
 extern "C" void reopenQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList)) {
+    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled()) {
         self->mState = 2;
     }
-}
-
-// Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
-// to the full CMenuQuestLog, then tail-calls cbRenderBefore.
-extern "C" void fwdQuestLogCbRender(IScnRender* self) {
-    reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
-}
-
-// Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
-// to the full CMenuQuestLog, then tail-calls the destructor.
-extern "C" void fwdQuestLogDtor(IScnRender* self) {
-    // Single-arg cast: retail thunk only adjusts this; mode stays in r4.
-    ((void (*)(CMenuQuestLog*))__dt__13CMenuQuestLogFv)(
-        reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58));
-}
-
-// __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.
-extern "C" CMenuQuestLog* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
-    if (self != 0 && mode > 0) {
-        operator delete(self);
-    }
-    return self;
 }
 
 // sbss singleton (retail 0x8: pointer + emitted zero word).
@@ -638,9 +444,6 @@ CMenuQuestLog* lbl_eu_80663FC0[2] = { 0, 0 };
 
 // --- hand-built retail data (splits: .rodata 804FE508-804FE6F0,
 // .data 8052CC10-8052CD50, .sdata 80661E70-80661E78) ---
-// .rodata class-name string (referenced by the .sdata pair below).
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_804FE508[0x0E] = "CMenuQuestLog";
 // .rodata menu-text pool (BdatTouchStringCell reads +0x0/+0xA in Init).
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
 char lbl_eu_804FE518[0x10] = "MNU_quest\0name";
@@ -679,7 +482,6 @@ extern const float lbl_eu_804FE6D8[6] = { -0.2f, 1.81f, -260.26f, -0.18f, 1.76f,
 
 // .data string-pointer table (28 marker addresses + 8 zero words) and the
 // resource table below need the retail names visible here.
-extern "C" char lbl_eu_804FE508[];
 extern "C" char lbl_eu_804FE528[];
 extern "C" char lbl_eu_804FE538[];
 extern "C" char lbl_eu_804FE548[];
@@ -707,52 +509,6 @@ extern "C" char lbl_eu_804FE698[];
 extern "C" char lbl_eu_804FE6A8[];
 extern "C" char lbl_eu_804FE6B8[];
 extern "C" char lbl_eu_804FE6C8[];
-// Resource-table targets live in other TUs (sdata); address-taken only.
-extern "C" const u8 lbl_eu_80661940[];
-extern "C" const u8 lbl_eu_80661958[];
-extern "C" const u8 lbl_eu_80661950[];
-extern "C" const u8 lbl_eu_80661948[];
-extern "C" const u8 lbl_eu_80661DE8[];
-extern "C" const u8 lbl_eu_80661DE0[];
-
-// Free-function spellings of vtable slots for the hand-built CC38 table
-// below (same recipe as CScrollBar/CMenuEnemyState): these declare the exact
-// retail (link) symbols; the members defined in this TU provide the
-// CMenuQuestLog ones, other TUs provide Reset/Draw/Tail.
-extern "C" void Reset__14CChildListNodeFv(void);
-extern "C" void Init__13CMenuQuestLogFv(void);
-extern "C" void Term__13CMenuQuestLogFv(void);
-extern "C" void Move__13CMenuQuestLogFv(void);
-extern "C" void Tail__8CProcessFv(void);
-extern "C" void cbRenderBefore__13CMenuQuestLogFv(void);
-// .sdata RTTI pair (defined below); referenced by the vtable.
-extern void* lbl_eu_80661E70[];
-
-// .data composite vtable (retail lbl_eu_8052CC38, 14 words): primary vtable
-// (RTTI, null, dtor, Reset, Init, Term, Move, Draw, Tail) + IScnRender
-// secondary vtable (RTTI, -0x58 offset-to-top, dtor/render forwards,
-// cbRenderBefore). The Draw__14CTTask<5IUICf>Fv slot has no C++ spelling
-// (angle brackets); it stays a zero placeholder like CMenuEnemyState's
-// vtable (reloc names are gate-ignored; link carries 0 there).
-__declspec(section ".data") __attribute__((used, aligned(8)))
-void* lbl_eu_8052CC38[14] = {
-    lbl_eu_80661E70, 0, (void*)__dt__13CMenuQuestLogFv,
-    (void*)Reset__14CChildListNodeFv, (void*)Init__13CMenuQuestLogFv,
-    (void*)Term__13CMenuQuestLogFv, (void*)Move__13CMenuQuestLogFv,
-    0, (void*)Tail__8CProcessFv,
-    lbl_eu_80661E70, (void*)0xFFFFFFA8,
-    (void*)fwdQuestLogDtor, (void*)fwdQuestLogCbRender,
-    (void*)cbRenderBefore__13CMenuQuestLogFv,
-};
-// .data resource table (retail 0x8052CC70-0x8052CCA7, no retail label):
-// {sdata pointer, count} pairs (first count 88, rest 0, last pair zero).
-struct QuestLogResEntry { const void* ptr; s32 count; };
-__declspec(section ".data") __attribute__((used, aligned(4)))
-struct QuestLogResEntry questlog_res_table[7] = {
-    { lbl_eu_80661940, 88 }, { lbl_eu_80661958, 0 }, { lbl_eu_80661950, 0 },
-    { lbl_eu_80661948, 0 }, { lbl_eu_80661DE8, 0 }, { lbl_eu_80661DE0, 0 },
-    { 0, 0 },
-};
 // .data marker-pointer table (retail lbl_eu_8052CCA8, 28 addresses + zero fill).
 struct QuestLogStrTable { const char* p[28]; u32 reserved[8]; };
 __declspec(section ".data") __attribute__((used, aligned(4)))
@@ -771,9 +527,3 @@ struct QuestLogStrTable lbl_eu_8052CCA8 = {
 // .data float table (retail lbl_eu_8052CD38).
 __declspec(section ".data") __attribute__((used, aligned(4)))
 extern const float lbl_eu_8052CD38[6] = { 1.0f, 1.0f, 1.0f, 0.9f, 0.7f, 0.9f };
-// .sdata RTTI pair (retail lbl_eu_80661E70): class-name string + resource table.
-#pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") void* lbl_eu_80661E70[2] = {
-    lbl_eu_804FE508, questlog_res_table,
-};
-#pragma section data_type ".data" ".data"

@@ -6,11 +6,6 @@
 // Retail nw4r data-pool float constants (sdata2, owned by nw4r_data.o -
 // extern only). Named after the retail symbols so the generated sda21 float
 // relocations match retail exactly (instead of TU-local pool labels).
-extern const f32 lbl_eu_80669BCC;  // 1.0f
-extern const f32 lbl_eu_80669BD0;  // 0.5f
-extern const f32 lbl_eu_80669BD4;  // 2.0f
-extern const f32 lbl_eu_80669BD8;  // 256.0f (s11 fixed-point scale)
-extern const f32 lbl_eu_80669BDC;  // 1.0f
 
 namespace nw4r {
 namespace g3d {
@@ -114,15 +109,15 @@ void GDLoadTexMtxImm3x3(const math::MTX33& rMtx, u32 id) {
     mtx.m[0][0] = rMtx.m[0][0];
     mtx.m[0][1] = rMtx.m[0][1];
     mtx.m[0][2] = rMtx.m[0][2];
-    mtx.m[0][3] = lbl_eu_80669BDC;
+    mtx.m[0][3] = 0.0f;
     mtx.m[1][0] = rMtx.m[1][0];
     mtx.m[1][1] = rMtx.m[1][1];
     mtx.m[1][2] = rMtx.m[1][2];
-    mtx.m[1][3] = lbl_eu_80669BDC;
+    mtx.m[1][3] = 0.0f;
     mtx.m[2][0] = rMtx.m[2][0];
     mtx.m[2][1] = rMtx.m[2][1];
     mtx.m[2][2] = rMtx.m[2][2];
-    mtx.m[2][3] = lbl_eu_80669BDC;
+    mtx.m[2][3] = 0.0f;
     GXLoadTexMtxImm(mtx.mtx, id, GX_MTX_3x4);
 }
 
@@ -148,51 +143,51 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
 
     s32 scale = 0;
 
-    if (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
-        a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
-        a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC) {
+    if (a00 >= 1.0f || a01 >= 1.0f ||
+        a02 >= 1.0f || a10 >= 1.0f ||
+        a11 >= 1.0f || a12 >= 1.0f) {
         // Scale down: halve every element until the largest |value| < 1.0f.
         do {
             if ((s8)scale >= 46) {
                 break;
             }
-            a00 *= lbl_eu_80669BD0;
-            m00 *= lbl_eu_80669BD0;
-            m01 *= lbl_eu_80669BD0;
-            m02 *= lbl_eu_80669BD0;
-            m10 *= lbl_eu_80669BD0;
-            m11 *= lbl_eu_80669BD0;
-            m12 *= lbl_eu_80669BD0;
-            a01 *= lbl_eu_80669BD0;
-            a02 *= lbl_eu_80669BD0;
-            a10 *= lbl_eu_80669BD0;
-            a11 *= lbl_eu_80669BD0;
-            a12 *= lbl_eu_80669BD0;
+            a00 *= 0.5f;
+            m00 *= 0.5f;
+            m01 *= 0.5f;
+            m02 *= 0.5f;
+            m10 *= 0.5f;
+            m11 *= 0.5f;
+            m12 *= 0.5f;
+            a01 *= 0.5f;
+            a02 *= 0.5f;
+            a10 *= 0.5f;
+            a11 *= 0.5f;
+            a12 *= 0.5f;
             scale++;
-        } while (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
-                 a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
-                 a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC);
-    } else if (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
-               a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
-               a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0) {
+        } while (a00 >= 1.0f || a01 >= 1.0f ||
+                 a02 >= 1.0f || a10 >= 1.0f ||
+                 a11 >= 1.0f || a12 >= 1.0f);
+    } else if (a00 < 0.5f && a01 < 0.5f &&
+               a02 < 0.5f && a10 < 0.5f &&
+               a11 < 0.5f && a12 < 0.5f) {
         // Scale up: double every element until the largest |value| >= 0.5f.
         do {
-            a00 *= lbl_eu_80669BD4;
-            m00 *= lbl_eu_80669BD4;
-            m01 *= lbl_eu_80669BD4;
-            m02 *= lbl_eu_80669BD4;
-            m10 *= lbl_eu_80669BD4;
-            m11 *= lbl_eu_80669BD4;
-            m12 *= lbl_eu_80669BD4;
-            a01 *= lbl_eu_80669BD4;
-            a02 *= lbl_eu_80669BD4;
-            a10 *= lbl_eu_80669BD4;
-            a11 *= lbl_eu_80669BD4;
-            a12 *= lbl_eu_80669BD4;
+            a00 *= 2.0f;
+            m00 *= 2.0f;
+            m01 *= 2.0f;
+            m02 *= 2.0f;
+            m10 *= 2.0f;
+            m11 *= 2.0f;
+            m12 *= 2.0f;
+            a01 *= 2.0f;
+            a02 *= 2.0f;
+            a10 *= 2.0f;
+            a11 *= 2.0f;
+            a12 *= 2.0f;
             scale--;
-        } while (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
-                 a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
-                 a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0 &&
+        } while (a00 < 0.5f && a01 < 0.5f &&
+                 a02 < 0.5f && a10 < 0.5f &&
+                 a11 < 0.5f && a12 < 0.5f &&
                  (s8)scale > -17);
     }
 
@@ -200,7 +195,7 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
     // Encode as three XF indirect-matrix register writes. Each word carries an
     // 11-bit fixed-point element pair plus a 2-bit slice of the 6-bit scale
     // exponent (scale + 17) and the XF register id in the top byte.
-    f32 scl = lbl_eu_80669BD8;
+    f32 scl = 1024.0f;
     u32 exp = scale + 17;
 
     s32 w00 = (s32)(scl * m00);

@@ -8,6 +8,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/code_800C17DC.hpp"
 
+extern "C" void CmText_DefaultNoopCallback(void);
+
 /// Classify one decoded char stream: report whether the bytes at `str` form a
 /// plain char (type 1), a two-byte sequence (type 2) or a newline/end (type 3),
 /// and how many source bytes to consume.  Returns the decoded character (for a
@@ -105,6 +107,7 @@ int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
     return result;
 }
 
+
 /// Split a cue-script line into words, storing a pointer to each word start in
 /// `out`.  Words begin at a letter (A-Z/a-z) or a two-byte char and are
 /// separated by spaces/tabs; `#` and `//` start a comment that ends the line.
@@ -148,6 +151,7 @@ int func_800C1900(char* str, char** out, int maxLen) {
     s[0] = 0;
     return count;
 }
+
 
 /// Register a (filename-hash, id, seq) entry into the table set selected by
 /// `key` (0-5). `name` is hashed via Tok_ParseFile; `value` (optional) is an
@@ -233,11 +237,13 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
     }
 }
 
+
 // Routes to CmText_ParseTextBuffer with the global flag record as the leading
 // argument and passes its two arguments through unchanged.
 extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
     CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
 }
+
 
 // Register a callback into the table slot selected by field20 and set the
 // continue flag that the dispatch loop CmText_DispatchCallbacks checks.
@@ -246,14 +252,12 @@ extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
     lbl_eu_805739F8.field24 = flag;
 }
 
+
 // Variadic prologue dump: on entry MWCC spills every register-argument into
 // this frame so callers can read them back out of memory. Empty body.
 extern "C" void CmText_VariadicNoop(...) {}
 
-// Default no-op callback stored in the callback table at lbl_eu_805739F8.
-// Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
-// registered handler.  The empty body corresponds to a single blr instruction.
-extern "C" void CmText_DefaultNoopCallback(void) {}
+
 
 // (Re)initialise the callback table: clear every slot, reset the active index
 // and flag, then install the default no-op callback in slot 0.
@@ -263,6 +267,8 @@ extern "C" void CmText_InitCallbackTable() {
     memset(&lbl_eu_805739F8, 0, 0x20);
     lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = CmText_DefaultNoopCallback;
 }
+
+
 
 // Dispatch loop: while the active callback slot is populated, clear the
 // continue flag, invoke the callback, and keep iterating if the callback
@@ -276,6 +282,15 @@ extern "C" void CmText_DispatchCallbacks() {
     }
 }
 
+
+
+// Default no-op callback stored in the callback table at lbl_eu_805739F8.
+// Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
+// registered handler.  The empty body corresponds to a single blr instruction.
+extern "C" void CmText_DefaultNoopCallback(void) {}
+
+
+
 // Default no-op callback stored in the callback table at lbl_eu_805739F8.
 // Called by CmText_DispatchCallbacks when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
@@ -283,6 +298,7 @@ extern "C" void sinit_800C1F2C() {
     lbl_eu_805739F8.field20 = 0;
     lbl_eu_805739F8.field24 = 0;
 }
+
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -768,11 +784,11 @@ void initialize__Q22cf11CfObjectObjFv();
 void isCollEnabled__Q22cf13CfObjectPointFv();
 u32 lbl_eu_806618D8[];
 u32 lbl_eu_806618E8[];
-u32 lbl_eu_806618F8[];
-u32 lbl_eu_80661900[];
+u32 __RTTI__Q22cf12CObjectParam[];
+u32 __RTTI__Q22cf12CObjectState[];
 u32 lbl_eu_806619A0[];
 u32 lbl_eu_80661CB0[];
-u32 lbl_eu_80661D10[];
+u32 __RTTI__Q22cf11CfObjectNpc[];
 u32 lbl_eu_80661D20[];
 void loadIconType__Q22cf11CfObjectNpcFv();
 void loadPointData__Q22cf13CfObjectPointFv();
@@ -835,7 +851,7 @@ void* lbl_eu_80529690[] = {
     (void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv, 0,
 };
 void* lbl_eu_805298B8[] = {
-    (void*)&lbl_eu_80661D10, 0, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
+    (void*)&__RTTI__Q22cf11CfObjectNpc, 0, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
     (void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv, (void*)CObjectState_clearStateWord4__Q22cf12CObjectStateFv, (void*)CObjectState_applyStateFlags__Q22cf12CObjectStateFv, (void*)CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
     (void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv, (void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv, (void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
     (void*)CObjectState_getStateData__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv, (void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
@@ -872,12 +888,12 @@ void* lbl_eu_805298B8[] = {
     (void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv, (void*)loadIconType__Q22cf11CfObjectNpcFv, (void*)getIconType__Q22cf11CfObjectNpcFv, (void*)getRltMeet__Q22cf11CfObjectNpcFv,
 };
 void* lbl_eu_80529AE8[] = {
-    (void*)&lbl_eu_80661900, 0, (void*)&lbl_eu_806618F8, 0,
+    (void*)&__RTTI__Q22cf12CObjectState, 0, (void*)&__RTTI__Q22cf12CObjectParam, 0,
     (void*)&lbl_eu_806618F0, 0, (void*)&lbl_eu_806618E8, 0,
     (void*)&lbl_eu_806618D8, 0, 0, 0,
 };
 void* lbl_eu_80529B18[] = {
-    (void*)&lbl_eu_80661900, 0, (void*)&lbl_eu_806618F8, 0,
+    (void*)&__RTTI__Q22cf12CObjectState, 0, (void*)&__RTTI__Q22cf12CObjectParam, 0,
     (void*)&lbl_eu_806618F0, 0, (void*)&lbl_eu_806618E8, 0,
     (void*)&lbl_eu_806618D8, 0, (void*)&lbl_eu_80661D20, 0,
     0,
@@ -920,7 +936,7 @@ void* lbl_eu_80529B4C[] = {
     (void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv,
 };
 void* lbl_eu_80529D70[] = {
-    (void*)&lbl_eu_80661900, 0, (void*)&lbl_eu_806618F8, 0,
+    (void*)&__RTTI__Q22cf12CObjectState, 0, (void*)&__RTTI__Q22cf12CObjectParam, 0,
     (void*)&lbl_eu_806618F0, 0, (void*)&lbl_eu_806618E8, 0,
     (void*)&lbl_eu_806618D8, 0, 0, 0,
 };

@@ -25,11 +25,167 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
+
+#pragma push
+#pragma optimize_for_size on
+// Retail-evidence shadow: __ct__CLoad bls the member ctor directly with no
+// placement-new null guard, so the TU calls it by its retail mangled name.
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+__attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self);
+
+extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg) {
+    self->mVtbl = lbl_eu_8053A340;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mFileHandle = nullptr;
+    self->mAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans0 = nullptr;
+    self->mAnimTrans1 = nullptr;
+    self->mIsLoaded = 0;
+    self->field_29 = 1;
+    self->mAnimStep = 0;
+    self->field_2B = 0;
+    self->field_2C = 1;
+    self->field_2D = arg;
+    return self;
+}
+#pragma pop
+
+
+
+
+#pragma push
+#pragma optimize_for_size on
+CLoad::~CLoad() {
+    // mMemRegion's destructor runs automatically after the body.
+}
+#pragma pop
+
+
+
+
+// Begin the file load request.
+void CLoadBeginFileRequest(CLoad* self) {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    self->mFileHandle = CDeviceFile::readFile(
+        handle, lbl_eu_80510CC8, reinterpret_cast<IWorkEvent*>(self), 0, 0);
+    CDeviceFile::tryUpdateJobPriority(self->mFileHandle, 3);
+    CDeviceFile::setHandleFlag2(self->mFileHandle);
+}
+
+
+
+// Per-frame state-driven layout update: advances the animation state
+// machine, then ticks the layout once.
+__attribute__((noinline)) void CLoadUpdateLayout(CLoad* self) {
+    if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
+        switch (self->mAnimStep) {
+        case 1:
+            CLoadAdvanceFadeHold(self);
+            break;
+        case 2:
+            advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668DF0);
+            break;
+        case 3:
+            CLoadFinishRetryIdle(self);
+            break;
+        }
+        self->mLayout->Animate(0);
+    }
+}
+
+
+
+// Draw the loading layout when loaded and visible.
+void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
+    // short-circuit || lowers as test-return + branch-over-return (retail shape)
+    if (self->mIsLoaded == 0 || self->field_29 == 0)
+        return;
+    if (self->mAnimStep != 0)
+        drawLayout(self->mLayout, drawInfo, 0, 1);
+}
+
+
+// retail frame: stmw/lmw size form
+
+// Tear down the loaded layout, accessor and mem region.
+void CLoadTeardownLayout(CLoad* self) {
+    CDeviceVI::waitForDrawDone();
+    closeFileHandle(&self->mFileHandle);
+    self->mIsLoaded = 0;
+    // Redundant inner null check: MWCC CSEs the delete's repeated test into
+    // one cmpi and re-tests it, reproducing the retail's second (dead) beq.
+    if (self->mLayout != nullptr) {
+        delete self->mLayout;
+        self->mLayout = nullptr;
+    }
+    releaseArcResourceAccessor(self->mAccessor);
+    self->mAccessor = nullptr;
+    self->mMemRegion.deleteRegion();
+}
+
+
 u8 CLoadIsLoadReady(CLoad* self) { return self->field_2B; }
+
 
 u8 CLoadIsLoaded(CLoad* self) { return self->mIsLoaded; }
 
+
+
 u8 CLoadIsAnimSettled(CLoad* self) { return self->field_2C; }
+
+
+
+// Begin the fade-in animation (step 1).
+void CLoadStartFadeInStep(CLoad* self) {
+    if (self->mAnimStep == 0) {
+        self->mAnimStep = 1;
+        self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
+        self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
+        self->mLayout->Animate(0);
+        self->field_2C = 0;
+    }
+}
+
+
+
+// Restart as the retry animation (step 3).
+void CLoadStartRetryStep(CLoad* self) {
+    if (self->mAnimStep == 2) {
+        self->mAnimStep = 3;
+        self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
+        self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
+        self->mLayout->Animate(0);
+        self->field_2C = 0;
+    }
+}
+
+
+
+// Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
+void CLoadAdvanceFadeHold(CLoad* self) {
+    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
+        return;
+    }
+    self->mAnimStep = 2;
+    self->mLayout->SetAnimationEnable(self->mAnimTrans0, 0);
+    self->mLayout->SetAnimationEnable(self->mAnimTrans1, 1);
+    self->mAnimTrans1->SetFrame(lbl_eu_80668DF4);
+    self->mLayout->Animate(0);
+    self->field_2C = 1;
+}
+
+
+
+// Step 3 -> idle: retry animation finished.
+__attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
+    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
+        self->mAnimStep = 0;
+        self->field_2C = 1;
+    }
+}
+
+
 
 __attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self) {
     if (self->field_1C != 0) {
@@ -37,6 +193,8 @@ __attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self) {
         self->field_28 = 1;
     }
 }
+
+
 
 // File-load completion callback: builds the loading-screen layout from the
 // freshly loaded archive and starts its animations. Retail builds this with
@@ -81,132 +239,6 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
 }
 #pragma pop
 
-// retail frame: stmw/lmw size form
-#pragma push
-#pragma optimize_for_size on
-// Retail-evidence shadow: __ct__CLoad bls the member ctor directly with no
-// placement-new null guard, so the TU calls it by its retail mangled name.
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg) {
-    self->mVtbl = lbl_eu_8053A340;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = nullptr;
-    self->mAccessor = nullptr;
-    self->mLayout = nullptr;
-    self->mAnimTrans0 = nullptr;
-    self->mAnimTrans1 = nullptr;
-    self->mIsLoaded = 0;
-    self->field_29 = 1;
-    self->mAnimStep = 0;
-    self->field_2B = 0;
-    self->field_2C = 1;
-    self->field_2D = arg;
-    return self;
-}
-#pragma pop
-
-#pragma push
-#pragma optimize_for_size on
-CLoad::~CLoad() {
-    // mMemRegion's destructor runs automatically after the body.
-}
-#pragma pop
-
-// Begin the file load request.
-void CLoadBeginFileRequest(CLoad* self) {
-    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    self->mFileHandle = CDeviceFile::readFile(
-        handle, lbl_eu_80510CC8, reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    CDeviceFile::tryUpdateJobPriority(self->mFileHandle, 3);
-    CDeviceFile::setHandleFlag2(self->mFileHandle);
-}
-
-// Per-frame state-driven layout update: advances the animation state
-// machine, then ticks the layout once.
-__attribute__((noinline)) void CLoadUpdateLayout(CLoad* self) {
-    if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
-        switch (self->mAnimStep) {
-        case 1:
-            CLoadAdvanceFadeHold(self);
-            break;
-        case 2:
-            advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668DF0);
-            break;
-        case 3:
-            CLoadFinishRetryIdle(self);
-            break;
-        }
-        self->mLayout->Animate(0);
-    }
-}
-
-// Draw the loading layout when loaded and visible.
-void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
-    // short-circuit || lowers as test-return + branch-over-return (retail shape)
-    if (self->mIsLoaded == 0 || self->field_29 == 0)
-        return;
-    if (self->mAnimStep != 0)
-        drawLayout(self->mLayout, drawInfo, 0, 1);
-}
-
-// Tear down the loaded layout, accessor and mem region.
-void CLoadTeardownLayout(CLoad* self) {
-    CDeviceVI::waitForDrawDone();
-    closeFileHandle(&self->mFileHandle);
-    self->mIsLoaded = 0;
-    // Redundant inner null check: MWCC CSEs the delete's repeated test into
-    // one cmpi and re-tests it, reproducing the retail's second (dead) beq.
-    if (self->mLayout != nullptr) {
-        delete self->mLayout;
-        self->mLayout = nullptr;
-    }
-    releaseArcResourceAccessor(self->mAccessor);
-    self->mAccessor = nullptr;
-    self->mMemRegion.deleteRegion();
-}
-
-// Begin the fade-in animation (step 1).
-void CLoadStartFadeInStep(CLoad* self) {
-    if (self->mAnimStep == 0) {
-        self->mAnimStep = 1;
-        self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
-        self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
-        self->mLayout->Animate(0);
-        self->field_2C = 0;
-    }
-}
-
-// Restart as the retry animation (step 3).
-void CLoadStartRetryStep(CLoad* self) {
-    if (self->mAnimStep == 2) {
-        self->mAnimStep = 3;
-        self->mLayout->SetAnimationEnable(self->mAnimTrans1, 0);
-        self->mLayout->SetAnimationEnable(self->mAnimTrans0, 1);
-        self->mLayout->Animate(0);
-        self->field_2C = 0;
-    }
-}
-
-// Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
-void CLoadAdvanceFadeHold(CLoad* self) {
-    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
-        return;
-    }
-    self->mAnimStep = 2;
-    self->mLayout->SetAnimationEnable(self->mAnimTrans0, 0);
-    self->mLayout->SetAnimationEnable(self->mAnimTrans1, 1);
-    self->mAnimTrans1->SetFrame(lbl_eu_80668DF4);
-    self->mLayout->Animate(0);
-    self->field_2C = 1;
-}
-
-// Step 3 -> idle: retry animation finished.
-__attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
-    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
-        self->mAnimStep = 0;
-        self->field_2C = 1;
-    }
-}
 
 // ----- Retail data sections defined by this TU (subset) -----
 // .rodata archive/layout name pool (single 0x98 blob; code indexes into it
@@ -240,8 +272,6 @@ __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80668DF8[8] = "C
 // [5..33] W3..W31, then a 4-word RTTI block (RTTI word + zeros; the RTTI
 // symbol is unspellable in source, cf. CFade, so the word stays zero).
 // Cross-TU vtable slots (flat retail names; CFade vtable idiom).
-extern "C" void __dt__13CTutorialListFv();
-extern "C" void OnFileEvent__13CTutorialListFP10CEventFile();
 extern "C" void __dt__5CLoadFv();
 extern "C" bool OnFileEvent__5CLoadFP10CEventFile(CLoad* self, CEventFile* ev);
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
@@ -274,53 +304,12 @@ extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern char lbl_eu_80510B68[];  // CTutorialList class-name (defined in CTutorialList.cpp)
-extern u32 lbl_eu_8053A330[];
 extern u32 lbl_eu_8053A3C8[];
 #pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") u32 lbl_eu_80662DF0[2] = {
-    (u32)&lbl_eu_80510B68, (u32)&lbl_eu_8053A330,
-};
 extern __declspec(section ".sdata") u32 lbl_eu_80662DF8[2] = {
     (u32)&lbl_eu_80668DF8, (u32)&lbl_eu_8053A3C8,
 };
 #pragma section data_type ".data" ".data"
-__declspec(section ".data") __attribute__((used, aligned(8)))
-void* lbl_eu_8053A2A8[34] = {
-    (void*)&lbl_eu_80662DF0, (void*)0,
-    (void*)&__dt__13CTutorialListFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
-    (void*)&OnFileEvent__13CTutorialListFP10CEventFile,
-    (void*)&WorkEvent3__10IWorkEventFPv,
-    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
-    (void*)&WorkEvent6__10IWorkEventFv,
-    (void*)&WorkEvent7__10IWorkEventFv,
-    (void*)&WorkEvent8__10IWorkEventFv,
-    (void*)&WorkEvent9__10IWorkEventFv,
-    (void*)&WorkEvent10__10IWorkEventFv,
-    (void*)&WorkEvent11__10IWorkEventFv,
-    (void*)&WorkEvent12__10IWorkEventFv,
-    (void*)&WorkEvent13__10IWorkEventFv,
-    (void*)&WorkEvent14__10IWorkEventFv,
-    (void*)&WorkEvent15__10IWorkEventFv,
-    (void*)&WorkEvent16__10IWorkEventFv,
-    (void*)&WorkEvent17__10IWorkEventFv,
-    (void*)&WorkEvent18__10IWorkEventFv,
-    (void*)&WorkEvent19__10IWorkEventFv,
-    (void*)&WorkEvent20__10IWorkEventFv,
-    (void*)&WorkEvent21__10IWorkEventFv,
-    (void*)&WorkEvent22__10IWorkEventFv,
-    (void*)&WorkEvent23__10IWorkEventFv,
-    (void*)&WorkEvent24__10IWorkEventFv,
-    (void*)&WorkEvent25__10IWorkEventFv,
-    (void*)&WorkEvent26__10IWorkEventFv,
-    (void*)&WorkEvent27__10IWorkEventFv,
-    (void*)&WorkEvent28__10IWorkEventFv,
-    (void*)&WorkEvent29__10IWorkEventFv,
-    (void*)&WorkEvent30__10IWorkEventFv,
-    (void*)&WorkEvent31__10IWorkEventFv,
-};
-__declspec(section ".data") __attribute__((used, aligned(8)))
-u32 lbl_eu_8053A330[4] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 void* lbl_eu_8053A340[34] = {
     (void*)&lbl_eu_80662DF8, (void*)0,

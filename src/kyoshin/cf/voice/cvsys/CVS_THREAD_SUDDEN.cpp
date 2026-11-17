@@ -118,8 +118,8 @@ extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern "C" int SuddenVx_GetBufferSizeValue__17CVS_THREAD_SUDDENFv();
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662D30[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf17CVS_THREAD_SUDDEN[2];
 
 // Sized to the retail section extent (0x18): the NUL-terminated name plus
 // zero padding. The auditor keys on offset, and the gate on section bytes.
@@ -132,7 +132,7 @@ u32 lbl_eu_80539CE8[3] = {
 };
 
 u32 lbl_eu_80539CF4[7] = {
-    (u32)lbl_eu_80662D30,
+    (u32)__RTTI__Q22cf17CVS_THREAD_SUDDEN,
     0,
     (u32)PlayThreadVoice,
     (u32)SuddenVxRemoveVoice,
@@ -142,13 +142,13 @@ u32 lbl_eu_80539CF4[7] = {
 };
 
 u32 lbl_eu_80539D10[4] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662D30[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf17CVS_THREAD_SUDDEN[2] = {
     (u32)lbl_eu_80510800,
     (u32)lbl_eu_80539D10,
 };

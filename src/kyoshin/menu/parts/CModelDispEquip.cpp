@@ -4,6 +4,7 @@
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Forward decls: state-dispatch callees defined later in this TU.
 extern "C" void ModelDispEquip_BuildDisplay(CModelDispEquip*);
@@ -398,16 +399,15 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
     CModelDispMca mca;
     f32 tmpB[3];
     f32 tmpA[3];
-    CModelDispListHolder lh;
     u32* srcp = lbl_eu_80507FD0;
     src[0] = *srcp++;
     src[1] = *srcp++;
     src[2] = *srcp++;
     CActParamHolder* holder = &self->actParamHolder;
-    CTaskGame_enumListCtor(&lh);
-    startEnumObjects(CTaskGame_enumListGet(&lh), src[self->equipSlot], 0);
-    if (CTaskGame_enumListGet(&lh)->field_620 >= 1) {
-        CModelDispSlot* slot = getEntryAt(CTaskGame_enumListGet(&lh), 0);
+    CfEnumListHolder lh;
+    startEnumObjects(((CModelDispEnumList*)lh.get()), src[self->equipSlot], 0);
+    if (((CModelDispEnumList*)lh.get())->field_620 >= 1) {
+        CModelDispSlot* slot = getEntryAt(((CModelDispEnumList*)lh.get()), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = getCfObjectPc(cfMove);
@@ -522,7 +522,6 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
     } else {
         ModelDispEquip_TeardownHolder(self, holder);
     }
-    __dt__80043E88(&lh, -1);
 }
 
 // ============================================================
@@ -926,13 +925,12 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
     // 12-byte filter triple: retail copies it as one struct value (lis/lwzu/
     // lwz/lwz into r6/r5/r4/r0) before storing to the stack slot.
     CModelDispFilterTbl tbl = *(const CModelDispFilterTbl*)lbl_eu_80507FDC;
-    CModelDispListHolder lh;
-    CTaskGame_enumListCtor(&lh);
-    startEnumObjects(CTaskGame_enumListGet(&lh), tbl.slot[self->equipSlot], 0);
+    CfEnumListHolder lh;
+    startEnumObjects(((CModelDispEnumList*)lh.get()), tbl.slot[self->equipSlot], 0);
     // Fresh enum-list walks: the count check and the slot lookup each re-call
-    // CTaskGame_enumListGet (retail never reuses the previous result).
-    if (CTaskGame_enumListGet(&lh)->field_620 >= 1) {
-        CModelDispSlot* slot = getEntryAt(CTaskGame_enumListGet(&lh), 0);
+    // get__16CfEnumListHolderFv (retail never reuses the previous result).
+    if (((CModelDispEnumList*)lh.get())->field_620 >= 1) {
+        CModelDispSlot* slot = getEntryAt(((CModelDispEnumList*)lh.get()), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
             CModelDispActor* actor = getCfObjectPc(cfMove);
@@ -971,7 +969,6 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
             }
         }
     }
-    __dt__80043E88(&lh, -1);
 }
 
 // ============================================================

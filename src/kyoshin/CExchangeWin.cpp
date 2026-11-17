@@ -15,7 +15,6 @@
 #include "monolib/work/CEventFile.hpp"
 extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern void playUISound(u32);
-extern const float lbl_eu_80668610;
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 
@@ -60,7 +59,7 @@ extern "C" void ExWin_RequestOpen(CExchangeWin* self) {
 }
 
 extern "C" __attribute__((noinline)) void ExWin_AdvanceEnter(CExchangeWin* self) {
-    float f = lbl_eu_80668610;
+    float f = 1.0f;
     if (advanceAnimTransform(self->mAnimTransform, f)) {
         self->_26 = 2;
         self->field_27 = 1;
@@ -68,7 +67,7 @@ extern "C" __attribute__((noinline)) void ExWin_AdvanceEnter(CExchangeWin* self)
 }
 
 extern "C" void ExWin_AdvanceExit(CExchangeWin* self) {
-    float f = lbl_eu_80668610;
+    float f = 1.0f;
     if (AnimRewindFrame(self->mAnimTransform, f)) {
         self->_26 = 0;
         self->field_27 = 1;

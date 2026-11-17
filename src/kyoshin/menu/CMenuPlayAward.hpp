@@ -3,11 +3,13 @@
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CScrollBar.hpp"
 
 #include <nw4r/lyt.h>
 
 #include <monolib/scn/IScnRender.hpp>
 #include <monolib/work/CProcess.hpp>
+#include "kyoshin/IUICf.hpp"
 
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -19,49 +21,30 @@ class CScn;
 
 #include "kyoshin/CTaskGame.hpp"
 
-// 8-byte award list entry (array element; zeroed by PlayAward_InitEntry and freed by
-// __dt__802706D4).
-struct CPlayAwardEntry {
+// 8-byte award list entry (array element).
+class CPlayAwardEntry {
+public:
+    CPlayAwardEntry();
+    ~CPlayAwardEntry();
+
     u32 word0;
     u32 word1;
 };
 
-// Layout of the entry-array region (CPlayAwardList + 0x94): 512 entries
-// (0x1000 bytes) followed by the trailing state fields at +0x1000..+0x100F
-// (initialised by PlayAward_InitEntryArray; page index for entry lookup at +0x100A).
-struct CPlayAwardEntryArray {
+// Entry-array region of CPlayAwardList (+0x94): 512 entries (0x1000 bytes)
+// followed by the trailing state fields (page index for entry lookup at +0x100A).
+class CPlayAwardEntryArray {
+public:
+    CPlayAwardEntryArray();
+
     CPlayAwardEntry mEntries[0x200]; // 0x00-0xFFF
     u8 field_1000;                   // 0x1000
     u8 field_1001;                   // 0x1001
-    u8 _1002[0x1004 - 0x1002];       // 0x1002-0x1003
     f32 field_1004;                  // 0x1004
     u8 field_1008[2];                // 0x1008-0x1009: per-page entry counts (field_1008[page])
     u8 mPageIndex;                   // 0x100A: page index for entry lookup (<< 11)
-    u8 _100B;                        // 0x100B
     s16 field_100C;                  // 0x100C (s16; PlayAward_RequestOpen reads it via a u16 cast)
     s16 field_100E;                  // 0x100E (s16; PlayAward_RequestOpen reads it via a u16 cast)
-};
-
-// Mirror of the CScrollBar layout (0x40 bytes) for the raw body copy in the
-// CPlayAwardList ctor (same struct as CSortMenu.hpp; CScrollBar.hpp cannot be
-// co-included with CTitleAHelp.hpp here).
-struct CScrollBarData {
-    void* mVtbl;         // +0x00
-    u32 mMemRegion[4];   // +0x04 (UnkClass_8045F564)
-    void* mFileHandle;   // +0x14
-    void* mAccessor;     // +0x18
-    void* mLayout;       // +0x1C
-    void* mAnimTrans;    // +0x20
-    u8 mReady;           // +0x24
-    u8 mVisible;         // +0x25
-    u8 mState;           // +0x26
-    u8 mActive;          // +0x27
-    f32 mAnimOffset;     // +0x28
-    f32 mScrollPosY;     // +0x2C
-    f32 mScrollRatio;    // +0x30
-    f32 mThumbHeight;    // +0x34
-    f32 mContentHeight;  // +0x38
-    u8 mDirection;       // +0x3C
 };
 
 // Minimal mirror of cf::CfPadData (see kyoshin/cf/CfPadData.hpp; the real
@@ -134,9 +117,9 @@ public:
 
 class CPlayAwardList : public IWorkEvent {
 public:
-    CPlayAwardList();
+    CPlayAwardList(int arg = 0); // retail passes 0; the arg is unused by the ctor body
     virtual ~CPlayAwardList();
-    bool OnFileEvent(CEventFile* event);
+    virtual bool OnFileEvent(CEventFile* event);
 
     // Layout (IWorkEvent base at 0x00-0x03, then members):
     // 0x04-0x13: UnkClass_8045F564 layout memory region
@@ -158,7 +141,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans28; // 0x28
     u32 field_0x2C;                         // 0x2C: second award text color/attr (PlayAward_RefreshEntryPanes)
     CCur18 mCursor;                         // 0x30-0x47
-    u8 mScrollBar[0x40];                    // 0x48-0x87 (CScrollBar region)
+    CScrollBar mScrollBar;                  // 0x48-0x87
     u8 field_0x88;                          // 0x88: render gate checked by PlayAward_DrawList
     u8 field_0x89;                          // 0x89: state byte (5/0/2 on transitions)
     u8 field_0x8A;                          // 0x8A: checked by PlayAward_IsListReady
@@ -166,37 +149,29 @@ public:
     s16 field_0x8C;                         // 0x8C: scroll position (halfword)
     s16 field_0x8E;                         // 0x8E: scroll offset (halfword)
     s8 field_0x90;                          // 0x90: page byte used by PlayAward_GetPageCue
-    u8 _pad91[0x94 - 0x91];                 // 0x91-0x93
     CPlayAwardEntryArray mEntryArray;       // 0x94: 512-entry array + state fields
 };
 
-class CMenuPlayAward : public CProcess {
+class CMenuPlayAward : public IUICf, public IScnRender {
 public:
-    CMenuPlayAward();
+    CMenuPlayAward(CScn* scene);
     virtual ~CMenuPlayAward();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
 
-    // Layout (CProcess base at 0x00-0x3B, then members). Menu-screen pattern
-    // (cf. CMenuTutorialList): ptmf callback slots at 0x3C-0x53, state byte
-    // at 0x54, IScnRender subobject at 0x58, CScn* at 0x5C, CBgTex at
-    // 0x60-0x7F, CTitleAHelp at 0x80-0xB7, CPlayAwardList at 0xB8,
-    // help-display byte at 0x1160.
-    u32 ptmf0[3];                                              // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];                                              // 0x48-0x53: null PMF callback slot group 2
-    u8 mField54;                                               // 0x54: state byte (set to 1 by PlayAward_Phase3_RequestClose)
-    u8 mField55;                                               // 0x55
-    u8 _pad56[0x58 - 0x56];                                    // 0x56-0x57
-    IScnRender mIScnRender;                                    // 0x58-0x5B: render-callback subobject (vptr)
-    CScn* mScene;                                              // 0x5C: owning scene
-    CBgTex mBgTex;                                             // 0x60-0x7F
-    CTitleAHelp mTitleAHelp;                                   // 0x80-0xB7
-    CPlayAwardList mPlayAwardList;                             // 0xB8
-    f32 mField115C;                                            // 0x115C: float state (ctor: lbl_eu_80668998)
-    u8 mField1160;                                             // 0x1160: help-display byte (set to 2 by PlayAward_Phase1_Advance)
-    u8 _pad1161[0x1164 - 0x1161];                              // 0x1161-0x1163: pad to total 0x1164
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    static CMenuPlayAward* create(CProcess* parent, CScn* scene);
+    static CMenuPlayAward* sInstance;
+
+    // IUICf task base (0x00-0x57) and the IScnRender subobject (0x58) come first.
+    CScn* mScene;                  // 0x5C: owning scene
+    CBgTex mBgTex;                 // 0x60-0x7F
+    CTitleAHelp mTitleAHelp;       // 0x80-0xB7
+    CPlayAwardList mPlayAwardList; // 0xB8-0x115B
+    f32 mField115C;                // 0x115C: float state (ctor: lbl_eu_80668998)
+    u8 mField1160;                 // 0x1160: help-display byte (set to 2 by PlayAward_Phase1_Advance)
 };
 
 // MWCC runtime operator delete (freeing dtor helper).
@@ -222,9 +197,6 @@ extern const float lbl_eu_806689A0;
 // (makecrystal precedent); the value matches the retail symbol.
 extern const double lbl_eu_806689B0;
 
-// Menu-open singleton (0 = closed; cleared by Term, checked by PlayAward_CreateMenu).
-extern unsigned long lbl_eu_806648A0;
-
 // Loaded-BDAT pointer for the award tables (stored by OnFileEvent branch 2
 // from getFP; read by PlayAward_BuildEntries's sort/list build).
 extern void* lbl_eu_806648A8;
@@ -242,13 +214,7 @@ extern u32 lbl_eu_80663E28;
 // Shared string pool (split .rodata): award-list arc file paths at +0x5A / +0x74.
 extern char lbl_eu_8050E7C0[];
 
-// CProcess primary vtable (pre-PMF copy) / CMenuPlayAward composite vtable
-// and the null PMF callback slots (ctor vtable fixups; same scheme as
-// CMenuTutorialList.hpp). MWCC does not mangle global-scope data names.
-extern char lbl_eu_8052BF70[];
-extern char lbl_eu_80537BB0[];
-extern char lbl_eu_80537C20[];   // CPlayAwardList vtable (stored at +0x00 by its ctor)
-extern u32 __ptmf_null[3];
+
 
 // .sdata2 float pool: menu init float (ctor stores to +0x115C).
 extern const float lbl_eu_80668998;
@@ -263,12 +229,6 @@ extern "C" int IsMenuState621F0();
 // DrawInfo layout setup (retail MANGLED name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo;
 // declared with C++ linkage so MWCC re-derives the mangled reloc).
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-
-// Layout DrawInfo ctor/dtor (retail keeps the mangled names verbatim). A
-// class-typed local would make MWCC virtual-dispatch the dtor, so cbRenderBefore
-// uses a plain byte buffer with these direct C-linkage calls (CSysWinSave idiom).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 
 // Retail-unmangled free functions of this unit (US retail strips the
 // mangling). C linkage keeps call relocs on the bare retail names;
@@ -311,23 +271,7 @@ extern "C" s32 __declspec(noinline) PlayAward_GetPageCue(CPlayAwardList* self);
 
 // Award-list state handlers / helpers (retail-unmangled names; see above).
 extern "C" void __declspec(noinline) PlayAward_RequestClose(CPlayAwardList* self);
-extern "C" __declspec(noinline) CPlayAwardEntryArray* PlayAward_InitEntryArray(CPlayAwardEntryArray* self);
 
-// Menu factory (retail-unmangled): allocate + construct the singleton menu,
-// register it as a child of `parent`, return the stored instance.
-extern "C" __declspec(noinline) CMenuPlayAward* PlayAward_CreateMenu(CProcess* parent, CScn* scene);
-
-// Retail constructor symbol (unmangled global in US). Free-function form so
-// the factory (PlayAward_CreateMenu) emits a real bl to the bare retail symbol;
-// returns `this` in r3 like retail.
-extern "C" CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, CScn* scene);
-
-// Embedded-widget ctors called by the menu ctor (US retail strips these
-// manglings; C-ABI wrappers, same scheme as CMenuTutorialList.hpp).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" __declspec(noinline) CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg);
 
 // Title/help bar idle query -- free-function form of CTitleAHelp::isIdle()
 // (retail reloc is the mangled member name; declared with int return so the
@@ -366,26 +310,22 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // under C linkage so calls bind the literal identifier).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
-// CScrollBar show request (retail-unmangled import). The member declaration in
-// CScrollBar.hpp would mangle the call reloc (CScrollBar_requestScrollIn__10CScrollBarFv),
-// and CSortMenu.hpp cannot be co-included with CTitleAHelp.hpp (its extern
-// UnkClass_8045F564 ctor conflicts with the member ctor CTitleAHelp pulls in).
-extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
+// CScrollBar imports keep their retail-unmangled names (US retail strips the
+// mangling; the member declarations in CScrollBar.hpp would mangle the relocs,
+// e.g. CScrollBar_requestScrollIn__10CScrollBarFv), so they are C-linkage here.
+extern "C" void CScrollBar_requestScrollIn(CScrollBar* scrollBar);
 
 // Scroll-bar init (retail-unmangled; 2nd arg is a 3-float vector, cf. CMapSel).
-extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
-
-// CScrollBar / CCur18 embedded-widget ctors (retail-unmangled names).
-extern "C" void __ct__10CScrollBarFUc(u8* scrollBar, int arg);
+extern "C" void CScrollBar_InitRootPane(CScrollBar* scrollBar, const float* vec);
 
 // CScrollBar draw + cursor draw imports (retail-unmangled names; same reason
 // as CScrollBar_requestScrollIn -- the CScrollBar.hpp member decl would mangle them).
-extern "C" void CScrollBar_draw(u8* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CScrollBar_draw(CScrollBar* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void Cur_DrawLayout(CBaseCur* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
 extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
-extern "C" void CScrollBar_requestScrollOut(u8* scrollBar);
+extern "C" void CScrollBar_requestScrollOut(CScrollBar* scrollBar);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
@@ -395,17 +335,13 @@ extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
-// update helper (retail-unmangled names; CScrollBar.hpp cannot be included).
-extern "C" void CScrollBar_loadLayoutArc(u8* scrollBar);
-extern "C" void CScrollBar_Teardown(u8* scrollBar);
-extern "C" void CScrollBar_UpdateDispatch(u8* scrollBar);
-extern "C" void CScrollBar_UpdateThumb(u8* scrollBar, int, int);
-extern "C" void CScrollBar_PlaceThumb(u8* scrollBar, u16 val);
+// update helper (retail-unmangled names; see above).
+extern "C" void CScrollBar_loadLayoutArc(CScrollBar* scrollBar);
+extern "C" void CScrollBar_Teardown(CScrollBar* scrollBar);
+extern "C" void CScrollBar_UpdateDispatch(CScrollBar* scrollBar);
+extern "C" void CScrollBar_UpdateThumb(CScrollBar* scrollBar, int, int);
+extern "C" void CScrollBar_PlaceThumb(CScrollBar* scrollBar, u16 val);
 extern "C" void Cur_Update(CBaseCur* cursor);
-
-// Embedded-widget destructors (retail mangled __dt__ names; the widget
-// storages are opaque u8 arrays so the dtor calls are C-ABI imports).
-extern "C" void __dt__10CScrollBarFv(u8* scrollBar, int dealloc);
 
 // Class_8045F858 scratch-region RAII guard used by OnFileEvent around the
 // layout build (retail C-linkage names; the class itself is declared in
@@ -413,40 +349,15 @@ extern "C" void __dt__10CScrollBarFv(u8* scrollBar, int dealloc);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 
-// 4-word mem-region copy helper used by Init to copy temp widget bodies into
-// the embedded members (retail-unmangled C symbol).
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-
 // OnFileEvent / Init layout-build imports (retail-unmangled C symbols).
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" u32 CUICfManager_getPackedFont9C();
+extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u8 code80135FDC_getByte_6407F();
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
-// Award-list array element ctor/dtor + MWCC array helpers (retail-unmangled
-// names). Declaring the element dtor with C linkage keeps the
-// __construct_array/__destroy_arr element-dtor relocs bound to the bare
-// retail names (cf. CMenuQstCnt's __dt__80227030).
-extern "C" void PlayAward_InitEntry(CPlayAwardEntry* self);
-extern "C" void* __dt__802706D4(CPlayAwardEntry* self, int mode);
-extern "C" void __construct_array(void*, void*, void*, u32, u32);
-extern "C" void __destroy_arr(void*, void*, int, int);
 
-// Widget/base destructors called by the member dtor (US retail keeps the
-// mangled __dt__ names; C-ABI wrappers for the embedded widget storages).
-// __declspec(noinline) on the CPlayAwardList dtor keeps the same-TU empty
-// member stub from being inlined into the calls.
-extern "C" __declspec(noinline) CPlayAwardList* __dt__14CPlayAwardListFv(CPlayAwardList* self, int dealloc);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
-extern "C" void __dt__6CBgTexFv(CBgTex* self, int dealloc);
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
-
-// IScnRender-vtable thunk targets: the C++ members are emitted under their
-// mangled names; C linkage keeps the verbatim retail symbols (so the
-// PlayAward_RenderThunk / PlayAward_DtorThunk thunks bind the literal identifiers).
-extern "C" void cbRenderBefore__14CMenuPlayAwardFv(CMenuPlayAward* self);

@@ -140,24 +140,6 @@ public:
 
 // SDA2 default-FX parameter constants (this TU's .sdata2 pool). Referenced by
 // name so the SDA21 relocations match the stripped retail object.
-extern const f32 lbl_eu_80667EC0;
-extern const f32 lbl_eu_80667EC4;
-extern const f32 lbl_eu_80667EC8;
-extern const f32 lbl_eu_80667ECC;
-extern const f32 lbl_eu_80667ED0;
-extern const f32 lbl_eu_80667ED4;
-extern const f32 lbl_eu_80667ED8;
-extern const f32 lbl_eu_80667EDC;
-extern const f32 lbl_eu_80667EE0;
-extern const f32 lbl_eu_80667EE4;
-extern const f32 lbl_eu_80667EE8;
-extern const f32 lbl_eu_80667EEC;
-extern const f32 lbl_eu_80667EF0;
-extern const f32 lbl_eu_80667EF4;
-extern const f32 lbl_eu_80667EF8;
-extern const f32 lbl_eu_80667EFC;
-extern const f32 lbl_eu_80667F00;
-extern const f32 lbl_eu_80667F04;
 
 // Panic() arguments (retail .data string literals, external to this TU).
 extern const char lbl_eu_80533D48[];
@@ -209,26 +191,26 @@ inline void ClearSlotEffect(FxSoundSlot* slot) {
 // C-linkage so the __construct_array address relocs match retail.
 extern "C" void initFxSoundSlot(FxSoundSlot* self) {
     // Wave 1: default params (retail store order, ascending).
-    self->mReverbParam.preDelayTime = lbl_eu_80667EC0;
-    self->mReverbParam.fusedTime = lbl_eu_80667EC4;
-    self->mReverbParam.coloration = lbl_eu_80667EC8;
-    self->mReverbParam.damping = lbl_eu_80667ECC;
-    self->mReverbParam.outGain = lbl_eu_80667ED0;
+    self->mReverbParam.preDelayTime = 0.02f;
+    self->mReverbParam.fusedTime = 3.0f;
+    self->mReverbParam.coloration = 0.6f;
+    self->mReverbParam.damping = 0.4f;
+    self->mReverbParam.outGain = 1.0f;
     self->mReverbParam.iirType = 5;
-    self->mReverbParam.preDelayTimeMax = lbl_eu_80667EC0;
+    self->mReverbParam.preDelayTimeMax = 0.02f;
     self->mReverbParam.fusedMode = 0;
-    self->mReverbParam.earlyGain = lbl_eu_80667ED4;
-    self->mReverbParam.fusedGain = lbl_eu_80667ED0;
-    self->mChorusParam.delayTime = lbl_eu_80667ED8;
-    self->mChorusParam.depth = lbl_eu_80667EDC;
-    self->mChorusParam.rate = lbl_eu_80667ED0;
-    self->mChorusParam.feedback = lbl_eu_80667ED4;
-    self->mChorusParam.outGain = lbl_eu_80667ED0;
-    self->mDelayParam.delay = lbl_eu_80667EE0;
-    self->mDelayParam.feedback = lbl_eu_80667ECC;
-    self->mDelayParam.outGain = lbl_eu_80667ED0;
-    self->mDelayParam.delayTimeMax = lbl_eu_80667EE0;
-    self->mDelayParam.iir = lbl_eu_80667ED0;
+    self->mReverbParam.earlyGain = 0.0f;
+    self->mReverbParam.fusedGain = 1.0f;
+    self->mChorusParam.delayTime = 10.0f;
+    self->mChorusParam.depth = 0.5f;
+    self->mChorusParam.rate = 1.0f;
+    self->mChorusParam.feedback = 0.0f;
+    self->mChorusParam.outGain = 1.0f;
+    self->mDelayParam.delay = 160.0f;
+    self->mDelayParam.feedback = 0.4f;
+    self->mDelayParam.outGain = 1.0f;
+    self->mDelayParam.delayTimeMax = 160.0f;
+    self->mDelayParam.iir = 1.0f;
 
     // Construct the three FX sub-objects (retail __ct__Q34nw4r3snd...Fv).
     new (&self->mReverb) nw4r::snd::FxReverbStdDpl2();
@@ -240,25 +222,25 @@ extern "C" void initFxSoundSlot(FxSoundSlot* self) {
 
     // Wave 2: final param values (retail store order).
     self->mReverbParam.iirType = 5;
-    self->mReverbParam.preDelayTimeMax = lbl_eu_80667EE4;
-    self->mReverbParam.preDelayTime = lbl_eu_80667EC0;
+    self->mReverbParam.preDelayTimeMax = 0.06f;
+    self->mReverbParam.preDelayTime = 0.02f;
     self->mReverbParam.fusedMode = 3;
-    self->mReverbParam.fusedTime = lbl_eu_80667EE8;
-    self->mReverbParam.coloration = lbl_eu_80667EC8;
-    self->mReverbParam.damping = lbl_eu_80667EC8;
-    self->mReverbParam.earlyGain = lbl_eu_80667EEC;
-    self->mReverbParam.fusedGain = lbl_eu_80667EF0;
-    self->mReverbParam.outGain = lbl_eu_80667EF4;
-    self->mChorusParam.delayTime = lbl_eu_80667EF8;
-    self->mChorusParam.depth = lbl_eu_80667EDC;
-    self->mChorusParam.rate = lbl_eu_80667ED0;
-    self->mChorusParam.feedback = lbl_eu_80667ED4;
-    self->mChorusParam.outGain = lbl_eu_80667ED0;
-    self->mDelayParam.delayTimeMax = lbl_eu_80667EFC;
-    self->mDelayParam.delay = lbl_eu_80667F00;
-    self->mDelayParam.feedback = lbl_eu_80667EC8;
-    self->mDelayParam.outGain = lbl_eu_80667F04;
-    self->mDelayParam.iir = lbl_eu_80667ED0;
+    self->mReverbParam.fusedTime = 4.0f;
+    self->mReverbParam.coloration = 0.6f;
+    self->mReverbParam.damping = 0.6f;
+    self->mReverbParam.earlyGain = 0.2f;
+    self->mReverbParam.fusedGain = 0.8f;
+    self->mReverbParam.outGain = 0.9f;
+    self->mChorusParam.delayTime = 25.0f;
+    self->mChorusParam.depth = 0.5f;
+    self->mChorusParam.rate = 1.0f;
+    self->mChorusParam.feedback = 0.0f;
+    self->mChorusParam.outGain = 1.0f;
+    self->mDelayParam.delayTimeMax = 250.0f;
+    self->mDelayParam.delay = 200.0f;
+    self->mDelayParam.feedback = 0.6f;
+    self->mDelayParam.outGain = 0.7f;
+    self->mDelayParam.iir = 1.0f;
 }
 
 void __dt__Q34nw4r3snd15FxReverbStdDpl2Fv(){}

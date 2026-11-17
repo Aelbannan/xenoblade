@@ -72,10 +72,6 @@ void selectLodTexCoord(s32 value) {
 // ---------------------------------------------------------------------------
 // Imports used by the Fv-named draw entry points below.
 // ---------------------------------------------------------------------------
-extern const f32 lbl_eu_8066A618;
-extern const f32 lbl_eu_8066A61C;
-extern const f32 lbl_eu_8066A620;
-extern const f32 lbl_eu_8066A624;
 
 // Panic message strings (nw4r asserts inside the texture loader).
 extern const char lbl_eu_8052CF10[];
@@ -86,9 +82,6 @@ extern const char lbl_eu_8052CF3C[];
 extern const char lbl_eu_8052CF20[];
 extern const char lbl_eu_80661E98[];
 extern const char lbl_eu_80661EA8[];
-extern const char lbl_eu_80663808[];
-extern const char lbl_eu_80663810[];
-extern const char lbl_eu_8066380C[];
 
 extern u32 lbl_eu_80658348[];   // tex-mtx work table (0x38 / 0x68 blocks)
 extern u32 lbl_eu_80665780;     // bound ResFile pointer
@@ -209,16 +202,16 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     lbl_eu_806657E0 = 0;
     lbl_eu_806657F8 = -1;
     lbl_eu_80665818 = 0;
-    lbl_eu_80665800 = lbl_eu_8066A618;
+    lbl_eu_80665800 = (-1.0f);
     lbl_eu_80665804 = 0;
     lbl_eu_8066580C = 0;
     lbl_eu_806657E8 = 0;
     lbl_eu_80665814 = 0xFF;
 
     Vec v;
-    v.x = lbl_eu_8066A61C;
-    v.y = lbl_eu_8066A61C;
-    v.z = lbl_eu_8066A620;
+    v.x = 10000.0f;
+    v.y = 10000.0f;
+    v.z = 0.0f;
     PSMTXMultVec(*lbl_eu_80657FD8, &v, &v);
 
     lbl_eu_806657EC = obj->field_0x410;
@@ -266,8 +259,8 @@ void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
 
     if ((rec->field_0x0C & 0x40) != 0) {
         f32 cur = getLodCacheObject__Q23LOD17UnkClass_8046368CFv(rec->field_0x1E);
-        f32 delta = lbl_eu_8066A624 - cur;
-        if (lbl_eu_8066A624 != delta) {
+        f32 delta = 1.0f - cur;
+        if (1.0f != delta) {
             s32 fade = lbl_eu_80665814;
             lbl_eu_80665814 = (s32)((f32)fade * delta);
             lbl_eu_806657E8 |= 2;
@@ -390,7 +383,7 @@ extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
     }
     if (tex.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4,
-                        lbl_eu_80661E98, lbl_eu_80663808);
+                        lbl_eu_80661E98, "ref");
     }
 
     GXTexObj texObj;
@@ -423,17 +416,17 @@ extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
 
         if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2a, lbl_eu_8052CF50,
-                            lbl_eu_80661EA8, lbl_eu_80663810);
+                            lbl_eu_80661EA8, "ref");
         }
         u16 numEntries = pltt.ref().numEntries;
         if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2a, lbl_eu_8052CF50,
-                            lbl_eu_80661EA8, lbl_eu_80663810);
+                            lbl_eu_80661EA8, "ref");
         }
         GXTlutFmt tlutFmt = pltt.ref().fmt;
         if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2a, lbl_eu_8052CF50,
-                            lbl_eu_80661EA8, lbl_eu_8066380C);
+                            lbl_eu_80661EA8, "ref");
         }
 
         GXTlutObj tlutObj;
@@ -461,8 +454,8 @@ extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
         GXInitTexObjLOD(&texObj, GX_LIN_MIP_LIN, GX_LINEAR, minLod, maxLod,
                         lodBias, GX_FALSE, GX_FALSE, GX_ANISO_1);
     } else {
-        GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, lbl_eu_8066A620,
-                        lbl_eu_8066A620, lbl_eu_8066A620, GX_FALSE, GX_FALSE,
+        GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f,
+                        0.0f, 0.0f, GX_FALSE, GX_FALSE,
                         GX_ANISO_1);
     }
     GXLoadTexObj(&texObj, map);

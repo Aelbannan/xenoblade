@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
@@ -5,7 +6,17 @@
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 
+#include "monolib/device/CDeviceVI.hpp"
+// Shield CSystemWindow.hpp's C++-linkage SysWinGetSingleton decl: this TU
+// uses CfGimmick.hpp's extern "C" flat form (retail symbol is unmangled).
+#define SysWinGetSingleton SysWinGetSingleton_cxx_hidden
+#include "kyoshin/CSystemWindow.hpp"
+#undef SysWinGetSingleton
+#include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include <nw4r/lyt/lyt_layout.h>
+#include <nw4r/lyt/lyt_drawInfo.h>
+
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -16,18 +27,166 @@
 
 #include <stdio.h>
 
-// C-ABI view of the member symbols so the vtable adjustor thunks can address
-// them by their retail names with r4 passed through untouched (the member
-// definitions below emit those symbols).
-extern "C" void __dt__14CMenuKeyAssignFv(void*, int);
-extern "C" void cbRenderBefore__14CMenuKeyAssignFv(void*);
-
-// Typed view of the null member-function-pointer triple (see ctor).
-struct PtmfNullTriple {
-    u32 fn;
-    u32 adjust;
-    u32 delta;
+// View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
+// flag in the low bit of the byte at +0xBB; the repo's nw4r header exposes it
+// as the protected mFlag member, so pane visibility is driven through this
+// byte view - CMenuGetItem idiom).
+struct PaneFlagView {
+    u8 _00[0xBB];
+    u8 flags; // 0xBB - bit 0 = visible
 };
+
+// Pane view covering the size words (+0x4C/+0x50) and the visible flag
+// (+0xBB) - used by openKeyAssignPlayer to size a picture pane from a texture.
+struct PaneSizeFlagView {
+    u8 _00[0x4C];
+    f32 sizeX; // 0x4C
+    f32 sizeY; // 0x50
+    u8 _54[0xBB - 0x54];
+    u8 flags;  // 0xBB
+};
+
+// Texture object returned by the arc accessor's GetResource("timg", ...)
+// call in openKeyAssignPlayer: +0x08 points at the texture header, whose first
+// word is a pointer to the u16 width/height pair.
+struct TexDimsView {
+    u16* mDims; // 0x00
+};
+struct TexView {
+    u8 _00[8];
+    TexDimsView* mHeader; // 0x08
+};
+
+// u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
+// (subtracts the retail .sdata2 magic double lbl_eu_80667080).
+union F64Conv {
+    u32 w[2];
+    f64 d;
+};
+
+// Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
+// slot 0x24 (index 9, no args) yields the u32 bound into the layout's font
+// pane via ApplyFontToTxtPanes. Never instantiated, so no vtable is emitted; a
+// genuine virtual call makes MWCC emit retail's r12 dispatch sequence
+// (CMenuQstCntFont / CMenuPTGaugeFont scheme).
+class CMenuKeyAssignFont {
+public:
+    virtual ~CMenuKeyAssignFont();  // 0x00 (3 dtor slots)
+    virtual void vf0C();            // 0x0C
+    virtual void vf10();            // 0x10
+    virtual void vf14();            // 0x14
+    virtual void vf18();            // 0x18
+    virtual void vf1C();            // 0x1C
+    virtual void vf20();            // 0x20
+    virtual u32 getFontHandle();    // 0x24
+};
+
+// Key-assign string table (region name, layout name, button-pane formats).
+extern char lbl_eu_804FDEE8[];
+// sdata2 double 0x4330000000000000 - u32->f32 conversion magic (openKeyAssignPlayer).
+extern f64 lbl_eu_80667080;
+// sdata2 f32 compared against the arts-select gauge in Move (arts vf128).
+extern f32 lbl_eu_80667078;
+
+// Move's view of the arts-state object (MapFx_ResolveOwner result): sub-object at
+// +4 whose vtable slot 0x30 returns the actor-id word.
+struct CMenuKeyAssignActorSub {
+    virtual void vf08();               // +0x08
+    virtual void vf0C();
+    virtual void vf10();
+    virtual void vf14();
+    virtual void vf18();
+    virtual void vf1C();
+    virtual void vf20();
+    virtual void vf24();
+    virtual void vf28();
+    virtual void vf2C();
+    virtual u32* getActorId();         // +0x30
+};
+struct CMenuKeyAssignActor {
+    u8 _00[0x4];
+    CMenuKeyAssignActorSub* mSub04;    // +0x04
+};
+
+// Move's player view (CfObjectMove): battle sub-object at +0x38 carrying the
+// battle-state id at +0x36C and the party count at +0x370.
+struct CMenuKeyAssignBattleObj {
+    u8 _00[0x36C];
+    s32 mState36C;                     // +0x36C
+    s32 mCount370;                     // +0x370
+};
+struct CMenuKeyAssignPlayer {
+    u8 _00[0x38];
+    CMenuKeyAssignBattleObj* mSub38;   // +0x38
+};
+
+// Move's battle-manager view: +0x28/+0x8 list heads, the +0x1A8 sub-object
+// (phase byte at +2) and the +0x20C8 s16. Named locally - the shared
+// CfGameManager.hpp already declares a CBattleManagerView for another TU.
+struct CMenuKeyAssignBattleMgr {
+    u8 _00[0x8];
+    void* mList08;                     // +0x08
+    u8 _0C[0x28 - 0x0C];
+    void* mList28;                     // +0x28
+    u8 _2C[0x1A8 - 0x2C];
+    u8 mSub1A8;                        // +0x1A8 (phase at +2 = 0x1AA)
+    u8 _1A9[0x20C8 - 0x1A9];
+    s16 mSub20C8;                      // +0x20C8
+};
+
+// Circular linked-list node (head at +0x28 / +0x8, next pointer at +0).
+struct CListLink {
+    CListLink* next;                   // +0x00
+};
+
+// findObjectById result view: +0x64 flags word, +0x91 type byte.
+struct CActorTargetView {
+    u8 _00[0x64];
+    u32 mFlags64;                      // +0x64
+    u8 _68[0x91 - 0x68];
+    u8 mType91;                        // +0x91
+};
+
+// C-ABI import used by cbRenderBefore (retail unmangled name; not declared by
+// any shared header yet, so declared here).
+extern "C" int GetSysStateFlag20();
+
+// C-linkage imports (retail names are unmangled free functions; MWCC mangles
+// plain global-scope free functions with a __F suffix, so the declarations
+// must sit under extern "C" to emit the retail reloc names).
+extern "C" {
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+void PaneSetTexPalette(void* pane, void* tex);
+u16 BdatGetU16ByTableKey(const void*, const void*, u32);
+char* BdatTouchStringCell(const void*, const void*, int);
+void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
+void ApplyFontToTxtPanes(void*, u32);
+// Move's gate helpers (retail unmangled; declared in their own TUs but not by
+// any included header).
+int CMenuArtsSelect_IsAvailable();
+int battleCommuIsActive();
+int GetZealObjPtr(void);
+int CMainMenu_IsOpen();
+// Arts-state gate helpers used by Move (retail unmangled; declared in their
+// own TUs but not by any included header).
+void* CfObjectMove_getSelfIfActive(void* objParam);
+void* MapFx_ResolveOwner(void* source);
+bool CMenuArtsSelect_isCreated();
+}
+
+// C++-mangled import (retail symbol findObjectById__Fi): actor id -> target.
+void* findObjectById(int id);
+
+// Layout build helper - retail emits the mangled nw4r form
+// buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc,
+// so declare it as a normal C++ function to let MWCC mangle it (NOT inside
+// extern "C").
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+
+// Layout draw helper - retail emits the mangled nw4r form
+// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii, so declare it as
+// a normal C++ function to let MWCC mangle it (NOT inside extern "C").
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Key-assign free helpers (defined in this TU). Retail emits these under the
 // unmangled names, so the declarations/definitions keep C linkage.
@@ -42,28 +201,17 @@ struct PtmfNullTriple {
 // (memberized: openKeyAssignButtons -> CMenuKeyAssign::openKeyAssignButtons; declaration moved into class CMenuKeyAssign)
 
 // us-8011492c - CMenuKeyAssign::~CMenuKeyAssign
-// Complete-object destructor. The UnkClass_8045F564 scratch region at +0x64 is
-// destroyed first (member dtor with r4=-1), then the CProcess base guarded by
-// the nested double null-check (an MWCC D2-inlined-into-D1 artifact), then the
-// conditional operator delete is auto-emitted from the dtor flags.
-CMenuKeyAssign::~CMenuKeyAssign() {
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->~UnkClass_8045F564();
-    if (this != 0) {
-        if (this != 0) {
-            // C-ABI base dtor call with flags=0 (retail shape).
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
-}
+// Members and bases are destroyed by the compiler.
+CMenuKeyAssign::~CMenuKeyAssign() {}
 
 void CMenuKeyAssign::Init() {
     // Scratch MEM2 region for the layout file data (guarded by the RAII
     // Class_8045F858 host so the region is released on every exit path).
     // The region address is recomputed at each use (this+0x64) - a held
     // pointer local would claim an extra callee-saved register.
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->createRegion(
+    mUnkClass.createRegion(
         (int)mtl::MemManager::getHandleMEM2(), 0x4200, lbl_eu_804FDEE8, 0);
-    Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0]));
+    Class_8045F858 memHost(&mUnkClass);
 
     mtl::MemManager::setMemInitFlag(false);
 
@@ -80,14 +228,9 @@ void CMenuKeyAssign::Init() {
     // Hide the button panes that are not yet active (shared helper).
     this->hideKeyAssignPanes();
 
-    // MI adjust: IScnRender subobject at +0x5c (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->addRenderCB(cb, 0xa, 0);
+    mScn->addRenderCB(this, 0xa, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->validateHeap();
+    mUnkClass.validateHeap();
 }
 
 // us-80114a84 - CMenuKeyAssign::Term
@@ -97,21 +240,16 @@ void CMenuKeyAssign::Init() {
 void CMenuKeyAssign::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // MI adjust: IScnRender subobject at +0x5c (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->removeRenderCB(cb);
+    mScn->removeRenderCB(this);
 
     if (mLayout != NULL) {
         delete mLayout;
         mLayout = NULL;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->deleteRegion();
+    mUnkClass.deleteRegion();
 
-    lbl_eu_80663FA8 = NULL;
+    sInstance = NULL;
 }
 
 // us-80114b04 - CMenuKeyAssign::Move
@@ -550,7 +688,7 @@ done:
     ((void (*)(void*, u32))((void**)self->mLayout)[0x38 / 4])(self->mLayout, 0);
 }
 
-void Draw__14CMenuKeyAssignFv(void) {}
+void CMenuKeyAssign::Draw() {}
 
 // us-80115964 - CMenuKeyAssign::cbRenderBefore
 // Gate prefix (task busy / global bits / scene-active / presentation flags)
@@ -579,69 +717,27 @@ void CMenuKeyAssign::cbRenderBefore() {
     }
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo (CMenuGCItem idiom): a C++ local would also emit a
-    // scope-exit (virtual) destructor on top of the explicit call.
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
 }
 
-// Factory constructor (retail unmangled symbol __ct__CMenuKeyAssign). When the
-// singleton already exists it returns 0; otherwise it allocates + constructs
-// the 0x7c-byte object, registers it under the parent process and returns the
-// singleton. `parent` (r3) feeds CProcess::Regist, `scene` (r4) is stored at
-// +0x60 as the render-callback owning scene.
-extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
-    if (lbl_eu_80663FA8 != 0) {
+// Constructor: retail builds the object inside the factory (no separate ctor
+// function). Member order matches the retail store order (scene, scratch
+// region, layout, open state).
+inline CMenuKeyAssign::CMenuKeyAssign(CScn* scene) : mScn(scene), mLayout(0), mField_78(0) {}
+
+CMenuKeyAssign* CMenuKeyAssign::sInstance;
+
+// Only one key-assign menu exists at a time.
+CMenuKeyAssign* CMenuKeyAssign::create(CProcess* parent, CScn* scene) {
+    if (sInstance != 0) {
         return 0;
     }
-    CMenuKeyAssign* obj = (CMenuKeyAssign*)mtl::MemManager::allocate(
-        0x7c, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // vtable fixups: temp (CProcess) vtable first, then the composite
-        // vtable and the IWorkEvent (+0x24) / IScnRender (+0xac) sub-vtables.
-        // The null-PMF triple is copied through one base register (retail
-        // keeps r8 across both groups; store order 0x3c..0x50 sequential).
-        obj->mProcessVt = (u32)lbl_eu_8052BF70;
-        // Differently-typed view so the ptmfMove/ptmfDraw stores cannot alias
-        // the source triple - MWCC keeps ONE base register instead of
-        // rematerializing the __ptmf_null address per access.
-        const PtmfNullTriple* src = (const PtmfNullTriple*)__ptmf_null;
-        // One uniform 6-word walk over both callback groups - each triple
-        // allocates the same way, matching retail's repeated load pattern.
-        u32* dst = obj->ptmfMove;
-        u32 w1 = src->adjust;
-        u32 w0 = src->fn;
-        dst[0] = w0;
-        dst[1] = w1;
-        u32 w2 = src->delta;
-        dst[2] = w2;
-        w1 = src->adjust;
-        w0 = src->fn;
-        dst[3] = w0;
-        dst[4] = w1;
-        w2 = src->delta;
-        dst[5] = w2;
-        obj->mField_54 = 0;
-        obj->mField_55 = 0;
-
-        obj->mProcessVt = (u32)lbl_eu_8052C640;
-        obj->mIWorkEventVt = (u32)lbl_eu_8052C640 + 0x24;
-        obj->mIScnRenderVt = (u32)lbl_eu_8052C640 + 0xac;
-        obj->mScn = scene;
-
-        __ct__17UnkClass_8045F564Fv(&obj->mUnkClass[0]);
-
-        obj->mLayout = 0;
-        obj->mField_78 = 0;
-    }
-    lbl_eu_80663FA8 = obj;
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
-    return lbl_eu_80663FA8;
+    CMenuKeyAssign* menu = new (CWorkThreadSystem::getWorkMem()) CMenuKeyAssign(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 // Open the key-assign menu for `count` remap columns starting at `state`
@@ -1024,16 +1120,3 @@ void CMenuKeyAssign::setKeyAssignLabels(char* str, int idx) {
     p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
 }
-
-// us-80116a94 - IWorkEvent vtable adjustor thunk (subobject at +0x58).
-// Called through the subobject vtable destructor slot, `this` points at
-// CMenuKeyAssign + 0x58, so subtract 0x58 before forwarding to the full-object
-// member. The retail emits exactly subi r3,r3,0x58; b <member>.
-void CMenuKeyAssign_dtorAdj58(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
-
-// IScnRender vtable cbRenderBefore adjustor thunk (subobject at +0x5C).
-void CMenuKeyAssign_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
-
-// us-80116aa4 - IScnRender vtable adjustor thunk (subobject at +0x5C).
-// Same shape as CMenuKeyAssign_dtorAdj58 but for the IScnRender subobject.
-void CMenuKeyAssign_dtorAdj5C(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }

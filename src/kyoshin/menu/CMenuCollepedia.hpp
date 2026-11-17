@@ -2,8 +2,8 @@
 
 #include <types.h>
 #include <monolib/scn/IScnRender.hpp>
-#include <monolib/work/CProcess.hpp>
 
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CCollepedia.hpp"
@@ -13,12 +13,11 @@
 class CScn;
 
 /*
- * Collepedia (encyclopedia) menu screen process.
+ * Collepedia (encyclopedia) menu screen.
  *
- * Layout (constructor + Term):
- *   0x00: CProcess        -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8              -- phase/state flag (written by Colle_MarkClosing etc.)
- *   0x58: IScnRender      -- render-callback subobject (member, vptr)
+ * Layout:
+ *   0x00: IUICf           -- common in-game menu task base (0x58 bytes)
+ *   0x58: IScnRender      -- render-callback subobject (secondary base, vptr)
  *   0x5C: CScn*           -- owning scene (removeRenderCB target in Term)
  *   0x60: CBgTex          -- background layout widget
  *   0x80: CTitleAHelp     -- title/help bar
@@ -27,44 +26,31 @@ class CScn;
  *  0x29B8: f32 mTimer     -- animation/open timer
  *  0x29BC: total size     -- sizeof(CMenuCollepedia) = 0x29BC
  */
-class CMenuCollepedia : public CProcess {
+class CMenuCollepedia : public IUICf, public IScnRender {
 public:
-    // CProcess overrides
+    CMenuCollepedia(CScn* scene);
     virtual ~CMenuCollepedia();
+
     virtual void Init();
     virtual void Term();
     virtual void Move();
+    virtual void cbRenderBefore();
 
-    // Render callback (dispatched through the IScnRender subobject vtable)
-    void cbRenderBefore();
+    void Colle_NavigateBack();
+    void Colle_CloseMenu();
+    void Colle_OpenMenu();
+    void Colle_HandleInput();
 
-    // IScnRender vtable this-adjusting thunks
-    void Colle_ThunkRender();
-    void Colle_ThunkDtor();
-
-    u32 ptmf0[3];                 // 0x3C-0x47: null PMF callback slot group 1
-    u32 ptmf1[3];                 // 0x48-0x53: null PMF callback slot group 2
-    u8 mField54;                  // 0x54: phase flag
-    u8 mField55;                  // 0x55
-    u8 _pad56[2];                 // 0x56-0x57
-    IScnRender mIScnRender;       // 0x58: render-callback subobject (vptr)
     CScn* mScene;                 // 0x5C: owning scene
     CBgTex mBgTex;                // 0x60
     CTitleAHelp mTitleAHelp;      // 0x80
     CCollepedia mCollepedia;      // 0xB8 (0x28FC bytes -> 0x29B4)
     u8 mState;                    // 0x29B4
     f32 mTimer;                   // 0x29B8
-    CMenuCollepedia();
-    void Colle_NavigateBack();
-    void Colle_CloseMenu();
-    void Colle_OpenMenu();
-    void Colle_HandleInput();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
@@ -82,14 +68,9 @@ extern "C" int clpIsOverlay(CCollepedia* self);
 extern "C" u32 clpIsBusy(CCollepedia* self);
 
 // Widget ctor/dtor and Init helper calls (US retail strips these names).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CCollepedia(CCollepedia* self);
-extern "C" void __dt__6CBgTexFv(CBgTex* self, int dealloc);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
 extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
@@ -129,13 +110,8 @@ struct CollepediaSubEntry {
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];
-extern char lbl_eu_8052BF70[];   // CProcess primary vtable (pre-PMF copy)
 extern char lbl_eu_805372A0[];   // CMenuCollepedia composite vtable
 extern char lbl_eu_8050C688[];   // message-name string pool (Init title lookup)
-// Menu timer constants (sdata2 pool): init 0.0f, per-frame +1.0f, clamp 10.0f.
-extern const f32 lbl_eu_806687E0;
-extern const f32 lbl_eu_806687E4;
-extern const f32 lbl_eu_806687E8;
 
 // Shared singleton (retail name; global-scope plain extern keeps unmangled symbol).
 extern u32 lbl_eu_806647D0;

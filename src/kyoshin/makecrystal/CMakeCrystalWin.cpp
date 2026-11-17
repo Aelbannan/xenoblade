@@ -4,9 +4,11 @@
 // NOTE: do not include kyoshin/harness_catalog.hpp here - its CTaskGameEff ->
 // CfGameManager chain declares lbl_eu_80664090 as void*, which conflicts with
 // the char* declaration in CMCCrystalBox.hpp. Nothing in this TU needs it.
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
 /*
@@ -26,7 +28,7 @@ extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 ar
     _this->mScnRenderVtbl = (u32)lbl_eu_80535B70 + 0x88;
     _this->mScene = 0;
     _this->mThread = 0;
-    __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
+    __ct__11CTitleAHelpFPcUc(&_this->mTitleAHelp, 0, 0);
     __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(&_this->mModelDispArea[0]), 0);
     __ct__CMCCrystalBox(&_this->mCrystalBox, 0);
     __ct__CLoad(&_this->mLoad, 0);
@@ -273,7 +275,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
 
 
 // Render callback: draw the crystal window's four subobjects once the task
-// gate is clear. Same guard + raw-storage DrawInfo scheme as
+// gate is clear. Same guard + stack DrawInfo scheme as
 // CSystemWindow::cbRenderBefore.
 void CMakeCrystalWin::cbRenderBefore() {
     CTaskGame::getInstance();
@@ -282,16 +284,12 @@ void CMakeCrystalWin::cbRenderBefore() {
     if (IsMenuState621F0() == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI ct/dt calls to match the
-    // retail direct calls (a C++ local would virtual-dispatch its dtor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    MakeCrystal_DrawAll(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawCrystalBox(&mCrystalBox, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    CLoadDrawIfVisible(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    MakeCrystal_DrawAll(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), &drawInfo);
+    drawCrystalBox(&mCrystalBox, &drawInfo);
+    CLoadDrawIfVisible(&mLoad, &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
 void cbRenderBefore__15CMakeCrystalWinFv(void*);

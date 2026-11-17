@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CKizunaTalkList
 // Replace stubs with high-level C/C++ during decomp.
 
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CKizunaTalkList.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -8,134 +9,54 @@
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CKizunaTalkListImports.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 void playUISound(u32);
 
-// Converted to inline member function in header
-
-extern "C" void* __ct__802726F4(TalkListEntryArray* self, u32 parent);
-
-CKizunaTalkList::CKizunaTalkList() {
-    // Retail order: region ctor, POD zeroing, cursor/scrollbar widget ctors,
-    // state bytes (mNeedsRebuild = 1), entry-array ctor, then a temporary
-    // CScrollbar(1) whose fields are memberwise-copied over the embedded bar.
-    __ct__17UnkClass_8045F564Fv((u8*)this + 4);
-    mEntryCount = 0;
-    mUnknown18 = 0;
-    mUnknown1C = 0;
-    mpLayout20 = NULL;
-    mpAnim24 = NULL;
-    mpAnim28 = NULL;
-    __ct__CCur18(&mCursor, NULL);
-    __ct__10CScrollBarFUc(mScrollBar, 0);
-    mState84 = 0;
-    mState85 = 0;
-    mUnknown86 = 0;
-    mNeedsRebuild = 1;
-    mUnknown88 = 0;
-    mUnknown8A = 0;
-    __ct__802726F4(&mEntryArray, 0);
-
-    u8 tmpBuf[0x40];
-    __ct__10CScrollBarFUc(reinterpret_cast<CScrollBar*>(tmpBuf), 1);
-    // Member-wise copy of the temp bar's body, skipping the vtable slot.
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mMemRegion =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mMemRegion;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mFileHandle =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mFileHandle;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mAccessor =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mAccessor;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mLayout =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mLayout;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mAnimTransform =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mAnimTransform;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mReady =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mReady;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mVisible =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mVisible;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mState =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mState;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mActive =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mActive;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mAnimOffset =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mAnimOffset;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mScrollPosY =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mScrollPosY;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mScrollRatio =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mScrollRatio;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mThumbHeight =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mThumbHeight;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mContentHeight =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mContentHeight;
-    reinterpret_cast<CScrollBar*>(mScrollBar)->mDirection =
-        reinterpret_cast<CScrollBar*>(tmpBuf)->mDirection;
-    __dt__10CScrollBarFv(reinterpret_cast<CScrollBar*>(tmpBuf), -1);
+// Entry table constructor: all 256 entries are default-constructed
+// (cleared, subtype -1), the count is reset and the owning resource accessor
+// recorded. Retail emits the inline entry ctor/dtor and the implicit table
+// dtor right after this function.
+TalkListEntryArray::TalkListEntryArray(nw4r::lyt::ArcResourceAccessor* parent) {
+    mCount = 0;
+    mParent = parent;
 }
 
-// TalkListEntry element destructor (defined below; used by the array teardown).
-struct TalkListEntry;
-extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags);
-
-// Deleting destructor (retail __dt__15CKizunaTalkListFv): teardown the
-// 20x0x100 TalkListEntry array at +0x8C, then the embedded sub-objects
-// (scrollbar +0x44, CCur18 cursor +0x2C, UnkClass_8045F564 +0x04), and free
-// self when the delete flag is set. -O4,s merges the r30/r31
-// saves into the retail stmw r30 prologue.
-extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int flags) {
-    if (self != 0) {
-        if ((u8*)self + 0x8C != 0) {
-            __destroy_arr((u8*)self + 0x8C, (void*)__dt__80272774, 0x14, 0x100);
-        }
-        __dt__10CScrollBarFv((u8*)self + 0x44, -1);
-        __dt__6CCur18Fv(&self->mCursor, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+CKizunaTalkList::CKizunaTalkList(int)
+    : mMemRegion(), mFileHandle(NULL), mBdatHandle(NULL), mAccessor(NULL), mpLayout20(NULL),
+      mpAnim24(NULL), mpAnim28(NULL), mCursor(NULL), mScrollBar(0), mState84(0), mState85(0),
+      mUnknown86(0), mNeedsRebuild(1), mUnknown88(0), mUnknown8A(0), mEntryArray(NULL) {
+    // Re-initialise the bar as a vertical one. CScrollBar is still a
+    // non-polymorphic view (hand vptr member), so its implicit operator= would
+    // copy the vptr; retail's `mScrollBar = CScrollBar(1);` skips it. Copy the
+    // body of a real temporary member by member until CScrollBar is real.
+    CScrollBar tmp(1);
+    mScrollBar.mMemRegion = tmp.mMemRegion;
+    mScrollBar.mFileHandle = tmp.mFileHandle;
+    mScrollBar.mAccessor = tmp.mAccessor;
+    mScrollBar.mLayout = tmp.mLayout;
+    mScrollBar.mAnimTransform = tmp.mAnimTransform;
+    mScrollBar.mReady = tmp.mReady;
+    mScrollBar.mVisible = tmp.mVisible;
+    mScrollBar.mState = tmp.mState;
+    mScrollBar.mActive = tmp.mActive;
+    mScrollBar.mAnimOffset = tmp.mAnimOffset;
+    mScrollBar.mScrollPosY = tmp.mScrollPosY;
+    mScrollBar.mScrollRatio = tmp.mScrollRatio;
+    mScrollBar.mThumbHeight = tmp.mThumbHeight;
+    mScrollBar.mContentHeight = tmp.mContentHeight;
+    mScrollBar.mDirection = tmp.mDirection;
 }
 
-// Element destructor of TalkListEntry (used by the array teardown). Entries
-// are plain PODs so there is no member teardown; only the backing memory is
-// freed when the delete flag is set (retail __dt__80272774). Returns the
-// pointer itself, as the deleting-destructor ABI requires.
-extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags) {
-    if (entry != 0 && flags > 0)
-        operator delete(entry);
-    return entry;
-}
-
-// Element constructor (defined below; used as the array element ctor).
-void clearTalkEntry(TalkListEntry* entry);
-
-// Construct the TalkListEntry array (retail __ct__802726F4). Constructs all
-// 256 entries in place via the element ctor clearTalkEntry, then initialises
-// the count to 0 and records the owning object.
-extern "C" __declspec(noinline) void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
-    __construct_array(self, (void*)clearTalkEntry, (void*)__dt__80272774, 0x14, 0x100);
-    self->mCount = 0;
-    self->mParent = parent;
-    return self;
-}
-
-// Destroy the TalkListEntry array (retail __dt__802727B4), freeing the
-// backing memory when the delete flag is set. -O4,s merges the
-// register saves into the retail stmw/lmw frame.
-extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flags) {
-    if (self != 0) {
-        __destroy_arr(self, (void*)__dt__80272774, 0x14, 0x100);
-        if (flags > 0)
-            operator delete(self);
-    }
-    return self;
-}
+CKizunaTalkList::~CKizunaTalkList() {}
 
 // Initialise the Kizuna talk list (retail initTalkList): load the talk-list
 // file and the shared archive, then set up the scroll bar.
 void CKizunaTalkList::initTalkList() {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    this->mEntryCount = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], this, 0, 0);
-    this->mUnknown18 = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], this, 0, 0);
+    this->mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], this, 0, 0);
+    this->mBdatHandle = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], this, 0, 0);
     CScrollBar_loadLayoutArc(&this->mScrollBar);
     this->mUnknown86 = 0;
 }
@@ -166,8 +87,7 @@ void CKizunaTalkList::updateTalkList() {
             break;
         }
 
-        // Layout virtual slot 0x38/4: disable animation.
-        ((void (*)(void*, int))(*(void***)this->mpLayout20)[0x38 / 4])(this->mpLayout20, 0);
+        this->mpLayout20->Animate(0);
         Cur_Update(&this->mCursor);
         CScrollBar_UpdateDispatch(&this->mScrollBar);
     }
@@ -187,20 +107,19 @@ void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
 void CKizunaTalkList::teardownTalkList() {
     CBdat::getEntry(2);
-    closeFileHandle((CFileHandle**)&this->mEntryCount);
-    closeFileHandle((CFileHandle**)&this->mUnknown18);
+    closeFileHandle(&this->mFileHandle);
+    closeFileHandle(&this->mBdatHandle);
     this->mState84 = 0;
     if (this->mpLayout20 != NULL) {
-        // Layout virtual slot 0x08/4.
-        ((void (*)(void*, int))((void**)this->mpLayout20)[0x08 / 4])(this->mpLayout20, 1);
+        delete this->mpLayout20;
         this->mpLayout20 = NULL;
     }
-    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C);
-    this->mUnknown1C = 0;
+    releaseArcResourceAccessor(this->mAccessor);
+    this->mAccessor = NULL;
 
     this->mCursor.cleanup();
     CScrollBar_Teardown(&this->mScrollBar);
-    deleteRegion((UnkClass_8045F564*)((u8*)this + 4));
+    deleteRegion(&this->mMemRegion);
     lbl_eu_806648B8 = NULL;
 }
 
@@ -218,17 +137,6 @@ __declspec(noinline) void fillTalkEntry(TalkListEntry* entry, u32 a, u32 b,
     entry->field_13 = in13;   // u8
 }
 
-// Zero-initialise a talk-list entry (retail clearTalkEntry).
-__declspec(noinline) void clearTalkEntry(TalkListEntry* entry) {
-    entry->field_00 = 0;
-    entry->field_04 = 0;
-    entry->field_08 = 0;
-    entry->field_0C = 0;
-    entry->field_10 = 0;
-    entry->field_12 = -1;
-    entry->field_13 = 0;
-}
-
 // Copy one talk-list entry into another (retail copyTalkEntry).
 __declspec(noinline) void copyTalkEntry(TalkListEntry* dst, TalkListEntry* src) {
     dst->field_00 = src->field_00;
@@ -240,17 +148,6 @@ __declspec(noinline) void copyTalkEntry(TalkListEntry* dst, TalkListEntry* src) 
     dst->field_13 = src->field_13;
 }
 
-// Copy one talk-list entry into another (retail cloneTalkEntry).
-__declspec(noinline) void cloneTalkEntry(TalkListEntry* dst,
-                                        const TalkListEntry* src) {
-    dst->field_00 = src->field_00;
-    dst->field_04 = src->field_04;
-    dst->field_08 = src->field_08;
-    dst->field_0C = src->field_0C;
-    dst->field_10 = src->field_10;
-    dst->field_12 = src->field_12;
-    dst->field_13 = src->field_13;
-}
 
 // Virtual slot 3: resource lookup (this, "timg", name, 0).
 typedef u32 (*KtlResFn)(void*, const char*, const char*, u32);
@@ -343,7 +240,7 @@ void buildTalkList(TalkListEntryArray* arr) {
         fillTalkEntry(&tmpB, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        cloneTalkEntry(&arr->mEntries[c], &tmpB);
+        arr->mEntries[c] = tmpB;
         collect[k] = 0;
     }
 
@@ -378,7 +275,7 @@ void buildTalkList(TalkListEntryArray* arr) {
         fillTalkEntry(&tmpC, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        cloneTalkEntry(&arr->mEntries[c], &tmpC);
+        arr->mEntries[c] = tmpC;
         collect[k] = 0;
     }
 
@@ -407,7 +304,7 @@ void buildTalkList(TalkListEntryArray* arr) {
         fillTalkEntry(&tmpD, (u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        cloneTalkEntry(&arr->mEntries[c], &tmpD);
+        arr->mEntries[c] = tmpD;
         collect[k] = 0;
     }
 
@@ -437,7 +334,7 @@ void buildTalkList(TalkListEntryArray* arr) {
         fillTalkEntry(&tmpE, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        cloneTalkEntry(&arr->mEntries[c], &tmpE);
+        arr->mEntries[c] = tmpE;
         collect[k] = 0;
     }
 
@@ -448,7 +345,7 @@ void buildTalkList(TalkListEntryArray* arr) {
             TalkListEntry* e1 = &arr->mEntries[inner];
             TalkListEntry* e2 = &arr->mEntries[inner + 1];
             if ((u32)e1->field_13 > (u32)e2->field_13) {
-                clearTalkEntry(&tmpSort);
+                tmpSort = TalkListEntry();
                 copyTalkEntry(&tmpSort, e1);
                 copyTalkEntry(e1, e2);
                 copyTalkEntry(e2, &tmpSort);
@@ -461,7 +358,7 @@ void buildTalkList(TalkListEntryArray* arr) {
 
 // Whether the talk-list has anything to show (retail hasVisibleTalks): returns
 // the unknown-0x86 state byte when the scroll bar is visible, else 0.
-u8 CKizunaTalkList::hasVisibleTalks() {
+bool CKizunaTalkList::hasVisibleTalks() {
     if (CScrollBar_isVisible(&this->mScrollBar)) {
         return this->mUnknown86;
     }
@@ -633,7 +530,6 @@ extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self) {
 }
 
 // Bind the scroll-out animations for the talk list (retail bindScrollOutAnims).
-// Bind the scroll-out animations for the talk list (retail bindScrollOutAnims).
 extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self) {
     self->mpLayout20->SetAnimationEnable(self->mpAnim28, 0);
     self->mpLayout20->SetAnimationEnable(self->mpAnim24, 1);
@@ -645,7 +541,6 @@ extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self) {
     self->mpLayout20->SetAnimationEnable(self->mpAnim28, 1);
 }
 
-void bindScrollInAnims(){}
 
 // Rebuild/render the visible list. For each of the (up to) 7 visible rows it
 // pulls the entry, binds the pane names (built with sprintf row suffixes),
@@ -718,7 +613,7 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
         else
             lvlStr = &lbl[0x10f];
 
-        void* anim = ((void* (*)(void*, u32, const char*, int))(((void**)self->mUnknown1C)[0x0c / 4]))((void*)self->mUnknown1C, 0x74696d67, lvlStr, 0);
+        void* anim = self->mAccessor->GetResource(0x74696d67, lvlStr, 0);
         if (anim)
             PaneSetTexPaletteByName(self->mpLayout20, buf, anim);
 
@@ -780,29 +675,12 @@ extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
 
 // Rebuild the visible talk list (retail rebuildTalkList): requires both the
 // shared BDAT data and the layout accessor. Builds a fresh local table via
-// __ct__802726F4, copies it over the member array, then rebuilds/sorts.
+// a temporary table, assigns it over the member array, then rebuilds/sorts.
 void rebuildTalkList(CKizunaTalkList* self) {
-    u32 accessor = self->mUnknown1C;
-    if (accessor == 0)
-        return;
-    if (lbl_eu_806648B8 == NULL)
+    if (self->mAccessor == NULL || lbl_eu_806648B8 == NULL)
         return;
 
-    TalkListEntryArray tmp;
-    __ct__802726F4(&tmp, accessor);
-
-    TalkListEntry* dst = self->mEntryArray.mEntries;
-    TalkListEntry* src = tmp.mEntries;
-    TalkListEntry* end = self->mEntryArray.mEntries + 256;
-    do {
-        cloneTalkEntry(dst, src);
-        dst++;
-        src++;
-    } while (dst < end);
-    self->mEntryArray.mCount = tmp.mCount;
-    self->mEntryArray.mParent = tmp.mParent;
-    __destroy_arr(&tmp, (void*)__dt__80272774, 0x14, 0x100);
-
+    self->mEntryArray = TalkListEntryArray(self->mAccessor);
     buildTalkList(&self->mEntryArray);
     self->mUnknown86 = 1;
     self->mState84 = 1;
@@ -812,70 +690,61 @@ void rebuildTalkList(CKizunaTalkList* self) {
 // ---------------------------------------------------------------------------
 // Handle a file-load completion event (retail OnFileEvent__15CKizunaTalkListFP10CEventFile).
 // The event's file handle matches either the talk-list layout archive
-// (mEntryCount) or the shared archive (mUnknown18). On the layout archive we
+// (mFileHandle) or the shared archive (mBdatHandle). On the layout archive we
 // tear down/rebuild the whole scene: region, ArcResource accessor, layout,
 // animation transforms, font pane, and the embedded cursor. Returns 1 on the
 // matching archive, 0 otherwise.
 bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
-    if (this->mEntryCount == (u32)pEventFile->mFileHandle) {
+    if (this->mFileHandle == pEventFile->mFileHandle) {
         u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-        char* strBase = lbl_eu_8050E990;
 
         // Create the region backing the base memory area, then scope a guard
         // object so the region is torn down on exit.
-        ((UnkClass_8045F564*)((u8*)this + 4))->createRegion((int)handle, 0x10000, &strBase[0x1b9], 0);
-        u8 temp8[0x8];
-        __ct__14Class_8045F858FP17UnkClass_8045F564(temp8, (u8*)this + 4);
+        this->mMemRegion.createRegion((int)handle, 0x10000, &lbl_eu_8050E990[0x1b9], 0);
+        Class_8045F858 regionScope(&this->mMemRegion);
 
-        CFileHandle* fh = (CFileHandle*)this->mEntryCount;
+        CFileHandle* fh = this->mFileHandle;
         void* fileData = fh->getData();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         // Attach the layout archive to a fresh ArcResource accessor.
-        this->mUnknown1C = (u32)CLibLayout::createArcResourceAccessor();
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, fileData, &strBase[0x1c9]);
+        this->mAccessor = CLibLayout::createArcResourceAccessor();
+        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(this->mAccessor, fileData, &lbl_eu_8050E990[0x1c9]);
 
         // Create the layout and its two animation transforms.
-        buildLayout(&this->mpLayout20, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1cd]);
-        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim24, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1e2]);
-        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim28, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1fa]);
+        buildLayout(&this->mpLayout20, this->mAccessor, &lbl_eu_8050E990[0x1cd]);
+        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim24, this->mAccessor, &lbl_eu_8050E990[0x1e2]);
+        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim28, this->mAccessor, &lbl_eu_8050E990[0x1fa]);
 
         // Bind the font pane onto the layout.
-        void* rootPane = *(void**)((char*)this->mpLayout20 + 0x10);
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, this->mpLayout20);
-        u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-        ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, fontResult);
+        nw4r::lyt::Pane* rootPane = this->mpLayout20->GetRootPane();
+        u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
+                             CDeviceFont::getFontInfo(1, this->mpLayout20))->getFont();
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         bindScrollOutAnims(this);
 
-        // Layout virtual slot 14 (offset 0x38): disable animation.
-        ((void (*)(void*, int))(((void**)this->mpLayout20)[0x38 / 4]))(this->mpLayout20, 0);
+        this->mpLayout20->Animate(0);
 
-        // Create the CCur18 cursor on the stack and copy its body into the
-        // embedded cursor (+0x2c), skipping the vtable at +0.
-        CCur18 cur18Temp;
-        __ct__CCur18(&cur18Temp, CUICfManager_getArcResourceAccessor());
-        mCursor = cur18Temp;
-        __dt__6CCur18Fv(&cur18Temp, -1);
+        mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         mCursor.initLayout();
 
         rebuildTalkList(this);
 
-        this->mEntryCount = 0;
-        ((UnkClass_8045F564*)((u8*)this + 4))->validateHeap();
-        __dt__14Class_8045F858Fv(temp8, -1);
+        this->mFileHandle = NULL;
+        this->mMemRegion.validateHeap();
         return 1;
     }
 
-    if (this->mUnknown18 == (u32)pEventFile->mFileHandle) {
+    if (this->mBdatHandle == pEventFile->mFileHandle) {
         // Shared-archive hit: release the previously buffered shared file data.
-        CFileHandle* fh2 = (CFileHandle*)this->mUnknown18;
+        CFileHandle* fh2 = this->mBdatHandle;
         void* data2 = fh2->getData();
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
         lbl_eu_806648B8 = (void*)getFP(&lbl_eu_8050E990[0x217]);
         rebuildTalkList(this);
-        this->mUnknown18 = 0;
+        this->mBdatHandle = NULL;
         return 1;
     }
 

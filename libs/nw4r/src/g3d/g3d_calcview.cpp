@@ -9,8 +9,6 @@
 // Retail nw4r data-pool constants referenced by the billboard kernels.  Named
 // after the retail symbols so the generated sda21 float relocations match
 // retail exactly (instead of TU-local pool labels).
-extern const f32 lbl_eu_80669C30;  // 1.0f
-extern const f32 lbl_eu_80669C34;  // billboard Y-axis degeneracy epsilon
 extern const f32 lbl_eu_80669C38;  // adjugate singularity epsilon (f32 view)
 
 namespace nw4r {
@@ -292,13 +290,13 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                          const ResMdl* pMdl, unsigned long mtxId) {
     // The billboard's local Y axis comes from the current matrix's Y column
     // (X, Y components) with a unit Z component.
-    math::VEC3 localY(pOut->_01, pOut->_11, lbl_eu_80669C30);
+    math::VEC3 localY(pOut->_01, pOut->_11, 0.0f);
 
     // Degenerate Y axis: if both X and Y components are negligible the
     // column points straight down Z (at the camera) and no billboard
     // rotation can be built.
-    if (__fabs(localY.x) >= lbl_eu_80669C34 ||
-        __fabs(localY.y) >= lbl_eu_80669C34) {
+    if (__fabs(localY.x) >= 1e-18f ||
+        __fabs(localY.y) >= 1e-18f) {
         math::VEC3Normalize(&localY, &localY);
 
         const math::MTX34* pMtx = &pMtxArray[mtxId];
@@ -311,19 +309,19 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
             f32 lenSq = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
                         pMtx->_20 * pMtx->_20;
             f32 len;
-            if (lenSq > lbl_eu_80669C30) {
+            if (lenSq > 0.0f) {
                 len = lenSq * math::FrSqrt(lenSq);
             } else {
-                len = lbl_eu_80669C30;
+                len = 0.0f;
             }
 
             pOut->_22 = len;
-            pOut->_02 = lbl_eu_80669C30;
-            pOut->_12 = lbl_eu_80669C30;
+            pOut->_02 = 0.0f;
+            pOut->_12 = 0.0f;
             pOut->_00 = localY.y * len;
             pOut->_01 = localY.x * len;
-            pOut->_20 = lbl_eu_80669C30;
-            pOut->_21 = lbl_eu_80669C30;
+            pOut->_20 = 0.0f;
+            pOut->_21 = 0.0f;
             pOut->_10 = -localY.x * len;
             pOut->_11 = localY.y * len;
         } else {
@@ -331,37 +329,37 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
             f32 lenSq0 = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
                          pMtx->_20 * pMtx->_20;
             f32 len0;
-            if (lenSq0 > lbl_eu_80669C30) {
+            if (lenSq0 > 0.0f) {
                 len0 = lenSq0 * math::FrSqrt(lenSq0);
             } else {
-                len0 = lbl_eu_80669C30;
+                len0 = 0.0f;
             }
 
             f32 lenSq1 = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
                          pMtx->_21 * pMtx->_21;
             f32 len1;
-            if (lenSq1 > lbl_eu_80669C30) {
+            if (lenSq1 > 0.0f) {
                 len1 = lenSq1 * math::FrSqrt(lenSq1);
             } else {
-                len1 = lbl_eu_80669C30;
+                len1 = 0.0f;
             }
 
             f32 lenSq2 = pMtx->_02 * pMtx->_02 + pMtx->_12 * pMtx->_12 +
                          pMtx->_22 * pMtx->_22;
             f32 len2;
-            if (lenSq2 > lbl_eu_80669C30) {
+            if (lenSq2 > 0.0f) {
                 len2 = lenSq2 * math::FrSqrt(lenSq2);
             } else {
-                len2 = lbl_eu_80669C30;
+                len2 = 0.0f;
             }
 
             pOut->_22 = len2;
-            pOut->_02 = lbl_eu_80669C30;
-            pOut->_12 = lbl_eu_80669C30;
+            pOut->_02 = 0.0f;
+            pOut->_12 = 0.0f;
             pOut->_00 = localY.y * len0;
             pOut->_01 = localY.x * len1;
-            pOut->_20 = lbl_eu_80669C30;
-            pOut->_21 = lbl_eu_80669C30;
+            pOut->_20 = 0.0f;
+            pOut->_21 = 0.0f;
             pOut->_10 = -localY.x * len0;
             pOut->_11 = localY.y * len1;
         }
@@ -387,9 +385,9 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (__fabs(dir.x) >= lbl_eu_80669C34 ||
-        __fabs(dir.y) >= lbl_eu_80669C34 ||
-        __fabs(dir.z) >= lbl_eu_80669C34) {
+    if (__fabs(dir.x) >= 1e-18f ||
+        __fabs(dir.y) >= 1e-18f ||
+        __fabs(dir.z) >= 1e-18f) {
         PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
                        reinterpret_cast<Vec*>(&dir));
 
@@ -397,9 +395,9 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                           reinterpret_cast<const Vec*>(&dir),
                           reinterpret_cast<Vec*>(&right));
 
-        if (__fabs(right.x) >= lbl_eu_80669C34 ||
-            __fabs(right.y) >= lbl_eu_80669C34 ||
-            __fabs(right.z) >= lbl_eu_80669C34) {
+        if (__fabs(right.x) >= 1e-18f ||
+            __fabs(right.y) >= 1e-18f ||
+            __fabs(right.z) >= 1e-18f) {
             PSVECNormalize(reinterpret_cast<const Vec*>(&right),
                            reinterpret_cast<Vec*>(&right));
             PSVECCrossProduct(reinterpret_cast<const Vec*>(&dir),
@@ -411,8 +409,8 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
         f32 lenSq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                     pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                     pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-        f32 len = lbl_eu_80669C30;
-        if (lenSq > lbl_eu_80669C30) {
+        f32 len = 0.0f;
+        if (lenSq > 0.0f) {
             len = lenSq * math::FrSqrt(lenSq);
         }
 
@@ -431,24 +429,24 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
         f32 len0Sq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                      pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                      pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-        f32 len0 = lbl_eu_80669C30;
-        if (len0Sq > lbl_eu_80669C30) {
+        f32 len0 = 0.0f;
+        if (len0Sq > 0.0f) {
             len0 = len0Sq * math::FrSqrt(len0Sq);
         }
 
         f32 len1Sq = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
                      pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
                      pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
-        f32 len1 = lbl_eu_80669C30;
-        if (len1Sq > lbl_eu_80669C30) {
+        f32 len1 = 0.0f;
+        if (len1Sq > 0.0f) {
             len1 = len1Sq * math::FrSqrt(len1Sq);
         }
 
         f32 len2Sq = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
                      pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
                      pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
-        f32 len2 = lbl_eu_80669C30;
-        if (len2Sq > lbl_eu_80669C30) {
+        f32 len2 = 0.0f;
+        if (len2Sq > 0.0f) {
             len2 = len2Sq * math::FrSqrt(len2Sq);
         }
 
@@ -497,19 +495,19 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
         } else {
             localY.x = pMtxArray[mtxId]._01;
             localY.y = pMtxArray[mtxId]._11;
-            localY.z = lbl_eu_80669C30;
+            localY.z = 0.0f;
         }
     } else {
         localY.x = pMtxArray[mtxId]._01;
         localY.y = pMtxArray[mtxId]._11;
-        localY.z = lbl_eu_80669C30;
+        localY.z = 0.0f;
     }
 
     // Degenerate local Y axis: if neither component clears the epsilon the
     // column points straight down Z (at the camera) and no billboard
     // rotation can be built.
-    if (math::FAbs(localY.x) >= lbl_eu_80669C34 ||
-        math::FAbs(localY.y) >= lbl_eu_80669C34) {
+    if (math::FAbs(localY.x) >= 1e-18f ||
+        math::FAbs(localY.y) >= 1e-18f) {
         math::VEC3Normalize(&localY, &localY);
 
         if (useParent) {
@@ -517,20 +515,20 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
             f32 lenSq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                         pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                         pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-            f32 len = lbl_eu_80669C30;
-            if (lenSq > lbl_eu_80669C30) {
+            f32 len = 0.0f;
+            if (lenSq > 0.0f) {
                 len = lenSq * math::FrSqrt(lenSq);
             }
 
             // Output rows form a transposed 2D rotation of the normalized
             // Y axis; retail pairs the row stores.
             pOut->_22 = len;
-            pOut->_02 = lbl_eu_80669C30;
-            pOut->_12 = lbl_eu_80669C30;
+            pOut->_02 = 0.0f;
+            pOut->_12 = 0.0f;
             pOut->_00 = localY.y * len;
             pOut->_01 = localY.x * len;
-            pOut->_20 = lbl_eu_80669C30;
-            pOut->_21 = lbl_eu_80669C30;
+            pOut->_20 = 0.0f;
+            pOut->_21 = 0.0f;
             pOut->_10 = -localY.x * len;
             pOut->_11 = localY.y * len;
         } else {
@@ -539,34 +537,34 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
             f32 lenSq0 = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                          pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                          pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-            f32 len0 = lbl_eu_80669C30;
-            if (lenSq0 > lbl_eu_80669C30) {
+            f32 len0 = 0.0f;
+            if (lenSq0 > 0.0f) {
                 len0 = lenSq0 * math::FrSqrt(lenSq0);
             }
 
             f32 lenSq1 = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
                          pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
                          pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
-            f32 len1 = lbl_eu_80669C30;
-            if (lenSq1 > lbl_eu_80669C30) {
+            f32 len1 = 0.0f;
+            if (lenSq1 > 0.0f) {
                 len1 = lenSq1 * math::FrSqrt(lenSq1);
             }
 
             f32 lenSq2 = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
                          pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
                          pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
-            f32 len2 = lbl_eu_80669C30;
-            if (lenSq2 > lbl_eu_80669C30) {
+            f32 len2 = 0.0f;
+            if (lenSq2 > 0.0f) {
                 len2 = lenSq2 * math::FrSqrt(lenSq2);
             }
 
             pOut->_22 = len2;
-            pOut->_02 = lbl_eu_80669C30;
-            pOut->_12 = lbl_eu_80669C30;
+            pOut->_02 = 0.0f;
+            pOut->_12 = 0.0f;
             pOut->_00 = localY.y * len0;
             pOut->_01 = localY.x * len1;
-            pOut->_20 = lbl_eu_80669C30;
-            pOut->_21 = lbl_eu_80669C30;
+            pOut->_20 = 0.0f;
+            pOut->_21 = 0.0f;
             pOut->_10 = -localY.x * len0;
             pOut->_11 = localY.y * len1;
         }
@@ -616,9 +614,9 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
     }
 
     // Degenerate camera direction -> no billboard rotation possible.
-    if (math::FAbs(dir.x) >= lbl_eu_80669C34 ||
-        math::FAbs(dir.y) >= lbl_eu_80669C34 ||
-        math::FAbs(dir.z) >= lbl_eu_80669C34) {
+    if (math::FAbs(dir.x) >= 1e-18f ||
+        math::FAbs(dir.y) >= 1e-18f ||
+        math::FAbs(dir.z) >= 1e-18f) {
         PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
                        reinterpret_cast<Vec*>(&dir));
 
@@ -627,9 +625,9 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                           reinterpret_cast<const Vec*>(&dir),
                           reinterpret_cast<Vec*>(&right));
 
-        if (math::FAbs(right.x) >= lbl_eu_80669C34 ||
-            math::FAbs(right.y) >= lbl_eu_80669C34 ||
-            math::FAbs(right.z) >= lbl_eu_80669C34) {
+        if (math::FAbs(right.x) >= 1e-18f ||
+            math::FAbs(right.y) >= 1e-18f ||
+            math::FAbs(right.z) >= 1e-18f) {
             PSVECNormalize(reinterpret_cast<const Vec*>(&right),
                            reinterpret_cast<Vec*>(&right));
             PSVECCrossProduct(reinterpret_cast<const Vec*>(&dir),
@@ -641,9 +639,9 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                 f32 lenSq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                             pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                             pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-                f32 len = (lenSq > lbl_eu_80669C30)
+                f32 len = (lenSq > 0.0f)
                               ? lenSq * math::FrSqrt(lenSq)
-                              : lbl_eu_80669C30;
+                              : 0.0f;
 
                 // Output columns are (right, localY, dir); retail pairs the
                 // xy row stores, hence the interleaved assignment order.
@@ -661,23 +659,23 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                 f32 lenSq0 = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
                              pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                              pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
-                f32 len0 = (lbl_eu_80669C30 < lenSq0)
+                f32 len0 = (0.0f < lenSq0)
                                ? lenSq0 * math::FrSqrt(lenSq0)
-                               : lbl_eu_80669C30;
+                               : 0.0f;
 
                 f32 lenSq1 = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
                              pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
                              pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
-                f32 len1 = (lbl_eu_80669C30 < lenSq1)
+                f32 len1 = (0.0f < lenSq1)
                                ? lenSq1 * math::FrSqrt(lenSq1)
-                               : lbl_eu_80669C30;
+                               : 0.0f;
 
                 f32 lenSq2 = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
                              pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
                              pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
-                f32 len2 = (lbl_eu_80669C30 < lenSq2)
+                f32 len2 = (0.0f < lenSq2)
                                ? lenSq2 * math::FrSqrt(lenSq2)
-                               : lbl_eu_80669C30;
+                               : 0.0f;
 
                 pOut->_00 = right.x * len0;
                 pOut->_01 = right.y * len0;
@@ -718,12 +716,12 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     yAxis.z = pOut->_21;
     up.x = pOut->_11;
     up.y = -pOut->_01;
-    up.z = lbl_eu_80669C30;
+    up.z = 0.0f;
 
     // Degenerate Y column (all three components negligible) -> zero it.
-    if (__fabs(yAxis.x) < lbl_eu_80669C34 &&
-        __fabs(yAxis.y) < lbl_eu_80669C34 &&
-        __fabs(yAxis.z) < lbl_eu_80669C34) {
+    if (__fabs(yAxis.x) < 1e-18f &&
+        __fabs(yAxis.y) < 1e-18f &&
+        __fabs(yAxis.z) < 1e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -731,10 +729,10 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     const math::MTX34* pMtx = &pMtxArray[mtxId];
 
     // Normalize the Y column by its own length.
-    f32 len1 = lbl_eu_80669C30;
+    f32 len1 = 0.0f;
     f32 lenSq1 = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
                  pMtx->_21 * pMtx->_21;
-    if (lenSq1 > lbl_eu_80669C30) {
+    if (lenSq1 > 0.0f) {
         len1 = lenSq1 * math::FrSqrt(lenSq1);
     }
 
@@ -747,7 +745,7 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     yAxis.z *= invLen1;
 
     // Degenerate implied up direction -> zero it.
-    if (__fabs(up.x) < lbl_eu_80669C34 && __fabs(up.y) < lbl_eu_80669C34) {
+    if (__fabs(up.x) < 1e-18f && __fabs(up.y) < 1e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -772,28 +770,28 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
         // Upstream nw4r quirk: only two lengths are derived here, from model
         // matrix columns 0 and 1, and they scale output columns 0 and 2; the
         // Y column is multiplied by a pooled 1.0f (not folded).
-        f32 len0 = lbl_eu_80669C30;
+        f32 len0 = 0.0f;
         f32 lenSq0 = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
                      pMtx->_20 * pMtx->_20;
-        if (lenSq0 > lbl_eu_80669C30) {
+        if (lenSq0 > 0.0f) {
             len0 = lenSq0 * math::FrSqrt(lenSq0);
         }
 
-        f32 lenB = lbl_eu_80669C30;
+        f32 lenB = 0.0f;
         f32 lenSqB = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
                      pMtx->_21 * pMtx->_21;
-        if (lenSqB > lbl_eu_80669C30) {
+        if (lenSqB > 0.0f) {
             lenB = lenSqB * math::FrSqrt(lenSqB);
         }
 
         pOut->_00 = up.x * len0;
-        pOut->_01 = yAxis.x * lbl_eu_80669C30;
+        pOut->_01 = yAxis.x * 0.0f;
         pOut->_10 = up.y * len0;
-        pOut->_11 = yAxis.y * lbl_eu_80669C30;
+        pOut->_11 = yAxis.y * 0.0f;
         pOut->_02 = right.x * lenB;
         pOut->_12 = right.y * lenB;
         pOut->_20 = up.z * len0;
-        pOut->_21 = yAxis.z * lbl_eu_80669C30;
+        pOut->_21 = yAxis.z * 0.0f;
         pOut->_22 = right.z * lenB;
     }
 }
@@ -815,24 +813,24 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
     // Degenerate up vector (all components ~0) -> zero matrix.
-    if (math::FAbs(up.x) >= lbl_eu_80669C34 ||
-        math::FAbs(up.y) >= lbl_eu_80669C34 ||
-        math::FAbs(up.z) >= lbl_eu_80669C34) {
+    if (math::FAbs(up.x) >= 1e-18f ||
+        math::FAbs(up.y) >= 1e-18f ||
+        math::FAbs(up.z) >= 1e-18f) {
         // Normalize up by its own (clamped) length.
         f32 upLenSq = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
                       pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
                       pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
-        f32 upLen = lbl_eu_80669C30;
-        if (upLenSq > lbl_eu_80669C30) {
+        f32 upLen = 0.0f;
+        if (upLenSq > 0.0f) {
             upLen = upLenSq * math::FrSqrt(upLenSq);
         }
         math::VEC3Scale(&up, &up, math::FInv(upLen));
 
         math::VEC3Cross(&right, &up, &dir);
 
-        if (math::FAbs(right.x) < lbl_eu_80669C34 &&
-            math::FAbs(right.y) < lbl_eu_80669C34 &&
-            math::FAbs(right.z) < lbl_eu_80669C34) {
+        if (math::FAbs(right.x) < 1e-18f &&
+            math::FAbs(right.y) < 1e-18f &&
+            math::FAbs(right.z) < 1e-18f) {
             goto zero;
         }
 
@@ -857,20 +855,20 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
                          pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
                          pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
             f32 len0;
-            if (len0Sq > lbl_eu_80669C30) {
+            if (len0Sq > 0.0f) {
                 len0 = len0Sq * math::FrSqrt(len0Sq);
             } else {
-                len0 = lbl_eu_80669C30;
+                len0 = 0.0f;
             }
 
             f32 len2Sq = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
                          pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
                          pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
             f32 len2;
-            if (len2Sq > lbl_eu_80669C30) {
+            if (len2Sq > 0.0f) {
                 len2 = len2Sq * math::FrSqrt(len2Sq);
             } else {
-                len2 = lbl_eu_80669C30;
+                len2 = 0.0f;
             }
 
             pOut->_00 = right.x * len0;
@@ -1010,7 +1008,7 @@ void CalcView(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
     // Pass 2: normal matrices (and texture matrices).  The attribute array
     // is walked a second time here.
     if (pViewNrmArray != NULL) {
-        const f32 one = lbl_eu_80669C30;
+        const f32 one = 0.0f;
 
         for (u32 j = 0; j < numMtx; j++) {
             u32 attrib = pModelMtxAttribArray[j];
@@ -1100,7 +1098,7 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
 
     LCQueueWait(0);
 
-    const f32 one = lbl_eu_80669C30;
+    const f32 one = 0.0f;
 
     // Advancing views of the arrays; originals stay for the null checks.
     math::MTX34* pPos = pViewPosArray;
@@ -1332,7 +1330,7 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
         LCQueueWait(0);
     }
 
-    const f32 one = lbl_eu_80669C30;
+    const f32 one = 0.0f;
 
     u32 processed = 0;         // current matrix index
     u32 attribByteOffset = 0;  // == processed * 4

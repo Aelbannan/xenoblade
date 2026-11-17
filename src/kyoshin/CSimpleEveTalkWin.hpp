@@ -198,8 +198,6 @@ void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 // does not set r3 for the call).
 void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner, u32 textId, u8* msgBuf);
 void eveTalkWinAdvancePage(CSimpleEveTalkWin* self);
-void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 void* __ct__CTagProcessorSE(void* self);  // returns this (r3 survives)
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self,
                                                   UnkClass_8045F564* base);

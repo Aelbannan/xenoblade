@@ -1,163 +1,62 @@
+#define IWORK_EVENT_INLINE_DTOR
 // kyoshin/menu/CMenuZeal - Zeal (collective) menu screen controller.
 
 #include "kyoshin/menu/CMenuZeal.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
 // (pluginUi.hpp not included: its extern "C" BdatTouchStringCell declaration
-// clashes with code_80135FDC.hpp's; only bindIndexedEffect was needed and it is
-// declared in CMenuZeal.hpp.)
+// clashes with code_80135FDC.hpp's; only bindIndexedEffect was needed.)
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameEffApi.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
 #include <revolution/GX.h>
 
-// Global-view declarations so the catalog thunks can address the member
-// lifecycle functions by their retail symbol names (the definitions below
-// emit those symbols).
-void __dt__9CMenuZealFv(void* self, int flags);
-void cbRenderBefore__9CMenuZealFv(void* self);
+// Retail data label: cbRenderBefore gate flag (bit 21 skips the draw).
+extern u32 lbl_eu_80663E28;
+// Zeal menu string table (layout/anim names, texture names, callbacks).
+extern char lbl_eu_80503454[];
+
+// C-ABI imports (retail unmangled names; these identifiers must keep C linkage
+// so MWCC emits the literal reloc names -- see CSysWinSave.hpp).
+extern "C" {
+// Shared ARC resource accessor getter (retail unmangled name).
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+// Classic-controller detection; the retail callee ignores the arg, but the
+// call site still materialises `li r3,-1` (the CfGameManager.hpp inline
+// wrapper drops it when inlined, so bind the pre-mangled name directly).
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
+}
+// UI sound effect (mangles to playUISound__FUl).
+void playUISound(u32 op);
 
 // ---------------------------------------------------------------------------
-// Allocating factory constructor (retail keeps the unmangled global name).
-// Runs CProcess's ctor, installs the temp then composite vtables, copies the
-// null PMF triple into the Move/Draw callback slots, then constructs the
-// UnkClass_8045F564 scratch region, zeroes the layout/anim pointers, and
-// initialises the tail fields (menu state 1, position timers).
+// Ctor: retail keeps this as a separate out-of-line function (create() calls
+// it), so it is defined here rather than inlined into the class body. The
+// IUICf base (CTTask, null PMF slots, fields 0x54/0x55) and the vtables are
+// set up by the compiler; the members initialise in declaration order.
 // ---------------------------------------------------------------------------
-extern "C" __declspec(noinline) CMenuZeal* __ct__CMenuZeal(
-    CMenuZeal* obj, void* a2, int a3, float f1) {
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(obj));
-
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IWorkEvent (+0x24) / IScnRender (+0xac) sub-vtables. The pmf
-    // copy reads the null member-function-pointer triple through one base
-    // register; post-increment derefs of a const local pointer fold the first
-    // access into `lwzu` (btm_sco_init shape). Stores are [1],[0],[2] per
-    // group (retail order 0x40,0x3C,0x44 / 0x4C,0x48,0x50).
-    obj->mProcessVt = (u32)lbl_eu_8052BF70;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    obj->ptmfMove[1] = w1;
-    obj->ptmfMove[0] = w0;
-    u32 w2 = *src++;
-    obj->ptmfMove[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    obj->ptmfDraw[1] = w0;
-    obj->ptmfDraw[0] = w1;
-    w2 = *src++;
-    obj->ptmfDraw[2] = w2;
-    obj->mField_54 = 0;
-    obj->mField_55 = 0;
-
-    obj->mProcessVt = (u32)lbl_eu_80531BE8;
-    obj->mIWorkEventVt = (u32)lbl_eu_80531BE8 + 0x24;
-    obj->mIScnRenderVt = (u32)lbl_eu_80531BE8 + 0xac;
-    obj->mScn = (CScn*)a2;
-
-    // Zero the layout/anim pointer region (0x64..0x90), then the scalar tail.
-    obj->mLayout1 = 0;
-    obj->mAnim1 = 0;
-    obj->mAnim2 = 0;
-    obj->mAnim3 = 0;
-    obj->mAnim4 = 0;
-    obj->mLayout2 = 0;
-    obj->mAnim5 = 0;
-    obj->mAnim6 = 0;
-    obj->mAnim7 = 0;
-    obj->mAnim8 = 0;
-    obj->mLayout3 = 0;
-    obj->mAnim9 = 0;
-    obj->mField_94 = lbl_eu_80667870;
-    obj->mField_98 = lbl_eu_80667874;
-    obj->mField_9C = lbl_eu_80667874;
-    obj->mField_A0 = 0;
-    obj->mField_A1 = 0;
-
-    __ct__17UnkClass_8045F564Fv(obj->mLayoutMem);
-
-    obj->mField_B8 = (u32)a3;
-    obj->mField_BC = 1;
-    obj->mField_BD = 1;
-    obj->mField_BE = 0;
-    obj->mField_BF = 0;
-    obj->mField_C0 = lbl_eu_80667874;
-    obj->mField_C4 = 1;
-    obj->mField_B4 = lbl_eu_80667878 * f1;
-    return obj;
+CMenuZeal::CMenuZeal(CScn* scene, int a3, float f1)
+    : mScn(scene), mLayout1(nullptr), mAnim1(nullptr), mAnim2(nullptr),
+      mAnim3(nullptr), mAnim4(nullptr), mLayout2(nullptr), mAnim5(nullptr),
+      mAnim6(nullptr), mAnim7(nullptr), mAnim8(nullptr), mLayout3(nullptr),
+      mAnim9(nullptr), mField_94(100.0f), mField_98(0.0f), mField_9C(0.0f),
+      mField_A0(0), mField_A1(0), mField_B8(a3), mField_BC(1), mField_BD(1),
+      mField_BE(0), mField_BF(0), mField_C0(0.0f), mField_C4(1) {
+    mField_B4 = 5.0f * f1;
 }
 
-CMenuZeal::~CMenuZeal() {
-    // Scratch region + CProcess base destruction are driven by hand (retail
-    // shape: member dtor with r4=-1, then the base dtor guarded by the nested
-    // double null-check, an MWCC D2-inlined-into-D1 artifact). The conditional
-    // operator delete is auto-emitted from the dtor flags.
-    reinterpret_cast<UnkClass_8045F564*>(&mLayoutMem)->~UnkClass_8045F564();
-    if (this != 0) {
-        if (this != 0) {
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
-}
+// ---------------------------------------------------------------------------
+// Dtor: the UnkClass_8045F564 scratch member and the IUICf/IWorkEvent/IScnRender
+// bases are destroyed by the compiler.
+// ---------------------------------------------------------------------------
+CMenuZeal::~CMenuZeal() {}
 
 void CMenuZeal::Init() {}
-
-void CMenuZeal::Move() {}
-
-// ---------------------------------------------------------------------------
-// AddZealEffect: position the collective menu relative to the player.
-// Gets the player object; if present, stores the sdata2 constant into
-// mField_9C and routes the effect lookup through the 0xc1 (or 0xc2 when
-// arg2 is zero) effect table entry.
-// ---------------------------------------------------------------------------
-void AddZealEffect(CMenuZeal* self, int arg2) {
-    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    if (player != 0) {
-        self->mField_9C = lbl_eu_80667890;
-        if (arg2 != 0) {
-            bindIndexedEffect(0xc1, player);
-        } else {
-            bindIndexedEffect(0xc2, player);
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// ZealMenuCreateSingleton: allocate and register the Zeal singleton.
-// If a singleton already exists and none of its gate flags (0xBE/0x54/0xA1)
-// are set, returns null; otherwise marks the existing singleton's 0xBF flag
-// and (re)builds a fresh instance: allocate 0xc8 bytes from work memory,
-// construct it, store the singleton, and register it under `parent`.
-// ---------------------------------------------------------------------------
-CMenuZeal* ZealMenuCreateSingleton(CProcess* parent, void* a2, int a3, float f1) {
-    CMenuZeal* existing = lbl_eu_806642A0;
-    if (existing != 0) {
-        // Bitwise-OR the three gate flags into a local so MWCC keeps the
-        // retail `lbz/or/or.` shape instead of short-circuiting to branches.
-        u8 flags = existing->mField_BE | existing->mField_54 | existing->mField_A1;
-        if (flags == 0) {
-            return 0;
-        }
-        existing->mField_BF = 1;
-    }
-
-    CMenuZeal* obj = (CMenuZeal*)mtl::MemManager::allocate(
-        0xc8, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // The retail ctor returns `this` in r3, so threading the return value
-        // back into obj keeps it live in r3 across the call (no spill).
-        obj = __ct__CMenuZeal(obj, a2, a3, f1);
-    }
-
-    lbl_eu_806642A0 = obj;
-    Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(obj), parent,
-                                  false);
-    return lbl_eu_806642A0;
-}
 
 // ---------------------------------------------------------------------------
 // Term: tear down the render callback, the three layouts, and the scratch
@@ -166,13 +65,7 @@ CMenuZeal* ZealMenuCreateSingleton(CProcess* parent, void* a2, int a3, float f1)
 void CMenuZeal::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // IScnRender subobject lives at +0x5C; the null-checked upcast keeps the
-    // retail `mr r4,this; beq; addi r4,this,0x5c` shape.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->removeRenderCB(renderCB);
+    mScn->removeRenderCB(this);
 
     if (mLayout1 != 0) {
         delete mLayout1;
@@ -187,11 +80,13 @@ void CMenuZeal::Term() {
         mLayout3 = 0;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mLayoutMem)->deleteRegion();
+    mLayoutMem.deleteRegion();
     if (mField_BF == 0) {
-        lbl_eu_806642A0 = 0;
+        sInstance = 0;
     }
 }
+
+void CMenuZeal::Move() {}
 
 // ---------------------------------------------------------------------------
 // cbRenderBefore: gate prefix (task busy / global bit 21 / scene active /
@@ -229,17 +124,33 @@ body:
 }
 
 // ---------------------------------------------------------------------------
-// VTable-compatible thunks adjacent to the CMenuZeal subobjects (retail emits
-// these as offset-adjusted dispatch stubs: only r3 is re-based, then a tail
-// jump into the right member). Preserved from the scaffold.
+// create: allocate and register the Zeal singleton.
+// If a singleton already exists and none of its gate flags (0xBE/0x54/0xA1)
+// are set, returns null; otherwise marks the existing singleton's 0xBF flag
+// and (re)builds a fresh instance in work memory, stores the singleton, and
+// registers it under `parent`.
 // ---------------------------------------------------------------------------
-void zealDtorThunk58(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x58); }
+CMenuZeal* CMenuZeal::sInstance;
 
-void zealRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuZealFv)((char*)self - 0x5c); }
+CMenuZeal* CMenuZeal::create(CProcess* parent, CScn* scene, int a3, float f1) {
+    CMenuZeal* existing = sInstance;
+    if (existing != 0) {
+        // Bitwise-OR the three gate flags into a local so MWCC keeps the
+        // retail `lbz/or/or.` shape instead of short-circuiting to branches.
+        u8 flags = existing->mField_BE | existing->mField54 | existing->mField_A1;
+        if (flags == 0) {
+            return 0;
+        }
+        existing->mField_BF = 1;
+    }
 
-void zealDtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x5c); }
+    CMenuZeal* menu = new (CWorkThreadSystem::getWorkMem()) CMenuZeal(scene, a3, f1);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
+}
 
-u32 GetZealObjPtr() { return (u32)lbl_eu_806642A0; }
+extern "C" CMenuZeal* GetZealObjPtr() { return CMenuZeal::sInstance; }
 
 // ---------------------------------------------------------------------------
 // GetZealResult: advance the Zeal menu state when the collective-gauge intro
@@ -250,7 +161,7 @@ u32 GetZealObjPtr() { return (u32)lbl_eu_806642A0; }
 // with result 1/2 (2 when 0x98 is inside the b4-scaled window), otherwise
 // the fallback path plays sound 0xaa and returns 0.
 // ---------------------------------------------------------------------------
-int GetZealResult(CMenuZeal* self) {
+extern "C" int GetZealResult(CMenuZeal* self) {
     if (self->mField_A1 != 0) {
         return 0;
     }
@@ -273,7 +184,7 @@ int GetZealResult(CMenuZeal* self) {
     quadP[0] = 0xff;
     PaneMatSetTevColorsByName(self->mLayout2, &lbl_eu_80503454[0x25e], quadP, quadQ);
 
-    if (self->mField_94 >= lbl_eu_80667870) {
+    if (self->mField_94 >= 100.0f) {
         // Texture name depends on the detected pad type.
         const char* texName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_80503454[0x1c7]
@@ -283,18 +194,18 @@ int GetZealResult(CMenuZeal* self) {
             PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], tex);
         }
 
-        self->mField_94 = lbl_eu_80667874;
+        self->mField_94 = 0.0f;
         if (self->mField_C4 == 3) {
             // Stage-3 timing: result 2 while 0x98 sits in
-            // [80667870, 8066788C * 0xB4 + 80667870], else 1. The sound id is
+            // [100.0, 1.5 * 0xB4 + 100.0], else 1. The sound id is
             // Named float temps keep MWCC's retail FPR allocation.
-            f32 minGauge = lbl_eu_80667870;
+            f32 minGauge = 100.0f;
             f32 gauge = self->mField_98;
             int result;
             u32 sound;
             if (minGauge <= gauge &&
                 gauge <=
-                    self->mField_B4 * lbl_eu_8066788C + minGauge) {
+                    self->mField_B4 * 1.5f + minGauge) {
                 result = 2;
                 sound = 0xa9;
             } else {
@@ -314,4 +225,22 @@ int GetZealResult(CMenuZeal* self) {
     self->mField_BC = 0;
     self->mField_C4 = 6;
     return 0;
+}
+
+// ---------------------------------------------------------------------------
+// AddZealEffect: position the collective menu relative to the player.
+// Gets the player object; if present, stores the sdata2 constant into
+// mField_9C and routes the effect lookup through the 0xc1 (or 0xc2 when
+// arg2 is zero) effect table entry.
+// ---------------------------------------------------------------------------
+extern "C" void AddZealEffect(CMenuZeal* self, int arg2) {
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    if (player != 0) {
+        self->mField_9C = 34.0f;
+        if (arg2 != 0) {
+            bindIndexedEffect(0xc1, player);
+        } else {
+            bindIndexedEffect(0xc2, player);
+        }
+    }
 }

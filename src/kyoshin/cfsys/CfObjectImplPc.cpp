@@ -11,6 +11,7 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 (CScn*)
 #include "monolib/scn/CScnTimeApi.hpp"        // Scn_GetFrameDelta
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // TU-local C-ABI imports (moved out of CfObjectImplPc.hpp so that header
 // stays co-includable with kyoshin/cf/object/CfObjectMove.hpp, whose owner
@@ -87,10 +88,10 @@ extern void Walker_GetField380();
 extern void Walker_TryStartBattle();
 extern void Walker_BindBattleObj();
 } // extern "C"
-extern void* lbl_eu_80661D28;
+extern void* __RTTI__Q22cf18CfObjectImplWalker;
 extern void* __RTTI__Q22cf11IObjectInfo;
-extern void* lbl_eu_80661BF0;
-extern void* lbl_eu_80661C68;
+extern void* __RTTI__14IActParamEvent;
+extern void* __RTTI__Q22cf16CfObjectImplMove;
 
 // .data 0x108: CfObjectImplPc vtable (RTTI + dtor + 60 slots, then two
 // secondary bases). Own-TU slots use their MWCC-mangled spellings
@@ -108,8 +109,8 @@ const void* lbl_eu_8052A558[66] = {
     (void*)MoveImplResolveActorRef, (void*)ObjPc_StoreSubVal_A274, (void*)ObjPc_EventDispatch_9A20, (void*)ObjPc_ArtsCmdEventDispatch_9CEC, // +0x80
     (void*)MoveImplDispatch204, (void*)ObjPc_DispatchArtsTable_A104, (void*)ObjPc_DispatchArtsCmd_A084, (void*)Walker_ExitBattleSweep, // +0x90
 (void*)ObjPc_ClearSub_5AA0,
-    (void*)MoveImplPushEventId, (void*)&lbl_eu_80661D28, (void*)0xFFFFFFF4, (void*)Walker_Adjust0C_Dtor, // +0xB0
-    (void*)Walker_Adjust0C_6EC0, (void*)&lbl_eu_80661D28, (void*)0xFFFFFFF0, (void*)Walker_Adjust10_Dtor, // +0xC0
+    (void*)MoveImplPushEventId, (void*)&__RTTI__Q22cf18CfObjectImplWalker, (void*)0xFFFFFFF4, (void*)Walker_Adjust0C_Dtor, // +0xB0
+    (void*)Walker_Adjust0C_6EC0, (void*)&__RTTI__Q22cf18CfObjectImplWalker, (void*)0xFFFFFFF0, (void*)Walker_Adjust10_Dtor, // +0xC0
     (void*)Walker_Adjust10_FFA0, (void*)Walker_OnBattleChange, (void*)Walker_DispatchTalkSrc, (void*)Walker_SweepBattleActors, // +0xD0
 (void*)ObjPc_NotifyVf10_6EC0,
     (void*)Walker_FanfareBattleStart, (void*)Walker_VtNoopF0, (void*)Walker_SetField380, (void*)Walker_GetField380, // +0xF0
@@ -119,8 +120,8 @@ const void* lbl_eu_8052A558[66] = {
 // .data 0x30: cross-TU RTTI-descriptor table.
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8052A660[12] = {
-    (void*)&__RTTI__Q22cf11IObjectInfo, (void*)0x00000010, (void*)&lbl_eu_80661BF0, 0, // +0x108
-    (void*)&lbl_eu_80661BE8, 0, (void*)&lbl_eu_80661C68, 0, // +0x118
+    (void*)&__RTTI__Q22cf11IObjectInfo, (void*)0x00000010, (void*)&__RTTI__14IActParamEvent, 0, // +0x108
+    (void*)&lbl_eu_80661BE8, 0, (void*)&__RTTI__Q22cf16CfObjectImplMove, 0, // +0x118
     (void*)&lbl_eu_80661C60, 0, 0, 0, // +0x128
 };
 // .rodata 0x40: NUL-led battle-command string table (retail lbl_eu_804FC758).
@@ -442,11 +443,9 @@ L_tail:
             cf::CfGameManager::getInstance();
             if (isGlobalCamFlagSet(0x04000000) == 0) {
                 if (findObjB48ById(0x9c5)) {
-                    u8 h58[8];
-                    CTaskGame_enumListCtor(h58);
-                    startEnumObjects(CTaskGame_enumListGet(h58), 0x20, 0x800);
-                    if (((cf::CfEnumList*)CTaskGame_enumListGet(h58))->field_620 != 0) {
-                        __dt__80043E88(h58, -1);
+                    CfEnumListHolder h58;
+                    startEnumObjects(h58.get(), 0x20, 0x800);
+                    if (((cf::CfEnumList*)h58.get())->field_620 != 0) {
                     } else {
                         // No other actors queued: drop every player into the
                         // battle-start state.
@@ -465,7 +464,6 @@ L_tail:
                                 }
                             }
                         }
-                        __dt__80043E88(h58, -1);
                         goto L_end;
                     }
                 }
@@ -514,16 +512,16 @@ L_tail:
             if (isGlobalCamFlagSet(0x02000000)) {
                 goto L_end;
             }
-            u8 h50[8];
-            CTaskGame_enumListCtor(h50);
-            startEnumObjects(CTaskGame_enumListGet(h50), 0x20, 0x1000);
-            if (((cf::CfEnumList*)CTaskGame_enumListGet(h50))->field_620 != 0) {
-                obj->v11C(lbl_eu_80666BC8);
-                obj->v314();
-                CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 1, -1, 1);
-                obj->mSub.v08(0x200);
+            {
+                CfEnumListHolder h50;
+                startEnumObjects(h50.get(), 0x20, 0x1000);
+                if (((cf::CfEnumList*)h50.get())->field_620 != 0) {
+                    obj->v11C(lbl_eu_80666BC8);
+                    obj->v314();
+                    CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 1, -1, 1);
+                    obj->mSub.v08(0x200);
+                }
             }
-            __dt__80043E88(h50, -1);
             goto L_end;
         }
         // 0x1c clear path: four more flags must pass before either the
@@ -572,14 +570,13 @@ L_tail:
         {
             // Landing reset: enumerate actors, replay each idler's landing
             // scale, then rebase the chain gauge from the 0x48 query rate.
-            u8 h48[8];
-            CTaskGame_enumListCtor(h48);
-            startEnumObjects(CTaskGame_enumListGet(h48), 0x20, 0);
-            cf::CfEnumList* list = (cf::CfEnumList*)CTaskGame_enumListGet(h48);
+            CfEnumListHolder h48;
+            startEnumObjects(h48.get(), 0x20, 0);
+            cf::CfEnumList* list = (cf::CfEnumList*)h48.get();
             for (u32 i = 0; i < list->field_620; i++) {
                 cf::CfObjectImplPc18* o2 = reinterpret_cast<cf::CfObjectImplPc18*>(
                     MapFx_ResolveOwner(
-                        getObjectAt((u8*)CTaskGame_enumListGet(h48), i)));
+                        getObjectAt((u8*)h48.get(), i)));
                 if (o2 != self->field_18 && o2->vf308() == 4) {
                     o2->vf304(1);
                     cf::CfObjectImplPc2F4* t = o2->vf2F4();
@@ -606,9 +603,8 @@ L_tail:
                 ob->v194(0);
                 spreadChainArtsHits(cf::CBattleManager::getInstance(), ob, 0, 0);
                 unregisterBattleActor(cf::CBattleManager::getInstance(), ob);
-                u8 h40[8];
-                CTaskGame_enumListCtor(h40);
-                startEnumObjects(CTaskGame_enumListGet(h40), 0x20, 0x800);
+                CfEnumListHolder h40;
+                startEnumObjects(h40.get(), 0x20, 0x800);
                 void* q = ob->vf290();
                 u32 w38 = 0;
                 f32 fv34 = 0.0f;
@@ -618,12 +614,12 @@ L_tail:
                     if (q != 0) {
                         if (IdTable_GetSum(q, 0x48, (s32*)&w38)) {
                             cf::CfEnumList* list2 =
-                                (cf::CfEnumList*)CTaskGame_enumListGet(h40);
+                                (cf::CfEnumList*)h40.get();
                             for (u32 i = 0; i < list2->field_620; i++) {
                                 cf::CfObjectImplPc18* o2 =
                                     reinterpret_cast<cf::CfObjectImplPc18*>(
                                         MapFx_ResolveOwner(getObjectAt(
-                                            (u8*)CTaskGame_enumListGet(h40), i)));
+                                            (u8*)h40.get(), i)));
                                 calcBattleDamage(0, o2, 0);
                                 // Rebase the stored gauge off the magic
                                 // double bias, then rescale by BD0.
@@ -635,11 +631,11 @@ L_tail:
                     }
                 }
                 for (u32 i = 0;
-                     i < ((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620;
+                     i < ((cf::CfEnumList*)h40.get())->field_620;
                      i++) {
                     cf::CfObjectImplPc18* o2 =
                         reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
-                            getObjectAt((u8*)CTaskGame_enumListGet(h40), i)));
+                            getObjectAt((u8*)h40.get(), i)));
                     if (o2->vf290() == 0) {
                         continue;
                     }
@@ -682,7 +678,7 @@ L_tail:
                                       &eff, 0x9a, 0);
                     }
                     if (IdTable_GetSum(o2->vf290(), 0x62, (s32*)&w38)) {
-                        if (((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620
+                        if (((cf::CfEnumList*)h40.get())->field_620
                             == 1) {
                             PartyGaugeAddClamped(
                                 &cf::CBattleManager::getInstance()->unk194,
@@ -690,9 +686,7 @@ L_tail:
                         }
                     }
                 }
-                __dt__80043E88(h40, -1);
             }
-            __dt__80043E88(h48, -1);
         }
     }
 L_end:
@@ -767,17 +761,16 @@ L_flags:
         }
     }
 
-    u8 holder[8];
-    CTaskGame_enumListCtor(holder);
-    startEnumObjects(CTaskGame_enumListGet(holder), 0x80000002, 0);
+    CfEnumListHolder holder;
+    startEnumObjects(holder.get(), 0x80000002, 0);
     u32 startId = self->vf40();
-    sortEntriesByDistance(CTaskGame_enumListGet(holder), (void*)startId);
-    if (((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620 != 0) {
+    sortEntriesByDistance(holder.get(), (void*)startId);
+    if (((cf::CfEnumList*)holder.get())->field_620 != 0) {
         // Non-empty list: reset iteration (holder passed directly), publish
         // the result via vtable 0x70, and forward entry 0's actor to 0x2C4.
-        u32 resetId = (u32)findFirstCleanObjectId(holder);
+        u32 resetId = (u32)findFirstCleanObjectId(&holder);
         self->vf68(resetId);
-        u8* item = (u8*)getObjectAt(CTaskGame_enumListGet(holder), 0);
+        u8* item = (u8*)getObjectAt(holder.get(), 0);
         u8* target = item;
         if (target != 0) {
             target -= 0x3e9c;  // back up from the embedded mSub to the owner
@@ -823,7 +816,6 @@ L_reset:
             }
         }
     }
-    __dt__80043E88(holder, -1);
 }
 
 void ObjPc_NotifyVf10_6EC0(cf::CfObjectImplPc* self, u32 param)
@@ -1272,22 +1264,23 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
 {
     self->field_18->field_04->vf20(0x400000);
     self->field_18->field_04->vf20(0x800000);
-    u8 holder[8];
-    CTaskGame_enumListCtor(holder);
-    startEnumObjects(CTaskGame_enumListGet(holder), 0x80000002, 0);
-    u32 startId = self->vf40();
-    sortEntriesByDistance(CTaskGame_enumListGet(holder), (void*)startId);
-    // Unrotated in retail (init; b cond; body; incr; cond) - kept as a plain
-    // while since MWCC emits identical bytes either way.
-    u32 i = 0;
-    while (i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620) {
-        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
-            getObjectAt(CTaskGame_enumListGet(holder), i));
-        self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
-        i++;
+    u32 listId;
+    {
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x80000002, 0);
+        u32 startId = self->vf40();
+        sortEntriesByDistance(holder.get(), (void*)startId);
+        // Unrotated in retail (init; b cond; body; incr; cond) - kept as a plain
+        // while since MWCC emits identical bytes either way.
+        u32 i = 0;
+        while (i < ((cf::CfEnumList*)holder.get())->field_620) {
+            cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
+                getObjectAt(holder.get(), i));
+            self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
+            i++;
+        }
+        listId = (u32)findFirstCleanObjectId(holder.get());
     }
-    u32 listId = (u32)findFirstCleanObjectId(CTaskGame_enumListGet(holder));
-    __dt__80043E88(holder, -1);
     if (self->field_18->mSub.sf4C() == 0) {
         self->field_18->mSub.sf50(listId);
         if (self->field_18->mSub.sf4C() == 0) {
@@ -1890,12 +1883,11 @@ int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self)
     u32 v = 0;
     u32 prev = self->field_37C;
     self->field_37C = 0;
-    u8 holder[8];
-    CTaskGame_enumListCtor(holder);
-    startEnumObjects(CTaskGame_enumListGet(holder), 0x80000000, 0x800);
-    for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
+    CfEnumListHolder holder;
+    startEnumObjects(holder.get(), 0x80000000, 0x800);
+    for (u32 i = 0; i < ((cf::CfEnumList*)holder.get())->field_620; i++) {
         cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
-            getObjectAt(CTaskGame_enumListGet(holder), i));
+            getObjectAt(holder.get(), i));
         if (obj->mSub.sf4C() == self->field_18->field_3F10) {
             self->field_37C++;
         }
@@ -1907,13 +1899,11 @@ int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self)
         if (v == 0) {
             cf::CfSoundMan::playActorSound(0, 0x5c, 0, 0, lbl_eu_80666BC8);
         }
-        __dt__80043E88(holder, -1);
         return 1;
     }
     if (self->field_37C == 0) {
         self->field_18->mSub.sf208(0x11);
     }
-    __dt__80043E88(holder, -1);
     return 0;
 }
 

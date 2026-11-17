@@ -8,9 +8,9 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 void playUISound(u32);
+extern "C" void func_8022EB0C(CMCCrystalSupport* self);
 
 extern "C" {
-extern void* lbl_eu_80536770[];
 extern char lbl_eu_8050AA3C[];
 extern void* lbl_eu_80664090;
 extern const float lbl_eu_80668630;
@@ -22,36 +22,8 @@ void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 }
 
-// Retail vtable lbl_eu_80536770: RTTI lbl_eu_80662898, dtor @+0x08, then the
-// full IWorkEvent tree (WorkEvent1..31, OnFileEvent, OnPauseTrigger) -- so
-// CMCCrystalSupport derives IWorkEvent. novtable + explicit label write in the
-// ctor, same shape as CMCCrystalList / CMCCrystalInfo. IWORK_EVENT_INLINE_DTOR
-// elides the base-dtor call so __dt__17CMCCrystalSupportFv stays 0x40 bytes
-// (retail shape); the extra weak __dt__10IWorkEventFv is link-deduped and
-// documented in IWorkEvent.hpp.
-class __declspec(novtable) CMCCrystalSupport : public IWorkEvent {
-public:
-    virtual ~CMCCrystalSupport();
-
-    nw4r::lyt::ArcResourceAccessor* mAccessor;
-    nw4r::lyt::Layout* mLayout;
-    nw4r::lyt::AnimTransform* mAnimTransform;
-    u8 mLoaded;
-    u8 _pad11[3];
-    s32 mState;
-    u8 mFinished;
-};
-
-extern "C" void __ct__CMCCrystalSupport(CMCCrystalSupport* self,
-                                        nw4r::lyt::ArcResourceAccessor* accessor) {
-    *(void**)self = lbl_eu_80536770;
-    self->mAccessor = accessor;
-    self->mLayout = nullptr;
-    self->mAnimTransform = nullptr;
-    self->mLoaded = 0;
-    self->mState = 0;
-    self->mFinished = 1;
-}
+CMCCrystalSupport::CMCCrystalSupport(nw4r::lyt::ArcResourceAccessor* accessor)
+    : mAccessor(accessor), mLayout(nullptr), mAnimTransform(nullptr), mLoaded(0), mState(0), mFinished(1) {}
 
 CMCCrystalSupport::~CMCCrystalSupport() {}
 

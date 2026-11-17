@@ -1,3 +1,4 @@
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuVision.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
@@ -432,17 +433,12 @@ void CMenuVision::cbRenderBefore() {
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls,
-    // matching the retail direct calls (a C++ local would virtual-dispatch its
-    // scope-exit destructor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     for (u8 i = 0; i < 6; i++) {
         drawLayout(mEntries[i].mLayout,
-                      (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+                      &drawInfo, 0, 1);
     }
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
 // Lazy singleton factory: allocate a CMenuVision from the work-thread heap,

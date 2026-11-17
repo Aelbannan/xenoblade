@@ -1,6 +1,7 @@
 // Decomp of kyoshin/menu/CMenuShopBuy.
 // Shop buy menu screen process (CProcess-header + IScnRender MI layout).
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGame.hpp"
 
@@ -10,70 +11,33 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
-
-extern "C" void cbRenderBefore__12CMenuShopBuyFv(void*);
 
 // Same-TU blob copy helper (defined below); Init uses it twice.
 extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src);
 
 /*
- * Destructor (retail D2 form, symbol keeps its C++ mangling in US).
- *
- * Written with an explicit flags parameter so the base-class destruction can
- * target the retail CProcess dtor wrapper __dt__800FED0C: a real member
- * destructor would make MWCC auto-emit __dt__8CProcessFv (the library D1)
- * for the base call, which cannot match the retail reloc name at the call
- * site. Subobjects are destroyed in reverse construction order, then
- * conditional operator delete when flags > 0 (same shape as CMenuSave).
+ * Constructor. The IUICf base (CTTask + mField54/mField55) and the IScnRender
+ * sub-object are constructed by the compiler; the members are initialised in
+ * declaration order, then the item box line is built in place (raw storage),
+ * then the scalar tail (state 0 + float init).
  */
-extern "C" CMenuShopBuy* __dt__12CMenuShopBuyFv(CMenuShopBuy* _this, int flags) {
-    if (_this != 0) {
-        __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(_this->mItemBoxLine), -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&_this->mBgTex, -1);
-        __dt__800FED0C(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
+CMenuShopBuy::CMenuShopBuy(CScn* scene, u32 arg)
+    : mScene(scene), mField60(arg), mBgTex(0), mTitleAHelp(0, 0) {
+    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0, 0);
+
+    mState = 0;
+    mFloat6FC = lbl_eu_80667A20;
 }
 
 /*
- * Constructor (retail unmangled `__ct__CMenuShopBuy`).
- *
- * CProcess base first, then the temp vtable + __ptmf_null callback slots, the
- * composite vtable + IScnRender sub-vtable at +0x58, the scene/arg slots, the
- * three embedded subobjects, and the scalar tail (state 0 + float init).
+ * Destructor: tears down the item box line (raw storage, so it is not a
+ * member). The CBgTex / CTitleAHelp members and the IUICf / IScnRender bases
+ * are destroyed by the compiler after this body.
  */
-extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32 arg) {
-    __ct__8CProcessFv(self);
-
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58 (same scheme as CMenuSave).
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    self->ptmf0[0] = __ptmf_null[0];
-    self->ptmf0[1] = __ptmf_null[1];
-    self->ptmf0[2] = __ptmf_null[2];
-    self->ptmf1[0] = __ptmf_null[0];
-    self->ptmf1[1] = __ptmf_null[1];
-    self->ptmf1[2] = __ptmf_null[2];
-    self->mField54 = 0;
-    self->mField55 = 0;
-
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_805326C0;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_805326C0 + 0x24;
-    self->mScene = scene;
-    self->mField60 = arg;
-
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0, 0);
-
-    self->mState = 0;
-    self->mFloat6FC = lbl_eu_80667A20;
-    return self;
+CMenuShopBuy::~CMenuShopBuy() {
+    __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), -1);
 }
 
 void CMenuShopBuy::Init() {
@@ -83,40 +47,11 @@ void CMenuShopBuy::Init() {
     // fields into the member, then destroy the temp (CMenuMapSelect pattern).
     // All member/temp addresses stay inline so MWCC recomputes the addi per
     // use (retail keeps only r31=self and r30 scratch - no cached pointers).
-    u8 tmpBgRaw[0x20];
-    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
-    __ct__UnkClass_8011C974(&mBgTex.mMemRegion,
-                            &reinterpret_cast<CBgTex*>(tmpBgRaw)->mMemRegion);
-    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tmpBgRaw)->mFileHandle;
-    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tmpBgRaw)->mLayout;
-    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tmpBgRaw)->mLayoutReady;
-    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tmpBgRaw)->mLoaded;
-    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tmpBgRaw)->mPtmMode;
-    __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tmpBgRaw), -1);
+    mBgTex = CBgTex(0);
 
     BgTex_Acquire_3C14(&mBgTex);
 
-    // Build a temporary CTitleAHelp from the locale string and copy its data
-    // fields into the member, then destroy the temp.
-    u8 tmpTitleRaw[0x38];
-    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
-                      BdatTouchStringCell(lbl_eu_80503B20, lbl_eu_80503B20 + 9, 1), 0);
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4,
-                            &reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk4);
-    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mFileHandle;
-    mTitleAHelp.mArcResourceAccessor =
-        reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mArcResourceAccessor;
-    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mLayout;
-    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mAnimTrans20;
-    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mAnimTrans24;
-    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk28;
-    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk2c;
-    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->mName;
-    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk34;
-    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk35;
-    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk36;
-    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk37;
-    __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell(lbl_eu_80503B20, lbl_eu_80503B20 + 9, 1), 0);
 
     mTitleAHelp.CTitleAHelp_load();
 
@@ -128,8 +63,8 @@ void CMenuShopBuy::Init() {
     ShopBuyItemBoxLine tmpLine;
     __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(&tmpLine), (u16)mField60, 1);
 
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion04, &tmpLine.mData.mRegion04);
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion14, &tmpLine.mData.mRegion14);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion04, &tmpLine.mData.mRegion04);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion14, &tmpLine.mData.mRegion14);
     mItemBox.mIBLData.field_0x20[0] = tmpLine.mData.field_0x20[0];
     mItemBox.mIBLData.field_0x20[1] = tmpLine.mData.field_0x20[1];
     mItemBox.mIBLData.field_0x20[2] = tmpLine.mData.field_0x20[2];
@@ -151,8 +86,8 @@ void CMenuShopBuy::Init() {
     MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[1], &tmpLine.mData.cursors[1]);
     MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[2], &tmpLine.mData.cursors[2]);
     MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[3], &tmpLine.mData.cursors[3]);
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegionD4, &tmpLine.mData.mRegionD4);
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegionE4, &tmpLine.mData.mRegionE4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegionD4, &tmpLine.mData.mRegionD4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegionE4, &tmpLine.mData.mRegionE4);
     mItemBox.mIBLData.field_0xF0[0] = tmpLine.mData.field_0xF0[0];
     mItemBox.mIBLData.field_0xF0[1] = tmpLine.mData.field_0xF0[1];
     mItemBox.mIBLData.field_0xF0[2] = tmpLine.mData.field_0xF0[2];
@@ -190,7 +125,7 @@ void CMenuShopBuy::Init() {
     mItemBox.mIBLData.field_0x178 = tmpLine.mData.field_0x178;
     ShopBuy_CopyData(&mItemBox.mIBLData.blob17C, &tmpLine.mData.blob17C);
 
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion2DC, &tmpLine.mData.mRegion2DC);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion2DC, &tmpLine.mData.mRegion2DC);
     mItemBox.mIBLData.field_0x2EC[0] = tmpLine.mData.field_0x2EC[0];
     mItemBox.mIBLData.field_0x2EC[1] = tmpLine.mData.field_0x2EC[1];
     mItemBox.mIBLData.field_0x2EC[2] = tmpLine.mData.field_0x2EC[2];
@@ -202,7 +137,7 @@ void CMenuShopBuy::Init() {
     mItemBox.mIBLData.field_0x304[2] = tmpLine.mData.field_0x304[2];
     mItemBox.mIBLData.field_0x304[3] = tmpLine.mData.field_0x304[3];
     mItemBox.mIBLData.field_0x304[4] = tmpLine.mData.field_0x304[4];
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion310, &tmpLine.mData.mRegion310);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion310, &tmpLine.mData.mRegion310);
     mItemBox.mIBLData.field_0x320[0] = tmpLine.mData.field_0x320[0];
     mItemBox.mIBLData.field_0x320[1] = tmpLine.mData.field_0x320[1];
     mItemBox.mIBLData.field_0x320[2] = tmpLine.mData.field_0x320[2];
@@ -217,7 +152,7 @@ void CMenuShopBuy::Init() {
     mItemBox.mIBLData.field_0x334[3] = tmpLine.mData.field_0x334[3];
     mItemBox.mIBLData.field_0x334[4] = tmpLine.mData.field_0x334[4];
     mItemBox.mIBLData.field_0x348 = tmpLine.mData.field_0x348;
-    __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion350, &tmpLine.mData.mRegion350);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion350, &tmpLine.mData.mRegion350);
     mItemBox.mIBLData.field_0x360[0] = tmpLine.mData.field_0x360[0];
     mItemBox.mIBLData.field_0x360[1] = tmpLine.mData.field_0x360[1];
     mItemBox.mIBLData.field_0x360[2] = tmpLine.mData.field_0x360[2];
@@ -276,11 +211,7 @@ void CMenuShopBuy::Init() {
     ItemBoxLine_PushTabByte(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), 0xd);
     ItemBoxLine_LoadFiles(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = &mIScnRender;
-    }
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, cb, 0xd, 0);
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 0xd, 0);
 }
 
 // Tear down the shop buy menu: detach the render callback, release the
@@ -290,11 +221,7 @@ void CMenuShopBuy::Term() {
     CDeviceVI::waitForDrawDone();
 
     // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = &mIScnRender;
-    }
-    removeRenderCB__4CScnFP10IScnRender(mScene, cb);
+    removeRenderCB__4CScnFP10IScnRender(mScene, this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
@@ -340,16 +267,11 @@ void CMenuShopBuy::cbRenderBefore() {
         return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
-    // scope-exit destructor is not virtual-dispatched (same scheme as
-    // CSystemWindow::cbRenderBefore).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
+    ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine), &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
 // Copy the 0x159-byte shop-buy data blob field-by-field. Each sub-struct
@@ -381,11 +303,9 @@ extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 a
 
     CMenuShopBuy* obj = (CMenuShopBuy*)mtl::MemManager::allocate(
         0x700, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // Reassign from the ctor return so obj stays in volatile r3 (retail
-        // never spills it to a callee-saved register).
-        obj = __ct__CMenuShopBuy(obj, scene, arg);
-    }
+    // Placement new supplies the null check; reassigning from its result keeps
+    // obj in volatile r3 (retail never spills it to a callee-saved register).
+    obj = new (obj) CMenuShopBuy(scene, arg);
     lbl_eu_806642F8 = (u32)obj;
     obj->Regist(parent, 0);
     return (CMenuShopBuy*)lbl_eu_806642F8;
@@ -518,12 +438,4 @@ extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
             self->mField54 = 1;
         }
     }
-}
-
-extern "C" void ShopBuy_ThunkRender(void* self) {
-    ((void(*)(void*))cbRenderBefore__12CMenuShopBuyFv)((char*)self - 0x58);
-}
-
-extern "C" void ShopBuy_ThunkDtor(void* self) {
-    ((void(*)(void*))__dt__12CMenuShopBuyFv)((char*)self - 0x58);
 }

@@ -30,5 +30,4 @@ void entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(void* a, bool b);
 }
 
 // Data imports - at global scope plain extern is sufficient (no mangling).
-extern unsigned char lbl_eu_8065FD00[];
 extern signed char lbl_eu_80663B18;

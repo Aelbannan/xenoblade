@@ -42,7 +42,6 @@ extern "C" {
     cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
-    extern const float lbl_eu_80668250;
 
     // Forward declarations: functions defined below inherit C linkage from
     // this block (matching the unmangled retail symbols).
@@ -117,7 +116,7 @@ int getPcHpRate(VMThread* pThread) {
         float curHp = actor->CActorParam_getHp();
         // (float)ceil(...) forces MWCC to emit fdivs+fmuls before ceil,
         // then frsp+fctiwz to round to int (matching retail).
-        result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
+        result.value.intVal = (int)(float)ceil(100.0f * (curHp / maxHp));
     } else {
         result.type = VM_TYPE_INT;
         result.value.intVal = -1;
@@ -158,7 +157,7 @@ int getEneHpRate(VMThread* pThread) {
         result.type = VM_TYPE_INT;
         float maxHp = actor->CActorParam_getDamageScale();
         float curHp = actor->CActorParam_getHp();
-        result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
+        result.value.intVal = (int)(float)ceil(100.0f * (curHp / maxHp));
     } else {
         result.type = VM_TYPE_INT;
         result.value.intVal = -1;

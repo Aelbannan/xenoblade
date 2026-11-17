@@ -17,9 +17,9 @@
  *         to CScn::addRenderCB/removeRenderCB
  *   0x74  CScn* owning scene (loaded at Term's removeRenderCB / Init's addRenderCB)
  *   0x78  CSysWin storage (0x3A bytes). Not a C++ member (retail controls its
- *         ctor/dtor via C-linkage __ct__CSysWin / __dt__7CSysWinFv), so it is a
+ *         ctor/dtor via C-linkage __ct__7CSysWinFUc / __dt__7CSysWinFv), so it is a
  *         bare byte buffer here to avoid duplicate destruction in ~CSystemWindow.
- *   0xB5  byte passed as the arg to __ct__CSysWin during Init
+ *   0xB5  byte passed as the arg to __ct__7CSysWinFUc during Init
  *   0x2B6 flag = (lbl_eu_80663E24 >> 30) & 1 (drives cf load-flag management)
  *   sizeof = 0x2B7
  *
@@ -78,7 +78,7 @@ void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-void __ct__CSysWin(void* syswin, int arg);
+void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
@@ -94,8 +94,6 @@ void sysWinDispatchPhase(void* syswin);
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
 // would change call-site codegen (see MWCC_CASES); keep C linkage.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
-void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }
 
 // C++-linkage helpers - MWCC mangles these to the retail symbols

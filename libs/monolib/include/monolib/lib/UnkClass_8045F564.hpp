@@ -12,6 +12,14 @@ public:
     UnkClass_8045F564();
     ~UnkClass_8045F564();
 
+    UnkClass_8045F564& operator=(const UnkClass_8045F564& rhs) {
+        unk0 = rhs.unk0;
+        unk4 = rhs.unk4;
+        unk8 = rhs.unk8;
+        unkC = rhs.unkC;
+        return *this;
+    }
+
     
     void createRegion(int, int, const char*, int);
     void deleteRegion();

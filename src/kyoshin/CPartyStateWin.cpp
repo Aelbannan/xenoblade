@@ -7,7 +7,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CTaskManager.hpp"
 #include "functions.hpp"
-#include "kyoshin/CPartyStateWin.hpp"
+#include "kyoshin/CPartyStateWinImports.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/core/CViewFrame.hpp"
@@ -20,6 +20,14 @@
 #include "monolib/core/CProc.hpp"
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
+
+// Screen-active check used by cbRenderBefore (unit-private import) (retail unmangled).
+extern "C" int IsMenuState621F0();
+
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
+
 
 extern "C" u32 PartyStateWin_GetSharedWinObj(void) {
     return lbl_eu_80663E10;
@@ -120,7 +128,7 @@ extern "C" __declspec(noinline) u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src)
 
 // Copy helper (retail C-linkage): copy-constructs a 0x58-byte menu-state blob
 // from src into dst. The 4-word mem region at +0x04 goes through the
-// __ct__UnkClass_8011C974 helper, scalar fields +0x14..+0x31 are copied
+// __as__17UnkClass_8045F564FRC17UnkClass_8045F564 helper, scalar fields +0x14..+0x31 are copied
 // field-by-field, the cursor sub-object at +0x34 through MenuShopSellCopyCursor, then
 // the packed tail +0x4C..+0x57. Returns dst (retail keeps `this` in r3). src
 // is intentionally non-const: MWCC would otherwise hoist the field loads above
@@ -131,7 +139,7 @@ extern "C" __declspec(noinline) u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src)
 #pragma optimize_for_size on
 __declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                      CPartyStateWinBlob58* src) {
-    __ct__UnkClass_8011C974(&self->field_0x4[0], &src->field_0x4[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->field_0x4[0], &src->field_0x4[0]);
     self->field_0x14 = src->field_0x14;
     self->field_0x18 = src->field_0x18;
     self->field_0x1C = src->field_0x1C;
@@ -238,8 +246,8 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     // pointer-walk loops (optimize_for_size keeps them mtctr/bdnz).
     CEquipChangeCopyView* self = reinterpret_cast<CEquipChangeCopyView*>(dstP);
     CEquipChangeCopyView* src = reinterpret_cast<CEquipChangeCopyView*>(srcP);
-    __ct__UnkClass_8011C974(&self->f04[0], &src->f04[0]);
-    __ct__UnkClass_8011C974(&self->f14[0], &src->f14[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f04[0], &src->f04[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f14[0], &src->f14[0]);
     for (int i = 0; i < 8; i++) {
         self->f24[i] = src->f24[i];
     }
@@ -257,8 +265,8 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     u32 vHi = src->f9e;
     self->f9e = vHi;
     self->f9a = vLo;
-    __ct__UnkClass_8011C974(&self->fa8[0], &src->fa8[0]);
-    __ct__UnkClass_8011C974(&self->fb8[0], &src->fb8[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->fa8[0], &src->fa8[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->fb8[0], &src->fb8[0]);
     for (int i = 0; i < 27; i++) {
         self->fc8[i] = src->fc8[i];
     }
@@ -278,8 +286,8 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     self->f150 = src->f150;
     self->f152 = src->f152;
     ShopBuy_CopyData(&self->f154[0], &src->f154[0]);
-    __ct__UnkClass_8011C974(&self->f2b4[0], &src->f2b4[0]);
-    __ct__UnkClass_8011C974(&self->f2c4[0], &src->f2c4[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2b4[0], &src->f2b4[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2c4[0], &src->f2c4[0]);
     for (int i = 0; i < 7; i++) {
         self->f2d4[i] = src->f2d4[i];
     }
@@ -289,14 +297,14 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     PartyStateWin_CopySlotRec(&self->f2f4[0], &src->f2f4[0]);
     PartyStateWin_CopySlotRec(&self->f30c[0], &src->f30c[0]);
     MenuShopSellCopyCursor(&self->f324[0], &src->f324[0]);
-    __ct__UnkClass_8011C974(&self->f340[0], &src->f340[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f340[0], &src->f340[0]);
     for (int i = 0; i < 5; i++) {
         self->f350[i] = src->f350[i];
     }
     for (int i = 0; i < 4; i++) {
         self->f364[i] = src->f364[i];
     }
-    __ct__UnkClass_8011C974(&self->f36c[0], &src->f36c[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f36c[0], &src->f36c[0]);
     // Tail of the +0x368 sub-record: the source base sits at +0x368 and the
     // copied fields start at +0x14 (dst +0x37c).
     self->f37c[0] = src->f37c[0];
@@ -1163,7 +1171,6 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyState
         u32 v = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
         EquipChange_RefreshCategory(reinterpret_cast<CEquipChange*>(&self->_pad4150), (u8)v);
         if ((u8)ModelDispEquip_GetEquipSlot(&self->mModelDispEquip) < 3) {
-            CPartyStateWinHolder holder;
             u32 names[3];
             // Post-increment loads fold the base materialization into the
             // first access (retail: lis + lwzu + +4/+8 displacements) - same
@@ -1172,20 +1179,19 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyState
             names[0] = *src++;
             names[1] = *src++;
             names[2] = *src++;
-            CTaskGame_enumListCtor(&holder);
-            startEnumObjects(CTaskGame_enumListGet(&holder),
+            CfEnumListHolder holder;
+            startEnumObjects(holder.get(),
                           names[(u8)ModelDispEquip_GetEquipSlot(&self->mModelDispEquip)], 0);
-            if (reinterpret_cast<CPartyStateWinList*>(CTaskGame_enumListGet(&holder))
+            if (reinterpret_cast<CPartyStateWinList*>(holder.get())
                     ->field_0x620 >= 1) {
                 CPartyStateWinListSlot* slot = reinterpret_cast<CPartyStateWinListSlot*>(
-                    getEntryAt(CTaskGame_enumListGet(&holder), 0));
+                    getEntryAt(holder.get(), 0));
                 if (slot->field_0x4 != 0) {
                     CfObjectPc_setupFrame(
                         getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4),
                         0);
                 }
             }
-            __dt__80043E88(&holder, -1);
         }
         self->field_6BE4 = 0x7;
     }
@@ -1371,12 +1377,12 @@ CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
     mVtbl4 = (u32)(vtbl + 0x88);
     mScene = 0;
     mWork14 = 0;
-    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(&_pad18), 0, 0);
+    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(&_pad18), 0, 0);
     __ct__CModelDisp(reinterpret_cast<CModelDisp*>(&_pad50), 0);
     __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038));
     __ct__CModelDispEquip(&mModelDispEquip, 0, 0);
     __ct__CEquipChange(reinterpret_cast<CEquipChange*>(&_pad4150));
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
     field_6BE4 = 0;
     field_6BE5 = 0;
     field_6BE8 = lbl_eu_806681D8;
@@ -1404,23 +1410,18 @@ body:
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch
-    // its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     drawPartyState(reinterpret_cast<CPartyState*>(&_pad3038),
-                  (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                  &drawInfo);
     if (field_6BE4 < 0x10) {
         EquipChange_DrawLayouts(reinterpret_cast<CEquipChange*>(&_pad4150),
-                      (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                      &drawInfo);
     }
     sysWinDrawLayout(reinterpret_cast<CSysWin*>(&_pad6BA8),
-                  (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                  &drawInfo);
     drawHelp(reinterpret_cast<CTitleAHelp*>(&_pad18),
-                  (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+                  &drawInfo);
 }
 
 // Destroys the embedded sub-objects in reverse construction order (CSysWin at
@@ -1505,7 +1506,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
 
     char* titleName =
         BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
-    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(titleTmp), titleName, 0x10);
+    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(titleTmp), titleName, 0x10);
     ItemEx_CopyTitle(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   reinterpret_cast<CTitleAHelp*>(titleTmp));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(titleTmp), -1);
@@ -1537,7 +1538,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     __dt__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(equipChangeTmp), -1);
     EquipChange_LoadBindFiles(reinterpret_cast<CEquipChange*>(&self->_pad4150));
 
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(sysWinTmp), 0);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(sysWinTmp), 0);
     InfoCfCopySysWin(&self->_pad6BA8[0], reinterpret_cast<const u8*>(sysWinTmp));
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(sysWinTmp), -1);
 

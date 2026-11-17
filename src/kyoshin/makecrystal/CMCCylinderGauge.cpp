@@ -40,11 +40,11 @@ char lbl_eu_80509224[0x8C] =
     "mf10_cry01_gage_out.brlan\0"
     "txt_sylinder\0";
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806627F0[2] = { lbl_eu_80509210, nullptr };
+const void* __RTTI__16CMCCylinderGauge[2] = { lbl_eu_80509210, nullptr };
 extern "C" {
 __declspec(section ".data") __attribute__((aligned(8), used))
 u32 lbl_eu_80535F48[4] = {
-    (u32)&lbl_eu_806627F0,
+    (u32)&__RTTI__16CMCCylinderGauge,
     0,
     (u32)&__dt__16CMCCylinderGaugeFv,
     0,

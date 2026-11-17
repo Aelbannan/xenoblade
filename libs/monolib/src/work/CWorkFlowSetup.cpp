@@ -4,7 +4,7 @@
 
 // Data owned by this TU (blob monolibdata1d dissolve):
 //   lbl_eu_80522708 (.rodata) = CWorkFlowSetup RTTI name string
-//   lbl_eu_806635B8 (.sdata)  = __RTTI__14CWorkFlowSetup {name, base-list}
+//   lbl_eu_806635B8 (.sdata)  = lbl_eu_806635B8 {name, base-list}
 //   lbl_eu_8056B880 (.data)   = CWorkFlowSetup vtable
 //   lbl_eu_8056B920 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
 //   lbl_eu_806655E0 (.sbss)   = spInstance singleton (word 0 in use)
@@ -13,7 +13,7 @@ extern "C" const char lbl_eu_80522708[16] = {0x43,0x57,0x6F,0x72,0x6B,0x46,0x6C,
 extern IWorkEventVtbl lbl_eu_8056B880;
 extern RttiBaseList2 lbl_eu_8056B920;
 
-// __RTTI__14CWorkFlowSetup = {name, base-list} (.sdata).
+// lbl_eu_806635B8 = {name, base-list} (.sdata).
 u32 lbl_eu_806635B8[2] = {(u32)lbl_eu_80522708, (u32)&lbl_eu_8056B920};
 
 IWorkEventVtbl lbl_eu_8056B880 = {

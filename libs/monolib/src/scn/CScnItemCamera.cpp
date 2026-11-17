@@ -941,7 +941,7 @@ extern "C" u32 lbl_eu_805243D8;
 extern "C" u32 lbl_eu_805243E4;
 extern "C" u32 lbl_eu_805243F0;
 extern "C" u32 lbl_eu_805243FC;
-extern "C" u32 lbl_eu_806638B0;
+extern "C" u32 __RTTI__14CScnItemCamera;
 extern "C" u32 lbl_eu_8066AC40;
 extern "C" u32 lbl_eu_8066AC48;
 extern "C" u32 lbl_eu_8066AC50;
@@ -1018,7 +1018,7 @@ extern "C" u32 lbl_eu_8066AE1C;
 
 // [.data] 0x8056ECC0-0x8056F014 (0x354B)
 extern "C" u32 lbl_eu_8056ECC0[213] = {
-    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamViewReg, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
+    (u32)&__RTTI__14CScnItemCamera, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamViewReg, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
     0x00000000, (u32)&ScnCamRebuild, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
     (u32)&lbl_eu_8066AC58, 0x00000001, (u32)&lbl_eu_8066AC60, 0x00000001, (u32)&lbl_eu_8066AC68, 0x00000001, (u32)&lbl_eu_8066AC70, 0x00010001,
     (u32)&lbl_eu_80524268, 0x00020001, (u32)&lbl_eu_80524274, 0x00010001, (u32)&lbl_eu_80524280, 0x00020001, (u32)&lbl_eu_8052428C, 0x00010001,

@@ -10,7 +10,7 @@
 #include "monolib/util/MemManager.hpp"
 
 extern "C" u32 lbl_eu_8056C8A8[40]; // vtable (defined below)
-extern "C" u32 lbl_eu_80663748[2];  // .sdata RTTI locator (defined below)
+extern "C" u32 __RTTI__17CDeviceFontLoader[2];  // .sdata RTTI locator (defined below)
 extern "C" u32 lbl_eu_8056C948[6];  // .data RTTI chain (defined below)
 
 extern "C" {
@@ -137,7 +137,7 @@ extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
 }
 
 extern "C" u32 lbl_eu_8056C8A8[40] = {
-    (u32)&lbl_eu_80663748, 0x00000000,
+    (u32)&__RTTI__17CDeviceFontLoader, 0x00000000,
     (u32)&FontLoaderBlob::__dt__17CDeviceFontLoaderFv,
     (u32)&FontLoaderBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&FontLoaderBlob::OnFileEvent__17CDeviceFontLoaderFP10CEventFile,
@@ -188,6 +188,6 @@ extern "C" const u32 lbl_eu_80522EB8[6] = {
 };
 
 // [.sdata] 0x80663748-0x80663750 (8B): RTTI locator { name, RTTI chain }
-extern "C" u32 lbl_eu_80663748[2] = {
+extern "C" u32 __RTTI__17CDeviceFontLoader[2] = {
     (u32)&lbl_eu_80522EB8, (u32)&lbl_eu_8056C948,
 };

@@ -52,12 +52,6 @@ struct CModelDispMakeCrystalFull {
 // directly.)
 class CResLookup;
 
-// 8-byte holder around a CfObjEnumList* (CTaskGame_enumListCtor / __dt__80043E88).
-struct CMCryListHolder {
-    cf::CfObjEnumList* list;   // 0x0
-    u32 handle;   // 0x4
-};
-
 // Crystal-charged actor container: CfObjectMove embedded at +0x3e9c.
 struct CMCCryChgActor {
     u8 _00[0x3e9c];
@@ -204,9 +198,9 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __ct__CMCCrystalList(void* self);
 extern "C" void __ct__10CScrollBarFUc(void* self, int arg);
-extern "C" void __ct__CSysWin(void* self, int arg);
+extern "C" void __ct__7CSysWinFUc(void* self, int arg);
 extern "C" void __ct__CMCGetItemBox(void* self);
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" size_t strlen(const char* s);
 extern "C" char* strcpy(char* dst, const char* src);

@@ -13,9 +13,6 @@ extern "C" void __ct__CScnFilter(CScnFilter* ths);
 extern "C" void __dt__10CScnFilterFv(CScnFilter* ths, int flag);
 // Global operator delete -- MWCC mangles this to operator delete(defined in MemManager.cpp).
 void operator delete(void* p) throw();
-extern const f32 lbl_eu_8066AAE0;
-extern const f32 lbl_eu_8066AAE4;
-extern const f32 lbl_eu_8066AAE8;
 extern "C" void FilterUpdateIntensity();   // CScnBloom (foreign TU)
 
 // Opaque render-work object (CScnTexWorkMan instance), only forwarded.
@@ -36,9 +33,8 @@ extern "C" void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
                                            u32 c, u32 d, u32 e);
 extern "C" void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
-extern const f32 lbl_eu_8066AAEC;
-extern u32 lbl_eu_806639E8;    // CScnBlend RTTI locator (owned by CScnItemCamera TU)
-extern u32 lbl_eu_806639F0;    // CScnFilter RTTI locator (owned by CScnItemCamera TU)
+extern u32 __RTTI__9CScnBlend;    // CScnBlend RTTI locator (owned by CScnItemCamera TU)
+extern u32 __RTTI__10CScnFilter;    // CScnFilter RTTI locator (owned by CScnItemCamera TU)
 
 // Region + tint as one anonymous aggregate (MWCC struct-copies via lwz/stw).
 // x/y/w/h describe the blend quad in normalised screen space; tR/tG/tB are the
@@ -85,13 +81,13 @@ extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined b
 // [.data] 0x8056E9E8-0x8056EA08 (32B): CScnBlend vtable (20B) + RTTI chain (12B).
 // The vtable is installed by __ct__CScnBlend; writing the dtor as an extern "C"
 // free function keeps MWCC from auto-emitting __vt__/__RTTI__ here (the retail
-// RTTI locators lbl_eu_806639E8/lbl_eu_806639F0 live in the CScnItemCamera TU).
+// RTTI locators __RTTI__9CScnBlend/__RTTI__10CScnFilter live in the CScnItemCamera TU).
 u32 lbl_eu_8056E9E8[5] = {
-    (u32)&lbl_eu_806639E8, 0x00000000, (u32)&__dt__9CScnBlendFv,
+    (u32)&__RTTI__9CScnBlend, 0x00000000, (u32)&__dt__9CScnBlendFv,
     (u32)&FilterUpdateIntensity, (u32)&Blend_DrawFilter,
 };
 u32 lbl_eu_8056E9FC[3] = {
-    (u32)&lbl_eu_806639F0, 0x00000000, 0x00000000,
+    (u32)&__RTTI__10CScnFilter, 0x00000000, 0x00000000,
 };
 
 // [.rodata] 0x805240A0-0x805240AC (12B): "CScnBlend"
@@ -112,13 +108,13 @@ extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
     ths->field_0x68 = 0;
 
     RectRegion tmp;
-    tmp.x = lbl_eu_8066AAE0;
-    tmp.y = lbl_eu_8066AAE0;
-    tmp.w = lbl_eu_8066AAE0;
-    tmp.h = lbl_eu_8066AAE4;
-    tmp.tR = lbl_eu_8066AAE8;
-    tmp.tG = lbl_eu_8066AAE8;
-    tmp.tB = lbl_eu_8066AAE8;
+    tmp.x = 1.0f;
+    tmp.y = 1.0f;
+    tmp.w = 1.0f;
+    tmp.h = 0.5f;
+    tmp.tR = 0.0f;
+    tmp.tG = 0.0f;
+    tmp.tB = 0.0f;
     ths->mRect = tmp;
 
     ths->mFlags = (u8)((u32)ths->field_0x68 | 3);
@@ -172,7 +168,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
     ml::CRect rect;
     insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
-    if (ths->mRect.h != lbl_eu_8066AAE8) {
+    if (ths->mRect.h) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
         updateOrthoGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
@@ -233,9 +229,9 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
                 // Single TEV stage: raster color * texture * (-tint*255)
                 // held in TEV register 3.
                 GXColorS10 tevColor = {0, 0, 0, 0};
-                tevColor.r = (s16)(lbl_eu_8066AAEC * -ths->mRect.tR);
-                tevColor.g = (s16)(lbl_eu_8066AAEC * -ths->mRect.tG);
-                tevColor.b = (s16)(lbl_eu_8066AAEC * -ths->mRect.tB);
+                tevColor.r = (s16)(255.0f * -ths->mRect.tR);
+                tevColor.g = (s16)(255.0f * -ths->mRect.tG);
+                tevColor.b = (s16)(255.0f * -ths->mRect.tB);
                 GXSetTevColorS10((GXTevRegID)3, tevColor);
                 GXSetNumTevStages(1);
                 GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0,
@@ -258,8 +254,8 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
             }
             GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
             GXLoadTexObj(tex, GX_TEXMAP0);
-            ml::CCol4 blendColor(lbl_eu_8066AAE8, lbl_eu_8066AAE8,
-                                 lbl_eu_8066AAE0, lbl_eu_8066AAE0);
+            ml::CCol4 blendColor(0.0f, 0.0f,
+                                 1.0f, 1.0f);
             drawTexturedQuad(&rect, &ths->mRect, &blendColor);
             TexMan_ReleaseArg_02D8(texWork, tex);
         }

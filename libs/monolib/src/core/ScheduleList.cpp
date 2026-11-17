@@ -61,10 +61,10 @@ extern "C" const char lbl_eu_80524740[16];
 extern "C" const char lbl_eu_80524750[24];
 extern "C" const char lbl_eu_80524768[28];
 extern "C" const char lbl_eu_80524784[20];
-extern "C" u32 lbl_eu_80663C10[2];
+extern "C" u32 __RTTI__12ScheduleList[2];
 extern "C" u32 lbl_eu_80663C18[2];
 extern "C" u32 lbl_eu_80663C20[2];
-extern "C" u32 lbl_eu_80663C28[2];
+extern "C" u32 __RTTI__18IScheduleContainer[2];
 extern "C" u32 lbl_eu_805700A8[3];
 extern "C" u32 lbl_eu_805700B4[3];
 extern "C" u32 lbl_eu_805700C0[3];
@@ -89,7 +89,7 @@ extern "C" const char lbl_eu_80524784[20] = {
 // ============================================================================
 // .sdata (32B, align 8): RTTI locators { typeinfo name, base vtable }.
 // ============================================================================
-extern "C" __declspec(align(8)) u32 lbl_eu_80663C10[2] = {
+extern "C" __declspec(align(8)) u32 __RTTI__12ScheduleList[2] = {
     (u32)&lbl_eu_80524740, (u32)&lbl_eu_805700A8,
 };
 extern "C" u32 lbl_eu_80663C18[2] = {
@@ -98,7 +98,7 @@ extern "C" u32 lbl_eu_80663C18[2] = {
 extern "C" u32 lbl_eu_80663C20[2] = {
     (u32)&lbl_eu_80524768, 0,
 };
-extern "C" u32 lbl_eu_80663C28[2] = {
+extern "C" u32 __RTTI__18IScheduleContainer[2] = {
     (u32)&lbl_eu_80524784, 0,
 };
 
@@ -120,7 +120,7 @@ extern "C" u32 SchedList_TallyItems(SLList* self);
 extern "C" void* SchedList_RingHead(u8* self);
 
 extern "C" __declspec(align(8)) u32 lbl_eu_80570078[12] __attribute__((weak)) = {
-    (u32)&lbl_eu_80663C10, 0x00000000,
+    (u32)&__RTTI__12ScheduleList, 0x00000000,
     (u32)&__dt__12ScheduleListFv, (u32)&SchedList_StepAll,
     (u32)&SchedList_SweepAll, (u32)&SchedList_SweepMatched,
     (u32)&SchedList_AddItem, (u32)&SchedList_DropItem,
@@ -128,7 +128,7 @@ extern "C" __declspec(align(8)) u32 lbl_eu_80570078[12] __attribute__((weak)) = 
     (u32)&SchedList_TallyItems, (u32)&SchedList_RingHead,
 };
 extern "C" u32 lbl_eu_805700A8[3] = {
-    (u32)&lbl_eu_80663C28, 0, 0,
+    (u32)&__RTTI__18IScheduleContainer, 0, 0,
 };
 extern "C" u32 lbl_eu_805700B4[3] __attribute__((weak)) = {
     (u32)&lbl_eu_80663C18, 0, (u32)&__dt__reslist_CSchedule,

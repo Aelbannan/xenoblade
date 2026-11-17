@@ -680,13 +680,7 @@ struct CfWalkGlobal {
     u32 field_90E4;                            // 0x90E4
 };
 
-// Stack-allocated enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor).
-struct CfWalkEnumHolder {
-    void* list;   // 0x0
-    u32 handle;   // 0x4
-};
-
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
 struct CfWalkEnumList {
     u8 _pad00[0x620];                          // 0x00-0x61F
     u32 field_620;                             // 0x620
@@ -944,14 +938,12 @@ void* CfObjectMove_getSelfIfActive(void* objParam);
 void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b, u32 c); // 4-arg form (this TU passes st; def CfObjectMove.cpp takes void*)
 // Shop-exchange flag (CMenuItemExchange.cpp): bare retail symbol, so C linkage.
 extern "C" u8 ItemEx_GetFlagByte();
-// Enum-list helpers: CTaskGame_enumListGet is the extern "C" void* form
+// Enum-list helpers: get__16CfEnumListHolderFv is the extern "C" void* form
 // from CVision.hpp / CtrlPc.hpp (already in scope); the rest are TU-local.
-void CTaskGame_enumListCtor(void* holder);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void* getObjectIdAt(void* list, int index);
 void* func_800BBC0C(void* objParam);
 void CfObjectMove_setMoveSpeed(void* player, float value);
-void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
 int UIWin_HasPendingUpdate(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* MapFx_ResolveOwner(void* src);
@@ -1037,7 +1029,7 @@ void UIWin_ClearTimer(void);
 int getQuestWindow(void);
 
 // Enum-list constructors (decompiler placeholder addresses; same pattern as
-// __dt__80043E88).
+// __dt__16CfEnumListHolderFv).
 void* __ct__800FB044(void* list, f32 a, void* obj, int b);
 void* __ct__800FA9B4(void* list, void* obj, int b);
 

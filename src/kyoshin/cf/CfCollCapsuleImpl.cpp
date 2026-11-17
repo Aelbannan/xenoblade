@@ -7,7 +7,6 @@ extern const float lbl_eu_80666914; // 1.0f
 extern const float lbl_eu_8066692C; // 0.1f
 extern const float lbl_eu_80666930; // 0.5f
 extern const float lbl_eu_80666934; // 0.15f
-extern const float lbl_eu_80666948; // 0.75f
 
 // Collision query helper: process capsule against collision context.
 // Retail names this symbol UNMANGLED (plain C linkage).
@@ -38,8 +37,8 @@ void CollCapsule_DrawDebugShape(void* /*unused*/, cf::CfCollCapsuleImpl* capsule
     } else if ((int)capsule->mKind == 6) {
         cf::CfDebugCol tmp;
         tmp.f[0] = lbl_eu_80666910;
-        tmp.f[1] = lbl_eu_80666948;
-        tmp.f[2] = lbl_eu_80666948;
+        tmp.f[1] = 0.75f;
+        tmp.f[2] = 0.75f;
         tmp.f[3] = lbl_eu_8066692C;
         col.u[0] = tmp.u[0];
         col.u[1] = tmp.u[1];

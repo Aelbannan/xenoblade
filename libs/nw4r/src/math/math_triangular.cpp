@@ -349,20 +349,13 @@ extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* l
 
 // Retail .sdata2 constants referenced by name so no local pool is emitted.
 extern "C" {
-    extern const f32 lbl_eu_80669E20; // 65536.0f
-    extern const f32 lbl_eu_80669E24; // 0.0f
-    extern const f32 lbl_eu_80669E28; // 32.0f
-    extern const f32 lbl_eu_80669E2C; // 64.0f
-    extern const f32 lbl_eu_80669E30; // -64.0f
-    extern const f32 lbl_eu_80669E34; // 128.0f
-    extern const f32 lbl_eu_80669E38; // -128.0f
 }
 
 namespace {
 
 // Retail inlines this into Atan2FIdx and never emits a standalone body.
 static f32 AtanFIdx_(f32 x) {
-    x *= lbl_eu_80669E28;
+    x *= 32.0f;
 
     u16 whole = F32ToU16(x);
     f32 frac = x - U16ToF32(whole);
@@ -377,8 +370,8 @@ static f32 AtanFIdx_(f32 x) {
 f32 SinFIdx(f32 fidx) {
     f32 abs_fidx = FAbs(fidx);
 
-    while (abs_fidx > lbl_eu_80669E20) {
-        abs_fidx -= lbl_eu_80669E20;
+    while (abs_fidx > 65536.0f) {
+        abs_fidx -= 65536.0f;
     }
 
     u16 whole = F32ToU16(abs_fidx);
@@ -387,14 +380,14 @@ f32 SinFIdx(f32 fidx) {
     f32 sin = reinterpret_cast<const SinCosSample*>(lbl_eu_8051D7F8)[whole & 255].sin_val +
               frac * reinterpret_cast<const SinCosSample*>(lbl_eu_8051D7F8)[whole & 255].sin_delta;
 
-    return (fidx < lbl_eu_80669E24) ? -sin : sin;
+    return (fidx < 0.0f) ? -sin : sin;
 }
 
 f32 CosFIdx(f32 fidx) {
     f32 abs_fidx = FAbs(fidx);
 
-    while (abs_fidx > lbl_eu_80669E20) {
-        abs_fidx -= lbl_eu_80669E20;
+    while (abs_fidx > 65536.0f) {
+        abs_fidx -= 65536.0f;
     }
 
     u16 whole = F32ToU16(abs_fidx);
@@ -416,7 +409,7 @@ void SinCosFIdx(register f32* pSin, register f32* pCos, register f32 fidx) {
     register f32 c_zero; // f25
     const register f32* pTbl; // r30
     
-    idxmax = lbl_eu_80669E20;
+    idxmax = 65536.0f;
     pTbl = reinterpret_cast<const f32*>(lbl_eu_8051D7F8);
 
     /*
@@ -485,59 +478,59 @@ f32 Atan2FIdx(f32 y, f32 x) {
     f32 a, b, c;
     bool minus;
 
-    if (lbl_eu_80669E24 == x && lbl_eu_80669E24 == y) {
-        return lbl_eu_80669E24;
+    if (0.0f == x && 0.0f == y) {
+        return 0.0f;
     }
 
-    if (x >= lbl_eu_80669E24) {
-        if (y >= lbl_eu_80669E24) {
+    if (x >= 0.0f) {
+        if (y >= 0.0f) {
             if (x >= y) {
                 a = x;
                 b = y;
-                c = lbl_eu_80669E24;
+                c = 0.0f;
                 minus = false;
             } else {
                 a = y;
                 b = x;
-                c = lbl_eu_80669E2C;
+                c = 64.0f;
                 minus = true;
             }
         } else {
             if (x >= -y) {
                 a = x;
                 b = -y;
-                c = lbl_eu_80669E24;
+                c = 0.0f;
                 minus = true;
             } else {
                 a = -y;
                 b = x;
-                c = lbl_eu_80669E30;
+                c = (-64.0f);
                 minus = false;
             }
         }
     } else {
-        if (y >= lbl_eu_80669E24) {
+        if (y >= 0.0f) {
             if (-x >= y) {
                 a = -x;
                 b = y;
-                c = lbl_eu_80669E34;
+                c = 128.0f;
                 minus = true;
             } else {
                 a = y;
                 b = -x;
-                c = lbl_eu_80669E2C;
+                c = 64.0f;
                 minus = false;
             }
         } else {
             if (-x >= -y) {
                 a = -x;
                 b = -y;
-                c = lbl_eu_80669E38;
+                c = (-128.0f);
                 minus = false;
             } else {
                 a = -y;
                 b = -x;
-                c = lbl_eu_80669E30;
+                c = (-64.0f);
                 minus = true;
             }
         }

@@ -21,10 +21,7 @@ NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
 // match the stripped retail object (MWCC_CASES §1b float pools).
-extern "C" const f32 lbl_eu_80669E78; // 0.0f
-extern "C" const f32 lbl_eu_80669E7C; // 1.0f
 extern "C" const f64 lbl_eu_80669E80; // 0x43300000_00000000 (u32->f64 conv)
-extern "C" const f32 lbl_eu_80669E88; // AX_MAX_VOLUME as float
 
 // The AxManager header ends its layout at 0xF0 (u8 mAuxCallbackWaitCounter[3]).
 // Retail's object carries three more u32 words at 0xF4 (the ctor zeroes them;
@@ -55,13 +52,13 @@ AxManager::AxManager()
       mOldAidCallback(NULL),
       mResetReadyCounter(-1) {
 
-    mMainOutVolume.InitValue(lbl_eu_80669E7C);
-    mMasterVolume.InitValue(lbl_eu_80669E7C);
-    mVolumeForReset.InitValue(lbl_eu_80669E7C);
+    mMainOutVolume.InitValue(1.0f);
+    mMasterVolume.InitValue(1.0f);
+    mVolumeForReset.InitValue(1.0f);
 
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mAuxFadeVolume[i].InitValue(lbl_eu_80669E7C);
-        mAuxUserVolume[i].InitValue(lbl_eu_80669E7C);
+        mAuxFadeVolume[i].InitValue(1.0f);
+        mAuxUserVolume[i].InitValue(1.0f);
         mAuxCallback[i] = NULL;
         mAuxCallbackContext[i] = NULL;
         reinterpret_cast<AxManagerTailView*>(this)->field_0xF4[i] = 0;
@@ -148,12 +145,12 @@ void AxManager::Update() {
         if (update) {
             // Reference the sdata2 pool labels directly so the SDA21
             // relocations carry the retail symbol names.
-            f32 ratio = lbl_eu_80669E7C;
-            ratio *= ut::Clamp(mAuxUserVolume[i].GetValue(), lbl_eu_80669E78,
-                               lbl_eu_80669E7C);
-            ratio *= ut::Clamp(mAuxFadeVolume[i].GetValue(), lbl_eu_80669E78,
-                               lbl_eu_80669E7C);
-            u16 volume = static_cast<u16>(lbl_eu_80669E88 * ratio);
+            f32 ratio = 1.0f;
+            ratio *= ut::Clamp(mAuxUserVolume[i].GetValue(), 0.0f,
+                               1.0f);
+            ratio *= ut::Clamp(mAuxFadeVolume[i].GetValue(), 0.0f,
+                               1.0f);
+            u16 volume = static_cast<u16>(32768.0f * ratio);
 
             switch (i) {
             case AUX_A: {
@@ -189,8 +186,8 @@ void AxManager::Update() {
 
     f32 masterRatio = mMainOutVolume.GetValue();
     masterRatio *= mVolumeForReset.GetValue();
-    masterRatio = ut::Clamp(masterRatio, lbl_eu_80669E78, lbl_eu_80669E7C);
-    AXSetMasterVolume(static_cast<u16>(lbl_eu_80669E88 * masterRatio));
+    masterRatio = ut::Clamp(masterRatio, 0.0f, 1.0f);
+    AXSetMasterVolume(static_cast<u16>(32768.0f * masterRatio));
 }
 
 void* AxManager::GetZeroBufferAddress() {

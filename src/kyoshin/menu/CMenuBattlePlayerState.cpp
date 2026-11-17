@@ -6,26 +6,20 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#undef CTaskGame_enumListCtor
 #undef GetZealObjPtr
 #undef isSceneLoading__Q22cf13CfGameManagerFv
-#undef CTaskGame_enumListGet
 // code_80135FDC.hpp declares ml::epsilon as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
-#define CTaskGame_enumListCtor menuBpsEnumListCtor5
 #define GetZealObjPtr menuBpsFd44Get5
 #define isSceneLoading__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
-#define CTaskGame_enumListGet menuBpsMoveEnumListGet5
 // CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
 // code_80135FDC.hpp re-types it as nw4r::math::VEC3 -> MWCC 10563. This TU
 // never touches the zero vector, so rename the header-local decl away.
 #define zero__Q22ml5CVec3 menuBpsZeroVecDecl5
 #include "kyoshin/code_80135FDC.hpp"
-#undef CTaskGame_enumListCtor
 #undef GetZealObjPtr
 #undef isSceneLoading__Q22cf13CfGameManagerFv
-#undef CTaskGame_enumListGet
 #undef zero__Q22ml5CVec3
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -38,6 +32,7 @@
 #include <nw4r/math.h>
 #include <revolution/GX.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch
@@ -248,7 +243,7 @@ void CMenuBattlePlayerState::Init() {
                 slot.unk48 = rp->FindPaneByName(tbl + 0x23C, true);
                 slot.unk4C = rp->FindPaneByName(tbl + 0x245, true);
                 slot.unk50 = rp->FindPaneByName(tbl + 0x24C, true);
-                slot.unk54 = rp->FindPaneByName(tbl + 0x255, true);
+                slot.mField54 = rp->FindPaneByName(tbl + 0x255, true);
                 slot.unk58 = rp->FindPaneByName(tbl + 0x262, true);
                 slot.unk5C = rp->FindPaneByName(tbl + 0x26F, true);
                 slot.unk60 = rp->FindPaneByName(tbl + 0x27C, true);
@@ -1257,7 +1252,7 @@ extern "C" void BpsStateUpdateHpGauge(CMenuBattlePlayerState* self,
         ratio = lbl_eu_80666F94;
     }
 
-    nw4r::lyt::Pane* pane = slot->unk54;
+    nw4r::lyt::Pane* pane = slot->mField54;
     if (pane != NULL) {
         pane->SetSize(nw4r::lyt::Size(lbl_eu_80666FC8 * ratio,
                                       pane->GetSize().height));

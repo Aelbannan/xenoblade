@@ -7,11 +7,11 @@
 const char lbl_eu_80522848[40] = {0x54,0x43,0x68,0x69,0x6C,0x64,0x4C,0x69,0x73,0x74,0x48,0x65,0x61,0x64,0x65,0x72,0x3C,0x43,0x43,0x68,0x69,0x6C,0x64,0x4C,0x69,0x73,0x74,0x4E,0x6F,0x64,0x65,0x3E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* "TChildListHeader<CChildListNode>" pad to 0x80522848-70 */
 // sdata 0x806635E0 (0x8): RTTI typeinfo { class-name, cast-table=0 }.
 u32 lbl_eu_806635E0[2] = { (u32)&lbl_eu_80522848, 0 };
-// data 0x8056BBA0 (0x10): CChildListNode vtable {&lbl_eu_80661950, 0,
+// data 0x8056BBA0 (0x10): CChildListNode vtable {&__RTTI__14CChildListNode, 0,
 // &__dt__14CChildListNodeFv, &Reset__14CChildListNodeFv} (the ctor below
 // stores this label at +0x10).
 void* lbl_eu_8056BBA0[4] = {
-    (void*)&lbl_eu_80661950, 0, (void*)&__dt__14CChildListNodeFv,
+    (void*)&__RTTI__14CChildListNode, 0, (void*)&__dt__14CChildListNodeFv,
     (void*)&Reset__14CChildListNodeFv,
 };
 /* UNRESOLVED: lbl_eu_8056BBB0 (0x10, TChildListHeader<CChildListNode> vtable

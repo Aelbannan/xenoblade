@@ -82,7 +82,6 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
 #pragma optimize_for_size on
 CMenuKizunaTalk::~CMenuKizunaTalk() {
     __dt__7CSysWinFv(&mSysWin[0], -1);
-    __dt__6CCur18Fv(&mCur, -1);
     __dt__17UnkClass_8045F564Fv(&mMemRegion[0], -1);
 }
 #pragma optimize_for_size off
@@ -184,7 +183,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     KizunaScratch scratch;
     switch (self->mFieldA4) {
     case 0:
-        __ct__CSysWin(&scratch.mWin0[0], 0);
+        __ct__7CSysWinFUc(&scratch.mWin0[0], 0);
         InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin0[0]);
         __dt__7CSysWinFv(&scratch.mWin0[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
@@ -202,14 +201,12 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         break;
     }
     case 2: {
-        __ct__CSysWin(&scratch.mWin2[0], 3);
+        __ct__7CSysWinFUc(&scratch.mWin2[0], 3);
         InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin2[0]);
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
 
-        __ct__CCur18(&scratch.mCur, CUICfManager_getArcResourceAccessor());
-        self->mCur = scratch.mCur;
-        __dt__6CCur18Fv(&scratch.mCur, -1);
+        self->mCur = CCur18(CUICfManager_getArcResourceAccessor());
         self->mCur.initLayout();
         break;
     }

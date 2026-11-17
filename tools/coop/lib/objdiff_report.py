@@ -85,33 +85,18 @@ def meets_required_level(
     proof: Optional[ProofResult] = None,
 ) -> bool:
     if required_level == "FULL_MATCH":
-        if symbol:
-            return function_match is not None and function_match >= 100.0
-        return unit.code_match_percent >= 100.0 and unit.data_match_percent >= 100.0
+        return status == "FULL_MATCH"
     if required_level == "EQUIVALENT_MATCH":
         if status in {"EQUIVALENT_MATCH", "FULL_MATCH"}:
             return True
-        if symbol:
-            if function_match is not None and function_match >= 100.0:
-                return True
-            if (
-                function_match is not None
+        if (symbol and function_match is not None
                 and function_match >= EQUIVALENT_MATCH_MIN_PERCENT
-                and equivalence == ProofStatus.EQUIVALENT
-            ):
-                if policy is None:
-                    return True
-                decision = classify_for_promotion_legacy(
-                    equivalence,
-                    function_match,
-                    policy,
-                    certificate=certificate,
-                    proof=proof,
-                )
-                return decision.allowed
-            return False
-        # Unit-level: still require full code+data until unit-wide proofs exist.
-        return unit.code_match_percent >= 100.0 and unit.data_match_percent >= 100.0
+                and equivalence == ProofStatus.EQUIVALENT):
+            if policy is None:
+                return True
+            return classify_for_promotion_legacy(equivalence, function_match, policy,
+                                                 certificate=certificate, proof=proof).allowed
+        return False
     if required_level == "CODE_MATCH":
         if symbol and function_match is not None:
             return function_match >= 95.0 or status in {"EQUIVALENT_MATCH", "FULL_MATCH"}
@@ -139,22 +124,18 @@ def classify_status(
     policy: Optional[CoopConfig] = None,
     certificate: Optional[dict] = None,
     proof: Optional[ProofResult] = None,
+    full_match_verified: bool = False,
 ) -> str:
+    if full_match_verified:
+        return "FULL_MATCH"
     if symbol:
-        # A certificate means a sound equivalence proof ALREADY succeeded
-        # (register-renaming witness or full-instruction-match). That is the
-        # source of truth even when the objdiff match% is broken/None — some
-        # units' objdiff reports return 0%/None for byte-identical functions
-        # (null retail symbols, e.g. CBattleManager), which would otherwise
-        # classify as NOT_STARTED/COMPILES despite the witness certifying.
+        # Semantic certificates may establish equivalence. FULL_MATCH requires
+        # the current byte gate above, never a historical cert or fuzzy score.
         if certificate is not None and equivalence == ProofStatus.EQUIVALENT:
-            if certificate.get("evidence") == "full-instruction-match":
-                return "FULL_MATCH"
-            return "EQUIVALENT_MATCH"
+            if certificate.get("evidence") != "full-instruction-match":
+                return "EQUIVALENT_MATCH"
         if function_match is None:
             return "NOT_STARTED"
-        if function_match >= 100.0:
-            return "FULL_MATCH"
         can_equivalent = (
             function_match >= EQUIVALENT_MATCH_MIN_PERCENT
             and equivalence == ProofStatus.EQUIVALENT
@@ -178,8 +159,6 @@ def classify_status(
         if function_match > 0.0:
             return "STRUCTURAL"
         return "COMPILES"
-    if unit.code_match_percent >= 100.0 and unit.data_match_percent >= 100.0:
-        return "FULL_MATCH"
     if unit.fuzzy_match_percent >= 95.0:
         return "CODE_MATCH"
     if unit.fuzzy_match_percent >= 70.0:
@@ -312,7 +291,7 @@ def evaluate_unit_match(
     elif run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
         with timer("smt"):
             probe: EquivalenceProbe = prove_unit_symbol(
-                project, unit, fn_match.name, linked=linked, target_id=target_id,
+                project, unit, symbol, linked=linked, target_id=target_id,
                 declared_return=declared_return, contract=contract, smt=run_smt,
                 witness_timeout_ms=witness_timeout_ms,
                 witness_enabled=witness_enabled,
@@ -331,13 +310,26 @@ def evaluate_unit_match(
         and pct >= 100.0
     ):
         with timer("smt"):
-            probe = certify_unit_symbol(project, unit, fn_match.name, target_id,
+            probe = certify_unit_symbol(project, unit, symbol, target_id,
                                        witness_timeout_ms=witness_timeout_ms,
                                        witness_enabled=witness_enabled)
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
         proof = probe.proof
+    full_verified = False
+    if symbol:
+        from tools.coop.lib.full_match import check_unit_function
+        try:
+            full_verified = check_unit_function(project, unit, symbol).match
+        except (OSError, ValueError, RuntimeError) as exc:
+            detail = f"{detail}; byte gate: {exc}".strip("; ")
+    # A stale/incorrect full certificate must never be downgraded to semantic
+    # acceptance when the independent byte check rejects it.
+    if certificate and certificate.get("evidence") == "full-instruction-match" and not full_verified:
+        certificate = None
+        equivalence = ProofStatus.INCONCLUSIVE_SMT_DISABLED
+        detail = f"{detail}; full byte verification failed".strip("; ")
     status = classify_status(
         pct,
         unit_report,
@@ -346,6 +338,7 @@ def evaluate_unit_match(
         policy=project.config,
         certificate=certificate,
         proof=proof,
+        full_match_verified=full_verified,
     )
     confidence: Optional[str] = None
     policy_id: Optional[str] = None

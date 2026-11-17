@@ -32,14 +32,6 @@ struct FxChorusParam {
 
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
 // match the stripped retail object (MWCC_CASES §1b float pools).
-extern "C" const f32 lbl_eu_80669F60; // default delayTime
-extern "C" const f32 lbl_eu_80669F64; // default depth
-extern "C" const f32 lbl_eu_80669F68; // default rate/outGain; depth+outGain max
-extern "C" const f32 lbl_eu_80669F6C; // default feedback; min + sendGain
-extern "C" const f32 lbl_eu_80669F70; // delayTime max
-extern "C" const f32 lbl_eu_80669F74; // delayTime min / rate min
-extern "C" const f32 lbl_eu_80669F78; // rate max
-extern "C" const f32 lbl_eu_80669F7C; // feedback max
 
 // Standalone layout (no FxBase base): the class reproduces retail's FxBase
 // prefix (vptr + intrusive link node) as explicit fields. Inheriting FxBase
@@ -114,18 +106,18 @@ FxChorusDpl2::FxChorusDpl2() {
     mWorkHeap.mHeap = nullptr; // 0x14
     mWorkHeap.mAllocCount = 0; // 0x18
 
-    mParam.delayTime = lbl_eu_80669F60;
-    mParam.depth     = lbl_eu_80669F64;
-    mParam.rate      = lbl_eu_80669F68;
-    mParam.feedback  = lbl_eu_80669F6C;
-    mParam.outGain   = lbl_eu_80669F68;
+    mParam.delayTime = 10.0f;
+    mParam.depth     = 0.5f;
+    mParam.rate      = 1.0f;
+    mParam.feedback  = 0.0f;
+    mParam.outGain   = 1.0f;
 
     detail::FxChorusParam param;
-    param.delayTime = lbl_eu_80669F60;
-    param.depth     = lbl_eu_80669F64;
-    param.rate      = lbl_eu_80669F68;
-    param.feedback  = lbl_eu_80669F6C;
-    param.outGain   = lbl_eu_80669F68;
+    param.delayTime = 10.0f;
+    param.depth     = 0.5f;
+    param.rate      = 1.0f;
+    param.feedback  = 0.0f;
+    param.outGain   = 1.0f;
     SetParam(param);
 }
 
@@ -212,32 +204,32 @@ void FxChorusDpl2::Shutdown() {
 bool FxChorusDpl2::SetParam(const detail::FxChorusParam& rParam) {
     mParam = rParam;
 
-    f32 v = ut::Clamp(rParam.delayTime, lbl_eu_80669F74, lbl_eu_80669F70);
+    f32 v = ut::Clamp(rParam.delayTime, 0.1f, 50.0f);
     mDpl2.delayTime = v;
     mMono.delayTime = v;
 
-    v = ut::Clamp(rParam.depth, lbl_eu_80669F6C, lbl_eu_80669F68);
+    v = ut::Clamp(rParam.depth, 0.0f, 1.0f);
     mDpl2.depth = v;
     mMono.depth = v;
 
-    v = ut::Clamp(rParam.rate, lbl_eu_80669F74, lbl_eu_80669F78);
+    v = ut::Clamp(rParam.rate, 0.1f, 2.0f);
     mDpl2.rate = v;
     mMono.rate = v;
 
-    v = ut::Clamp(rParam.feedback, lbl_eu_80669F6C, lbl_eu_80669F7C);
+    v = ut::Clamp(rParam.feedback, 0.0f, 0.99f);
     mDpl2.feedback = v;
     mMono.feedback = v;
 
-    v = ut::Clamp(rParam.outGain, lbl_eu_80669F6C, lbl_eu_80669F68);
+    v = ut::Clamp(rParam.outGain, 0.0f, 1.0f);
     mDpl2.outGain = v;
     mMono.outGain = v;
 
     mMono.busIn = NULL;
     mMono.busOut = NULL;
-    mMono.sendGain = lbl_eu_80669F6C;
+    mMono.sendGain = 0.0f;
     mDpl2.busIn = NULL;
     mDpl2.busOut = NULL;
-    mDpl2.sendGain = lbl_eu_80669F6C;
+    mDpl2.sendGain = 0.0f;
 
     if (!mIsActive) {
         return true;

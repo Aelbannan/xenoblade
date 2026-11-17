@@ -15,6 +15,7 @@
 
 #include <nw4r/lyt.h>
 #include <nw4r/ut.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 
 // Retail symbol is unmangled (C linkage); extern "C" keeps the reloc name.
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
@@ -35,27 +36,28 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
 #pragma optimize_for_size on
 // Retail dtor shares the ctor's optimize_for_size region (stmw frame).
-CTitleAHelp::~CTitleAHelp() {}
-extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
-    extern void* lbl_eu_80534500[];
-    extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
-    *(const void**)self = lbl_eu_80534500;
-    __ct__17UnkClass_8045F564Fv(&self->unk4);
-    self->mFileHandle = nullptr;
-    self->mArcResourceAccessor = nullptr;
-    self->mLayout = nullptr;
-    self->mAnimTrans20 = nullptr;
-    self->mAnimTrans24 = nullptr;
-    self->unk28 = 0;
-    self->unk2c = 0;
-    self->mName = arg1;
-    self->unk34 = arg2;
-    self->unk35 = 0;
-    self->unk36 = 1;
-    self->unk37 = 0;
-    return self;
+CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2) {
+    mFileHandle = nullptr;
+    mArcResourceAccessor = nullptr;
+    mLayout = nullptr;
+    mAnimTrans20 = nullptr;
+    mAnimTrans24 = nullptr;
+    unk28 = 0;
+    unk2c = 0;
+    mName = arg1;
+    unk34 = arg2;
+    unk35 = 0;
+    unk36 = 1;
+    unk37 = 0;
 }
+
+
+
+
+
+
+CTitleAHelp::~CTitleAHelp() {}
 #pragma optimize_for_size off
 
 void CTitleAHelp::CTitleAHelp_load() {

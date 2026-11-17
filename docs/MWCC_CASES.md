@@ -11372,3 +11372,225 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       additive header overload decl `bool impl_GetSoundInfoOffset(u32, SoundInfoOffset*) const;` (no existing lines touched) + out-of-line def in the TU source: NULL/count/version-1.1 guards, new path `*pOffset = pInfo->soundInfoRef; return true`, old path uninitialized-temp copy (`SoundInfoOffset ref; ref.refType/dataType/value set; *pOffset = ref;`) which reproduces retail's garbage-`sth r7` reserved store and byte-wise loads/stores exactly.
 - Result:    FULL_MATCH 100.0%, 0 structural, 0 reg_swap, size 0x100/0x100 exact, semantic-certified; TU 20/23 (all 19 prior ACCEPTED intact; dependent fully-matched snd_MemorySoundArchive 21/21 undisturbed). Unit split still OVER (ReadSeq/Strm/Wave inlining + extra by-value def are sibling agents' scope), no promotion.
 - Evidence:  libs/nw4r/src/snd/snd_SoundArchiveFile.cpp, libs/nw4r/include/nw4r/snd/snd_SoundArchiveFile.h (us-8041fde8)
+
+## nw4r lyt pilot — reference-shape port + symbol naming closes 8 targets at once (GC/3.0a5.2, 2026-11-17)
+- Symptom:   lyt_layout `Build` 35% STRUCTURAL, `BindAnimationAuto`/`CreateAnimTransform(AnimResource&)` HIGH_MATCH, `SetTagProcessorImpl` CODE_MATCH; lyt_animation `SetResource(…,Us)`/`Animate(Ul,Material*)`/`AnimPaneTree::Bind` HIGH_MATCH; many lyt functions "✗ 100%" in hexdiff (bytes identical, reloc target unresolved); `__sinit_\lyt_picture_cpp` STRUCTURAL.
+- Cause:     (1) local sources were workaround-shaped (layout mirror structs, mangled free functions, raw `lbl_eu_*` externs) instead of the real class API; (2) the lyt allocator, vtables and RTTI objects were still unnamed labels in `config/{us,eu}/symbols.txt`, so real-C++ references could never pair; (3) `ut::DynamicCast` lacked the retail null check; (4) Xenoblade's `TestFileVersion` accepts minor 8..10 written as `minorVer >= 8` (the `> 7` spelling costs 2 instructions).
+- Fix:       ported lyt_animation.cpp / lyt_layout.cpp from the same-era public nw4r reference shape (`AnimResource`, `detail::AnimPaneTree`, templated `AnimTransformBasic::Bind<T>`, real `TexMap::ReplaceImage` members); renamed `mspAllocator__Q34nw4r3lyt6Layout`, `__vt__Q34nw4r3lyt{4Pane,5Group,6Layout,7Picture,7TextBox,6Window}`, `typeInfo__Q34nw4r3lyt{4Pane,7Picture,7TextBox,6Window,8Bounding}` in symbols.txt; replaced raw label uses with `Layout::AllocMemory/FreeMemory/SetAllocator` and `NW4R_UT_RTTI_DEF_*`; helpers absent from the retail link (`AnimResource::Init`, `FindUnbindLink`, `AnimPaneTree::FindAnimContent`) stay ordinary out-of-line definitions; the linked view dead-strips them (PLAN §17.8).
+- Result:    FULL_MATCH us-80401fd8, us-804023b4, us-804027cc, us-804028b0, us-80403614, us-8040ae14, us-8040b440, us-8040bcd4. hexdiff: lyt_layout 19/19, lyt_pane 36/36, lyt_group 5/5, lyt_picture 13/13, lyt_common 14/14, lyt_animation 24/27. No sibling regressions (snd_SeqSoundHandle, CLibLayout unchanged). Split gate still OVER on most lyt units (unreferenced weak/local dtors, non-retail `SetNoWrap`), so no promotions.
+- Open:      `AnimTransformBasic::Bind(Pane*,bool,bool)` us-8040af78 (33 reg swaps), `Bind(Material*,bool)` us-8040b140 (18), `AnimPaneTree::Set` us-8040ba74 (12): pure saved-register permutations — retail colors the content-offset table r30 ahead of the loop index, decomp colors it last (r26). Inert: decl-order swap of `pCrAnimLink`/`animContOffsets`, pointer-vs-reference `animCont`, `(u32)base + offset` vs `u8*` arithmetic in `ConvertOffsToPtr`, `inline` vs non-inline on the folded helpers. `Window::DrawFrame` us-80405a4c 119 reg swaps, untouched.
+- Evidence:  libs/nw4r/src/lyt/lyt_animation.cpp, lyt_layout.cpp, lyt_texMap.cpp; libs/nw4r/include/nw4r/lyt/lyt_animation.h; config/us/symbols.txt
+
+## nw4r lyt split overage — what is source-fixable and what is linker dead-strip (GC/3.0a5.2, 2026-11-17)
+- Symptom:   every lyt unit with all functions matching still fails the split-size gate (0xB8..0x35C over); 188 units repo-wide, 60,420 bytes.
+- Cause:     three different things. (1) Real source errors: `Window` declared overrides of `FindAnimationLinkSelf(AnimTransform*)`, `SetAnimationEnable(AnimTransform*,bool,bool)` and `GetMaterial()` that the retail Window vtable does not have (retail slots point at the `Pane` versions; `Window::GetMaterial()` was declared but never defined = link undef). (2) Real out-of-line source functions that retail inlined into their only callers and mwld then dead-stripped (`Picture::Init/ReserveTexCoord/SetTexCoordNum/Picture(u8)`, `Window::InitContent/InitFrame/ReserveTexCoord`, `Pane::Init/InsertChild/GetPaneRect/SetUserData/CalculateMtxChild`, `PaneBase` ctor/dtor + `__vt__PaneBase`, `TexMap::SetNoWrap` x2); same-era reference source has them as ordinary non-inline definitions. (3) Compiler-generated, unreferenced weak/local destructors from the shared ut headers (`__dt__Q34nw4r2ut12LinkListNodeFv`, `__dt__...LinkList<T,N>Fv`, anon-namespace `NonCopyable` dtor, `__dt__Window::Content`): no relocation in the object references them and no retail copy exists anywhere in symbols.txt. The older `drop_text_symbols` UNIT_RULES for the hbm twins document the same orphans.
+- Fix:       (1) removed the three bogus Window overrides (vtable relocs now equal retail; `GetContentMaterial` calls `static_cast<const Pane*>(this)->GetMaterial()`). (2)+(3) gate decision 2026-11-17 (PLAN §17.8): `weak_dedup.linked_view` now dead-strips functions with no retail copy that nothing retained references (unit must spell every retail `.text` symbol; force-active symbols are roots; local data stays; a nameless global vtable goes only when all its references are excluded and the unit's data slice is fully named). The `inline` markers tried first were reverted — source keeps the original out-of-line shape. Result: `run.py size --all` 188 -> 136 FAIL with no unit newly failing, `data diff --all` 447 -> 445; lyt_pane/lyt_animation/lyt_picture/lyt_window split 0x0 spare. `lbl_eu_80569C78` renamed `__vt__Q34nw4r3lyt18AnimTransformBasic` (US/EU) and the lyt_animation drop/rename UNIT_RULES fields retired. Pitfall: the cached linked object was keyed on the object bytes only, so a rule change reused stale views — key now includes the exclusion set.
+- Also:      US splits.txt now gives lyt_group/lyt_layout/lyt_picture/lyt_textBox their own `.data` (vtable) and lyt_picture/lyt_textBox their own `.sbss` (typeInfo) instead of lyt_pane owning 0x805698F0-0x80569AB8; the hand-written fake vtable arrays and `lyt_pane_sbss_pad`/`lyt_picture_pad2` are deleted; stale `#Q34nw4r3lyt` UNIT_RULES fields that renamed real symbols back to raw labels or stripped now-owned `.data` are retired (shrink-only, frozen check OK, 4 fields awaiting --ratchet).
+- Result:    lyt_picture 13/13 + split PASS + data MATCH + extab MATCH (promotion-ready; not promoted because the link cannot run while two unrelated kyoshin TUs fail to compile). lyt_group and lyt_layout data MATCH. lyt_window overage 0x250 -> 0x118. No function regressions across the 16 lyt units or CLibLayout.
+- Evidence:  libs/nw4r/src/lyt/lyt_window.cpp, lyt_picture.cpp, lyt_pane.cpp; libs/nw4r/include/nw4r/lyt/lyt_window.h; config/us/splits.txt; tools/postprocess_reloc_names.py
+
+## Postprocess rule burn-down, pass 1 — what retires mechanically and what does not (2026-11-17)
+- Symptom:   `tools/postprocess_reloc_names.py` carried 301 rules; most exist because the source or the split, not the compiler, differs from retail.
+- Cause:     four recurring stand-ins. (1) symbols.txt placeholder names (`lbl_eu_*`, `__ct__CCur18`, `...__Q23LOD9LODMemManFv`) where the compiled object already emits the real mangled name at the same address. (2) `.sdata2` splits that do not give a TU its own literal pool, so `pool_patterns`/`extern_data_sections` rename or strip it. (3) `extern const float lbl_eu_*;` declarations used in place of literals (2,921 declarations in 385 files), which leave the object with a partial pool. (4) functions the linker strips anyway (`drop_text_symbols`), now modelled by the linked view (PLAN §17.8).
+- Fix:       (1) rename in symbols.txt, then `run.py targets sync-symbols`; convert the `extern "C"` definition to the real member. (2) give the TU its exact slice when the object's pool is a unique byte match AND a rule label or a fully-literal pool proves the address; unaligned slice ends are fine, do not "round" an already-exact slice. (3) replace the label with the retail value only once the TU owns its pool — a literal in a TU without its own slice scores as a reloc-name drift. (4) delete the field; size/data/extab gates stay unchanged.
+- Result:    301 -> 280 rules; all 21 `drop_text_symbols` fields, 60 placeholder renames, 18 `.sdata2` pool fields retired. Link gate missing 96 -> 72. 13,107 -> 13,128 functions at 100%.
+- MWCC:      a float tested for truth is `if (x)`, not `if (x != 0.0f)`: with a literal the explicit compare loads the constant first (`lfs f1,const; lfs f0,x`), the implicit test loads the member first as retail does (CScnBlend `Blend_DrawFilter`). Pass-through float wrappers (`CTaskLOD::notifyLODTick(float)`) need no "uninitialized float" trick once the signature carries the argument.
+- Trap:      the link gate's `sda_reloc` count is not stable: mwld stops after ~100 errors ("too many link errors"), so retiring undefined symbols lets previously hidden small-data errors print (8 -> 14: g3d_resmat `GetLyrRate`, CfObjectEne `CActorParam_addHp`, both reference literals inside a range their rule drops).
+- Open:      pseudo-constructors that call a member ctor through a fake C name (`__ct__CCur18(&self->mCur, 0)`) cannot be fixed with placement new (adds a null check); the owner needs a real constructor. `mCur = CCur18(arc);` replaces the temp + fake ctor/dtor block and usually matches. CMenuSelectShop demoted for this reason.
+- Fix (2026-11-17): both units were fixed in source instead of raising the `sda_reloc` baseline. g3d_resmat: label externs and the hand-written trailing `.sdata2` block replaced by literals, rule deleted; the natural pool is `0.6, 0.0f, ...` where retail has `0.0f, 1.0f, 0.6, ...`, i.e. an earlier function using 0.0f/1.0f is missing from the source, so the unit is NonMatching until that is found. CfObjectEne: hand-built 0x70 pool (structs, `ene_f3..f10`, filler string, `CfEneF64Conv` conversions) replaced by literals and plain casts, rule deleted.
+- Cause:     CfObjectEne's "0x70 pool" was two things. (1) The last 0x10 bytes (`lbl_eu_806669C8` 180.0f, `lbl_eu_806669D0` int->double magic) are referenced only by code_800B06A4/CfGameManager text: the `.sdata2` boundary was wrong; now 0x806669C8. (2) The `"ene1Lv"` string between 1.8f and 10.0f is the initializer of a file-scope `char*` (`lbl_eu_80661CB8`, in `.sdata`): MWCC puts a pointer-initializer string literal of <= 8 bytes in `.sdata2` at its source position among the float literals (longer ones go to `.rodata`, e.g. the sibling pointer `lbl_eu_80661CBC` -> `lbl_eu_804FC148`). Probe: `char* p = "ene1Lv";` after initEnemyBattleState reproduces the retail 0x60 pool byte-for-byte.
+- Open:      CfObjectEne cannot define those two pointers yet: `.sdata` 0x80661CA0-0x80661CC8 (the pointers plus this TU's RTTI records) is split to code_800B06A4.cpp and the unit emits no classes. Its pool is therefore 8 bytes short and `lbl_eu_80666974` is a recorded link-gate missing symbol (added by hand to the baseline; 10 others retired in the same ratchet). initEnemyBattleState dropped 93.3 -> 82.9 in the report: with real literals MWCC keeps `self + 0x3E9C` in a callee-saved register across the four calls; the earlier score depended on loading the two floats from the fake pool struct. Retail recomputes the adjustment per call (implicit base-class `this` adjustment); `static_cast` through the `...At3E9C` MI views adds null checks and is worse. Needs the real class hierarchy.
+- Evidence:  config/us/symbols.txt, config/us/splits.txt, tools/postprocess_reloc_names.py, src/kyoshin/CCur.cpp, libs/monolib/src/lod/{CTaskLOD,LODMemMan}.cpp, libs/monolib/src/scn/CScnBlend.cpp, libs/nw4r/src/g3d/res/g3d_resanmchr.cpp
+
+## Source-faithfulness pass — split ownership from relocations, and the first de-faked unit (2026-11-17)
+- Symptom:   units byte-match while the source is not what was written: storage and constants defined in a neighbour TU as `lbl_eu_*` fillers, hand-built vtables/RTTI, hand-written static initialisers, rules that rename or drop what the compiler emitted.
+- Tooling:   `run.py faithful` scores every unit (labels, `extern "C"` mangled names, `__declspec(section)`, raw offset casts, view structs, postprocess rule, foreign data) against `docs/evidence/faithful_baseline.json`, shrink-only. `tools/coop/section_owners.py` infers data ownership from the retail split objects' relocations (a data symbol referenced by exactly one unit's `.text` votes for that unit; votes kept by longest run consistent with text link order).
+- Rule:      only anonymous symbols are evidence. Tier A = anonymous `.sdata2`/`.sbss2` literals, jump tables, anonymous strings (78 split range edits applied). Named symbols never move a boundary: `ml::huge`, `__EXIFreq`, `bta_dm_pm_cfg`, `bd_addr_null` are globals defined in one TU and used only by another, and moving them was wrong (reverted).
+- Signal:    a `.sdata2` unit start that is not 8-aligned, or an anonymous literal referenced by two units, means either a named constant (`nw4r::snd::detail::EnvGenerator::VOLUME_INIT`, now a real `const volatile f32`) or one TU split into several units (22 groups, e.g. CfCollCircle/AABB/Cylinder/CapsuleImpl + CfObjectColl) - a text split error, not a data one.
+- MWCC:      `char* p = "ene1Lv";` puts a string of 8 bytes or fewer in `.sdata2` at source position; local `GXColor c = {...}` initialisers also live in `.sdata2`. A literal passed directly to a call is reloaded each time, while a `float x = 0.0f` local used across a loop is hoisted into a saved FPR. `(f32)(s32)mtRand()` reproduces the signed int->float magic. An inline helper's int argument must be a named local at the call site (`int volDb = (int)(100.0f * vol); lookupVolume(volDb);`): passing the cast expression re-materialises the `fctiwz` store/load at every use inside the inlined loop.
+- Fix (CLibCriStreamingPlay): the regressions after replacing label externs with literals were source errors the labels had hidden. The volume table lookup compared the wrong way (`volDb < hi` for retail's `volDb >= hi`); wkUpdate used double arithmetic where retail is single; three hand-expanded pause computations are one inlined helper (`applyPause`); the fade timer is `entry->field_0x74 += 1/30` re-read from the struct, and the fade action is signed. Two symbols were misnamed: retail `func_8045C700` (0x80460744) is `setStreamVolume` and retail `setStreamVolume` (0x804608F4) is `setStreamVolumeScale`, as `CLibCri`'s forwarders already said; renamed in US/EU symbols, callers and targets. wkUpdate 80.4 -> 88.2, setStreamPause 99.1, setStreamVolume 99.7, setStreamVolumeScale 99.3.
+- Fix (CERand): the unit hand-built its vtables/RTTI under `lbl_eu_*` names, kept a never-called `KeepCERandomizerEmission()` to force the inline virtuals out, hand-wrote `__sinit`, and had its two global objects defined as byte arrays in CNReqtaskSave.cpp (`u8 lbl_eu_80660028[16]`) and CNReqtaskCheck.cpp (`u32 lbl_eu_80665A08[2]`). Replaced by `CERandomizer ceRandomizer; CERandomizerSimple ceRandomizerSimple;` at the top of the TU and calls through them (`ceRandomizer.randFHalf()`); MWCC devirtualises and inlines exactly as retail, emits the vtables/RTTI/sinit itself in retail order, and places the weak inline virtuals where retail has them. `.bss` 0x80660028-0x80660038 and `.sbss` 0x80665A08-0x80665A10 moved to CERand in splits; seven symbols renamed (`ceRandomizer`, `ceRandomizerSimple`, `__vt__*`, `__RTTI__*`); rule deleted. 16/16 functions, size PASS, data/extab MATCH, faithful score 0. `drawMarkerEntry`'s "default clamp-info blob" `lbl_eu_80665A08` was `&ceRandomizer`.
+- Recipe:    for a unit with hand-built vtable/RTTI data: (1) find its real globals by looking at what `__sinit_\<unit>_cpp` stores in the retail asm; (2) give the unit the `.bss`/`.sbss` ranges of those globals and delete the filler definitions from whichever unit carried them; (3) rename the vtable/RTTI/global symbols in symbols.txt to what MWCC emits; (4) declare the globals in source order of the sinit stores and call members through them; (5) delete the rule. If the compiler's own emission order differs from retail, the class or global declaration order is wrong - do not reorder data by hand.
+- Open:      `Chain_CheckChanceRoll` 63.9 -> 60.7 after replacing a union int->float hack with real casts (accepted). CNReqtaskSave extab gate failure (`CNReqSaveConfigSave`/`sinit_804DAF58` naming, hand-built vtables) predates this pass. wkUpdate still re-reads `entry->flags` where retail does (0x10 short).
+- Evidence:  tools/coop/{faithful,section_owners}.py, config/us/{splits,symbols}.txt, libs/monolib/src/effect/CERand.cpp, libs/monolib/src/lib/CLibCriStreamingPlay.cpp, libs/monolib/src/lib/CLibCriMoviePlay.cpp, libs/nw4r/src/snd/snd_EnvGenerator.cpp
+
+## RTTI names recovered from retail data; why "-RTTI off" and `drop_data_tail` exist (2026-11-17)
+- Symptom:   de-faking a unit (real classes instead of hand-built vtable arrays) leaves its data larger than retail: extra `__RTTI__<Base>` records, base lists and name strings for every base class. 21 units are compiled with `-RTTI off` and ~13 rules carry `drop_data_tail`/`drop_data_range` to hide this.
+- Cause:     not a source problem. MWCC emits a weak type_info for every polymorphic class a TU touches and mwld keeps the first copy; the retail split objects come from the linked DOL and so show one copy only. `tools/coop/lib/weak_dedup.py` already models this, but it identifies the surviving retail copy by name, and only 61 retail type_info records had names - the rest were `lbl_eu_*`.
+- Fix:       `tools/coop/rtti_names.py` rebuilds `__RTTI__<mangled>` from the retail objects: an anonymous 8-byte `.sdata`/`.data` symbol whose first word points at a labelled NUL-terminated string (same object or, across a split boundary, another one), whose second word is a relocation or null, and which a vtable or base list in `.data` points at. 484 records are now named in config/us/symbols.txt (was 61). 236 were renamed directly; 187 more were renamed together with their spelling in hand-built source data (`__RTTI__...` is a valid C identifier).
+- Trap:      a hand-declared `extern ... __RTTI__8CProcess;` in a TU where the compiler also generates that type_info is error 10322 "illegal name overloading" - the same error the `-RTTI off` comments in configure.py cite. 56 labels were left as `lbl_eu_*` for that reason (everything declared in a shared header, plus CDeviceGX, CCur, CTaskLOD, CfObjectEff, CDeviceFontInfoExt, CNBanner and the four named in rule values). They get their names when the unit's hand-built typeinfo is deleted. Template classes (142, e.g. `CTTask<CTaskGame>`, `reslist<CScn *>`) are not recovered: the string is the demangled spelling.
+- Result:    no function changed score; 25 data sections improved. CTaskManager: hand-built vtables/RTTI removed by a Haiku agent, 16/16 functions (was 14/16), rule deleted, `-RTTI off` removed; its `.data` is retail's plus weak copies of `__RTTI__8CProcess`/`14CChildListNode`/`15CDoubleListNode`, which stay visible until those three retail records are named (blocked on CTaskLOD.cpp's hand declarations).
+- Agents:    first batch of six narrow Haiku agents, one hand-faked unit each (recipe in the previous entry). Done: lyt_resourceAccessor (real class, compiler vtable, rule deleted), snd_Lfo (sine table is a function-local `static const s8 sinTable[33]`, rule deleted), CTaskManager. Stopped with a root cause rather than a hack: CProc (`-RTTI off`), HBMAnmController and CLibStaticData (weak base RTTI = the dedup case above; CLibStaticData's singletons are fillers in CLibLayout.cpp:344).
+- Also:      bta_dm_act.c declared `btm_cb` as a 2-byte struct, so MWCC addressed the 0x27C4-byte `.bss` object through r13 (a hidden small-data link error that surfaced when another undefined symbol retired); it now has its retail size.
+- Next:      (1) name the template type_infos and `__vt__` symbols the same way; (2) delete hand-built typeinfo unit by unit, dropping `-RTTI off` (`run.py faithful` counts `rtti_off`); (3) rules of the form `("__RTTI__9CDeviceGX", "lbl_eu_80663758")` rename the compiler's correct name to a label and die with the label.
+- Evidence:  tools/coop/rtti_names.py, tools/coop/faithful.py, config/us/symbols.txt, configure.py (CTaskManager), libs/monolib/src/core/CTaskManager.cpp, libs/nw4r/src/snd/snd_Lfo.cpp, libs/nw4r/src/lyt/lyt_resourceAccessor.cpp
+
+## NAND family rebuilt from three merged TUs; the "sinit + vtable-storing func" pattern is a static task object (2026-11-17)
+- Symptom:   `CNReqtaskSave.cpp` held ~40 functions under invented names (`CNReqSaveConfigSave`, `sinit_804DAF58` + `func_804DAF60`), hand-built vtables, `noinline`/`optimize_for_size` pragmas, a postprocess rule, and an extab gate failure. `monolib_eu_804F9E98.cpp` and parts of CNBanner.cpp/CNand.cpp were the same family under other names.
+- Cause:     the unit was three retail TUs: `CNReqtask.cpp` (async NAND wrappers and shared state), `CNRequest.cpp` (one queued request: picks a task and steps it), `CNReqtaskSave.cpp`. Each `CNReqtask<X>` (Check, Save, Load, Remove, Readdir, Createdir, SaveBanner) is its own TU. RTTI name strings gave the class names; 8-byte padding between objects and the order of name strings in `.rodata` gave the TU boundaries. `monolib_eu_804F9E98` is `CNReqtaskCreatedir` (its RTTI string says so).
+- MWCC:      `static CNReqtaskX sTask;` for a class with an implicit constructor emits `__sinit_\File_cpp` (`addi r3, sTask; b __ct__`) followed by a weak out-of-line `__ct__NNClassFv` that stores the vtable. That is the retail shape ~150 units reproduce by hand as `sinit_XXXX` + `func_XXXX` ("Dissolved monolibdata2 / blob surgery"). Write the class and the static object; delete the hand-built vtable, RTTI and sinit.
+- MWCC:      `#pragma no_static_dtors on` around a global object gives a constructor call in `__sinit` with no `__register_global_object` (CNand `nand`). Function-local statics are `@LOCAL@func@name` / `@GUARD@func@name`. The vptr sits where the first virtual is declared. RTTI name strings are emitted at the key function; function-body literals pool at the end of `.rodata`.
+- MWCC:      a `setup(void* p, ...)` that casts to a local `Param*` keeps the parameter block in r31 as retail does; taking `Param*` directly swaps the callee-saved registers. `mHead++; mHead %= 8;` (s16) gives extsh before the modulo; `(mHead + 1) % 8` does not.
+- MWCC:      every "needs `noinline`" note in the old unit was an artefact of the merge: across real TU boundaries nothing can be inlined. With the unit's real flags (`-O4,s`) the size pragmas were unnecessary too.
+- MWCC:      MSL declares C library functions as unable to throw (`_MSL_CANT_THROW`). Without it a `memset` in a constructor opens an exception range with a DESTROYBASE action that retail does not have (CNBanner ctor: record `10080000 00000000`). `string.h` now carries the attribute.
+- MWCC:      `CNBanner::~CNBanner() { unload(); }` with `unload` defined later in the file inlines to the retail destructor (base+offset `lbzu` walk included) and gives retail's single exception range. The earlier hand-expanded body matched the code but produced two ranges and four chained actions: a matching function with a wrong extab record usually means the source has the wrong shape.
+- Tooling:   `weak_dedup._dead_strip` drops a `__vt__` object that has no retail name and that no relocation in its own object references (abstract base `CNReqtask`: emitted at its key function `close`, never installed out of line, absent from retail). Other unreferenced nameless data is still left alone. Tests in `tools/coop/tests/test_weak_dedup.py`.
+- Result:    CNand 14/14, CNReqtask 20/20, CNRequest 9/9, seven task units and CNBanner 9/9: sizes PASS, data MATCH, extab MATCH; three rules deleted; fillers for this family removed from CWorkSystemCache, CETrail, CMdlDynamics, main.cpp.
+- Fix:       `CNReqtask::error` reported through an `extern "C"` `logExceptionMessage__10CExceptionFv`; it is now the static member `CException::logExceptionMessage(const wchar_t*)` (`...FPCw`), still 100%. Retail tests only the first byte of the wide string.
+- Open:      EU/JP splits still describe the merged unit (only US is built). CNBanner still needs `IWORK_EVENT_INLINE_DTOR`, a macro that gives IWorkEvent two definitions.
+- Evidence:  libs/monolib/{include/monolib,src}/nand/, config/us/{splits,symbols}.txt, tools/coop/lib/weak_dedup.py, libs/PowerPC_EABI_Support/include/stl/string.h
+
+## CTTask users: the hand-built constructor is a real constructor plus `create` (2026-11-17)
+- Symptom:   link gate, two new undefined `@N` locals referenced from CfTaskMain after `__RTTI__8CProcess` / `__RTTI__14CChildListNode` / `__RTTI__15CDoubleListNode` got their names (retail copies at 0x80661948/50/58, in CTaskGameCf's slice): the unit's rule stripped `.data/.rodata/.sdata` while its weak type_infos still pointed at the stripped name strings.
+- Cause:     CfTaskMain was a fake: `__ct__800697E8` called the raw CProcess constructor, wrote both vtable pointers through a byte-range shim and copied `__ptmf_null` word by word through a volatile pointer.
+- Fix:       `CfTaskMain(CScn* scene) : mScene(scene) {}` and `static CfTaskMain* create(CProcess* parent, CScn* scene) { CfTaskMain* task = new (CWorkThreadSystem::getWorkMem()) CfTaskMain(scene); task->Regist(parent, false); return task; }`. 11/11, extab MATCH, rule deleted, unit promoted to Matching. The three CfGameManager functions it calls take no object in retail and are now `static` members.
+- Fix (CTaskLOD): hand-built vtables, base lists, RTTI records and name strings deleted; the compiler's own are byte-identical (data MATCH). `create` was 93.8%: retail runs the persistent-buffer setup inside the null check of `new`, so that code belongs to the constructor, not to `create`. 38/38.
+- MWCC:      retail order for every CTTask user is `CTTask<X>::~CTTask`, the class's own functions, `create`, then `CTTask<X>::Move` / `Draw`. With the destructor specialization at the end of the file the code matches and the exception index does not.
+- Trap:      a TU that hand-declares `extern "C" u32 __RTTI__8CProcess[]` and also sees the real class with RTTI on fails with 10322. Of 16 files using the three labels only CTaskLOD did; the answer was to delete its hand-built tables.
+- Next:      64 files use CTTask and 32 carry explicit specializations and usually a shim constructor like the one removed here. Same recipe; `CTTask.hpp` still declares Move/Draw/dtor without bodies so that the specializations are emitted.
+- Evidence:  src/kyoshin/cf/CfTaskMain.{cpp,hpp}, libs/monolib/src/lod/CTaskLOD.cpp, libs/monolib/src/core/CException.cpp, config/us/symbols.txt, docs/evidence/{link_undefs,extab,text_order,faithful}_baseline.json
+
+## CTTask batch 2: private interface bases, `IUICf`, and a class cut in half by its split (2026-11-17)
+- Scope:     six Haiku agents, one hand-built CTTask constructor each (CTaskGameEffAfter, CTaskGameEvt, CMenuItem, CCol6Invite, CMenuGCItem, CMenuTitle). Two finished with help, one exposed a split error, three stopped and restored.
+- MWCC:      the RTTI base list names only **public** bases. CTaskGameEvt's retail list is `CDoubleListNode, CChildListNode, CProcess, CTTask<CTaskGameEvt>` with no IWorkEvent/IScnRender although both thunk sets exist, so the class is `class CTaskGameEvt : public CTTask<CTaskGameEvt>, IWorkEvent, IScnRender` (interfaces private by default). A base list that is too long by 8 bytes per interface means a missing access specifier, not a missing base. CMenuItem's list does include IScnRender, so there it is public.
+- MWCC:      per-function `#pragma optimize_for_size` plus `__declspec(noinline)` on the constructor was standing in for the unit flag `-O4,s`: with it the out-of-line constructor, `stmw`/`lmw` frames and `create` all match with no pragma (CTaskGameEvt 18/18, data MATCH, extab MATCH).
+- Fix:       CTaskGameEvt's "relay" free functions and "null handler" were members: `clearSeqState()`, `teardownSeq()`, `virtual bool OnFileEvent(CEventFile*) { return false; }`; the four hand-named thunks are the compiler's `@84@`/`@88@` thunks. CTaskGame now holds a `CTaskGameEvt*` and the `CTaskGameUnkD4Obj` view struct is gone.
+- Finding:   the "temporary vtable" `lbl_eu_8052BF70` that ~10 menu units store by hand is `__vt__14CTTask<5IUICf>` (owner CMenuArtsSelect; slots `__dt__14CTTask<5IUICf>Fv`, `Move/Draw__14CTTask<5IUICf>Fv`). Those menus are `class X : public IUICf, ...` (`src/kyoshin/IUICf.hpp`: CTTask<IUICf> plus two flag bytes at 0x54/0x55), not `CTTask<X>`. `lbl_eu_80661DE0` is `__RTTI__5IUICf` (renamed); `lbl_eu_80661DE8` is `__RTTI__14CTTask<5IUICf>`.
+- Split:     `kyoshin/cf/CInfoCf.cpp` ended at 0x80168AAC and held `~CMenuItem`, `Init`, `Term`, `Move`, `cbRenderBefore` under a second definition of `class CMenuItem`. Retail CInfoCf ends at 0x801679F4 (8 functions, 2 extab records); everything after is CMenuItem.cpp. Splits (US, EU text/extab) and sources now follow that; one `class CMenuItem : public IUICf, public IScnRender` with a real inline constructor, `static create`, `static sInstance`, compiler thunks and string literals.
+- Open (CMenuItem): 9/18 in the report. `create` is byte-identical but names `__vt__14CTTask<5IUICf>` where symbols.txt still says `lbl_eu_8052BF70`; the label cannot be renamed until the hand-built users (CMainMenu, CMiniMap, COption, CMenuMakeCrystal, CMenuShopBuy, CMenuSkipTimer) stop spelling it. `~CMenuItem` is 75%: retail's has no vtable stores and two redundant null checks, i.e. an empty body with a real `CItemBoxGrid` member and inline `~IUICf` / `~CTTask<IUICf>`. `Init` and the six `InfoCfCopy*` functions are `member = Temp(...)` assignments and the implicit `operator=` of CItemBoxGrid's members. All of that waits on CItemBoxGrid (6,000 lines of C-style code with a postprocess rule) becoming a class: leaf first.
+- Open (CInfoCf): 8 small functions still written as C over a struct with a `void* vtable`; its callers are in CTaskREvent.
+- Blocked:   CCol6Invite/CCol6Hint/CCol6CheckBat share an unmodelled intermediate base (temp vtable `lbl_eu_8052D238`, in CCol6System.cpp) and a secondary base at +0x6C. CMenuGCItem is the same IUICf + IScnRender shape as CMenuItem and also needs the real CItemBoxGrid. CMenuTitle has a second `class CMenuTitle` in `CUIErrMesWin.hpp` whose methods sit in CUIErrMesWin's split (another split error).
+- Split:     CTaskGameEffAfter's `.sdata` started 8 bytes early; `__RTTI__Q22cf17CActParamAnimGame` at 0x80661A08 belongs to pluginCam.
+- Evidence:  src/kyoshin/CTaskGameEvt.{cpp,hpp}, src/kyoshin/menu/CMenuItem.{cpp,hpp}, src/kyoshin/cf/CInfoCf.{cpp,hpp}, src/kyoshin/cf/CTaskGameEffAfter.{cpp,hpp}, config/{us,eu}/{splits,symbols}.txt, configure.py
+
+## IUICf menus, wave 1+2: member classes, `X = X(args)` rebuilds, and four more splits cut at the factory (2026-11-18)
+- Scope:     `lbl_eu_8052BF70` / `lbl_eu_80661DE8` are now `__vt__14CTTask<5IUICf>` / `__RTTI__14CTTask<5IUICf>`; 19 menu units stopped spelling the labels and derive `IUICf` (+ `IWorkEvent` / `IScnRender`). CUICfManager calls `CMenuX::create(...)` for the converted ones.
+- MWCC:      the Init "widget rebuild" block (stack buffer, fake ctor call, field-by-field copy into the member, `__ct__UnkClass_8011C974`, fake dtor) is `mX = X(args);`. `__ct__UnkClass_8011C974` is the weak out-of-line `UnkClass_8045F564::operator=` (`__as__17UnkClass_8045F564FRC17UnkClass_8045F564`), now an inline member and emitted by the compiler. Bigger members get their own weak `operator=` in the same unit (CMenuMapSelect: `MapSelCopy`/`FadeCopy`/`FloorMapCopy`; CMenuPTState: `CopyPTSubBlob`/`CopyPTStateBlob`; CMenuItem: `InfoCfCopy*`).
+- Trap:      explicit padding members (`u8 _29[3]`) are copied by the implicit `operator=` and break the match. Delete them. `lha` vs `lhz` in the copy shows the real signedness of a field (CSkipTimer +0x2E is s16).
+- MWCC:      a destructor of a polymorphic class with a non-empty body re-stores every vptr at its top (0x14 bytes for two). Every menu dtor that is "0x8c vs retail 0x78" has raw `u8 mX[N]` storage and an explicit `__dt__...(mX, -1)`; with a real member and `~X() {}` it matches (CMenuGameClear, CMenuSkipTimer). Not a flag issue.
+- MWCC:      a virtual call on a member object (`mSysWin.loadSystemArc()`) is not devirtualized; that is retail's dispatch.
+- Flags:     a unit whose every function carries `#pragma optimize_for_size on` is a `-O4,s` unit (CSysWin, CSkipTimer; pragmas deleted).
+- Classes:   `CSysWin : IWorkEvent` (ctor `CSysWin(u8 kind)`, virtual `loadSystemArc`), `CSkipTimer : IWorkEvent` holding `CSysWin` + `CSkipTimer2`, `CPresentWin : IWorkEvent`, `CMCCrystalSupport : IWorkEvent` (ctor takes the ArcResourceAccessor) are real; their hand-stored vtable labels are `__vt__...` now.
+- Split:     the dtor/Init/Term/Move/cbRenderBefore block precedes `create` in every menu TU. Four units were cut at `create` and their virtuals (and `.sbss` singleton, vtable, jump table, extab records) sat in the previous unit: CMenuArtsSet (starts 0x80230A50, not 0x80231300; CPresentWin and CMCCrystalSupport also got their own `.data`/`.sdata` back), CMenuPTState (0x80192B3C), CMenuMapSelect (0x80243624), CMenuTitle (0x802B8638, incl. `~CTTask<CMenuTitle>`). Boundaries taken from the retail object's relocations (text symbol -> extab/extabindex/data users). CMCCrystalSupport became 9/9 with data and extab MATCH from the split fix alone. CCol6Invite/CCol6System have the same symptom but interleaved thunks; open.
+- Finding:   `COption.cpp` was a copy of CMenuOption's code; the real COption (0x8029E5B4-0x802A1040) is unwritten apart from three getters.
+- Debt:      class headers carried unit-private `extern "C"` import blocks with conflicting prototypes, which is why CUICfManager could not include the menu headers. Pattern: `<Name>Imports.hpp` next to the class header, included only by .cpp files.
+- Open:      member widget classes that are still C structs with `__ct__X(self, ...)` (CItemBoxLine, CItemBoxGrid, CPlayAwardList, CArtsList, CQstLogList, COption, CMakeCrystalWin, CSaveLoad, ...) keep their holders' dtors at 22%; ~20 holders still call `__ct__7CSysWinFUc` through an `extern "C"` spelling. `CMenuLvUp::create` 52%: retail's inner clear loop has an extra `begin <= end` unroll guard no spelling reproduced yet. CMiniMap (CMenuMiniMap2) and CMenuArtsSet are not converted.
+- Evidence:  src/kyoshin/{CSysWin,CSkipTimer,CPresentWin}.{cpp,hpp}, src/kyoshin/menu/CMenu{SkipTimer,GameClear,LvUp,ShopBuy,ShopSell,SymbolMark,QuestLog,PlayAward,EnemyState}.{cpp,hpp}, include/kyoshin/makecrystal/CMCCrystalSupport.hpp, config/us/{splits,symbols}.txt
+
+## Vtable/RTTI ownership, thunks as TU terminators, and real locals for exception tables (2026-11-18)
+
+**Vtable runs sat in the wrong unit's `.data`.** A scan of every retail unit object for
+vtables whose destructor slot is *undefined in that object* found 69 misassigned vtables;
+in almost every case a unit's `.data`/`.sdata` began with the vtable + RTTI of the class
+defined by the text-previous unit. 56 boundaries were moved (only adjacent, contiguous
+cases). MWCC emits `[vtable][RTTI base list]` in that order, so a small `n*8+4`-byte
+object that references only RTTI symbols and sits *before* a vtable is the base list of
+the *previous* class (e.g. the 0xC list before `__vt__Q22cf8CREvtObj` belongs to
+`cf::CREvtEffect`), not part of the following vtable. Two nw4r/g3d proposals were wrong
+(the matching nw4r sources emit that data where it was) and were not applied.
+
+**What the move exposed.** Units marked `Matching` that "owned" no vtable because the
+neighbour's split supplied it: `cf::CREvtObj` and `cf::CREvtMem` were converted to real
+classes (ctor with init list, `virtual ~T()`, class `operator new/delete` for CREvtObj)
+and still match 100%, now with matching data. `CLoad.cpp` and `CMenuOption.cpp` contained
+hand-written copies of *another class's* vtable (`CTutorialList`, `CTutorial`) — deleted.
+`CfObjectEne`, `CfObjectImplNpc` and `CfResTboxImpl` use the manual-vtable scheme for
+classes they own and were demoted to `NonMatching` until the classes are real.
+`CfObjectImplObj.cpp` emitted C++-mangled names for functions whose retail symbols are
+unmangled; it only linked because nothing referenced them from a compiled object.
+
+**This-adjusting thunks end a translation unit.** MWCC emits `@N@...` thunks after
+everything else in the TU. Functions that follow a unit's thunks in retail text belong to
+the next TU: four `cf::UnkClass_80192BF4` functions after `CMenuPTState`'s thunks became
+their own unit (`kyoshin/cf/code_80194310`), and the 0x40 destructor after
+`CMenuQuestLog`'s thunks is the destructor of `CMenuSymbolMark`'s +0x70 member (named as
+such by a DESTROYMEMBER action in the SymbolMark constructor's exception table).
+
+**Exception-table records identify real locals.** A retail record with a destroy-local
+action whose destructor is a "free function" means the original had a real object:
+- `nw4r::lyt::DrawInfo drawInfo;` instead of `u8 buf[0x54]` + C-style ctor/dtor calls
+  keeps `cbRenderBefore` at 100% and fixes its record (CMenuTitle, CMenuItem; the
+  remaining ~35 units are being converted).
+- The "enum list holder" (`CTaskGame_enumListCtor` / `__dt__80043E88`) is a real class,
+  `CfEnumListHolder`. A scan loop that exits early with the holder alive matched only as
+  an inline helper returning `bool` (early `return` inside the loop), not as a
+  `goto`/flag in the caller.
+
+**Member dtor shape.** A menu destructor that is 0x14 bytes too long and stores its own
+vtable pointers has an explicit member-destructor call in its body; the retail shape is a
+real member with a declared out-of-line destructor and an empty `~Menu() {}`
+(CMenuMakeCrystal, CMenuPlayAward, CMenuEnemyState, CMenuPTState, CMenuMapSelect,
+CMenuArtsSet).
+
+**Open: implicit `operator=` inlining.** `mX = X(args)` rebuilds match when the member
+class's implicit assignment has one use site in the TU; with several use sites MWCC emits
+an out-of-line weak `__as__` and calls it, while retail has the copies inlined
+(CMenuPlayAward `CCur18`/`CScrollBar`/entry array, CMenuMapSelect). Unverified
+hypothesis: those classes declare an explicit inline `operator=`.
+
+## Widget re-init is assignment from a temporary (2026-11-18)
+
+The menu `Init` functions that build a stack widget, copy it field by field into
+a member and destroy the stack copy are plain assignments in the original
+source:
+
+```cpp
+mBgTex = CBgTex(0);
+mTitleAHelp = CTitleAHelp(name, 0x50);
+```
+
+MWCC inlines the implicit `operator=` of the outer class (scalar members become
+load/store pairs in declaration order, the vptr is skipped) and calls the
+member's user-declared `operator=` out of line — that is the
+`bl __as__17UnkClass_8045F564FRC17UnkClass_8045F564` in every such block. The
+temporary's constructor and `__dt__(…, -1)` calls come from the temporary
+itself. Verified on `CMenuCollepedia::Init`: the two-line form compiles to the
+same bytes as the ~25 hand-written lines it replaced.
+
+Consequences:
+
+- A hand-written `u8 temp[N]; __ct__…(temp); …copies…; __dt__…(temp, -1);`
+  block is a sign that the destination should be a real, typed member.
+- Small helpers named like `…CopyCursor(dst, src)` that such blocks call are
+  the weak out-of-line `operator=` of a member class (for example a `CBaseCur`
+  subclass), not hand-written utilities.
+- Earlier note about implicit `operator=` being emitted out of line when used
+  at more than one site still needs a unit where that happens to be checked
+  against this form.
+
+Follow-up from converting more units (same day):
+
+- The assignment form only reproduces retail stack offsets when *every*
+  temp-copy block in the function is a real temporary. Mixing one real
+  temporary with a remaining raw `u8 temp[N]` buffer reorders the stack slots
+  (`CMenuMapSelectSC::Init`: temp at `sp+8` instead of retail `sp+48`;
+  `CMenuTutorial::Init` dropped from 100% to 12%). Convert a function's blocks
+  together, after the member classes involved are real.
+- Open: `CMenuItemExchange::Init` matches with the copies *out of line*
+  (`ItemEx_CopyBgTex`, `ItemEx_CopyTitle`, `ItemEx_CopyLine`, `ItemEx_CopyGrid`
+  sit right after `Init` in first-use order, i.e. they look like the weak
+  implicit `operator=` bodies). Writing `mBgTex = CBgTex(0);` there inlines the
+  copy and grows `Init` from 0x1BC to 0x244. Units where the copy is inlined
+  (`CMenuCollepedia`, `CMenuKizunaTalkList`, `CMenuItem`) use the same flags.
+  Untested hypothesis: with all four assignments real, the two very large ones
+  (`CItemBoxLine` 0x388 bytes, `CItemBoxGrid` 0x638 bytes of copy code) push
+  the caller past the inliner's size limit and none is inlined. Needs
+  `CItemBoxLine`/`CItemBoxGrid` as real classes to test.
+
+## Locals in destructors change the exception table, not the code (2026-11-18)
+
+Found while making `cf::CREvtLight` and `cf::CREvtCamera` real subclasses of
+`cf::CREvtObj`; in both cases the code was already 100% and only the extab
+record differed.
+
+- A function-scope copy of a member (`void* old = field_20;`) in a destructor
+  produced five chained destroy-base actions. Using the member directly gives
+  retail's single action.
+- Block-scope `f32 x, y, z` inside a nested `if` in a destructor split the
+  destroy-base range three ways. Declaring them once at the top of the
+  destructor (`f32 z, y, x;`) gives retail's single range.
+- `u32` parameters mangle as `Ul` with this compiler (`__ct__Q22cf10CREvtLightFUl`).
+- The 0x10-byte object after a derived class's vtable that points at the
+  base's `__RTTI__` is the derived class's base list and belongs to its unit
+  (it had been split into the following unit, `CBgTex`, and reproduced there
+  by a hand-written array).

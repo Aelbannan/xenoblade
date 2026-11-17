@@ -439,7 +439,7 @@ int EndVoice_AllocSize() {
 // bytes live in this unit's range, so it is defined here. BufVxAdvanceSlot
 // is defined in CVS_THREAD_BUF.cpp; the proto below mirrors that
 // definition (incomplete struct keeps the BUF header out of this TU).
-// lbl_eu_80539A20 / lbl_eu_80662CC0 live in the BUF / CCharVoiceMan ranges
+// lbl_eu_80539A20 / __RTTI__Q22cf10CVS_THREAD live in the BUF / CCharVoiceMan ranges
 // and are referenced, not defined, here.
 struct CVS_THREAD_BUF;
 extern "C" void BufVxAdvanceSlot(CVS_THREAD_BUF* self);
@@ -448,9 +448,9 @@ extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 lbl_eu_805399E0[3];
 extern u32 lbl_eu_80539A20[4];
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662CD8[2];
-extern u32 lbl_eu_80662CE0[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf21CVS_THREAD_BATTLE_END[2];
+extern u32 __RTTI__Q22cf14CVS_THREAD_BUF[2];
 
 extern const char lbl_eu_80510700[0x20] = "cf::CVS_THREAD_BATTLE_END";
 extern const char lbl_eu_80510720[0x18] = "cf::CVS_THREAD_BUF";
@@ -498,7 +498,7 @@ u32 lbl_eu_805399A8[4] = {
 };
 
 u32 lbl_eu_805399B8[7] = {
-    (u32)lbl_eu_80662CD8,
+    (u32)__RTTI__Q22cf21CVS_THREAD_BATTLE_END,
     0,
     (u32)PlayThreadVoice,
     (u32)EndVoice_RemoveVoice,
@@ -508,7 +508,7 @@ u32 lbl_eu_805399B8[7] = {
 };
 
 u32 lbl_eu_805399D4[3] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
 };
@@ -529,12 +529,12 @@ __declspec(section ".sdata") extern u32 lbl_eu_80662CD0[2] = {
     0xB5E,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CD8[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf21CVS_THREAD_BATTLE_END[2] = {
     (u32)lbl_eu_80510700,
     (u32)lbl_eu_805399D4,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662CE0[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf14CVS_THREAD_BUF[2] = {
     (u32)lbl_eu_80510720,
     (u32)lbl_eu_80539A20,
 };

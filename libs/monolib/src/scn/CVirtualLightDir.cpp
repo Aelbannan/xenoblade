@@ -6,12 +6,11 @@
 // Retail CVirtualLightDir vtable data (stored manually; see
 // CVirtualLightObj.hpp) and the shared sdata2 {0.0f, 0.0f} constant.
 extern "C" u32 lbl_eu_8056E898[];
-extern "C" const float lbl_eu_8066AA80; // 0.0f (first float of the 8-byte pair)
 
 CVirtualLightDir::CVirtualLightDir() {
     mVtable = (u8*)lbl_eu_8056E898;
-    mField34 = lbl_eu_8066AA80;
-    mField38 = lbl_eu_8066AA80;
+    mField34 = 0.0f;
+    mField38 = 0.0f;
     mField2C = 2;
 }
 
@@ -29,16 +28,16 @@ extern "C" void __dt__16CVirtualLightDirFv();
 extern "C" void getVirtualLightColor();
 extern "C" void getVirtualLightSentinel();
 }
-extern "C" u32 lbl_eu_806639D8;   // .sdata (foreign)
-extern "C" u32 lbl_eu_806639D0;   // .sdata (foreign)
+extern "C" u32 __RTTI__16CVirtualLightDir;   // .sdata (foreign)
+extern "C" u32 __RTTI__16CVirtualLightObj;   // .sdata (foreign)
 
 // [.data] 0x8056E898-0x8056E8B8 (32B): CVirtualLightDir vtable
 extern "C" u32 lbl_eu_8056E898[8] = {
-    (u32)&lbl_eu_806639D8, 0x00000000,
+    (u32)&__RTTI__16CVirtualLightDir, 0x00000000,
     (u32)&VLBlob::__dt__16CVirtualLightDirFv,
     (u32)&VLBlob::getVirtualLightColor,
     (u32)&VLBlob::getVirtualLightSentinel,
-    (u32)&lbl_eu_806639D0, 0x00000000, 0x00000000,
+    (u32)&__RTTI__16CVirtualLightObj, 0x00000000, 0x00000000,
 };
 
 // [.rodata] 0x80524078-0x805240A0 (40B)

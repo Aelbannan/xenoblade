@@ -126,12 +126,12 @@ extern "C" int WorkEvent28__10IWorkEventFv();
 extern "C" int WorkEvent29__10IWorkEventFv();
 extern "C" int WorkEvent30__10IWorkEventFv();
 extern "C" int WorkEvent31__10IWorkEventFv();
-extern "C" u32 lbl_eu_806639D0[];
+extern "C" u32 __RTTI__16CVirtualLightObj[];
 extern "C" u32 lbl_eu_80663988[];
 extern "C" u32 lbl_eu_80663990[];
 
 extern "C" u32 lbl_eu_8056E8B8[6] = {
-    (u32)&lbl_eu_806639D0, 0x00000000,
+    (u32)&__RTTI__16CVirtualLightObj, 0x00000000,
     (u32)&__dt__16CVirtualLightObjFv,
     (u32)&getVirtualLightColor,
     (u32)&getVirtualLightSentinel,

@@ -25,7 +25,7 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // Pane helpers (retail unmangled).
 extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
+extern "C" void setPaneVisible(void*, u32);
 
 // BDAT text / name helpers (retail unmangled).
 extern "C" u32 BdatGetItemType(u32);
@@ -114,7 +114,6 @@ public:
     nw4r::lyt::AnimTransform* field_0x28;     // 0x28
     u32 field_0x2C;                           // 0x2C - CTagProcessor* (raw)
     u8 mUnk30;                                // 0x30
-    u8 _31[3];                                // 0x31 - padding to 0x33
     s32 field_0x34;                           // 0x34 - state (signed compares)
     u8 mField38;                              // 0x38
     u8 mField39;                              // 0x39

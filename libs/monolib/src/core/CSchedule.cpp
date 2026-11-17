@@ -14,12 +14,12 @@ extern "C" __declspec(align(8)) const char lbl_eu_80524730[16] = {
 
 // === .sdata size=0x8 align=8 ===
 // RTTI locator for "CSchedule" (name ptr + 0).
-extern "C" u32 lbl_eu_80663C08[2] = { (u32)&lbl_eu_80524730, 0x00000000 };
+extern "C" u32 __RTTI__9CSchedule[2] = { (u32)&lbl_eu_80524730, 0x00000000 };
 
 // === .data size=0x10 align=8 ===
 // CSchedule vtable (16B): typeinfo locator + dtor.
 extern "C" u32 lbl_eu_80570068[4] = {
-    (u32)&lbl_eu_80663C08, 0x00000000, (u32)&__dt__9CScheduleFv, 0x00000000,
+    (u32)&__RTTI__9CSchedule, 0x00000000, (u32)&__dt__9CScheduleFv, 0x00000000,
 };
 
 // us-804e7730: CSchedule::__ct__CSchedule()

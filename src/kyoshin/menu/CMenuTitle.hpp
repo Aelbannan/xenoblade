@@ -2,88 +2,67 @@
 
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTitle.hpp"
 
-// CRTP task base - canonical monolib template (declared-only members so the
-// unit cpp can emit the retail out-of-line Move__20CTTask<10CMenuTitle>Fv /
-// Draw__20CTTask<10CMenuTitle>Fv symbols via explicit `template<>`
-// specializations). Member-function-pointer callbacks are dispatched by MWCC
-// through the retail __ptmf_test / __ptmf_scall machinery (r3=this, r12=&ptmf).
+class CProcess;
 
-class CMenuTitle : public CTTask<CMenuTitle> {
+// Title-screen menu task. Bases (retail vtable layout): the CTTask<CMenuTitle>
+// task at +0x00, IWorkEvent at +0x54 and IScnRender at +0x58 (the compiler
+// emits the `@84@` / `@88@` adjustor thunks for the secondary vtables).
+class CMenuTitle : public CTTask<CMenuTitle>, public IWorkEvent, public IScnRender {
 public:
-    CMenuTitle();
+    CMenuTitle(CScn* scene, CTitleAction* action);
+    virtual ~CMenuTitle();
 
-    // TODO: add fields
-};
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
 
-// Allocating factory ctor (retail unmangled symbol `__ct__CMenuTitle`): builds
-// a fresh CMenuTitle object (0xF0 bytes), registers it under the passed parent
-// and returns the stored singleton (or 0 when one already exists). C linkage
-// matches retail; the definition in the .cpp inherits it from this declaration.
-extern "C" CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2);
+    // Only one title menu exists at a time; returns null when one is already
+    // running, otherwise the new instance (also stored in sInstance).
+    static CMenuTitle* create(CProcess* parent, CScn* scene, CTitleAction* action);
 
-// Ctor-time view of the object layout built by __ct__CMenuTitle.
-// 0x00-0x53 matches CTask<CMenuTitle> (CProcess base + two null ptmf slots).
-struct CMenuTitleCtorShim {
-    u8 _00[0x10];        // 0x00-0x0F CDoubleListNode
-    void* vtable;        // 0x10
-    u8 _14[0x28];        // 0x14-0x3B rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 null task callbacks (2x 12-byte ptmf)
-    char* field54;       // 0x54 secondary-base vtable (final vtbl + 0x24)
-    char* field58;       // 0x58 secondary-base vtable (final vtbl + 0xAC)
-    CProcess* parent;    // 0x5C
-    CTitle mTitle;       // 0x60 (0x88 bytes)
-    u8 field_e8;         // 0xE8
-    u8 field_e9;         // 0xE9
-    u8 field_ea;         // 0xEA
-    u8 _pad_eb;          // 0xEB
-    f32 field_ec;        // 0xEC
-}; // sizeof 0xF0
+    static CMenuTitle* sInstance;
 
-// Opaque sub-menu object embedded at offset 0x60 of the menu object handled by
-// the TitleMenuShowSub / TitleMenuHandleInput controller handlers in this TU.
-class CMenuTitleSub {};
+private:
+    // State handlers dispatched through sStateFuncs[mState] from Move().
+    void stateSetReady();
+    void stateOnLoadDone();
+    void stateShowSub();
+    void stateOnAnimDone4();
+    void statePollPress();
+    void stateAdvanceProgress();
+    void stateHandleInput();
+    void stateOnAnimDone2();
+    void stateOnAnimDone9();
+    void stateNoop();
 
-// Layout of the menu object passed to the controller handlers.
-// 0x60: sub-menu object (CTitle_showMenu/775C/75D8/7650/76D4 target).
-// 0xE8/0xE9/0xEA: state bytes written/read by the handler.
-struct CMenuTitleInput {
-    u8 _pad00[0x60];           // 0x00-0x5F
-    CMenuTitleSub mSub;        // 0x60 (empty class, sizeof 1)
-    u8 _pad61[0xE8 - 0x61];    // 0x61-0xE7
-    u8 field_e8;               // 0xE8
-    u8 field_e9;               // 0xE9
-    u8 field_ea;               // 0xEA
-    f32 field_ec;              // 0xEC
-};
+    typedef void (CMenuTitle::*StateFunc)();
+    static const StateFunc sStateFuncs[10];
 
+    /* 0x5C */ CScn* mScene;
+    /* 0x60 */ CTitle mTitle;
+    /* 0xE8 */ u8 mState;       // index into sStateFuncs
+    /* 0xE9 */ u8 mInputEnable; // draw gate / input enable
+    /* 0xEA */ u8 mInputLock;   // transient lock (non-zero blocks input)
+    /* 0xEC */ f32 mProgress;
+}; // size: 0xF0
 
-// Sub-menu handler statics (plain C symbols) called on the +0x60 subobject.
-extern "C" int CTitle_isLoadDone(CMenuTitleSub* sub);
-extern "C" int CTitle_isAnimDone(CMenuTitleSub* sub);
-extern "C" int CTitle_confirmSelection(CMenuTitleSub* sub);
-extern "C" void CTitle_beginLogoOutro(CMenuTitleSub* sub);
-extern "C" void CTitle_beginMenuOutro(CMenuTitleSub* sub);
-extern "C" void CTitle_moveCursorUp(CMenuTitleSub* sub);
-extern "C" void CTitle_moveCursorDown(CMenuTitleSub* sub);
-extern "C" void CTitle_stepLogoMenu(CMenuTitleSub* sub);
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dt__10CMenuTitleFv(void* self);
-extern "C" void cbRenderBefore__10CMenuTitleFv(void* self);
-
-// Factory-ctor imports (retail symbol names).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" CTitle* __ct__CTitle(CTitle* self);
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8053B1AC[]; // intermediate vtable (written first)
-extern char lbl_eu_8053B0B8[]; // final CMenuTitle vtable
-// Singleton pointer for the title menu (.sbss).
-extern CMenuTitle* lbl_eu_80664C30;
-
-// sdata2 float constants referenced by the input handlers.
-extern const f32 lbl_eu_80668FD0; // threshold / set-point for field_ec
-extern const f32 lbl_eu_80668FD4;
-extern const f32 lbl_eu_80668FD8; // per-frame increment for field_ec
-
+// CTitle controller helpers (retail C-linkage, defined in CTitle.cpp).
+extern "C" int CTitle_isLoadDone(CTitle* self);
+extern "C" int CTitle_isAnimDone(CTitle* self);
+extern "C" int CTitle_confirmSelection(CTitle* self);
+extern "C" void CTitle_beginLogoOutro(CTitle* self);
+extern "C" void CTitle_beginMenuOutro(CTitle* self);
+extern "C" void CTitle_moveCursorUp(CTitle* self);
+extern "C" void CTitle_moveCursorDown(CTitle* self);
+extern "C" void CTitle_stepLogoMenu(CTitle* self);
+extern "C" void CTitle_showMenu(CTitle* self);
+extern "C" void CTitle_startLoad(CTitle* self);
+extern "C" void CTitle_teardown(CTitle* self);
+extern "C" void CTitle_update(CTitle* self);
+extern "C" void CTitle_draw(CTitle* self, void* drawInfo);

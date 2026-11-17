@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuItemExchange
 // High-level C/C++ reconstruction from retail PPC.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 #include "kyoshin/CTaskGame.hpp"
 
@@ -8,6 +9,7 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include <monolib/util/FixStr.hpp>
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
@@ -65,7 +67,7 @@ __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
     self->mField74 = arg;
 
     __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
+    __ct__11CTitleAHelpFPcUc(&self->mTitleAHelp, 0, 0);
     __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0, 0);
     __ct__CItemBoxGrid(&self->mItemBoxGrid, 0, 0, 0, 1);
 
@@ -119,7 +121,7 @@ void CMenuItemExchange::Init() {
     // Title/help bar: temp CTitleAHelp (named from the locale string) ->
     // copy -> destroy, then load.
     u8 tmpTitleRaw[0x38];
-    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
+    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
                       BdatTouchStringCell(lbl_eu_80505324, lbl_eu_80505324 + 9, 0x1a), 0);
     ItemEx_CopyTitle(&mTitleAHelp, reinterpret_cast<CTitleAHelp*>(tmpTitleRaw));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
@@ -170,7 +172,7 @@ void CMenuItemExchange::Init() {
  * helper, then the file-handle / layout pointers and the three status bytes.
  * Returns dest (copy-ctor idiom, retail restores r3 to dest before the tail). */
 extern "C" CBgTex* ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src) {
-    __ct__UnkClass_8011C974(&dest->mMemRegion, &src->mMemRegion);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->mMemRegion, &src->mMemRegion);
     dest->mFileHandle = src->mFileHandle;
     dest->mLayout = src->mLayout;
     dest->mLayoutReady = src->mLayoutReady;
@@ -183,7 +185,7 @@ extern "C" CBgTex* ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src) {
  * ItemEx_CopyTitle): the +0x4 mem region via UnkClass_8011C974, then the file
  * handle / layout / anim pointers and the trailing status bytes. */
 extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src) {
-    __ct__UnkClass_8011C974(&dest->unk4, &src->unk4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->unk4, &src->unk4);
     dest->mFileHandle = src->mFileHandle;
     dest->mArcResourceAccessor = src->mArcResourceAccessor;
     dest->mLayout = src->mLayout;
@@ -209,8 +211,8 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     CItemBoxLineView* dest = reinterpret_cast<CItemBoxLineView*>(destArg);
     CItemBoxLineView* src = reinterpret_cast<CItemBoxLineView*>(srcArg);
 
-    __ct__UnkClass_8011C974(&dest->region04[0], &src->region04[0]);
-    __ct__UnkClass_8011C974(&dest->region14[0], &src->region14[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->region04[0], &src->region04[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->region14[0], &src->region14[0]);
 
     // File handles / layout / anim pointers.
     dest->field24 = src->field24;
@@ -245,8 +247,8 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     MenuShopSellCopyCursor(&dest->curB8[0], &src->curB8[0]);
 
     // Item-box-info2 state region: two typed sub-regions + raw body.
-    __ct__UnkClass_8011C974(&dest->info2D0[0x4], &src->info2D0[0x4]);
-    __ct__UnkClass_8011C974(&dest->info2D0[0x14], &src->info2D0[0x14]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->info2D0[0x4], &src->info2D0[0x4]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->info2D0[0x14], &src->info2D0[0x14]);
     for (int i = 0x24; i < 0xB0; i++) {
         dest->info2D0[i] = src->info2D0[i];
     }
@@ -287,8 +289,8 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
 }
 
 extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src) {
-    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(dest) + 4, reinterpret_cast<u8*>(src) + 4);
-    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(dest) + 8, reinterpret_cast<u8*>(src) + 8);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(dest) + 4, reinterpret_cast<u8*>(src) + 4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(dest) + 8, reinterpret_cast<u8*>(src) + 8);
 }
 
 extern "C" void waitForDrawDone__9CDeviceVIFv();
@@ -378,17 +380,13 @@ end:
 body:
     if (IsMenuState621F0() != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        // Raw-storage DrawInfo built/destroyed via pre-mangled ct/dt calls
-        // (a C++ local would virtual-dispatch its scope-exit dtor).
-        u8 drawInfo[0x54];
-        __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+        nw4r::lyt::DrawInfo drawInfo;
+        SetWideLocAdjust(&drawInfo);
+        BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         ItemBoxLine_DrawLayout(reinterpret_cast<CItemBoxLine*>(mItemBoxLine),
-                      reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        DrawItemBoxGrid(&mItemBoxGrid, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        drawHelp(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-        __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
+                      &drawInfo);
+        DrawItemBoxGrid(&mItemBoxGrid, &drawInfo);
+        drawHelp(&mTitleAHelp, &drawInfo);
     }
 }
 

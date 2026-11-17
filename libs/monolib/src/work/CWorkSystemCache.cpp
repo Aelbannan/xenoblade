@@ -226,9 +226,6 @@ extern "C" const char lbl_eu_80524594[28] = {
 };  // "_reslist_base<CCacheItem *>\0"
 
 // Foreign .sdata strings referenced by the locators below.
-extern const char lbl_eu_8066B218[];
-extern const char lbl_eu_8066B220[];
-extern const char lbl_eu_805245C8[];
 
 // Forward declarations for the .data block below (referenced by the .sdata
 // locators above).
@@ -237,21 +234,16 @@ extern "C" u32 lbl_eu_8056FD30[];
 extern "C" u32 lbl_eu_8056FD24[];
 extern "C" u32 lbl_eu_8056FD3C[];
 
-// [.sdata] 0x80663B40-0x80663B78 (56B): RTTI locators + shared "ref"-style
+// [.sdata] 0x80663B40-0x80663B58 (24B): RTTI locators + shared "ref"-style
 // string pointers (u32* slots; same bytes as void* pointer tables).
-extern "C" u32 lbl_eu_80663B40[2] = { (u32)lbl_eu_80524568, (u32)lbl_eu_8056FD10 };
+extern "C" u32 __RTTI__16CWorkSystemCache[2] = { (u32)lbl_eu_80524568, (u32)lbl_eu_8056FD10 };
 extern "C" u32 lbl_eu_80663B48[2] = { (u32)lbl_eu_8052457C, (u32)lbl_eu_8056FD30 };
 extern "C" u32 lbl_eu_80663B50[2] = { (u32)lbl_eu_80524594, 0 };
-extern "C" u32 lbl_eu_80663B58[2] = { (u32)lbl_eu_8066B218, 0 };
-extern "C" u32 lbl_eu_80663B60 = (u32)lbl_eu_8066B220;
-extern "C" u32 lbl_eu_80663B64 = (u32)lbl_eu_8066B220;
-extern "C" u32 lbl_eu_80663B68[2] = { (u32)lbl_eu_8066B220, 0 };
-extern "C" u32 lbl_eu_80663B70[2] = { (u32)lbl_eu_805245C8, 0 };
 
 // [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
 // RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.
 extern "C" u32 lbl_eu_8056FC70[40] = {
-    (u32)&lbl_eu_80663B40, 0x00000000, (u32)&__dt__16CWorkSystemCacheFv,
+    (u32)&__RTTI__16CWorkSystemCache, 0x00000000, (u32)&__dt__16CWorkSystemCacheFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,

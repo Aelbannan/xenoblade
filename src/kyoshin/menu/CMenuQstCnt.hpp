@@ -122,8 +122,6 @@ extern "C" int isQuestLogMenuActive();
 extern "C" char* BuildItemNameStr(u16);
 extern "C" u16 GetU16PairEntry(u16);
 extern "C" u32 SearchThresholdIdx(u16);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" u32 __ptmf_null[];
 extern "C" u32 lbl_eu_8052D238[];
 extern "C" u32 lbl_eu_80536128[];

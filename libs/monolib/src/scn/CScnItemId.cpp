@@ -7,7 +7,7 @@
 #include "monolib/scn/code_804BC9EC.hpp"
 
 // Foreign data labels referenced by the CScnItemId vtable/param block.
-extern "C" u32 lbl_eu_806638B8;
+extern "C" u32 __RTTI__10CScnItemId;
 extern "C" u32 lbl_eu_806624D8;
 // Foreign function referenced by the dispatch table.
 extern "C" void ScnCamNw4r_EmptyHook48();
@@ -27,7 +27,7 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523E98[16] = {
 // === .data size=0x30 align=8 ===
 // CScnItemId vtable (32B).
 extern "C" u32 lbl_eu_8056DCD8[8] = {
-    (u32)&lbl_eu_806638B8, 0x00000000, (u32)&__dt__10CScnItemIdFv, (u32)&scnItemIdNoopB,
+    (u32)&__RTTI__10CScnItemId, 0x00000000, (u32)&__dt__10CScnItemIdFv, (u32)&scnItemIdNoopB,
     (u32)&ScnCamNw4r_EmptyHook48, (u32)&scnItemIdNoopA, (u32)&scnItemIdSelfPlusC, (u32)&scnItemIdGetValue,
 };
 // CScnItemId param block (16B).

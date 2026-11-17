@@ -12,6 +12,7 @@
 #define sysWinApplyKind sysWinApplyKind_csys_dup
 #define CSysWinFull CSysWinFull_csys_dup
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #undef sysWinSwitchKindPane
 #undef sysWinApplyKind
 #undef CSysWinFull
@@ -2594,16 +2595,16 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         *(s16*)&lbl_eu_80664640[6] = *(s16*)&lbl_eu_80664620[6];
 
         // Build the four embedded cursors from stack temps (copy + teardown).
-        CCur18 cur70;
-        __ct__CCur18(&cur70, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->mCur70, &cur70);
-        __dt__6CCur18Fv(&cur70, -1);
+        {
+            CCur18 cur70(CUICfManager_getArcResourceAccessor());
+            MenuShopSellCopyCursor(&this->mCur70, &cur70);
+        }
         this->mCur70.initLayout();
 
-        CCur18 cur88;
-        __ct__CCur18(&cur88, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->mCur88, &cur88);
-        __dt__6CCur18Fv(&cur88, -1);
+        {
+            CCur18 cur88(CUICfManager_getArcResourceAccessor());
+            MenuShopSellCopyCursor(&this->mCur88, &cur88);
+        }
         this->mCur88.initLayout();
 
         u8 curA0[0x18];
@@ -2612,10 +2613,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         __dt__8CBaseCurFv((CBaseCur*)curA0, 0);
         ((CBaseCur*)&this->mCurA0)->initLayout();
 
-        u8 curB8[0x18];
-        __ct__CSubCur((CBaseCur*)curB8, (nw4r::lyt::ArcResourceAccessor*)this->field38);
-        MenuShopSellCopyCursor(&this->mCurB8, curB8);
-        __dt__7CSubCurFv((CBaseCur*)curB8, -1);
+        {
+            CSubCur curB8((nw4r::lyt::ArcResourceAccessor*)this->field38);
+            MenuShopSellCopyCursor(&this->mCurB8, &curB8);
+        }
         ((CBaseCur*)&this->mCurB8)->initLayout();
 
         Cur_ShowTwoSubPanes(&this->mCurB8, 0);

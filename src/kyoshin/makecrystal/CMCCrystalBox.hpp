@@ -587,7 +587,7 @@ extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CMCCrystalInfo(void*);
 extern "C" void __ct__10CScrollBarFUc(void*, int);
-extern "C" void __ct__CSysWin(void*, int);
+extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -706,7 +706,7 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" void __ct__UnkClass_8011C974(void*, void*);   // 4-word mem-region copy
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);   // 4-word mem-region copy
 // (copyScrollBarData is the CScrollBar-data copy; retail symbol is unmangled)
 extern "C" void copyScrollBarData(void*, void*);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);

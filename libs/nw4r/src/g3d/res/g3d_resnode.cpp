@@ -2,9 +2,6 @@
 #include <nw4r/math.h>
 
 // Retail float-pool literals referenced below (1.0f / deg-to-fidx / 0.0f)
-extern const float lbl_eu_80669AA0;
-extern const float lbl_eu_80669AA4;
-extern const float lbl_eu_80669AA8;
 
 namespace nw4r {
 namespace g3d {
@@ -22,7 +19,7 @@ void ResNode::PatchChrAnmResult(ChrAnmResult* pResult) const {
             flags |=
                 ChrAnmResult::FLAG_SCALE_ONE | ChrAnmResult::FLAG_SCALE_UNIFORM;
 
-            pResult->s.x = pResult->s.y = pResult->s.z = lbl_eu_80669AA0;
+            pResult->s.x = pResult->s.y = pResult->s.z = 1.0f;
         } else {
             // Propagate/clear the uniform fast-path flag...
             u32 tmp;
@@ -58,7 +55,7 @@ void ResNode::PatchChrAnmResult(ChrAnmResult* pResult) const {
             f32 fy;
             f32 fz;
             fz = r.rot.z;
-            deg = lbl_eu_80669AA4;
+            deg = 0.7111111f;
             fy = r.rot.y;
             fx = r.rot.x;
 
@@ -80,7 +77,7 @@ void ResNode::PatchChrAnmResult(ChrAnmResult* pResult) const {
             flags |= ChrAnmResult::FLAG_TRANS_ZERO;
 
             pResult->rt._03 = pResult->rt._13 = pResult->rt._23 =
-                lbl_eu_80669AA8;
+                0.0f;
         } else {
             flags &= ~(ChrAnmResult::FLAG_MTX_IDENT |
                        ChrAnmResult::FLAG_ROT_TRANS_ZERO |

@@ -8,12 +8,12 @@
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 extern "C" u32 lbl_eu_80663978[2];  // RTTI locators (owned by CScnItemCamera.cpp)
-extern "C" u32 lbl_eu_80663980[2];
+extern "C" u32 __RTTI__8CScnNw4r[2];
 extern "C" u32 lbl_eu_80663988[2];
 extern "C" u32 lbl_eu_80663990[2];
-extern "C" u32 lbl_eu_80661948[2];  // RTTI CProcess
-extern "C" u32 lbl_eu_80661950[2];  // RTTI CChildListNode
-extern "C" u32 lbl_eu_80661958[2];  // RTTI CDoubleListNode
+extern "C" u32 __RTTI__8CProcess[2];  // RTTI CProcess
+extern "C" u32 __RTTI__14CChildListNode[2];  // RTTI CChildListNode
+extern "C" u32 __RTTI__15CDoubleListNode[2];  // RTTI CDoubleListNode
 
 // [.rodata] 0x80523F98-0x80523FD0 (0x38 = 56B): class name strings.
 extern "C" __declspec(align(8)) const char lbl_eu_80523F98[0x38] = {
@@ -76,7 +76,7 @@ extern "C" u32 lbl_eu_8056E5B8[4] = {
     (u32)&CScnMemBlob::__dt__7CScnMemFv, 0x00000000,
 };
 extern "C" u32 lbl_eu_8056E5C8[45] = {
-    (u32)&lbl_eu_80663980, 0x00000000,
+    (u32)&__RTTI__8CScnNw4r, 0x00000000,
     (u32)&CScnMemBlob::__dt__8CScnNw4rFv,
     (u32)&CScnMemBlob::Reset__14CChildListNodeFv,
     (u32)&CScnMemBlob::Init__4CScnFv,
@@ -84,7 +84,7 @@ extern "C" u32 lbl_eu_8056E5C8[45] = {
     (u32)&CScnMemBlob::Move__4CScnFv,
     (u32)&CScnMemBlob::Draw__4CScnFv,
     (u32)&CScnMemBlob::Tail__8CProcessFv,
-    (u32)&lbl_eu_80663980, 0xFFFFFFAC,
+    (u32)&__RTTI__8CScnNw4r, 0xFFFFFFAC,
     (u32)&CScnMemBlob::fwdScnMemDtor,
     (u32)&CScnMemBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&CScnMemBlob::OnFileEvent__10IWorkEventFP10CEventFile,
@@ -122,25 +122,25 @@ extern "C" u32 lbl_eu_8056E5C8[45] = {
 };
 extern "C" u32 lbl_eu_8056E67C[13] = {
     (u32)&CScnMemBlob::__RTTI__10IWorkEvent, 0x00000054,
-    (u32)&lbl_eu_80661958, 0x00000000,
-    (u32)&lbl_eu_80661950, 0x00000000,
-    (u32)&lbl_eu_80661948, 0x00000000,
+    (u32)&__RTTI__15CDoubleListNode, 0x00000000,
+    (u32)&__RTTI__14CChildListNode, 0x00000000,
+    (u32)&__RTTI__8CProcess, 0x00000000,
     (u32)&lbl_eu_80663990, 0x00000000,
     (u32)&lbl_eu_80663988, 0x00000000,
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056E6B0[11] = {
     (u32)&CScnMemBlob::__RTTI__10IWorkEvent, 0x00000054,
-    (u32)&lbl_eu_80661958, 0x00000000,
-    (u32)&lbl_eu_80661950, 0x00000000,
-    (u32)&lbl_eu_80661948, 0x00000000,
+    (u32)&__RTTI__15CDoubleListNode, 0x00000000,
+    (u32)&__RTTI__14CChildListNode, 0x00000000,
+    (u32)&__RTTI__8CProcess, 0x00000000,
     (u32)&lbl_eu_80663990, 0x00000000,
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056E6DC[7] = {
-    (u32)&lbl_eu_80661958, 0x00000000,
-    (u32)&lbl_eu_80661950, 0x00000000,
-    (u32)&lbl_eu_80661948, 0x00000000,
+    (u32)&__RTTI__15CDoubleListNode, 0x00000000,
+    (u32)&__RTTI__14CChildListNode, 0x00000000,
+    (u32)&__RTTI__8CProcess, 0x00000000,
     0x00000000,
 };
 extern "C" __declspec(align(8)) char lbl_eu_8056E6F8[0x38] = {

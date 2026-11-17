@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CMainMenu
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -5,6 +6,204 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include <string.h>
 #include "kyoshin/CMainMenu.hpp"
+
+// Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
+// Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
+// this TU (extern "C" BdatGetU16ByTableKey signature clash with code_80135FDC.hpp).
+class CArtsInfo {
+public:
+    u8 _00[0x54];
+    u8 field_0x54;
+};
+
+// Mirror of the font object returned by CDeviceFont::getFontInfo; vtable
+// slot 9 (offset 0x24) yields the pane bound by ApplyFontToTxtPanes.
+struct CMainMenuFontView {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable offset 0x24
+};
+
+
+// Gameplay-input gate for the menu-frame dispatch (defined in this TU).
+// Takes the owner like retail (the caller emits mr r3,r31 before the call).
+extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self);
+
+// Per-frame menu handlers (defined in this TU). extern "C" so every
+// referencing reloc carries the exact retail (unmangled) symbol.
+extern "C" void CMainMenu_RefreshFlags(CMainMenu* self);
+extern "C" void CMainMenu_DispatchState(CMainMenu* self);
+extern "C" void CMainMenu_HandleSubInput(CMainMenu* self);
+extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self);
+extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self);
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
+
+// Menu singleton/state guards (defined in their owning menu TUs)
+extern "C" u32 ItemMenu_IsPresent();   // item menu active (CMenuItem.cpp)
+extern "C" u32 isMapSelectActive();   // map-select menu active (CMenuMapSelect.cpp)
+extern "C" u32 Colle_HasInstance();   // collepedia active (CMenuCollepedia.cpp)
+extern "C" u32 KizunagramIsCreated();   // kizunagram active (CMenuKizunagram.cpp)
+extern "C" u32 PlayAward_IsActive();   // play-award active (CMenuPlayAward.cpp)
+extern "C" u32 KizunaList_IsPresent();   // kizuna-talk-list active (CMenuKizunaTalkList.cpp)
+extern "C" u32 hasOptionMenu();   // option menu active (CMenuOption.cpp)
+extern "C" u32 CMenuTutorialList_IsActive();   // tutorial-list active (CMenuTutorialList.cpp)
+extern "C" u32 isQuestLogMenuActive();   // quest-log active (CMenuQuestLog.cpp)
+extern "C" u32 SysWinGetSingleton();   // close-system-menu gate (CHelp_CloseSysMenu.cpp)
+extern "C" u32 isSaveMenuActive();   // save-menu active (CMenuSave.cpp)
+extern "C" u32 SkipTimer_IsActiveFlag();   // update menu active (CMenuUpdate.cpp)
+extern "C" u32 hasQuestWindow();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)
+extern "C" int CUICfManager_hasInUseSlot();   // menu-system close (CUICfManager.cpp)
+extern "C" u32 menuPTStateIsActive();   // party-state screen active (CMenuPTState.cpp)
+extern "C" u32 MakeCrystalIsCreated();   // make-crystal menu active (CMenuMakeCrystal.cpp)
+extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
+
+// Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
+extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+
+// split1 .sdata2 float constants (int->float magic f64 at 0x80666F10,
+// then two 0.0f)
+extern f64 lbl_eu_80666F10;   // 0x80666F10 - s32->f32 conversion constant (0x4330000080000000)
+extern f32 lbl_eu_80666F18;   // 0x80666F18 - anim frame time (0.0f)
+extern f32 lbl_eu_80666F1C;   // 0x80666F1C - HP death threshold (0.0f)
+
+// Presentation/mode bitfield (sibling of lbl_eu_80663E24; split1 .sbss).
+extern u32 lbl_eu_80663E28;
+
+// Resource/flag getter (resource id -> value; defined in CMiniMap.cpp).
+extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
+
+// UnkClass_8045F564 embedded-object lifecycle (defined in split1; normally
+// declared via kyoshin/CArtsInfo.hpp, which this TU cannot include).
+
+// Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
+extern "C" void Cur_SetVisible(void* cur, u8 flag);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+
+// Cursor constructors (defined in kyoshin/CCur.cpp)
+// Font binding imports (CDeviceFont / CLibLayout)
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+
+// Menu pane-position/color helper (defined in code_80135FDC.cpp).
+extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout* layout, const char* paneName,
+                              const void* src, u32 idx);
+// Menu open/close gate (defined in code_80135FDC.cpp).
+extern "C" void BuildSlotItemLists(u32 arg);
+// System-window busy gate (defined in code_80135FDC.cpp).
+extern "C" int IsMenuState621F0();
+// Another menu-open gate (kizuna-talk-list / message-log family).
+extern "C" u32 hasPassiveSkillMenu();
+// Message-log busy gate (CSysWinMsgLog.cpp).
+extern "C" u32 SysWinLog_IsBusy();
+// System window buffer singleton gate (CSysWinBuff.cpp).
+class CSysWinBuff;
+extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
+// Window focus gates (CUICfManager.cpp).
+extern "C" void CUICfManager_queueMapSelectMenu();
+extern "C" void CUICfManager_queuePTStateMenu();
+// Pad-enable/disable and mode gates (cf::CfGameManager).
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+
+// cf::CPad view: only the three flag words this unit reads.
+struct CMainMenuPad {
+    u32 mHeldButtonFlags;       // 0x00
+    u32 mPressedButtonFlags;    // 0x04
+    u32 mTurboPressButtonFlags; // 0x08
+};
+extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
+
+// Cursor activate helper (defined in CCur.cpp).
+extern "C" void Cur_SetActive(CBaseCur* cur);
+// Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
+extern "C" void Cur_DrawLayout(void* cur, nw4r::lyt::DrawInfo* drawInfo);
+
+#include "kyoshin/CTaskGame.hpp"
+// Cursor per-frame update helper (defined in CCur.cpp).
+extern "C" void Cur_Update(void* cur);
+// Pane-config finish gate (defined in CUICfManager.cpp).
+extern "C" void UIWin_CreateExtraWin();
+
+// Sub-menu pane-name table (14 words) and cursor->angle s16 table.
+struct CMainMenuNameTable {
+    const char* name[14];
+};
+extern u32 lbl_eu_804FCE50[];
+extern s16 lbl_eu_804FCD60[];
+// CBaseCur runtime vtable (stored over the stack temp after construction).
+
+// Constructor data symbols (see __ct__CMainMenu in CMainMenu.cpp).
+// CProcess base constructor (abstract class, out-of-line in retail).
+
+// Player view structs for CMainMenu_IsInputBlocked (mirror CfGimmick.hpp layouts).
+// getPlayer returns the +0x3E9C embedded spot object; the player base is the
+// de-biased pointer (base = spot - 0x3E9C).
+struct CMainMenuPlayerSub {
+    u8 _00[0x3B4];
+    u8 field_0x3B4[0x4EC - 0x3B4];  // 0x3B4 - sub-object passed to the spot vfn
+    u32 field_4EC;              // 0x4EC - state flags
+    u8 _4F0[0x530 - 0x4F0];
+    u16 field_530;              // 0x530 - action flags
+};
+
+struct CMainMenuPlayerSpot {
+    void** vtable;              // 0x00 - embedded +0x3E9C sub-object
+    u8 _04[0xC4 - 0x04];
+    CMainMenuPlayerSub* field_0xC4;   // 0xC4 - battle-state sub-object
+};
+struct CMainMenuPlayer {
+    void** vtable;              // 0x00 - slot 0x128 yields HP (float)
+    u8 _04[0x3E9C - 0x04];
+    CMainMenuPlayerSpot spot;   // 0x3E9C (0xC8 bytes; field_0xC4 == player+0x3F60)
+};
+extern "C" CMainMenuPlayerSpot* getPlayer__Q22cf13CfGameManagerFi(int index);
+
+// Typed head views for the raw back-adjust thunks/recoveries in CMainMenu.cpp:
+// the +0x58/+0x5C sub-objects and the +0x3E9C player spot are addressed
+// through sized byte-head pointer arithmetic ((Head*)p - 1) instead of raw
+// (char*)-offset. Layout matches CMainMenu / CMainMenuPlayer exactly.
+struct CMainMenuPlayerHead {
+    u8 head_00[0x3E9C];              // bytes preceding CMainMenuPlayer::spot
+};
+
+// cf::CBattleManager battle-list view (sentinel node at +0x8, nodes at +0x0).
+struct CMainMenuBattleNode {
+    CMainMenuBattleNode* next;  // 0x00
+};
+struct CMainMenuBattleMgr {
+    u8 _0[0x8];
+    CMainMenuBattleNode* list;  // 0x8 - sentinel node
+};
+#include "kyoshin/cf/CBattleManagerApi.hpp"
+
+#include "kyoshin/code_801F3BE0.hpp"
+
+// CSubCur view at +0xA8 (CBaseCur layout, 0x16 bytes). Cast-only iface for
+// the vtable+0x10 dispatch (setRootPaneTranslate, takes a translate VEC3).
+
+// Menu dispatch handlers (defined in CUICfManager.cpp / menu TUs)
+extern "C" int MenuTutorialIsCreated();            // party-change notice gate
+extern "C" void CUICfManager_queueBaseMenuItem();
+extern "C" void CUICfManager_queueMakeCrystalMenu();
+extern "C" void CUICfManager_queueCollepediaMenu();
+extern "C" void CUICfManager_queueArtsSetMenu();
+extern "C" void CUICfManager_queuePassiveSkillMenu();
+extern "C" void CUICfManager_queueQuestLogMenu(u32 value);
+extern "C" void CUICfManager_queueKizunagramMenu(u32 value);
+extern "C" void CUICfManager_queueKizunaTalkMenu();
+extern "C" void CUICfManager_queuePlayAwardMenu();
+extern "C" void CUICfManager_queueSkipTimerMenu();
+extern "C" void CUICfManager_queueTutorialListMenu(u32 value);
+extern "C" void CUICfManager_queueSaveMenu(int a, int b);
+extern "C" void CUICfManager_openSaveMenu();
+extern "C" void CUICfManager_queueOptionMenu(u32 value);
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -73,90 +272,95 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 // CBaseCur shared helpers (defined in CCur.cpp)
 extern "C" void Cur_DeactivateTail(CBaseCur* cur);
 
-// Destructor for CBaseCur-derived class at vtable 0x800FEA30.
-// Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
-// conditionally operator delete, return this.
-void* __dt__800FEA30(void* _this, int flags) {
-    if (_this) {
-        __dt__8CBaseCurFv(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
+CMainCur::~CMainCur() {}
+
+void CMainCur::initLayout() {
+    buildLayout(&mpLayout, mArcResAcc, "mf01_main21_cursor.brlyt");
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, "mf01_main21_cursor_roop.brlan");
+    bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, "mf01_main21_cursor_on.brlan");
+    mpLayout->UnbindAllAnimation();
+    Cur_DeactivateTail(this);
+}
+
+// Moves the "Param" pane to the cursor position.
+void CMainCur::setRootPaneTranslate(const nw4r::math::VEC3* pos) {
+    nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName("txt_cursor", true);
+    if (pane != NULL) {
+        pane->SetSRTElement(0, pos->x);
+        pane->SetSRTElement(1, pos->y);
+        pane->SetSRTElement(2, pos->z);
     }
-    return _this;
 }
 
-void* CMainMenu_GetInstancePtr(void) {
-    extern u32 lbl_eu_80663F18;
-    return (void*)(uintptr_t)lbl_eu_80663F18;
+CMainMenu::CMainMenu(CScn* scene)
+    : field_0x70(scene),
+      field_0x74(nullptr),
+      field_0x78(nullptr),
+      field_0x7C(nullptr),
+      field_0x80(nullptr),
+      field_0x84(nullptr),
+      field_0x88(nullptr),
+      field_0x8C(nullptr),
+      mMainCur(nullptr),
+      mSubCur(nullptr),
+      field_0xC0(3),
+      field_0xC4(0),
+      field_0xE0(0) {
+    mMoveFunc = static_cast<MoveFunc>(&CMainMenu::moveWaitLoad);
 }
 
-// Destructor for CProcess-derived class at vtable 0x800FED0C.
-// The nested null-check reproduces MWCC's D2-inlined-into-D1 pattern
-// (D2 has its own null guard, preserved when inlined).
-void* __dt__800FED0C(void* _this, int flags) {
-    if (_this) {
-        if (_this) {
-            __dt__8CProcessFv(_this, 0);
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
+CMainMenu::~CMainMenu() {}
+
+CMainMenu* CMainMenu_GetInstancePtr() {
+    return CMainMenu::sInstance;
+}
+
+static const char* sArcName = "menu/jp/MainMenu.arc";
+
+// Requests the menu layout archive; OnFileEvent runs when it has loaded.
+void CMainMenu::Init() {
+    field_0x74 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), sArcName, this, 0, 0);
+}
+
+// Waits for the VI draw to complete, drops the render callback and the file
+// handle, shuts both cursors down, deletes the layout, releases the arc
+// accessor and the memory region, then clears the singleton.
+void CMainMenu::Term() {
+    CDeviceVI::waitForDrawDone();
+    field_0x70->removeRenderCB(this);
+    closeFileHandle(&field_0x74);
+    mMainCur.cleanup();
+    mSubCur.cleanup();
+    if (field_0x7C != 0) {
+        delete field_0x7C;
+        field_0x7C = 0;
     }
-    return _this;
+    releaseArcResourceAccessor(field_0x78);
+    field_0x78 = 0;
+    mMemRegion.deleteRegion();
+    sInstance = nullptr;
 }
 
-// CMainMenu::~CMainMenu() - virtual destructor (D1/D2 merged).
-// Destroys subobjects in reverse order: CSubCur at +0xA8, CBaseCur at +0x90,
-// UnkClass_8045F564 at +0x60, CProcess at 0x00, then conditionally frees memory.
-// The addic. for CBaseCur and the nested CProcess null-checks are MWCC
-// D2-inlined-into-D1 artifacts.
-extern "C" void* __dt__9CMainMenuFv(CMainMenu* _this, int flags) {
-    if (_this) {
-        CBaseCur* subCur = (CBaseCur*)&_this->subCur;
-        __dt__7CSubCurFv(subCur, -1);
-        CBaseCur* baseCur = (CBaseCur*)&_this->_90[0];
-        if (baseCur) {
-            __dt__8CBaseCurFv(baseCur, 0);
-        }
-        __dt__17UnkClass_8045F564Fv(&_this->_60[0], -1);
-        if (_this) {
-            if (_this) {
-                __dt__8CProcessFv(_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+static const s16 sCursorPosX[] = {-192, -128, -64, 0, 64, 128, 192};
 
-
-extern u32 lbl_eu_8052BDF4[];
-
-// Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
-// guarded by field_0x74 to ensure one-shot initialization.
-extern "C" void CMainMenu_LoadStateTriplet(CMainMenu* self) {
-    if (self->field_0x74 != 0) {
+// First move function: wait until the layout archive has been consumed by
+// OnFileEvent, then switch to the main update.
+void CMainMenu::moveWaitLoad() {
+    if (field_0x74 != nullptr) {
         return;
     }
-    u32 v0;
-    u32 *p = (u32 *)lbl_eu_8052BDF4;
-    v0 = p[0];
-    self->field_0x40 = p[1];
-    self->field_0x3C = v0;
-    self->field_0x44 = p[2];
+    mMoveFunc = static_cast<MoveFunc>(&CMainMenu::moveMain);
 }
 
-extern "C" void CMainMenu_Update(CMainMenu* self) {
+void CMainMenu::moveMain() {
+    CMainMenu* self = this;
     // Main-menu frame update: gate on the system window, refresh the menu
     // availability flags, then dispatch on the current state.
     if (IsMenuState621F0() == 0) {
         return;
     }
     if (lbl_eu_80663E24 & 0xAFE40000) {
-        self->field_0x54 = 1;
+        self->mField54 = 1;
         return;
     }
     if (SysWinLog_IsBusy() != 0) return;
@@ -189,7 +393,7 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
     case 1:
         // Cursor-select: once the intro animation finishes, set the current
         // cursor number (or its placeholder) and activate the cursor.
-        if (advanceAnimTransform(self->field_0x80, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x80, 1.0f) == 0) {
             break;
         }
         // Strings hoisted above the branch like retail; MWCC colors the
@@ -199,17 +403,17 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
             char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+                s1 = BdatTouchStringCell("MNU_main", "name", n);
+                s2 = BdatTouchStringCell("MNU_main", "help", n);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
-                              lbl_eu_804FCEBC + 0x89, 0);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
-                              lbl_eu_804FCEBC + 0x89, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject",
+                              "", 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess",
+                              "", 0);
             }
-            Cur_SetVisible(&self->_90[0], 1);
+            Cur_SetVisible(&self->mMainCur, 1);
             self->field_0xE0 = 2;
         }
         break;
@@ -219,10 +423,10 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
         break;
     case 3:
         // Exit: once the close animation finishes, mark the menu idle.
-        if (advanceAnimTransform(self->field_0x84, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x84, 1.0f) == 0) {
             break;
         }
-        self->field_0x54 = 1;
+        self->mField54 = 1;
         self->field_0xE0 = 0;
         break;
     case 4:
@@ -247,7 +451,7 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
         break;
     case 7:
         // Cursor-exit: like case 1 but driven by the exit animation.
-        if (advanceAnimTransform(self->field_0x8C, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x8C, 1.0f) == 0) {
             break;
         }
         // Strings hoisted above the branch like case 1.
@@ -256,15 +460,15 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
             char* s2;
             int n = self->field_0xC0 + 1;
             if (n > 0) {
-                s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, n);
-                s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, n);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+                s1 = BdatTouchStringCell("MNU_main", "name", n);
+                s2 = BdatTouchStringCell("MNU_main", "help", n);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
             } else {
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71,
-                              lbl_eu_804FCEBC + 0x89, 0);
-                LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c,
-                              lbl_eu_804FCEBC + 0x89, 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject",
+                              "", 0);
+                LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess",
+                              "", 0);
             }
             self->field_0xE0 = 2;
         }
@@ -276,104 +480,22 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
 
     // Epilogue: animate the layout and advance both cursors.
     self->field_0x7C->Animate(0);
-    Cur_Update(&self->_90[0]);
-    Cur_Update(&self->subCur);
+    Cur_Update(&self->mMainCur);
+    Cur_Update(&self->mSubCur);
 }
 
-// File-event handler (retail symbol __ct__800FF300): fires when the menu
+// File-event handler: fires when the menu
 // layout arc finished loading. Same shape as COption::OnFileEvent: open a
 // scratch heap region (RAII Class_8045F858 guard), detach the file handle,
 // attach it to a fresh ArcResourceAccessor, build the layout + four
 // animations, bind the device font, reset text panes and animation state,
 // then build both cursors on the stack and copy them into their slots.
-// CMainMenu constructor (retail symbol __ct__CMainMenu: the split symbol
-// carries no class-length mangling, so it stays a plain C-linkage global
-// function rather than a member ctor - same idiom as __ct__CSimpleEveTalkWin).
-//
-// Runs CProcess's ctor then fills the IWorkEvent base region by hand (base
-// ctor is out-of-line in retail, its effects are emitted inline here): the
-// vtable at +0x10 is written twice (temp vtable lbl_eu_8052BF70, then the
-// composite vtable lbl_eu_8052BE24 whose +0x24/+0xAC sub-tables back the
-// +0x58/+0x5C interface pointers), the two __ptmf_null callback slots are
-// copied, the embedded UnkClass_8045F564 region and both cursors are
-// constructed, and finally the move-callback hook lbl_eu_8052BDE8 is installed.
-extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(_this));
-    _this->mVtable = (void*)lbl_eu_8052BF70;
-
-    // Composite vtable base and its two interface sub-table pointers,
-    // materialized before the callback copy so MWCC schedules their lis/addi
-    // ahead of the __ptmf_null base (same shape as __ct__CSysWinSelect).
-    char* compVt = lbl_eu_8052BE24;
-    u32 evtVt = (u32)(compVt + 0x24);
-    u32 scnVt = (u32)(compVt + 0xac);
-
-    // Copy the null member-function pointer into both callback slots (store
-    // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50). Post-increment derefs of a
-    // local pointer make MWCC fold the first access into `lwzu` instead of an
-    // extra addi-materialised pointer - cf. CTaskGameEvt / CSysWinSelect.
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    _this->field_0x40 = w1;
-    _this->field_0x3C = w0;
-    u32 w2 = *src++;
-    _this->field_0x44 = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    _this->field_0x4C = w0;
-    _this->field_0x48 = w1;
-    w2 = *src++;
-    _this->field_0x50 = w2;
-
-    _this->field_0x54 = 0;
-    _this->field_0x55 = 0;
-    _this->mVtable = (void*)compVt;
-    _this->mIWorkEventVtbl = evtVt;
-    _this->field_0x5C = scnVt;
-
-    __ct__17UnkClass_8045F564Fv(&_this->_60[0]);
-
-    CBaseCur* baseCur = (CBaseCur*)&_this->_90[0];
-    _this->field_0x70 = scene;
-    _this->field_0x74 = NULL;
-    _this->field_0x78 = NULL;
-    _this->field_0x7C = NULL;
-    _this->field_0x80 = NULL;
-    _this->field_0x84 = NULL;
-    _this->field_0x88 = NULL;
-    _this->field_0x8C = NULL;
-    __ct__8CBaseCurFv(baseCur, NULL);
-    baseCur->vtbl() = (void*)lbl_eu_8052BF28;
-    __ct__CSubCur((CBaseCur*)&_this->subCur, NULL);
-
-    _this->field_0xC0 = 3;
-
-    // Install the move-callback hook. Retail folds the symbol's low half into
-    // an update-form first load, then reads words 1/2 relative to the advanced
-    // pointer; store order is 0x40, 0x3C, 0x44.
-    // v0-before-pointer declaration order: the lwzu result claims r4 and the
-    // base pointer takes r5 (cf. VisionTell_PlaySlot1).
-    u32 h0;
-    u32* hook = lbl_eu_8052BDE8;
-    _this->field_0xC4 = 0;
-    _this->field_0xE0 = 0;
-    h0 = *hook++;
-    _this->field_0x40 = hook[0];
-    _this->field_0x3C = h0;
-    _this->field_0x44 = hook[1];
-    return _this;
-}
-
-extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
+bool CMainMenu::OnFileEvent(CEventFile* pEventFile) {
+    CMainMenu* self = this;
     if (self->field_0x74 == pEventFile->mFileHandle) {
-        // Long-lived rodata base: retail caches lbl_eu_804FCEBC in a
-        // callee-saved register and offsets every resource name from it.
-        char* base = lbl_eu_804FCEBC;
-        reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->createRegion(
-            mtl::MemManager::getHandleMEM2(), 0xCC00, &base[0x8a], 0);
-        Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&self->_60[0]));
+        self->mMemRegion.createRegion(
+            mtl::MemManager::getHandleMEM2(), 0xCC00, "CMainMenu", 0);
+        Class_8045F858 memHost(&self->mMemRegion);
 
         // Take ownership of the loaded file data (getData clears the handle's
         // data pointer) and release the loader's lock.
@@ -381,16 +503,16 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
 
     self->field_0x78 = CLibLayout::createArcResourceAccessor();
-            self->field_0x78->Attach(fileData, &base[0x94]);
-            buildLayout(&self->field_0x7C, self->field_0x78, &base[0x98]);
+            self->field_0x78->Attach(fileData, "arc");
+            buildLayout(&self->field_0x7C, self->field_0x78, "mf01_main00_icon.brlyt");
             bindLayoutAnimTransform(self->field_0x7C, &self->field_0x80, self->field_0x78,
-                          &base[0xaf]);
+                          "mf01_main00_icon_in.brlan");
             bindLayoutAnimTransform(self->field_0x7C, &self->field_0x84, self->field_0x78,
-                          &base[0xc9]);
+                          "mf01_main00_icon_out.brlan");
             bindLayoutAnimTransform(self->field_0x7C, &self->field_0x88, self->field_0x78,
-                          &base[0xe4]);
+                          "mf01_main00_icon_sub_in.brlan");
             bindLayoutAnimTransform(self->field_0x7C, &self->field_0x8C, self->field_0x78,
-                          &base[0x102]);
+                          "mf01_main00_icon_sub_out.brlan");
 
             // Bind the device font: ask the font object for its pane (vtable+0x24)
             // and push it onto the layout root.
@@ -401,64 +523,28 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
                     ->sf9());
 
-            LayoutSetTextBoxFmtValue(self->field_0x7C, &base[0x71], &base[0x89], 0);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, &base[0x7c], &base[0x89], 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
 
             // Park all animations except the intro (anim0), which stays enabled.
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, true);
-            self->field_0x80->SetFrame(lbl_eu_80666F1C);
+            self->field_0x80->SetFrame(0.0f);
             self->field_0x7C->Animate(0);
 
-            // Build the base cursor on the stack and copy its members into +0x90
-            // (implicit copy-assign skips the vptr), then run its init virtual.
-            {
-                u8 temp[0x18];
-                __ct__8CBaseCurFv((CBaseCur*)temp, self->field_0x78);
-                ((CBaseCur*)temp)->vtbl() = (void*)lbl_eu_8052BF28;
-                ((CBaseCur*)&self->_90[0])->mArcResAcc = ((CBaseCur*)temp)->mArcResAcc;
-                ((CBaseCur*)&self->_90[0])->mpLayout = ((CBaseCur*)temp)->mpLayout;
-                ((CBaseCur*)&self->_90[0])->mpAnimTrans0 = ((CBaseCur*)temp)->mpAnimTrans0;
-                ((CBaseCur*)&self->_90[0])->mpAnimTrans1 = ((CBaseCur*)temp)->mpAnimTrans1;
-                ((CBaseCur*)&self->_90[0])->mActive = ((CBaseCur*)temp)->mActive;
-                ((CBaseCur*)&self->_90[0])->mVisible = ((CBaseCur*)temp)->mVisible;
-                __dt__8CBaseCurFv(temp, 0);
-                ((CBaseCur*)&self->_90[0])->initLayout();
-            }
-            // Build the sub cursor on the stack and copy its members into +0xA8.
-            {
-                u8 temp[0x18];
-                __ct__CSubCur((CBaseCur*)temp, self->field_0x78);
-                ((CMainMenuSubCurView*)&self->subCur)->mArcResAcc =
-                    ((CMainMenuSubCurView*)temp)->mArcResAcc;
-                ((CMainMenuSubCurView*)&self->subCur)->mpLayout =
-                    ((CMainMenuSubCurView*)temp)->mpLayout;
-                ((CMainMenuSubCurView*)&self->subCur)->mpAnimTrans0 =
-                    ((CMainMenuSubCurView*)temp)->mpAnimTrans0;
-                ((CMainMenuSubCurView*)&self->subCur)->mpAnimTrans1 =
-                    ((CMainMenuSubCurView*)temp)->mpAnimTrans1;
-                ((CMainMenuSubCurView*)&self->subCur)->mActive =
-                    ((CMainMenuSubCurView*)temp)->mActive;
-                ((CMainMenuSubCurView*)&self->subCur)->mVisible =
-                    ((CMainMenuSubCurView*)temp)->mVisible;
-                __dt__7CSubCurFv((CBaseCur*)temp, -1);
-                ((CBaseCur*)&self->subCur)->initLayout();
-            }
+            mMainCur = CMainCur(field_0x78);
+            mMainCur.initLayout();
+            mSubCur = CSubCur(field_0x78);
+            mSubCur.initLayout();
 
             CMainMenu_RefreshFlags(self);
 
-            // Register the render callback slot (+0x5C) with the owning scene; the
-            // null-check branch is the standard cross-cast idiom.
-            IScnRender* render = reinterpret_cast<IScnRender*>(self);
-            if (self != NULL) {
-                render = reinterpret_cast<IScnRender*>(&self->field_0x5C);
-            }
-            self->field_0x70->addRenderCB(render, 0xa, 0);
+            field_0x70->addRenderCB(this, 0xa, 0);
 
             self->field_0x74 = NULL;
-            reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->validateHeap();
+            self->mMemRegion.validateHeap();
             return true;
     }
     return false;
@@ -469,16 +555,6 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
 // offset 0x19: brlan name (e.g. "mf00_menu_in.brlan")
 // offset 0x37: brlan name (e.g. "mf00_menu_out.brlan")
 // offset 0x53: pane name "Param"
-
-// VUpdate() override for the CBaseCur-derived class embedded at CMainMenu+0x90.
-// Loads the layout and two animation transforms, then initializes via Cur_DeactivateTail.
-extern "C" void BaseCur_BuildLayout(CBaseCur* self) {
-    buildLayout(&self->mpLayout, self->mArcResAcc, &lbl_eu_804FCEBC[0]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_804FCEBC[0x19]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_804FCEBC[0x37]);
-    self->mpLayout->UnbindAllAnimation();
-    Cur_DeactivateTail(self);
-}
 
 // Render callback: draws the menu layout and its two embedded cursors.
 // Gated on task-busy state, the global mode bitfield (bit 10), the
@@ -498,52 +574,28 @@ void CMainMenu::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     drawLayout(field_0x7C, &drawInfo, 0, 1);
-    Cur_DrawLayout(&this->_90[0], &drawInfo);
-    Cur_DrawLayout(&this->subCur, &drawInfo);
+    Cur_DrawLayout(&mMainCur, &drawInfo);
+    Cur_DrawLayout(&mSubCur, &drawInfo);
 }
 
-// Finds the "Param" pane in the layout's root pane and sets its translate
-// to the given position (3 floats: x, y, z).
-void CMainMenu::setParamPaneTranslate(float* pos) {
-    nw4r::lyt::Pane* pane =
-        field_0x08->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
-    if (pane != NULL) {
-        pane->SetSRTElement(0, pos[0]);
-        pane->SetSRTElement(1, pos[1]);
-        pane->SetSRTElement(2, pos[2]);
+CMainMenu* CMainMenu::sInstance;
+
+CMainMenu* CMainMenu::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
+    CMainMenu* menu = new (CWorkThreadSystem::getWorkMem()) CMainMenu(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
-extern u32 lbl_eu_80663F18;
-
-// Creates the CMainMenu singleton: allocates from work memory,
-// constructs via the unmangled retail ctor fragment __ct__CMainMenu,
-// stores in lbl_eu_80663F18, and registers as a child of the given CProcess.
-// Returns NULL if already created.
-extern "C" void* CMainMenu_Create(void* parent, void* param) {
-    if (lbl_eu_80663F18) {
-        return NULL;
-    }
-    u32 workMem = CWorkThreadSystem::getWorkMem();
-    CMainMenu* menu = (CMainMenu*)mtl::MemManager::allocate(0xE4, workMem);
-    if (menu != NULL) {
-        // __ct__CMainMenu returns _this; keep the value in the return reg
-        // so MWCC needs no extra spill across the call.
-        menu = __ct__CMainMenu(menu, (CScn*)param);
-    }
-    lbl_eu_80663F18 = (u32)menu;
-    Regist__8CProcessFP8CProcessb(menu, parent, false);
-    return (void*)lbl_eu_80663F18;
-}
-
-extern u32 lbl_eu_80663F18;
-
-// Returns 1 if isMenuOpen() is non-zero, else booleanizes lbl_eu_80663F18.
+// Returns 1 if isMenuOpen() is non-zero, else checks the singleton.
 extern "C" u32 CMainMenu_IsOpen(CMainMenu* self) {
-    if (isAnyMenuOpen__9CMainMenuFv() != 0) {
+    if (CMainMenu::isAnyMenuOpen() != 0) {
         return 1;
     }
-    return lbl_eu_80663F18 != 0 ? 1 : 0;
+    return CMainMenu::sInstance != nullptr ? 1 : 0;
 }
 
 int CMainMenu::isAnyMenuOpen() {
@@ -569,10 +621,10 @@ int CMainMenu::isAnyMenuOpen() {
 // Returns 1 if isMenuOpen() is non-zero, else checks the global CMainMenu
 // singleton's field_0xE0 for states 4 or 8 (active/invite).
 extern "C" u32 CMainMenu_CheckOpenState() {
-    if (isAnyMenuOpen__9CMainMenuFv() != 0) {
+    if (CMainMenu::isAnyMenuOpen() != 0) {
         return 1;
     }
-    CMainMenu* menu = (CMainMenu*)(uintptr_t)lbl_eu_80663F18;
+    CMainMenu* menu = CMainMenu::sInstance;
     if (menu == NULL) {
         return 0;
     }
@@ -581,20 +633,6 @@ extern "C" u32 CMainMenu_CheckOpenState() {
     }
     // cntlzw trick: returns 1 if field_0xE0 == 8, else 0
     return (menu->field_0xE0 == 8) ? 1 : 0;
-}
-
-// CMainMenu::Init - loads the menu layout file via CDeviceFile::readFile.
-// The IWorkEvent at offset 0x58 receives OnFileEvent when the load completes.
-extern u32 lbl_eu_80661DC0;
-
-void CMainMenu::Init() {
-    // Get IWorkEvent pointer at offset 0x58 (NULL-safe: if this is NULL, workEvent stays NULL)
-    void* workEvent = this;
-    if (this) {
-        workEvent = &this->mIWorkEventVtbl;
-    }
-    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    field_0x74 = CDeviceFile::readFile(handle, (const char*)lbl_eu_80661DC0, (IWorkEvent*)workEvent, 0, 0);
 }
 
 extern "C" void ArtsInfo_SetReadyFlag(CArtsInfo* self) {
@@ -630,11 +668,9 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
-        // Retail materializes the rodata base only here, after the anim calls.
-        char* base = lbl_eu_804FCEBC;
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
-        Cur_SetVisible(&self->_90[0], 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
+        Cur_SetVisible(&self->mMainCur, 0);
         playUISound(9);
         self->field_0xE0 = 3;
         return;
@@ -685,29 +721,24 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         if (idx < 0) {
             self->field_0xC0 = 6;
         }
-        // Retail loads the layout via the embedded CBaseCur mpLayout (+0x98),
-        // not field_0x7C, then takes the +0x10 root pane.
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)(
-            (u8*)((CBaseCur*)&self->_90[0])->mpLayout + 0x10);
-        nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+        nw4r::lyt::Pane* pane =
+            self->mMainCur.mpLayout->GetRootPane()->FindPaneByName("txt_cursor", true);
         nw4r::math::VEC3 vec;
         if (pane != NULL) {
             vec = pane->GetTranslate();
         }
-        vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CBaseCur*)&self->_90[0])->setRootPaneTranslate(&vec);
+        vec.x = sCursorPosX[self->field_0xC0];
+        self->mMainCur.setRootPaneTranslate(&vec);
         // Refresh the "N" counter panes for the new cursor index.
         int n = self->field_0xC0 + 1;
         if (n > 0) {
-            char* base = lbl_eu_804FCEBC;
-            char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, n);
-            char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, n);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
+            char* s1 = BdatTouchStringCell("MNU_main", "name", n);
+            char* s2 = BdatTouchStringCell("MNU_main", "help", n);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
         } else {
-            char* base = lbl_eu_804FCEBC;
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
         }
         playUISound(0x6a);
         return;
@@ -717,26 +748,23 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         if (++self->field_0xC0 > 6) {
             self->field_0xC0 = 0;
         }
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)(
-            (u8*)((CBaseCur*)&self->_90[0])->mpLayout + 0x10);
-        nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+        nw4r::lyt::Pane* pane =
+            self->mMainCur.mpLayout->GetRootPane()->FindPaneByName("txt_cursor", true);
         nw4r::math::VEC3 vec;
         if (pane != NULL) {
             vec = pane->GetTranslate();
         }
-        vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CBaseCur*)&self->_90[0])->setRootPaneTranslate(&vec);
+        vec.x = sCursorPosX[self->field_0xC0];
+        self->mMainCur.setRootPaneTranslate(&vec);
         int n = self->field_0xC0 + 1;
         if (n > 0) {
-            char* base = lbl_eu_804FCEBC;
-            char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, n);
-            char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, n);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
+            char* s1 = BdatTouchStringCell("MNU_main", "name", n);
+            char* s2 = BdatTouchStringCell("MNU_main", "help", n);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
         } else {
-            char* base = lbl_eu_804FCEBC;
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
-            LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+            LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
         }
         playUISound(0x6a);
         return;
@@ -757,136 +785,131 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         case 0:
         case 3:
             // Header entries: activate the main cursor and enter screen-open state.
-            Cur_SetActive((CBaseCur*)&self->_90[0]);
+            Cur_SetActive(&self->mMainCur);
             self->field_0xE0 = 4;
             playUISound(0x6b);
             return;
         case 1: {
-            char* base = lbl_eu_804FCEBC;
             // Retail: first three entries on, rest off (0x16c is OFF).
-            MENU_SET_PANE_FLAG(self, base + 0x142, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x150, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x15e, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_01", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_02", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_03", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_04", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_03", 0, true);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0x88->SetFrame(0.0f);
             self->field_0xE0 = 5;
             playUISound(0x6c);
             return;
         }
         case 2: {
-            char* base = lbl_eu_804FCEBC;
             // Retail: 0x16c+0x17a on (page-2 pair), rest off.
-            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x16c, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x17a, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_01", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_02", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_04", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_03", 0, true);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0x88->SetFrame(0.0f);
             self->field_0xE0 = 5;
             playUISound(0x6c);
             return;
         }
         case 4: {
-            char* base = lbl_eu_804FCEBC;
             // Retail: 0x188..0x1b2 on (four), rest off.
-            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x188, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x196, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1a4, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1b2, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_01", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_02", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_03", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_04", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_03", 0, true);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0x88->SetFrame(0.0f);
             self->field_0xE0 = 5;
             playUISound(0x6c);
             return;
         }
         case 5: {
-            char* base = lbl_eu_804FCEBC;
             // Retail: 0x1c0+0x1ce on, rest off.
-            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1c0, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ce, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_04", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_01", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_02", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_03", 0, true);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0x88->SetFrame(0.0f);
             self->field_0xE0 = 5;
             playUISound(0x6c);
             return;
         }
         case 6: {
-            char* base = lbl_eu_804FCEBC;
             // Retail: last three on (0x1dc..0x1f8); all FindPane recurse=true.
-            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1dc, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1ea, 1, true);
-            MENU_SET_PANE_FLAG(self, base + 0x1f8, 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base02_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base03_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_03", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base05_04", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_01", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base06_02", 0, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_01", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_02", 1, true);
+            MENU_SET_PANE_FLAG(self, "pic_base07_03", 1, true);
             self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0x88->SetFrame(0.0f);
             self->field_0xE0 = 5;
             playUISound(0x6c);
             return;
@@ -901,10 +924,9 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
-        char* base = lbl_eu_804FCEBC;
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
-        Cur_SetVisible(&self->_90[0], 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
+        Cur_SetVisible(&self->mMainCur, 0);
         playUISound(9);
         self->field_0xE0 = 3;
         return;
@@ -919,7 +941,7 @@ done:
 extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
     // the current (state, sub-state) pair, then park the state at 6 (idle).
-    if (advanceAnimTransform(self->field_0x88, lbl_eu_80666F18) == 0) {
+    if (advanceAnimTransform(self->field_0x88, 1.0f) == 0) {
         return;
     }
     self->field_0xC4 = 0;
@@ -955,10 +977,8 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
         }
         if (cond != 0) idx = 0x16;
     }
-    // Hoisted rodata base: retail keeps it in r29 and offsets from it.
-    char* base = lbl_eu_804FCEBC;
     char buf[0x20];
-    sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+    sprintf(buf, "pic_base%02d_%02d", self->field_0xC0 + 1, self->field_0xC4 + 1);
     // First two lookups go through the root-pane virtual; the fourth argument
     // of ScalePaneWorldPos is the layout's raw +0x10 root pointer (no dispatch).
     // Declaration order nudges MWCC's callee-saved coloring.
@@ -966,23 +986,23 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
     nw4r::lyt::Pane* pane2;
     nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
     pane1 = root->FindPaneByName(buf, true);
-    pane2 = root->FindPaneByName(base + 0x133, true);
+    pane2 = root->FindPaneByName("nul_proportion", true);
     nw4r::math::VEC3 vec;
     // Fourth argument reloads the raw root pointer (no dispatch).
     ScalePaneWorldPos(&vec, pane1, pane2,
                   *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-    ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
+    self->mSubCur.setRootPaneTranslate(&vec);
     if (idx > 0) {
-        char* s1 = BdatTouchStringCell(base + 0x5e, base + 0x67, idx);
-        char* s2 = BdatTouchStringCell(base + 0x5e, base + 0x6c, idx);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, s1, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, s2, 0);
+        char* s1 = BdatTouchStringCell("MNU_main", "name", idx);
+        char* s2 = BdatTouchStringCell("MNU_main", "help", idx);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
     } else {
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
     }
-    Cur_SetVisible(&self->_90[0], 0);
-    Cur_SetVisible(&self->subCur, 1);
+    Cur_SetVisible(&self->mMainCur, 0);
+    Cur_SetVisible(&self->mSubCur, 1);
     self->field_0xE0 = 6;
 }
 
@@ -996,9 +1016,9 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
-        self->field_0x8C->SetFrame(lbl_eu_80666F1C);
-        Cur_SetVisible(&self->_90[0], 1);
-        Cur_SetVisible(&self->subCur, 0);
+        self->field_0x8C->SetFrame(0.0f);
+        Cur_SetVisible(&self->mMainCur, 1);
+        Cur_SetVisible(&self->mSubCur, 0);
         playUISound(6);
         self->field_0xE0 = 7;
         return;
@@ -1059,20 +1079,18 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
             if (--self->field_0xC4 < 0) self->field_0xC4 = 2;
             break;
         }
-        // Hoisted rodata base like retail (cached in a callee-saved reg).
-        char* base = lbl_eu_804FCEBC;
         char buf[0x20];
-        sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+        sprintf(buf, "pic_base%02d_%02d", self->field_0xC0 + 1, self->field_0xC4 + 1);
         // Raw +0x10 root-pane loads like retail (no accessor call).
         nw4r::lyt::Pane* pane1 =
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 =
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
-                ->FindPaneByName(base + 0x133, true);
+                ->FindPaneByName("nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
+        self->mSubCur.setRootPaneTranslate(&vec);
         playUISound(0x6a);
         goto tail;
     }
@@ -1095,18 +1113,17 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
             if (++self->field_0xC4 > 2) self->field_0xC4 = 0;
             break;
         }
-        char* base = lbl_eu_804FCEBC;
         char buf[0x20];
-        sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
+        sprintf(buf, "pic_base%02d_%02d", self->field_0xC0 + 1, self->field_0xC4 + 1);
         nw4r::lyt::Pane* pane1 =
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 =
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
-                ->FindPaneByName(base + 0x133, true);
+                ->FindPaneByName("nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
+        self->mSubCur.setRootPaneTranslate(&vec);
         playUISound(0x6a);
         goto tail;
     }
@@ -1143,7 +1160,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         }
         playUISound(0x6b);
         self->field_0xE0 = 8;
-        Cur_SetActive((CBaseCur*)&self->subCur);
+        Cur_SetActive(&self->mSubCur);
         goto tail;
     }
     if (confirm != 0) {
@@ -1152,9 +1169,9 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
-        self->field_0x8C->SetFrame(lbl_eu_80666F1C);
-        Cur_SetVisible(&self->_90[0], 1);
-        Cur_SetVisible(&self->subCur, 0);
+        self->field_0x8C->SetFrame(0.0f);
+        Cur_SetVisible(&self->mMainCur, 1);
+        Cur_SetVisible(&self->mSubCur, 0);
         playUISound(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {
@@ -1201,13 +1218,13 @@ tail:
         break;
     }
     if (idx > 0) {
-        char* s1 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x67, idx);
-        char* s2 = BdatTouchStringCell(lbl_eu_804FCEBC + 0x5e, lbl_eu_804FCEBC + 0x6c, idx);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, s1, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, s2, 0);
+        char* s1 = BdatTouchStringCell("MNU_main", "name", idx);
+        char* s2 = BdatTouchStringCell("MNU_main", "help", idx);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", s1, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", s2, 0);
     } else {
-        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x71, lbl_eu_804FCEBC + 0x89, 0);
-        LayoutSetTextBoxFmtValue(self->field_0x7C, lbl_eu_804FCEBC + 0x7c, lbl_eu_804FCEBC + 0x89, 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
+        LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
     }
 }
 
@@ -1268,7 +1285,7 @@ extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self) {
     }
     if (player != 0) {
         float hp = ((CfPlayerBaseReal*)player)->getHP();
-        if (lbl_eu_80666F1C == hp) return 1;
+        if (0.0f == hp) return 1;
         CMainMenuPlayerSub* sub = player->spot.field_0xC4;
         if (sub != 0) {
             int cond = (sub->field_4EC >> 15) & 1;
@@ -1380,7 +1397,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     // when available ({0x3c,0x32,0x1e}) else dim ({0xff,0xff,0xff}).
     char buf[0x20];
     for (u32 i = 0; i < 7; i++) {
-        sprintf(buf, lbl_eu_804FCEBC + 0x206, (u8)i + 1);
+        sprintf(buf, "pic_icon%02d", (u8)i + 1);
         if (self->field_0xC8[(u8)i] != 0) {
             s16 pos[4];
             pos[3] = 0xff;
@@ -1419,60 +1436,4 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
             PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], pos, 1);
         }
     }
-}
-
-void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((CMainMenuHead58*)self - 1); }
-
-void CMainMenu_DtorThunk58(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((CMainMenuHead58*)self - 1); }
-
-void CMainMenu_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((CMainMenuHead5C*)self - 1); }
-
-extern "C" void CMainMenu_DtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((CMainMenuHead5C*)self - 1); }
-
-
-// CTTask<IUICf>::Move - test PTMF at +0x3C, call if non-null
-// (static_cast mirrors the canonical CTTask.hpp inline body).
-template<>
-void CTTask<IUICf>::Move() {
-    if (mMoveFunc) {
-        (static_cast<IUICf*>(this)->*mMoveFunc)();
-    }
-}
-
-// CTTask<IUICf>::Draw - test PTMF at +0x48, call if non-null
-template<>
-void CTTask<IUICf>::Draw() {
-    if (mDrawFunc) {
-        (static_cast<IUICf*>(this)->*mDrawFunc)();
-    }
-}
-
-// Standard MWCC virtual dtor: empty body, compiler emits base dtor call + D1 wrapper
-template<>
-CTTask<IUICf>::~CTTask() {
-}
-
-
-// CMainMenu::Term (us-800ff944): wait for the VI draw to complete, drop the
-// render callback (+0x5C cross-cast) and the file handle, run both cursors'
-// shutdown virtuals, delete the layout, release the arc accessor, tear down
-// the +0x60 memory region, then clear the singleton.
-void CMainMenu::Term() {
-    CDeviceVI::waitForDrawDone();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&field_0x5C);
-    }
-    field_0x70->removeRenderCB(render);
-    closeFileHandle(&field_0x74);
-    ((CBaseCur*)&_90[0])->cleanup();
-    ((CBaseCur*)&subCur)->cleanup();
-    if (field_0x7C != 0) {
-        delete field_0x7C;
-        field_0x7C = 0;
-    }
-    releaseArcResourceAccessor(field_0x78);
-    field_0x78 = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&_60[0])->deleteRegion();
-    lbl_eu_80663F18 = 0;
 }

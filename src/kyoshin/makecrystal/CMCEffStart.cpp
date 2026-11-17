@@ -62,7 +62,7 @@ extern "C" void __dt__14CMCCrystalListFv();
 extern "C" int OnFileEvent__14CMCCrystalListFP10CEventFile(void*);
 extern "C" char lbl_eu_805092B0[];
 // Forward declaration: the .sdata pair below is referenced by the .data prefix.
-extern "C" const void* lbl_eu_806627F8[2];
+extern "C" const void* __RTTI__14CMCCrystalList[2];
 
 // ---------------------------------------------------------------------------
 // Retail data-slice definitions owned by this TU.
@@ -80,7 +80,7 @@ extern "C" {
 // aligned(8) for the section alignment.
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
 const void* lbl_eu_80535F80[34] = {
-    (const void*)lbl_eu_806627F8,
+    (const void*)__RTTI__14CMCCrystalList,
     (const void*)0,
     (const void*)__dt__14CMCCrystalListFv,
     (const void*)WorkEvent1__10IWorkEventFPvPCc,
@@ -127,7 +127,7 @@ const void* lbl_eu_80536008[4] = {
 
 // .sdata prefix: IWorkEvent typeinfo pair { name, base }.
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806627F8[2] = {
+const void* __RTTI__14CMCCrystalList[2] = {
     (const void*)lbl_eu_805092B0,
     (const void*)lbl_eu_80536008
 };

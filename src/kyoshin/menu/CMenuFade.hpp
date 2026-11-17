@@ -17,8 +17,8 @@
 // base-cast null-check codegen in Term().
 class CMenuFadeBase : public IUICf {
 public:
-    u8 field_0x54;                              // 0x54
-    u8 pad55[3];                                // 0x55-0x57
+
+
     u32 mIWorkEventVtbl;                        // 0x58 - IWorkEvent vtable (raw)
 };
 

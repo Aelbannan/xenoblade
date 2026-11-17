@@ -1,12 +1,122 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuMapSelectSC
 // Replace stubs with high-level C/C++ during decomp.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
+
+// Retail-unmangled callee names (US strips mangling for these func_ helpers);
+// declared extern "C" so call sites emit the literal retail reloc names.
+// Mirrors the CMenuOption/CMenuGCItem pattern for the same helpers. Return
+// types are int (not u8) so callers compare with cmpwi directly (no byte
+// mask), matching retail.
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void func_801C4654(CTitleAHelp* self, u32 arg);
+extern "C" void setInfoText(CTitleAHelp* self, char* name);
+extern "C" void func_801C46DC(CTitleAHelp* self, u32 arg);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" int CFade_IsReady(CFade* self);
+extern "C" int CFade_IsVisible(CFade* self);
+// (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
+extern "C" void CFade_FadeOut(CFade* self);
+extern "C" void CFade_StartLoad(CFade* self);
+extern "C" void CFade_Update(CFade* self);
+extern "C" void FloorMap_Teardown(CFloorMap* self);
+extern "C" u16 FloorMap_GetU16Field5A(CFloorMap* self);
+extern "C" int FloorMap_GetField42Gated(CFloorMap* self);
+extern "C" void FloorMap_LoadStageLayout(CFloorMap* self);
+extern "C" void FloorMap_UpdateFrame(CFloorMap* self);
+extern "C" int FloorMap_ClassifyByte41(CFloorMap* self);
+extern "C" int FloorMap_CheckRowVisited(CFloorMap* self);
+extern "C" u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
+extern "C" u8 FloorMap_GetField208Plain(CFloorMap* self);
+extern "C" void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
+extern "C" u8 FloorMap_GetField208Gated(CFloorMap* self);
+extern "C" int FloorMap_IsSysWinBusy(CFloorMap* self);
+extern "C" void FloorMap_UpdateRowPanePos(CFloorMap* self);
+extern "C" void FloorMap_CursorNextFloor(CFloorMap* self);
+extern "C" void FloorMap_OpenRowWindow(CFloorMap* self);
+extern "C" void FloorMap_ConfirmSelect(CFloorMap* self);
+extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
+extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);
+extern "C" void FloorMap_HandleMapDown(CFloorMap* self);
+extern "C" void FloorMap_NormalizeMapPos(CFloorMap* self);
+extern "C" void FloorMap_Log2Field208(CFloorMap* self);
+extern "C" void FloorMap_Log2Field333C(CFloorMap* self);
+extern "C" void FloorMap_ScrollDown(CFloorMap* self);
+extern "C" void FloorMap_ScrollUp(CFloorMap* self);
+extern "C" void FloorMap_ScrollRight(CFloorMap* self);
+extern "C" void FloorMap_ScrollLeft(CFloorMap* self);
+extern "C" void FloorMap_MoveToCursorRow(CFloorMap* self);
+
+// Retail symbol keeps its mangled form (CfGameManager static member); the
+// call site passes (u16 value, 0) even though the name says Fv.
+extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
+
+
+
+// World-map phase helpers (retail-unmangled callee names).
+extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self);
+
+// ---------------------------------------------------------------------------
+// Additional retail-unmangled callee names for the world-map (SC) screen.
+// ---------------------------------------------------------------------------
+// CScn-side helpers: scene enable flag + render-callback management.
+// int return (mismatched vs the (void*, u8) definition) blocks -ipa inlining
+// of the 1-line body, keeping the retail `bl Scn_SetPauseFlag` call site.
+extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
+// CFloorMap helpers (retail unmangles these member helpers).
+// (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
+extern "C" void FloorMap_LoadMapFiles(CFloorMap* self);
+extern "C" void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
+// CTitleAHelp / CFade draw + reset helpers.
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
+// (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
+// UI/sound + scene-active helpers.
+extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
+extern "C" int IsMenuState621F0();
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// Ctor/re-init helpers for the embedded widgets (retail-unmangled).
+extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
+extern "C" void __ct__CFloorMap(CFloorMap* self);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
+extern "C" void InfoCfCopySysWin(void* dest, void* src);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
+extern "C" char* BdatTouchStringCell(char* a, char* b, u32 id);
+extern "C" void __dt__9CFloorMapFv(CFloorMap* _this, int flags);
+extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
+extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
+
+// C++-linkage helpers - retail emits the mangled forms
+// playUISound__FUl / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
+void playUISound(unsigned long op);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
+
+// Data imports (MWCC does not mangle global-scope data names).
+extern u32 lbl_eu_80664184;   // current map id (bdat row) -> floor map select
+extern u32 lbl_eu_80663E28;   // global mode bitfield (bit 0x400 = world-map gate)
+extern u8 lbl_eu_80537130[];  // CMenuMapSelectSC final vtable; IScnRender vtable at +0x24
+extern u32 __ptmf_null[3];    // null pointer-to-member-function constant
+extern char lbl_eu_8050C5A4[];  // world-map title/help string table base
+extern const f32 lbl_eu_806687C0;  // 0.0f - world-map timer reset value
+extern const f32 lbl_eu_806687C4;  // 1.0f - world-map timer increment per frame
+extern const f32 lbl_eu_806687C8;  // 10.0f - world-map timer cap
+
 #include "kyoshin/CTaskGame.hpp"
 
 #include <new>
 #include <cstring>
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CFloorMapImports.hpp"
 
 struct S {
     int dummy;
@@ -20,72 +130,13 @@ struct S {
 
 extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src);
 
-// Retail constructor (unmangled global) with an explicit arg, mirroring the
-// CMenuOption ctor pattern: base CProcess ctor, temp vtable store, null PMF
-// data copy (two 3-word slots at 0x3C/0x48), then the composite vtable +
-// IScnRender sub-vtable at +0x58, then each embedded widget's ctor and the
-// final state bytes.
-extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CProcess* arg) {
-    __ct__8CProcessFv((CProcess*)self);
+// Out-of-line constructor (retail keeps it as its own function; the member
+// initialisers run in declaration order: parent ref, CTitleAHelp, CFade,
+// CFloorMap, then the state byte and timer).
+CMenuMapSelectSC::CMenuMapSelectSC(CProcess* parent)
+    : mParentRef(parent), mTitleAHelp(0, 0), mState(0), mTimer(lbl_eu_806687C0) {}
 
-    // Temporary (CProcess) vtable until the null-PMF data is copied in.
-    *(u32*)((u8*)self + 0x10) = (u32)(void*)lbl_eu_8052BF70;
-
-    // Null PMF slots: walk the constant with one lwzu, then re-load the three
-    // words by index for each slot (MWCC cannot CSE these across the stores).
-    u32* p = __ptmf_null;
-
-    // Final composite vtable + IScnRender sub-vtable (+0x24) are formed from
-    // ONE materialisation of the vtable label (retail hoists lis/addi r6 and
-    // addi r0,r6,0x24 above the PMF copy) but only stored after it.
-    void* vt = (void*)lbl_eu_80537130;
-
-    u32 pmfW0 = *p++;
-    self->ptmf0[1] = p[0];
-    CTitleAHelp* help = &self->mTitleAHelp;  // hoisted like retail's addi r3,r29,0x60
-    self->ptmf0[0] = pmfW0;
-    self->ptmf0[2] = p[1];
-    u32 pmfU0 = p[-1];   // retail loads [0] before storing the [1] slot
-    self->ptmf1[1] = p[0];
-    self->ptmf1[0] = pmfU0;
-    self->ptmf1[2] = p[1];
-    self->mField54 = 0;
-    self->mField55 = 0;
-
-    *(u32*)((u8*)self + 0x10) = (u32)vt;
-    *(u32*)((u8*)self + 0x58) = (u32)vt + 0x24;
-    self->mParentRef = arg;
-
-    __ct__CTitleAHelp(help, 0, 0);
-    __ct__5CFadeFv(&self->mFade);
-    __ct__CFloorMap(&self->mFloorMap);
-
-    self->mState = 0;
-    self->mTimer = lbl_eu_806687C0;
-    return self;
-}
-
-/* Destructor (retail D2 form, symbol keeps its C++ mangling in US).
- *
- * Written with an explicit flags parameter so the base-class destruction can
- * target the retail CProcess dtor symbol __dt__800FED0C (0x800FF7F4, the
- * game-side D2 wrapper). A real member destructor would make MWCC auto-emit
- * __dt__8CProcessFv (the library D1 at 0x804474D0) for the base call, which
- * cannot match the retail reloc name at the call site. Subobjects are
- * destroyed in reverse construction order, then conditional operator delete
- * when flags > 0 (same shape as CSysWinSave's dtor). */
-extern "C" CMenuMapSelectSC* __dt__16CMenuMapSelectSCFv(CMenuMapSelectSC* _this, int flags) {
-    if (_this != 0) {
-        __dt__9CFloorMapFv(&_this->mFloorMap, -1);
-        __dt__5CFadeFv(&_this->mFade, -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__800FED0C(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+CMenuMapSelectSC::~CMenuMapSelectSC() {}
 
 void CMenuMapSelectSC::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
@@ -94,9 +145,9 @@ void CMenuMapSelectSC::Init() {
     char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 1);
 
     u8 tempTitle[0x38];
-    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x4a);
+    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x4a);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x64, tempTitle + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x64, tempTitle + 0x4);
     CTitleAHelp* tmpTitle = reinterpret_cast<CTitleAHelp*>(tempTitle);
     mTitleAHelp.mFileHandle = tmpTitle->mFileHandle;
     mTitleAHelp.mArcResourceAccessor = tmpTitle->mArcResourceAccessor;
@@ -117,7 +168,7 @@ void CMenuMapSelectSC::Init() {
     // --- Re-initialise the embedded CFade via a temporary ---
     {
         CFade tmpFade;
-        __ct__UnkClass_8011C974((u8*)this + 0x9c, (u8*)&tmpFade + 0x4);
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x9c, (u8*)&tmpFade + 0x4);
         mFade.mFileHandle = tmpFade.mFileHandle;
         mFade.mArcResAcc = tmpFade.mArcResAcc;
         mFade.mLayout = tmpFade.mLayout;
@@ -134,8 +185,8 @@ void CMenuMapSelectSC::Init() {
     u8 tempFloor[0x3348];
     __ct__CFloorMap(reinterpret_cast<CFloorMap*>(tempFloor));
 
-    __ct__UnkClass_8011C974((u8*)this + 0xc4, tempFloor + 0x4);
-    __ct__UnkClass_8011C974((u8*)this + 0xd4, tempFloor + 0x14);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xc4, tempFloor + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xd4, tempFloor + 0x14);
 
     // File handles / buffers / visibility flags (member 0x24-0x5D).
     *(u32*)((u8*)this + 0xe4) = *(u32*)(tempFloor + 0x24);
@@ -159,7 +210,7 @@ void CMenuMapSelectSC::Init() {
     *(u8*)((u8*)this + 0x11c) = *(u8*)(tempFloor + 0x5c);
     *(u8*)((u8*)this + 0x11d) = *(u8*)(tempFloor + 0x5d);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x124, tempFloor + 0x64);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x124, tempFloor + 0x64);
 
     // Cursor / scroll state (member 0x74-0xB5).
     *(u32*)((u8*)this + 0x134) = *(u32*)(tempFloor + 0x74);
@@ -237,11 +288,7 @@ void CMenuMapSelectSC::Init() {
     __dt__9CFloorMapFv(reinterpret_cast<CFloorMap*>(tempFloor), -1);
 
     // Register the widget as an IScnRender render callback on its parent scene.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 1);
+    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(this, 0xd, 1);
 }
 
 extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src) {
@@ -260,18 +307,13 @@ void CMenuMapSelectSC::Term() {
     CDeviceVI::waitForDrawDone();
     Scn_SetPauseFlag(reinterpret_cast<CScn*>(mParentRef), 1);
 
-    // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
+    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     teardown(&mTitleAHelp);
     (&mFade)->Unload();
     FloorMap_Teardown(&mFloorMap);
 
-    lbl_eu_806647C0 = 0;
+    sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -337,41 +379,34 @@ body:
         goto end;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
-    // calls to match the retail direct calls (a C++ local would
-    // virtual-dispatch its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    FloorMap_Draw(&mFloorMap, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    CFade_Draw(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    FloorMap_Draw(&mFloorMap, &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
+    CFade_Draw(&mFade, &drawInfo);
 }
 
+CMenuMapSelectSC* CMenuMapSelectSC::sInstance;
+
 // Create the world-map (SC) singleton: returns 0 when it already exists,
-// otherwise allocates the object (0x3410 bytes), constructs it, stores the
-// singleton and registers it as a CProcess child of `parent`.
-CMenuMapSelectSC* MapSelectSCCreate(CProcess* parent, CProcess* arg) {
-    if (lbl_eu_806647C0 != 0) {
+// otherwise allocates the object (0x3410 bytes), constructs it in place, stores
+// the singleton and registers it as a CProcess child of `parent`.
+extern "C" CMenuMapSelectSC* MapSelectSCCreate(CProcess* parent, CProcess* arg) {
+    if (CMenuMapSelectSC::sInstance != 0) {
         return 0;
     }
 
     playUISound(4);
-    // Use the ctor's return value (constructors return self) so MWCC keeps
-    // the object pointer in r3 across the call instead of spilling it.
     CMenuMapSelectSC* obj = (CMenuMapSelectSC*)mtl::MemManager::allocate(
         0x3410, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuMapSelectSC(obj, arg);
-    }
-    lbl_eu_806647C0 = (u32)obj;
+    obj = new (obj) CMenuMapSelectSC(arg);
+    CMenuMapSelectSC::sInstance = obj;
     obj->Regist(parent, false);
-    return (CMenuMapSelectSC*)lbl_eu_806647C0;
+    return CMenuMapSelectSC::sInstance;
 }
 
-// (lbl_eu_806647C0 != 0)
-extern "C" bool MapSelectSCIsCreated() { extern u32 lbl_eu_806647C0; return lbl_eu_806647C0 != 0; }
+// (sInstance != 0)
+extern "C" bool MapSelectSCIsCreated() { return CMenuMapSelectSC::sInstance != 0; }
 
 // World-map phase 0: wait for the title/help bar and fade to be ready, then
 // start the fade-in animation and advance to phase 1.
@@ -636,21 +671,4 @@ extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self) {
         func_8008413C__Q22cf13CfGameManagerFv(FloorMap_GetU16Field5A(&self->mFloorMap), 0);
         self->mState = 7;
     }
-}
-
-// IScnRender vtable this-adjusting thunk for cbRenderBefore.
-// IScnRender is a non-primary base at offset 0x58 within CMenuMapSelectSC;
-// vtable dispatch passes 'this' pointing at +0x58, so the thunk subtracts
-// it back and tail-calls the real implementation.
-// Retail: subi r3, r3, 0x58; b cbRenderBefore__16CMenuMapSelectSCFv
-void MapSelectSCRenderThunk58(IScnRender* self) {
-    ((void(*)(char*))cbRenderBefore__16CMenuMapSelectSCFv)((char*)self - 0x58);
-}
-
-// IScnRender vtable this-adjusting thunk for ~CMenuMapSelectSC.
-// Same adjustment as MapSelectSCRenderThunk58 but forwards to the destructor, leaving
-// r4 (delete flag) as caller leftover.
-// Retail: subi r3, r3, 0x58; b __dt__16CMenuMapSelectSCFv
-void MapSelectSCDtorThunk58(IScnRender* self) {
-    ((void(*)(char*))__dt__16CMenuMapSelectSCFv)((char*)self - 0x58);
 }

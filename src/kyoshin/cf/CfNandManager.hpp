@@ -11,18 +11,6 @@
 // C-linkage runtime imports (retail symbol names - keep linkage/signature verbatim).
 extern "C" long __ptmf_test(void* ptmf);
 
-// NAND request-queue layout (mirrors libs/monolib/src/nand/CNand.cpp).
-struct CNandQueue {
-    u8 mReq[0x120]; // 0x000: 8 CNRequest entries (0x24 each)
-    s16 mHead;      // 0x120: consume index (ring head)
-    s16 mTail;      // 0x122: produce index (ring tail)
-    u8 mStatus;     // 0x124
-    u8 mFlag;       // 0x125
-    u8* mTable;     // 0x128: shared callback table
-};
-
-// NAND completion pump (defined in libs/monolib/src/nand/CNand.cpp).
-extern "C" void NandMgrPumpCompletion(CNandQueue* self);
 
 // Single event slot of the CfNandManager event ring (0x10 bytes).
 struct CfNandEvent {
@@ -212,8 +200,6 @@ extern u8* lbl_eu_8066477C;   // heap buffer freed via MemManager::deallocate
 // Second half of the buffer pair allocated by NandAllocBufs (buf + size1).
 extern u8* lbl_eu_80664780;
 extern u16 lbl_eu_80664770;   // u16 counter cleared on teardown
-// CNand singleton (.bss, 0x130).
-extern CNandQueue lbl_eu_8065FD00;
 
 // D80 scene flag (.sbss; holds a CScn*). Retail-unmangled C helper defined in
 // CfRes.cpp; declared here for the CfNandManager TU's teardown path.
@@ -236,13 +222,6 @@ extern u8 lbl_eu_80536CB4[];
 extern u32 lbl_eu_80536B20[3];
 // Null pointer-to-member-function constant (defined in CUICfManager.cpp).
 extern u32 __ptmf_null[3];
-// NAND request helpers (libs/monolib/src/nand/CNand.cpp).
-extern "C" int NandMgrEnqueueSaveFlush(CNandQueue* self, const char* name, u32 a2, u32 a3,
-                             void* a4, u32 a5);
-extern "C" int NandMgrEnqueueLoad(CNandQueue* self, const char* name, u32 a2, u32 a3);
-extern "C" int NandMgrEnqueueRemove(CNandQueue* self, u32 a1);
-extern "C" int NandMgrEnqueueReaddir(CNandQueue* self, u8* path, u32 size, void* outCount);
-extern "C" int NandMgrEnqueueBannerLoad(CNandQueue* self, u32 a1, u32 a2);
 
 // Party-snapshot fallback data (.bss, 3 words) for missing player slots
 // (NandCopyParty) and the fallback float (.sbss).

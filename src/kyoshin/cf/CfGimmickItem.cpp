@@ -22,127 +22,116 @@ union BdatCol {
 // Constructor / Destructor
 // ---------------------------------------------------------------------------
 
-cf::CfGimmickItem::~CfGimmickItem() {
-    CfGimmick_ClearManagerBinding(this);
-    CfGimmick_UnregisterSpawnedObject(&this->field_7C);
-}
-
-// ---------------------------------------------------------------------------
-// Constructor -- BDAT columns populate the item fields.
-// ---------------------------------------------------------------------------
+enum {
+    kItemFlagWork = 0x10,   // "working" flag set/cleared during the move step
+    kItemFlagBusy = 0x20,   // actor busy flag (spawned/attached)
+};
 
 cf::CfGimmickItem::CfGimmickItem(int rowId) {
-    // Named copy of `this`: with plain `this` MWCC reorders the A_Item/A_Lost
-    // column-buffer loads in the slot loop (22.7%); the copy keeps retail's
-    // schedule (93.9%).
-    cf::CfGimmickItem* self = this;
-    self->field_82 = 6;
+    this->field_82 = 6;
 
     void* mgr = Bdat_GetTable_AA34();
     // Retail keeps the bdat table handle in a dedicated frame slot and
     // reloads it for every column read (its address escapes below).
     u32 bdat = lbl_eu_8066413C;
-    self->field_64 = rowId;
+    this->field_64 = rowId;
 
     // Area position / extents (collider view) / rotation.
-    CfGimmick_LoadBdatAreaPos(this, &self->field_04.x, mgr, &bdat);
-    CfGimmick_LoadBdatAreaExtents(this, (cf::CfGimmick*)self->field_1C, mgr, &bdat);
-    CfGimmick_LoadBdatAreaRotation(this, &self->field_10.x, mgr, &bdat);
+    CfGimmick_LoadBdatAreaPos(this, &this->field_04.x, mgr, &bdat);
+    CfGimmick_LoadBdatAreaExtents(this, (cf::CfGimmick*)this->field_1C, mgr, &bdat);
+    CfGimmick_LoadBdatAreaRotation(this, &this->field_10.x, mgr, &bdat);
 
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
     volatile BdatCol c66;
     c66.w = getBdatStringColumnValue((void*)bdat, "rectype", rowId);
-    self->field_66 = c66.b;
+    this->field_66 = c66.b;
     for (int i = 0; i < 3; ++i) {
+        char* lostColumn = lbl_eu_806627B8[1];
         char c = (char)('A' + i);
-        lbl_eu_806627B8[1][0] = c;
-        lbl_eu_806627B8[0][0] = c;
+        char* itemColumn = lbl_eu_806627B8[0];
+        itemColumn[0] = lostColumn[0] = c;
         volatile BdatCol cid;
-        cid.w = getBdatStringColumnValue((void*)bdat, lbl_eu_806627B8[0], rowId);
-        self->field_84[i] = cid.h;
+        cid.w = getBdatStringColumnValue((void*)bdat, itemColumn, rowId);
+        lostColumn = lbl_eu_806627B8[1];
+        this->field_84[i] = cid.h;
         volatile BdatCol clost;
-        clost.w = getBdatStringColumnValue((void*)bdat, lbl_eu_806627B8[1], rowId);
+        clost.w = getBdatStringColumnValue((void*)bdat, lostColumn, rowId);
         if (clost.b != 0) {
-            self->field_74 |= (1u << i);
+            this->field_74 |= (1u << i);
         }
     }
 
     volatile BdatCol c8A;
     c8A.w = getBdatStringColumnValue((void*)bdat, "geItem", rowId);
-    self->field_8A = c8A.h;
+    this->field_8A = c8A.h;
     volatile BdatCol c6A;
     c6A.w = getBdatStringColumnValue((void*)bdat, "MSG1", rowId);
-    self->field_6A = c6A.h;
+    this->field_6A = c6A.h;
     volatile BdatCol c8C;
     c8C.w = getBdatStringColumnValue((void*)bdat, "MSG2", rowId);
-    self->field_8C = c8C.h;
+    this->field_8C = c8C.h;
     volatile BdatCol c98;
     c98.w = getBdatStringColumnValue((void*)bdat, "time", rowId);
-    self->field_98 = c98.b;
+    this->field_98 = c98.b;
     volatile BdatCol c70;
     c70.w = getBdatStringColumnValue((void*)bdat, "LODObj", rowId);
-    self->field_70 = c70.b;
+    this->field_70 = c70.b;
     volatile BdatCol c99;
     c99.w = getBdatStringColumnValue((void*)bdat, "LODSub", rowId);
-    self->field_99 = c99.b;
+    this->field_99 = c99.b;
     volatile BdatCol c9A;
     c9A.w = getBdatStringColumnValue((void*)bdat, "LODType", rowId);
-    self->field_9A = c9A.b;
+    this->field_9A = c9A.b;
     volatile BdatCol c9B;
     c9B.w = getBdatStringColumnValue((void*)bdat, "EFF", rowId);
-    self->field_9B = c9B.b;
+    this->field_9B = c9B.b;
     volatile BdatCol c92;
     c92.w = getBdatStringColumnValue((void*)bdat, "camID", rowId);
-    self->field_92 = c92.h;
+    this->field_92 = c92.h;
     volatile BdatCol c8E;
     c8E.w = getBdatStringColumnValue((void*)bdat, "swtSE", rowId);
-    self->field_8E = c8E.h;
+    this->field_8E = c8E.h;
     volatile BdatCol c90;
     c90.w = getBdatStringColumnValue((void*)bdat, "finSE", rowId);
-    self->field_90 = c90.h;
+    this->field_90 = c90.h;
     volatile BdatCol c9C;
     c9C.w = getBdatStringColumnValue((void*)bdat, "ct", rowId);
-    self->field_9C = c9C.b;
+    this->field_9C = c9C.b;
     volatile BdatCol c6C;
     c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[13], rowId);
-    self->field_6C = c6C.h;
+    this->field_6C = c6C.h;
     volatile BdatCol c6E;
     c6E.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[14], rowId);
-    self->field_6E = c6E.h;
+    this->field_6E = c6E.h;
     volatile BdatCol c94;
     c94.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[15], rowId);
-    self->field_94 = c94.h;
+    this->field_94 = c94.h;
     volatile BdatCol c96;
     c96.w = getBdatStringColumnValue((void*)bdat, "quest_Max", rowId);
-    self->field_96 = c96.b;
+    this->field_96 = c96.b;
     volatile BdatCol c97;
     c97.w = getBdatStringColumnValue((void*)bdat, "quest_Min\0\0\0", rowId);
-    self->field_97 = c97.b;
+    this->field_97 = c97.b;
 
     CfGimmick_UpdateColliderMatrix();
 
-    self->field_9E = 0;
-    self->field_A0 = 0;
-    if (self->field_70 != 0) {
-        attachLODObject__8CTaskLODFv(self->field_70, 0);
-        removeLODEntry__8CTaskLODFv(self->field_70, lbl_eu_80668448);
+    this->field_9E = 0;
+    this->field_A0 = 0;
+    if (this->field_70 != 0) {
+        attachLODObject__8CTaskLODFv(this->field_70, 0);
+        removeLODEntry__8CTaskLODFv(this->field_70, lbl_eu_80668448);
     }
 
-    if (CfGimmick_CheckStateFlag2CC8((u8*)(u32)self->field_64) != 0 && self->field_9C == 3) {
-        self->field_9E = 5;
+    if (CfGimmick_CheckStateFlag2CC8((u8*)(u32)this->field_64) != 0 && this->field_9C == 3) {
+        this->field_9E = 5;
     }
 }
 
-// ---------------------------------------------------------------------------
-// GimItem_StateDispatch -- PTMF state dispatch + one-frame spawn/cleanup
-// ---------------------------------------------------------------------------
-
-// Field-74 state flag bits (retail rlwinm masks).
-enum {
-    kItemFlagWork = 0x10,   // "working" flag set/cleared during the move step
-    kItemFlagBusy = 0x20,   // actor busy flag (spawned/attached)
-};
+cf::CfGimmickItem::~CfGimmickItem() {
+    CfGimmick_ClearManagerBinding(this);
+    CfGimmick_UnregisterSpawnedObject(&this->field_7C);
+}
 
 void cf::CfGimmickItem::CfGimmick_Update() {
     // Dispatch the current state through the 12-byte PTMF table.
@@ -159,88 +148,6 @@ void cf::CfGimmickItem::CfGimmick_Update() {
         CfGimmick_UnregisterSpawnedObject(&field_7C);
     }
 }
-
-// ---------------------------------------------------------------------------
-// GimItem_BusyActivate -- busy-flag handled item activation; falls back to state 4
-// ---------------------------------------------------------------------------
-
-void GimItem_BusyActivate(cf::CfGimmickItem* self) {
-    CfGimmick_SetGlobalFlagC0042();
-
-    // a busy actor only stays when CfGimmick_IsMessageSystemBusy still reports work, and an
-    // idle one is (re)spawned via CfGimmick_PostGimmickName + busy bit.  The two fail
-    // paths branch to the shared `zero` merge (single `li r3,0`); the ready
-    // paths set ok=1 and jump straight to the test.
-    u32 ok;
-    if ((ok = self->field_6A) == 0) {
-        goto st4;
-    }
-    if (self->field_74 & kItemFlagBusy) {
-        if (CfGimmick_IsMessageSystemBusy() != 0) {
-            ok = 1;
-        } else {
-            self->field_74 &= ~kItemFlagBusy;
-            goto zero;
-        }
-    } else {
-        CfGimmick_PostGimmickName(self->field_6A);
-        self->field_74 |= kItemFlagBusy;
-        ok = 1;
-    }
-    goto test;
-
-zero:
-    ok = 0;
-test:
-    if (ok == 0) {
-st4:
-        self->field_9E = 4;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// GimItem_CollectScan -- detect what can be collected and move to the next state
-// ---------------------------------------------------------------------------
-
-void GimItem_CollectScan(cf::CfGimmickItem* self) {
-    for (int i = 0; i < 3; ++i) {
-        if (self->field_84[i] != 0 && (self->field_74 & (1 << i))) {
-            CItem_consumeFamilyCnt(self->field_84[i], 1);
-        }
-    }
-
-    if (self->field_8A != 0) {
-        CItem_thunkAllocRecord(self->field_8A, 1);
-    }
-
-    if (self->field_9C == 3) {
-        self->field_9E = 5;
-    } else if (self->field_9C == 2) {
-        self->field_9E = 5;
-    } else {
-        self->field_9E = 4;
-    }
-
-    if (self->field_64 != 0) {
-        CfGimmick_TriggerSound2CC8(self->field_64, 1);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// GimItem_PlaceDispatch -- placement dispatch; on miss reset the item state
-// ---------------------------------------------------------------------------
-
-void GimItem_PlaceDispatch(cf::CfGimmickItem* self) {
-    if ((self->field_66 & 1) != 0 ||
-        jumptable_eu_80535830[self->field_60](
-            (cf::CfGimmick*)self->field_1C, &lbl_eu_805765A0, &self->field_04) == 0) {
-        self->field_9E = 0;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// GimItem_WorkFrameUpdate -- working-frame update: range window, respawn gate, spawn
-// ---------------------------------------------------------------------------
 
 void GimItem_WorkFrameUpdate(cf::CfGimmickItem* self) {
     // Only run while the current sequence counter sits inside the item's
@@ -290,9 +197,39 @@ void GimItem_WorkFrameUpdate(cf::CfGimmickItem* self) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// GimItem_LodFxUpdate -- per-frame LOD/effect/manager update + countdown reset
-// ---------------------------------------------------------------------------
+void GimItem_BusyActivate(cf::CfGimmickItem* self) {
+    CfGimmick_SetGlobalFlagC0042();
+
+    // a busy actor only stays when CfGimmick_IsMessageSystemBusy still reports work, and an
+    // idle one is (re)spawned via CfGimmick_PostGimmickName + busy bit.  The two fail
+    // paths branch to the shared `zero` merge (single `li r3,0`); the ready
+    // paths set ok=1 and jump straight to the test.
+    u32 ok;
+    if ((ok = self->field_6A) == 0) {
+        goto st4;
+    }
+    if (self->field_74 & kItemFlagBusy) {
+        if (CfGimmick_IsMessageSystemBusy() != 0) {
+            ok = 1;
+        } else {
+            self->field_74 &= ~kItemFlagBusy;
+            goto zero;
+        }
+    } else {
+        CfGimmick_PostGimmickName(self->field_6A);
+        self->field_74 |= kItemFlagBusy;
+        ok = 1;
+    }
+    goto test;
+
+zero:
+    ok = 0;
+test:
+    if (ok == 0) {
+st4:
+        self->field_9E = 4;
+    }
+}
 
 void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
     CfGimmick_SetGlobalFlagC0042();
@@ -381,9 +318,37 @@ void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// FULL_MATCH: Virtual function override -- no-op
-// ---------------------------------------------------------------------------
+void GimItem_CollectScan(cf::CfGimmickItem* self) {
+    for (int i = 0; i < 3; ++i) {
+        if (self->field_84[i] != 0 && (self->field_74 & (1 << i))) {
+            CItem_consumeFamilyCnt(self->field_84[i], 1);
+        }
+    }
+
+    if (self->field_8A != 0) {
+        CItem_thunkAllocRecord(self->field_8A, 1);
+    }
+
+    if (self->field_9C == 3) {
+        self->field_9E = 5;
+    } else if (self->field_9C == 2) {
+        self->field_9E = 5;
+    } else {
+        self->field_9E = 4;
+    }
+
+    if (self->field_64 != 0) {
+        CfGimmick_TriggerSound2CC8(self->field_64, 1);
+    }
+}
+
+void GimItem_PlaceDispatch(cf::CfGimmickItem* self) {
+    if ((self->field_66 & 1) != 0 ||
+        jumptable_eu_80535830[self->field_60](
+            (cf::CfGimmick*)self->field_1C, &lbl_eu_805765A0, &self->field_04) == 0) {
+        self->field_9E = 0;
+    }
+}
 
 extern "C" void GimItem_Noop() {}
 
@@ -427,7 +392,5 @@ char* lbl_eu_806627B8[2] = { lbl_eu_80668438, lbl_eu_80668440 };
 #pragma section data_type ".sdata2" ".sdata2"
 extern __declspec(section ".sdata2") f32 lbl_eu_80668448 = 0.0f;
 extern __declspec(section ".sdata2") f32 lbl_eu_8066844C = 5.0f;
-extern __declspec(section ".sdata2") f32 lbl_eu_80668450 = 0.0f;
-extern __declspec(section ".sdata2") f32 lbl_eu_80668454 = 20.0f;
 #pragma section data_type ".data" ".data"
 // ----- end typified retail data -----

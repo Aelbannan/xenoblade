@@ -196,7 +196,7 @@ __declspec(section ".rodata") __attribute__((used))
 const char lbl_eu_80503114[0x14] = "cf::CfResImpl";
 
 // Forward decls for the .data <-> .sdata cross-references below.
-extern const void* lbl_eu_806623D0[2];
+extern const void* __RTTI__Q22cf12CfResObjImpl[2];
 extern const void* lbl_eu_806623D8[2];
 extern const void* lbl_eu_80530FB0[4];
 
@@ -210,7 +210,7 @@ CfPmfEntry lbl_eu_80530F20[3] = {
 // .data 0x6C: hand-built vtable (RTTI + 0 + dtor + 24 slots).
 __declspec(section ".data") __attribute__((used))
 cf::CfResObjImplVtbl lbl_eu_80530F44 = { {
-    (u32)lbl_eu_806623D0,
+    (u32)__RTTI__Q22cf12CfResObjImpl,
     0,
     (u32)__dt__Q22cf12CfResObjImplFv,
     (u32)ResObj_DispatchState_CCE0,
@@ -252,7 +252,7 @@ static u32 s_sbssPad;
 
 // .sdata 0x10: RTTI descriptor pairs.
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806623D0[2] = { lbl_eu_80503100, lbl_eu_80530FB0 };
+const void* __RTTI__Q22cf12CfResObjImpl[2] = { lbl_eu_80503100, lbl_eu_80530FB0 };
 __declspec(section ".sdata") __attribute__((used))
 const void* lbl_eu_806623D8[2] = { lbl_eu_80503114, 0 };
 

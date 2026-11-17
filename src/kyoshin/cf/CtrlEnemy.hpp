@@ -305,13 +305,7 @@ public:
     virtual int m028(u32 mask);      // index 8 -> vtable 0x28
 };
 
-// 8-byte enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor); the
-// list returned by CTaskGame_enumListGet has the element count at +0x620.
-struct CtrlEnemyEnumHolder {
-    void* list;   // 0x0
-    u32 handle;   // 0x4
-};
-
+// Enum list view (CfEnumListHolder::get()): element count at +0x620.
 struct CtrlEnemyEnumList {
     u8 _pad00[0x620];                // 0x00-0x61F
     u32 field_620;                   // 0x620 (count)
@@ -474,11 +468,8 @@ int CtrlMoveEne_ConsumeTargetResolve(void* sub);
 // Enum-list helpers: C++ void* forms (match CfObjectImplMove.hpp / majority).
 // Kept outside extern "C" so they unify with the ImplMove decls pulled via
 // harness_catalog rather than MWCC 10197 against mixed linkage.
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
 void startEnumObjects(void* list, u32 a, u32 b);
 void* getObjectIdAt(void* list, int idx);
-void __dt__80043E88(void* holder, int flags);
 void* __ct__800FB044(void* list, f32 f, void* obj, int a);
 void* __ct__800FAE3C(void* list, void* vec, int a);
 void* __ct__800FD0B4(void* list, int a);

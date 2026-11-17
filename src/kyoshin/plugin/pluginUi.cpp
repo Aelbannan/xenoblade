@@ -1,4 +1,5 @@
 #include "kyoshin/plugin/pluginUi.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "monolib/util.hpp"
 #include "monolib/vm/yvm2.h"
@@ -353,14 +354,13 @@ int setTrust(VMThread* pThread) {
     CfSlotTable tbl = lbl_eu_804FA9F0;
     int done = 0;
     CfEnumListHolder holder;
-    CTaskGame_enumListCtor(&holder);
 
     // Spawn the effect on the arg1 player slot.
-    startEnumObjects(CTaskGame_enumListGet(&holder), tbl.values[arg1], 0);
-    if (CTaskGame_enumListGet(&holder)->count >= 1) {
+    startEnumObjects(holder.get(), tbl.values[arg1], 0);
+    if (((CfEnumList*)holder.get())->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
+                (CfEnumListItem*)getEntryAt(holder.get(), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
@@ -370,11 +370,11 @@ int setTrust(VMThread* pThread) {
     }
 
     // Same for the arg2 slot; both must succeed before notifying.
-    startEnumObjects(CTaskGame_enumListGet(&holder), tbl.values[arg2], 0);
-    if (CTaskGame_enumListGet(&holder)->count >= 1) {
+    startEnumObjects(holder.get(), tbl.values[arg2], 0);
+    if (((CfEnumList*)holder.get())->count >= 1) {
         if (code80135FDC_getByte_64059() == 0) {
             CfEnumListItem* item =
-                (CfEnumListItem*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
+                (CfEnumListItem*)getEntryAt(holder.get(), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
                                         (const void*)&lbl_eu_806618D8,
                                         (const void*)&lbl_eu_806618F0, 0);
@@ -386,7 +386,6 @@ int setTrust(VMThread* pThread) {
     if (done >= 2) {
         UIWin_CreateMenuUpdate(5, 0, arg3, arg4);
     }
-    __dt__80043E88(&holder, -1);
     return 0;
 }
 

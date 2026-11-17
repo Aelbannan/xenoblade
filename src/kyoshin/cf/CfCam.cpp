@@ -51,7 +51,7 @@ class cfCamGameManagerObjMoveFwd;
 // 8-byte typeinfo decls keep them sdata-eligible -> li @sda21).
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern const void* lbl_eu_80661B28[2];
+extern const void* __RTTI__Q22cf11CfCamFollow[2];
 extern const void* lbl_eu_80661B30[2];
 // C++-linkage global; MWCC mangles it to isGlobalCamFlagSet__Fi (the retail name).
 int isGlobalCamFlagSet(int gate);
@@ -170,7 +170,7 @@ char lbl_eu_804FB4F0[0xE0] =
 // rodata names above; the dispatch halves ship from other TUs.
 extern char lbl_eu_80527154[];
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* lbl_eu_80661B28[2] = { lbl_eu_804FB4D0, lbl_eu_80527154 };
+const void* __RTTI__Q22cf11CfCamFollow[2] = { lbl_eu_804FB4D0, lbl_eu_80527154 };
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 const void* lbl_eu_80661B30[2] = { lbl_eu_804FB4E0, 0 };
 // .sdata scalar pool as a struct (Eve/Item recipe): individual scalars with
@@ -3991,7 +3991,7 @@ void propagateFollowParam(cf::CfCamFollow* self, int cond) {
 // self's +0x10 slot.
 void cfCam_copyCamState(cf::CfCamFollow* self, cf::CfObject* src) {
     cf::CfCamStateView* state = reinterpret_cast<cf::CfCamStateView*>(
-        __dynamic_cast(src, 0, &lbl_eu_80661B28, &lbl_eu_80661B30, 0));
+        __dynamic_cast(src, 0, &__RTTI__Q22cf11CfCamFollow, &lbl_eu_80661B30, 0));
     if (state != NULL) {
         cf::CfCamStateView* dst = reinterpret_cast<cf::CfCamStateView*>(self);
         copyVec3Words(&dst->field34, &state->field34);

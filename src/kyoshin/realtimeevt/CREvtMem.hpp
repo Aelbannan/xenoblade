@@ -5,11 +5,13 @@
 namespace cf {
 
 // CREvtMem - realtime event memory manager (singleton)
-// Vtable at 0x80530A30
 // Size: 0x2C
 // Singleton pointer at lbl_eu_80664260
-struct CREvtMem {
-    /* 0x00 */ u8* vtable;
+class CREvtMem {
+public:
+    CREvtMem();
+    virtual ~CREvtMem();
+
     /* 0x04 */ u32 flags;
     /* 0x08 */ u32 field_08;  // start1
     /* 0x0C */ u32 field_0C;  // size1
@@ -20,24 +22,13 @@ struct CREvtMem {
     /* 0x20 */ u32 arenaSize;
     /* 0x24 */ u32 currentPos;
     /* 0x28 */ f32 someFloat;
-    // (no ctor declaration: the ctor __ct__cf_CREvtMem is provided by
-    // CREvtMem.cpp as an extern "C" retail-symbol function.)
-    // Frees any pending MEM2 allocations, clears the singleton pointer and,
-    // when the compiler-generated destruction flag requests it, deletes the
-    // object (retail __dt__Q22cf8CREvtMemFv / __dl__FPv epilogue).
-    ~CREvtMem();
 };
 
 } // namespace cf
 
-// Vtable (retail .data:0x80530A30) and the realtime-event memory singleton
-// (sbss; stored by the ctor, cleared by the dtor).
-extern u8 lbl_eu_80530A30[];
+// The realtime-event memory singleton (sbss; stored by the ctor, cleared by
+// the dtor).
 extern cf::CREvtMem* lbl_eu_80664260;
-
-// Float constant loaded by the ctor (retail sdata2 pool; UNDEF slot kept
-// for rule-side pool naming -- see the sbss note in CREvtMem.cpp).
-extern const f32 lbl_eu_80667650;
 
 // Arena bounds helpers imported from the CInfoCf TU (bodies in
 // kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250).

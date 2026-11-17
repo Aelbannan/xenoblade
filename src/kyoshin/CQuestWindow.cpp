@@ -156,12 +156,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         self->mAnimA->SetFrame(lbl_eu_8066713C);
         self->mpLayout->Animate(0);
 
-        // Build the cursor on the stack, copy its body into the member region
-        // (skipping the +0x00 vtable pointer) and destroy the temp.
-        CCur18 tmpCur;
-        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
-        self->mCursor = tmpCur;
-        __dt__6CCur18Fv(&tmpCur, -1);
+        self->mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         self->mCursor.initLayout();
 
         refreshQuestContent(self);
@@ -193,17 +188,12 @@ void CQuestWindow::cbRenderBefore() {
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch
-    // its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mpLayout, &drawInfo, 0, 1);
     if (field_0xC0 >= 0) {
-        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor, &drawInfo);
     }
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
 // ---------------------------------------------------------------------------

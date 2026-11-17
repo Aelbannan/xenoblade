@@ -380,6 +380,37 @@ void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
     }
 }
 
+/* btm_remove_sco_links calls BTM_RemoveSco; -ipa file must not inline the
+   body or the caller's bl call site disappears (same pattern as
+   BTM_ChangeEScoLinkParms above). */
+#pragma auto_inline off
+tBTM_STATUS BTM_RemoveSco(UINT16 sco_inx)
+{
+    tSCO_CONN *p = &SCO_CB->sco_db[sco_inx];
+    UINT16 tempstate;
+
+    /* Validity check */
+    if (sco_inx >= 3 || (tempstate = p->state) == SCO_ST_UNUSED)
+        return (BTM_UNKNOWN_ADDR);
+
+    /* If no HCI handle, simply drop the connection and return */
+    if (p->hci_handle == HCI_INVALID_HANDLE || tempstate == SCO_ST_PEND_UNPARK) {
+        p->hci_handle = HCI_INVALID_HANDLE;
+        p->state = SCO_ST_UNUSED;
+        p->p_esco_cback = NULL;
+        return (BTM_SUCCESS);
+    }
+
+    p->state = SCO_ST_DISCONNECTING;
+
+    if (!btsnd_hcic_disconnect(p->hci_handle, HCI_ERR_PEER_USER)) {
+        p->state = tempstate;
+        return (BTM_NO_RESOURCES);
+    }
+
+    return (BTM_CMD_STARTED);
+}
+
 void btm_remove_sco_links(BD_ADDR bda)
 {
     /* Remove every known-address SCO link towards bda */
@@ -443,11 +474,6 @@ void btm_sco_acl_removed(BD_ADDR bda)
     } while (i < 3);
 }
 
-void btm_route_sco_data(BT_HDR* p_msg)
-{
-    GKI_freebuf(p_msg);
-}
-
 /* Retail keeps a real bl BTM_ChangeEScoLinkParms at the btm_sco_connected
    call site; -ipa file must not inline the body or the call disappears
    (same pattern as btm_sec_execute_procedure in btm_sec.c). */
@@ -457,6 +483,10 @@ void btm_route_sco_data(BT_HDR* p_msg)
 char btm_sco_pool_ces[] = "BTM_ChangeEScoLinkParms -> SCO Link for handle 0x%04x, pkt 0x%04x";
 char btm_sco_pool_cee[] = "BTM_ChangeEScoLinkParms -> eSCO Link for handle 0x%04x";
 
+void btm_route_sco_data(BT_HDR* p_msg)
+{
+    GKI_freebuf(p_msg);
+}
 tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parms)
 {
     /* Retail pools the trace strings under one base label (@1903) and reaches
@@ -527,6 +557,7 @@ tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parm
 
     return (BTM_CMD_STARTED);
 }
+
 #pragma auto_inline on
 
 void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
@@ -623,36 +654,5 @@ BOOLEAN btm_is_sco_active_by_bdaddr(BD_ADDR remote_bda)
         p++;
     }
     return FALSE;
-}
-
-/* btm_remove_sco_links calls BTM_RemoveSco; -ipa file must not inline the
-   body or the caller's bl call site disappears (same pattern as
-   BTM_ChangeEScoLinkParms above). */
-#pragma auto_inline off
-tBTM_STATUS BTM_RemoveSco(UINT16 sco_inx)
-{
-    tSCO_CONN *p = &SCO_CB->sco_db[sco_inx];
-    UINT16 tempstate;
-
-    /* Validity check */
-    if (sco_inx >= 3 || (tempstate = p->state) == SCO_ST_UNUSED)
-        return (BTM_UNKNOWN_ADDR);
-
-    /* If no HCI handle, simply drop the connection and return */
-    if (p->hci_handle == HCI_INVALID_HANDLE || tempstate == SCO_ST_PEND_UNPARK) {
-        p->hci_handle = HCI_INVALID_HANDLE;
-        p->state = SCO_ST_UNUSED;
-        p->p_esco_cback = NULL;
-        return (BTM_SUCCESS);
-    }
-
-    p->state = SCO_ST_DISCONNECTING;
-
-    if (!btsnd_hcic_disconnect(p->hci_handle, HCI_ERR_PEER_USER)) {
-        p->state = tempstate;
-        return (BTM_NO_RESOURCES);
-    }
-
-    return (BTM_CMD_STARTED);
 }
 #pragma auto_inline on

@@ -30,7 +30,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) char lbl_eu_8052D3
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
-__declspec(section ".sdata") __attribute__((used, aligned(8))) const char* const lbl_eu_80661ED8[2] = { lbl_eu_804FEF98, lbl_eu_8052D338 };
+__declspec(section ".sdata") __attribute__((used, aligned(8))) const char* const __RTTI__13CSysWinSelect[2] = { lbl_eu_804FEF98, lbl_eu_8052D338 };
 CSysWinSelect* lbl_eu_80663FDC = nullptr;
 
 // VTable-compatible thunks adjacent to the CSysWinSelect subobjects (retail

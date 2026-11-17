@@ -1071,7 +1071,7 @@ extern "C" u32 __RTTI__10IWorkEvent;
 extern "C" u32 __RTTI__11CWorkThread;
 extern "C" u32 lbl_eu_806635F0;  // CFileHandle RTTI locator (foreign TU)
 }
-extern "C" u32 lbl_eu_806636B0[2]; // .sdata RTTI locator (defined below)
+extern "C" u32 __RTTI__11CDeviceFile[2]; // .sdata RTTI locator (defined below)
 extern "C" u32 lbl_eu_806636B8[2];
 extern "C" u32 lbl_eu_806636C0[2];
 extern "C" u32 lbl_eu_8056C2F0[7];
@@ -1079,7 +1079,7 @@ extern "C" u32 lbl_eu_8056C30C[3];
 extern "C" u32 lbl_eu_8056C318[3];
 
 extern "C" u32 lbl_eu_8056C250[40] = {
-    (u32)&lbl_eu_806636B0, 0x00000000, (u32)&DeviceFileBlob::__dt__11CDeviceFileFv,
+    (u32)&__RTTI__11CDeviceFile, 0x00000000, (u32)&DeviceFileBlob::__dt__11CDeviceFileFv,
     (u32)&DeviceFileBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&DeviceFileBlob::OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&DeviceFileBlob::WorkEvent3__10IWorkEventFPv,
@@ -1158,7 +1158,7 @@ extern "C" const char lbl_eu_80522BE4[172] = {
 };
 
 // [.sdata] 0x806636A8-0x806636C8 (32B): flags + RTTI locators.
-extern "C" u32 lbl_eu_806636B0[2] = { (u32)&lbl_eu_80522BA0, (u32)&lbl_eu_8056C2F0 };
+extern "C" u32 __RTTI__11CDeviceFile[2] = { (u32)&lbl_eu_80522BA0, (u32)&lbl_eu_8056C2F0 };
 extern "C" u32 lbl_eu_806636B8[2] = { (u32)&lbl_eu_80522BAC, (u32)&lbl_eu_8056C318 };
 extern "C" u32 lbl_eu_806636C0[2] = { (u32)&lbl_eu_80522BC4, 0x00000000 };
 

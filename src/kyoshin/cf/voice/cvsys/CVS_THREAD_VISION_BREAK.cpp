@@ -17,72 +17,6 @@
 // RequestVoicePlayback, CCharVoiceMan_DispatchById, CCharVoiceMan_AllocVoiceArena, HpVoice_FindBySubState,
 // MapFx_ResolveOwner, CfObjectMove_releaseVoiceHandle) and the base constructor
 // __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
-// us-802abc94 (VisBreak_TryRunSlotAction)
-// Completion callback: if no active voice is playing, invoke the playback
-// virtual (CVS_THREAD::PlayThreadVoice, vtable slot 1).
-void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
-    }
-}
-
-// us-802abcdc (VisBreak_RemoveVoiceSlot)
-// Remove a voice from the field_0x20 slot by matching its embedded CCharVoice.
-// A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
-// is biased by 0x3E9C before comparing against the incoming voice pointer.
-void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
-    // Direct call to the free function at 0x802A3BEC.
-    DetachThreadVoice(self, voicePtr);
-
-    CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x20 = NULL;
-    }
-}
-
-// us-802abd3c (VisBreak_AllocVoiceHandle)
-// Standalone voice selector for vision-break. Finds a free voice handle via
-// HpVoice_FindBySubState(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
-// based on the current game-manager frame count. Always returns 0.
-extern "C" int VisBreak_AllocVoiceHandle() {
-    CVoiceHandle* handle = HpVoice_FindBySubState(1);
-    if (handle == NULL) {
-        return 0;
-    }
-
-    // Allocate a 0x32-byte playback buffer.
-    if (CCharVoiceMan_DispatchById(0x32, 1) == NULL) {
-        return 0;
-    }
-
-    // Select a voice ID based on the game-manager frame counter.
-    // Retail calls getQueuedFileEventCount() for EACH branch condition (not once).
-    // Cast to u32 ensures unsigned compare (cmpli) matches retail.
-    int voiceId;
-    if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x38u) {
-        // Early phase: voice IDs 0x65-0x66.
-        voiceId = ml::math::mtRand(2) + 0x65;
-    } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x62u) {
-        // Mid phase: voice IDs 0x67-0x68.
-        voiceId = ml::math::mtRand(2) + 0x67;
-    } else {
-        // Late phase: voice IDs 0x69-0x6A.
-        voiceId = ml::math::mtRand(2) + 0x69;
-    }
-
-    // Bias the handle to its embedded CCharVoice.
-    CCharVoice* voicePtr = (CCharVoice*)handle;
-    if (handle != NULL) {
-        voicePtr = &handle->voice;
-    }
-
-    RequestVoicePlayback(voicePtr, voiceId, 0x32);
-    return 0;
-}
 
 // us-802aba10 (__ct__802A92D8)
 // Factory constructor for CVS_THREAD_VISION_BREAK. Validates the parameter,
@@ -224,6 +158,77 @@ void VisBreak_DispatchPlayback(CVS_THREAD_VISION_BREAK* self) {
         }
     }
 }
+
+
+// us-802abc94 (VisBreak_TryRunSlotAction)
+// Completion callback: if no active voice is playing, invoke the playback
+// virtual (CVS_THREAD::PlayThreadVoice, vtable slot 1).
+void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
+    }
+}
+
+
+
+// us-802abcdc (VisBreak_RemoveVoiceSlot)
+// Remove a voice from the field_0x20 slot by matching its embedded CCharVoice.
+// A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
+// is biased by 0x3E9C before comparing against the incoming voice pointer.
+void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
+    // Direct call to the free function at 0x802A3BEC.
+    DetachThreadVoice(self, voicePtr);
+
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+}
+
+
+// us-802abd3c (VisBreak_AllocVoiceHandle)
+// Standalone voice selector for vision-break. Finds a free voice handle via
+// HpVoice_FindBySubState(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
+// based on the current game-manager frame count. Always returns 0.
+extern "C" int VisBreak_AllocVoiceHandle() {
+    CVoiceHandle* handle = HpVoice_FindBySubState(1);
+    if (handle == NULL) {
+        return 0;
+    }
+
+    // Allocate a 0x32-byte playback buffer.
+    if (CCharVoiceMan_DispatchById(0x32, 1) == NULL) {
+        return 0;
+    }
+
+    // Select a voice ID based on the game-manager frame counter.
+    // Retail calls getQueuedFileEventCount() for EACH branch condition (not once).
+    // Cast to u32 ensures unsigned compare (cmpli) matches retail.
+    int voiceId;
+    if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x38u) {
+        // Early phase: voice IDs 0x65-0x66.
+        voiceId = ml::math::mtRand(2) + 0x65;
+    } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x62u) {
+        // Mid phase: voice IDs 0x67-0x68.
+        voiceId = ml::math::mtRand(2) + 0x67;
+    } else {
+        // Late phase: voice IDs 0x69-0x6A.
+        voiceId = ml::math::mtRand(2) + 0x69;
+    }
+
+    // Bias the handle to its embedded CCharVoice.
+    CCharVoice* voicePtr = (CCharVoice*)handle;
+    if (handle != NULL) {
+        voicePtr = &handle->voice;
+    }
+
+    RequestVoicePlayback(voicePtr, voiceId, 0x32);
+    return 0;
+}
 // Buffer-size getter recorded under the flat retail map name VisBreak_GetSizeConstF:
 // returns 0xF (the thread's buffer size). Retail body: li r3,0xF; blr.
 u32 VisBreak_GetSizeConstF(CVS_THREAD_VISION_BREAK* self) { return 0xF; }
@@ -236,13 +241,13 @@ u32 VisBreak_GetSizeConstF(CVS_THREAD_VISION_BREAK* self) { return 0xF; }
 // typeinfo-base word plus padding, and three .sdata objects: two voice-ID
 // quads the code reads via @sda21 and the typeinfo object ({name,
 // trailing}). Global-scope data symbols: MWCC does not mangle them.
-// lbl_eu_80662CC0 lives in the CCharVoiceMan range and is referenced, not
+// __RTTI__Q22cf10CVS_THREAD lives in the CCharVoiceMan range and is referenced, not
 // defined, here.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662D50[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf23CVS_THREAD_VISION_BREAK[2];
 
 extern const char lbl_eu_80510838[0x20] = "cf::CVS_THREAD_VISION_BREAK";
 
@@ -259,7 +264,7 @@ u32 lbl_eu_80539D7C[3] = {
 };
 
 u32 lbl_eu_80539D88[7] = {
-    (u32)lbl_eu_80662D50,
+    (u32)__RTTI__Q22cf23CVS_THREAD_VISION_BREAK,
     0,
     (u32)PlayThreadVoice,
     (u32)VisBreak_RemoveVoiceSlot,
@@ -269,7 +274,7 @@ u32 lbl_eu_80539D88[7] = {
 };
 
 u32 lbl_eu_80539DA4[3] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
 };
@@ -288,7 +293,7 @@ __declspec(section ".sdata") extern s16 lbl_eu_80662D48[4] = {
     0,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662D50[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf23CVS_THREAD_VISION_BREAK[2] = {
     (u32)lbl_eu_80510838,
     (u32)lbl_eu_80539DA4,
 };

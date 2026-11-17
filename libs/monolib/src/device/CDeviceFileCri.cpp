@@ -175,7 +175,7 @@ bool CDeviceFileCri::checkDriveStatus() {
     if (status == -1) {
         // Fatal DVD error: raise the global exception handler, then fall
         // through to the shared "keep running" tail below.
-        logExceptionMessage__10CExceptionFv(lbl_eu_80522CA0);
+        CException::logExceptionMessage(reinterpret_cast<const wchar_t*>(lbl_eu_80522CA0));
     } else if (status == 6) {
         // Recoverable DVD errors: only surface the message when an exception
         // is not already pending (flag or queued EVT_EXCEPTION), then stay

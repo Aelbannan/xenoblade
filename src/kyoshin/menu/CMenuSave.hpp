@@ -1,156 +1,41 @@
 #pragma once
 
 #include <types.h>
-#include <monolib/work/CProcess.hpp>
-#include <monolib/scn/IScnRender.hpp>
 
+#include "kyoshin/IUICf.hpp"
+#include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 
-// Forward-declared only: including CSaveLoad.hpp here would conflict its
-// CSaveLoad* declaration of lbl_eu_806649F4 with CTaskGame.hpp's u32 one.
-// This TU treats CSaveLoad as an opaque type.
-class CSaveLoad;
+class CProcess;
 
-/*
- * Menu save/load screen process.
- *
- * Layout (constructor / destructor / Term):
- *   0x00: CProcess          -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8                -- phase/state flag (written by flagSaveMenuReady)
- *   0x58: IScnRender        -- render-callback subobject (member, vptr)
- *   0x5C: CProcess*         -- parent process reference
- *   0x60: CBgTex            -- background layout widget
- *   0x80: CTitleAHelp       -- title/help bar
- *   0xB8: CSaveLoad storage -- save/load data region (0x150 bytes; kept as an
- *                              opaque byte region because CSaveLoad's declared
- *                              sizeof is larger than its real retail extent)
- *  0x208: u8 mField208
- *  0x20A: u8 mField20A
- *  0x20B: u8 mState
- *  total: 0x20C             -- sizeof(CMenuSave) (allocate literal in createSaveMenu)
- */
-class CMenuSave : public CProcess {
+// Menu save/load screen process (IUICf task + IScnRender render callback).
+//
+// The CSaveLoad region is kept as an opaque byte array: CSaveLoad's declared
+// sizeof is larger than its real retail extent, so it is constructed and
+// destroyed by hand from the constructor/destructor bodies.
+class CMenuSave : public IUICf, public IScnRender {
 public:
+    CMenuSave(CProcess* parent, u32 arg208, u32 arg209, u32 arg20A);
     virtual ~CMenuSave();
+
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
 
-    u32 ptmf0[3];                 // 0x3C-0x47: vtable pointer-to-member-function data
-    u32 ptmf1[3];                 // 0x48-0x53: vtable pointer-to-member-function data
-    u8 mField54;                  // 0x54: phase flag
-    u8 mField55;                  // 0x55
-    u8 _pad56[2];                 // 0x56-0x57
-    IScnRender mIScnRender;       // 0x58
-    CProcess* mParentRef;         // 0x5C
-    CBgTex mBgTex;                // 0x60
-    CTitleAHelp mTitleAHelp;      // 0x80
-    u8 mSaveLoad[0x150];          // 0xB8-0x207: CSaveLoad storage
-    u8 mField208;                 // 0x208
-    u8 mField209;                 // 0x209
-    u8 mField20A;                 // 0x20A
-    u8 mState;                    // 0x20B
-};
+    // Only one save menu exists at a time (subsequent calls return NULL).
+    static CMenuSave* create(CProcess* parent, CProcess* parentRef, u32 arg208,
+                             u32 arg209, u32 arg20A);
 
-// Flat view of cf::CfPadData exposing only the flag words handleSaveMenuInput reads:
-// CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
-// +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
-struct MenuSavePadData {
-    u32 mPadHeldFlags;          // 0x00 - CPad::mHeldButtonFlags
-    u32 mPadPressedFlags;       // 0x04 - CPad::mPressedButtonFlags
-    u8 _pad[0xFC];              // 0x08-0x103 - rest of the pad data
-    u32 mTurboPressButtonFlags; // 0x104
-};
+    static CMenuSave* sInstance;
 
-// IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-extern "C" void fwdSaveMenuCbRender(void* self);
-extern "C" void fwdSaveMenuDtor(void* self);
-
-// Shared singleton state flag (cleared by Term, set by createSaveMenu).
-extern unsigned long lbl_eu_806649E8;
-
-// Render-gate mode bitfield (.sbss; bit 21 = realtime event busy).
-extern u32 lbl_eu_80663E28;
-
-// vtable / PMF data (MWCC does not mangle global-scope data names).
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8052BF70[];   // CMenuSave temporary vtable (pre-PMF copy)
-extern char lbl_eu_80538710[];   // CMenuSave composite vtable
-// Message table base used by Init's CTitleAHelp name lookup (+0xb string).
-extern char lbl_eu_8050F7B0[];
-
-// Retail-unmangled callee names (US strips mangling for these func_ helpers).
-// isIdle/BgTex_IsLoaded_3E34/... are declared int (not u8) so callers compare with
-// cmpwi directly (no byte mask), matching retail.
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" int CSaveLoad_getIdle(CSaveLoad* self);
-extern "C" int CSaveLoad_isReady(CSaveLoad* self);
-extern "C" u8 func_8028FFD4(CSaveLoad* self);
-extern "C" void CSaveLoad_reset(CSaveLoad* self);
-extern "C" void CSaveLoad_open(CSaveLoad* self);
-extern "C" void NandTeardown();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-
-// Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
-// (retail symbols are unmangled / non-namespace, so C linkage is required).
-extern "C" int IsMenuState621F0();
-extern "C" void openSaveMenu(CMenuSave* self);
-extern "C" void advanceSaveMenuPhase(CMenuSave* self);
-extern "C" void handleSaveMenuInput(CMenuSave* self);
-extern "C" void flagSaveMenuReady(CMenuSave* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void CSaveLoad_update(CSaveLoad* self);
-extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int CSaveLoad_isBusy(CSaveLoad* self);
-extern "C" int CSaveLoad_getDone(CSaveLoad* self);
-extern "C" void CSaveLoad_confirm(CSaveLoad* self);
-extern "C" void CSaveLoad_cancel(CSaveLoad* self);
-extern "C" void CSaveLoad_close(CSaveLoad* self);
-extern "C" void CSaveLoad_openDel(CSaveLoad* self);
-extern "C" void CSaveLoad_curUp(CSaveLoad* self);
-extern "C" void CSaveLoad_curDown(CSaveLoad* self);
-extern "C" void CSaveLoad_pageUp(CSaveLoad* self);
-extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
-extern "C" void loadSaveData__9CSaveLoadFv(CSaveLoad* self);
-extern "C" int CMainMenu_GetInstancePtr();
-extern "C" void ArtsInfo_SetReadyFlag();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(void* self, int arg);
-extern "C" void __ct__CTitleAHelp(void* self, char* name, int id);
-extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" void NandAllocBufs();
-extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
-extern "C" void InfoCfCopySysWin(void* dest, void* src);
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
-                                                      u32 b);
-
-// DrawInfo helper - retail emits the mangled nw4r form
-// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
-// global function to let MWCC mangle it - NOT inside the extern "C" block.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-
-// Destructor retail symbols (kept mangled in US; the dtor D2 form addresses
-// them by their literal names; __dt__800FED0C is the game-side CProcess dtor
-// wrapper defined in CMainMenu.cpp).
-extern "C" void cbRenderBefore__9CMenuSaveFv(void* self);
-extern "C" void* __dt__800FED0C(void* self, int flags);
-extern "C" CSaveLoad* __dt__9CSaveLoadFv(CSaveLoad* self, int flags);
-extern "C" CTitleAHelp* __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-extern "C" CBgTex* __dt__6CBgTexFv(CBgTex* self, int flags);
+    /* 0x5C */ CProcess* mParentRef;
+    /* 0x60 */ CBgTex mBgTex;
+    /* 0x80 */ CTitleAHelp mTitleAHelp;
+    /* 0xB8 */ u8 mSaveLoad[0x150]; // CSaveLoad storage (opaque, see above)
+    /* 0x208 */ u8 mField208;
+    /* 0x209 */ u8 mField209;
+    /* 0x20A */ u8 mField20A;
+    /* 0x20B */ u8 mState;
+}; // size: 0x20C

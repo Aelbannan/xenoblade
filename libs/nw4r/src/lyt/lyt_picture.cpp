@@ -4,11 +4,9 @@
 namespace nw4r {
 namespace lyt {
 
-// Definition of the Picture RTTI object (extern + initializer = definition),
-// using the retail sbss linker name (see lyt_pane.cpp / lyt_textBox.cpp).
-__attribute__((used, aligned(8))) nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665480(&lbl_eu_80665470);
-__attribute__((used, aligned(1))) char lyt_picture_pad2[4];
-// pad removed
+
+
+NW4R_UT_RTTI_DEF_DERIVED(Picture, Pane);
 
 // TODO(kiwi) Don't know what this actually looks like...
 Picture::Picture(u8 num) : Pane(NULL) {
@@ -136,11 +134,10 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 }
 
 const nw4r::ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
-    return &lbl_eu_80665480;
+    return &typeInfo;
 }
 
 } // namespace lyt
 } // namespace nw4r
 
-// Pad .sbss to retail 0x10 (retail 0x10, decomp 0x4) - need second object lbl_eu_80665488 (8) plus pad 4
-__attribute__((used, aligned(8))) nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488(&lbl_eu_80665470);
+

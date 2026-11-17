@@ -4,9 +4,8 @@ namespace nw4r {
 namespace g3d {
 namespace detail {
 
-// Retail 0.0f constant (sdata2 lbl_eu_80669BE0); referenced by name so the
+// Retail 0.0f constant (sdata2 0.0); referenced by name so the
 // PS-store kernels' lfs stays sda21-addressed and this TU stays data-free.
-extern "C" { extern const f32 lbl_eu_80669BE0; }
 
 void Copy32ByteBlocks(register void* pDst, register const void* pSrc,
                       register u32 size) {
@@ -33,7 +32,7 @@ void Copy32ByteBlocks(register void* pDst, register const void* pSrc,
 }
 
 void ZeroMemory32ByteBlocks(register void* pDst, register u32 size) {
-    register f32 zero = lbl_eu_80669BE0;
+    register f32 zero = 0.0f;
 
     for (size /= 32; size > 0; size--) {
         ASM (
@@ -48,7 +47,7 @@ void ZeroMemory32ByteBlocks(register void* pDst, register u32 size) {
 }
 
 void ZeroMemory16ByteBlocks(register void* pDst, register u32 size) {
-    register f32 zero = lbl_eu_80669BE0;
+    register f32 zero = 0.0f;
 
     for (size /= 16; size > 0; size--) {
         ASM (

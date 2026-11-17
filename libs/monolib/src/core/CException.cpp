@@ -144,8 +144,6 @@ extern "C" {
 // Shared .sdata2 float constants (retail pool; owned by another TU's range).
 extern const f32 lbl_eu_8066A480;  // 0.0f
 extern const f32 lbl_eu_8066A484;  // 0.8f
-extern const f32 lbl_eu_8066A488;  // 1.0f
-extern const f32 lbl_eu_8066A4C0;  // exception fade step
 
 // Constructor - extern "C" to match retail symbol name
 extern "C" CException* __ct__CException(CException* self, const char* pName, CWorkThread* pParent) {
@@ -534,7 +532,7 @@ bool CException::wkStandbyLogin() {
             CMsgParamEntry entry;
         } local;
         CTaskGame_setVec4(reinterpret_cast<ml::CCol4*>(&local), lbl_eu_8066A480,
-                      lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A488);
+                      lbl_eu_8066A480, lbl_eu_8066A480, 1.0f);
         view->unk444 = *(ml::CVec4*)&local.color;
 
         // Enqueue an EVT_4 message into the view's context ring.
@@ -556,8 +554,8 @@ bool CException::wkStandbyLogin() {
         view->unk460 = 2;
     }
 
-    mAlphaStep = lbl_eu_8066A4C0;
-    mAlpha = lbl_eu_8066A4C0;
+    mAlphaStep = 0.04f;
+    mAlpha = 0.04f;
     mAnimState = 0;
     lbl_eu_806656C8 = unk208;
     setAppException__8CDesktopFi(1);
@@ -598,7 +596,7 @@ public:
     virtual void render();
 };
 
-extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
+void CException::logExceptionMessage(const wchar_t* message) {
     int index = 0;
     while (index < (int)lbl_eu_806656C4) {
         CException* exception = lbl_eu_80657B50[index];
@@ -606,7 +604,9 @@ extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
         ((CVirtualException*)exception)->render();
         index++;
     }
-    if (message == nullptr || message[0] == 0 || CDeviceVI::getInstance() == nullptr) {
+    // Retail tests only the first byte of the wide string.
+    if (message == nullptr || *reinterpret_cast<const char*>(message) == 0 ||
+        CDeviceVI::getInstance() == nullptr) {
         for (;;) {}
     }
     updateCmd2Color__8CGXCacheFv(cacheInstance__9CDeviceGX, &ml::CCol4::black, 1);
@@ -704,14 +704,14 @@ extern "C" const char lbl_eu_80522F88[];
 extern "C" u32 lbl_eu_8056CD80[];
 
 // [.sdata] 0x80663780-0x80663788 (8B): RTTI locator {name "CException", class-info}.
-extern "C" u32 lbl_eu_80663780[2] = {
+extern "C" u32 __RTTI__10CException[2] = {
     (u32)&lbl_eu_80522F70, (u32)&lbl_eu_8056CD80,
 };
 
 // [.data] 0x8056CCE0-0x8056CD80 (0xA0): CException primary vtable.
 extern "C" u32 lbl_eu_8056CCE0[40] = {
     // IWorkEventVtbl
-    (u32)&lbl_eu_80663780, 0, (u32)&__dt__10CExceptionFv,
+    (u32)&__RTTI__10CException, 0, (u32)&__dt__10CExceptionFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,

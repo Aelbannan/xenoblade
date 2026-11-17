@@ -281,7 +281,7 @@ struct CfImplEneTarget {
     u32 field_04;                            // 0x04
 };
 
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
 struct CfEnumList {
     u8 _pad00[0x620];                        // 0x00-0x61F
     u32 field_620;                           // 0x620
@@ -772,11 +772,8 @@ void unregisterBattleActor(void* mgr, void* target);
 void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
 void UIWin_BuildFlagBuf(u32 a, u32 b, u32 c);
 void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void* getObjectAt(void* list, u32 idx);
-void __dt__80043E88(void* holder, int);
 }
 
 // C++-mangled imports (declared so MWCC emits the retail mangled names).

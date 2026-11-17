@@ -64,13 +64,13 @@ extern char lbl_eu_8050DBD8[];
 extern char lbl_eu_8050DBF0[];
 extern char lbl_eu_8050DC08[];
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80662990[2] = { lbl_eu_8050DBC4, lbl_eu_805379F0 };
+const void* __RTTI__Q22UI13CPassiveSkill[2] = { lbl_eu_8050DBC4, lbl_eu_805379F0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80662998[2] = { lbl_eu_8050DBD8, 0 };
+const void* __RTTI__Q22UI17CPassiveSkillLine[2] = { lbl_eu_8050DBD8, 0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806629A0[2] = { lbl_eu_8050DBF0, 0 };
+const void* __RTTI__Q22UI17CPassiveSkillInfo[2] = { lbl_eu_8050DBF0, 0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806629A8[2] = { lbl_eu_8050DC08, 0 };
+const void* __RTTI__Q22UI16CPassiveSkillCur[2] = { lbl_eu_8050DC08, 0 };
 __declspec(section ".sdata") __attribute__((used))
 const void* lbl_eu_806629B0[2] = { lbl_eu_80668964, 0 };
 
@@ -101,15 +101,15 @@ struct EneDataRow {
 // 12-byte rows (not one 72-byte table) and a 12+4 split for the tags.
 __declspec(section ".data") __attribute__((used))
 const EneDataRow lbl_eu_805379FC = {
-    lbl_eu_80662998, 0, (const void*)__dt__Q22UI17CPassiveSkillLineFv,
+    __RTTI__Q22UI17CPassiveSkillLine, 0, (const void*)__dt__Q22UI17CPassiveSkillLineFv,
 };
 __declspec(section ".data") __attribute__((used))
 const EneDataRow lbl_eu_80537A08 = {
-    lbl_eu_806629A0, 0, (const void*)__dt__Q22UI17CPassiveSkillInfoFv,
+    __RTTI__Q22UI17CPassiveSkillInfo, 0, (const void*)__dt__Q22UI17CPassiveSkillInfoFv,
 };
 __declspec(section ".data") __attribute__((used))
 const EneDataRow lbl_eu_80537A14 = {
-    lbl_eu_806629A8, 0, (const void*)__dt__Q22UI16CPassiveSkillCurFv,
+    __RTTI__Q22UI16CPassiveSkillCur, 0, (const void*)__dt__Q22UI16CPassiveSkillCurFv,
 };
 __declspec(section ".data") __attribute__((used))
 const EneDataRow lbl_eu_80537A20 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneGateSetup };

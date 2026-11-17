@@ -8,7 +8,6 @@ namespace detail {
 namespace dcc {
 
 // -0.5f (RT translation constant, retail .sdata2 pool symbol)
-extern "C" const float lbl_eu_80669CA8;
 
 namespace {
 
@@ -74,7 +73,7 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = suc;
     pMtx->m[0][1] = sus;
     pMtx->m[0][2] = lbl_eu_80669C98;
-    pMtx->m[0][3] = lbl_eu_80669CA8 * (sus + suc - su);
+    pMtx->m[0][3] = (-0.5f) * (sus + suc - su);
     pMtx->m[1][0] = -svs;
     pMtx->m[1][1] = svc;
     pMtx->m[1][2] = lbl_eu_80669C98;
@@ -128,7 +127,7 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 suc, sus, hs, nsv, u, t, lo, hi;
     hs = lbl_eu_80669CA4 * sinR;
     nsv = -rSrt.Sv;
-    u = lbl_eu_80669CA8 * cosR;
+    u = (-0.5f) * cosR;
     t = hs - lbl_eu_80669CA4;
     suc = rSrt.Su * cosR;
     lo = u - t;
@@ -256,7 +255,7 @@ void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     // One syntactic mention per pooled constant -> one SDA reloc each.
     f32 half = lbl_eu_80669CA4;
-    f32 neghalf = lbl_eu_80669CA8;
+    f32 neghalf = (-0.5f);
 
     pMtx->m[0][0] = cosR * m00 + sinR * m10;
     pMtx->m[1][0] = -sinR * m00 + cosR * m10;

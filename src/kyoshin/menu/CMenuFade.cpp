@@ -138,7 +138,7 @@ extern "C" u8 isFadeActive(u8* pthis) {
     return ((CMenuFade*)pthis)->field_0x94;
 }
 extern "C" void triggerFadeMenu(CMenuFade* pthis) {
-    pthis->field_0x54 = 1;
+    pthis->mField54 = 1;
 }
 extern "C" CMenuFade* __dt__9CMenuFadeFv(CMenuFade* self, int deleteFlag);
 extern "C" void fwdFadeDtor58(CMenuFade* p) {

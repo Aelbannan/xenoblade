@@ -78,6 +78,7 @@ bool Component::update(int i, f32 x, f32 y, u32 /* trig */, u32 /* hold */,
     return touch;
 }
 
+
 Manager::~Manager() {
     IDToComponent* pIt = static_cast<IDToComponent*>(
         nw4hbm::ut::List_GetFirst(&mIDToComponent));
@@ -94,6 +95,8 @@ Manager::~Manager() {
     }
 }
 
+
+
 void Manager::init() {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         const IDToComponent* pIt = static_cast<const IDToComponent*>(
@@ -102,6 +105,8 @@ void Manager::init() {
         pIt->mpComponent->init();
     }
 }
+
+
 
 void Manager::addComponent(Component* pComponent) {
     u32 id = pComponent->getID();
@@ -117,6 +122,8 @@ void Manager::addComponent(Component* pComponent) {
                               new IDToComponent(id, pComponent));
     }
 }
+
+
 
 void Manager::delComponent(Component* pComponent) {
     IDToComponent* pIt = static_cast<IDToComponent*>(
@@ -138,12 +145,15 @@ void Manager::delComponent(Component* pComponent) {
     }
 }
 
+
+
 Component* Manager::getComponent(u32 id) {
     const IDToComponent* p = static_cast<const IDToComponent*>(
         nw4hbm::ut::List_GetNthConst(&mIDToComponent, id));
 
     return p->mpComponent;
 }
+
 
 bool Manager::update(int i, f32 x, f32 y, u32 trig, u32 hold, u32 release,
                      void* pData) {
@@ -182,6 +192,7 @@ bool Manager::update(int i, f32 x, f32 y, u32 trig, u32 hold, u32 release,
     return touch;
 }
 
+
 void Manager::calc() {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         const IDToComponent* pIt = static_cast<const IDToComponent*>(
@@ -190,6 +201,8 @@ void Manager::calc() {
         pIt->mpComponent->calc();
     }
 }
+
+
 
 void Manager::draw() {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
@@ -200,6 +213,8 @@ void Manager::draw() {
     }
 }
 
+
+
 void Manager::setAllComponentTriggerTarget(bool target) {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         const IDToComponent* pIt = static_cast<const IDToComponent*>(
@@ -208,6 +223,8 @@ void Manager::setAllComponentTriggerTarget(bool target) {
         pIt->mpComponent->setTriggerTarget(target);
     }
 }
+
+
 
 PaneManager::~PaneManager() {
     PaneToComponent* pIt = static_cast<PaneToComponent*>(
@@ -228,18 +245,20 @@ PaneManager::~PaneManager() {
     }
 }
 
+
+
 void PaneManager::createLayoutScene(const nw4hbm::lyt::Layout& layout) {
     suIDCounter = 0;
     walkInChildren(layout.GetRootPane()->GetChildList());
 }
 
+
+
 void PaneManager::addLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
     walkInChildren(rLayout.GetRootPane()->GetChildList());
 }
 
-void PaneManager::delLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
-    walkInChildrenDel(rLayout.GetRootPane()->GetChildList());
-}
+
 
 void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
     NW4R_UT_LINKLIST_FOREACH(it, rPaneList, {
@@ -277,6 +296,14 @@ void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
     });
 }
 
+
+
+void PaneManager::delLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
+    walkInChildrenDel(rLayout.GetRootPane()->GetChildList());
+}
+
+
+
 void PaneManager::walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList) {
     NW4R_UT_LINKLIST_FOREACH(it, rPaneList, {
         PaneToComponent* pLink = static_cast<PaneToComponent*>(
@@ -305,6 +332,8 @@ void PaneManager::walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList) {
     });
 }
 
+
+
 PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         PaneToComponent* pIt = static_cast<PaneToComponent*>(
@@ -318,6 +347,8 @@ PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
     return nullptr;
 }
 
+
+
 #pragma opt_propagation off // matches retail codegen for this function only
 void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
@@ -329,6 +360,8 @@ void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
         }
     }
 }
+
+
 #pragma opt_propagation on
 
 
@@ -359,6 +392,8 @@ bool PaneComponent::contain(f32 x, f32 y) {
 
     return false;
 }
+
+
 
 void PaneComponent::draw() {
     const nw4hbm::lyt::DrawInfo* pDrawInfo =
@@ -394,6 +429,7 @@ void PaneComponent::draw() {
               x - size.width / 2.0f, y - size.height / 2.0f, 0.0f, 8, color);
 }
 
+
 static bool is_visible(nw4hbm::lyt::Pane* pPane) {
     if (!pPane->IsVisible()) {
         return false;
@@ -406,6 +442,7 @@ static bool is_visible(nw4hbm::lyt::Pane* pPane) {
     return is_visible(pPane->GetParent());
 }
 
+
 bool PaneComponent::isVisible() {
     // Matches retail cubeScale$8924: emitted as the last TU rodata item,
     // after the shared line-draw constant pool {0.0f, color, 0.5f}.
@@ -413,6 +450,7 @@ bool PaneComponent::isVisible() {
 
     return is_visible(mpPane);
 }
+
 
 } // namespace gui
 } // namespace homebutton

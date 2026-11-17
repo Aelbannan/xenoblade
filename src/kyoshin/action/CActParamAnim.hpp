@@ -493,7 +493,6 @@ extern const float lbl_eu_80665EA0; // const: lets MWCC hoist the sdata2 load li
 extern const float lbl_eu_80665ED8; // fidx scale (makeAxisAngleQ / sinAnimFIdx)
 extern const float lbl_eu_80665F00; // half-angle (makeAxisAngleQ)
 extern float lbl_eu_80665F18;
-extern const float lbl_eu_80665E98; // (initAnimState init)
 extern const float lbl_eu_80665EA4; // (initAnimState init)
 extern const float lbl_eu_80665EA8; // (initAnimState init)
 extern const float lbl_eu_80665EAC; // (initAnimState init)

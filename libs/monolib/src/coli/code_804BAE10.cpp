@@ -22,9 +22,6 @@ struct Vec3 {
 extern Vec3 lbl_eu_8065F3F0;
 extern Vec3 lbl_eu_8065F3FC;
 extern f32 lbl_eu_80665960;
-extern const f32 lbl_eu_8066AEF4;  // sdata2: slab max init
-extern const f32 lbl_eu_8066AEF8;  // sdata2: slab min init
-extern const f32 lbl_eu_8066AEFC;  // sdata2: degenerate-axis epsilon
 // sdata2 sweep tables: entries consumed with a 12-byte stride; the additive
 // base table sits 16 bytes into the same region and is indexed identically.
 struct SweepTab {
@@ -32,10 +29,6 @@ struct SweepTab {
     f32 field_0x4;
     f32 field_0x8;
 };
-extern const f32 lbl_eu_8066AEF0;  // sdata2: segment direction scale
-extern const f32 lbl_eu_8066AF00;  // sdata2: sweep additive base
-extern const f32 lbl_eu_8066AF04;  // sdata2: box-min init value
-extern const f32 lbl_eu_8066AF08;  // sdata2: box-max init value
 extern Vec3 lbl_eu_8065F408;       // box extents (lbl_eu_8065F3F0 + 0x18)
 
 // 12-byte triangle element inside the collision object's element array
@@ -135,7 +128,7 @@ bool ColiTestSegBoxEdge(const Vec3* a, const Vec3* b) {
     nw4r::math::VEC3 diff;
     nw4r::math::VEC3Sub(&diff, &va, &vb);
     // shrink toward b in place; retail reuses diff's stack slot for the result
-    nw4r::math::VEC3Scale(&diff, &diff, lbl_eu_8066AEF0);
+    nw4r::math::VEC3Scale(&diff, &diff, 0.5f);
     nw4r::math::VEC3Add(&mid, &vb, &diff);
 
     // vector from the shrunken point to the box min corner
@@ -164,9 +157,9 @@ bool ColiTestSegSlab(const f32* a, const f32* b) {
     const f32* minCorner = &lbl_eu_8065F3F0.x;  // r6
     f32 s;
     f32 eps;
-    f32 maxVal = lbl_eu_8066AEF4;
-    f32 minVal = lbl_eu_8066AEF8;
-    eps = lbl_eu_8066AEFC;
+    f32 maxVal = 1000000.0f;
+    f32 minVal = (-1000000.0f);
+    eps = 0.0f;
     for (int i = 3; i != 0; i--) {
         s = *scale;
         if (eps != s) {
@@ -265,7 +258,7 @@ void ColiWalkSegTree(ColiObj* self, ColiTri* tri) {
     // scaled segment vector, then step point from vertex B
     nw4r::math::VEC3 d;
     nw4r::math::VEC3Sub(&d, vA, vB);
-    nw4r::math::VEC3Scale(&d, &d, lbl_eu_8066AEF0);
+    nw4r::math::VEC3Scale(&d, &d, 0.5f);
     nw4r::math::VEC3 p;
     nw4r::math::VEC3Add(&p, vB, &d);
     const nw4r::math::VEC3& mn = qs.min;
@@ -410,7 +403,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     // plain forward branches; each direct self-call site is written out once
     // (retail one-level-inlines them); deeper levels stay truly recursive.
     bool hit;
-    if (dmin * dmax < lbl_eu_8066AEFC) {
+    if (dmin * dmax < 0.0f) {
         // plane straddles the box: near child first (inlined), far child on miss
         ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
         if (nearChild->field_0x8 == 3) {
@@ -419,7 +412,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
             u16 nAxis = nearChild->field_0x8;
             f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nAxis];
             f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nAxis];
-            if (ndmin * ndmax < lbl_eu_8066AEFC) {
+            if (ndmin * ndmax < 0.0f) {
                 // gchild straddles its plane too
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
                     hit = true;
@@ -427,7 +420,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
                     hit = ColiWalkBvhSplit(self,
                                         &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
                 }
-            } else if (ndmin < lbl_eu_8066AEFC) {
+            } else if (ndmin < 0.0f) {
                 hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
             } else {
                 hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
@@ -445,7 +438,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
             u16 fAxis = farChild->field_0x8;
             f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[fAxis];
             f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[fAxis];
-            if (fdmin * fdmax < lbl_eu_8066AEFC) {
+            if (fdmin * fdmax < 0.0f) {
                 // gchild straddles its plane too
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
                     hit2 = true;
@@ -453,7 +446,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
                     hit2 = ColiWalkBvhSplit(self,
                                          &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
                 }
-            } else if (fdmin < lbl_eu_8066AEFC) {
+            } else if (fdmin < 0.0f) {
                 hit2 = ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]]);
             } else {
                 hit2 = ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
@@ -464,7 +457,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
 
     // box entirely on one side of the plane: descend into that side only
     // (each side written out - retail keeps two inline visit copies here)
-    if (dmin >= lbl_eu_8066AEFC) {
+    if (dmin >= 0.0f) {
         ColiNode* child = &self->tris2[self->indices2[node->field_0x0 + 1]];
         if (child->field_0x8 == 3) {
             hit = ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[child->field_0x0 + 1], self->indices2[child->field_0x0]);
@@ -472,13 +465,13 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
             u16 cAxis = child->field_0x8;
             f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
             f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
-            if (cdmin * cdmax < lbl_eu_8066AEFC) {
+            if (cdmin * cdmax < 0.0f) {
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                     hit = true;
                 } else {
                     hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
                 }
-            } else if (cdmin < lbl_eu_8066AEFC) {
+            } else if (cdmin < 0.0f) {
                 hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]]);
             } else {
                 hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
@@ -493,13 +486,13 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         u16 cAxis = child->field_0x8;
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
         f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
-        if (cdmin * cdmax < lbl_eu_8066AEFC) {
+        if (cdmin * cdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                 hit = true;
             } else {
                 hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
             }
-        } else if (cdmin < lbl_eu_8066AEFC) {
+        } else if (cdmin < 0.0f) {
             hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]]);
         } else {
             hit = ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
@@ -536,8 +529,8 @@ void ColiQuerySegmentSweep(ColiObj* self, const Vec3* a, const Vec3* b, int idx)
     // copy-constructed intermediate (retail keeps a float-wise copy here)
     Vec3 m(*reinterpret_cast<const Vec3*>(&t));
 
-    f32 scale = lbl_eu_8066AEF0;
-    f32 base = lbl_eu_8066AF00;
+    f32 scale = 0.5f;
+    f32 base = 1e-06f;
 
     nw4r::math::VEC3 n;
     nw4r::math::VEC3Scale(&n, reinterpret_cast<const nw4r::math::VEC3*>(&m), scale);
@@ -609,8 +602,8 @@ void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* base, f32 s0
     nw4r::math::VEC3Add(&c[7], &s11, &az1);
     Vec3* mn = &lbl_eu_8065F3F0;
     Vec3* mx = &lbl_eu_8065F3FC;
-    mn->x = mn->y = mn->z = lbl_eu_8066AF04;
-    mx->x = mx->y = mx->z = lbl_eu_8066AF08;
+    mn->x = mn->y = mn->z = (-100000.0f);
+    mx->x = mx->y = mx->z = 100000.0f;
     const volatile Vec3* cc = (const volatile Vec3*)corners;
     for (int i = 0; i < 8; i++) {
         if (cc->x < mn->x) mn->x = cc->x;
@@ -648,7 +641,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[node->field_0x8];
     f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[node->field_0x8];
     bool hit;
-    if (dmin * dmax < lbl_eu_8066AEFC) {
+    if (dmin * dmax < 0.0f) {
         // plane straddles the box: visit the near child first (inlined), then
         // the far child only when the near side reported no hit.
         ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
@@ -658,14 +651,14 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         }
         f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nearChild->field_0x8];
         f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nearChild->field_0x8];
-        if (ndmin * ndmax < lbl_eu_8066AEFC) {
+        if (ndmin * ndmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
                 hit = true;
             } else {
                 hit = ColiWalkBvhSplit(self,
                                     &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
             }
-        } else if (ndmin < lbl_eu_8066AEFC) {
+        } else if (ndmin < 0.0f) {
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]]);
         } else {
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0 + 1]]);
@@ -679,13 +672,13 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         }
         f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[farChild->field_0x8];
         f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[farChild->field_0x8];
-        if (fdmin * fdmax < lbl_eu_8066AEFC) {
+        if (fdmin * fdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
                 return true;
             }
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
         }
-        if (fdmin < lbl_eu_8066AEFC) {
+        if (fdmin < 0.0f) {
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]]);
         }
         return ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0 + 1]]);
@@ -695,7 +688,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     // Each side is written out with an inlined child visit (deeper levels
     // recurse through ColiWalkBvhSplit).
     ColiNode* child;
-    if (dmin >= lbl_eu_8066AEFC) {
+    if (dmin >= 0.0f) {
         child = &self->tris2[self->indices2[node->field_0x0 + 1]];
         if (child->field_0x8 == 3) {
             u32 idx = child->field_0x0;
@@ -703,13 +696,13 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         }
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
         f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
-        if (cdmin * cdmax < lbl_eu_8066AEFC) {
+        if (cdmin * cdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                 return true;
             }
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
         }
-        if (cdmin < lbl_eu_8066AEFC) {
+        if (cdmin < 0.0f) {
             return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]]);
         }
         return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
@@ -721,13 +714,13 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     }
     f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
     f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
-    if (cdmin * cdmax < lbl_eu_8066AEFC) {
+    if (cdmin * cdmax < 0.0f) {
         if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
             return true;
         }
         return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);
     }
-    if (cdmin < lbl_eu_8066AEFC) {
+    if (cdmin < 0.0f) {
         return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]]);
     }
     return ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0 + 1]]);

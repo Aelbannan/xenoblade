@@ -6,7 +6,7 @@
 #include "monolib/util/CErrorWii.hpp"
 
 //size: 0x1d0
-class CLibCri : public CWorkThread, public CDeviceVICb, public IErrorWii {
+class __declspec(novtable) CLibCri : public CWorkThread, public CDeviceVICb, public IErrorWii {
 public:
     CLibCri(const char* pName, CWorkThread* pParent);
     ~CLibCri();

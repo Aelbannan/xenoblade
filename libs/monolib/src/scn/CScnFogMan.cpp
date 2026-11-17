@@ -28,15 +28,6 @@
 
 // Retail flash constants (fog default colour/parameters). Referenced directly
 // so the emitted lfs relocations hit the exact retail labels.
-extern const f32 lbl_eu_8066ABB0; // (f4 in ctor)
-extern const f32 lbl_eu_8066ABB4; // (f3 in ctor)
-extern const f32 lbl_eu_8066ABB8; // (f2 in ctor)
-extern const f32 lbl_eu_8066ABBC; // (f1 in ctor)
-extern const f32 lbl_eu_8066ABC0; // (f0 in ctor)
-extern const f32 lbl_eu_8066ABC4;
-extern const f32 lbl_eu_8066ABC8;
-extern const f32 lbl_eu_8066ABCC;
-extern const f32 lbl_eu_8066ABD0;
 extern const f32 lbl_eu_8066ABD4;
 extern const double lbl_eu_8066ABD8;
 
@@ -53,7 +44,7 @@ extern char lbl_eu_8056EC60[];
 extern "C" u32 lbl_eu_8056EBD0[4];
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-extern "C" u32 lbl_eu_80663A68[2];  // RTTI locator (owned by CScnItemCamera.cpp)
+extern "C" u32 __RTTI__10CScnFogMan[2];  // RTTI locator (owned by CScnItemCamera.cpp)
 extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag);
 
 // [.rodata] 0x80524218-0x80524228 (0x10 = 16B): RTTI name "CScnFogMan".
@@ -63,7 +54,7 @@ extern "C" __declspec(align(8)) const char lbl_eu_80524218[0x10] = {
 
 // [.data] 0x8056EBD0-0x8056EC70 (0xA0 = 160B): vtable + NW4R assert strings.
 extern "C" u32 lbl_eu_8056EBD0[4] = {
-    (u32)&lbl_eu_80663A68, 0x00000000, (u32)&__dt__10CScnFogManFv, 0x00000000,
+    (u32)&__RTTI__10CScnFogMan, 0x00000000, (u32)&__dt__10CScnFogManFv, 0x00000000,
 };
 
 // [.data] string definitions live at end of file (same order); keeping this
@@ -85,56 +76,42 @@ struct CScnFogManVptrView {
     u32* vtPrimary;
 };
 
+
 // Constructor is a C-ABI free function named __ct__CScnFogMan (retail has no
 // mangled arg suffix), so it must be given extern "C" linkage to keep the name.
 extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
     reinterpret_cast<CScnFogManVptrView*>(self)->vtPrimary = lbl_eu_8056EBD0;
     self->field_0x04 = param;
     self->value08 = 0;
-    self->field_0xC = lbl_eu_8066ABB0;
-    self->field_0x10 = lbl_eu_8066ABB0;
-    self->field_0x14 = lbl_eu_8066ABB0;
-    self->field_0x18 = lbl_eu_8066ABB4;
-    self->field_0x1c = lbl_eu_8066ABB8;
-    self->field_0x20 = lbl_eu_8066ABBC;
+    self->field_0xC = 0.0f;
+    self->field_0x10 = 0.0f;
+    self->field_0x14 = 0.0f;
+    self->field_0x18 = 1.0f;
+    self->field_0x1c = 1000.0f;
+    self->field_0x20 = 0.1f;
     self->field_0x24 = 0;
     self->field_0x28 = 0;
     self->field_0x2c = 2;
-    self->field_0x30 = lbl_eu_8066ABB4;
-    self->field_0x34 = lbl_eu_8066ABC0;
-    self->field_0x38 = lbl_eu_8066ABB4;
-    self->field_0x3c = lbl_eu_8066ABC0;
-    self->field_0x40 = lbl_eu_8066ABB4;
-    self->field_0x44 = lbl_eu_8066ABB4;
-    self->field_0x48 = lbl_eu_8066ABB4;
-    self->field_0x4c = lbl_eu_8066ABB4;
+    self->field_0x30 = 1.0f;
+    self->field_0x34 = 100.0f;
+    self->field_0x38 = 1.0f;
+    self->field_0x3c = 100.0f;
+    self->field_0x40 = 1.0f;
+    self->field_0x44 = 1.0f;
+    self->field_0x48 = 1.0f;
+    self->field_0x4c = 1.0f;
     self->field_0x50 = 2;
-    self->field_0x54 = lbl_eu_8066ABB4;
-    self->field_0x58 = lbl_eu_8066ABC0;
-    self->field_0x5c = lbl_eu_8066ABB4;
-    self->field_0x60 = lbl_eu_8066ABC0;
-    self->field_0x64 = lbl_eu_8066ABB4;
-    self->field_0x68 = lbl_eu_8066ABB4;
-    self->field_0x6c = lbl_eu_8066ABB4;
-    self->field_0x70 = lbl_eu_8066ABB4;
+    self->field_0x54 = 1.0f;
+    self->field_0x58 = 100.0f;
+    self->field_0x5c = 1.0f;
+    self->field_0x60 = 100.0f;
+    self->field_0x64 = 1.0f;
+    self->field_0x68 = 1.0f;
+    self->field_0x6c = 1.0f;
+    self->field_0x70 = 1.0f;
 }
 
-extern "C" void FogManSetValue08(u8* self, u32 val) {
-    reinterpret_cast<CScnFogMan*>(self)->value08 = val;
-}
-// Tail-call trampoline over FogManApplyFog (retail is a single `b`).
-// Retail symbol is unmangled (C linkage); other TUs' relocs target
-// `FogManApplyFog` directly.
-// (memberized: FogManApplyFog -> CScnFogMan::ApplyFog; declaration moved into class CScnFogMan)
-extern "C" bool FogManIsFogEnabled(CScnFogMan* self) {
-    return self->ApplyFog();
-}
 
-extern "C" void FogManSetNearFar(u8* self, float a, float b) {
-    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
-    fog->field_0x20 = a;
-    fog->field_0x1c = b;
-}
 
 // Retail dtor (free-function form so MWCC emits no local vtable; the retail
 // vtable lives in the blob data above and the ctor stores it explicitly).
@@ -147,14 +124,22 @@ extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
     return self;
 }
 
-extern "C" void FogManCopyFogWords(u8* self, const void* src) {
-    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
-    const u32* words = static_cast<const u32*>(src);
-    *(u32*)&fog->field_0xC = words[0];
-    *(u32*)&fog->field_0x10 = words[1];
-    *(u32*)&fog->field_0x14 = words[2];
-    *(u32*)&fog->field_0x18 = words[3];
+
+extern "C" void FogManSetValue08(u8* self, u32 val) {
+    reinterpret_cast<CScnFogMan*>(self)->value08 = val;
 }
+
+
+
+// Tail-call trampoline over FogManApplyFog (retail is a single `b`).
+// Retail symbol is unmangled (C linkage); other TUs' relocs target
+// `FogManApplyFog` directly.
+// (memberized: FogManApplyFog -> CScnFogMan::ApplyFog; declaration moved into class CScnFogMan)
+extern "C" bool FogManIsFogEnabled(CScnFogMan* self) {
+    return self->ApplyFog();
+}
+
+
 
 // Copy a fog parameter block into the near/far fog fields. mValue lands in
 // field_0x50, the four floats into 0x54-0x60, and the source word-vector is
@@ -178,6 +163,8 @@ extern "C" void FogManCopyFogParams(CScnFogMan* self, u32 value, const SWordVec*
     self->field_0x1c = p1;
     self->field_0x20 = p0;
 }
+
+
 
 // Apply the fog-manager state to the scene root's slot-0 fog according to
 // value08, then optionally propagate a grayscaled fog colour to all 32 slots
@@ -216,10 +203,10 @@ bool CScnFogMan::ApplyFog() {
         // Pack the scaled channels through a byte temp so MWCC emits the
         // retail stb/lwz/stw sequence.
         u8 tmp1[4];
-        tmp1[0] = (u8)(lbl_eu_8066ABC4 * this->field_0x40);
-        tmp1[1] = (u8)(lbl_eu_8066ABC4 * this->field_0x44);
-        tmp1[2] = (u8)(lbl_eu_8066ABC4 * this->field_0x48);
-        tmp1[3] = (u8)(lbl_eu_8066ABC4 * this->field_0x4c);
+        tmp1[0] = (u8)(255.0f * this->field_0x40);
+        tmp1[1] = (u8)(255.0f * this->field_0x44);
+        tmp1[2] = (u8)(255.0f * this->field_0x48);
+        tmp1[3] = (u8)(255.0f * this->field_0x4c);
         GXColor color1 = *(GXColor*)tmp1;
 
         if (fog.ptr() == NULL) {
@@ -246,10 +233,10 @@ bool CScnFogMan::ApplyFog() {
         // Pack the scaled channels through a byte temp so MWCC emits the
         // retail stb/lwz/stw sequence.
         u8 tmp0[4];
-        tmp0[0] = (u8)(lbl_eu_8066ABC4 * this->field_0xC);
-        tmp0[1] = (u8)(lbl_eu_8066ABC4 * this->field_0x10);
-        tmp0[2] = (u8)(lbl_eu_8066ABC4 * this->field_0x14);
-        tmp0[3] = (u8)(lbl_eu_8066ABC4 * this->field_0x18);
+        tmp0[0] = (u8)(255.0f * this->field_0xC);
+        tmp0[1] = (u8)(255.0f * this->field_0x10);
+        tmp0[2] = (u8)(255.0f * this->field_0x14);
+        tmp0[3] = (u8)(255.0f * this->field_0x18);
         GXColor color0 = *(GXColor*)tmp0;
 
         if (fog.ptr() == NULL) {
@@ -290,8 +277,8 @@ bool CScnFogMan::ApplyFog() {
 
             // Luminance-weighted grayscale of the current fog colour,
             // clamped above only (retail has no lower clamp).
-            f32 lum = lbl_eu_8066ABD0 * color.g + lbl_eu_8066ABCC * color.r +
-                      lbl_eu_8066ABC8 * color.b;
+            f32 lum = 0.586611f * color.g + 0.298912f * color.r +
+                      0.114477f * color.b;
             s32 gray = (s32)lum;
             if (gray > 255) {
                 gray = 255;
@@ -316,6 +303,26 @@ bool CScnFogMan::ApplyFog() {
 
     return true;
 }
+
+
+
+extern "C" void FogManCopyFogWords(u8* self, const void* src) {
+    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
+    const u32* words = static_cast<const u32*>(src);
+    *(u32*)&fog->field_0xC = words[0];
+    *(u32*)&fog->field_0x10 = words[1];
+    *(u32*)&fog->field_0x14 = words[2];
+    *(u32*)&fog->field_0x18 = words[3];
+}
+
+
+
+extern "C" void FogManSetNearFar(u8* self, float a, float b) {
+    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
+    fog->field_0x20 = a;
+    fog->field_0x1c = b;
+}
+
 
 // [.data] 0x8056EBE0-0x8056EC70: NW4R assert message/file string pairs.
 // One label per retail string; file [0x10] sizes include the 6 zero pad

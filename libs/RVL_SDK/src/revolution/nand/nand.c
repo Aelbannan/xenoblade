@@ -42,6 +42,15 @@ static s32 nandCreate(const char* path, u8 perm, u8 attr,
 }
 
 
+s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr) {
+    if (!nandIsInitialized()) {
+        return NAND_RESULT_FATAL_ERROR;
+    }
+
+    return nandConvertErrorCode(
+        nandCreate(path, perm, attr, NULL, FALSE, TRUE));
+}
+
 s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
                     NANDAsyncCallback callback, NANDCommandBlock* block) {
     if (!nandIsInitialized()) {
@@ -51,15 +60,6 @@ s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
     block->callback = callback;
     return nandConvertErrorCode(
         nandCreate(path, perm, attr, block, TRUE, FALSE));
-}
-
-s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr) {
-    if (!nandIsInitialized()) {
-        return NAND_RESULT_FATAL_ERROR;
-    }
-
-    return nandConvertErrorCode(
-        nandCreate(path, perm, attr, NULL, FALSE, TRUE));
 }
 
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
@@ -100,6 +100,14 @@ s32 NANDDelete(const char* path) {
     return nandConvertErrorCode(nandDelete(path, NULL, FALSE, FALSE));
 }
 
+s32 NANDPrivateDelete(const char* path) {
+    if (!nandIsInitialized()) {
+        return NAND_RESULT_FATAL_ERROR;
+    }
+
+    return nandConvertErrorCode(nandDelete(path, NULL, FALSE, TRUE));
+}
+
 s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
                     NANDCommandBlock* block) {
     if (!nandIsInitialized()) {
@@ -108,14 +116,6 @@ s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
 
     block->callback = callback;
     return nandConvertErrorCode(nandDelete(path, block, TRUE, FALSE));
-}
-
-s32 NANDPrivateDelete(const char* path) {
-    if (!nandIsInitialized()) {
-        return NAND_RESULT_FATAL_ERROR;
-    }
-
-    return nandConvertErrorCode(nandDelete(path, NULL, FALSE, TRUE));
 }
 
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,

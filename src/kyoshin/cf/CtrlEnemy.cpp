@@ -8,6 +8,7 @@
 
 #include "kyoshin/cf/CtrlEnemy.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/CfEnumListHolder.hpp"
 
 namespace cf {
 class CtrlBase;
@@ -258,7 +259,6 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     // diff @0x18, sumTmp @0x24, distSqTmp @0x30, lifted @0x3c, upVec @0x48,
     // probePos @0x54, anchor @0x60, powTmp @0x70.
     u32 cmdWord;
-    cf::CtrlEnemyEnumHolder holder;
     f32 diff[3];
     f32 sumTmp[3];
     f32 distSqTmp[3];
@@ -310,52 +310,52 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         anchor[1] = src[1];
         anchor[2] = src[2];
     }
-    CTaskGame_enumListCtor(&holder);
+    CfEnumListHolder holder;
     switch (*self->field_0x80->v258()) {
     case 1:
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x900);
+        startEnumObjects(holder.get(), 0x20, 0x900);
         sub = self->field_0x80->mSub.s0AC();
         powTmp = self->field_0x80->v5B4();
         {
             f32 f270 = *self->field_0x80->v270();
             f32 f268 = *self->field_0x80->v268();
-            rebuildByDistanceCone(CTaskGame_enumListGet(&holder), sub, f268, f270,
+            rebuildByDistanceCone(holder.get(), sub, f268, f270,
                           (f32)powTmp, 0);
         }
-        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
+        __ct__800FAE3C(holder.get(), anchor, 0);
         break;
     case 2:
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0xa00);
+        startEnumObjects(holder.get(), 0x20, 0xa00);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
+            __ct__800FB044(holder.get(), f268, sub, 0);
         }
-        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
+        __ct__800FAE3C(holder.get(), anchor, 0);
         break;
     case 3:
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
+        startEnumObjects(holder.get(), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
+            __ct__800FB044(holder.get(), f268, sub, 0);
         }
-        __ct__800FD0B4(CTaskGame_enumListGet(&holder), 0);
-        __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
+        __ct__800FD0B4(holder.get(), 0);
+        __ct__800FAE3C(holder.get(), anchor, 0);
         break;
     case 4:
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
+        startEnumObjects(holder.get(), 0x20, 0x800);
         sub = self->field_0x80->mSub.s0AC();
         {
             f32 f268 = *self->field_0x80->v268();
-            __ct__800FB044(CTaskGame_enumListGet(&holder), f268, sub, 0);
+            __ct__800FB044(holder.get(), f268, sub, 0);
         }
-        __ct__800FC4FC(CTaskGame_enumListGet(&holder), lbl_eu_80666580, 0);
+        __ct__800FC4FC(holder.get(), lbl_eu_80666580, 0);
         break;
     }
     // Scan candidates: nearest eligible enemy wins.
-    for (i = 0; i < (int)((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
-        id = (int)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
+    for (i = 0; i < (int)((cf::CtrlEnemyEnumList*)holder.get())->field_620; i++) {
+        id = (int)getObjectIdAt(holder.get(), i);
         obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(findObjectById(id));
         if (obj->field_3F60 != 0 &&
             (((cf::CtrlEnemySubFlag*)obj->field_3F60)->field_530 & 1) != 0) {
@@ -412,10 +412,8 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         if (obj->v2BC() != 0) {
             continue;
         }
-        __dt__80043E88(&holder, -1);
         return (void*)id;
     }
-    __dt__80043E88(&holder, -1);
     return 0;
 }
 
@@ -436,16 +434,15 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
         0) {
         return 0;
     }
-    cf::CtrlEnemyEnumHolder holder;
-    CTaskGame_enumListCtor(&holder);
+    CfEnumListHolder holder;
     self->field_0x80->v258();
-    startEnumObjects(CTaskGame_enumListGet(&holder), 0x80000000, 0);
+    startEnumObjects(holder.get(), 0x80000000, 0);
     void* pos = self->field_0x80->mSub.s0AC();
     f32 gauge = *self->field_0x80->v268();
-    __ct__800FB044(CTaskGame_enumListGet(&holder), gauge, pos, 0);
-    for (u32 i = 0; i < ((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
+    __ct__800FB044(holder.get(), gauge, pos, 0);
+    for (u32 i = 0; i < ((cf::CtrlEnemyEnumList*)holder.get())->field_620; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(
-            findObjectById((int)getObjectIdAt(CTaskGame_enumListGet(&holder), i)));
+            findObjectById((int)getObjectIdAt(holder.get(), i)));
         if (obj == 0) continue;
         int objId = obj->v0E0();
         int battleId = self->field_0x80->v0E0();
@@ -454,10 +451,8 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
         // keeps the same saved register across the dtor call (retail puts
         // both values in r31).
         objId = (int)obj->v2E8();
-        __dt__80043E88(&holder, -1);
         return (void*)objId;
     }
-    __dt__80043E88(&holder, -1);
     return 0;
 }
 

@@ -150,12 +150,6 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 
-// nw4r DrawInfo pre-mangled ct/dt names (retail emits the direct calls; a
-// C++ local would virtual-dispatch its scope-exit destructor and bloat the
-// body - same scheme as CMenuQstCnt / CSystemWindow).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
-                                              int flags);
 
 // Font handles dispatch through IDeviceFontInfo::getFont at +0x24 (real
 // owner in monolib/device/CDeviceFont.hpp); no TU-local view is kept.

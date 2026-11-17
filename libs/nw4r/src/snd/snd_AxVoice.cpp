@@ -28,10 +28,6 @@ struct AdpcmParam {
 // declarations are not mangled by MWCC; referencing the labels keeps the
 // sda21 relocs pointed at the shared pool entries instead of TU-local
 // duplicates.
-extern const f32 lbl_eu_80669E90; // 32000.0f (AX_SAMPLE_RATE)
-extern const f32 lbl_eu_80669EA8; // 65535.0f
-extern const f32 lbl_eu_80669EAC; // 0.0f
-extern const f32 lbl_eu_80669EB0; // 65536.0f
 
 // Retail per-channel biquad coefficient provider objects. Indexed by the
 // raw biquad selector; NULL entries mean "no provider -> clear the filter".
@@ -736,11 +732,11 @@ void AxVoice::SetSrc(f32 ratio, bool initial) {
         // Local (not the parameter): retail keeps this in scratch floats.
         // Retail clamps the ratio only when (re)initializing the SRC block.
         f32 dspRatio = ut::Clamp(
-            GetDspRatio(ratio), lbl_eu_80669EAC, lbl_eu_80669EA8);
+            GetDspRatio(ratio), 0.0f, 65535.0f);
 
         AXPBSRC src;
 
-        u32 ratioBits = lbl_eu_80669EB0 * dspRatio;
+        u32 ratioBits = 65536.0f * dspRatio;
 
         src.ratioHi = ratioBits >> 16 & 0xFFFF;
         src.ratioLo = ratioBits & 0xFFFF;

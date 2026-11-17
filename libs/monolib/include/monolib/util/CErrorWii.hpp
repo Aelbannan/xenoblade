@@ -5,10 +5,10 @@
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
-class IErrorWii {
+class __declspec(novtable) IErrorWii {
 public:
     IErrorWii(){}
-    virtual ~IErrorWii();
+    virtual ~IErrorWii() {}
     virtual void errorWiiCB() = 0;
 };
 

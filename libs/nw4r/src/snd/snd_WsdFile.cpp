@@ -9,7 +9,6 @@
 
 // Retail .sdata2 pool constant 1.0f, referenced by name so the SDA21
 // float relocation matches the stripped retail object (PLAN.md §17.6).
-extern const f32 lbl_eu_8066A100;
 
 namespace {
 
@@ -59,6 +58,7 @@ inline bool WsdFileReader::IsValidFileHeader(
     return true;
 }
 
+
 WsdFileReader::WsdFileReader(const void* pWsdBin)
     : mHeader(NULL), mDataBlock(NULL), mWaveBlock(NULL) {
     if (!IsValidFileHeader(
@@ -78,6 +78,81 @@ WsdFileReader::WsdFileReader(const void* pWsdBin)
             ut::AddOffsetToPtr(mHeader, mHeader->waveBlockOffset));
     }
 }
+
+
+
+bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
+    const WsdFile::Wsd* pWsd =
+        Util::GetDataRefAddress0(mDataBlock->refWsd[id], &mDataBlock->wsdCount);
+
+    const WsdFile::WsdInfo* pWsdInfo =
+        Util::GetDataRefAddress0(pWsd->refWsdInfo, &mDataBlock->wsdCount);
+
+    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 2)) {
+        pSoundInfo->pitch = pWsdInfo->pitch;
+        pSoundInfo->pan = pWsdInfo->pan;
+        pSoundInfo->surroundPan = pWsdInfo->surroundPan;
+        pSoundInfo->fxSendA = pWsdInfo->fxSendA;
+        pSoundInfo->fxSendB = pWsdInfo->fxSendB;
+        pSoundInfo->fxSendC = pWsdInfo->fxSendC;
+        pSoundInfo->mainSend = pWsdInfo->mainSend;
+    } else if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
+        pSoundInfo->pitch = pWsdInfo->pitch;
+        pSoundInfo->pan = pWsdInfo->pan;
+        pSoundInfo->surroundPan = pWsdInfo->surroundPan;
+        pSoundInfo->fxSendA = 0;
+        pSoundInfo->fxSendB = 0;
+        pSoundInfo->fxSendC = 0;
+        pSoundInfo->mainSend = 127;
+    } else {
+        pSoundInfo->pitch = 1.0f;
+        pSoundInfo->pan = 64;
+        pSoundInfo->surroundPan = 0;
+        pSoundInfo->fxSendA = 0;
+        pSoundInfo->fxSendB = 0;
+        pSoundInfo->fxSendC = 0;
+        pSoundInfo->mainSend = 127;
+    }
+
+    return true;
+}
+
+
+
+bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
+                                          int id, int note) const {
+    const WsdFile::Wsd* pWsd =
+        Util::GetDataRefAddress0(mDataBlock->refWsd[id], &mDataBlock->wsdCount);
+
+    const WsdFile::NoteTable* pTable =
+        Util::GetDataRefAddress0(pWsd->refNoteTable, &mDataBlock->wsdCount);
+
+    const WsdFile::NoteInfo* pNoteInfo =
+        Util::GetDataRefAddress0(pTable->items[note], &mDataBlock->wsdCount);
+
+    pSoundNoteInfo->waveIndex = pNoteInfo->waveIndex;
+    pSoundNoteInfo->attack = pNoteInfo->attack;
+    pSoundNoteInfo->hold = pNoteInfo->hold;
+    pSoundNoteInfo->decay = pNoteInfo->decay;
+    pSoundNoteInfo->sustain = pNoteInfo->sustain;
+    pSoundNoteInfo->release = pNoteInfo->release;
+    pSoundNoteInfo->originalKey = pNoteInfo->originalKey;
+    pSoundNoteInfo->volume = pNoteInfo->volume;
+
+    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
+        pSoundNoteInfo->pan = pNoteInfo->pan;
+        pSoundNoteInfo->surroundPan = pNoteInfo->surroundPan;
+        pSoundNoteInfo->pitch = pNoteInfo->pitch;
+    } else {
+        pSoundNoteInfo->pan = 64;
+        pSoundNoteInfo->surroundPan = 0;
+        pSoundNoteInfo->pitch = 1.0f;
+    }
+
+    return true;
+}
+
+
 
 bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
                                  const void* pWaveAddr) const {
@@ -116,74 +191,6 @@ bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
     return reader.ReadWaveInfo(pWaveInfo, pWaveAddr);
 }
 
-bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
-    const WsdFile::Wsd* pWsd =
-        Util::GetDataRefAddress0(mDataBlock->refWsd[id], &mDataBlock->wsdCount);
-
-    const WsdFile::WsdInfo* pWsdInfo =
-        Util::GetDataRefAddress0(pWsd->refWsdInfo, &mDataBlock->wsdCount);
-
-    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 2)) {
-        pSoundInfo->pitch = pWsdInfo->pitch;
-        pSoundInfo->pan = pWsdInfo->pan;
-        pSoundInfo->surroundPan = pWsdInfo->surroundPan;
-        pSoundInfo->fxSendA = pWsdInfo->fxSendA;
-        pSoundInfo->fxSendB = pWsdInfo->fxSendB;
-        pSoundInfo->fxSendC = pWsdInfo->fxSendC;
-        pSoundInfo->mainSend = pWsdInfo->mainSend;
-    } else if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
-        pSoundInfo->pitch = pWsdInfo->pitch;
-        pSoundInfo->pan = pWsdInfo->pan;
-        pSoundInfo->surroundPan = pWsdInfo->surroundPan;
-        pSoundInfo->fxSendA = 0;
-        pSoundInfo->fxSendB = 0;
-        pSoundInfo->fxSendC = 0;
-        pSoundInfo->mainSend = 127;
-    } else {
-        pSoundInfo->pitch = lbl_eu_8066A100;
-        pSoundInfo->pan = 64;
-        pSoundInfo->surroundPan = 0;
-        pSoundInfo->fxSendA = 0;
-        pSoundInfo->fxSendB = 0;
-        pSoundInfo->fxSendC = 0;
-        pSoundInfo->mainSend = 127;
-    }
-
-    return true;
-}
-
-bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
-                                          int id, int note) const {
-    const WsdFile::Wsd* pWsd =
-        Util::GetDataRefAddress0(mDataBlock->refWsd[id], &mDataBlock->wsdCount);
-
-    const WsdFile::NoteTable* pTable =
-        Util::GetDataRefAddress0(pWsd->refNoteTable, &mDataBlock->wsdCount);
-
-    const WsdFile::NoteInfo* pNoteInfo =
-        Util::GetDataRefAddress0(pTable->items[note], &mDataBlock->wsdCount);
-
-    pSoundNoteInfo->waveIndex = pNoteInfo->waveIndex;
-    pSoundNoteInfo->attack = pNoteInfo->attack;
-    pSoundNoteInfo->hold = pNoteInfo->hold;
-    pSoundNoteInfo->decay = pNoteInfo->decay;
-    pSoundNoteInfo->sustain = pNoteInfo->sustain;
-    pSoundNoteInfo->release = pNoteInfo->release;
-    pSoundNoteInfo->originalKey = pNoteInfo->originalKey;
-    pSoundNoteInfo->volume = pNoteInfo->volume;
-
-    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
-        pSoundNoteInfo->pan = pNoteInfo->pan;
-        pSoundNoteInfo->surroundPan = pNoteInfo->surroundPan;
-        pSoundNoteInfo->pitch = pNoteInfo->pitch;
-    } else {
-        pSoundNoteInfo->pan = 64;
-        pSoundNoteInfo->surroundPan = 0;
-        pSoundNoteInfo->pitch = lbl_eu_8066A100;
-    }
-
-    return true;
-}
 
 } // namespace detail
 } // namespace snd

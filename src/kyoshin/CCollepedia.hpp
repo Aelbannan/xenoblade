@@ -228,7 +228,7 @@ extern "C" void copyVEC3(void*, const void*);
 // Additional imports for the CCollepedia constructor
 extern void* lbl_eu_805373E0[]; // CCollepedia vtable (retail .data)
 extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
-extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
+extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / clpBuildPages
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count

@@ -4,6 +4,11 @@
 namespace nw4hbm {
 namespace lyt {
 
+
+ResourceAccessor::~ResourceAccessor() {}
+
+
+
 /******************************************************************************
  *
  * ResourceAccessor
@@ -11,11 +16,12 @@ namespace lyt {
  ******************************************************************************/
 ResourceAccessor::ResourceAccessor() {}
 
-ResourceAccessor::~ResourceAccessor() {}
+
 
 ut::Font* ResourceAccessor::GetFont(const char* /*pName*/) {
     return NULL;
 }
+
 
 } // namespace lyt
 } // namespace nw4hbm

@@ -24,12 +24,7 @@ struct UiFlags {
 // does not mangle global variables).
 // ---------------------------------------------------------------------------
 
-// Opaque enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor /
-// CTaskGame_enumListGet accessor); the list it yields has an element count at +0x620.
-struct CfEnumListHolder {
-    void* list;  // 0x0
-    u32 handle;  // 0x4
-};
+// Enum-list view yielded by CfEnumListHolder::get(); element count at +0x620.
 struct CfEnumList {
     u8 _00[0x620];
     u32 count;  // 0x620
@@ -102,9 +97,6 @@ void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a
 // Talk-window factory (window id, text, mode); used by winTalk.
 void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
 
-void CTaskGame_enumListCtor(CfEnumListHolder* holder);
-CfEnumList* CTaskGame_enumListGet(CfEnumListHolder* holder);
-void __dt__80043E88(CfEnumListHolder* holder, int tags);
 void startEnumObjects(void* list, int type, int value);
 void* getEntryAt(void* list, int index);
 u8 code80135FDC_getByte_64059();

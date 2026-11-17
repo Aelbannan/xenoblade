@@ -754,7 +754,7 @@ extern "C" u32 __RTTI__11CWorkThread;
 extern "C" void wkStandbyLogin__15CWorkSystemPackFv(); // defined below (member)
 extern "C" void wkUpdate__15CWorkSystemPackFv();       // defined below (member)
 extern "C" void wkStandbyLogout__15CWorkSystemPackFv(); // defined below (member)
-extern "C" u32 lbl_eu_80663BD0[2];
+extern "C" u32 __RTTI__15CWorkSystemPack[2];
 extern "C" u32 lbl_eu_80663BD8[2];
 extern "C" u32 lbl_eu_80663BE0[2];
 extern "C" u32 lbl_eu_80663BE8[2];
@@ -764,7 +764,7 @@ extern "C" u32 lbl_eu_8056FF18[3];
 extern "C" u32 lbl_eu_8056FF3C[3];
 
 extern "C" u32 lbl_eu_8056FE58[40] = {
-    (u32)&lbl_eu_80663BD0, 0x00000000, (u32)&__dt__15CWorkSystemPackFv,
+    (u32)&__RTTI__15CWorkSystemPack, 0x00000000, (u32)&__dt__15CWorkSystemPackFv,
     (u32)&PackBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&PackBlob::OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&PackBlob::WorkEvent3__10IWorkEventFPv,
@@ -849,7 +849,7 @@ extern "C" __declspec(align(4)) const char lbl_eu_805246E0[28] = {
 
 // [.sdata] 0x80663BC8-0x80663BF8 (48B): region handle + RTTI locators.
 extern "C" u32 lbl_eu_80663BC8[2] = { 0xFFFFFFFF, 0x00000000 };
-extern "C" u32 lbl_eu_80663BD0[2] = { (u32)&lbl_eu_80524688, (u32)&lbl_eu_8056FEF8 };
+extern "C" u32 __RTTI__15CWorkSystemPack[2] = { (u32)&lbl_eu_80524688, (u32)&lbl_eu_8056FEF8 };
 extern "C" u32 lbl_eu_80663BD8[2] = { (u32)&lbl_eu_80524698, (u32)&lbl_eu_8056FF18 };
 extern "C" u32 lbl_eu_80663BE0[2] = { (u32)&lbl_eu_805246AC, 0x00000000 };
 extern "C" u32 lbl_eu_80663BE8[2] = { (u32)&lbl_eu_805246C8, (u32)&lbl_eu_8056FF3C };

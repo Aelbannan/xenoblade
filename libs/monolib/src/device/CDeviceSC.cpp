@@ -20,6 +20,7 @@ extern "C" u32 lbl_eu_8056BD38[0xA0 / 4];
 // 8 bytes, word 0 in use) - blob monolibdata1d dissolve.
 CDeviceSC* lbl_eu_80665640[2];
 
+
 // novtable: member init-list stores are scheduled BEFORE any body statement,
 // so a manual vptr store written as the first body statement would be sunk
 // below all of them; retail keeps the vptr install right after the base-ctor
@@ -40,28 +41,36 @@ CDeviceBase(pName, pParent, MAX_CHILD){
     SCInit();
 }
 
+
+
 CDeviceSC::~CDeviceSC(){
     lbl_eu_80665640[0] = nullptr;
 }
+
+
 
 CDeviceSC* CDeviceSC::getInstance(){
     return lbl_eu_80665640[0];
 }
 
+
+
 bool CDeviceSC::isWideAspectRatio(){
     return lbl_eu_80665640[0]->mAspectRatio == SC_ASPECT_WIDE;
 }
+
+
 
 bool CDeviceSC::isSoundModeMono(){
     return lbl_eu_80665640[0]->mSoundMode == SC_SND_MONO;
 }
 
-u8 CDeviceSC::getLanguage(){
-    if(lbl_eu_80665640[0] == nullptr){
-        return SCGetLanguage();
-    }
-    return lbl_eu_80665640[0]->mLanguage;
+
+
+extern "C" bool func_eu_8044A600(){
+    return SCGetLanguage() == 0;
 }
+
 
 // Mirror view over the singleton's thread flag / message-queue tail fields
 // (the private CMsgParam<8> members mArrayPtr/mFront/mSize/mCapacity sit at
@@ -79,6 +88,16 @@ public:
     u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
     u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
 };
+
+
+u8 CDeviceSC::getLanguage(){
+    if(lbl_eu_80665640[0] == nullptr){
+        return SCGetLanguage();
+    }
+    return lbl_eu_80665640[0]->mLanguage;
+}
+
+
 
 // Inline copy of CWorkThread::isRunning()'s exception/queue scan written
 // directly in isInitialized (kept body-local: a standalone static helper gets
@@ -109,6 +128,8 @@ bool CDeviceSC::isInitialized(){
             self->mState == CWorkThread::THREAD_STATE_RUN);
 }
 
+
+
 bool CDeviceSC::wkStandbyLogin(){
     if(SCCheckStatus() == SC_STATUS_OK){
         if(CDeviceClock::isInitialized()){
@@ -125,6 +146,8 @@ bool CDeviceSC::wkStandbyLogin(){
     return false;
 }
 
+
+
 bool CDeviceSC::wkStandbyLogout(){
     if(mChildren.empty()){
         if(CDeviceVI::getInstance() == nullptr){
@@ -135,9 +158,6 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-extern "C" bool func_eu_8044A600(){
-    return SCGetLanguage() == 0;
-}
 
 // ---- Retail data (blob monolibdata1/monolibdata1d dissolve) ----
 // rodata 0x80522980 (class-name string), sdata 0x806635F8 (class info),

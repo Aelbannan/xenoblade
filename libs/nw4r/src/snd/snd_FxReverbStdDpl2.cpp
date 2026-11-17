@@ -25,12 +25,6 @@ struct FxReverbStdParam {
 
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
 // match the stripped retail object (MWCC_CASES §1b float pools).
-extern "C" const f32 lbl_eu_80669F98; // preDelayTime / preDelayTimeMax default
-extern "C" const f32 lbl_eu_80669F9C; // fusedTime default
-extern "C" const f32 lbl_eu_80669FA0; // coloration default
-extern "C" const f32 lbl_eu_80669FA4; // damping default
-extern "C" const f32 lbl_eu_80669FA8; // outGain / fusedGain default, upper clamp
-extern "C" const f32 lbl_eu_80669FAC; // sendGain, lower clamp bound
 
 // Retail vtable (shared data split .data 0x8056A7E8). The class is defined as
 // a plain struct so MWCC emits no local __vt__/RTTI and no weak vtable-support
@@ -78,28 +72,28 @@ extern "C" FxReverbStdDpl2* __ct__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDpl2
     self->mHeap = nullptr; // 0x14
     self->mAllocCount = 0; // 0x18
 
-    self->mParam.preDelayTime = lbl_eu_80669F98;
-    self->mParam.fusedTime = lbl_eu_80669F9C;
-    self->mParam.coloration = lbl_eu_80669FA0;
-    self->mParam.damping = lbl_eu_80669FA4;
-    self->mParam.outGain = lbl_eu_80669FA8;
+    self->mParam.preDelayTime = 0.02f;
+    self->mParam.fusedTime = 3.0f;
+    self->mParam.coloration = 0.6f;
+    self->mParam.damping = 0.4f;
+    self->mParam.outGain = 1.0f;
     self->mParam.iirType = 5;
-    self->mParam.preDelayTimeMax = lbl_eu_80669F98;
+    self->mParam.preDelayTimeMax = 0.02f;
     self->mParam.fusedMode = 0;
-    self->mParam.earlyGain = lbl_eu_80669FAC;
-    self->mParam.fusedGain = lbl_eu_80669FA8;
+    self->mParam.earlyGain = 0.0f;
+    self->mParam.fusedGain = 1.0f;
 
     detail::FxReverbStdParam param;
-    param.preDelayTime = lbl_eu_80669F98;
-    param.fusedTime = lbl_eu_80669F9C;
-    param.coloration = lbl_eu_80669FA0;
-    param.damping = lbl_eu_80669FA4;
-    param.outGain = lbl_eu_80669FA8;
+    param.preDelayTime = 0.02f;
+    param.fusedTime = 3.0f;
+    param.coloration = 0.6f;
+    param.damping = 0.4f;
+    param.outGain = 1.0f;
     param.iirType = 5;
-    param.preDelayTimeMax = lbl_eu_80669F98;
+    param.preDelayTimeMax = 0.02f;
     param.fusedMode = 0;
-    param.earlyGain = lbl_eu_80669FAC;
-    param.fusedGain = lbl_eu_80669FA8;
+    param.earlyGain = 0.0f;
+    param.fusedGain = 1.0f;
     SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxReverbStdParam(self, param);
     return self;
 }
@@ -188,7 +182,7 @@ extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxR
     self->mParam = rParam;
 
     f32 preDelayTimeMax =
-        ut::Max(rParam.preDelayTimeMax, lbl_eu_80669FAC);
+        ut::Max(rParam.preDelayTimeMax, 0.0f);
     bool changed = (preDelayTimeMax != self->mMono.preDelayTimeMax);
 
     self->mDpl2.earlyMode = rParam.iirType;
@@ -197,7 +191,7 @@ extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxR
     self->mMono.preDelayTimeMax = preDelayTimeMax;
 
     f32 preDelayTime =
-        ut::Clamp(rParam.preDelayTime, lbl_eu_80669FAC, rParam.preDelayTimeMax);
+        ut::Clamp(rParam.preDelayTime, 0.0f, rParam.preDelayTimeMax);
     self->mDpl2.preDelayTime = preDelayTime;
     self->mMono.preDelayTime = preDelayTime;
 
@@ -206,39 +200,39 @@ extern "C" bool SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxR
 
     // Retail clamps fusedTime only on the lower side (ut::Max), unlike the
     // other gain/time fields below which use a full upper/lower Clamp.
-    f32 fusedTime = ut::Max(rParam.fusedTime, lbl_eu_80669FAC);
+    f32 fusedTime = ut::Max(rParam.fusedTime, 0.0f);
     self->mDpl2.fusedTime = fusedTime;
     self->mMono.fusedTime = fusedTime;
 
     f32 coloration =
-        ut::Clamp(rParam.coloration, lbl_eu_80669FAC, lbl_eu_80669FA8);
+        ut::Clamp(rParam.coloration, 0.0f, 1.0f);
     self->mDpl2.coloration = coloration;
     self->mMono.coloration = coloration;
 
-    f32 damping = ut::Clamp(rParam.damping, lbl_eu_80669FAC, lbl_eu_80669FA8);
+    f32 damping = ut::Clamp(rParam.damping, 0.0f, 1.0f);
     self->mDpl2.damping = damping;
     self->mMono.damping = damping;
 
     f32 earlyGain =
-        ut::Clamp(rParam.earlyGain, lbl_eu_80669FAC, lbl_eu_80669FA8);
+        ut::Clamp(rParam.earlyGain, 0.0f, 1.0f);
     self->mDpl2.earlyGain = earlyGain;
     self->mMono.earlyGain = earlyGain;
 
     f32 fusedGain =
-        ut::Clamp(rParam.fusedGain, lbl_eu_80669FAC, lbl_eu_80669FA8);
+        ut::Clamp(rParam.fusedGain, 0.0f, 1.0f);
     self->mDpl2.fusedGain = fusedGain;
     self->mMono.fusedGain = fusedGain;
 
-    f32 outGain = ut::Clamp(rParam.outGain, lbl_eu_80669FAC, lbl_eu_80669FA8);
+    f32 outGain = ut::Clamp(rParam.outGain, 0.0f, 1.0f);
     self->mDpl2.outGain = outGain;
     self->mMono.outGain = outGain;
 
     self->mMono.busIn = NULL;
     self->mMono.busOut = NULL;
-    self->mMono.sendGain = lbl_eu_80669FAC;
+    self->mMono.sendGain = 0.0f;
     self->mDpl2.busIn = NULL;
     self->mDpl2.busOut = NULL;
-    self->mDpl2.sendGain = lbl_eu_80669FAC;
+    self->mDpl2.sendGain = 0.0f;
 
     if (!self->mIsActive) {
         return true;

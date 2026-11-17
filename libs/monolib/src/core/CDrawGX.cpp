@@ -3,13 +3,9 @@
 
 // ===== Dissolved monolibdata2 (.sdata2 pool) constants owned by this TU =====
 // Retail CDrawGX.o ships no .sdata2: the float literals below resolve to the
-// monolibdata2 pool (lbl_eu_8066A468..A478); referencing them as externs
+// monolibdata2 pool (1.0f..A478); referencing them as externs
 // keeps this TU's .sdata2 empty (retail shape).
-extern "C" const float lbl_eu_8066A468;   // 1.0f
 
-extern "C" const float lbl_eu_8066A46C;   // 0.0f
-extern "C" const float lbl_eu_8066A470;   // 255.0f
-extern "C" const float lbl_eu_8066A474;   // 128/pi (nw4r RAD_TO_FIDX)
 
 // nw4r trig entry points used by renderCircle (retail calls these directly,
 // passing rad * 128/pi from the shared pool constant).
@@ -18,7 +14,7 @@ extern "C" float CosFIdx__Q24nw4r4mathFf(float);
 
 CDrawGX::CDrawGX() :
 mFlags(0),
-mOpacity(lbl_eu_8066A468),
+mOpacity(1.0f),
 mDrawPrim(PRIM_INVALID),
 unk1C(0),
 mVerts(0),
@@ -26,7 +22,7 @@ mVertCount(0),
 mLineWidth(LINE_WIDTH),
 mZPos(0),
 mPrimitive(0){
-    mCol.set(lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468);
+    mCol.set(1.0f,1.0f,1.0f,1.0f);
     unk90.setUnit();
 }
 
@@ -35,7 +31,7 @@ CDrawGX::~CDrawGX(){
 }
 
 void CDrawGX::clear(){
-    mOpacity = lbl_eu_8066A468;
+    mOpacity = 1.0f;
     mVertCount = 0;
     mPrimitive = 0;
     unk1C = 0;
@@ -43,7 +39,7 @@ void CDrawGX::clear(){
     mVerts = 0;
     mZPos = 0;
     mLineWidth = LINE_WIDTH;
-    mCol.set(lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468);
+    mCol.set(1.0f,1.0f,1.0f,1.0f);
     unk90.setUnit();
 }
 
@@ -70,16 +66,16 @@ void CDrawGX::setCol(const ml::CCol3& col){
     mCol.r = col.r;
     mCol.g = col.g;
     mCol.b = col.b;
-    mCol.a = lbl_eu_8066A468;
+    mCol.a = 1.0f;
 
-    mCol.clamp(lbl_eu_8066A46C, lbl_eu_8066A468);
+    mCol.clamp(0.0f, 1.0f);
 
     setFlag(FLAG_INITIALIZED, false);
 }
 
 void CDrawGX::setCol(const ml::CCol4& col){
     mCol = col;
-    mCol.clamp(lbl_eu_8066A46C, lbl_eu_8066A468);
+    mCol.clamp(0.0f, 1.0f);
 
     setFlag(FLAG_INITIALIZED, false);
 }
@@ -189,7 +185,7 @@ void CDrawGX::setupGX(){
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     }
 
-    if(mCol.a < lbl_eu_8066A468){
+    if(mCol.a < 1.0f){
         CDeviceGX::getCacheInstance()->setBlendState(1, 0);
     }else{
         CDeviceGX::getCacheInstance()->setBlendState((mFlags >> 4) & 1, 0);
@@ -328,8 +324,8 @@ void CDrawGX::add(const ml::CVec3& vec){
 
 void CDrawGX::add(s16 x, s16 y, const ml::CCol4& col){
     GXPosition3s16(x, y, mZPos);
-    u32 color = ((u8)(lbl_eu_8066A470 * col.r) << 24) | ((u8)(lbl_eu_8066A470 * col.g) << 16) |
-                ((u8)(lbl_eu_8066A470 * col.b) << 8) | (u8)(lbl_eu_8066A470 * col.a);
+    u32 color = ((u8)(255.0f * col.r) << 24) | ((u8)(255.0f * col.g) << 16) |
+                ((u8)(255.0f * col.b) << 8) | (u8)(255.0f * col.a);
     GXColor1u32(color);
 
     mVertCount++;
@@ -443,7 +439,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474)));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f)));
         }
 
         end();
@@ -455,7 +451,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), lbl_eu_8066A46C));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * 40.743664f), 0.0f));
         }
 
         end();

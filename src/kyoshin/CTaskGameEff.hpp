@@ -34,9 +34,6 @@ struct CTaskGameEffPtmf {
     u32 w[3];
 };
 
-// Self-allocating factory for the after-task (defined in cf/CTaskGameEffAfter.cpp).
-void* __ct__CTaskGameEffAfter(CProcess* parent);
-
 // Effect-singleton setup helpers (retail unmangled; operate on lbl_eu_8065FC18).
 // EffSys_GetConstBase queries the effect resource size; EffSys_Startup/804CBAA8 bind
 // the effect buffer and attach the scene to the singleton.

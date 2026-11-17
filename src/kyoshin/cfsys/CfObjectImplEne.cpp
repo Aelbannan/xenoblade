@@ -9,6 +9,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+#include "kyoshin/CfEnumListHolder.hpp"
 
 extern "C" void __dt__Q22cf15CfObjectImplEneFv();
 
@@ -224,16 +225,14 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
 
     // Death id 0x968: refresh every tracked unit in the enum list.
     if (battleObj->field_3F28 == 0x968) {
-        u8 holder[8];
-        CTaskGame_enumListCtor(holder);
-        startEnumObjects(CTaskGame_enumListGet(holder), 0x80000000, 0);
-        for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
-            void* obj = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(holder), i));
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x80000000, 0);
+        for (u32 i = 0; i < ((cf::CfEnumList*)holder.get())->field_620; i++) {
+            void* obj = MapFx_ResolveOwner(getObjectAt(holder.get(), i));
             if (obj != 0) {
                 ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
             }
         }
-        __dt__80043E88(holder, -1);
     }
 }
 

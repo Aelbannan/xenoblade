@@ -64,7 +64,7 @@ extern void __dt__8CProcessFv(void* self, s32 flags);
 extern void* __dynamic_cast(void* obj, long offset, const void* srcType,
                             const void* dstType, void* src2dst);
 extern const void* lbl_eu_80662170; // __dynamic_cast src typeinfo
-extern const void* lbl_eu_80661EC8; // __dynamic_cast dst typeinfo
+extern const void* __RTTI__9IUIWindow; // __dynamic_cast dst typeinfo
 }
 
 // Object type reached through the dynamic_cast in UIWin_ShowTalkWindow; only the
@@ -965,7 +965,7 @@ void UIWin_ShowTalkWindow(u32 id) {
         IUIWindow* window = *it;
         if (window->field_0x68 == id) {
             void* cast = __dynamic_cast(window, 0x10, &lbl_eu_80662170,
-                                        &lbl_eu_80661EC8, NULL);
+                                        &__RTTI__9IUIWindow, NULL);
             if (cast != NULL) {
                 ((CTaskWindowFlags*)cast)->field_0xAC = 1;
             }

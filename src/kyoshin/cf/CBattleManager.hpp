@@ -32,7 +32,9 @@ namespace cf{
         UnkClass_80192BF4();
         void __ct__80192C10();
 
-        u8 unk0[0xC];
+        /* 0x00 */ u32 field_0x00; // counter/state
+        /* 0x04 */ f32 field_0x04; // timer/accumulator
+        /* 0x08 */ f32 field_0x08; // value
     };
 
     // 8 bytes: 4-byte key + 1-byte count + 3 padding

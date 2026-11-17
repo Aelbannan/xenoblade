@@ -146,9 +146,6 @@ extern "C" void* Scn_GetUnk80Handle(CScn* scene);
 // Hbm state toggle (flat retail names; defined in CLibHbm.cpp). Retail
 // CTaskGame_moveNandReset disables via setHbmActiveFlag then re-enables via setHbmStopFlag.
 extern "C" void DevFile_SetByteA9(int value);
-// CTaskGameEvt event-helper import (retail flat name; stub body in
-// CTaskGameEvt.cpp): setLoadingCaption passes the unkD4 object.
-extern "C" void EvtTask_Relay64CFC(void*);
 // Per-mode dispatch helpers for the CTaskGame_nandCallback callback (flat retail
 // names; stub bodies in this TU). Retail CTaskGame_nandCallback tail-calls them.
 extern "C" void CTaskGame_setFlag200(CTaskGame* inst, u32 a, u32 b);
@@ -221,13 +218,7 @@ extern u32 lbl_eu_805257F0[3];
 // (retail CTaskGame_moveSelectErrWin indexes it with addi from one materialized base).
 extern u32 lbl_eu_80525568[];
 
-// 8-byte enum-list holder (list pointer + MEM2 alloc handle) used by
-// CTaskGame_enumListCtor / CTaskGame_enumListGet / __dt__80043E88; other TUs declare their
-// own local holder equivalents around these flat symbols.
-struct CfEnumListHolder {
-    cf::CfObjEnumList* list;   // +0x00 /* 0x00 */
-    u32 handle;                // +0x04 /* 0x04 */
-};
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Object-registry layout at CTaskGame +0x174: 4 object pointers (stride 4)
 // each paired with a busy byte at +0x184 (stride 1); CTaskGame_allocObjSlot and
@@ -333,13 +324,6 @@ struct CTaskGameFlags68 {
 extern const f32 lbl_eu_80665D6C;
 extern const f32 lbl_eu_80665D74;
 
-// Object pointed to by CTaskGame::unkD4: flag word at +0x60 (setLoadingCaption
-// clears its bit 0x2).
-struct CTaskGameUnkD4Obj {
-    u8 pad[0x60]; /* 0x00 */
-    u32 field_0x60;   // +0x60 /* 0x60 */
-};
-
 // FixStr<32> view of the caption buffer at CTaskGame +0x104 (mLength at
 // +0x124); CTaskGame_moveSetCaption assigns the default caption through this view.
 // The declared CTaskGame fields at 0x104/0x124 stay byte/u32 so the ctor
@@ -399,9 +383,6 @@ extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u
 extern "C" int CTaskGame_playTimeGate();
 // CRI volume/seek helper (flat retail name; defined in this TU).
 extern "C" void CTaskGame_setStreamVol(float volume);
-// CTaskGameEvt event helper (flat retail name; stub body in CTaskGameEvt.cpp):
-// CTaskGame_moveShowTitle passes the unkD4 object.
-extern "C" void EvtTask_Relay65038(void* obj);
 // Window/error-message reset (flat retail name; declared in
 // CMenuKizunagram.hpp): CTaskGame_moveShowTitle runs it before the title-menu ctor.
 extern "C" void CTaskGame_deleteLoad();
@@ -409,14 +390,6 @@ extern "C" void CTaskGame_deleteLoad();
 // with C linkage): retail CTaskGame_moveExitFade calls it out of line with
 // (framerate/2, volume constant) before the vec4 scene push.
 extern "C" void CTaskGame_fadeStream(int frames, float volume);
-// Title-menu factory ctor (retail stripped name; stub body in CMenuTitle.cpp
-// with the same C-ABI shape). extern "C": the call-site reloc must carry the
-// verbatim retail name (a C++ declaration would mangle an __FP... suffix;
-// same scheme as __ct__802B4DF4 above). The ITitleMenu* third parameter
-// receives the +0x60 subobject via a null-checked static_cast at the call
-// site (retail cmpwi/mr/beq/addi adjusted-this shape).
-extern "C" void* __ct__CMenuTitle(CTaskGame* self, CScnNw4r* scene, ITitleMenu* titleMenu);
-
 // Caller-shape imports for the CTaskGame_moveTitleTick / CTaskGame_openStream /
 // CTaskGame_openVision / CTaskGame_moveStartMission call sites (same scheme as the CLibCri
 // caller-shape imports above). Flat retail names; the defining TUs emit
@@ -519,7 +492,6 @@ extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
 extern "C" u8 getLanguage__9CDeviceSCFv();
 extern "C" void GamePicStartFileLoad(CTaskGamePic* self, const char* path);
 extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* parent, int arg);
-extern "C" CTaskGameEvt* create__12CTaskGameEvtFv(CProcess* parent, int arg);
 // Scene-create name pointer (.sdata; points into .sdata2 string space).
 extern char* lbl_eu_80661908;
 extern const f32 lbl_eu_80665D70;
@@ -535,8 +507,6 @@ extern "C" int getWiimoteBattery__Q22cf9CfPadTaskFv();
 
 // nw4r DrawInfo raw-storage helpers (retail pre-mangled names; same scheme
 // as CQuestWindow.hpp).
-void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Virtual-delete views for the loading screen / battery objects (vtable dtor

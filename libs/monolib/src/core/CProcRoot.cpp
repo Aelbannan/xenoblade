@@ -21,7 +21,7 @@ extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const c
 // RTTI name string (.rodata).
 extern const char lbl_eu_80522508[];
 // RTTI locator (.sdata, 8 bytes): { name, base-list }.
-extern u32 lbl_eu_80663548[2];
+extern u32 __RTTI__9CProcRoot[2];
 
 const char lbl_eu_80522508[] = "CProcRoot";
 const char lbl_eu_80522514[] = "CDesktop\0CProcRoot\0";
@@ -30,7 +30,7 @@ const char lbl_eu_80522514[] = "CDesktop\0CProcRoot\0";
 // wkRender/wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout (CProcRoot),
 // wkStandbyExceptionRetry].
 u32 lbl_eu_8056B2A8[0xA0 / 4] = {
-    (u32)&lbl_eu_80663548, 0, (u32)&__dt__9CProcRootFv,
+    (u32)&__RTTI__9CProcRoot, 0, (u32)&__dt__9CProcRootFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
     (u32)&OnPauseTrigger__10IWorkEventFb,
@@ -57,7 +57,7 @@ u32 lbl_eu_8056B348[6] = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-u32 lbl_eu_80663548[2] = { (u32)lbl_eu_80522508, (u32)lbl_eu_8056B348 };
+u32 __RTTI__9CProcRoot[2] = { (u32)lbl_eu_80522508, (u32)lbl_eu_8056B348 };
 
 // spInstance (sbss lbl_eu_806655A4) - defined here so this TU owns its data
 // (blob monolibdata1d dissolve). Retail code accesses the singleton via the

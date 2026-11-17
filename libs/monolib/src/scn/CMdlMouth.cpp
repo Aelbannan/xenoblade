@@ -39,14 +39,14 @@ extern "C" void __ct__CMdlMouth(CMdlMouth* ths) {
     ths->field_0x04 = 0;
     ths->field_0x08 = 0;
     ths->field_0x0C = -1;
-    f32 z = lbl_eu_8066B310;
+    f32 z = 0.0f;
     ths->field_0x10 = z;
     ths->field_0x14 = z;
     ths->field_0x18 = z;
     ths->field_0x1C = z;
     ths->field_0x24 = -1;
     ths->field_0x28 = 0;
-    ths->value2C = lbl_eu_8066B314;
+    ths->value2C = 1.0f;
 }
 
 // Retail dtor fragment (deleting-dtor form: flag > 0 frees the object).
@@ -62,14 +62,14 @@ extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model) {
     ths->field_0x04 = model;
     ths->field_0x08 = 0;
     ths->field_0x0C = -1;
-    f32 z = lbl_eu_8066B310;
+    f32 z = 0.0f;
     ths->field_0x1C = z;
     ths->field_0x10 = z;
     ths->field_0x14 = z;
     ths->field_0x18 = z;
     ths->field_0x24 = -1;
     ths->field_0x28 = 0;
-    ths->value2C = lbl_eu_8066B314;
+    ths->value2C = 1.0f;
 
     // Bind the named node if present; the inner panics are DB_ASSERTs on the
     // same validity check, so MWCC reuses the outer compare (dead code).
@@ -119,15 +119,15 @@ extern "C" void MdlMouthSetMode(CMdlMouth* ths, int arg2, int arg3) {
     if (ths->field_0x08 != arg2) {
         ths->field_0x08 = arg2;
         if (arg2 != 0) {
-            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x14 = 0.002f * (f32)ml::math::mtRand(100) + 0.2f;
+            ths->field_0x18 = 0.006f * (f32)ml::math::mtRand(100) + 0.2f;
         }
         if (arg2 != 0) {
             ths->field_0x28 = 2;
         }
         if (arg3 != 0) {
             if (ths->field_0x08 == 0) {
-                f32 z = lbl_eu_8066B310;
+                f32 z = 0.0f;
                 ths->field_0x1C = z;
                 ths->field_0x10 = z;
                 ths->field_0x14 = z;
@@ -161,19 +161,19 @@ extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResul
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
     if (ths->field_0x10 > ml::pi) {
         // Reset to fully closed, then re-randomize open/close speeds.
-        ths->field_0x10 = lbl_eu_8066B310;
-        ths->field_0x14 = lbl_eu_8066B310;
+        ths->field_0x10 = 0.0f;
+        ths->field_0x14 = 0.0f;
         if (ths->field_0x08 != 0) {
-            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x14 = 0.002f * (f32)ml::math::mtRand(100) + 0.2f;
+            ths->field_0x18 = 0.006f * (f32)ml::math::mtRand(100) + 0.2f;
         }
     }
     nw4r::math::VEC3 v;
     f32 o = ths->field_0x10;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
+    f32 s = nw4r::math::SinFIdx(40.743664f * o);
     ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
     res->GetRotateDeg(&v);
-    v.z = lbl_eu_8066B334 * ths->field_0x1C + v.z;
+    v.z = 33.0f * ths->field_0x1C + v.z;
     res->SetRotateDeg(&v);
     return 1;
 }
@@ -195,18 +195,18 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
     if (ths->field_0x10 > ml::pi) {
         // Reset to fully closed, then re-randomize open/close speeds.
-        ths->field_0x10 = lbl_eu_8066B310;
-        ths->field_0x14 = lbl_eu_8066B310;
+        ths->field_0x10 = 0.0f;
+        ths->field_0x14 = 0.0f;
         if (ths->field_0x08 != 0) {
-            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x14 = 0.002f * (f32)ml::math::mtRand(100) + 0.2f;
+            ths->field_0x18 = 0.006f * (f32)ml::math::mtRand(100) + 0.2f;
         }
     }
     f32 o = ths->field_0x10;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
+    f32 s = nw4r::math::SinFIdx(40.743664f * o);
     ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
     // Pick the SRT offset-table row from the open amount, clamped to [0,2].
-    s32 idx = (s32)(lbl_eu_8066B338 * ths->field_0x1C);
+    s32 idx = (s32)(4.0f * ths->field_0x1C);
     if ((u32)idx >= 3) {
         idx = 2;
     }
@@ -222,18 +222,18 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
         // in offset order.
         f32 t = lbl_eu_805247B4[idx];
         nw4r::math::MTX34 m;
-        m._00 = lbl_eu_8066B314;
-        m._01 = lbl_eu_8066B310;
-        m._02 = lbl_eu_8066B310;
+        m._00 = 1.0f;
+        m._01 = 0.0f;
+        m._02 = 0.0f;
         m._03 = t;
-        m._10 = lbl_eu_8066B310;
-        m._11 = lbl_eu_8066B314;
-        m._12 = lbl_eu_8066B310;
-        m._13 = lbl_eu_8066B310;
-        m._20 = lbl_eu_8066B310;
-        m._21 = lbl_eu_8066B310;
-        m._22 = lbl_eu_8066B314;
-        m._23 = lbl_eu_8066B310;
+        m._10 = 0.0f;
+        m._11 = 1.0f;
+        m._12 = 0.0f;
+        m._13 = 0.0f;
+        m._20 = 0.0f;
+        m._21 = 0.0f;
+        m._22 = 1.0f;
+        m._23 = 0.0f;
         srt.SetEffectMtx(0, &m);
         srt.SetEffectMtx(1, &m);
         srt.SetEffectMtx(2, &m);
@@ -252,14 +252,14 @@ extern const char lbl_eu_805247A8[];
 extern const char lbl_eu_8066B340[];
 const char* lbl_eu_80663C58 = lbl_eu_8066B308;
 const char* lbl_eu_80663C5C = lbl_eu_805247A8;
-extern "C" const void* lbl_eu_80663C60[2] = { (const void*)lbl_eu_805247C0, 0 };
+extern "C" const void* __RTTI__9CMdlMouth[2] = { (const void*)lbl_eu_805247C0, 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C68[4] = { 0x72,0x65,0x66,0x00 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C6C[4] = { 0x72,0x65,0x66,0x00 };
 const char* lbl_eu_80663C70 = lbl_eu_8066B340;
 // [.data] 0x805701B0-0x805701C0 (16B): CMdlMouth vtable {RTTI locator
-// lbl_eu_80663C60, 0, dtor, 0}.
+// __RTTI__9CMdlMouth, 0, dtor, 0}.
 extern "C" u32 lbl_eu_805701B0[4] = {
-    (u32)&lbl_eu_80663C60, 0x00000000,
+    (u32)&__RTTI__9CMdlMouth, 0x00000000,
     (u32)&__dt__9CMdlMouthFv, 0x00000000,
 };
 

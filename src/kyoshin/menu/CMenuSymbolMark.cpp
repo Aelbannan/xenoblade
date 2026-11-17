@@ -1,7 +1,11 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Decompiled: CMenuSymbolMark + CArrow3D
 // High-level C++ reconstruction
 
 #include "kyoshin/menu/CMenuSymbolMark.hpp"
+#include "kyoshin/menu/CMenuSymbolMarkImports.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>   // nw4r::lyt::DrawInfo
@@ -59,10 +63,6 @@ extern u8 lbl_eu_8052637C[];
 extern u8 lbl_eu_80526354[];
 extern u8 lbl_eu_8052CDB4[];
 extern u8 lbl_eu_8052CD50[];
-// Interface vtable blobs installed over the object prefix (+0x10) and the
-// manual IWorkEvent/IScnRender subobjects (+0x58/+0x5C).
-extern u8 lbl_eu_8052BF70[];
-extern u8 lbl_eu_8052CDF8[];
 
 
 // Zero-body stubs for matching
@@ -110,39 +110,30 @@ extern u32 lbl_eu_80663E28;
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
-// Pre-mangled DrawInfo ctor/dtor (raw-storage construction); extern "C" so
-// MWCC keeps the retail symbol verbatim instead of appending the signature.
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
-                                             int flags);
 extern "C" void __dt__Q34nw4r3lyt6LayoutFv(void* self, int flags);
 
 // Retail singletons used by the menu create helpers.
-extern u32 lbl_eu_80663FC8;                    // installed CMenuSymbolMark pointer
 extern const f32 lbl_eu_806670D4;              // timer reset value
 extern const f32 lbl_eu_806670E0;              // timer threshold
 extern const f32 lbl_eu_806670E8;              // timer tick delta
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" CMenuSymbolMark* __ct__CMenuSymbolMark(CMenuSymbolMark* self, CProcess* parent);
-
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 
+// Destructor of the member sub-object at +0x70 (trivial body; the retail
+// exception table of the constructor names it as that member's destructor).
+// TODO: becomes `~T() {}` once the +0x70 member class is recovered.
+extern "C" void* __dt__8011D2F8(void* self, int mode) {
+    if (self != 0 && mode > 0) {
+        operator delete(self);
+    }
+    return self;
+}
+
 // ---------- CMenuSymbolMark constructor ----------
-// Base CProcess construction and the member initializer list build the manual
-// interface subobjects (ptmf triples cleared from __ptmf_null, interface
-// vtables at +0x58/+0x5C); the body then zeroes every entry record and pulls
-// the menu tables/file pointers.
-CMenuSymbolMark::CMenuSymbolMark(CScn* scn, u32 idx)
-    : mUnk54(0),
-      mUnk55(0),
-      mWorkEventSubobj((void*)&lbl_eu_8052CDF8[0x24]),
-      mScnRenderSubobj((void*)&lbl_eu_8052CDF8[0xac]),
-      mScn(scn) {
-    ((ProcPrefixView*)this)->vt10 = (void*)&lbl_eu_8052BF70[0];
-    ptmfMove = __ptmf_null;
-    ptmfDraw = __ptmf_null;
-    ((ProcPrefixView*)this)->vt10 = (void*)&lbl_eu_8052CDF8[0];
+// The IUICf/IWorkEvent/IScnRender bases (vtables, null move/draw slots,
+// fields 0x54/0x55) are set up by the compiler; the body zeroes every entry
+// record and pulls the menu tables/file pointers.
+CMenuSymbolMark::CMenuSymbolMark(CScn* scn) : mScn(scn) {
     const char* S = (const char*)&lbl_eu_804FE720[0];
     // Clear every entry record; the world floats copy uninitialized stack
     // homes. Pointer-walk form: MWCC expands this as peel + x8 unroll with a
@@ -208,26 +199,8 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn, u32 idx)
 }
 
 // ---------- CMenuSymbolMark destructor ----------
-// Retail: if (self == 0) goto end; __dt__17UnkClass_8045F564Fv(&self->mUnkClass, -1);
-// if (self != 0) { if (self != 0) { __dt__8CProcessFv(self, 0); } }
-// if (flags > 0) operator delete(self); end: return self; - the redundant
-// `if (self != 0)` re-check reproduces the retail's dead double-beq
-// (CMenuBattleChain/CMenuArtsSelect idiom).
-#pragma push
-#pragma auto_inline off
-extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags) {
-    if (self == 0) goto end;
-    __dt__17UnkClass_8045F564Fv(&self->mUnkClass, -1);
-    if (self != 0) {
-        if (self != 0) {
-            __dt__8CProcessFv(self, 0);
-        }
-    }
-    if (flags > 0) operator delete(self);
-end:
-    return self;
-}
-#pragma pop
+// Members and bases are destroyed by the compiler.
+CMenuSymbolMark::~CMenuSymbolMark() {}
 
 // ---------- CMenuSymbolMark::Init ----------
 // Builds the per-entry layouts from the shared archive accessor, registers the
@@ -250,13 +223,7 @@ void CMenuSymbolMark::Init() {
                       (u32)getPackedFont__Fv());
     }
     mField_274 = 1;
-    // The `if (this)` idiom splits the IScnRender subobject address
-    // (this+0x5C) into its own addi; the call itself is unconditional.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
-    }
-    mScn->addRenderCB(render, 7, 0);
+    mScn->addRenderCB(this, 7, 0);
     mUnkClass.validateHeap();
     SymbolMarkRenderItem* item = (SymbolMarkRenderItem*)mtl::MemManager::allocate(
         0x7c, (u32)getWorkMem__17CWorkThreadSystemFv());
@@ -303,13 +270,7 @@ void CMenuSymbolMark::Term() {
         mRenderItem->flag39 = 1;
         mRenderItem = 0;
     }
-    // The `if (this)` idiom splits the IScnRender subobject address
-    // (this+0x5C) into its own addi; the call itself is unconditional.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
-    }
-    mScn->removeRenderCB(render);
+    mScn->removeRenderCB(this);
     for (u8 i = 0; i < 16; i++) {
         SymbolMarkEntry& entry = mEntries[i];
         // Polymorphic delete through the Layout type: MWCC emits the null
@@ -320,7 +281,7 @@ void CMenuSymbolMark::Term() {
         }
     }
     deleteRegion__17UnkClass_8045F564Fv(&mUnkClass);
-    lbl_eu_80663FC8 = 0;
+    sInstance = 0;
 }
 
 // Later-file walkers used by Move.
@@ -527,11 +488,8 @@ cont:
     if (lbl_eu_80663E24 & 0xAFA40000) return;
     if (mEntryCount == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls
-    // (a C++ local would inline the empty ctor and virtual-dispatch the dtor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)drawInfo);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
     for (u32 i = 0; i < 16; i++) {
         if ((u8)i >= mEntryCount) {
             break;
@@ -539,25 +497,24 @@ cont:
         SymbolMarkEntry& entry = mEntries[(u8)i];
         if (entry.flag0 != 0) {
             drawLayout((nw4r::lyt::Layout*)entry.layout,
-                          (nw4r::lyt::DrawInfo*)drawInfo, entry.flag2, 1);
+                          &drawInfo, entry.flag2, 1);
         }
     }
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo, -1);
 }
 
-// ---------- SymMark_Create ----------
-extern "C" void* SymMark_Create(CProcess* scn, CProcess* parent) {
-    if (lbl_eu_80663FC8 != 0) {
+// ---------- CMenuSymbolMark::create ----------
+// Installs the singleton: refuses when one already exists, otherwise builds a
+// fresh instance in work memory and registers it under `parent`.
+CMenuSymbolMark* CMenuSymbolMark::sInstance;
+
+CMenuSymbolMark* CMenuSymbolMark::create(CProcess* parent, CScn* scene) {
+    if (sInstance != 0) {
         return 0;
     }
-    CMenuSymbolMark* obj = (CMenuSymbolMark*)mtl::MemManager::allocate(
-        2228, (u32)getWorkMem__17CWorkThreadSystemFv());
-    if (obj != 0) {
-        obj = __ct__CMenuSymbolMark(obj, parent);
-    }
-    lbl_eu_80663FC8 = (u32)obj;
-    reinterpret_cast<CProcess*>(obj)->Regist(scn, false);
-    return (void*)lbl_eu_80663FC8;
+    CMenuSymbolMark* menu = new (CWorkThreadSystem::getWorkMem()) CMenuSymbolMark(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 // ---------- SymMark_Store ----------
@@ -2156,13 +2113,10 @@ restore:
     resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
     updateViewRoot__9CViewRootFv();
     if (mLayout != 0) {
-        // Raw-storage DrawInfo (same shape as CMenuSymbolMark::cbRenderBefore).
-        u8 drawInfo[0x54];
-        __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        nw4r::lyt::DrawInfo drawInfo;
+        SetWideLocAdjust(&drawInfo);
         drawLayout((nw4r::lyt::Layout*)mLayout,
-                      (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-        __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+                      &drawInfo, 0, 1);
     }
 }
 #pragma pop

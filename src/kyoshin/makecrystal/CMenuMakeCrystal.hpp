@@ -1,38 +1,46 @@
 #pragma once
 
 #include <types.h>
-#include <monolib/work/CProcess.hpp>
-#include <monolib/scn/IScnRender.hpp>
 
-class CBgTex;
-class CMakeCrystalWin;
+#include "kyoshin/IUICf.hpp"
+#include "kyoshin/CBgTex.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/CProcess.hpp"
 
-// Data block copied by MakeCrystalCopyParamBlock (fields +0x4..+0x14 only; +0x0 is not
-// part of the copy). Two bytes, three words, one byte - meaning unknown.
-struct CMakeCrystalCopyBlock {
-    u32 field_0x0;   // +0x00 (not copied)
-    u8  field_0x4;   // +0x04
-    u8  field_0x5;   // +0x05
-    u32 field_0x8;   // +0x08
-    u32 field_0xC;   // +0x0C
-    u32 field_0x10;  // +0x10
-    u8  field_0x14;  // +0x14
+class CScn;
+
+// Opaque view of the crafting window (the full class lives in
+// makecrystal/CMakeCrystalWin.hpp, which cannot be co-included here yet
+// because of its flat import declarations). Only the size and the
+// out-of-line destructor matter to the menu.
+class CMakeCrystalWin {
+public:
+    ~CMakeCrystalWin();
+    int mkCrystalIsBusyState();
+
+private:
+    u32 mStorage[0x4364 / 4];
 };
 
 // Main menu UI for the crystal crafting system.
-// Inherits from CProcess (task system) and IScnRender (render callback interface).
-// IScnRender subobject is at offset 0x58, requiring this-adjusting thunks.
-class CMenuMakeCrystal : public CProcess, public IScnRender {
+// Common IUICf task base at 0x00; IScnRender subobject at 0x58 (requires this-adjusting thunks).
+class CMenuMakeCrystal : public IUICf, public IScnRender {
 public:
-    CMenuMakeCrystal();
+    CMenuMakeCrystal(CScn* scene);
     virtual ~CMenuMakeCrystal();
 
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
 
-    // IScnRender vtable this-adjusting thunks
-    void MakeCrystalRenderThunk58();
-    void MakeCrystalDtorThunk58();
-};
+    static CMenuMakeCrystal* create(CProcess* parent, CScn* scene);
+
+    static CMenuMakeCrystal* sInstance;
+
+    /* 0x5C */ CScn* mScene;
+    /* 0x60 */ CBgTex mBgTex;
+    /* 0x80 */ CMakeCrystalWin mCrystalWin;
+    /* 0x43E4 */ u8 mField43E4;
+    /* 0x43E5 */ u8 mField43E5;
+}; // size: 0x43E8

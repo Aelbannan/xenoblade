@@ -2,10 +2,7 @@
 
 // Shared nw4r .sdata2 float constants (retail references these; retail
 // ut_CharWriter.o has .sdata2 size 0 -- no TU-local pool entries).
-extern const f32 lbl_eu_8066A140;  // 0.0f
-extern const f32 lbl_eu_8066A144;  // 1.0f
 extern const f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
-extern const f32 lbl_eu_8066A150;  // 0.5f
 extern const f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
 unsigned char lbl_eu_80653EA8[0x10] __attribute__((aligned(8)));
 nw4r::ut::CharWriter::LoadingTexture lbl_eu_80653EB8 __attribute__((aligned(8)));
@@ -32,8 +29,8 @@ void SetupGXCommon() {
     // Local (stack) zero color -- a function-static would emit a .sbss entry
     // (retail ut_CharWriter.o .sbss is only the 0x80665558 slot).
     nw4r::ut::Color fog = 0;
-    GXSetFog(GX_FOG_NONE, fog, lbl_eu_8066A140, lbl_eu_8066A140,
-             lbl_eu_8066A140, lbl_eu_8066A140);
+    GXSetFog(GX_FOG_NONE, fog, 0.0f, 0.0f,
+             0.0f, 0.0f);
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
                           GX_CH_ALPHA);
     GXSetZTexture(GX_ZT_DISABLE, GX_TF_Z8, 0);
@@ -60,15 +57,15 @@ namespace ut {
 // Retail ut_CharWriter.o .bss 0x80653EA8-0x80653EC8 (0x20): lbl_eu_80653EA8 (0x10)
 // and mLoadingTexture (0x10). Absorbed from nw4r_data.s.
 CharWriter::CharWriter()
-    : mAlpha(255), mIsWidthFixed(false), mFixedWidth(lbl_eu_8066A140),
+    : mAlpha(255), mIsWidthFixed(false), mFixedWidth(0.0f),
       mFont(NULL) {
 
     mLoadingTexture.Reset();
     ResetColorMapping();
     SetGradationMode(GRADMODE_NONE);
     SetTextColor(Color::WHITE);
-    SetScale(lbl_eu_8066A144, lbl_eu_8066A144);
-    SetCursor(lbl_eu_8066A140, lbl_eu_8066A140, lbl_eu_8066A140);
+    SetScale(1.0f, 1.0f);
+    SetCursor(0.0f, 0.0f, 0.0f);
     EnableLinearFilter(true, true);
 }
 
@@ -154,7 +151,7 @@ f32 CharWriter::Print(u16 ch) {
     if (mIsWidthFixed) {
         f32 margin =
             (mFixedWidth - ConvF32S(glyph.widths.charWidth) * mScale.x) *
-            lbl_eu_8066A150;
+            0.5f;
         width = mFixedWidth;
         left = margin + ConvF32S(glyph.widths.left) * mScale.x;
     } else {
@@ -221,7 +218,7 @@ void CharWriter::LoadTexture(const Glyph& rGlyph, GXTexMapID slot) {
                      FALSE);
 
         GXInitTexObjLOD(&texObj, mFilter.atSmall, mFilter.atLarge,
-                        lbl_eu_8066A140, lbl_eu_8066A140, lbl_eu_8066A140,
+                        0.0f, 0.0f, 0.0f,
                         FALSE, FALSE, GX_ANISO_1);
 
         GXLoadTexObj(&texObj, slot);

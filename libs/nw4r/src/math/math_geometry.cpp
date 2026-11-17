@@ -15,9 +15,6 @@ namespace math {
 // the SDA21 relocs drift).
 extern "C" {
 extern f32 lbl_eu_806634D0[2]; // 0.0001f (defined at global scope)
-extern const f32 lbl_eu_80669E5C; // 0.0f
-extern const f32 lbl_eu_80669E68; // 1.0f
-extern const f64 lbl_eu_80669E70; // 0.0
 }
 
 void PLANE::Set(const VEC3* p0, const VEC3* p1, const VEC3* p2) {
@@ -342,11 +339,11 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
 
     // Double-pool zero: retail loads this constant via lfd, so compare
     // against the extern double, not a 0.0f float literal.
-    if (tNumerator < lbl_eu_80669E70) {
-        tNumerator = lbl_eu_80669E5C;
+    if (tNumerator < 0.0) {
+        tNumerator = 0.0f;
 
-        if (-d < lbl_eu_80669E5C) {
-            sNumerator = lbl_eu_80669E5C;
+        if (-d < 0.0f) {
+            sNumerator = 0.0f;
         } else if (-d > a) {
             sNumerator = sDenominator;
         } else {
@@ -356,8 +353,8 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
     } else if (tNumerator > tDenominator) {
         tNumerator = tDenominator;
 
-        if (-d + b < lbl_eu_80669E5C) {
-            sNumerator = lbl_eu_80669E5C;
+        if (-d + b < 0.0f) {
+            sNumerator = 0.0f;
         } else if (-d + b > a) {
             sNumerator = sDenominator;
         } else {
@@ -366,9 +363,9 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
         }
     }
 
-    f32 s = FAbs(sNumerator) < lbl_eu_806634D0[0] ? lbl_eu_80669E5C
+    f32 s = FAbs(sNumerator) < lbl_eu_806634D0[0] ? 0.0f
                                                : sNumerator / sDenominator;
-    f32 t = FAbs(tNumerator) < lbl_eu_806634D0[0] ? lbl_eu_80669E5C
+    f32 t = FAbs(tNumerator) < lbl_eu_806634D0[0] ? 0.0f
                                                : tNumerator / tDenominator;
 
     if (pOut0 != 0) {

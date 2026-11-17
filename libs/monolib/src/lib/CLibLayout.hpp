@@ -66,7 +66,7 @@ public:
 // exact retail lbl_eu_* symbols. lbl_eu_805231BC is DEFINED in CLibLayout.cpp
 // (retail owns the storage there); no decl here -- a duplicate extern in this
 // TU trips MWCC 10322 (illegal name overloading) at the definition site.
-extern MEMAllocator* lbl_eu_80665478;
+
 
 // layoutAllocCallback/layoutFreeCallback are the CLibLayout allocator callbacks. Their
 // retail symbols use synthetic "Fv" names even though the callbacks genuinely

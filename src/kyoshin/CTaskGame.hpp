@@ -14,6 +14,7 @@
 class CView;
 class CWorkThread;
 class CScnNw4r;
+class CTaskGameEvt;
 
 // Object stored in the four virtual-delete slots at CTaskGame +0x174..+0x184
 // (Term deletes each non-null entry through its vtable deleting-dtor slot).
@@ -123,7 +124,7 @@ public:
     u8 unkC9[0xCC - 0xC9]; /* 0xC9 */
     u32 unkCC; /* 0xCC */
     u32 unkD0; /* 0xD0 */
-    u32 unkD4; /* 0xD4 */
+    CTaskGameEvt* unkD4; /* 0xD4 */
     int unkD8; /* 0xD8 */
     u32 unkDC; /* 0xDC */
     float unkE0; /* 0xE0 */

@@ -61,13 +61,13 @@ void handleRenderCallback__Q22cf13CfNandManagerFv();
 void handleFileEvent__Q22cf13CfNandManagerFv();
 void cbRenderBefore__Q22cf13CfNandManagerFv();
 }
-extern char lbl_eu_80661940[];
-extern char lbl_eu_80661948[];
-extern char lbl_eu_80661950[];
-extern char lbl_eu_80661958[];
+extern char __RTTI__10IScnRender[];
+extern char __RTTI__8CProcess[];
+extern char __RTTI__14CChildListNode[];
+extern char __RTTI__15CDoubleListNode[];
 extern char __RTTI__10IWorkEvent[];
 // this TU's own .sdata pair tables (defined below; vtable slots point at them)
-extern const void* lbl_eu_806628C8[2];
+extern const void* __RTTI__Q22cf13CfNandManager[2];
 extern const void* lbl_eu_806628D0[2];
 // fwd decls so the .sdata initializers below see the tables (defs inherit
 // external linkage, matching retail's global .obj bindings)
@@ -78,7 +78,7 @@ extern const void* lbl_eu_80536CD8[7];
 
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char jumptable_eu_80536B2C[0x90] = {0};
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536BBC[49] = {
-    lbl_eu_806628C8, 0,
+    __RTTI__Q22cf13CfNandManager, 0,
     (const void*)__dt__Q22cf13CfNandManagerFv,
     (const void*)Reset__14CChildListNodeFv,
     (const void*)Init__Q22cf13CfNandManagerFv,
@@ -86,7 +86,7 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536BBC[49
     (const void*)Move__Q22cf13CfNandManagerFv,
     0, // retail Draw__28CTTask<Q22cf13CfNandManager>Fv (unspellable '<')
     (const void*)Tail__8CProcessFv,
-    lbl_eu_806628C8, (const void*)0xFFFFFFAC,
+    __RTTI__Q22cf13CfNandManager, (const void*)0xFFFFFFAC,
     (const void*)destroyViaWorkEvent__Q22cf13CfNandManagerFv,
     (const void*)WorkEvent1__10IWorkEventFPvPCc,
     (const void*)OnFileEvent__Q22cf13CfNandManagerFv,
@@ -119,16 +119,16 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536BBC[49
     (const void*)WorkEvent29__10IWorkEventFv,
     (const void*)WorkEvent30__10IWorkEventFv,
     (const void*)WorkEvent31__10IWorkEventFv,
-    lbl_eu_806628C8, (const void*)0xFFFFFFA8,
+    __RTTI__Q22cf13CfNandManager, (const void*)0xFFFFFFA8,
     (const void*)destroyViaRender__Q22cf13CfNandManagerFv,
     (const void*)handleRenderCallback__Q22cf13CfNandManagerFv,
     (const void*)handleFileEvent__Q22cf13CfNandManagerFv,
     (const void*)cbRenderBefore__Q22cf13CfNandManagerFv,
 };
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536C80[13] = {
-    lbl_eu_80661940, (const void*)0x58,
+    __RTTI__10IScnRender, (const void*)0x58,
     __RTTI__10IWorkEvent, (const void*)0x54,
-    lbl_eu_80661958, 0, lbl_eu_80661950, 0, lbl_eu_80661948, 0,
+    __RTTI__15CDoubleListNode, 0, __RTTI__14CChildListNode, 0, __RTTI__8CProcess, 0,
     lbl_eu_806628D0, 0, 0,
 };
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CB4[9] = {
@@ -141,7 +141,7 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CB4[9]
     (const void*)Tail__8CProcessFv,
 };
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CD8[7] = {
-    lbl_eu_80661958, 0, lbl_eu_80661950, 0, lbl_eu_80661948, 0, 0,
+    __RTTI__15CDoubleListNode, 0, __RTTI__14CChildListNode, 0, __RTTI__8CProcess, 0, 0,
 };
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char s_nandTail[4] = {0}; // retail +0x1C8 null word
 #pragma section data_type ".data" ".bss"
@@ -152,7 +152,7 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050B470[0
 // typed .sdata pointer pairs (replaces old sdata blob which MWCC migrated
 // to nobits as all-zero bytes): relocs to the string/pool labels keep the
 // section live.
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628C8[2] = { lbl_eu_8050B440, lbl_eu_80536C80 };
+__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf13CfNandManager[2] = { lbl_eu_8050B440, lbl_eu_80536C80 };
 __declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628D0[2] = { lbl_eu_8050B454, lbl_eu_80536CD8 };
 // typed .bss/.sbss zero-fill (nobits compare sizes only; small sbss objects
 // stay in .sbss automatically, no section attr needed).

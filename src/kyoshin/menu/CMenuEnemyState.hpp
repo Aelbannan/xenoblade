@@ -4,10 +4,16 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/IUICf.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
 // Forward decl: full view is TU-local in CMenuEnemyState.cpp (only the
 // pointer is needed for the memberized EneSt_ScanSlotHighlight declaration).
 struct Actor2Layout;
+
+extern "C" const f32 lbl_eu_80666FEC;
+extern "C" const f32 lbl_eu_80667004;
 
 // Panel entry in the 24-slot panel array at offset 0xA4, each 0x4C bytes.
 // Initialised in the ctor do-while loop.  The entry-pointer trick
@@ -21,8 +27,6 @@ struct MenuEnemyPanel {
     u32 unk10;                     // +0x10
     u8 drawLayout0Flag;            // +0x14  (entry[0xB8], panelData[0x14])
     u8 visible;                    // +0x15  (entry[0xB9], panelData[0x15])
-    u8 gap16;                      // +0x16
-    u8 gap17;                      // +0x17
     f32 animMarker;                // +0x18  (entry+0xBC)
     u8 unk1C;                      // +0x1C  (entry[0xC0], panelData[0x1c])
     u8 unk1D;                      // +0x1D  (entry[0xC1], panelData[0x1d])
@@ -31,12 +35,9 @@ struct MenuEnemyPanel {
     u8 unk20;                      // +0x20
     u8 unk21;                      // +0x21
     u8 unk22;                      // +0x22
-    u8 gap23;                      // +0x23
     u32 unk24;                     // +0x24
     u8 panelType;                  // +0x28  (entry[0xCC], panelData[0x28])
     u8 unk29;                      // +0x29  (entry[0xCD])
-    u8 gap2A;                      // +0x2A
-    u8 gap2B;                      // +0x2B
     void* obj1;                    // +0x2C  (panelData+0x2C)
     void* obj2;                    // +0x30  (panelData+0x30)
     void* obj3;                    // +0x34  (panelData+0x34)
@@ -45,60 +46,55 @@ struct MenuEnemyPanel {
     u32 unk40;                     // +0x40
     u32 unk44;                     // +0x44
     u32 unk48;                     // +0x48
+
+    MenuEnemyPanel()
+        : actorId(0), layout1(NULL), unk08(0), layout2(NULL), unk10(0),
+          drawLayout0Flag(0), visible(0), animMarker(lbl_eu_80666FEC), unk1C(0),
+          unk1D(0), unk1E(0), unk1F(0), unk20(0), unk21(0), unk22(0), unk24(0),
+          panelType(0), unk29(1), obj1(NULL), obj2(NULL), obj3(NULL), unk38(0),
+          unk3C(0), unk40(0), unk44(0), unk48(0) {}
 };
 
 // 4 packed shorts returned in r3:r4 by PaneMatGetS16Quad.
 struct FourShorts { s16 a, b, c, d; };
 
-// CPcSelectCursor lives at offset 0x7E4 and is 0x48 bytes.
-// Several fields alias into CMenuEnemyState (unk800..unk828).
-// Declared here so the source can name the sub-fields.
-struct CPcSelectCursorLayout {
-    u8 field00[4];                         // +0x00 (vtable / reserved)
-    u32 field04;                           // +0x04
-    u32 field08;                           // +0x08
-    u32 field0C;                           // +0x0C
-    u32 field10;                           // +0x10
-    u32 field14;                           // +0x14
-    u32 field18;                           // +0x18
-    nw4r::lyt::Layout* layout1C;          // +0x1C  (= unk800)
-    nw4r::lyt::AnimTransform* anim20;      // +0x20  (= unk804)
-    nw4r::lyt::AnimTransform* anim24;      // +0x24  (= unk808)
-    u32 field28;                           // +0x28
-    u32 field2C;                           // +0x2C
-    u32 field30;                           // +0x30
-    u32 field34;                           // +0x34
-    u32 field38;                           // +0x38
-    u32 field3C;                           // +0x3C
-    u8 byte40;                             // +0x40  (= unk824)
-    u8 byte41;                             // +0x41  (= unk825)
-    u8 pad42[2];                           // +0x42-0x43
-    u32 field44;                           // +0x44  (= unk828)
+// Embedded target-select cursor (0x48 bytes at +0x7E4 of CMenuEnemyState).
+// Virtual destructor only; the ctor is defined in CMenuEnemyState.cpp.
+class CPcSelectCursor {
+public:
+    // Declared first so the compiler puts the vptr at +0x00.
+    CPcSelectCursor();
+    virtual ~CPcSelectCursor();
+
+    u32 field04;                     // +0x04
+    UnkClass_8045F564 mem08;         // +0x08 (16 B: field08..field14)
+    u32 field18;                     // +0x18
+    nw4r::lyt::Layout* layout1C;     // +0x1C
+    nw4r::lyt::AnimTransform* anim20; // +0x20
+    nw4r::lyt::AnimTransform* anim24; // +0x24
+    u32 field28;                     // +0x28
+    u32 field2C;                     // +0x2C
+    u32 field30;                     // +0x30
+    u32 field34;                     // +0x34
+    u32 field38;                     // +0x38
+    u32 field3C;                     // +0x3C
+    u8 byte40;                       // +0x40
+    u8 byte41;                       // +0x41
+    u32 field44;                     // +0x44
+
+    void EneSt_CursorBuild();
     void EneSt_CursorUpdate();
 };
 
-class CMenuEnemyState {
+// IUICf task base (0x00-0x57), the IWorkEvent subobject at +0x58, the
+// IScnRender subobject at +0x5C, then the menu fields.
+class CMenuEnemyState : public IUICf, public IWorkEvent, public IScnRender {
 public:
-    void cbRenderBefore();
-    void Move();
-
     // ---- fields ----
-    // 0x000-0x053: CProcess base data
-    u8 unk00[0x54];
-    // 0x054
-    u8 unk54;
-    // 0x055
-    u8 unk55;
-    // 0x056-0x057
-    u8 gap56[2];
-    // 0x058
-    char* vtPtr1;
-    // 0x05C
-    char* vtPtr2;
     // 0x060
     void* unk60;
-    // 0x064-0x073  UnkClass_8045F564Fv (16 B)
-    u8 unk64[0x10];
+    // 0x064-0x073  UnkClass_8045F564 (16 B)
+    UnkClass_8045F564 mem64;
     // 0x074
     nw4r::lyt::Layout* unk74;
     // 0x078
@@ -144,7 +140,7 @@ public:
     // 0x7E0
     u32 field7E0;
     // 0x7E4-0x82B  CPcSelectCursor (0x48 B)
-    CPcSelectCursorLayout selectCursor;
+    CPcSelectCursor selectCursor;
     // 0x82C
     u32 field82C;
     // 0x830
@@ -156,13 +152,15 @@ public:
     // 0x838
     f32 unk838;
 
-    CMenuEnemyState(void* scn);
-    // Deliberately non-virtual: the retail dtor stores no vtable (the ctor
-    // writes the vtable constants manually), so declaring `virtual` here would
-    // make MWCC emit an unwanted vptr store in the dtor.
-    ~CMenuEnemyState();
-    void Init();
-    void Term();
+    static CMenuEnemyState* sInstance;
+    static CMenuEnemyState* create(CProcess* parent, CScn* scene, void* arg3);
+
+    CMenuEnemyState(CScn* scn);
+    virtual ~CMenuEnemyState();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
     void EneSt_PositionPanel(u8* panelData, void* posA, void* posB);
     void EneSt_UpdatePanelHighlight(u8* panelData);
     void EneSt_HighlightPane(u8* panelData, int which);
@@ -170,116 +168,3 @@ public:
     void EneSt_RefreshMenu();
     void EneSt_ScanSlotHighlight(Actor2Layout* actor2);
 };
-
-// CPcSelectCursor lives at offset 0x7E4 in CMenuEnemyState and is 0x48 bytes.
-// The retail dtor __dt__15CPcSelectCursorFv stores no vtable, so the class is
-// deliberately non-polymorphic here (the +0x00 word is a plain reserved
-// field). The ctor __ct__15CPcSelectCursorFv is defined in another TU.
-class CPcSelectCursor {
-public:
-    u32 field00;                     // +0x00 (vtable / reserved)
-    u32 field04;                     // +0x04
-    UnkClass_8045F564 mem08;         // +0x08 (16 B: field08..field14)
-    u32 field18;                     // +0x18
-    nw4r::lyt::Layout* layout1C;     // +0x1C
-    nw4r::lyt::AnimTransform* anim20; // +0x20
-    nw4r::lyt::AnimTransform* anim24; // +0x24
-    u32 field28;                     // +0x28
-    u32 field2C;                     // +0x2C
-    u32 field30;                     // +0x30
-    u32 field34;                     // +0x34
-    u32 field38;                     // +0x38
-    u32 field3C;                     // +0x3C
-    u8 byte40;                       // +0x40
-    u8 byte41;                       // +0x41
-    u8 pad42[2];                     // +0x42-0x43
-    u32 field44;                     // +0x44
-
-    CPcSelectCursor();
-    ~CPcSelectCursor();
-    void EneSt_CursorBuild();
-};
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __ct__15CPcSelectCursorFv(void* self);
-extern "C" void* MapFx_ResolveOwner(void* r3);
-// Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
-extern "C" u32 CUICfManager_getPackedFontD8();
-// 4-short colour pairs read off a pane (unmangled retail symbol).
-extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
-extern "C" void* __dt__15CMenuEnemyStateFv(CMenuEnemyState* self, int flags);
-extern "C" void* __ct__CMenuEnemyState(void* self, void* scn);
-extern "C" void* CUICfManager_getArcResourceAccessor();
-extern "C" void __dt__8CProcessFv(void* self, int flags);
-extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
-// Layout sound effect helper (retail symbol is unmangled).
-extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout* layout, const char* name,
-                              u32 value);
-// Apply a loaded texture to a pane (retail symbol is unmangled).
-extern "C" void PaneSetTexPalette(void* a, void* palette);
-// Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
-// declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
-// later plain redeclaration inherit it (same signature).
-extern "C" char* MakeTplNameSysFile(u32 id);
-// Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
-// (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
-extern "C" void* findObjB28ById(s32 a);
-// Unprototyped-style import shared by two callers in this TU.
-extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
-extern "C" int ScMain_GetSummedInt(void* self);
-extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
-extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
-extern "C" char* GetBdatNameByNumId(const char* s);
-extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
-extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
-extern "C" void* lookupCA0By45C0(void);
-int sprintf(char*, const char*, ...);
-// Retail linker name is the already-mangled C++ symbol.
-extern "C" void* getEffOwner____FPv(void* obj);
-void* getEffOwner(void* obj);
-
-// Retail .sdata singleton (created by EneSt_Create, cleared by Term).
-extern u32 lbl_eu_80663F50;
-// CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
-// (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
-// String pool base (EneSt_ScalePaneWidths pane names at +0xd3/+0xdd/+0x11d).
-extern char lbl_eu_804FDBF8[];
-// sdata2 constants used by the panel-highlight helpers.
-extern const f32 lbl_eu_80667008;
-extern const f32 lbl_eu_8066703C;
-extern const f32 lbl_eu_80667040;
-extern const f32 lbl_eu_80667044;
-extern const f32 lbl_eu_80667048;
-extern const f32 lbl_eu_8066704C;
-extern const f32 lbl_eu_80667050;
-extern const f32 lbl_eu_80667054;
-extern const f32 lbl_eu_80667038;
-// Enemy-data table pointer (sdata) used by the highlight-scan helpers.
-extern u8* lbl_eu_806640E0;
-// Texture-index table for the panel-highlight search (EneSt_SearchHighlightTexture).
-extern u32 lbl_eu_804FDBC8[];
-// sdata colour/scale quads + s16 pairs used by EneSt_RegisterPanel's pane setup.
-// Declared as 4-element s16 arrays so direct element access keeps the retail
-// sda21 addressing (li lbl@sda21 + halfword ops).
-extern s16 lbl_eu_80663F58[];
-extern u32 lbl_eu_80663F5C;
-extern s16 lbl_eu_80663F60[];
-extern u32 lbl_eu_80663F64;
-extern s16 lbl_eu_80663F68[];
-extern s16 lbl_eu_80663F70[];
-extern s16 lbl_eu_80663F78[];
-extern s16 lbl_eu_80663F80[];
-extern s16 lbl_eu_80663F88[];
-extern s16 lbl_eu_80663F90[];
-extern u32 lbl_eu_806640CC;
-// sdata2 constants used by the position-marker helpers.
-extern const f32 lbl_eu_80666FF0;
-extern const f32 lbl_eu_80666FF4;
-extern const f32 lbl_eu_80666FF8;
-extern const f32 lbl_eu_80666FFC;
-extern const f32 lbl_eu_80667000;
-extern const f32 lbl_eu_80667018;
-extern const f32 lbl_eu_8066701C;
-extern const f32 lbl_eu_80667020;
-extern const f32 lbl_eu_80667024;
-extern const f32 lbl_eu_80667028;

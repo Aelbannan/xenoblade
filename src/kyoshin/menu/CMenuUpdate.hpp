@@ -177,8 +177,6 @@ extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void* getInstance__9CTaskGameFv();
 extern "C" bool isFlag01Set__9CTaskGameFv(void*);

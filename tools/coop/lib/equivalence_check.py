@@ -452,63 +452,10 @@ def _byte_identical_with_relocs(
     canonical_symbols: dict[str, str] | None = None,
     linker_layout: "LinkerLayout | None" = None,
 ) -> bool:
-    """Byte-identical bodies AND matching relocation destinations (r5 Finding 2).
-
-    ``left.code == right.code`` alone is not sound: in ET_REL objects the
-    instruction bytes at a relocation site hold a placeholder/addend, so a
-    ``bl wrong_function`` and ``bl right_function`` compare equal. Bodies are
-    only truly identical when each site agrees on (offset, type, addend) and,
-    when both sides have usable names, on the **canonical** destination.
-    ``(null)`` / empty retail names are wildcards for the name slot only —
-    type and addend still must match.
-
-    Two representation-level extensions (category A, fail-closed):
-
-    * bodies that differ only in ADDR16 linker-absolute fields (one side baked
-      the immediate, the other leaves zero + a reloc) are accepted when the
-      materialized immediates match — the linked bytes are identical;
-    * destinations that spell different names but resolve to the same linked
-      address (``lbl_eu_*`` vs the decomp's own label) are equivalent.
-    """
-    codes_differ = left.code != right.code
-    if codes_differ and not _addr16_only_differences(left, right, canonical_symbols, linker_layout):
-        return False
-    left_by_off = {int(r.offset): r for r in left.relocations}
-    right_by_off = {int(r.offset): r for r in right.relocations}
-    for offset in sorted(set(left_by_off) | set(right_by_off)):
-        left_reloc = left_by_off.get(offset)
-        right_reloc = right_by_off.get(offset)
-        if left_reloc is None or right_reloc is None:
-            # ADDR16 presence asymmetry (the other side baked the immediate)
-            # was validated byte-by-byte by _addr16_only_differences above;
-            # every other reloc class must be present on both sides.
-            present = left_reloc if left_reloc is not None else right_reloc
-            from tools.coop.lib.reloc_canon import ADDR16_HA, ADDR16_HI, ADDR16_LO, type_class
-
-            if type_class(int(present.relocation_type)) not in (ADDR16_HA, ADDR16_HI, ADDR16_LO):
-                return False
-            other_code = right.code if left_reloc is not None else left.code
-            if not _addr16_materialized_ok(present, other_code, canonical_symbols, linker_layout):
-                return False
-            continue
-        if int(left_reloc.relocation_type) != int(right_reloc.relocation_type):
-            return False
-        left_addend = 0 if left_reloc.addend is None else int(left_reloc.addend)
-        right_addend = 0 if right_reloc.addend is None else int(right_reloc.addend)
-        if left_addend != right_addend:
-            return False
-        left_dest = _normalize_reloc_dest(left_reloc.symbol, canonical_symbols)
-        right_dest = _normalize_reloc_dest(right_reloc.symbol, canonical_symbols)
-        if left_dest is None or right_dest is None:
-            continue
-        if _reloc_dests_equivalent(left_dest, right_dest):
-            continue
-        left_addr = _resolve_reloc_address(left_dest, linker_layout)
-        right_addr = _resolve_reloc_address(right_dest, linker_layout)
-        if left_addr is not None and left_addr == right_addr:
-            continue
-        return False
-    return True
+    """Strict relocation-aware byte identity; missing names never wildcard."""
+    from tools.coop.lib.full_match import compare_functions
+    return compare_functions(left, right, canonical_symbols=canonical_symbols,
+                             linker_layout=linker_layout).match
 
 
 def _current_certifier_hash() -> str:
@@ -3563,62 +3510,11 @@ def certify_unit_symbol(
     try:
         try:
             left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
-        except Exception:
-            # Retail object may have NULL/stripped symbols (DOL-split placeholder,
-            # e.g. CBattleManager) while the decomp side has real mangled names.
-            # hexdiff recovers these via the registry address; do the same here:
-            # resolve the decomp function by name, and the retail function by
-            # address (registry address - decomp text_base = retail .text offset).
-            from tools.coop.lib.targets import get_target, load_targets
-            try:
-                reg = get_target(load_targets(project.config), target_id)
-                addr = reg.address
-            except Exception:
-                addr = None
-            if not addr:
-                raise
-            # text_base: the unit's first retail function address. The registry
-            # min address for this unit == where retail .text starts. Deriving
-            # it from the DECOMP object is unreliable (decomp can have
-            # different function sizes/ordering than the DOL-split retail,
-            # e.g. CBattleManager: retail first fn 0x320B vs decomp 0x328B).
-            try:
-                min_addr = min(
-                    int(t.address, 0)
-                    for t in load_targets(project.config)
-                    if t.unit and (t.unit == unit.name or t.unit == unit.name.split("/", 1)[-1])
-                    and t.address
-                )
-            except Exception:
-                min_addr = None
-            if min_addr is not None and (int(str(addr), 0) - 0) >= min_addr:
-                text_base = min_addr
-            else:
-                decomp_fns = list_text_functions(unit.base_path)
-                decomp_candidates = _resolve_candidates(decomp_fns, symbol)
-                if len(decomp_candidates) != 1:
-                    raise ElfSymbolError(
-                        f"ambiguous decomp symbol {symbol!r} in {unit.base_path} "
-                        f"({len(decomp_candidates)} candidates)"
-                    )
-                decomp_fn = decomp_candidates[0]
-                text_base = (int(str(addr), 0) - decomp_fn.value) & 0xFFFFFFFF
-            retail_fns = list_text_functions(unit.target_path)
-            retail_target = None
-            for rf in retail_fns:
-                if (text_base + rf.value) & 0xFFFFFFFF == int(str(addr), 0):
-                    retail_target = rf
-                    break
-            if retail_target is None:
-                raise
-            decomp_fns = list_text_functions(unit.base_path)
-            decomp_candidates = _resolve_candidates(decomp_fns, symbol)
-            if len(decomp_candidates) != 1:
-                raise ElfSymbolError(
-                    f"ambiguous decomp symbol {symbol!r} in {unit.base_path} "
-                    f"({len(decomp_candidates)} candidates)"
-                )
-            left, right = retail_target, decomp_candidates[0]
+        except ElfSymbolError:
+            # Stripped retail names are recovered only from retail splits;
+            # decomp offsets / the first registered function are not bases.
+            from tools.coop.lib.full_match import resolve_unit_pair
+            left, right = resolve_unit_pair(project, unit, symbol)
         # Byte-identical FULL_MATCH leaves (common for RVL paired-single MTX)
         # skip SMT prove: incomplete PS capability stubs / timeouts block certs
         # that parents need. Prefer prove only when bytes differ and a reviewed
@@ -3634,10 +3530,8 @@ def certify_unit_symbol(
                     identity_canonical = _canonical_symbols_for_unit(_unit_name)
         except Exception:
             identity_canonical = None
-        bytes_identical = _byte_identical_with_relocs(
-            left, right, canonical_symbols=identity_canonical,
-            linker_layout=_linker_layout_for_project(project),
-        )
+        from tools.coop.lib.full_match import compare_unit_functions
+        bytes_identical = compare_unit_functions(project, unit, left, right).match
         if not bytes_identical:
             # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).  The
             # witness must run before the SMT-first memory-bus block below,

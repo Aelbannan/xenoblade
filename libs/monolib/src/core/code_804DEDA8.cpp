@@ -174,23 +174,10 @@ extern CSchedMemGlob lbl_eu_8065FC18;
 // conversion constant (2^52 + 2^31), and the frame-rate clamp upper bound.
 // const routes these into the readonly sdata2 pool so MWCC hoists the lfs
 // above the frame stores (docs/MWCC_CASES.md lfs-hoist scheduling fix).
-extern const f32 lbl_eu_8066B290;
 extern f64 lbl_eu_8066B298;
 extern f64 lbl_eu_8066B2A0;
 extern const f64 lbl_eu_8066B288; // u8->float conversion magic (2^52)
-extern const f32 lbl_eu_8066B2AC;
-extern const f32 lbl_eu_8066B2B0;
 extern f32 lbl_eu_8066B2A8;
-extern const f32 lbl_eu_8066B2B4;
-extern const f32 lbl_eu_8066B2B8;
-extern const f32 lbl_eu_8066B2BC;
-extern const f32 lbl_eu_8066B2C0;
-extern const f32 lbl_eu_8066B2C4;
-extern const f32 lbl_eu_8066B2C8;
-extern const f32 lbl_eu_8066B2D4;
-extern const f32 lbl_eu_8066B2D8;
-extern const f32 lbl_eu_8066B2CC;
-extern const f32 lbl_eu_8066B2DC;
 
 // s32 -> f32 through the shared signed magic double lbl_eu_8066B2A0 (retail
 // xoris + 0x43300000 stack-double shape). Writing it explicitly keeps MWCC
@@ -1340,7 +1327,7 @@ extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem
         if (!(conv <= item->mField00)) {
             break;
         }
-        if (!(lbl_eu_8066B290 <= f1)) {
+        if (!(0.0f <= f1)) {
             break;
         }
         item->mField05 = item->mField06;
@@ -1375,7 +1362,7 @@ extern "C" void CEVec3LerpPS(void* out, const void* a, const void* b, f32 t);
 // and clamps the result into [1.0, lbl_eu_8066B2A8]. A 0x4000 entry
 // (terminator) yields rate 1.0.
 extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s32 index) {
-    f32 result = lbl_eu_8066B290;
+    f32 result = 0.0f;
     u8 a = item->mField06;
     u8 b = item->mField05;
     u16 hi = *(u16*)((u8*)entries + index * a);
@@ -1398,8 +1385,8 @@ extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s3
         return result;
     }
     f32 r = f * rate;
-    if (r < lbl_eu_8066B290) {
-        r = lbl_eu_8066B290;
+    if (r < 0.0f) {
+        r = 0.0f;
     } else if (r > lbl_eu_8066B2A8) {
         r = lbl_eu_8066B2A8;
     }
@@ -1410,7 +1397,7 @@ extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s3
 // state and copy the selected element's three vectors into item+0x0C/0x18/0x24
 // (all zeros when no blob), then run the usual terminator flag check.
 void SchedAnim_InitVec28(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1447,7 +1434,7 @@ void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x28);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     u8* b = (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x28;
@@ -1458,7 +1445,7 @@ void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
 
 // Retail duplicate of SchedAnim_InitVec28.
 void SchedAnim_InitVec28B(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1492,7 +1479,7 @@ void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x28);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     u8* b = (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x28;
@@ -1507,7 +1494,7 @@ void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // element's u16 frame count against the new rate into the slot pair
 // (+0x0E / +0x0C). Finally run the usual terminator flag check.
 void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1523,12 +1510,12 @@ void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
         (CEntryU16PairElem*)(base + item->mField05 * 8);
 
     // Channel A
-    f32 d = (f32)(s32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    f32 d = (f32)(s32)ml::math::mtRand() / 2147483600.0f - 0.5f;
     f32 scale;
     if (base != NULL) {
         scale = *(f32*)(base - 8);
     } else {
-        scale = lbl_eu_8066B290;
+        scale = 0.0f;
     }
     f32 t = lbl_eu_8066B2A8 - d * scale;
     item->mField14 = t;
@@ -1538,11 +1525,11 @@ void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
     }
 
     // Channel B
-    d = (f32)(s32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    d = (f32)(s32)ml::math::mtRand() / 2147483600.0f - 0.5f;
     if (base != NULL) {
         scale = *(f32*)(base - 4);
     } else {
-        scale = lbl_eu_8066B290;
+        scale = 0.0f;
     }
     t = lbl_eu_8066B2A8 - d * scale;
     item->mField10 = t;
@@ -1573,12 +1560,12 @@ void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
     }
     CEntryU16PairElem* ret = (CEntryU16PairElem*)(base + item->mField05 * 8);
     s32 rdraw = ml::math::mtRand();
-    f32 rnd = (f32)rdraw / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    f32 rnd = (f32)rdraw / 2147483600.0f - 0.5f;
     f32 scale;
     if (base != NULL) {
         scale = *(f32*)(base - 8);
     } else {
-        scale = lbl_eu_8066B290;
+        scale = 0.0f;
     }
     f32 t = lbl_eu_8066B2A8 - rnd * scale;
     item->mField14 = t;
@@ -1588,11 +1575,11 @@ void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
     if ((v & 0xFFFF) != 0) {
         item->mSlot0E = (s16)v;
     }
-    rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    rnd = (f32)ml::math::mtRand() / 2147483600.0f - 0.5f;
     if (base != NULL) {
         scale = *(f32*)(base - 4);
     } else {
-        scale = lbl_eu_8066B290;
+        scale = 0.0f;
     }
     t = lbl_eu_8066B2A8 - rnd * scale;
     item->mField10 = t;
@@ -1616,7 +1603,7 @@ void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 8);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     u8 lo = item->mField05;
@@ -1635,9 +1622,9 @@ void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
     u32 dw = end->mB;
     f32 fc = cw;
     f32 fd = dw;
-    s16 s = (s16)(lbl_eu_8066B2B4 *
-                  (lbl_eu_8066B2B8 + (rate * (fd - fc) + fc) * item->mField10));
-    item->mSlot0C = (s16)(lbl_eu_8066B2BC * s);
+    s16 s = (s16)(10.0f *
+                  (0.001f + (rate * (fd - fc) + fc) * item->mField10));
+    item->mSlot0C = (s16)(0.1f * s);
 }
 
 // Initialize one anim item from a 0x14-stride entry blob with a random
@@ -1647,7 +1634,7 @@ void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // fill item+0x1C with a random vector, normalize it and scale everything by
 // that factor; otherwise zero it.
 void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1656,7 +1643,7 @@ void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
     if (base == NULL) {
         *(AnimVec3*)&item->mField1C = schedZero;
         *(AnimVec3*)&item->mField10 = schedZero;
-        item->mField28 = lbl_eu_8066B290;
+        item->mField28 = 0.0f;
         return;
     }
     CEntryWideElem* ret =
@@ -1670,14 +1657,14 @@ void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
     if (base != NULL) {
         scale = *(f32*)(base - 0xC);
     } else {
-        scale = lbl_eu_8066B290;
+        scale = 0.0f;
     }
-    if (scale > lbl_eu_8066B290) {
+    if (scale > 0.0f) {
         randVec__6CERandFPQ22ml5CVec3((ml::CVec3*)&item->mField1C);
         f32 len2 = item->mField1C * item->mField1C +
                    item->mField20 * item->mField20 +
                    item->mField24 * item->mField24;
-        if (len2 == lbl_eu_8066B290) {
+        if (len2 == 0.0f) {
             *(AnimVec3*)&item->mField1C = schedZero;
         } else {
             PSVECNormalize((const Vec*)&item->mField1C,
@@ -1718,7 +1705,7 @@ void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entries, u8* arg
         // standard advance path
         if (ret != NULL) {
             f32 rate = SchedAnim_FrameRate(item, entries, 0x14);
-            if (!(rate < lbl_eu_8066B290)) {
+            if (!(rate < 0.0f)) {
                 u8* b = (u8*)ret +
                         ((item->mField06 - item->mField05) & 0xFF) * 0x14;
                 CEVec3LerpPS(&item->mField10, (u8*)ret + 4, b + 4, rate);
@@ -1743,7 +1730,7 @@ void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entries, u8* arg
             u16 w = *(u16*)(p + (item->mField06 - item->mField05) * 0x14);
             if (w < 0x4000) {
                 f32 rate = SchedAnim_FrameRate(item, entries, 0x14);
-                if (!(rate < lbl_eu_8066B290)) {
+                if (!(rate < 0.0f)) {
                     f32 startF = *(f32*)(p + 0x10);
                     f32 endF = *(f32*)(p + (item->mField06 - item->mField05) *
                                                0x14 +
@@ -1803,11 +1790,11 @@ void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
         SplinePt* p3 = (SplinePt*)args[3];
         f32 t2 = t * t;
         f32 t3 = t2 * t;
-        f32 h10 = t3 - lbl_eu_8066B2C0 * t2 + t;
-        f32 h00 = lbl_eu_8066B290 + lbl_eu_8066B2C0 * t3 - lbl_eu_8066B2C4 * t2;
-        f32 h01 = lbl_eu_8066B2C8 * t3 + lbl_eu_8066B2C4 * t2;
+        f32 h10 = t3 - 2.0f * t2 + t;
+        f32 h00 = 0.0f + 2.0f * t3 - 3.0f * t2;
+        f32 h01 = (-2.0f) * t3 + 3.0f * t2;
         f32 h11 = t3 - t2;
-        f32 k = lbl_eu_8066B2B0;
+        f32 k = 0.5f;
         AnimVec3 m0;
         m0.x = (p2->mPos.x - p0->mPos.x) * k;
         m0.y = (p2->mPos.y - p0->mPos.y) * k;
@@ -1852,7 +1839,7 @@ void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
 // item+0x0C, scale the selected element's float by the random factor into
 // item+0x10, then run the usual terminator flag check.
 void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
-    f32 one = lbl_eu_8066B290;
+    f32 one = 0.0f;
     item->mField00 = one;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1864,7 +1851,7 @@ void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
         return;
     }
     u8* ret = SchedEntry_PickRandom(base, 8, 0, &item->mField05, &item->mField07);
-    f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
+    f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f - 0.5f;
     f32 scale;
     if (base == NULL) {
         scale = one;
@@ -1891,7 +1878,7 @@ extern "C" void SchedAnim_AdvanceCursor(CSchedAnimItem* item, CEntryElem* entrie
         return;
     }
     f32 r = SchedAnim_FrameRate(item, entries, 8);
-    if (r < lbl_eu_8066B290) {
+    if (r < 0.0f) {
         return;
     }
     CEntryFloatElem* arr = (CEntryFloatElem*)ret;
@@ -1908,7 +1895,7 @@ extern "C" void SchedAnim_AdvanceCursor(CSchedAnimItem* item, CEntryElem* entrie
 // blob is present) load the run's slot handles and set the 0x04 flag bits
 // according to whether the run extends to the blob terminator.
 extern "C" void SchedAnim_InitSlots(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1957,7 +1944,7 @@ void SchedAnim_RefreshSlotHandles(CScheduleItem* item, CEntryElem* entries, u8* 
 // scale-deviation bits when the copied vector deviates from (1,1,1,1), plus
 // the usual run-tail terminator check.
 void SchedAnim_InitQuad14(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -1972,12 +1959,12 @@ void SchedAnim_InitQuad14(CSchedAnimItem* item, u8* base) {
         } else {
             item->mQuad0C = ret->mVec;
             // Flag bit pairs when the stored vector deviates from (1,1,1,1).
-            item->mScaleFlag = (item->mField0C != lbl_eu_8066B290 ||
-                                item->mField10 != lbl_eu_8066B290);
+            item->mScaleFlag = (item->mField0C != 0.0f ||
+                                item->mField10 != 0.0f);
             item->mScaleFlag =
                 (u8)(item->mScaleFlag |
-                     (u8)((item->mField14 != lbl_eu_8066B290 ||
-                           item->mField18 != lbl_eu_8066B290)
+                     (u8)((item->mField14 != 0.0f ||
+                           item->mField18 != 0.0f)
                           << 1));
             u8 idx = item->mField05 + item->mField07;
             u16 w = *(u16*)(base + idx * 0x14);
@@ -2029,25 +2016,25 @@ void SchedAnim_SplitHue(CScheduleItem* unused, HueSplitOut* out,
         mn = ch[0];
     }
     out->mMax = mx;
-    if (lbl_eu_8066B290 == mx) {
+    if (0.0f == mx) {
         return;
     }
     f32 y = (mx - mn) / mx;
     out->mDelta = y;
-    if (y == lbl_eu_8066B290) {
+    if (y == 0.0f) {
         return;
     }
     // Hue sector selected by which channel equals the max.
     if (ch[0] == mx) {
         out->mHue = (ch[1] - ch[2]) / (mx - mn);
     } else if (ch[1] == mx) {
-        out->mHue = lbl_eu_8066B2C0 + (ch[2] - ch[0]) / (mx - mn);
+        out->mHue = 2.0f + (ch[2] - ch[0]) / (mx - mn);
     } else { // ch[2] == mx
-        out->mHue = lbl_eu_8066B2D4 + (ch[0] - ch[1]) / (mx - mn);
+        out->mHue = 4.0f + (ch[0] - ch[1]) / (mx - mn);
     }
-    f32 h = out->mHue / lbl_eu_8066B2D8;
+    f32 h = out->mHue / 6.0f;
     out->mHue = h;
-    if (h < lbl_eu_8066B290) {
+    if (h < 0.0f) {
         out->mHue = lbl_eu_8066B2A8 + h;
     }
 }
@@ -2066,7 +2053,7 @@ void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x14);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     CEVec4LerpPS(&item->mField0C, (u8*)ret + 4,
@@ -2074,7 +2061,7 @@ void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
                   rate);
     // deviate bit 5: x/y
     u8 devXY = 0;
-    if (item->mField0C != lbl_eu_8066B290 || item->mField10 != lbl_eu_8066B290) {
+    if (item->mField0C != 0.0f || item->mField10 != 0.0f) {
         devXY = 1;
     }
     u8 sf2;
@@ -2087,7 +2074,7 @@ void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
     item->mScaleFlag = sf;
     // deviate bit 6: z/w
     u8 devZW = 0;
-    if (item->mField14 != lbl_eu_8066B290 || item->mField18 != lbl_eu_8066B290) {
+    if (item->mField14 != 0.0f || item->mField18 != 0.0f) {
         devZW = 1;
     }
     if (devZW != 0) {
@@ -2108,7 +2095,7 @@ void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // +0x24..+0x2C) is scaled by the new rates, and the usual terminator check
 // runs. All rate/scale slots default to 2.0 when no blob is present.
 void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -2146,34 +2133,34 @@ void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
     item->mField28 = src24[1];
     item->mField2C = src24[2];
     // channel A
-    f32 rnd = s32ToF32_B2A0((s32)ml::math::mtRand()) / lbl_eu_8066B2AC -
-              lbl_eu_8066B2B0;
-    f32 dScale = base != NULL ? *(f32*)(base - 0xc) : lbl_eu_8066B290;
+    f32 rnd = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+              0.5f;
+    f32 dScale = base != NULL ? *(f32*)(base - 0xc) : 0.0f;
     item->mField18 = lbl_eu_8066B2A8 - dScale * rnd;
-    if (dScale > lbl_eu_8066B290) {
+    if (dScale > 0.0f) {
         item->field_0x04 |= 0x10;
     }
     // channel B: reuse channel A's rate while the pre-scale is < 1.0
-    f32 dScale2 = base != NULL ? *(f32*)(base - 8) : lbl_eu_8066B2CC;
-    if (dScale2 < lbl_eu_8066B290) {
+    f32 dScale2 = base != NULL ? *(f32*)(base - 8) : (-1.0f);
+    if (dScale2 < 0.0f) {
         item->mField1C = item->mField18;
     } else {
-        f32 rnd2 = s32ToF32_B2A0((s32)ml::math::mtRand()) / lbl_eu_8066B2AC -
-                   lbl_eu_8066B2B0;
+        f32 rnd2 = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+                   0.5f;
         item->mField1C = lbl_eu_8066B2A8 - dScale2 * rnd2;
-        if (dScale2 > lbl_eu_8066B290) {
+        if (dScale2 > 0.0f) {
             item->field_0x04 |= 0x10;
         }
     }
     // channel C: reuse channel A's rate while the pre-scale is < 1.0
-    f32 dScale3 = base != NULL ? *(f32*)(base - 4) : lbl_eu_8066B2CC;
-    if (dScale3 < lbl_eu_8066B290) {
+    f32 dScale3 = base != NULL ? *(f32*)(base - 4) : (-1.0f);
+    if (dScale3 < 0.0f) {
         item->mField20 = item->mField18;
     } else {
-        f32 rnd3 = s32ToF32_B2A0((s32)ml::math::mtRand()) / lbl_eu_8066B2AC -
-                   lbl_eu_8066B2B0;
+        f32 rnd3 = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+                   0.5f;
         item->mField20 = lbl_eu_8066B2A8 - dScale3 * rnd3;
-        if (dScale3 > lbl_eu_8066B290) {
+        if (dScale3 > 0.0f) {
             item->field_0x04 |= 0x10;
         }
     }
@@ -2203,7 +2190,7 @@ void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f3
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret != NULL) {
         f32 rate = SchedAnim_FrameRate(item, entries, 0x10);
-        if (rate < lbl_eu_8066B290) {
+        if (rate < 0.0f) {
             return;
         }
         CEVec3LerpPS(&item->mField24, ((CEntryVec10*)ret)->mVec,
@@ -2223,7 +2210,7 @@ void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f3
 // deviates from (1,1,1), advance item+0x28 by the item velocity (+0x10),
 // decay it while the 0x0C byte is nonzero, then run the terminator check.
 void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -2237,37 +2224,37 @@ void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
     if (base != NULL) {
         sc = *(f32*)(base - 0x18);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField10 = sc;
     if (base != NULL) {
         sc = *(f32*)(base - 0x14);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField14 = sc;
     if (base != NULL) {
         sc = *(f32*)(base - 0x10);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField18 = sc;
     if (base != NULL) {
         sc = *(f32*)(base - 0xC);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField1C = sc;
     if (base != NULL) {
         sc = *(f32*)(base - 8);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField20 = sc;
     if (base != NULL) {
         sc = *(f32*)(base - 4);
     } else {
-        sc = lbl_eu_8066B290;
+        sc = 0.0f;
     }
     item->mField24 = sc;
     *(AnimVec3*)&item->mExt28 = ret->mVec;
@@ -2281,33 +2268,33 @@ void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
     if (signMode == 1) {
         CERand::randSignVec((ml::CVec3*)&item->mExt34);
     }
-    if (!(item->mField1C == lbl_eu_8066B290 &&
-          item->mField20 == lbl_eu_8066B290 &&
-          item->mField24 == lbl_eu_8066B290)) {
+    if (!(item->mField1C == 0.0f &&
+          item->mField20 == 0.0f &&
+          item->mField24 == 0.0f)) {
         // volatile: retail re-loads these floats instead of CSE-ing them
         // with the copies taken above.
-        f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                  lbl_eu_8066B2B0;
+        f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                  0.5f;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 0xC);
         } else {
-            sc = lbl_eu_8066B290;
+            sc = 0.0f;
         }
         item->mField1C = lbl_eu_8066B2A8 - rnd * sc;
-        rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-              lbl_eu_8066B2B0;
+        rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+              0.5f;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 8);
         } else {
-            sc = lbl_eu_8066B290;
+            sc = 0.0f;
         }
         item->mField20 = lbl_eu_8066B2A8 - rnd * sc;
-        rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-              lbl_eu_8066B2B0;
+        rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+              0.5f;
         if (base != NULL) {
             sc = *(volatile f32*)(base - 4);
         } else {
-            sc = lbl_eu_8066B290;
+            sc = 0.0f;
         }
         item->mField24 = lbl_eu_8066B2A8 - rnd * sc;
         item->field_0x04 |= 0x10;
@@ -2319,9 +2306,9 @@ void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
     item->mExt2C += item->mField14;
     item->mExt30 += item->mField18;
     if (item->mByte0C != 0) {
-        item->mExt28 *= lbl_eu_8066B2CC;
-        item->mExt2C *= lbl_eu_8066B2CC;
-        item->mExt30 *= lbl_eu_8066B2CC;
+        item->mExt28 *= (-1.0f);
+        item->mExt2C *= (-1.0f);
+        item->mExt30 *= (-1.0f);
     }
     u8 idx = item->mField05 + item->mField07;
     u16 w = *(u16*)(base + ((u32)idx << 4));
@@ -2332,12 +2319,12 @@ void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
     }
     } else {
-        item->mExt30 = lbl_eu_8066B290;
-        item->mExt2C = lbl_eu_8066B290;
-        item->mExt28 = lbl_eu_8066B290;
-        item->mField18 = lbl_eu_8066B290;
-        item->mField14 = lbl_eu_8066B290;
-        item->mField10 = lbl_eu_8066B290;
+        item->mExt30 = 0.0f;
+        item->mExt2C = 0.0f;
+        item->mExt28 = 0.0f;
+        item->mField18 = 0.0f;
+        item->mField14 = 0.0f;
+        item->mField10 = 0.0f;
         item->mField24 = lbl_eu_8066B2A8;
         item->mField20 = lbl_eu_8066B2A8;
         item->mField1C = lbl_eu_8066B2A8;
@@ -2361,7 +2348,7 @@ void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
         return;
     }
     f32 rate = SchedAnim_FrameRate(self, blob, 0x10);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     u8 type = blob ? *((u8*)blob - 0x1B) : 0;
@@ -2383,9 +2370,9 @@ void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
         self->mExt30 += self->mField18;
     } else if (type == 2) {
         if (self->mByte0C != 0) {
-            self->mExt28 *= lbl_eu_8066B2CC;
-            self->mExt2C *= lbl_eu_8066B2CC;
-            self->mExt30 *= lbl_eu_8066B2CC;
+            self->mExt28 *= (-1.0f);
+            self->mExt2C *= (-1.0f);
+            self->mExt30 *= (-1.0f);
         }
         AnimVec3 tmp;
         tmp.x = (*(f32*)(src + 0)) * mult;
@@ -2396,9 +2383,9 @@ void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
         self->mExt30 += tmp.z;
     }
     if (self->mByte0C != 0) {
-        self->mExt28 *= lbl_eu_8066B2CC;
-        self->mExt2C *= lbl_eu_8066B2CC;
-        self->mExt30 *= lbl_eu_8066B2CC;
+        self->mExt28 *= (-1.0f);
+        self->mExt2C *= (-1.0f);
+        self->mExt30 *= (-1.0f);
     }
 }
 
@@ -2409,7 +2396,7 @@ void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
 // element's color halfword/float data into item+0x1C..+0x20, set the 0x10
 // rate flag, and run the usual terminator check.
 void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -2418,17 +2405,17 @@ void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
     CEntryVecElem* ret =
         (CEntryVecElem*)SchedEntry_PickRandom(base, 0x10, 0, &item->mField05,
                                       &item->mField07);
-    f32 v14 = (base != NULL) ? *(f32*)(base - 0x14) : lbl_eu_8066B290;
+    f32 v14 = (base != NULL) ? *(f32*)(base - 0x14) : 0.0f;
     bool eq;
-    if (v14 == lbl_eu_8066B290) {
+    if (v14 == 0.0f) {
         // fcmpo/bgt: continues only when not greater (lt/eq/unordered)
-        f32 v10 = (base != NULL) ? *(f32*)(base - 0x10) : lbl_eu_8066B2CC;
-        if (!(v10 > lbl_eu_8066B290)) {
-            f32 v0C = (base != NULL) ? *(f32*)(base - 0xC) : lbl_eu_8066B2CC;
-            if (!(v0C > lbl_eu_8066B290)) {
+        f32 v10 = (base != NULL) ? *(f32*)(base - 0x10) : (-1.0f);
+        if (!(v10 > 0.0f)) {
+            f32 v0C = (base != NULL) ? *(f32*)(base - 0xC) : (-1.0f);
+            if (!(v0C > 0.0f)) {
                 f32 v08 =
-                    (base != NULL) ? *(f32*)(base - 8) : lbl_eu_8066B290;
-                eq = (v08 == lbl_eu_8066B290);
+                    (base != NULL) ? *(f32*)(base - 8) : 0.0f;
+                eq = (v08 == 0.0f);
             } else {
                 eq = false;
             }
@@ -2449,40 +2436,40 @@ void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
         // volatile: these floats are re-loaded rather than reused from the
         // validation reads above.
         f32 s10 = (base != NULL) ? *(volatile f32*)(base - 0x10)
-                                 : lbl_eu_8066B2CC;
+                                 : (-1.0f);
         f32 s0C = (base != NULL) ? *(volatile f32*)(base - 0xC)
-                                 : lbl_eu_8066B2CC;
-        if (s10 < lbl_eu_8066B290 && s0C < lbl_eu_8066B290) {
+                                 : (-1.0f);
+        if (s10 < 0.0f && s0C < 0.0f) {
             item->mField14 = lbl_eu_8066B2A8;
             item->mField10 = lbl_eu_8066B2A8;
             item->mField0C = lbl_eu_8066B2A8;
-            f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                      lbl_eu_8066B2B0;
+            f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                      0.5f;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
-                                    : lbl_eu_8066B290;
+                                    : 0.0f;
             item->mField24 = lbl_eu_8066B2A8 - rnd * sc;
         } else {
-            f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                      lbl_eu_8066B2B0;
+            f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                      0.5f;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
-                                    : lbl_eu_8066B290;
+                                    : 0.0f;
             item->mField0C = lbl_eu_8066B2A8 - rnd * sc;
-            rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                  lbl_eu_8066B2B0;
+            rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                  0.5f;
             sc = (base != NULL) ? *(volatile f32*)(base - 0x10)
-                                : lbl_eu_8066B2CC;
+                                : (-1.0f);
             item->mField10 = lbl_eu_8066B2A8 - rnd * sc;
             f32 c = lbl_eu_8066B2A8;
             item->mField24 = c;
-            rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                  lbl_eu_8066B2B0;
+            rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                  0.5f;
             sc = (base != NULL) ? *(volatile f32*)(base - 0xC)
-                                : lbl_eu_8066B2CC;
+                                : (-1.0f);
             item->mField14 = c - rnd * sc;
         }
-        f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC -
-                  lbl_eu_8066B2B0;
-        f32 sc = (base != NULL) ? *(volatile f32*)(base - 8) : lbl_eu_8066B290;
+        f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
+                  0.5f;
+        f32 sc = (base != NULL) ? *(volatile f32*)(base - 8) : 0.0f;
         u8 flag = item->field_0x04 | 0x10;
         item->mField18 = lbl_eu_8066B2A8 - rnd * sc;
         item->field_0x04 = flag;
@@ -2526,7 +2513,7 @@ void SchedAnim_AdvanceColor10(CSchedAnimItem* item, CEntryElem* entries, u8* arg
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x10);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     u8* a = (u8*)ret + 4;
@@ -2549,7 +2536,7 @@ void SchedAnim_NoOp(){}
 // item+0x0C..0x18, flag bit 0x60 when the referenced components deviate from
 // 1.0, then check the run tail for the blob terminator (0x80 / 0x08 flags).
 void SchedAnim_InitVec10(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
+    item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -2560,8 +2547,8 @@ void SchedAnim_InitVec10(CSchedAnimItem* item, u8* base) {
         item->mVecScale = elem->mVec;
         // Flag bit 0x60 when the stored vector deviates from (1,1,1).
         u8 flag = false;
-        if (item->mField0C != lbl_eu_8066B290 || item->mField10 != lbl_eu_8066B290 ||
-            item->mField14 != lbl_eu_8066B290) {
+        if (item->mField0C != 0.0f || item->mField10 != 0.0f ||
+            item->mField14 != 0.0f) {
             flag = true;
         }
         item->mScaleFlag = flag;
@@ -2588,7 +2575,7 @@ void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* ar
         return;
     }
     f32 rate = SchedAnim_FrameRate(item, entries, 0x10);
-    if (rate < lbl_eu_8066B290) {
+    if (rate < 0.0f) {
         return;
     }
     CEVec3LerpPS(&item->mField0C, ((CEntryVec10*)ret)->mVec,
@@ -2596,8 +2583,8 @@ void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* ar
                   rate);
     // flag starts cleared and is set only when the vector deviates from 1.0
     u8 flag = false;
-    if (item->mField0C != lbl_eu_8066B290 || item->mField10 != lbl_eu_8066B290 ||
-        item->mField14 != lbl_eu_8066B290) {
+    if (item->mField0C != 0.0f || item->mField10 != 0.0f ||
+        item->mField14 != 0.0f) {
         flag = true;
     }
     item->mScaleFlag = flag;
@@ -2613,12 +2600,12 @@ void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const AnimVec3* hsv,
                    f32 mul) {
     f32 h = hsv->x;
     if (h < lbl_eu_8066B2A8) {
-        h = lbl_eu_8066B2DC;
+        h = 0.9999f;
     }
-    f32 hf = lbl_eu_8066B2D8 * h;
+    f32 hf = 6.0f * h;
     s32 sector = (s32)hf;
     f32 s = hsv->y;
-    if (s == lbl_eu_8066B290) {
+    if (s == 0.0f) {
         out->x = hsv->z;
         out->y = hsv->z;
         out->z = hsv->z;

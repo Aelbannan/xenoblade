@@ -15,6 +15,7 @@ namespace lyt {
 
 NW4R_UT_RTTI_DEF_DERIVED(Picture, Pane);
 
+
 Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
     : Pane(pRes) {
 
@@ -49,6 +50,8 @@ Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
     }
 }
 
+
+
 Picture::~Picture() {
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
         mpMaterial->~Material();
@@ -59,29 +62,15 @@ Picture::~Picture() {
     mTexCoordAry.Free();
 }
 
-ut::Color Picture::GetVtxColor(u32 idx) const {
-    return mVtxColors[idx];
-}
 
-void Picture::SetVtxColor(u32 idx, ut::Color color) {
-    mVtxColors[idx] = color;
-}
-
-u8 Picture::GetVtxColorElement(u32 idx) const {
-    // Split index into word-offset and byte-offset to match retail pattern.
-    const u8* base = reinterpret_cast<const u8*>(mVtxColors);
-    return base[(idx & ~3u) + (idx & 3u)];
-}
-
-void Picture::SetVtxColorElement(u32 idx, u8 value) {
-    detail::SetVtxColorElement(mVtxColors, idx, value);
-}
 
 void Picture::Append(TPLPalette* pPalette) {
     GXTexObj texObj;
     detail::InitGXTexObjFromTPL(&texObj, pPalette, 0);
     Append(texObj);
 }
+
+
 
 void Picture::Append(const GXTexObj& rTexObj) {
     u8 texNum = mpMaterial->GetTextureNum();
@@ -108,6 +97,34 @@ void Picture::Append(const GXTexObj& rTexObj) {
     }
 }
 
+
+
+ut::Color Picture::GetVtxColor(u32 idx) const {
+    return mVtxColors[idx];
+}
+
+
+
+void Picture::SetVtxColor(u32 idx, ut::Color color) {
+    mVtxColors[idx] = color;
+}
+
+
+
+u8 Picture::GetVtxColorElement(u32 idx) const {
+    // Split index into word-offset and byte-offset to match retail pattern.
+    const u8* base = reinterpret_cast<const u8*>(mVtxColors);
+    return base[(idx & ~3u) + (idx & 3u)];
+}
+
+
+
+void Picture::SetVtxColorElement(u32 idx, u8 value) {
+    detail::SetVtxColorElement(mVtxColors, idx, value);
+}
+
+
+
 void Picture::DrawSelf(const DrawInfo& rInfo) {
     if (mpMaterial == NULL) {
         return;
@@ -125,15 +142,18 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
                      mGlbAlpha);
 }
 
+
 } // namespace lyt
 } // namespace nw4hbm
 
 namespace nw4hbm {
 namespace lyt {
 
+
 const ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
     return &typeInfo;
 }
+
 
 } // namespace lyt
 } // namespace nw4hbm

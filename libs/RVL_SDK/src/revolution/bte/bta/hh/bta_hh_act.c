@@ -682,6 +682,28 @@ static tBTA_HH_STATUS bta_hh_get_trans_status(UINT32 result)
     }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Data action (matched, retained for reference)                      */
+/* ------------------------------------------------------------------ */
+
+void bta_hh_data_act(void *p_cb, void *p_data)
+{
+    void *p_buf;
+    unsigned short off;
+    unsigned short len;
+    unsigned char rpt;
+
+    p_buf = *(void **)((char *)p_data + 0xc);
+    off = ((BT_HDR *)p_buf)->offset;
+    rpt = (unsigned char)(*(unsigned short *)((char *)p_data + 6));
+    len = ((BT_HDR *)p_buf)->len;
+    bta_hh_co_data(rpt, (char *)p_buf + off + 8, len,
+                   *((unsigned char *)p_cb + 0x1b),
+                   *((unsigned char *)p_cb + 0x13),
+                   *((unsigned char *)p_cb + 0x15));
+    utl_freebuf(&p_buf);
+}
+
 /* Handshake event from the HID host.  (Not part of the active batch; the
  * full body keeps this TU's string pool and jump tables in the retail
  * order so the sibling functions match byte-for-byte.) */
@@ -792,6 +814,83 @@ void bta_hh_ctrl_dat_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
     utl_freebuf((void **)&pdata);
 }
 
+/* Close the connection to a HID device (BTA_HH_API_CLOSE_EVT /
+ * HID_HDEV_EVT_CLOSE).  L2CAP failure reasons or a device that was not
+ * opened close the HID host side directly; an opened device is closed
+ * on the application side first. */
+void bta_hh_close_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
+{
+    tBTA_HH_CONN conn;
+    tBTA_HH_CBDATA cback_data = {BTA_HH_OK, BTA_HH_OK};
+    tBTA_HH_EVT event = BTA_HH_CLOSE_EVT;
+    UINT32 data = p_data->hid_cback.data;
+    UINT8 xx;
+
+    if (p_cb->vp)
+        event = BTA_HH_VC_UNPLUG_EVT;
+
+    cback_data.handle = p_cb->hid_handle;
+    cback_data.status = (UINT8)p_data->hid_cback.data;
+
+    if ((data & (HID_L2CAP_CONN_FAIL | HID_L2CAP_REQ_FAIL | HID_L2CAP_CFG_FAIL)) ||
+        data == 0xf ||
+        data == 0xe ||
+        !p_cb->opened) {
+        /* close the HID host connection and report OPEN_EVT */
+        conn.handle = p_cb->hid_handle;
+        conn.status = (data == 0xf) ? BTA_HH_ERR_AUTH_FAILED : BTA_HH_ERR;
+        bdcpy(conn.bda, p_cb->addr);
+
+        HID_HostCloseDev(p_cb->hid_handle);
+
+        (*bta_hh_cb.p_cback)(BTA_HH_OPEN_EVT, (tBTA_HH *)&conn);
+        bta_hh_trace_dev_db();
+    } else {
+        /* connection was opened: close the application side */
+        bta_hh_co_close(p_cb->hid_handle, p_cb->app_id);
+        bta_sys_conn_close(BTA_ID_HH, p_cb->app_id, p_cb->addr);
+
+        --bta_hh_cb.cnt_num;
+        p_cb->opened = FALSE;
+
+        if (cback_data.status != BTA_HH_OK)
+            cback_data.status = BTA_HH_ERR;
+
+        (*bta_hh_cb.p_cback)(event, (tBTA_HH *)&cback_data);
+
+        if (p_cb->vp) {
+            HID_HostRemoveDev(p_cb->hid_handle);
+            bta_hh_clean_up_kdev(p_cb);
+        }
+
+        bta_hh_trace_dev_db();
+
+        p_cb->vp = FALSE;
+        p_cb->w4_evt = 0;
+
+        if (bta_hh_cb.cnt_num == 0 && bta_hh_cb.w4_disable) {
+            tBTA_HH_STATUS status = BTA_HH_OK;
+
+            if (HID_HostDeregister() != HID_SUCCESS)
+                status = BTA_HH_ERR;
+
+            for (xx = 0; xx < BTA_HH_MAX_KNOWN; xx++)
+                utl_freebuf((void **)&bta_hh_cb.kdev[xx].dscp_info.dsc_list);
+
+            utl_freebuf((void **)&bta_hh_cb.p_disc_db);
+
+            (*bta_hh_cb.p_cback)(BTA_HH_DISABLE_EVT, (tBTA_HH *)&status);
+
+            memset(&bta_hh_cb, 0, sizeof bta_hh_cb);
+        }
+    }
+}
+
+void bta_hh_get_dscp_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
+{
+    (*bta_hh_cb.p_cback)(BTA_HH_GET_DSCP_EVT, (tBTA_HH *)&p_cb->dscp_info);
+}
+
 /* Add/remove a virtually-cabled device (BTA_HhAddDev / BTA_HhRemoveDev).
  * The sub_event at p_data->maint_dev.sub_event selects the operation; the
  * result is reported to the application with the same sub-event code. */
@@ -849,11 +948,6 @@ void bta_hh_maint_dev_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
 
     (*bta_hh_cb.p_cback)(p_data->maint_dev.sub_event,
                          (tBTA_HH *)&dev_info);
-}
-
-void bta_hh_get_dscp_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
-{
-    (*bta_hh_cb.p_cback)(BTA_HH_GET_DSCP_EVT, (tBTA_HH *)&p_cb->dscp_info);
 }
 
 void bta_hh_get_acl_q_info(void)
@@ -961,100 +1055,6 @@ void bta_hh_write_dev_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
             bta_sys_busy(BTA_ID_HH, p_cb->app_id, p_cb->addr);
         }
     }
-}
-
-/* Close the connection to a HID device (BTA_HH_API_CLOSE_EVT /
- * HID_HDEV_EVT_CLOSE).  L2CAP failure reasons or a device that was not
- * opened close the HID host side directly; an opened device is closed
- * on the application side first. */
-void bta_hh_close_act(tBTA_HH_DEV_CB *p_cb, tBTA_HH_DATA *p_data)
-{
-    tBTA_HH_CONN conn;
-    tBTA_HH_CBDATA cback_data = {BTA_HH_OK, BTA_HH_OK};
-    tBTA_HH_EVT event = BTA_HH_CLOSE_EVT;
-    UINT32 data = p_data->hid_cback.data;
-    UINT8 xx;
-
-    if (p_cb->vp)
-        event = BTA_HH_VC_UNPLUG_EVT;
-
-    cback_data.handle = p_cb->hid_handle;
-    cback_data.status = (UINT8)p_data->hid_cback.data;
-
-    if ((data & (HID_L2CAP_CONN_FAIL | HID_L2CAP_REQ_FAIL | HID_L2CAP_CFG_FAIL)) ||
-        data == 0xf ||
-        data == 0xe ||
-        !p_cb->opened) {
-        /* close the HID host connection and report OPEN_EVT */
-        conn.handle = p_cb->hid_handle;
-        conn.status = (data == 0xf) ? BTA_HH_ERR_AUTH_FAILED : BTA_HH_ERR;
-        bdcpy(conn.bda, p_cb->addr);
-
-        HID_HostCloseDev(p_cb->hid_handle);
-
-        (*bta_hh_cb.p_cback)(BTA_HH_OPEN_EVT, (tBTA_HH *)&conn);
-        bta_hh_trace_dev_db();
-    } else {
-        /* connection was opened: close the application side */
-        bta_hh_co_close(p_cb->hid_handle, p_cb->app_id);
-        bta_sys_conn_close(BTA_ID_HH, p_cb->app_id, p_cb->addr);
-
-        --bta_hh_cb.cnt_num;
-        p_cb->opened = FALSE;
-
-        if (cback_data.status != BTA_HH_OK)
-            cback_data.status = BTA_HH_ERR;
-
-        (*bta_hh_cb.p_cback)(event, (tBTA_HH *)&cback_data);
-
-        if (p_cb->vp) {
-            HID_HostRemoveDev(p_cb->hid_handle);
-            bta_hh_clean_up_kdev(p_cb);
-        }
-
-        bta_hh_trace_dev_db();
-
-        p_cb->vp = FALSE;
-        p_cb->w4_evt = 0;
-
-        if (bta_hh_cb.cnt_num == 0 && bta_hh_cb.w4_disable) {
-            tBTA_HH_STATUS status = BTA_HH_OK;
-
-            if (HID_HostDeregister() != HID_SUCCESS)
-                status = BTA_HH_ERR;
-
-            for (xx = 0; xx < BTA_HH_MAX_KNOWN; xx++)
-                utl_freebuf((void **)&bta_hh_cb.kdev[xx].dscp_info.dsc_list);
-
-            utl_freebuf((void **)&bta_hh_cb.p_disc_db);
-
-            (*bta_hh_cb.p_cback)(BTA_HH_DISABLE_EVT, (tBTA_HH *)&status);
-
-            memset(&bta_hh_cb, 0, sizeof bta_hh_cb);
-        }
-    }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Data action (matched, retained for reference)                      */
-/* ------------------------------------------------------------------ */
-
-void bta_hh_data_act(void *p_cb, void *p_data)
-{
-    void *p_buf;
-    unsigned short off;
-    unsigned short len;
-    unsigned char rpt;
-
-    p_buf = *(void **)((char *)p_data + 0xc);
-    off = ((BT_HDR *)p_buf)->offset;
-    rpt = (unsigned char)(*(unsigned short *)((char *)p_data + 6));
-    len = ((BT_HDR *)p_buf)->len;
-    bta_hh_co_data(rpt, (char *)p_buf + off + 8, len,
-                   *((unsigned char *)p_cb + 0x1b),
-                   *((unsigned char *)p_cb + 0x13),
-                   *((unsigned char *)p_cb + 0x15));
-    utl_freebuf(&p_buf);
 }
 
 /* HID host event callback (registered via HID_HostRegister).  Maps the

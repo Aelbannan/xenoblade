@@ -41,6 +41,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <stdio.h>
+#include "kyoshin/CfEnumListHolder.hpp"
 void playUISound(u32);
 
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
@@ -114,8 +115,8 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
 
     // --- copy config out of a fresh CItemBoxInfo(4,0) temp ---
     __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&boxTmp), 4, 0);
-    __ct__UnkClass_8011C974(&v->fa8[0], &boxTmp.f04[0]);
-    __ct__UnkClass_8011C974(&v->fb8[0], &boxTmp.f14[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->fa8[0], &boxTmp.f04[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->fb8[0], &boxTmp.f14[0]);
     v->fc8[0] = boxTmp.f24[0];
     v->fc8[1] = boxTmp.f24[1];
     v->fc8[2] = boxTmp.f24[2];
@@ -164,8 +165,8 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     // --- copy config out of a fresh default CEquipItemBox temp ---
     CEqChEquipTemp eqTmp;
     __ct__CEquipItemBox(&eqTmp);
-    __ct__UnkClass_8011C974(&v->f2b4[0], &eqTmp.f04[0]);
-    __ct__UnkClass_8011C974(&v->f2c4[0], &eqTmp.f14[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->f2b4[0], &eqTmp.f04[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->f2c4[0], &eqTmp.f14[0]);
     v->f2d4[0] = eqTmp.f24[0];
     v->f2d4[1] = eqTmp.f24[1];
     v->f2d4[2] = eqTmp.f24[2];
@@ -180,7 +181,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     PartyStateWin_CopySlotRec(&v->f2f4[0], &eqTmp.f2f4[0]);
     PartyStateWin_CopySlotRec(&v->f30c[0], &eqTmp.f30c[0]);
     MenuShopSellCopyCursor(&v->f324[0], &eqTmp.f324[0]);
-    __ct__UnkClass_8011C974(&v->f340[0], &eqTmp.f340[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->f340[0], &eqTmp.f340[0]);
     v->f350[0] = eqTmp.f350[0];
     v->f350[1] = eqTmp.f350[1];
     v->f350[2] = eqTmp.f350[2];
@@ -190,7 +191,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f364[1] = eqTmp.f364[1];
     v->f364[2] = eqTmp.f364[2];
     v->f364[3] = eqTmp.f364[3];
-    __ct__UnkClass_8011C974(&v->f36c[0], &eqTmp.f36c[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->f36c[0], &eqTmp.f36c[0]);
     v->f37c[0] = eqTmp.f37c[0];
     v->f37c[1] = eqTmp.f37c[1];
     v->f37c[2] = eqTmp.f37c[2];
@@ -744,7 +745,6 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     // play the 0x76 sound.
     CtrlObjectParam_SyncParamFromActor(obj);
     if (self->field_99 < 3) {
-        CEquipEnumHolder holder;
         u32 names[3];
         // Post-increment loads fold the base materialization into the first
         // access (retail: lis + lwzu + +4/+8 displacements).
@@ -752,15 +752,14 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         names[0] = *src++;
         names[1] = *src++;
         names[2] = *src++;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), names[self->field_99], 0);
-        if (((CEquipEnumList*)CTaskGame_enumListGet(&holder))->field_0x620 >= 1) {
-            CEquipEnumListSlot* slot = (CEquipEnumListSlot*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), names[self->field_99], 0);
+        if (((CEquipEnumList*)holder.get())->field_0x620 >= 1) {
+            CEquipEnumListSlot* slot = (CEquipEnumListSlot*)getEntryAt(holder.get(), 0);
             if (slot->field_0x4 != 0) {
                 CfObjectPc_setupFrame(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
             }
         }
-        __dt__80043E88(&holder, -1);
     }
     playUISound(0x76);
         return 1;
@@ -1529,22 +1528,22 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // Build each cursor from a stack temporary, copy it into place, run
         // its reset hook, then advance to the next one. Retail reloads the
         // accessor from field_2C at every use (never cached in a register).
-        u8 tmp14[0x18];
-        u8 tmp15[0x18];
-        u8 tmpSub[0x24];
-        __ct__CCur14(tmp14, field_2C);
-        MenuShopSellCopyCursor(_pad50, tmp14);
-        __dt__6CCur14Fv((CBaseCur*)tmp14, -1);
+        {
+            CCur14 tmp14(field_2C);
+            MenuShopSellCopyCursor(_pad50, &tmp14);
+        }
         ((CBaseCur*)_pad50)->initLayout();
 
-        __ct__CCur15(tmp15, field_2C);
-        MenuShopSellCopyCursor(_pad68, tmp15);
-        __dt__6CCur15Fv((CBaseCur*)tmp15, -1);
+        {
+            CCur15 tmp15(field_2C);
+            MenuShopSellCopyCursor(_pad68, &tmp15);
+        }
         ((CBaseCur*)_pad68)->initLayout();
 
-        __ct__CSubCur(tmpSub, field_2C);
-        MenuShopSellCopyCursor(field_80, tmpSub);
-        __dt__7CSubCurFv((CBaseCur*)tmpSub, -1);
+        {
+            CSubCur tmpSub(field_2C);
+            MenuShopSellCopyCursor(field_80, &tmpSub);
+        }
         ((CBaseCur*)field_80)->initLayout();
 
         Cur_ShowTwoSubPanes(field_80, 0);

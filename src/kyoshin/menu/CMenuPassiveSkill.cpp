@@ -4,22 +4,35 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/menu/CMenuPassiveSkillImports.hpp"
+#include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 void playUISound(u32);
 
-extern "C" void Init__17CMenuPassiveSkillFv() {}
+CMenuPassiveSkill::CMenuPassiveSkill(CScn* scene)
+    : mScnRef(scene), mBgTex(0), mTitleAHelp(nullptr, 0) {
+    __ct__UI_CPassiveSkill(mPassiveSkill);
+    field_2AC = 0;
+    field_2B0 = 0.0f;
+}
 
-extern "C" void Move__17CMenuPassiveSkillFv() {}
+// The embedded UI::CPassiveSkill is raw storage, so its teardown is the only
+// work here; CBgTex / CTitleAHelp / IUICf are destroyed by the compiler.
+CMenuPassiveSkill::~CMenuPassiveSkill() {
+    __dt__Q22UI13CPassiveSkillFv(mPassiveSkill, -1);
+}
 
 // ---------------------------------------------------------------------------
 // Re-initialise the passive-skill menu screen: rebuild each embedded widget
 // (CBgTex / CTitleAHelp / UI::CPassiveSkill) by constructing a stack temporary
 // and copying its body into the embedded storage (vtable word skipped; mem
-// regions via __ct__UnkClass_8011C974; the 5x5 skill-grid cells through the
+// regions via __as__17UnkClass_8045F564FRC17UnkClass_8045F564; the 5x5 skill-grid cells through the
 // counted 8-byte pair loops), then register this screen as a render callback
 // on the owning scene (CMenuCollepedia::Init pattern).
 // ---------------------------------------------------------------------------
@@ -32,7 +45,7 @@ void CMenuPassiveSkill::Init() {
     u8 tempBgTex[0x20];
     __ct__6CBgTexFUc((CBgTex*)tempBgTex, 0);
 
-    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, tempBgTex + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mBgTex.mMemRegion, tempBgTex + 0x4);
     mBgTex.mFileHandle = *(CFileHandle**)(tempBgTex + 0x14);
     mBgTex.mLayout = *(nw4r::lyt::Layout**)(tempBgTex + 0x18);
     mBgTex.mLayoutReady = *(bool*)(tempBgTex + 0x1c);
@@ -46,9 +59,9 @@ void CMenuPassiveSkill::Init() {
     char* name = BdatTouchStringCell(lbl_eu_8050DB4C, lbl_eu_8050DB4C + 0xc, 1);
 
     u8 tempTitle[0x38];
-    __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x5a);
+    __ct__11CTitleAHelpFPcUc((CTitleAHelp*)tempTitle, name, 0x5a);
 
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, tempTitle + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mTitleAHelp.unk4, tempTitle + 0x4);
     mTitleAHelp.mFileHandle = *(CFileHandle**)(tempTitle + 0x14);
     mTitleAHelp.mArcResourceAccessor =
         *(nw4r::lyt::ArcResourceAccessor**)(tempTitle + 0x18);
@@ -74,7 +87,7 @@ void CMenuPassiveSkill::Init() {
     CMenuPassivePSView& q = *(CMenuPassivePSView*)&mPassiveSkill[0];
 
     q.field_4 = p.field_4;
-    __ct__UnkClass_8011C974(q.mUnk8, p.mUnk8);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(q.mUnk8, p.mUnk8);
 
     q.field_18 = p.field_18;
     q.field_1C = p.field_1C;
@@ -164,7 +177,7 @@ void CMenuPassiveSkill::Init() {
     q.field_1B4 = p.field_1B4;
     q.field_1B5 = p.field_1B5;
 
-    __ct__UnkClass_8011C974(q.mUnk1BC, p.mUnk1BC);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(q.mUnk1BC, p.mUnk1BC);
     q.field_1CC = p.field_1CC;
     q.field_1D0 = p.field_1D0;
     q.field_1D4 = p.field_1D4;
@@ -184,13 +197,8 @@ void CMenuPassiveSkill::Init() {
 
     CPassiveSkill_loadSkillData(&mPassiveSkill[0]);
 
-    // Register this screen as a render callback on the owning scene (the
-    // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x58);
-    }
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScnRef, cb, 0xd, 0);
+    // Register this screen as a render callback on the owning scene.
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScnRef, this, 0xd, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -198,24 +206,17 @@ void CMenuPassiveSkill::Init() {
 // from the owning scene, tear down the three embedded widgets in reverse
 // construction order (bgTex / titleAHelp / passiveSkill), clear the
 // created-screen singleton and re-enable pad input.
-// The null-check/adjust dance around the render pointer reproduces retail:
-// a null this would pass the raw pointer, a real this passes the IScnRender
-// secondary base at +0x58.
 // ---------------------------------------------------------------------------
 void CMenuPassiveSkill::Term() {
     CDeviceVI::waitForDrawDone();
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        render = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x58);
-    }
-    removeRenderCB__4CScnFP10IScnRender(mScnRef, render);
+    removeRenderCB__4CScnFP10IScnRender(mScnRef, this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     CPassiveSkill_teardown(mPassiveSkill);
 
-    lbl_eu_80664878 = 0;
+    sInstance = nullptr;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -288,99 +289,20 @@ body:
     }
 }
 
-// ---------------------------------------------------------------------------
-// Factory (us-80265d40): single-instance guard - once a screen exists the
-// factory returns NULL. Otherwise allocate 0x2B4 bytes from the work-thread
-// region, construct it, register it as a child process and return the
-// stored singleton pointer.
-// ---------------------------------------------------------------------------
-extern "C" CMenuPassiveSkill* createPassiveSkillMenu(CProcess* parent, u32 arg) {
-    if (lbl_eu_80664878 != 0) {
-        return NULL;
+CMenuPassiveSkill* CMenuPassiveSkill::sInstance;
+
+// Only one passive skill menu exists at a time.
+CMenuPassiveSkill* CMenuPassiveSkill::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
 
-    CMenuPassiveSkill* proc = reinterpret_cast<CMenuPassiveSkill*>(
-        mtl::MemManager::allocate(0x2B4, CWorkThreadSystem::getWorkMem()));
-    if (proc != NULL) {
-        proc = __ct__CMenuPassiveSkill(proc, arg);
-    }
-    lbl_eu_80664878 = reinterpret_cast<u32>(proc);
-
-    ((CProcess*)proc)->Regist(parent, false);
-    return reinterpret_cast<CMenuPassiveSkill*>(lbl_eu_80664878);
+    CMenuPassiveSkill* menu = new (CWorkThreadSystem::getWorkMem()) CMenuPassiveSkill(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
-// Constructor (retail unmangled global `__ct__CMenuPassiveSkill`, C-ABI free
-// function like CMenuItem so no class-length mangling is emitted). Builds the
-// CProcess base, installs the temp then composite vtables, copies __ptmf_null
-// into the Move/Draw callback slots (+0x3C/+0x48), clears the state bytes,
-// swaps in the composite vtable and its IScnRender sub-vtable (+0x24), stores
-// the scene ref and constructs the three embedded widgets in order.
-extern "C" __declspec(noinline) CMenuPassiveSkill* __ct__CMenuPassiveSkill(CMenuPassiveSkill* self, u32 arg) {
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
-
-    // Temp (CProcess) vtable first; composite vtable + IScnRender sub-vtable
-    // installed after the PMF copy (retail store order).
-    self->mVtable10 = reinterpret_cast<u32>(lbl_eu_8052BF70);
-
-    // NULL PTMF -> callback slots 0x3C / 0x48. First read is a post-increment
-    // deref so MWCC folds the address setup into `lis`+`lwzu`; the remaining
-    // reads are plain indexed loads off the same base.
-    char* vtFinal = lbl_eu_805378B0;
-    const u32* src = __ptmf_null;
-    u32 ptmf0 = *src++;
-
-    char* iscnVt = vtFinal + 0x24;
-    u32 ptmf1 = src[0];
-    self->ptmfCallbacks[1] = ptmf1;
-    self->ptmfCallbacks[0] = ptmf0;
-    u32 ptmf2 = src[1];
-    self->ptmfCallbacks[2] = ptmf2;
-
-    ptmf0 = src[-1];
-    ptmf1 = src[0];
-    self->ptmfCallbacks[4] = ptmf1;
-    self->ptmfCallbacks[3] = ptmf0;
-    u32 ptmf2b = src[1];
-    self->ptmfCallbacks[5] = ptmf2b;
-
-    self->field_54 = 0;
-    self->mField55 = 0;
-    self->mVtable10 = reinterpret_cast<u32>(vtFinal);
-    self->mIScnRenderVt = reinterpret_cast<u32>(iscnVt);
-    self->mScnRef = reinterpret_cast<CScn*>(arg);
-
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__UI_CPassiveSkill(&self->mPassiveSkill[0]);
-
-    // Seed loaded up front; the store itself is tied into the return
-    // expression so the scheduler keeps it at the function tail.
-    f32 seed = lbl_eu_806688F0;
-    self->field_2AC = 0;
-    return self->field_2B0 = seed, self;
-}
-
-// ---------------------------------------------------------------------------
-// Destructor (us-80265698), retail D2 form: written as a free function so the
-// base-class destruction targets the game-side CProcess dtor wrapper
-// __dt__800FED0C (a real member dtor would emit the library D1 symbol and an
-// extra vtable store). Sub-objects are destroyed in reverse construction
-// order with the -1 subobject flag, then conditional operator delete when
-// flags > 0.
-// ---------------------------------------------------------------------------
-extern "C" CMenuPassiveSkill* __dt__17CMenuPassiveSkillFv(CMenuPassiveSkill* self, int flags) {
-    if (self != NULL) {
-        __dt__Q22UI13CPassiveSkillFv(self->mPassiveSkill, -1);
-        __dt__11CTitleAHelpFv(&self->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&self->mBgTex, -1);
-        __dt__800FED0C(reinterpret_cast<CProcess*>(self), 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
 
 // ---------------------------------------------------------------------------
 // Per-frame readiness poll (us-80265dc4): once the background texture has
@@ -539,7 +461,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
 // Same shape as updatePassiveSkillMenu but writes the +0x54 state flag instead.
 void setPassiveSkillReady(CMenuPassiveSkill* self) {
     if (self->mTitleAHelp.isIdle() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
-        self->field_54 = 1;
+        self->mField54 = 1;
     }
 }
 
@@ -580,23 +502,8 @@ extern "C" void confirmPassiveSkillMenu(CMenuPassiveSkill* self) {
             playUISound(6);
         }
         self->field_2AC = 4;
-        self->field_54 = 1;
+        self->mField54 = 1;
     }
 }
 
-// Adjusted-this thunk: called through a secondary-base vtable entry
-// (IScnRender at offset +0x58 within CMenuPassiveSkill). Retail is
-// subi r3,r3,0x58 + tail-branch, so call through the adjusted pointer.
-void CMenuPassiveSkill::renderBeforeAdj58() {
-    ((CMenuPassiveSkill*)((u8*)this - 0x58))->cbRenderBefore();
-}
-
-// Adjusted-this thunk for the destructor (same +0x58 adjustment). Retail
-// forwards the caller's flags word untouched (subi + tail-branch, no li on
-// r4), so the flags parameter must be passed straight through.
-void CMenuPassiveSkill::dtorAdj58(int flags) {
-    __dt__17CMenuPassiveSkillFv((CMenuPassiveSkill*)((u8*)this - 0x58), flags);
-}
-
-extern unsigned long lbl_eu_80664878;
-extern "C" unsigned long hasPassiveSkillMenu(void) { return lbl_eu_80664878 != 0; }
+extern "C" unsigned long hasPassiveSkillMenu(void) { return CMenuPassiveSkill::sInstance != nullptr; }

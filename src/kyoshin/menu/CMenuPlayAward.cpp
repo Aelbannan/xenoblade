@@ -1,6 +1,8 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuPlayAward
 // Replace stubs with high-level C/C++ during decomp.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include <stdio.h>   // sprintf (award pane names)
 #include "monolib/lib/CLibLayout.hpp"
 #include <revolution/gx/GXPixel.h>  // GXSetZMode
@@ -19,208 +21,52 @@ void playUISound(u32 cue); // defined in code_80135FDC.cpp
 #include "monolib/work/CProcess.hpp"          // CProcess::Regist
 #include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CTitleAHelpImports.hpp"
 // CScn (with removeRenderCB) comes from the minimal declaration in
 // CTaskGameEff.hpp via harness_catalog.hpp -- CScn.hpp redefines it.
 
 void closeFileHandle(CFileHandle**);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 
-// Retail constructor symbol (unmangled global in US). Kept out-of-line so the
-// factory (PlayAward_CreateMenu) emits a real bl to it, and returns `this` in r3
-// like a real constructor.
-__declspec(noinline) CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, CScn* scene) {
-    __ct__8CProcessFv((CProcess*)self);
-
-    // vtable fixups: temp (CProcess) vtable first, then the null PMF
-    // callback slots, then the composite vtable + the IScnRender sub-vtable
-    // at +0x58 (same scheme as CMenuTutorialList's ctor).
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    self->ptmf0[0] = __ptmf_null[0];
-    self->ptmf0[1] = __ptmf_null[1];
-    self->ptmf0[2] = __ptmf_null[2];
-    self->ptmf1[0] = __ptmf_null[0];
-    self->ptmf1[1] = __ptmf_null[1];
-    self->ptmf1[2] = __ptmf_null[2];
-    self->mField54 = 0;
-    self->mField55 = 0;
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80537BB0;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80537BB0 + 0x24;
-    self->mScene = scene;
-
-    // Embedded widgets in construction order.
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CPlayAwardList(&self->mPlayAwardList, 0);
-
-    self->mField115C = lbl_eu_80668998;
-    self->mField1160 = 0;
-    return self;
+// Out-of-line constructor (retail __ct__CMenuPlayAward, separate from the
+// factory). The IUICf base, the IScnRender subobject and the null PMF slots
+// are set up by the compiler; the members initialise in declaration order.
+CMenuPlayAward::CMenuPlayAward(CScn* scene)
+    : mScene(scene), mBgTex(0), mTitleAHelp(0, 0), mPlayAwardList(0) {
+    mField115C = lbl_eu_80668998;
+    mField1160 = 0;
 }
 
-/* Destructor (retail D2 form, symbol keeps its C++ mangling). Written as a
- * free function with an explicit flags parameter (same scheme as
- * CMenuTutorialList/CMenuSave): a real member destructor would make MWCC
- * auto-emit a vtable store that retail lacks. Subobjects are destroyed in
- * reverse construction order with the -1 subobject flag, then the game-side
- * CProcess dtor wrapper __dt__800FED0C with flag 0, then conditional
- * operator delete when flags > 0. */
-extern "C" CMenuPlayAward* __dt__14CMenuPlayAwardFv(CMenuPlayAward* _this, int flags) {
-    if (_this != 0) {
-        __dt__14CPlayAwardListFv(&_this->mPlayAwardList, -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&_this->mBgTex, -1);
-        __dt__800FED0C(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+CMenuPlayAward::~CMenuPlayAward() {}
 
 // Re-initialise the award-list menu screen: rebuild each embedded widget
-// (CBgTex / CTitleAHelp / CPlayAwardList) by constructing a stack temporary
-// and copying its body into the embedded storage, then register this screen
-// as a render callback on the owning scene (same pattern as CMenuCollepedia).
+// (CBgTex / CTitleAHelp / CPlayAwardList) from a temporary, then register this
+// screen as a render callback on the owning scene (same pattern as CMenuSkipTimer).
 void CMenuPlayAward::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
-    // --- Re-initialise the background CBgTex via a temporary ---
-    u8 tempBgTex[0x20];
-    __ct__6CBgTexFUc((CBgTex*)tempBgTex, 0);
-
-    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
-    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
-    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tempBgTex)->mLayout;
-    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tempBgTex)->mLayoutReady;
-    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tempBgTex)->mLoaded;
-    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tempBgTex)->mPtmMode;
-    __dt__6CBgTexFv((CBgTex*)tempBgTex, -1);
-
+    mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    // --- Re-initialise the embedded CTitleAHelp ---
-    char* name = BdatTouchStringCell(lbl_eu_8050E7A0, lbl_eu_8050E7A0 + 0xb, 0x9);
-
-    u8 tempTitle[0x38];
-    __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x66);
-
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
-    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
-    mTitleAHelp.mArcResourceAccessor =
-        reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
-    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
-    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
-    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
-    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
-    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
-    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
-    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
-    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
-    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
-    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
-    __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
-
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell(lbl_eu_8050E7A0, lbl_eu_8050E7A0 + 0xb, 0x9), 0x66);
     mTitleAHelp.CTitleAHelp_load();
 
-    // --- Re-initialise the embedded CPlayAwardList via a temporary ---
-    u8 tempList[0x10A4];
-    __ct__CPlayAwardList((CPlayAwardList*)tempList, 0);
-
-    __ct__UnkClass_8011C974(&mPlayAwardList.mMemRegion, &reinterpret_cast<CPlayAwardList*>(tempList)->mMemRegion);
-    mPlayAwardList.mFileHandle = reinterpret_cast<CPlayAwardList*>(tempList)->mFileHandle;
-    mPlayAwardList.mFileHandle2 = reinterpret_cast<CPlayAwardList*>(tempList)->mFileHandle2;
-    mPlayAwardList.mArcAccessor1C =
-        reinterpret_cast<CPlayAwardList*>(tempList)->mArcAccessor1C;
-    mPlayAwardList.mLayout20 = reinterpret_cast<CPlayAwardList*>(tempList)->mLayout20;
-    mPlayAwardList.mAnimTrans24 = reinterpret_cast<CPlayAwardList*>(tempList)->mAnimTrans24;
-    mPlayAwardList.mAnimTrans28 = reinterpret_cast<CPlayAwardList*>(tempList)->mAnimTrans28;
-    mPlayAwardList.field_0x2C = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x2C;
-    // Cursor body (+0x30..+0x45, skipping the +0x00 vtable pointer).
-    CCur18& curSrc = reinterpret_cast<CPlayAwardList*>(tempList)->mCursor;
-    mPlayAwardList.mCursor.mArcResAcc = curSrc.mArcResAcc;
-    mPlayAwardList.mCursor.mpLayout = curSrc.mpLayout;
-    mPlayAwardList.mCursor.mpAnimTrans0 = curSrc.mpAnimTrans0;
-    mPlayAwardList.mCursor.mpAnimTrans1 = curSrc.mpAnimTrans1;
-    mPlayAwardList.mCursor.mActive = curSrc.mActive;
-    mPlayAwardList.mCursor.mVisible = curSrc.mVisible;
-    // Scroll bar: 16-byte mem region via the helper, then the field body.
-    __ct__UnkClass_8011C974(&mPlayAwardList.mScrollBar[4], tempList + 0x4c);
-    CScrollBarData* barDst = reinterpret_cast<CScrollBarData*>(&mPlayAwardList.mScrollBar[0]);
-    CScrollBarData* barSrc = reinterpret_cast<CScrollBarData*>(reinterpret_cast<CPlayAwardList*>(tempList)->mScrollBar);
-    barDst->mFileHandle = barSrc->mFileHandle;
-    // Entry-array copy loop pointers (retail sets these up between the
-    // scrollbar field copies and the tail-field copies).
-    CPlayAwardEntry* dst = &mPlayAwardList.mEntryArray.mEntries[0];
-    CPlayAwardEntry* src =
-        reinterpret_cast<CPlayAwardEntry*>(tempList + 0x94);
-    barDst->mAccessor = barSrc->mAccessor;
-    barDst->mLayout = barSrc->mLayout;
-    barDst->mAnimTrans = barSrc->mAnimTrans;
-    barDst->mReady = barSrc->mReady;
-    barDst->mVisible = barSrc->mVisible;
-    barDst->mState = barSrc->mState;
-    barDst->mActive = barSrc->mActive;
-    barDst->mAnimOffset = barSrc->mAnimOffset;
-    barDst->mScrollPosY = barSrc->mScrollPosY;
-    barDst->mScrollRatio = barSrc->mScrollRatio;
-    barDst->mThumbHeight = barSrc->mThumbHeight;
-    barDst->mContentHeight = barSrc->mContentHeight;
-    barDst->mDirection = barSrc->mDirection;
-    // List tail fields (state bytes + scroll halfwords + page byte).
-    mPlayAwardList.field_0x88 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x88;
-    mPlayAwardList.field_0x89 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x89;
-    mPlayAwardList.field_0x8A = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8A;
-    mPlayAwardList.field_0x8B = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8B;
-    mPlayAwardList.field_0x8C = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8C;
-    mPlayAwardList.field_0x8E = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8E;
-    mPlayAwardList.field_0x90 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x90;
-    // The 512-entry array, copied element by element (retail 8-byte loop).
-    do {
-        *dst = *src;
-        dst++;
-        src++;
-    } while (dst < &mPlayAwardList.mEntryArray.mEntries[0x200]);
-    // Trailing state fields (+0x1000..+0x100F) of the entry array.
-    CPlayAwardEntryArray* arrDst = &mPlayAwardList.mEntryArray;
-    CPlayAwardEntryArray* arrSrc =
-        &reinterpret_cast<CPlayAwardList*>(tempList)->mEntryArray;
-    arrDst->field_1000 = arrSrc->field_1000;
-    arrDst->field_1001 = arrSrc->field_1001;
-    arrDst->field_1004 = arrSrc->field_1004;
-    *(u16*)&arrDst->field_1008[0] = *(u16*)&arrSrc->field_1008[0];
-    arrDst->mPageIndex = arrSrc->mPageIndex;
-    arrDst->field_100C = arrSrc->field_100C;
-    arrDst->field_100E = arrSrc->field_100E;
-    __dt__14CPlayAwardListFv((CPlayAwardList*)tempList, -1);
-
+    mPlayAwardList = CPlayAwardList(0);
     PlayAward_LoadLayouts(&mPlayAwardList);
 
-    // Register this screen as a render callback on the owning scene (the
-    // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = &mIScnRender;
-    }
-    mScene->addRenderCB(cb, 0xd, 0);
+    // Register this screen as a render callback on the owning scene.
+    mScene->addRenderCB(this, 0xd, 0);
 }
 
 void CMenuPlayAward::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // The IScnRender render callback lives at +0x58; the `if (this)` is the
-    // MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58 (same as the
-    // sibling CMenuTutorialList/CMenuCollepedia Term bodies).
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(&mIScnRender);
-    }
-    mScene->removeRenderCB(renderCB);
+    mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     PlayAward_ReleaseList(&mPlayAwardList);
 
-    lbl_eu_806648A0 = 0;
+    sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -296,32 +142,25 @@ body:
         goto exit;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw DrawInfo storage: a class-typed local would make MWCC virtual-dispatch
-    // the dtor; retail calls __ct__/__dt__Q34nw4r3lyt8DrawInfoFv directly.
-    u8 drawInfo[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    PlayAward_DrawList(&mPlayAwardList, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    drawHelp(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
+    PlayAward_DrawList(&mPlayAwardList, &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
-/* Factory: lazily allocate + construct the single award-list menu instance
- * and register it as a child of `parent`. Returns the stored instance (or 0
- * if it already exists). */
-CMenuPlayAward* PlayAward_CreateMenu(CProcess* parent, CScn* scene) {
-    if (lbl_eu_806648A0 != 0) {
-        return 0;
+// ---------- Factory: lazily allocate + construct + register the menu ----------
+
+CMenuPlayAward* CMenuPlayAward::sInstance;
+
+CMenuPlayAward* CMenuPlayAward::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
-    CMenuPlayAward* obj = (CMenuPlayAward*)mtl::MemManager::allocate(
-        0x1164, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuPlayAward(obj, scene);
-    }
-    lbl_eu_806648A0 = (unsigned long)obj;
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, 0x0);
-    return (CMenuPlayAward*)lbl_eu_806648A0;
+    CMenuPlayAward* menu = new (CWorkThreadSystem::getWorkMem()) CMenuPlayAward(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }
 
 void stub_us_80272800() {}
@@ -415,50 +254,24 @@ void PlayAward_Phase3_RequestClose(CMenuPlayAward* self) {
     }
 }
 
-void PlayAward_RenderThunk(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
-
-void PlayAward_DtorThunk(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
-
-// Entry-array initialiser (retail PlayAward_InitEntryArray): construct the 512 award
-// entries via the MWCC array helper, then initialise the trailing state
-// fields. Returns self like a constructor.
-CPlayAwardEntryArray* PlayAward_InitEntryArray(CPlayAwardEntryArray* self) {
-    __construct_array(self->mEntries, (void*)PlayAward_InitEntry, (void*)__dt__802706D4, 8, 0x200);
-    self->field_1000 = 0;
-    self->field_1001 = 0;
-    self->field_1004 = lbl_eu_806689A8;
-    self->mPageIndex = 0;
-    self->field_100C = 0;
-    self->field_100E = 0;
-    self->field_1008[0] = 0;
-    self->field_1008[1] = 0;
-    return self;
+CPlayAwardEntry::CPlayAwardEntry() {
+    word0 = 0;
+    word1 = 0;
 }
 
-void PlayAward_InitEntry(CPlayAwardEntry* self) {
-    self->word0 = 0;
-    self->word1 = 0;
-}
+CPlayAwardEntry::~CPlayAwardEntry() {}
 
-// Deleting destructor for CPlayAwardEntry array elements: free the object when
-// non-null and the deleting flag is set.
-void* __dt__802706D4(CPlayAwardEntry* self, int mode) {
-    if (self && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
-// Destructor (retail __dt__80270714): destroys the 512-entry award array via
-// __destroy_arr, then frees the object if deleting.
-void* __dt__80270714(CPlayAwardEntryArray* self, int mode) {
-    if (self != 0) {
-        __destroy_arr(self->mEntries, (void*)&__dt__802706D4, 8, 0x200);
-        if (mode > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+// Entry-array constructor: the 512 award entries are constructed by the
+// compiler (array helper), then the trailing state fields are initialised.
+CPlayAwardEntryArray::CPlayAwardEntryArray() {
+    field_1000 = 0;
+    field_1001 = 0;
+    field_1004 = lbl_eu_806689A8;
+    mPageIndex = 0;
+    field_100C = 0;
+    field_100E = 0;
+    field_1008[0] = 0;
+    field_1008[1] = 0;
 }
 
 // Rebuild the award-list entry array from the BDAT award table: count the
@@ -471,8 +284,8 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
     }
 
     char* const s = lbl_eu_8050E7C0;
-    void* fp = getFP(s);
     void* bdat = lbl_eu_806648A8;
+    void* fp = getFP(s);
     self->field_1001 = (u8)Bdat_GetMaxRow_B1EC(fp);
 
     // Count the award types present in the BDAT award table (row 0x312c +
@@ -570,77 +383,14 @@ u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param) {
     return (u8*)&self->mEntries[0] + (self->mPageIndex << 11) + ((param & 0xFF) << 3);
 }
 
-// Retail ctor (unmangled US symbol). Builds the embedded widgets, constructs
-// the 512-entry array and copies a flag-5 temporary scrollbar body into the
-// member (the +0x00 vtable was already set by the first ctor call).
-CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
-    *(u32*)self = (u32)lbl_eu_80537C20;   // vtable (free-function ctor, manual store)
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = 0;
-    self->mFileHandle2 = 0;
-    self->mArcAccessor1C = 0;
-    self->mLayout20 = 0;
-    self->mAnimTrans24 = 0;
-    self->mAnimTrans28 = 0;
-    self->field_0x2C = 0;
-    __ct__CCur18(&self->mCursor, 0);
-    __ct__10CScrollBarFUc(self->mScrollBar, 0);
-    self->field_0x88 = 0;
-    self->field_0x89 = 0;
-    self->field_0x8A = 0;
-    self->field_0x8B = 1;
-    self->field_0x8C = 0;
-    self->field_0x8E = 0;
-    self->field_0x90 = 0;
-    PlayAward_InitEntryArray(&self->mEntryArray);
-
-    // Temp scrollbar body copy (retail copies each field: lwz/stw, lbz/stb,
-    // lfs/stfs).
-    CScrollBarData temp;
-    __ct__10CScrollBarFUc((u8*)&temp, 5);
-    CScrollBarData* dst = reinterpret_cast<CScrollBarData*>(&self->mScrollBar[0]);
-    dst->mMemRegion[0] = temp.mMemRegion[0];
-    dst->mMemRegion[1] = temp.mMemRegion[1];
-    dst->mMemRegion[2] = temp.mMemRegion[2];
-    dst->mMemRegion[3] = temp.mMemRegion[3];
-    dst->mFileHandle = temp.mFileHandle;
-    dst->mAccessor = temp.mAccessor;
-    dst->mLayout = temp.mLayout;
-    dst->mAnimTrans = temp.mAnimTrans;
-    dst->mReady = temp.mReady;
-    dst->mVisible = temp.mVisible;
-    dst->mState = temp.mState;
-    dst->mActive = temp.mActive;
-    dst->mAnimOffset = temp.mAnimOffset;
-    dst->mScrollPosY = temp.mScrollPosY;
-    dst->mScrollRatio = temp.mScrollRatio;
-    dst->mThumbHeight = temp.mThumbHeight;
-    dst->mContentHeight = temp.mContentHeight;
-    dst->mDirection = temp.mDirection;
-    __dt__10CScrollBarFv((u8*)&temp, -1);
-    return self;
+CPlayAwardList::CPlayAwardList(int)
+    : mFileHandle(0), mFileHandle2(0), mArcAccessor1C(0), mLayout20(0), mAnimTrans24(0),
+      mAnimTrans28(0), field_0x2C(0), mCursor(0), mScrollBar(0), field_0x88(0), field_0x89(0),
+      field_0x8A(0), field_0x8B(1), field_0x8C(0), field_0x8E(0), field_0x90(0), mEntryArray() {
+    mScrollBar = CScrollBar(5);
 }
 
-/* Destructor (retail D2 form; symbol keeps its C++ mangling). Written as a
- * free function with an explicit dealloc flag: the retail body has no vtable
- * store, and the CScrollBar/CCur18 regions are opaque byte storages whose
- * retail dtors must be invoked explicitly (reverse construction order: entry
- * array, scroll bar, cursor, then the UnkClass_8045F564 region). */
-CPlayAwardList* __dt__14CPlayAwardListFv(CPlayAwardList* self, int dealloc) {
-    if (self != 0) {
-        CPlayAwardEntryArray* entryArr = &self->mEntryArray;
-        if (entryArr != 0) {
-            __destroy_arr(entryArr->mEntries, (void*)__dt__802706D4, 8, 0x200);
-        }
-        __dt__10CScrollBarFv(self->mScrollBar, -1);
-        __dt__6CCur18Fv(&self->mCursor, -1);
-        self->mMemRegion.~UnkClass_8045F564();
-        if (dealloc > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CPlayAwardList::~CPlayAwardList() {}
 
 // Load the award-list layout arc files: the list arc via readFile (handle from
 // MEM2) and the common archive via readCommonArchiveFile (handle re-queried by
@@ -650,7 +400,7 @@ void PlayAward_LoadLayouts(CPlayAwardList* self) {
         mtl::MemManager::getHandleMEM2(), &lbl_eu_8050E7C0[0x5a], self, 0, 0);
     self->mFileHandle2 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(), &lbl_eu_8050E7C0[0x74], self, 0, 0);
-    CScrollBar_loadLayoutArc(self->mScrollBar);
+    CScrollBar_loadLayoutArc(&self->mScrollBar);
     self->field_0x8A = 0;
 }
 
@@ -675,7 +425,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
         }
         self->mLayout20->Animate(0);
         Cur_Update(&self->mCursor);
-        CScrollBar_UpdateDispatch(self->mScrollBar);
+        CScrollBar_UpdateDispatch(&self->mScrollBar);
     }
 }
 
@@ -684,7 +434,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
 void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
-        CScrollBar_draw(self->mScrollBar, drawInfo);
+        CScrollBar_draw(&self->mScrollBar, drawInfo);
         Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
@@ -706,7 +456,7 @@ void PlayAward_ReleaseList(CPlayAwardList* self) {
     }
     releaseArcResourceAccessor(self->mArcAccessor1C);
     self->mCursor.cleanup();
-    CScrollBar_Teardown(self->mScrollBar);
+    CScrollBar_Teardown(&self->mScrollBar);
     self->mMemRegion.deleteRegion();
 }
 
@@ -716,7 +466,7 @@ extern "C" bool CScrollBar_isVisible(void*);
 // visible AND the flag byte at 0x8A is set. Int return so callers compare
 // with cmpwi directly (cf. CMenuTutorialList.hpp).
 int PlayAward_IsListReady(CPlayAwardList* self) {
-    if (CScrollBar_isVisible(self->mScrollBar)) {
+    if (CScrollBar_isVisible(&self->mScrollBar)) {
         return self->field_0x8A;
     }
     return 0;
@@ -735,9 +485,9 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     vec[0] = lbl_eu_806689B8;
     vec[1] = lbl_eu_806689BC;
     vec[2] = lbl_eu_806689A8;
-    CScrollBar_InitRootPane(self->mScrollBar, vec);
+    CScrollBar_InitRootPane(&self->mScrollBar, vec);
 
-    CScrollBar_UpdateThumb(self->mScrollBar, 9,
+    CScrollBar_UpdateThumb(&self->mScrollBar, 9,
                   self->mEntryArray.field_1008[self->mEntryArray.mPageIndex]);
 
     // Restore the scroll position from the entry-array state (reads as u16,
@@ -752,7 +502,7 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
     if (self->field_0x8E < 0) self->field_0x8E = 0;
 
     self->field_0x90 = self->mEntryArray.mPageIndex;
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -767,7 +517,7 @@ void PlayAward_RequestClose(CPlayAwardList* self) {
         self->field_0x8B = 0;
         PlayAward_BindOpenAnims(self);
         Cur_SetVisible(&self->mCursor, 0);
-        CScrollBar_requestScrollOut(self->mScrollBar);
+        CScrollBar_requestScrollOut(&self->mScrollBar);
         playUISound(6);
     }
 }
@@ -798,7 +548,7 @@ void PlayAward_MoveCursorUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -831,7 +581,7 @@ void PlayAward_MoveCursorDown(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -855,7 +605,7 @@ void PlayAward_ScrollPageUp(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -885,7 +635,7 @@ void PlayAward_ScrollPageDown(CPlayAwardList* self) {
     }
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     playUISound(1);
 }
 
@@ -903,8 +653,8 @@ void PlayAward_FlipPage(CPlayAwardList* self) {
         self->mEntryArray.mPageIndex = page;
     }
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
-    CScrollBar_UpdateThumb(self->mScrollBar, 9, count);
-    CScrollBar_PlaceThumb(self->mScrollBar, self->field_0x8E);
+    CScrollBar_UpdateThumb(&self->mScrollBar, 9, count);
+    CScrollBar_PlaceThumb(&self->mScrollBar, self->field_0x8E);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
     PlayAward_RefreshCursor(self);
@@ -921,7 +671,7 @@ void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
     if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 2;
         PlayAward_BindOpenAnims(self);
-        CScrollBar_requestScrollIn(self->mScrollBar);
+        CScrollBar_requestScrollIn(&self->mScrollBar);
     }
 }
 
@@ -1045,8 +795,8 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
 }
 
 // Award-list load handler: when the layout arc accessor is ready and the
-// common archive has finished loading, build the entry array on the stack and
-// copy it into the embedded region, then refresh the list.
+// common archive has finished loading, reset the entry array and rebuild it,
+// then refresh the list.
 void PlayAward_LoadEntries(CPlayAwardList* self) {
     if (self->mArcAccessor1C != 0 && self->mFileHandle2 == 0) {
         goto body;
@@ -1057,20 +807,7 @@ exit:
 body:
     self->field_0x8A = 1;
     self->field_0x88 = 1;
-    CPlayAwardEntryArray tmp;
-    PlayAward_InitEntryArray(&tmp);
-    for (u32 i = 0; i < 0x200; i++) {
-        self->mEntryArray.mEntries[i] = tmp.mEntries[i];
-    }
-    self->mEntryArray.field_1000 = tmp.field_1000;
-    self->mEntryArray.field_1001 = tmp.field_1001;
-    self->mEntryArray.field_1004 = tmp.field_1004;
-    // Copy both per-page counts as one halfword (retail lhz/sth pair).
-    *(u16*)&self->mEntryArray.field_1008[0] = *(u16*)&tmp.field_1008[0];
-    self->mEntryArray.mPageIndex = tmp.mPageIndex;
-    self->mEntryArray.field_100C = tmp.field_100C;
-    self->mEntryArray.field_100E = tmp.field_100E;
-    __destroy_arr(tmp.mEntries, (void*)&__dt__802706D4, 8, 0x200);
+    self->mEntryArray = CPlayAwardEntryArray();
     PlayAward_BuildEntries(&self->mEntryArray);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
@@ -1086,7 +823,6 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Scratch heap region guard around the layout build.
         u8 regionBuf[8];
         char buf[0x20];
-        CCur18 tmpCur;
         mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x10000,
                                 &lbl_eu_8050E7C0[0x118], 0);
         __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
@@ -1120,7 +856,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         u32 fontResult = fontObj->getFontHandle();
         ApplyFontToTxtPanes(rootPane, fontResult);
 
-        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], CUICfManager_getPackedFont9C());
+        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], reinterpret_cast<u32>(CUICfManager_getPackedFont9C()));
         PlayAward_BindCloseAnims(this);
         mLayout20->Animate(0);
 
@@ -1141,11 +877,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
             reinterpret_cast<CPlayAwardPaneUser*>(pane)->field_F8 = field_0x2C;
         }
 
-        // Build the cursor on the stack, copy its body into the member region
-        // (skipping the +0x00 vtable pointer) and destroy the temp.
-        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
-        mCursor = tmpCur;
-        __dt__6CCur18Fv(&tmpCur, -1);
+        mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         mCursor.initLayout();
 
         // Refresh the list, release the file handle and the scratch region.
@@ -1168,4 +900,4 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     return 0;
 }
 
-extern "C" unsigned long PlayAward_IsActive(void) { return lbl_eu_806648A0 != 0; }
+extern "C" unsigned long PlayAward_IsActive(void) { return CMenuPlayAward::sInstance != 0; }

@@ -6,22 +6,6 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Retail .sdata2/.rodata pool constants and tables referenced by name so the
-// SDA21/data relocations match the stripped retail object (PLAN.md §17.6
-// approved extern "C" lbl_eu_* pattern, MWCC_CASES §1b float pools).
-extern "C" const f32 lbl_eu_80669F30; // -90.4f (volume min dB)
-extern "C" const f32 lbl_eu_80669F34; // 65535.0f
-extern "C" const f32 lbl_eu_80669F38; // 10.0f
-extern "C" const f32 lbl_eu_80669F3C; // 0.0f
-extern "C" const f32 lbl_eu_80669F40; // -1/32
-// int->double magic (0x4330000080000000) for MWCC's Gekko double-trick
-// conversions; referenced by name from Update/CalcRelease codegen (renamed
-// from the TU-local pool by postprocess pool_patterns, see MWCC_CASES).
-extern "C" const f64 lbl_eu_80669F48;
-extern "C" const f32 lbl_eu_80669F50; // 24.0f (CalcRelease mid constant)
-extern "C" const f32 lbl_eu_80669F54; // 1/128 (CalcRelease reciprocal)
-extern "C" const f32 lbl_eu_80669F58; // 5.0f (CalcRelease divisor)
-extern "C" const f32 lbl_eu_80669F5C; // 60.0f (CalcRelease constant)
 
 // Attack table (128 f32 entries).  Retail: lbl_eu_8051FD40.
 extern "C" const f32 lbl_eu_8051FD40[128];
@@ -88,7 +72,7 @@ private:
     // NOTE: the float literals above are kept pooled (byte-identical retail
     // codegen incl. the fmuls operand order); the TU-local pool entries are
     // renamed to the retail sdata2 labels by postprocess pool_patterns on
-    // snd_EnvGenerator.o (lbl_eu_80669F34/50/54/58/5C) and the .sdata2 is
+    // snd_EnvGenerator.o (65535.0f/50/54/58/5C) and the .sdata2 is
     // trimmed to the retail-empty split.
 
     int CalcDecibelSquare(int scale) {

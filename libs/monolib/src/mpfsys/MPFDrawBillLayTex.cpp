@@ -708,12 +708,12 @@ extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLa
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056DC00-0x8056DC68 (104B): three vtables (LayTex 16B, Cross 16B,
 // Billboard 16B) interleaved with their RTTI chains (24B/16B/16B).  The
-// sdata locators lbl_eu_80663888/90/98 below carry the RTTI names; the shared
-// base locator lbl_eu_80663870 is owned by a neighbouring mpfsys TU.
-extern "C" u32 lbl_eu_80663870;    // shared base RTTI locator (foreign TU)
-extern "C" u32 lbl_eu_80663888[2]; // LayTex RTTI locator (defined below)
-extern "C" u32 lbl_eu_80663890[2]; // Cross RTTI locator (defined below)
-extern "C" u32 lbl_eu_80663898[2]; // Billboard RTTI locator (defined below)
+// sdata locators __RTTI__Q26mpfsys17MPFDrawBillLayTex/90/98 below carry the RTTI names; the shared
+// base locator __RTTI__Q26mpfsys7MPFDraw is owned by a neighbouring mpfsys TU.
+extern "C" u32 __RTTI__Q26mpfsys7MPFDraw;    // shared base RTTI locator (foreign TU)
+extern "C" u32 __RTTI__Q26mpfsys17MPFDrawBillLayTex[2]; // LayTex RTTI locator (defined below)
+extern "C" u32 __RTTI__Q26mpfsys12MPFDrawCross[2]; // Cross RTTI locator (defined below)
+extern "C" u32 __RTTI__Q26mpfsys16MPFDrawBillboard[2]; // Billboard RTTI locator (defined below)
 extern "C" u32 lbl_eu_8056DC10[6];
 extern "C" u32 lbl_eu_8056DC28[4];
 extern "C" u32 lbl_eu_8056DC38[4];
@@ -723,28 +723,28 @@ extern "C" u32 lbl_eu_8056DC58[4];
 // The retail singleton object at 0x8056DC00 is the LayTex vtable itself
 // (getInstance points the sdata slot at it).
 extern "C" u32 lbl_eu_8056DC00[4] = {
-    (u32)&lbl_eu_80663888, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys17MPFDrawBillLayTex, 0x00000000,
     (u32)&drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv,
     (u32)&drawPaired__Q26mpfsys17MPFDrawBillLayTexFv,
 };
 extern "C" u32 lbl_eu_8056DC10[6] = {
-    (u32)&lbl_eu_80663870, 0x00000000, (u32)&lbl_eu_80663898,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, (u32)&__RTTI__Q26mpfsys16MPFDrawBillboard,
     0x00000000, 0x00000000, 0x00000000,
 };
 extern "C" u32 lbl_eu_8056DC28[4] = {
-    (u32)&lbl_eu_80663890, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys12MPFDrawCross, 0x00000000,
     (u32)&submitBillIndexed, (u32)&submitBillPaired,
 };
 extern "C" u32 lbl_eu_8056DC38[4] = {
-    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
 };
 extern "C" u32 lbl_eu_8056DC48[4] = {
-    (u32)&lbl_eu_80663898, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys16MPFDrawBillboard, 0x00000000,
     (u32)&drawIndexed__Q26mpfsys16MPFDrawBillboardFv,
     (u32)&drawPaired__Q26mpfsys16MPFDrawBillboardFv,
 };
 extern "C" u32 lbl_eu_8056DC58[4] = {
-    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
 };
 
 // [.rodata] 0x80523E00-0x80523E98 (152B): blend-order tables + RTTI names.
@@ -776,6 +776,6 @@ extern "C" __declspec(align(4)) const char lbl_eu_80523E84[20] = {
 };
 
 // [.sdata] 0x80663888-0x806638A0 (24B): RTTI locators.
-extern "C" u32 lbl_eu_80663888[2] = { (u32)&lbl_eu_80523E20, (u32)&lbl_eu_8056DC10 };
-extern "C" u32 lbl_eu_80663890[2] = { (u32)&lbl_eu_80523E3C, (u32)&lbl_eu_8056DC38 };
-extern "C" u32 lbl_eu_80663898[2] = { (u32)&lbl_eu_80523E54, (u32)&lbl_eu_8056DC58 };
+extern "C" u32 __RTTI__Q26mpfsys17MPFDrawBillLayTex[2] = { (u32)&lbl_eu_80523E20, (u32)&lbl_eu_8056DC10 };
+extern "C" u32 __RTTI__Q26mpfsys12MPFDrawCross[2] = { (u32)&lbl_eu_80523E3C, (u32)&lbl_eu_8056DC38 };
+extern "C" u32 __RTTI__Q26mpfsys16MPFDrawBillboard[2] = { (u32)&lbl_eu_80523E54, (u32)&lbl_eu_8056DC58 };

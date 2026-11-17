@@ -38,7 +38,10 @@ sys.path.insert(0, str(_REPO))
 from tools.coop.lib.config import CoopConfig, load_config
 from tools.coop.lib.object_size import check_object_size, format_size_check
 from tools.coop.lib.project import Project
-from tools.ppc_equivalence.elf_symbols import list_text_functions, FunctionBytes
+from tools.ppc_equivalence.elf_symbols import list_code_functions as list_text_functions, FunctionBytes, FunctionRelocation
+from tools.coop.lib.full_match import (compare_functions, pair_function, recover_retail_names, unit_section_bases, load_layout, compare_unit_functions)
+from tools.coop.lib.reloc_canon import LinkerLayout
+from dataclasses import replace
 from tools.ppc_equivalence.ir import Opcode
 
 
@@ -48,68 +51,19 @@ def _recover_retail_names(
     decomp_fn: list[FunctionBytes] | None,
     unit_name: str,
 ) -> int:
-    """Rename retail functions whose symbols are NULL/stripped in the retail
-    object (DOL-split placeholder strings — e.g. CBattleManager's 78 functions
-    are all literal '(null)') by matching each function's .text OFFSET against
-    the target registry's address→symbol map.
-
-    text_base is derived from the DECOMP object: it has real mangled names, and
-    the registry maps name→absolute address, so
-        text_base = registry_addr(name) - decomp_offset(name)
-    for any named decomp function. Then retail_abs = text_base + retail_offset.
-
-    Returns the number of retail functions that were renamed.
-    """
-    if not retail_fn or not decomp_fn:
-        return 0
-    # Build name→absolute address from the registry (all units; cheap once).
+    """Recover stripped retail identities from the retail split addresses."""
     reg = project.root / "tools" / "coop" / "targets.json"
     if not reg.is_file():
         return 0
-    try:
-        doc = json.loads(reg.read_text())
-        rows = doc.get("targets", []) if isinstance(doc, dict) else []
-    except (OSError, ValueError):
-        return 0
-    name_to_addr: dict[str, int] = {}
-    for r in rows:
-        if not isinstance(r, dict):
-            continue
-        sym = r.get("symbol")
-        addr = r.get("address")
-        if isinstance(sym, str) and sym and isinstance(addr, str) and addr:
-            try:
-                name_to_addr[sym] = int(addr, 0)
-            except ValueError:
-                pass
-    if not name_to_addr:
-        return 0
-    # text_base from the FIRST decomp function that has a registry address.
-    text_base: int | None = None
-    for f in decomp_fn:
-        if f.name in name_to_addr:
-            text_base = (name_to_addr[f.name] - f.value) & 0xFFFFFFFF
-            break
-    if text_base is None:
-        return 0
-    # Rename retail functions by address match.
-    addr_to_name: dict[int, str] = {}
-    for sym, addr in name_to_addr.items():
-        addr_to_name[addr] = sym
-    renamed = 0
-    for i, f in enumerate(retail_fn):
-        if f.name and f.name != "(null)":
-            continue
-        abs_addr = (text_base + f.value) & 0xFFFFFFFF
-        sym = addr_to_name.get(abs_addr)
-        if sym:
-            retail_fn[i] = FunctionBytes(
-                name=sym, path=f.path, code=f.code, base=f.base, value=f.value,
-                size=f.size, section_index=f.section_index, section_name=f.section_name,
-                symbol_type=f.symbol_type, relocations=f.relocations,
-            )
-            renamed += 1
-    return renamed
+    rows = json.loads(reg.read_text()).get("targets", [])
+    recovered = recover_retail_names(retail_fn, project.root, project.config.region, unit_name, rows)
+    changed = sum(a.name != b.name for a, b in zip(retail_fn, recovered))
+    retail_fn[:] = recovered
+    return changed
+
+
+def _compare(project, unit, retail, decomp):
+    return compare_unit_functions(project, unit, retail, decomp)
 
 # ── mini PowerPC disassembler ──────────────────────────────────────────────
 
@@ -844,7 +798,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def run(argv: list[str] | None = None) -> int:
+def _run(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
 
     modes = sum(1 for x in (args.symbol, args.all, args.list is not None) if x)
@@ -894,46 +848,11 @@ def run(argv: list[str] | None = None) -> int:
                 timeout=args.build_timeout,
             )
 
-        lock_fd: Optional[int] = None
         try:
-            lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
-            try:
-                fcntl.flock(lock_fd, fcntl.LOCK_EX)
-            except OSError:
-                # Lock not supported on this filesystem (NFS etc.) — build
-                # anyway; ninja's own lock still applies.
-                os.close(lock_fd)
-                lock_fd = None
-            if lock_fd is not None:
-                try:
-                    os.ftruncate(lock_fd, 0)
-                    os.lseek(lock_fd, 0, os.SEEK_SET)
-                    os.write(
-                        lock_fd,
-                        (json.dumps({"pid": os.getpid(), "ts": time.monotonic()})).encode(),
-                    )
-                except OSError:
-                    pass
-            try:
-                build_result = _run_build()
-            finally:
-                if lock_fd is not None:
-                    try:
-                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
-                    except OSError:
-                        pass
-                    os.close(lock_fd)
+            build_result = _run_build()
         except subprocess.TimeoutExpired:
-            print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
-                  file=sys.stderr)
+            print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}", file=sys.stderr)
             return 2
-        except Exception:
-            if lock_fd is not None:
-                try:
-                    os.close(lock_fd)
-                except OSError:
-                    pass
-            raise
 
         if build_result.returncode != 0:
             print(build_result.stdout, file=sys.stderr)
@@ -966,19 +885,8 @@ def run(argv: list[str] | None = None) -> int:
         print(f"ERROR: symbol {args.symbol!r} not found in {retail_path}", file=sys.stderr)
         print(f"  available: {', '.join(f.name for f in retail_fn[:20])}", file=sys.stderr)
         return 4
-    if not decomp_match and retail_match:
-        # If the symbol resolved in the retail object but not in the decomp
-        # object (name mismatch between retail and decompiled symbols), try
-        # matching by offset (value) so the diff still works.
-        retail_val = retail_match[0].value
-        decomp_match = [f for f in decomp_fn if f.value == retail_val]
-        if not decomp_match:
-            print(f"ERROR: symbol {args.symbol!r} not found in {decomp_path}", file=sys.stderr)
-            print(f"  available: {', '.join(f.name for f in decomp_fn[:20])}", file=sys.stderr)
-            return 4
-    elif not decomp_match:
-        print(f"ERROR: symbol {args.symbol!r} not found in {decomp_path}", file=sys.stderr)
-        print(f"  available: {', '.join(f.name for f in decomp_fn[:20])}", file=sys.stderr)
+    if len(retail_match) != 1 or len(decomp_match) != 1:
+        print(f"ERROR: missing or ambiguous function pair for {args.symbol!r}", file=sys.stderr)
         return 4
 
     retail = retail_match[0]
@@ -988,6 +896,16 @@ def run(argv: list[str] | None = None) -> int:
     if args.asm:
         return _cmd_asm(args, retail, decomp, compiler_cfg)
 
+    args.original_pair = (retail, decomp)
+    comparison = _compare(project, unit, retail, decomp)
+    args.byte_match = comparison.match
+    args.relocation_errors = list(comparison.reasons)
+    unresolved = frozenset(offset & ~3 for offset in comparison.unresolved)
+    retail, decomp = comparison.retail, comparison.decomp
+    # Display unresolved writes at their instruction starts (ADDR16 is +2).
+    decomp = replace(decomp, relocations=tuple(
+        FunctionRelocation(offset, 0, "unproven", 0)
+        for offset in unresolved))
     # Build relocation offset sets
     retail_reloc_offsets = frozenset(r.offset for r in retail.relocations)
     decomp_reloc_offsets = frozenset(r.offset for r in decomp.relocations)
@@ -1029,32 +947,13 @@ def run(argv: list[str] | None = None) -> int:
 
 
 def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[FunctionBytes]:
-    exact = [f for f in functions if f.name == symbol]
-    if exact:
-        return exact
-    lowered = symbol.lower()
-    ci = [f for f in functions if f.name.lower() == lowered]
-    if ci:
-        return ci
-    # Plain-substring first (registry short form -> full mangling), then
-    # Itanium length-prefix digit-strip as LAST resort (r7 fix parity with
-    # elf_symbols._resolve_candidates): `__ct__CMCEffUpPrm` (registry) must
-    # resolve to `__ct__11CMCEffUpPrmFPQ34...` (object) — the length prefix
-    # `11` breaks the plain substring, and stripping digits would be wrong
-    # BEFORE the plain check (func_80255894 would match every func_).
-    partial = [f for f in functions if lowered in f.name.lower()]
-    if partial:
-        return partial
-
-    import re as _re
-
-    def _strip_digits(s: str) -> str:
-        return _re.sub(r"\d+", "", s)
-
-    stripped = _strip_digits(lowered)
-    if len(stripped) >= 5:
-        partial = [f for f in functions if stripped in _strip_digits(f.name.lower())]
-    return partial
+    from tools.ppc_equivalence.elf_symbols import _resolve_candidates as resolve
+    candidates = resolve(functions, symbol)
+    if not candidates:
+        alias = re.match(r"^@\d+@(.+)$", symbol)
+        if alias:
+            candidates = resolve(functions, alias.group(1))
+    return candidates
 
 
 def _object_paths_for_unit(project: Project, unit) -> tuple[Path | None, Path | None]:
@@ -1309,7 +1208,6 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         size_check = None
 
     decomp_by_name = {f.name: f for f in decomp_fn}
-    decomp_by_value = {f.value: f for f in decomp_fn}
     aliases: dict[str, str] = {}
     for item in getattr(args, "pair_alias", None) or []:
         if "=" in item:
@@ -1319,7 +1217,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
     rows = []
     for rf in sorted(retail_fn, key=lambda f: f.value):
         # Try exact name match first, then planned-rename alias, then
-        # substring match (like _resolve_candidates), then exact value match.
+        # unique name resolution. Offsets are not cross-object identities.
         # The alias arm pairs renames whose new name no longer contains the
         # old one (memberize-bulk gate) before fuzzy matching can misfire.
         dm = decomp_by_name.get(rf.name)
@@ -1333,14 +1231,17 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             # behavior; digit-strip is the new fallback that prevents an
             # incorrect address-based pairing.
             cands = _resolve_candidates(decomp_fn, rf.name)
-            if cands:
+            if len(cands) == 1:
                 dm = cands[0]
-        if dm is None:
-            dm = decomp_by_value.get(rf.value)
         if dm is None:
             rows.append((rf, None, None))
             continue
-        rows.append((rf, dm, _counts_for(rf, dm)))
+        comparison = _compare(project, unit, rf, dm)
+        counts = _counts_for(comparison.retail, comparison.decomp)
+        counts["match"] = comparison.match
+        counts["reloc"] = len(comparison.unresolved)
+        counts["relocation_errors"] = list(comparison.reasons)
+        rows.append((rf, dm, counts))
 
     # --json: machine-readable per-function counts for the harness's
     # TU-final regression sweep (one call instead of N hexdiff subprocesses).
@@ -1367,7 +1268,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
                     "decomp_symbol": None,
                 })
                 continue
-            ok = c["mismatch"] == 0
+            ok = c["match"]
             if ok:
                 out["matched"] += 1
             out["functions"].append({
@@ -1380,6 +1281,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
                 "reg_swap": c["reg_swap"],
                 "pure_reg_swap": c["pure_reg_swap"],
                 "reloc": c["reloc"],
+                "relocation_errors": c["relocation_errors"],
                 "retail_size": rf.size,
                 "decomp_size": dm.size,
             })
@@ -1395,7 +1297,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         color = _GREEN if size_check.ok else _RED
         print(f"split: {color}{format_size_check(size_check)}{_RESET}")
     for line in (size_check.excluded if size_check is not None else ()):
-        print(f"weak-dedup: excluded {line}")
+        print(f"linked-view: excluded {line}")
 
     n_match = 0
     print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'SIZE':>12s}  SYMBOL")
@@ -1403,7 +1305,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         if dm is None:
             print(f"  {'-':4s} {'n/a':>7s} {'-':>5s} {'-':>5s} {f'0x{rf.size:x}':>12s}  {rf.name}  (not written yet)")
             continue
-        ok = c["mismatch"] == 0
+        ok = c["match"]
         if ok:
             n_match += 1
         mark = "✓" if ok else "✗"
@@ -1469,14 +1371,15 @@ def _output_terminal(
 
     # Print relocation info if requested
     if args.relocs:
-        if retail.relocations:
+        raw_retail, raw_decomp = args.original_pair
+        if raw_retail.relocations:
             print(f"{_CYAN}Retail relocations:{_RESET}")
-            for r in retail.relocations:
+            for r in raw_retail.relocations:
                 print(f"  +0x{r.offset:04x} type={r.relocation_type} "
                       f"symbol={r.symbol} addend={r.addend}")
-        if decomp.relocations:
+        if raw_decomp.relocations:
             print(f"{_CYAN}Decomp relocations:{_RESET}")
-            for r in decomp.relocations:
+            for r in raw_decomp.relocations:
                 print(f"  +0x{r.offset:04x} type={r.relocation_type} "
                       f"symbol={r.symbol} addend={r.addend}")
         print()
@@ -1566,7 +1469,7 @@ def _output_terminal(
         )
 
     print()
-    if byte_mismatches == 0 and reloc_count == 0:
+    if getattr(args, "byte_match", byte_mismatches == 0 and reloc_count == 0):
         print(f"{_GREEN}✓ 100% match — {total // 4} instructions identical{_RESET}")
     elif not args.brief:
         parts = []
@@ -1653,7 +1556,7 @@ def _output_terminal(
         for h in hints:
             print(f"  - {h}")
 
-    return 0 if byte_mismatches == 0 else 5
+    return 0 if args.byte_match else 5
 
 
 def _output_json(
@@ -1744,6 +1647,8 @@ def _output_json(
 
     output = {
         "symbol": retail.name,
+        "match": args.byte_match,
+        "relocation_errors": args.relocation_errors,
         "retail_path": str(retail.path),
         "decomp_path": str(decomp.path),
         "retail_size": retail.size,
@@ -1770,17 +1675,33 @@ def _output_json(
         ),
         "retail_relocations": [
             {"offset": r.offset, "type": r.relocation_type, "symbol": r.symbol, "addend": r.addend}
-            for r in retail.relocations
+            for r in args.original_pair[0].relocations
         ],
         "decomp_relocations": [
             {"offset": r.offset, "type": r.relocation_type, "symbol": r.symbol, "addend": r.addend}
-            for r in decomp.relocations
+            for r in args.original_pair[1].relocations
         ],
         "reloc_drift": [d.to_dict() for d in reloc_drifts],
         "reloc_suggestions": reloc_suggestions,
     }
     print(json.dumps(output, indent=2))
-    return 0 if all(d["match"] for d in diffs) else 5
+    return 0 if args.byte_match else 5
+
+
+def run(argv: list[str] | None = None) -> int:
+    """Keep the just-built objects stable until all comparison reads finish."""
+    args = _parse_args(argv)
+    if args.list is not None:
+        return _run(argv)
+    config = load_config(None, _REPO)
+    lock_path = _REPO / "build" / config.region / ".hexdiff.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            return _run(argv)
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
 
 
 if __name__ == "__main__":

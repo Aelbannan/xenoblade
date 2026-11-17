@@ -69,16 +69,16 @@ public:
     virtual AnimTransform*
     CreateAnimTransform(const void* pAnmBinary,
                         ResourceAccessor* pAccessor); // at 0x14
-    virtual void
+    virtual AnimTransform*
     CreateAnimTransform(const AnimResource& rResource,
-                        ResourceAccessor* pAccessor); //at 0x18
+                        ResourceAccessor* pAccessor); // at 0x18
 
     virtual void BindAnimation(AnimTransform* pAnimTrans);   // at 0x1C
     virtual void UnbindAnimation(AnimTransform* pAnimTrans); // at 0x20
     virtual void UnbindAllAnimation();                       // at 0x24
-    virtual void
+    virtual bool
     BindAnimationAuto(const AnimResource& rResource,
-                     ResourceAccessor* pAccessor); //at 0x28
+                      ResourceAccessor* pAccessor); // at 0x28
     virtual void SetAnimationEnable(AnimTransform* pAnimTrans,
                                     bool enable); // at 0x2C
 
@@ -163,6 +163,12 @@ public:
         if(pObj != NULL){
             pObj->~TObj();
             FreeMemory(pObj);
+        }
+    }
+
+    template <typename TObj> static void DeletePrimArray(TObj* objAry) {
+        if (objAry != NULL) {
+            FreeMemory(objAry);
         }
     }
 

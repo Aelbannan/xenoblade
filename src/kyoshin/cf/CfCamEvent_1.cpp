@@ -64,7 +64,7 @@ DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_sdata2struct, sdata2_CfCamEvent1);
 // pad (0x70 % 8 == 0). Reloc slots emit zero bytes in the .o, matching
 // retail (data_match skips reloc-name comparison when bytes are identical).
 extern "C" {
-extern char lbl_eu_80661B28[];
+extern char __RTTI__Q22cf11CfCamFollow[];
 // lbl_eu_80661B30 is owned by the header as `const void*` (pointer-object,
 // so MWCC emits sda21 li's at use sites); the vtable needs its address.
 void __dt__Q22cf11CfCamFollowFv();
@@ -78,7 +78,7 @@ void cfCam_setFollowTg(); void cfCam_loadUnk164(); void camPluginNoopV64(); void
 void camPluginNoopV6C(); void cfCam_getActivePad(); void runCamAction(); void camPluginNoopV68();
 }
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80527260[34] = {
-    lbl_eu_80661B28, 0,
+    __RTTI__Q22cf11CfCamFollow, 0,
     (const void*)__dt__Q22cf11CfCamFollowFv,
     (const void*)resetCamEntry, (const void*)cfCam_getPlus1C, (const void*)cfCam_copyToPlus28,
     (const void*)cfCam_updFollowPos, (const void*)cfCam_nestedPlus118, (const void*)frameDriver,

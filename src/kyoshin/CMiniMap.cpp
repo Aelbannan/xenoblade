@@ -19,6 +19,7 @@
 // CfScript.cpp (retail symbol format__Q22ml10FixStr<128>FPCce).
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CfEnumListHolder.hpp"
 
 // Pre-mangled global-view declarations so the offset-adjusted dispatch thunks
 // can address the CMenuMiniMap2 member methods by their retail symbol names
@@ -127,13 +128,10 @@ extern "C" char lbl_eu_804FE1FC[];       // string pool (columns/formats/names)
 
 // ---- cross-TU helpers (retail unmangled symbols) ----
 extern "C" {
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 u8 BdatGetU8Direct(u32, const char*, u32);
 s16 BdatGetS16Direct(void*, const char*, u32);
 u32 Bdat_GetMaxRow_B1EC(void*);
-void __dt__80043E88(void* holder, int);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
@@ -490,13 +488,6 @@ struct MiniMapObj {
 // (Body defined below, after the MiniMapSubObj view declaration.)
 // ============================================================================
 
-// (The former MiniMapDtorIf pad is gone: the pane teardown calls are explicit
-// virtual destructor invocations on nw4r::lyt::Pane -- MWCC dispatches vt+8
-// with flag -1 -- and the layout release is a plain delete, vt+8 with +1.)
-struct MiniMapEnumHolder {
-    void* list;                      // 0x00
-    u32 handle;                      // 0x04
-};
 struct MiniMapEnumList {
     u8 pad[0x620];
     u32 count;                       // 0x620
@@ -670,7 +661,6 @@ extern "C" void __declspec(noinline) MiniMapTeardownMarkerPanes(CMiniMap* self) 
 // copy #1: diff1 @ sp+636, name1 @ sp+872, pane parent "panemapmark".
 // copy #2: diff2 @ sp+624, name2 @ sp+840.
 extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
-    MiniMapEnumHolder holder;
     MiniMapEnumList* list;
     MiniMapObj* obj;
     f32 clamp;
@@ -702,12 +692,12 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
     if (!self->m0C) return;
     if (!cf::CfGameManager::getPlayer(0)) return;
     obj = (MiniMapObj*)getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
-    CTaskGame_enumListCtor(&holder);
-    list = (MiniMapEnumList*)CTaskGame_enumListGet(&holder);
+    CfEnumListHolder holder;
+    list = (MiniMapEnumList*)holder.get();
     startEnumObjects(list, 0xB00, 0);
     {
         void* playerPos = ((MiniMapObj*)cf::CfGameManager::getPlayer(0))->GetPos();
-        __ct__800FB044(CTaskGame_enumListGet(&holder), lbl_eu_806670B8 * self->m20, playerPos, 0);
+        __ct__800FB044(holder.get(), lbl_eu_806670B8 * self->m20, playerPos, 0);
     }
     if (lbl_eu_80663FBC++ > 30) {
         lbl_eu_80663FBC = 0;
@@ -1131,8 +1121,8 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                 u32 cntlz = (u32)__cntlzw(cf8cVal);
                 if ((cntlz >> 5) != 0) {
                 for (u32 i = 0;
-                     i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
+                     i < ((MiniMapEnumList*)holder.get())->count; i++) {
+                                        u32 id = (u32)getObjectIdAt(holder.get(), i);
                                         MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
@@ -1227,8 +1217,8 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
             u16 rowCount = (u16)Bdat_GetMaxRow_B1EC(bdatEntry);
             if (gimmickView != 0) {
                 for (u32 i = 0;
-                     i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)getObjectIdAt(CTaskGame_enumListGet(&holder), i));
+                     i < ((MiniMapEnumList*)holder.get())->count; i++) {
+                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)getObjectIdAt(holder.get(), i));
                     if (!o) continue;
                     if ((o->m64 & 0x8) == 0) continue;
                     f32 objY = o->GetPos()->y;
@@ -1321,8 +1311,8 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
 
             // ---- sub-actor section (vt228()==3) ----
             for (u32 i = 0;
-                 i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                    u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
+                 i < ((MiniMapEnumList*)holder.get())->count; i++) {
+                                    u32 id = (u32)getObjectIdAt(holder.get(), i);
                                     MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
@@ -1410,8 +1400,8 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
 
             // ---- m91==12 section ----
             for (u32 i = 0;
-                 i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                    u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
+                 i < ((MiniMapEnumList*)holder.get())->count; i++) {
+                                    u32 id = (u32)getObjectIdAt(holder.get(), i);
                                     MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
@@ -1500,8 +1490,8 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
             // ---- type-dispatch section (17/18/20) ----
             if (gimmickView != 0) {
                 for (u32 i = 0;
-                     i < ((MiniMapEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                                        u32 id = (u32)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
+                     i < ((MiniMapEnumList*)holder.get())->count; i++) {
+                                        u32 id = (u32)getObjectIdAt(holder.get(), i);
                                         MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
@@ -1701,7 +1691,6 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
 
         MiniMapPlaceMarkers((u8*)self + 0x3C, lbl_eu_80664184);
         __dt__14Class_8045F858Fv(guard, -1);
-        __dt__80043E88(&holder, -1);
     }
 }
 }
@@ -2389,9 +2378,8 @@ CMenuMiniMap2* __ct__8011C1B8(CProcess* parent, CScn* scene) {
     if (obj != 0) {
         __ct__8CProcessFv((CProcess*)obj);
 
-        // Temp (CProcess) vtable first, then the null PMF triple copy, then
-        // the composite vtable and the +0x24/+0xAC sub-vtable slots.
-        obj->mVtable10 = (u32)lbl_eu_8052BF70;
+        // Null PMF triple copy, then the composite vtable and the
+        // +0x24/+0xAC sub-vtable slots.
         u32* ptmf = __ptmf_null;
         obj->mPtMf3C[0] = ptmf[0];
         obj->mPtMf3C[1] = ptmf[1];

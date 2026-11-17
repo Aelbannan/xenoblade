@@ -375,7 +375,7 @@ struct VoiceNameLocator {
     const char* name;
     const void* vtableRow;
 };
-VoiceNameLocator lbl_eu_80662C90 = { lbl_eu_80510690, lbl_eu_805398A0 };
+VoiceNameLocator __RTTI__Q22cf12CChainEffect = { lbl_eu_80510690, lbl_eu_805398A0 };
 char* lbl_eu_80662C98[2] = { (char*)lbl_eu_805106A8, 0 };
 #pragma section data_type ".sdata2" ".sdata2"
 extern __declspec(section ".sdata2") float lbl_eu_80668C58 = 10.0f;

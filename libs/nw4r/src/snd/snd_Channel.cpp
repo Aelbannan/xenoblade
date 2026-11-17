@@ -13,8 +13,6 @@ extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
     u32 offset);
 
 // Retail InitParam pools its 0.0f/1.0f literals under these sdata2 labels.
-extern const f32 lbl_eu_80669F08; // 0.0f
-extern const f32 lbl_eu_80669F0C; // 1.0f
 
 // Mirror of DisposeCallback used by Channel::Stop/VoiceCallbackFunc: retail
 // invokes vtable slot 0xC with a SINGLE argument (no r5 ever set), so the
@@ -113,43 +111,43 @@ void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
     mKey = KEY_INIT;
     mOriginalKey = ORIGINAL_KEY_INIT;
 
-    mInitVolume = lbl_eu_80669F0C;
-    mInitPan = lbl_eu_80669F08;
-    mInitSurroundPan = lbl_eu_80669F08;
-    mTune = lbl_eu_80669F0C;
+    mInitVolume = 1.0f;
+    mInitPan = 0.0f;
+    mInitSurroundPan = 0.0f;
+    mTune = 1.0f;
 
-    mUserVolume = lbl_eu_80669F0C;
-    mUserPitch = lbl_eu_80669F08;
-    mUserPitchRatio = lbl_eu_80669F0C;
-    mUserPan = lbl_eu_80669F08;
-    mUserSurroundPan = lbl_eu_80669F08;
-    mUserLpfFreq = lbl_eu_80669F08;
+    mUserVolume = 1.0f;
+    mUserPitch = 0.0f;
+    mUserPitchRatio = 1.0f;
+    mUserPan = 0.0f;
+    mUserSurroundPan = 0.0f;
+    mUserLpfFreq = 0.0f;
 
     mBiquadFilterType = 0;
-    mBiquadFilterValue = lbl_eu_80669F08;
+    mBiquadFilterValue = 0.0f;
     mRemoteFilter = 0;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
 
-    mMainOutVolume = lbl_eu_80669F0C;
-    mMainSend = lbl_eu_80669F08;
+    mMainOutVolume = 1.0f;
+    mMainSend = 0.0f;
 
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mFxSend[i] = lbl_eu_80669F08;
+        mFxSend[i] = 0.0f;
     }
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = lbl_eu_80669F0C;
-        mRemoteSend[i] = lbl_eu_80669F08;
-        mRemoteFxSend[i] = lbl_eu_80669F08;
+        mRemoteOutVolume[i] = 1.0f;
+        mRemoteSend[i] = 0.0f;
+        mRemoteFxSend[i] = 0.0f;
     }
 
     mSilenceVolume.InitValue(SILENCE_VOLUME_MAX);
 
-    mSweepPitch = lbl_eu_80669F08;
+    mSweepPitch = 0.0f;
     mSweepLength = 0;
     mSweepCounter = 0;
 
-    mEnvelope.Init(lbl_eu_80669F30);
+    mEnvelope.Init();
     mLfo.GetParam().Init();
 
     mLfoTarget = LFO_TARGET_PITCH;
@@ -308,7 +306,7 @@ extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoi
     self->mLfo.Reset();
     // Pass the retail-pooled constant explicitly so the SDA21 reloc matches
     // (default arg resolves to the TU-local VOLUME_INIT symbol).
-    self->mEnvelope.Reset(lbl_eu_80669F30);
+    self->mEnvelope.Reset();
     self->mSweepCounter = 0;
 
     // Retail Voice::Setup also takes WaveInfo; the locked snd_Voice.h still
@@ -489,7 +487,7 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
 
             pChannel->mLfo.mDelayCounter = 0;
             // Retail pools the 0.0f through the sdata2 label (SDA21 reloc).
-            pChannel->mLfo.mCounter = lbl_eu_80669F08;
+            pChannel->mLfo.mCounter = 0.0f;
             pChannel->mPauseFlag = false;
             pChannel->mActiveFlag = false;
             pChannel->mAllocFlag = false;

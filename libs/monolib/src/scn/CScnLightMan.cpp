@@ -81,8 +81,8 @@ extern "C" void LightManInvokeLightV3(CScnLightMan* ths) {
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056E568-0x8056E598 (48B): CScnLightMan vtable. The typeinfo pair
-// lbl_eu_80663950 and the 8 foreign slot targets live in other TUs.
-extern "C" u32 lbl_eu_80663950;
+// __RTTI__12CScnLightMan and the 8 foreign slot targets live in other TUs.
+extern "C" u32 __RTTI__12CScnLightMan;
 extern "C" void __dt__12CScnLightManFv();
 extern "C" u32 lbl_eu_8066A958;
 extern "C" u32 lbl_eu_8066A960;
@@ -92,7 +92,7 @@ extern "C" u32 lbl_eu_8066A978;
 extern "C" u32 lbl_eu_8066A980;
 extern "C" u32 lbl_eu_8066A988;
 extern "C" u32 lbl_eu_8056E568[4] = {
-    (u32)&lbl_eu_80663950, 0x00000000,
+    (u32)&__RTTI__12CScnLightMan, 0x00000000,
     (u32)&__dt__12CScnLightManFv, 0x00000000,
 };
 // [.data] 0x8056E578-0x8056E598 (32B): foreign slot targets; retail holds
@@ -113,4 +113,3 @@ extern "C" u32 lbl_eu_8056E578[8] = {
 extern "C" __declspec(align(8)) const char lbl_eu_80523F58[0xD] = { 0x43,0x53,0x63,0x6E,0x4C,0x69,0x67,0x68,0x74,0x4D,0x61,0x6E,0x00 };
 extern "C" __declspec(align(4)) const char lbl_eu_80523F68[0xD] = { 0x73,0x68,0x61,0x64,0x6F,0x77,0x54,0x65,0x78,0x5F,0x49,0x34,0x00 };
 extern "C" __declspec(align(8)) const f32 lbl_eu_80523F78[7] = { 1.0f, 0.7f, 0.7f, 0.5f, 0.5f, 0.7f, 0.7f };
-extern "C" __declspec(section ".rodata") const char lbl_eu_80523F94[0x4] = { 0x53,0x48,0x41,0x00 };

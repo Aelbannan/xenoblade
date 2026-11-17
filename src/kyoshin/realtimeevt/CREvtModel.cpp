@@ -13,7 +13,7 @@ namespace nw4r { namespace db { void Panic(const char* file, int line, const cha
 extern "C" {
 extern void __ct__Q22cf8CREvtObjFi(void* self, int arg);
 extern void* __dt__Q22cf8CREvtObjFv(void* self, int dealloc);
-extern void* EvtObj_AllocBlock(u32 size);
+extern void* __nw__Q22cf8CREvtObjFUl(u32 size);
 extern u32 Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
 extern void EvtSeqResolveAnmChr(void* data, const char* name, int* outValue);
@@ -38,8 +38,8 @@ extern void __ct__CREvtModelObj(void* self, void* parent);
 extern void __ct__CREvtModelPc(void* self, void* parent);
 extern void ItemAnim_GetChr_E708(void* data, int index);
 extern const void* lbl_eu_8053167C[];
-extern const void* lbl_eu_806623F8[2];
-extern const void* lbl_eu_80662400[2];
+extern const void* __RTTI__18CScnMaruShadowNw4r[2];
+extern const void* __RTTI__14IScnPolyShadow[2];
 // typified split1 retail .rodata: RTTI type names + nw4r option strings as
 // one 8-aligned struct (two commented halves). Byte-exact; offsets used by
 // code: 0x00 CScnMaruShadowNw4r, 0x14 IScnPolyShadow, 0x24 cf::CREvtModel,
@@ -61,8 +61,8 @@ extern const float lbl_eu_80667770;
 extern const float lbl_eu_80667774;
 extern const float lbl_eu_80667778;
 extern const float lbl_eu_8066777C;
-extern const void* lbl_eu_806623F8[2];
-extern const void* lbl_eu_80662400[2];
+extern const void* __RTTI__18CScnMaruShadowNw4r[2];
+extern const void* __RTTI__14IScnPolyShadow[2];
 extern const void* lbl_eu_80662418;
 extern const void* lbl_eu_8066241C;
 extern const char lbl_eu_80530D18[];
@@ -263,7 +263,7 @@ void EvtModelSetupShadow(void* self, void* model) {
         EvtSeqFindResFloat(FLD(void*, self, 0x24), &strBase[0x36], &stackF0);
     } else { stackVal = 1; }
     static_cast<CScnItemModel*>(model)->vfunc50(stackVal == 0 ? 0 : 1);
-    void* shadow = __dynamic_cast(FLD(void*, model, 0x7EC), 0, (void*)&lbl_eu_806623F8, (void*)&lbl_eu_80662400, 0);
+    void* shadow = __dynamic_cast(FLD(void*, model, 0x7EC), 0, (void*)&__RTTI__18CScnMaruShadowNw4r, (void*)&__RTTI__14IScnPolyShadow, 0);
     if (shadow != 0) {
         if (stackVal == 1) { FLD(u8, shadow, 0x2A) = 1; }
         else if (stackVal == 2) { FLD(u8, shadow, 0x2A) = 0; }
@@ -306,17 +306,17 @@ void EvtModelApplyHideParts(void* self, void* animData, void* model, int flag) {
 void* createEvtModelObj(void* self) {
     u32 type = FLD(u32, self, 0x28);
     if (type == 1) {
-        void* obj = EvtObj_AllocBlock(0x1F0);
+        void* obj = __nw__Q22cf8CREvtObjFUl(0x1F0);
         if (obj != 0) { __ct__CREvtModelMap(obj, self); }
         return obj;
     } else if (type == 2) {
         if (FLD(s8, self, 0x16) != 0x30 || FLD(s8, self, 0x17) != 0x30) {
-            void* obj = EvtObj_AllocBlock(0xB4);
+            void* obj = __nw__Q22cf8CREvtObjFUl(0xB4);
             if (obj != 0) { __ct__CREvtModelPc(obj, self); }
             return obj;
         }
     }
-    void* obj = EvtObj_AllocBlock(0x88);
+    void* obj = __nw__Q22cf8CREvtObjFUl(0x88);
     if (obj != 0) { __ct__CREvtModelObj(obj, self); }
     return obj;
 }
@@ -339,7 +339,7 @@ int zeroEvtModelHook(void* self) {
 // .data of its own, so these three objects ARE the section, in order).
 extern "C" {
 extern void* __RTTI__Q22cf13CfObjectActor;
-extern const void* lbl_eu_80662408[2];  // defined with the .sdata below
+extern const void* __RTTI__Q22cf10CREvtModel[2];  // defined with the .sdata below
 extern void getField20(), isBusy__Q22cf8CREvtObjFv(), CREvtObjVfunc24Default();  // cross-TU slots of the 0x44 table
 extern void CActorState_setObjStateBit3__Q22cf11CActorStateFv(), CBattleState_getOwner__Q22cf13CfObjectActorFv(), CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(), CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(), CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(), CBattleState_enterStatusEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry();
 extern void CBattleState_addStagingEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearStatusId__Q22cf12CBattleStateFv(), CBattleState_applyEventEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(), CBattleState_removeKeyedEntries__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearEntriesByMask__Q22cf12CBattleStateFUl();
@@ -506,14 +506,14 @@ const void* lbl_eu_8053109C[373] = {
 // .data 0xC: RTTI descriptor pair + pad.
 __declspec(section ".data") __attribute__((used))
 void* lbl_eu_80531670[3] = {
-    (void*)lbl_eu_80662400,
+    (void*)__RTTI__14IScnPolyShadow,
     0, 0
 };
 
 // .data 0x44: this TU's dispatch table (own-TU funcs + 3 cross-TU).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8053167C[17] = {
-    (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)EvtModelResetPose, // +0x0
+    (void*)__RTTI__Q22cf10CREvtModel, 0, (void*)__ct__80172668, (void*)EvtModelResetPose, // +0x0
     (void*)releaseEvtAnim28, (void*)getField20, (void*)isEvtFlagBit4Set, (void*)isEvtFlagBit0Set, // +0x10
     (void*)isBusy__Q22cf8CREvtObjFv, (void*)EvtModelUpdate, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
     (void*)EvtModelSetVisible, (void*)EvtModelSetEventData, (void*)emptyEvtModelHook, (void*)EvtModelReleaseAnimsOnce, // +0x30
@@ -532,16 +532,16 @@ extern "C" char lbl_eu_80503324[];
 extern "C" char lbl_eu_80503230[];
 extern "C" void* lbl_eu_80531670[];
 extern "C" void* lbl_eu_805316C0[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806623F0[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf18CfMapEffectManager[2] = {
     lbl_eu_80503230, 0
 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806623F8[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__18CScnMaruShadowNw4r[2] = {
     lbl_eu_80503300, lbl_eu_80531670
 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80662400[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__14IScnPolyShadow[2] = {
     lbl_eu_80503314, 0
 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80662408[2] = {
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf10CREvtModel[2] = {
     lbl_eu_80503324, lbl_eu_805316C0
 };
 __declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_8066777C __attribute__((used)) = 255.0f;

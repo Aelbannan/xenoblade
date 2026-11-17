@@ -628,14 +628,14 @@ void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner)
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x805700D8-0x805701B0 (0xD8): vtable (3 words) + 8 embedded
 // nw4r assertion strings ("%s::%s: Object not valid." etc., retail bytes).
-extern "C" u32 lbl_eu_80663C38;          // .sdata RTTI locator (defined below)
+extern "C" u32 __RTTI__12CMdlMaterial;          // .sdata RTTI locator (defined below)
 extern "C" u32 lbl_eu_8066B2F8;          // shared .sdata2 constant pair
 extern "C" u32 lbl_eu_8066B300;
 extern "C" const u32 lbl_eu_80524798[7];  // .rodata name string (defined below)
 extern "C" void __dt__12CMdlMaterialFv();  // member dtor (this TU, retail reloc)
 
 extern "C" u32 lbl_eu_805700D8[54] = {
-    (u32)&lbl_eu_80663C38, 0x00000000, (u32)&__dt__12CMdlMaterialFv,
+    (u32)&__RTTI__12CMdlMaterial, 0x00000000, (u32)&__dt__12CMdlMaterialFv,
     0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000,
     0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420,
     0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307833, 0x29000000,

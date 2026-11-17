@@ -12,7 +12,6 @@
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 
 // SDA/sdata2 float pool labels used by the direction helpers below.
-extern const f32 lbl_eu_80667D60; // 0.0f
 extern const f32 lbl_eu_80667D64; // 1.0f
 extern const f32 lbl_eu_80667D68;
 extern const f32 lbl_eu_80667D6C; // rad -> FIdx degrees
@@ -94,10 +93,10 @@ extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSr
     *outWeight = lbl_eu_80667D64;
     if (mag < outerRadius) {
         if (mag < innerRadius) {
-            *outWeight = lbl_eu_80667D60;
+            *outWeight = 1.0f;
         } else {
             *outWeight =
-                lbl_eu_80667D60 - (mag - innerRadius) / (outerRadius - innerRadius);
+                1.0f - (mag - innerRadius) / (outerRadius - innerRadius);
         }
     }
 
@@ -350,7 +349,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
         // Looping path: plain distance-attenuated volume updates.
         f32 vol = self->m24;
         if (CfRes_getD80Flag()) {
-            vol *= lbl_eu_80667D60 - Scn_QueryUnk80State()->field_0xC;
+            vol *= 1.0f - Scn_QueryUnk80State()->field_0xC;
         }
         if ((lbl_eu_80663E24 & 0x40000) != 0) {
             if (self->m32 != 0) {
@@ -359,7 +358,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
             }
             vol *= self->m28;
         } else {
-            self->m28 = lbl_eu_80667D60;
+            self->m28 = 1.0f;
             self->m32 = 0;
         }
         if (self->m34 != 0) {
@@ -383,7 +382,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
                   lbl_eu_80667D68, lbl_eu_80667D68 + self->m18);
     f32 vol = self->m1C * self->m24;
     if (CfRes_getD80Flag()) {
-        vol *= lbl_eu_80667D60 - Scn_QueryUnk80State()->field_0xC;
+        vol *= 1.0f - Scn_QueryUnk80State()->field_0xC;
     }
     if ((lbl_eu_80663E24 & 0x40000) != 0) {
         if (self->m32 != 0) {
@@ -391,7 +390,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
         }
         vol *= self->m28;
     } else {
-        self->m28 = lbl_eu_80667D60;
+        self->m28 = 1.0f;
         self->m32 = 0;
     }
     if (self->m32 == 0) {
@@ -448,7 +447,7 @@ union CtrlStateFnBits {
 
 CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     work->m00 = lbl_eu_80667D64;
-    work->m04 = lbl_eu_80667D60;
+    work->m04 = 1.0f;
     work->m08 = lbl_eu_80667D64;
     work->m0C = lbl_eu_80667D64;
     work->m10 = lbl_eu_80667D64;
@@ -463,7 +462,7 @@ CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     CtrlState* cur = &work->mEntries[0];
     CtrlState* stop = &work->mEntries[128];
     for (; cur < stop; ++cur) {
-        cur->m1C = lbl_eu_80667D60;
+        cur->m1C = 1.0f;
         cur->m20 = lbl_eu_80667D64;
         cur->m28 = lbl_eu_80667D64;
         cur->m2C = -1;

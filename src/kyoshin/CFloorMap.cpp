@@ -12,11 +12,13 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CFloorMapImports.hpp"
 
 // Named .sdata2 conversion magics: defining them lets MWCC's constant pool
 // reuse the retail symbols for the (f32) casts on s16/u8 map coordinates
@@ -2652,8 +2654,8 @@ CFloorMap::CFloorMap() {
     field_5D = 0;
     __ct__10CScrollBarFUc(&mScrollBar[0], 0);
     __ct__CCur18(&mCursorA0, 0);
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
-    __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
+    __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
     layout_130 = 0;
     field_134 = 0;
     layout_138 = 0;
@@ -2735,7 +2737,7 @@ CFloorMap::CFloorMap() {
     {
         u8 winStorage[0x3C];
         CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
-        __ct__CSysWin(reinterpret_cast<CSysWin*>(win), 3);
+        __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(win), 3);
         CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinB8[0]);
         dst->mMemRegion = win->mMemRegion;
         dst->mFileHandle = win->mFileHandle;
@@ -2759,7 +2761,7 @@ CFloorMap::CFloorMap() {
     {
         u8 winStorage[0x3C];
         CSysWinBody* win = reinterpret_cast<CSysWinBody*>(winStorage);
-        __ct__CSysWin(reinterpret_cast<CSysWin*>(win), 0);
+        __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(win), 0);
         CSysWinBody* dst = reinterpret_cast<CSysWinBody*>(&mSysWinF4[0]);
         dst->mMemRegion = win->mMemRegion;
         dst->mFileHandle = win->mFileHandle;

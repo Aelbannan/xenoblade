@@ -90,8 +90,8 @@ extern "C" void* __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn
     process->callbacks[3] = q0;
     q2 = ptmf[-1];
     process->callbacks[5] = q2;
-    me->unk54 = (u8)z;
-    me->unk55 = (u8)z;
+    me->mField54 = (u8)z;
+    me->mField55 = (u8)z;
     process->vtable = lbl_eu_8052C330;
     *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
     *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;

@@ -28,6 +28,9 @@ public:
     void AddToGlobalArray(IException* pException);
     void RemoveFromGlobalArray(IException* pException);
     void setGlobalMessage();
+    // Renders every registered exception, then shows `message` forever
+    // (halts outright when there is no message or no display).
+    static void logExceptionMessage(const wchar_t* message);
 
     static CException* convertToException(CWorkThread* pThread){
          CException* exception;

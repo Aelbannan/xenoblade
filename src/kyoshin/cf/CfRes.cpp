@@ -2850,11 +2850,11 @@ const char* lbl_eu_80661A20 = lbl_eu_806661F0;
 __declspec(section ".sdata") __attribute__((used))
 const char* lbl_eu_80661A24 = lbl_eu_806661F4;
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A28[2] = { lbl_eu_804FB1E0, lbl_eu_805267C8 };
+const void* __RTTI__Q22cf9CfResTask[2] = { lbl_eu_804FB1E0, lbl_eu_805267C8 };
 __declspec(section ".sdata") __attribute__((used))
 const void* lbl_eu_80661A30[2] = { lbl_eu_804FB1F0, lbl_eu_80526810 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A38[2] = { lbl_eu_804FB208, lbl_eu_805268B8 };
+const void* __RTTI__Q22cf5CfRes[2] = { lbl_eu_804FB208, lbl_eu_805268B8 };
 __declspec(section ".sdata") __attribute__((used))
 char lbl_eu_80661A40[8] = ".";
 __declspec(section ".sdata") __attribute__((used))
@@ -2862,31 +2862,31 @@ const void* lbl_eu_80661A48[2] = { lbl_eu_804FB258, lbl_eu_8052692C };
 __declspec(section ".sdata") __attribute__((used))
 const void* lbl_eu_80661A50[2] = { lbl_eu_804FB270, 0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A58[2] = { lbl_eu_804FB290, lbl_eu_80526998 };
+const void* __RTTI__Q22cf19IResInfoEneNpcEvent[2] = { lbl_eu_804FB290, lbl_eu_80526998 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A60[2] = { lbl_eu_804FB2A8, lbl_eu_80526A00 };
+const void* __RTTI__Q22cf14IResInfoEneNpc[2] = { lbl_eu_804FB2A8, lbl_eu_80526A00 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A68[2] = { lbl_eu_804FB2BC, lbl_eu_80526A60 };
+const void* __RTTI__Q22cf10IResInfoPc[2] = { lbl_eu_804FB2BC, lbl_eu_80526A60 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A70[2] = { lbl_eu_804FB2CC, lbl_eu_80526AC0 };
+const void* __RTTI__Q22cf15IResInfoMapBdat[2] = { lbl_eu_804FB2CC, lbl_eu_80526AC0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A78[2] = { lbl_eu_804FB2E0, lbl_eu_80526B20 };
+const void* __RTTI__Q22cf11IResInfoObj[2] = { lbl_eu_804FB2E0, lbl_eu_80526B20 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A80[2] = { lbl_eu_804FB2F0, lbl_eu_80526B80 };
+const void* __RTTI__Q22cf12IResInfoTBox[2] = { lbl_eu_804FB2F0, lbl_eu_80526B80 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A88[2] = { lbl_eu_804FB304, lbl_eu_80526BE0 };
+const void* __RTTI__Q22cf10IResInfoSe[2] = { lbl_eu_804FB304, lbl_eu_80526BE0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A90[2] = { lbl_eu_804FB314, lbl_eu_80526C40 };
+const void* __RTTI__Q22cf14IResInfoEffect[2] = { lbl_eu_804FB314, lbl_eu_80526C40 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661A98[2] = { lbl_eu_804FB328, lbl_eu_80526CA0 };
+const void* __RTTI__Q22cf11IResInfoLOD[2] = { lbl_eu_804FB328, lbl_eu_80526CA0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661AA0[2] = { lbl_eu_804FB338, lbl_eu_80526D00 };
+const void* __RTTI__Q22cf10IResInfoID[2] = { lbl_eu_804FB338, lbl_eu_80526D00 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661AA8[2] = { lbl_eu_804FB348, lbl_eu_80526D60 };
+const void* __RTTI__Q22cf18IResInfoPreloadMap[2] = { lbl_eu_804FB348, lbl_eu_80526D60 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661AB0[2] = { lbl_eu_804FB360, lbl_eu_80526DC0 };
+const void* __RTTI__Q22cf11IResInfoMap[2] = { lbl_eu_804FB360, lbl_eu_80526DC0 };
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80661AB8[2] = { lbl_eu_804FB370, 0 };
+const void* __RTTI__Q22cf8IResInfo[2] = { lbl_eu_804FB370, 0 };
 // .sbss 0x10: manager/instance state (retail sizes; 80663D84 has no named
 // users, covered by the static pad word).
 u32 lbl_eu_80663D78;

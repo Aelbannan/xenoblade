@@ -332,7 +332,7 @@ class WitnessCanonicalRelocTests(unittest.TestCase):
         self.assertFalse(_byte_identical_with_relocs(
             left, right, linker_layout=self.layout))
 
-    def test_unrelated_tu_local_addr16_site_does_not_block(self):
+    def test_unproven_tu_local_addr16_site_fails_closed(self):
         # a TU-local @N ADDR16 reloc (unresolvable without the unit reloc map)
         # present on both sides at an identical-byte offset must not stop the
         # difference-driven comparison
@@ -341,7 +341,7 @@ class WitnessCanonicalRelocTests(unittest.TestCase):
                     (6, R_PPC_ADDR16_LO, "@1234", 0)])
         right = _fn(b"\x3c\x20\x80\x67\x80\x00\x00\x00",
                     [(6, R_PPC_ADDR16_LO, "@1234", 0)])
-        self.assertTrue(_byte_identical_with_relocs(
+        self.assertFalse(_byte_identical_with_relocs(
             left, right, linker_layout=self.layout))
 
     def test_unverifiable_addr16_presence_asymmetry_rejected(self):

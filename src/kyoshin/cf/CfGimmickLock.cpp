@@ -540,7 +540,7 @@ extern const char lbl_eu_806683A8[];
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_805086EC[0x0C] = "rockTYPE";
 
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662790[2] = { lbl_eu_80508668, lbl_eu_805358EC };
+__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };
 __declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662798[2] = { lbl_eu_806683A8, nullptr };
 
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_806683A8[] = "popID1";

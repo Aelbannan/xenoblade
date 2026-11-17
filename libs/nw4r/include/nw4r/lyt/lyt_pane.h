@@ -271,6 +271,13 @@ public:
         return mbUserAllocated;
     }
 
+    const ExtUserDataList* GetExtUserDataList() const {
+        return mpExtUserDataList;
+    }
+    void SetExtUserDataList(const ExtUserDataList* pBlock) {
+        mpExtUserDataList = pBlock;
+    }
+
 protected:
     Pane* mpParent;              // at 0xC
     PaneList mChildList;         // at 0x10

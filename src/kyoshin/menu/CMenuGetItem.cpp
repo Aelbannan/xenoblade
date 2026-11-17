@@ -1,5 +1,5 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuGetItem
-// Replace stubs with high-level C/C++ during decomp.
+#define IWORK_EVENT_INLINE_DTOR
+// kyoshin/menu/CMenuGetItem - get-item screen controller.
 
 #include "kyoshin/menu/CMenuGetItem.hpp"
 
@@ -22,8 +22,44 @@
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
-extern "C" void __dt__12CMenuGetItemFv(void*, int);
-extern "C" void cbRenderBefore__12CMenuGetItemFv(void*);
+// Get-item string table (layout name, anim name, pane names, sprintf formats).
+extern char lbl_eu_805018D0[];
+// cbRenderBefore gate flag (bit 21 skips the draw).
+extern u32 lbl_eu_80663E28;
+// GetItem singleton instance (retail SDA symbol).
+extern CMenuGetItem* lbl_eu_806641A8;
+
+// View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
+// flag in the low bit of the byte at +0xBB; the repo's nw4r headers don't
+// model that field).
+struct PaneFlagView {
+    u8 _00[0xBB];
+    u8 flags; // 0xBB - bit 0 = visible
+};
+
+// View of the CProcess remove flag (CProcess keeps mIsRemove private at +0x39
+// with no accessor; the factories read it through this view).
+struct ProcessRemoveView {
+    u8 _00[0x39];
+    u8 mIsRemove; // 0x39
+};
+
+// View of the AnimTransform float this TU touches (current-frame counter at
+// +0x10; repo nw4r AnimTransform is a skeleton without members).
+struct AnimFrameView {
+    u8 _00[0x10];
+    f32 frame; // 0x10
+};
+
+// C-linkage imports (retail names are unmangled free functions in this TU;
+// MWCC mangles plain global-scope free functions with a __F suffix, so the
+// declarations must sit under extern "C" to emit the retail reloc names).
+extern "C" u8 isLandTelopActive();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+extern "C" void* BuildItemNameStr(u32);
+// Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
+// extern "C" keeps the literal identifier (no double mangling).
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 
 // Already-open get-item handlers (stubs below; the factories call them). The
 // noinline keeps the retail `bl` at the call sites (empty bodies would be
@@ -32,183 +68,41 @@ extern "C" __declspec(noinline) void CMenuGetItem_RefreshSingle(CMenuGetItem* se
 extern "C" __declspec(noinline) void CMenuGetItem_RefreshVariant(CMenuGetItem* self, u32 arg);
 extern "C" __declspec(noinline) void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1);
 
-/*
- * Single get-item screen constructor (retail symbol keeps its unmangled
- * global name). Builds the CProcess base (raw storage, abstract class so the
- * ctor is called via its C-ABI name), installs the temp then composite
- * vtables, copies the null PMF triple into the Move/Draw callback slots, then
- * constructs the UnkClass_8045F564 scratch region and zeroes/initialises the
- * tail fields. `parent` is stored at +0x60 (the render-callback target scene)
- * and `arg` at +0x94; mField_2AF is set to 1 (the single variant marker).
- */
-extern "C" CMenuGetItem* __ct__CMenuGetItem(CMenuGetItem* obj, CScn* parent,
-                                             u32 arg) {
-    __ct__8CProcessFv((CProcess*)obj);
+// ---------------------------------------------------------------------------
+// Constructors: retail keeps each as a separate out-of-line function (the
+// factories below call them). The IUICf base (CTTask, null PMF slots, fields
+// 0x54/0x55), the vtables and the scratch region are set up by the compiler;
+// the members initialise in declaration order.
+// ---------------------------------------------------------------------------
+CMenuGetItem::CMenuGetItem(CScn* parent, u32 arg)
+    : mScn(parent), mLayout(nullptr), mField_78(nullptr), mField_88(0),
+      mField_8C(0.0f), mField_90(0), mField_94(arg), mField_98(0), mField_9C(0),
+      mField_2AE(0), mField_2AF(1), mField_2B0(0) {}
 
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IWorkEvent (+0x24) / IScnRender (+0xac) sub-vtables. The pmf
-    // copy reads the null member-function-pointer triple through one base
-    // register; post-increment derefs of a const local pointer fold the first
-    // access into `lwzu` (btm_sco_init shape). Stores are [1],[0],[2] per
-    // group (retail order 0x40,0x3C,0x44 / 0x4C,0x48,0x50).
-    obj->mProcessVt = (u32)lbl_eu_8052BF70;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    obj->ptmfMove[1] = w1;
-    obj->ptmfMove[0] = w0;
-    u32 w2 = *src++;
-    obj->ptmfMove[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    obj->ptmfDraw[1] = w0;
-    obj->ptmfDraw[0] = w1;
-    w2 = *src++;
-    obj->ptmfDraw[2] = w2;
-    obj->mField_54 = 0;
-    obj->mField_55 = 0;
+CMenuGetItem::CMenuGetItem(CScn* parent, s32 arg)
+    : mScn(parent), mLayout(nullptr), mField_78(nullptr), mField_88(0),
+      mField_8C(0.0f), mField_90(0), mField_94(0), mField_98(arg), mField_9C(0),
+      mField_2AE(0), mField_2AF(1), mField_2B0(0) {}
 
-    obj->mProcessVt = (u32)lbl_eu_8052EA40;
-    obj->mIWorkEventVt = (u32)lbl_eu_8052EA40 + 0x24;
-    obj->mIScnRenderVt = (u32)lbl_eu_8052EA40 + 0xac;
-    obj->mScn = parent;
+CMenuGetItem::CMenuGetItem(CScn* parent, u32 arg0, u32 arg1)
+    : mScn(parent), mLayout(nullptr), mField_78(nullptr), mField_88(0),
+      mField_8C(0.0f), mField_90(0), mField_94(0), mField_98(0), mField_9C(arg0),
+      mField_9D(arg1), mField_2AE(0), mField_2AF(0), mField_2B0(0) {}
 
-    __ct__17UnkClass_8045F564Fv(&obj->mUnkClass[0]);
-
-    obj->mLayout = 0;
-    obj->mField_78 = 0;
-    obj->mField_88 = 0;
-    obj->mField_8C = lbl_eu_80667418;
-    obj->mField_90 = 0;
-    obj->mField_94 = arg;
-    obj->mField_98 = 0;
-    obj->mField_9C = 0;
-    obj->mField_2AE = 0;
-    obj->mField_2AF = 1;
-    obj->mField_2B0 = 0;
-    return obj;
-}
-
-/*
- * Second get-item variant constructor (retail placeholder name __ct__80149878,
- * not yet a target). Same 0x2B4 layout construction as __ct__CMenuGetItem, but
- * the ctor arg is stored at +0x98 (retail store order 0x94=0, 0x98=arg).
- */
-extern "C" CMenuGetItem* __ct__80149878(CMenuGetItem* obj, CScn* parent,
-                                         u32 arg) {
-    __ct__8CProcessFv((CProcess*)obj);
-
-    obj->mProcessVt = (u32)lbl_eu_8052BF70;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    obj->ptmfMove[1] = w1;
-    obj->ptmfMove[0] = w0;
-    u32 w2 = *src++;
-    obj->ptmfMove[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    obj->ptmfDraw[1] = w0;
-    obj->ptmfDraw[0] = w1;
-    w2 = *src++;
-    obj->ptmfDraw[2] = w2;
-    obj->mField_54 = 0;
-    obj->mField_55 = 0;
-
-    obj->mProcessVt = (u32)lbl_eu_8052EA40;
-    obj->mIWorkEventVt = (u32)lbl_eu_8052EA40 + 0x24;
-    obj->mIScnRenderVt = (u32)lbl_eu_8052EA40 + 0xac;
-    obj->mScn = parent;
-
-    __ct__17UnkClass_8045F564Fv(&obj->mUnkClass[0]);
-
-    obj->mLayout = 0;
-    obj->mField_78 = 0;
-    obj->mField_88 = 0;
-    obj->mField_8C = lbl_eu_80667418;
-    obj->mField_90 = 0;
-    obj->mField_94 = 0;
-    obj->mField_98 = arg;
-    obj->mField_9C = 0;
-    obj->mField_2AE = 0;
-    obj->mField_2AF = 1;
-    obj->mField_2B0 = 0;
-    return obj;
-}
-
-/*
- * Multi get-item variant constructor (retail placeholder name __ct__80149970).
- * Same base construction as __ct__CMenuGetItem, but takes two extra args
- * stored at +0x9C/+0x9D, keeps mField_94 and mField_2AF at 0.
- */
-extern "C" CMenuGetItem* __ct__80149970(CMenuGetItem* obj, CScn* parent,
-                                         u32 arg0, u32 arg1) {
-    __ct__8CProcessFv((CProcess*)obj);
-
-    obj->mProcessVt = (u32)lbl_eu_8052BF70;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    obj->ptmfMove[1] = w1;
-    obj->ptmfMove[0] = w0;
-    u32 w2 = *src++;
-    obj->ptmfMove[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    obj->ptmfDraw[1] = w0;
-    obj->ptmfDraw[0] = w1;
-    w2 = *src++;
-    obj->ptmfDraw[2] = w2;
-    obj->mField_54 = 0;
-    obj->mField_55 = 0;
-
-    obj->mProcessVt = (u32)lbl_eu_8052EA40;
-    obj->mIWorkEventVt = (u32)lbl_eu_8052EA40 + 0x24;
-    obj->mIScnRenderVt = (u32)lbl_eu_8052EA40 + 0xac;
-    obj->mScn = parent;
-
-    __ct__17UnkClass_8045F564Fv(&obj->mUnkClass[0]);
-
-    obj->mLayout = 0;
-    obj->mField_78 = 0;
-    obj->mField_88 = 0;
-    obj->mField_8C = lbl_eu_80667418;
-    obj->mField_90 = 0;
-    obj->mField_94 = 0;
-    obj->mField_98 = 0;
-    obj->mField_9C = arg0;
-    obj->mField_9D = arg1;
-    obj->mField_2AE = 0;
-    obj->mField_2AF = 0;
-    obj->mField_2B0 = 0;
-    return obj;
-}
-
-CMenuGetItem::~CMenuGetItem() {
-    // Scratch region + CProcess base destruction are driven by hand (retail
-    // shape: member dtor with r4=-1, then the base dtor guarded by the nested
-    // double null-check, an MWCC D2-inlined-into-D1 artifact). The conditional
-    // operator delete is auto-emitted from the dtor flags.
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->~UnkClass_8045F564();
-    if (this != 0) {
-        if (this != 0) {
-            // C-ABI base dtor call with flags=0 (retail shape).
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
-}
+// ---------------------------------------------------------------------------
+// Dtor: the scratch region and the IUICf/IWorkEvent/IScnRender bases are
+// destroyed by the compiler.
+// ---------------------------------------------------------------------------
+CMenuGetItem::~CMenuGetItem() {}
 
 void CMenuGetItem::Init() {
     // Scratch MEM2 region for the layout file data (guarded by the RAII
     // Class_8045F858 host so the region is released on every exit path).
     // The region address is recomputed at each use (this+0x64) - a held
     // pointer local would claim an extra callee-saved register.
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->createRegion(
+    mMemRegion.createRegion(
         (int)mtl::MemManager::getHandleMEM2(), 0x1000, lbl_eu_805018D0, 0);
-    Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0]));
+    Class_8045F858 memHost(&mMemRegion);
 
     mField_90 = isLandTelopActive();
 
@@ -228,7 +122,7 @@ void CMenuGetItem::Init() {
         ApplyFontToTxtPanes(rootPane, fontResult);
 
         mLayout->SetAnimationEnable(mField_78, true);
-        reinterpret_cast<AnimFrameView*>(mField_78)->frame = lbl_eu_80667418;
+        reinterpret_cast<AnimFrameView*>(mField_78)->frame = 0.0f;
         mLayout->Animate(0);
 
         // Resolve the three variant panes by name.
@@ -286,31 +180,23 @@ void CMenuGetItem::Init() {
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805018D0[0x8c], (char*)title, 0);
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->addRenderCB(cb, 7, 0);
+    mScn->addRenderCB(this, 7, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->validateHeap();
+    mMemRegion.validateHeap();
 }
 
 void CMenuGetItem::Term() {
     CDeviceVI::waitForDrawDone();
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->removeRenderCB(cb);
+    mScn->removeRenderCB(this);
 
     if (mLayout != NULL) {
         delete mLayout;
         mLayout = NULL;
     }
 
-    reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0])->deleteRegion();
+    mMemRegion.deleteRegion();
 
     if (lbl_eu_806641A8 == this) {
         lbl_eu_806641A8 = NULL;
@@ -337,13 +223,9 @@ void CMenuGetItem::cbRenderBefore() {
     }
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo (CMenuGCItem idiom): a C++ local would also emit a
-    // scope-exit (virtual) destructor on top of the explicit call.
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
 }
 
 /*
@@ -353,11 +235,11 @@ void CMenuGetItem::cbRenderBefore() {
  * memory, construct it, store it in the singleton and register it under
  * `registParent`, returning the stored instance.
  */
-CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u32 arg) {
+extern "C" CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u32 arg) {
     CMenuGetItem* inst = lbl_eu_806641A8;
-    if (inst != 0 && inst->mIsRemove == 0) {
-        if (inst->mField_54 != 0) {
-            inst->mField_54 = 0;
+    if (inst != 0 && reinterpret_cast<ProcessRemoveView*>(inst)->mIsRemove == 0) {
+        if (inst->mField54 != 0) {
+            inst->mField54 = 0;
         }
         CMenuGetItem_RefreshSingle(lbl_eu_806641A8, arg);
         return 0;
@@ -365,11 +247,9 @@ CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u3
 
     CMenuGetItem* obj = (CMenuGetItem*)mtl::MemManager::allocate(
         sizeof(CMenuGetItem), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // Reassign from the ctor return so obj stays in volatile r3 (retail
-        // never spills it to a callee-saved register).
-        obj = __ct__CMenuGetItem(obj, parent, arg);
-    }
+    // Reassign from the ctor return so obj stays in volatile r3 (retail
+    // never spills it to a callee-saved register).
+    obj = new (obj) CMenuGetItem(parent, arg);
     lbl_eu_806641A8 = obj;
     ((CProcess*)obj)->Regist(registParent, 0);
     return lbl_eu_806641A8;
@@ -377,14 +257,14 @@ CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u3
 
 /*
  * Second get-item variant factory (CMenuGetItem_CreateVariant) - same shape as
- * CMenuGetItem_CreateSingle but constructs via __ct__80149878 and forwards to
+ * CMenuGetItem_CreateSingle but constructs the variant and forwards to
  * CMenuGetItem_RefreshVariant.
  */
-CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u32 arg) {
+extern "C" CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u32 arg) {
     CMenuGetItem* inst = lbl_eu_806641A8;
-    if (inst != 0 && inst->mIsRemove == 0) {
-        if (inst->mField_54 != 0) {
-            inst->mField_54 = 0;
+    if (inst != 0 && reinterpret_cast<ProcessRemoveView*>(inst)->mIsRemove == 0) {
+        if (inst->mField54 != 0) {
+            inst->mField54 = 0;
         }
         CMenuGetItem_RefreshVariant(lbl_eu_806641A8, arg);
         return 0;
@@ -392,9 +272,7 @@ CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u
 
     CMenuGetItem* obj = (CMenuGetItem*)mtl::MemManager::allocate(
         sizeof(CMenuGetItem), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__80149878(obj, parent, arg);
-    }
+    obj = new (obj) CMenuGetItem(parent, static_cast<s32>(arg));
     lbl_eu_806641A8 = obj;
     ((CProcess*)obj)->Regist(registParent, 0);
     return lbl_eu_806641A8;
@@ -402,14 +280,14 @@ CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u
 
 /*
  * Multi get-item variant factory (CMenuGetItem_CreateMulti) - same shape with one extra
- * arg; constructs via __ct__80149970 and forwards both args to CMenuGetItem_AppendEntry.
+ * arg; constructs the multi variant and forwards both args to CMenuGetItem_AppendEntry.
  */
-CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32 arg0,
+extern "C" CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32 arg0,
                             u32 arg1) {
     CMenuGetItem* inst = lbl_eu_806641A8;
-    if (inst != 0 && inst->mIsRemove == 0) {
-        if (inst->mField_54 != 0) {
-            inst->mField_54 = 0;
+    if (inst != 0 && reinterpret_cast<ProcessRemoveView*>(inst)->mIsRemove == 0) {
+        if (inst->mField54 != 0) {
+            inst->mField54 = 0;
         }
         CMenuGetItem_AppendEntry(lbl_eu_806641A8, arg0, arg1);
         return 0;
@@ -417,9 +295,7 @@ CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32
 
     CMenuGetItem* obj = (CMenuGetItem*)mtl::MemManager::allocate(
         sizeof(CMenuGetItem), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__80149970(obj, parent, arg0, arg1);
-    }
+    obj = new (obj) CMenuGetItem(parent, arg0, arg1);
     lbl_eu_806641A8 = obj;
     ((CProcess*)obj)->Regist(registParent, 0);
     return lbl_eu_806641A8;
@@ -427,16 +303,16 @@ CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32
 
 extern "C" unsigned long CMenuGetItem_IsActive(void) { return lbl_eu_806641A8 != 0; }
 
-u8 CMenuGetItem_GetField90() {
+extern "C" u8 CMenuGetItem_GetField90() {
     if (lbl_eu_806641A8 != NULL) {
         return lbl_eu_806641A8->mField_90;
     }
     return 0;
 }
 
-void CMenuGetItem_SetField54() {
+extern "C" void CMenuGetItem_SetField54() {
     if (lbl_eu_806641A8 != NULL) {
-        lbl_eu_806641A8->mField_54 = 1;
+        lbl_eu_806641A8->mField54 = 1;
     }
 }
 
@@ -498,8 +374,5 @@ extern "C" void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1)
 
 void CMenuGetItem_TickDisplay(){}
 
-void CMenuGetItem_DtorThunk58(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 
-void CMenuGetItem_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
 
-void CMenuGetItem_DtorThunk5C(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }

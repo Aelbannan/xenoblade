@@ -7,7 +7,6 @@
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 #define spInstance lbl_eu_80665708
 extern "C" CLibHbmControl* lbl_eu_80665708;
-extern const float lbl_eu_8066A578;  // 0.0f (retail wkStandbyLogin zero)
 extern void* __dt__5CProcFv(void* self, int flag);
 extern bool wkStandbyLogin__5CProcFv(void* self);
 extern bool wkStandbyLogout__5CProcFv(void* self);
@@ -61,9 +60,9 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523190[0x20] = {
     0x43,0x4C,0x69,0x62,0x48,0x62,0x6D,0x43,0x6F,0x6E,0x74,0x72,0x6F,0x6C,0x00,0x00,
     0x43,0x4C,0x69,0x62,0x48,0x62,0x6D,0x43,0x6F,0x6E,0x74,0x72,0x6F,0x6C,0x00,0x00,
 };
-extern "C" u32 lbl_eu_806637D0[2];
+extern "C" u32 __RTTI__14CLibHbmControl[2];
 extern "C" u32 lbl_eu_8056D290[40] = {
-    (u32)&lbl_eu_806637D0, 0x00000000,
+    (u32)&__RTTI__14CLibHbmControl, 0x00000000,
     (u32)&HBMBlob::__dt__14CLibHbmControlFv,
     (u32)&HBMBlob::WorkEvent1__10IWorkEventFPvPCc, (u32)&HBMBlob::OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&HBMBlob::WorkEvent3__10IWorkEventFPv, (u32)&HBMBlob::WorkEvent4__10IWorkEventFv,
@@ -92,7 +91,7 @@ extern "C" u32 lbl_eu_8056D330[8] = {
     (u32)&HBMBlob::__RTTI__5CProc, 0x00000000,
     0x00000000, 0x00000000,
 };
-extern "C" u32 lbl_eu_806637D0[2] = { (u32)&lbl_eu_80523190, (u32)&lbl_eu_8056D330 };
+extern "C" u32 __RTTI__14CLibHbmControl[2] = { (u32)&lbl_eu_80523190, (u32)&lbl_eu_8056D330 };
 
 // Own-class virtuals as plain free functions (retail names).
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
@@ -263,7 +262,7 @@ bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
     subView->setRect(rect);
 
     // Set position to zero (four floats loaded from sdata)
-    float zero = lbl_eu_8066A578;
+    float zero = 0.0f;
     subView->unk444.x = zero;
     subView->unk444.y = zero;
     subView->unk444.z = zero;

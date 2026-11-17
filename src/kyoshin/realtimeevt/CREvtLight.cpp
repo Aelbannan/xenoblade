@@ -1,7 +1,7 @@
 // TU: kyoshin/realtimeevt/CREvtLight
-// Class: CREvtLight (inherits from cf::CREvtObj)
+// Class: cf::CREvtLight (inherits from cf::CREvtObj)
 // Own vtable at 0x80533D90
-// Total size: 0x50
+// Total size: 0x24
 
 #include <types.h>
 #include <nw4r/math.h>
@@ -38,70 +38,38 @@ extern "C" void scnLgtRemoveLgtItem(void* mgr, void* handle);
 extern "C" void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
 extern "C" u32   REvtCam_IsTaskListEmpty(void);
 
-// Own vtable and math constants / helpers.
-extern "C" u32 lbl_eu_80533D90[];
-extern "C" void  __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg);
-extern "C" void  __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-
+// Math constants.
 extern "C" const f32 lbl_eu_80667F08;  // angle conversion factor
 extern "C" const f32 lbl_eu_80667F0C;  // pi
 extern "C" const f32 lbl_eu_80667F10;  // pi/2 threshold base
 
 // ============================================================================
-// Constructor: __ct__CREvtLight
-// r3 = this, r4 = arg
-// Calls CREvtObj(this, 2), sets own vtable, initializes fields
+// Constructor: base CREvtObj(2) (light kind), then the light fields.
 // ============================================================================
-extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
-    __ct__Q22cf8CREvtObjFi((cf::CREvtObj*)self, 2);
-    *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
-    self->field_14 = 0;
-    self->field_18 = arg;
-    self->field_20 = nullptr;
-    return self;
+cf::CREvtLight::CREvtLight(u32 arg) : CREvtObj(2) {
+    field_14 = 0;
+    field_18 = arg;
+    field_20 = nullptr;
 }
 
 // ============================================================================
-// __ct__801C3604: Reassignment constructor with cleanup
-// r3 = this, r4 = dealloc_flag
-// If this != null, releases old resource, calls CREvtObj dtor, optionally
-// deallocates from CREvtMem.
+// Destructor (vtable slot 0): releases the light resource and notifies the
+// map-effect object; the CREvtObj base dtor and class operator delete
+// (CREvtMem arena) follow implicitly.
 // ============================================================================
-CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
-    if (self != nullptr) {
-        cf::CREvtObj* base = (cf::CREvtObj*)self;
-        void* oldResource = self->field_20;
-
-        // Update vtable before cleanup
-        *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
-
-        if (oldResource != nullptr) {
-            // Release old resource through CScn manager
-            void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
-            scnLgtRemoveLgtItem(mgr, oldResource);
-            self->field_20 = nullptr;
-
-            // Notify the object behind the game manager's +0x2F3C pointer.
-            if (cf::CfGameManager::getGameSubManager() != nullptr) {
-                if (reinterpret_cast<GameSubMapFxView*>(
-                        cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
-                    CScnEnvLgtCtrlListItem* fx = reinterpret_cast<GameSubMapFxView*>(
-                        cf::CfGameManager::getGameSubManager())->mapFx;
-                    fx->v24(1);
-                }
+cf::CREvtLight::~CREvtLight() {
+    // (No `oldResource` local: a local here adds redundant destroy-base
+    // actions to the retail exception table.)
+    if (field_20 != nullptr) {
+        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+        scnLgtRemoveLgtItem(mgr, field_20);
+        field_20 = nullptr;
+        if (cf::CfGameManager::getGameSubManager() != nullptr) {
+            if (reinterpret_cast<GameSubMapFxView*>(cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
+                reinterpret_cast<GameSubMapFxView*>(cf::CfGameManager::getGameSubManager())->mapFx->v24(1);
             }
         }
-
-        // Call base destructor
-        __dt__Q22cf8CREvtObjFv(base, 0);
-
-        // Optionally deallocate from CREvtMem
-        if (dealloc_flag > 0) {
-            cf::CREvtObj::operator delete(self);
-        }
     }
-
-    return self;
 }
 
 // ============================================================================
@@ -147,14 +115,11 @@ extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceNam
 }
 
 // ============================================================================
-// CREvtLight_noop7C4: Empty virtual function
+// vfunc_1C / vfunc_04: empty overrides
 // ============================================================================
-void CREvtLight_noop7C4(void) {}
+void cf::CREvtLight::vfunc_1C() {}
 
-// ============================================================================
-// CREvtLight_noop7C8: Empty virtual function
-// ============================================================================
-void CREvtLight_noop7C8(void) {}
+void cf::CREvtLight::vfunc_04() {}
 
 // ============================================================================
 // CREvtLight_DistToTarget: Vector distance to target
@@ -162,7 +127,7 @@ void CREvtLight_noop7C8(void) {}
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-extern "C" f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
+extern "C" f32 CREvtLight_DistToTarget(CREvtLightPose* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
@@ -186,7 +151,7 @@ extern "C" f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
 // Computes horizontal angle from this to target, returns state (1, 2, or 4)
 // based on angle thresholds.
 // ============================================================================
-extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
+extern "C" int CREvtLight_AngleState(CREvtLightPose* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
@@ -242,35 +207,8 @@ extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
 // objects pack at 4-align with no padding, and codegen is unchanged.
 // ============================================================================
 
-// Cross-TU vtable slots (flat retail names).
-extern "C" void CREvtObjVfunc08Default();
-extern "C" void vfunc_0C__Q22cf8CREvtObjFv();
-extern "C" void vfunc_10__Q22cf8CREvtObjFv();
-extern "C" void vfunc_14__Q22cf8CREvtObjFv();
-extern "C" void isBusy__Q22cf8CREvtObjFv();
-extern u32 lbl_eu_80662648[];  // sdata word pair (defined below).
-
-// [.data] 0x80533D90-0x80533DB8 (40B): CREvtLight vtable (sdata locator,
-// null word, dtor, and 7 virtual slots; retail lays one label over all 10).
-u32 lbl_eu_80533D90[10] = {
-    (u32)&lbl_eu_80662648, 0x00000000,
-    (u32)&__ct__801C3604, (u32)&CREvtLight_noop7C8,
-    (u32)&CREvtObjVfunc08Default, (u32)&vfunc_0C__Q22cf8CREvtObjFv,
-    (u32)&vfunc_10__Q22cf8CREvtObjFv, (u32)&vfunc_14__Q22cf8CREvtObjFv,
-    (u32)&isBusy__Q22cf8CREvtObjFv, (u32)&CREvtLight_noop7C4,
-};
-
-// [.rodata] 0x80505360-0x80505370 (16B): class-name string (unreferenced pool
-// bytes, kept under the retail label; sized [0x10] to carry the trailing pad).
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
-char lbl_eu_80505360[0x10] = {
-    0x63,0x66,0x3A,0x3A,0x43,0x52,0x45,0x76,0x74,0x4C,0x69,0x67,0x68,0x74,0x00,0x00,
-};
-
-// [.sdata] 0x80662648-0x80662650 (8B): null word pair referenced by vtable[0].
-#pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") u32 lbl_eu_80662648[2] = { 0x00000000, 0x00000000 };
-#pragma section data_type ".data" ".data"
+// The vtable (0x80533D90), RTTI record and "cf::CREvtLight" name string are
+// compiler-emitted for the class above.
 
 // [.sdata2] 0x80667F08-0x80667F18 (16B): lfs-read float trio + 4 zero tail
 // (section 8-align pad). F08 = pi/128 angle factor, F0C = 60.0, F10 = 2.0.

@@ -19,14 +19,6 @@ class CScnItemModelNw4r;
 extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* ths, u32 value);
 
 // Shared .sdata2 constants referenced by CMdlMouth (retail linker names).
-extern const f32 lbl_eu_8066B310; // reset mouth-open angle (1.0f)
-extern const f32 lbl_eu_8066B314; // startup mouth-open scalar
-extern const f32 lbl_eu_8066B318; // random-range base
-extern const f32 lbl_eu_8066B31C; // random-range multiplier (0x14)
-extern const f32 lbl_eu_8066B320; // random-range multiplier (0x18)
-extern const f32 lbl_eu_8066B330; // angle -> sin index scale
-extern const f32 lbl_eu_8066B334; // rotate delta scale
-extern const f32 lbl_eu_8066B338; // final-angle -> fctiwz scale
 // SRT offset table (.rodata, 3 entries), indexed by the mouth-open stage.
 extern const f32 lbl_eu_805247B4[];
 

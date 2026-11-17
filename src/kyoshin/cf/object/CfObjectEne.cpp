@@ -25,83 +25,6 @@ extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
 extern "C" void aiResetTables(u8* obj);
 extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);
 
-// .sdata2 pool (retail 0x70): head float struct, the ene1Lv tag string
-// (lbl_eu_80666974, retail size 7), eight mid float scalars, tail struct.
-// Split (not one struct) so the tag carries its retail label; the pieces'
-// natural alignment reproduces the retail padding exactly (1 pad byte
-// after the tag, 4 before the tail). Mid scalars are extern: MWCC
-// const-propagates local const scalars into anonymous pool slots and the
-// named definitions vanish; externals are emitted in order (same idiom
-// as lbl_eu_806669C8/D0 below). Code uses labels via the defines below;
-// the hpp extern decls stay (parsed before the defines, never referenced).
-// Tail f13/d4 are real
-// retail-named objects below (both orphans: .text + relocs verified
-// byte-identical with and without that split; the literal pool tail the
-// rule trims past 0x70 is unaffected).
-struct Sdata2_EneHead {
-    float f0, f1, f2;
-};
-// Mid floats as eight scalars, not a struct: MWCC places aggregate
-// objects at 8-alignment (mid struct landed at 0x18, retail needs 0x14)
-// while 4-aligned scalars pack tightly after the tag's single pad byte.
-struct Sdata2_EneTail {
-    double d0, d1;
-    float f11, f12;
-    double d2, d3;
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_EneHead sdata2_EneHead = {
-    0.0f, 0.6f, 1.8f,
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(1)))
-extern const char lbl_eu_80666974[] = "ene1Lv";
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f3 = 10.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f4 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f5 = 4.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f6 = 2.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f7 = 3.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f8 = 180.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f9 = 100.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float ene_f10 = 0.1f;
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_EneTail sdata2_EneTail = {
-    4503599627370496.0, 4503601774854144.0,
-    0.01f, 10000.0f,
-    0.5, -0.5
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-extern const float lbl_eu_806669C8 = 180.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-extern const double lbl_eu_806669D0 = 4503599627370496.0;
-#define lbl_eu_80666968 sdata2_EneHead.f0
-#define lbl_eu_8066696C sdata2_EneHead.f1
-#define lbl_eu_80666970 sdata2_EneHead.f2
-#define lbl_eu_8066697C ene_f3
-#define lbl_eu_80666980 ene_f4
-#define lbl_eu_80666984 ene_f5
-#define lbl_eu_80666988 ene_f6
-#define lbl_eu_8066698C ene_f7
-#define lbl_eu_80666990 ene_f8
-#define lbl_eu_80666994 ene_f9
-#define lbl_eu_80666998 ene_f10
-#define lbl_eu_806669A0 sdata2_EneTail.d0
-#define lbl_eu_806669A8 sdata2_EneTail.d1
-#define lbl_eu_806669B0 sdata2_EneTail.f11
-#define lbl_eu_806669B4 sdata2_EneTail.f12
-#define lbl_eu_806669B8 sdata2_EneTail.d2
-#define lbl_eu_806669C0 sdata2_EneTail.d3
-
-
-
-
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650
 struct ParamCopyBlock {
     u32 f00;
@@ -115,6 +38,7 @@ struct ParamCopyBlock {
     f32 f5C;
     u32 f60, f64, f68, f6C, f70, f74;
 };
+
 
 
 // Thunk note: UVF20..23 are 0x10 bctr thunks onto UVF13..16
@@ -157,19 +81,7 @@ extern "C" cf::CfObjectEne* __ct__cf_CfObjectEne(cf::CfObjectEne* self) {
     return self;
 }
 
-// us-800ae274: CAIAction dtor. Clears the slot-block tail words, guarded by
-// addic.-beq null checks on the block addresses at +4 and +0xC (MWCC cannot
-// fold `&this->unk4 != 0` / `addr+8 != 0`, so both stay as folded address
-// tests). The deleting-dtor wrapper frees when the flag > 0.
-cf::CAIAction::~CAIAction() {
-    cf::CfCAIActionBlockView* blk = (cf::CfCAIActionBlockView*)&this->unk4;
-    if (blk != NULL) {
-        if (&blk->field_8 != NULL) {
-            blk->field_210 = 0;
-            blk->field_20C = 0;
-        }
-    }
-}
+
 
 // us-800ae1f4: CfObjectActor dtor. The retail explicitly destroys the
 // CfObjectMove subobject at self+0x3E9C (non-deleting flag 0, direct bl), then
@@ -202,11 +114,28 @@ extern "C" cf::CfObjectActor* __dt__Q22cf13CfObjectActorFv(cf::CfObjectActor* se
     return self;
 }
 
+
+
+// us-800ae274: CAIAction dtor. Clears the slot-block tail words, guarded by
+// addic.-beq null checks on the block addresses at +4 and +0xC (MWCC cannot
+// fold `&this->unk4 != 0` / `addr+8 != 0`, so both stay as folded address
+// tests). The deleting-dtor wrapper frees when the flag > 0.
+cf::CAIAction::~CAIAction() {
+    cf::CfCAIActionBlockView* blk = (cf::CfCAIActionBlockView*)&this->unk4;
+    if (blk != NULL) {
+        if (&blk->field_8 != NULL) {
+            blk->field_210 = 0;
+            blk->field_20C = 0;
+        }
+    }
+}
+
+
 // Splitter-renamed deleting destructor (retail symbol is address-derived, no
 // class name): zero the +0x208/+0x204 words, then free when a delete flag is
 // passed, then return the object. Mirrors the matched __dt__800BAA24 pattern
 // (CfObjectModel.cpp) - the `__` in the name makes MWCC keep it verbatim.
-u8* __dt__800ADA08(u8* object, s32 deleteFlag) {
+extern "C" u8* __dt__800ADA08(u8* object, s32 deleteFlag) {
     if (object != 0) {
         ((cf::CfDtor800ADA08View*)object)->field_0x208 = 0;
         ((cf::CfDtor800ADA08View*)object)->field_0x204 = 0;
@@ -215,6 +144,7 @@ u8* __dt__800ADA08(u8* object, s32 deleteFlag) {
     }
     return object;
 }
+
 
 // us-800ae320: CfObjectEne (deleting) dtor. Free-function treatment (same as
 // the base CfObjectActor dtor above: the header MI layout is +0x80 off
@@ -255,6 +185,8 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
     return self;
 }
 
+
+
 // us-800ae3f8: CfObjectEne vf2. Runs the CfObjectMove subobject's
 // CfObject_initEventState (Model UVF2 / slot +0x58), dispatches the subobject
 // vtable slot +0x158 with flag 1, clears two battle-state flag words
@@ -285,10 +217,23 @@ extern "C" int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self)
     dispatchItemLoad(self, 0x10000000);
     CfObjectMove_setRegionAttached(&((cf::CfEneMoveBaseC*)self)->base, 1);
     u8* region = (u8*)self + 0x44A8;
-    ColiSetMoveVec2(region, 0, lbl_eu_8066696C, lbl_eu_80666970);
+    ColiSetMoveVec2(region, 0, 0.6f, 1.8f);
     ((cf::CfEneReloadArea*)region)->field_0xB2 = 0xC8;
     return 1;
 }
+
+// Retail defines two file-scope name pointers at this point in the TU:
+//   char* <lbl_eu_80661CB8> = "ene1Lv";      // 7-byte literal -> .sdata2, between 1.8f and 10.0f
+//   char* <lbl_eu_80661CBC> = <lbl_eu_804FC148 string>;  // 10-byte literal -> .rodata
+// (loadEnemyParams patches index [3] of both). Verified by probe: a
+// `char* p = "ene1Lv";` here reproduces the retail 0x60 .sdata2 pool exactly.
+// They are not defined here yet because the .sdata slice 0x80661CA0-0x80661CC8
+// (these pointers plus this TU's RTTI records) is still split to
+// code_800B06A4.cpp; this unit cannot own it until it emits its real
+// classes. Until then the pool is 8 bytes short and lbl_eu_80666974 is
+// undefined at link.
+
+
 
 // us-800ae4a0: CfObjectEne::updateEnemyBattleState (retail Fv; this in r3). Probes
 // the +0x4 sub-object's actor id (vtable +0x30 first word) against
@@ -357,6 +302,8 @@ defaultPath:
 done:;
 }
 
+
+
 // us-800ae674: CfObjectEne::loadEnemyParams (retail Fv; this in r3). Full
 // enemy-parameter setup from two bdat tables. The row id (+0x3F28) is
 // RE-LOADED before every column read (the bdat calls may modify it - retail
@@ -381,7 +328,7 @@ void cf::CfObjectEne::loadEnemyParams() {
     c5.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x5], v->field_0x3F28);
     this->CActorParam_setEnemyType(c5.b);
     cA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
-    this->CActorParam_propagateScale((f32)(u32)cA.b / lbl_eu_8066697C);
+    this->CActorParam_propagateScale((f32)(u32)cA.b / 10.0f);
     c10.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10], v->field_0x3F28);
     this->CActorParam_setActorType(c10.b);
     c17.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17], v->field_0x3F28);
@@ -396,7 +343,7 @@ void cf::CfObjectEne::loadEnemyParams() {
         ((cf::CfObjectMoveAt3E9C*)this)->CfObjectMove_recordMoveValue((f32)(s32)(u32)k22);
         u8 k2d = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2D], v->field_0x3F28);
         ((cf::CfObjectAt3E9C*)this)->CfObject_setMoveValue((f32)(s32)(u32)k2d);
-        ((cf::CfObjectAt3E9C*)this)->CfObject_setMoveScale(lbl_eu_80666980);
+        ((cf::CfObjectAt3E9C*)this)->CfObject_setMoveScale(1.0f);
         if (k22 == 0 || k2d == 0)
             p->field_0x3374 |= 0x1000;
     }
@@ -410,9 +357,9 @@ void cf::CfObjectEne::loadEnemyParams() {
     this->CActorParam_setGauge1624((f32)(u32)c53.h * ml::deg2rad);
     this->CActorParam_setGaugeFlagA(1);
     this->CActorParam_setGaugeFlagB(1);
-    this->CActorParam_setGaugeRateA(lbl_eu_80666984);
-    this->CActorParam_setGaugeRateB(lbl_eu_80666984);
-    this->CActorParam_setMoveRate(lbl_eu_80666988 * (ml::pi / lbl_eu_8066698C));
+    this->CActorParam_setGaugeRateA(4.0f);
+    this->CActorParam_setGaugeRateB(4.0f);
+    this->CActorParam_setMoveRate(2.0f * (ml::pi / 3.0f));
     c60.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x60], v->field_0x3F28);
     p->field_0x1648 |= c60.b;
     c6A.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x6A], v->field_0x3F28);
@@ -427,7 +374,7 @@ void cf::CfObjectEne::loadEnemyParams() {
     c96t.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
     if (c96t.b != 0) {
         c96b.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
-        this->CActorParam_setHitRange((ml::pi / lbl_eu_80666990) * (f32)(u32)c96b.b);
+        this->CActorParam_setHitRange((ml::pi / 180.0f) * (f32)(u32)c96b.b);
     }
     cf::CfEneRatesView* g = (cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock();
     cA2.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA2], v->field_0x3F28);
@@ -436,8 +383,8 @@ void cf::CfObjectEne::loadEnemyParams() {
     f32 w = (f32)(s32)((u32)cA5.h * 100);
     g->field_0x10 = w;
     g->field_0x4 = w;
-    g->field_0xC = lbl_eu_80666968;
-    g->field_0x18 = lbl_eu_80666994;
+    g->field_0xC = 0.0f;
+    g->field_0x18 = 100.0f;
     cAC.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xAC], v->field_0x3F28);
     g->field_0x1C = (s16)cAC.h;
     cB0.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB0], v->field_0x3F28);
@@ -445,11 +392,11 @@ void cf::CfObjectEne::loadEnemyParams() {
     cB4.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xB4], v->field_0x3F28);
     g->field_0x20 = (s16)cB4.h;
     cBA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xBA], v->field_0x3F28);
-    g->field_0x40 = (f32)(u32)cBA.b / lbl_eu_8066697C;
+    g->field_0x40 = (f32)(u32)cBA.b / 10.0f;
     cC9.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xC9], v->field_0x3F28);
-    g->field_0x44 = (f32)(u32)cC9.h / lbl_eu_80666994;
+    g->field_0x44 = (f32)(u32)cC9.h / 100.0f;
     cD7.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xD7], v->field_0x3F28);
-    g->field_0x48 = (f32)(u32)cD7.h / lbl_eu_80666994;
+    g->field_0x48 = (f32)(u32)cD7.h / 100.0f;
     cDF.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xDF], v->field_0x3F28);
     g->field_0x56 = cDF.b;
     cE7.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xE7], v->field_0x3F28);
@@ -489,7 +436,7 @@ void cf::CfObjectEne::loadEnemyParams() {
         if (u129.b & 0x20) {
             this->CActorParam_propagateScale((f32)(s32)sum);
         } else {
-            this->CActorParam_propagateScale(lbl_eu_80666998 * (f32)(s32)sum);
+            this->CActorParam_propagateScale(0.1f * (f32)(s32)sum);
         }
         g->field_0x0 = g->field_0x0 + (u32)sn;
         g->field_0x4 = (f32)sn * (f32)u102.h + g->field_0x4;
@@ -497,14 +444,14 @@ void cf::CfObjectEne::loadEnemyParams() {
         g->field_0x1E = (s16)((f32)sn * (f32)u115.h + (f32)g->field_0x1E);
         g->field_0x20 = (s16)((f32)sn * (f32)u11F.h + (f32)g->field_0x20);
         if (g->field_0x0 < 1) g->field_0x0 = 1;
-        if (g->field_0x4 < lbl_eu_80666980) g->field_0x4 = lbl_eu_80666980;
+        if (g->field_0x4 < 1.0f) g->field_0x4 = 1.0f;
         if (g->field_0x1C < 1) g->field_0x1C = 1;
         if (g->field_0x1E < 1) g->field_0x1E = 1;
         if (g->field_0x20 < 1) g->field_0x20 = 1;
         g->field_0x10 = g->field_0x4;
     } else {
         elseA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
-        this->CActorParam_propagateScale(lbl_eu_80666998 * (f32)(s32)(u32)elseA.b);
+        this->CActorParam_propagateScale(0.1f * (f32)(s32)(u32)elseA.b);
         p->field_0x3F00 |= 0x04000000;
     }
     u32 cap = g->field_0x0;
@@ -544,7 +491,7 @@ void cf::CfObjectEne::loadEnemyParams() {
             bufa.field_0x14 = (u16)p->field_0x1638;
             bufa.field_0x16 = (u16)p->field_0x1640;
             bufa.field_0x18 = (u16)p->field_0x1644;
-            bufa.field_0x20 = lbl_eu_80666968;
+            bufa.field_0x20 = 0.0f;
             bufa.field_0x30 = 1;
             ((cf::CBattleStateAt8*)this)->CBattleState_enterStatusEntry(
                 (cf::CBattleStateEntry*)&bufa);
@@ -558,7 +505,7 @@ void cf::CfObjectEne::loadEnemyParams() {
         bufb.field_0x4 = 0;
         bufb.field_0xC = 0xC3;
         bufb.field_0x10 = (u32)c18B.b;
-        bufb.field_0x20 = lbl_eu_80666968;
+        bufb.field_0x20 = 0.0f;
         ((cf::CBattleStateAt8*)this)->CBattleState_enterStatusEntry(
             (cf::CBattleStateEntry*)&bufb);
     }
@@ -578,27 +525,49 @@ void cf::CfObjectEne::loadEnemyParams() {
     }
 }
 
+
+
 // Wave-62: CActorParam_setEnemyType (+0xE4) / setActorType (+0xDC) base
 // impls. Free-function Fv forms keep the Unk linker names that hand-built
 // tables / CREvtModel reference.
 extern "C" void CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
 
+
+
 extern "C" void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, float val) { *(float*)((u8*)self + 0x6ec) = val; }
+
+
 
 // Wave-62: CActorParam_setParam161C / setFlag1628 / setGauge1624 / setHitRange
 // base impls. Free-function Fv forms keep the Unk linker names.
 extern "C" void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
     // retail: stb r4, 0x1628(r3) - member block is +8 shifted, raw view pins the offset
     ((cf::CfObjectEne1628View*)self)->field_0x1628 = val;
 }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
+
+
+
+extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+    *(ParamCopyBlock*)&self->unk17E4 = *(const ParamCopyBlock*)src;
+}
+
+
 
 // us-800af534: CfObjectEne::initEnemyBdatParams (retail Fv; this in r3). Resets
 // the bdat manager, reads the enemy bdat column value (getFP on the
@@ -615,7 +584,7 @@ void cf::CfObjectEne::initEnemyBdatParams() {
                                      &lbl_eu_804FC168[0x19A],
                                      ((cf::CfEneLookupView*)this)->field_0x3F28);
     f32 base = this->CActorParam_getSubScale();
-    f32 scaled = lbl_eu_806669B0 * (f32)col.h;
+    f32 scaled = 0.01f * (f32)col.h;
     this->CActorParam_setStatScale(scaled * base);
     for (int i = 0; i < 6; i++)
         this->CActorParam_getArtsSlotIds();
@@ -625,6 +594,108 @@ void cf::CfObjectEne::initEnemyBdatParams() {
     aiResetTables((u8*)this + 0x3380);
     aiInstallArts(&((u8*)this)[0x3380], 0, 0);
 }
+
+
+
+// us-800af614: CfObjectEne::CActorParam_UnkVirtualFunc166 (retail Fv; this
+// in r3). Arts-set loader: reloads the bdat manager, reads the enemy bdat
+// information table, writes the eight arts-slot ids (columns 0x1A7..0x1D1,
+// step 6) through the primary vtable slot +0x27C arts-set, then for each
+// non-zero slot loads the CArtsParam record (getArtsParamByIdx), copies the
+// name, fills the typed fields from the bdat columns, dispatches the +0x84
+// record vtable slot 2 (+0x8) for slots with (u16)(unk3C - 1) <= 1 and
+// unk44 == 0, accumulates the +0x78 flag bits (0x40000000 always,
+// 0x80000000 for unk42 == 1) and scales the +0x2C gauge by the 0x8000 bit.
+void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
+    cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
+    Bdat_GetTable_AA34();
+    void* bdat = getFP(v->field_0x3F14);
+    const char* tbl = (const char*)lbl_eu_804FC168;
+    u16 row = v->field_0x3F28;
+    u32 a0 = getBdatStringColumnValue(bdat, tbl + 0x1A7, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a0, 0);
+    u32 a1 = getBdatStringColumnValue(bdat, tbl + 0x1AD, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a1, 1);
+    u32 a2 = getBdatStringColumnValue(bdat, tbl + 0x1B3, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a2, 2);
+    u32 a3 = getBdatStringColumnValue(bdat, tbl + 0x1B9, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a3, 3);
+    u32 a4 = getBdatStringColumnValue(bdat, tbl + 0x1BF, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a4, 4);
+    u32 a5 = getBdatStringColumnValue(bdat, tbl + 0x1C5, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a5, 5);
+    u32 a6 = getBdatStringColumnValue(bdat, tbl + 0x1CB, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a6, 6);
+    u32 a7 = getBdatStringColumnValue(bdat, tbl + 0x1D1, row);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a7, 7);
+
+    Bdat_GetTable_AA34();
+    void* bdat2 = getFP(&tbl[0x1D7]);
+    int i;
+    s16 zero46 = 0;  // retail keeps a dedicated zero reg for field_0x46
+    for (i = 0; i < 8; i++) {
+        u16 slot = getArtsSlotByFlatIdx(this->CActorParam_getArtsSet(), (s16)i);
+        if (slot == 0) continue;
+        cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(this->CActorParam_getArtsSet(), i);
+        // name column referenced through the raw label (not tbl), as in retail
+        char* nm = (char*)getBdatStringColumnValue(bdat2, (char*)lbl_eu_804FC168, slot);
+        arts->field_0x20 = strlen(nm);
+        strcpy(arts->name, nm);
+        arts->field_0x78 = getBdatStringColumnValue(bdat2, tbl + 0x1D, slot);
+        arts->field_0x2C = (f32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x1E0, slot) / 10.0f;
+        u8 e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
+        if (e5 == 0xFF) {
+            arts->field_0x30 = 10000.0f;
+        } else {
+            e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
+            arts->field_0x30 = (f32)e5;
+        }
+        arts->field_0x34 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EC, slot);
+        arts->field_0x36 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EF, slot);
+        arts->field_0x38 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F3, slot);
+        arts->field_0x3A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F9, slot);
+        arts->field_0x42 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1FF, slot);
+        u8 a2b = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
+        if (a2b != 0)
+            arts->field_0x2A = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
+        arts->field_0x3C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x209, slot);
+        arts->field_0x40 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x212, slot);
+        arts->field_0x43 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x217, slot);
+        arts->field_0x44 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x220, slot);
+        arts->field_0x46 = zero46;
+        // simple attack classes (field_0x3C in {0,1}) without the 0x44 flag are
+        // initialized through the record vtable and skipped
+        if ((u16)(arts->field_0x3C - 1) <= 1 && arts->field_0x44 == 0) {
+            ((cf::CAttackParam*)arts)->CAttackParam_clearArtsRecord();
+            continue;
+        }
+        arts->field_0x58 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x229, slot);
+        arts->field_0x5A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x231, slot);
+        arts->field_0x5C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x237, slot);
+        arts->field_0x5E = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x23B, slot);
+        u16 w246 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x246, slot);
+        f32 rateBonus = ((cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock())->field_0x44;
+        arts->field_0x60 = (f32)w246 / 100.0f + rateBonus;
+        arts->field_0x64 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x24C, slot);
+        arts->field_0x76 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x25E, slot);
+        arts->field_0x77 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x262, slot);
+        arts->field_0x48 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x26A, slot);
+        arts->field_0x4A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x271, slot);
+        arts->field_0x4C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x279, slot);
+        arts->field_0x50 = (f32)(u16)getBdatStringColumnValue(bdat2, tbl + 0x281, slot) / 10.0f;
+        arts->field_0x54 = (f32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x288, slot) / 10.0f;
+        arts->field_0x66 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x28F, slot);
+        arts->field_0x67 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x297, slot);
+        arts->field_0x68 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x29F, slot);
+        arts->field_0x6A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x2A7, slot);
+        arts->field_0x78 |= 0x40000000;
+        if (arts->field_0x42 == 1)
+            arts->field_0x78 |= 0x80000000;
+        if (arts->field_0x78 & 0x8000)
+            arts->field_0x2C *= 100.0f;
+    }
+}
+
 
 // us-800afd5c: CfObjectEne::CActorParam_UnkVirtualFunc167 (retail Fv; this
 // in r3). Attack-set loader: reloads the bdat manager, reads the enemy bdat
@@ -653,7 +724,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
 
     Bdat_GetTable_AA34();
     u8* bdat2 = (u8*)getFP(&cols[0x2B6]);
-    f32 zero = lbl_eu_80666968;
+    f32 zero = 0.0f;
     f32 scale = ml::rad2deg;
     for (int i = 0; i < 6; i++) {
         // name column addresses the raw symbol; the rest go through the
@@ -702,120 +773,8 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     }
 }
 
-// us-800af614: CfObjectEne::CActorParam_UnkVirtualFunc166 (retail Fv; this
-// in r3). Arts-set loader: reloads the bdat manager, reads the enemy bdat
-// information table, writes the eight arts-slot ids (columns 0x1A7..0x1D1,
-// step 6) through the primary vtable slot +0x27C arts-set, then for each
-// non-zero slot loads the CArtsParam record (getArtsParamByIdx), copies the
-// name, fills the typed fields from the bdat columns, dispatches the +0x84
-// record vtable slot 2 (+0x8) for slots with (u16)(unk3C - 1) <= 1 and
-// unk44 == 0, accumulates the +0x78 flag bits (0x40000000 always,
-// 0x80000000 for unk42 == 1) and scales the +0x2C gauge by the 0x8000 bit.
-void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
-    // Retail pins two 0x4330xxxx conversion words (sp+0xA8/sp+0xB0) for the
-    // whole function; only the low word is refreshed per conversion.
-    cf::CfEneF64Conv cvA;
-    cf::CfEneF64Conv cvB;
-    cvA.w[0] = 0x43300000;
-    cvB.w[0] = 0x43300000;
-    cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
-    Bdat_GetTable_AA34();
-    void* bdat = getFP(v->field_0x3F14);
-    const char* tbl = (const char*)lbl_eu_804FC168;
-    u16 row = v->field_0x3F28;
-    u32 a0 = getBdatStringColumnValue(bdat, tbl + 0x1A7, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a0, 0);
-    u32 a1 = getBdatStringColumnValue(bdat, tbl + 0x1AD, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a1, 1);
-    u32 a2 = getBdatStringColumnValue(bdat, tbl + 0x1B3, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a2, 2);
-    u32 a3 = getBdatStringColumnValue(bdat, tbl + 0x1B9, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a3, 3);
-    u32 a4 = getBdatStringColumnValue(bdat, tbl + 0x1BF, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a4, 4);
-    u32 a5 = getBdatStringColumnValue(bdat, tbl + 0x1C5, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a5, 5);
-    u32 a6 = getBdatStringColumnValue(bdat, tbl + 0x1CB, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a6, 6);
-    u32 a7 = getBdatStringColumnValue(bdat, tbl + 0x1D1, row);
-    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a7, 7);
 
-    Bdat_GetTable_AA34();
-    void* bdat2 = getFP(&tbl[0x1D7]);
-    // Hoisted constants the loop keeps live across calls (retail f29/f30/f31/f28)
-    f32 subA = lbl_eu_806669A0;
-    f32 divB = lbl_eu_8066697C;
-    f32 cstFF = lbl_eu_806669B4;
-    f32 divC = lbl_eu_80666994;
-    int i;
-    s16 zero46 = 0;  // retail keeps a dedicated zero reg for field_0x46
-    for (i = 0; i < 8; i++) {
-        u16 slot = getArtsSlotByFlatIdx(this->CActorParam_getArtsSet(), (s16)i);
-        if (slot == 0) continue;
-        cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(this->CActorParam_getArtsSet(), i);
-        // name column referenced through the raw label (not tbl), as in retail
-        char* nm = (char*)getBdatStringColumnValue(bdat2, (char*)lbl_eu_804FC168, slot);
-        arts->field_0x20 = strlen(nm);
-        strcpy(arts->name, nm);
-        arts->field_0x78 = getBdatStringColumnValue(bdat2, tbl + 0x1D, slot);
-        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x1E0, slot);
-        arts->field_0x2C = ((f32)(cvA.d - subA) / divB);
-        u8 e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
-        if (e5 == 0xFF) {
-            arts->field_0x30 = cstFF;
-        } else {
-            e5 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1E5, slot);
-            cvB.w[1] = (u32)e5;
-            arts->field_0x30 = (f32)(cvB.d - subA);
-        }
-        arts->field_0x34 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EC, slot);
-        arts->field_0x36 = (s16)(s8)getBdatStringColumnValue(bdat2, tbl + 0x1EF, slot);
-        arts->field_0x38 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F3, slot);
-        arts->field_0x3A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x1F9, slot);
-        arts->field_0x42 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x1FF, slot);
-        u8 a2b = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
-        if (a2b != 0)
-            arts->field_0x2A = (u8)getBdatStringColumnValue(bdat2, tbl + 0xA2, slot);
-        arts->field_0x3C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x209, slot);
-        arts->field_0x40 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x212, slot);
-        arts->field_0x43 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x217, slot);
-        arts->field_0x44 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x220, slot);
-        arts->field_0x46 = zero46;
-        // simple attack classes (field_0x3C in {0,1}) without the 0x44 flag are
-        // initialized through the record vtable and skipped
-        if ((u16)(arts->field_0x3C - 1) <= 1 && arts->field_0x44 == 0) {
-            ((cf::CAttackParam*)arts)->CAttackParam_clearArtsRecord();
-            continue;
-        }
-        arts->field_0x58 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x229, slot);
-        arts->field_0x5A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x231, slot);
-        arts->field_0x5C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x237, slot);
-        arts->field_0x5E = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x23B, slot);
-        u16 w246 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x246, slot);
-        f32 rateBonus = ((cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock())->field_0x44;
-        cvA.w[1] = (u32)w246;
-        arts->field_0x60 = (f32)(cvA.d - subA) / divC + rateBonus;
-        arts->field_0x64 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x24C, slot);
-        arts->field_0x76 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x25E, slot);
-        arts->field_0x77 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x262, slot);
-        arts->field_0x48 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x26A, slot);
-        arts->field_0x4A = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x271, slot);
-        arts->field_0x4C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x279, slot);
-        cvB.w[1] = (u32)(u16)getBdatStringColumnValue(bdat2, tbl + 0x281, slot);
-        arts->field_0x50 = (f32)(cvB.d - subA) / divB;
-        cvA.w[1] = (u32)(u8)getBdatStringColumnValue(bdat2, tbl + 0x288, slot);
-        arts->field_0x54 = (f32)(cvA.d - subA) / divB;
-        arts->field_0x66 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x28F, slot);
-        arts->field_0x67 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x297, slot);
-        arts->field_0x68 = (s16)getBdatStringColumnValue(bdat2, tbl + 0x29F, slot);
-        arts->field_0x6A = (s16)getBdatStringColumnValue(bdat2, tbl + 0x2A7, slot);
-        arts->field_0x78 |= 0x40000000;
-        if (arts->field_0x42 == 1)
-            arts->field_0x78 |= 0x80000000;
-        if (arts->field_0x78 & 0x8000)
-            arts->field_0x2C *= divC;
-    }
-}
+
 // us-800b00b0: bdat lookup helper. Reads the u16 row id at self+0x456C
 // (shifted right 4) and looks up the column value in the BDAT table returned
 // by getGlobalPtr6409C. Returns whatever getBdatStringColumnValue produced (the
@@ -825,12 +784,16 @@ extern "C" u32 getEneBdatColumn(cf::CfObjectEne* self, const char* column) {
                                     ((cf::CfObjectEne456CView*)self)->field_0x456C >> 4);
 }
 
+
+
 // us-800b00f8: bdat lookup helper. r3 is a dead incoming arg (retail never
 // reads it); the bdat pointer is getGlobalWord640A4's return (party-count
 // getter), column/index come from r4/r5.
 extern "C" u32 getEneBdatByIndex(u32 unused, const char* col, u32 index) {
     return getBdatStringColumnValue((u8*)getGlobalWord640A4__Q22cf13CfGameManagerFv(), col, index);
 }
+
+
 
 // us-800b013c: enemy drop/reward application. Guard chain (flag bit
 // 0x100000, shared lbl_eu_80663E24 bits 0xAFA40000, +0x3F60 target bit 8,
@@ -883,36 +846,35 @@ bmCheck:
         f32 now = t * sub + ((cf::CfEneTailView*)self)->field_0x45CC;
         // retail stores the accumulated time back BEFORE the threshold compare
         ((cf::CfEneTailView*)self)->field_0x45CC = now;
-        cf::CfEneF64Conv cvR;
-        cvR.w[0] = 0x43300000;
-        cvR.w[1] = (u32)((s32)reward * 30) ^ 0x80000000;
-        f32 thresh = (f32)(cvR.d - lbl_eu_806669A8);
+        f32 thresh = (f32)((s32)reward * 30);
         if (now < thresh) return;
         u8 count = (u8)getBdatStringColumnValue(bdat, tbl + 0x2D7, row);
-        cf::CfEneF64Conv cvN;
-        cvN.w[0] = 0x43300000;
-        cvN.w[1] = (u32)count;
-        f32 n = (f32)(cvN.d - lbl_eu_806669A0);
-        f32 prod = lbl_eu_806669B0 * (n * static_cast<cf::CActorParam*>(self)->CActorParam_getDamageScale());
-        if (prod != lbl_eu_80666968) {
+        f32 n = (f32)count;
+        f32 prod = 0.01f * (n * static_cast<cf::CActorParam*>(self)->CActorParam_getDamageScale());
+        if (prod != 0.0f) {
             s32 iv = (s32)prod;
-            cf::CfEneF64Conv cvV;
-            cvV.w[0] = 0x43300000;
-            cvV.w[1] = (u32)iv ^ 0x80000000;
-            f32 rv = (f32)(cvV.d - lbl_eu_806669A8);
-            if (rv == lbl_eu_80666968) rv = lbl_eu_80666980;
+            f32 rv = (f32)iv;
+            if (rv == 0.0f) rv = 1.0f;
             static_cast<cf::CActorParam*>(self)->CActorParam_addHp(-rv);
         }
-        ((cf::CfEneTailView*)self)->field_0x45CC = lbl_eu_80666968;
+        ((cf::CfEneTailView*)self)->field_0x45CC = 0.0f;
         return;
     }
 }
 
+
+
 extern "C" int CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
+
+
 
 void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
+
+
 void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
+
+
 
 // CActorState setObjStateBit3: unk4 is the Move subobject (this+0x3E9C); slot
 // +0x38 = CObjectState::setStateBitMask3.
@@ -920,13 +882,25 @@ extern "C" void CActorState_setObjStateBit3__Q22cf11CActorStateFv(cf::CActorStat
     reinterpret_cast<cf::CObjectState*>(self->unk4)->CObjectState_setStateBitMask3();
 }
 
+
+
 extern "C" u8* CBattleState_getStagingRecord__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
     return ((cf::CBattleState*)self)->unk152C + (index << 4);
 }
 
+
+
 extern "C" u8* CBattleState_getStatusBlock__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x152c; }
 
+
+
 extern "C" u8* CBattleState_getEntryArray__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x8; }
+
+
+
+
+
+
 
 // us-800b0404: retail copies 0x1520 bytes (0x2a4 * 8) from src to this->unk8
 // (offset 0x8) with a counted lwzu/stwu loop - full struct assignment of the
@@ -937,34 +911,81 @@ extern "C" void CBattleState_copyStatusEntries__Q22cf12CBattleStateFv(cf::CBattl
 
 
 
+extern "C" void CBattleState_getStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+    self->CBattleState_readStatusSlot();
+}
+
+
+
+extern "C" void CBattleState_getEventEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+    self->CBattleState_getEventSlot();
+}
+
+
+
+extern "C" void CBattleState_fetchStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+    self->CBattleState_fetchStatusSlot();
+}
+
+
+
+// UVF13 is Fi; keep r4 live into the callee (0x10-byte bctr).
+extern "C" void CBattleState_getEntryByIndex__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
+    self->CBattleState_getStatusSlot(index);
+}
+
 
 
 extern "C" void CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x2A80) = val; }
 
+
+
 extern "C" int CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv(cf::CActorParam* self) { return 0; }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv(void) {}
 
+
+
 extern "C" u32 CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x3370); }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // ml::pi declared (const form) in CfObjectEne.hpp / CChain.hpp
     return ml::pi - *(float*)((char*)self + 0x1630);
 }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
+
+
 
 extern "C" void* CActorParam_getActorModeFlags__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x164a); }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc163__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1648); }
+
+
 
 extern "C" u32 CActorParam_UnkVirtualFunc162__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x336C); }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc161__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x336C) = val; }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x3358); }
+
+
 
 // us-800b04d0: zeroes the 8-entry CActorParam_UnkStruct5 array at 0x1928.
 // Retail is fully unrolled (48 straight stores: the u32 slot then the five
@@ -985,12 +1006,16 @@ extern "C" void CActorParam_UnkVirtualFunc148__Q22cf11CActorParamFv(cf::CActorPa
     v->entries[7].init();
 }
 
+
+
 // us-800b059c: retail copies 0xC0 bytes (0x18 * 8) from src to the 8-entry
 // CActorParam UnkStruct5 array at offset 0x1928 (stride 0x18) with a
 // counted lwzu/stwu loop.
 extern "C" void CActorParam_UnkVirtualFunc146__Q22cf11CActorParamFv(cf::CActorParam* self, const cf::CActorParam* src) {
     *(cf::CActorParamUnk1928Block*)((cf::CActorParamUnk1928View*)self)->entries = *(const cf::CActorParamUnk1928Block*)src;
 }
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc145__Q22cf11CActorParamFv(cf::CActorParam* self, unsigned long idx) {
     // retail: mulli r4,0x18 / add / addi r3,r3,0x1928 - the declared unk1928
@@ -999,9 +1024,15 @@ extern "C" void* CActorParam_UnkVirtualFunc145__Q22cf11CActorParamFv(cf::CActorP
     return &((cf::CActorParamUnk1928View*)self)->entries[idx];
 }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1928); }
 
+
+
 extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x2A80); }
+
+
 
 // Wave-62: override of CActorParam_resetStatsSlot (+0x2AC). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
@@ -1015,13 +1046,23 @@ extern "C" u8 CActorParam_getStatsSlot__Q22cf11CActorParamFv(cf::CActorParam* se
     return ((cf::CActorParam3354View*)self)->field_0x3354;
 }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x31dc); }
 
 extern "C" void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv(cf::CActorParam* self, unsigned long index) { return (u8*)self + index * 0xBC + 0x2A84; }
 
+
+
 extern "C" u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x15E0); }
 
-extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); } // getAtkSetBlock +0x284
+
+
+extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
+
+
+
+ // getAtkSetBlock +0x284
 
 // us-800b0620: CActorParam::copyAtkSetBlock (virtual +0x280). Fv retail
 // linker name kept for CREvtModel; real ABI passes (self, r4 = attack-set
@@ -1094,7 +1135,13 @@ extern "C" void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorPa
     } while (d < end);
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); } // getArtsSetBlock +0x278
+
+
+extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
+
+
+
+ // getArtsSetBlock +0x278
 
 // us-800b07e8: CActorParam::copyArtsSetBlock (virtual +0x274). Fv retail
 // linker name kept for CREvtModel; real ABI (self, r4 = arts-set data
@@ -1190,56 +1237,94 @@ extern "C" void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorPa
     } while (d < end);
 }
 
+
+
 extern "C" u8 CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // retail: lbz r3, 0x183c(r3) - member block is +8 shifted, raw view pins the offset
     return ((cf::CfObjectEne183AView*)self)->field_0x183C;
 }
+
+
 
 extern "C" u8 CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // retail: lbz r3, 0x183b(r3) - member block is +8 shifted, raw view pins the offset
     return ((cf::CfObjectEne183AView*)self)->field_0x183B;
 }
 
+
+
 extern "C" u8 CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // retail: lbz r3, 0x183a(r3) - member block is +8 shifted, raw view pins the offset
     return ((cf::CfObjectEne183AView*)self)->field_0x183A;
 }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
     // retail: stb r4, 0x183b(r3) - member block is +8 shifted, raw view pins the offset
     ((cf::CfObjectEne183AView*)self)->field_0x183B = val;
 }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
     // retail: stb r4, 0x183a(r3) - member block is +8 shifted, raw view pins the offset
     ((cf::CfObjectEne183AView*)self)->field_0x183A = val;
 }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x15fc) = val; }
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x15fc); }
 
-// (lbl_eu_80666968 declared in CfObjectEne.hpp)
+
+
+
 // Wave-62: override of CActorParam_refreshBattleAction (+0x230). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
 extern "C" void CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    *(f32*)((u8*)self + 0x15FC) = lbl_eu_80666968;
+    *(f32*)((u8*)self + 0x15FC) = 0.0f;
 }
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc101__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x185c); }
+
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x17e4); }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1792); }
+
+
 
 extern "C" void* CActorParam_getArtsSyncBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
 
+
+
 extern "C" void* CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1650); }
+
+
+
+extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+    *(ParamCopyBlock*)&self->unk1650 = *(const ParamCopyBlock*)src;
+}
+
 
 
 // us-800b0be0: retail symbol is Fv; the real ABI passes (self, val, argA, argB).
@@ -1254,61 +1339,111 @@ extern "C" void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorPar
     }
 }
 
+
+
 extern "C" u32 CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x1600) + *(u32*)((u8*)self + 0x1604); }
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1834); }
 
+
+
 extern "C" void* CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x182c); }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1834) = val; }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x182c) = val; }
+
+
 
 extern "C" void* CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1828); }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1828) = val; }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1824); }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1824) = val; }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1618); }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1610); }
+
+
 
 extern "C" int CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1616); }
 
+
+
 extern "C" int CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1614); }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x1614) = val; }
 
+
+
 extern "C" int CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160e); }
+
+
 
 extern "C" int CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160c); }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x160C) = val; }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17F0) / *(float*)((u8*)self + 0x17FC); }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17fc); }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc49__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f0); }
 
+
+
 extern "C" void CActorParam_setTensionPoints__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17f0) = val; }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17EC) / *(float*)((u8*)self + 0x17F8); }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f8); }
+
+
 
 extern "C" float CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17ec); }
 
+
+
 // us-800b0d38: add amount to the 0x17EC gauge and clamp into
-// [lbl_eu_80666968 (0.0f), field_0x17F8]. Same arg-reuse pattern as Func31
+// [0.0f, field_0x17F8]. Same arg-reuse pattern as Func31
 // (lfs f2,cur; lfs f0,min; fadds f1,f2,f1; lfs f2,max; stfs f1); the upper
 // compare is against the max local (fcmpo f1,f2; blelr stores max when the
 // value exceeds it or is unordered).
 extern "C" void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFv(cf::CActorParam* self, float amount) {
-    float min = lbl_eu_80666968;
+    float min = 0.0f;
     float cur = ((cf::CActorParam17ECView*)self)->field_0x17EC;
     float sum = cur + amount;
     float max = ((cf::CActorParam17ECView*)self)->field_0x17F8;
@@ -1319,9 +1454,15 @@ extern "C" void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFv(cf::CActorPar
         ((cf::CActorParam17ECView*)self)->field_0x17EC = max;
 }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17ec) = val; }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17E8) / *(float*)((u8*)self + 0x17F4); }
+
+
 
 // us-800b0d84: retail symbol is Fv; the real ABI passes (self, val). Scales
 // val by the gauge field at 0x17F4 and tail-dispatches vtable slot +0x11C
@@ -1329,6 +1470,8 @@ extern "C" float CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv(cf::CActorPa
 extern "C" void CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
     self->CActorParam_addHp(((cf::CfActorParamFields*)self)->field_0x17F4 * val);
 }
+
+
 
 // us-800b0d9c: retail symbol is Fv; the real ABI passes (self, amount). Adds
 // amount to the 0x17E8 gauge, stores it, rounds to the nearest int (half
@@ -1358,16 +1501,20 @@ extern "C" void CActorParam_addHp__Q22cf11CActorParamFv(cf::CActorParam* self, f
     }
 }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1660); }
 
+
+
 // us-800b0e40: add amount to the 0x1660 gauge and clamp at the 0.0f floor
-// (lbl_eu_80666968 = 0.0f). Retail emits lfs f2,cur; lfs f0,lbl(0.0f);
+// Retail emits lfs f2,cur; lfs f0,lbl(0.0f);
 // fadds f1,f2,f1; stfs f1 - the floor stays in f0 and the accumulated value
 // reuses the arg register. The else-if is the retail dev's always-false
 // `amount > amount` guard: fcmpo cr0,f1,f1 / blelr over a redundant store
 // (bclr 4,1 = branch when NOT GT keeps the tail-return shape).
 extern "C" void CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv(cf::CActorParam* self, float amount) {
-    float min = lbl_eu_80666968;
+    float min = 0.0f;
     float cur = ((cf::CActorParam1660View*)self)->field_0x1660;
     amount = cur + amount;
     ((cf::CActorParam1660View*)self)->field_0x1660 = amount;
@@ -1377,17 +1524,31 @@ extern "C" void CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv(cf::CActorPar
         ((cf::CActorParam1660View*)self)->field_0x1660 = amount;
 }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x1660) = val; }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) += val; }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x17E4) = val; }
+
+
 
 extern "C" void CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) += val; }
 
+
+
 extern "C" void CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) { *(u32*)((u8*)self + 0x1650) = val; }
 
+
+
 extern "C" float CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x15f8); }
+
+
 
 extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // retail: lbz r3, 0x15f4(r3) - the declared unk15F4[4] member is +8
@@ -1395,29 +1556,26 @@ extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(cf::CActorParam
     return ((cf::CfObjectEne15F4View*)self)->field_0x15F4;
 }
 
+
+
 extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
+
+
 
 extern "C" u32 CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(u32*)((u8*)self + 0xB4); }
 
+
+
 extern "C" float CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xac); }
+
+
 
 extern "C" float CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xa8); }
 
+
+
 extern "C" u32 CfObjectModel_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x704); }
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
-
-extern "C" void CfObjectActor_clearActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
-    *(long*)((char*)self + 0x45bc) = -1;
-}
-
-extern "C" u32 CfObjectActor_getActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
-
-extern "C" void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv((char*)self - 0x8); }
-
-extern "C" void CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv((char*)self - 0x8); }
-
-extern "C" void CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x8); }
 
 // Secondary-vtable thunks below keep the (void(*)(void*)) form: the cast pins
 // the verbatim retail reloc name (a typed call emits a mangled ref and drifts)
@@ -1426,52 +1584,75 @@ extern "C" void CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(cf::CfObjec
 // these thunks forward to -- must be declared here after W60 renamed them.
 extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg);
 extern "C" void CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value);
+
+extern "C" u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
+
+
+
+extern "C" void CfObjectActor_clearActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+    *(long*)((char*)self + 0x45bc) = -1;
+}
+
+
+
+extern "C" u32 CfObjectActor_getActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
+
+
+
+extern "C" void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+
+
+
+extern "C" void CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+
+
+
+
+extern "C" void CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+
+
+
 extern "C" void CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+
+
 
 extern "C" void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
+
+
 extern "C" void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { loadEnemyParams__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
+
+
 
 extern "C" void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
     reinterpret_cast<cf::CfObjectActor*>((char*)self - 0x3e9c)->cf::CfObjectActor::CfObjectActor_readFacingAngle();
 }
 
+
+
+extern "C" void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))initEnemyBattleState__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+
+
+
 extern "C" void CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+
 
 
 extern "C" void CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x3e9c); }
 
+
+
 extern "C" void CfObjectMove_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+
+
 
 extern "C" void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))initEnemyBattleState__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+
 
 extern "C" void CfObject_updateEnemyState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { updateEnemyBattleState__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 
+
+
 extern "C" void destroyEnemyObject__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-extern "C" void CBattleState_getStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_readStatusSlot();
-}
-
-extern "C" void CBattleState_getEventEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_getEventSlot();
-}
-
-extern "C" void CBattleState_fetchStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_fetchStatusSlot();
-}
-
-// UVF13 is Fi; keep r4 live into the callee (0x10-byte bctr).
-extern "C" void CBattleState_getEntryByIndex__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
-    self->CBattleState_getStatusSlot(index);
-}
-
-extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
-    *(ParamCopyBlock*)&self->unk17E4 = *(const ParamCopyBlock*)src;
-}
-
-extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
-    *(ParamCopyBlock*)&self->unk1650 = *(const ParamCopyBlock*)src;
-}

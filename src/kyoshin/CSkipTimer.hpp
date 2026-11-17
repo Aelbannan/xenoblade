@@ -4,6 +4,8 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/CSysWin.hpp"
 
 #include <nw4r/lyt.h>
 
@@ -34,54 +36,11 @@ public:
     virtual void vf2(int) = 0;  // slot 2 (0x08) - release-style virtual
 };
 
-// View of the embedded CSysWin blob's vtable for the load-complete hook at
-// offset 0x88. With -RTTI the first declared virtual sits at vtable offset
-// 0x8 (see CPresentLayoutSlot2View), so 33 virtuals put the hook exactly on
-// 0x88. Pure virtuals only so MWCC emits no vtable of its own.
-class SysWinSlot88View {
-public:
-    virtual void vf00(void*) = 0;
-    virtual void vf01(void*) = 0;
-    virtual void vf02(void*) = 0;
-    virtual void vf03(void*) = 0;
-    virtual void vf04(void*) = 0;
-    virtual void vf05(void*) = 0;
-    virtual void vf06(void*) = 0;
-    virtual void vf07(void*) = 0;
-    virtual void vf08(void*) = 0;
-    virtual void vf09(void*) = 0;
-    virtual void vf0A(void*) = 0;
-    virtual void vf0B(void*) = 0;
-    virtual void vf0C(void*) = 0;
-    virtual void vf0D(void*) = 0;
-    virtual void vf0E(void*) = 0;
-    virtual void vf0F(void*) = 0;
-    virtual void vf10(void*) = 0;
-    virtual void vf11(void*) = 0;
-    virtual void vf12(void*) = 0;
-    virtual void vf13(void*) = 0;
-    virtual void vf14(void*) = 0;
-    virtual void vf15(void*) = 0;
-    virtual void vf16(void*) = 0;
-    virtual void vf17(void*) = 0;
-    virtual void vf18(void*) = 0;
-    virtual void vf19(void*) = 0;
-    virtual void vf1A(void*) = 0;
-    virtual void vf1B(void*) = 0;
-    virtual void vf1C(void*) = 0;
-    virtual void vf1D(void*) = 0;
-    virtual void vf1E(void*) = 0;
-    virtual void vf1F(void*) = 0;
-    virtual void onLayoutLoaded() = 0;  // vtable offset 0x88
-};
-
 class CSkipTimer2 {
 public:
-    ~CSkipTimer2();
-    // (ctor is extern "C" __ct__CSkipTimer2 below - retail short-form name)
+    CSkipTimer2(void* parent = nullptr);
+    virtual ~CSkipTimer2();
 
-    // --- member fields ---
-    /* 0x00 */ void* mVtbl;              // lbl_eu_80539884, set at construction
     /* 0x04 */ UnkClass_8045F564 mMemRegion;  // scratch region for layout build
     /* 0x14 */ void* mParent;            // parent handle, set at construction
     /* 0x18 */ UnkObjField18* mField18;  // object released via vtable[2]
@@ -94,19 +53,18 @@ public:
 };
 // Total size: 0x28 bytes
 
-class CSkipTimer {
+class CSkipTimer : public IWorkEvent {
 public:
-    // (ctor is extern "C" __ct__CSkipTimer below - retail short-form name)
-    ~CSkipTimer();
+    CSkipTimer();
+    virtual ~CSkipTimer();
 
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
     u8 isSkipActive() { return mActive; }
 
     // --- member fields ---
-    /* 0x00 */ void* mVtbl;                       // vtable pointer, set at construction
     /* 0x04 */ UnkClass_8045F564 mMemRegion;      // scratch region for layout build
     /* 0x14 */ CFileHandle* mFileHandle;          // file handle, freed in CSkipTimerTeardown
     /* 0x18 */ nw4r::lyt::Layout* mLayout;        // layout 1 (pane stamping / accessor release)
@@ -118,11 +76,10 @@ public:
     /* 0x2A */ u8 mField2A;                       // init 0
     /* 0x2B */ u8 mField2B;                       // init 1
     /* 0x2C */ s16 mField2C;                      // init 0 (switch key)
-    /* 0x2E */ u16 mField2E;                      // init 0
+    /* 0x2E */ s16 mField2E;                      // init 0
     /* 0x30 */ u8 mActive;                        // active flag; init 0, read by getActive
-    /* 0x31 */ u8 pad31[3];
-    /* 0x34 */ u8 mSysWinData[0x3C];              // CSysWin panel blob
-    /* 0x70 */ u8 mSkipTimer2Data[0x28];          // CSkipTimer2 sub-controller
+    /* 0x34 */ CSysWin mSysWin;
+    /* 0x70 */ CSkipTimer2 mSkipTimer2;
     void OnFwdGate();
     void ReengageInput();
     void EndSkip();
@@ -131,92 +88,3 @@ public:
     void LockSkipButton();
 };
 // Total size: 0x98 bytes (verified via CMenuSkipTimer mTimerData[0x98])
-
-// C-linkage imports - retail symbol names; extern "C" so calls bind to the
-// literal (un)mangled identifiers. (Retail names are the true symbol names;
-// do not rename.)
-// CSkipTimer2 vtable pointer stored at +0x00.
-extern "C" void* lbl_eu_80539884[];
-// CSkipTimer vtable pointer stored at +0x00.
-extern "C" void* lbl_eu_805397F0[];
-// String pool used by CSkipTimerStampSlotText (pane name + sprintf format).
-extern "C" char lbl_eu_80510568[];
-// CSkipTimer2 ctor: retail symbol is the short form (no length/sig suffix),
-// so it must be a C-linkage function carrying the exact retail name
-// (MWCC_CASES sec. 3824); the dtor keeps the mangled member form.
-extern "C" CSkipTimer2* __ct__CSkipTimer2(CSkipTimer2* self, void* parent);
-// CSkipTimer ctor: same retail short-form treatment; returns the object.
-extern "C" CSkipTimer* __ct__CSkipTimer(CSkipTimer* self);
-
-// External callees.
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __ct__CSysWin(void* self, int arg);
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-// Mem-region copy initializer used by the temp-copy widget-rebuild pattern
-// (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" u32 CSysWin_isReady(void*);
-
-// .sdata2 float constants used by the sinit_802A07D8 static initializer.
-extern "C" float lbl_eu_80664A50;
-extern "C" const float lbl_eu_80668C4C;
-extern "C" const float lbl_eu_80662C78;
-extern "C" const float lbl_eu_80668C48;
-extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" void sysWinTermLayout(void*);
-// C-exported retail symbol: unmangled reloc name must be emitted at call sites.
-extern "C" void setPaneVisible(void*, u32);
-extern "C" int CSysWin_isActive(void*);
-extern "C" void sysWinAdvancePhase3(void*);
-extern "C" u32 CMainMenu_GetInstancePtr();
-extern "C" void ArtsInfo_SetReadyFlag();
-
-// Shared-arc font/text value feeding setLayoutTextBoxFont (unmangled retail symbol).
-extern "C" u32 CUICfManager_getPackedFontD8();
-// Sub-controller layout rebind helper (unmangled retail symbol).
-extern "C" void CSkipTimer2RebindAnim(CSkipTimer2* self);
-// Post-build flag setter on the sub-controller (unmangled retail symbol).
-extern "C" void CSkipTimer2MarkActive(u8* self);
-
-// Unmatched same-unit siblings referenced as extern (linker resolves to retail
-// address) so in-unit callers emit a direct `bl` instead of inlining a stub.
-// Retail strips mangling for these func_ names in US, hence extern "C".
-extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg);
-extern "C" void func_8029F6EC(CSkipTimer2* self);
-extern "C" void CSkipTimer2OnAdvanceEnd(CSkipTimer2* self);
-// CSkipTimer_BeginLoad: System.arc load kickoff (retail strips mangling on US func_
-// names), so the definition binds to the literal retail symbol.
-extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
-// CSkipTimer2RebuildLayout: post-build hook on the sub-controller (body lives in retail).
-extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self);
-extern "C" int CSkipTimerMapKeyToAction(CSkipTimer* self);
-extern "C" void CSkipTimer2Start(CSkipTimer2* self, u8 arg);
-// CSkipTimer2Reset: reset the sub-controller (body lives in retail).
-extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
-
-// Same-unit siblings DEFINED in this TU whose retail callers emit a direct
-// `bl` (retail keeps them out-of-line). The definitions in CSkipTimer.cpp are
-// guarded with #pragma auto_inline off (MWCC_CASES sec. hbm/seq) so
-// -inline auto does not inline them into CSkipTimer2DriveState / CSkipTimerActivateTimer /
-// CSkipTimerNextKey; the extern "C" form binds both the definitions and the call
-// sites to the literal (un)mangled retail names.
-extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self);
-extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self);
-extern "C" void CSkipTimer_UpdateSlotFrame(CSkipTimer* self);
-extern "C" void CSkipTimerBindAnim24(CSkipTimer* self);
-extern "C" void CSkipTimerBindAnim20(CSkipTimer* self);
-extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
-
-class CSysWin;
-// CSysWin per-frame update (retail symbol is unmangled; defined extern "C" in CSysWin.cpp).
-extern "C" void sysWinDispatchPhase(CSysWin* sysWin);
-
-// cf::CfGameManager static (retail symbol keeps the Fv suffix from the
-// decompiler guess; the real signature is 3 u32s, see CREvtCamera.cpp).
-extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
-
-// Window content setters from CSysWin.cpp (retail-unmangled names).
-extern "C" void sysWinSetKindContent(void* syswin, void* str1, void* str2);
-extern "C" void sysWinOpenPhase1(void* syswin);

@@ -69,10 +69,10 @@ __declspec(noinline) CScnItemLight::~CScnItemLight() {
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056DD08-0x8056DD70 (104B): primary + secondary vtable groups.
-// lbl_eu_806638C0/806638C8 (typeinfo pairs) and lbl_eu_806624D8 live in
+// __RTTI__13CScnItemLight/806638C8 (typeinfo pairs) and lbl_eu_806624D8 live in
 // foreign TUs.
-extern "C" u32 lbl_eu_806638C0;
-extern "C" u32 lbl_eu_806638C8;
+extern "C" u32 __RTTI__13CScnItemLight;
+extern "C" u32 __RTTI__17CScnItemLightNw4r;
 extern "C" u32 lbl_eu_806624D8;
 extern "C" void __dt__13CScnItemLightFv();
 extern "C" void __dt__17CScnItemLightNw4rFv();
@@ -80,7 +80,7 @@ extern "C" void ScnCamNw4r_NullHook40();
 extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void scnItemIdNoopA();
 extern "C" u32 lbl_eu_8056DD08[8] = {
-    (u32)&lbl_eu_806638C0, 0x00000000,
+    (u32)&__RTTI__13CScnItemLight, 0x00000000,
     (u32)&__dt__13CScnItemLightFv,
     (u32)&forwardItemLightEnv,
     (u32)&ScnCamNw4r_EmptyHook48,
@@ -92,7 +92,7 @@ extern "C" u32 lbl_eu_8056DD28[4] = {
     (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
 };
 extern "C" u32 lbl_eu_8056DD38[8] = {
-    (u32)&lbl_eu_806638C8, 0x00000000,
+    (u32)&__RTTI__17CScnItemLightNw4r, 0x00000000,
     (u32)&__dt__17CScnItemLightNw4rFv,
     (u32)&forwardItemLightEnv,
     (u32)&ScnCamNw4r_EmptyHook48,
@@ -102,7 +102,7 @@ extern "C" u32 lbl_eu_8056DD38[8] = {
 };
 extern "C" u32 lbl_eu_8056DD58[6] = {
     (u32)&lbl_eu_806624D8, 0x00000000,
-    (u32)&lbl_eu_806638C0, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__13CScnItemLight, 0x00000000, 0x00000000, 0x00000000,
 };
 
 // [.rodata]

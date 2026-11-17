@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
@@ -43,12 +44,24 @@
 #undef getReloadParam0
 #undef CtrlObjectParam_GetCharEntry
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
 #include <nw4r/lyt.h>
+
+// Imports used by this unit (data/globals referenced at their retail names).
+// Secondary-mode flags bitfield (bit 21 = 0x200000 gated in Move/cbRenderBefore).
+extern u32 lbl_eu_80663E28;
+// sdata2 animation frame constants.
+extern const f32 lbl_eu_80667C80;
+extern const f32 lbl_eu_80667C84;
+// ARC resource name string table base.
+extern char lbl_eu_80503D80[];
+// Shared battle ARC resource accessor -- retail calls the unmangled name.
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // TU-local mirror of reslist::size(); declaration order walks the counter
 // between cursor and sentinel so MWCC colors cursor->r3, counter->r4,
@@ -68,6 +81,8 @@ static inline u32 ActorList1Count(reslist<cf::CfObjectActor*>* list) {
 }
 
 // CLEANUP: renamed all unk fields to descriptive names (see header).
+
+CMenuBattleMode::~CMenuBattleMode() {}
 
 /**
  * Initialises the battle mode layout.
@@ -104,117 +119,6 @@ void CMenuBattleMode::Init() {
     mLayoutMem.validateHeap();
 }
 
-// C-linkage declarations so MWCC emits the plain retail symbol names (the
-// thunks jump through these unmangled addresses; C++ linkage would re-mangle).
-// (thunk-recovery pilot: MWCC now emits the +0x5C adjustors itself as weak
-// @92@cbRenderBefore__15CMenuBattleModeFv / @92@__dt__15CMenuBattleModeFv --
-// symbols.txt names them the same way; padding keeps line count.)
-extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag);
-
-// Deleting virtual destructor (D1 shape): destroys the mLayoutMem member
-// (delete flag -1), then the CProcess base (via IUICf/CTTask), then frees the
-// backing block when the delete flag is nonzero. Written as a plain free C-ABI
-// shim on the mangled symbol so MWCC does not re-install the class vtables at
-// the top of the dtor (retail emits no vptr stores here). The redundant
-// `if (self != 0)` re-check reproduces the retail's dead double-beq and the
-// explicit __dt__8CProcessFv(self, 0) call fixes the delete flag to 0
-// (CMenuSymbolMark/CMenuBattleChain idiom).
-extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
-extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
-    if (self == 0) goto end;
-    self->mLayoutMem.~UnkClass_8045F564();
-    if (self != 0) {
-        if (self != 0) {
-            __dt__8CProcessFv(self, 0);
-        }
-    }
-    if (deleteFlag > 0) operator delete(self);
-end:
-    return self;
-}
-
-/**
- * Factory-style constructor for the single battle-mode menu instance.
- *
- * If no instance exists yet (global is null), allocates a 0x84-byte block from
- * work memory, constructs the CProcess base + UnkClass_8045F564 member on top
- * of it, installs the three vtables (primary / IWorkEvent / IScnRender), then
- * stores the pointer in the singleton global and registers off the parent.
- */
-
-// Byte-range shim over the retconned object so the factory ctor can write the
-// vtables (+0x10, +0x58, +0x5C) and the PTMF callback slots (+0x3C..0x53)
-// without raw pointer arithmetic. Mirrors CMenuBattleMode layout exactly.
-struct CMenuBattleModeShim {
-    u8 unk00[0x10];
-    void* vtable;                    // 0x10
-    u8 unk14[0x3C - 0x14];          // 0x14-0x3B (CProcess tail)
-    u32 callbacks[6];               // 0x3C-0x53 (__ptmf_null copies)
-    u8 field54;                     // 0x54
-    u8 field55;                     // 0x55
-    void* iweVtable;                // 0x58 (IWorkEvent)
-    void* iscnVtable;               // 0x5C (IScnRender)
-    UnkClass_8045F564 mLayoutMem;    // 0x60-0x6F
-    CScn* mScn;                     // 0x70
-    nw4r::lyt::Layout* mLayout;      // 0x74
-    nw4r::lyt::AnimTransform* mAnimDefault; // 0x78
-    nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C
-    u8 mState;                      // 0x80
-    u8 pad81[3];                    // 0x81-0x83
-};
-extern "C" CMenuBattleMode* __ct__CMenuBattleMode(CProcess* parent, CScn* scene) {
-    if (lbl_eu_80664318 != 0) {
-        return NULL;
-    }
-
-    mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
-    CMenuBattleModeShim* shim =
-        (CMenuBattleModeShim*)mtl::MemManager::allocate(0x84, handle);
-
-    if (shim != NULL) {
-        u32 zero = 0;
-        CProcess* proc = (CProcess*)shim;
-        __ct__8CProcessFv(proc);
-
-        // Temp (CProcess) vtable first.
-        shim->vtable = lbl_eu_8052BF70;
-
-        // Word-exact copy of the two null-PMF slot groups (0x3C..0x53).
-        u32* ptmf = __ptmf_null;
-        u32 w1 = ptmf[1];
-        u32 w0 = ptmf[0];
-        shim->callbacks[0] = w0;
-        shim->callbacks[1] = w1;
-        shim->callbacks[2] = ptmf[2];
-
-        w1 = ptmf[1];
-        w0 = ptmf[0];
-        shim->callbacks[3] = w0;
-        shim->callbacks[4] = w1;
-        shim->callbacks[5] = ptmf[2];
-
-        shim->field54 = zero;
-        shim->field55 = zero;
-
-        // Composite vtable + IWorkEvent (+0x24) / IScnRender (+0xac)
-        // sub-vtables, formed from one materialization of the final label.
-        shim->vtable = lbl_eu_80532DD0;
-        shim->iweVtable = lbl_eu_80532DD0 + 0x24;
-        shim->iscnVtable = lbl_eu_80532DD0 + 0xac;
-
-        ::new (&shim->mLayoutMem) UnkClass_8045F564();
-        shim->mScn = scene;
-        shim->mLayout = (nw4r::lyt::Layout*)zero;
-        shim->mAnimDefault = (nw4r::lyt::AnimTransform*)zero;
-        shim->mAnimLabel = (nw4r::lyt::AnimTransform*)zero;
-        shim->mState = zero;
-    }
-
-    lbl_eu_80664318 = (u32)shim;
-    ((CProcess*)shim)->Regist(parent, false);
-    return (CMenuBattleMode*)lbl_eu_80664318;
-}
-
 void CMenuBattleMode::Term() {
     CDeviceVI::waitForDrawDone();
 
@@ -226,7 +130,7 @@ void CMenuBattleMode::Term() {
     }
 
     mLayoutMem.deleteRegion();
-    lbl_eu_80664318 = 0;
+    sInstance = nullptr;
 }
 
 void CMenuBattleMode::Move() {
@@ -342,4 +246,20 @@ draw:
         SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
     }
+}
+
+CMenuBattleMode* CMenuBattleMode::sInstance;
+
+inline CMenuBattleMode::CMenuBattleMode(CScn* scene)
+    : mScn(scene), mLayout(nullptr), mAnimDefault(nullptr), mAnimLabel(nullptr), mState(0) {}
+
+CMenuBattleMode* CMenuBattleMode::create(CProcess* parent, CScn* scene) {
+    if (sInstance != nullptr) {
+        return nullptr;
+    }
+
+    CMenuBattleMode* menu = new (CWorkThreadSystem::getWorkMem()) CMenuBattleMode(scene);
+    sInstance = menu;
+    menu->Regist(parent, false);
+    return sInstance;
 }

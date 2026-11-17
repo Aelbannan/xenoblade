@@ -59,9 +59,6 @@ extern "C" u32 func_80138574(const char* name, u32 id);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
-// Temp (CProcess) vtable written before the __ptmf_null copy, then overwritten
-// by the composite vtable (see __ct__8011C1B8).
-extern char lbl_eu_8052BF70[];
 extern char lbl_eu_8052C858[];  // CMenuMiniMap2 composite vtable block (+0x24/+0xAC slots)
 extern char lbl_eu_8052CA88[];  // CMMClock vtable
 // Presentation/mode flag words (.sbss) tested by cbRenderBefore.
@@ -245,9 +242,9 @@ public:
 // weak stubs); the factory hand-writes the +0x58 table instead.
 class CMenuMiniMap2Base : public IUICf {
 public:
-    u8 mField54;                  // 0x54
-    u8 mField55;                  // 0x55
-    u8 mPad56[0x58 - 0x56];       // 0x56..0x58
+
+
+
     u32 mFn58;                    // 0x58 raw IWorkEvent vtable (lbl_eu_8052C858 + 0x24)
 };
 

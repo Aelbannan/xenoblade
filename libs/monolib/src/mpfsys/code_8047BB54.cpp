@@ -191,7 +191,6 @@ extern "C" void* Scn_GetCurrentScene(CView* view);
 extern "C" void* Scn_HasCamItem(void* camera, CView* view);
 
 // .sdata2 float for the layer-scale setup (func_8047230C).
-extern const f32 lbl_eu_8066A858;
 // Embedded subobject pointer cache (this+0x24) written by initMpfDrawBuffer.
 extern void* lbl_eu_80665838;
 // Draw-description VEC3 buffers handed to mpfRunDescQuery (retail .bss).
@@ -501,7 +500,7 @@ extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
         layout->field_0x10 = 0x15;
         __dt__8047BC74(self, 0x96000, 0x64000);
         setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, lbl_eu_8066A858);
+            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, 4.0f);
         u32 size;
         nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
             (MEMAllocator*)getScnRoot45C(cscn), &size,

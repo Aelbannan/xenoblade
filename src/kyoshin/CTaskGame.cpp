@@ -1,6 +1,8 @@
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTaskGameImports.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CTaskGameCf.hpp"
+#include "kyoshin/CTaskGameEvt.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CGame.hpp"
@@ -11,6 +13,7 @@ class CLoad;
 extern "C" void CLoadBeginFileRequest(CLoad* self);
 extern "C" void CLoadTeardownLayout(CLoad* self);
 #include "kyoshin/CLoad.hpp"
+#include "kyoshin/menu/CMenuTitle.hpp"
 
 // --- CTTask<CTaskGame> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -85,7 +88,7 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int initFlag) :
     unkC8(initFlag),
     unkCC(0),
     unkD0(0),
-    unkD4(0),
+    unkD4(nullptr),
     unkD8(-1),
     unkDC(2),
     unkE0(1.0f),
@@ -226,10 +229,9 @@ void CTaskGame::Init(){
     gameCf->startMission(
         0, 0, *reinterpret_cast<ml::FixStr<32>*>(&lbl_eu_804FA890[0]), 0);
 
-    CTaskGameEvt* evt = create__12CTaskGameEvtFv(this, (int)unk74);
-    unkD4 = reinterpret_cast<u32>(evt);
-    // Raise bit 0x2 of the event object's flag word.
-    reinterpret_cast<CTaskGameUnkD4Obj*>(evt)->field_0x60 |= 2;
+    CTaskGameEvt* evt = CTaskGameEvt::create(this, unk74);
+    unkD4 = evt;
+    evt->mFlags |= CTaskGameEvt::FLAG_ENABLED;
 
     if (lbl_eu_80663D2C != 0) {
         CTaskGame_setLoadScreen(1, 1);
@@ -677,7 +679,7 @@ extern "C" __declspec(noinline) int CTaskGame_playTimeGate() {
     if (lbl_eu_80663D18 == nullptr) return 0;
     return (lbl_eu_80663D18->unkD8 + 1) != 0;
 }
-extern "C" u32 CTaskGame_enumListGet(u32* ptr) { return *ptr; }
+cf::CfObjEnumList* CfEnumListHolder::get() { return list; }
 // IScnRender base impls (retail blr): cbRenderBefore + legacy handleEmptyRender (0x800444C0).
 void IScnRender::cbRenderBefore() {} void IScnRender::handleEmptyRender() {}
 void Tail__8CProcessFv() {}
@@ -808,12 +810,10 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             goto L_8004316C;
         }
         {
-            u8 drawInfo[0x54];
-            __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-            SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-            CLoadDrawIfVisible(lbl_eu_80663D1C, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            nw4r::lyt::DrawInfo drawInfo;
+            SetWideLocAdjust(&drawInfo);
+            CLoadDrawIfVisible(lbl_eu_80663D1C, &drawInfo);
             lbl_eu_80663D28 = 1;
-            __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
         }
     }
 
@@ -913,11 +913,9 @@ L_80043454:
             }
 L_80043460:
             {
-                u8 drawInfo[0x54];
-                __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-                SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-                lbl_eu_80663D20->drawBattery((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-                __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+                nw4r::lyt::DrawInfo drawInfo;
+                SetWideLocAdjust(&drawInfo);
+                lbl_eu_80663D20->drawBattery(&drawInfo);
             }
             goto L_80043514;
         } else {
@@ -1019,8 +1017,8 @@ __declspec(noinline) void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, 
     unk68 |= 2;
     unk128 = 3;
     if (unkD4 != nullptr) {
-        EvtTask_Relay64CFC(reinterpret_cast<void*>(unkD4));
-        reinterpret_cast<CTaskGameUnkD4Obj*>(unkD4)->field_0x60 &= ~2;
+        unkD4->teardownSeq();
+        unkD4->mFlags &= ~CTaskGameEvt::FLAG_ENABLED;
     }
 }
 
@@ -1714,7 +1712,7 @@ extern "C" void CTaskGame_moveClrErrWin2(CTaskGame* self) {
 // unk68 bit 0x200000 and raises the lbl_eu_80663D2C flag. When the
 // window-state gate (CTaskGame_windowGate) is clear: clear the +0x39 busy bytes and
 // null the unkCC/unkD0 objects, run the CTaskGame_deleteLoad reset, poke the unkF0
-// object's +0x39 byte, create the title menu (__ct__CMenuTitle with the
+// object's +0x39 byte, create the title menu (CMenuTitle::create with the
 // +0x60 ITitleMenu subobject via a null-checked adjusted cast), poke the
 // unkD4 event object, reset unk78, and switch the move-hook ptmf to pool
 // lbl_eu_80525784.
@@ -1740,9 +1738,9 @@ extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
         if (self->unkF0 != 0) {
             reinterpret_cast<CTaskGameFlag39*>(self->unkF0)->field_0x39 = 1;
         }
-        self->unkF0 = reinterpret_cast<u32>(__ct__CMenuTitle(self, self->unk74, static_cast<ITitleMenu*>(self)));
-        if (self->unkD4 != 0) {
-            EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
+        self->unkF0 = reinterpret_cast<u32>(CMenuTitle::create(self, reinterpret_cast<CScn*>(self->unk74), reinterpret_cast<CTitleAction*>(static_cast<ITitleMenu*>(self))));
+        if (self->unkD4 != nullptr) {
+            self->unkD4->clearSeqState();
         }
         self->unk78 = 0;
         u32 v0;
@@ -1772,8 +1770,8 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
         if (self->unk86 == 0 && CTaskGame_playTimeGate() == 0 && EvtSeqGetStateBit10() != 0) {
             CTaskGame_openStream(0, &lbl_eu_804FA890[0x6E], self->unk74->getAllocHandle(), 0, 1, 0, lbl_eu_80665D6C);
         }
-        if (self->unkD4 != 0) {
-            EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
+        if (self->unkD4 != nullptr) {
+            self->unkD4->clearSeqState();
         }
         if ((self->unk68 & 0x1000) != 0) {
             // Retail loads unkF4 first and clears the tested 0x1000 bit
@@ -2148,9 +2146,9 @@ void CTaskGame_stub_80042784(){}
 // lbl_eu_80525844 and return 1. Returns 0 otherwise.
 extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
     if (CTaskGame::isFlag01Set() != 0) {
-        if (self->unkD4 != 0) {
-            EvtTask_Relay64CFC(reinterpret_cast<void*>(self->unkD4));
-            reinterpret_cast<CTaskGameUnkD4Obj*>(self->unkD4)->field_0x60 &= ~2;
+        if (self->unkD4 != nullptr) {
+            self->unkD4->teardownSeq();
+            self->unkD4->mFlags &= ~CTaskGameEvt::FLAG_ENABLED;
         }
         if (cf::CTaskGameCf::getInstance() != 0) {
             cf::CTaskGameCf::getInstance()->reqExit();
@@ -2165,9 +2163,9 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
         return 1;
     }
     if ((self->unk68 & 0x2) != 0) {
-        if (self->unkD4 != 0) {
-            EvtTask_Relay64CFC(reinterpret_cast<void*>(self->unkD4));
-            reinterpret_cast<CTaskGameUnkD4Obj*>(self->unkD4)->field_0x60 &= ~2;
+        if (self->unkD4 != nullptr) {
+            self->unkD4->teardownSeq();
+            self->unkD4->mFlags &= ~CTaskGameEvt::FLAG_ENABLED;
         }
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525844);
@@ -2504,22 +2502,21 @@ extern "C" __declspec(noinline) void CTaskGame_fadeStream(int frames, float volu
 // object registry (CTaskGame_allocObjSlot); when no slot is free, allocates a fresh
 // CfObjEnumList from the MEM2 region. Zeroes the list's count fields and
 // returns the holder.
-extern "C" CfEnumListHolder* CTaskGame_enumListCtor(CfEnumListHolder* self) {
-    self->handle = -1;
-    self->list = reinterpret_cast<cf::CfObjEnumList*>(CTaskGame_allocObjSlot());
-    if (self->list == nullptr) {
-        self->handle = mtl::MemManager::getHandleMEM2();
+CfEnumListHolder::CfEnumListHolder() {
+    this->handle = -1;
+    this->list = reinterpret_cast<cf::CfObjEnumList*>(CTaskGame_allocObjSlot());
+    if (this->list == nullptr) {
+        this->handle = mtl::MemManager::getHandleMEM2();
         cf::CfObjEnumList* list = static_cast<cf::CfObjEnumList*>(
-            mtl::MemManager::allocate(0x3040, self->handle));
+            mtl::MemManager::allocate(0x3040, this->handle));
         if (list != nullptr) {
             list = __ct__cf_CfObjEnumList(list);
         }
-        self->list = list;
+        this->list = list;
     }
-    CfObjEnumListFields* list = reinterpret_cast<CfObjEnumListFields*>(self->list);
+    CfObjEnumListFields* list = reinterpret_cast<CfObjEnumListFields*>(this->list);
     list->mPtrCount = 0;
     list->mObjInfoCount = 0;
-    return self;
 }
 // Retail __dt__80043E88: enum-list holder destructor. When the holder owns a
 // heap list (handle != -1) it virtual-deletes the list (vtable slot +8, flag 1)
@@ -2527,24 +2524,16 @@ extern "C" CfEnumListHolder* CTaskGame_enumListCtor(CfEnumListHolder* self) {
 // (handle == -1) it returns the slot via CTaskGame_freeObjSlot. Deletes the holder
 // itself when flag > 0. The redundant second pointer test mirrors MWCC's
 // `delete` expansion (retail emits two beq against one cmpwi).
-CfEnumListHolder* __dt__80043E88(CfEnumListHolder* self, int flag) {
-    if (self != nullptr) {
-        if ((u32)self->handle != 0xFFFFFFFFu) {
-            if (self->list != nullptr) {
-                // Retail `delete list` (virtual deleting-dtor dispatch at
-                // vtable+8 with flag 1); the redundant pointer test mirrors
-                // the delete expansion (retail emits two beq, one cmpwi).
-                delete reinterpret_cast<CfObjEnumListVtView*>(self->list);
-                self->list = nullptr;
-            }
-        } else {
-            CTaskGame_freeObjSlot(self->list);
+CfEnumListHolder::~CfEnumListHolder() {
+    if ((u32)this->handle != 0xFFFFFFFFu) {
+        if (this->list != nullptr) {
+            // Retail `delete list` (virtual deleting-dtor dispatch at vtable+8 with flag 1).
+            delete reinterpret_cast<CfObjEnumListVtView*>(this->list);
+            this->list = nullptr;
         }
-        if (flag > 0) {
-            operator delete(self);
-        }
+    } else {
+        CTaskGame_freeObjSlot(this->list);
     }
-    return self;
 }
 
 void CTaskGame_stub_80043E08(){}
@@ -2553,20 +2542,19 @@ void CTaskGame_stub_80043E08(){}
 // allocates a fresh CfObjEnumList from the MEM2 region. Unlike CTaskGame_enumListCtor
 // the count fields are NOT zeroed here; the list is passed straight to
 // startEnumObjects with the caller's type/filter and the holder is returned.
-extern "C" CfEnumListHolder* CTaskGame_enumListFill(CfEnumListHolder* self, u32 type, u32 filter) {
-    self->handle = -1;
-    self->list = reinterpret_cast<cf::CfObjEnumList*>(CTaskGame_allocObjSlot());
-    if (self->list == nullptr) {
-        self->handle = mtl::MemManager::getHandleMEM2();
+CfEnumListHolder::CfEnumListHolder(u32 type, u32 filter) {
+    this->handle = -1;
+    this->list = reinterpret_cast<cf::CfObjEnumList*>(CTaskGame_allocObjSlot());
+    if (this->list == nullptr) {
+        this->handle = mtl::MemManager::getHandleMEM2();
         cf::CfObjEnumList* list = static_cast<cf::CfObjEnumList*>(
-            mtl::MemManager::allocate(0x3040, self->handle));
+            mtl::MemManager::allocate(0x3040, this->handle));
         if (list != nullptr) {
             list = __ct__cf_CfObjEnumList(list);
         }
-        self->list = list;
+        this->list = list;
     }
-    startEnumObjects(self->list, type, filter);
-    return self;
+    startEnumObjects(this->list, type, filter);
 }
 // Target us-8004460c: append a C-string to a FixStr<32> (retail call sites
 // pass CTaskGame+0x104): strlen+strcat into mString and bump mLength; return

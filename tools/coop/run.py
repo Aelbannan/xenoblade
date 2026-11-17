@@ -577,7 +577,7 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
     result, note = _compare(retail, decomp)
     print(f"unit: {unit.name}")
     for line in view.excluded:
-        print(f"  weak-dedup: excluded {line}")
+        print(f"  linked-view: excluded {line}")
     if note:
         print(f"  (postprocess: {note})")
     print(format_data_result(result))
@@ -935,15 +935,9 @@ def cmd_cycle(
             declared_return_value = cert_abi.get("declared_return")
 
     attempt_num = count_attempts(config.resolve(config.attempt_log), target.id) + 1
-    # When ELF identity issued a full-instruction-match cert, persist 100% even
-    # if objdiff under-scored (score-gap / null-symbol pairing). The cert is the
-    # source of truth for FULL_MATCH; writing the under-score recreated the
-    # mid-band FULL_MATCH integrity hole the audit flagged.
-    if (
-        evaluation.status == "FULL_MATCH"
-        and evaluation.equivalence_certificate
-        and evaluation.equivalence_certificate.get("evidence") == "full-instruction-match"
-    ):
+    # The independent relocation-aware byte gate is authoritative, including
+    # functions whose opcodes the semantic certificate decoder cannot model.
+    if evaluation.status == "FULL_MATCH":
         persisted_match = 100.0
     elif fn_match:
         persisted_match = fn_match.match_percent
@@ -2827,6 +2821,15 @@ def main() -> int:
     p_extab_gate.add_argument("--init", action="store_true", help="write the baseline from the current objects")
     p_extab_gate.add_argument("--verbose", action="store_true", help="print per-function diffs for failing units")
 
+    p_faithful = sub.add_parser(
+        "faithful",
+        help="Shrink-only source-faithfulness gate per unit (docs/evidence/faithful_baseline.json)",
+    )
+    p_faithful.add_argument("--ratchet", action="store_true", help="lower the baseline (shrink-only)")
+    p_faithful.add_argument("--init", action="store_true", help="write the baseline from the current tree")
+    p_faithful.add_argument("--verbose", action="store_true", help="list the worst units")
+    p_faithful.add_argument("--unit", help="print the breakdown for units matching this substring")
+
     p_order_gate = sub.add_parser(
         "text-order-gate",
         help="Shrink-only .text function-order gate for completed units (docs/evidence/text_order_baseline.json)",
@@ -3050,6 +3053,11 @@ def main() -> int:
         from tools.coop import extab_gate
 
         return extab_gate.gate(config.region, args.ratchet, args.init, args.verbose)
+
+    if args.command == "faithful":
+        from tools.coop import faithful
+
+        return faithful.gate(config.region, args.ratchet, args.init, args.verbose, args.unit)
 
     if args.command == "text-order-gate":
         from tools.coop import text_order_gate

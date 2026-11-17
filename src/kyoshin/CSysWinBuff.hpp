@@ -191,7 +191,7 @@ extern PtmfNullWords __ptmf_null_words;
 extern "C" {
 void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
-void __ct__CSysWin(void* syswin, int arg);
+void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);

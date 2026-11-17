@@ -350,11 +350,11 @@ void EffectActNw4rInitModel(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
 extern "C" void __dt__17CScnEffectActNw4rFv();
 
 // Foreign .sdata words (typeinfo headers for the two views).
-extern u32 lbl_eu_80663A20;
-extern u32 lbl_eu_80663A28;
+extern u32 __RTTI__17CScnEffectActNw4r;
+extern u32 __RTTI__10IEffectAct;
 
 extern "C" u32 lbl_eu_8056EAD8[26] = {
-    (u32)&lbl_eu_80663A20, 0x00000000,
+    (u32)&__RTTI__17CScnEffectActNw4r, 0x00000000,
     (u32)&__dt__17CScnEffectActNw4rFv,
     (u32)&EffectActNw4rProbeAnimActive, (u32)&EffectActNw4rMgrCallV04, (u32)&EffectActNw4rSetLeafDist,
     (u32)&EffectActNw4rSetTreeFlag2, (u32)&EffectActNw4rCallMgrV43, (u32)&EffectActNw4rCallMgrV16,
@@ -366,5 +366,5 @@ extern "C" u32 lbl_eu_8056EAD8[26] = {
     (u32)&EffectActNw4rCheckRange, (u32)&EffectActNw4rHasDirectAct,
 };
 extern "C" u32 lbl_eu_8056EB40[4] = {
-    (u32)&lbl_eu_80663A28, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__10IEffectAct, 0x00000000, 0x00000000, 0x00000000,
 };

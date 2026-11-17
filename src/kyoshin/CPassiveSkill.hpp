@@ -394,8 +394,8 @@ public:
 // retail symbol is unmangled, so the declaration needs C linkage to make the
 // call reloc plain `CSysWin_isReady` (same pattern as CItemBoxLine.hpp).
 // CSysWin sub-object constructor (defined in CSysWin.cpp as a C-linkage free
-// function; retail symbol __ct__CSysWin). Called by __ct__UI_CPassiveSkill.
-extern "C" void __ct__CSysWin(CSysWin* self, int arg);
+// function; retail symbol __ct__7CSysWinFUc). Called by __ct__UI_CPassiveSkill.
+extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);
 
 extern "C" u32 CSysWin_isReady(void* syswin);
 
@@ -631,14 +631,6 @@ class CfObjectMove;
 class CfObjEnumList;
 }
 
-// 8-byte enum-list holder around a cf::CfObjEnumList (CTaskGame_enumListCtor ctor /
-// CTaskGame_enumListGet accessor / __dt__80043E88 dtor); same scheme as
-// CfEnumListHolder in CTaskGame.hpp / pluginUi.hpp.
-struct CPSkillEnumListHolder {
-    cf::CfObjEnumList* list;   // +0x00
-    u32 handle;                // +0x04
-};
-
 // One slot of the CfObjEnumList element array (getEntryAt result): the
 // CfObjectMove pointer sits at +0x04.
 struct CPSkillEnumListSlot {
@@ -646,7 +638,7 @@ struct CPSkillEnumListSlot {
     cf::CfObjectMove* move;    // +0x04
 };
 
-// CfObjEnumList element-count field at +0x620 (CTaskGame_enumListGet result).
+// CfObjEnumList element-count field at +0x620 (get__16CfEnumListHolderFv result).
 struct CPSkillEnumListCount {
     u8 _pad0[0x620];           // +0x00..0x61F
     u32 count;                 // +0x620
@@ -655,9 +647,6 @@ struct CPSkillEnumListCount {
 // cf enum-list helpers used by CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // declared with typed holders in this header only - no co-included header
 // re-declares them).
-extern "C" void CTaskGame_enumListCtor(void*);
-extern "C" void* CTaskGame_enumListGet(void*);
-extern "C" void __dt__80043E88(void*, int);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" CPSkillEnumListSlot* getEntryAt(void*, u32);
 extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);

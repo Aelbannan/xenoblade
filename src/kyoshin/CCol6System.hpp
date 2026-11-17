@@ -387,7 +387,7 @@ void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_
 void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
 extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
-void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
+void __ct__7CSysWinFUc(void* self, int arg);                              // CSysWin ctor (retail short name)
 extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
@@ -452,8 +452,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 extern "C" void CScrollBar_Teardown(CScrollBar* scrollbar);                    // scrollbar destroy
 extern "C" void CScrollBar_draw(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide

@@ -56,9 +56,9 @@ void CScnBloom_RenderHalfRes(CScnBloom* self);
 }
 
 // Retail data labels referenced by the bloom vtable/params (foreign pool).
-extern "C" u32 lbl_eu_806639F8;
-extern "C" u32 lbl_eu_806639F0;
-extern "C" u32 lbl_eu_80663A00;
+extern "C" u32 __RTTI__9CScnBloom;
+extern "C" u32 __RTTI__10CScnFilter;
+extern "C" u32 __RTTI__13CScnBloomBase;
 // Foreign function referenced by the dispatch table.
 extern "C" void FilterUpdateIntensity();
 // Forward declarations for in-TU extern "C" functions referenced below.
@@ -68,13 +68,13 @@ extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param);
 // === .data size=0x38 align=8 ===
 // CScnBloom dispatch table (36B): typeinfo locators + virtual thunks.
 extern "C" u32 lbl_eu_8056EA08[9] = {
-    (u32)&lbl_eu_806639F8, 0x00000000, (u32)&lbl_eu_806639F8, 0xFFFFFFB8,
+    (u32)&__RTTI__9CScnBloom, 0x00000000, (u32)&__RTTI__9CScnBloom, 0xFFFFFFB8,
     (u32)&CScnBloom_destroyAdj48, (u32)&FilterUpdateIntensity, (u32)&CScnBloom_renderBloomAdj48,
     (u32)&__dt__9CScnBloomFv, (u32)&CScnBloom_RenderFiltered,
 };
 // Bloom param block (20B).
 extern "C" u32 lbl_eu_8056EA2C[5] = {
-    (u32)&lbl_eu_806639F0, 0x00000048, (u32)&lbl_eu_80663A00, 0x00000000, 0x00000000,
+    (u32)&__RTTI__10CScnFilter, 0x00000048, (u32)&__RTTI__13CScnBloomBase, 0x00000000, 0x00000000,
 };
 
 // ============================================================================

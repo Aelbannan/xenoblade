@@ -28,5 +28,5 @@ void NandData_SetupBanner_11C0()
 
     CNandData::sInstance.mNandBanner.setBannerPath(lbl_eu_80662E00);
     CNandData::sInstance.mNandBanner.setFileList(lbl_eu_8053A3D8, lbl_eu_8053A3FC);
-    CNandData::sInstance.mNandBanner.unkC &= ~0x10;
+    CNandData::sInstance.mNandBanner.mFlags &= ~0x10;
 }

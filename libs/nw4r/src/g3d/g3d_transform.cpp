@@ -44,8 +44,7 @@ namespace detail {
 namespace {
 
 /**
- * Singularity threshold. Retail literal at lbl_eu_80669B40 = 0x03AA2425
- * (~1e-36). A denormal guard: any meaningful determinant passes; only
+ * Singularity threshold (0x03AA2425, ~1e-36). A denormal guard: any meaningful determinant passes; only
  * (near-)zero / denormal determinants are treated as singular.
  */
 const f32 INVERSE_EPSILON = 1.0e-36f;

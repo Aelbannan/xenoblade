@@ -2,57 +2,33 @@
 
 #include "kyoshin/IUICf.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
-#include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
-#include <nw4r/lyt.h>
+class CProcess;
+class CScn;
+namespace nw4r { namespace lyt { class Layout; class AnimTransform; } }
 
-// Batch 2026-07-14l: menu-battlemode-init owns Init exclusively.
-// IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4
-// (same shape proven for CMenuBattlePlayerState -- see MWCC_CASES section 15).
-class CMenuBattleModeBase : public IUICf {
+// Battle-mode menu (IUICf task + IWorkEvent + IScnRender render callback).
+class CMenuBattleMode : public IUICf, public IWorkEvent, public IScnRender {
 public:
-    u8 pad54[4];
-};
-
-class CMenuBattleMode : public CMenuBattleModeBase,
-                         public IWorkEvent,
-                         public IScnRender {
-public:
-    void Init();
-
-    // IWorkEvent @0x58; IScnRender @0x5c (extab)
-    UnkClass_8045F564 mLayoutMem;        // 0x60 -- layout memory region (MEM2 alloc, scoped region guard)
-    CScn* mScn;                          // 0x70 -- owning scene; addRenderCB target
-    nw4r::lyt::Layout* mLayout;          // 0x74 -- layout draw target (hosts animations)
-    nw4r::lyt::AnimTransform* mAnimDefault; // 0x78 -- default animation (label text, enabled at init)
-    nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C -- label animation (disabled at init)
-    u8 mState;                       // 0x80 -- battle-mode phase/state machine index
+    CMenuBattleMode(CScn* scene);
     virtual ~CMenuBattleMode();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-    CMenuBattleMode();
-};
 
-// --- Imports used by this unit (data/globals referenced at their retail names) ---
-// Singleton instance pointer for the battle-mode menu (shared .sbss 4-byte ptr).
-extern u32 lbl_eu_80664318;
-// Secondary-mode flags bitfield (bit 21 = 0x200000 gated in Move/cbRenderBefore).
-extern u32 lbl_eu_80663E28;
-// sdata2 animation frame constants.
-extern const f32 lbl_eu_80667C80;
-extern const f32 lbl_eu_80667C84;
-// ARC resource name string table base.
-extern char lbl_eu_80503D80[];
-// CProcess primary vtable + CMenuBattleMode primary vtable (written by ctor).
-extern char lbl_eu_8052BF70[];
-extern char lbl_eu_80532DD0[];
-// Null pointer-to-member-function constant used for the PTMF callback slots.
-extern u32 __ptmf_null[3];
-// Shared battle ARC resource accessor -- retail calls the unmangled name.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-// CProcess ctor import: CProcess is abstract (pure virtuals) so it cannot be
-// placement-new'd from the factory; retail emits its mangled C-ABI name.
-extern "C" void __ct__8CProcessFv(CProcess* self);
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    // Only one battle-mode menu exists at a time (subsequent calls return NULL).
+    static CMenuBattleMode* create(CProcess* parent, CScn* scene);
+
+    static CMenuBattleMode* sInstance;
+
+    /* 0x60 */ UnkClass_8045F564 mLayoutMem;   // layout memory region (MEM2 alloc, scoped region guard)
+    /* 0x70 */ CScn* mScn;                     // owning scene; addRenderCB target
+    /* 0x74 */ nw4r::lyt::Layout* mLayout;     // layout draw target (hosts animations)
+    /* 0x78 */ nw4r::lyt::AnimTransform* mAnimDefault; // default animation (label text, enabled at init)
+    /* 0x7C */ nw4r::lyt::AnimTransform* mAnimLabel;   // label animation (disabled at init)
+    /* 0x80 */ u8 mState;                      // battle-mode phase/state machine index
+}; // size: 0x84

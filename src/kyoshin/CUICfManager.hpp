@@ -58,7 +58,6 @@ void playUISound(u32);         // mangles to playUISound__FUl
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);      // resource getter (CMiniMap.cpp)
-extern "C" u32 CMainMenu_Create(u8* ctx, u32 scene);  // menu factory (CMainMenu.cpp)
 extern "C" u32 hasQuestWindow();                    // close-quest-menu gate (CMainMenu.hpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
 // C-library delete operators (flat retail symbols; shared runtime helpers).
@@ -97,7 +96,7 @@ extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u3
 extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
 extern "C" void UIWin_CreateSysWin1(char* a, char* b, int c, int d);
 // Enum-list holder helpers for CUICfManager_checkMenuOpenGate (defining TU: code_80043E08 TU).
-// CTaskGame_enumListFill takes the holder itself (declared in the .cpp next to the
+// __ct__16CfEnumListHolderFUlUl takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
 extern "C" u8* __ct__800FC32C(u8* list, int a, int b, int c);
 // .sdata2 float constants (r2-sda21 loads; const routes them into .sdata2).

@@ -12,9 +12,6 @@ Class_80296898* initInstance(Class_80296898* obj){
     return obj;
 }
 
-Class_80296898* Class_80296898::getInstance(void) {
-    return &lbl_eu_805772C8;
-}
 
 void Class_80296898::init(){
     std::memset(mSlotFlags, 0, 64);
@@ -52,6 +49,13 @@ void Class_80296898::init(){
     // Retail reads from the global singleton at offset 0x1C (mConfigData[0x0C])
     setErrMesLanguage(lbl_eu_805772C8.mConfigData[0x0C] != 0);
 }
+
+
+
+Class_80296898* Class_80296898::getInstance(void) {
+    return &lbl_eu_805772C8;
+}
+
 
 // Overwrite the full configuration from external source.
 // Resets mFrameCount to 10 if the incoming data had it at 0.

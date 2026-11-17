@@ -7,6 +7,7 @@
 #include <revolution/MTX.h>
 #include <math.h>
 #include "monolib/effect/code_804CC2B8.hpp"
+#include "monolib/effect/CERand.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
@@ -73,7 +74,6 @@ int setupEffectDrawCtx(void* draw, void* desktop, void* material);
 void releaseEffectDrawTex(void* draw);
 void blitEffectViewRect(void* draw, int a, const void* b);
 void SchedTexLoadCached(void* tex, int index, int cacheIndex, int wrap);
-extern u32 lbl_eu_80665A08; // default clamp-info blob
 extern const f32 lbl_eu_8066B478; // draw-epsilon
 
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
@@ -240,7 +240,7 @@ void drawMarkerEntry(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDr
     // Degenerate size or fully transparent: nothing to draw.
     if (size->field_0x0c <= lbl_eu_8066B478) return;
     if (alpha <= lbl_eu_8066B478) return;
-    if (clampInfo == NULL) clampInfo = (const void*)&lbl_eu_80665A08;
+    if (clampInfo == NULL) clampInfo = (const void*)&ceRandomizer;
 
     snapTexCursor(desktop);
     CDrawCtxLocal draw;

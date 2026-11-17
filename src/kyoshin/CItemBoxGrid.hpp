@@ -303,8 +303,6 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void CTaskGame_enumListCtor(void*);
-extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
@@ -447,8 +445,8 @@ extern "C" void __ct__CNumSelect(void*, int);
 extern "C" void __ct__CItemBoxGridSubMenu(void*);
 extern "C" void __ct__CExchangeWin(void*);
 extern "C" void __ct__CPresentWin(void*);
-extern "C" void __ct__CSysWin(void*, int);
-extern "C" void __ct__UnkClass_8011C974(void*, void*);
+extern "C" void __ct__7CSysWinFUc(void*, int);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
 extern "C" void InfoCfCopySysWin(void*, void*);
 extern "C" void ItemBlockSetDefaultFlags();
 extern "C" void* __ct__801C5514(void*);
@@ -480,16 +478,8 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 
 // ---- UnequipPartyItem imports/helpers ----
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
-extern "C" void __dt__80043E88(void*, int);
 
-// Stack-scene enum-list holder used by UnequipPartyItem's camera block: the
-// 12-byte name table at +0x10 is written before the CTaskGame_enumListCtor ctor call.
-struct CItemBoxGridEnumHolder {
-    void* field_00;
-    u32 field_04;
-    u32 names[3];
-};
-// Enum list returned by CTaskGame_enumListGet: element count at +0x620.
+// Enum list returned by get__16CfEnumListHolderFv: element count at +0x620.
 struct CItemBoxGridEnumList {
     u8 _pad00[0x620];
     u32 field_620;
@@ -576,13 +566,13 @@ struct CibgByteBlock200 {
 };
 
 // 16-byte memory region whose copy goes through the retail
-// __ct__UnkClass_8011C974 helper (same-TU inline folds the wrapper away,
+// __as__17UnkClass_8045F564FRC17UnkClass_8045F564 helper (same-TU inline folds the wrapper away,
 // leaving the single bl the retail assignments show).
 class CibgUnk16 {
 public:
     u8 d[0x10];
     CibgUnk16& operator=(const CibgUnk16& o) {
-        __ct__UnkClass_8011C974((void*)d, (void*)o.d);
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((void*)d, (void*)o.d);
         return *this;
     }
 };

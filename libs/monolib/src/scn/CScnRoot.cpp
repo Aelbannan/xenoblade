@@ -277,13 +277,13 @@ extern "C" void __dt__8CScnRootFv(void* self, int deleteFlag) {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // Foreign .sdata RTTI locator referenced by the CScnRoot vtable (owned by
 // the sdata pool unit).
-extern u32 lbl_eu_80663998;
+extern u32 __RTTI__8CScnRoot;
 
 // [.data] 0x8056E730-0x8056E768 (0x38 = 56B): CScnRoot vtable.
 // word0 = RTTI locator, +8 = dtor, +0x28/+0x2C/+0x30 = the three -1
 // virtual stubs, rest zero.
 extern "C" u32 lbl_eu_8056E730[14] = {
-    (u32)&lbl_eu_80663998, 0x00000000,
+    (u32)&__RTTI__8CScnRoot, 0x00000000,
     (u32)&__dt__8CScnRootFv, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
     (u32)&scnRootStub28, (u32)&scnRootStub2C, (u32)&scnRootStub30, 0x00000000,

@@ -7,8 +7,6 @@
 
 // External function declarations
 extern "C" {
-    void __ct__Q22cf8CREvtObjFi(CREvtCamera* self, u32 param);
-    void __dt__Q22cf8CREvtObjFv(CREvtCamera* self, int deleteFlag);
     CREvtCamManager* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
     void  cfCam_setClear04(void* mgr, u32 mask, int flag);
@@ -47,199 +45,86 @@ static CREvtCamera* GetCamera() {
 }
 
 // ============================================================================
-// REvtCam_IsTaskListEmpty (0x80181D3C, size 0x14) - already implemented
+// Constructor (0x80181374, size 0x110): base CREvtObj(0) (camera kind).
 // ============================================================================
-extern "C" unsigned long REvtCam_IsTaskListEmpty() {
-    extern unsigned long lbl_eu_806642A8;
-    unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
-    unsigned long v = ptr[0xa0 / 4];
-    return v ? 0 : 1;
-}
-
-// ============================================================================
-// REvtCam_GetFieldA5Flag (0x80181D50, size 0xC)
-// ============================================================================
-extern "C" unsigned char REvtCam_GetFieldA5Flag() {
-    extern unsigned long lbl_eu_806642A8;
-    return ((CREvtCamera*)lbl_eu_806642A8)->mFieldA5;
-}
-
-// ============================================================================
-// REvtCam_IsField98Set (0x80181D5C, size 0x18)
-// ============================================================================
-extern "C" unsigned long REvtCam_IsField98Set() {
-    extern unsigned long lbl_eu_806642A8;
-    return ((CREvtCamera*)lbl_eu_806642A8)->mField98 == 1 ? 1 : 0;
-}
-
-// ============================================================================
-// REvtCam_IsMode2B0Eq1 (0x80181D74, size 0x18)
-// ============================================================================
-extern "C" unsigned long REvtCam_IsMode2B0Eq1() {
-    extern unsigned long lbl_eu_806642A8;
-    return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 1 ? 1 : 0;
-}
-
-// ============================================================================
-// REvtCam_IsMode2B0Eq2 (0x80181D8C, size 0x18)
-// ============================================================================
-extern "C" unsigned long REvtCam_IsMode2B0Eq2() {
-    extern unsigned long lbl_eu_806642A8;
-    return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 2 ? 1 : 0;
-}
-
-// ============================================================================
-// REvtCam_ClearAnimHandle (0x80181A1C, size 0x44)
-// ============================================================================
-extern "C" void REvtCam_ClearAnimHandle(CREvtCamera* self) {
-    if (self->mField24) {
-        Scn_IsAnimActiveOrNull((void*)self->mField24);
-        self->mField24 = 0;
-    }
-}
-
-// ============================================================================
-// REvtCam_ActivateLodTasks (0x80181790, size 0x80)
-// Activates every task in the global camera's mTaskArray1A6 list.
-// ============================================================================
-extern "C" void REvtCam_ActivateLodTasks(CREvtCamera* self) {
-    extern unsigned long lbl_eu_806642A8;
-    if (!lbl_eu_806642A8) return;
-    for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount2AC; i++) {
-        s16 taskID = ((CREvtCamera*)lbl_eu_806642A8)->mTaskArray1A6[i];
-        activateLOD__8CTaskLODFv(taskID);
-        attachLODObject__8CTaskLODFv(taskID, 1);
-    }
-}
-
-// ============================================================================
-// Constructor: __ct__CREvtCamera (0x80181374, size 0x110)
-// ============================================================================
-extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
-    __ct__Q22cf8CREvtObjFi(self, 0);
-
-    // Declaration/use split reproduces retail scheduling: the first default
-    // float loads before the vtable address formation, the other two inside
-    // the lis/@ha - addi/@l gap.
-    f32 f2 = lbl_eu_806678A4;
-    u8* vt = (u8*)lbl_eu_80531CE8;
-    u32 zero = 0;
-    f32 f1 = lbl_eu_806678A8;
-    f32 f0 = lbl_eu_806678AC;
-    *(u32**)self = (u32*)(vt);
-    s32 neg1 = -1;
-
-    self->mField14 = zero;
-    self->mField18 = param;
-    self->mField1C = zero;
-    self->mField20 = zero;
-    self->mField24 = zero;
-    self->mField88 = (CREvtCamFile*)zero;
-    self->mField8C = f2;
-    self->mField90 = zero;
-    self->mField94 = zero;
-    self->mField98 = zero;
-    self->mField9C = zero;
-    self->mFieldA0 = zero;
-    self->mFieldA4 = 0;
-    self->mFieldA5 = 0;
-    self->mTaskCount2A8 = zero;
-    self->mTaskCount2AC = zero;
-    self->mField2B0 = zero;
-    self->mTaskCount434 = zero;
-    self->mField438 = 0;
-    self->mField43C = neg1;
-    self->mField440 = f1;
-    self->mField444 = f0;
-
+cf::CREvtCamera::CREvtCamera(u32 param)
+    : CREvtObj(0), mField14(0), mField18(param), mField1C(0), mField20(0), mField24(0),
+      mField88(0), mField8C(lbl_eu_806678A4), mField90(0), mField94(0), mField98(0),
+      mField9C(0), mFieldA0(0), mFieldA4(0), mFieldA5(0), mTaskCount2A8(0), mTaskCount2AC(0),
+      mField2B0(0), mTaskCount434(0), mField438(0), mField43C(-1), mField440(lbl_eu_806678A8),
+      mField444(lbl_eu_806678AC) {
     // Mirror the game manager's camera settings into this camera. Each
     // getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE calls).
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
         if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
-            self->mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->getFov();
-            self->mField440 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
-            self->mField444 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
+            mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->getFov();
+            mField440 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
+            mField444 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
         }
     }
 
     extern unsigned long lbl_eu_806642A8;
-    lbl_eu_806642A8 = (unsigned long)self;
-    return self;
+    lbl_eu_806642A8 = (unsigned long)this;
 }
 
-// Vtable view for self-calls at +0x10 (REvtCam_ClearAnimHandle).
-// MWCC invents a dual virtual-dtor pair for any polymorphic class here, so
-// only two pads precede clearAnimHandle (slots: dtor,dtor,pad,pad,clear=+0x10).
-struct __declspec(novtable) CREvtCamClearVt {
-    virtual void slot00() = 0;
-    virtual void slot04() = 0;
-    virtual void clearAnimHandle() = 0;
-};
-
 // ============================================================================
-// Destructor: __ct__80180088 (0x80181484, size 0x188)
-//
-// Note: this retail symbol is really a destructor (vtable reset + cleanup +
-// base-class dtor + operator delete). The whole body runs under an explicit
-// `if (self)` guard so MWCC emits a single `beq` to the epilogue for the
-// null check, matching retail.
+// Destructor (0x80181484, size 0x188): clears the singleton, hands the
+// camera settings back to the game manager, releases the animation handle
+// and scene items; the CREvtObj base dtor and class operator delete follow
+// implicitly.
 // ============================================================================
-extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
-    if (self) {
-        *(u32**)self = (u32*)((u8*)lbl_eu_80531CE8);
-        lbl_eu_806642A8 = 0;
+cf::CREvtCamera::~CREvtCamera() {
+    // Declared up front (not in the nested block): block-scoped locals add
+    // redundant destroy-base ranges to the retail exception table.
+    f32 z, y, x;
+    lbl_eu_806642A8 = 0;
 
-        // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
-        // function calls) - retail makes 3 calls before cfCam_setClear04.
-        if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-            if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
-                cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
+    // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
+    // function calls) - retail makes 3 calls before cfCam_setClear04.
+    if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
+        if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
+            cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
 
-                if (self->mFieldA4) {
-                    // Mirror the camera position into the game manager.
-                    // Block-local temps reproduce retail's load-all/store-all
-                    // scheduling (z/y/x declaration order -> retail's reverse
-                    // load order into f0/f1/f2).
-                    f32 z = self->mMatrix58[2][3];
-                    f32 y = self->mMatrix58[1][3];
-                    f32 x = self->mMatrix58[0][3];
-                    f32 pos[3] = { x, y, z };
-                    getCameraDataBlock__Q22cf13CfGameManagerFv()->setPosition(pos);
-                }
-
-                getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(self->mField8C);
-
-                // Restore the player object's stored fields. Declaring both
-                // locals first then assigning keeps MWCC's f30/f31 allocation
-                // on declaration order while emitting the loads in assignment
-                // order (0x444 before 0x440, matching retail).
-                f32 f31, f30;
-                f30 = self->mField444;
-                f31 = self->mField440;
-                CREvtPlayerObj* player =
-                    (CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C;
-                player->field_0x1EC = f31;
-                player->field_0x1F0 = f30;
-                ScnCamDepthUp();
+            if (mFieldA4) {
+                // Mirror the camera position into the game manager.
+                // Block-local temps reproduce retail's load-all/store-all
+                // scheduling (z/y/x declaration order -> retail's reverse
+                // load order into f0/f1/f2).
+                z = mMatrix58[2][3];
+                y = mMatrix58[1][3];
+                x = mMatrix58[0][3];
+                f32 pos[3] = { x, y, z };
+                getCameraDataBlock__Q22cf13CfGameManagerFv()->setPosition(pos);
             }
-        }
 
-        // Retail vtable+0x10 is REvtCam_ClearAnimHandle.
-        static_cast<CREvtCamClearVt*>(static_cast<void*>(self))->clearAnimHandle();
+            getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(mField8C);
 
-        if (self->mField20) {
-            if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)self->mField20);
-            self->mField20 = 0;
+            // Restore the player object's stored fields. Declaring both
+            // locals first then assigning keeps MWCC's f30/f31 allocation
+            // on declaration order while emitting the loads in assignment
+            // order (0x444 before 0x440, matching retail).
+            f32 f31, f30;
+            f30 = mField444;
+            f31 = mField440;
+            CREvtPlayerObj* player =
+                (CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C;
+            player->field_0x1EC = f31;
+            player->field_0x1F0 = f30;
+            ScnCamDepthUp();
         }
-        if (self->mField1C) {
-            if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)self->mField1C);
-            self->mField1C = 0;
-        }
-
-        __dt__Q22cf8CREvtObjFv(self, 0);
-        if (deleteFlag > 0) cf::CREvtObj::operator delete(self);
     }
-    return self;
+
+    // vtable+0x10: release the animation handle (vfunc_08).
+    vfunc_08();
+
+    if (mField20) {
+        if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)mField20);
+        mField20 = 0;
+    }
+    if (mField1C) {
+        if (lbl_eu_80663E14) Scn_IsAnimActiveOrNull((void*)mField1C);
+        mField1C = 0;
+    }
 }
 
 // ============================================================================
@@ -290,21 +175,35 @@ extern "C" void REvtCam_ActivateTasks(CREvtCamera* taskData) {
 }
 
 // ============================================================================
+// REvtCam_ActivateLodTasks (0x80181790, size 0x80)
+// Activates every task in the global camera's mTaskArray1A6 list.
+// ============================================================================
+extern "C" void REvtCam_ActivateLodTasks(CREvtCamera* self) {
+    extern unsigned long lbl_eu_806642A8;
+    if (!lbl_eu_806642A8) return;
+    for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount2AC; i++) {
+        s16 taskID = ((CREvtCamera*)lbl_eu_806642A8)->mTaskArray1A6[i];
+        activateLOD__8CTaskLODFv(taskID);
+        attachLODObject__8CTaskLODFv(taskID, 1);
+    }
+}
+
+// ============================================================================
 // REvtCam_SetupSceneModel (0x80181810, size 0xB8)
 // Loads the camera scene model from static file data and grabs the two
 // animation handles ("Cam" matrices) from it.
 // ============================================================================
-extern "C" void REvtCam_SetupSceneModel(CREvtCamera* self) {
+void cf::CREvtCamera::vfunc_04() {
     u8* handle;
     getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(lbl_eu_805036D8, &handle, 0);
     if (handle) {
         CScnItemModel* obj = Scn_SetupAnim((u32)lbl_eu_80663E14, handle, -1, 1);
-        self->mField1C = (u32)obj;
+        mField1C = (u32)obj;
         simSetFlag2000Chain(obj, 1);
-        simSetLeafDist7B0((CScnItemModel*)self->mField1C, lbl_eu_806678B0);
-        ((CScnItemModel*)self->mField1C)->flags7A8 |= 4;
-        self->mField90 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_80662448);
-        self->mField94 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_8066244C);
+        simSetLeafDist7B0((CScnItemModel*)mField1C, lbl_eu_806678B0);
+        ((CScnItemModel*)mField1C)->flags7A8 |= 4;
+        mField90 = (u32)((CScnItemModel*)mField1C)->vfunc3C(lbl_eu_80662448);
+        mField94 = (u32)((CScnItemModel*)mField1C)->vfunc3C(lbl_eu_8066244C);
     }
 }
 
@@ -328,34 +227,44 @@ static f32 ConvU32ToTime(u32 v) {
 // "Cam" matrices at the current time, mirrors the camera position into the
 // game manager, and applies the result to the active camera object.
 // ============================================================================
-extern "C" void REvtCam_UpdateFromAnim(CREvtCamera* self) {
+void cf::CREvtCamera::vfunc_1C() {
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
         cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 1);
     }
-    if (!self->mField1C) return;
+    if (!mField1C) return;
     if (cf::CfGameManager::isSceneLoading()) return;
 
-    CScnItemModel* sceneObj = (CScnItemModel*)self->mField1C;
+    CScnItemModel* sceneObj = (CScnItemModel*)mField1C;
     nw4r::g3d::ChrAnmResult* result =
         scnImN4AnimFn(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)EvtSeqGetCounter100()));
-    result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix58);
-    self->mFieldA4 = 1;
+    result->GetRotTrans((nw4r::math::MTX34*)mMatrix58);
+    mFieldA4 = 1;
     result = scnImN4AnimFn(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)EvtSeqGetCounter100()));
-    result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
+    result->GetRotTrans((nw4r::math::MTX34*)mMatrix28);
 
     CREvtCamObj* camObj = Scn_FindCamItem((u32)lbl_eu_80663E14, -1);
     if (!camObj) return;
 
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(self->mMatrix28[2][3]);
+        getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(mMatrix28[2][3]);
     }
-    camObj->field_0x1E0 = self->mMatrix28[2][3];
+    camObj->field_0x1E0 = mMatrix28[2][3];
     ScnCamDepthUp();
-    camObj->field_0x1EC = self->mMatrix28[0][3];
-    camObj->field_0x1F0 = self->mMatrix28[1][3];
+    camObj->field_0x1EC = mMatrix28[0][3];
+    camObj->field_0x1F0 = mMatrix28[1][3];
     ScnCamDepthUp();
-    ScnCamLoadMtx(camObj, self->mMatrix58);
-    self->mFieldA4 = 1;
+    ScnCamLoadMtx(camObj, mMatrix58);
+    mFieldA4 = 1;
+}
+
+// ============================================================================
+// REvtCam_ClearAnimHandle (0x80181A1C, size 0x44)
+// ============================================================================
+void cf::CREvtCamera::vfunc_08() {
+    if (mField24) {
+        Scn_IsAnimActiveOrNull((void*)mField24);
+        mField24 = 0;
+    }
 }
 
 // ============================================================================
@@ -376,8 +285,8 @@ extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* som
         self->mField9C = 0;
         self->mFieldA0 = 0;
         if (self->mField20) {
-            // Retail vtable+0x10: REvtCam_ClearAnimHandle.
-            static_cast<CREvtCamClearVt*>(static_cast<void*>(self))->clearAnimHandle();
+            // vtable+0x10: release the animation handle (vfunc_08).
+            self->vfunc_08();
             self->mField24 = self->mField20;
             self->mField20 = 0;
         }
@@ -429,3 +338,54 @@ extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* som
     self->mField88 = (CREvtCamFile*)someParam;
 }
 
+// ============================================================================
+// REvtCam_IsTaskListEmpty (0x80181D3C, size 0x14) - already implemented
+// ============================================================================
+extern "C" unsigned long REvtCam_IsTaskListEmpty() {
+    extern unsigned long lbl_eu_806642A8;
+    unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
+    unsigned long v = ptr[0xa0 / 4];
+    return v ? 0 : 1;
+}
+
+// ============================================================================
+// REvtCam_GetFieldA5Flag (0x80181D50, size 0xC)
+// ============================================================================
+extern "C" unsigned char REvtCam_GetFieldA5Flag() {
+    extern unsigned long lbl_eu_806642A8;
+    return ((CREvtCamera*)lbl_eu_806642A8)->mFieldA5;
+}
+
+// ============================================================================
+// REvtCam_IsField98Set (0x80181D5C, size 0x18)
+// ============================================================================
+extern "C" unsigned long REvtCam_IsField98Set() {
+    extern unsigned long lbl_eu_806642A8;
+    return ((CREvtCamera*)lbl_eu_806642A8)->mField98 == 1 ? 1 : 0;
+}
+
+// ============================================================================
+// REvtCam_IsMode2B0Eq1 (0x80181D74, size 0x18)
+// ============================================================================
+extern "C" unsigned long REvtCam_IsMode2B0Eq1() {
+    extern unsigned long lbl_eu_806642A8;
+    return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 1 ? 1 : 0;
+}
+
+// ============================================================================
+// REvtCam_IsMode2B0Eq2 (0x80181D8C, size 0x18)
+// ============================================================================
+extern "C" unsigned long REvtCam_IsMode2B0Eq2() {
+    extern unsigned long lbl_eu_806642A8;
+    return ((CREvtCamera*)lbl_eu_806642A8)->mField2B0 == 2 ? 1 : 0;
+}
+
+// ============================================================================
+// vfunc_14 (CREvtObj, 0x80181DA4): always true.
+// ============================================================================
+int cf::CREvtObj::vfunc_14() { return 1; }
+
+// ============================================================================
+// vfunc_0C (0x80181DAC): the scene model pointer.
+// ============================================================================
+int cf::CREvtCamera::vfunc_0C() { return mField1C; }

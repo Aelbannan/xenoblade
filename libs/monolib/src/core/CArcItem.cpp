@@ -143,11 +143,11 @@ extern "C" void WorkEvent31__10IWorkEventFv();
 }
 
 extern "C" const char lbl_eu_80524708[0x28];
-extern "C" u32 lbl_eu_80663C00[2];
+extern "C" u32 __RTTI__8CArcItem[2];
 
 // [.data] 0x8056FFE0-0x80570068 (0x88 = 136B): CArcItem vtable
 extern "C" u32 lbl_eu_8056FFE0[34] = {
-    (u32)&lbl_eu_80663C00, 0x00000000,
+    (u32)&__RTTI__8CArcItem, 0x00000000,
     (u32)&CArcItemBlob::__dt__8CArcItemFv,
     (u32)&CArcItemBlob::WorkEvent1__10IWorkEventFPvPCc,
     (u32)&CArcItemBlob::OnFileEvent__8CArcItemFP10CEventFile,
@@ -191,4 +191,4 @@ extern "C" __declspec(align(4)) const char lbl_eu_80524708[0x28] = {
 };
 
 // [.sdata] 0x80663C00-0x80663C08 (8B)
-extern "C" u32 lbl_eu_80663C00[2] = { (u32)&lbl_eu_80524708, 0x00000000 };
+extern "C" u32 __RTTI__8CArcItem[2] = { (u32)&lbl_eu_80524708, 0x00000000 };

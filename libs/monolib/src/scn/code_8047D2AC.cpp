@@ -77,10 +77,6 @@ extern "C" {
 extern u8 lbl_eu_80658560[]; // UnkClass_8047E110 scene manager (bss 0xA8)
 extern u8 lbl_eu_80658540[]; // UnkClass_8047CD0C node pool (bss)
 
-extern const f32 lbl_eu_8066A878; // 0.5f
-extern const f32 lbl_eu_8066A87C; // 1.0f
-extern const f32 lbl_eu_8066A880; // 0.0f
-extern const f32 lbl_eu_8066A884; // 0.01f
 extern const f64 lbl_eu_8066A888; // 2^52 (int->float magic)
 
 // UnkClass_8047CD0C
@@ -130,7 +126,7 @@ void UnkClass_8047E064::initScnDefaults() {
     mFieldE = 0;
     mField20 = 1;
     mField12 = 0x50;
-    mField4 = lbl_eu_8066A880;
+    mField4 = 0.0f;
     mField22 = 4;
     mField24 = 0;
 }
@@ -159,7 +155,7 @@ extern "C" s32 solveWalkStep__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     if (self->mFlags & 4) {
         if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1,
                                                   self->mField18, self->mField14, arg2,
-                                                  lbl_eu_8066A878)) {
+                                                  0.5f)) {
             result = 1;
             self->mField18 = (u16)localA;
             self->mField14 = (u16)*arg1;
@@ -167,7 +163,7 @@ extern "C" s32 solveWalkStep__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     }
     if (!result) {
         if (findNode__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1, arg2,
-                                                  lbl_eu_8066A87C)) {
+                                                  1.0f)) {
             result = 1;
             self->mField18 = (u16)localA;
             self->mField14 = (u16)*arg1;
@@ -195,7 +191,7 @@ extern "C" s32 solveWalkPair__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     if (self->mFlags & 4) {
         if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
                                                   self->mField18, self->mField14, arg,
-                                                  lbl_eu_8066A878)) {
+                                                  0.5f)) {
             result = 1;
             self->mField1A = (u16)localA;
             self->mField16 = (u16)localB;
@@ -203,7 +199,7 @@ extern "C" s32 solveWalkPair__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     }
     if (!result) {
         if (findNode__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB, arg,
-                                                  lbl_eu_8066A87C)) {
+                                                  1.0f)) {
             result = 1;
             self->mField1A = (u16)localA;
             self->mField16 = (u16)localB;
@@ -253,9 +249,9 @@ extern "C" s32 runWalkerTick__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
                                                      void* posA, void* posB) {
     u16 flags = self->mFlags;
     if ((flags & 1) == 0 || (flags & 2) == 0) {
-        *(f32*)((u8*)outDir + 0) = lbl_eu_8066A880;
-        *(f32*)((u8*)outDir + 4) = lbl_eu_8066A880;
-        *(f32*)((u8*)outDir + 8) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 0) = 0.0f;
+        *(f32*)((u8*)outDir + 4) = 0.0f;
+        *(f32*)((u8*)outDir + 8) = 0.0f;
         return 2;
     }
     setWalkBox__17UnkClass_8047E110Fv(lbl_eu_80658560, (f32)0, (f32)0, posA,
@@ -265,7 +261,7 @@ extern "C" s32 runWalkerTick__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
         u32 localB;
         if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
                                                   self->mField18, self->mField14, posA,
-                                                  lbl_eu_8066A878)) {
+                                                  0.5f)) {
             self->mField18 = (u16)localA;
             self->mField14 = (u16)localB;
         }

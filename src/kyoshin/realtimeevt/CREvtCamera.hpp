@@ -6,11 +6,7 @@
  *
  * Class hierarchy (namespace cf):
  *   cf::CREvtObj  (vtable 0x80532320, size 0x14)
- *     +0x00: vtable pointer
- *     +0x04: u32 field (set to 0 in CREvtCamera's constructor)
- *     +0x08: __ptmf (12 bytes, initialized to null)
- *     +0x14: .. derived class fields start here
- *   +-- CREvtCamera  (vtable 0x80531CE8, size >= 0x448)
+ *   +-- CREvtCamera  (vtable 0x80531CE8, size 0x448)
  *
  * A global singleton pointer is stored at lbl_eu_806642A8.
  */
@@ -94,12 +90,18 @@ struct ChrAnmResult;
 }
 } // namespace nw4r::g3d
 
-class CREvtCamera {
+namespace cf {
+
+// CREvtCamera - realtime event camera (RTTI name "cf::CREvtCamera").
+// Derives from cf::CREvtObj (type 0); vtable at 0x80531CE8; size 0x448.
+class CREvtCamera : public CREvtObj {
 public:
-    // Inherited from cf::CREvtObj (size 0x14)
-    /* 0x00 */ u8* vtable;
-    /* 0x04 */ u32 field_04;
-    /* 0x08 */ u32 ptmf[3];
+    CREvtCamera(u32 param);
+    virtual ~CREvtCamera();
+    virtual void vfunc_04();  // load the camera scene model ("Cam"/"Cam2" handles)
+    virtual void vfunc_08();  // release the animation handle at +0x24
+    virtual int vfunc_0C();   // returns the scene model pointer (mField1C)
+    virtual void vfunc_1C();  // per-frame update from the scene model animation
 
     // +0x14: unknown (always 0)
     u32 mField14;
@@ -166,10 +168,12 @@ public:
     // +0x444: float (default from lbl_eu_806678AC, updated from game manager)
     f32 mField444;
 
-    // Inline helpers (already FULL_MATCH)
-    int REvtCam_AlwaysTrue1() const { return 1; }
-    u32 REvtCam_GetField1CValue() const { return mField1C; }
 };
+
+} // namespace cf
+
+using cf::CREvtCamera;
+
 
 // Retail data symbols referenced by this TU (imports; global-scope externs are
 // unmangled by MWCC, so no extern "C" is needed here).
@@ -180,8 +184,6 @@ extern const char lbl_eu_805036D8[];
 // (const char* string pointers)
 extern const char* lbl_eu_80662448;
 extern const char* lbl_eu_8066244C;
-// CREvtCamera vtable (0x80531CE8)
-extern u8 lbl_eu_80531CE8[];
 // Default floats (camera fov / player fields)
 extern f32 lbl_eu_806678A4;
 extern f32 lbl_eu_806678A8;

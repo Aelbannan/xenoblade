@@ -51,6 +51,8 @@ class CProcess;
 extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
 // Realtime-event arena allocator (initEvtMemArena / allocEvtMemAligned).
 #include "kyoshin/realtimeevt/CREvtMem.hpp"
+#include "kyoshin/realtimeevt/CREvtLight.hpp"
+#include "kyoshin/realtimeevt/CREvtCamera.hpp"
 
 // .sbss presentation/mode flag (co-op secondary mode bitfield)
 extern u32 lbl_eu_80663E28;
@@ -124,27 +126,23 @@ extern "C" bool ScnCamDepthUp(UnkEvtPlayer* obj);
 // object setup helpers (kyoshin/realtimeevt/*.cpp). The third argument is the
 // address of the id-list element (the callees store it into +0x43C/+0x1C
 // etc.).
-struct CREvtCamera;
 struct CREvtEffect;
-struct CREvtLight;
 struct CREvtMovie;
 struct CREvtMovieScript;
 struct CREvtParam;
 extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData,
                               void* elemAddr);
 extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* elemAddr);
-extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName,
+extern "C" void CREvtLight_SetResource(cf::CREvtLight* self, const char* resourceName,
                               u32 elemAddr);
 extern "C" void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 // Imports for EvtSeqSetupObjLists (event-sequence setup): realtime-event arena
 // allocator + object ctors (kyoshin/realtimeevt/*.cpp), the name-matching
 // helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
 // (CMenuVision.cpp).
-extern "C" void* EvtObj_AllocBlock(void* size);
-extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param);
+extern "C" void* __nw__Q22cf8CREvtObjFUl(void* size);
 extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self,
                                           CREvtParam* param);
-extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg);
 extern "C" CREvtMovie* __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
     CREvtMovie* self, CREvtMovieScript* scriptData);
 extern "C" void* createEvtModelObj(void* self);

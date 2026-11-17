@@ -90,11 +90,6 @@ extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent); 
 // (the second Layout* parameter is left unset at this call site).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
 
-// DrawInfo raw-storage ct/dt helpers: pre-mangled retail identifiers, so they
-// must keep C linkage (a C++ declaration double-mangles the name).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-
 // cf::CfGameManager helper (retail mangled member symbol, one u32 arg).
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 

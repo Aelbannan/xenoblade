@@ -1,9 +1,9 @@
 // Decomp of kyoshin/menu/CMenuKizunaTalkList.
 // Kizuna talk list screen process (CProcess + IScnRender MI).
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
-
-extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
+#include "kyoshin/cf/CfGameManager.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -14,6 +14,8 @@ extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CKizunaTalkListImports.hpp"
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
 // CfGameManager.hpp cannot be included here: it declares lbl_eu_80664090 as
@@ -48,6 +50,16 @@ struct KizunaPadData {
 // signature. int returns keep the caller's `!= 0` as a plain cmpwi (no u8 mask)
 // like retail.
 // ---------------------------------------------------------------------------
+// Shared string pool (.rodata) used by Init.
+extern char lbl_eu_8050E970[];
+
+// Global render-gate mode bitfield (.sbss; bit 21), read by Move/cbRenderBefore.
+extern u32 lbl_eu_80663E28;
+
+// Retail beginClose symbol (unmangled global): free-call form so the reloc
+// is bare (same pattern as CMenuShopBuy.hpp).
+extern "C" void beginClose(CTitleAHelp* self);
+
 // (memberized: needsTalkRebuild -> CKizunaTalkList::needsTalkRebuild; declaration moved into class CKizunaTalkList)
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
@@ -72,15 +84,6 @@ extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 
-// nw4r DrawInfo C-ABI ct/dt (retail emits the direct calls; a C++ local would
-// virtual-dispatch its scope-exit destructor and bloat the body).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
-
-// Singleton instance pointer (.sbss; cleared by Term, read/written by the
-// factory KizunaList_Create and the idle check KizunaList_IsPresent).
-extern unsigned long lbl_eu_806648B0;
-
 // CfGameManager one-arg controller-type query: declared extern "C" int(int)
 // in CMenuTutorial.hpp-style headers; do NOT redeclare here with a different
 // signature (MWCC: illegal function overloading). The inline header wrapper
@@ -92,82 +95,20 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8);
 
 // CW-mangled constructors/destructors referenced by Init() (extern "C" stops
 // C++ re-mangling of the retail CW names).
-extern "C" void __ct__6CBgTexFUc(void*, int);
-extern "C" void __dt__6CBgTexFv(void*, int);
-extern "C" void __ct__UnkClass_8011C974(void*, void*);
-extern "C" void __ct__CTitleAHelp(void*, char*, int);
-extern "C" void __dt__11CTitleAHelpFv(void*, int);
-extern "C" void __ct__15CKizunaTalkListFv(void*, int);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
+extern "C" void __ct__15CKizunaTalkListFi(void*, int);
 extern "C" void __dt__15CKizunaTalkListFv(void*, int);
-extern "C" void __ct__8CProcessFv(CProcess* self);
 
-// Retail constructor symbol (unmangled global, takes the parent). Written as
-// an out-of-line free function so the factory (KizunaList_Create) emits a real bl
-// to the bare retail symbol; returns `this` in r3 like retail.
-// The body mirrors the CSysWinSave ctor pattern: base ctor, temp vtable
-// store, null PMF data copy, then the composite vtable + IScnRender
-// sub-vtable, then each embedded widget's ctor and the final state byte.
-extern "C" __declspec(noinline) CMenuKizunaTalkList* __ct__CMenuKizunaTalkList(
-    CMenuKizunaTalkList* self, CProcess* parent) {
-    __ct__8CProcessFv((CProcess*)self);
+CMenuKizunaTalkList::CMenuKizunaTalkList(CProcess* parent)
+    : mParentRef(parent), mBgTex(0), mTitleAHelp(0, 0), mKizunaTalkList(0), mState(0) {}
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-
-    // Copy the null member-function pointer into both callback slots.
-    // Retail loads [0],[1], stores [1],[0], then [2] per slot.
-    u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
-    u32 w0 = ptmf[0];
-    u32 w1 = ptmf[1];
-    self->ptmf0[1] = w1;
-    self->ptmf0[0] = w0;
-    u32 w2 = ptmf[2];
-    self->ptmf0[2] = w2;
-    w0 = ptmf[0];
-    w1 = ptmf[1];
-    self->ptmf1[1] = w1;
-    self->ptmf1[0] = w0;
-    w2 = ptmf[2];
-    self->ptmf1[2] = w2;
-    self->mUnknown54 = 0;
-    self->mUnknown55 = 0;
-
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80537CB8;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80537CB8 + 0x24;
-    self->mParentRef = parent;
-
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__15CKizunaTalkListFv(&self->mKizunaTalkList, 0);
-    self->mState = 0;
-    return self;
-}
+CMenuKizunaTalkList::~CMenuKizunaTalkList() {}
 
 // Phase handlers referenced by Move() before their definitions below.
 void KizunaList_Phase0Show(CMenuKizunaTalkList* self);
 void KizunaList_Phase1Ready(CMenuKizunaTalkList* self);
 void KizunaList_Phase2Input(CMenuKizunaTalkList* self);
 void KizunaList_Phase3Flag(CMenuKizunaTalkList* self);
-
-extern "C" void __dt__800FED0C(CProcess* self, int flags);
-
-/*
- * Destructor (retail D2 form). Free-function with flags so the base call
- * relocates to __dt__800FED0C, not library __dt__8CProcessFv.
- */
-extern "C" CMenuKizunaTalkList* __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int flags) {
-    if (self != 0) {
-        // Free-function dtor cannot touch private members; use layout offsets.
-        u8* base = reinterpret_cast<u8*>(self);
-        __dt__15CKizunaTalkListFv(base + 0xB8, -1);
-        __dt__11CTitleAHelpFv(base + 0x80, -1);
-        __dt__6CBgTexFv(base + 0x60, -1);
-        __dt__800FED0C((CProcess*)self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
 
 // Initialise the Kizuna talk list screen. Re-initialises each embedded widget
 // via a temporary object + copy (see CMenuTutorial::Init), then registers this
@@ -176,47 +117,24 @@ void CMenuKizunaTalkList::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the background CBgTex via a temporary ---
-    u8 tempBgTex[0x20];
-    __ct__6CBgTexFUc(tempBgTex, 0);
-
-    __ct__UnkClass_8011C974((u8*)this + 0x64, tempBgTex + 0x4);
-    *(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);
-    *(u32*)((u8*)this + 0x78) = *(u32*)(tempBgTex + 0x18);
-    *(u8*)((u8*)this + 0x7c)  = *(u8*)(tempBgTex + 0x1c);
-    *(u8*)((u8*)this + 0x7d)  = *(u8*)(tempBgTex + 0x1d);
-    *(u8*)((u8*)this + 0x7e)  = *(u8*)(tempBgTex + 0x1e);
-    __dt__6CBgTexFv(tempBgTex, -1);
+    mBgTex = CBgTex(0);
 
     BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = BdatTouchStringCell(lbl_eu_8050E970, lbl_eu_8050E970 + 0xb, 0x11);
-
-    u8 tempTitle[0x38];
-    __ct__CTitleAHelp(tempTitle, name, 0x0);
-
-    __ct__UnkClass_8011C974((u8*)this + 0x84, tempTitle + 0x4);
-    *(u32*)((u8*)this + 0x94) = *(u32*)(tempTitle + 0x14);
-    *(u32*)((u8*)this + 0x98) = *(u32*)(tempTitle + 0x18);
-    *(u32*)((u8*)this + 0x9c) = *(u32*)(tempTitle + 0x1c);
-    *(u32*)((u8*)this + 0xa0) = *(u32*)(tempTitle + 0x20);
-    *(u32*)((u8*)this + 0xa4) = *(u32*)(tempTitle + 0x24);
-    *(u8*)((u8*)this + 0xa8)  = *(u8*)(tempTitle + 0x28);
-    *(u32*)((u8*)this + 0xac) = *(u32*)(tempTitle + 0x2c);
-    *(u32*)((u8*)this + 0xb0) = *(u32*)(tempTitle + 0x30);
-    *(u8*)((u8*)this + 0xb4)  = *(u8*)(tempTitle + 0x34);
-    *(u8*)((u8*)this + 0xb5)  = *(u8*)(tempTitle + 0x35);
-    *(u8*)((u8*)this + 0xb6)  = *(u8*)(tempTitle + 0x36);
-    *(u8*)((u8*)this + 0xb7)  = *(u8*)(tempTitle + 0x37);
-    __dt__11CTitleAHelpFv(tempTitle, -1);
+    mTitleAHelp = CTitleAHelp(name, 0);
 
     mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CKizunaTalkList ---
+    // Retail: `mKizunaTalkList = CKizunaTalkList(0);`. Spelled out by hand
+    // because CScrollBar is still a non-polymorphic view whose hand vptr
+    // member the implicit operator= would copy (retail skips +0xFC).
     u8 tempList[0x1494];
-    __ct__15CKizunaTalkListFv(tempList, 0);
+    __ct__15CKizunaTalkListFi(tempList, 0);
 
-    __ct__UnkClass_8011C974((u8*)this + 0xbc, tempList + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xbc, tempList + 0x4);
     *(u32*)((u8*)this + 0xcc) = *(u32*)(tempList + 0x14);
     *(u32*)((u8*)this + 0xd0) = *(u32*)(tempList + 0x18);
     *(u32*)((u8*)this + 0xd4) = *(u32*)(tempList + 0x1c);
@@ -230,7 +148,7 @@ void CMenuKizunaTalkList::Init() {
     *(u8*)((u8*)this + 0xf8)  = *(u8*)(tempList + 0x40);
     *(u8*)((u8*)this + 0xf9)  = *(u8*)(tempList + 0x41);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x100, tempList + 0x48);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x100, tempList + 0x48);
     *(u32*)((u8*)this + 0x110) = *(u32*)(tempList + 0x58);
     *(u32*)((u8*)this + 0x114) = *(u32*)(tempList + 0x5c);
     *(u32*)((u8*)this + 0x118) = *(u32*)(tempList + 0x60);
@@ -279,11 +197,7 @@ void CMenuKizunaTalkList::Init() {
 
     (&this->mKizunaTalkList)->initTalkList();
 
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(cb, 0xd, 0);
+    reinterpret_cast<CScn*>(mParentRef)->addRenderCB(this, 0xd, 0);
 }
 
 // Tear the talk-list screen down: remove the render callback from the parent
@@ -292,17 +206,13 @@ void CMenuKizunaTalkList::Init() {
 void CMenuKizunaTalkList::Term() {
     CDeviceVI::waitForDrawDone();
 
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
+    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     (&mKizunaTalkList)->teardownTalkList();
 
-    lbl_eu_806648B0 = 0;
+    sInstance = nullptr;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -328,7 +238,7 @@ void CMenuKizunaTalkList::Move() {
             playUISound(6);
         }
         mState = 4;
-        mUnknown54 = 1;
+        mField54 = 1;
     }
 
     switch (mState) {
@@ -361,33 +271,29 @@ void CMenuKizunaTalkList::cbRenderBefore() {
     if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // (a C++ local would virtual-dispatch its scope-exit destructor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    (&mKizunaTalkList)->drawTalkList((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
+    (&mKizunaTalkList)->drawTalkList(&drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
 }
 
-// Factory: lazily allocate + construct the single kizuna talk-list instance
-// and register it under `self`. Returns the stored instance (or 0 if one
-// already exists).
-CMenuKizunaTalkList* KizunaList_Create(CProcess* self, CProcess* parent) {
-    if (lbl_eu_806648B0 != 0) {
-        return 0;
+CMenuKizunaTalkList* CMenuKizunaTalkList::sInstance;
+
+// Only one kizuna talk-list screen exists at a time. Returns the stored
+// instance (or 0 if one already exists).
+CMenuKizunaTalkList* CMenuKizunaTalkList::create(CProcess* self, CProcess* parent) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
-    CMenuKizunaTalkList* obj = (CMenuKizunaTalkList*)mtl::MemManager::allocate(
-        0x1550, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuKizunaTalkList(obj, parent);
-    }
-    lbl_eu_806648B0 = (unsigned long)obj;
-    obj->Regist(self, 0);
-    return (CMenuKizunaTalkList*)lbl_eu_806648B0;
+
+    CMenuKizunaTalkList* menu = new (CWorkThreadSystem::getWorkMem()) CMenuKizunaTalkList(parent);
+    sInstance = menu;
+    menu->Regist(self, false);
+    return sInstance;
 }
+
+extern "C" unsigned long KizunaList_IsPresent(void) { return CMenuKizunaTalkList::sInstance != nullptr; }
 
 // void stub_us_8027490c() {} // empty retail stub; nothing references it
 // within this split, so it is not emitted.
@@ -468,22 +374,6 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
 void KizunaList_Phase3Flag(CMenuKizunaTalkList* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         (&self->mKizunaTalkList)->needsTalkRebuild() != 0) {
-        self->mUnknown54 = 1;
+        self->mField54 = 1;
     }
 }
-
-// IScnRender vtable adjustor thunk for cbRenderBefore.
-// When IScnRender virtual functions dispatch through IScnRender*,
-// 'this' points to the IScnRender subobject at offset +0x58 within
-// CMenuKizunaTalkList. This thunk adjusts it back and tail-calls the
-// real implementation.
-extern "C" void KizunaList_ThunkRender58(void* self) {
-    ((void(*)(void*))cbRenderBefore__19CMenuKizunaTalkListFv)((char*)self - 0x58);
-}
-
-// IScnRender vtable adjustor thunk for ~CMenuKizunaTalkList.
-extern "C" void KizunaList_ThunkDtor58(void* self) {
-    ((void(*)(void*))__dt__19CMenuKizunaTalkListFv)((char*)self - 0x58);
-}
-
-extern "C" unsigned long KizunaList_IsPresent(void) { return lbl_eu_806648B0 != 0; }

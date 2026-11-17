@@ -27,23 +27,12 @@ CLibCriMoviePlay* lbl_eu_806656E0 = nullptr;
 // Own retail-named data (defined at the bottom of this file, retail order).
 extern "C" {
     extern u32 lbl_eu_8056CF48[48];          // __vt__16CLibCriMoviePlay (+ sub-vtable)
-    extern u32 lbl_eu_80663798[2];           // .sdata RTTI locator pair
+    extern u32 __RTTI__16CLibCriMoviePlay[2];           // .sdata RTTI locator pair
     extern const char lbl_eu_8052301C[0x34]; // wkUpdate status strings
 }
 
 // External globals from sdata2
 extern "C" {
-    // KColor constants for TEV stages
-    extern u32 lbl_eu_8066A4D8;  // KColor0 word0
-    extern u32 lbl_eu_8066A4DC;  // KColor0 word1
-    extern u32 lbl_eu_8066A4E0;  // KColor1
-    extern u32 lbl_eu_8066A4E4;  // KColor2
-    extern u32 lbl_eu_8066A4E8;  // KColor3
-    extern u32 lbl_eu_8066A4EC;  // KColor4
-    extern float lbl_eu_8066A4F0; // 0.0f
-    extern float lbl_eu_8066A4F4; // 1.0f
-    extern float lbl_eu_8066A4F8; // PAL frame rate / scale
-    extern float lbl_eu_8066A4FC; // NTSC frame rate / scale
     extern f32 identity__Q22ml6CMat34[12]; // ml::CMat34::identity matrix
 }
 
@@ -207,29 +196,20 @@ extern "C" void setupMovieGfx__16CLibCriMoviePlayFv(unsigned int texMapStage1, u
     GXSetTevSwapMode((GXTevStageID)3, (GXTevSwapSel)0, (GXTevSwapSel)0);
     GXSetTevKColorSel((GXTevStageID)3, (GXTevKColorSel)0xF);
 
-    // Set TEV register color: retail loads the two pooled words separately
-    // (lbl_eu_8066A4D8 into r5 first, then lbl_eu_8066A4DC into r0) before
-    // storing them to the outgoing struct slot, so the loads are spelled
-    // individually to reproduce that register assignment.
+    // YUV -> RGB conversion constants.
     // NOTE: the TEVREG1 enum value in this header tree is off by one from
     // retail.
-    {
-        // Retail loads the two pooled words separately (first anchored at
-        // lbl_eu_8066A4D8, second at lbl_eu_8066A4DC) straight into the
-        // outgoing argument slot, so the words are read into a temporary
-        // that MWCC sinks into the arg area.
-        // NOTE: the TEVREG1 enum value in this header tree is off by one
-        // from retail.
-        u32 tevWords[2];
-        tevWords[0] = lbl_eu_8066A4D8;
-        tevWords[1] = lbl_eu_8066A4DC;
-        GXSetTevColorS10((GXTevRegID)1, *(const GXColorS10*)tevWords);
-    }
+    GXColorS10 tevColor = { -111, 0, -138, 68 };
+    GXSetTevColorS10((GXTevRegID)1, tevColor);
 
-    GXSetTevKColor((GXTevKColorID)0, *(const GXColor*)&lbl_eu_8066A4E0);
-    GXSetTevKColor((GXTevKColorID)1, *(const GXColor*)&lbl_eu_8066A4E4);
-    GXSetTevKColor((GXTevKColorID)2, *(const GXColor*)&lbl_eu_8066A4E8);
-    GXSetTevKColor((GXTevKColorID)3, *(const GXColor*)&lbl_eu_8066A4EC);
+    GXColor kColor0 = { 0x66, 0x00, 0xFF, 0x32 };
+    GXColor kColor1 = { 0x94, 0x00, 0x94, 0x94 };
+    GXColor kColor2 = { 0xCB, 0x00, 0x05, 0xCF };
+    GXColor kColor3 = { 0x00, 0xFF, 0x00, 0x00 };
+    GXSetTevKColor((GXTevKColorID)0, kColor0);
+    GXSetTevKColor((GXTevKColorID)1, kColor1);
+    GXSetTevKColor((GXTevKColorID)2, kColor2);
+    GXSetTevKColor((GXTevKColorID)3, kColor3);
 
     // Set swap mode tables
     GXSetTevSwapModeTable(GX_TEV_SWAP0, (GXTevColorChan)0, (GXTevColorChan)1, (GXTevColorChan)2, (GXTevColorChan)3);
@@ -324,10 +304,10 @@ extern "C" int startMovie__16CLibCriMoviePlayFv(const char* filename, u32 allocH
     entry->mActive = true;
     entry->mTexBufY = nullptr;
     entry->mTexBufCbCr = nullptr;
-    entry->mColor[0] = lbl_eu_8066A4F0;
-    entry->mColor[1] = lbl_eu_8066A4F0;
-    entry->mColor[2] = lbl_eu_8066A4F0;
-    entry->mColor[3] = lbl_eu_8066A4F0;
+    entry->mColor[0] = 0.0f;
+    entry->mColor[1] = 0.0f;
+    entry->mColor[2] = 0.0f;
+    entry->mColor[3] = 0.0f;
     entry->mAction = 3;
     entry->mField100 = 0;
     entry->mPauseOverride = false;
@@ -428,20 +408,20 @@ extern "C" bool renderMovie__16CLibCriMoviePlayFv(int id, const ml::CRect16& rec
         GXBegin((GXPrimitive)0x98, GX_VTXFMT0, 4);
 
         GXPosition3s16(rect.mPos.x, rect.mPos.y, 0);
-        GXTexCoord1f32(lbl_eu_8066A4F0);
-        GXTexCoord1f32(lbl_eu_8066A4F0);
+        GXTexCoord1f32(0.0f);
+        GXTexCoord1f32(0.0f);
 
         GXPosition3s16(rect.mPos.x + rect.mSize.x, rect.mPos.y, 0);
-        GXTexCoord1f32(lbl_eu_8066A4F4);
-        GXTexCoord1f32(lbl_eu_8066A4F0);
+        GXTexCoord1f32(1.0f);
+        GXTexCoord1f32(0.0f);
 
         GXPosition3s16(rect.mPos.x, rect.mPos.y + rect.mSize.y, 0);
-        GXTexCoord1f32(lbl_eu_8066A4F0);
-        GXTexCoord1f32(lbl_eu_8066A4F4);
+        GXTexCoord1f32(0.0f);
+        GXTexCoord1f32(1.0f);
 
         GXPosition3s16(rect.mPos.x + rect.mSize.x, rect.mPos.y + rect.mSize.y, 0);
-        GXTexCoord1f32(lbl_eu_8066A4F4);
-        GXTexCoord1f32(lbl_eu_8066A4F4);
+        GXTexCoord1f32(1.0f);
+        GXTexCoord1f32(1.0f);
 
         // Flush the quad, then draw the tint overlay on top
         resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
@@ -531,9 +511,8 @@ void CLibCriMoviePlay::updateMovieTextures() {
                             GXInitTexObj(&entry->mTexObjY, entry->mTexBufY,
                                          entry->mTexWidth, entry->mTexHeight,
                                          (GXTexFmt)1, (GXTexWrapMode)0, (GXTexWrapMode)0, GX_FALSE);
-                            float lodZ = lbl_eu_8066A4F0;
                             GXInitTexObjLOD(&entry->mTexObjY, (GXTexFilter)0, (GXTexFilter)0,
-                                            lodZ, lodZ, lodZ, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+                                            0.0f, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
                         }
 
                         if (entry->mTexBufCbCr == nullptr) {
@@ -565,9 +544,8 @@ void CLibCriMoviePlay::updateMovieTextures() {
                             GXInitTexObj(&entry->mTexObjCbCr, entry->mTexBufCbCr,
                                          cw, ch, (GXTexFmt)3,
                                          (GXTexWrapMode)0, (GXTexWrapMode)0, GX_FALSE);
-                            float lodZ = lbl_eu_8066A4F0;
                             GXInitTexObjLOD(&entry->mTexObjCbCr, (GXTexFilter)0, (GXTexFilter)0,
-                                            lodZ, lodZ, lodZ, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+                                            0.0f, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
                         }
                     }
 
@@ -750,7 +728,7 @@ bool CLibCriMoviePlay::wkStandbyLogin() {
     memset(fxData, 0, 0x20);
 
     float frameRate = CDeviceVI::isTvFormatPal()
-                      ? lbl_eu_8066A4F8 : lbl_eu_8066A4FC;
+                      ? 50.0f : 59.94f;
     *(float*)fxData = frameRate;
     fxData[3] = 1;
 
@@ -1128,7 +1106,7 @@ extern "C" u32 lbl_eu_80663618[];   // type_info vtable (foreign)
 // (CLibG3d.cpp pattern); every word is an explicit &reloc so the object
 // reproduces the retail reloc names exactly.
 extern "C" u32 lbl_eu_8056CF48[48] = {
-    (u32)&lbl_eu_80663798, 0x00000000,
+    (u32)&__RTTI__16CLibCriMoviePlay, 0x00000000,
     (u32)&__dt__16CLibCriMoviePlayFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
@@ -1152,7 +1130,7 @@ extern "C" u32 lbl_eu_8056CF48[48] = {
     (u32)&wkStandbyLogout__16CLibCriMoviePlayFv,
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
     // CDeviceVICb sub-vtable (this -0x1C4)
-    (u32)&lbl_eu_80663798, 0xFFFFFE3C,
+    (u32)&__RTTI__16CLibCriMoviePlay, 0xFFFFFE3C,
     (u32)&thunk_452_dt,
     (u32)&forwardUpdateMovies__16CLibCriMoviePlayFv,
     (u32)&handleViBeginFrame__16CLibCriMoviePlayFv,
@@ -1186,7 +1164,7 @@ extern "C" u32 lbl_eu_8056D008[8] = {
 
 // [.sdata] 0x80663798-0x806637A0 (0x8): RTTI locator pair
 // { class-name string, typeinfo block } referenced by both vtable halves.
-extern "C" u32 lbl_eu_80663798[2] = {
+extern "C" u32 __RTTI__16CLibCriMoviePlay[2] = {
     (u32)(const char*)lbl_eu_80523008,
     (u32)(const u32*)lbl_eu_8056D008,
 };

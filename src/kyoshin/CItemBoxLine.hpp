@@ -276,8 +276,8 @@ class CItemBoxLine {public:
     u8 pad_6E[0x70 - 0x6E];             // 0x6E..0x6F
     CCur18 mCur70;                      // +0x70
     CCur18 mCur88;                      // +0x88
-    CBaseCur mCurA0;                    // +0xA0: embedded cursor
-    CBaseCur mCurB8;                    // +0xB8: embedded cursor (vtable[2] tab-name dispatcher)
+    CCur18 mCurA0;                      // +0xA0: embedded cursor (retail ctor __ct__CIBLTabCur; see CIBLTabCur note)
+    CSubCur mCurB8;                     // +0xB8: embedded cursor (__ct__CSubCur, vtable[2] tab-name dispatcher)
     u8 mInfo2D0[0x2DC - 0xD0];          // +0xD0..0x2DB: item-box info2 state region
     CNumSelectFull mNumSel;     // +0x2DC: member of ItemBoxLine_IsBusy
     u8 pad_30B[0x310 - 0x30B];  // 0x30B..0x30F (CNumSelectFull is 0x2F bytes)
@@ -356,7 +356,6 @@ extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);   // bind font pan
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
-extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void MenuShopSellCopyCursor(void*, void*);               // copy stack cursor temp into member
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.

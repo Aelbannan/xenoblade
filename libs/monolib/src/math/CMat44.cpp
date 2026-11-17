@@ -1,7 +1,5 @@
 #include "monolib/math.hpp"
 
-extern const float lbl_eu_8066A258; // 0.0f
-extern const float lbl_eu_8066A25C; // 1.0f
 
 namespace ml{
     // Retail values recovered from __sinit_\CMat44_cpp: zero = all 0.0f,

@@ -388,7 +388,7 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B24[0x0C] =
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B30[0x0C] = "s1LODSTOP";
 // .sdata RTTI pair (classname + RTTI base), referenced by the vtable head.
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-void* lbl_eu_806626F8[2] = { lbl_eu_80507A40, lbl_eu_80534E60 };
+void* __RTTI__10CScrollBar[2] = { lbl_eu_80507A40, lbl_eu_80534E60 };
 // .data pane-pointer tables (nul names / pic names).
 __declspec(section ".data") __attribute__((used, aligned(4)))
 const char* lbl_eu_80534DA8[6] = {
@@ -403,7 +403,7 @@ const char* lbl_eu_80534DC0[6] = {
 // .data vtable (RTTI, null, dtor, IWorkEvent/CScrollBar virtuals).
 __declspec(section ".data") __attribute__((used, aligned(8)))
 void* lbl_eu_80534DD8[34] = {
-    lbl_eu_806626F8, 0, (void*)__dt__10CScrollBarFv,
+    __RTTI__10CScrollBar, 0, (void*)__dt__10CScrollBarFv,
     (void*)WorkEvent1__10IWorkEventFPvPCc,
     (void*)OnFileEvent__10CScrollBarFP10CEventFile,
     (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv,

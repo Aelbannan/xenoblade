@@ -105,7 +105,7 @@ void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 } // extern "C"
 
 // Foreign base-list label referenced by both param blocks (MPFDrawBillboard).
-extern "C" u32 lbl_eu_80663870;
+extern "C" u32 __RTTI__Q26mpfsys7MPFDraw;
 // Forward decls of the in-TU draw helpers referenced by the dispatch tables.
 extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
 extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
@@ -126,25 +126,25 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523DE0[32] = {
 // RTTI locators: {name-ptr, base-list-in-data}.
 extern "C" u32 lbl_eu_8056DBD0[4];
 extern "C" u32 lbl_eu_8056DBF0[4];
-extern "C" u32 lbl_eu_80663878[2] = { (u32)&lbl_eu_80523DC8, (u32)&lbl_eu_8056DBD0 };
-extern "C" u32 lbl_eu_80663880[2] = { (u32)&lbl_eu_80523DE0, (u32)&lbl_eu_8056DBF0 };
+extern "C" u32 __RTTI__Q26mpfsys15MPFDrawMdlColor[2] = { (u32)&lbl_eu_80523DC8, (u32)&lbl_eu_8056DBD0 };
+extern "C" u32 __RTTI__Q26mpfsys17MPFDrawMdlNoColor[2] = { (u32)&lbl_eu_80523DE0, (u32)&lbl_eu_8056DBF0 };
 
 // === .data size=0x40 align=8 ===
 // MPFDrawMdlColor dispatch table (16B).
 extern "C" u32 lbl_eu_8056DBC0[4] = {
-    (u32)&lbl_eu_80663878, 0x00000000, (u32)&drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv, (u32)&drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv,
+    (u32)&__RTTI__Q26mpfsys15MPFDrawMdlColor, 0x00000000, (u32)&drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv, (u32)&drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv,
 };
 // MPFDrawMdlColor base-list tail (16B).
 extern "C" u32 lbl_eu_8056DBD0[4] = {
-    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
 };
 // MPFDrawMdlNoColor dispatch table (16B).
 extern "C" u32 lbl_eu_8056DBE0[4] = {
-    (u32)&lbl_eu_80663880, 0x00000000, (u32)&drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv,
+    (u32)&__RTTI__Q26mpfsys17MPFDrawMdlNoColor, 0x00000000, (u32)&drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv,
 };
 // MPFDrawMdlNoColor base-list tail (16B).
 extern "C" u32 lbl_eu_8056DBF0[4] = {
-    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__Q26mpfsys7MPFDraw, 0x00000000, 0x00000000, 0x00000000,
 };
 
 // === .sbss size=0x8 align=8 (zero-fill) ===

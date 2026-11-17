@@ -15,10 +15,11 @@
 #include "monolib/math/Random.hpp"
 // CBattleManager.hpp currently pulls a conflicting CfObjectActor.hpp decl
 // (findBattleStatusEntry overload); use the standalone header chain instead.
-// NOTE: CVision.hpp omitted - its extern "C" CTaskGame_enumListCtor(void*) clashes
+// NOTE: CVision.hpp omitted - its extern "C" __ct__16CfEnumListHolderFv(void*) clashes
 // with the typed decl reachable via harness_catalog.hpp -> CfObjectImplMove.hpp.
 #include "kyoshin/cf/CCharEffect.hpp" // setChildB59__ (cue release)
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 namespace cf {}
 using namespace cf;
@@ -989,30 +990,26 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
 // end each holder's lifetime at its dtor call like retail.
 void SuddenCommuMarkCommuVoices(CSuddenCommu* self) {
     {
-        CSuddenCommuEnumHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x100, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x100, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)holder.get())->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)holder.get();
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             actor->voiceAct.field_3388 |= 0x2;
         }
-        __dt__80043E88(&holder, -1);
     }
     {
-        CSuddenCommuEnumHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x20, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)holder.get())->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)holder.get();
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             actor->voiceAct.field_3388 |= 0x2;
         }
-        __dt__80043E88(&holder, -1);
     }
     // Split RMW so the last store is a plain stw (ctor epilogue shape):
     // retail restores r31/r30 then LR; `|=` hoists LR first.
@@ -1028,30 +1025,26 @@ void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
     if (!(self->field_24 & 0x2)) return;
     self->field_24 &= ~0x2;
     {
-        CSuddenCommuEnumHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x100, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x100, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)holder.get())->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)holder.get();
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             aiActionClearBits0006(&actor->voiceAct);
         }
-        __dt__80043E88(&holder, -1);
     }
     {
-        CSuddenCommuEnumHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)CTaskGame_enumListGet(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
+        CfEnumListHolder holder;
+        startEnumObjects(holder.get(), 0x20, 0);
+        for (u32 i = 0; i < ((cf::CfObjEnumList*)holder.get())->mPtrCount; i++) {
+            cf::CfObjEnumList* list = (cf::CfObjEnumList*)holder.get();
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
             if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             aiActionClearBits0006(&actor->voiceAct);
         }
-        __dt__80043E88(&holder, -1);
     }
 }
 

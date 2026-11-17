@@ -4,6 +4,7 @@
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
 
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 
@@ -147,21 +148,11 @@ struct ShopBuyItemBoxLine {
 
 /*
  * Shop buy menu screen process.
-    ShopBuyData24 m00;      // 0x00..0x18  (3 x 8B copy loop)
-    ShopBuyData144 m18;     // 0x18..0xA8  (18 x 8B copy loop)
-    u32 mA8[6];             // 0xA8..0xC0  (6 unrolled words)
-    ShopBuyData24 mC0;      // 0xC0..0xD8  (3 x 8B copy loop)
-    u8 mD8;                 // 0xD8        (single byte)
-    ShopBuyData128 mD9;     // 0xD9..0x159 (16 x 8B copy loop)
-};
-
-/*
- * Shop buy menu screen process.
  *
  * Layout (Term / dtor / phase handlers):
- *   0x00: CProcess header -- task-system base (0x3C) + vtable PMF data
+ *   0x00: IUICf           -- task base (CTTask<IUICf>) + mField54/mField55
  *   0x54: u8 mField54     -- closing-state flag (written by ShopBuy_MarkClosing)
- *   0x58: IScnRender      -- render-callback subobject (member, vptr)
+ *   0x58: IScnRender      -- render-callback subobject (base, vptr)
  *   0x5C: CScn*           -- owning scene (removeRenderCB target in Term)
  *   0x60: u32 mField60    -- ctor arg 3
  *   0x64: CBgTex          -- background layout widget (0x20 bytes)
@@ -171,21 +162,16 @@ struct ShopBuyItemBoxLine {
  *  0x6FC: f32 mFloat6FC   -- float init (lbl_eu_80667A20 pool constant)
  *  total: 0x700
  */
-class CMenuShopBuy : public CProcess {
+class CMenuShopBuy : public IUICf, public IScnRender {
 public:
+    CMenuShopBuy(CScn* scene, u32 arg);
     virtual ~CMenuShopBuy();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
 
-    // CProcess base occupies 0x00-0x3B; vtable pointer-to-member data follows.
-    u32 ptmf0[3];               // 0x3C-0x47: vtable pointer-to-member data
-    u32 ptmf1[3];               // 0x48-0x53: vtable pointer-to-member data
-    u8 mField54;                // 0x54: closing-state flag
-    u8 mField55;                // 0x55
-    u8 _pad56[2];               // 0x56-0x57
-    IScnRender mIScnRender;     // 0x58: render-callback subobject (vptr)
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
     CScn* mScene;               // 0x5C: owning scene
     u32 mField60;               // 0x60: ctor arg 3
     CBgTex mBgTex;              // 0x64
@@ -200,7 +186,6 @@ public:
         } mItemBox;
     };
     u8 mState;                  // 0x6F8
-    u8 _pad6F9[3];              // 0x6F9-0x6FB
     f32 mFloat6FC;              // 0x6FC: float init
 };
 
@@ -242,7 +227,7 @@ extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
 extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
 extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
 extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
@@ -253,16 +238,9 @@ extern char lbl_eu_80503B20[];  // split1 .rodata string pool (Init title name)
 extern const f32 lbl_eu_80667A24;  // .sdata2 float pool constants (timer inc/clamp)
 extern const f32 lbl_eu_80667A28;
 
-// Subobject ctors/dtors (retail keeps the unmangled names; __dt__800FED0C is
-// the game-side CProcess dtor wrapper defined in CMainMenu.cpp).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
-extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
+// Subobject ctors/dtors (retail keeps the unmangled names).
 extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine*, int);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp*, int);
-extern "C" void __dt__6CBgTexFv(CBgTex*, int);
-extern "C" void __dt__800FED0C(void*, int);
 
 // Subobject draw/update hooks called by Move / cbRenderBefore (retail names
 // are unmangled for these helpers too).
@@ -273,21 +251,17 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void ItemBoxLine_UpdateStates(CItemBoxLine* self);
 extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo);
 
-// DrawInfo raw-storage ct/dt (C-ABI so the scope-exit dtor is not
-// virtual-dispatched) and the DrawInfo setup helper (C++ mangled name).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
+// DrawInfo setup helper (C++ mangled name).
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Phase handlers (same TU, extern "C" definitions in CMenuShopBuy.cpp) plus
-// the factory and ctor (retail unmangled names). __declspec(noinline) stops
+// the factory (retail unmangled name). __declspec(noinline) stops
 // -inline auto from inlining the small phase handlers into Move (retail keeps
 // real bls; see MWCC_CASES -inline auto same-TU helpers).
 extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self);
-extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32 arg);
 extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 arg);
 
 // Other retail-named helpers.
@@ -307,7 +281,4 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" int IsMenuState621F0();
 extern u32 lbl_eu_80663E28;       // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern u32 lbl_eu_806642F8;       // shop-buy singleton flag (cleared by Term)
-extern u32 __ptmf_null[3];        // null pointer-to-member-function constant
-extern char lbl_eu_8052BF70[];    // temporary (CProcess) vtable, pre-PMF copy
-extern char lbl_eu_805326C0[];    // CMenuShopBuy composite vtable; IScnRender sub-vtable at +0x24
 extern const f32 lbl_eu_80667A20; // .sdata2 float pool constant (ctor mFloat6FC init)

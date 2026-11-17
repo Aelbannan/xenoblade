@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuBattleChain
 // Replace stubs with high-level C/C++ during decomp.
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuBattleChain.hpp"
@@ -265,14 +266,9 @@ body:
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls;
-    // a C++ local would virtual-dispatch its scope-exit destructor. Cast at
-    // each call site (no named pointer local) to keep retail's regalloc.
-    u8 drawInfoBuf[0x60];
-    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
-    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
-    drawLayout(mLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
 }
 
 /*
@@ -923,14 +919,14 @@ extern "C" void sinit_802AAF24() {
 
 // Retail tables owned by this unit.
 // .sdata tail (0x60-0x67): locator pair {rodata name, vtable-trailer}
-// (retail rela.sdata). lbl_eu_80662DD0 is read by the vtable below. The
+// (retail rela.sdata). __RTTI__16CMenuBattleChain is read by the vtable below. The
 // trailer word stays zero: it would reference lbl_eu_80539F08, but that
 // object dies with the frozen .data strip (extern_data_sections), so naming
 // it here would open a new link row for a symbol nothing can provide.
 // (wave DL-r4: 9F08 is now defined below and the strip is removed, so the
 // trailer names it.)
 extern void* lbl_eu_80539F08[16];
-const void* lbl_eu_80662DD0[2] = { lbl_eu_80510878, lbl_eu_80539F08 };
+const void* __RTTI__16CMenuBattleChain[2] = { lbl_eu_80510878, lbl_eu_80539F08 };
 // NOTE: the retail .data (jump tables + vtable + RTTI trailer) is
 // fully reconstructed in the residual notes below, but the frozen
 // CMenuBattleChain.o rule strips .data at RELOCPOST, so defining it here
@@ -978,15 +974,15 @@ extern "C" void WorkEvent28__10IWorkEventFv();
 extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
-extern u32 lbl_eu_80661940[];
-extern u32 lbl_eu_80661958[];
-extern u32 lbl_eu_80661950[];
-extern u32 lbl_eu_80661948[];
+extern u32 __RTTI__10IScnRender[];
+extern u32 __RTTI__15CDoubleListNode[];
+extern u32 __RTTI__14CChildListNode[];
+extern u32 __RTTI__8CProcess[];
 extern u32 lbl_eu_80661ED0[];
-extern u32 lbl_eu_80661EC8[];
+extern u32 __RTTI__9IUIWindow[];
 __declspec(section ".data") __attribute__((used, aligned(8)))
 void* lbl_eu_80539E48[48] = {
-    (void*)lbl_eu_80662DD0,
+    (void*)__RTTI__16CMenuBattleChain,
     (void*)0,
     (void*)__dt__16CMenuBattleChainFv,
     (void*)Reset__14CChildListNodeFv,
@@ -995,7 +991,7 @@ void* lbl_eu_80539E48[48] = {
     (void*)Move__16CMenuBattleChainFv,
     (void*)0, // Draw__18CTTask<9IUIWindow>Fv: template-id unspellable
     (void*)Tail__8CProcessFv,
-    (void*)lbl_eu_80662DD0,
+    (void*)__RTTI__16CMenuBattleChain,
     (void*)0xFFFFFF94, // -108 this-adjustor
     (void*)0, // CMenuBattleChain_dtorAdj6C: short name, link-provided nowhere
     (void*)WorkEvent1__10IWorkEventFPvPCc,
@@ -1029,7 +1025,7 @@ void* lbl_eu_80539E48[48] = {
     (void*)WorkEvent29__10IWorkEventFv,
     (void*)WorkEvent30__10IWorkEventFv,
     (void*)WorkEvent31__10IWorkEventFv,
-    (void*)lbl_eu_80662DD0,
+    (void*)__RTTI__16CMenuBattleChain,
     (void*)0xFFFFFF90, // -112 this-adjustor
     (void*)0, // CMenuBattleChain_dtorAdj70: short name
     (void*)0, // CMenuBattleChain_renderBeforeAdj70: short name
@@ -1037,19 +1033,19 @@ void* lbl_eu_80539E48[48] = {
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 void* lbl_eu_80539F08[16] = {
-    (void*)&lbl_eu_80661940,
+    (void*)&__RTTI__10IScnRender,
     (void*)0x70, // 112: trailer count
     (void*)0, // __RTTI__10IWorkEvent: unspellable in source
     (void*)0x6C, // 108: trailer size
-    (void*)&lbl_eu_80661958,
+    (void*)&__RTTI__15CDoubleListNode,
     (void*)0,
-    (void*)&lbl_eu_80661950,
+    (void*)&__RTTI__14CChildListNode,
     (void*)0,
-    (void*)&lbl_eu_80661948,
+    (void*)&__RTTI__8CProcess,
     (void*)0,
     (void*)&lbl_eu_80661ED0,
     (void*)0,
-    (void*)&lbl_eu_80661EC8,
+    (void*)&__RTTI__9IUIWindow,
     (void*)0, (void*)0, (void*)0,
 };
 #pragma section data_type ".data" ".data"

@@ -22,6 +22,7 @@ class CCur19 : public CBaseCur {
 public:
     CCur19();
     ~CCur19();
+    virtual void initLayout();   // +0x08 (retail COptionLoadLayout, 0x8029E640)
 
     // 0x00 CBaseCur base (16 bytes)
     // 0x16 ... derived fields
@@ -200,10 +201,10 @@ public:
     u8 field_0x34;                                 // 0x34 (constructor arg: window kind)
     u8 _35[0x38 - 0x35];                          // 0x35-0x37
     u8 mScrollBar[0x40];                           // 0x38 CScrollBar storage (raw; destroyed via retail __dt__10CScrollBarFv)
-    CBaseCur mSubCur1;                             // 0x78 (size 0x18)
-    CBaseCur mSubCur2;                             // 0x90 (size 0x18)
+    CCur18 mSubCur1;                               // 0x78 (size 0x18)
+    CCur19 mSubCur2;                               // 0x90 (size 0x18)
     u8 mSysWin[0x3C];                              // 0xA8 CSysWin region (size 0x3C)
-    CBaseCur mSubCur3;                             // 0xE4 (size 0x18)
+    CCur18 mSubCur3;                               // 0xE4 (size 0x18)
     s32 field_0xFC;                       // 0xFC (advance/state word set by handlers; signed compares in retail)
     u32 field_0x100;                      // 0x100
 };
@@ -230,7 +231,7 @@ extern unsigned char lbl_eu_805396E8[];
 // Sub-object constructors (retail C-linkage names; C linkage keeps the
 // __-prefixed names unmangled, so call sites bind to the retail relocs).
 extern "C" void __ct__10CScrollBarFUc(CScrollBar* self, int arg);
-extern "C" void __ct__CSysWin(CSysWin* self, int arg);
+extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);
 extern "C" Class_80296898 lbl_eu_80577308;
 extern "C" u8 lbl_eu_8053948C[0x30];
 // updateConfig retail symbol (1-arg mangling); COptionTickConfigSync calls it with a
@@ -246,9 +247,8 @@ extern "C" VoiceSource* getVoiceSourceForSystem(VoiceSource* source);
 extern "C" void CfObjectMove_relaySubB0Slot2C(cf::CfObject* obj);
 extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);
 extern "C" void sysWinGetPaneScreenPos(u8* out, u8* syswin, u8 sel);
-extern "C" void __ct__UnkClass_8011C974(u8* dst, u8* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(u8* dst, u8* src);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, IWorkEvent*, int, int);
-extern "C" void __ct__8CBaseCurFv(CBaseCur*);
 extern "C" void __dt__8CBaseCurFv(void*, int);
 extern "C" void* __dt__7CSysWinFv(void*, int);
 extern "C" void* __dt__10CScrollBarFv(CScrollBar*, int);

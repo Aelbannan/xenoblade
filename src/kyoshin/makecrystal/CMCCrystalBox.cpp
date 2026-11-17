@@ -273,7 +273,7 @@ CMCCrystalBox* __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType) {
     __ct__CSortMenu(&self->sortMenu);
     __ct__CMCCrystalInfo(&self->crystalInfo);
     __ct__10CScrollBarFUc(self->pad_250, 0);
-    __ct__CSysWin(self->sysWin, 0);
+    __ct__7CSysWinFUc(self->sysWin, 0);
     self->unk2CC = 0;
     self->unk2CD = 0;
     self->unk2CE = 0;
@@ -428,7 +428,7 @@ void initCrystalBoxResources(CMCCrystalBox* self) {
     // scrollbar and the three tail bytes).
     CSortMenu tmp;
     __ct__CSortMenu(&tmp);
-    __ct__UnkClass_8011C974(&self->sortMenu.mUnk04[0], &tmp.mUnk04[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->sortMenu.mUnk04[0], &tmp.mUnk04[0]);
     self->sortMenu.mFileHandle = tmp.mFileHandle;
     self->sortMenu.mArcResAcc = tmp.mArcResAcc;
     self->sortMenu.mpLayout = tmp.mpLayout;
@@ -450,8 +450,8 @@ void initCrystalBoxResources(CMCCrystalBox* self) {
     // Re-init the crystal-info sub-object from a default temp.
     CMCCrystalInfo tmp2;
     __ct__CMCCrystalInfo(&tmp2);
-    __ct__UnkClass_8011C974(&self->crystalInfo.mMemRegion1[0], &tmp2.mMemRegion1[0]);
-    __ct__UnkClass_8011C974(&self->crystalInfo.mMemRegion2[0], &tmp2.mMemRegion2[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->crystalInfo.mMemRegion1[0], &tmp2.mMemRegion1[0]);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->crystalInfo.mMemRegion2[0], &tmp2.mMemRegion2[0]);
     self->crystalInfo.mFileHandle1 = tmp2.mFileHandle1;
     self->crystalInfo.mFileHandle2 = tmp2.mFileHandle2;
     self->crystalInfo.mArcResAccessor = tmp2.mArcResAccessor;
@@ -486,9 +486,9 @@ void initCrystalBoxResources(CMCCrystalBox* self) {
     __dt__10CScrollBarFv(&sbTmp, -1);
 
     CSysWinData swTmp;
-    __ct__CSysWin(&swTmp, 0);
+    __ct__7CSysWinFUc(&swTmp, 0);
     // Write through the folded r31+0x290 base (no held pointer register).
-    __ct__UnkClass_8011C974(((CSysWinData*)self->sysWin)->mMemRegion, swTmp.mMemRegion);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(((CSysWinData*)self->sysWin)->mMemRegion, swTmp.mMemRegion);
     ((CSysWinData*)self->sysWin)->mFileHandle = swTmp.mFileHandle;
     ((CSysWinData*)self->sysWin)->mTagProcessor = swTmp.mTagProcessor;
     ((CSysWinData*)self->sysWin)->mArcAccessor = swTmp.mArcAccessor;

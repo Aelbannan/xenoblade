@@ -15,6 +15,7 @@ extern "C" bool CMenuArtsSelect_isCreated();
 
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
 
 namespace cf {
 // Intrusive ring-list node used by CBattleManager's unit list (sentinel at +0x8).
@@ -52,9 +53,6 @@ extern "C" {
     void CBattleMan_RefreshChainEnum(cf::CBattleManager*);
     void CBattleMan_RaiseBattleFlag10(cf::CBattleManager*);
     void CBattleMan_DropBattleFlag10(cf::CBattleManager*);
-
-    // Enum list holder ctor (dtor/accessors come from CfObjectImplMove.hpp)
-    void CTaskGame_enumListFill(void* holder, int type, int subtype);
 
     // Enum list operations
     void __ct__800FC32C(void* list, int a, int b, int c);
@@ -128,7 +126,6 @@ int defeatingCount(VMThread* pThread) {
 
 int isEnd(VMThread* pThread) {
     VMArg arg;
-    u8 holder[8];
     int result = 0;
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     // wraps back to itself when empty. Declaration order mirrors the matched
@@ -143,14 +140,13 @@ int isEnd(VMThread* pThread) {
         ++count;
     }
     if (count == 0) {
-        CTaskGame_enumListFill(&holder, 0x20, 0x800);
-        void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
+        CfEnumListHolder holder(0x20, 0x800);
+        void* list = holder.get();
         __ct__800FC32C(list, 3, 4, 0);
-        list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
+        list = holder.get();
         if (((CfMoveEnumList*)list)->field_620 != 0) {
             result = 1;
         }
-        __dt__80043E88((CfMoveEnumHolder*)holder, -1);
     }
     // unsigned cast forces MWCC's rotate-form shift (rlwinm), matching retail
     arg.type = ((unsigned)__cntlzw(result) >> 5) + 1;
@@ -204,17 +200,15 @@ int attackEne(VMThread* pThread) {
     } else {
         targetId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     }
-    u8 holder[8];
-    CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
-    startEnumObjects(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
+    CfEnumListHolder holder;
+    startEnumObjects(holder.get(), 0x100, 0);
     // Count is re-read via the holder accessor every iteration (retail shape).
-    for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder))->field_620; i++) {
-        void* unit = MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
+    for (u32 i = 0; i < ((CfMoveEnumList*)holder.get())->field_620; i++) {
+        void* unit = MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)holder.get(), i));
         if (targetId == ((BtlUnitIdView*)unit)->id3F28) {
             registerBattleActor(cf::CBattleManager::getInstance(), unit);
         }
     }
-    __dt__80043E88((CfMoveEnumHolder*)holder, -1);
     return 0;
 }
 
@@ -234,22 +228,20 @@ int selectTgt(VMThread* pThread) {
             Selector_UpdateFilter(cam, ((BtlSlot74View*)slot)->ptr74);
         }
     } else {
-        u8 holder[8];
-        CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
-        void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
+        CfEnumListHolder holder;
+        void* list = holder.get();
         startEnumObjects((CfMoveEnumList*)list, 0x100, 0x802);
         void* player = cf::CfGameManager::getPlayer(0);
         // Target getter at vtable+0xAC is
         // cf::CfObject::CfObject_getPosVector on the player object.
         void* target = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
-        list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
+        list = holder.get();
         sortEntriesByDistance((CfMoveEnumList*)list, target);
         void* cam = Selector_GetInstance();
         setRequestParams(cam, 0x80000003, 0, 0);
-        void* val = findFirstCleanObjectId(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
+        void* val = findFirstCleanObjectId(holder.get());
         cam = Selector_GetInstance();
         Selector_UpdateFilter(cam, val);
-        __dt__80043E88((CfMoveEnumHolder*)holder, -1);
     }
     return 0;
 }

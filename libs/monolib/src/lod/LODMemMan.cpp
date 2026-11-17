@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/lod/LODMemMan.hpp"
+#include "monolib/lod/UnkClass_8046D144.hpp"
 #include "monolib/core/CView.hpp"           // CView::getCurrentView
 #include "monolib/core/code_804E36DC.hpp"   // Scn_GetFrameDelta (frame delta, C ABI)
 #include "nw4r/g3d/g3d_obj.h"               // nw4r::g3d::G3dObj::Destroy
@@ -149,7 +149,6 @@ extern int lbl_eu_80658368[];
 extern int lbl_eu_80658374[];
 extern const char lbl_eu_8052637C[];  // acquireResFileSlot Panic file path
 // Float-pool slot for the +0x96C/+0x970 scale pair init (initLightScales).
-extern "C" const f32 lbl_eu_8066A718;
 // Panic message for the ResFile alignment check (acquireResFileSlot).
 extern const char lbl_eu_80526354[];
 
@@ -165,7 +164,7 @@ extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
 
 // TU-internal callees defined later in this file.
 extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, u8* resBuf, CScn* scene);
+    LOD::UnkClass_8046D144* self, u8* resBuf, CScn* scene);
 extern "C" void allocSecondaryBuffers__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, u32 count20, u32 count18, u32 count48, u32 count4,
     u8** outBase, u8** out18, u8** out48, u8** out4);
@@ -240,7 +239,7 @@ struct LODMemManSubView {
     u8 pad_0x00[0xCC];
     u8 sub_CC[1];                  // +0xCC sub-manager block start
     u8 pad_0xCD[0xF0 - 0xCD];
-    LOD::LODMemMan* ptr_F0;        // +0xF0 sub-manager word
+    LOD::UnkClass_8046D144* ptr_F0;        // +0xF0 sub-manager word
     u8 pad_0xF4[0xA44 - 0xF4];
     u8 sub_A44[1];                 // +0xA44 sub-manager block start
     u8 pad_0xA45[0xABC - 0xA45];
@@ -690,7 +689,7 @@ struct LODMemManLayout {
 // accessed through its own overlay.
 struct LODSubMgrView {
     u8 mPad_00[0xF0];
-    LOD::LODMemMan* field_0xF0;               // 0xf0 sub-manager
+    LOD::UnkClass_8046D144* field_0xF0;               // 0xf0 sub-manager
 };
 
 // ---------------------------------------------------------------------------
@@ -700,9 +699,9 @@ struct LODSubMgrView {
 // signature, so the exact retail names are forced with C linkage (the
 // reloc_map tool's approved fix for name drift).
 // ---------------------------------------------------------------------------
-extern "C" void updateElementLod__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem);
-extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, f32 f1);
-extern "C" void updateSubViewFrame__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, int a);
+extern "C" void updateElementLod__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODElem20* elem);
+extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u8* p, f32 f1);
+extern "C" void updateSubViewFrame__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u8* p, int a);
 
 // TU-internal callees with extra args (retail symbol names).  MWCC appends
 // `__F<params>` to plain C++ declarations at call sites, so C linkage keeps
@@ -715,11 +714,11 @@ extern "C" u32 ScnRes_IsStateActive_E4A0();
 // gate can test it).  Call codegen is identical either way.
 extern "C" u32 ScnRes_Notify2Word_E458(u32 a1, u32 a2);
 extern "C" LODPoolBlock* findPoolBlockById__Q23LOD9LODMemManFv(LODPoolBlock* self, int id);
-extern "C" u8* getOrCreatePoolData__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id);
+extern "C" u8* getOrCreatePoolData__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int id);
 extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 size, int id);
-extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u16 value, u8* data);
-extern "C" void updateBoxElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODBoxElem* box);
-extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
+extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u16 value, u8* data);
+extern "C" void updateBoxElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODBoxElem* box);
+extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
 
 // Scene / view helpers defined in other monolib TUs.  Retail kept the plain
 // unmangled names; C linkage forces the verbatim names at the call sites.
@@ -745,16 +744,16 @@ extern "C" void ScnData_FwdB8078(void* unused, s32 a);
 extern "C" void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx, u8 arg2);
 
 // TU-internal unlink helper (definition later in this file).
-extern "C" void unlinkElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem);
+extern "C" void unlinkElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODElem20* elem);
 
 // TU-internal sub-manager callbacks (definitions later in this file).
-extern "C" void driveArchiveLoadState__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void updateLodFrame__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void notifyG3dManager__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene);
-extern "C" void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void resetChildMasks__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void resetLightColor__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
-extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 x);
+extern "C" void driveArchiveLoadState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void updateLodFrame__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void notifyG3dManager__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CScn* scene);
+extern "C" void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void resetChildMasks__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void resetLightColor__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 target);
 
 // Reset-tail view: the per-frame scratch words at +0x3C..+0x50 and the
 // +0x84 scale slot cleared by resetAndReload.
@@ -809,12 +808,12 @@ struct LODResView {
 // --- FULL_MATCH functions ---
 
 // Simple getter: return the float at offset 0x7c.
-float LOD::LODMemMan::getBaseScale() {
+float LOD::UnkClass_8046D144::getBaseScale() {
     return mFloat_7C;
 }
 
 // Tail-forward call to embedded sub-object's updateLodPositions.
-void LOD::LODMemMan::updateSubObject() {
+void LOD::UnkClass_8046D144::updateSubObject() {
     mSubObject.updateLodPositions();
 }
 
@@ -829,7 +828,7 @@ void LOD::LODMemMan::updateSubObject() {
 // fields, name string) and the embedded UnkClass_8046A530 / resetFrameFields
 // are run.
 // ---------------------------------------------------------------------------
-LOD::LODMemMan::LODMemMan() {
+LOD::UnkClass_8046D144::UnkClass_8046D144() {
     LODCtorView* cv = (LODCtorView*)this;
     LODMemManLayout* l = (LODMemManLayout*)this;
     LODCtorSlot* s = &cv->mSlotsA[1];
@@ -874,10 +873,9 @@ extern "C" void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
 // the +0xCC and +0xA44 sub-managers, keeps only flag bit 0x800 of +0x6C,
 // runs the embedded sub-object destructor (+0xABC) and frees the instance
 // when the deleting flag is positive.
-void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
-    LODMemManSubView* sub = (LODMemManSubView*)self;
-    if (self != 0) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+LOD::UnkClass_8046D144::~UnkClass_8046D144() {
+    LODMemManSubView* sub = (LODMemManSubView*)this;
+    LODMemManLayout* l = (LODMemManLayout*)this;
     if (l->field_0xA8 != 0) {
         nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
@@ -896,17 +894,12 @@ void* __dt__8046D144(LOD::LODMemMan* self, int flags) {
     }
     l->mView_1C = 0;
     l->field_0x5C = 0;
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::LODMemMan*)sub->sub_CC, 0);
-    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::LODMemMan*)sub->sub_CC);
+    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC, 0);
+    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC);
     ((LOD::LODMemMan*)sub->sub_A44)->resetManagerState();
     // Keep only bit 0x800 (bit 20) of the enable-flag word.
     l->field_0x6C &= 0x800u;
     __dt__8046A584((LOD::UnkClass_8046A530*)sub->sub_ABC, -1);
-    if (flags > 0) {
-        operator delete(self);
-    }
-    }
-    return self;
 }
 
 // Cache manager helper called with (shared buffer base + offset at +0x58).
@@ -924,15 +917,15 @@ extern u32 lbl_eu_80665768;
 // TU-internal callees used by the two rebuild/update passes below.
 extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(
     LOD::UnkClass_8046A530* self);
-void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task);
-extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
+void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task);
+extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param);
 extern "C" int bindResMdl__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, CScn* archive, u32 mdlIdx, u32 packed,
+    LOD::UnkClass_8046D144* self, CScn* archive, u32 mdlIdx, u32 packed,
     const f32* mtxSrc);
 extern "C" s32 acquireResFileSlot__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, LOD::LODMemMan* pool, s32 id, s32* out);
+    LOD::UnkClass_8046D144* self, LOD::UnkClass_8046D144* pool, s32 id, s32* out);
 extern "C" void linkElementToChains__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, LODElem20* elem, u16 id, const LODVec3f* v);
+    LOD::UnkClass_8046D144* self, LODElem20* elem, u16 id, const LODVec3f* v);
 
 // Header of the shared buffer handed in r4 (offsets consumed here).
 struct LOLDBufHdr {
@@ -965,7 +958,7 @@ struct LODScnProcUD {
 
 // Retail calls this member-shaped rebuild with the shared-buffer base in the
 // second (register-only) argument; keep the exact retail ABI.
-extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg) {
+extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u32 arg) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LOLDBufHdr* bh = (LOLDBufHdr*)arg;
     u8* buf = (u8*)arg;
@@ -1010,11 +1003,11 @@ extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::LODMemMan* self
 
     if (bh->field_0xC != 0) {
         initSceneGroup__Q23LOD9LODMemManFv(
-            (LOD::LODMemMan*)((u8*)self + 0xCC), buf + bh->field_0xC,
+            (LOD::UnkClass_8046D144*)((u8*)self + 0xCC), buf + bh->field_0xC,
             (CScn*)l->mView_1C);
     } else {
         initSceneGroup__Q23LOD9LODMemManFv(
-            (LOD::LODMemMan*)((u8*)self + 0xCC), (u8*)0,
+            (LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (u8*)0,
             (CScn*)l->mView_1C);
     }
 
@@ -1196,7 +1189,7 @@ extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::LODMemMan* self
 // the per-frame fields, store `view` into +0x1C, set flag bit 0 and run the
 // scene refresh passes.
 // ---------------------------------------------------------------------------
-extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg, u8* view) {
+extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u32 arg, u8* view) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 4) {
         if (l->field_0xA8 != 0) {
@@ -1215,7 +1208,7 @@ extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg
             l->field_0xAC->Destroy();
             l->field_0xAC = 0;
         }
-        notifyG3dManager__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC), (CScn*)l->mView_1C);
+        notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (CScn*)l->mView_1C);
         ((LOD::LODMemMan*)((u8*)self + 0xA44))->cancelFileAndRelease();
         l->mView_1C = 0;
         l->field_0x5C = 0;
@@ -1245,7 +1238,7 @@ extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg
     return true;
 }
 
-void LOD::LODMemMan::resetFrameFields() {
+void LOD::UnkClass_8046D144::resetFrameFields() {
     LODMemManLayout* l = (LODMemManLayout*)this;
     // Float pool constants are cached in locals so MWCC CSEs them into
     // f1 (1.0f) / f0 (scale divisor); the clears follow in field order.
@@ -1284,13 +1277,14 @@ void LOD::LODMemMan::resetFrameFields() {
 // the u8* self local keeps `self` in r31 so the +0xCC temps recompute per
 // call instead of hoisting into a saved register).
 // ---------------------------------------------------------------------------
-void clearManagers__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
+void LOD::UnkClass_8046D144::clearManagers() {
+    LOD::UnkClass_8046D144* self = this;
     LODMemManSubView* sub = (LODMemManSubView*)self;
     LODMemManLayout* l = (LODMemManLayout*)self;
     l->mView_1C = 0;
     l->field_0x5C = 0;
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::LODMemMan*)sub->sub_CC, 0);
-    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::LODMemMan*)sub->sub_CC);
+    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC, 0);
+    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC);
     ((LOD::LODMemMan*)sub->sub_A44)->resetManagerState();
     l->field_0x6C &= 0x800;
 }
@@ -1302,7 +1296,7 @@ void clearManagers__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 // pass when `param` is set).  Ends by clearing the view/shared-buffer pointers
 // and toggling flag bits 0x3087 -> 0x8000.
 // ---------------------------------------------------------------------------
-void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
+void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA8) {
         nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)getScnGroupChild((CScn*)l->mView_1C, 7);
@@ -1320,7 +1314,7 @@ void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
         l->field_0xAC->Destroy();
         l->field_0xAC = 0;
     }
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC), (CScn*)l->mView_1C);
+    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (CScn*)l->mView_1C);
     ((LOD::LODMemMan*)((u8*)self + 0xA44))->cancelFileAndRelease();
     if (param) {
         ((LOD::LODMemMan*)((u8*)l + 0xA44))->clearFlagAndResetName();
@@ -1340,7 +1334,8 @@ void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
 // per-type update, folds the shrink accumulator and finally updates the
 // embedded UnkClass_8046A530 when bit 0x10 is clear.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
+void LOD::UnkClass_8046D144::updateLodTick() {
+    LOD::UnkClass_8046D144* self = this;
     LODMemManLayout* l = (LODMemManLayout*)self;
     u32 flags = l->field_0x6C;
     if (!(flags & 1)) return;
@@ -1352,7 +1347,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
         // re-mark the reload-request bit (0x10000) if the reset bit survives.
         if (f2 & 0x10000) {
             l->field_0x6C = f2 & ~0x10000u;
-            destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::LODMemMan*)((LODMemManSubView*)self)->sub_CC);
+            destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((LODMemManSubView*)self)->sub_CC);
         }
         u32 g = l->field_0x6C;
         if (!(g & 0x8000)) return;
@@ -1360,7 +1355,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
         return;
     }
     // Load pass.
-    driveArchiveLoadState__Q23LOD9LODMemManFv((LOD::LODMemMan*)((LODMemManSubView*)self)->sub_A44);
+    driveArchiveLoadState__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((LODMemManSubView*)self)->sub_A44);
     if (!(l->field_0x6C & 4)) {
         if (((LODCtorView*)self)->mSub.field_0x20 & 2) {
             rebuildFromSharedBuffer__Q23LOD9LODMemManFv(self, ((LODCtorView*)self)->mSub.field_0x4);
@@ -1406,9 +1401,9 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 }
 
 // Retail-named imports used only by updateLodLayersForView.
-void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view);
-void rebuildElementChains__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count);
-void teardownSubEntries__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub);
+void updateViewLayers__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODViewDesc* view);
+void rebuildElementChains__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int count);
+void teardownSubEntries__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LOD::UnkClass_8046D144* sub);
 extern "C" u8* Coli_GetBitTable_5A68(u8* buf);           // bitmap allocator
 extern "C" int dispatchLodPick__Q23LOD17UnkClass_8046368CFv(LODTypeDesc18* td);
 extern f32 lbl_eu_8066A6F0;      // direction vector z constant
@@ -1447,7 +1442,7 @@ struct DD9ElemView {
 // texture bindings.
 // ---------------------------------------------------------------------------
 extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, u8* p, f32 scale) {
+    LOD::UnkClass_8046D144* self, u8* p, f32 scale) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     u32 flags = l->field_0x6C;
     if ((flags & 1) == 0) return;
@@ -1549,8 +1544,8 @@ extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(
     }
     rebuildElementChains__Q23LOD9LODMemManFv(self, bh->field_0x1C);
     teardownSubEntries__Q23LOD9LODMemManFv(
-        (LOD::LODMemMan*)((u8*)self + 0xCC),
-        (LOD::LODMemMan*)((u8*)self + 0xA44));
+        (LOD::UnkClass_8046D144*)((u8*)self + 0xCC),
+        (LOD::UnkClass_8046D144*)((u8*)self + 0xA44));
     if ((l->field_0x68 & 0x10) == 0) {
         // Publish the buffer/time bookkeeping globals.
         lbl_eu_806657B8 = ((l->field_0xB8 * 60) + l->field_0xBA) * 60
@@ -1579,13 +1574,13 @@ extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(
     self->refreshPaletteBinding();
 }
 
-void LOD::LODMemMan::updateSubViewFrame() {}
+void LOD::UnkClass_8046D144::updateSubViewFrame() {}
 
 // ---------------------------------------------------------------------------
 // setPauseFlag: when `param` is zero set bit 3 of the +0x6C flag word,
 // otherwise clear bit 6.
 // ---------------------------------------------------------------------------
-void setPauseFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
+void setPauseFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (param != 0) {
         l->field_0x6C &= ~8;
@@ -1601,7 +1596,7 @@ void setPauseFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
 // store `param` into +0xB4 and set flag bit 0x800; otherwise clear +0xB4
 // and the flag.
 // ---------------------------------------------------------------------------
-void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 param) {
+void attachSceneObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u32 param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (param) {
         if (l->field_0xA8) {
@@ -1634,7 +1629,8 @@ void attachSceneObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 param) {
 // whose +0x47 descriptor's flag bits are nonzero, refresh the element via
 // getScnHandle/ScnData_FwdB80CC and record the result byte at +0x1D.
 // ---------------------------------------------------------------------------
-void setLodScaleAndRefresh__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 f1) {
+void LOD::UnkClass_8046D144::setLodScaleAndRefresh(float f1) {
+    LOD::UnkClass_8046D144* self = this;
     LODMemManLayout* l = (LODMemManLayout*)self;
     l->field_0x1CDC = f1;
     if (l->field_0x5C == 0) return;
@@ -1656,7 +1652,7 @@ void setLodScaleAndRefresh__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 f1) {
 // ---------------------------------------------------------------------------
 // setTimeParams: stores the three short params into the 0xB8..0xBC fields.
 // ---------------------------------------------------------------------------
-void setTimeParams__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u16 a, u16 b, u16 c) {
+void setTimeParams__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u16 a, u16 b, u16 c) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     l->field_0xB8 = a;
     l->field_0xBA = b;
@@ -1667,7 +1663,7 @@ void setTimeParams__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u16 a, u16 b, u16 c
 // clearElementFlag: when the LOD system is enabled, walk every element matching
 // `task` and clear bit 1 of its flag word (retail keeps one loop copy).
 // ---------------------------------------------------------------------------
-void clearElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+void clearElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -1685,7 +1681,7 @@ void clearElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // setElementFlag: when the LOD system is enabled, walk every element matching
 // `task` and set bit 1 of its flag word.
 // ---------------------------------------------------------------------------
-void setElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+void setElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -1704,7 +1700,7 @@ void setElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // `task` and flip bit 1 of its flag word - set when `flag` is zero, cleared
 // otherwise (retail keeps two copies of the loop, one per bit operation).
 // ---------------------------------------------------------------------------
-void toggleElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int flag) {
+void toggleElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (flag) {
         if (!(l->field_0x6C & 1)) return;
@@ -1740,7 +1736,7 @@ void toggleElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int f
 // `task`; on the first match return whether bit 1 of its flag word is clear
 // (bool; retail materializes !(flag&2) via rlwinm/cntlzw/srwi).
 // ---------------------------------------------------------------------------
-bool isElementFlagClear__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+bool isElementFlagClear__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         int i = 0;
@@ -1763,7 +1759,7 @@ bool isElementFlagClear__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // (u16 truncation of pool*f1) and store it into field_0xE of every element
 // matching `task`.
 // ---------------------------------------------------------------------------
-void setElementLodLevel__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 f1) {
+void setElementLodLevel__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, f32 f1) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     u16 v = (u16)(s32)(lbl_eu_8066A70C * f1);
@@ -1790,7 +1786,7 @@ void setElementLodLevel__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 
 // according to `flag`, while a non-positive value walks the matching
 // elements setting/clearing their bit 0x10 per `flag`.
 // ---------------------------------------------------------------------------
-void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 val, s16 task, int flag) {
+void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, f32 val, s16 task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     u32 flags = l->field_0x6C;
     if (!(flags & 1)) return;
@@ -1860,7 +1856,7 @@ void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 val, s
 // setElementVisibility: when the LOD system is enabled, walk every element matching
 // `task` and set/clear bit 0x10 of its flag word according to `flag`.
 // ---------------------------------------------------------------------------
-void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int flag) {
+void setElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -1885,7 +1881,7 @@ void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, in
 // every element whose id matches `task`; elements with the follow-through
 // flag bit and a nonzero enable field then refresh their animation state.
 // ---------------------------------------------------------------------------
-void setElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 v) {
+void setElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, f32 v) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
@@ -1911,7 +1907,7 @@ void setElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 v) 
 // refreshElementScale: same id walk as setElementScale, but the active value is
 // refreshed from the cached value instead of a parameter.
 // ---------------------------------------------------------------------------
-void refreshElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+void refreshElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
@@ -1937,7 +1933,7 @@ void refreshElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // getElementScale: when the LOD system is enabled, return the +0x4 float of the
 // first element matching `task`, else the A6C0 pool constant.
 // ---------------------------------------------------------------------------
-f32 getElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+f32 getElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
@@ -1961,7 +1957,7 @@ f32 getElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // bits 0x120 of its flag word; otherwise set bit 0x100 when +0x44 bit 3 is
 // set, else bit 0x40.
 // ---------------------------------------------------------------------------
-void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int flag) {
+void updateElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -1990,7 +1986,7 @@ void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task,
 // setElementFlag80: when the LOD system is enabled, walk every element matching
 // `task` and set/clear bit 7 of its flag word according to `flag`.
 // ---------------------------------------------------------------------------
-void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int flag) {
+void setElementFlag80__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, int flag) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -2016,7 +2012,7 @@ void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int fl
 // and link the element into the index-linked list (head/tail at +0x10/+0x14)
 // unless it is already linked (0x10000 flag).
 // ---------------------------------------------------------------------------
-void linkTaskElements__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int value) {
+void linkTaskElements__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, int value) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -2058,7 +2054,7 @@ void linkTaskElements__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int va
 // getElementState:
 // first element matching `task`, or 0.
 // ---------------------------------------------------------------------------
-u8 getElementState__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+u8 getElementState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
@@ -2080,7 +2076,7 @@ u8 getElementState__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // setElementCachedValue: when the LOD system is enabled, store `value` into the +0x8
 // float of every element matching `task`.
 // ---------------------------------------------------------------------------
-void setElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 value) {
+void setElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task, f32 value) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
@@ -2100,7 +2096,7 @@ void setElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f
 // getElementCachedValue: when the LOD system is enabled, return the +0x8 float of the
 // first element matching `task`, else the A6C0 pool constant.
 // ---------------------------------------------------------------------------
-f32 getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+f32 getElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
@@ -2122,7 +2118,7 @@ f32 getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // updateSingleElement: when the LOD system is enabled, scale the base value by the
 // current frame delta and forward the matching element to updateElementLod.
 // ---------------------------------------------------------------------------
-void updateSingleElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id) {
+void updateSingleElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int id) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 1) {
         f32 dt = Scn_GetFrameDelta(l->mView_1C);
@@ -2141,7 +2137,7 @@ void updateSingleElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id) {
     }
 }
 
-void LOD::LODMemMan::setBaseScale(float a) { ((LODMemManLayout*)this)->field_0x1CC8 = a; mFloat_7C = a; }
+void LOD::UnkClass_8046D144::setBaseScale(float a) { ((LODMemManLayout*)this)->field_0x1CC8 = a; mFloat_7C = a; }
 
 // ---------------------------------------------------------------------------
 // configureFadeMode: when `mode` is nonzero, publish the `value` short into +0xBE
@@ -2149,7 +2145,7 @@ void LOD::LODMemMan::setBaseScale(float a) { ((LODMemManLayout*)this)->field_0x1
 // otherwise clear the flag.  Then scale +0x84 by 1/f1 unless f1 matches the
 // A6C0 pool constant (then the stored scale is used as-is).
 // ---------------------------------------------------------------------------
-void configureFadeMode__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int mode, u16 value, f32 f1) {
+void configureFadeMode__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int mode, u16 value, f32 f1) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (mode) {
         l->field_0xBE = value;
@@ -2174,7 +2170,7 @@ void configureFadeMode__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int mode, u16 v
 // element indices) refreshes each referenced box element, the +0x1C group
 // feeds refreshGroupFromList, and the pass ends with updateElementsByDesc.
 // ---------------------------------------------------------------------------
-void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view) {
+void updateViewLayers__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODViewDesc* view) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (ScnRes_IsStateActive_E4A0() != 0 && (l->field_0x6C & 0x20) == 0) {
         l->field_0x68 |= 0x10;
@@ -2206,7 +2202,7 @@ void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* vie
 // point at +0x20), refresh the element's u16 child groups the same way as
 // updateViewLayers.
 // ---------------------------------------------------------------------------
-void updateBoxElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODBoxElem* box) {
+void updateBoxElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODBoxElem* box) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODBoxCenterView* bv = (LODBoxCenterView*)self;
     if (box->mMinX < bv->mBox_20[0]) return;
@@ -2251,7 +2247,7 @@ static inline f32 LODVecLenSq(const LODVec3f* v);
 // (u8*)self+0x20/0xCC/0xA44 derives at each use site, but the O4 scheduler
 // speculatively hoists them into prologue saved regs.  scheduling-off pins
 // advances to program order and stops the hoist.
-extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u16 value, u8* data) {
+extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u16 value, u8* data) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     const f32 cZero = lbl_eu_8066A6C0;
     LODVec3f delta;
@@ -2286,7 +2282,7 @@ extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u
         if (td->field_0x6 == 1) {
             l->field_0x64[idx >> 5] |= (1u << (idx & 31));
             bindResMdl__Q23LOD9LODMemManFv(
-                (LOD::LODMemMan*)((u8*)self + 0xCC), (CScn*)l->mView_1C,
+                (LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (CScn*)l->mView_1C,
                 td->field_0x0, idx, (const f32*)ed);
             continue;
         }
@@ -2294,8 +2290,8 @@ extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u
         s32 slot;
         if (td->mFlags & 0x8000) {
             if (acquireResFileSlot__Q23LOD9LODMemManFv(
-                    (LOD::LODMemMan*)((u8*)self + 0xCC),
-                    (LOD::LODMemMan*)((u8*)self + 0xA44), td->field_0x0,
+                    (LOD::UnkClass_8046D144*)((u8*)self + 0xCC),
+                    (LOD::UnkClass_8046D144*)((u8*)self + 0xA44), td->field_0x0,
                     &slot) == 0) {
                 continue;
             }
@@ -2359,7 +2355,7 @@ static inline f32 LODVecLenSq(const LODVec3f* v) {
 // manager plane pair, and finally updated through linkElementToChains with an
 // optional rotation matrix built from SinFIdx/CosFIdx.
 // ---------------------------------------------------------------------------
-extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
+extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA4 == 0) {
         return;
@@ -2406,14 +2402,14 @@ extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
                 if (tbl->field_0x6 == 1) {
                     // Direct model reference.
                     bindResMdl__Q23LOD9LODMemManFv(
-                        (LOD::LODMemMan*)((u8*)self + 0xCC), (CScn*)l->mView_1C,
+                        (LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (CScn*)l->mView_1C,
                         tbl->field_0x0, idx, (const f32*)ed);
                     goto next_elem;
                 } else if (tbl->mFlags & 0x8000) {
                     // ResFile slot path; on failure keep scanning types.
                     if (acquireResFileSlot__Q23LOD9LODMemManFv(
-                            (LOD::LODMemMan*)((u8*)self + 0xCC),
-                            (LOD::LODMemMan*)((u8*)self + 0xA44), tbl->field_0x0,
+                            (LOD::UnkClass_8046D144*)((u8*)self + 0xCC),
+                            (LOD::UnkClass_8046D144*)((u8*)self + 0xA44), tbl->field_0x0,
                             &slot) == 0) {
                         continue;
                     }
@@ -2539,7 +2535,7 @@ extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 // ResMdl, storing each resolved ResTexPlttInfo pointer into the u32 array at
 // +0xB0.  If no model matched, clear +0xB4 and drop flag bits 0x180000.
 // ---------------------------------------------------------------------------
-void LOD::LODMemMan::refreshPaletteBinding() {
+void LOD::UnkClass_8046D144::refreshPaletteBinding() {
     u32 flags = ((LODMemManLayout*)this)->field_0x6C;
     if (!(flags & 0x800)) return;
     if (!(flags & 0x2000)) return;
@@ -2617,7 +2613,7 @@ void LOD::LODMemMan::refreshPaletteBinding() {
 // clears both pointers, and mid-list removal splices the successor into the
 // predecessor's link.
 // ---------------------------------------------------------------------------
-void unlinkElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
+void unlinkElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODElem20* elem) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(elem->field_0x0 & 0x10000)) return;
     elem->field_0x0 &= ~0x10000;
@@ -2661,7 +2657,7 @@ void unlinkElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
 // 0..0xff range based on the squared horizontal length of `v`.
 // ---------------------------------------------------------------------------
 extern "C" void linkElementToChains__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, LODElem20* elem, u16 id, const LODVec3f* v)
+    LOD::UnkClass_8046D144* self, LODElem20* elem, u16 id, const LODVec3f* v)
 {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODTypeDesc18* desc = &l->field_0x94[id];
@@ -2744,7 +2740,7 @@ extern "C" void linkElementToChains__Q23LOD9LODMemManFv(
 // field at +0x10+2*i, and each chain's final tail is terminated with the
 // sentinel index.
 // ---------------------------------------------------------------------------
-void rebuildElementChains__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count) {
+void rebuildElementChains__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int count) {
     LODBuildList* l = (LODBuildList*)self;
     // Retail strength-reduces the inner loop to pointer/offset induction
     // (mtctr/bdnz over 3, pre-advanced tail/head/pair pointers), so the
@@ -2818,7 +2814,7 @@ void rebuildElementChains__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count) {
 // shared LOD distance globals, and the record's render bits drive the
 // billboard/submit helpers.
 // ---------------------------------------------------------------------------
-void updateElementLod__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem) {
+void updateElementLod__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODElem20* elem) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     u32 flags0 = elem->field_0x0;
     if ((flags0 & 0x1000) && (flags0 & 0x2000)) {
@@ -2967,7 +2963,7 @@ void updateElementLod__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem)
 // records.  The index field_0xE of the matched element is set from the
 // current scale so the caller can pick the LOD kind.
 // ---------------------------------------------------------------------------
-extern "C" void updateLodFrame__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
+extern "C" void updateLodFrame__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     int countA4 = l->field_0xA4;
     if (countA4 == 0) return;
@@ -3066,7 +3062,7 @@ struct LODChildDesc {
     u8  mPad_3C[0x40 - 0x3C];  // 64-byte stride
 };
 
-extern "C" void registerChildSlot__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODChildDesc* desc, u8* mtx, int index);
+extern "C" void registerChildSlot__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODChildDesc* desc, u8* mtx, int index);
 
 // ---------------------------------------------------------------------------
 // bindLodChildren: per-frame LOD child binding.  Copies the caller's 13-word
@@ -3078,13 +3074,13 @@ extern "C" void registerChildSlot__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODC
 // per-group .bss arrays.
 // ---------------------------------------------------------------------------
 extern "C" void bindLodChildren__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, const f32* matrixBlock)
+    LOD::UnkClass_8046D144* self, const f32* matrixBlock)
 {
     Mtx mtx;
     *(nw4r::math::MTX34*)mtx = *(const nw4r::math::MTX34*)matrixBlock;
     PSMTXInverse(mtx, mtx);
-    resetChildMasks__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC));
-    resetLightColor__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xCC));
+    resetChildMasks__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
+    resetLightColor__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
 
     // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
     int* flagA = lbl_eu_80658368;
@@ -3103,7 +3099,7 @@ extern "C" void bindLodChildren__Q23LOD9LODMemManFv(
         while (i < count) {
             if (d->field_0x30 & 0x10000) {
                 registerChildSlot__Q23LOD9LODMemManFv(
-                    (LOD::LODMemMan*)((u8*)self + 0xCC), d, (u8*)mtx, g);
+                    (LOD::UnkClass_8046D144*)((u8*)self + 0xCC), d, (u8*)mtx, g);
                 seen++;
             }
             i++;
@@ -3122,11 +3118,11 @@ extern "C" void bindLodChildren__Q23LOD9LODMemManFv(
 // nonzero task, push the layer scale and the frame data into the sub-manager
 // (updateLodLayersForView is skipped while the scene gate byte is set).
 // ---------------------------------------------------------------------------
-void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
+void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     CView* view = CView::getCurrentView();
     LODViewFrame* frame = Scn_HasCamItem(Scn_GetCurrentScene(), view);
-    LOD::LODMemMan* sub = ((LODSubMgrView*)self)->field_0xF0;
+    LOD::UnkClass_8046D144* sub = ((LODSubMgrView*)self)->field_0xF0;
     if (task != 0) {
         if (((LODScnGate*)getScnRootPtr(Scn_GetCurrentScene()))->field_0x19 == 0) {
             updateLodLayersForView__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
@@ -3140,7 +3136,7 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 // is set, resolve the current view frame and hand it (+0x9C) to the +0xF0
 // sub-manager's updateSubViewFrame along with `param`.
 // ---------------------------------------------------------------------------
-extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
+extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param) {
     if (param == 0) {
         CScn* scn = Scn_GetCurrentScene();
         CScn* scn2 = (CScn*)getScnRootPtr(scn);
@@ -3150,7 +3146,7 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int p
         CView* view = CView::getCurrentView();
         CScn* scn3 = Scn_GetCurrentScene();
         LODViewFrame* vf = Scn_HasCamItem(scn3, view);
-    LOD::LODMemMan* sub = ((LODMemManSubView*)self)->ptr_F0;
+    LOD::UnkClass_8046D144* sub = ((LODMemManSubView*)self)->ptr_F0;
         updateSubViewFrame__Q23LOD9LODMemManFv(sub, vf->field_0x9C, param);
     }
 }
@@ -3162,7 +3158,7 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int p
 // and +0xC8 (17 records).
 // ---------------------------------------------------------------------------
 extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, u8* resBuf, CScn* scene) {
+    LOD::UnkClass_8046D144* self, u8* resBuf, CScn* scene) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LODResView* rv = (LODResView*)self;
     // getScnRoot45C fetches the scene's allocator; its result feeds Construct.
@@ -3200,7 +3196,7 @@ extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
 }
 
 extern "C" int bindModelToSlot__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, CScn* archive, nw4r::g3d::ResFile* resFile,
+    LOD::UnkClass_8046D144* self, CScn* archive, nw4r::g3d::ResFile* resFile,
     u32 id, int mdlIdx, const f32* mtxSrc);
 
 // ---------------------------------------------------------------------------
@@ -3211,7 +3207,7 @@ extern "C" int bindModelToSlot__Q23LOD9LODMemManFv(
 // mdlIdx is passed through unchanged, and its mtxSrc is the 5th arg.
 // ---------------------------------------------------------------------------
 __declspec(noinline) int bindResMdl__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, CScn* archive, u32 mdlIdx, u32 packed,
+    LOD::UnkClass_8046D144* self, CScn* archive, u32 mdlIdx, u32 packed,
     const f32* mtxSrc)
 {
     return bindModelToSlot__Q23LOD9LODMemManFv(
@@ -3227,7 +3223,7 @@ __declspec(noinline) int bindResMdl__Q23LOD9LODMemManFv(
 // ResFile data end (block + block[+0x14]) and runs ResFile::Init on it.
 // ---------------------------------------------------------------------------
 extern "C" s32 acquireResFileSlot__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, LOD::LODMemMan* pool, s32 id, s32* out)
+    LOD::UnkClass_8046D144* self, LOD::UnkClass_8046D144* pool, s32 id, s32* out)
 {
     s32 result = -1;
     LODResFileSlotArray& arr = *(LODResFileSlotArray*)self;
@@ -3277,7 +3273,7 @@ extern "C" s32 acquireResFileSlot__Q23LOD9LODMemManFv(
 // floats, the 3x3 from the rest) and records the id.
 // ---------------------------------------------------------------------------
 int bindModelToSlot__Q23LOD9LODMemManFv(
-    LOD::LODMemMan* self, CScn* archive, nw4r::g3d::ResFile* resFile,
+    LOD::UnkClass_8046D144* self, CScn* archive, nw4r::g3d::ResFile* resFile,
     u32 id, int mdlIdx, const f32* mtxSrc)
 {
     LODBindView* v = (LODBindView*)self;
@@ -3328,7 +3324,7 @@ int bindModelToSlot__Q23LOD9LODMemManFv(
 // ---------------------------------------------------------------------------
 // TU-internal member callee, called through its exact retail symbol so MWCC
 // does not inline its tail-call to mergeElementList (retail keeps a real bl).
-extern "C" void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
+extern "C" void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
 
 // Walking views: base pointer starts at `self` and advances one slot (0xC)
 // per iteration while each access reads through the fixed offset window
@@ -3355,7 +3351,7 @@ union LODF108CMem {
     } b;
 };
 
-void teardownSubEntries__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub) {
+void teardownSubEntries__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LOD::UnkClass_8046D144* sub) {
     LODF108CMem* m = (LODF108CMem*)self;
     // Scoped zero constants: keeping them as explicit locals pins the zero
     // register materialization to the points retail chooses (hoisted before
@@ -3411,7 +3407,7 @@ void teardownSubEntries__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
+void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self) {
     int i = 0;
     LODMemManLayout* l = (LODMemManLayout*)self;
     while (i < 16) {
@@ -3446,7 +3442,7 @@ struct LODSlotStep {
     LODG3dSlot mSlot;
 };
 
-void notifyG3dManager__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene) {
+void notifyG3dManager__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CScn* scene) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x0 != 0) {
         LODSlotStep* p = (LODSlotStep*)self;
@@ -3486,7 +3482,7 @@ struct LODChildMaskView {
 // resetChildMasks: zero the used-mask words of the three child records
 // (offsets 0x408, 0x694, 0x920 - three words each).
 // ---------------------------------------------------------------------------
-void LOD::LODMemMan::resetChildMasks() {
+void LOD::UnkClass_8046D144::resetChildMasks() {
     LODChildMaskView* v = (LODChildMaskView*)this;
     v->mask_408[0] = 0;
     v->mask_408[1] = 0;
@@ -3503,7 +3499,7 @@ void LOD::LODMemMan::resetChildMasks() {
 // resetLightColor: initialise the light colour at +0x92C to zero (retail keeps
 // a stack zero word passed by address).
 // ---------------------------------------------------------------------------
-void LOD::LODMemMan::resetLightColor() {
+void LOD::UnkClass_8046D144::resetLightColor() {
     GXColor zero = {0, 0, 0, 0};
     GXInitLightColor(&((LODChildMaskView*)this)->light_92C, zero);
 }
@@ -3543,7 +3539,7 @@ struct LODChild188 {
 // LightCtlInitGXLight, and the done-mask bit is set before the slot index advances.
 // (retail keeps the kind test as two compares; the goto chain reproduces it.)
 // ---------------------------------------------------------------------------
-void registerChildSlot__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODChildDesc* desc, u8* unused, int index) {
+void registerChildSlot__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODChildDesc* desc, u8* unused, int index) {
     // Declared high-to-low so MWCC's reverse-order stack allocation puts
     // the words at 0x8..0x14 like retail.
     f32 wf3;
@@ -3585,7 +3581,7 @@ floatsDone:
 #pragma auto_inline off
 #include <revolution/os/OSFastCast.h>
 #pragma pop
-void setLightScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, s16 value) {
+void setLightScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, s16 value) {
     ((LODLightMgr*)self)->field_0x96C = __OSs16tof32(&value);
 }
 
@@ -3593,9 +3589,9 @@ void setLightScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, s16 value) {
 // initLightScales: initialise the high offset scale pair (+0x96C/+0x970) and
 // the +0x974 index to -1 (retail store order: 0x970, 0x96C, 0x974).
 // ---------------------------------------------------------------------------
-void LOD::LODMemMan::initLightScales() {
-    ((LODLightMgr*)this)->field_0x970 = lbl_eu_8066A718;
-    ((LODLightMgr*)this)->field_0x96C = lbl_eu_8066A718;
+void LOD::UnkClass_8046D144::initLightScales() {
+    ((LODLightMgr*)this)->field_0x970 = 1.0f;
+    ((LODLightMgr*)this)->field_0x96C = 1.0f;
     ((LODLightMgr*)this)->field_0x974 = -1;
 }
 
@@ -3607,7 +3603,7 @@ void LOD::LODMemMan::initLightScales() {
 // last-bound child id and the stored scale, so an unchanged repeat load is a
 // no-op.
 // ---------------------------------------------------------------------------
-void reloadChildGxLights__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int childIdx) {
+void reloadChildGxLights__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int childIdx) {
     if (childIdx == -1) return;
     LODChildRec* child = (LODChildRec*)((u8*)self + childIdx * 0x28c);
     LODLight188* p = (LODLight188*)((u8*)child + 0x188);

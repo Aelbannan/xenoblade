@@ -191,7 +191,7 @@ extern "C" {
     extern const char lbl_eu_80522B48[];
     extern const char lbl_eu_80522B58[];
     extern const char lbl_eu_80522B78[];
-    extern u32 lbl_eu_80663690[];
+    extern u32 __RTTI__12CDeviceClock[];
     extern u32 lbl_eu_80663698[];
     extern u32 lbl_eu_806636A0[];
     extern u32 lbl_eu_8056C170[];
@@ -201,11 +201,11 @@ extern "C" {
 extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522B48[16] = {0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x43,0x6c,0x6f,0x63,0x6b,0x00,0x00,0x00,0x00};
 extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522B58[32] = {0x72,0x65,0x73,0x6c,0x69,0x73,0x74,0x3c,0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x43,0x6c,0x6f,0x63,0x6b,0x46,0x72,0x61,0x6d,0x65,0x20,0x2a,0x3e,0x00,0x00,0x00,0x00};
 extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522B78[40] = {0x5f,0x72,0x65,0x73,0x6c,0x69,0x73,0x74,0x5f,0x62,0x61,0x73,0x65,0x3c,0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x43,0x6c,0x6f,0x63,0x6b,0x46,0x72,0x61,0x6d,0x65,0x20,0x2a,0x3e,0x00,0x00,0x00,0x00,0x00,0x00};
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663690[2] = { (u32)&lbl_eu_80522B48, (u32)&lbl_eu_8056C210 };
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__12CDeviceClock[2] = { (u32)&lbl_eu_80522B48, (u32)&lbl_eu_8056C210 };
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663698[2] = { (u32)&lbl_eu_80522B58, (u32)&lbl_eu_8056C238 };
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_806636A0[2] = { (u32)&lbl_eu_80522B78, 0 };
 extern "C" u32 lbl_eu_8056C170[40] __attribute__((aligned(8))) = {
-    (u32)&lbl_eu_80663690, 0,
+    (u32)&__RTTI__12CDeviceClock, 0,
     (u32)&__dt__12CDeviceClockFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,

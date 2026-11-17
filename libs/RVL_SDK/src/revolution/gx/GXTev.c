@@ -9,25 +9,32 @@ u32 TEVCOpTableST1[5] = {0xC008F80F, 0xC008089F, 0xC0080C8F, 0xC008FFF8, 0xC008F
 u32 TEVAOpTableST0[5] = {0xC108F2F0, 0xC108FFD0, 0xC108F2F0, 0xC108FFC0, 0xC108FFD0};
 u32 TEVAOpTableST1[5] = {0xC108F070, 0xC108FF80, 0xC108F070, 0xC108FFC0, 0xC108FF80};
 
-void GXSetNumTevStages(u8 nStages)
+void GXSetTevOp(GXTevStageID stage, GXTevMode mode)
 {
-    u32 reg = __GXData->genMode;
-    reg = __rlwimi(reg, nStages - 1, 10, 18, 21);
-    __GXData->genMode = reg;
-    __GXData->gxDirtyFlags |= 4;
-}
+    u32 *ctmp, *atmp;
+    u32 idx = (u32)stage;
+    u32 tevc, teva;
 
-void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp op,
-                       GXCompare comp1, u8 ref1)
-{
-    u32 reg = 0xF3000000;
-    reg = __rlwimi(reg, ref0,  0, 24, 31);
-    reg = __rlwimi(reg, ref1,  8, 16, 23);
-    reg = __rlwimi(reg, comp0, 16, 13, 15);
-    reg = __rlwimi(reg, comp1, 19, 10, 12);
-    reg = __rlwimi(reg, op,    22,  8,  9);
+    if (stage == 0) {
+        ctmp = TEVCOpTableST0 + (u32)mode;
+        atmp = TEVAOpTableST0 + (u32)mode;
+    } else {
+        ctmp = TEVCOpTableST1 + (u32)mode;
+        atmp = TEVAOpTableST1 + (u32)mode;
+    }
+
+    tevc = __GXData->tevc[idx];
+    tevc = (*ctmp & ~0xFF000000) | (tevc & 0xFF000000);
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = reg;
+    WGPIPE.i = tevc;
+    __GXData->tevc[idx] = tevc;
+
+    teva = __GXData->teva[idx];
+    teva = (*atmp & ~0xFF00000F) | (teva & 0xFF00000F);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = teva;
+    __GXData->teva[idx] = teva;
+
     __GXData->lastWriteWasXF = 0;
 }
 
@@ -58,51 +65,6 @@ void GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a, GXTevAlphaArg b,
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = reg;
     __GXData->teva[idx] = reg;
-    __GXData->lastWriteWasXF = 0;
-}
-
-void GXSetTevSwapMode(GXTevStageID stage, GXTevSwapSel rasSel, GXTevSwapSel texSel)
-{
-    u32 idx = (u32)stage;
-    u32 *ptr = &__GXData->teva[idx];
-    u32 reg = *ptr;
-    reg = __rlwimi(reg, (u32)rasSel, 0, 30, 31);
-    reg = __rlwimi(reg, (u32)texSel, 2, 28, 29);
-    *ptr = reg;
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = *ptr;
-    __GXData->lastWriteWasXF = 0;
-}
-
-void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel)
-{
-    u32 reg;
-    u32 *ptr = &__GXData->tevKsel[stage >> 1];
-    if (stage & 1) {
-        reg = __rlwimi(*ptr, (u32)sel, 14, 13, 17);
-        *ptr = reg;
-    } else {
-        reg = __rlwimi(*ptr, (u32)sel,  4, 23, 27);
-        *ptr = reg;
-    }
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = *ptr;
-    __GXData->lastWriteWasXF = 0;
-}
-
-void GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel)
-{
-    u32 reg;
-    u32 *ptr = &__GXData->tevKsel[stage >> 1];
-    if (stage & 1) {
-        reg = __rlwimi(*ptr, (u32)sel, 19,  8, 12);
-        *ptr = reg;
-    } else {
-        reg = __rlwimi(*ptr, (u32)sel,  9, 18, 22);
-        *ptr = reg;
-    }
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = *ptr;
     __GXData->lastWriteWasXF = 0;
 }
 
@@ -235,6 +197,51 @@ void GXSetTevKColor(GXTevKColorID id, GXColor color)
     __GXData->lastWriteWasXF = 0;
 }
 
+void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel)
+{
+    u32 reg;
+    u32 *ptr = &__GXData->tevKsel[stage >> 1];
+    if (stage & 1) {
+        reg = __rlwimi(*ptr, (u32)sel, 14, 13, 17);
+        *ptr = reg;
+    } else {
+        reg = __rlwimi(*ptr, (u32)sel,  4, 23, 27);
+        *ptr = reg;
+    }
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = *ptr;
+    __GXData->lastWriteWasXF = 0;
+}
+
+void GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel)
+{
+    u32 reg;
+    u32 *ptr = &__GXData->tevKsel[stage >> 1];
+    if (stage & 1) {
+        reg = __rlwimi(*ptr, (u32)sel, 19,  8, 12);
+        *ptr = reg;
+    } else {
+        reg = __rlwimi(*ptr, (u32)sel,  9, 18, 22);
+        *ptr = reg;
+    }
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = *ptr;
+    __GXData->lastWriteWasXF = 0;
+}
+
+void GXSetTevSwapMode(GXTevStageID stage, GXTevSwapSel rasSel, GXTevSwapSel texSel)
+{
+    u32 idx = (u32)stage;
+    u32 *ptr = &__GXData->teva[idx];
+    u32 reg = *ptr;
+    reg = __rlwimi(reg, (u32)rasSel, 0, 30, 31);
+    reg = __rlwimi(reg, (u32)texSel, 2, 28, 29);
+    *ptr = reg;
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = *ptr;
+    __GXData->lastWriteWasXF = 0;
+}
+
 void GXSetTevSwapModeTable(GXTevSwapSel sel, GXTevColorChan r, GXTevColorChan g,
                            GXTevColorChan b, GXTevColorChan a)
 {
@@ -255,6 +262,20 @@ void GXSetTevSwapModeTable(GXTevSwapSel sel, GXTevColorChan r, GXTevColorChan g,
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = *Kreg;
 
+    __GXData->lastWriteWasXF = 0;
+}
+
+void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp op,
+                       GXCompare comp1, u8 ref1)
+{
+    u32 reg = 0xF3000000;
+    reg = __rlwimi(reg, ref0,  0, 24, 31);
+    reg = __rlwimi(reg, ref1,  8, 16, 23);
+    reg = __rlwimi(reg, comp0, 16, 13, 15);
+    reg = __rlwimi(reg, comp1, 19, 10, 12);
+    reg = __rlwimi(reg, op,    22,  8,  9);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = reg;
     __GXData->lastWriteWasXF = 0;
 }
 
@@ -358,31 +379,10 @@ void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map,
     __GXData->gxDirtyFlags |= 1;
 }
 
-void GXSetTevOp(GXTevStageID stage, GXTevMode mode)
+void GXSetNumTevStages(u8 nStages)
 {
-    u32 *ctmp, *atmp;
-    u32 idx = (u32)stage;
-    u32 tevc, teva;
-
-    if (stage == 0) {
-        ctmp = TEVCOpTableST0 + (u32)mode;
-        atmp = TEVAOpTableST0 + (u32)mode;
-    } else {
-        ctmp = TEVCOpTableST1 + (u32)mode;
-        atmp = TEVAOpTableST1 + (u32)mode;
-    }
-
-    tevc = __GXData->tevc[idx];
-    tevc = (*ctmp & ~0xFF000000) | (tevc & 0xFF000000);
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = tevc;
-    __GXData->tevc[idx] = tevc;
-
-    teva = __GXData->teva[idx];
-    teva = (*atmp & ~0xFF00000F) | (teva & 0xFF00000F);
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = teva;
-    __GXData->teva[idx] = teva;
-
-    __GXData->lastWriteWasXF = 0;
+    u32 reg = __GXData->genMode;
+    reg = __rlwimi(reg, nStages - 1, 10, 18, 21);
+    __GXData->genMode = reg;
+    __GXData->gxDirtyFlags |= 4;
 }

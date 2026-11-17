@@ -774,13 +774,6 @@ public:
     void SweepReposition();
 };
 
-// Stack-allocated enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor)
-// and the list returned by CTaskGame_enumListGet (element count at +0x620).
-struct CfMoveEnumHolder {
-    void* list;   // 0x0
-    u32 handle;   // 0x4
-};
-
 struct CfMoveEnumList {
     u8 _pad00[0x620];                          // 0x00-0x61F
     u32 field_620;                             // 0x620
@@ -846,13 +839,10 @@ void* getInstance__Q22cf13CfGameManagerFv();
 void updatePosition(void* self);
 void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c);
 // Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
-void CTaskGame_enumListCtor(void* holder);
-void* CTaskGame_enumListGet(void* holder);
 void startEnumObjects(void* list, u32 type, u32 filter);
 void sortEntriesByDistance(void* list, void* value); // canonical (void*,void*) form (CAIAction/ImplPc/ImplWalker)
 void* getObjectAt(void* list, u32 idx);
 void* findFirstCleanObjectId(void* list);
-void __dt__80043E88(void* holder, int flags);
 
 // The CfObjectImplMove destructor, called directly by the CfObjectImplMoveDtorThunkC /
 // CfObjectImplMoveDtorThunk10 adjusting thunks. The C++ member form would emit the 2-arg

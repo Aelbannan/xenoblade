@@ -39,22 +39,58 @@ void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePt
     }
 }
 
-// us-802aad5c (PartyGage_InitVoiceId_8628)
-// Voice-ID init helper.  If the handle has its manager flag set, is not
-// actively playing, and a handle buffer can be allocated, play a random
-// party-gauge voice (base 0x385) through the sound system.
-extern "C" int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
-    if ((self->field_0x3F00 & 2) == 0) return 0;
-    if (((CVoiceVTV*)self)->idle() != 0) return 0;
-    if (CCharVoiceMan_DispatchById(0xc8, 1) == NULL) return 0;
 
-    CCharVoice* voicePtr = (CCharVoice*)self;
-    if (self != NULL) {
-        voicePtr = &self->voice;
+// us-802aa8a8 (constructor factory)
+// Factory/constructor.  Picks a gauge threshold level from the two owner
+// counts, allocates the two voice-handle buffers and the object itself, runs
+// the base constructor, sets vtable/owner fields, and copies init data.
+extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
+    if (owner1 <= owner2) return NULL;
+    if (HpVoice_CountActiveVoices(NULL) < 2) return NULL;
+
+    int level;
+    if (owner1 >= 0x12c) {
+        level = 2;
+    } else if (owner2 < 0xc8 && owner1 >= 0xc8) {
+        level = 1;
+    } else if (owner2 < 0x64 && owner1 >= 0x64) {
+        level = 0;
+    } else {
+        return NULL;
     }
-    RequestVoicePlayback(voicePtr, ml::math::mtRand(2) + 0x385, 0xc8);
-    return 0;
+
+    CVoiceHandle* member = HpVoice_PickIdleVoice((CVoiceHandle*)0);
+    CVoiceHandle* gauge = HpVoice_PickIdleVoice(member);
+    if (member == NULL) return NULL;
+    if (CCharVoiceMan_DispatchById(0x8c, 1) == NULL) return NULL;
+
+    CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)CCharVoiceMan_AllocVoiceArena(0x2c);
+    if (self == NULL) return NULL;
+    CVS_THREAD_PARTY_GAGE_raw* raw = (CVS_THREAD_PARTY_GAGE_raw*)self;
+
+    // Retail emits a redundant re-check (beq past the construct block) here.
+    // The try only wraps the base-constructor call + field stores; the catch
+    // rethrows via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0;
+    // li r5,0; bl __throw`).
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
+            // Set the subclass vtable at offset 0x1C (right after base fields).
+            raw->vtable = lbl_eu_80539C6C;
+            self->partyMember = member;
+            self->gaugeData = gauge;
+            self->thresholdLevel = (u32)level;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
+
+    // Copy init data from the global table as the base's ptmf member
+    // (VoiceCb is 12 bytes; DOWN precedent).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C48)->unk0;
+    return self;
 }
+
 
 // us-802aaa08 (PartyGage_AdvanceA_82D4)
 // Advance/play function.  Copies init data into the base fields, then if the
@@ -174,56 +210,24 @@ int PartyGage_GetBufSize_8620() {
     return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
 }
 
-// us-802aa8a8 (constructor factory)
-// Factory/constructor.  Picks a gauge threshold level from the two owner
-// counts, allocates the two voice-handle buffers and the object itself, runs
-// the base constructor, sets vtable/owner fields, and copies init data.
-extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
-    if (owner1 <= owner2) return NULL;
-    if (HpVoice_CountActiveVoices(NULL) < 2) return NULL;
 
-    int level;
-    if (owner1 >= 0x12c) {
-        level = 2;
-    } else if (owner2 < 0xc8 && owner1 >= 0xc8) {
-        level = 1;
-    } else if (owner2 < 0x64 && owner1 >= 0x64) {
-        level = 0;
-    } else {
-        return NULL;
-    }
+// us-802aad5c (PartyGage_InitVoiceId_8628)
+// Voice-ID init helper.  If the handle has its manager flag set, is not
+// actively playing, and a handle buffer can be allocated, play a random
+// party-gauge voice (base 0x385) through the sound system.
+extern "C" int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
+    if ((self->field_0x3F00 & 2) == 0) return 0;
+    if (((CVoiceVTV*)self)->idle() != 0) return 0;
+    if (CCharVoiceMan_DispatchById(0xc8, 1) == NULL) return 0;
 
-    CVoiceHandle* member = HpVoice_PickIdleVoice((CVoiceHandle*)0);
-    CVoiceHandle* gauge = HpVoice_PickIdleVoice(member);
-    if (member == NULL) return NULL;
-    if (CCharVoiceMan_DispatchById(0x8c, 1) == NULL) return NULL;
-
-    CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)CCharVoiceMan_AllocVoiceArena(0x2c);
-    if (self == NULL) return NULL;
-    CVS_THREAD_PARTY_GAGE_raw* raw = (CVS_THREAD_PARTY_GAGE_raw*)self;
-
-    // Retail emits a redundant re-check (beq past the construct block) here.
-    // The try only wraps the base-constructor call + field stores; the catch
-    // rethrows via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0;
-    // li r5,0; bl __throw`).
+    CCharVoice* voicePtr = (CCharVoice*)self;
     if (self != NULL) {
-        try {
-            __ct__cf_CVS_THREAD(self);
-            // Set the subclass vtable at offset 0x1C (right after base fields).
-            raw->vtable = lbl_eu_80539C6C;
-            self->partyMember = member;
-            self->gaugeData = gauge;
-            self->thresholdLevel = (u32)level;
-        } catch (...) {
-            __throw(0, 0, 0);
-        }
+        voicePtr = &self->voice;
     }
-
-    // Copy init data from the global table as the base's ptmf member
-    // (VoiceCb is 12 bytes; DOWN precedent).
-    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C48)->unk0;
-    return self;
+    RequestVoicePlayback(voicePtr, ml::math::mtRand(2) + 0x385, 0xc8);
+    return 0;
 }
+
 
 // Retail section reconstruction (measured in
 // .scratch/dlabels/a2/CVS_THREAD_PARTY_GAGE.txt): the .rodata typeinfo name
@@ -233,13 +237,13 @@ extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int ow
 // word plus padding, and two .sdata objects: the voice-ID pair the code
 // reads via @sda21 ({0x659, 0x65A}) and the typeinfo object ({name,
 // trailing}). Global-scope data symbols: MWCC does not mangle them.
-// lbl_eu_80662CC0 lives in the CCharVoiceMan range and is referenced, not
+// __RTTI__Q22cf10CVS_THREAD lives in the CCharVoiceMan range and is referenced, not
 // defined, here.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CC0[2];
-extern u32 lbl_eu_80662D20[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
+extern u32 __RTTI__Q22cf21CVS_THREAD_PARTY_GAGE[2];
 
 extern const char lbl_eu_805107C8[0x20] = "cf::CVS_THREAD_PARTY_GAGE";
 
@@ -262,7 +266,7 @@ u32 lbl_eu_80539C60[3] = {
 };
 
 u32 lbl_eu_80539C6C[7] = {
-    (u32)lbl_eu_80662D20,
+    (u32)__RTTI__Q22cf21CVS_THREAD_PARTY_GAGE,
     0,
     (u32)PlayThreadVoice,
     (u32)PartyGage_RemoveVoice_85A8,
@@ -272,7 +276,7 @@ u32 lbl_eu_80539C6C[7] = {
 };
 
 u32 lbl_eu_80539C88[4] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
     0,
@@ -283,7 +287,7 @@ __declspec(section ".sdata") extern u32 lbl_eu_80662D18[2] = {
     0x65A,
 };
 
-__declspec(section ".sdata") extern u32 lbl_eu_80662D20[2] = {
+__declspec(section ".sdata") extern u32 __RTTI__Q22cf21CVS_THREAD_PARTY_GAGE[2] = {
     (u32)lbl_eu_805107C8,
     (u32)lbl_eu_80539C88,
 };

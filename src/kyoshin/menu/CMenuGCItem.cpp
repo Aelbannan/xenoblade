@@ -1,120 +1,103 @@
 // FULL_MATCH: CMenuGCItem_RenderThunk58, CMenuGCItem_DtorThunk58
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuGCItem.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CItemBoxGrid.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
-extern "C" void cbRenderBefore__11CMenuGCItemFv(void*);
+// Data imports (MWCC does not mangle global-scope data names).
+extern u32 lbl_eu_80663E28; // render-gate mode bitfield (.sbss; bit 21 = busy)
+
+// C-linkage callees (retail unmangled names for the func_ helpers).
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int isInitialized(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int IsItemBoxReady(CItemBoxGrid* self);
+extern "C" void InitItemDisplay(CItemBoxGrid* self);
+extern "C" void UpdateItemBox(CItemBoxGrid* self);
+extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void UnloadItemBox(CItemBoxGrid* self);
+extern "C" int GetField61(CItemBoxGrid* self);
+extern "C" int IsMenuState621F0();
+
+// CItemBoxGrid is still driven through its C-linkage ctor/dtor (4-arg ctor).
+extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
+
+// DrawInfo helper - retail emits the mangled nw4r form
+// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is a normal C++ global.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Phase-2 helper defined below (phase-2 input dispatch; advances mState to 3).
-// (memberized: CMenuGCItem_HandlePhase2 -> CMenuGCItem::HandlePhase2; declaration moved into class CMenuGCItem)
+
+CMenuGCItem* CMenuGCItem::sInstance;
 
 /*
- * Retail constructor symbol (unmangled global). Combines the factory and the
- * in-place construction: lazily allocate the single GC-item instance, build
- * it (CProcess base ctor, temp vtable store, null PMF data copy, composite
- * vtable + IScnRender sub-vtable at +0x58, then each embedded widget's ctor
- * and the final state bytes), register it under `registParent`, and return
- * the stored instance (or 0 if one already exists).
- *
- * r3 = registration parent (Regist), r4 = parent (stored at 0x5C),
- * r5 = constructor arg (stored at 0x4AC5).
+ * Constructor: the retail single function that lazily allocates the GC-item
+ * instance (create below), then builds it: CTTask/IUICf bases, the parent
+ * pointer at 0x5C, the BgTex and title/help members, the item-box grid, then
+ * the state bytes.
  */
-extern "C" __declspec(noinline) CMenuGCItem* __ct__CMenuGCItem(
-    CProcess* registParent, CProcess* parent, u32 arg) {
-    if (lbl_eu_80664C00 != 0) {
-        return 0;
-    }
-    CMenuGCItem* obj = (CMenuGCItem*)mtl::MemManager::allocate(
-        sizeof(CMenuGCItem), CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // vtable fixups: temp (CProcess) vtable first, then the composite
-        // vtable and the IScnRender sub-vtable at +0x58. Both null-PMF triples
-        // are copied through a single pinned base pointer (retail keeps one
-        // materialization of &__ptmf_null live across both copies).
-        *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_8052BF70;
-        u32* src = (u32*)__ptmf_null;
-        u32 t1 = src[1];
-        obj->ptmf0[0] = src[0];
-        obj->ptmf0[1] = t1;
-        obj->ptmf0[2] = src[2];
-        t1 = src[1];
-        obj->ptmf1[0] = src[0];
-        obj->ptmf1[1] = t1;
-        obj->ptmf1[2] = src[2];
-        obj->mField54 = 0;
-        obj->mField55 = 0;
-
-        *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_8053AD08;
-        *(u32*)((u8*)obj + 0x58) = (u32)lbl_eu_8053AD08 + 0x24;
-        obj->mParentRef = parent;
-
-        __ct__6CBgTexFUc(&obj->mBgTex, 0);
-        __ct__CTitleAHelp(&obj->mTitleAHelp, 0, 0);
-        __ct__CItemBoxGrid(&obj->mItemBoxGrid, 0, 0, 0, 1);
-        obj->mState = 0;
-        obj->mArg = arg;
-    }
-    lbl_eu_80664C00 = (unsigned long)obj;
-    obj->Regist(registParent, 0x0);
-    return (CMenuGCItem*)lbl_eu_80664C00;
+inline CMenuGCItem::CMenuGCItem(CProcess* parent, u32 arg)
+    : mParentRef(parent), mBgTex(0), mTitleAHelp(nullptr, 0) {
+    __ct__CItemBoxGrid((CItemBoxGrid*)mItemBoxGrid, 0, 0, 0, 1);
+    mState = 0;
+    mArg = arg;
 }
 
 /*
- * Destructor (retail D2 form, symbol keeps its C++ mangling in US). Written
- * with an explicit flags parameter so the base-class destruction can target
- * the library D1 CProcess dtor symbol __dt__8CProcessFv (0x804474D0), which
- * is what retail calls here. Subobjects are destroyed in reverse construction
- * order, then conditional operator delete when flags > 0. The nested double
- * null-check before the base call is an MWCC artifact (same shape as
- * ~CSystemWindow / ~CSysWinSave).
+ * Factory: refuse if an instance already exists, otherwise construct it in the
+ * work memory, record it as the singleton, register it under `registParent`
+ * and return the stored instance.
  */
-extern "C" CMenuGCItem* __dt__11CMenuGCItemFv(CMenuGCItem* _this, int flags) {
-    if (_this != 0) {
-        __dt__12CItemBoxGridFv(&_this->mItemBoxGrid, -1);
-        __dt__11CTitleAHelpFv(&_this->mTitleAHelp, -1);
-        __dt__6CBgTexFv(&_this->mBgTex, -1);
-        if (_this != 0) {
-            if (_this != 0) {
-                __dt__8CProcessFv((CProcess*)_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
+CMenuGCItem* CMenuGCItem::create(CProcess* registParent, CProcess* parent, u32 arg) {
+    if (sInstance != nullptr) {
+        return nullptr;
     }
-    return _this;
+    CMenuGCItem* obj = new (CWorkThreadSystem::getWorkMem()) CMenuGCItem(parent, arg);
+    sInstance = obj;
+    obj->Regist(registParent, false);
+    return sInstance;
+}
+
+/*
+ * Destructor: the item-box grid is raw storage, so its dtor runs explicitly
+ * first; the other members and bases are destroyed by the compiler.
+ */
+CMenuGCItem::~CMenuGCItem() {
+    __dt__12CItemBoxGridFv((CItemBoxGrid*)mItemBoxGrid, -1);
 }
 
 void CMenuGCItem::Init() {}
 
 /* Tear the GC-item screen down: wait for the draw callback to finish, remove
  * the render callback from the parent scene, release each embedded widget and
- * clear the singleton instance flag. */
+ * clear the singleton instance. */
 void CMenuGCItem::Term() {
     CDeviceVI::waitForDrawDone();
 
-    // The `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58.
-    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        renderCB = &mIScnRender;
-    }
-    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
+    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    UnloadItemBox(&mItemBoxGrid);
+    UnloadItemBox((CItemBoxGrid*)mItemBoxGrid);
 
-    lbl_eu_80664C00 = 0;
+    sInstance = nullptr;
 }
 
 /* Per-frame update of the GC-item screen. Gate on the task/busy flags, then
@@ -129,16 +112,16 @@ void CMenuGCItem::Move() {
         // Once the bg texture, title bar and item grid are all ready, start
         // the panel intro animations and play the open cue (sound 0x6d).
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
-            IsItemBoxReady(&mItemBoxGrid) != 0) {
+            IsItemBoxReady((CItemBoxGrid*)mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
-            InitItemDisplay(&mItemBoxGrid);
+            InitItemDisplay((CItemBoxGrid*)mItemBoxGrid);
             mState = 1;
             playUISound(0x6d);
         }
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid is ready.
-        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61((CItemBoxGrid*)mItemBoxGrid) != 0) {
             mState = 2;
         }
         break;
@@ -147,7 +130,7 @@ void CMenuGCItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61((CItemBoxGrid*)mItemBoxGrid) != 0) {
             mField54 = 1;
         }
         break;
@@ -155,7 +138,7 @@ void CMenuGCItem::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     updateHelp(&mTitleAHelp);
-    UpdateItemBox(&mItemBoxGrid);
+    UpdateItemBox((CItemBoxGrid*)mItemBoxGrid);
 }
 
 /* Render the GC-item screen through a stack DrawInfo: gate on the task/busy
@@ -168,41 +151,15 @@ void CMenuGCItem::cbRenderBefore() {
     if (IsMenuState621F0() == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // (a C++ local would virtual-dispatch its scope-exit destructor).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    DrawItemBoxGrid(&mItemBoxGrid, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
-}
-
-/**
- * IScnRender vtable this-adjusting thunk for cbRenderBefore.
- *
- * IScnRender is a non-primary subobject at offset 0x58 within CMenuGCItem.
- *
- * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
- */
-extern "C" void CMenuGCItem_RenderThunk58(void* self) {
-    ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58);
-}
-
-/**
- * IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
- *
- * Same adjustment as CMenuGCItem_RenderThunk58 but forwards to the destructor.
- *
- * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
- */
-extern "C" void CMenuGCItem_DtorThunk58(void* self) {
-    ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    BgTex_Draw_3D7C(&mBgTex, &drawInfo);
+    drawHelp(&mTitleAHelp, &drawInfo);
+    DrawItemBoxGrid((CItemBoxGrid*)mItemBoxGrid, &drawInfo);
 }
 
 extern "C" int CMenuGCItem_IsActive() {
-    return lbl_eu_80664C00 != 0;
+    return CMenuGCItem::sInstance != nullptr;
 }
 
 void CMenuGCItem::HandlePhase2() {}

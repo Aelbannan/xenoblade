@@ -65,37 +65,9 @@ extern BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type, 
 extern BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id);extern void LogMsg_2(UINT32 level, const char *fmt, UINT32 arg1, UINT32 arg2);
 
 tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq);  // defined below
+BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_len, int nest_level);
 
-#pragma dont_inline on
 
-BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_len, int nest_level) {
-    UINT8 *p_end = p + seq_len;
-    UINT8 type;
-    UINT32 len;
-
-    if (nest_level > 3)
-        return FALSE;
-
-    while (p < p_end) {
-        type = *p++;
-        p = sdpu_get_len_from_type(p, type, &len);
-        type = type >> 3;
-
-        if (type == UUID_DESC_TYPE) {
-            if (sdpu_compare_uuid_arrays(p, len, p_uuid, uuid_len))
-                return TRUE;
-        } else if (type == DATA_ELE_SEQ_DESC_TYPE) {
-            if (find_uuid_in_seq(p, len, p_uuid, uuid_len, nest_level + 1))
-                return TRUE;
-        }
-
-        p = p + len;
-    }
-
-    return FALSE;
-}
-
-#pragma dont_inline off
 
 /*******************************************************************************
  **
@@ -151,6 +123,37 @@ tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq)
 
     return NULL;
 }
+
+#pragma dont_inline on
+
+BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_len, int nest_level) {
+    UINT8 *p_end = p + seq_len;
+    UINT8 type;
+    UINT32 len;
+
+    if (nest_level > 3)
+        return FALSE;
+
+    while (p < p_end) {
+        type = *p++;
+        p = sdpu_get_len_from_type(p, type, &len);
+        type = type >> 3;
+
+        if (type == UUID_DESC_TYPE) {
+            if (sdpu_compare_uuid_arrays(p, len, p_uuid, uuid_len))
+                return TRUE;
+        } else if (type == DATA_ELE_SEQ_DESC_TYPE) {
+            if (find_uuid_in_seq(p, len, p_uuid, uuid_len, nest_level + 1))
+                return TRUE;
+        }
+
+        p = p + len;
+    }
+
+    return FALSE;
+}
+
+#pragma dont_inline off
 
 tSDP_RECORD *sdp_db_find_record(UINT32 handle) {
     tSDP_RECORD *p_rec;
@@ -244,21 +247,6 @@ BOOLEAN SDP_DeleteRecord(UINT32 handle) {
     }
 
     return FALSE;
-} 
-
-BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_service_ids) {
-    UINT8 buff[SDP_MAX_ATTR_LEN * 2 + 8];
-    UINT16 num = 0;
-    UINT8 *p = buff;
-
-    for (num = 0; num < num_services; num++) {
-        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-        *p++ = (UINT8)(*p_service_ids >> 8);
-        *p++ = (UINT8)*p_service_ids;
-        p_service_ids++;
-    }
-
-    return SDP_AddAttribute(handle, 1, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
 }
 
 // .data log strings in retail pool order (0x98): MWCC pools function-scope
@@ -359,6 +347,23 @@ BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UIN
     }
 
     return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
+}
+
+ 
+
+BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_service_ids) {
+    UINT8 buff[SDP_MAX_ATTR_LEN * 2 + 8];
+    UINT16 num = 0;
+    UINT8 *p = buff;
+
+    for (num = 0; num < num_services; num++) {
+        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
+        *p++ = (UINT8)(*p_service_ids >> 8);
+        *p++ = (UINT8)*p_service_ids;
+        p_service_ids++;
+    }
+
+    return SDP_AddAttribute(handle, 1, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
 }
 
 BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)

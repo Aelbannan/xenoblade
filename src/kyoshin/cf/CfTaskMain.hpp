@@ -4,27 +4,26 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
+class CScn;
+
 namespace cf {
 
+// Game-root task that drives CfGameManager once per frame.
 class CfTaskMain : public CTTask<CfTaskMain>, public IWorkEvent {
 public:
+    CfTaskMain(CScn* scene) : mScene(scene) {}
     virtual ~CfTaskMain();
-    void Move();
-    void Draw();
-    void Tail();
 
-    void Init();
-    void Term();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void Draw();
+    virtual void Tail();
+
+    static CfTaskMain* create(CProcess* parent, CScn* scene);
 
     /* 0x54: IWorkEvent vptr */
-    /* 0x58 */ u32 field_0x58;
+    /* 0x58 */ CScn* mScene;
 };
+
 } // namespace cf
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __ct__8CProcessFv(void* self);
-extern "C" void func_8007F9C4__Q22cf13CfGameManagerFv(void);
-extern "C" void refreshCameraIfCurrentView__Q22cf13CfGameManagerFv(void);
-extern "C" void resetCameraIfCurrentView__Q22cf13CfGameManagerFv(void);
-extern "C" unsigned long lbl_eu_80663E28;
-

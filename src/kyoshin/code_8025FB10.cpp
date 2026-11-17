@@ -15,6 +15,7 @@
 #include <revolution/MTX.h>
 
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/code_80296898.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
@@ -114,12 +115,6 @@ extern char lbl_eu_80537700[];
 extern char lbl_eu_805376EC[];
 extern char lbl_eu_805376B8[];
 
-extern const f32 lbl_eu_806688D0;
-extern const f32 lbl_eu_806688D4;
-extern const f32 lbl_eu_806688D8;
-extern const f32 lbl_eu_806688DC;
-extern const f32 lbl_eu_806688E0;
-extern const f32 lbl_eu_806688B8;
 // Shared sdata2 constant: the int->double conversion magic (2^52 + 2^51)
 // that retail's idiom subtracts.
 extern f32 lbl_eu_806688C0;
@@ -538,10 +533,10 @@ SMAX:
 
 // us-8026215c - like IdTable_SumValues but returns the maximum f32
 // +0x10 value along the deepest child's +0x1C sibling chain, else the shared
-// sdata2 constant (lbl_eu_806688B8).
+// sdata2 constant (0.0f).
 f32 IdTable_MaxValue10(CUnkObj8025FB10* obj, int index) {
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
-        return lbl_eu_806688B8;
+        return 0.0f;
     }
 
     CUnkItem8025FB10* rec;
@@ -551,7 +546,7 @@ f32 IdTable_MaxValue10(CUnkObj8025FB10* obj, int index) {
         rec = findRecByIndex(obj, index);
     }
     if (rec == NULL) {
-        return lbl_eu_806688B8;
+        return 0.0f;
     }
 
     // Deepest node of the +0x18 child chain.  Retail unrolls 16 levels,
@@ -604,7 +599,7 @@ M2: result = t;
 MR: result = rec;
 MMAX:
     // Max of the +0x1C sibling chain's +0x10 floats from the deepest child.
-    f32 best = lbl_eu_806688B8;
+    f32 best = 0.0f;
     CUnkItem8025FB10* node = result;
     do {
         if (best < node->mValue10) {
@@ -810,7 +805,7 @@ SUMSTORE:
     // Second pass: +0x10 float max, stored through outFloat.
     f32 best;
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
-        best = lbl_eu_806688B8;
+        best = 0.0f;
         goto FSTORE;
     }
 
@@ -821,7 +816,7 @@ SUMSTORE:
         recF = findRecByIndex(obj, index);
     }
     if (recF == NULL) {
-        best = lbl_eu_806688B8;
+        best = 0.0f;
         goto FSTORE;
     }
 
@@ -894,7 +889,7 @@ E03: resultF = f2; goto EMAX;
 E01: resultF = recF; goto EMAX;
 EMAX:
     // Max of the +0x1C sibling chain's +0x10 floats from the deepest child.
-    best = lbl_eu_806688B8;
+    best = 0.0f;
     CUnkItem8025FB10* nodeF = resultF;
     do {
         if (best < nodeF->mValue10) {
@@ -905,7 +900,7 @@ EMAX:
 
 FSTORE:
     *outFloat = best;
-    return best != lbl_eu_806688B8;
+    return best != 0.0f;
 }
 
 // us-80262bb8 - dual accessor.  Stores the +0x08 sum chain total for
@@ -1287,7 +1282,7 @@ MAXSTORE:
     // Third pass: +0x10 float max, stored through outFloat.
     f32 best;
     if (!(obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F)))) {
-        best = lbl_eu_806688B8;
+        best = 0.0f;
         goto FSTORE;
     }
 
@@ -1298,7 +1293,7 @@ MAXSTORE:
         recF = findRecByIndex(obj, index);
     }
     if (recF == NULL) {
-        best = lbl_eu_806688B8;
+        best = 0.0f;
         goto FSTORE;
     }
 
@@ -1371,7 +1366,7 @@ GG03: resultF = g2; goto GMAX;
 GG01: resultF = recF; goto GMAX;
 GMAX:
     // Max of the +0x1C sibling chain's +0x10 floats from the deepest child.
-    best = lbl_eu_806688B8;
+    best = 0.0f;
     CUnkItem8025FB10* nodeF = resultF;
     do {
         if (best < nodeF->mValue10) {
@@ -1382,7 +1377,7 @@ GMAX:
 
 FSTORE:
     *outFloat = best;
-    return best != lbl_eu_806688B8;
+    return best != 0.0f;
 }
 
 // us-802638d8 - test bit (index & 0x1F) of bitmap word (index >> 5)
@@ -1632,9 +1627,9 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
     if (!getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX)) {
         f32 width = static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         f32 height = static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
-        C_MTXOrtho(projection, lbl_eu_806688D0, height,
-                   lbl_eu_806688D0, width, lbl_eu_806688D0,
-                   lbl_eu_806688D4);
+        C_MTXOrtho(projection, 0.0f, height,
+                   0.0f, width, 0.0f,
+                   (-16777216.0f));
     } else {
         // renderWidth first so unsigned→float divisor keeps f28; then bottom,
         // left so NV result colors match retail (left=f26, bottom=f27).
@@ -1680,7 +1675,7 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
         f32 top = static_cast<f32>(cacheHeight) * rectRatioTop;
 
         C_MTXOrtho(projection, top, bottom, left, right,
-                   lbl_eu_806688D0, lbl_eu_806688D4);
+                   0.0f, (-16777216.0f));
     }
     GXSetProjection(projection, GX_ORTHOGRAPHIC);
 
@@ -1690,8 +1685,8 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
 
     setTagProcessorChecked(&writer, lbl_eu_8066486C, writerRegion);
     setDrawFlagChecked(&writer, writerRegion, 0x110);
-    setScaleChecked(&writer, writerRegion, lbl_eu_806688D8, lbl_eu_806688DC);
-    setCharSpaceChecked(&writer, writerRegion, lbl_eu_806688D0);
+    setScaleChecked(&writer, writerRegion, 1.0f, 1.2658228f);
+    setCharSpaceChecked(&writer, writerRegion, 0.0f);
 
     const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
@@ -1720,20 +1715,20 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
         writer.UpdateVertexColor();
     }
 
-    setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
-                     y - lbl_eu_806688D8, lbl_eu_806688E0);
+    setCursorChecked(&writer, writerRegion, x - 1.0f,
+                     y - 1.0f, (-1.0f));
     // textRegion is only needed for later FLAG checks; computing it before
     // printCheckedInitial lets the FF000000 rlwinm hoist into setCursor.
     printCheckedInitial(&writer, writerRegion, text, 0);
     u32 textRegion = (u32)text & 0xFF000000;
-    setCursorChecked(&writer, writerRegion, lbl_eu_806688D8 + x,
-                     y - lbl_eu_806688D8, lbl_eu_806688E0);
+    setCursorChecked(&writer, writerRegion, 1.0f + x,
+                     y - 1.0f, (-1.0f));
     printChecked(&writer, writerRegion, text, textRegion);
-    setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
-                     lbl_eu_806688D8 + y, lbl_eu_806688E0);
+    setCursorChecked(&writer, writerRegion, x - 1.0f,
+                     1.0f + y, (-1.0f));
     printChecked(&writer, writerRegion, text, textRegion);
-    setCursorChecked(&writer, writerRegion, lbl_eu_806688D8 + x,
-                     lbl_eu_806688D8 + y, lbl_eu_806688E0);
+    setCursorChecked(&writer, writerRegion, 1.0f + x,
+                     1.0f + y, (-1.0f));
     printChecked(&writer, writerRegion, text, textRegion);
 
     {
@@ -1756,11 +1751,11 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
         writer.mTextColor.start.a = colorKeep->a;
         writer.UpdateVertexColor();
     }
-    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    setCursorChecked(&writer, writerRegion, x, y, 0.0f);
     printChecked(&writer, writerRegion, text, textRegion);
-    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    setCursorChecked(&writer, writerRegion, x, y, 0.0f);
     printChecked(&writer, writerRegion, text, textRegion);
-    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    setCursorChecked(&writer, writerRegion, x, y, 0.0f);
     printChecked(&writer, writerRegion, text, textRegion);
 }
 

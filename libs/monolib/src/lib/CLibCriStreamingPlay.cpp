@@ -31,7 +31,7 @@ struct StreamEntry {
     f32 field_0x74;  // fade timer
     f32 field_0x78;  // volume multiplier
     f32 field_0x7C;  // volume multiplier 2
-    u32 field_0x80;  // fade-end action
+    s32 field_0x80;  // fade-end action
     u32 field_0x84;  // playback position
     u32 field_0x88;  // AFS file id
     u32 field_0x8C;  // AFS subfile id
@@ -89,12 +89,7 @@ extern "C" {
     extern void* lbl_eu_806656EC;
     extern const char* lbl_eu_806637A4;
     extern u32 lbl_eu_806637A0;
-    extern float lbl_eu_8066A508;
-    extern const float lbl_eu_8066A50C;
-    extern float lbl_eu_8066A510;
     extern double lbl_eu_8066A518;
-    extern float lbl_eu_8066A520;
-    extern float lbl_eu_8066A524;
     extern const u32 lbl_eu_80523050[20];
     extern const u32 lbl_eu_805230B8[24];
 
@@ -107,7 +102,7 @@ extern "C" {
     // Dissolved retail class data (definitions at the bottom of this TU)
     extern u32 lbl_eu_8056D028[45];
     extern u32 lbl_eu_8056D0DC[5];
-    extern u32 lbl_eu_806637A8[2];
+    extern u32 __RTTI__20CLibCriStreamingPlay[2];
 
     // CException second-base teardown (free-function call form)
     extern void RemoveFromGlobalArray__10CExceptionFP10IException(void*);
@@ -155,20 +150,29 @@ extern "C" {
     extern void onViBeginFrame__20CLibCriStreamingPlayFv();
 }
 
+// Re-evaluate a stream's ADX pause state: paused while its own pause bits are
+// set, the global pause counter is non-zero, or a flow is active.
+// Inlined by MWCC at each call site.
+static inline void applyPause(StreamEntry* entry) {
+    u32 flags = entry->flags;
+    ADXT_Pause(entry->adxt, CWorkControl::hasFlow() |
+                            ((*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0) |
+                             (flags & 1) | ((flags >> 1) & 1)));
+}
+
 // Volume lookup helper - searches table for volume dB value.
 // Inlined by MWCC into every caller (retail inlines the loop).
 static int lookupVolume(int volDb) {
     const int* table = reinterpret_cast<const int*>(lbl_eu_80523050);
+    int lo;
     int hi;
     while ((hi = table[0]) >= 0) {
-        if (volDb < hi) {
+        if (volDb >= hi) {
             return table[1];
-        } else if (volDb > table[2]) {
-            int lo = table[2];
-            float num1 = (float)(table[1] - table[3]);
-            float num2 = (float)(volDb - lo);
-            float den = (float)(hi - lo);
-            return table[3] + (int)(num1 * num2 / den);
+        }
+        lo = table[2];
+        if (volDb > lo) {
+            return table[3] + (int)((float)(table[1] - table[3]) * (float)(volDb - lo) / (float)(hi - lo));
         }
         table += 2;
     }
@@ -378,15 +382,15 @@ extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int p
     // Initialise playback state.
     slot->field_0x5C = 0;
     slot->field_0x60 = 0;
-    slot->field_0x64 = lbl_eu_8066A508;
-    slot->field_0x7C = lbl_eu_8066A508;
-    slot->field_0x68 = lbl_eu_8066A508;
-    slot->field_0x6C = lbl_eu_8066A508;
-    slot->field_0x70 = lbl_eu_8066A50C;
-    slot->field_0x74 = lbl_eu_8066A50C;
+    slot->field_0x64 = 1.0f;
+    slot->field_0x7C = 1.0f;
+    slot->field_0x68 = 1.0f;
+    slot->field_0x6C = 1.0f;
+    slot->field_0x70 = 0.0f;
+    slot->field_0x74 = 0.0f;
     slot->field_0x80 = 0;
     slot->field_0x84 = 0;
-    slot->field_0x78 = lbl_eu_8066A508;
+    slot->field_0x78 = 1.0f;
 
     if (loop) {
         slot->flags |= 0x20;
@@ -541,9 +545,10 @@ extern "C" void setStreamPause__20CLibCriStreamingPlayFv(int id, bool pause) {
         // Output volume = level * mult1 * mult2, forced to 1.0 during a flow.
         float vol = entry->field_0x7C * (entry->field_0x64 * entry->field_0x78);
         if (CWorkControl::hasFlow()) {
-            vol = lbl_eu_8066A50C;
+            vol = 0.0f;
         }
-        ADXT_SetOutVol(entry->adxt, lookupVolume((int)(lbl_eu_8066A510 * vol)));
+        int volDb = (int)(100.0f * vol);
+        ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
     }
 }
 
@@ -573,7 +578,7 @@ static int lookupVolumeDb(int volDb) {
     const int* table = reinterpret_cast<const int*>(lbl_eu_80523050);
     int hi;
     while ((hi = table[0]) >= 0) {
-        if (volDb < hi) {
+        if (volDb >= hi) {
             return table[1];
         }
         int lo = table[2];
@@ -604,8 +609,6 @@ static void releaseSlot(StreamEntry* entry) {
 
 // wkUpdate - Main update loop for all streams
 void CLibCriStreamingPlay::wkUpdate() {
-    const float fadeStep = lbl_eu_8066A520;
-    const float volPct = lbl_eu_8066A510;
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(this) + 0x1C8);
     const char* statusBase = reinterpret_cast<const char*>(lbl_eu_805230B8);
@@ -615,27 +618,21 @@ void CLibCriStreamingPlay::wkUpdate() {
 
         // Fade processing runs only while a fade is pending, nothing is globally
         // paused, and the stream is not individually paused.
-        if (!(entry->field_0x70 == lbl_eu_8066A50C ||
+        if (!(entry->field_0x70 == 0.0f ||
               *(s32*)((u8*)this + 0x4B0) != 0 || (entry->flags & 1))) {
-            float timer = entry->field_0x74 + fadeStep;
-            entry->field_0x74 = timer;
+            entry->field_0x74 += (1.0f / 30.0f);
 
-            if (timer >= entry->field_0x70) {
+            if (entry->field_0x70 <= entry->field_0x74) {
                 // Fade finished: latch the end volume and reset the fade time.
                 entry->field_0x64 = entry->field_0x68;
-                entry->field_0x70 = lbl_eu_8066A50C;
-                if (entry->field_0x68 == lbl_eu_8066A50C) {
+                entry->field_0x70 = 0.0f;
+                if (entry->field_0x68 == 0.0f) {
                     // Faded back to neutral: apply the fade-end action.
-                    u32 action = entry->field_0x80;
+                    int action = entry->field_0x80;
                     if (action == 1) {
                         // Pause in place at fade end.
-                        u32 newFlags = entry->flags | 2;
-                        entry->flags = newFlags;
-                        int pauseArg = CWorkControl::hasFlow();
-                        pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
-                        pauseArg |= (int)(newFlags & 1);
-                        pauseArg |= (int)((newFlags >> 1) & 1);
-                        ADXT_Pause(entry->adxt, pauseArg);
+                        entry->flags |= 2;
+                        applyPause(entry);
                     } else if (action == 2) {
                         // Stop and release the stream.
                         if (entry != nullptr) {
@@ -645,39 +642,30 @@ void CLibCriStreamingPlay::wkUpdate() {
                     }
                 } else if (entry->flags & 2) {
                     // Resume a stream parked by a previous fade-end pause.
-                    u32 newFlags = entry->flags & ~2;
-                    entry->flags = newFlags;
-                    int pauseArg = CWorkControl::hasFlow();
-                    pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
-                    pauseArg |= (int)(newFlags & 1);
-                    pauseArg |= (int)((newFlags >> 1) & 1);
-                    ADXT_Pause(entry->adxt, pauseArg);
+                    entry->flags &= ~2u;
+                    applyPause(entry);
                 }
             } else {
                 // Interpolate the current volume toward the fade target.
-                float t = timer / entry->field_0x70;
                 entry->field_0x64 =
-                    (entry->field_0x68 - entry->field_0x6C) * t + entry->field_0x6C;
+                    (entry->field_0x68 - entry->field_0x6C) *
+                    (entry->field_0x74 / entry->field_0x70) + entry->field_0x6C;
 
                 // Un-pause a fading-in stream once its volume moved off the mute point.
                 if (entry->field_0x80 == 1 && (entry->flags & 2) &&
-                    entry->field_0x64 != lbl_eu_8066A50C) {
-                    u32 newFlags = entry->flags & ~2;
-                    entry->flags = newFlags;
-                    int pauseArg = CWorkControl::hasFlow();
-                    pauseArg |= (*(s32*)((u8*)lbl_eu_806656E8 + 0x4B0) != 0);
-                    pauseArg |= (int)(newFlags & 1);
-                    pauseArg |= (int)((newFlags >> 1) & 1);
-                    ADXT_Pause(entry->adxt, pauseArg);
+                    entry->field_0x64 != 0.0f) {
+                    entry->flags &= ~2u;
+                    applyPause(entry);
                 }
             }
         }    volumeSection:
         // Output volume = level * mult1 * mult2, forced to 1.0 while a flow is active.
         float vol = entry->field_0x7C * (entry->field_0x64 * entry->field_0x78);
         if (CWorkControl::hasFlow()) {
-            vol = lbl_eu_8066A50C;
+            vol = 0.0f;
         }
-        ADXT_SetOutVol(entry->adxt, lookupVolumeDb((int)(volPct * vol)));
+        int volDb = (int)(100.0f * vol);
+        ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
 
         // Playback status handling.
         int stat = ADXT_GetStat(entry->adxt);
@@ -730,7 +718,7 @@ void CLibCriStreamingPlay::wkUpdate() {
 
             // Track playback position from the decoded time (ms -> position units).
             int time = ADXT_GetTimeReal(entry->adxt);
-            entry->field_0x84 = (u32)((f64)time / volPct / fadeStep);
+            entry->field_0x84 = (u32)((f32)time / 100.0f / (1.0f / 30.0f));
         }
     }
 }
@@ -791,7 +779,6 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
     }
 
     StreamEntry* entry = reinterpret_cast<StreamEntry*>((u8*)this + 0x1C8);
-    const float volPct = lbl_eu_8066A510;
     for (u32 i = 0; i < 5; i++, entry++) {
         if ((u32)(entry->id + 0x10000) == 0xFFFF) continue; // unused slot
 
@@ -808,9 +795,9 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
         // Output volume = level * mult1 * mult2, forced to 1.0 during a flow.
         float vol = entry->field_0x64 * entry->field_0x78 * entry->field_0x7C;
         if (CWorkControl::hasFlow()) {
-            vol = lbl_eu_8066A50C;
+            vol = 0.0f;
         }
-        int volDb = (int)(volPct * vol);
+        int volDb = (int)(100.0f * vol);
         int outVol = lookupVolume(volDb);
         ADXT_SetOutVol(entry->adxt, outVol);
     }
@@ -831,7 +818,7 @@ extern "C" float getStreamVolume__20CLibCriStreamingPlayFv(int id) {
         (u32)(++entry)->id == (u32)id ? entry :
         (entry = NULL);
 
-    return entry == NULL ? lbl_eu_8066A50C : entry->field_0x64;
+    return entry == NULL ? 0.0f : entry->field_0x64;
 }
 
 // setStreamVolume - Set volume immediately.
@@ -856,16 +843,16 @@ extern "C" void setStreamVolume__20CLibCriStreamingPlayFv(int id, float volume) 
         entry->field_0x68 = volume;
         float vol = (float)dv;
         entry->field_0x6C = vol;
-        entry->field_0x70 = lbl_eu_8066A50C;
-        entry->field_0x74 = lbl_eu_8066A50C;
+        entry->field_0x70 = 0.0f;
+        entry->field_0x74 = 0.0f;
 
         // Calculate and set output volume
         float totalVol = entry->field_0x7C * (vol * entry->field_0x78);
         if (CWorkControl::hasFlow()) {
-            totalVol = lbl_eu_8066A50C;
+            totalVol = 0.0f;
         }
-        int outVol = lookupVolume((int)(lbl_eu_8066A510 * totalVol));
-        ADXT_SetOutVol(entry->adxt, outVol);
+        int volDb = (int)(100.0f * totalVol);
+        ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
     }
 }
 
@@ -888,12 +875,13 @@ extern "C" void setStreamVolumeScale__20CLibCriStreamingPlayFv(int id, float vol
         // Set volume multiplier, then recompute the output volume:
         // multiplier * (level * mult1), forced to 1.0 during a flow.
         entry->field_0x7C = volume;
-        float totalVol = volume * (entry->field_0x64 * entry->field_0x78);
+        double dv = volume;
+        float totalVol = (float)dv * (entry->field_0x64 * entry->field_0x78);
         if (CWorkControl::hasFlow()) {
-            totalVol = lbl_eu_8066A50C;
+            totalVol = 0.0f;
         }
-        int outVol = lookupVolume((int)(lbl_eu_8066A510 * totalVol));
-        ADXT_SetOutVol(entry->adxt, outVol);
+        int volDb = (int)(100.0f * totalVol);
+        ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
     }
 }
 
@@ -916,7 +904,7 @@ static StreamEntry* findSlotById(u32 id) {
 // f2 = fade time (see the CLibCri forwarding trampoline fadeStreamVolume).
 extern "C" void fadeStreamVolume__20CLibCriStreamingPlayFv(int id, int action, float volume, float fadeTime) {
     // Immediate volume change when the fade time is <= 0.
-    if (fadeTime <= lbl_eu_8066A50C) {
+    if (fadeTime <= 0.0f) {
         StreamEntry* entry = findSlotById((u32)id);
 
         if (entry != NULL) {
@@ -926,15 +914,15 @@ extern "C" void fadeStreamVolume__20CLibCriStreamingPlayFv(int id, int action, f
             entry->field_0x68 = volume;
             float level = (float)dv;
             entry->field_0x6C = level;
-            entry->field_0x70 = lbl_eu_8066A50C;
-            entry->field_0x74 = lbl_eu_8066A50C;
+            entry->field_0x70 = 0.0f;
+            entry->field_0x74 = 0.0f;
 
             // Total output volume: multiplier * (level * mult1), 0 during a flow.
             float totalVol = entry->field_0x7C * (level * entry->field_0x78);
             if (CWorkControl::hasFlow()) {
-                totalVol = lbl_eu_8066A50C;
+                totalVol = 0.0f;
             }
-            int volDb = (int)(lbl_eu_8066A510 * totalVol);
+            int volDb = (int)(100.0f * totalVol);
             ADXT_SetOutVol(entry->adxt, lookupVolume(volDb));
         }
     }
@@ -946,13 +934,13 @@ extern "C" void fadeStreamVolume__20CLibCriStreamingPlayFv(int id, int action, f
         entry->field_0x68 = volume;
         entry->field_0x6C = entry->field_0x64;
         // Latch the fade-end action only for a mute-to-zero fade.
-        if (volume == lbl_eu_8066A50C) {
+        if (volume == 0.0f) {
             entry->field_0x80 = action;
         }
         entry->field_0x70 = fadeTime;
-        entry->field_0x74 = lbl_eu_8066A50C;
-        if (entry->field_0x70 <= lbl_eu_8066A50C) {
-            entry->field_0x70 = lbl_eu_8066A50C;
+        entry->field_0x74 = 0.0f;
+        if (entry->field_0x70 <= 0.0f) {
+            entry->field_0x70 = 0.0f;
         }
     }
 }
@@ -989,19 +977,19 @@ extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* i
         // Total output volume: multiplier * (current * level), 0 during a flow.
         float totalVol = slot->field_0x64 * vol * slot->field_0x7C;
         if (CWorkControl::hasFlow()) {
-            totalVol = lbl_eu_8066A50C;
+            totalVol = 0.0f;
         }
 
         // Convert to ADX output-volume units via the 100.0 percent scale, then
         // look up (with linear interpolation) the ADX volume from the dB table.
-        int volDb = (int)(lbl_eu_8066A510 * totalVol);
+        int volDb = (int)(100.0f * totalVol);
         int outVol = lookupVolume(volDb);
         ADXT_SetOutVol(slot->adxt, outVol);
 
         // Set pan unless the stream is mono (flag 0x40).
         u32 flags = slot->flags;
         if (!(flags & 0x40)) {
-            int panVal = (int)(lbl_eu_8066A524 * pan);
+            int panVal = (int)(15.0f * pan);
             if (panVal < -15) {
                 panVal = -15;
             }
@@ -1139,7 +1127,7 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char 
 // vtable (.data 0x8056D028): primary {typeinfo, 0, slots...} + CDeviceVICb
 // secondary at +0xA0 {typeinfo, -0x1C4, thunk dtor, thunk cb, stop-all}
 extern "C" u32 lbl_eu_8056D028[45] __attribute__((aligned(8))) = {
-    (u32)&lbl_eu_806637A8, 0,
+    (u32)&__RTTI__20CLibCriStreamingPlay, 0,
     (u32)&__dt__20CLibCriStreamingPlayFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
     (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
@@ -1161,7 +1149,7 @@ extern "C" u32 lbl_eu_8056D028[45] __attribute__((aligned(8))) = {
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__20CLibCriStreamingPlayFv,
     (u32)&wkStandbyLogout__20CLibCriStreamingPlayFv,
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-    (u32)&lbl_eu_806637A8, 0xFFFFFE3C,
+    (u32)&__RTTI__20CLibCriStreamingPlay, 0xFFFFFE3C,
     (u32)&onViDestroy__20CLibCriStreamingPlayFv, (u32)&onViBeginFrame__20CLibCriStreamingPlayFv,
     (u32)&clearAllStreams__20CLibCriStreamingPlayFv
 };
@@ -1178,7 +1166,7 @@ extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_8
 extern "C" __declspec(section ".sdata") const char* lbl_eu_806637A4 = (const char*)lbl_eu_8066A500;
 
 // monolib type descriptor {name, base list} (.sdata 0x806637A8)
-extern "C" __declspec(section ".sdata") u32 lbl_eu_806637A8[2] = {
+extern "C" __declspec(section ".sdata") u32 __RTTI__20CLibCriStreamingPlay[2] = {
     (u32)&lbl_eu_805230A0, (u32)&lbl_eu_8056D0DC
 };
 

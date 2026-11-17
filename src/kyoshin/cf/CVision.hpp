@@ -98,7 +98,7 @@ namespace cf{
         virtual void vf190(u32 a);  // declared index 98 -> vtable 0x190
     };
 
-    // Object list created by CTaskGame_enumListCtor / filled by startEnumObjects; the
+    // Object list created by __ct__16CfEnumListHolderFv / filled by startEnumObjects; the
     // element count lives at +0x620.
     struct CVisionEnumList {
         u8 unk0[0x620];

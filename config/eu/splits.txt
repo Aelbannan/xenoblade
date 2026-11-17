@@ -615,14 +615,14 @@ kyoshin/cf/CTaskREvent.cpp:
 	.text       start:0x801652B8 end:0x801678C0
 
 kyoshin/cf/CInfoCf.cpp:
-	extab       start:0x8000DD78 end:0x8000DE54
-	extabindex  start:0x80028F78 end:0x80029008
-	.text       start:0x801678C0 end:0x80168AAC
+	extab       start:0x8000DD78 end:0x8000DD88
+	extabindex  start:0x80028F78 end:0x80028F90
+	.text       start:0x801678C0 end:0x801679F4
 
 kyoshin/menu/CMenuItem.cpp:
-	extab       start:0x8000DE54 end:0x8000DEAC
-	extabindex  start:0x80029008 end:0x80029020
-	.text       start:0x80168AAC end:0x80168DFC
+	extab       start:0x8000DD88 end:0x8000DEAC
+	extabindex  start:0x80028F90 end:0x80029020
+	.text       start:0x801679F4 end:0x80168DFC
 
 kyoshin/realtimeevt/CREvtMem.cpp:
 	extab       start:0x8000DEAC end:0x8000DECC
@@ -5169,7 +5169,7 @@ monolib/src/nand/CNBanner.cpp:
 	extabindex  start:0x80039508 end:0x80039550
 	.text       start:0x804F96C0 end:0x804F9E98
 
-monolib/src/core/monolib_eu_804F9E98.cpp:
+monolib/src/nand/CNReqtaskCreatedir.cpp:
 	extab       start:0x8002119C end:0x800211AC
 	extabindex  start:0x80039550 end:0x80039568
 	.text       start:0x804F9E98 end:0x804F9FBC

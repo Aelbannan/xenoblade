@@ -3,6 +3,7 @@
 // Matching session: dtor, Term, cbRenderBefore, TalkWin_Create_CC78 (factory) and
 // sinit_8012DE98 (static float-table initializer).
 
+#include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTalkWindow.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
@@ -934,14 +935,9 @@ void CTalkWindow::cbRenderBefore() {
     if (findObjectById((int)field_68) == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
-    // to match the retail direct calls (a C++ local would virtual-dispatch
-    // its scope-exit destructor and bloat the body).
-    u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mpLayout, &drawInfo, 0, 1);
 }
 
 // ---------------------------------------------------------------------------

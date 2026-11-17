@@ -1,182 +1,57 @@
-// Decompiled: CNReqtaskLoad
-//
-// Translation-unit final form.
-//
-// The CNReqtaskLoad sub-task block lives inside a CNRequest (at offset 4).
-// MWCC mangles the names of free functions and data globals; the retail
-// symbols here are stripped placeholder names (func_8...) and the data items
-// are referenced by their absolute linker labels (lbl_8...). To keep the
-// emitted object symbols/labels byte-identical to retail we must keep C
-// linkage for exactly those names (exempt in PLAN.md 17.6). Everything that
-// is meaningful C++ (the task data layout) is expressed as a real struct.
-#include <types.h>
+#include "monolib/nand/CNReqtaskLoad.hpp"
+
 #include <string.h>
-#include "revolution/os/OSCache.h"  // DCFlushRange (C linkage)
 
-// Vtable of the CNReqtaskLoad task. Its layout is unknown (we only ever
-// install it / take its address), so it is used as an opaque pointer type.
-struct CNReqtaskLoadVtbl;
-struct CNReqtaskLoadData;  // defined below; forward decl for the extern block
+#include <revolution/OS.h>
 
-// Retail linker names referenced by this unit (C linkage so the emitted
-// symbols match the stripped retail names rather than C++ manglings).
-extern "C" {
-    extern u8  lbl_eu_806659D0;         // global NAND "busy" flag
-    extern s32 lbl_eu_806659D4;         // global NAND result/error latch
+static CNReqtaskLoad sTask;
 
-    // NAND subsystem primitives (defined in the CNReqtaskSave unit). These are
-    // stripped retail placeholder names, so they need C linkage to emit the same
-    // unmangled reloc. `strcpy` comes from <string.h> and `DCFlushRange` from
-    // <revolution/os/OSCache.h> (both already included above).
-    s32 CNReqSaveFormatTempPath(CNReqtaskLoadData* data, u8 arg);  // NAND open primitive
-    s32 CNReqSaveNandOpen(u8* ptr, u32 arg);  // NAND set-buffer primitive
-    s32 CNReqSaveNandRead(u32 arg1, u32 arg2);  // NAND read primitive
-    s32 CNReqSaveNandClose(void);                // NAND close primitive
+CNReqtask* CNReqtaskLoad::setup(void* p, const char* name, void* buf, u32 size, bool share) {
+    Param* param = static_cast<Param*>(p);
+
+    strcpy(param->name, name);
+    param->buf = buf;
+    param->size = size;
+    param->share = share;
+    param->state = 0;
+    return &sTask;
 }
 
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056FD88-0x8056FDA8 (32B): two 16B vtables.  The task vtable
-// (lbl_eu_8056FD88) is installed via sinit_804DB0D8; its RTTI locator is the
-// .sdata pair lbl_eu_80663B90 below, and the base-vtable chain lives in the
-// sibling .data block lbl_eu_8056FD98 (pointing at CNRequest's RTTI locator
-// lbl_eu_80663B70, owned by the CNReqtaskSave unit).
-extern "C" u32 lbl_eu_80663B70;     // CNRequest RTTI locator (foreign sdata)
-extern "C" void CNReqSaveDeallocIfOpen();    // CNRequest base vtable func (foreign TU)
-extern "C" s32 stepNandLoadTask(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
-extern "C" u32 lbl_eu_80663B90[2];  // this unit's .sdata RTTI locator pair
-extern "C" u32* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
+int CNReqtaskLoad::update(void* p) {
+    Param* param = static_cast<Param*>(p);
 
-extern "C" u32 lbl_eu_8056FD88[4] = {
-    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&stepNandLoadTask, (u32)&CNReqSaveDeallocIfOpen,
-};
-extern "C" u32 lbl_eu_8056FD98[4] = {
-    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
-};
-
-// [.rodata] 0x80524610-0x80524620 (16B): "CNReqtaskLoad"
-extern "C" const u32 lbl_eu_80524610[4] = {
-    0x434E5265, 0x71746173, 0x6B4C6F61, 0x64000000,
-};
-
-// [.sdata] 0x80663B90-0x80663B98 (8B): RTTI locator { name, base-vtable }
-extern "C" u32 lbl_eu_80663B90[2] = {
-    (u32)&lbl_eu_80524610, (u32)&lbl_eu_8056FD98,
-};
-
-
-
-// CNReqtaskLoad task parameter block (the sub-task embedded in CNRequest):
-//   +0x00: char path[0x10] -- NAND load path (written by strcpy)
-//   +0x10: u32 mBuffer     -- destination buffer address (NAND read / DCFlushRange dest)
-//   +0x14: u32 mSize       -- buffer size (NAND read / DCFlushRange size)
-//   +0x18: u8  mFlag       -- request flag forwarded to the NAND open call
-//   +0x19: u8  mState      -- async state machine step (0..4)
-struct CNReqtaskLoadData {
-    char path[0x10]; // +0x00
-    u32 mBuffer;     // +0x10
-    u32 mSize;       // +0x14
-    u8  mFlag;       // +0x18
-    u8  mState;      // +0x19
-};
-
-// us-804df22c: NandLoadConfigure
-// Configures the CNReqtaskLoad sub-task: records the path/buffer/size/flag and
-// resets the async state to step 0, then returns the task vtable pointer.
-//
-// First arg is the CNReqtaskLoad sub-task block embedded in CNRequest (+4).
-// First parameter stays an opaque byte pointer (`u8*`) with a typed local
-// `d`, mirroring the byte-identical NandRmConfigure recipe in the sibling
-// CNReqtaskRemove unit: the `u8*` + cast-local split plus hoisted scalar
-// args reproduce retail's saved-register colouring across the strcpy call.
-extern "C" CNReqtaskLoadVtbl** NandLoadConfigure(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
-    CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
-    u32 buf = arg2;
-    u32 size = arg3;
-    u8 flag = arg4;
-    strcpy(d->path, path);
-    d->mBuffer = buf;
-    d->mSize = size;
-    d->mFlag = flag;
-    d->mState = 0;
-    return (CNReqtaskLoadVtbl**)lbl_eu_806659E8;
-}
-
-// us-804df27c: stepNandLoadTask
-// Async NAND load state machine, polled by the CNand completion pump.
-// Advancing one step per call; returns 1 when fully loaded, 2 on error,
-// 0 while still in progress. Steps:
-//   0 -> open the file (CNReqSaveFormatTempPath + CNReqSaveNandOpen)
-//   1 -> read into mBuffer (CNReqSaveNandRead)
-//   2 -> close the file (CNReqSaveNandClose)
-//   3 -> flush dcache on the read buffer (DCFlushRange)
-//   4 -> done (return 1)
-extern "C" s32 stepNandLoadTask(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
-    CNReqtaskLoadData* d = data;
-
-    if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
+    if (sBusy) {
         return 0;
     }
+    if (param->state > 0 && sResult < 0) {
+        return 2;
+    }
 
-    // If the load has begun and the global result latch has gone negative,
-    // the pending operation failed.
-    if ((s8)d->mState > 0) {
-        if (lbl_eu_806659D4 < 0) {
+    switch (param->state) {
+    case 0:
+        if (open(getPath(param->name, param->share), NAND_ACCESS_READ) != 0) {
             return 2;
         }
+        param->state = 1;
+        break;
+    case 1:
+        if (read(param->buf, param->size) != 0) {
+            return 2;
+        }
+        param->state = 2;
+        break;
+    case 2:
+        if (closeFile() != 0) {
+            return 2;
+        }
+        param->state = 3;
+        break;
+    case 3:
+        DCFlushRange(param->buf, param->size);
+        param->state = 4;
+        break;
+    case 4:
+        return 1;
     }
-
-    switch ((s8)d->mState) {
-        case 0: {
-            s32 ret = CNReqSaveFormatTempPath(d, d->mFlag);
-            s32 r = CNReqSaveNandOpen((u8*)(u32)ret, 1);
-            if (r != 0) {
-                return 2;
-            }
-            d->mState = 1;
-            goto ret0;
-        }
-        case 1: {
-            s32 r = CNReqSaveNandRead(d->mBuffer, d->mSize);
-            if (r != 0) {
-                return 2;
-            }
-            d->mState = 2;
-            goto ret0;
-        }
-        case 2: {
-            s32 r = CNReqSaveNandClose();
-            if (r != 0) {
-                return 2;
-            }
-            d->mState = 3;
-            goto ret0;
-        }
-        case 3: {
-            DCFlushRange((u8*)d->mBuffer, d->mSize);
-            d->mState = 4;
-            goto ret0;
-        }
-        case 4:
-            return 1;
-        default:
-            break;
-    }
-ret0:
     return 0;
-}
-
-// us-804df3a0: sinit_804DB0D8
-// .ctors static initializer: installs the CNReqtaskLoad vtable
-// (lbl_eu_8056FD88) into the task vtable pointer (lbl_eu_806659E8).
-//
-// Retail keeps the thunk `li r3,&lbl_eu_806659E8@sda21; b func_804DB0E0`
-// as a tail call into the adjacent helper (the annotation originally merged
-// the two bodies into one 0x18 symbol). The helper stores the vtable
-// address through r3. `char[]` type for the vtable keeps the address
-// constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804DB0E0(u32** dest) {
-    *dest = lbl_eu_8056FD88;
-}
-extern "C" __declspec(noinline) void sinit_804DB0D8() {
-    func_804DB0E0(lbl_eu_806659E8);
 }

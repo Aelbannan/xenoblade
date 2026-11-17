@@ -495,12 +495,8 @@ struct CEquipItemBoxPageStateView {
 };
 
 /* Stack-allocated enum-list holder/list used by useEIBSelectedItem's CfMove
-   search (CTaskGame_enumListCtor ctor / CTaskGame_enumListGet getter / __dt__80043E88 dtor;
+   search (__ct__16CfEnumListHolderFv ctor / get__16CfEnumListHolderFv getter / __dt__16CfEnumListHolderFv dtor;
    the list's element count sits at +0x620). */
-struct CEquipItemBoxEnumHolder {
-    void* list;   // 0x0
-    u32 handle;   // 0x4
-};
 struct CEquipItemBoxEnumList {
     u8 _pad00[0x620];
     u32 field_620;  // 0x620
@@ -779,13 +775,10 @@ extern const float lbl_eu_80668B08;
 
 // CfMove enum-list holder helpers (retail plain names; sibling decls in
 // CItemBoxGrid.hpp / CfObjectImplMove.hpp).
-extern "C" void CTaskGame_enumListCtor(void*);
-extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 arg);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
-extern "C" void __dt__80043E88(void*, int);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of
 // pulling in the big cf/CtrlObjectParam headers).
@@ -832,15 +825,15 @@ extern "C" void* __dt__80285C44(void*, int);
 // own TUs as extern "C" free functions).
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CSortMenu(void*);
-extern "C" void __ct__CSysWin(void*, int);
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
+extern "C" void __ct__7CSysWinFUc(void*, int);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void InfoCfCopySysWin(void* dst, void* src);
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
 extern "C" void ItemBlockSetDefaultFlags();
 
 /* Partial-copy views used by the ctor: the member CSortMenu is populated
    from a destroyed stack temp one sub-object at a time (the first 0x10 bytes
-   after the vtable go through the __ct__UnkClass_8011C974 copy ctor; the
+   after the vtable go through the __as__17UnkClass_8045F564FRC17UnkClass_8045F564 copy ctor; the
    rest are scalar-copied; the vtable word is never copied). */
 struct CEquipItemBoxSortMenuBlock {
     void* vtable;               // 0x00 (never copied)

@@ -83,30 +83,7 @@ extern u8 lbl_eu_80658410[];
 extern Mtx lbl_eu_80658458; // identity matrix (defined at the bottom of this TU)
 
 // sdata2 constants used by the five functions below.
-extern const f32 lbl_eu_8066A7A4;
-extern const f32 lbl_eu_8066A7B0;
-extern const f32 lbl_eu_8066A748;
-extern const f32 lbl_eu_8066A750;
-extern const f32 lbl_eu_8066A754;
-extern const f32 lbl_eu_8066A760;
-extern const f32 lbl_eu_8066A764;
 extern const u32 lbl_eu_8066A72C; // index mask
-extern const f32 lbl_eu_8066A730;
-extern const f32 lbl_eu_8066A7AC;
-extern const f32 lbl_eu_8066A7B4;
-extern const f32 lbl_eu_8066A7B8;
-extern const f32 lbl_eu_8066A7BC;
-extern const f32 lbl_eu_8066A7C0;
-extern const f32 lbl_eu_8066A774;
-extern const f32 lbl_eu_8066A778;
-extern const f32 lbl_eu_8066A77C;
-extern const f32 lbl_eu_8066A780;
-extern const f32 lbl_eu_8066A784;
-extern const f32 lbl_eu_8066A788;
-extern const f32 lbl_eu_8066A78C;
-extern const f32 lbl_eu_8066A790;
-extern const f32 lbl_eu_8066A794; // rand()%1000 divisor
-extern const f32 lbl_eu_8066A798; // rand()%20 divisor
 extern u32 lbl_eu_8066A7A8;
 // Random-scale float constants (defined at the bottom of this TU).
 extern f32 lbl_eu_80663850;
@@ -479,15 +456,15 @@ void mpfsys::UnkClass_80471EC8::initLayerRecords() {
         PSMTXIdentity(rec->mtxB);
         // Direction vector: two random draws scaled into [-c, c]. The first
         // draw lands on Z and is held in an FPR across the second call.
-        f32 dz = lbl_eu_8066A748 * (f32)(rand() % 100) - lbl_eu_8066A74C;
-        rec->dir.x = lbl_eu_8066A748 * (f32)(rand() % 100) - lbl_eu_8066A74C;
+        f32 dz = 0.01f * (f32)(rand() % 100) - lbl_eu_8066A74C;
+        rec->dir.x = 0.01f * (f32)(rand() % 100) - lbl_eu_8066A74C;
         rec->dir.y = lbl_eu_8066A744;
         rec->dir.z = dz;
         if (rec->dir.x == lbl_eu_8066A744 && rec->dir.y == lbl_eu_8066A744 &&
             rec->dir.z == lbl_eu_8066A744) {
             rec->dir.x = lbl_eu_8066A744;
             rec->dir.y = lbl_eu_8066A744;
-            rec->dir.z = lbl_eu_8066A750;
+            rec->dir.z = 1.0f;
         } else {
             f32 lenSq = rec->dir.z * rec->dir.z +
                         (rec->dir.x * rec->dir.x + rec->dir.y * rec->dir.y);
@@ -508,15 +485,15 @@ void mpfsys::UnkClass_80471EC8::initLayerRecords() {
     // surviving weights are stored.
     MpfsysInitLayout* st = (MpfsysInitLayout*)this;
     for (int i = 8; i < 56; i++) {
-        st->w[i] = lbl_eu_8066A754;
+        st->w[i] = (-100000.0f);
     }
     st->lod0[0] = lbl_eu_8066A758;
     st->lod0[1] = lbl_eu_8066A75C;
-    st->lod0[2] = lbl_eu_8066A760;
-    st->lod1[0] = lbl_eu_8066A750;
-    st->lod1[1] = lbl_eu_8066A750;
-    st->lod1[2] = lbl_eu_8066A764;
-    st->lod1[3] = lbl_eu_8066A764;
+    st->lod0[2] = 0.6f;
+    st->lod1[0] = 1.0f;
+    st->lod1[1] = 1.0f;
+    st->lod1[2] = 10.0f;
+    st->lod1[3] = 10.0f;
     st->field_0x2E12 = 0;
     st->field_0x2E04 = 0xA;
     st->field_0x2E10 = 0;
@@ -712,9 +689,9 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     // When amplitude is at its floor and dt is exactly 1, soften the
     // constraint response; the gate reads the PREVIOUS frame's tip target
     // Q[2] (still holding its integrated value at this point).
-    if (st->field_2DE8 <= lbl_eu_8066A758 && arg == lbl_eu_8066A750) {
+    if (st->field_2DE8 <= lbl_eu_8066A758 && arg == 1.0f) {
         f32 lsq = Q[2].z * Q[2].z + (Q[2].x * Q[2].x + Q[2].y * Q[2].y);
-        if (lsq <= lbl_eu_8066A774) {
+        if (lsq <= 0.0001f) {
             scaledDt = dt * lbl_eu_8066A74C;
         }
     }
@@ -723,12 +700,12 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     // Y jitter from draw 3; the X component always adds zero.
     f32 wob = st->field_2DE8 * (lbl_eu_80663850 * (f32)(rand() % 500));
     f32 jz = st->field_2DEC *
-             (lbl_eu_8066A778 *
+             (0.4f *
               (lbl_eu_80663850 * (f32)(rand() % 500) - lbl_eu_8066A74C));
     rec->dir.x += lbl_eu_8066A744;
     rec->dir.z += jz;
     f32 jy = st->field_2DEC *
-             (lbl_eu_8066A778 *
+             (0.4f *
               (lbl_eu_80663850 * (f32)(rand() % 500) - lbl_eu_8066A74C));
     rec->dir.y += jy;
 
@@ -752,9 +729,9 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
 
     // Loop-pinned sdata2 constants: reading them into locals lets MWCC hold
     // them in callee-saved FPRs across the PSVEC calls (retail behaviour).
-    const f32 rest = lbl_eu_8066A750;
-    const f32 gain = lbl_eu_8066A778;
-    const f32 eps = lbl_eu_8066A774;
+    const f32 rest = 1.0f;
+    const f32 gain = 0.4f;
+    const f32 eps = 0.0001f;
     const f32 damp = lbl_eu_8066A74C;
 
     // Distance constraints between consecutive chain points: the correction
@@ -772,7 +749,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         e.y = Q[i].y - Q[i + 1].y;
         e.z = Q[i].z - Q[i + 1].z;
         f32 dot = d.x * e.x + d.y * e.y + d.z * e.z;
-        f32 inv = (mag >= eps) ? rest / mag : lbl_eu_8066A77C;
+        f32 inv = (mag >= eps) ? rest / mag : 10000.0f;
         f32 k = -(gain * strain + damp * dot * inv) * scaledDt;
         MpfsysVec3 push;
         push.x = d.x * inv * k;
@@ -795,7 +772,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         f32 mag = PSVECMag((Vec*)&v);
         if (mag >= eps) {
             f32 inv = rest / mag;
-            f32 k = lbl_eu_8066A780 * mag * scaledDt;
+            f32 k = 0.13f * mag * scaledDt;
             Q[j].x += v.x * inv * k;
             Q[j].y += v.y * inv * k;
             Q[j].z += v.z * inv * k;
@@ -804,13 +781,13 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
 
     // Tip velocity term lands in Q[2]; the randomised drift (draws mod 100
     // offset by 100) folds into Q[1], while Q[2] shrinks toward the origin.
-    f32 vk = lbl_eu_8066A784 * scaledDt;
+    f32 vk = 0.033333335f * scaledDt;
     f32 dx = vel.x * vk;
     f32 dy = vel.y * vk;
     f32 dz = vel.z * vk;
     dx *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
     dy *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
-    f32 shrink = lbl_eu_8066A750 - lbl_eu_8066A788 * dt;
+    f32 shrink = 1.0f - 0.02f * dt;
     dz *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
     Q[1].x += dx;
     Q[1].y += dy;
@@ -826,14 +803,14 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     if (Q[1].z > lbl_eu_8066A758) {
         Q[1].z = lbl_eu_8066A758;
     }
-    if (Q[1].x < lbl_eu_8066A78C) {
-        Q[1].x = lbl_eu_8066A78C;
+    if (Q[1].x < (-0.3f)) {
+        Q[1].x = (-0.3f);
     }
-    if (Q[1].y < lbl_eu_8066A78C) {
-        Q[1].y = lbl_eu_8066A78C;
+    if (Q[1].y < (-0.3f)) {
+        Q[1].y = (-0.3f);
     }
-    if (Q[1].z < lbl_eu_8066A78C) {
-        Q[1].z = lbl_eu_8066A78C;
+    if (Q[1].z < (-0.3f)) {
+        Q[1].z = (-0.3f);
     }
 
     Q[2].x *= shrink;
@@ -848,14 +825,14 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     if (Q[2].z > lbl_eu_8066A758) {
         Q[2].z = lbl_eu_8066A758;
     }
-    if (Q[2].x < lbl_eu_8066A78C) {
-        Q[2].x = lbl_eu_8066A78C;
+    if (Q[2].x < (-0.3f)) {
+        Q[2].x = (-0.3f);
     }
-    if (Q[2].y < lbl_eu_8066A78C) {
-        Q[2].y = lbl_eu_8066A78C;
+    if (Q[2].y < (-0.3f)) {
+        Q[2].y = (-0.3f);
     }
-    if (Q[2].z < lbl_eu_8066A78C) {
-        Q[2].z = lbl_eu_8066A78C;
+    if (Q[2].z < (-0.3f)) {
+        Q[2].z = (-0.3f);
     }
 
     // Integrate chain points by the scaled targets.
@@ -886,15 +863,15 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         }
         f32 dot = ml::CVec3::unitY.x * n.x + ml::CVec3::unitY.y * n.y +
                   ml::CVec3::unitY.z * n.z;
-        if (dot < lbl_eu_8066A790) {
+        if (dot < (-0.9999f)) {
             quat.x = lbl_eu_8066A744;
-            quat.y = lbl_eu_8066A750;
+            quat.y = 1.0f;
             quat.z = lbl_eu_8066A744;
             quat.w = lbl_eu_8066A744;
         } else {
             Vec axis;
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
-            f32 m = lbl_eu_8066A73C * (lbl_eu_8066A750 + dot);
+            f32 m = lbl_eu_8066A73C * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                              lbl_eu_80526300);
@@ -904,7 +881,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             if (m > lbl_eu_8066A744) {
                 s4 = m * nw4r::math::FrSqrt(m);
             }
-            f32 scale = lbl_eu_8066A750 / s4;
+            f32 scale = 1.0f / s4;
             quat.x = axis.x * scale;
             quat.y = axis.y * scale;
             quat.z = axis.z * scale;
@@ -928,15 +905,15 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         }
         f32 dot = ml::CVec3::unitY.x * n.x + ml::CVec3::unitY.y * n.y +
                   ml::CVec3::unitY.z * n.z;
-        if (dot < lbl_eu_8066A790) {
+        if (dot < (-0.9999f)) {
             quat.x = lbl_eu_8066A744;
-            quat.y = lbl_eu_8066A750;
+            quat.y = 1.0f;
             quat.z = lbl_eu_8066A744;
             quat.w = lbl_eu_8066A744;
         } else {
             Vec axis;
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
-            f32 m = lbl_eu_8066A73C * (lbl_eu_8066A750 + dot);
+            f32 m = lbl_eu_8066A73C * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                              lbl_eu_80526300);
@@ -946,7 +923,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             if (m > lbl_eu_8066A744) {
                 s4 = m * nw4r::math::FrSqrt(m);
             }
-            f32 scale = lbl_eu_8066A750 / s4;
+            f32 scale = 1.0f / s4;
             quat.x = axis.x * scale;
             quat.y = axis.y * scale;
             quat.z = axis.z * scale;
@@ -995,9 +972,9 @@ void mpfsys::UnkClass_80471EC8::updateLayers() {
     f32 next = st->field_0x2DF8 - decay;
     st->field_0x2DF8 = next;
     if (next <= lbl_eu_8066A744) {
-        f32 t = (f32)(rand() % 1000) / lbl_eu_8066A794;
+        f32 t = (f32)(rand() % 1000) / 1000.0f;
         st->field_0x2DF8 = st->field_0x2DF4 * t;
-        f32 u = (f32)(rand() % 20) / lbl_eu_8066A798;
+        f32 u = (f32)(rand() % 20) / 20.0f;
         st->field_0x2DE8 = st->field_0x2DE0 * u + st->field_0x2DE4;
     }
 
@@ -1006,13 +983,13 @@ void mpfsys::UnkClass_80471EC8::updateLayers() {
     MpfsysLayerRec* rec = (MpfsysLayerRec*)this;
     for (int i = 0; i < 0x20; i++) {
         simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
-            this, rec, lbl_eu_8066A750);
+            this, rec, 1.0f);
         rec++;
     }
     rec = (MpfsysLayerRec*)((u8*)this + 0x1680);
     for (int i = 0x20; i < 0x40; i++) {
         simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
-            this, rec, lbl_eu_8066A778);
+            this, rec, 0.4f);
         rec++;
     }
 }
@@ -1141,7 +1118,7 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
         GXInitTexObjLOD(&texObj, (GXTexFilter)5, (GXTexFilter)1, minLod, maxLod,
                         lodBias, GX_FALSE, GX_FALSE, (GXAnisotropy)0);
     } else {
-        f32 lod = lbl_eu_8066A7A4;
+        f32 lod = 0.0f;
         GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, lod, lod, lod, GX_FALSE,
                         GX_FALSE, (GXAnisotropy)0);
     }
@@ -1267,9 +1244,9 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     for (int i = 4; i < 12; i++) {
         rot->w[i] = src->w[i];
     }
-    rot->m[0][3] = lbl_eu_8066A7A4;
-    rot->m[1][3] = lbl_eu_8066A7A4;
-    rot->m[2][3] = lbl_eu_8066A7A4;
+    rot->m[0][3] = 0.0f;
+    rot->m[1][3] = 0.0f;
+    rot->m[2][3] = 0.0f;
 
     // Translation column of the source matrix, then billboard axis (0,0,1)
     // pushed through the rotation part.
@@ -1277,14 +1254,14 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     trans->x = pf[3];
     trans->y = pf[7];
     trans->z = pf[11];
-    axis->x = lbl_eu_8066A7A4;
-    axis->y = lbl_eu_8066A7A4;
-    axis->z = lbl_eu_8066A7AC;
+    axis->x = 0.0f;
+    axis->y = 0.0f;
+    axis->z = (-1.0f);
     PSMTXMultVec(cam->rot.m, (Vec*)axis, (Vec*)axis);
 
     f32 lenSq = axis->z * axis->z +
                 (axis->x * axis->x + axis->y * axis->y);
-    if (lenSq == lbl_eu_8066A7A4) {
+    if (lenSq == 0.0f) {
         // Component-wise copy keeps the shared zero-vector loads inline
         // (retail never calls the CVec3 assignment operator here).
         const ml::CVec3& z = ml::CVec3::zero;
@@ -1308,12 +1285,12 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     lbl_eu_8066584C[0].base = base + *(u32*)(base + *(u32*)(base + 0x24));
     lbl_eu_80665850 = (u16*)(base + *(u32*)(base + *(u32*)(base + 0xC)));
     *(u32*)&lbl_eu_80665868 = (u32)(base + *(u32*)(base + *(u32*)(base + 0x2C)));
-    lbl_eu_80665880 = lbl_eu_8066A7B0 / lenSq2;
+    lbl_eu_80665880 = 1.0f / lenSq2;
     // FOV: tan of the scaled half-angle; its scaled store lands right after
     // the call, ahead of GXClearVtxDesc (retail schedule).
-    f32 t = (f32)tan(lbl_eu_8066A7B8 *
-                     (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * ml::deg2rad))));
-    *(f32*)&lbl_eu_80665884 = lbl_eu_8066A7C0 * t;
+    f32 t = (f32)tan(0.024543693f *
+                     (40.743664f * (0.5f * (fovScale * ml::deg2rad))));
+    *(f32*)&lbl_eu_80665884 = 2.0f * t;
 
     GXClearVtxDesc();
     GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x1);
@@ -1600,15 +1577,15 @@ void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
         (ml::CVec3*)(lbl_eu_8066584C[idx].base + idx * 0xC);
     Mtx m;
     Mtx out;
-    f32 zero = lbl_eu_8066A7A4;
+    f32 zero = 0.0f;
     f32 diag;
     if (scale == zero) {
-        diag = lbl_eu_8066A7B0;
+        diag = 1.0f;
     } else {
         // Scale factor grows with the masked index sum (converted through the
         // shared unsigned int -> double helper constants).
         u32 v = ((u32)idx + layerIdx) & lbl_eu_8066A72C;
-        diag = lbl_eu_8066A7B0 + scale * (f32)(((f64)v - lbl_eu_8066A7C8) * lbl_eu_8066A730);
+        diag = 1.0f + scale * (f32)(((f64)v - lbl_eu_8066A7C8) * 0.03125f);
     }
     // Store order mirrors the retail schedule: off-diagonal zeros first,
     // then the diagonal, then row 2.
@@ -1733,23 +1710,23 @@ void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     cam->rot.w[9] = src->w[9];
     cam->rot.w[10] = src->w[10];
     cam->rot.w[11] = src->w[11];
-    cam->rot.m[0][3] = lbl_eu_8066A7A4;
-    cam->rot.m[1][3] = lbl_eu_8066A7A4;
-    cam->rot.m[2][3] = lbl_eu_8066A7A4;
+    cam->rot.m[0][3] = 0.0f;
+    cam->rot.m[1][3] = 0.0f;
+    cam->rot.m[2][3] = 0.0f;
 
     // Translation column of the source matrix, then billboard axis (0,0,1)
     // transformed in place through the rotation part.
     cam->trans.x = src->m[0][3];
     cam->trans.y = src->m[1][3];
     cam->trans.z = src->m[2][3];
-    cam->axis.x = lbl_eu_8066A7A4;
-    cam->axis.y = lbl_eu_8066A7A4;
-    cam->axis.z = lbl_eu_8066A7AC;
+    cam->axis.x = 0.0f;
+    cam->axis.y = 0.0f;
+    cam->axis.z = (-1.0f);
     PSMTXMultVec(cam->rot.m, (Vec*)&cam->axis, (Vec*)&cam->axis);
 
     f32 lenSq = cam->axis.z * cam->axis.z +
                 (cam->axis.x * cam->axis.x + cam->axis.y * cam->axis.y);
-    if (lenSq == lbl_eu_8066A7A4) {
+    if (lenSq == 0.0f) {
         // Component-wise copy keeps the shared zero-vector loads inline
         // (retail never calls the CVec3 assignment operator here).
         cam->axis.x = ml::CVec3::zero.x;
@@ -1762,13 +1739,13 @@ void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     // FOV: tan of the scaled half-angle, plus the inverse-square term.
     f32 lenSq2 = cam->axis.x * cam->axis.x + cam->axis.y * cam->axis.y +
                  cam->axis.z * cam->axis.z;
-    f32 tanArg = lbl_eu_8066A7B8 *
-                 (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * ml::deg2rad)));
-    lbl_eu_80665880 = lbl_eu_8066A7B0 / lenSq2;
+    f32 tanArg = 0.024543693f *
+                 (40.743664f * (0.5f * (fovScale * ml::deg2rad)));
+    lbl_eu_80665880 = 1.0f / lenSq2;
     f32 t = (f32)tan(tanArg);
 
     lbl_eu_80665840 = self;
-    *(f32*)&lbl_eu_80665884 = lbl_eu_8066A7C0 * t;
+    *(f32*)&lbl_eu_80665884 = 2.0f * t;
 
     // Refresh the display-list pointer table via the two-level offset chase:
     // field_0x24 points at a header whose entries are offsets from the object

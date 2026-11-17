@@ -158,6 +158,13 @@ inline bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
 }
 bool TestFileHeader(const res::BinaryFileHeader& rHeader, u32 signature);
 
+inline bool TestFileVersion(const res::BinaryFileHeader& rHeader) {
+    u32 majorVer = (rHeader.version >> 8) & 0xFF;
+    u32 minorVer = rHeader.version & 0xFF;
+    bool ret = majorVer == 0 && (minorVer >= 8 && minorVer <= 10);
+    return ret;
+}
+
 bool EqualsResName(const char* pLhs, const char* pRhs);
 bool EqualsMaterialName(const char* pLhs, const char* pRhs);
 

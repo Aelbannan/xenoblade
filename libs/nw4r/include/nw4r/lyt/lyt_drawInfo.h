@@ -15,8 +15,6 @@ namespace lyt {
 // the base inline ctor assigns the retail label explicitly instead of the
 // compiler-generated __vt__Q34nw4r3lyt8DrawInfo.
 extern "C" void* lbl_eu_80569C68[];
-extern "C" const float lbl_eu_80669DD0; // 0.0f
-extern "C" const float lbl_eu_80669DD4; // 1.0f
 
 // Empty base whose inline ctor writes the retail vtable label. Because the
 // base ctor runs before the derived member inits, the store lands at retail's

@@ -3,10 +3,8 @@
 #include <nw4r/ut.h>
 
 // Retail sdata2 float pool (nw4r_data.s): GetAnmResult loads these via SDA21
-// relocs (lbl_eu_80669AD8 = 1.0f, lbl_eu_80669ADC = 0.0f); declaring them as
+// relocs (1.0f = 1.0f, 0.0f = 0.0f); declaring them as
 // extern keeps the reloc names retail-identical and emits no .sdata2 here.
-extern "C" const float lbl_eu_80669AD8;
-extern "C" const float lbl_eu_80669ADC;
 
 namespace nw4r {
 namespace g3d {
@@ -33,8 +31,8 @@ inline u32 MakeResult(TexSrt* pSrt, const ResAnmTexSrtTexData* pTexData,
                                               svConstant);
         }
     } else {
-        rSrt.Su = lbl_eu_80669AD8; // 1.0f
-        rSrt.Sv = lbl_eu_80669AD8; // 1.0f
+        rSrt.Su = 1.0f; // 1.0f
+        rSrt.Sv = 1.0f; // 1.0f
     }
 
     if (!(flags & ResAnmTexSrtTexData::FLAG_ROT_ZERO)) {
@@ -43,7 +41,7 @@ inline u32 MakeResult(TexSrt* pSrt, const ResAnmTexSrtTexData* pTexData,
         rSrt.R = detail::GetResAnmResult(&pTexData->anms[anmIdx++], frame,
                                          rConstant);
     } else {
-        rSrt.R = lbl_eu_80669ADC; // 0.0f
+        rSrt.R = 0.0f; // 0.0f
     }
 
     if (!(flags & ResAnmTexSrtTexData::FLAG_TRANS_ZERO)) {
@@ -55,8 +53,8 @@ inline u32 MakeResult(TexSrt* pSrt, const ResAnmTexSrtTexData* pTexData,
         rSrt.Tv = detail::GetResAnmResult(&pTexData->anms[anmIdx++], frame,
                                           tvConstant);
     } else {
-        rSrt.Tu = lbl_eu_80669ADC; // 0.0f
-        rSrt.Tv = lbl_eu_80669ADC; // 0.0f
+        rSrt.Tu = 0.0f; // 0.0f
+        rSrt.Tv = 0.0f; // 0.0f
     }
 
     return flags & (ResAnmTexSrtTexData::FLAG_ANM_EXISTS |

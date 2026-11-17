@@ -1,257 +1,126 @@
-// Decompiled: monolib/src/nand/CNand
-//
-// CNand is a NAND request manager. It owns a ring buffer of 8 CNRequest
-// objects (0x24 bytes each, offsets 0x000..0x11F) plus bookkeeping fields:
-//   +0x120 s16  mHead    -- consume index (ring head)
-//   +0x122 s16  mTail    -- produce index (ring tail)
-//   +0x124 u8   mStatus  -- last completion status byte
-//   +0x125 u8   mFlag    -- async/enable flag forwarded to request setup
-//   +0x128 void*mTable   -- pointer to the shared callback table (lbl_eu_8056FD48)
-//
-// The constructor/destructor and the request-enqueue helpers below carry
-// retail placeholder symbol names (e.g. __ct__CNand, NandMgrEnqueueCheck) that are
-// not standard MWCC manglings, so they are emitted as extern "C" stand-alone
-// functions -- the same fragment-anchored pattern used elsewhere in monolib
-// (see scn/code_804BF59C.cpp). CNand/CNRequest are plain data layouts; the
-// extern "C" __dt__* functions play the role of the deleting destructors.
+#include "monolib/nand/CNand.hpp"
 
-#include <types.h>
-#include <decomp.h>
-#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
+#include <revolution/NAND.h>
 
-struct CNRequest {
-    void* mTask;        // 0x00: active task vtable pointer (NULL when idle)
-    u8 mData[0x20];     // 0x04..0x23: task-specific parameter block
-};
+// Retail constructs this object without registering its destructor.
+#pragma no_static_dtors on
+CNand nand;
+#pragma no_static_dtors reset
 
-struct CNand {
-    CNRequest mReq[8];  // 0x000..0x11F
-    s16 mHead;          // 0x120
-    s16 mTail;          // 0x122
-    u8 mStatus;         // 0x124
-    u8 mFlag;           // 0x125
-    void* mTable;       // 0x128
-};
-
-// --- runtime / external symbols -------------------------------------------
-extern "C" {
-
-// Foreign data labels referenced by the CNand/CNRequest vtables.
-extern u32 lbl_eu_80663B58;    // RTTI base-list (CNand)
-extern u32 lbl_eu_805245E8;    // .rodata RTTI name string (CNand)
-extern u32 lbl_eu_8066B228;    // foreign constant (CNRequest)
-extern u8 lbl_eu_8065FD00[];   // .bss 0x130  the CNand singleton
-
-// Retail deleting destructors (separate C-linkage identifiers, no clash with
-// the C++ members). Forward-declared so the vtables below can reference them.
-extern void* __dt__5CNandFv(CNand* self, int deleting);
-extern void* __dt__9CNRequestFv(CNRequest* self, int deleting);
-
-// CNRequest constructor callback, defined in the CNReqtaskSave unit.
-void __ct__CNRequest(void* self);
-
-// CNRequest task-setup helpers, defined in the CNReqtask* units. Each stores a
-// task vtable into the request and returns TRUE on success.
-int CNReqSavePollTask(CNRequest* req, u8* statusOut);
-int CNReqSaveInitCheck(CNRequest* req, u32 a1, u32 a2, u32 a3);
-int CNReqSaveInitSave(CNRequest* req, u32 a1, u32 a2, u32 a3, u32 a5, u8 flag);
-int CNReqSaveInitLoad(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag);
-int CNReqSaveInitRemove(CNRequest* req, u32 a1, u8 flag);
-int CNReqSaveInitReaddir(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag);
-int CNReqSaveInitSaveBanner(CNRequest* req, u32 a1, u32 a2);
-int CNReqSaveSetupRequest(CNRequest* req, void* buf, u32 size, u32 a3);
+CNand::~CNand() {
 }
 
-// === .rodata size=0x24 align=8 ===
-extern "C" __declspec(align(8)) const char lbl_eu_805245B0[24] = {
-    0x73,0x68,0x61,0x72,0x65,0x00,0x62,0x61,0x6E,0x6E,0x65,0x72,0x2E,0x62,0x69,0x6E,
-    0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-};
-extern "C" __declspec(align(8)) const char lbl_eu_805245C8[12] = {
-    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x00, 0x00,0x00,
-};
-
-// === .sdata size=0x10 align=8 ===
-// RTTI locators: {name-ptr, base-list}.
-extern "C" u32 lbl_eu_80663B78[2] = { (u32)&lbl_eu_805245E8, 0x00000000 };
-extern "C" u32 lbl_eu_80663B80[2] = { (u32)&lbl_eu_8066B228, 0x00000000 };
-
-// === .data size=0x20 align=8 ===
-// CNand vtable (16B): typeinfo locator + dtor.
-extern "C" u32 lbl_eu_8056FD48[4] = {
-    (u32)&lbl_eu_80663B58, 0x00000000, (u32)&__dt__5CNandFv, 0x00000000,
-};
-// CNRequest vtable (16B): typeinfo locator + dtor.
-extern "C" u32 lbl_eu_8056FD58[4] = {
-    (u32)&lbl_eu_80663B78, 0x00000000, (u32)&__dt__9CNRequestFv, 0x00000000,
-};
-
-// --- destructors ----------------------------------------------------------
-
-// CNand deleting destructor (__dt__5CNandFv): destroys the 8-request array
-// then frees the object when the deleting flag is set.
-extern "C" void* __dt__5CNandFv(CNand* self, int deleting) {
-    if (self != nullptr) {
-        __destroy_arr(self, reinterpret_cast<ConstructorDestructor*>(&__dt__9CNRequestFv), 0x24, 8);
-        if (deleting > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+CNand::CNand() {
+    mHead = 0;
+    mTail = 0;
+    mShare = false;
 }
 
-// CNRequest deleting destructor (__dt__9CNRequestFv).
-extern "C" void* __dt__9CNRequestFv(CNRequest* self, int deleting) {
-    if (self != nullptr) {
-        if (deleting > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
+void CNand::reset() {
+    mHead = 0;
+    mTail = 0;
+    mSuccess = true;
 }
 
-// --- constructor ----------------------------------------------------------
+void CNand::update() {
+    bool success;
 
-// CNand constructor (__ct__CNand).
-extern "C" DECOMP_DONT_INLINE CNand* __ct__CNand(CNand* self) {
-    self->mTable = lbl_eu_8056FD48;
-    __construct_array(self,
-                      reinterpret_cast<ConstructorDestructor>(&__ct__CNRequest),
-                      reinterpret_cast<ConstructorDestructor>(&__dt__9CNRequestFv),
-                      0x24, 8);
-    self->mHead = 0;
-    self->mTail = 0;
-    self->mFlag = 0;
-    return self;
-}
-
-// --- helpers --------------------------------------------------------------
-
-// Reset the ring head/tail and mark the manager ready (NandMgrResetReady).
-extern "C" void NandMgrResetReady(CNand* self) {
-    self->mHead = 0;
-    self->mTail = 0;
-    self->mStatus = 1;
-}
-
-extern "C" CNRequest* func_804DA47C(CNand* nand);
-
-// Completion pump (NandMgrPumpCompletion): while the head request is active, poll it;
-// on success record its status byte and advance the head, else stop.
-extern "C" void NandMgrPumpCompletion(CNand* self) {
-    u8 status;
-    while (self->mReq[self->mHead].mTask != nullptr) {
-        if (CNReqSavePollTask(&self->mReq[self->mHead], &status) == 0) {
+    while (mRequests[mHead].mTask != NULL) {
+        if (!mRequests[mHead].update(&success)) {
             break;
         }
-        self->mStatus = status;
-        self->mHead = (s16)((s16)(self->mHead + 1) % 8);
+        mSuccess = success;
+        mHead++;
+        mHead %= REQUEST_MAX;
     }
 }
 
-// Enqueue a check request (NandMgrEnqueueCheck).
-extern "C" int NandMgrEnqueueCheck(CNand* self, u32 a1, u32 a2, u32 a3) {
-    CNRequest* req = func_804DA47C(self);
-    if (req != nullptr) {
-        return CNReqSaveInitCheck(req, a1, a2, a3);
+bool CNand::check(u32 neededBlocks, u32 neededFiles, u32* answer) {
+    CNRequest* request = alloc();
+    if (request != NULL) {
+        return request->check(neededBlocks, neededFiles, answer);
     }
-    return 0;
+    return false;
 }
 
-// Enqueue a save request, optionally preceded by a directory-create request
-// and followed by a flush request (NandMgrEnqueueSaveFlush).
-extern "C" int NandMgrEnqueueSaveFlush(CNand* self, u32 a1, u32 a2, u32 a3, u32 a4, u32 a5) {
-    if (self->mFlag != 0) {
-        CNRequest* req = func_804DA47C(self);
-        if (req == nullptr) {
-            return 0;
+bool CNand::save(const char* name, const void* buf, u32 size, CNBanner* banner, u8 perm) {
+    if (mShare) {
+        CNRequest* request = alloc();
+        if (request == NULL) {
+            return false;
         }
-        if (CNReqSaveSetupRequest(req, (void*)lbl_eu_805245B0, 0x34, 0) == 0) {
-            return 0;
+        if (!request->mkdir("share", NAND_PERM_RUSR | NAND_PERM_WUSR | NAND_PERM_RGRP, false)) {
+            return false;
         }
     }
 
-    CNRequest* req2 = func_804DA47C(self);
-    if (req2 == nullptr) {
-        return 0;
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    if (CNReqSaveInitSave(req2, a1, a2, a3, a5, self->mFlag) == 0) {
-        return 0;
+    if (!request->save(name, buf, size, perm, mShare)) {
+        return false;
     }
 
-    if (a4 != 0) {
-        CNRequest* req3 = func_804DA47C(self);
-        if (req3 == nullptr) {
-            return 0;
+    if (banner != NULL) {
+        CNRequest* request = alloc();
+        if (request == NULL) {
+            return false;
         }
-        if (CNReqSaveInitSaveBanner(req3, a4, 0) == 0) {
-            return 0;
+        if (!request->saveBanner(banner, false)) {
+            return false;
         }
     }
-
-    return 1;
+    return true;
 }
 
-// Enqueue a load request (NandMgrEnqueueLoad).
-extern "C" int NandMgrEnqueueLoad(CNand* self, u32 a1, u32 a2, u32 a3) {
-    CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+bool CNand::load(const char* name, void* buf, u32 size) {
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    return CNReqSaveInitLoad(req, a1, a2, a3, self->mFlag);
+    return request->load(name, buf, size, mShare);
 }
 
-// Enqueue a remove request (NandMgrEnqueueRemove).
-extern "C" int NandMgrEnqueueRemove(CNand* self, u32 a1) {
-    CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+bool CNand::remove(const char* name) {
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    return CNReqSaveInitRemove(req, a1, self->mFlag);
+    return request->remove(name, mShare);
 }
 
-// Enqueue a readdir request (NandMgrEnqueueReaddir).
-extern "C" int NandMgrEnqueueReaddir(CNand* self, u32 a1, u32 a2, u32 a3) {
-    CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+bool CNand::readdir(char* nameList, u32 size, u32* num) {
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    return CNReqSaveInitReaddir(req, a1, a2, a3, self->mFlag);
+    return request->readdir(nameList, size, num, mShare);
 }
 
-// Enqueue a flush request (NandMgrEnqueueFlush).
-extern "C" int NandMgrEnqueueFlush(CNand* self, u32 a1) {
-    CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+bool CNand::saveBanner(CNBanner* banner) {
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    return CNReqSaveInitSaveBanner(req, a1, 0);
+    return request->saveBanner(banner, false);
 }
 
-// Enqueue a banner/load request against the shared path buffer (NandMgrEnqueueBannerLoad).
-extern "C" int NandMgrEnqueueBannerLoad(CNand* self, u32 a1, u32 a2) {
-    CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+bool CNand::loadBanner(void* buf, u32 size) {
+    CNRequest* request = alloc();
+    if (request == NULL) {
+        return false;
     }
-    return CNReqSaveInitLoad(req, (u32)(lbl_eu_805245B0 + 6), a1, a2, 0);
+    return request->load("banner.bin", buf, size, false);
 }
 
-// Ring buffer producer: claim the next free request slot (func_804DA47C).
-// Returns NULL when advancing the tail would collide with the head (full).
-extern "C" DECOMP_DONT_INLINE CNRequest* func_804DA47C(CNand* self) {
-    s16 next = (s16)((s16)(self->mTail + 1) % 8);
-    if (next == self->mHead) {
-        return nullptr;
+CNRequest* CNand::alloc() {
+    s16 next = mTail + 1;
+    next %= REQUEST_MAX;
+    if (next == mHead) {
+        return NULL;
     }
-    CNRequest* req = &self->mReq[self->mTail];
-    self->mTail = next;
-    return req;
-}
-
-// --- static initializer ---------------------------------------------------
-
-// .ctors hook: construct the CNand singleton (sinit_804DA4C0).
-extern "C" CNand* sinit_804DA4C0(void) {
-    return __ct__CNand(reinterpret_cast<CNand*>(lbl_eu_8065FD00));
+    CNRequest* request = &mRequests[mTail];
+    mTail = next;
+    return request;
 }

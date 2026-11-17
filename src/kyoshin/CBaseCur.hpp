@@ -40,9 +40,11 @@ extern "C" void* lbl_eu_805349A0[];
 // virtuals. initLayout is declared without a body: the base slot is 0 and
 // novtable emits no reference to the missing symbol; virtual calls land on
 // the leaf tables in the blob.
-class __declspec(novtable) CBaseCur {
+class CBaseCur {
 public:
-    virtual void initLayout();   // +0x08 (0 in the base table)
+    CBaseCur(nw4r::lyt::ArcResourceAccessor*);
+    ~CBaseCur();
+    virtual void initLayout() = 0;   // +0x08 (0 in the base table)
     virtual void cleanup();      // +0x0C
     virtual void setRootPaneTranslate(const nw4r::math::VEC3* pos); // +0x10
     virtual void checkDeactivate(); // +0x14
@@ -59,33 +61,39 @@ public:
     void*& vtbl() { return *reinterpret_cast<void**>(this); }
 };
 
-class __declspec(novtable) CCur07 : public CBaseCur {
+class CCur07 : public CBaseCur {
 public:
+    CCur07(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CCur09 : public CBaseCur {
+class CCur09 : public CBaseCur {
 public:
+    CCur09(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CCur11 : public CBaseCur {
+class CCur11 : public CBaseCur {
 public:
+    CCur11(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CCur14 : public CBaseCur {
+class CCur14 : public CBaseCur {
 public:
+    CCur14(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CCur15 : public CBaseCur {
+class CCur15 : public CBaseCur {
 public:
+    CCur15(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CCur16 : public CBaseCur {
+class CCur16 : public CBaseCur {
 public:
+    CCur16(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
@@ -93,12 +101,11 @@ public:
 // rely on MWCC's implicit member destruction of an embedded CCur18 (e.g.
 // UI::CPassiveSkillLine). Elsewhere owners call __dt__6CCur18Fv explicitly, and
 // a declared dtor would add scope-exit calls for their stack temporaries.
-class __declspec(novtable) CCur18 : public CBaseCur {
+class CCur18 : public CBaseCur {
 public:
+    CCur18(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
-#ifdef CCUR18_MEMBER_DTOR
-    ~CCur18();
-#endif
+    virtual ~CCur18();
 };
 
 // Retail ctor/dtor of the embedded-cursor leaf (stripped short ctor name
@@ -109,12 +116,16 @@ public:
 extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc);
 extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags);
 
-class __declspec(novtable) CCur22 : public CBaseCur {
+class CCur22 : public CBaseCur {
 public:
+    virtual ~CCur22();
+    CCur22(nw4r::lyt::ArcResourceAccessor* = nullptr);
     virtual void initLayout();
 };
 
-class __declspec(novtable) CSubCur : public CBaseCur {
+class CSubCur : public CBaseCur {
 public:
+    CSubCur(nw4r::lyt::ArcResourceAccessor* = nullptr);
+    ~CSubCur();
     virtual void initLayout();
 };

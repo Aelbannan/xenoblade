@@ -51,7 +51,7 @@ struct CMCSubFixStr64 { char mString[64]; int mLength; };
 struct CMCSubFixStr128 { char mString[128]; int mLength; };
 
 // Copy-shape helpers for __ct__CMCGetItemBox (same idiom as CItemBoxGrid.hpp:
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);   // 4-word mem-region copy ctor
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);   // 4-word mem-region copy ctor
 // whole-member struct assignments reproduce retail's scheduling, with word
 // arrays lowering to the paired lwzu/stwu bdnz loops).
 struct CMCW6 { u32 w[6]; };
@@ -63,7 +63,7 @@ class CMCUnk16 {
 public:
     u8 d[0x10];
     CMCUnk16& operator=(const CMCUnk16& o) {
-        __ct__UnkClass_8011C974((void*)d, (void*)o.d);
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((void*)d, (void*)o.d);
         return *this;
     }
 };
@@ -227,7 +227,7 @@ public:
 };
 
 // C-ABI ctor (retail symbol __ct__CMCGetItemBox, no class-length mangling,
-// same as __ct__CSysWin / __ct__CEIBCur). Free-function form: no implicit
+// same as __ct__7CSysWinFUc / __ct__CEIBCur). Free-function form: no implicit
 // base-vptr store is emitted, the label is written explicitly via vtbl().
 extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self);
 
@@ -294,7 +294,7 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub
 // Constructor imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
 // __ct__17UnkClass_8045F564Fv lives in kyoshin/CSysWin.hpp (typed form).
-extern "C" void __ct__CSysWin(void* syswin, int arg);
+extern "C" void __ct__7CSysWinFUc(void* syswin, int arg);
 extern "C" void __ct__CItemBoxInfo(void* info, int arg2, int arg3);
 extern "C" void __dt__12CItemBoxInfoFv(void* info, int flags);
 extern "C" void __dt__7CSysWinFv(void* syswin, int flags);

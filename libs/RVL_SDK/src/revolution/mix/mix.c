@@ -251,19 +251,6 @@ static u16 MIXGetVolumeInline(s32 db)
     return __MIXVolumeTable[idx];
 }
 
-u16 __MIXGetVolume(s32 db) {
-    s32 idx;
-
-    if (db <= MIX_DB_MIN) {
-        return 0;
-    }
-    if (db >= MIX_DB_MAX) {
-        return 0xFF64;
-    }
-    idx = db + 904;
-    return __MIXVolumeTable[idx];
-}
-
 void __MIXSetPan(MIXChannel* ch) {
     s32 pan = ch->panL;
     s32 panR = ch->panR;
@@ -285,6 +272,19 @@ void __MIXSetPan(MIXChannel* ch) {
         ch->vRL = 0;
         ch->vRR = 0;
     }
+}
+
+u16 __MIXGetVolume(s32 db) {
+    s32 idx;
+
+    if (db <= MIX_DB_MIN) {
+        return 0;
+    }
+    if (db >= MIX_DB_MAX) {
+        return 0xFF64;
+    }
+    idx = db + 904;
+    return __MIXVolumeTable[idx];
 }
 
 void MIXInit(void) {

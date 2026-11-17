@@ -14,6 +14,8 @@ namespace lyt {
 // Forward declarations
 class Pane;
 class Material;
+class Group;
+class Layout;
 class ResourceAccessor;
 
 namespace res {
@@ -100,6 +102,51 @@ struct AnimationContent {
     u8 PADDING_0x16[0x18 - 0x16]; // at 0x16
 };
 
+/******************************************************************************
+ *
+ * AnimationTarget
+ *
+ ******************************************************************************/
+struct AnimationTarget {
+    enum AnimCurve {
+        ANIMCURVE_NONE,
+        ANIMCURVE_STEP,
+        ANIMCURVE_HERMITE,
+
+        ANIMCURVE_MAX
+    };
+
+    u8 id;                     // at 0x0
+    u8 target;                 // at 0x1
+    u8 curveType;              // at 0x2
+    u8 PADDING_0x3;            // at 0x3
+    u16 keyNum;                // at 0x4
+    u8 PADDING_0x6[0x8 - 0x6]; // at 0x6
+    u32 keysOffset;            // at 0x8
+};
+
+/******************************************************************************
+ *
+ * StepKey
+ *
+ ******************************************************************************/
+struct StepKey {
+    f32 frame;       // at 0x0
+    u16 value;       // at 0x4
+    u16 PADDING_0x6; // at 0x6
+};
+
+/******************************************************************************
+ *
+ * HermiteKey
+ *
+ ******************************************************************************/
+struct HermiteKey {
+    f32 frame; // at 0x0
+    f32 value; // at 0x4
+    f32 slope; // at 0x8
+};
+
 } // namespace res
 
 /******************************************************************************
@@ -110,17 +157,41 @@ struct AnimationContent {
 class AnimResource {
 public:
     AnimResource();
+    AnimResource(const void* pAnmResBuf) {
+        Set(pAnmResBuf);
+    }
 
-    int GetGroupNum() const;
-    const void* GetGroupArray() const;
-    int GetAnimationShareInfoNum() const;
+    void Set(const void* pAnmResBuf);
+    void Init();
+
+    u16 GetGroupNum() const;
+    const AnimationGroupRef* GetGroupArray() const;
     bool IsDescendingBind() const;
 
-protected:
-    const res::BinaryFileHeader* mpFileHeader;
-    const res::AnimationBlock* mpResBlock;
-    const res::AnimationTagBlock* mpTagBlock;
-    const res::AnimationShareBlock* mpShareBlock;
+    u16 GetAnimationShareInfoNum() const;
+    const AnimationShareInfo* GetAnimationShareInfoArray() const;
+
+    u16 CalcAnimationNum(Pane* pPane, bool recursive) const;
+    u16 CalcAnimationNum(Group* pGroup, bool recursive) const;
+
+    const res::BinaryFileHeader* GetFileHeader() const {
+        return mpFileHeader;
+    }
+    const res::AnimationBlock* GetResourceBlock() const {
+        return mpResBlock;
+    }
+    const res::AnimationTagBlock* GetTagBlock() const {
+        return mpTagBlock;
+    }
+    const res::AnimationShareBlock* GetShareBlock() const {
+        return mpShareBlock;
+    }
+
+private:
+    const res::BinaryFileHeader* mpFileHeader;       // at 0x0
+    const res::AnimationBlock* mpResBlock;           // at 0x4
+    const res::AnimationTagBlock* mpTagBlock;        // at 0x8
+    const res::AnimationShareBlock* mpShareBlock;    // at 0xC
 };
 
 /******************************************************************************
@@ -196,6 +267,12 @@ public:
     virtual void Animate(u32 idx, Pane* pPane);         // at 0x1C
     virtual void Animate(u32 idx, Material* pMaterial); // at 0x20
 
+    AnimationLink* FindUnbindLink(AnimationLink* pLink) const;
+
+    template <typename T>
+    AnimationLink* Bind(T* pTarget, AnimationLink* pAnimLink, u16 idx,
+                        bool disable);
+
 protected:
     void** mpFileResAry;         // at 0x14
     AnimationLink* mAnimLinkAry; // at 0x18
@@ -209,12 +286,55 @@ protected:
  ******************************************************************************/
 namespace detail {
 
+/******************************************************************************
+ *
+ * AnimPaneTree
+ *
+ ******************************************************************************/
+class AnimPaneTree {
+public:
+    static const int MATERIAL_NUM_MAX = 9;
+
+public:
+    AnimPaneTree() {
+        Init();
+    }
+    AnimPaneTree(Pane* pTargetPane, const AnimResource& rAnimRes) {
+        Init();
+        Set(pTargetPane, rAnimRes);
+    }
+
+    static u16 FindAnimContent(const res::AnimationBlock* pAnimBlock,
+                               const char* pAnimContName, u8 animContType);
+
+    void Init();
+    void Set(Pane* pTargetPane, const AnimResource& rAnimRes);
+    AnimTransform* Bind(Layout* pLayout, Pane* pTargetPane,
+                        ResourceAccessor* pResAccessor) const;
+
+    bool IsEnabled() const {
+        return mLinkNum != 0;
+    }
+    const AnimResource& GetAnimResource() const {
+        return mAnimRes;
+    }
+
+private:
+    AnimResource mAnimRes;              // at 0x0
+    u16 mAnimPaneIdx;                   // at 0x10
+    u16 mLinkNum;                       // at 0x12
+    u16 mAnimMatIdx[MATERIAL_NUM_MAX];  // at 0x14
+    u8 mAnimMatCnt;                     // at 0x26
+};
+
 AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
                                  AnimTransform* pAnimTrans);
 AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
                                  const AnimResource& rResource);
 void UnbindAnimationLink(AnimationLinkList* pAnimList,
-                                 AnimTransform* pAnimTrans);
+                         AnimTransform* pAnimTrans);
+void UnbindAnimationLink(AnimationLinkList* pAnimList,
+                         const AnimResource& rResource);
 
 } // namespace detail
 

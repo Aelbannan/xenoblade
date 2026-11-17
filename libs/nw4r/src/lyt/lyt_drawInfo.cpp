@@ -16,9 +16,9 @@ __declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_80569
 namespace nw4r {
 namespace lyt {
 
-DrawInfo::DrawInfo() : mViewRect(lbl_eu_80669DD0, lbl_eu_80669DD0, lbl_eu_80669DD0, lbl_eu_80669DD0),
-                       mLocationAdjustScale(lbl_eu_80669DD4, lbl_eu_80669DD4),
-                       mGlobalAlpha(lbl_eu_80669DD4) {
+DrawInfo::DrawInfo() : mViewRect(0.0f, 0.0f, 0.0f, 0.0f),
+                       mLocationAdjustScale(1.0f, 1.0f),
+                       mGlobalAlpha(1.0f) {
     std::memset(&mFlag, 0, sizeof(mFlag));
     math::MTX34Identity(&mViewMtx);
 }

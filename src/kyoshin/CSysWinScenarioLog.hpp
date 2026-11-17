@@ -936,10 +936,6 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 // inline body at each call site (retail calls them out-of-line).
 extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg);
 extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self);
-
-// cbRenderBefore imports (retail emits direct bl to these symbols).
-extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
-extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int arg2, int arg3);

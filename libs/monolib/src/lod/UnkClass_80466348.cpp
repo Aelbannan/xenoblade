@@ -100,10 +100,6 @@ extern f32 lbl_eu_806583B0[3][4]; // fixed LOD texture matrix
 // ---- shared sdata2 float constants (small-data pool) ----
 extern const float lbl_eu_8066A620;
 extern const float lbl_eu_8066A624;
-extern const float lbl_eu_8066A640;
-extern const float lbl_eu_8066A644;
-extern const double lbl_eu_8066A628;  // s32->f32 magic (0x4330000080000000)
-extern const double lbl_eu_8066A638;  // u8->f32 magic (0x4330000000000000)
 
 // Builtin (f32) casts: retail's conversion idiom subtracts the 0x4330 magic
 // with single rounding (fsubs), which only the builtin cast emits (a manual
@@ -839,14 +835,14 @@ void LOD::UnkClass_80466348::setCurrentMtxCached() {
 // single unmatched data slot (data 99.5%) is deferred (see CNReqtaskCheck).
 extern "C" void sinit_804683E8() {
     float* ramp = lbl_eu_80658380;
-    ramp[0] = lbl_eu_8066A640;
+    ramp[0] = 0.5f;
     ramp[1] = lbl_eu_8066A620;
     ramp[2] = lbl_eu_8066A620;
-    ramp[3] = lbl_eu_8066A640;
+    ramp[3] = 0.5f;
     ramp[4] = lbl_eu_8066A620;
-    ramp[5] = lbl_eu_8066A644;
+    ramp[5] = (-0.5f);
     ramp[6] = lbl_eu_8066A620;
-    ramp[7] = lbl_eu_8066A640;
+    ramp[7] = 0.5f;
     ramp[8] = lbl_eu_8066A620;
     ramp[9] = lbl_eu_8066A620;
     ramp[10] = lbl_eu_8066A620;

@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from tools.coop.lib.data_match import check_data_sections
+from tools.coop.lib import weak_dedup as W
 from tools.coop.lib.weak_dedup import linked_view_for
 
 R_PPC_ADDR32 = 1
@@ -23,9 +24,13 @@ RANGES = [("other/Base.cpp", ".text", 0x80000000, 0x80000100),
 
 
 def build(path: Path, *, text: bytes, rodata: bytes, sdata: bytes,
-          symbols: list[tuple], sdata_relocs: list[tuple[int, str]]) -> Path:
+          symbols: list[tuple], sdata_relocs: list[tuple[int, str]],
+          text_relocs: list[tuple[int, str]] = (), force_active: tuple[str, ...] = ()) -> Path:
     """symbols: (name, section, value, size, bind, type)."""
-    names = [".text", ".rodata", ".sdata", ".rela.sdata", ".symtab", ".strtab", ".shstrtab"]
+    names = [".text", ".rodata", ".sdata", ".rela.sdata"]
+    names += [".rela.text"] if text_relocs else []
+    names += [".comment"] if force_active else []
+    names += [".symtab", ".strtab", ".shstrtab"]
     idx = {n: i + 1 for i, n in enumerate(names)}
     shstr = b"\0" + b"".join(n.encode() + b"\0" for n in names)
     shname, off = {}, 1
@@ -39,7 +44,13 @@ def build(path: Path, *, text: bytes, rodata: bytes, sdata: bytes,
         syms.append(struct.pack(">IIIBBH", len(strtab), value, size, bind << 4 | typ, 0, idx[sec]))
         strtab += name.encode() + b"\0"
     rela = b"".join(struct.pack(">IIi", o, sym_index[n] << 8 | R_PPC_ADDR32, 0) for o, n in sdata_relocs)
+    rela_text = b"".join(struct.pack(">IIi", o, sym_index[n] << 8 | R_PPC_ADDR32, 0) for o, n in text_relocs)
+    # MWCC .comment: 0x2C header, then 8 bytes per symbol (byte 5 & 0x08 = force-active).
+    comment = b"CodeWarrior".ljust(0x2C, b"\0") + b"".join(
+        bytes([0, 0, 0, 4, 0, 0x08 if n in force_active else 0, 0, 0])
+        for n in [None] + [name for name, *_ in order])
     blobs = {".text": text, ".rodata": rodata, ".sdata": sdata, ".rela.sdata": rela,
+             ".rela.text": rela_text, ".comment": comment,
              ".symtab": b"".join(syms), ".strtab": strtab, ".shstrtab": shstr}
     body, offs = b"", {}
     for n in names:
@@ -49,9 +60,9 @@ def build(path: Path, *, text: bytes, rodata: bytes, sdata: bytes,
     body += b"\0" * ((-(0x34 + len(body))) % 4)
     shdrs = [b"\0" * 40]
     for n in names:
-        typ = {".symtab": 2, ".strtab": 3, ".shstrtab": 3, ".rela.sdata": 4}.get(n, 1)
-        link = idx[".symtab"] if n == ".rela.sdata" else (idx[".strtab"] if n == ".symtab" else 0)
-        info = idx[".sdata"] if n == ".rela.sdata" else 0
+        typ = {".symtab": 2, ".strtab": 3, ".shstrtab": 3, ".rela.sdata": 4, ".rela.text": 4}.get(n, 1)
+        link = idx[".symtab"] if n.startswith(".rela") else (idx[".strtab"] if n == ".symtab" else 0)
+        info = idx[n[5:]] if n.startswith(".rela") else 0
         shdrs.append(struct.pack(">IIIIIIIIII", shname[n], typ, 0, 0, offs[n], len(blobs[n]),
                                  link, info, 4, 0))
     ehdr = (b"\x7fELF\x01\x02\x01" + b"\0" * 9
@@ -86,8 +97,11 @@ class WeakDedupTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    # Retail names of what this unit really owns (so they are never link-dead).
+    OWN = {"f": 0x80001000, "__RTTI__4Unit": 0x80601000, "keep": 0x80601000}
+
     def view(self, obj: Path, addrs: dict[str, int]):
-        return linked_view_for(obj, RANGES, addrs, "this/Unit.cpp")
+        return linked_view_for(obj, RANGES, {**self.OWN, **addrs}, "this/Unit.cpp")
 
     def test_weak_copy_owned_by_other_unit_is_excluded(self):
         obj = unit_object(self.d / "u.o")
@@ -97,17 +111,126 @@ class WeakDedupTest(unittest.TestCase):
 
     def test_weak_symbol_retail_places_in_this_unit_is_kept(self):
         obj = unit_object(self.d / "u.o")
-        v = self.view(obj, {"__dt__4BaseFv": 0x80001010})
+        v = self.view(obj, {"__dt__4BaseFv": 0x80001010, "__RTTI__4Base": 0x80601004})
         self.assertEqual(v.excluded, [])
         self.assertEqual(v.path, obj)
 
     def test_global_symbol_with_same_name_is_kept(self):
         obj = unit_object(self.d / "u.o", weak_dtor_bind=GLOBAL)
-        v = self.view(obj, {"__dt__4BaseFv": 0x80000040})
+        v = self.view(obj, {"__dt__4BaseFv": 0x80000040, "__RTTI__4Base": 0x80601004})
         self.assertEqual(v.excluded, [])
 
-    def test_weak_symbol_unknown_to_symbols_txt_is_kept(self):
+    def test_unreferenced_symbol_with_no_retail_copy_is_dead_stripped(self):
+        # Nothing references the dtor copy or the Base RTTI and retail has
+        # neither anywhere: mwld garbage-collected them (any binding).
+        for bind in (WEAK, GLOBAL, LOCAL):
+            obj = unit_object(self.d / f"u{bind}.o", weak_dtor_bind=bind)
+            v = self.view(obj, {})
+            self.assertEqual(v.removed.get(".text"), 0x10, bind)
+            self.assertTrue(any("__dt__4BaseFv" in n and "dead-strip" in n for n in v.excluded))
+            self.assertFalse(any(n.startswith(".text f ") for n in v.excluded))
+            # Unreferenced data with an unknown name is left alone.
+            self.assertNotIn(".sdata", v.removed)
+            self.assertNotIn(".rodata", v.removed)
+
+    def test_symbol_referenced_from_retained_data_is_not_dead_stripped(self):
+        obj = build(self.d / "u.o", text=b"\x60\0\0\0" * 8, rodata=b"", sdata=b"\0" * 4,
+                    symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                             ("helper", ".text", 0x10, 0x10, GLOBAL, FUNC),
+                             ("keep", ".sdata", 0, 4, GLOBAL, OBJECT)],
+                    sdata_relocs=[(0, "helper")])
+        v = self.view(obj, {})
+        self.assertEqual(v.excluded, [])
+        self.assertEqual(v.path, obj)
+
+    def test_unit_with_an_unspelled_retail_function_is_not_dead_stripped(self):
+        # symbols.txt places "mystery" in this unit's .text but the object
+        # defines no such name: an unknown decomp name may be that function
+        # under another spelling, so nothing is treated as link-dead.
         obj = unit_object(self.d / "u.o")
+        v = self.view(obj, {"mystery": 0x80001010})
+        self.assertEqual(v.excluded, [])
+        self.assertEqual(v.path, obj)
+
+    def test_flat_spelling_of_a_retail_name_is_not_dead_stripped(self):
+        obj = build(self.d / "u.o", text=b"\x60\0\0\0" * 8, rodata=b"", sdata=b"",
+                    symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                             ("g__3BarFv__FP3Bar", ".text", 0x10, 0x10, GLOBAL, FUNC)],
+                    sdata_relocs=[])
+        self.assertEqual(self.view(obj, {"g__3BarFv": 0x80001010}).excluded, [])
+
+    def class_object(self, name: str, **kw) -> Path:
+        """f (retail) + ctor/dtor of a base retail never instantiates: the ctor
+        installs vtable ``vt`` (global, .sdata+4), whose slot names the dtor;
+        the ctor also reads a local literal."""
+        return build(self.d / name, text=b"\x60\0\0\0" * 12, rodata=b"lit\0", sdata=b"\0" * 8,
+                     symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                              ("ctor", ".text", 0x10, 0x10, GLOBAL, FUNC),
+                              ("dtor", ".text", 0x20, 0x10, GLOBAL, FUNC),
+                              ("@1", ".rodata", 0, 4, LOCAL, OBJECT),
+                              ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                              ("vt", ".sdata", 4, 4, GLOBAL, OBJECT)],
+                     sdata_relocs=[(4, "dtor")], text_relocs=[(0x10, "vt"), (0x14, "@1")], **kw)
+
+    # symbols.txt for class_object(): retail has f and keep, nothing else.
+    CLASS = {"f": 0x80001000, "keep": 0x80601000}
+
+    def class_view(self, obj: Path, addrs: dict[str, int]):
+        return linked_view_for(obj, RANGES, {**self.CLASS, **addrs}, "this/Unit.cpp")
+
+    def test_vtable_only_a_dead_ctor_installs_goes_with_its_dtor(self):
+        v = self.class_view(self.class_object("u.o"), {})
+        self.assertEqual(v.removed.get(".text"), 0x20)
+        self.assertEqual(v.removed.get(".sdata"), 4)
+        self.assertTrue(any(".sdata vt " in n for n in v.excluded))
+        # Retail keeps the literals of a function it stripped.
+        self.assertNotIn(".rodata", v.removed)
+
+    def orphan_vtable_object(self, vt_name: str) -> Path:
+        """f and g (both retail) + a global vtable naming g that nothing installs."""
+        return build(self.d / "o.o", text=b"\x60\0\0\0" * 8, rodata=b"", sdata=b"\0" * 8,
+                     symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                              ("g", ".text", 0x10, 0x10, GLOBAL, FUNC),
+                              ("keep", ".sdata", 0, 4, GLOBAL, OBJECT),
+                              (vt_name, ".sdata", 4, 4, GLOBAL, OBJECT)],
+                     sdata_relocs=[(4, "g")])
+
+    def test_unreferenced_vtable_with_no_retail_copy_is_dropped(self):
+        v = self.class_view(self.orphan_vtable_object("__vt__4Base"), {"g": 0x80001010})
+        self.assertEqual(v.removed.get(".sdata"), 4)
+        self.assertNotIn(".text", v.removed)
+
+    def test_unreferenced_vtable_retail_names_is_kept(self):
+        v = self.class_view(self.orphan_vtable_object("__vt__4Base"),
+                            {"g": 0x80001010, "__vt__4Base": 0x80601004})
+        self.assertEqual(v.excluded, [])
+
+    def test_unreferenced_vtable_retail_may_name_differently_is_kept(self):
+        v = self.class_view(self.orphan_vtable_object("__vt__4Base"),
+                            {"g": 0x80001010, "lbl_80601004": 0x80601004})
+        self.assertEqual(v.excluded, [])
+
+    def test_unreferenced_plain_data_with_no_retail_copy_is_kept(self):
+        v = self.class_view(self.orphan_vtable_object("table"), {"g": 0x80001010})
+        self.assertEqual(v.excluded, [])
+
+    def test_data_retail_may_name_differently_is_not_stripped(self):
+        # symbols.txt has an unknown label in this unit's .sdata slice: "vt"
+        # may be that object, so it stays and keeps its dtor alive.
+        v = self.class_view(self.class_object("u.o"), {"lbl_80601004": 0x80601004})
+        self.assertEqual(v.removed.get(".text"), 0x10)
+        self.assertTrue(any(".text ctor " in n for n in v.excluded))
+        self.assertNotIn(".sdata", v.removed)
+
+    def test_force_active_function_is_a_root(self):
+        v = self.class_view(self.class_object("u.o", force_active=("ctor",)), {})
+        self.assertEqual(v.excluded, [])
+
+    def test_unreferenced_local_data_is_left_alone(self):
+        obj = build(self.d / "u.o", text=b"\x60\0\0\0" * 4, rodata=b"Unit\0\0\0\0", sdata=b"",
+                    symbols=[("f", ".text", 0, 0x10, GLOBAL, FUNC),
+                             ("@1", ".rodata", 0, 5, LOCAL, OBJECT)],
+                    sdata_relocs=[])
         self.assertEqual(self.view(obj, {}).excluded, [])
 
     def test_string_only_an_excluded_symbol_references_is_stripped(self):
@@ -151,3 +274,33 @@ class WeakDedupTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class KeepAlignmentTest(unittest.TestCase):
+    """Dropping an object must leave the next one at its own alignment."""
+
+    def fake(self, aligns):
+        import struct
+        import types
+        # symbol tuples: (name, value, size, info, other, shndx); section 1 = .rodata
+        syms = [(0, 0, 0, 0, 0, 0),
+                (0, 0x0, 0xB, 1, 0, 1),    # kept name string
+                (0, 0xC, 0xB, 1, 0, 1),    # dropped
+                (0, 0x18, 0x10, 1, 0, 1)]  # string table
+        comment = bytearray(b"CodeWarrior".ljust(0x2C, b"\0"))
+        comment += bytes(8)
+        for a in aligns:
+            comment += struct.pack(">I", a) + bytes(4)
+        return types.SimpleNamespace(names=["", ".rodata", ".comment"], syms=syms, shnum=3,
+                                     contents=[b"", b"", bytes(comment)])
+
+    def test_tail_of_dropped_range_becomes_padding(self):
+        ranges, zero = W._keep_alignment(self.fake([4, 4, 8]), {1: [(0xC, 0x18)]})
+        # 0x18 would land on 0xC; an 8-aligned object needs 0x10, so 4 bytes stay.
+        self.assertEqual(ranges[1], [(0xC, 0x14)])
+        self.assertEqual(zero[1], [(0x14, 0x18)])
+
+    def test_already_aligned_object_is_untouched(self):
+        ranges, zero = W._keep_alignment(self.fake([4, 4, 4]), {1: [(0xC, 0x18)]})
+        self.assertEqual(ranges[1], [(0xC, 0x18)])
+        self.assertEqual(zero, {})

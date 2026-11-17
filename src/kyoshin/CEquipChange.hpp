@@ -155,7 +155,7 @@ extern "C" void __ct__CCur15(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CSubCur(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CItemBoxInfo(void* self, int a, int b);
 extern "C" void __ct__CEquipItemBox(void* self);
-extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
+extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void ShopBuy_CopyData(void* dst, void* src);
 extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
 extern "C" void InfoCfCopySysWin(void* dst, void* src);
@@ -252,8 +252,8 @@ struct CEqChStateView {
    box info temp, -0x2B0 for the equip item box temp). */
 struct CEqChBoxTemp {
     u32 _00;               // 0x00
-    u8 f04[0x10];          // 0x04 (__ct__UnkClass_8011C974)
-    u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
+    u8 f04[0x10];          // 0x04 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    u8 f14[0x10];          // 0x14 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
     u32 f24[27];           // 0x24..0x90
     u8 f134;               // 0x90
     u8 _pad91[3];
@@ -274,18 +274,18 @@ struct CEqChBoxTemp {
 
 struct CEqChEquipTemp {
     u32 _00;               // 0x00 (vtable-slot word never copied; f04 sits at +4)
-    u8 f04[0x10];          // 0x04 (__ct__UnkClass_8011C974)
-    u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
+    u8 f04[0x10];          // 0x04 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
+    u8 f14[0x10];          // 0x14 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
     u32 f24[7];            // 0x24..0x40
     u8 f2f0[4];            // 0x40
     u8 f2f4[0x18];         // 0x44 (PartyStateWin_CopySlotRec)
     u8 f30c[0x18];         // 0x5c (PartyStateWin_CopySlotRec)
     u8 f324[0x1c];         // 0x74 (MenuShopSellCopyCursor)
-    u8 f340[0x10];         // 0x90 (__ct__UnkClass_8011C974)
+    u8 f340[0x10];         // 0x90 (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
     u32 f350[5];           // 0xa0..0xb4
     u8 f364[4];            // 0xb4..0xb8
     u8 _padb8[4];
-    u8 f36c[0x10];         // 0xbc (__ct__UnkClass_8011C974)
+    u8 f36c[0x10];         // 0xbc (__as__17UnkClass_8045F564FRC17UnkClass_8045F564)
     u32 f37c[4];           // 0xcc..0xdc
     u8 f38c[4];            // 0xdc..0xe0
     f32 f390[5];           // 0xe0..0xf4
@@ -446,16 +446,12 @@ extern u32 lbl_eu_80508068[3];
 // CfObjEnumList helper family (opaque void* params repo-wide - see
 // CPartyStateWin.hpp); struct views for the stack holder / list / slot used
 // by EquipChange_RunMainFlow's refresh block.
-struct CEquipEnumHolder { void* field_0x0; u32 field_0x4; };
 struct CEquipEnumList { u8 _00[0x620]; u32 field_0x620; };
 struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
-extern "C" void CTaskGame_enumListCtor(void*);
-extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
-extern "C" void __dt__80043E88(void*, int);
 extern "C" int stepEIBSysWin2(CEquipItemBox* box);
 extern "C" int isEIBSelectBlocked(CEquipItemBox* box);
 extern "C" void handleEIBConfirm(CEquipItemBox* box);

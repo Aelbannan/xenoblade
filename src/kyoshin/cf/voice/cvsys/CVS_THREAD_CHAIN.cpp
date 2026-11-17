@@ -62,25 +62,6 @@ int chainVoicePlayById(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voi
     return TryRequestVoice(self, embedded, voiceId);
 }
 
-// us-802a8238 (chainVoiceActorTrigger)
-// Chain actor voice trigger. The actor handle must have its factory-active
-// flag (bit 1 of the 0x3F00 manager word) set; a thread buffer (0xA) is
-// reserved, then a random chain voice (mtRand(2) + 0x321) is played. Always
-// returns 0.
-extern "C" int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
-    if ((self->field_0x3F00 & 2) == 0) {
-        return 0;
-    }
-    if (CCharVoiceMan_DispatchById(0xA, 1) == nullptr) {
-        return 0;
-    }
-    CCharVoice* embedded = (CCharVoice*)self;
-    if (self != nullptr) {
-        embedded = &self->voice;
-    }
-    RequestVoicePlayback(embedded, ml::math::mtRand(2) + 0x321, 0xA);
-    return 0;
-}
 
 // us-802a7f64 (__ct__802A5830)
 // Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
@@ -121,6 +102,20 @@ extern "C" cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     return self;
 }
 
+
+
+// us-802a81dc (chainVoiceAlwaysOne)
+// Always-one voice predicate (retail 0x8 bytes: li r3,1; blr). Flat C
+// linkage keeps the emitted symbol unmangled like retail (FAINT's
+// FaintVoice_GetBufSize precedent); referenced from the thread vtable
+// (lbl_eu_80539A3C slot 4). The same-named inline member in the header
+// still satisfies the class interface.
+extern "C" int chainVoiceAlwaysOne() {
+    return 1;
+}
+
+
+
 // us-802a8148 (chainVoiceLifetimeHandler)
 // Chain voice lifetime handler. Validates the factory-active flag, that the
 // voice is not already active (vtable[0x2BC/4]), and that the previous sound
@@ -156,15 +151,28 @@ extern "C" int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
     return 0;
 }
 
-// us-802a81dc (chainVoiceAlwaysOne)
-// Always-one voice predicate (retail 0x8 bytes: li r3,1; blr). Flat C
-// linkage keeps the emitted symbol unmangled like retail (FAINT's
-// FaintVoice_GetBufSize precedent); referenced from the thread vtable
-// (lbl_eu_80539A3C slot 4). The same-named inline member in the header
-// still satisfies the class interface.
-extern "C" int chainVoiceAlwaysOne() {
-    return 1;
+
+
+// us-802a8238 (chainVoiceActorTrigger)
+// Chain actor voice trigger. The actor handle must have its factory-active
+// flag (bit 1 of the 0x3F00 manager word) set; a thread buffer (0xA) is
+// reserved, then a random chain voice (mtRand(2) + 0x321) is played. Always
+// returns 0.
+extern "C" int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
+    if ((self->field_0x3F00 & 2) == 0) {
+        return 0;
+    }
+    if (CCharVoiceMan_DispatchById(0xA, 1) == nullptr) {
+        return 0;
+    }
+    CCharVoice* embedded = (CCharVoice*)self;
+    if (self != nullptr) {
+        embedded = &self->voice;
+    }
+    RequestVoicePlayback(embedded, ml::math::mtRand(2) + 0x321, 0xA);
+    return 0;
 }
+
 
 // Retail .data reconstruction (measured in
 // .scratch/dlabels/a2/CVS_THREAD_CHAIN.txt): the init-state triple the
@@ -175,13 +183,13 @@ extern "C" int chainVoiceAlwaysOne() {
 // carry the retail linker names.
 //
 // External words (out-of-unit retail labels, referenced not defined):
-// lbl_eu_80662CE8 is the CHAIN typeinfo object defined by DOWN's .sdata,
-// lbl_eu_80662CC0 is the base typeinfo word in CCharVoiceMan's .sdata.
+// __RTTI__Q22cf16CVS_THREAD_CHAIN is the CHAIN typeinfo object defined by DOWN's .sdata,
+// __RTTI__Q22cf10CVS_THREAD is the base typeinfo word in CCharVoiceMan's .sdata.
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_80662CE8[2];
-extern u32 lbl_eu_80662CC0[2];
+extern u32 __RTTI__Q22cf16CVS_THREAD_CHAIN[2];
+extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 
 u32 lbl_eu_80539A30[3] = {
     0,
@@ -190,7 +198,7 @@ u32 lbl_eu_80539A30[3] = {
 };
 
 u32 lbl_eu_80539A3C[7] = {
-    (u32)lbl_eu_80662CE8,
+    (u32)__RTTI__Q22cf16CVS_THREAD_CHAIN,
     0,
     (u32)PlayThreadVoice,
     (u32)chainVoiceRemoveByPtr,
@@ -200,7 +208,7 @@ u32 lbl_eu_80539A3C[7] = {
 };
 
 u32 lbl_eu_80539A58[4] = {
-    (u32)lbl_eu_80662CC0,
+    (u32)__RTTI__Q22cf10CVS_THREAD,
     0,
     0,
     0,

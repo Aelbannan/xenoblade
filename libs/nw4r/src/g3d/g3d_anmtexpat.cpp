@@ -7,7 +7,6 @@
 
 // Float constants in the retail .sdata2 pool (named so the sda21 relocs
 // reference the retail symbols instead of TU-local pool labels).
-extern const f32 lbl_eu_80669B58; // 0.0f (rate==0 triggers the cache refresh)
 extern const f32 lbl_eu_80669B5C; // 1.0f (FrameCtrl::mUpdateRate init)
 extern const f64 lbl_eu_80669B60; // 0x4330000000000000 (u16->double bias)
 extern const f32 lbl_eu_80669B5C; // 1.0f (FrameCtrl::mUpdateRate init)
@@ -228,13 +227,13 @@ void AnmObjTexPatRes::SetFrame(f32 frame) {
 void AnmObjTexPatRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (lbl_eu_80669B58 == rate) {
+    if (0.0f == rate) {
         UpdateCache();
     }
 }
 
 void AnmObjTexPatRes::UpdateFrame() {
-    if (lbl_eu_80669B58 != GetRate()) {
+    if (0.0f != GetRate()) {
         UpdateFrm();
         UpdateCache();
     }

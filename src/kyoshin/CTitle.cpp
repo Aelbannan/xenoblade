@@ -16,6 +16,7 @@
 #include <nw4r/math.h>
 #include <stdio.h>
 #include "kyoshin/CSysWin.hpp" // ScalePaneWorldPos cursor-position helper
+#include "kyoshin/CSysWinImports.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 
 // TU-local plain functions (defined below in address order) called by the
@@ -466,7 +467,7 @@ extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self) {
 // CTitle: IWorkEvent vtable, mem region, flag fields, then the embedded
 // logo/menu/cursor sub-objects (retail order).
 // ---------------------------------------------------------------------------
-extern "C" CTitle* __ct__CTitle(CTitle* self) {
+extern "C" CTitle* __ct__6CTitleFv(CTitle* self) {
     *(void**)self = lbl_eu_8053B2C8;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = 0;
@@ -710,10 +711,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
         mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
         CTitleLogo_build(&mLogo, mAccessor);
         CTitleMenu_build(&mMenu, mAccessor);
-        CCur18 cur18Temp;
-        __ct__CCur18(&cur18Temp, mAccessor);
-        mCur = cur18Temp;
-        __dt__6CCur18Fv(&cur18Temp, -1);
+        mCur = CCur18(mAccessor);
         mCur.initLayout();
         field_0x1C = 1;
         mFileHandle = 0;

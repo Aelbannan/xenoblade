@@ -873,13 +873,13 @@ extern "C" void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScn
 extern "C" void __dt__reslist_CScnFilter();
 extern "C" void __dt___reslist_base_CScnFilter();
 }
-extern "C" u32 lbl_eu_80663A40; extern "C" u32 lbl_eu_80663A48;
+extern "C" u32 __RTTI__13CScnFilterMan; extern "C" u32 lbl_eu_80663A48;
 extern "C" u32 lbl_eu_80663A50; extern "C" u32 lbl_eu_80663A58;
 extern "C" u32 lbl_eu_80663A60;
 
 // [.data] 0x8056EB78-0x8056EBD0 (88B): 7 vtable sub-objects
 extern "C" u32 lbl_eu_8056EB78[4] = {
-    (u32)&lbl_eu_80663A40, 0x00000000,
+    (u32)&__RTTI__13CScnFilterMan, 0x00000000,
     (u32)&FMBlob::__dt__13CScnFilterManFv, (u32)&FMBlob::cbRenderBefore__13CScnFilterManFv,
 };
 extern "C" u32 lbl_eu_8056EB88[3] = { (u32)&lbl_eu_80663A48, 0x00000000,

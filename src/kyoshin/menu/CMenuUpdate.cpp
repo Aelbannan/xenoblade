@@ -182,7 +182,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
     u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
-    ApplyFontToTxtPanes((void*)getField10((u8*)obj->mLayout), (void*)result2);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)getField10((u8*)obj->mLayout)), (const nw4r::ut::Font*)((void*)result2));
 
     // Disable the alt animation, enable the main one, then tick the layout.
     obj->mLayout->SetAnimationEnable(obj->mAnim2, false);
@@ -343,7 +343,7 @@ extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg
     nw4r::lyt::ResourceAccessor* accessor =
         (nw4r::lyt::ResourceAccessor*)CUICfManager_getArcResourceAccessor();
     void* text = accessor->GetResource(0x74696D67, (const char*)str, NULL);
-    if (text) PaneSetTexPaletteByName(obj->mLayout, (const char*)name, text);
+    if (text) PaneSetTexPaletteByName(obj->mLayout, (const char*)name, (TPLPalette*)text);
 }
 
 // MenuUpdate_RebindLayout - (re)bind the window layout's textures, animations and pane
@@ -366,9 +366,9 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     void* tex = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                     ->GetResource(0x74696D67 /* 'timg' */, icon, NULL);
     if (tex != NULL) {
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, tex);
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, tex);
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, (TPLPalette*)tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, (TPLPalette*)tex);
+        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, (TPLPalette*)tex);
 
         // Texture object carries pixel dimensions through a two-level chain.
         // u32 locals so the int->float conversion uses the 0x4330 double trick.
@@ -435,7 +435,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, (TPLPalette*)res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
@@ -472,7 +472,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
             break;
         }
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, (TPLPalette*)res);
         }
 
         // Counter sign selects the countdown vs count-up gauge group; the
@@ -500,7 +500,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, (TPLPalette*)res);
             }
         } else {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
@@ -529,7 +529,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, (TPLPalette*)res);
             }
         }
         setPaneVisible(paneA, 1);
@@ -541,9 +541,9 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
         // Wide-vs-narrow number strip chosen by whether 32 digits fit.
         // wideFlag initializes before the len call (retail hoists li r26,0).
         u32 wideFlag = 0;
-        u16 len = BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x293,
+        u32 len = BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x293,
                                 (const char*)lbl_eu_805013C8 + 0x2a4, 5);
-        if ((u32)CtrlRemote_TouchBitByArg(0x20) >= (u32)len) {
+        if ((u32)CtrlRemote_TouchBitByArg(0x20) >= (u32)(u16)len) {
             wideFlag = 1;
         }
 
@@ -589,7 +589,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, (TPLPalette*)res);
             }
         } else {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
@@ -618,7 +618,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                       ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, res);
+                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, (TPLPalette*)res);
             }
         }
         setPaneVisible(paneA, 1);
@@ -640,7 +640,7 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                   ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, res);
+            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, (TPLPalette*)res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;

@@ -22,12 +22,10 @@
 // touches UnkClass_8045F564 storage through the void* free functions.
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
-#define ScalePaneWorldPos ScalePaneWorldPos_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSysWinImports.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
-#undef ScalePaneWorldPos
 
 // CfGameManager view for this TU (full header conflicts with CtrlObjectParam.hpp
 // data declarations).

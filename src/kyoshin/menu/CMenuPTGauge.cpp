@@ -107,7 +107,7 @@ void CMenuPTGauge::Init() {
     CMenuPTGaugeFont* fontObj =
         static_cast<CMenuPTGaugeFont*>(CDeviceFont::getFontInfo(1, mLayout));
     u32 fontResult = fontObj->sf9();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     mLayout->Animate(0);
     mLayout->UnbindAllAnimation();

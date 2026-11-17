@@ -107,7 +107,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     void** fontObj = (void**)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mLayout90);
     u32 fontResult = ((u32 (*)(void*))fontObj[0x24 / 4])(fontObj);
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     self->mLayout90->SetAnimationEnable(self->mAnim94, true);
     self->mAnim94->SetFrame(lbl_eu_80668B84);
@@ -138,7 +138,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xa7], tex);
+            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xa7], (TPLPalette*)tex);
             // Texture sub-resource carries a 2D dimension header (u16 w,h).
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
@@ -181,7 +181,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xb8], tex);
+            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xb8], (TPLPalette*)tex);
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
             u16 w = dims->mW;
@@ -216,7 +216,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                 char* str = MakeTplNameSysFile(msg);
                 void* tex = self->mAccessor->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
-                    PaneSetTexPaletteByName(self->mLayout90, buf, tex);
+                    PaneSetTexPaletteByName(self->mLayout90, (const char*)buf, (TPLPalette*)tex);
                 }
             } else {
                 if (idx < 3) {
@@ -247,7 +247,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                 nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
                 void* tex = mgr->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
-                    PaneSetTexPaletteByName(self->mLayout90, buf, tex);
+                    PaneSetTexPaletteByName(self->mLayout90, (const char*)buf, (TPLPalette*)tex);
                 }
             } else {
                 sprintf(buf, &lbl_eu_8050FC20[0x105], idx + 1);

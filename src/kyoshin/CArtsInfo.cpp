@@ -702,9 +702,9 @@ extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
         LayoutSetTextBoxFmtValue(self->mpLayout2, lbl_eu_8050B00C + 0x59, s, 0);
     }
 
-    u8 f1 = BdatGetU8Direct(self->field_0x4C, lbl_eu_8050B00C + 0x19c, self->field_0x55);
-    u8 f2 = BdatGetU8Direct(self->field_0x4C, lbl_eu_8050B00C + 0x1a1, self->field_0x55);
-    u8 f3 = BdatGetU8Direct(self->field_0x4C, lbl_eu_8050B00C + 0x1a6, self->field_0x55);
+    u8 f1 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x19c, self->field_0x55);
+    u8 f2 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x1a1, self->field_0x55);
+    u8 f3 = BdatGetU8Direct((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x1a6, self->field_0x55);
     char* p1 = 0;
     char* p2 = 0;
     char* p3 = 0;
@@ -733,7 +733,7 @@ extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
     unsigned int i = 1;
     do {
         sprintf(buf, lbl_eu_8050B00C + 0x1b2, (u8)i);
-        u8 f = BdatGetU8Direct(self->field_0x4C, buf, self->field_0x55);
+        u8 f = BdatGetU8Direct((const void*)self->field_0x4C, (const char*)buf, self->field_0x55);
         if (f != 0) {
             CArtsInfo_UpdateArtsRow(self, f, (u8)n++);
         }
@@ -929,17 +929,17 @@ int CArtsInfo_CalcDmg52(CArtsInfo* self) {
     u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = BdatGetItemId(v0 >> 20);
-    int hp = (int)BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
-    u8 b = (u8)BdatGetU8Direct((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u16 hp = BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
+    u8 b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
-        hp = (int)(lbl_eu_80668690 * (float)((hp & 0xffff) * base));
-        if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
+        hp = lbl_eu_80668690 * (float)(hp * base);
+        if (hp >= 0x3e7) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so CArtsInfo_GetSkill2D
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)CArtsInfo_GetEquipValue(self, 0x52) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)(hp * ((int)CArtsInfo_GetEquipValue(self, 0x52) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
@@ -956,17 +956,17 @@ int CArtsInfo_CalcDmg53(CArtsInfo* self) {
     u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = BdatGetItemId(v0 >> 20);
-    int hp = (int)BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x205, id);
-    u8 b = (u8)BdatGetU8Direct((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u16 hp = BdatGetU16Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x205, id);
+    u8 b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)CtrlObjectParam_GetArtsDataWord(obj);
-        hp = (int)(lbl_eu_806686A0 * (float)((hp & 0xffff) * base));
-        if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
+        hp = lbl_eu_806686A0 * (float)(hp * base);
+        if (hp >= 0x3e7) hp = 0x3e7;
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so CArtsInfo_GetSkill2D
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)CArtsInfo_GetEquipValue(self, 0x53) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)(hp * ((int)CArtsInfo_GetEquipValue(self, 0x53) + (int)CArtsInfo_GetSkill2D(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
@@ -981,7 +981,7 @@ fail:
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32 arg2) {
     char* result = 0;
-    u8 r = BdatGetU8Direct((u32)self->field_0x50, lbl_eu_8050B00C + 0x20C, arg2);
+    u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x20C, arg2);
     if (r != 0) {
         result = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, r);
     }
@@ -995,7 +995,7 @@ extern "C" __declspec(noinline) char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
     char* result = 0;
-    u8 r = BdatGetU8Direct((u32)self->field_0x50, lbl_eu_8050B00C + 0x212, arg2);
+    u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x212, arg2);
     if (r != 0) {
         result = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, r);
     }
@@ -1063,7 +1063,7 @@ extern "C" __declspec(noinline) void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8
     if (self->field_0x56 < 0xA) {
         LayoutSetTextBoxFmtValue(self->mpLayout2, buf, s, 0);
     }
-    u8 k = (u8)BdatGetU8Direct(self->field_0x50, lbl_eu_8050B00C + 0x225, arg2);
+    u8 k = (u8)BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x225, arg2);
     switch (k) {
     case 0x00: CArtsInfo_FmtRow00(self, arg2, arg3); break;
     case 0x01: CArtsInfo_FmtRow01(self, arg2, arg3); break;
@@ -1463,23 +1463,23 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u32 const arg2, int arg3) {
     }
     v1 = RoundHalfAway0(lbl_eu_80668694 * (float)(v1 * base));
     v2 = RoundHalfAway0(lbl_eu_80668694 * (float)(v2 * base));
-    u16 k = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
-    if (k == 0x66) {
+    u32 k = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+    if ((u16)k == 0x66) {
         int a = CArtsInfo_GetEquipValue(self, 0x49);
         v1 += RoundHalfAway0(lbl_eu_80668694 * (float)(v1 * a));
         a = CArtsInfo_GetEquipValue(self, 0x49);
         v2 += RoundHalfAway0(lbl_eu_80668694 * (float)(v2 * a));
-    } else if (k == 0x67) {
+    } else if ((u16)k == 0x67) {
         int a = CArtsInfo_GetEquipValue(self, 0x9);
         v1 += RoundHalfAway0(lbl_eu_80668694 * (float)(v1 * a));
         a = CArtsInfo_GetEquipValue(self, 0x9);
         v2 += RoundHalfAway0(lbl_eu_80668694 * (float)(v2 * a));
-    } else if (k == 0x68) {
+    } else if ((u16)k == 0x68) {
         int a = CArtsInfo_GetEquipValue(self, 0x3a);
         v1 += RoundHalfAway0(lbl_eu_80668694 * (float)(v1 * a));
         a = CArtsInfo_GetEquipValue(self, 0x3a);
         v2 += RoundHalfAway0(lbl_eu_80668694 * (float)(v2 * a));
-    } else if (k == 0x69) {
+    } else if ((u16)k == 0x69) {
         int a = CArtsInfo_GetEquipValue(self, 0x5c);
         v1 += RoundHalfAway0(lbl_eu_80668694 * (float)(v1 * a));
         a = CArtsInfo_GetEquipValue(self, 0x5c);
@@ -1497,23 +1497,23 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u32 const arg2, int arg3) {
         int v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(g2n * t));
         v1n = RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * base));
         v2n = RoundHalfAway0(lbl_eu_80668694 * (float)(v2n * base));
-        u16 k2 = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
-        if (k2 == 0x66) {
+        u32 k2 = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+        if ((u16)k2 == 0x66) {
             int a = CArtsInfo_GetEquipValue(self, 0x49);
             v1n += RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * a));
             a = CArtsInfo_GetEquipValue(self, 0x49);
             v2n += RoundHalfAway0(lbl_eu_80668694 * (float)(v2n * a));
-        } else if (k2 == 0x67) {
+        } else if ((u16)k2 == 0x67) {
             int a = CArtsInfo_GetEquipValue(self, 0x9);
             v1n += RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * a));
             a = CArtsInfo_GetEquipValue(self, 0x9);
             v2n += RoundHalfAway0(lbl_eu_80668694 * (float)(v2n * a));
-        } else if (k2 == 0x68) {
+        } else if ((u16)k2 == 0x68) {
             int a = CArtsInfo_GetEquipValue(self, 0x3a);
             v1n += RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * a));
             a = CArtsInfo_GetEquipValue(self, 0x3a);
             v2n += RoundHalfAway0(lbl_eu_80668694 * (float)(v2n * a));
-        } else if (k2 == 0x69) {
+        } else if ((u16)k2 == 0x69) {
             int a = CArtsInfo_GetEquipValue(self, 0x5c);
             v1n += RoundHalfAway0(lbl_eu_80668694 * (float)(v1n * a));
             a = CArtsInfo_GetEquipValue(self, 0x5c);
@@ -2403,7 +2403,7 @@ __declspec(noinline) void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char
     u8 lang = getLanguage__9CDeviceSCFv();
     if (lang != 5) return;
 
-    u8 r = BdatGetU8Direct((u32)self->field_0x50, lbl_eu_8050B00C + 0x20c, arg2);
+    u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x20c, arg2);
     if (r != 0x4f) return;
 
     int len = strlen(str);
@@ -2489,7 +2489,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
-        ApplyFontToTxtPanes(root1, (u32)((IDeviceFontInfo*)fontObj1)->getFont());
+        ApplyFontToTxtPanes(root1, (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj1)->getFont()));
 
         char* lang = CUICfManager_getPackedFont9C();
         if (lang != 0) {
@@ -2536,7 +2536,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         if (timg != 0) {
             CArtsMsgObj* msg = (CArtsMsgObj*)timg;
             LayoutSetTextBoxFmtValue(mpLayout1, &lbl_eu_8050B00C[0x3D3], (char*)timg, 0);
-            PaneSetTexPaletteByName(mpLayout1, &lbl_eu_8050B00C[0x3D3], (u32)msg->chain);
+            PaneSetTexPaletteByName(mpLayout1, &lbl_eu_8050B00C[0x3D3], (TPLPalette*)((u32)msg->chain));
             nw4r::lyt::Pane* msgPane1 =
                 root1->FindPaneByName(&lbl_eu_8050B00C[0x3D3], true);
             if (msgPane1 != 0) {
@@ -2554,7 +2554,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
         ApplyFontToTxtPanes(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
-                      (u32)((IDeviceFontInfo*)fontObj2)->getFont());
+                      (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj2)->getFont()));
 
         if (lang != 0) {
             setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);

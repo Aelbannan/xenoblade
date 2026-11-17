@@ -9,6 +9,7 @@
 
 #include <nw4r/lyt.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Vtable symbol for CPcKizunagram (stored by CPcKizunagramVtblBase).
 extern "C" void* lbl_eu_80537618[];
@@ -234,7 +235,6 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 // Sound / effect helper (C-linkage retail symbol playUISound__FUl).
 
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // BDAT table pointer (loaded via sda21 by KizunagramRebuildSlotList / KizunagramStoreChartEntry).
 extern "C" u32 lbl_eu_8066415C;
@@ -250,7 +250,6 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
     nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 
 // Scratch region guard (RAII Class_8045F858): explicit buffer + C-ABI ctor/dtor
 // calls so the retail stack slot and the -1 dealloc flag match exactly.
@@ -259,17 +258,11 @@ extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self
 extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 
 // BDAT / random / pane-text helpers with unmangled retail names.
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 // u32-return view: retail masks the column byte at the call sites (clrlwi 24),
 // so this TU saw an int/unsigned return, not u8.
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int isPaneVisible(void);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 CUICfManager_getPackedFont9C(void);
-extern "C" void PaneSetTexPalette(void*, u32);
-extern "C" void PaneSetVtxColorAll(void*, u32);
 extern "C" void FetchRelatePair(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)
@@ -280,7 +273,6 @@ extern "C" const u32 lbl_eu_806688A4;
 // (no low-byte mask at the call site), so this TU saw a u16 parameter.
 // Literal mangled identifier links to the same symbol as setLayoutTextBoxNumber.
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void setPaneVisible(void*, u32);
 
 // Cursor destroy helper (external retail symbol, not in this TU).

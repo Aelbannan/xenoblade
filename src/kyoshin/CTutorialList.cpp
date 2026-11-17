@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Layout / BDAT helpers with unmangled retail names.
 extern "C" void setPaneVisible(void*, u32);
@@ -32,7 +33,6 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int KyoshinHeap_GetField44();
 
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 
 extern "C" void Cur_Update(void*);
@@ -91,7 +91,7 @@ __declspec(noinline) void CTutorialIdTable::Rebuild(u16 target, int filter) {
     for (int id = 1; id <= total; id++) {
         if (CtrlRemote_TouchBitByArg(id + 0x333f) == 0) continue;
         if (filter != 0 &&
-            (int)(u8)BdatGetU8Direct((u32)table, "type_cat", id) != catFilter)
+            (int)(u8)BdatGetU8Direct((const void*)table, (const char*)("type_cat"), id) != catFilter)
             continue;
         mIds[mCount++] = id;
     }
@@ -103,8 +103,8 @@ __declspec(noinline) void CTutorialIdTable::Rebuild(u16 target, int filter) {
             u16 a = mIds[j];
             u16* p = &mIds[j];
             u16 b = p[1];
-            if ((u8)BdatGetU8Direct((u32)table, "order", a) >
-                (u8)BdatGetU8Direct((u32)table, "order", b)) {
+            if ((u8)BdatGetU8Direct((const void*)table, (const char*)("order"), a) >
+                (u8)BdatGetU8Direct((const void*)table, (const char*)("order"), b)) {
                 swapped = 1;
                 const u16 x = p[1] ^ p[0];
                 const u16 nb = p[1] ^ x;
@@ -574,13 +574,9 @@ __declspec(noinline) void CTutorialList::TutorialList_UpdateRowTexts() {
         if (sel == 0) {
             LayoutSetTextBoxFmtValue(mLayout, buf, "", 0);
         } else {
-            // Retail passes only two args here (the third header param is
-            // unused at this site); cast to the 2-arg form so no li r5 is
-            // emitted.
-            char* txt = ((char* (*)(const void*, const void*))BdatGetPtrDirect)(
-                (const void*)lbl_eu_80664BF0, "title");
+            char* txt = BdatGetPtrDirect((const void*)lbl_eu_80664BF0, "title", sel);
             LayoutSetTextBoxFmtValue(mLayout, buf, txt, 0);
-            if (BdatGetU8Direct(lbl_eu_80664BF0, "type", sel) == 0) {
+            if (BdatGetU8Direct((const void*)lbl_eu_80664BF0, (const char*)("type"), sel) == 0) {
                 if (CtrlRemote_TouchBitByArg((u16)sel + 0x33bf) == 0) {
                     setPaneVisible(text, 1);
                 }
@@ -668,7 +664,7 @@ bool CTutorialList::OnFileEvent(CEventFile* event) {
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((char*)mLayout + 0x10);
         u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
             CDeviceFont::getFontInfo(1, mLayout))->getFont();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         TutorialList_EnableOpenAnims();
         mLayout->Animate(0);
@@ -685,7 +681,7 @@ bool CTutorialList::OnFileEvent(CEventFile* event) {
         CTutorialMsgObj* obj =
             (CTutorialMsgObj*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, texName, 0);
         if (obj != 0) {
-            PaneSetTexPaletteByName(mLayout, (void*)"pic_soatbtn", obj);
+            PaneSetTexPaletteByName(mLayout, (const char*)((void*)"pic_soatbtn"), (TPLPalette*)obj);
             // Row/col counts are lhz-loaded before the pane lookup; the
             // u16->f32 stores expand to MWCC's 0x4330-magic int-to-double
             // sequence against the .sdata2 pool constant.

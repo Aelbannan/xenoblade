@@ -4,6 +4,7 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -116,13 +117,8 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
-u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float f1);
 // Layout/message/input helpers used by the file-load completion handler.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-char* BdatTouchStringCell(const void*, const void*, int);
-void ApplyFontToTxtPanes(void*, u32);
-void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
 char* MakeTplNameSysFile(u32);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void setPaneVisible(nw4r::lyt::Pane*, u32);
@@ -138,7 +134,6 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 // C++-linkage helpers (retail symbols are their MWCC-mangled forms).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float f1);
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);

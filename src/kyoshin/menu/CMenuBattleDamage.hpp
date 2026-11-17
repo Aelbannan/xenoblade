@@ -5,6 +5,8 @@
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -308,8 +310,6 @@ nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int GetSysStateFlag24();
 int IsMenuState621F0();
 const char* getTelopString(int index);
-char* BdatGetPtrDirect(const void*, const void*, int);
-void ApplyFontToTxtPanes(void*, u32);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
 // full slot word with no rlwinm truncation at the call site (the callee only
 // reads the low byte), so the declaration must not force a u32->u8 mask.
@@ -320,9 +320,6 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 CMenuBattleDamagePose* Scn_FindCamItem(CScn* scene, int index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
                    const nw4r::math::VEC3* in);
-char* BdatTouchStringCell(const void*, const void*, int);
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
 const char* getErrMesText12();
 const char* getErrMesText13();
 const char* getErrMesText14();

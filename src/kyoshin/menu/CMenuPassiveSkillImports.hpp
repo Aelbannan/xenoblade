@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CMenuPassiveSkill.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 extern "C" void Init__17CMenuPassiveSkillFv();
 extern "C" void Move__17CMenuPassiveSkillFv();
@@ -33,7 +34,6 @@ extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void*
 extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern char lbl_eu_8050DB4C[];
-extern "C" char* BdatTouchStringCell(char* base, char* entry, u32 len);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,

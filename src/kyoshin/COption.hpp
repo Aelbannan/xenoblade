@@ -11,6 +11,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CWorkSystemPack.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 class CEventFile;
 class CfEnumObject;
@@ -274,6 +275,5 @@ extern "C" void sysWinSetKindContent(void*, void*, void*);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" void Cur_Update(void*);
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void initInstance__FP14Class_80296898(void*);
 

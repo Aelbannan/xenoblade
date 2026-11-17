@@ -5,6 +5,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CFileHandle;
 class CScn;
@@ -900,18 +901,12 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);            // characte
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();                       // character-data category
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-count lookup
-extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see SysWinLog_OpenContent).
 // BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // row name lookup
-extern "C" char* BdatTouchStringCell(char*, char*, u32);    // format two strings
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void* res);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
@@ -925,7 +920,6 @@ extern "C" double lbl_eu_80668AD8;
 // CSysWinScenarioLog::Move helpers.
 extern "C" int IsMenuState621F0();
 extern "C" s32  MenuTutorialIsCreated();
-extern "C" u32  AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;

@@ -238,7 +238,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         ShopFontView* fontObj =
             (ShopFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = fontObj->getSpacing();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         mLayout->SetAnimationEnable(mAnimTransform, 1);
         mLayout->Animate(0);
@@ -290,8 +290,8 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         UnkMsgObj* obj = static_cast<UnkMsgObj*>(mgr->GetResource(0x74696d67U, mssg, 0));
         if (obj != NULL) {
-            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xeb], obj);
-            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xf5], obj);
+            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xeb], (TPLPalette*)obj);
+            PaneSetTexPaletteByName(mLayout, &lbl_eu_8050A62C[0xf5], (TPLPalette*)obj);
 
             // Two u16 counts ([+2] row, [+0] column) offsetting the two
             // panes; u32->float via the named 2^52+2^31 magic double keeps

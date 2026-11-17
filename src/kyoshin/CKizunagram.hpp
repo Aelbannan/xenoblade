@@ -5,6 +5,7 @@
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include <revolution/gx/GXTypes.h>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 class CEventFile;    // monolib/work/CEventFile.hpp
@@ -672,7 +673,6 @@ struct UnkKizunaSelfC874 {
 
 // Writes 3 floats at dst, returns dst in r3 (C ABI helper from
 // code_80135FDC.cpp).
-extern "C" UnkKizunaVec3* code80135FDC_setVec3(float* dst, float x, float y, float z);
 
 // Same-TU display-state helpers called by tickInfoMode / kizCursorDir1
 // family (retail links these unmangled; extern "C" keeps the bl relocs
@@ -721,7 +721,6 @@ extern "C" void TagCopyVec2f(float* dst, const float* src); // copy 2 floats
 extern const float lbl_eu_8066882C;
 extern const float lbl_eu_80668830;
 extern const float lbl_eu_8066884C;
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" void CMenuArtsSet_setPaneScale(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
 extern "C" void copyVEC2(void*, const void*);
 extern "C" void copyVEC3(float* dst, const float* src);
@@ -1055,14 +1054,10 @@ extern "C" void tickKizLine(void* self);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);              // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 idx);               // game-progress getter
 extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
-extern "C" int BdatGetS16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetSexFlag(int id);
-extern "C" void PaneSetVtxColorAll(void* obj, u32 color);
 extern "C" int strcmp(const char*, const char*);
-extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* pane, u32 res); // bind texture resource to pane
 // Bdat_GetTable_AA34 is declared by an included header (no-arg bdat manager refresh);
 // retail leaves r3=self live into the call either way.
-extern "C" void PaneSetVtxColorPairsByName(void* layout, const char* tag, int color1, u32 color2);
 
 // Same-TU callee: returns the new kizuna selection id (name = item + 0xBC).
 // Retail links it unmangled.

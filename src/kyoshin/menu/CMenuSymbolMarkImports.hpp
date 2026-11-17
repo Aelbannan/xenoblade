@@ -6,7 +6,6 @@
 // KEEP (blockers-A 2026-10-23): 32-bit view of BdatGetU16Direct (canonical u16 in
 // kyoshin/code_80135FDC_Bdat.hpp); the u16 form adds clrlwi and moves the
 // callers here further from retail.
-extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CTTask.hpp"
@@ -23,6 +22,7 @@ extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 #include <nw4r/lyt.h>
 
 #include "monolib/scn/CScn.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // Global float constant pool (SDA-relative float loads). Declared const so
 // MWCC treats the loads as constants and hoists them above the frame stores.

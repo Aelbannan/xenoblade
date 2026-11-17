@@ -10,6 +10,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 class CBaseCur;
 class CEventFile;
 
@@ -427,8 +428,6 @@ public:
 // Previously declared inline in each TU as pseudo-imports; kept here as real
 // imports. The names ARE the retail symbol names - keep verbatim.
 // Returns the destination pointer (retail reuses it as a call argument).
-extern "C" float* code80135FDC_setVec3(float*, float, float, float);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void Cur_SetVisible(void*, u8);  // retail symbol is unmangled
 extern "C" int func_8021A8EC(void*);
 extern "C" u32 CSysWin_isReady(void*);
@@ -451,7 +450,6 @@ extern "C" unsigned long getSelectTableWord(unsigned long*, unsigned int);
 extern "C" __declspec(noinline) int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" char* getCrystalItemName(CMCCrystalData*, int);
 extern "C" void MCCrystal_PlayAnim4(void*);
@@ -472,8 +470,6 @@ extern "C" void* CItem_initItemImplInstances(void*);
 }
 #define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" u16 CItemBlock_getFlag120EC(int);
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void setPaneVisible(void*, u32);   // pane visibility setter
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
 // linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
@@ -482,8 +478,6 @@ extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();   // shared timg resource accessor
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 u32 getPackedFont();
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-extern "C" void ApplyFontToTxtPanes(void*, u32);   // bind font pane onto root
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
@@ -504,7 +498,6 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void BuildSlotItemLists(u32);
 extern "C" void MCCrystal_Teardown(void*);
 extern "C" void sysWinTermLayout(void*);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void sysWinAdvancePhase3(void*);
@@ -512,7 +505,6 @@ extern "C" void sysWinSwitchKindPane(void*, int);
 extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinApplyKind(void*, int);
 extern "C" void sysWinOpenPhase1(void*);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void MCCrystal_StepState(void*);
 extern "C" void Cur_Update(void*);
 extern "C" void sysWinDispatchPhase(void*);
@@ -527,7 +519,6 @@ extern "C" void func_802137B4(void* self);
 extern "C" void MakeCrystal_SetFlag(void*, int, unsigned char);
 extern "C" int getCrystalSelectEntry(void*);
 extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
-extern "C" void AccumPaneWorldPos(char*, nw4r::lyt::Pane*);
 extern "C" void Cur_ShowTwoPanes(void*, unsigned char);
 extern "C" int GetCollectedFlagByte(unsigned char);
 extern "C" unsigned short LookupRelateValue(unsigned char, unsigned char);
@@ -536,7 +527,6 @@ extern "C" unsigned short LookupRelateValue(unsigned char, unsigned char);
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
 // symbol as setLayoutTextBoxNumber.
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;
 extern float lbl_eu_80668484;

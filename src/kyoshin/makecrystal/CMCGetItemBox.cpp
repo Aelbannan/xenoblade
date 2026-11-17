@@ -16,6 +16,7 @@
 
 #include <nw4r/lyt.h>
 #include <cstdio>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
@@ -52,7 +53,6 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransf
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
@@ -296,7 +296,7 @@ __declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         char tail[0x80];
         char copy[0x80];
         sprintf(buf48, &lbl_eu_8050FF8C[0x1e], nm);
-        u8 mkind = (u8)BdatGetU8Direct((u32)db, &lbl_eu_8050FF8C[0x21], (u16)icon);
+        u8 mkind = BdatGetU8Direct((const void*)db, &lbl_eu_8050FF8C[0x21], (u16)icon);
         char* s2 = BdatGetPtrDirect((void*)db, &lbl_eu_8050FF8C[0x2a], (u16)icon);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s2);
         u32 len = strlen(sub->name.mString);
@@ -331,7 +331,7 @@ __declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
                 } else if (*p2 == '2') {
                     p2++;
                     tbl = lbl_eu_8050FF60;
-                    u8 s3 = BdatGetU8Direct((u32)db, (const char*)tvals[kind], (u16)icon);
+                    u8 s3 = BdatGetU8Direct((const void*)db, (const char*)tvals[kind], (u16)icon);
                     if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x7d], s3);
                     else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x96], s3);
                 }
@@ -1008,7 +1008,7 @@ extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 i
             h = 0;
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
             u32 k = inst->getIcon(e);
-            u8 r = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
+            u8 r = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
             switch (r) {
                 case 4: h = MakeTplNameSysFile(0x144); break;
                 case 5: h = MakeTplNameSysFile(0x145); break;
@@ -1074,7 +1074,7 @@ extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 i
     if (h != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050FF8C[0x14e], (int)(n + 1));
-        PaneSetTexPaletteByName((void*)self->layout40, buf, (void*)h);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)((void*)self->layout40), (const char*)buf, (TPLPalette*)((void*)h));
     }
 }
 
@@ -1159,7 +1159,7 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItem
     if (h != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050FF8C[0x161], (int)(n + 1));
-        PaneSetTexPaletteByName((void*)self->layout40, buf, (void*)h);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)((void*)self->layout40), (const char*)buf, (TPLPalette*)((void*)h));
     }
 }
 // noinline + C linkage: called out-of-line from refreshMCGetItemBoxSlots in retail
@@ -1365,7 +1365,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = this->layout40->GetRootPane();
         void* font = CDeviceFont::getFontInfo(1, this->layout40);
         void* fontData = ((IDeviceFontInfo*)font)->getFont();
-        ApplyFontToTxtPanes(rootPane, (u32)fontData);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((u32)fontData));
 
         u32 w = (u32)getPackedFont();
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);
@@ -1418,9 +1418,9 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::math::VEC3 v1;
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2;
-        code80135FDC_setVec3((float*)&s1, lbl_eu_80668BF8, lbl_eu_80668BFC, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), lbl_eu_80668BF8, lbl_eu_80668BFC, lbl_eu_80668BD4);
         v1 = s1;
-        code80135FDC_setVec3((float*)&s2, lbl_eu_80668C00, lbl_eu_80668BFC, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, lbl_eu_80668BFC, lbl_eu_80668BD4);
         v2 = s2;
         Cur_SetTwoPanes09(&this->subObj_70, &v2, &v1);
 

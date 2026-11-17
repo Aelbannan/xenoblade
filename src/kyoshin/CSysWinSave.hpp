@@ -7,6 +7,7 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 /*
  * System window "save" process (singleton, created by __ct__802944D8).
@@ -185,7 +186,6 @@ void sysWinDispatchPhase(void* syswin);
 void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 void Cur_SetVisible(void* cur, int val);
 void Cur_Update(void* cur);
-char* BdatTouchStringCell(const void* a, const void* b, int id);
 void CUICfManager_queueSaveMenu(int a, int b);
 }
 

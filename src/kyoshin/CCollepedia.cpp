@@ -83,7 +83,7 @@ void clpInitLayout(CCollepedia* this_) {
 
     // Set up position for first pane
     float vec1[3];
-    code80135FDC_setVec3(vec1, lbl_eu_806687F0, lbl_eu_806687F4, lbl_eu_806687F8);
+    code80135FDC_setVec3((nw4r::math::VEC3*)vec1, lbl_eu_806687F0, lbl_eu_806687F4, lbl_eu_806687F8);
 
     // Find first pane and copy position
     nw4r::lyt::Pane* pane1 = this_->field_8->GetRootPane()->FindPaneByName(
@@ -92,7 +92,7 @@ void clpInitLayout(CCollepedia* this_) {
 
     // Set up position for second pane
     float vec2[3];
-    code80135FDC_setVec3(vec2, lbl_eu_806687FC, lbl_eu_806687F4, lbl_eu_806687F8);
+    code80135FDC_setVec3((nw4r::math::VEC3*)vec2, lbl_eu_806687FC, lbl_eu_806687F4, lbl_eu_806687F8);
 
     // Find second pane and copy position
     nw4r::lyt::Pane* pane2 = this_->field_8->GetRootPane()->FindPaneByName(
@@ -195,7 +195,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     nw4r::lyt::Pane* rootPane = pg->mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
     u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    ApplyFontToTxtPanes(rootPane, fontHandle);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
 
     char* tagStr = (char*)CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
@@ -315,10 +315,10 @@ extern "C" void clpSetPageNum(CCollepedia* this_, unsigned char arg) {
 #pragma dont_inline on
 extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
     if (arg2 != NULL) {
-        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x138], arg2);
+        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x138], (TPLPalette*)arg2);
     }
     if (arg3 != NULL) {
-        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x144], arg3);
+        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x144], (TPLPalette*)arg3);
     }
 }
 #pragma pop
@@ -414,8 +414,8 @@ extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
             break;
         }
         for (u16 j = 1; j <= (u16)numA; j++) {
-            if ((u8)BdatGetU8Direct((u32)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
-                BdatGetU8Direct((u32)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
+            if ((u8)BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
+                BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
                 CtrlRemote_TouchBitByArg(j + 0x20c8) != 0) {
                 u8 cnt = self_[0];
                 self_[cnt * 0x140 + 4] = cat;
@@ -433,8 +433,8 @@ extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
             u8* pg = self_ + j * 0x140;
             u8 keyCur = pg[4];
             u8 keyNext = pg[0x144];
-            if ((u8)BdatGetU8Direct((u32)tblB, &s[0x17a], keyCur) >
-                (u8)BdatGetU8Direct((u32)tblB, &s[0x17a], keyNext)) {
+            if ((u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyCur) >
+                (u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyNext)) {
                 pg[4] = keyNext;
                 pg[0x144] = keyCur;
                 swapped = 1;
@@ -474,10 +474,10 @@ extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
         for (u16 c = 0; c < n; c++) {
             u16 itemId = ids[c];
             u16 kind = BdatGetItemId(itemId);
-            if ((u8)BdatGetU8Direct((u32)lbl_eu_80664104, &lbl_eu_8050C6E8[0x16b], kind) != cat) {
+            if ((u8)BdatGetU8Direct((const void*)lbl_eu_80664104, &lbl_eu_8050C6E8[0x16b], kind) != cat) {
                 continue;
             }
-            u8 sub = (u8)BdatGetU8Direct((u32)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
+            u8 sub = (u8)BdatGetU8Direct((const void*)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
             if (row == 0) {
                 grp[0 * 0x34 + 0xC] = sub;
                 clpFillEntry(self_, g, row, 0, itemId);
@@ -566,9 +566,9 @@ extern "C" __declspec(noinline) char* clpGetPageNam(u8* self) {
     u8* base = self + idx * 0x140;
     u8 val = base[4];
     if (val == 0x1a) {
-        return (char*)BdatTouchStringCell((const void*)&lbl_eu_8050C6E8[0xA2], (const void*)&lbl_eu_8050C6E8[0xAE], 0x14);
+        return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], 0x14);
     } else {
-        return (char*)BdatGetPtrDirect((const void*)lbl_eu_806640A8, (const void*)&lbl_eu_8050C6E8[0xAE], val);
+        return (char*)BdatGetPtrDirect((const void*)lbl_eu_806640A8, (const char*)&lbl_eu_8050C6E8[0xAE], val);
     }
 }
 
@@ -584,7 +584,7 @@ extern "C" __declspec(noinline) char* clpGetRowName(u8* self, u32 index) {
     s8 idx = (s8)self[1];
     u8 val = self[idx * 0x140 + index * 0x34 + 0xC];
     if (val != 0) {
-        return (char*)BdatTouchStringCell((const void*)&lbl_eu_8050C6E8[0xA2], (const void*)&lbl_eu_8050C6E8[0xAE], val);
+        return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], val);
     }
     return 0;
 }
@@ -614,7 +614,7 @@ u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
     return reinterpret_cast<CCollepediaEntry*>(ptr)[1].field_08;
 }
 
-extern "C" __declspec(noinline) u32 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) u16 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)this_[1];
@@ -1550,7 +1550,7 @@ __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, in
     if (res != NULL) {
         char buf[0x28];
         sprintf(buf, &lbl_eu_8050C6E8[0x256], name + 1);
-        PaneSetTexPaletteByName(this_->field_38, buf, res);
+        PaneSetTexPaletteByName(this_->field_38, (const char*)buf, (TPLPalette*)res);
     }
 }
 
@@ -1573,7 +1573,7 @@ __declspec(noinline) void clpSetSlotIcn(CCollepedia* this_, const char* name, u3
     if (tex != NULL) {
         char buf[0x28];
         sprintf(buf, &lbl_eu_8050C6E8[0x277], name + 1);
-        PaneSetTexPaletteByName(this_->field_38, buf, tex);
+        PaneSetTexPaletteByName(this_->field_38, (const char*)buf, (TPLPalette*)tex);
     }
 }
 
@@ -1764,7 +1764,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         // Bind the device font into every text pane via the root pane.
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-        ApplyFontToTxtPanes(field_38->GetRootPane(), fontHandle);
+        ApplyFontToTxtPanes(field_38->GetRootPane(), (const nw4r::ut::Font*)fontHandle);
 
         char* tagStr = (char*)getPackedFont();
         setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);

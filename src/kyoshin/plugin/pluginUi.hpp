@@ -104,9 +104,7 @@ void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
 int CtrlRemote_TouchBitByArg(int index);
 void CtrlRemote_SetSharedBit(int index, int value);
 // Copies an entry out of a script string table into the given buffer.
-char* BdatTouchStringCell(char* buf, const char* table, int index);
 // BDAT row-name lookup: resolve key row in the character table.
-char* BdatGetPtrDirect(const void* tbl, const void* key, int id);
 // Open a party-talk window over an existing message box.
 void UIWin_CreateSysWin1(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.

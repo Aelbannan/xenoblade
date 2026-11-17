@@ -315,8 +315,8 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
         for (u8 inner = 0; inner < (self->field_1001 - 1) - outer; inner++) {
             u8 a = buf[inner];
             u8 b = buf[inner + 1];
-            if (BdatGetU8Direct((u32)bdat, &s[0xe], a) >
-                BdatGetU8Direct((u32)bdat, &s[0xe], b)) {
+            if (BdatGetU8Direct((const void*)bdat, &s[0xe], a) >
+                BdatGetU8Direct((const void*)bdat, &s[0xe], b)) {
                 buf[inner] = b;
                 buf[inner + 1] = a;
                 swapped = 1;
@@ -330,10 +330,10 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
     char* def = BdatTouchStringCell(&s[0x14], &s[0x1f], 0x10);
     for (u8 k = 0; k < count; k++) {
         u8 val = buf[k];
-        u8 page = (u8)(BdatGetU8Direct((u32)bdat, &s[0x24], val) - 1);
+        u8 page = (u8)(BdatGetU8Direct((const void*)bdat, &s[0x24], val) - 1);
         int has = CtrlRemote_TouchBitByArg(0x312c + val % 200) != 0;
 
-        u8 key2 = BdatGetU8Direct((u32)bdat, &s[0x2a], val);
+        u8 key2 = BdatGetU8Direct((const void*)bdat, &s[0x2a], val);
         u16 key3 = BdatGetU16Direct(bdat, &s[0x36], val);
         int flag = 0;
         if (key2 <= self->field_1000 && key3 <= CtrlRemote_TouchBitByArg(0x20)) {
@@ -771,7 +771,7 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     CPlayAwardMsgObj* obj = reinterpret_cast<CPlayAwardMsgObj*>(
         mgr->GetResource(0x74696D67, texName, 0));
     if (obj != 0) {
-        PaneSetTexPaletteByName(self->mLayout20, &lbl_eu_8050E7C0[0xe9], obj);
+        PaneSetTexPaletteByName(self->mLayout20, &lbl_eu_8050E7C0[0xe9], (TPLPalette*)obj);
         CPlayAwardCoords* coords = obj->chain->pCoords;
         u16 row = coords->row;
         u16 col = coords->col;
@@ -853,7 +853,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         CPlayAwardFontObj* fontObj = (CPlayAwardFontObj*)
             getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20);
         u32 fontResult = fontObj->getFontHandle();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], reinterpret_cast<u32>(CUICfManager_getPackedFont9C()));
         PlayAward_BindCloseAnims(this);

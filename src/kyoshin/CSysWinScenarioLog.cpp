@@ -463,7 +463,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     if (mat == 0) {
         return;
     }
-    PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050EE24[0x94], mat);
+    PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050EE24[0x94], (TPLPalette*)mat);
     CSysWinTexMeta* meta = (CSysWinTexMeta*)mat;
     u16 w = meta->field_0x8->field_0x2;
     u16 h = meta->field_0x8->field_0x0;
@@ -1553,7 +1553,7 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
-        ApplyFontToTxtPanes(rootPane, fontHandle);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
         self->mpLayout->SetAnimationEnable(self->mpAnim, true);
         self->mpLayout->Animate(0);
         void* pane = ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(

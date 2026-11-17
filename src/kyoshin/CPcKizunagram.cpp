@@ -280,7 +280,7 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
             for (u32 k = 1; k <= 6; k++) {
                 char buf[0x20];
                 sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                u32 e8 = BdatGetU8Direct((u32)table, buf, (u8)n);
+                u8 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
                 CtrlRemote_TouchBitByArg(rnd);
                 u8 lb9;
@@ -299,7 +299,7 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                 if (visible != 0) {
                     u32 tex = (u32)self->mArcRes->GetResource(
                         (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
-                    if (tex != 0) PaneSetTexPalette(p, tex);
+                    if (tex != 0) PaneSetTexPalette(p, (TPLPalette*)tex);
                 }
                 char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
@@ -317,7 +317,7 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                     for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                        u32 e8 = BdatGetU8Direct((u32)table, buf, (u8)n);
+                        u8 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (u8)n);
                         int id = (e8 & 0xff) + 1;
                         char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                         nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
@@ -356,7 +356,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
     for (k = 1; k <= 6; k++) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = BdatGetU8Direct((u32)table, buf, (s8)self->mField28 + 1);
+        u32 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (s8)self->mField28 + 1);
         // Two distinct mask forms stop MWCC from CSE-ing a single masked
         // temp; retail recomputes the byte after the rand call from a raw
         // copy held in a nonvolatile.
@@ -380,7 +380,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
             s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
-        if (tex1 != 0) PaneSetTexPalette(pane, tex1);
+        if (tex1 != 0) PaneSetTexPalette(pane, (TPLPalette*)tex1);
 
         char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         const char* s2;
@@ -394,7 +394,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
         u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, s2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-            PaneSetTexPalette(pane2, tex2);
+            PaneSetTexPalette(pane2, (TPLPalette*)tex2);
             if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
@@ -475,7 +475,7 @@ void __declspec(noinline) KizunagramPlaceCursor(CPcKizunagram* self) {
     // Word-wise temp copy: retail moves the 12 bytes as integers (lwz/stw),
     // not through the FP registers.
     u32 tmp[3];
-    ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout->GetRootPane());
+    ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane1, pane2, self->mLayout->GetRootPane());
     tmp[0] = *(u32*)&pos.x;
     tmp[1] = *(u32*)&pos.y;
     tmp[2] = *(u32*)&pos.z;
@@ -518,7 +518,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
     for (k = 1; k <= 6; k++) {
         char buf1[0x20];
         sprintf(buf1, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = BdatGetU8Direct((u32)table, buf1, (s8)self->mField28 + 1);
+        u8 e8 = BdatGetU8Direct((const void*)table, (const char*)buf1, (s8)self->mField28 + 1);
         // Retail evaluates the rand column first (keeping raw e8 live across
         // the call), then derives id from the masked byte.
         u16 val = (u16)CtrlRemote_TouchBitByArg((e8 & 0xff) + 0x29);
@@ -546,7 +546,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
             }
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
-        if (tex1 != 0) PaneSetTexPalette(pane, tex1);
+        if (tex1 != 0) PaneSetTexPalette(pane, (TPLPalette*)tex1);
 
         // Second panel: build its resource name from a value-dependent format.
         // Each range chooses a distinct format string; the val>=0x2711 range
@@ -571,7 +571,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
         u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, buf2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-            PaneSetTexPalette(pane2, tex2);
+            PaneSetTexPalette(pane2, (TPLPalette*)tex2);
             if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
@@ -639,7 +639,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         CDeviceFontVtblView* font =
             (CDeviceFontVtblView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = font->vf7();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
         CUICfManager_getPackedFont9C();
 
         mLayout->SetAnimationEnable(mAnimTransform, true);

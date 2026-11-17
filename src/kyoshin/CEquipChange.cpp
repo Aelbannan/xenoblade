@@ -649,7 +649,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(2, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -665,7 +665,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(4, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -681,7 +681,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(5, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -697,7 +697,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(6, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -713,7 +713,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(7, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -729,7 +729,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         void* item = CItem_kindPtr(8, id);
         if (item != NULL && *(u32*)item != 0) {
             u32 word = *(u32*)item;
-            u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
+            u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80508168[0x34], word >> 20);
             u32 isOne = v - 1;
             isOne = (isOne == 0) ? 1u : 0u;
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
@@ -1213,7 +1213,7 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
                             &base[0xff], &base[0x108], 0x1E - (((packed >> 22) & 7) - 1));
                         char* nm = BdatGetPtrDirect(tbl, &base[0x108], tmp.field_00);
                         sprintf(textBuf1, &base[0x10d], nm, lbl);
-                        u32 code = BdatGetU8Direct((u32)tbl, &base[0x112], tmp.field_00);
+                        u8 code = BdatGetU8Direct((const void*)tbl, &base[0x112], tmp.field_00);
                         switch (code) {
                         case 0:
                             texRes = ((nw4r::lyt::ArcResourceAccessor*)self->field_30)->GetResource(0x74696D67, &base[0x11b], NULL);
@@ -1260,8 +1260,8 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
                         u32 iconRow =
                             CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
                         void* tbl = lbl_eu_806640D8_arr[cat - 1];
-                        u32 code =
-                            BdatGetU8Direct((u32)tbl, &base[0x112], BdatGetItemId(iconRow & 0xFFFF));
+                        u8 code =
+                            BdatGetU8Direct((const void*)tbl, &base[0x112], BdatGetItemId(iconRow & 0xFFFF));
                         switch (code) {
                         case 0:
                             texRes = ((nw4r::lyt::ArcResourceAccessor*)self->field_30)->GetResource(0x74696D67, &base[0x11b], NULL);
@@ -1298,7 +1298,7 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
             LayoutSetTextBoxText(layout, iconName1, textBuf1, 0);
             LayoutSetTextBoxText(layout, labelName1, textBuf1, 0);
             if (texRes != NULL)
-                PaneSetTexPaletteByName(layout, imageName1, (u32)texRes);
+                PaneSetTexPaletteByName(layout, (const char*)imageName1, (TPLPalette*)((u32)texRes));
         }
     }
 
@@ -1348,7 +1348,7 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
                             &base[0xff], &base[0x108], 0x1E - (((packed >> 22) & 7) - 1));
                         char* nm = BdatGetPtrDirect(tbl, &base[0x108], tmp.field_00);
                         sprintf(textBuf2, &base[0x10d], nm, lbl);
-                        u32 code = BdatGetU8Direct((u32)tbl, &base[0x112], tmp.field_00);
+                        u8 code = BdatGetU8Direct((const void*)tbl, &base[0x112], tmp.field_00);
                         switch (code) {
                         case 0:
                             texRes = ((nw4r::lyt::ArcResourceAccessor*)self->field_30)->GetResource(0x74696D67, &base[0x11b], NULL);
@@ -1397,8 +1397,8 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
                         u32 iconRow =
                             CItem_initItemImplInstances((CItemData*)item2)->vf54((CItemData*)item2);
                         void* tbl = lbl_eu_806640D8_arr[cat - 1];
-                        u32 code =
-                            BdatGetU8Direct((u32)tbl, &base[0x112], BdatGetItemId(iconRow & 0xFFFF));
+                        u8 code =
+                            BdatGetU8Direct((const void*)tbl, &base[0x112], BdatGetItemId(iconRow & 0xFFFF));
                         switch (code) {
                         case 0:
                             texRes = ((nw4r::lyt::ArcResourceAccessor*)self->field_30)->GetResource(0x74696D67, &base[0x11b], NULL);
@@ -1438,7 +1438,7 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
         LayoutSetTextBoxText(layout, paneName2, textBuf2, 0);
         LayoutSetTextBoxText(layout, labelName3, textBuf2, 0);
         if (texRes != NULL)
-            PaneSetTexPaletteByName(layout, imageName2, (u32)texRes);
+            PaneSetTexPaletteByName(layout, (const char*)imageName2, (TPLPalette*)((u32)texRes));
     }
 }
 
@@ -1482,7 +1482,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         nw4r::lyt::Pane* root = ((nw4r::lyt::Layout*)field_34)->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, (nw4r::lyt::Layout*)field_34);
-        ApplyFontToTxtPanes(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
+        ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
         char* text = CUICfManager_getPackedFont9C();

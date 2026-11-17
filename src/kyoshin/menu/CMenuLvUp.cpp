@@ -21,6 +21,7 @@
 #include "kyoshin/menu/CMenuLvUp.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Unknown per-entry object, deleted via virtual dispatch (vtable+8, flag 1).
 // Only the virtual-dtor shape is required -- the real class lives in the
@@ -160,8 +161,6 @@ void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry);
 MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
-int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
-                  const nw4r::math::VEC3* c);
 void CCharVoiceMan_PlayLevelUpVoice(int id);
 void waitForDrawDone__9CDeviceVIFv();
 void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);

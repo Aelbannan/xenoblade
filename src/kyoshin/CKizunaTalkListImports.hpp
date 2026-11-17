@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CKizunaTalkList.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CKizunaTalkList.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
 // ---------------------------------------------------------------------------
@@ -29,7 +30,6 @@ extern "C" void deleteRegion(UnkClass_8045F564* self);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" int sprintf(char* str, const char* fmt, ...);
 

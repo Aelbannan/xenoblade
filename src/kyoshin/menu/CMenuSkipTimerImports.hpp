@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CMenuSkipTimer.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/menu/CMenuSkipTimer.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 
 extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
@@ -38,7 +39,6 @@ extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
 extern "C" void __ct__11CTitleAHelpFPcUc(void*, char*, int);
 extern "C" void __dt__11CTitleAHelpFv(void*, int);
 extern "C" void __dt__10CSkipTimerFv(void*, int);
-extern "C" char* BdatTouchStringCell(char*, char*, int);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 // Draw/advance helpers for cbRenderBefore / SkipTimer_Phase2PollPad (retail keeps the

@@ -23,12 +23,13 @@
 #include <string.h>
 #include <math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Retail helper imports (unmangled retail symbol names).
 extern "C" u32 GetU16PairEntry(u16);
 extern "C" u8 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 SearchThresholdIdx(u16);
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" int func_80138574(void*, u32);
 // Naturally-mangled retail import (findObjectById__Fi).
 void* findObjectById(int id);
@@ -41,14 +42,9 @@ extern "C" void* getReslistB68();
 extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
 // (ScnXformBlock, returned by Scn_FindCamItem).
-extern "C" int CheckViewAngle60(void* anchor, void* extent, void* pos);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
-extern "C" char* BdatGetPtrDirect(void*, const char*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void* getPackedFont__Fv();
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
@@ -92,7 +88,7 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
                 check = 1;
             }
             if (check != 0 &&
-                (u8)BdatGetU8Direct(tbl[SearchThresholdIdx((u16)id)],
+                (u8)BdatGetU8Direct((const void*)tbl[SearchThresholdIdx((u16)id)],
                                   str + 0x2f, (u16)id) == 1) {
                 return 1;
             }
@@ -220,7 +216,7 @@ void CMenuSymbolMark::Init() {
         // calls (retail reloads the slot from the entry base each time).
         ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
         ApplyFontToTxtPanes(((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane(),
-                      (u32)getPackedFont__Fv());
+                      (const nw4r::ut::Font*)((u32)getPackedFont__Fv()));
     }
     mField_274 = 1;
     mScn->addRenderCB(this, 7, 0);
@@ -572,9 +568,9 @@ void CMenuSymbolMark::SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
     nw4r::lyt::ArcResourceAccessor* acc = (nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor();
-    if (acc->GetResource(0x74696d67 /* "timg" */,
-                  (const char*)name.c_str(), 0) != 0) {
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
+    TPLPalette* palette = (TPLPalette*)acc->GetResource(0x74696d67 /* "timg" */, (const char*)name.c_str(), 0);
+    if (palette != 0) {
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)entry->layout, S + 0x8d, palette);
     }
     entry->unk00 = id;
     entry->flag0 = 1;
@@ -727,7 +723,7 @@ void CMenuSymbolMark::SymMark_RebuildEntryBuf() {
         if (func_80138574(archive, id) == 0) {
             continue;
         }
-        if ((u8)BdatGetU8Direct((u32)archive, &names[0x96], id) == 0) {
+        if ((u8)BdatGetU8Direct((const void*)archive, &names[0x96], id) == 0) {
             continue;
         }
         u32 n = this->mField_498;
@@ -829,7 +825,7 @@ void CMenuSymbolMark::SymMark_RebuildIdsB() {
         extent.x = scn->extX;
         extent.y = scn->extY;
         extent.z = scn->extZ;
-        if (CheckViewAngle60(&anchor, &extent, pos) == 0) {
+        if (CheckViewAngle60((const nw4r::math::VEC3*)&anchor, (const nw4r::math::VEC3*)&extent, (const nw4r::math::VEC3*)pos) == 0) {
             continue;
         }
         u32 n = this->mField_8A8;
@@ -892,11 +888,11 @@ void CMenuSymbolMark::SymMark_AddTouchMark() {
     }
     // Only when the current map id matches the archive row for this kind.
     u8 curMap = (u8)lbl_eu_80664184;
-    if ((u8)BdatGetU8Direct((u32)this->mSomeFP, S + 0x9B, kind) != curMap) {
+    if ((u8)BdatGetU8Direct((const void*)this->mSomeFP, S + 0x9B, kind) != curMap) {
         return;
     }
-    u32 sw = BdatGetU8Direct((u32)this->mSomeFP, S + 0x96, kind);
-    u32 meas = BdatGetU16Direct((const void*)this->mSomeFP, S + 0x9F, kind);
+    u8 sw = BdatGetU8Direct((const void*)this->mSomeFP, S + 0x96, kind);
+    u16 meas = BdatGetU16Direct((const void*)this->mSomeFP, S + 0x9F, kind);
     switch ((u8)sw) {
     case 1: {
         // Live-marker list: first actor without an owned slot claims one and
@@ -1109,7 +1105,7 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
             extent.x = scn->extX;
             extent.y = scn->extY;
             extent.z = scn->extZ;
-            if (CheckViewAngle60(&anchor, &extent, pos) == 0) {
+            if (CheckViewAngle60((const nw4r::math::VEC3*)&anchor, (const nw4r::math::VEC3*)&extent, (const nw4r::math::VEC3*)pos) == 0) {
                 continue;
             }
             // Skip if this actor already owns an entry slot (isNew: 0 on
@@ -1155,7 +1151,6 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
 // the player stands within range.
 // Retail imports used only here.
 extern "C" void bdatGetPosXYZ(Vec* out, int id);
-extern "C" s16 BdatGetS16Direct(const void* fp, const char* str, u32 id);
 extern "C" u32 CheckState2CC8Active(u16 id);
 
 // Bounds test: build the anchor/extent pair from the scene pose block and
@@ -1170,7 +1165,7 @@ extern "C" u32 CheckState2CC8Active(u16 id);
         extQ.x = scnQ->extX;                                                     \
         extQ.y = scnQ->extY;                                                     \
         extQ.z = scnQ->extZ;                                                     \
-        CheckViewAngle60(&ancQ, &extQ, (posPtr)) != 0;                              \
+        CheckViewAngle60((const nw4r::math::VEC3*)&ancQ, (const nw4r::math::VEC3*)&extQ, (const nw4r::math::VEC3*)(posPtr)) != 0;                            \
     })
 
 // Entry-slot dup scan: false when some entry already owns nameV.
@@ -1239,18 +1234,18 @@ void CMenuSymbolMark::SymMark_SyncBufMarks() {
     for (u32 i = 0; i < this->mField_498; i++) {
         u32 id = this->mBuffer[i];
         // Per-id dispatch keys out of the archive.
-        u32 key = BdatGetU8Direct((u32)archive, S + 0x96, id);
-        u32 meas = BdatGetU16Direct(archive, S + 0x9f, id);
-        u32 measB = BdatGetU16Direct(archive, S + 0xad, id);
+        u8 key = BdatGetU8Direct((const void*)archive, S + 0x96, id);
+        u16 meas = BdatGetU16Direct(archive, S + 0x9f, id);
+        u16 measB = BdatGetU16Direct(archive, S + 0xad, id);
         void* row = (void*)lbl_eu_80573D18[SearchThresholdIdx((u16)measB)];
-        u32 kind = (u8)BdatGetU8Direct((u32)row, S + 0x2f, (u16)measB);
+        u32 kind = (u8)BdatGetU8Direct((const void*)row, S + 0x2f, (u16)measB);
         bool kindNonzero = kind != 0;
         bool kindOk = false;
         if (!kindNonzero) {
             // Fallback key: retry the kind lookup through the alternate id.
             measB = BdatGetU16Direct(archive, S + 0xb6, id);
             if ((u16)measB != 0) {
-                kind = (u8)BdatGetU8Direct((u32)row, S + 0x2f, (u16)measB);
+                kind = (u8)BdatGetU8Direct((const void*)row, S + 0x2f, (u16)measB);
                 kindNonzero = kind != 0;
                 if (!kindNonzero && CtrlRemote_TouchBitByArg((u16)measB + 0x220) == 0) {
                     kindOk = true;
@@ -2183,7 +2178,7 @@ void CArrow3D::Init() {
     }
     buildLayout((nw4r::lyt::Layout**)&mLayout, CUICfManager_getArcResourceAccessor(), S);
     nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)mLayout;
-    ApplyFontToTxtPanes(lay->GetRootPane(), (u32)CUICfManager_getPackedFont9C());
+    ApplyFontToTxtPanes(lay->GetRootPane(), (const nw4r::ut::Font*)((u32)CUICfManager_getPackedFont9C()));
     LayoutSetTextBoxFmtValue(lay, (char*)S + 0x14, (char*)S + 0x1b, 0);
     lay->GetRootPane()->FindPaneByName(S + 0x14, true)->SetVisible(false);
     lay->GetRootPane()->FindPaneByName(S + 0x26, true)->SetVisible(false);

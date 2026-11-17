@@ -13,6 +13,7 @@
 
 #include <revolution/GX.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 void playUISound(u32);
 
 class CSaveLoad;
@@ -84,7 +85,6 @@ extern "C" void __ct__11CTitleAHelpFPcUc(void* self, char* name, int id);
 extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" void NandAllocBufs();
-extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" CSaveLoad* __dt__9CSaveLoadFv(CSaveLoad* self, int flags);
 extern "C" CTitleAHelp* __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);

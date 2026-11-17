@@ -23,6 +23,7 @@
 
 #include <functions.hpp>
 #include "kyoshin/CTutorialImports.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Layout text-setter helper: retail reloc is the literal mangled name
 // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc. The retail callers pass an
@@ -31,7 +32,6 @@
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
                                                         char*, int);
 // Tex palette binder (const char* pane name; code_80135FDC.hpp types it void*).
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
 
 // (Layout teardown goes through `delete`, whose deleting-dtor vcall
 // matches retail. Font dispatch goes through IDeviceFontInfo::getFont.)
@@ -277,7 +277,7 @@ void CTutorial::Tutorial_ReloadTutorialData() {
     field_44 = 1;
     field_50 = 0;
     field_51 =
-        (s8)BdatGetU8Direct(lbl_eu_80664A30, "page", field_48);
+        (s8)(u8)BdatGetU8Direct((const void*)lbl_eu_80664A30, (const char*)("page"), field_48);
     Tutorial_RefreshPage();
 }
 
@@ -297,7 +297,7 @@ void CTutorial::Tutorial_RefreshPage() {
     }
     void* tex = mAccessor1->GetResource(0x74696d67, buf, 0);
     if (tex != NULL) {
-        PaneSetTexPaletteByName(mpLayout, "pic_cap", tex);
+        PaneSetTexPaletteByName(mpLayout, (const char*)("pic_cap"), (TPLPalette*)tex);
     }
 }
 
@@ -333,7 +333,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
         u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
                              CDeviceFont::getFontInfo(1, mpLayout))->getFont();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         u32 lang = getPackedFont();
         if (lang != 0) {

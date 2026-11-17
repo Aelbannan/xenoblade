@@ -10,6 +10,7 @@
 #include "monolib/work/CEventFile.hpp"
 
 #include "kyoshin/CSortMenu.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r { namespace math { struct VEC3; } }
 
@@ -185,9 +186,6 @@ extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the
 // code_80135FDC.hpp set is co-included for BdatGetPtrDirect/LayoutSetTextBoxFmtValue).
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 

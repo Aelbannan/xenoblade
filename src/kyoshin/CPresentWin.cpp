@@ -52,7 +52,7 @@ void showPresentRank(CPresentWin* self) {
     char buf[0x20];
     sprintf(buf, pool + 0x12a, rank);
 
-    int res = BdatGetS8Direct((const char*)lbl_eu_80664104, buf, (const char*)itemId);
+    int res = BdatGetS8Direct((const char*)lbl_eu_80664104, (const char*)buf, (int)((const char*)itemId));
 
     if ((s8)res < 0) {
         // Time not met: hide the result panes, show the failure panes and a
@@ -70,7 +70,7 @@ void showPresentRank(CPresentWin* self) {
             tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
-            PaneSetTexPaletteByName(self->mpLayout, pool + 0x149, tex);
+            PaneSetTexPaletteByName(self->mpLayout, pool + 0x149, (TPLPalette*)tex);
         }
     } else {
         // Time met: show the result panes and a texture matching the rank.
@@ -91,7 +91,7 @@ void showPresentRank(CPresentWin* self) {
             tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, pool + 0x17f, NULL);
         }
         if (tex) {
-            PaneSetTexPaletteByName(self->mpLayout, pool + 0x195, tex);
+            PaneSetTexPaletteByName(self->mpLayout, pool + 0x195, (TPLPalette*)tex);
         }
     }
 
@@ -118,7 +118,7 @@ tail:
 
     void* tex = self->mAccessor->GetResource(0x74696D67, pool + 0x117, NULL);
     if (tex) {
-        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, (TPLPalette*)tex);
     }
 
     self->mField37 = 4;
@@ -202,7 +202,7 @@ void togglePresentPath(CPresentWin* self) {
         SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
         void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
         if (tex) {
-            PaneSetTexPalette(self->mPane2C, tex);
+            PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
         }
     }
 }
@@ -271,7 +271,7 @@ extern "C" __declspec(noinline) void repaintPresentItemA(CPresentWin* self) {
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
-        PaneSetTexPalette(self->mPane28, tex);
+        PaneSetTexPalette(self->mPane28, (TPLPalette*)tex);
     }
 }
 
@@ -283,7 +283,7 @@ extern "C" __declspec(noinline) void repaintPresentItemB(CPresentWin* self) {
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
-        PaneSetTexPalette(self->mPane2C, tex);
+        PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
     }
 }
 
@@ -362,7 +362,7 @@ void openPresentWin(CPresentWin* self) {
     SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
     void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
     if (tex) {
-        PaneSetTexPalette(self->mPane2C, tex);
+        PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
     }
 
     char* s1 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x2b);
@@ -377,7 +377,7 @@ void openPresentWin(CPresentWin* self) {
     nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr->GetResource(0x74696D67, handle, NULL);
     if (tex2) {
-        PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050A84C[0x10d], tex2);
+        PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050A84C[0x10d], (TPLPalette*)tex2);
         // Texture dimensions are read before the pane lookup so the loads
         // schedule above the call (retail interleaves them).
         CPresentTexDims* dims = ((CPresentTexObj*)tex2)->mChain->mDims;
@@ -433,7 +433,7 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     u32 fontResult = ((CPresentFontView*)fontObj)->sf9();
     // No persistent rootPane local: retail reloads GetRootPane() per use,
     // keeping callee-saved pressure down to r29-r31.
-    ApplyFontToTxtPanes(self->mpLayout->GetRootPane(), fontResult);
+    ApplyFontToTxtPanes(self->mpLayout->GetRootPane(), (const nw4r::ut::Font*)fontResult);
 
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, true);
@@ -460,7 +460,7 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     nw4r::lyt::ArcResourceAccessor* mgr1 = CUICfManager_getArcResourceAccessor();
     void* tex1 = mgr1->GetResource(0x74696D67, handle1, NULL);
     if (tex1) {
-        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex1);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, (TPLPalette*)tex1);
         // Texture dimensions are read before the pane lookup so the loads
         // schedule above the virtual call (retail interleaves them).
         CPresentTexDims* dims1 = ((CPresentTexObj*)tex1)->mChain->mDims;
@@ -485,7 +485,7 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     nw4r::lyt::ArcResourceAccessor* mgr2 = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr2->GetResource(0x74696D67, handle2, NULL);
     if (tex2) {
-        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, tex2);
+        PaneSetTexPaletteByName(self->mpLayout, pool + 0x10d, (TPLPalette*)tex2);
         CPresentTexDims* dims2 = ((CPresentTexObj*)tex2)->mChain->mDims;
         u16 h2 = dims2->mH;
         u16 w2 = dims2->mW;

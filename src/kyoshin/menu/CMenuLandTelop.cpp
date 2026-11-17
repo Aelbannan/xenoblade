@@ -589,9 +589,9 @@ void buildTelopLayout(CMenuLandTelop* self) {
     // slot (+0x24); the import returns void* and is cast at the call site
     // (CEquipChange.cpp idiom).
     ApplyFontToTxtPanes(self->field_54->GetRootPane(),
-                   (u32)static_cast<IDeviceFontInfo*>(
+                   (const nw4r::ut::Font*)((u32)static_cast<IDeviceFontInfo*>(
                        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-                           1, self->field_54))->getFont());
+                           1, self->field_54))->getFont()));
 
     self->field_88->SetFrame(lbl_eu_806673C8);
     self->field_54->Animate();

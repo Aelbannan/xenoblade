@@ -13,7 +13,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 extern void playUISound(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
@@ -112,7 +112,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = static_cast<CExchangeWinFontView*>(fontObj)->sf9();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     mLayout->SetAnimationEnable(mAnimTransform, true);
     mLayout->Animate(0);
@@ -200,7 +200,7 @@ extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val) {
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
     pane1 = win->mLayout->GetRootPane()->FindPaneByName(buf, true);
     pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
-    ScalePaneWorldPos(dst, pane1, pane2, win->mLayout->GetRootPane());
+    ScalePaneWorldPos((nw4r::math::VEC3*)dst, pane1, pane2, win->mLayout->GetRootPane());
 }
 extern "C" void ExWin_LoadFile(CExchangeWin* self) {
     self->mFileHandle = CDeviceFile::readFile(

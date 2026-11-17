@@ -6,38 +6,28 @@
 #include "kyoshin/CSysWin.hpp"
 // CItemBoxInfo.hpp declares these retail helpers with different parameter
 // types than this TU (illegal C-linkage overloads); its forms are renamed.
-#define ScalePaneWorldPos ScalePaneWorldPos_ibinfo_dup
 #define PaneMatGetS16Quad PaneMatGetS16Quad_ibinfo_dup
 #define LookupItemTypeTable LookupItemTypeTable_ibinfo_dup
 #define renderItemBox2ByKind renderItemBox2ByKind_ibinfo_dup
-#define BdatGetU8Direct BdatGetU8Direct_ibinfo_dup
 #define BuildItemNameStr BuildItemNameStr_ibinfo_dup
 #define BlendFloatAvgScale BlendFloatAvgScale_ibinfo_dup
 #define Counter_TestBit Counter_TestBit_ibinfo_dup
 #define GetCollectedFlagByte GetCollectedFlagByte_ibinfo_dup
-#define BdatGetU16Direct BdatGetU16Direct_ibinfo_dup
 #define __as__11_GXColorS10FRC11_GXColorS10 __as__11_GXColorS10FRC11_GXColorS10_ibinfo_dup
 #include "kyoshin/CItemBoxInfo.hpp"
-#undef ScalePaneWorldPos
 #undef PaneMatGetS16Quad
 #undef LookupItemTypeTable
 #undef renderItemBox2ByKind
-#undef BdatGetU8Direct
 #undef BuildItemNameStr
 #undef BlendFloatAvgScale
 #undef Counter_TestBit
 #undef GetCollectedFlagByte
-#undef BdatGetU16Direct
 #undef __as__11_GXColorS10FRC11_GXColorS10
 // CNumSelect.hpp declares setPaneVisible(nw4r::lyt::Pane*, u32), which is an
 // illegal C-linkage overload next to CScrollBar.hpp's (void*, u32) form.
 #define setPaneVisible setPaneVisible_numsel_dup
-#define LayoutSetTextBoxText LayoutSetTextBoxText_numsel_dup
-#define LayoutSetTextBoxFmtValue LayoutSetTextBoxFmtValue_numsel_dup
 #include "kyoshin/CNumSelect.hpp"
 #undef setPaneVisible
-#undef LayoutSetTextBoxText
-#undef LayoutSetTextBoxFmtValue
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"

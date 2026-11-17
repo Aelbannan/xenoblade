@@ -649,7 +649,7 @@ void CTalkWindow::Init() {
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, mpLayout);
         ApplyFontToTxtPanes(mpLayout->GetRootPane(),
-                      reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle());
+                      (const nw4r::ut::Font*)(reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle()));
 
         // Prime the message-window pane and bind the four corner panes.
         CTalkWinPane* paneB0 = reinterpret_cast<CTalkWinPane*>(
@@ -781,8 +781,8 @@ void CTalkWindow::Init() {
 
         // Bind the page texture to the two arrow panes.
         if (res != 0) {
-            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x11e], res);
-            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x12c], res);
+            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x11e], (TPLPalette*)res);
+            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x12c], (TPLPalette*)res);
         }
 
         IScnRender* render = reinterpret_cast<IScnRender*>(this);

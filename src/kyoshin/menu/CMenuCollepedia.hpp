@@ -7,6 +7,7 @@
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CCollepedia.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // Forward declaration for the owning scene (CScn.hpp pulls broken monolib
 // umbrella headers; keep the pointer opaque, same scheme as CMenuBattleEnd).
@@ -73,7 +74,6 @@ extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
-extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
 extern "C" void clpStartLoads(CCollepedia* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);

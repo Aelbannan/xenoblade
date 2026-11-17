@@ -8,6 +8,7 @@
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <nw4r/math/math_types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void cbRenderBefore__12CUIErrMesWinFv();
@@ -27,7 +28,6 @@ extern "C" void sysWinOpenPhase1(void* syswin);
 extern "C" void sysWinAdvancePhase3(void* syswin);
 
 // Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
-extern "C" char* BdatTouchStringCell(char* fmt, char* base, u32 id);
 
 // String pool used by ErrWin_LoadText_4F40's error message.
 extern char lbl_eu_805135E0[];

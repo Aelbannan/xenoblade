@@ -4,6 +4,7 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CPresentWin : public IWorkEvent {
 public:
@@ -79,7 +80,6 @@ extern void* lbl_eu_80664090;
 // linkage so calls bind to the literal mangled identifier.
 extern "C" {
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void PaneSetTexPalette(void*, void*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
@@ -96,13 +96,10 @@ public:
 // reloc and drift at the reloc gate).
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
-void AccumPaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void setPaneVisible(nw4r::lyt::Pane*, u32);
 void writePanePos(nw4r::lyt::Pane*, float*);
 u32 BdatGetItemId(u32);
-int BdatGetS8Direct(const char*, const char*, const char*);
-char* BdatGetPtrDirect(const void*, const void*, int);
 void AdjustRelateValue(u16, u16, s8);
 void repaintPresentItemA(CPresentWin* self);
 void repaintPresentItemB(CPresentWin* self);

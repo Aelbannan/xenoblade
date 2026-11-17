@@ -11,6 +11,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Window base class: quest/menu windows are CRTP task objects whose Move/Draw
 // behavior is dispatched through the +0x3C/+0x48 pointer-to-member-function
@@ -284,7 +285,6 @@ void CUICfManager_setTimeout30();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
-void ScalePaneWorldPos(void*, void*, void*, void*);
 void incrementEventCounter__FUl(u32);
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);

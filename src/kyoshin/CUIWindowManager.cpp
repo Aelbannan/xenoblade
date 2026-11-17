@@ -523,8 +523,8 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
             return;
         }
         if (BdatGetU8Direct(
-                (u32)lbl_eu_80573D18[SearchThresholdIdx(id - 0x220)],
-                lbl_eu_8050097C, id - 0x220) == 2) {
+                (const void*)lbl_eu_80573D18[SearchThresholdIdx(id - 0x220)],
+                (const char*)lbl_eu_8050097C, id - 0x220) == 2) {
             return;
         }
         u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)lbl_eu_80664088->unk9C,
@@ -1398,7 +1398,7 @@ extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
     }
     if (first == 1) {
         int idx = (int)SearchThresholdIdx(second);
-        if ((u8)BdatGetU8Direct((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
+        if ((u8)BdatGetU8Direct((const void*)lbl_eu_80573D18[idx], (const char*)lbl_eu_8050097C,
                               second) == 2) {
             return NULL;
         }

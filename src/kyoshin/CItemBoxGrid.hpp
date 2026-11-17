@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 class CBaseCur;
 class UnkClass_8045F564;
 namespace nw4r { namespace lyt {
@@ -215,10 +216,8 @@ extern "C" int CSysWin_isActive(void*);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" __declspec(noinline) void UpdateCursors(void*);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 BdatGetItemType(u32);
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 // CfGameManager.hpp (included transitively) now declares the unified
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
@@ -275,14 +274,10 @@ extern "C" void advancePresentState(void*);
 extern "C" void ExWin_RequestClose(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" void AccumPaneWorldPos(void*, void*);
 extern "C" void renderItemBoxByKind(void*, u32, u32, u32);
 extern "C" u32 startItemBoxOpen(void*);
 extern "C" void setItemBoxResultPane(void*, u32);
 extern "C" void setPaneVisible(void*, u32);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
@@ -435,7 +430,6 @@ extern "C" void __dt__12CItemBoxInfoFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void MenuShopSellCopyData(void*, void*);
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void Cur_SetTwoPanes09(void*, CibgVec3, CibgVec3);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);

@@ -5,6 +5,7 @@
 // does not pull these flat declarations into unrelated units).
 
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 namespace cf { class CfObjectMove; }
 #include "kyoshin/CPartyStateWin.hpp"
 
@@ -68,7 +69,6 @@ extern "C" void drawHelp(CTitleAHelp*, nw4r::lyt::DrawInfo*);
 
 // String-pool lookup helper (retail unmangled; also declared in
 // CMenuKizunagram.hpp) and the string pool it indexes.
-extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 extern char lbl_eu_80507C94[];
 
 // C-linkage CSysWin helper imports (retail unmangled names, defined in

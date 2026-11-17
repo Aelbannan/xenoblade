@@ -104,7 +104,7 @@ void CMenuPause::Init() {
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = ((CMenuPauseFontView*)fontObj)->sf9();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     mLayout->SetAnimationEnable(
         mAnim, true);
@@ -129,7 +129,7 @@ void CMenuPause::Init() {
         char* handle = MakeTplNameSysFile(msg);
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(mLayout, (void*)"pic_btn00", tex);
+            PaneSetTexPaletteByName(mLayout, (const char*)((void*)"pic_btn00"), (TPLPalette*)tex);
             // u16 -> f32 via MWCC's own 0x43300000 double-trick conversion:
             // the width/height reads are hoisted ahead of FindPaneByName and
             // the Size copy lands as two stfs pairs (pane + stack scratch).
@@ -157,7 +157,7 @@ void CMenuPause::Init() {
         char* handle = MakeTplNameSysFile(msg);
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(mLayout, (void*)"pic_btn01", tex);
+            PaneSetTexPaletteByName(mLayout, (const char*)((void*)"pic_btn01"), (TPLPalette*)tex);
             CMenuPauseTexDims* dims =
                 ((CMenuPauseTexObj*)tex)->mChain->mDims;
             u16 texHeight = dims->field_0x2;

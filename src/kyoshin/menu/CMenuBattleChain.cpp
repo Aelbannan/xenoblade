@@ -141,7 +141,7 @@ void CMenuBattleChain::Init() {
     bindLayoutAnimTransform(mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    ApplyFontToTxtPanes(rootPane, getPackedFont());
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)getPackedFont());
 
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnim0);

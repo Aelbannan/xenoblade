@@ -12,6 +12,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <revolution/gx/GXPixel.h>                 // GXSetZMode
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Globals shared across menu units
 extern u32 lbl_eu_80663E28;
@@ -50,7 +51,6 @@ int ScMain_GetSummedInt(void*);
 struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
-void PaneSetTexPalette(void*, void*);
 char* MakeTplNameSysFile(u32);
 
 extern u32 lbl_eu_80662580;
@@ -160,7 +160,7 @@ static inline void menuVisionSetImage(CMenuVisionEntry& entry, const char* paneN
     nw4r::lyt::Pane* pane = entry.mLayout->GetRootPane()->FindPaneByName(paneName, true);
     menuVisionSetVisible(pane, false);
     if (image != 0) {
-        PaneSetTexPaletteByName(entry.mLayout, (char*)paneName, image);
+        PaneSetTexPaletteByName(entry.mLayout, (char*)paneName, (TPLPalette*)image);
         menuVisionSetVisible(pane, true);
     }
 }
@@ -212,7 +212,7 @@ static inline void menuVisionBeginSilent(CMenuVisionEntry& entry) {
 
 static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image) {
     if (image != 0) {
-        PaneSetTexPalette(pane, image);
+        PaneSetTexPalette(pane, (TPLPalette*)image);
         pane->SetVisible(true);
     }
 }
@@ -760,7 +760,7 @@ extern "C" void driveVisionUpdate(int flags) {
             break;
         }
         if (image != 0) {
-            PaneSetTexPaletteByName(entry.mLayout, (char*)(lbl_eu_80504268 + 0x422), image);
+            PaneSetTexPaletteByName(entry.mLayout, (char*)(lbl_eu_80504268 + 0x422), (TPLPalette*)image);
         }
         menuVisionBeginWithoutSecond(entry);
     }
@@ -981,7 +981,7 @@ extern "C" void driveVisionUpdate(int flags) {
                         if (previous == idList[(u8)i]) {
                             void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
-                                PaneSetTexPalette(panic, image);
+                                PaneSetTexPalette(panic, (TPLPalette*)image);
                                 panic->SetVisible(true);
                             }
                             break;
@@ -1017,7 +1017,7 @@ extern "C" void driveVisionUpdate(int flags) {
                         if (current == idList[(u8)i]) {
                             void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
-                                PaneSetTexPalette(panic, image);
+                                PaneSetTexPalette(panic, (TPLPalette*)image);
                                 panic->SetVisible(true);
                             }
                             break;

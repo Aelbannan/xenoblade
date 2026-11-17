@@ -175,25 +175,25 @@ void CMenuBattleCommu::Init() {
         char* res = static_cast<char*>(
             CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
         if (res != 0) {
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x158, (TPLPalette*)res);
         }
         res = static_cast<char*>(
             CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x165, 0));
         if (res != 0) {
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x182, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x18f, (TPLPalette*)res);
         }
     } else {
         char* res = static_cast<char*>(
             CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x19c, 0));
         if (res != 0) {
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x158, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x158, (TPLPalette*)res);
         }
         res = static_cast<char*>(
             CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x1b7, 0));
         if (res != 0) {
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x182, res);
-            PaneSetTexPaletteByName(mField74, lbl_eu_805047FC + 0x18f, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x182, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x18f, (TPLPalette*)res);
         }
     }
 

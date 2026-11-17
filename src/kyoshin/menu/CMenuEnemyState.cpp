@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Unit-private imports (retail symbol names - keep linkage/signatures verbatim)
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -12,10 +13,7 @@ extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).
-extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout* layout, const char* name,
-                              u32 value);
 // Apply a loaded texture to a pane (retail symbol is unmangled).
-extern "C" void PaneSetTexPalette(void* a, void* palette);
 // Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
 // declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
 // later plain redeclaration inherit it (same signature).
@@ -27,7 +25,6 @@ extern "C" void* findObjB28ById(s32 a);
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int ScMain_GetSummedInt(void* self);
 extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
-extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
 extern "C" char* GetBdatNameByNumId(const char* s);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
 extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
@@ -526,7 +523,6 @@ extern "C" void* MapFx_ResolveOwner(void* obj);
 int GetSysStateFlag23();
 void CfModel_NotifyReady(void* model);
 void CfModel_GetSpeedRate(void* model);
-int CheckViewAngle60(void* a, void* b, void* c);
 
 
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
@@ -919,7 +915,7 @@ void CMenuEnemyState::Move() {
                 ml::CVec3* qpos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosVector();
                 Vec3f c = *reinterpret_cast<const Vec3f*>(qpos);
 
-                if (!CheckViewAngle60(&a, &b, &c)) {
+                if (!CheckViewAngle60((const nw4r::math::VEC3*)&a, (const nw4r::math::VEC3*)&b, (const nw4r::math::VEC3*)&c)) {
                     panel.visible = z;
                     continue;
                 }
@@ -1400,7 +1396,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
         break;
     }
     if (tex != NULL) {
-        PaneSetTexPalette(panel->obj2, tex);
+        PaneSetTexPalette((nw4r::lyt::Pane*)panel->obj2, (TPLPalette*)tex);
         reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
     }
 
@@ -1573,7 +1569,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                     break;
                 }
                 if (tex != NULL) {
-                    PaneSetTexPalette(panel->obj2, tex);
+                    PaneSetTexPalette((nw4r::lyt::Pane*)panel->obj2, (TPLPalette*)tex);
                     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
                 }
 
@@ -1735,7 +1731,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                     break;
                 }
                 if (tex2 != NULL) {
-                    PaneSetTexPalette(panel->obj2, tex2);
+                    PaneSetTexPalette((nw4r::lyt::Pane*)panel->obj2, (TPLPalette*)tex2);
                     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
                 }
 
@@ -1923,8 +1919,8 @@ void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
             // Retail hoists the second call's pane pointer (r28) ahead of the
             // first call's argument setup.
             void* p90 = reinterpret_cast<void*>(this->field90);
-            PaneSetVtxColorPairs(reinterpret_cast<void*>(this->field8C), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-            PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            PaneSetVtxColorPairs((nw4r::lyt::Pane*)(reinterpret_cast<void*>(this->field8C)), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
         }
     } else {
         nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
@@ -1949,20 +1945,20 @@ void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
             void* p8C = reinterpret_cast<void*>(this->field8C);
             void* p90 = reinterpret_cast<void*>(this->field90);
             if (tgt >= 6) {
-                PaneSetVtxColorPairs(p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
-                PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
             } else if (tgt >= 3) {
-                PaneSetVtxColorPairs(p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
-                PaneSetVtxColorPairs(p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D20000 + 0x28FF, 0xD2D20000 + 0x2800);
             } else if (tgt <= -6) {
-                PaneSetVtxColorPairs(p8C, 0, 0);
-                PaneSetVtxColorPairs(p90, 0, 0);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0, 0);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0, 0);
             } else if (tgt <= -3) {
-                PaneSetVtxColorPairs(p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
-                PaneSetVtxColorPairs(p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0x288D0000 - 1, 0x288D0000 - 0x100);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0x288D0000 - 1, 0x288D0000 - 0x100);
             } else {
-                PaneSetVtxColorPairs(p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
-                PaneSetVtxColorPairs(p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p8C, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
+                PaneSetVtxColorPairs((nw4r::lyt::Pane*)p90, 0xD2D30000 - 0x2D01, 0xD2D30000 - 0x2E00);
             }
         }
     }
@@ -2108,7 +2104,7 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
 
         void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
-            u8 v = BdatGetU8Direct(lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
+            u8 v = BdatGetU8Direct((const void*)lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
                                  static_cast<AD860Result*>(sub)->id3F28);
             // Retail clrlwi's the result - keep the u8 narrowing.
             switch (v) {
@@ -2326,7 +2322,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                     void* tex = accessor->GetResource(0x74696D67, name, 0);
                     if (tex != 0) {
                         f94->flagBB = (f94->flagBB & 0xFE) | 1;
-                        PaneSetTexPalette(f94, tex);
+                        PaneSetTexPalette((nw4r::lyt::Pane*)f94, (TPLPalette*)tex);
                         this->field7DC = idx;
                         break;
                     }
@@ -2363,7 +2359,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                         void* tex = accessor->GetResource(0x74696D67, name, 0);
                         if (tex != 0) {
                             f98->flagBB = (f98->flagBB & 0xFE) | 1;
-                            PaneSetTexPalette(f98, tex);
+                            PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
                             this->field7E0 = idx2;
                             break;
                         }
@@ -2377,7 +2373,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                             void* tex = accessor->GetResource(0x74696D67, name, 0);
                             if (tex != 0) {
                                 f98->flagBB = (f98->flagBB & 0xFE) | 1;
-                                PaneSetTexPalette(f98, tex);
+                                PaneSetTexPalette((nw4r::lyt::Pane*)f98, (TPLPalette*)tex);
                                 this->field7E0 = idx2;
                                 break;
                             }
@@ -2593,7 +2589,7 @@ void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* ac
                     0x74696D67, reinterpret_cast<const char*>((&tbl32.a)[oi]), 0);
                 if (tex != 0) {
                     obj48->flagBB = (obj48->flagBB & 0xFE) | 1;
-                    PaneSetTexPalette(obj48, tex);
+                    PaneSetTexPalette((nw4r::lyt::Pane*)obj48, (TPLPalette*)tex);
                     break;
                 }
             }
@@ -2796,7 +2792,7 @@ void CMenuEnemyState::Init() {
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
-    ApplyFontToTxtPanes(rootPane, reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0));
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0)));
 
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], CUICfManager_getPackedFontD8());
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], CUICfManager_getPackedFontD8());

@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CFileHandle;
 
@@ -23,11 +24,9 @@ extern const float lbl_eu_80668544;
 extern const float lbl_eu_80668548;
 
 // Layout text/pane bind helper (retail 0x80137924).
-void ScalePaneWorldPos(void*, void*, void*, void*);
 
 // Pane texture/anim bind helpers used by crystalListUpdateSlot.
 extern "C" void AnimResetToFirst(void* pane, void* animRes);
-extern "C" void PaneSetTexPalette(void* pane, void* tex);
 
 // Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
 extern char lbl_eu_805092C0[];

@@ -14,19 +14,13 @@
 // signatures; rename CFloorMap's versions while its header is processed.
 #define Cur_Update Cur_UpdateFloorMap
 #define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
-#define ApplyFontToTxtPanes ApplyFontToTxtPanesFloorMap
 #define Bdat_GetMaxRow_B1EC Bdat_GetMaxRow_B1ECFloorMap
 #define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
-#define BdatTouchStringCell BdatTouchStringCellFloorMap
-#define PaneSetTexPaletteByName PaneSetTexPaletteByNameFloorMap
 #include "kyoshin/CFloorMap.hpp"
 #undef Cur_Update
 #undef sysWinDispatchPhase
-#undef ApplyFontToTxtPanes
 #undef Bdat_GetMaxRow_B1EC
 #undef lbl_eu_806640A8
-#undef BdatTouchStringCell
-#undef PaneSetTexPaletteByName
 
 class CScn;
 

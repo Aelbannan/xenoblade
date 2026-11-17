@@ -221,7 +221,6 @@ u32 KyoshinHeap_GetField44();
 
 // BDAT message lookup helpers (unmangled retail C symbols): BdatGetU16Direct
 // resolves a row id, BdatGetPtrDirect resolves the message string for the id.
-char* BdatGetPtrDirect(void* obj, const char* key, u16 id);
 }
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms

@@ -170,7 +170,7 @@ void CMenuBattleDamage::Init() {
         {
             nw4r::lyt::Pane* root = e.mLayout0->GetRootPane();
             u32 font = getPackedFont();
-            ApplyFontToTxtPanes(root, font);
+            ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)font);
         }
         e.mLayout0->UnbindAllAnimation();
 
@@ -185,7 +185,7 @@ void CMenuBattleDamage::Init() {
                 static_cast<CMenuBattleDamageFontView*>(
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                         1, e.mLayout1));
-            ApplyFontToTxtPanes(root, fontObj->sf7());
+            ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)fontObj->sf7());
         }
 
         e.mLayout1->SetAnimationEnable(e.mAnim3, true);
@@ -966,7 +966,7 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
                 0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
         }
         if (res != 0) {
-            PaneSetTexPaletteByName(e.mLayout1, lbl_eu_804FD524 + 0x1af);
+            PaneSetTexPaletteByName(e.mLayout1, lbl_eu_804FD524 + 0x1af, (TPLPalette*)res);
         }
 
         e.field_32 = 0;

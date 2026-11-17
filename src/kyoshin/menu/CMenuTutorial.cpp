@@ -14,7 +14,6 @@
 // extern "C" BdatGetU8Direct (u8) overload-clashes with CTutorial.hpp's
 // (u32) (same clash CMenuPlayAward.cpp works around); this TU only needs
 // BdatTouchStringCell.
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 #include "monolib/core/CPadManager.hpp"
 
 #include <revolution/GX.h>
@@ -22,6 +21,7 @@ extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CTutorialImports.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // ---- Declarations private to this unit ----
 

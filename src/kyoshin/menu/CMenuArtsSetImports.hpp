@@ -3,6 +3,8 @@
 // Unit-private import declarations and helper views split out of
 // CMenuArtsSet.hpp; included only by CMenuArtsSet.cpp.
 #include "kyoshin/menu/CMenuArtsSet.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -23,7 +25,6 @@ extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
@@ -111,9 +112,7 @@ extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u3
 // BDAT message-table / texture-name helpers used by ArtsCharList_refreshDisplay (imports).
 extern void* lbl_eu_80664090;
 extern "C" char* MakeTplNameSysFile(u32 id);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, int);
 // Mangled retail symbol declared directly so the third argument stays a
 // full register (retail passes the raw manager value without truncation).
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
@@ -138,7 +137,6 @@ struct SArtsEntryWord {
 };
 // Mode-4/id-8 imports (code_80135FDC.cpp / CItem.cpp; C symbols).
 extern "C" u16 BdatGetItemId(u32 value);
-extern "C" u8 BdatGetU8Direct(u32 entry, const char* text, u32 row);
 extern "C" SArtsEntryWord* CItem_kindPtr(u32 kind);
 // Current BDAT text-table handle consumed by BdatGetU8Direct (.sdata word).
 extern u32 lbl_eu_806640F8;
@@ -293,21 +291,17 @@ extern const SArts320C0Block lbl_eu_8050ABFC;
 
 // String-table lookup (artsAvailFlag) and learn-arts flag-grid query
 // (artsAvailFlag); C-linkage retail symbols.
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
 // Accumulated pane translate (AccumPaneWorldPos, defined in code_80135FDC.cpp)
 // and pane translate setter (Cur_SetPaneTranslate, defined in CSysWin.cpp).
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Window-arm chain used by CMenuArtsSet_armSysWin: build a label string pair then
 // drive the CSysWin sub-object. sysWinApplyKind is already declared in
 // CSysWin.hpp as (CSysWin*, u8).
-extern "C" char* BdatTouchStringCell(char* a, char* b, u32 count);
 extern "C" void sysWinSetKindContent(CSysWin* self, char* str, u32 flag);
 extern "C" void sysWinOpenPhase1(CSysWin* self);
 
 // AnimRewindFrame is a flat C symbol (anim-frame check helper).
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // CArtsInfo field setters / refresh (defined in CArtsInfo.cpp; C symbols).
 extern "C" void CArtsInfo_SetCharId(CArtsInfo* self, u8 val);
@@ -320,7 +314,6 @@ extern "C" void SysWinLog_ScanGrid(u8* self);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 // BDAT string -> u16 (code_80135FDC.cpp). u32 3rd arg: retail passes the
 // raw int (no clrlwi at the call site).
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 // sprintf (varargs): C declaration mirrors CArtsInfo.hpp (crclr cr1eq at
 // the call site comes from the varargs ABI).
 extern "C" int sprintf(char*, const char*, ...);

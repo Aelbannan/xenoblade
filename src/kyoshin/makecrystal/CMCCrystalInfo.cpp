@@ -10,12 +10,12 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 void SplitU32ToS16s(void*, u32);
 void setGXColorS10(void*, u32, u32, u32, u32);
 extern "C" void MCCrystal_StepIntro(CMCCrystalInfo*);
@@ -228,7 +228,7 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
-    u8 code = BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
+    u8 code = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
     switch (code) {
     case 0:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
@@ -269,7 +269,7 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
 
     if (res != 0) {
         sprintf(buf, &lbl_eu_80508DF8[0x11b], idx);
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, buf, res);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, (const char*)buf, (TPLPalette*)res);
     }
 }
 
@@ -290,7 +290,7 @@ extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
                                       &lbl_eu_80508DF8[0x12b], NULL);
         if (res != 0) {
             sprintf(buf, &lbl_eu_80508DF8[0x11b], i);
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, buf, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, (const char*)buf, (TPLPalette*)res);
         }
     }
 }
@@ -307,7 +307,7 @@ void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneId
     nw4r::lyt::Pane* r2 =
         (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))
             ->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
-    ScalePaneWorldPos(self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
+    ScalePaneWorldPos((nw4r::math::VEC3*)self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
 }
 #pragma pop
 
@@ -541,9 +541,9 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         nw4r::lyt::Pane* rootPane =
             ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
         ApplyFontToTxtPanes(rootPane,
-            reinterpret_cast<CMCCrystalInfoFontView*>(
+            (const nw4r::ut::Font*)(reinterpret_cast<CMCCrystalInfoFontView*>(
                 CDeviceFont::getFontInfo(1, (nw4r::lyt::Layout*)mLayout))
-                ->vf7());
+                ->vf7()));
 
         // If a character set is loaded, stamp every text pane with it.
         u32 sh = CUICfManager_getPackedFont9C();

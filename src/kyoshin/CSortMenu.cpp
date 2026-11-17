@@ -13,9 +13,9 @@
 #include "monolib/work/CEventFile.hpp"
 
 #include <cstdio>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Pane-position helper from code_80135FDC (retail-unmangled).
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 void closeFileHandle(CFileHandle**);
 extern "C" u16 CItemBlock_getFlag120EC(int);
@@ -371,7 +371,7 @@ bool CSortMenu::OnFileEvent(CEventFile* pEventFile) {
                                 "mf00_reg00_sort_info_in.brlan");
 
         ApplyFontToTxtPanes(mpLayout->GetRootPane(),
-                            ((CDeviceFontItf*)CDeviceFont::getFontInfo(1, mpLayout))->getResource());
+                            (const nw4r::ut::Font*)(((CDeviceFontItf*)CDeviceFont::getFontInfo(1, mpLayout))->getResource()));
 
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
         mpLayout->SetAnimationEnable(mpAnimTrans0, true);

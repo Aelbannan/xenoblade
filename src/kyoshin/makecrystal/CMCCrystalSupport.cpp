@@ -4,6 +4,7 @@
 #include <nw4r/lyt.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
@@ -17,7 +18,6 @@ extern const float lbl_eu_80668630;
 extern const float lbl_eu_80668634;
 
 char* MakeTplNameSysFile(u16);
-void PaneSetTexPaletteByName(void*, const char*, void*);
 void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 }
@@ -81,7 +81,7 @@ extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
     char* name = MakeTplNameSysFile(key);
     void* resource = self->mAccessor->GetResource('timg', name, nullptr);
     if (resource != nullptr) {
-        PaneSetTexPaletteByName(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
+        PaneSetTexPaletteByName(self->mLayout, lbl_eu_8050AA3C + 0x38, (TPLPalette*)resource);
     }
 }
 #pragma pop

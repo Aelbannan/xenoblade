@@ -22,29 +22,12 @@
 
 class CScn;
 
-// All definitions in code_80135FDC.cpp are C-linkage (extern "C"), so the
-// declarations MUST match -- otherwise callers emit Itanium-mangled relocs
-// (e.g. BdatGetPtrDirect__FPvPcUs) while retail has the unmangled name, and the
-// witness rejects the pair at the reloc gate (us-8025658c / us-8025650c were
-// stuck at 99.4-99.6% on exactly this).
-// Params use const void* so both const char* (CArtsInfo, CExchangeWin) and
-// const void* (CCollepedia) call sites bind without conversions.
+// All definitions in code_80135FDC.cpp are C-linkage (extern "C"); their
+// single canonical declarations live in the lean headers below.
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+
 extern "C" {
-u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-s16 BdatGetS16ByTableKey(const void*, const void*, u32);
-s8 BdatGetS8ByTableKey(const void*, const void*, u32);
-#ifndef CODE_80135FDC_CPP
-// The definitions of these in code_80135FDC.cpp use different (not-yet-)
-// matched signatures/linkage; code_80135FDC.cpp defines CODE_80135FDC_CPP
-// before including so these caller-tuned exports don't clash with them.
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-u8 BdatGetU8Direct(u32, const char*, u32);
-char* BdatGetPtrDirect(const void*, const void*, int);
-void ApplyFontToTxtPanes(void*, u32);
-#endif
-void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 // Retail symbols for these ARE the Itanium-mangled names; declare them under
 // C linkage so calls bind to the literal mangled identifier (declaring them
 // as C++ functions would re-derive the same mangling, but the extern "C" +
@@ -77,9 +60,7 @@ extern "C" {
 #ifndef CODE_80135FDC_CPP
 u8 MapValueToRank6(u32);
 #endif
-u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 #ifndef CODE_80135FDC_CPP
-void PaneSetTexPaletteByName(void*, void*, void*);
 char* MakeTplNameSysFile(u32);
 void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 #endif
@@ -265,7 +246,6 @@ extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...)
 // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp (included above).
 
 // misc single decls
-extern "C" void SetLayoutSelfText(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getInstance__14Class_80296898Fv();
 }
 

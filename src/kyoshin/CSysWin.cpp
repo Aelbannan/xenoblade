@@ -210,7 +210,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     u8* font = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     typedef u32 (*FontVFn)(void*);
     u32 fontRes = (*reinterpret_cast<FontVFn**>(font))[0x24 / 4](font);
-    ApplyFontToTxtPanes(rootPane, fontRes);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontRes);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
         sysWinSetupAfterLoad(this);
@@ -355,27 +355,27 @@ case0:
         if (h >= lbl_eu_80668598) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685A0, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685A0, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685A4) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685A8, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685A8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685AC) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685B0, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685B0, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685B4) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685B8, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685B8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685BC) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
         } else {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C4, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685C4, lbl_eu_8066859C));
         }
     }
     goto end;
@@ -407,7 +407,7 @@ case1:
         writePanePos(pane0, pick);
         nw4r::math::VEC3 v;
         Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_2C),
-                      code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
+                      code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685C0, lbl_eu_8066859C));
     }
     goto end;
 case2:
@@ -430,19 +430,19 @@ case2:
         if (h >= lbl_eu_806685AC) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685C8, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685C8, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685B4) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685CC, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685CC, lbl_eu_8066859C));
         } else if (h >= lbl_eu_806685BC) {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D0, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685D0, lbl_eu_8066859C));
         } else {
             nw4r::math::VEC3 v;
             Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
-                          code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
+                          code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
         }
     }
     goto end;
@@ -474,7 +474,7 @@ case3:
         writePanePos(pane0, pick);
         nw4r::math::VEC3 v;
         Cur_SetPaneTranslate(reinterpret_cast<nw4r::lyt::Pane*>(self->field_30),
-                      code80135FDC_setVec3(&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
+                      code80135FDC_setVec3((nw4r::math::VEC3*)&v.x, lbl_eu_8066859C, lbl_eu_806685D4, lbl_eu_8066859C));
     }
 end:
     ;

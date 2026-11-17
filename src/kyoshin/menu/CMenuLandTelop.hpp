@@ -6,6 +6,7 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -170,7 +171,6 @@ extern f64 lbl_eu_806673F8;       // u32->double conversion bias
 // identifiers (declaring them C++ would emit a mangled reloc).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 void* BpsStateSingletonToInt();                    // system menu open gate
 unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();

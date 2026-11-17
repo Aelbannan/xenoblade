@@ -25,6 +25,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #undef writeVec3f
 #undef func_8004B9D4
 #undef Scn_SetupAnimDefault
@@ -381,7 +382,6 @@ extern "C" CModelDispNameParam* CfModel_GetBdatString(u8 value);
 extern "C" u32 bdatBitFromCol(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
 extern "C" u32 bdatResByIndex(int index);
 extern "C" int CfRes_isGridLoadIdle();

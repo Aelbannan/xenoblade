@@ -6,6 +6,8 @@
 #include <nw4r/db/db_assert.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <nw4r/ut/ut_Rect.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void playUISound(u32);
 
 // Forward decls only: this TU defines its own byte-wise nw4r::ut::Color, so the
@@ -796,7 +798,6 @@ struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
 // TagProcPumpMessage / TagProcStepMessage / TagProcStartMessage / TagProcBuildOpenText are also
 // declared in CTalkWindow.hpp / CSimpleEveTalkWin.hpp with these signatures.
 extern "C" {
-void WcsToUpperInPlace(u16* str);  // uppercase wide string (code_80135FDC.cpp)
 void TagParamClear(TagParam* p);  // reset a tag-param block
 void initTagParam(u8* obj, unsigned char a, unsigned char b, float c);  // 12-byte tag-param init
 void copyTagParam(u8* dst, const u8* src);  // 12-byte tag-param copy
@@ -925,10 +926,8 @@ u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str);
 u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str);
 // String splitter (code_80135FDC.cpp): split src on delim into outTokens,
 // returns the token count.
-int SplitWStringTrim(u16* src, u16 delim, u16** outTokens);
 // BDAT s16-keyed lookup (code_80135FDC.cpp): maps a key into the table pair
 // to an s16 value (TagWriterCode2Lookup's tag-2 name chain).
-s16 BdatGetS16ByTableKey(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
 // Message pre-processor: copy the raw message, normalize/compact the buffer
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
 u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f32 b,
@@ -945,7 +944,6 @@ u32 TagWriterApplyColor(void* unused, void* ret, TagColorArg* arg);
 // Tag-writer: print a marker into a scratch writer and advance the cursor.
 int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder);
 // Accumulated pane translate (code_80135FDC.cpp).
-void AccumPaneWorldPos(f32* out, nw4r::lyt::Pane* pane);
 
 // TagProcStepMessage's C-ABI imports: flat (or pre-mangled) retail names.
 extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = prior call's result)

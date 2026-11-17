@@ -3,6 +3,8 @@
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -168,7 +170,6 @@ struct CCollepedia {
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
 extern "C" u32 CSysWin_isReady(u8*);
 extern "C" u32 CSysWin_getUnk34(u8*);
 extern "C" int CSysWin_isActive(u8*);
@@ -188,12 +189,7 @@ extern "C" const double lbl_eu_80668818;
 extern "C" void* lbl_eu_80537474[];
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
-// KEEP (blockers-A 2026-10-23) u32 (not the canonical u16 in
-// kyoshin/code_80135FDC_Bdat.hpp): retail returns the lookup result untruncated
-// (tail-branch b in clpGetCelIcon); narrowing here would emit an extra rlwinm.
-extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);

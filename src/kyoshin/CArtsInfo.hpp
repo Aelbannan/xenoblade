@@ -5,6 +5,8 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CEventFile;
 
@@ -174,10 +176,8 @@ union CArtsSlotFlags {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // SjisDotToCommaEU is defined in code_80135FDC.cpp (C linkage);
 // CArtsInfo_DotToCommaDE is a same-unit retail symbol (unmangled, C linkage).
-extern "C" void SjisDotToCommaEU(char* str);
 extern "C" void CArtsInfo_DotToCommaDE(CArtsInfo*, u32, char*);
 extern "C" int getLanguage__9CDeviceSCFv();
-extern "C" s8 BdatGetS8ByTableKey(const void*, const char*, u8); // BDAT string -> s8
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
@@ -187,25 +187,14 @@ extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(v
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" char* BdatTouchStringCell(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // BDAT row string lookup
 // KEEP (blockers-A 2026-10-23): retail CArtsInfo_CalcDmg52/53 use the 32-bit
 // result without the clrlwi a u16 return forces, so this TU keeps its u32 view
 // instead of the canonical u16 form in kyoshin/code_80135FDC_Bdat.hpp.
-extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 // BdatGetU16ByTableKey/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u8);
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" s16 BdatGetS16ByTableKey(const void*, const void*, u32); // u32: matches defining TU code_80135FDC.cpp verbatim
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16); // colour init
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
@@ -291,7 +280,6 @@ extern void* lbl_eu_806640D8;
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 extern "C" char* CUICfManager_getPackedFont9C(void);
 extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -299,7 +287,6 @@ extern "C" void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTrans
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);

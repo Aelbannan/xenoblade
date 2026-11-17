@@ -174,7 +174,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     ApplyFontToTxtPanes(rootPane,
-                  ((IDeviceFontInfo*)fontObj)->getFont());
+                  (const nw4r::ut::Font*)(((IDeviceFontInfo*)fontObj)->getFont()));
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)CUICfManager_getPackedFont9C());
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)CUICfManager_getPackedFont9C());
 
@@ -216,8 +216,8 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     char* timgName = MakeTplNameSysFile(msgId);
     CNumSelectTimg* timg = (CNumSelectTimg*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, timgName, 0);
     if (timg != NULL) {
-        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x166], (u32)timg);
-        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x170], (u32)timg);
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x166], (TPLPalette*)((u32)timg));
+        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x170], (TPLPalette*)((u32)timg));
         u16 timgH = timg->unk8->dims->m02;
         u16 timgW = timg->unk8->dims->m00;
 

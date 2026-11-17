@@ -6,6 +6,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include <string.h>
 #include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
 // Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
@@ -85,7 +86,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
 extern "C" void Cur_SetVisible(void* cur, u8 flag);
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Cursor constructors (defined in kyoshin/CCur.cpp)
 // Font binding imports (CDeviceFont / CLibLayout)
@@ -265,7 +265,6 @@ public:
 };
 
 // C-linkage import (retail unmangled symbol).
-extern "C" void ApplyFontToTxtPanes(void* node, u32 font);
 void closeFileHandle(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
@@ -519,9 +518,9 @@ bool CMainMenu::OnFileEvent(CEventFile* pEventFile) {
             nw4r::lyt::Pane* rootPane = self->field_0x7C->GetRootPane();
             ApplyFontToTxtPanes(
                 rootPane,
-                reinterpret_cast<CMainMenuFontView*>(
+                (const nw4r::ut::Font*)(reinterpret_cast<CMainMenuFontView*>(
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
-                    ->sf9());
+                    ->sf9()));
 
             LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
             LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);

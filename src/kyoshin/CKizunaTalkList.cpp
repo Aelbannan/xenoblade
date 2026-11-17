@@ -220,8 +220,8 @@ void buildTalkList(TalkListEntryArray* arr) {
         if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
 
         u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -234,9 +234,9 @@ void buildTalkList(TalkListEntryArray* arr) {
 
         u32 v1 = findTalkIcon(arr, m1);
         u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
 
         fillTalkEntry(&tmpB, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
         u8 c = arr->mCount;
@@ -256,8 +256,8 @@ void buildTalkList(TalkListEntryArray* arr) {
         if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
 
         u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -269,9 +269,9 @@ void buildTalkList(TalkListEntryArray* arr) {
 
         u32 v1 = findTalkIcon(arr, m1);
         u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
 
         fillTalkEntry(&tmpC, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
         u8 c = arr->mCount;
@@ -288,8 +288,8 @@ void buildTalkList(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
 
-        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
         if ((u32)v >= 0x2a && (u32)v < 0x113) {
             if ((u32)m1 == 3) continue;
@@ -298,9 +298,9 @@ void buildTalkList(TalkListEntryArray* arr) {
 
         u32 v1 = findTalkIcon(arr, 0);
         u32 v2 = findTalkIcon(arr, 0);
-        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
 
         fillTalkEntry(&tmpD, (u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
         u8 c = arr->mCount;
@@ -318,8 +318,8 @@ void buildTalkList(TalkListEntryArray* arr) {
 
         char* name0 = BdatGetPtrDirect(fp, &lbl_eu_8050E990[0x40], id);
         u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
         if ((u32)v >= 0x113) {
             if ((u32)m1 == 3) m1 = 8;
@@ -328,9 +328,9 @@ void buildTalkList(TalkListEntryArray* arr) {
 
         u32 v1 = findTalkIcon(arr, m1);
         u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
 
         fillTalkEntry(&tmpE, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
         u8 c = arr->mCount;
@@ -586,9 +586,9 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
 
         if (entry->field_12 != -1) {
             sprintf(buf, &lbl[0xe3], dispIdx);
-            PaneSetTexPaletteByName(self->mpLayout20, buf, (void*)entry->field_08);
+            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_08));
             sprintf(buf, &lbl[0xf1], dispIdx);
-            PaneSetTexPaletteByName(self->mpLayout20, buf, (void*)entry->field_0C);
+            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_0C));
         }
 
         sprintf(buf, &lbl[0xff], dispIdx);
@@ -616,7 +616,7 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
 
         void* anim = self->mAccessor->GetResource(0x74696d67, lvlStr, 0);
         if (anim)
-            PaneSetTexPaletteByName(self->mpLayout20, buf, anim);
+            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)anim);
 
         // Row highlight colour / visibility from the entry subtype.
         GXColorS10* c0;
@@ -721,7 +721,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = this->mpLayout20->GetRootPane();
         u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
                              CDeviceFont::getFontInfo(1, this->mpLayout20))->getFont();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         bindScrollOutAnims(this);
 

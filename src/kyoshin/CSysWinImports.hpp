@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CSysWin.hpp so the class
 // header stays includable next to other headers.
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Full object layout for CSysWin (used by C-linkage accessors)
 struct CSysWinFull {
@@ -38,8 +39,6 @@ extern "C" void* __ct__CTagProcessor(void*);
 // CLibLayout helpers referenced by their literal retail (pre-mangled) names.
 
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
-                               nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void setPaneVisible(void*, u32);
 void closeFileHandle(CFileHandle**);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
@@ -54,7 +53,6 @@ extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane,
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers reuse it as the returned pointer for Cur_SetPaneTranslate (see
 // CScrollBar.cpp).
-extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 
 // .sdata2 floats for the label-pane placement ladder in sysWinSetKindContent
 // (thresholds + icon positions).

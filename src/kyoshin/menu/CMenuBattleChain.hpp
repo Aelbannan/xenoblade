@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace cf {
 class CfObjectMove;
@@ -193,7 +194,6 @@ struct CArtsSelectStateView {
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void PaneSetVtxColorPairsByName(void*, const char*, int, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void tickChainCounter(CMenuBattleChain* self);
 void applyChainColorScheme(CMenuBattleChain* self);

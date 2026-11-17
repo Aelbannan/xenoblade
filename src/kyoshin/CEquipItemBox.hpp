@@ -4,6 +4,8 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSortMenu.hpp"
 #include <monolib/work/CEventFile.hpp>  // CEventFile (OnFileEvent param)
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // CEquipItemBox vtable (lbl_eu_80538658)
 extern "C" void* lbl_eu_80538658[];
@@ -62,7 +64,6 @@ extern "C" void* lbl_eu_805386EC[];
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Bind a named pane to a resource (code_80135FDC unit, 3-arg form). */
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 
 /* Layout/anim builders (code_80135FDC unit). C++ linkage so MWCC mangles
    the unmangled identifiers to the retail names. */
@@ -279,7 +280,6 @@ extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 // Font/line text providers: getPackedFont is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
 char* getPackedFont();
@@ -287,12 +287,9 @@ extern "C" char* CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 extern "C" CEquipItemBoxFourShorts PaneMatGetS16QuadByName(void*, void*, u32);
 extern "C" CEquipItemBoxFourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" void CopyVec4s(void*, const void*);
-extern "C" void PaneSetTexPalette(void*, u32);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
@@ -551,8 +548,6 @@ extern "C" void copyEIBItem(CEquipItemData* dst, const CEquipItemData* src);
 extern "C" void rebuildEIBGridPage(CEquipItemGrid* grid, u8 v, u8 b, u8 hi);
 // String pool used by getEIBPageHint (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
-extern "C" char* BdatTouchStringCell(char*, char*, u32);
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -570,7 +565,6 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
 extern "C" f32 GetFloatTableEntry(u32 idx);
 extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
-extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
 extern "C" void copyVEC3(void*, const void*);
 // Declared with C++ linkage (same as CCol6System.hpp) so the two headers
 // don't create an illegal overload when a TU includes both.
@@ -640,7 +634,6 @@ extern "C" void* getEIBItemObj(CEquipItemGrid* grid, u16 idx);
 extern "C" char* fmtEIBItemName(CEquipItemGrid* grid, u32 param);
 extern "C" void dispatchEIBKind(CEquipItemBox* self, int a, int b);
 extern "C" u16 CItemBlock_getFlag120EC(int);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" int KyoshinHeap_GetField44(void);
 extern "C" void Cur_Update(void*);
@@ -725,7 +718,6 @@ extern CEquipItemBoxF32Record lbl_eu_8050EF68;
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
 // Layout text bind (code_80135FDC unit): (layout, pane name, text, 0).
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 // Page-slot word-table accessors used by the grid-cursor scans.
 extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" void CopyTabSlotVec(nw4r::math::VEC3*, const u16*, u32);

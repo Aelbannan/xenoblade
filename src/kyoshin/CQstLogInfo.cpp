@@ -204,7 +204,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* 
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], str, 0);
     nw4r::lyt::Pane* pane = self->mUnk20->GetRootPane()->FindPaneByName(
         &lbl_eu_8050A0B4[0x25], true);
-    u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x32], key);
+    u8 kind = BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x32], key);
     void* res = 0;
     switch (kind) {
     case 0:
@@ -221,7 +221,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* 
         break;
     }
     if (res != 0) {
-        PaneSetTexPalette(pane, (const char*)res);
+        PaneSetTexPalette(pane, (TPLPalette*)((const char*)res));
         setPaneVisible(pane, 1);
     }
 }
@@ -247,7 +247,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInf
     if (flag != 0) {
         str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
     } else {
-        if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
+        if (BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
             u16 v2 = BdatGetU16Direct((const char*)lbl_eu_80664098,
                                    &lbl_eu_8050A0B4[0x96], v);
             str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x9e], &lbl_eu_8050A0B4[0x7f], v2);
@@ -285,7 +285,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo
     char buf48[0x20];
     char buf28[0x20];
     char buf8[0x20];
-    if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0xc3], key) == 1) {
+    if (BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0xc3], key) == 1) {
         char* s = BdatGetPtrDirect((const void*)self->field_0x3C,
                                 &lbl_eu_8050A0B4[0xd0], key);
         LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xda], s,
@@ -393,7 +393,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo
             }
         }
         if (v >= 0xFC) {
-            if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
+            if (BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
                 char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf88, &lbl_eu_8050A0B4[0x12f], idx + 1);
@@ -479,7 +479,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo
             }
         }
         if (v >= 0xFC) {
-            if (BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
+            if (BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x1be], key) == 0) {
                 char* s2 = BdatGetPtrDirect((const void*)self->field_0x3C,
                                          &lbl_eu_8050A0B4[0x1c8], key);
                 sprintf(buf28, &lbl_eu_8050A0B4[0x12f], idx + 1);
@@ -525,7 +525,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
     char buf68[0x20];
     char* str = 0;
     if (v >= 0xFE) {
-        u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x222], key);
+        u8 kind = BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x222], key);
         if (kind == 1) {
             LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
                           BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
@@ -587,7 +587,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
                 }
                 sprintf(buf48, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = BdatGetU8Direct((u32)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf68, &lbl_eu_8050A0B4[0x29a], str,
                             BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
@@ -604,7 +604,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
             }
         }
     } else {
-        u8 kind = BdatGetU8Direct((u32)table, &lbl_eu_8050A0B4[0x222], key);
+        u8 kind = BdatGetU8Direct((const void*)table, &lbl_eu_8050A0B4[0x222], key);
         if (kind == 3) {
             LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
                           BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
@@ -686,7 +686,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
                 }
                 sprintf(buf8, &lbl_eu_8050A0B4[0x27b], i + 1);
                 if ((u16)v1 == 3) {
-                    u8 x = BdatGetU8Direct((u32)lbl_eu_806640EC,
+                    u8 x = BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                          &lbl_eu_8050A0B4[0x288], (u16)val);
                     sprintf(buf28, &lbl_eu_8050A0B4[0x29a], str,
                             BdatTouchStringCell(&lbl_eu_8050A0B4[0x291],
@@ -786,7 +786,7 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
 
         nw4r::lyt::Pane* rootPane = mUnk20->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
-        ApplyFontToTxtPanes(rootPane, ((CQstLogInfoFontView*)font)->sf9());
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(((CQstLogInfoFontView*)font)->sf9()));
 
         char* questName = CUICfManager_getPackedFont9C();
         if (questName != 0) {

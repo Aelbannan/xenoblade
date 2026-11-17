@@ -18,6 +18,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
 #include <cstddef>
 #include <nw4r/lyt.h>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Unit-private imports.
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
@@ -61,14 +62,6 @@ struct PtmfNullWordsArts {
     u32 w2;
 };
 
-// By-value view of ScalePaneWorldPos used by artsRebuildUI: the first argument
-// slot acts as an sret temp whose result is copied into the caller's local.
-// Declared in its own namespace so it cannot collide with the pointer-form
-// declaration pulled in from CSysWin.hpp; extern "C" keeps the retail symbol.
-namespace artsFAD0View {
-extern "C" nw4r::math::VEC3
-    ScalePaneWorldPos(nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-} // namespace artsFAD0View
 
 // C++-linkage draw helper (mangles to the retail symbol).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -421,16 +414,14 @@ extern "C" __declspec(noinline) void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
     setPaneVisible(self->field_0x08->field_0x10->v13(base + 0x8f, 1), 0);
 
     // Cursor anchor: resolve both panes on the label layout and convert the
-    // first pane's position into root-pane space. Block-scope view: retail
-    // treats ScalePaneWorldPos's first slot as an sret temp copied into pos.
+    // first pane's position into root-pane space; retail copies the result
+    // temp into pos.
     nw4r::lyt::Pane* anchor =
         (nw4r::lyt::Pane*)self->field_0x00->field_0x10->v13(base + 0x9f, 1);
     nw4r::lyt::Pane* rootPane =
         (nw4r::lyt::Pane*)self->field_0x00->field_0x10->v13(base + 0xa6, 1);
-    nw4r::math::VEC3 tmp =
-        artsFAD0View::ScalePaneWorldPos(
-            anchor, rootPane,
-            (nw4r::lyt::Pane*)self->field_0x00->field_0x10);
+    nw4r::math::VEC3 tmp;
+    ScalePaneWorldPos(&tmp, anchor, rootPane, (nw4r::lyt::Pane*)self->field_0x00->field_0x10);
     nw4r::math::VEC3 pos = tmp;
     Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
 
@@ -612,7 +603,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
                         ->GetResource(0x74696D67u, tex, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                          lbl_eu_8050AC70 + 0xd6, res);
+                          lbl_eu_8050AC70 + 0xd6, (TPLPalette*)res);
         }
     }
 
@@ -631,7 +622,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                          lbl_eu_8050AC70 + 0xea, res);
+                          lbl_eu_8050AC70 + 0xea, (TPLPalette*)res);
         }
     }
 
@@ -649,7 +640,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
         void* res = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67u, tex, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                          lbl_eu_8050AC70 + 0xf5, res);
+                          lbl_eu_8050AC70 + 0xf5, (TPLPalette*)res);
         }
     }
 
@@ -832,30 +823,30 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
             flag = 1;
         }
         int sel = (flag == 0);
-        u16 id =
+        u32 id =
             BdatGetU16ByTableKey(base + 0x1C8, base + 0x1D0, getArtsSlotRC(recv, sel, i));
-        if (id != 0) {
-            char* name = MakeTplNameSysFile(id);
+        if ((u16)id != 0) {
+            char* name = MakeTplNameSysFile((u16)id);
             void* res =
                 ((SArtsFindObj*)self->field_0x04)->vfind(0x74696D67, name, 0);
             if (res != NULL) {
                 PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                              (char*)names.w[i], res);
+                              (char*)names.w[i], (TPLPalette*)res);
                 setPaneVisible(
                     ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(
                         (void*)panes.w[i], 1),
                     1);
                 // Second label (level/counter text): re-queries the slot
                 // record and binds over the same pane.
-                u16 id2 = BdatGetU16ByTableKey(base + 0x1C8, base + 0x1D5,
+                u32 id2 = BdatGetU16ByTableKey(base + 0x1C8, base + 0x1D5,
                                         getArtsSlotRC(recv, sel, i));
-                if (id2 != 0) {
-                    char* name2 = MakeTplNameSysFile(id2);
+                if ((u16)id2 != 0) {
+                    char* name2 = MakeTplNameSysFile((u16)id2);
                     void* res2 = ((SArtsFindObj*)self->field_0x04)
                                      ->vfind(0x74696D67, name2, 0);
                     if (res2 != NULL) {
                         PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                                      (char*)panes.w[i], res2);
+                                      (char*)panes.w[i], (TPLPalette*)res2);
                     }
                 }
             } else {
@@ -919,7 +910,7 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
             u32 w = e->field_0x00;
             u32 tblEntry = *(u32*)((char*)&lbl_eu_806640F8 + w);
             u32 cat = BdatGetItemId(w >> 20);
-            u32 k = BdatGetU8Direct(tblEntry, (char*)lbl_eu_8050AC70 + 0x1df,
+            u32 k = BdatGetU8Direct((const void*)tblEntry, (char*)lbl_eu_8050AC70 + 0x1df,
                                   cat) -
                     4;
             switch (k) {
@@ -963,26 +954,26 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
 
     // Bind the selected help text onto both label panes.
     if (msg != 0) {
-        u16 id = BdatGetU16ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1D5,
+        u32 id = BdatGetU16ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1D5,
                                msg);
-        if (id != 0) {
-            char* name = MakeTplNameSysFile(id);
+        if ((u16)id != 0) {
+            char* name = MakeTplNameSysFile((u16)id);
             void* res =
                 ((SArtsFindObj*)self->field_0x04)->vfind(0x74696D67, name, 0);
             if (res != NULL) {
                 PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                              (char*)lbl_eu_8050AC70 + 0x1e8, res);
+                              (char*)lbl_eu_8050AC70 + 0x1e8, (TPLPalette*)res);
             }
         }
-        u16 id2 = BdatGetU16ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1D0,
+        u32 id2 = BdatGetU16ByTableKey(lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x1D0,
                                 msg);
-        if (id2 != 0) {
-            char* name2 = MakeTplNameSysFile(id2);
+        if ((u16)id2 != 0) {
+            char* name2 = MakeTplNameSysFile((u16)id2);
             void* res =
                 ((SArtsFindObj*)self->field_0x04)->vfind(0x74696D67, name2, 0);
             if (res != NULL) {
                 PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00,
-                              (char*)lbl_eu_8050AC70 + 0x1f3, res);
+                              (char*)lbl_eu_8050AC70 + 0x1f3, (TPLPalette*)res);
             }
         }
     }
@@ -1158,7 +1149,7 @@ extern "C" __declspec(noinline) u8 artsReadSelId(SArtsSub8022FA58* self) {
             // tbl is loaded ahead of the category lookup (retail schedule).
             u32 tbl = lbl_eu_806640F8;
             u16 cat = (u16)BdatGetItemId(entry->field_0x00 >> 20);
-            u8 row = BdatGetU8Direct(tbl, lbl_eu_8050AC70 + 0x1df, cat);
+            u8 row = BdatGetU8Direct((const void*)tbl, lbl_eu_8050AC70 + 0x1df, cat);
             switch (row) {
             case 4: result = 119; break;    // 119 == 0x77: distinct arm keeps
                                             // the retail 9-entry table shape
@@ -2058,13 +2049,13 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
         void* res = self->field_0x04->vfind(0x74696D67, name, 0);
         if (res != NULL) {
             sprintf(buf, base + 0x257, i + 9);
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00, buf, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00, (const char*)buf, (TPLPalette*)res);
         }
         char* name2 = MakeTplNameSysFile(row->field_0x06);
         void* res2 = self->field_0x04->vfind(0x74696D67, name2, 0);
         if (res2 != NULL) {
             sprintf(buf, base + 0x264, i + 9);
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00, buf, res2);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->field_0x00, (const char*)buf, (TPLPalette*)res2);
         }
 
         sprintf(buf, base + 0x271, i + 9);
@@ -3224,7 +3215,7 @@ bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     u32 fontHandle = ((SDevFontV*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                           1, (nw4r::lyt::Layout*)field_0x1C))
                          ->v7();
-    ApplyFontToTxtPanes(pane, fontHandle);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)pane, (const nw4r::ut::Font*)fontHandle);
     void* text = CUICfManager_getPackedFont9C();
     if (text != 0) {
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,

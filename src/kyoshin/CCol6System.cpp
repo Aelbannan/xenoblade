@@ -668,7 +668,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost));
     ApplyFontToTxtPanes(rootPane,
-                  reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
+                  (const nw4r::ut::Font*)(reinterpret_cast<CCol6FontView*>(fontObj)->vf7()));
 
     // Start the two anims (setAnim at +0x2C) and tick once (+0x38).
     reinterpret_cast<CCol6AnimHostView*>(self->mAnimHost)
@@ -1853,7 +1853,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
         reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mpLayout);
-    ApplyFontToTxtPanes(rootPane, reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<CCol6FontView*>(fontObj)->vf7()));
 
     // If the font value is present, label all 21 count panes with it.
     u32 fontVal = CUICfManager_getPackedFont9C();

@@ -3,6 +3,8 @@
 // Retail helper declarations used by CItemBoxLine.cpp (not part of the
 // class interface; kept out of CItemBoxLine.hpp so owners can include it).
 #include "kyoshin/CItemBoxLine.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // CItemBoxInfo2 layout lives in CItemBoxInfo.hpp (not included: it redeclares
 // __dt__17UnkClass_8045F564Fv with a void* arg, clashing with CSysWin.hpp's
@@ -16,7 +18,6 @@ class CFileHandle;
 
 extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag (C-ABI)
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
-extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
 extern "C" void sysWinApplyKind(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
@@ -210,7 +211,6 @@ extern "C" void __dt__7CSubCurFv(CBaseCur*, int);
 extern "C" void* Bdat_GetTable_AA34();                           // bdat manager reset (no args)
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
@@ -229,7 +229,6 @@ extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
@@ -306,7 +305,6 @@ extern const char lbl_eu_80506D90[];        // rodata name/format tables
 extern "C" u8 getLanguage__9CDeviceSCFv();
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 
 extern "C" u32 MapValueToRank6(unsigned int);
 extern "C" u16 CtrlRemote_TouchBitByArg(u32);
@@ -336,9 +334,6 @@ extern "C" u32 formatItemBoxName(void*, u32);
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
 // C-ABI (plain retail names).
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
-extern "C" char* BdatTouchStringCell(char*, char*, u32);
-extern "C" char* BdatGetPtrDirect(void*, char*);
-extern "C" void PaneSetTexPalette(void*, u32);  // bind texture resource to pane
 
 // Item-box-line refresh helpers (external retail symbols).
 extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
@@ -369,7 +364,6 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-for
 // view of BdatGetU16Direct instead of kyoshin/code_80135FDC_Bdat.hpp until those
 // table globals are retyped.
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 
 // .sbss item-kind owner tables (u32 values; SDA-accessed).
 extern u32 lbl_eu_806640F4;
@@ -383,7 +377,6 @@ extern "C" u32 CItemBlock_countEmpty(u8);
 extern "C" u32 CItem_sumFamilyByte6(unsigned int);
 
 // ItemBoxLine_ProbeAvailability: string/kind-table helpers (C-ABI).
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 
@@ -418,16 +411,13 @@ extern u8 lbl_eu_80664640[8];
 // ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
 // Retail helpers whose CItemBoxInfo.hpp declarations use other parameter types
 // (CItemBoxInfo.hpp's forms are renamed at its include above).
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" FourShorts PaneMatGetS16Quad(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 LookupItemTypeTable(u32);
 extern "C" void renderItemBox2ByKind(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
-extern "C" u8 BdatGetU8Direct(u32, const char*, unsigned int);
 extern "C" void* BuildItemNameStr(u32);
 extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 extern "C" int Counter_TestBit(u32, u32);
 extern "C" u32 GetCollectedFlagByte(u32);
-extern "C" u16 BdatGetU16Direct(u32 table, const void* name, int id);
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
 extern "C" void NumSel_ShowPaneB_B314(CNumSelect* self); // num-select display step
 extern "C" void NumSel_Teardown_AF9C(CNumSelect*);          // num-select destroy

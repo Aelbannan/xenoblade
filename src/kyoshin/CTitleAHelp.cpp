@@ -176,7 +176,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, NULL);
 
             if (resource != nullptr) {
-                PaneSetTexPaletteByName(self->mLayout, buf1, resource);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)buf1, (TPLPalette*)resource);
 
                 nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf1, true);
                 if (pane != nullptr) {
@@ -346,7 +346,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         u32 fontHandle = static_cast<CTitleAHelpFontView*>(
             CDeviceFont::getFontInfo(1, mLayout))->vf7();
-        ApplyFontToTxtPanes(rootPane, fontHandle);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
 
         mLayout->SetAnimationEnable(mAnimTrans24, false);
         mLayout->SetAnimationEnable(mAnimTrans20, true);

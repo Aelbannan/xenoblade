@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CEventFile;
 class CFileHandle;
@@ -234,10 +236,8 @@ extern "C" char lbl_eu_805063BC[];
 extern "C" char lbl_eu_8050634C[];
 extern "C" char lbl_eu_80506380[];extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" int Counter_TestBit(void*, u32);extern "C" u32 IdTable_SumValues(void*, u32);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void setPaneVisible(void*, u32);
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u16 BdatGetItemId(u32);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 LookupItemTypeTable(void*);
@@ -270,12 +270,8 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void copyVEC3(void*, const void*);
 // C-linkage position-set helper (retail-unmangled ScalePaneWorldPos; same
 // signature as CSysWin.hpp / CMenuPlayAward.hpp).
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 // More flat retail (unmangled) helpers used by the item-box renderers.
-extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
-extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" u32 func_801392C0();
 extern "C" int GetCollectedFlagByte(u8);
 extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
@@ -296,7 +292,6 @@ extern "C" void applyItemBoxSelColors(CItemBoxInfo*);
 // retail (callers pass the item-box pointer through it).
 extern "C" CItemBoxSelRec buildItemBoxSelRec(CItemBoxInfo*, u32);
 extern "C" void renderItemBox2SlotList(CItemBoxInfo2*, void*, void*);
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void initItemBoxVecTable(void*);
 extern "C" int IsSkillItem(void*);
@@ -418,13 +413,9 @@ struct CItemBoxVertexColors {
 
 // Unmangled retail imports (plain symbol names in the retail binary).
 extern "C" void buildItemBox2NameRec(void*, void*, void*, void*);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" char* BuildItemNameStr(u32);
 extern "C" CItemBoxSelRec buildItemBox2SelTable(CItemBoxInfo2*, u32);
 extern "C" void* CItemBlock_getPtr20E8();
-extern "C" void PaneSetTexPalette(void*, u32);
-extern "C" void PaneSetVtxColorAll(void*, u32);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
@@ -432,7 +423,6 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // signature shapes verbatim so the mangled names line up).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 extern "C" char* CUICfManager_getPackedFont9C(void);
 extern "C" char* GetBdatNameByNumId(const char* msg);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);

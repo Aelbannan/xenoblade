@@ -4,6 +4,7 @@
 
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -273,10 +274,7 @@ extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" f32 GetFloatTableEntry(u32 idx);
 extern "C" void BlendFloatAvgScale(u16 a, u16 b, int c, f32 d);
-extern "C" void PaneSetTexPalette(void* pane, void* tex); // pane texture setter
 extern "C" void removeTboxById(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
-                               nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
 // UI sound effect (retail pre-mangled name).
 // Rank-item pane text setter (retail symbol is the C++-mangled name).
 void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* paneName, u8 value);

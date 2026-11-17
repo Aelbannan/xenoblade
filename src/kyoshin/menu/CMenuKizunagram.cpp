@@ -31,6 +31,7 @@
 #define CLoadAdvanceFadeHold CLoadAdvanceFadeHold_CLoadHdr
 #define CLoadFinishRetryIdle CLoadFinishRetryIdle_CLoadHdr
 #include "kyoshin/CLoad.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #undef CLoadBeginFileRequest
 #undef CLoadUpdateLayout
 #undef CLoadDrawIfVisible
@@ -80,7 +81,6 @@ extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void reopenFromClose(CTitleAHelp* self);
 extern "C" void setNameText(CTitleAHelp* self, char* name);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 
 extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
 extern "C" void __dt__5CLoadFv(CLoad* _this, int flags);

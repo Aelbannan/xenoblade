@@ -3,6 +3,8 @@
 // Unit-private import declarations split out of CFloorMap.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CFloorMap.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
 
@@ -448,7 +450,6 @@ struct CFloorMapCase2Elem {
 // (BdatGetU16ByTableKey: only CFloorMap.cpp needs the wider view, so its u32 copy
 // lives TU-local there; the shared decl is the canonical u16 one on
 // code_80135FDC.hpp.)
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void* prepareReslistArg(int);
 extern "C" void* getReslistBC8();
 extern "C" void* getReslistB68();
@@ -460,20 +461,14 @@ extern "C" void bdatGetPosXYZ(float*, int = 0);
 // need extern "C" so MWCC does not append a parameter suffix.
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 // C-linkage name/label helpers from code_80135FDC.cpp. BdatTouchStringCell builds
 // a pane name from a format string, a base string and an index (JP retail
 // symbol BdatTouchStringCell__FPcPcUl = (char*, char*, u32); fixed args so MWCC
 // does not emit the varargs CR1 clear); LayoutSetTextBoxFmtValue updates a pane.
-extern "C" char* BdatTouchStringCell(char*, char*, u32);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 // C linkage so the same-TU definition emits the retail symbol
 // FloorMap_RefreshCursorRows instead of the mangled C++ name at every call site.
 extern "C" void FloorMap_RefreshCursorRows(void*);
-extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void* PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Flat C-ABI imports used by the map-cursor functions (retail symbols are
@@ -501,17 +496,10 @@ extern void playUISound(u32);
 // C-ABI imports used by the floor-map update functions (retail plain names).
 // (code80135FDC_setVec3 comes from kyoshin/CSysWin.hpp: VEC3* form.)
 extern "C" void copyVEC3(void*, const void*);
-extern "C" void Vec3AddInto(nw4r::math::VEC3*, const nw4r::math::VEC3*);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
-extern "C" s16 BdatGetS16Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
-extern "C" s32 BdatGetS8Direct(const void*, const void*, s32);
 // Height thresholds picking which of the three status panes lights up.
 extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;

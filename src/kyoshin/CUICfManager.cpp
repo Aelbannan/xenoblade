@@ -4,6 +4,8 @@
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // --- CTTask<CUICfManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -378,7 +380,6 @@ void* CtrlObjectParam_GetCharEntry(u32);
 // (defining TU: cf/CtrlObjectParam.cpp); declared here because including
 // CfGameManager.hpp pulls conflicting flat decls into this TU.
 void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32);
-u8 BdatGetU8Direct(u32, const char*, u32);
 void* lbl_eu_80573D18[];
 u8 lbl_eu_805000A8[];
 u16 lbl_eu_804FFFDC[];
@@ -450,7 +451,7 @@ range_221_607: {
 
     int idx = SearchThresholdIdx(off);
     void* tableVal = lbl_eu_80573D18[idx];
-    u8 res = (u8)BdatGetU8Direct((u32)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
+    u8 res = (u8)BdatGetU8Direct((const void*)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
     if (res == 2) {
         goto end;
     }
@@ -661,7 +662,6 @@ void* Scn_FindCamItem(void* obj, int index);
 void* getEntryAt(void* list, int index); // &slot -> has +0x4 object ptr
 void* getObjectIdAt(void* list, int index); // *slot -> object*
 int lookupWorkAtAddr(void*);
-int CheckViewAngle60(void* a, void* b, void* c);
  // &mInitSlots[0].unk04
 }
 
@@ -1056,7 +1056,7 @@ after_flags:
         posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
         posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
         posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
-        if (CheckViewAngle60(posA, posB, posC) == 0) {
+        if (CheckViewAngle60((const nw4r::math::VEC3*)posA, (const nw4r::math::VEC3*)posB, (const nw4r::math::VEC3*)posC) == 0) {
             goto enum_next;
         }
         list = holder.get();

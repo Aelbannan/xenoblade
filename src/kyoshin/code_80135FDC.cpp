@@ -48,10 +48,6 @@ extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // bool CtrlRemote_TouchBitByArg(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern u32 CtrlRemote_TouchBitByArg(u32);
-// forward decls: AccumPaneWorldPos calls these helpers before their definitions
-// (they are defined later in this TU).
-extern void code80135FDC_setVec3(float* self, float a, float b, float c);
-extern void Vec3AddInto(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
 }
 
 // getBdatStringColumnValue's canonical extern "C" declaration is
@@ -252,7 +248,7 @@ u8 GetCollectedFlagByte(u32 idx) {
 // BDAT string column readers. Each validates the table (Bdat_GetTable_AA34),
 // resolves the file pointer, reads the cell, and reinterprets it at the
 // requested width/sign: u8 / u16 / s16 / s8.
-u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
+u8 BdatGetU8ByTableKey(const char* tableName, const char* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -260,7 +256,7 @@ u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
     return *(u8*)&result;
 }
 
-u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
+u16 BdatGetU16ByTableKey(const char* tableName, const char* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -268,7 +264,7 @@ u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
     return *(u16*)&result;
 }
 
-s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
+s16 BdatGetS16ByTableKey(const char* tableName, const char* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -276,7 +272,7 @@ s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
     return *(s16*)&result;
 }
 
-s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
+s8 BdatGetS8ByTableKey(const char* tableName, const char* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
     void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
@@ -286,44 +282,44 @@ s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
     return (s8)byte;
 }
 
-void BdatTouchStringCell(const char* a, const char* b, const char* c) {
-    Bdat_GetTable_AA34(a);
-    void* fp = getFP(a);
-    getBdatStringColumnValue(fp, b, c);
+char* BdatTouchStringCell(const char* table, const char* column, int row) {
+    Bdat_GetTable_AA34(table);
+    void* fp = getFP(table);
+    return (char*)getBdatStringColumnValue(fp, column, (const void*)row);
 }
 
-u8 BdatGetU8Direct(const char* a, const char* b, const char* c) {
-    if (a == 0) return 0;
-    Bdat_GetTable_AA34(a);
-    void* result = getBdatStringColumnValue((void*)a, b, c);
+u8 BdatGetU8Direct(const void* bdat, const char* column, int row) {
+    if (bdat == 0) return 0;
+    Bdat_GetTable_AA34((const char*)bdat);
+    void* result = getBdatStringColumnValue((void*)bdat, column, (const void*)row);
     return *(u8*)&result;
 }
 
-u16 BdatGetU16Direct(const void* bdat, const void* column, int row) {
+u16 BdatGetU16Direct(const void* bdat, const char* column, int row) {
     if (bdat == 0) return 0;
     Bdat_GetTable_AA34((const char*)bdat);
     void* result = getBdatStringColumnValue((void*)bdat, (const char*)column, (const void*)row);
     return *(u16*)&result;
 }
 
-extern "C" int BdatGetS8Direct(const char* a, const char* b, const char* c) {
-    if (a == 0) return 0;
-    Bdat_GetTable_AA34(a);
-    void* result = getBdatStringColumnValue((void*)a, b, c);
+extern "C" int BdatGetS8Direct(const void* bdat, const char* column, int row) {
+    if (bdat == 0) return 0;
+    Bdat_GetTable_AA34((const char*)bdat);
+    void* result = getBdatStringColumnValue((void*)bdat, column, (const void*)row);
     return (s8)(*(u8*)&result);
 }
 
-extern "C" s16 BdatGetS16Direct(const char* a, const char* b, const char* c) {
-    if (a == 0) return 0;
-    Bdat_GetTable_AA34(a);
-    void* result = getBdatStringColumnValue((void*)a, b, c);
+extern "C" s16 BdatGetS16Direct(const void* bdat, const char* column, int row) {
+    if (bdat == 0) return 0;
+    Bdat_GetTable_AA34((const char*)bdat);
+    void* result = getBdatStringColumnValue((void*)bdat, column, (const void*)row);
     return *(s16*)&result;
 }
 
-extern "C" void* BdatGetPtrDirect(const char* a, const char* b, const char* c) {
-    if (a == 0) return 0;
-    Bdat_GetTable_AA34(a);
-    return getBdatStringColumnValue((void*)a, b, c);
+extern "C" char* BdatGetPtrDirect(const void* bdat, const char* column, int row) {
+    if (bdat == 0) return 0;
+    Bdat_GetTable_AA34((const char*)bdat);
+    return (char*)getBdatStringColumnValue((void*)bdat, column, (const void*)row);
 }
 
 extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
@@ -512,7 +508,7 @@ extern "C" void WcsToUpperInPlace(u16* str) {
     }
 }
 
-extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* node, const nw4r::ut::Font* font) {
     extern const char lbl_eu_80500664[];
     if (node == NULL) return;
     void* child = *(void**)((u8*)node + 0x14);
@@ -544,7 +540,7 @@ extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
                     (nw4r::lyt::TextBox*)type, font);
             }
         }
-        ApplyFontToTxtPanes((void*)type, font);
+        ApplyFontToTxtPanes((nw4r::lyt::Pane*)type, font);
         child = *(void**)child;
     }
 }
@@ -568,7 +564,7 @@ void setLayoutTextBoxNumber(
 }
 
 extern "C" void LayoutSetTextBoxText(
-    nw4r::lyt::Layout* layout, char* name, char* text, u32 tagProc) {
+    nw4r::lyt::Layout* layout, const char* name, const char* text, u32 tagProc) {
     nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(name, true);
     if (pane == NULL) return;
 
@@ -611,7 +607,7 @@ extern "C" void LayoutSetTextBoxText(
 }
 
 extern "C" void LayoutSetTextBoxFmtValue(
-    nw4r::lyt::Layout* layout, char* name, char* fmt, u32 value) {
+    nw4r::lyt::Layout* layout, const char* name, const char* text, u32 tagProc) {
     // Retail ignores the fmt param (r5 is never read) and formats with the
     // constant string-table extern lbl_eu_80500664 (lis/@l relocs, offset 0).
     extern const char lbl_eu_80500664[];
@@ -619,8 +615,8 @@ extern "C" void LayoutSetTextBoxFmtValue(
     // Retail passes the fmt param (r5) as the sprintf vararg; the format is
     // the constant lbl_eu_80500664 (r4 = lis/@l, fmt param never read as a
     // format). The 4th LayoutSetTextBoxText arg is the value param (r6 -> r31).
-    sprintf(buf, lbl_eu_80500664, fmt);
-    LayoutSetTextBoxText(layout, name, buf, value);
+    sprintf(buf, lbl_eu_80500664, text);
+    LayoutSetTextBoxText(layout, name, buf, tagProc);
 }
 
 extern "C" void LayoutSetTextBoxInt(nw4r::lyt::Layout* layout, u32 value) {
@@ -630,7 +626,7 @@ extern "C" void LayoutSetTextBoxInt(nw4r::lyt::Layout* layout, u32 value) {
 }
 
 extern "C" void SetLayoutSelfText(
-    nw4r::lyt::Layout* layout, char* text, u32 tagProc) {
+    nw4r::lyt::Layout* layout, const char* text, u32 tagProc) {
     u16 buf[1024];
     u32 destLen = 1024;
     u32 srcLen = strlen(text);
@@ -930,7 +926,7 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 
     nw4r::lyt::Pane* ggp = grandparent->GetParent();
     nw4r::math::VEC3 tmp2;
-    code80135FDC_setVec3((float*)&tmp2, lbl_eu_806672F0, lbl_eu_806672F0, lbl_eu_806672F0);
+    code80135FDC_setVec3(&tmp2, lbl_eu_806672F0, lbl_eu_806672F0, lbl_eu_806672F0);
     if (ggp == NULL) goto add_temp;
 
     copyVEC3(&tmp2, &ggp->GetTranslate());
@@ -950,10 +946,11 @@ add_out:
 // helpers into AccumPaneWorldPos/AccumPaneWorldPosB, but retail calls them out-of-line
 // (bl relocs present at every call site). noinline blocks the auto-inline
 // without changing the helper bodies (both are byte-matched).
-extern "C" __declspec(noinline) void code80135FDC_setVec3(float* self, float a, float b, float c) {
-    self[0] = a;
-    self[1] = b;
-    self[2] = c;
+extern "C" __declspec(noinline) nw4r::math::VEC3* code80135FDC_setVec3(nw4r::math::VEC3* self, float a, float b, float c) {
+    self->x = a;
+    self->y = b;
+    self->z = c;
+    return self;
 }
 
 extern "C" __declspec(noinline) void Vec3AddInto(nw4r::math::VEC3* output,
@@ -1005,7 +1002,7 @@ extern "C" void AccumPaneWorldPosB(nw4r::math::VEC3* output, nw4r::lyt::Pane* no
                         temp.y = grandparent->GetTranslate().y;
                         temp.z = grandparent->GetTranslate().z;
 
-                        code80135FDC_setVec3((float*)&recurse, z, z, z);
+                        code80135FDC_setVec3(&recurse, z, z, z);
                         if (ggpp != NULL) {
                             if (ggpp->GetParent() != NULL) {
                                 copyVEC3(&recurse, &ggpp->GetTranslate());
@@ -1088,10 +1085,9 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* nod
     nw4r::math::VEC3Add(output, output, &offset->GetTranslate());
 }
 
-extern "C" void PaneSetVtxColorByName(void* a, u32 b, u32 c) {
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout* a, const char* b, u32 c) {
     if (a == NULL) return;
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
-    nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
+    nw4r::lyt::Pane* result = a->GetRootPane()->FindPaneByName(b, true);
     if (result == NULL) return;
 
     { u32 v = c; result->SetVtxColor(0, *(nw4r::ut::Color*)&v); }
@@ -1100,7 +1096,7 @@ extern "C" void PaneSetVtxColorByName(void* a, u32 b, u32 c) {
     { u32 v = c; result->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void PaneSetVtxColorAll(void* obj, u32 value) {
+extern "C" void PaneSetVtxColorAll(nw4r::lyt::Pane* obj, u32 value) {
     // Retail reloads the vtable for every call and keeps `obj` (r30) and
     // `value` (r31) live; each call gets its own stack slot. Written as a
     // true virtual call so MWCC emits the r12 -> r12 dispatch sequence.
@@ -1112,10 +1108,9 @@ extern "C" void PaneSetVtxColorAll(void* obj, u32 value) {
     { u32 v = value; ((nw4r::lyt::Pane*)obj)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void PaneSetVtxColorPairsByName(void* a, u32 b, u32 c, u32 d) {
+extern "C" void PaneSetVtxColorPairsByName(nw4r::lyt::Layout* a, const char* b, u32 c, u32 d) {
     if (a == NULL) return;
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
-    nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
+    nw4r::lyt::Pane* result = a->GetRootPane()->FindPaneByName(b, true);
     if (result == NULL) return;
 
     u32 v0 = c;
@@ -1128,7 +1123,7 @@ extern "C" void PaneSetVtxColorPairsByName(void* a, u32 b, u32 c, u32 d) {
     result->SetVtxColor(3, *(nw4r::ut::Color*)&v3);
 }
 
-extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c) {
+extern "C" void PaneSetVtxColorPairs(nw4r::lyt::Pane* a, u32 b, u32 c) {
     // Retail order: idx0=b, idx2=c, idx1=b, idx3=c. The parameter addresses
     // are passed directly, so MWCC re-stores each value into a fresh stack
     // slot per call (no shared temp).
@@ -1141,29 +1136,28 @@ extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c) {
     { u32 v = c; ((nw4r::lyt::Pane*)a)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void PaneSetTexPaletteByName(void* a, u32 b, void* palette) {
+extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout* a, const char* b, TPLPalette* palette) {
     if (a == NULL) return;
-    nw4r::lyt::Pane* owner = ((PaneHolder10View*)a)->pane10;
-    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)b, true);
+    nw4r::lyt::Pane* res = a->GetRootPane()->FindPaneByName(b, true);
     if (res == NULL) return;
     if (palette == NULL) return;
 
     // res is a pane; its 0x68 vtable slot (Pane::GetMaterial) returns the material
     nw4r::lyt::Material* mat = res->GetMaterial();
 
-    nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
+    nw4r::lyt::TexMap texMap(palette, 0);
     if (mat->GetTextureNum() == 0) {
         nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
     }
     mat->GetTexMapAry()[0] = texMap;
 }
 
-extern "C" void PaneSetTexPalette(void* a, void* palette) {
+extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* a, TPLPalette* palette) {
     if (a != NULL) {
         if (palette != NULL) {
             nw4r::lyt::Material* mat = ((nw4r::lyt::Pane*)a)->GetMaterial();
 
-            nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
+            nw4r::lyt::TexMap texMap(palette, 0);
             if (mat->GetTextureNum() == 0) {
                 nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
             }

@@ -8,6 +8,8 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/lyt.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 /*
  * CTalkWindow - talk-window process (created by TalkWin_Create_CC78 on the work
@@ -245,7 +247,6 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 int IsMenuState621F0();
 void updateTalkWindow(CTalkWindow* self);
 void driveTalkIntro(CTalkWindow* self);
@@ -271,12 +272,8 @@ void UIWin_CreateBEDE0Win(u16 id);
 void CUICfManager_queueMakeCrystalMenu();
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 char* GetBdatNameByNumId(const char* msg);
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout* layout, const char* name, const char* text,
-                   u32 flag);
-void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
 void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
-void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);

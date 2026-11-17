@@ -2015,7 +2015,7 @@ extern "C" __declspec(noinline) void TagProcBuildOpenText(CTagProcessorBase* msg
         out[1] = lbl_eu_8066720C * out[1] + lbl_eu_80667254;
     else
         out[1] = lbl_eu_8066720C * out[1];
-    AccumPaneWorldPos(out2, pane);
+    AccumPaneWorldPos((nw4r::math::VEC3*)out2, pane);
     TagCopyVec2f(v3, pv->field_4C);
     // Retail computes BOTH differences first, then both products; out2
     // entries forward the stored v3 values.

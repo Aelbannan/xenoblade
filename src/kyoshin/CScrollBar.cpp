@@ -9,6 +9,7 @@
 #include "monolib/util/MemManager.hpp"
 
 #include <nw4r/lyt.h>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Cross-TU layout helpers (kyoshin .text). Retail keeps these unmangled at
 // CScrollBar call sites; extern "C" stops MWCC from emitting __F... tails.
@@ -17,7 +18,6 @@ extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 void closeFileHandle(CFileHandle**);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
-extern "C" float* code80135FDC_setVec3(float*, float, float, float);
 
 // The scroll-bar drag pane carries a small data block at +0x2C..+0x50 (thumb
 // dimensions / track position). The nw4r Pane layout doesn't model these
@@ -159,7 +159,7 @@ void CScrollBar::UpdateThumb(u32 scrollFrom, u32 scrollTo) {
         nw4r::math::VEC3 vec;
         Cur_SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-                          &vec.x, mThumbHeight, mContentHeight,
+                          (nw4r::math::VEC3*)&vec.x, mThumbHeight, mContentHeight,
                           lbl_eu_80668138)));
         setPaneVisible(pane, 0);
     } else {
@@ -178,7 +178,7 @@ void CScrollBar::UpdateThumb(u32 scrollFrom, u32 scrollTo) {
         nw4r::math::VEC3 vec;
         Cur_SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-                          &vec.x, mThumbHeight, mContentHeight,
+                          (nw4r::math::VEC3*)&vec.x, mThumbHeight, mContentHeight,
                           lbl_eu_80668138)));
         setPaneVisible(pane, 1);
     }
@@ -192,7 +192,7 @@ void CScrollBar::PlaceThumb(u16 count) {
     // the thumb stays inside the content as the scroll ratio advances.
     Cur_SetPaneTranslate(pane,
                   reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-                      &vec.x, mThumbHeight,
+                      (nw4r::math::VEC3*)&vec.x, mThumbHeight,
                       -mScrollRatio * (f32)count + mContentHeight,
                       lbl_eu_80668138)));
 }

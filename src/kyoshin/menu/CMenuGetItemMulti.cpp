@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "revolution/gx/GXPixel.h"
 #include "decomp.h"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -45,21 +46,6 @@ using getMenuMultiItemImplShim::CItem_initItemImplInstances;
 #define CItem_initItemImplInstances(entry) \
     getMenuMultiItemImplShim::CItem_initItemImplInstances(entry)
 
-// Wide-return views of the BDAT lookups used by GetItemMulti_ShowCat13: retail
-// stores each result in a raw u32 register (plain mr, no zero-extend) and
-// applies explicit (u8) masks only at the use sites - the u8-returning
-// global decls would force an rlwinm at every assignment.
-namespace getItemMultiE8WideShim {
-extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
-}
-using getItemMultiE8WideShim::BdatGetU8Direct;
-#define BdatGetU8Direct(a, b, c) getItemMultiE8WideShim::BdatGetU8Direct(a, b, c)
-
-namespace getItemMulti600CWideShim {
-extern "C" u32 BdatGetU8ByTableKey(const void*, const void*, u32);
-}
-using getItemMulti600CWideShim::BdatGetU8ByTableKey;
-#define BdatGetU8ByTableKey(a, b, c) getItemMulti600CWideShim::BdatGetU8ByTableKey(a, b, c)
 
 struct CMenuGetItemPaneWord {
     CMenuGetItemPaneWord() {}
@@ -166,7 +152,6 @@ u32 CItem_sumFamilyByte6(u32);
 u32 BdatGetItemType(u32);
 char* getErrMesText15();
 char* getErrMesText16();
-void PaneSetVtxColorByName(nw4r::lyt::Layout*, char*, u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 CSysWin* __ct__7CSysWinFUc(CSysWin*, int);
 CSysWin* __dt__7CSysWinFv(CSysWin*, int);
@@ -393,7 +378,7 @@ void CMenuGetItemMulti::Init() {
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuGetItemFontObject* fontObject = reinterpret_cast<CMenuGetItemFontObject*>(
         getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
-    ApplyFontToTxtPanes(rootPane, fontObject->getPane());
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontObject->getPane());
 
     u32 font = CUICfManager_getPackedFont9C();
     if (font != 0) {
@@ -444,14 +429,14 @@ void CMenuGetItemMulti::Init() {
     } else {
         fileName = &lbl_eu_80504A3C[0x158];
     }
-    u16 keyTextId = BdatGetU16ByTableKey(&lbl_eu_80504A3C[0x133], fileName, 43);
-    char* buttonTexture = MakeTplNameSysFile(keyTextId);
+    u32 keyTextId = BdatGetU16ByTableKey(&lbl_eu_80504A3C[0x133], fileName, 43);
+    char* buttonTexture = MakeTplNameSysFile((u16)keyTextId);
     nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     CMenuGetItemTextureResource* texture = reinterpret_cast<CMenuGetItemTextureResource*>(
         accessor->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
                               buttonTexture, NULL));
     if (texture != NULL) {
-        PaneSetTexPaletteByName(mLayout, &lbl_eu_80504A3C[0x161], texture);
+        PaneSetTexPaletteByName(mLayout, &lbl_eu_80504A3C[0x161], (TPLPalette*)texture);
         u16 textureWidth = texture->data->header->width;
         u16 textureHeight = texture->data->header->height;
         nw4r::lyt::Pane* buttonPane = mLayout->GetRootPane()->FindPaneByName(
@@ -585,7 +570,7 @@ void CMenuGetItemMulti::Init() {
                     // Retail: clrlwi into r3, set default texture, then
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
                     u32 fontHit = (u8)BdatGetU8Direct(
-                        fontCheck, &lbl_eu_80504A3C[0x33b],
+                        (const void*)fontCheck, &lbl_eu_80504A3C[0x33b],
                         (u16)BdatGetItemId((u16)(entry->packed >> 20)));
                     textureName = &lbl_eu_80504A3C[0x355];
                     if ((u32)(-(s32)fontHit | fontHit) >> 31) {
@@ -606,7 +591,7 @@ void CMenuGetItemMulti::Init() {
                         &lbl_eu_80504A3C[0x26b], NULL);
                 }
                 if (itemTexture != NULL) {
-                    PaneSetTexPaletteByName(mLayout, itemPaneName, itemTexture);
+                    PaneSetTexPaletteByName(mLayout, (const char*)itemPaneName, (TPLPalette*)itemTexture);
                 }
 
                 sprintf(itemPaneName, &lbl_eu_80504A3C[0x1a0], mVisibleItemCount + 1);
@@ -681,7 +666,7 @@ void CMenuGetItemMulti::Init() {
                     u32 catN = (entry->packed >> 16) & 0xf;
                     if (catN != 3 && catN != 9) {
                         u32 hit = (u8)BdatGetU8Direct(
-                            lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                            (const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                             (u16)(entry->packed >> 20));
                         special = (u32)(-(s32)hit | hit) >> 31;
                     }
@@ -762,7 +747,7 @@ void CMenuGetItemMulti::Init() {
                 LayoutSetTextBoxFmtValue(mLayout, initialTextPaneName, BuildItemNameStr(itemId), 0);
                 u32 special = 0;
                 if (category != 3 && category != 9) {
-                    u32 hit = (u8)BdatGetU8Direct(lbl_eu_806640EC,
+                    u32 hit = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                                 &lbl_eu_80504A3C[0x394],
                                                 itemId);
                     special = (u32)(-(s32)hit | hit) >> 31;
@@ -845,7 +830,7 @@ void CMenuGetItemMulti::Init() {
                 u32 fontCheck = lbl_eu_80664108;
                 char* fontKey = &lbl_eu_80504A3C[0x33b];
                 u32 fontHit = (u8)BdatGetU8Direct(
-                    fontCheck, fontKey, (u16)tableId);
+                    (const void*)fontCheck, fontKey, (u16)tableId);
                 textureName = &lbl_eu_80504A3C[0x355];
                 if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                     textureName = &lbl_eu_80504A3C[0x340];
@@ -865,7 +850,7 @@ void CMenuGetItemMulti::Init() {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                PaneSetTexPaletteByName(mLayout, initialItemPaneName, itemTexture);
+                PaneSetTexPaletteByName(mLayout, (const char*)initialItemPaneName, (TPLPalette*)itemTexture);
             }
 
             sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x1a0], sourceIndex + 1);
@@ -890,13 +875,13 @@ void CMenuGetItemMulti::Init() {
                 goto after_initial_cat;
             do_initial_slots:
                 {
-                    u32 slotCount = BdatGetU8Direct(
-                        (u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
-                    if ((u8)slotCount != 0) {
+                    u8 slotCount = BdatGetU8Direct(
+                        (const void*)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
+                    if (slotCount != 0) {
                         LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName, getErrMesText16(), 0);
                         PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643F0,
                                      &lbl_eu_806643F8);
-                        for (u8 slot = 0; slot < (u8)slotCount; ++slot) {
+                        for (u8 slot = 0; slot < slotCount; ++slot) {
                             sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
                             if (BdatGetU16Direct(itemTable, slotPaneName,
                                               (u16)tableId) != 0) {
@@ -912,12 +897,12 @@ void CMenuGetItemMulti::Init() {
                 goto after_initial_cat;
             do_initial_rank:
                 {
-                    u32 rankCount = BdatGetU8Direct(lbl_eu_806640EC,
+                    u8 rankCount = BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                                   &lbl_eu_80504A3C[0x3b3], itemId);
                     LayoutSetTextBoxFmtValue(mLayout, initialItemPaneName,
                                    BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                                 &lbl_eu_80504A3C[0x182],
-                                                30 - ((u8)rankCount - 1)), 0);
+                                                30 - (rankCount - 1)), 0);
                     PaneMatSetTevColorsByName(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                                  &lbl_eu_806643E8);
                 }
@@ -1416,7 +1401,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             u32 cat2 = (raw >> 12) & 0xF;
             int special2 = 0;
             if (cat2 != 3 && cat2 != 9) {
-                special2 = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                special2 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                                          raw >> 20) != 0;
             }
             if (cat2 == 12 || special2 != 0) {
@@ -1445,7 +1430,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (BdatGetU8Direct(fontCheck, &lbl_eu_80504A3C[0x33b],
+                if (BdatGetU8Direct((const void*)fontCheck, &lbl_eu_80504A3C[0x33b],
                                  BdatGetItemId((u16)(entry->packed >> 20)))) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
@@ -1464,7 +1449,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                PaneSetTexPaletteByName(self->mLayout, texPaneName, itemTexture);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)texPaneName, (TPLPalette*)itemTexture);
             }
 
             sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
@@ -1521,7 +1506,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             u16 itemId = self->mVisibleItemIds[i];
             char* itemTable = LookupItemTypeTable(itemId);
             u8 category = (u8)BdatGetItemType(itemId);
-            u16 tableId = BdatGetItemId(itemId);
+            u32 tableId = BdatGetItemId(itemId);
             if (itemId == 0) {
                 continue;
             }
@@ -1551,7 +1536,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
 
             int special2 = 0;
             if (category != 3 && category != 9) {
-                special2 = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                special2 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
                                          itemId) != 0;
             }
             if (category == 12 || special2 != 0) {
@@ -1581,7 +1566,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (BdatGetU8Direct(fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
+                if (BdatGetU8Direct((const void*)fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
                 break;
@@ -1597,7 +1582,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                PaneSetTexPaletteByName(self->mLayout, paneName, itemTexture);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)paneName, (TPLPalette*)itemTexture);
             }
 
             sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
@@ -1606,7 +1591,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                          &lbl_eu_806643E8);
 
             if ((category >= 4 && category <= 8) || category == 2) {
-                u8 slotCount = BdatGetU8Direct((u32)itemTable, &lbl_eu_80504A3C[0x39e],
+                u8 slotCount = BdatGetU8Direct((const void*)itemTable, &lbl_eu_80504A3C[0x39e],
                                              tableId);
                 if (slotCount != 0) {
                     LayoutSetTextBoxFmtValue(self->mLayout, paneName, getErrMesText16(), 0);
@@ -1624,7 +1609,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                     }
                 }
             } else if (category == 3 || category == 9) {
-                u8 rankCount = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                u8 rankCount = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
                                              itemId);
                 LayoutSetTextBoxFmtValue(self->mLayout, paneName,
                                BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
@@ -1929,16 +1914,16 @@ __declspec(noinline) void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int
     BdatGetItemType(arg2);
     u32 tableId = BdatGetItemId(arg2);
 
-    u32 w1 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
-    u32 w2 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
-    u32 v97 = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
-    u32 va3 = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
-    u32 vaf = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x500], (u16)tableId);
+    u16 w1 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
+    u16 w2 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
+    u8 v97 = BdatGetU8Direct((const void*)font, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u8 va3 = BdatGetU8Direct((const void*)font, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u8 vaf = BdatGetU8Direct((const void*)font, &lbl_eu_80504A3C[0x500], (u16)tableId);
     // Window scale factor: byte lookup converted via the int->double magic
     // constant, normalized by a per-window constant.
-    u32 vscale = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x508], (u16)tableId);
+    u8 vscale = BdatGetU8Direct((const void*)font, &lbl_eu_80504A3C[0x508], (u16)tableId);
     f32 total = (f32)((f64)(u8)vscale - lbl_eu_80667E08) / lbl_eu_80667E20;
-    u32 vbb = BdatGetU8Direct(font, &lbl_eu_80504A3C[0x517], (u16)tableId);
+    u8 vbb = BdatGetU8Direct((const void*)font, &lbl_eu_80504A3C[0x517], (u16)tableId);
 
     if ((vbb & 4) != 0) {
         // Scale the name/level window by the active character's id-derived
@@ -1960,7 +1945,7 @@ __declspec(noinline) void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int
     for (u32 i = 1; i <= 10; ++i) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80504A3C[0x51c], (u8)i);
-        if (BdatGetU8Direct(font, buf, (u16)tableId) != 0) {
+        if (BdatGetU8Direct((const void*)font, (const char*)buf, (u16)tableId) != 0) {
             total += GetFloatTableEntry((u8)i);
             break;
         }
@@ -2084,9 +2069,9 @@ __declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* s
     u32 itemFont = lbl_eu_806640F8;
     BdatGetItemType(arg2);
     u32 tableId = BdatGetItemId(arg2);
-    u32 v1 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
-    u32 v2 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
-    u32 v3 = BdatGetU8Direct(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
+    u8 v1 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
+    u8 v2 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
+    u8 v3 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v1);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)v2);
     setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xc7], (u8)v3);
@@ -2096,7 +2081,7 @@ __declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* s
     // comparison chain runs on the byte view (unsigned range test), while the
     // suffix switch below re-masks the raw value.
     u32 rankFont = lbl_eu_806640F8;
-    u32 rankVal = BdatGetU8Direct(rankFont, &lbl_eu_80504A3C[0x543],
+    u8 rankVal = BdatGetU8Direct((const void*)rankFont, &lbl_eu_80504A3C[0x543],
                                 (u16)BdatGetItemId(arg2));
     // Signed local: MWCC rewrites the 4..13 range test as an unsigned
     // subi/cmplwi pair but keeps signed cmpwi for the ==3/2/1 tests.
@@ -2216,7 +2201,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
         &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
         30 - ((u8)((arg3 != 0)
                        ? (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3)
-                       : (u16)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
+                       : (u16)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
                                             (u16)itemId)) -
               1));
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xd3], rankName, 0);
@@ -2234,7 +2219,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
     char* itemName = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], (u16)itemId2);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4a3], itemName, 0);
 
-    u8 n = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_80504A3C[0x561], (u16)itemId2);
+    u8 n = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_80504A3C[0x561], (u16)itemId2);
     char* rankStr = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
                                   n + 0x15);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x568], rankStr, 0);
@@ -2279,7 +2264,7 @@ __declspec(noinline) void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* se
     u32 tableId = BdatGetItemId(arg2);
     // Separate statement: retail keeps the lookup result live in r0 across
     // the BdatTouchStringCell arg setup (mr r0, r3 / clrlwi r5, r0, 24).
-    u32 rankN = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
+    u8 rankN = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
     char* rankText = BdatTouchStringCell(
         &lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], (u8)rankN);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0x4ae], rankText, 0);
@@ -2289,7 +2274,7 @@ __declspec(noinline) void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* se
     char* text;
     // Raw u32 kept in r0; the (u8) truncations happen at the use sites
     // (retail mr r0/r3 + rlwinm shape).
-    u32 descId = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x578], (u16)tableId);
+    u8 descId = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x578], (u16)tableId);
     if ((u8)descId == 0x1a) {
         text = BdatTouchStringCell(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 20);
     } else {
@@ -2382,21 +2367,17 @@ __declspec(noinline) void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int ar
     u32 tableId = BdatGetItemId(arg2);
     // Raw results kept unmasked (retail stores each with a plain mr and
     // truncates only at the use sites).
-    int kindA = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
-    u32 artIdx = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x58a], (u16)tableId);
-    // Record address: per-character stride 0x49 plus the doubled selector,
-    // folded back into selIdx (all-u32 so MWCC targets its register).
-    u32 selIdx = BdatGetU8Direct((u32)tbl, &lbl_eu_80504A3C[0x592], (u16)tableId);
-    selIdx = BdatGetU8ByTableKey(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x59b],
-                           (u8)selIdx);
-    void* mgr = CtrlObjectParam_GetCharEntry((u8)artIdx);
-    // Record address: per-character stride 0x49 plus the doubled selector,
-    // kept in u32 locals to match MWCC's register allocation.
+    u8 kindA = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
+    u8 artIdx = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x58a], (u16)tableId);
+    u8 selIdx = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x592], (u16)tableId);
+    CMenuGetItemCat13Record* rec;
+    u8 sel = BdatGetU8ByTableKey(&lbl_eu_80504A3C[0x54c], &lbl_eu_80504A3C[0x59b],
+                           selIdx);
+    void* mgr = CtrlObjectParam_GetCharEntry(artIdx);
+    // Record address: per-character stride 0x49 plus the doubled selector.
     u32 recBase = reinterpret_cast<u32>(mgr) +
                   (u8)CtrlObjectParam_GetCurrentRowKey(mgr) * 0x49;
-    selIdx = (u8)selIdx * 2 + recBase;
-    CMenuGetItemCat13Record* rec =
-        reinterpret_cast<CMenuGetItemCat13Record*>(selIdx);
+    rec = reinterpret_cast<CMenuGetItemCat13Record*>(recBase + sel * 2);
     char* rankName =
         BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 0x2c);
 
@@ -2465,7 +2446,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                         &lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182],
                         30 - (slotRank - 1));
                     switch ((u8)BdatGetU8Direct(
-                        (u32)fontTbl, &lbl_eu_80504A3C[0x5b9], slotItemId)) {
+                        (const void*)fontTbl, &lbl_eu_80504A3C[0x5b9], slotItemId)) {
                     case 0:
                         texture = CUICfManager_getArcResourceAccessor()->GetResource(
                             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
@@ -2517,7 +2498,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
                 LayoutSetTextBoxFmtValue(self->mLayout, buf, str.mString, 0);
                 if (texture != 0) {
-                    PaneSetTexPalette(pane, texture);
+                    PaneSetTexPalette(pane, (TPLPalette*)texture);
                 }
             } else {
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
@@ -2552,7 +2533,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
         void* itemTable = LookupItemTypeTable(arg2);
         u32 tableId = BdatGetItemId(arg2);
         u8 count =
-            (u8)BdatGetU8Direct((u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
+            (u8)BdatGetU8Direct((const void*)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
         u16 slotId = 0;
         u8 rankCnt = 0;
         u16 altFlag = 0;
@@ -2576,13 +2557,13 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                                BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
                                              &lbl_eu_80504A3C[0x182], 0x2a));
                 } else {
-                    altFlag = BdatGetU8Direct(lbl_eu_806640EC,
+                    altFlag = BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                             &lbl_eu_80504A3C[0x66b], id);
-                    rankCnt = BdatGetU8Direct(lbl_eu_806640EC,
+                    rankCnt = BdatGetU8Direct((const void*)lbl_eu_806640EC,
                                             &lbl_eu_80504A3C[0x3b3], id);
                     void* fontTbl2 = lbl_eu_806640D8;
                     switch ((u8)BdatGetU8Direct(
-                        (u32)fontTbl2, &lbl_eu_80504A3C[0x5b9],
+                        (const void*)fontTbl2, &lbl_eu_80504A3C[0x5b9],
                         (u16)BdatGetItemId(id))) {
                     case 0:
                         texture = CUICfManager_getArcResourceAccessor()->GetResource(
@@ -2626,7 +2607,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
                 LayoutSetTextBoxFmtValue(self->mLayout, buf, str.mString, 0);
                 if (texture != 0) {
-                    PaneSetTexPalette(pane, texture);
+                    PaneSetTexPalette(pane, (TPLPalette*)texture);
                 }
             } else {
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);

@@ -113,7 +113,7 @@ CMapSel::CMapSel() {
         case 8: case 9: case 11: case 12: case 13: case 14: case 15: case 16:
         case 17: case 18: case 19: case 21: case 23: case 24: case 25: case 27:
             for (s32 j = 1; j <= mapCount; j++) {
-                if (BdatGetU8Direct((u32)mapTable, base, (u32)j) == mapId) {
+                if (BdatGetU8Direct((const void*)mapTable, base, (u32)j) == mapId) {
                     if (CtrlRemote_TouchBitByArg((u32)(j + 0x20c8)) != 0) {
                         u8 idx = self->mGridData[0x20];
                         self->mGridData[idx] = mapId;
@@ -138,9 +138,9 @@ CMapSel::CMapSel() {
             // Retail hoists grid[k+1] into a callee-saved temp before the
             // first lookup, but passes grid[k] inline as its third argument.
             u8 b = self->mGridData[k + 1];
-            u8 keyA = BdatGetU8Direct((u32)orderTable, keys + 6,
+            u8 keyA = BdatGetU8Direct((const void*)orderTable, keys + 6,
                                     self->mGridData[k]);
-            u8 keyB = BdatGetU8Direct((u32)orderTable, keys + 6, b);
+            u8 keyB = BdatGetU8Direct((const void*)orderTable, keys + 6, b);
             if (keyA > keyB) {
                 self->mGridData[k] ^= self->mGridData[k + 1];
                 self->mGridData[k + 1] ^= self->mGridData[k];
@@ -541,12 +541,12 @@ extern "C" void __declspec(noinline) refreshMapSelImage(CMapSel* self) {
         const void* res = self->mArcAccessor->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x53, 0);
         if (res != 0) {
-            PaneSetTexPaletteByName(self->mLayout, base + 0x66, res);
+            PaneSetTexPaletteByName(self->mLayout, base + 0x66, (TPLPalette*)res);
         }
         return;
     }
     base = lbl_eu_8050B4A8;
-    PaneSetTexPaletteByName(self->mLayout, base + 0x66, self->mAllocatedMem);
+    PaneSetTexPaletteByName(self->mLayout, base + 0x66, (TPLPalette*)self->mAllocatedMem);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(base + 0x66, true);
     setPaneVisible(pane, 1);
@@ -631,7 +631,7 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
         u32 fontResult = static_cast<CDeviceFontView*>(fontObj)->vf7();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         mLayout->SetAnimationEnable(mAnimTransform2, false);
         mLayout->SetAnimationEnable(mAnimTransform1, true);

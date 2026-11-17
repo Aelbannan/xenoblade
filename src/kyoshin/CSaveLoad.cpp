@@ -356,7 +356,7 @@ extern "C" void CSLSub_create(UnkED70_Struct* s) {
     
     // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
     u32 result = static_cast<FontHelper*>(fontObj)->v7();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, result);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, (const nw4r::ut::Font*)result);
 
     CSLSub_bindPane((UnkTwoPtr*)s);
 }
@@ -1404,7 +1404,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
         void* paneA = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(numBuf, 1);
         void* paneB = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(
             strBase + 0xc4, 1);
-        ScalePaneWorldPos(paneBuf, paneA, paneB, ((Layout10View*)self->mLayout)->root);
+        ScalePaneWorldPos((nw4r::math::VEC3*)paneBuf, (nw4r::lyt::Pane*)paneA, (nw4r::lyt::Pane*)paneB, (nw4r::lyt::Pane*)(((Layout10View*)self->mLayout)->root));
         CSLCur_setPos(&((SaveCur28View*)self)->cur28, paneBuf);
     }
 }
@@ -1494,7 +1494,7 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
             void* awardData = self->mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x17c], 0);
             if (awardData != 0) {
                 sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
-                PaneSetTexPaletteByName(self->mLayout, slotNameBuf, awardData);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)slotNameBuf, (TPLPalette*)awardData);
             }
 
             // Hide the main slot button
@@ -1575,7 +1575,7 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
                     if (awardRes != 0) {
                         sprintf(textBuf, (const char*)&strBase[0x1ff], slotNum, btn + 1);
                         ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(textBuf, 1);
-                        PaneSetTexPaletteByName(self->mLayout, textBuf, awardRes);
+                        PaneSetTexPaletteByName(self->mLayout, (const char*)textBuf, (TPLPalette*)awardRes);
                     }
                 } else {
                     if (pane != 0) {
@@ -1615,7 +1615,7 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
 
             if (classData != 0) {
                 sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
-                PaneSetTexPaletteByName(self->mLayout, slotNameBuf, classData);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)slotNameBuf, (TPLPalette*)classData);
             }
 
             // Show/hide the final button depending on the character's sex flag
@@ -1780,7 +1780,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     void* rootPane = *(void**)((char*)self->mLayout + 0x10);
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
     u32 fontResult = static_cast<FontHelper*>(fontObj)->v7();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, fontResult);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, (const nw4r::ut::Font*)fontResult);
 
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)CUICfManager_getPackedFontD8();

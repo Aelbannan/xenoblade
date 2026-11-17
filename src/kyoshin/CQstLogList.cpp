@@ -6,6 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 extern "C" {
     void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
@@ -24,7 +25,6 @@ extern "C" {
 #include "monolib/util/MemManager.hpp"
 
 #include <stdio.h>
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 int CQstLogList::IsSortEnabled() { return mSortEnabled; }
 
@@ -291,7 +291,7 @@ modeFE:
         0x74696D67u, &lbl_eu_80509AB4[0xa7], 0);
 iconDone:
     if (str3 != 0) {
-        PaneSetTexPalette(pane1, str3);
+        PaneSetTexPalette(pane1, (TPLPalette*)str3);
         setPaneVisible(pane1, 1);
     }
 
@@ -315,7 +315,7 @@ iconDone:
         break;
     }
     if (str4 != 0) {
-        PaneSetTexPalette(pane2, str4);
+        PaneSetTexPalette(pane2, (TPLPalette*)str4);
         setPaneVisible(pane2, 1);
     }
 }
@@ -506,7 +506,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
     u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     ShowOpenAnim();
     mpLayout->Animate(0);
@@ -567,8 +567,8 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
         case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1A: case 0x1B:
         case 0x1C:
             for (s32 j = 1; j <= numQuests; j++) {
-                if (BdatGetU8Direct((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
-                    BdatGetU8Direct((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
+                if (BdatGetU8Direct((const void*)lbl_eu_806640A0, &s[0x70], j) == i &&
+                    BdatGetU8Direct((const void*)lbl_eu_806640A0, &s[0x170], j) == 0 &&
                     CtrlRemote_TouchBitByArg((u32)(j + 0x20c8)) != 0) {
                     indices[count++] = i;
                     break;
@@ -587,8 +587,8 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
         for (s8 inner = 0; inner < (s8)(last - outer); inner++) {
             u8 a = indices[inner];
             u8 b = indices[inner + 1];
-            if (BdatGetU8Direct((u32)lbl_eu_806640A8, &s[0xa], a) >
-                BdatGetU8Direct((u32)lbl_eu_806640A8, &s[0xa], b)) {
+            if (BdatGetU8Direct((const void*)lbl_eu_806640A8, &s[0xa], a) >
+                BdatGetU8Direct((const void*)lbl_eu_806640A8, &s[0xa], b)) {
                 u8 tmpSwap = a;
                 indices[inner] = b;
                 indices[inner + 1] = tmpSwap;
@@ -620,12 +620,12 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &s[0x185]
                           : &s[0x18e];
-    u16 msgId = BdatGetU16ByTableKey(&s[0x197], sel, 0x61);
-    char* texName = MakeTplNameSysFile((u32)msgId);
+    u32 msgId = BdatGetU16ByTableKey(&s[0x197], sel, 0x61);
+    char* texName = MakeTplNameSysFile((u32)(u16)msgId);
     CQstLogListMsgObj* obj = (CQstLogListMsgObj*)CUICfManager_getArcResourceAccessor()->GetResource(
         0x74696D67, texName, 0);
     if (obj != 0) {
-        PaneSetTexPaletteByName(mpLayout, &s[0x1a5], obj);
+        PaneSetTexPaletteByName(mpLayout, &s[0x1a5], (TPLPalette*)obj);
         CQstLogListCoords* coords = obj->chain->pCoords;
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(
             &s[0x1a5], true);

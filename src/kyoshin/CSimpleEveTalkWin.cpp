@@ -238,7 +238,7 @@ void CSimpleEveTalkWin::Init() {
         (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
@@ -248,7 +248,7 @@ void CSimpleEveTalkWin::Init() {
         texName = &lbl_eu_80503E14[0xaa];
     void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80503E14[0xc6], tex);
+        PaneSetTexPaletteByName(mpLayout, (const char*)&lbl_eu_80503E14[0xc6], (TPLPalette*)tex);
     }
 
     if (field_68 != 0) {
@@ -492,7 +492,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
         1, owner->mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // Start with the cursor animation disabled and the cursor at frame 1.
     owner->mpLayout->SetAnimationEnable(owner->field_8C, 0);
@@ -509,7 +509,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
         texName = &lbl_eu_80503E14[0xaa];
     void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        PaneSetTexPaletteByName(owner->mpLayout, &lbl_eu_80503E14[0xc6], tex);
+        PaneSetTexPaletteByName(owner->mpLayout, (const char*)&lbl_eu_80503E14[0xc6], (TPLPalette*)tex);
     }
 
     if (owner->field_68 != 0) {

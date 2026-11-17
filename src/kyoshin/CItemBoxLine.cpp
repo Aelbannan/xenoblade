@@ -14,6 +14,7 @@
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 #include "kyoshin/plugin/ocBdat.hpp"
 void playUISound(u32);
@@ -29,7 +30,6 @@ u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // ============================================================================
 // ItemBoxLine_GetSelectReady: busy-guard chain - only read the selector byte when every
@@ -123,7 +123,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
             if (entry->f4 > cur) entry->f8 = 1;
             if (arg4 != 0) {
                 if (self->field92 == 0xd) {
-                    if (BdatGetU8Direct(lbl_eu_80664110, &lbl_eu_805071B0[0xe],
+                    if (BdatGetU8Direct((const void*)lbl_eu_80664110, &lbl_eu_805071B0[0xe],
                                       BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
@@ -138,11 +138,11 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     } else {
                         str.format(&lbl_eu_805071B0[0x21], arg4);
                     }
-                    if (BdatGetU8Direct(t, str.mString, BdatGetItemId(result)) != 0) {
+                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
-                        u8 v = (u8)BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
+                        u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (v == 3) {
@@ -166,22 +166,22 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
         u16 id = CtrlRemote_TouchBitByArg(v + 0x21);
         u8 rowIdx;
         if (id >= 0x1f40) {
-            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x2f], arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, &lbl_eu_805071B0[0x2f], arg3);
         } else if (id >= 0x1770) {
-            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x37], arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, &lbl_eu_805071B0[0x37], arg3);
         } else if (id >= 0xfa0) {
-            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x3f], arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, &lbl_eu_805071B0[0x3f], arg3);
         } else if (id >= 0x7d0) {
-            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x47], arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, &lbl_eu_805071B0[0x47], arg3);
         } else {
-            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x4f], arg3);
+            rowIdx = (u8)BdatGetU8Direct((const void*)lbl_eu_80664098, &lbl_eu_805071B0[0x4f], arg3);
         }
         struct TabKindTable { const char* v[28]; };
         TabKindTable kinds = *(const TabKindTable*)&lbl_eu_80506D90[0x2f8];
         CItemBlock_getPtr20E8();
         for (int j = 0; j < 2; j++) {
             if (kinds.v[self->field92 * 2 + j] == 0) return;
-            u16 result = BdatGetU16Direct((u32)fp, kinds.v[self->field92 * 2 + j], rowIdx);
+            u16 result = BdatGetU16Direct((const void*)fp, kinds.v[self->field92 * 2 + j], rowIdx);
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
             entry->f0 = result;
@@ -203,11 +203,11 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     } else {
                         str.format(&lbl_eu_805071B0[0x21], arg4);
                     }
-                    if (BdatGetU8Direct(t, str.mString, BdatGetItemId(result)) != 0) {
+                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
-                        u8 w = (u8)BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
+                        u8 w = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (w == 3) {
@@ -330,13 +330,11 @@ extern "C" __declspec(noinline) char* ItemBoxLine_FormatDisplayName(CIBLTabFull*
     if (sel == 3) {
         BdatGetItemType(f0);
         u16 kind = BdatGetItemId(f0);
-        u8 n = BdatGetU8Direct((u32)lbl_eu_806640EC, pool + 0x5a, f0);
+        u8 n = BdatGetU8Direct((const void*)lbl_eu_806640EC, pool + 0x5a, f0);
         ml::FixStr<32> partName(true);
         partName.format(pool + 0x57, BdatTouchStringCell(pool + 0x63, pool + 0x6c, n));
-        u8 sub = BdatGetU8Direct((u32)lbl_eu_806640D8, pool + 0x71, kind);
-        // NOTE: retail sets r5 (kind) for this call, but the shared 2-arg
-        // declaration is kept to avoid changing the sibling call's codegen.
-        char* base = BdatGetPtrDirect((void*)lbl_eu_806640D8, pool + 0x7a);
+        u8 sub = BdatGetU8Direct((const void*)lbl_eu_806640D8, pool + 0x71, kind);
+        char* base = BdatGetPtrDirect((const void*)lbl_eu_806640D8, pool + 0x7a, kind);
         self->strB8.format(pool + 0x57, base);
         // Only some languages keep the full-width decoration around $-parts.
         int full = 1;
@@ -389,9 +387,8 @@ extern "C" __declspec(noinline) char* ItemBoxLine_FormatDisplayName(CIBLTabFull*
         if ((u8)(sel + 0xfc) > 5 && sel != 2) {
             table = lbl_eu_80664648;
         }
-        u16 v = BdatGetU16Direct((u32)lbl_eu_806640EC, pool + 0xfe, f0);
-        // NOTE: retail sets r5 (v) for this call; see 2-arg note above.
-        char* name = BdatGetPtrDirect((void*)table, pool + 0xfe);
+        u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, pool + 0xfe, f0);
+        char* name = BdatGetPtrDirect((const void*)table, pool + 0xfe, v);
         self->strB8.format(pool + 0x57, name);
     }
     return &self->strB8.mString[0];
@@ -443,12 +440,12 @@ search:
         } else {
             obj = lbl_eu_806640F8;
         }
-        u8 n = BdatGetU8Direct(obj, &lbl_eu_805071B0[0x106], (u16)v);
+        u8 n = BdatGetU8Direct((const void*)obj, &lbl_eu_805071B0[0x106], (u16)v);
         if (n == 0) goto ret0;
         char buf[0x20];
         for (u8 i = 0; i < n; i++) {
             sprintf(buf, &lbl_eu_805071B0[0x10f], (u8)i + 1);
-            if ((u16)BdatGetU16Direct(obj, buf, (u16)v) != 0) return 0xfd;
+            if ((u16)BdatGetU16Direct((const void*)obj, (const char*)buf, (u16)v) != 0) return 0xfd;
         }
         return 0xfe;
     }
@@ -483,21 +480,21 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     char* pool = lbl_eu_805071B0;
     u32 result = 0;
     if ((u16)kind == 3) {
-        u32 v = BdatGetU8Direct((u32)lbl_eu_806640EC, pool + 0x5a, itemData);
-        u16 count = BdatGetU16Direct(itemId, pool + 0x11b, cat);
+        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, pool + 0x5a, itemData);
+        u16 count = BdatGetU16Direct((const void*)itemId, pool + 0x11b, cat);
         CIBLF32Rec rec = lbl_eu_8050715C;
         result = __cvt_fp2unsigned((double)((float)count * rec.f[v & 0xFF]));
     } else if ((u16)kind == 9 || (u16)kind < 2 || (u16)kind > 8) {
-        u16 count = BdatGetU16Direct(itemId, pool + 0x11b, cat);
+        u16 count = BdatGetU16Direct((const void*)itemId, pool + 0x11b, cat);
         result = count;
     } else {
-        u16 count = BdatGetU16Direct(itemId, pool + 0x11b, cat);
-        u32 n = BdatGetU8Direct(itemId, pool + 0x106, cat);
+        u16 count = BdatGetU16Direct((const void*)itemId, pool + 0x11b, cat);
+        u8 n = BdatGetU8Direct((const void*)itemId, pool + 0x106, cat);
         float inc = lbl_eu_80668114;
         float step = lbl_eu_80668118;
         do {
             inc += step;
-        } while ((u8)n-- != 0);
+        } while (n-- != 0);
         result = __cvt_fp2unsigned((double)((float)count * inc));
     }
     return result * 10;
@@ -702,7 +699,7 @@ void CItemBoxLine::OpenLine() {
     setItemBox2NamedText(&mInfo2, 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
     SetInfo2Item((u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
-    mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3(vec, lbl_eu_8066811C, lbl_eu_80668120, lbl_eu_806680F8)));
+    mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, lbl_eu_8066811C, lbl_eu_80668120, lbl_eu_806680F8)));
     mScrollBar.UpdateThumb(7, tabs->count);
     mScrollBar.requestScrollIn();
 }
@@ -1573,7 +1570,7 @@ __declspec(noinline) void CItemBoxLine::CompactTabList() {
 void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x1ff], arg2);
+        u32 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x1ff], arg2);
         result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
         if (result == 0) {
             result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
@@ -1584,14 +1581,14 @@ void CItemBoxLine::DrawTabRowText(u32 arg2, u32 arg3) {
     if (result != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_805071B0[0x21c], arg3 + 1);
-        PaneSetTexPaletteByName(field40, buf, result);
+        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
     }
 }
 
 void CItemBoxLine::DrawTabRowIcon(u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
-        u32 v = BdatGetU16Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x22a], arg2);
+        u32 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x22a], arg2);
         result = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, MakeTplNameSysFile((u16)v), 0);
         if (result == 0) {
             result = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
@@ -1602,7 +1599,7 @@ void CItemBoxLine::DrawTabRowIcon(u32 arg2, u32 arg3) {
     if (result != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_805071B0[0x22f], arg3 + 1);
-        PaneSetTexPaletteByName(field40, buf, result);
+        PaneSetTexPaletteByName(field40, (const char*)buf, (TPLPalette*)result);
     }
 }
 
@@ -1619,7 +1616,7 @@ void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
     str.clear();
     u8 sel = (u8)BdatGetItemType(arg4);
     if (sel == 3 || sel == 9) {
-        u8 v = BdatGetU8Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], arg4);
+        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], arg4);
         char* name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x1e - (v - 1));
         str.format(&lbl_eu_805071B0[0x57], name);
         PaneMatSetTevColorsByName(field40, buf, lbl_eu_80664618, lbl_eu_80664620);
@@ -1684,7 +1681,7 @@ void CItemBoxLine::RebuildTabList() {
         if (unk64[i] == 0) {
             u32 tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x387], 0);
             if (tex != 0) {
-                PaneSetTexPaletteByName(field40, nameB, tex);
+                PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
             }
         }
         BindSlotTexture(entry, i);
@@ -1730,7 +1727,7 @@ __declspec(noinline) void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
     if (tex != 0) {
         char nameB[0x20];
         sprintf(nameB, &lbl_eu_805071B0[0x351], index + 1);
-        PaneSetTexPaletteByName(field40, nameB, tex);
+        PaneSetTexPaletteByName(field40, (const char*)nameB, (TPLPalette*)tex);
         if (unk64[index] == 0) {
             GXColorS10 col;
             col.b = 0x14;
@@ -1890,7 +1887,7 @@ void CItemBoxLine::ResetPageTables(u32 itemData) {
         CIBLVec3 vec;
         copyVEC3(&pageVecs4F8[i],
                  reinterpret_cast<const CIBLVec3*>(code80135FDC_setVec3(
-                     (float*)&vec, lbl_eu_806680F8, lbl_eu_806680F8, lbl_eu_806680F8)));
+                     (nw4r::math::VEC3*)((float*)&vec), lbl_eu_806680F8, lbl_eu_806680F8, lbl_eu_806680F8)));
     }
     // Hide every line pane (pane names from the shared pool; all hidden).
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 0);
@@ -1963,17 +1960,17 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     u32 table = lbl_eu_806640F4;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
-    u16 a = BdatGetU16Direct(table, &lbl_eu_805071B0[0x58f], kind);
-    u16 b = BdatGetU16Direct(table, &lbl_eu_805071B0[0x597], kind);
-    u8 c = BdatGetU8Direct(table, &lbl_eu_805071B0[0x59e], kind);
-    u8 d = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5a6], kind);
-    u8 e = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5ae], kind);
-    u8 f = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5b6], kind);
+    u16 a = BdatGetU16Direct((const void*)table, &lbl_eu_805071B0[0x58f], kind);
+    u16 b = BdatGetU16Direct((const void*)table, &lbl_eu_805071B0[0x597], kind);
+    u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
+    u8 d = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5a6], kind);
+    u8 e = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5ae], kind);
+    u8 f = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5b6], kind);
     float total = (float)f / lbl_eu_80668128;
-    u8 g = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5bc], kind);
+    u8 g = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5bc], kind);
     int v23;
     int v22;
-    if (BdatGetU8Direct(table, &lbl_eu_805071B0[0x5c5], kind) & 4) {
+    if (BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5c5], kind) & 4) {
         // retail reuses CtrlObjectParam_GetCharEntry's r3 as the arg to CtrlObjectParam_GetArtsDataWord
         u16 c1 = CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(1));
         v23 = (int)(lbl_eu_8066812C * (float)(a * c1));
@@ -1989,7 +1986,7 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     u8 i = 1;
     do {
         sprintf(buf, &lbl_eu_805071B0[0x16], i);
-        if (BdatGetU8Direct(table, buf, kind) != 0) {
+        if (BdatGetU8Direct((const void*)table, (const char*)buf, kind) != 0) {
             total += GetFloatTableEntry(i);
             break;
         }
@@ -2064,9 +2061,9 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     u32 table = lbl_eu_806640F8;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
-    u8 a = BdatGetU8Direct(table, &lbl_eu_805071B0[0x59e], kind);
-    u8 b = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5a6], kind);
-    u8 c = BdatGetU8Direct(table, &lbl_eu_805071B0[0x5d8], kind);
+    u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
+    u8 b = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5a6], kind);
+    u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5d8], kind);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4ca], a);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4d6], b);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4e2], c);
@@ -2075,7 +2072,7 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     // equality tests each branch to their case body; the bodies sit after the
     // tests in retail order (0x32, 0x31, 0x30, 0x2e) with the default last.
     u32 selTable = lbl_eu_806640F8;
-    u8 sel = BdatGetU8Direct(selTable, &lbl_eu_805071B0[0x26],
+    u8 sel = BdatGetU8Direct((const void*)selTable, &lbl_eu_805071B0[0x26],
                            BdatGetItemId(itemData));
     char* name;
     if ((u32)(sel - 4) <= 9) goto sel2e;
@@ -2188,14 +2185,14 @@ void CItemBoxLine::ShowPageTabs(u32 itemData) {
     u32 owner = (u32)lbl_eu_80664104;
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
-    u8 v = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x5ff], cat);
+    u8 v = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x5ff], cat);
     char* name = BdatTouchStringCell(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], v);
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x577], name, 0);
-    u8 v2 = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x610], cat);
+    u8 v2 = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x610], cat);
     char* name2;
     if (0x1a == v2) {        name2 = BdatTouchStringCell(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], 0x14);
     } else {
-        name2 = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_805071B0[0x6c]);
+        name2 = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_805071B0[0x6c], v2);
     }
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x583], name2, 0);
 }
@@ -2217,21 +2214,21 @@ void CItemBoxLine::FormatGemName(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName(pool + 0x555, true), 1);
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
-    u32 vEC = BdatGetU8Direct((u32)lbl_eu_806640EC, pool + 0x5a, itemData);
+    u32 vEC = BdatGetU8Direct((const void*)lbl_eu_806640EC, pool + 0x5a, itemData);
     char* name = BdatTouchStringCell(pool + 0x248, pool + 0x6c, 30 - ((u8)vEC - 1));
     LayoutSetTextBoxFmtValue(field40, pool + 0x549, name, 0);
-    u16 id = BdatGetU16Direct((u32)lbl_eu_806640D8, pool + 0x5e9, cat);
+    u16 id = BdatGetU16Direct((const void*)lbl_eu_806640D8, pool + 0x5e9, cat);
     char* txt = BdatTouchStringCell(pool + 0x63, pool + 0x6c, 15);
     if (id == 1) {
         txt = pool + 0x254;
         LayoutSetTextBoxFmtValue(field40, pool + 0x555, txt, 0);
     }
     char* pool2 = lbl_eu_805071B0;
-    char* gemName = BdatGetPtrDirect((void*)lbl_eu_806640D8, pool2 + 0x6c);
+    char* gemName = BdatGetPtrDirect((const void*)lbl_eu_806640D8, pool2 + 0x6c, cat);
     LayoutSetTextBoxFmtValue(field40, pool2 + 0x53e, gemName, 0);
     char* lvlName = BdatTouchStringCell(
         pool2 + 0x248, pool2 + 0x6c,
-        (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, pool2 + 0x5ed, cat) + 21);
+        (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, pool2 + 0x5ed, cat) + 21);
     LayoutSetTextBoxFmtValue(field40, pool2 + 0x5f4, lvlName, 0);
     nw4r::lyt::Pane* anchor =
         field40->GetRootPane()->FindPaneByName(pool2 + 0x53e, true);
@@ -2258,9 +2255,9 @@ void CItemBoxLine::FormatKindDName(u32 itemData) {
     u32 owner = (u32)lbl_eu_80664110;
     BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
-    u8 vA = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x616], cat);
-    u8 vB = BdatGetU8Direct(owner, &lbl_eu_805071B0[0xe], cat);
-    u8 vC = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x622], cat);
+    u8 vA = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x616], cat);
+    u8 vB = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0xe], cat);
+    u8 vC = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x622], cat);
     u8 defName = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], vC);
     void* tbl = CtrlObjectParam_GetCharEntry(vB);
     u8 idx = (u8)CtrlObjectParam_GetCurrentRowKey();
@@ -2295,7 +2292,7 @@ void CItemBoxLine::FormatKindDName(u32 itemData) {
 void CItemBoxLine::BuildPageData(u32 itemData) {
     u32 itemId = LookupItemTypeTable(itemData);
     u16 kind = BdatGetItemId(itemData);
-    u8 n = BdatGetU8Direct(itemId, &lbl_eu_805071B0[0x106], (u16)kind);
+    u8 n = BdatGetU8Direct((const void*)itemId, &lbl_eu_805071B0[0x106], (u16)kind);
     for (u8 i = 0; i < 3; i++) {
         char nameBuf[0x20];
         ml::FixStr<32> buf;
@@ -2309,11 +2306,11 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
             setPaneVisible(pane, 1);
             u32 tex = 0;
             buf.format(&lbl_eu_805071B0[0x10f], i + 1);
-            u16 v = BdatGetU16Direct(itemId, buf.mString, (u16)kind);
+            u16 v = BdatGetU16Direct((const void*)itemId, (const char*)buf.mString, (u16)kind);
             if (v != 0) {
-                a = (u8)BdatGetU8Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x649], (u16)v);
-                b = (u8)BdatGetU8Direct((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], (u16)v);
-                u8 sel = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_805071B0[0x651],
+                a = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x649], (u16)v);
+                b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], (u16)v);
+                u8 sel = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805071B0[0x651],
                                           (u16)BdatGetItemId(v));
                 if (sel == 0) {
                     tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
@@ -2340,7 +2337,7 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
             sprintf(nameBuf, &lbl_eu_805071B0[0x6f4], i + 1);
             LayoutSetTextBoxFmtValue(field40, nameBuf, buf.mString, 0);
             if (tex != 0) {
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
             }
         } else {
             sprintf(nameBuf, &lbl_eu_805071B0[0x6f4], i + 1);
@@ -2387,9 +2384,9 @@ int CItemBoxLine::ProbeAvailability(u32 key) {
     // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
     // temp register that is later reused for the BdatGetU8ByTableKey result.
     u16 v = BdatGetItemId(key);
-    u8 a = BdatGetU8Direct(table, &lbl_eu_805071B0[0x616], v);
-    u8 b = BdatGetU8Direct(table, &lbl_eu_805071B0[0xe], v);
-    u8 c = BdatGetU8Direct(table, &lbl_eu_805071B0[0x622], v);
+    u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x616], v);
+    u8 b = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0xe], v);
+    u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x622], v);
     u8 d = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], c);
     u8* base = (u8*)CtrlObjectParam_GetCharEntry(b);
     u32 f = (u8)CtrlObjectParam_GetCurrentRowKey();
@@ -2445,7 +2442,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
                                                                           this->field40);
-        ApplyFontToTxtPanes(root, ((IDeviceFontInfo*)fontObj)->getFont());
+        ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)fontObj)->getFont()));
 
         // Seed the seven slot-name textboxes with the line text.
         char* text = CUICfManager_getPackedFont9C();

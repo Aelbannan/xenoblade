@@ -13,12 +13,12 @@
 #include "monolib/work/CEventFile.hpp"
 
 #include <revolution/os/OSError.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
-// Local imports. code_80135FDC.hpp is deliberately NOT included here: this TU
-// calls the 2-argument form of BdatGetPtrDirect, which that header declares with
-// three parameters. Linkage/signatures mirror the retail symbols exactly.
+// Local imports. Linkage/signatures mirror the retail symbols exactly.
 extern u32 lbl_eu_806640D8;
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
@@ -31,14 +31,7 @@ extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(n
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" {
-u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-void ApplyFontToTxtPanes(void*, u32);
-char* BdatTouchStringCell(const void*, const void*, int);
-u8 BdatGetU8Direct(u32, const char*, u32);
-char* BdatGetPtrDirect(const void*, const void*);
-void PaneSetTexPaletteByName(void*, void*, void*);
 void setPaneVisible(void*, u32);
 void AnimJumpToLast(void*, void*);
 }
@@ -242,7 +235,7 @@ void crystalListState3To4(CMCCrystalList* self)
 void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     char buf[0x20];
     // BDAT name lookup happens BEFORE the slot number is computed.
-    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x36]);
+    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x36], id);
     u32 slot = idx + 1;
     sprintf(buf, &lbl_eu_805092C0[0x3b], slot);
     LayoutSetTextBoxFmtValue(self->mLayout, buf, name, 0);
@@ -253,7 +246,7 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     LayoutSetTextBoxFmtValue(self->mLayout, buf, desc, 0);
 
     void* tex = NULL;
-    switch (BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_805092C0[0x78], id)) {
+    switch (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x78], id)) {
     case 0:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
@@ -292,7 +285,7 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     }
     if (tex != NULL) {
         sprintf(buf, &lbl_eu_805092C0[0x11b], slot);
-        PaneSetTexPaletteByName(self->mLayout, buf, tex);
+        PaneSetTexPaletteByName(self->mLayout, (const char*)buf, (TPLPalette*)tex);
     }
 }
 #pragma optimize_for_size off
@@ -320,7 +313,7 @@ extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
             &lbl_eu_805092C0[0x12b], NULL);
         if (tex != NULL) {
             sprintf(buf, &lbl_eu_805092C0[0x11b], i);
-            PaneSetTexPaletteByName(self->mLayout, buf, tex);
+            PaneSetTexPaletteByName(self->mLayout, (const char*)buf, (TPLPalette*)tex);
         }
 
         if (arg == 0 && self->mStateIdx >= 3) {
@@ -348,7 +341,7 @@ void crystalListAlignSlot(CMCCrystalList* self, int idx)
     nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
     void* paneA = rootPane->FindPaneByName(&lbl_eu_805092C0[0x158], true);
     void* paneB = rootPane->FindPaneByName(buf, true);
-    ScalePaneWorldPos(self, paneB, paneA, rootPane);
+    ScalePaneWorldPos((nw4r::math::VEC3*)self, (nw4r::lyt::Pane*)paneB, (nw4r::lyt::Pane*)paneA, rootPane);
 }
 #pragma optimize_for_size off
 
@@ -387,7 +380,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x167], NULL); // 'itmg'
             if (tex != NULL) {
-                PaneSetTexPalette(paneC, tex);
+                PaneSetTexPalette(paneC, (TPLPalette*)tex);
             }
             result = 0;
         } else {
@@ -404,7 +397,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
             if (tex != NULL) {
-                PaneSetTexPalette(paneC, tex);
+                PaneSetTexPalette(paneC, (TPLPalette*)tex);
             }
             result = 0;
         } else {
@@ -412,7 +405,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x167], NULL);
             if (tex != NULL) {
-                PaneSetTexPalette(paneC, tex);
+                PaneSetTexPalette(paneC, (TPLPalette*)tex);
                 crystalListDisableAnims(self);
                 AnimJumpToLast(paneC, self->mAnimRes5);
             }
@@ -425,7 +418,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
             if (tex != NULL) {
-                PaneSetTexPalette(paneC, tex);
+                PaneSetTexPalette(paneC, (TPLPalette*)tex);
                 crystalListDisableAnims(self);
                 AnimJumpToLast(paneC, self->mAnimRes5);
             }
@@ -651,9 +644,9 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         ApplyFontToTxtPanes(rootPane,
-            reinterpret_cast<CMCCrystalListFontView*>(
+            (const nw4r::ut::Font*)(reinterpret_cast<CMCCrystalListFontView*>(
                 CDeviceFont::getFontInfo(1, mLayout))
-                ->vf7());
+                ->vf7()));
 
         // If a character set is loaded, stamp every crystal-slot text pane
         // (8 slots, two text panes each) with it.

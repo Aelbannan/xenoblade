@@ -6,6 +6,8 @@
 // kyoshin/CFloorMap.hpp.
 
 #include "kyoshin/CMapSel.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 passed to ApplyFontToTxtPanes. All-pure so no
@@ -37,7 +39,6 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 void closeFileHandle(CFileHandle**);
 extern "C" void __ct__10CScrollBarFUc(void*, int);
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);
@@ -49,16 +50,10 @@ extern "C" void Cur_Update(void*);                  // cursor per-frame update
 // the texture resource as PaneSetTexPaletteByName's third argument). Same guard as the legacy
 // AnimRewindFrame pseudo-import so code_802405F4.cpp's define stays a no-op.
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
-extern "C" void PaneSetTexPaletteByName(void*, const char*, const void*);
 extern "C" char* MakeTplNameSysFile(u32);
 #endif
 // Cursor position helper: fill output with the point derived from two panes.
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
-                               nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int sprintf(char*, const char*, ...);
@@ -83,6 +78,5 @@ extern "C" float lbl_eu_80668744;
 // headers (identical redeclarations are harmless, but keep the old macro
 // contract so code_802405F4.cpp's define stays a no-op).
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 #endif
 extern "C" const float lbl_eu_8066873C;

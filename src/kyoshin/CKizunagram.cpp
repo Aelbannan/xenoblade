@@ -216,7 +216,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, (nw4r::lyt::Layout*)self->layout);
     u32 bound = ((UnkKizunaFontView*)font)->vf7();
-    ApplyFontToTxtPanes(rootPane, bound);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)bound);
 
     self->layout->slot11((u32)self->anim, 1);
     self->layout->slot14(0);
@@ -235,32 +235,32 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     u8 lang = (u8)lbl_eu_80664184;
     if (lang == 0x19) {
         PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
-        PaneSetVtxColorPairsByName(lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
+        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
     } else if (lang == 0x1A) {
         PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
-        PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0x8CA0EBFF);
+        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0x8CA0EBFF);
     } else {
         switch (MapValueToRank6(lang)) {
         case 0:
         case 1:
             PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
-            PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0xEEB88AFF);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xEEB88AFF);
             break;
         case 2:
             PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
-            PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0xE0C072FF);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE0C072FF);
             break;
         case 3:
             PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
-            PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0xE1F8A8FF);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE1F8A8FF);
             break;
         case 4:
             PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
-            PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0xB4DEFFFF);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xB4DEFFFF);
             break;
         case 5:
             PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
-            PaneSetVtxColorPairsByName(lytv, str + 0x93, -1, 0xBCBAE6FF);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xBCBAE6FF);
             break;
         }
     }
@@ -398,7 +398,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
 
     void* msgTex = self->acc->getTex(0x74696D67, (u32)msg, 0);
     if (msgTex != 0) {
-        PaneSetTexPaletteByName(self->layout, str + 0x16a, msgTex);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->layout, str + 0x16a, (TPLPalette*)msgTex);
     }
 
     // Hide the five fixed number/name pane pairs.
@@ -507,7 +507,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
                 void* tpl = self->acc->getTex(0x74696D67, (u32)texTag, 0);
                 if (tpl != 0) {
                     sprintf(nameBuf, str + 0x171, (u8)k);
-                    PaneSetTexPaletteByName(self->layout, nameBuf, tpl);
+                    PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->layout, (const char*)nameBuf, (TPLPalette*)tpl);
                 }
             }
             for (u32 d = 0; d < 5; d++) {
@@ -1082,7 +1082,7 @@ extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
     for (u16 id = 1; (u32)id <= count; id++) {
         if (strcmp(BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, id),
                    name) == 0 &&
-            CtrlRemote_TouchBitByArg(BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
+            CtrlRemote_TouchBitByArg((u16)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
                                                        id) + 0xa20) != 0) {
             return id;
         }
@@ -1271,7 +1271,7 @@ __declspec(noinline) void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
             // Bind the shared 'timg' texture resource onto the refreshed pane.
             void* tex = self->field04->getTex(timg, fmtBuf, 0);
             if (tex != NULL) {
-                PaneSetTexPalette(paneB, (u32)tex);
+                PaneSetTexPalette(paneB, (TPLPalette*)((u32)tex));
             }
         }
     }
@@ -1310,7 +1310,7 @@ extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
     nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
     u32 val = CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
@@ -1451,7 +1451,7 @@ extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* s
     }
     if (texName != NULL) {
         // Bind the color texture and show the tinted root pane.
-        PaneSetTexPaletteByName(self->field8, lbl_eu_8050CB20 + 0xc16, texName);
+        PaneSetTexPaletteByName(self->field8, lbl_eu_8050CB20 + 0xc16, (TPLPalette*)texName);
         setPaneVisible(
             reinterpret_cast<nw4r::lyt::Pane*>(
                 reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
@@ -1540,8 +1540,8 @@ extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* s
                   BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x15), 0);
     LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xc0b,
                   BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xcb1, v), 0);
-    u8 heartsCur = BdatGetU8Direct((u32)mgr, lbl_eu_8050CB20 + 0xcc9, v);
-    u8 heartsMax = BdatGetU8Direct((u32)mgr, lbl_eu_8050CB20 + 0xcc1, v);
+    u8 heartsCur = BdatGetU8Direct((const void*)mgr, lbl_eu_8050CB20 + 0xcc9, v);
+    u8 heartsMax = BdatGetU8Direct((const void*)mgr, lbl_eu_8050CB20 + 0xcc1, v);
     char buf[0x14];
     sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsCur);
     LayoutSetTextBoxText(self->field8, lbl_eu_8050CB20 + 0xb5d, buf, 0);
@@ -1747,7 +1747,7 @@ extern "C" __declspec(noinline) void kizCursorDir1(UnkKizunaSelfC874* self) {
     VecA v;
     VecA tmp;
     VecA* src = reinterpret_cast<VecA*>(code80135FDC_setVec3(
-        reinterpret_cast<float*>(&tmp.a[0]), lbl_eu_80668828,
+        (nw4r::math::VEC3*)(reinterpret_cast<float*>(&tmp.a[0])), lbl_eu_80668828,
         lbl_eu_80668868, lbl_eu_80668828));
     v = *src;
     placeKizMarker(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
@@ -1767,7 +1767,7 @@ extern "C" __declspec(noinline) void kizCursorDir2(UnkKizunaSelfC874* self) {
     VecA v;
     VecA tmp;
     VecA* src = reinterpret_cast<VecA*>(code80135FDC_setVec3(
-        reinterpret_cast<float*>(&tmp.a[0]), lbl_eu_80668828,
+        (nw4r::math::VEC3*)(reinterpret_cast<float*>(&tmp.a[0])), lbl_eu_80668828,
         lbl_eu_8066886C, lbl_eu_80668828));
     v = *src;
     placeKizMarker(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
@@ -1789,7 +1789,7 @@ extern "C" __declspec(noinline) void kizCursorDir3(UnkKizunaSelfC874* self) {
     VecW v;
     VecW tmp;
     v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
-        reinterpret_cast<f32*>(&tmp.w[0]), lbl_eu_8066886C,
+        (nw4r::math::VEC3*)(reinterpret_cast<f32*>(&tmp.w[0])), lbl_eu_8066886C,
         lbl_eu_80668828, lbl_eu_80668828));
     placeKizMarker(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
                   reinterpret_cast<UnkKizunaVec3*>(&v));
@@ -1814,7 +1814,7 @@ extern "C" __declspec(noinline) void kizCursorDir4(UnkKizunaSelfC874* self) {
     VecW v;
     VecW tmp;
     v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
-        reinterpret_cast<f32*>(&tmp.w[0]), lbl_eu_80668868,
+        (nw4r::math::VEC3*)(reinterpret_cast<f32*>(&tmp.w[0])), lbl_eu_80668868,
         lbl_eu_80668828, lbl_eu_80668828));
     placeKizMarker(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
                   reinterpret_cast<UnkKizunaVec3*>(&v));
@@ -1950,7 +1950,7 @@ extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self) {
     VecW v;
     VecW tmp;
     v = *reinterpret_cast<VecW*>(code80135FDC_setVec3(
-        reinterpret_cast<f32*>(&tmp.w[0]), self->field40, self->field44,
+        (nw4r::math::VEC3*)(reinterpret_cast<f32*>(&tmp.w[0])), self->field40, self->field44,
         lbl_eu_80668828));
     placeKizMarker(reinterpret_cast<UnkKizunaSelf59394*>(&self->sub68),
                   reinterpret_cast<UnkKizunaVec3*>(&v));
@@ -2344,7 +2344,7 @@ extern "C" __declspec(noinline) bool revealKizEntries(UnkKizunaSelfA11C* self) {
         if (pane != NULL) {
             void* tex = self->texSrc->getTex(0x74696D67, (u32)buf, 0);
             if (tex != 0) {
-                PaneSetTexPalette(pane, (u32)tex);
+                PaneSetTexPalette(pane, (TPLPalette*)((u32)tex));
             }
         }
         lbl_eu_8066485A = lbl_eu_8066485A + 1;

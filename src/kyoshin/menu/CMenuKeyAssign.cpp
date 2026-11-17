@@ -26,6 +26,8 @@
 #include <revolution/gx/GXPixel.h>
 
 #include <stdio.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
 // flag in the low bit of the byte at +0xBB; the repo's nw4r header exposes it
@@ -156,11 +158,6 @@ extern "C" int GetSysStateFlag20();
 // must sit under extern "C" to emit the retail reloc names).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void PaneSetTexPalette(void* pane, void* tex);
-u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-char* BdatTouchStringCell(const void*, const void*, int);
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-void ApplyFontToTxtPanes(void*, u32);
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
 int CMenuArtsSelect_IsAvailable();
@@ -223,7 +220,7 @@ void CMenuKeyAssign::Init() {
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuKeyAssignFont*>(fontObj)->getFontHandle();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // Hide the button panes that are not yet active (shared helper).
     this->hideKeyAssignPanes();
@@ -794,7 +791,7 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -824,7 +821,7 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -850,7 +847,7 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -932,7 +929,7 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -961,7 +958,7 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -986,7 +983,7 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
-                PaneSetTexPalette(pane, tex);
+                PaneSetTexPalette(pane, (TPLPalette*)tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -1044,7 +1041,7 @@ void CMenuKeyAssign::openKeyAssignPlayer() {
             str.format(&base[0x66], mapped + 1);
             nw4r::lyt::Pane* pane =
                 this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-            PaneSetTexPalette(pane, tex);
+            PaneSetTexPalette(pane, (TPLPalette*)tex);
             // u16 -> f32 via MWCC's 0x43300000 magic double pair.
             cw.w[1] = (u32)tex->mHeader->mDims[1];
             ch.w[1] = (u32)tex->mHeader->mDims[0];

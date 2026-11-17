@@ -506,7 +506,7 @@ void CMCCrystalBox::openCrystalBox() {
     rebuildCrystalGridTable();
     float vec[3];
     // Retail reuses setVec3's returned dest pointer as the vec argument.
-    this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3(vec, lbl_eu_80668474,
+    this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, lbl_eu_80668474,
                                                      lbl_eu_80668478,
                                                      lbl_eu_8066845C)));
     // Distinct expression shapes per call keep MWCC from CSE-ing the
@@ -967,7 +967,7 @@ void CMCCrystalBox::toggleCrystalSortMenu() {
         // matching retail's pane-fetch order (base+0x63 before base+0x5a).
         nw4r::math::VEC3 local;
         ScalePaneWorldPos(&local, sub->vf_3C(base + 0x5a, 1),
-                      sub->vf_3C(base + 0x63, 1), sub);
+                      sub->vf_3C(base + 0x63, 1), (nw4r::lyt::Pane*)sub);
         this->sortMenu.SetPos(&local);
         this->sortMenu.SetSelect((u8)(this->field_1506 + this->field_1507));
         nw4r::math::VEC3 pos = this->sortMenu.GetCursorPos();
@@ -1813,7 +1813,7 @@ __declspec(noinline) void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned 
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
                                                        lbl_eu_8050888C + 0xbc,
                                                        id)),
                           0);
@@ -1831,7 +1831,7 @@ __declspec(noinline) void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned 
     if (msg != 0) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050888C + 0xc6, i + 1);
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, buf, (char*)msg);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
     }
 }
 
@@ -1894,7 +1894,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
                                                        lbl_eu_8050888C + 0xbc,
                                                        id)),
                           0);
@@ -1912,7 +1912,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
     if (msg != 0) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050888C + 0xd4, i + 1);
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, buf, (char*)msg);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
     }
 }
 
@@ -1981,7 +1981,7 @@ __declspec(noinline) void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
                                                        lbl_eu_8050888C + 0xe2,
                                                        id)),
                           0);
@@ -2000,7 +2000,7 @@ __declspec(noinline) void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned
         char buf[0x20];
         int i1 = i + 1;
         sprintf(buf, lbl_eu_8050888C + 0xe7, i1);
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, buf, (char*)msg);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
         const char* cap = 0;
         if (it != 0) {
             u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
@@ -2069,7 +2069,7 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
                       this->mArcAcc1)
                       ->GetResource(
                           0x74696D67,
-                          MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_806640EC,
+                          MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
                                                        lbl_eu_8050888C + 0xe2,
                                                        id)),
                           0);
@@ -2088,7 +2088,7 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
         char buf[0x20];
         int i1 = i + 1;
         sprintf(buf, lbl_eu_8050888C + 0x10e, i1);
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, buf, (char*)msg);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
         const char* cap = 0;
         if (it != 0) {
             u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
@@ -2290,7 +2290,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(bufD0, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
-                ScalePaneWorldPos(buf20, paneA, paneB, ((CrystalBoxSubObj5*)this->mLayout)->layout);
+                ScalePaneWorldPos((nw4r::math::VEC3*)buf20, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf20));
                 Cur_SetVisible(&this->mCur16, 1);
                 Cur_SetVisible(&this->mCur07, 0);
@@ -2301,7 +2301,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(bufB0, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
-                ScalePaneWorldPos(buf14, paneA, paneB, ((CrystalBoxSubObj5*)this->mLayout)->layout);
+                ScalePaneWorldPos((nw4r::math::VEC3*)buf14, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf14));
                 Cur_SetVisible(&this->mCur07, 1);
                 Cur_SetVisible(&this->mCur16, 0);
@@ -2313,7 +2313,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(buf90, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
-                ScalePaneWorldPos(buf8, paneA, paneB, ((CrystalBoxSubObj5*)this->mLayout)->layout);
+                ScalePaneWorldPos((nw4r::math::VEC3*)buf8, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf8));
                 Cur_SetVisible(&this->mCur07, 1);
                 Cur_SetVisible(&this->mCur16, 0);
@@ -2324,7 +2324,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                 sprintf(buf70, lbl_eu_8050888C + 0x1ae, (s8)this->unk2D3 + 1);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(buf70, 1);
-                AccumPaneWorldPos((char*)buf44, paneA);
+                AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf44), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 buf44[0] *= ((PaneW44*)paneB)->w44;
@@ -2341,7 +2341,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                 sprintf(buf50, lbl_eu_8050888C + 0x1bd);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(buf50, 1);
-                AccumPaneWorldPos((char*)buf38, paneA);
+                AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf38), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 buf38[0] *= ((PaneW44*)paneB)->w44;
@@ -2633,7 +2633,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x20f, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x20f, (TPLPalette*)res);
         }
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x21c,
                       lbl_eu_8050888C + 0x22b, 0);
@@ -2644,7 +2644,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         void* res2 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
         if (res2 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, res2);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, (TPLPalette*)res2);
         }
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x257,
                       lbl_eu_8050888C + 0x22b, 0);
@@ -2661,7 +2661,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, (TPLPalette*)res);
         }
         u8 d4 = (u8)GetCollectedFlagByte(this->unk2D4);
         u8 d5 = (u8)GetCollectedFlagByte(this->unk2D5);
@@ -2691,7 +2691,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         void* res2 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                          ->GetResource(0x74696D67, s, 0);
         if (res2 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x2cd, res2);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x2cd, (TPLPalette*)res2);
         }
         // Second rank message set with the complementary thresholds.
         const char* s2 = 0;
@@ -2715,7 +2715,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         void* res3 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                          ->GetResource(0x74696D67, s2, 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x351, res3);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x351, (TPLPalette*)res3);
         }
         // Countdown pane: scale id into a screen coordinate, then format
         // id/30 and id/20 into the +0x365 label. Manual uint->double
@@ -2879,7 +2879,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, (nw4r::lyt::Layout*)mLayout);
         u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
-        ApplyFontToTxtPanes(rootPane, fontHandle);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
         // Row/column count labels from the two shared counters.
         u32 cnt = getPackedFont();
         if (cnt != 0) {
@@ -2936,7 +2936,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
                         ->GetResource(0x74696D67, (const char*)msg, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mLayout,
-                          lbl_eu_8050888C + 0x4fd, res);
+                          lbl_eu_8050888C + 0x4fd, (TPLPalette*)res);
             // Mirror the timg-resource u16 position header onto the pane. The
             // double deref of res+8 rides as the vf_3C extra arg (r6) and is
             // reused as the base of the two u16 reads (retail schedule).
@@ -2993,7 +2993,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
                          ->GetResource(0x74696D67, (const char*)msg2, 0);
         if (res2 != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mLayout,
-                          lbl_eu_8050888C + 0x20f, res2);
+                          lbl_eu_8050888C + 0x20f, (TPLPalette*)res2);
         }
 
         // Mirror the window-size pane's translate onto field_14F4.
@@ -3020,10 +3020,10 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         // setVec3 into a temp, then copy to the passed-by-address destination.
         nw4r::math::VEC3 s1;
         nw4r::math::VEC3 v1 = *reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-            (float*)&s1, lbl_eu_80668488, lbl_eu_8066848C, lbl_eu_8066845C));
+            (nw4r::math::VEC3*)((float*)&s1), lbl_eu_80668488, lbl_eu_8066848C, lbl_eu_8066845C));
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2 = *reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-            (float*)&s2, lbl_eu_80668490, lbl_eu_8066848C, lbl_eu_8066845C));
+            (nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668490, lbl_eu_8066848C, lbl_eu_8066845C));
         Cur_SetTwoPanes09(&this->mCur09, &v2, &v1);
 
         {

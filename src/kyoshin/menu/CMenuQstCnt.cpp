@@ -225,7 +225,7 @@ void CMenuQstCnt::Init() {
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuQstCntFont*>(fontObj)->getFontHandle();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // First three text fields are filled straight from the message table.
     setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], getPackedFont());
@@ -575,11 +575,11 @@ void QstCnt_RefreshRecords(QstData* self) {
             }
             u32 v = SearchThresholdIdx(i);
             u32 tbl = lbl_eu_80573D18[v];
-            u32 res = BdatGetU8Direct(tbl, &lbl_eu_80509AB4[0], i);
+            u32 res = BdatGetU8Direct((const void*)tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;
             u32 showFlag = (res & 0xff) == 1;
             if (kindClass == 3) showFlag = 0;
-            u8 x = (u8)BdatGetU8Direct((u32)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
+            u8 x = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
             u16 idx = self->field_2000;
             self->field_2000 = idx + 1;
             QstInfo src;

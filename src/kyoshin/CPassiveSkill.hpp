@@ -5,6 +5,7 @@
 #include <nw4r/lyt.h>
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Vtable for UI::CPassiveSkillCur (installed by __ct__UI_CPassiveSkillCur).
 extern "C" void* lbl_eu_80537A14[];
@@ -512,7 +513,6 @@ extern "C" CPSkillColorS10* setGXColorS10(CPSkillColorS10* color, s16 r,
                                             s16 g, s16 b, s16 a);
 
 // Bind a texture resource to a pane (retail symbol unmangled).
-extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* pane, u32 res);
 
 // Pane colour setter (retail symbol unmangled): applies the two colours to
 // the pane (CItemBoxLine.hpp convention; PaneMatSetTevColorsByName is the layout form).
@@ -584,7 +584,6 @@ extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self);
 // Pane-position helper (defined in code_80135FDC.cpp; retail symbol
 // unmangled): writes the ancestor-translate sum for a pane into output.
 // Used by CPassiveSkillLine_refreshGridPositions to position the skill-grid cell panes.
-extern "C" void AccumPaneWorldPosB(nw4r::math::VEC3* output, nw4r::lyt::Pane* node);
 
 // .sdata2 int->double magic constants (0x4330000000000000 unsigned and
 // 0x4330000080000000 signed-conversion variants) used by the s32/u32->f64

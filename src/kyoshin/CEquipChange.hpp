@@ -4,18 +4,17 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 /* CItemBoxInfo.hpp declares LookupItemTypeTable(void*) while CEquipItemBox.hpp
    (included above) already declares the real u32(u32) - MWCC rejects the
    overload. This unit never calls it, so rename the stale declaration away
    for this inclusion only. */
 #define LookupItemTypeTable LookupItemTypeTable_stale_voidp
 #define GetCollectedFlagByte GetCollectedFlagByte_stale_int_u8
-#define LayoutSetTextBoxText LayoutSetTextBoxText_stale_constcharp
 #define PaneMatGetS16Quad PaneMatGetS16Quad_stale_gxcolor
 #include "kyoshin/CItemBoxInfo.hpp"
 #undef LookupItemTypeTable
 #undef GetCollectedFlagByte
-#undef LayoutSetTextBoxText
 #undef PaneMatGetS16Quad
 
 namespace nw4r {
@@ -368,7 +367,6 @@ extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
 // linkage. Cur_BothSubPanesOn/CEquipItemBox gates take the object and return status.
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
 extern "C" u32 startItemBoxOpen(CItemBoxInfo* info);
@@ -463,7 +461,6 @@ extern "C" void Cur_SetActive(CBaseCur* cur);
 
 // Accumulate a pane's translate into output (CPartyState.hpp also declares
 // this C-ABI helper).
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Sub-object destructors referenced by ~CEquipChange. Defined in CCur.cpp /
 // CItemBoxInfo.cpp / CEquipItemBox.cpp.

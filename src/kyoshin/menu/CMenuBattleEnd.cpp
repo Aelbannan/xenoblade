@@ -131,7 +131,7 @@ void CMenuBattleEnd::Init() {
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     u32 fontResult = getPackedFont();
-    ApplyFontToTxtPanes(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     mLayout->UnbindAllAnimation();
 

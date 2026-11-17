@@ -8,6 +8,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 /* Cursor widget embedded at +0x34 (loads layout "curs22"). Its constructor
    and destructor are defined in the CCur unit (__ct__CCur22 / __dt__6CCur22Fv);
@@ -149,7 +150,6 @@ void playUISound(u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // nw4r anim-transform frame checker; retail symbol is unmangled (C linkage).
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // Layout/accessor release helpers (C++ mangled retail symbols, mirroring the
 // canonical declarations in code_80135FDC.hpp, which conflicts with
@@ -180,14 +180,10 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" char* CItemBlock_getPtr20E8();
 
 // BDAT string/value lookups (unmangled retail symbols).
-extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 
 // Layout text/pane binding helpers (unmangled retail symbols; the canonical
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
 // CEquipItemBox.hpp in this TU).
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void setPaneVisible(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).
@@ -244,7 +240,6 @@ extern "C" u32 CfT_FrameTimerGet();
 // Text/layout binding helper (code_80135FDC.cpp, retail unmangled; the
 // canonical header code_80135FDC.hpp conflicts with CEquipItemBox.hpp in
 // this TU).
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 
 // Character-data lookup (retail unmangled).
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
@@ -254,7 +249,6 @@ extern "C" void Cur_PlacePaneByIndex(CBaseCur*, const nw4r::math::VEC3*, u8);
 extern "C" void Cur_ShowPane(CBaseCur*, u8, u8);
 
 // Pane translate accumulation (code_80135FDC.cpp, retail unmangled).
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 
 // Pane size/position copy helpers (retail unmangled).
 extern "C" void TagCopyVec2f(float*, float*);

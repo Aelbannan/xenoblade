@@ -16,6 +16,7 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp" // CTitleAHelp (0x38 subobject at menu +0x80)
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CScn;
 
@@ -317,11 +318,9 @@ extern "C" void Cur_DrawLayout(CBaseCur* cursor, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 
 // Pane-position translation helper (retail-unmangled): resolve a position in
 // pane1's space into pane2/root space (cf. CSelShopWin/CSysWin usage).
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; see above).

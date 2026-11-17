@@ -22,6 +22,8 @@
 #include <revolution/GX.h>
 
 #include "monolib/scn/CScn.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CCol6AnimHostView;  // layout anim host view (defined below)
 
@@ -320,7 +322,6 @@ void CtrlRemote_SetSharedBit(u32 destination, u32 value);                      /
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
 int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
-u8 BdatGetU8ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
 s32 CItemBlock_getPtr20E8();                                                 // CItemBoxInfo.cpp
 void CItemBlock_setCount(s32);                                             // CItemBoxInfo.cpp
 void* CItem_findRecByFamily(u16);                                            // CItemBoxInfo.cpp
@@ -334,8 +335,6 @@ CCol6Fade* getFadeMenu();                                           // CMenuFade
 int isFadeActive(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
 void CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp
 u32 GetItemMulti_IsActiveFlag();                                                   // code_80135FDC.cpp (any block condition active)
-u16 BdatGetU16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp
-char* BdatTouchStringCell(const void*, const void*, int);                   // code_80135FDC.cpp
 void notifyBattleSystem__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // CfGameManager.cpp
 void notifyCameraManager__Q22cf13CfGameManagerFv();                         // CfGameManager.cpp
 int isCameraReady__Q22cf13CfGameManagerFv();                          // CfGameManager.cpp
@@ -348,18 +347,13 @@ void sysWinSetKindContent(void* syswin, const char* msg, int flag);          // 
 void sysWinApplyKind(void* syswin, int flag);                           // CSysWin.cpp
 void sysWinOpenPhase1(void* syswin);                                     // CSysWin.cpp
 void sysWinDispatchPhase(void* syswin);                                     // CSysWin.cpp (per-frame update)
-char* BdatGetPtrDirect(const void*, const void*, int);                   // code_80135FDC.cpp
 int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void Cur_Update(void* cursor);                                     // CCur.cpp
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();                                              // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
-u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_80135FDC.cpp
-void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
 u32 CUICfManager_getPackedFont9C();                                                    // CUICfManager.cpp (font value)
-s16 BdatGetS16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
-void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
 void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
 void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
 char* BuildItemNameStr(u16);                                            // CItemBoxInfo.cpp
@@ -367,8 +361,6 @@ void* Bdat_GetTable_AA34();                                               // bda
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
 void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
 void sysWinSetTwoTextValues(void* syswin, void* a, void* b);                  // CSysWin.cpp
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
-                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);          // code_80135FDC.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
 void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
 void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
@@ -401,7 +393,6 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 // symbol, so it is declared extern "C" below.
 void setLayoutTextBoxFont(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
 int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-extern "C" int AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float frame);
 void playUISound(u32 soundId);
 
 // Split1 .rodata string pool (arc paths / layout region names / format strings).

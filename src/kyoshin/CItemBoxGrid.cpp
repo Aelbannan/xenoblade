@@ -40,16 +40,12 @@
 // TU decls keep the retail names (identical decls need no guard).
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
-#define ScalePaneWorldPos ScalePaneWorldPos_csys_dup
-#define code80135FDC_setVec3 code80135FDC_setVec3_csys_dup
 #define sysWinApplyKind sysWinApplyKind_csys_dup
 #define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSysWinImports.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
-#undef ScalePaneWorldPos
-#undef code80135FDC_setVec3
 #undef sysWinApplyKind
 #undef sysWinSwitchKindPane
 #include "monolib/device/CDeviceFont.hpp"
@@ -57,6 +53,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <nw4r/lyt.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
@@ -66,16 +64,10 @@ void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* acc
 // Retail helper forms used by this TU (kept out of CItemBoxGrid.hpp: owners
 // that also include CItemBoxInfo.hpp declare them with other parameter types).
 extern "C" u32 BdatGetItemId(u32);
-extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void SplitU32ToS16s(short*, unsigned long);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* CUICfManager_getPackedFont9C(void);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 void playUISound(u32);
 
 // Forward declarations for external functions
@@ -469,7 +461,7 @@ extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int ownerIdx
                 char nameBuf[64];
                 const char* fmt = (cat == 2) ? &lbl_eu_8050566C[0x132] : &lbl_eu_8050566C[0x13d];
                 sprintf(nameBuf, fmt, ownerIdx);
-                if (!BdatGetU8Direct(ownerTbl, nameBuf, shortKind & 0xFFFF)) {
+                if (!BdatGetU8Direct((const void*)ownerTbl, (const char*)nameBuf, shortKind & 0xFFFF)) {
                     *(s16*)entry = -1;
                     count = *(u16*)(p + 0x2800);
                     *(u16*)(p + 0x2800) = count - 1;
@@ -501,7 +493,7 @@ entry_done:
         if (cat != 3 && cat != 9) {
             if (!entry[3]) {
                 u32 kind2 = (*(u32*)item) >> 20;
-                u32 check = BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_8050566C[0x142], kind2);
+                u32 check = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x142], kind2);
                 u32 result = check;
                 u32 oneIfNonZero = (result != 0) ? 1 : 0;
                 entry[3] = (u8)oneIfNonZero;
@@ -969,7 +961,7 @@ extern "C" u32 FormatCellName(void* self, u32 idx) {
         CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)obj);
         u32 count = inst2->vf08((CItemData*)obj);
         u8 b = (u8)count;
-        u32 r = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
+        u32 r = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
         sprintf((char*)(p + 0x2805), (const char*)&lbl_eu_8050566C[0x15d], (char*)(p + 0x2805), r);
     }
 
@@ -1005,10 +997,10 @@ char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
         u32 v = inst->vf80((CItemData*)item);
         int sel = 0x9d;
         if ((u16)v != 0) sel = 0x9e;
-        char* msg = BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158], sel);
+        char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158], sel);
         sprintf((char*)(p + 0x2825), (const char*)&lbl_eu_8050566C[0x14c], msg);
     } else if (((*(u32*)item >> 12) & 0xF) == 9 && ((((u8*)item)[7] & 3) == 3)) {
-        char* msg = BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158], 0x9c);
+        char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158], 0x9c);
         sprintf((char*)(p + 0x2825), (const char*)&lbl_eu_8050566C[0x14c], msg);
     } else if (p[0x2802] == 3) {
         u32 tbl = lbl_eu_806640D8;
@@ -1020,7 +1012,7 @@ char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
         char* name90 = (char*)inst3->vf90((CItemData*)item);
         char buf48[32];
         sprintf(buf48, (const char*)&lbl_eu_8050566C[0x162], name90);
-        u32 nameKey = BdatGetU8Direct(tbl, (const char*)&lbl_eu_8050566C[0x165], (u16)slotStatus);
+        u32 nameKey = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x165], (u16)slotStatus);
         char* desc = BdatGetPtrDirect((const void*)tbl, &lbl_eu_8050566C[0x16e], (u16)slotStatus);
         sprintf((char*)(p + 0x2825), (const char*)&lbl_eu_8050566C[0x14c], desc);
 
@@ -1069,7 +1061,7 @@ char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
                     u32 ti;
                     for (ti = 0; ti < 7; ti++) wordTbl[ti] = ((const u32*)lbl_eu_805055F0)[ti];
                     key = *(u32*)((char*)wordTbl + langIdx);
-                    nKey = BdatGetU8Direct(tbl, (const char*)key, (u16)slotStatus);
+                    nKey = BdatGetU8Direct((const void*)tbl, (const char*)key, (u16)slotStatus);
                     if (langFlag != 0) sprintf(buf28, (const char*)&lbl_eu_8050566C[0x1c1], (u8)nKey);
                     else sprintf(buf28, (const char*)&lbl_eu_8050566C[0x1da], (u8)nKey);
                 } else {
@@ -1620,7 +1612,7 @@ __declspec(noinline) s32 GetShopItemValue(void* self, u32 id, void* item) {
             slot = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
         } else {
             key = shortKind;
-            slot = (u8)BdatGetU8Direct((u32)lbl_eu_806640EC, &lbl_eu_8050566C[0x200], shortKind & 0xFFFF);
+            slot = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x200], shortKind & 0xFFFF);
         }
         u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], key & 0xFFFF);
         u32 scale[7];
@@ -1634,7 +1626,7 @@ __declspec(noinline) s32 GetShopItemValue(void* self, u32 id, void* item) {
         u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], shortKind & 0xFFFF);
         u32 count;
         if (item) count = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
-        else count = (u8)BdatGetU8Direct(tbl, &lbl_eu_8050566C[0x209], shortKind & 0xFFFF);
+        else count = (u8)BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x209], shortKind & 0xFFFF);
         float f = lbl_eu_80667F78;
         while (count-- != 0) f += lbl_eu_80667F7C;
         result = (u32)((float)lookup * f);
@@ -1843,9 +1835,9 @@ void CItemBoxGridFull::SortByKindNameD() {
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 k2 = BdatGetItemId(w2 >> 20);
-            u32 c1 = BdatGetU8Direct(lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
-            u32 c2 = BdatGetU8Direct(lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
-            if ((c1 & 0xFF) <= (c2 & 0xFF)) continue;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
+            if ((u32)c1 <= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2017,10 +2009,10 @@ void GroupBySlotStat(CItemBoxGridFull* self, u32 target) {
             void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
             u16 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
             u16 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
-            u32 m1 = (u8)c1 == target;
-            u32 m2 = (u8)c2 == target;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
+            u32 m1 = c1 == target;
+            u32 m2 = c2 == target;
             if (m1 < m2) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2048,10 +2040,10 @@ void GroupBySlotAlt(CItemBoxGridFull* self, u32 target) {
             void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
             u16 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
             u16 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
-            u32 m1 = (u8)c1 == target;
-            u32 m2 = (u8)c2 == target;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
+            u32 m1 = c1 == target;
+            u32 m2 = c2 == target;
             if (m1 < m2) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2215,12 +2207,12 @@ void SortGridByKindName(CItemBoxGridFull* self) {
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 t1 = (u32)(size_t)lbl_eu_806640F4;
             u32 k1 = BdatGetItemId(w1 >> 20);
-            u32 c1 = BdatGetU8Direct(t1, (const char*)&lbl_eu_8050566C[0x227], k1 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)t1, (const char*)&lbl_eu_8050566C[0x227], k1 & 0xFFFF);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 t2 = (u32)(size_t)lbl_eu_806640F4;
             u32 k2 = BdatGetItemId(w2 >> 20);
-            u32 c2 = BdatGetU8Direct(t2, (const char*)&lbl_eu_8050566C[0x227], k2 & 0xFFFF);
-            if ((c1 & 0xFF) >= (c2 & 0xFF)) continue;
+            u8 c2 = BdatGetU8Direct((const void*)t2, (const char*)&lbl_eu_8050566C[0x227], k2 & 0xFFFF);
+            if ((u32)c1 >= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2247,14 +2239,14 @@ void SortGridByKindNameAlt(CItemBoxGridFull* self) {
             // Owner-table row is selected by the raw item word used as a
             // byte offset into the table data.
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 c1 = BdatGetU8Direct(*(u32*)((u8*)lbl_eu_806640F4 + w1),
+            u8 c1 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w1)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 c2 = BdatGetU8Direct(*(u32*)((u8*)lbl_eu_806640F4 + w2),
+            u8 c2 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w2)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    (u16)BdatGetItemId(w2 >> 20));
-            if ((u8)c1 >= (u8)c2) continue;
+            if (c1 >= c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2283,9 +2275,9 @@ void CItemBoxGridFull::SortByCapKeyAsc() {
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 k2 = BdatGetItemId(w2 >> 20);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
-            if ((c1 & 0xFF) >= (c2 & 0xFF)) continue;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
+            if ((u32)c1 >= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2313,9 +2305,9 @@ void CItemBoxGridFull::SortByCapKey2Asc() {
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 k2 = BdatGetItemId(w2 >> 20);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
-            if ((c1 & 0xFF) >= (c2 & 0xFF)) continue;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
+            if ((u32)c1 >= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2349,12 +2341,12 @@ void GroupByCapKey(CItemBoxGridFull* self, u32 target) {
             // retail keeps the first lookup result live across the second call.
             u32 k1 = BdatGetItemId(*(u32*)obj1 >> 20);
             u32 k2 = BdatGetItemId(*(u32*)obj2 >> 20);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640F8, strBase + 0x248, k1 & 0xFFFF);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640F8, strBase + 0x248, k2 & 0xFFFF);
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k2 & 0xFFFF);
             // Swap only when entry j+1 matches the target and entry j doesn't:
             // this drives all target-matching entries to the front.
-            u32 m2 = ((u8)c2 == target);
-            u32 m1 = ((u8)c1 == target);
+            u32 m2 = (c2 == target);
+            u32 m1 = (c1 == target);
             if (m1 < m2) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2385,9 +2377,9 @@ void CItemBoxGridFull::SortByCapKeyDesc() {
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 k2 = BdatGetItemId(w2 >> 20);
-            u32 c1 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
-            u32 c2 = BdatGetU8Direct(lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
-            if ((c1 & 0xFF) <= (c2 & 0xFF)) continue;
+            u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
+            u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
+            if ((u32)c1 <= (u32)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2445,11 +2437,11 @@ void SortGridByMsgKeyDesc(CItemBoxGridFull* self) {
             void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             tbl = lbl_eu_80664110;
-            u32 c1 = BdatGetU8Direct(tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w1 >> 20));
+            u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 tbl2 = lbl_eu_80664110;
-            u32 c2 = BdatGetU8Direct(tbl2, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w2 >> 20));
-            if ((u8)c1 <= (u8)c2) continue;
+            u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w2 >> 20));
+            if (c1 <= c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2476,12 +2468,12 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target) {
             void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 tbl = lbl_eu_80664110;
-            u32 c1 = BdatGetU8Direct(tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w1 >> 20));
+            u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u32 tbl2 = lbl_eu_80664110;
-            u32 c2 = BdatGetU8Direct(tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w2 >> 20));
-            u32 m1 = (u8)c1 == target;
-            u32 m2 = (u8)c2 == target;
+            u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w2 >> 20));
+            u32 m1 = c1 == target;
+            u32 m2 = c2 == target;
             if (m1 < m2) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2505,7 +2497,7 @@ float GetItemValueFloat(void* self, void* entry) {
     u32 kind = BdatGetItemId(word >> 20);
     u32 idx = BdatGetU16Direct((void*)tbl, (const char*)&lbl_eu_8050566C[0x25a], (u16)kind);
     // Bit 2 of the kind flag entry gates a party-bonus multiplier.
-    if ((BdatGetU8Direct(tbl, (const char*)&lbl_eu_8050566C[0x261], (u16)kind) & 4)) {
+    if ((BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x261], (u16)kind) & 4)) {
         void* charData = CtrlObjectParam_GetCharEntry(1);
         // Reading the product back through a signed union member blocks
         // MWCC's non-negative range fold, so the conversion uses the signed
@@ -2543,7 +2535,7 @@ extern "C" __declspec(noinline) u32 FindKindPoolIdx(void* self, void* entry) {
     for (i = 1; i <= 10; i++) {
         char buf[40];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x132], (u8)i);
-        if ((u8)BdatGetU8Direct(obj, buf, (u16)kind)) return i;
+        if ((u8)BdatGetU8Direct((const void*)obj, (const char*)buf, (u16)kind)) return i;
     }
     return 0;
 }
@@ -3816,7 +3808,7 @@ void func_801CCAF0(void* self) {
                 u32 teachState = getPresentRankB(p + 0x468);
                 if ((u8)teachState == 1) {
                     u32 table = lbl_eu_80664104;
-                    if ((BdatGetU8Direct(table, (const char*)&lbl_eu_8050566C[0x212],
+                    if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 7) {
                         incrementEventCounter__FUl(0x87);
                     }
@@ -3826,7 +3818,7 @@ void func_801CCAF0(void* self) {
                     if ((*(u32*)item >> 20) == 0x775) incrementEventCounter__FUl(0x8a);
                 } else if ((u8)teachState == 5) {
                     u32 table = lbl_eu_80664104;
-                    if ((BdatGetU8Direct(table, (const char*)&lbl_eu_8050566C[0x212],
+                    if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 2) {
                         incrementEventCounter__FUl(0x8b);
                     }
@@ -3835,7 +3827,7 @@ void func_801CCAF0(void* self) {
                     if ((u8)teachState == 1) incrementEventCounter__FUl(0x89);
                 } else if ((u8)teachType == 6) {
                     u32 table = lbl_eu_80664104;
-                    if ((BdatGetU8Direct(table, (const char*)&lbl_eu_8050566C[0x212],
+                    if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 5) {
                         incrementEventCounter__FUl(0x8d);
                     }
@@ -3896,7 +3888,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             }
             if (!(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF)) return;
             *(u32*)(p + 0x58) = 0x12;
-            u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
+            u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
             sysWinSwitchKindPane(p + 0x4e8, 0);
             sysWinSetKindContent(p + 0x4e8, msg, 0);
             sysWinApplyKind(p + 0x4e8, 1);
@@ -3963,7 +3955,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             NumSel_FormatPicName_B064(p + 0x3e4, (s8)p[0x529] * GetCellSellPrice(sub, entry));
             if (((int (*)(CItemBoxGridFull*, u16))GetCellFlag1)(sub, entry)) {
                 *(u32*)(p + 0x58) = 0x12;
-                u32 msg2 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
+                u32 msg2 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
                 sysWinSwitchKindPane(p + 0x4e8, 0);
                 sysWinSetKindContent(p + 0x4e8, msg2, 0);
                 sysWinApplyKind(p + 0x4e8, 1);
@@ -3973,7 +3965,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                 void* item2 = GetCellItemPtr((CItemBoxGridFull*)sub, (u16)entry);
                 if (((*(u32*)item2 >> 16) & 0xF) == 2) {
                     *(u32*)(p + 0x58) = 0x12;
-                    u32 msg3 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
+                    u32 msg3 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
                     sysWinSwitchKindPane(p + 0x4e8, 0);
                     sysWinSetKindContent(p + 0x4e8, msg3, 0);
                     sysWinApplyKind(p + 0x4e8, 1);
@@ -3981,9 +3973,9 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                     Cur_SetVisible(p + 0x70, 0);
                 } else {
                     *(u32*)(p + 0x58) = 0x15;
-                    u32 msg4 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
-                    u32 msg5 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
-                    u32 msg6 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
+                    u32 msg4 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
+                    u32 msg5 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
+                    u32 msg6 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
                     sysWinSetKindContent(p + 0x4ac, msg4, 0);
                     sysWinSetTwoTextValues(p + 0x4ac, msg5, msg6);
                     sysWinApplyKind(p + 0x4ac, 0);
@@ -3997,9 +3989,9 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                     u32 k12 = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
                     if (IsItemTeachable(p, k12 & 0xFFFF)) {
                         *(u32*)(p + 0x58) = 0x15;
-                        u32 msg7 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
-                        u32 msg8 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
-                        u32 msg9 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
+                        u32 msg7 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
+                        u32 msg8 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
+                        u32 msg9 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
                         sysWinSetKindContent(p + 0x4ac, msg7, 0);
                         sysWinSetTwoTextValues(p + 0x4ac, msg8, msg9);
                         sysWinApplyKind(p + 0x4ac, 0);
@@ -4286,7 +4278,7 @@ extern "C" __declspec(noinline) void FinishOpenAnim(CItemBoxGrid* self) {
         if (p[0x542]) {
             ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
             {
-                u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
+                u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
                 sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
                 sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
                 sysWinApplyKind((void*)(p + 0x4e8), 1);
@@ -4339,7 +4331,7 @@ extern "C" __declspec(noinline) void FinishNumSelect(CItemBoxGrid* self) {
             p[0x541] = 0;
             ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
             {
-                u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
+                u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
                 sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
                 sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
                 sysWinApplyKind((void*)(p + 0x4e8), 1);
@@ -4388,11 +4380,11 @@ __declspec(noinline) void DispatchSubmenuConfirm(void* self) { // noinline: disp
         u32 kindShort = BdatGetItemId(kind & 0xFFFF);
 
         u32 tbl = lbl_eu_80664110;
-        u32 catVal = BdatGetU8Direct(tbl, &lbl_eu_8050566C[0x109], kindShort & 0xFFFF);
-        u32 nameIdx = BdatGetU8Direct(tbl, &lbl_eu_8050566C[0x115], kindShort & 0xFFFF);
-        u32 paramVal = BdatGetU8Direct(tbl, &lbl_eu_8050566C[0x11d], kindShort & 0xFFFF);
+        u32 catVal = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x109], kindShort & 0xFFFF);
+        u32 nameIdx = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x115], kindShort & 0xFFFF);
+        u32 paramVal = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x11d], kindShort & 0xFFFF);
 
-        tbl = BdatGetU8ByTableKey((void*)&lbl_eu_8050566C[0x126], &lbl_eu_8050566C[0x12e], paramVal & 0xFF);
+        tbl = BdatGetU8ByTableKey((const char*)&lbl_eu_8050566C[0x126], &lbl_eu_8050566C[0x12e], paramVal & 0xFF);
         char* msg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x126], &lbl_eu_8050566C[0x158], paramVal & 0xFF);
         char* subMsg = 0;   // optional second dialog line
         u32 showDetail = 0;
@@ -4613,7 +4605,7 @@ void CItemBoxGridFull::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
             msgId = 0;
             CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
             u16 st = inst->vf54((CItemData*)obj);
-            u8 c = (u8)BdatGetU8Direct(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x331], (u16)st);
+            u8 c = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x331], (u16)st);
             switch (c) {
             case 4: msgId = (u32)MakeTplNameSysFile(0x144); break;
             case 5: msgId = (u32)MakeTplNameSysFile(0x145); break;
@@ -4709,7 +4701,7 @@ done:
     if (msgId) {
         char buf[32];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x383], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, buf, (void*)msgId);
+        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
     }
 }
 
@@ -4816,7 +4808,7 @@ done_item:
     if (msgId) {
         char buf[32];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x396], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, buf, (void*)msgId);
+        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
     }
 }
 
@@ -4849,7 +4841,7 @@ extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx) {
     if ((u8)sel == 3 || (u8)sel == 9) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)it);
         u32 cnt = (u32)inst->vf08((CItemData*)it);
-        char* msg = BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158],
+        char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158],
                                   (u32)(0x1e - ((cnt & 0xFF) - 1)));
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
         PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (void*)&lbl_eu_806644D8, (void*)&lbl_eu_806644E0);
@@ -4902,7 +4894,7 @@ extern "C" void ShowCellCount(void* self, u32 kind, void* flag2, void* flag3, u3
 
     if (pane) {
         // pane rides in r5 straight into the call (retail never reloads r5)
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (void*)buf, (void*)pane);
+        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)pane));
     }
 }
 
@@ -4944,7 +4936,7 @@ extern "C" void SetTabHeader(void* self, int cat, int idx) {
     }
     if (result) {
         sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, tmp, (void*)result);
+        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)tmp, (TPLPalette*)((void*)result));
     }
 }
 
@@ -5279,7 +5271,7 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
     s8 idx = (s8)p[0x525];
     if (idx == -2) {
         void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
-        AccumPaneWorldPos(&posT2, (void*)t1);
+        AccumPaneWorldPos(&posT2, (nw4r::lyt::Pane*)((void*)t1));
         void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
@@ -5291,7 +5283,7 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x507], (s8)p[0x6f] + 1);
         void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
-        AccumPaneWorldPos(&posT1, (void*)t1);
+        AccumPaneWorldPos(&posT1, (nw4r::lyt::Pane*)((void*)t1));
         void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
@@ -5303,7 +5295,7 @@ extern "C" __declspec(noinline) void UpdateCursors(void* self) {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x396], (s8)p[0x524] + idx * 10 + 1);
         void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
-        AccumPaneWorldPos(&posDef, (void*)t1);
+        AccumPaneWorldPos(&posDef, (nw4r::lyt::Pane*)((void*)t1));
         void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
@@ -5489,14 +5481,14 @@ u32 IsItemTeachable(void* self, u32 kind) {
     u32 bdat = lbl_eu_80664110;
     BdatGetItemType(kind);
     u32 shortKind = BdatGetItemId(kind);
-    u32 flag = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x109], (u16)shortKind);
-    u32 v;
-    u32 charId = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x115], (u16)shortKind);
-    u32 unk = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x11d], (u16)shortKind);
-    v = BdatGetU8ByTableKey((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk & 0xFF);
-    void* charData = (void*)CtrlObjectParam_GetCharEntry(charId & 0xFF);
-    u8* ptr = (u8*)charData + (CtrlObjectParam_GetCurrentRowKey() & 0xFF) * 0x49 + ((v & 0xFF) << 1);
-    switch (flag & 0xFF) {
+    u8 flag = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x109], (u16)shortKind);
+    u8 v;
+    u8 charId = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x115], (u16)shortKind);
+    u8 unk = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x11d], (u16)shortKind);
+    v = BdatGetU8ByTableKey((const char*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk);
+    void* charData = (void*)CtrlObjectParam_GetCharEntry(charId);
+    u8* ptr = (u8*)charData + (CtrlObjectParam_GetCurrentRowKey() & 0xFF) * 0x49 + (v << 1);
+    switch (flag) {
     case 1:
         if (ptr[0xe8]) return 0;
         break;
@@ -5571,7 +5563,7 @@ void RegisterTeachableItems(void* self) {
             tp = CtrlRemote_TouchBitByArg((u16)id + 0x220);
             if (tp >= 0xFE || tp == 0 || tp == 0xC8) continue;
             tbl = (void*)XB_TABLES[SearchThresholdIdx((u16)id)];
-            if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0], (u16)id)) {
+            if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0], (u16)id)) {
                 // Retail pushes the masked lookup value, not the raw item id:
                 // each `clrlwi. r4, r3, 16` result feeds PushUniqueItemId's r4.
                 #define XB_PUSH(tblArg, kOff) \
@@ -5581,48 +5573,48 @@ void RegisterTeachableItems(void* self) {
                 } while (0)
                 if (tp == 1) {
                     // Both lookups are issued before either result is tested.
-                    u8 c1 = BdatGetU8Direct((u32)tbl, &XB_K[0xd], (u16)id);
-                    u8 c2 = BdatGetU8Direct((u32)tbl, &XB_K[0], (u16)id);
+                    u8 c1 = BdatGetU8Direct((const void*)tbl, &XB_K[0xd], (u16)id);
+                    u8 c2 = BdatGetU8Direct((const void*)tbl, &XB_K[0], (u16)id);
                     if (c1 == 2) XB_PUSH(tbl, 0x1a);
                     if (c2 == 2) XB_PUSH(tbl, 0x26);
                 } else if (tp == 0x6f) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
                 } else if (tp == 0x79) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
                 } else if (tp == 0x83) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
                 } else if (tp == 0x70) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x7d], (u16)id) == 2) XB_PUSH(tbl, 0x8a);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x7d], (u16)id) == 2) XB_PUSH(tbl, 0x8a);
                 } else if (tp == 0x7a) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x96], (u16)id) == 2) XB_PUSH(tbl, 0xa3);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x96], (u16)id) == 2) XB_PUSH(tbl, 0xa3);
                 } else if (tp == 0x84) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0xaf], (u16)id) == 2) XB_PUSH(tbl, 0xbc);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0xaf], (u16)id) == 2) XB_PUSH(tbl, 0xbc);
                 }
-            } else if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0xc8], (u16)id)) {
+            } else if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0xc8], (u16)id)) {
                 // Teach-key dispatch (subset of types).
                 if (tp == 1) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
                 } else if (tp == 0x6f) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
                 } else if (tp == 0x79) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
                 } else if (tp == 0x83) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
                 }
             } else {
                 // Fallback: no base name and no teach key - check ability slots
                 u32 obj = (u32)UIWin_BuildFlagBuf((u16)id);
                 if (!UIWin_QueryItemAvail((CItemQuery*)obj, 0, 0)) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0xd], (u16)id) == 2) XB_PUSH(tbl, 0x1a);
                 }
                 if (!UIWin_QueryItemAvail((CItemQuery*)obj, 0, 1)) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x32], (u16)id) == 2) XB_PUSH(tbl, 0x3f);
                 }
                 if (!UIWin_QueryItemAvail((CItemQuery*)obj, 0, 2)) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x4b], (u16)id) == 2) XB_PUSH(tbl, 0x58);
                 }
                 if (!UIWin_QueryItemAvail((CItemQuery*)obj, 0, 3)) {
-                    if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
+                    if ((u8)BdatGetU8Direct((const void*)tbl, &XB_K[0x64], (u16)id) == 2) XB_PUSH(tbl, 0x71);
                 }
             }
         }
@@ -5653,11 +5645,11 @@ void PushGatedTypeIds(void* self) {
         if (flag1 & 0xFFFF) {
             u8 val = (u8)CtrlRemote_TouchBitByArg((flag1 & 0xFFFF) + 0x220);
             if (val >= 0xFE) continue;
-            if (val > (u8)BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xea], (u32)i)) continue;
+            if (val > (u8)BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0xea], (u32)i)) continue;
         } else {
-            u32 hasVal = BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xf3], (u32)i);
+            u32 hasVal = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0xf3], (u32)i);
             if (hasVal & 0xFF) {
-                if ((u8)BdatGetU8Direct((u32)bdat, (const char*)&lbl_eu_8050566C[0xfa], (u32)i)
+                if ((u8)BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0xfa], (u32)i)
                     <= (u8)CtrlRemote_TouchBitByArg((hasVal & 0xFF) + 0x7fc)) continue;
             }
         }
@@ -5678,10 +5670,10 @@ void RegisterLearnedSkills(void* self) {
     s32 count = (s32)Bdat_GetMaxRow_B1EC((void*)bdat);
     u8 i;
     for (i = 1; i <= count; i++) {
-        u32 flag = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x109], (u32)i);
-        u32 charId = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x115], (u32)i);
-        u32 unk = BdatGetU8Direct(bdat, (const char*)&lbl_eu_8050566C[0x11d], (u32)i);
-        u32 sub = BdatGetU8ByTableKey((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e],
+        u32 flag = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x109], (u32)i);
+        u32 charId = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x115], (u32)i);
+        u32 unk = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x11d], (u32)i);
+        u32 sub = BdatGetU8ByTableKey((const char*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e],
                             (u8)unk);
         // Reuse the charId slot for the character-data pointer (retail
         // recycles its register); then add the party stride and sub offset.
@@ -5740,7 +5732,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     nw4r::lyt::Pane* paneHost = layout->GetRootPane();
     void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
     void* fontData = ((IDeviceFontInfo*)font)->getFont();
-    ApplyFontToTxtPanes(paneHost, (u32)fontData);
+    ApplyFontToTxtPanes(paneHost, (const nw4r::ut::Font*)((u32)fontData));
     u32 screenW = (u32)getPackedFont__Fv();
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x53e], screenW);
@@ -5775,7 +5767,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     void* sysWin = CUICfManager_getArcResourceAccessor();
     void* texRes = ((nw4r::lyt::ArcResourceAccessor*)sysWin)->GetResource(0x74696D67, (const char*)msgId, 0);
     if (texRes != NULL) {
-        PaneSetTexPaletteByName(layout, (void*)&lbl_eu_8050566C[0x6fd], texRes);
+        PaneSetTexPaletteByName(layout, (const char*)&lbl_eu_8050566C[0x6fd], (TPLPalette*)texRes);
         void* pane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6fd], 1);
         if (pane2 != NULL) {
             CibgTexMat* mat = *(CibgTexMat**)((u8*)texRes + 8);
@@ -5827,9 +5819,9 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
     CibgVec3 vecMin;
-    code80135FDC_setVec3((float*)&vecMin, lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
+    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMin), lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
     CibgVec3 vecMax;
-    code80135FDC_setVec3((float*)&vecMax, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
+    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMax), lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
     Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
     {
         CCur18 cur18Buf(CUICfManager_getArcResourceAccessor());

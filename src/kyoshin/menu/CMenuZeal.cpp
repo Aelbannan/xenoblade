@@ -191,7 +191,7 @@ extern "C" int GetZealResult(CMenuZeal* self) {
                                   : &lbl_eu_80503454[0x1e2];
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
         if (tex != 0) {
-            PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], tex);
+            PaneSetTexPaletteByName(self->mLayout1, &lbl_eu_80503454[0x1fd], (TPLPalette*)tex);
         }
 
         self->mField_94 = 0.0f;

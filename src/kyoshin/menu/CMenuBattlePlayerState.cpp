@@ -33,6 +33,7 @@
 #include <revolution/GX.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch
@@ -213,7 +214,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
                 u32 fontHandle = CUICfManager_getPackedFont9C();
-                ApplyFontToTxtPanes(rootPane, fontHandle);
+                ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
             }
             {
                 u32 fontAccessor = CUICfManager_getPackedFontD8();
@@ -370,7 +371,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 nw4r::lyt::Pane* subRoot = slot.unk78->GetRootPane();
                 u32 fontHandle = CUICfManager_getPackedFont9C();
-                ApplyFontToTxtPanes(subRoot, fontHandle);
+                ApplyFontToTxtPanes(subRoot, (const nw4r::ut::Font*)fontHandle);
             }
 
             slot.unk78->SetAnimationEnable(slot.unk7C, true);
@@ -1046,7 +1047,6 @@ extern "C" void __destroy_arr(void* ptr, void* dtor, u32 size, u32 count);
 // UIBattleReleaseAll semantics - pane/material helpers shared by menu TUs).
 extern "C" void* UIBattleGetTableB8();
 extern "C" void UIBattleReleaseAll();
-extern "C" void PaneSetTexPalette(void* pane, u32 value);
 extern "C" void BtlDmg_QueueEnqueue(void* obj, u32 a, u32 b, u32 c);
 extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
 
@@ -1140,10 +1140,10 @@ extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
             break;
         }
         if (sel != 0) {
-            PaneSetTexPalette(slot->unk5C, sel);
-            PaneSetTexPalette(slot->unk60, sel);
-            PaneSetTexPalette(slot->unk64, sel);
-            PaneSetTexPalette(slot->unk68, sel);
+            PaneSetTexPalette(slot->unk5C, (TPLPalette*)sel);
+            PaneSetTexPalette(slot->unk60, (TPLPalette*)sel);
+            PaneSetTexPalette(slot->unk64, (TPLPalette*)sel);
+            PaneSetTexPalette(slot->unk68, (TPLPalette*)sel);
         } else {
             UIBattleReleaseAll();
         }
@@ -1350,7 +1350,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                        PaneSetTexPalette(starPane, bound);
+                        PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
                         slot->unk268 = static_cast<u32>(static_cast<u8>(cursor));
                         break;
                     }
@@ -1400,7 +1400,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                        PaneSetTexPalette(starPane, bound);
+                        PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
                         slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                         return;
@@ -1419,7 +1419,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                            PaneSetTexPalette(starPane, bound);
+                            PaneSetTexPalette((nw4r::lyt::Pane*)starPane, (TPLPalette*)bound);
                             slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                             return;
@@ -1463,8 +1463,8 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
 
     if (slot->unk25C & 0x2) {
         slot->unk25C &= ~0x2u;
-        LayoutSetTextBoxInt(slot->unk4C, slot->unk210);
-        LayoutSetTextBoxInt(slot->unk50, slot->unk214);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk4C, slot->unk210);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
             PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);
@@ -1587,8 +1587,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
 
     if (slot->unk25C & 2) {
         slot->unk25C &= ~2u;
-        LayoutSetTextBoxInt(slot->unk4C, slot->unk210);
-        LayoutSetTextBoxInt(slot->unk50, slot->unk214);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk4C, slot->unk210);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
             PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);

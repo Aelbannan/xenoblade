@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -29,9 +31,6 @@ struct CNumSelectFull {
 extern char lbl_eu_80506C14[];
 
 // Name/label helpers from code_80135FDC (retail unmangled C symbols).
-extern "C" char* BdatTouchStringCell(char*, char*, u32);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, int);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, int);
 
 /* Font-info objects from CDeviceFont::getFontInfo dispatch through
  * IDeviceFontInfo::getFont (+0x24); see monolib/device/CDeviceFont.hpp. */
@@ -67,13 +66,10 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 
 // Retail-unmangled C-ABI imports used by OnFileEvent.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" char* CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
-extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // u32->float cast-magic constant shared with the retail sdata2 pool.
@@ -88,7 +84,6 @@ void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain AnimRewindFrame), so keep C linkage.
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain setPaneVisible), so keep C linkage.
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 void playUISound(u32);

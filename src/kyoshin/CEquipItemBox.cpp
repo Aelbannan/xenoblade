@@ -15,14 +15,14 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void playUISound(u32);
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
 // KEEP (blockers-A 2026-10-23): BdatGetU16Direct is declared int here
 // (retail getEIBProgress defers narrowing, no clrlwi after the call); the
 // canonical u16 form lives in kyoshin/code_80135FDC_Bdat.hpp.
-extern "C" int BdatGetU16Direct(const void*, const void*, int);
 
 // C-linkage imports live in kyoshin/CEquipItemBox.hpp.
 // CItem_kindPtr stays inline: CEquipChange.hpp / CItemBoxInfo.hpp declare it
@@ -35,7 +35,6 @@ extern "C" void* CItem_kindPtr(u8, s16);
 // CItem_kindPtr (the sibling headers disagree on the signature).
 extern "C" void renderItemBoxByKind(CItemBoxInfo*, u16, void*, u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Pane-visibility helpers (C-ABI retail symbols; declared in CEquipItemBox.hpp
 // with extern "C" so MWCC emits the plain names).
 // Float constants in .sdata2, referenced via sda21 reloc.
@@ -46,7 +45,6 @@ extern const float lbl_eu_80668B04;
 int sprintf(char*, const char*, ...);
 // SysWin name probe + pane-position reader (updateEIBCursorPos tail).
 extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
-extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 
 extern "C" __declspec(noinline) u8 getEIBOpenFlag(CEquipItemBox* self) { return self->unk_40; }
 
@@ -711,8 +709,8 @@ extern "C" __declspec(noinline) void sortEIBByNm58(CEquipItemGrid* grid, int par
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
             u32 eqB = (u32)((u8)nameB == param);
             if (eqA < eqB) {
@@ -745,8 +743,8 @@ extern "C" __declspec(noinline) void sortEIBByNm00(CEquipItemGrid* grid, int par
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
             u32 eqB = (u32)((u8)nameB == param);
             if (eqA < eqB) {
@@ -951,9 +949,9 @@ extern "C" __declspec(noinline) void sortEIBByNameKey(CEquipItemGrid* grid) {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
-            u32 nameA = BdatGetU8Direct(gA, base + 0x61, BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x61, BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
-            u32 nameB = BdatGetU8Direct(gB, base + 0x61, BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x61, BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -985,9 +983,9 @@ extern "C" __declspec(noinline) void sortEIBByNameKey69(CEquipItemGrid* grid) {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
-            u32 nameA = BdatGetU8Direct(gA, base + 0x69, BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x69, BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
-            u32 nameB = BdatGetU8Direct(gB, base + 0x69, BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x69, BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1017,8 +1015,8 @@ extern "C" __declspec(noinline) void sortEIBByNm72(CEquipItemGrid* grid) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindB);
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1048,8 +1046,8 @@ extern "C" __declspec(noinline) void sortEIBByNm7A(CEquipItemGrid* grid) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindB);
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1081,8 +1079,8 @@ extern "C" __declspec(noinline) void sortEIBByNm17(CEquipItemGrid* grid, int key
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindB);
             u32 eqA = (u32)((u8)nameA == key);
             u32 eqB = (u32)((u8)nameB == key);
             if (eqA < eqB) {
@@ -1114,8 +1112,8 @@ extern "C" __declspec(noinline) void sortEIBByNm82(CEquipItemGrid* grid) {
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
-            u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
-            u32 nameB = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB);
+            u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
+            u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB);
             if ((u8)nameA > (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1174,17 +1172,15 @@ extern "C" double getEIBProgress(CEquipItemBox* self, CItemInstance* item) {
     u32 word = item->word;
     u32 g = lbl_eu_806640F4;
     u16 kind = BdatGetItemId(word >> 20);
-    // Int-typed variable + (u16) masks at USE sites only (retail defers
-    // narrowing; the TU-local int declaration avoids the store mask).
-    int result = BdatGetU16Direct((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
-    u32 v2 = BdatGetU8Direct(g, &lbl_eu_8050EFDC[0x92], kind);
+    u16 result = BdatGetU16Direct((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
+    u8 v2 = BdatGetU8Direct((const void*)g, &lbl_eu_8050EFDC[0x92], kind);
     if (v2 & 4) {
         void* obj = CtrlObjectParam_GetCharEntry(1);
         u16 n = (u16)CtrlObjectParam_GetArtsDataWord(obj);
-        result = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)result * (u32)n));
-        if ((u16)result >= 0x3E7) result = 0x3E7;
+        result = lbl_eu_80668B2C * (f32)(int)(result * n);
+        if (result >= 0x3E7) result = 0x3E7;
     }
-    return (f32)(u16)result;
+    return (f32)result;
 }
 
 // Scan the item instance list: return 1 when any entry's flag word bit 0 is
@@ -1211,7 +1207,7 @@ extern "C" __declspec(noinline) u8 getEIBNameKey(CEquipItemBox* self, CItemInsta
     for (u8 i = 1; i <= 10; i++) {
         char buf[0x28];
         sprintf(buf, &lbl_eu_8050EFDC[0x7], i);
-        if ((u8)BdatGetU8Direct(v, buf, kind)) {
+        if ((u8)BdatGetU8Direct((const void*)v, (const char*)buf, kind)) {
             return i;
         }
     }
@@ -1360,12 +1356,12 @@ extern "C" void setupEIBPageCur(CEIBCur* self) {
 
     float vec1[3];
     float vec2[3];
-    code80135FDC_setVec3(vec1, lbl_eu_80668B30, lbl_eu_80668B34, lbl_eu_80668B04);
+    code80135FDC_setVec3((nw4r::math::VEC3*)vec1, lbl_eu_80668B30, lbl_eu_80668B34, lbl_eu_80668B04);
     nw4r::lyt::Pane* pane1 =
         ((nw4r::lyt::Layout*)self->mpLayout)->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x11c], true);
     copyVEC3(&((CEquipItemBoxPaneView*)pane1)->mTranslate[0], vec1);
 
-    code80135FDC_setVec3(vec2, lbl_eu_80668B38, lbl_eu_80668B34, lbl_eu_80668B04);
+    code80135FDC_setVec3((nw4r::math::VEC3*)vec2, lbl_eu_80668B38, lbl_eu_80668B34, lbl_eu_80668B04);
     nw4r::lyt::Pane* pane2 =
         ((nw4r::lyt::Layout*)self->mpLayout)->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x128], true);
     copyVEC3(&((CEquipItemBoxPaneView*)pane2)->mTranslate[0], vec2);
@@ -2197,7 +2193,7 @@ extern "C" __declspec(noinline) int isEIBSelectBlocked(CEquipItemBox* self) {
     if (item == 0) return 1;
     u32 w = *(u32*)item;
     if (w == 0) return 1;
-    u8 v = (u8)BdatGetU8Direct(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20],
+    u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20],
                              w >> 20);
     if ((((u32)(s8)(v - 1)) >> 5) == 0) return 1;
     if (CtrlRemote_TouchBitByArg(0x3508) != 0) return 1;
@@ -2405,7 +2401,7 @@ extern "C" __declspec(noinline) void bindEIBCellTexture(CEquipItemBox* self, u16
     if (itemPtr != 0 && ((((CItemInstance*)itemPtr)->word >> 12) & 0xF) == 3) {
         u32 id = (u32)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)itemPtr))
                      ->vf08((CItemInstance*)itemPtr);
-        switch ((u8)BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0x1a7], (u16)id)) {
+        switch ((u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x1a7], (u16)id)) {
         case 4: res = MakeTplNameSysFile(0x144); break;
         case 5: res = MakeTplNameSysFile(0x145); break;
         case 6: res = MakeTplNameSysFile(0x146); break;
@@ -2449,7 +2445,7 @@ extern "C" __declspec(noinline) void bindEIBCellTexture(CEquipItemBox* self, u16
     }
     if (res != 0) {
         sprintf(buf, &lbl_eu_8050EFDC[0x1f9], i + 1);
-        PaneSetTexPaletteByName(self->field_38, buf, (u32)res);
+        PaneSetTexPaletteByName(self->field_38, (const char*)buf, (TPLPalette*)((u32)res));
     }
 }
 
@@ -2570,7 +2566,7 @@ extern "C" __declspec(noinline) void bindEIBCellIcon(CEquipItemBox* self, u16 ki
     if (res != 0) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050EFDC[0x20c], i + 1);
-        PaneSetTexPaletteByName(self->field_38, buf, (u32)res);
+        PaneSetTexPaletteByName(self->field_38, (const char*)buf, (TPLPalette*)((u32)res));
     }
 }
 
@@ -2593,7 +2589,7 @@ extern "C" __declspec(noinline) void bindEIBCellMark(CEquipItemBox* self, u32 mo
         res = self->field_30->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, &lbl_eu_8050EFDC[0x25c], 0);
     }
     if (res != 0) {
-        PaneSetTexPaletteByName(self->field_38, buf, (u32)res);
+        PaneSetTexPaletteByName(self->field_38, (const char*)buf, (TPLPalette*)((u32)res));
     }
     sprintf(buf, &lbl_eu_8050EFDC[0x270], n);
     nw4r::lyt::Pane* pane = self->field_38->GetRootPane()->FindPaneByName(buf, true);
@@ -3000,7 +2996,7 @@ extern "C" __declspec(noinline) void bindEIBPageTexture(CEquipItemBox* self, u8 
     }
     if (pane != 0) {
         sprintf(paneName, &lbl_eu_8050EFDC[0x2C8], i + 1);
-        PaneSetTexPaletteByName(self->field_38, paneName, (u32)pane);
+        PaneSetTexPaletteByName(self->field_38, (const char*)paneName, (TPLPalette*)((u32)pane));
     }
 }
 #pragma pop
@@ -3121,7 +3117,7 @@ extern "C" __declspec(noinline) void resetEIBPageView(CEquipItemBox* self) {
     for (u8 i = 0; i < 0xc; i++) {
         view->field_210[i] = 0;
         float vec[3];
-        float* p = (float*)code80135FDC_setVec3(vec, lbl_eu_80668B04, lbl_eu_80668B04, lbl_eu_80668B04);
+        float* p = (float*)code80135FDC_setVec3((nw4r::math::VEC3*)vec, lbl_eu_80668B04, lbl_eu_80668B04, lbl_eu_80668B04);
         copyVEC3(view->field_228[i], p);
     }
     const char* base = lbl_eu_8050EFDC;
@@ -3169,16 +3165,16 @@ extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
     // kind2=r26, name72=r27, name7a=r28, name61=r29, hi=r30, name69=r31).
     // Int-typed (retail defers narrow-masking to use sites; rates are
     // small table ids so no value ever exceeds u16 range).
-    int rateB;
-    int rateA;
+    u16 rateB;
+    u16 rateA;
     u32 g;
     char* base;
     u16 kind2;
-    u32 name72;
-    u32 name7a;
-    u32 name61;
+    u8 name72;
+    u8 name7a;
+    u8 name61;
     u32 hi;
-    u32 name69;
+    u8 name69;
     char buf[0x20];
     char nb[0x28];
     base = lbl_eu_8050EFDC;
@@ -3211,25 +3207,25 @@ extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
     kind2 = BdatGetItemId(a);
     rateA = BdatGetU16Direct((const void*)g, base + 0x60a, kind2);
     rateB = BdatGetU16Direct((const void*)g, base + 0x8b, kind2);
-    name72 = BdatGetU8Direct(g, base + 0x72, kind2);
-    name7a = BdatGetU8Direct(g, base + 0x7a, kind2);
-    name61 = BdatGetU8Direct(g, base + 0x61, kind2);
+    name72 = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
+    name7a = BdatGetU8Direct((const void*)g, base + 0x7a, kind2);
+    name61 = BdatGetU8Direct((const void*)g, base + 0x61, kind2);
     // The three int->float conversions use MWCC's own s32->f32 magic
     // ((f32) casts emit lis-0x4330/xoris/lfd/fsubs inline, sharing one
     // constant copy in r30 like retail); do NOT hand-roll unions here.
-    float f = (f32)(u32)(u8)BdatGetU8Direct(g, base + 0x612, kind2) / lbl_eu_80668B48;
-    name69 = BdatGetU8Direct(g, base + 0x69, kind2);
-    u32 flag92 = BdatGetU8Direct(g, base + 0x92, kind2);
+    float f = (f32)(u32)(u8)BdatGetU8Direct((const void*)g, base + 0x612, kind2) / lbl_eu_80668B48;
+    name69 = BdatGetU8Direct((const void*)g, base + 0x69, kind2);
+    u8 flag92 = BdatGetU8Direct((const void*)g, base + 0x92, kind2);
     if (flag92 & 4) {
         void* obj = CtrlObjectParam_GetCharEntry(1);
-        rateA = (int)(lbl_eu_80668B4C * (f32)(int)((u32)(u16)rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
-        rateB = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
-        if ((u32)(u16)rateA >= 0x3e7) rateA = 0x3e7;
-        if ((u32)(u16)rateB >= 0x3e7) rateB = 0x3e7;
+        rateA = lbl_eu_80668B4C * (f32)(int)(rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj));
+        rateB = lbl_eu_80668B2C * (f32)(int)(rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj));
+        if (rateA >= 0x3e7) rateA = 0x3e7;
+        if (rateB >= 0x3e7) rateB = 0x3e7;
     }
     for (u8 i = 1; i <= 10; i++) {
         sprintf(nb, base + 0x7, i);
-        if ((u8)BdatGetU8Direct(g, nb, kind2)) {
+        if ((u8)BdatGetU8Direct((const void*)g, (const char*)nb, kind2)) {
             f += GetFloatTableEntry(i);
             break;
         }
@@ -3277,7 +3273,7 @@ extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
 extern "C" void rebuildEIBKind48Page(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     u16 kind2;
-    u32 nameA, nameB, nameC;
+    u8 nameA, nameB, nameC;
     setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
     setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
     setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
@@ -3305,15 +3301,15 @@ extern "C" void rebuildEIBKind48Page(CEquipItemBox* self, int kind, int item) {
     u32 g = lbl_eu_806640F8;
     BdatGetItemType(kind);
     kind2 = BdatGetItemId(kind);
-    nameA = BdatGetU8Direct(g, base + 0x72, kind2);
-    nameB = BdatGetU8Direct(g, base + 0x7a, kind2);
-    nameC = BdatGetU8Direct(g, base + 0x82, kind2);
+    nameA = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
+    nameB = BdatGetU8Direct((const void*)g, base + 0x7a, kind2);
+    nameC = BdatGetU8Direct((const void*)g, base + 0x82, kind2);
     setLayoutTextBoxNumber(self->field_38, base + 0x546, (u8)nameA);
     setLayoutTextBoxNumber(self->field_38, base + 0x552, (u8)nameB);
     setLayoutTextBoxNumber(self->field_38, base + 0x55e, (u8)nameC);
     // Retail reloads lbl_eu_806640F8 here: the three setLayoutTextBoxNumber calls
     // above are opaque, so the global must not be cached across them.
-    u32 v = BdatGetU8Direct(lbl_eu_806640F8, base + 0x17, BdatGetItemId(kind));
+    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x17, BdatGetItemId(kind));
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
@@ -3386,7 +3382,7 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x5f2, str, 0);
     // Name text from the bdat lookup keyed by the vf54 name key.
     u32 name = BdatGetU8Direct(
-        lbl_eu_806640D8, base + 0x36,
+        (const void*)lbl_eu_806640D8, base + 0x36,
         (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x5e7, (char*)name, 0);
     // Detail text: when the vf90 value is present, prefix a per-name-byte
@@ -3395,8 +3391,8 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
         LayoutSetTextBoxFmtValue(self->field_38, base + 0x5fe, base + 0x228, 0);
     } else {
         char buf[0x20];
-        u32 v = BdatGetU8Direct(lbl_eu_806640D8, base + 0x633, (u16)key);
-        if ((u8)v != 0 && (u32)((u8)v - 3) <= 1) {
+        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x633, (u16)key);
+        if (v != 0 && (u32)(v - 3) <= 1) {
             char* str2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
             sprintf(buf, base + 0x626,
                     ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj), str2);
@@ -3407,7 +3403,7 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
         LayoutSetTextBoxText(self->field_38, base + 0x5fe, buf, 0);
     }
     // Category label: name-byte + 0x15 selects the category string.
-    u32 cat = BdatGetU8Direct(lbl_eu_806640D8, base + 0, (u16)key);
+    u32 cat = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0, (u16)key);
     char* str3 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, (u8)cat + 0x15);
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x640, str3, 0);
     // Cursor anchor: midpoint helper between the detail pane and anchor pane
@@ -3419,8 +3415,8 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
         ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
             ->FindPaneByName(base + 0x193, true);
     float pos[3];
-    ScalePaneWorldPos(pos, paneDetail, paneAnchor,
-                  ((CEquipItemBoxLayoutView*)self->field_38)->field_10);
+    ScalePaneWorldPos((nw4r::math::VEC3*)pos, paneDetail, paneAnchor,
+                  (nw4r::lyt::Pane*)(((CEquipItemBoxLayoutView*)self->field_38)->field_10));
     CEquipItemBoxKind3View* view = (CEquipItemBoxKind3View*)self;
     view->field_220 = (u16)key;
     view->field_2c0 = 3;
@@ -3470,7 +3466,7 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                 storeKind = kind;
                 char* name = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36,
                                             0x1e - ((u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf08(item) - 1));
-                switch ((u8)BdatGetU8Direct(g, base + 0x1a7, kind)) {
+                switch ((u8)BdatGetU8Direct((const void*)g, base + 0x1a7, kind)) {
                 case 0:
                     icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                     break;
@@ -3498,8 +3494,8 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                     sprintf(buf, base + 0x6f4, i1);
                     LayoutSetTextBoxFmtValue(self->field_38, buf, base + 0x228, 0);
                 } else {
-                    u32 v = BdatGetU8Direct(g, base + 0x633, kind);
-                    if (v != 0 && (u8)((u8)v - 3) <= 1) {
+                    u8 v = BdatGetU8Direct((const void*)g, base + 0x633, kind);
+                    if (v != 0 && (u8)(v - 3) <= 1) {
                         char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
                         sprintf(buf40, base + 0x626, key90, str);
                     } else {
@@ -3512,7 +3508,7 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                 sprintf(buf40, base + 0x3b, str2, name);
                 storeByte = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf08(item);
                 storeKey = (s16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf90(item);
-                PaneSetTexPalette(pane, (unsigned long)icon);
+                PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
             } else {
                 CItemInstance* entry = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)b))
                                            ->vf2C((CItemInstance*)b, (u8)idx);
@@ -3522,7 +3518,7 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                     u32 bits3 = (entry->word >> 22) & 7;
                     storeKind = kind2;
                     char* name2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x1e - (bits3 - 1));
-                    switch ((u8)BdatGetU8Direct(g2, base + 0x1a7, kind2)) {
+                    switch ((u8)BdatGetU8Direct((const void*)g2, base + 0x1a7, kind2)) {
                     case 0:
                         icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                         break;
@@ -3550,7 +3546,7 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                         sprintf(buf, base + 0x6f4, i1);
                         LayoutSetTextBoxFmtValue(self->field_38, buf, base + 0x228, 0);
                     } else {
-                        u32 v2 = BdatGetU8Direct(g2, base + 0x633, kind2);
+                        u32 v2 = BdatGetU8Direct((const void*)g2, base + 0x633, kind2);
                         if (v2 != 0 && (u8)((u8)v2 - 3) <= 1) {
                             char* str3 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
                             sprintf(buf40, base + 0x626, bit11, str3);
@@ -3564,7 +3560,7 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                     sprintf(buf40, base + 0x3b, str4, name2);
                     storeByte = (u8)bits3;
                     storeKey = (s16)((entry->word >> 11) & 0x7FF);
-                    PaneSetTexPalette(pane, (unsigned long)icon);
+                    PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
                 } else {
                     icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                     sprintf(buf, base + 0x6f4, i1);
@@ -3572,14 +3568,14 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
                     sprintf(buf40, base + 0x2a, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x2a));
                     sprintf(buf, base + 0x705, i1);
                     LayoutSetTextBoxText(self->field_38, buf, buf40, 0);
-                    PaneSetTexPalette(pane, (unsigned long)icon);
+                    PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
                 }
             }
         }
         nw4r::lyt::Pane* pane193 =
             self->field_38->GetRootPane()->FindPaneByName(base + 0x193, true);
         float out[3];
-        ScalePaneWorldPos(out, pane, pane193, self->field_38->GetRootPane());
+        ScalePaneWorldPos((nw4r::math::VEC3*)out, pane, pane193, self->field_38->GetRootPane());
         u8 v = (u8)(idx + 8);
         if (v < 0xc) {
             ((CEquipItemBoxPageDataView*)self)->field_210[v] = storeKind;
@@ -3740,7 +3736,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
-        ApplyFontToTxtPanes(root, ((IDeviceFontInfo*)font)->getFont());
+        ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)font)->getFont()));
         char* msg = getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
         setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
@@ -3761,7 +3757,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         nw4r::lyt::ArcResourceAccessor* acc2 = CUICfManager_getArcResourceAccessor();
         void* tex = acc2->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, 0);
         if (tex != 0) {
-            PaneSetTexPaletteByName(field_38, base + 0x778, (u32)tex);
+            PaneSetTexPaletteByName(field_38, base + 0x778, (TPLPalette*)((u32)tex));
             CEquipItemBoxTexDimsView* dims =
                 ((CEquipItemBoxTexObjView*)tex)->mChain->mDims;
             u16 v2 = dims->field_2;
@@ -4007,7 +4003,7 @@ extern "C" __declspec(noinline) void rebuildEIBGridPage(CEquipItemGrid* grid, u8
             cell->unk6 = 1;
             // Name check: name-byte 1/2 clears the cell when the window kind
             // disagrees with the vf54 name.
-            u32 name1 = BdatGetU8Direct(lbl_eu_806640D8, (char*)base, (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
+            u8 name1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (char*)base, (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
             if ((u8)name1 == 1) {
                 if (hi != 2) cell->unk6 = 0;
             } else if ((u8)name1 == 2) {
@@ -4034,17 +4030,16 @@ general:
                 sprintf(buf, (char*)base + 0x12, b);
             }
             u16 kind2 = BdatGetItemId(obj->word >> 20);
-            if (BdatGetU8Direct(g2, buf, kind2) != 0) cell->unk6 = 1;
+            if (BdatGetU8Direct((const void*)g2, (const char*)buf, kind2) != 0) cell->unk6 = 1;
             if (v == 2 && b == 0xb && (obj->word >> 20) == 0x4c) cell->unk6 = 1;
             if (v != 2) {
-                u32 name3 = BdatGetU8Direct(lbl_eu_806640F8, (char*)base + 0x17, BdatGetItemId(obj->word >> 20));
-                u8 n3 = (u8)name3;
-                if ((u32)(n3 - 4) <= 9) {
+                u8 name3 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (char*)base + 0x17, BdatGetItemId(obj->word >> 20));
+                if ((u32)(name3 - 4) <= 9) {
                     /* no-op */
-                } else if (n3 == 3) {
+                } else if (name3 == 3) {
                     if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
                 }
-                if (n3 == 2) {
+                if (name3 == 2) {
                     if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
                 }
             }
@@ -4070,7 +4065,7 @@ general:
             }
         }
 tail:
-        u32 name4 = BdatGetU8Direct(lbl_eu_806640EC, (char*)base + 0x20, obj->word >> 20);
+        u8 name4 = BdatGetU8Direct((const void*)lbl_eu_806640EC, (char*)base + 0x20, obj->word >> 20);
         cell->unk5 = ((u8)name4 == 1) ? 1 : 0;
         if (CtrlRemote_TouchBitByArg(0x3508) != 0) cell->unk5 = 0;
     }

@@ -20,6 +20,7 @@
 #include "kyoshin/code_80296898.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 namespace {
@@ -1506,7 +1507,6 @@ void TextState_Reset(int arg) {
 namespace {
 
 // UTF-16 string staging helper from code_80135FDC.cpp (C linkage there).
-extern "C" void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 
 // Field view of the game tag-processor object stored at lbl_eu_8066486C;
 // slot +0x14 renders a UTF-16 string buffer at a float position.

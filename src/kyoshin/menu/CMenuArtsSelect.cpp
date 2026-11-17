@@ -65,6 +65,7 @@
 #include <stdio.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
@@ -257,7 +258,6 @@ extern "C" int ChainTmr_GateArts_DF38(u8* self, u8* actor, int flag, int index);
 extern "C" int CChain_CheckActivateReady(u8* self, int param);
 // (UIBattleFindElemTimg/UIBattleFindPartyTimg: declared on CUIBattleManager.hpp, void*
 // return - the old local u8* copies are gone; call sites cast.)
-extern "C" void PaneSetTexPalette(void* pane, void* tex);   // pane texture setter
 
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
 extern "C" int CBattleMan_ListHasValue(void*, void*);
@@ -559,7 +559,7 @@ void CMenuArtsSelect::Init() {
         u8* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
         typedef u32 (*FontVFn)(void*);
         u32 lineSpace = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
-        ApplyFontToTxtPanes(rootPane, lineSpace);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)lineSpace);
     }
 
     {
@@ -2883,7 +2883,7 @@ void CMenuArtsSelect::refreshHelpText() {
                 break;
             }
             u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (BdatGetU8Direct(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            switch (BdatGetU8Direct((const void*)lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -2977,7 +2977,7 @@ void CMenuArtsSelect::refreshPaneTextures() {
                 break;
             }
             u16 cat = BdatGetItemId(*reinterpret_cast<u32*>(rec) >> 20);
-            switch (BdatGetU8Direct(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            switch (BdatGetU8Direct((const void*)lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
             case 4:  code = 0x77; break;
             case 5:  code = 0x78; break;
             case 6:  code = 0x79; break;
@@ -3002,7 +3002,7 @@ void CMenuArtsSelect::refreshPaneTextures() {
     if (nameId != 0) {
         void* tex = UIBattleFindElemTimg(MakeTplNameSysFile(nameId));
         if (tex != NULL) {
-            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2ae, tex);
+            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2ae, (TPLPalette*)tex);
         }
     }
     if (gaugeId != 0) {
@@ -3013,7 +3013,7 @@ void CMenuArtsSelect::refreshPaneTextures() {
             tex = UIBattleFindSysTimg(MakeTplNameSysFile(gaugeId));
         }
         if (tex != NULL) {
-            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2b9, tex);
+            PaneSetTexPaletteByName(unk80, lbl_eu_804FD1E0 + 0x2b9, (TPLPalette*)tex);
         }
     }
 }
@@ -3404,12 +3404,12 @@ void CMenuArtsSelect::updateSlotStates() {
             char* tex = MakeTplNameSysFile(param->mCheckFlag);
             u8* res = static_cast<u8*>(UIBattleFindElemTimg(tex));
             if (res != NULL) {
-                PaneSetTexPalette(reinterpret_cast<nw4r::lyt::Pane*>(unk200[i]), res);
+                PaneSetTexPalette(reinterpret_cast<nw4r::lyt::Pane*>(unk200[i]), (TPLPalette*)res);
             }
             tex = MakeTplNameSysFile(param->mField72);
             res = static_cast<u8*>(UIBattleFindPartyTimg(tex));
             if (res != NULL) {
-                PaneSetTexPalette(reinterpret_cast<nw4r::lyt::Pane*>(unk224[i]), res);
+                PaneSetTexPalette(reinterpret_cast<nw4r::lyt::Pane*>(unk224[i]), (TPLPalette*)res);
             }
         } else {
             if (unk308 & mask) {

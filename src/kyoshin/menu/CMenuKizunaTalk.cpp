@@ -12,22 +12,18 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // KEEP (extern-C cleanup 2026-10-23): CLibLayout.hpp cannot be included here
 // (it brings the canonical IWorkEvent, which clashes with this TU's KEEP copy).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 #include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
-extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
-extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void SplitU32ToS16s(short*, unsigned long);
 extern "C" u32 BdatGetItemId(u32);
-extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* CUICfManager_getPackedFont9C(void);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
@@ -429,20 +425,20 @@ extern "C" __declspec(noinline) void checkKizunaGate(CMenuKizunaTalk* self) {
     u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= CtrlRemote_TouchBitByArg((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-        u32 talk = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u32 talk2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
+        u8 talk = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
+        u8 talk2 = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
         u16 value = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u32 rank = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u8 rank = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
         if (CtrlRemote_TouchBitByArg((u32)0x20) >= 0x113) {
             if ((u8)talk == 3) talk = 8;
             if ((u8)talk2 == 3) talk2 = 8;
         }
-        int* list = CtrlObjectParam_GetSlotTableBase();
+        int* list = CtrlObjectParam_GetSlotTableBase() + 1;
         for (u32 i = 0; i < 3; i++) {
-            u32 v = (u32)list[i + 1];
-            if ((u8)talk == v) {
+            u32 v = (u32)list[i];
+            if (talk == v) {
                 b1 = 1;
-            } else if ((u8)talk2 == v) {
+            } else if (talk2 == v) {
                 b2 = 1;
             }
         }
@@ -485,12 +481,12 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         nw4r::lyt::Pane* rootPane = layout->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
-        ApplyFontToTxtPanes(rootPane, fontVal);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontVal);
 
-        u32 charName = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u32 charName2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
+        u32 charName = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
+        u32 charName2 = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
         u16 rank = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u32 affinity = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u32 affinity = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
 
         LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xb7],
                       BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x25), 0);
@@ -529,7 +525,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
                                                        &lbl_eu_80505118[0x176], 0);
         }
         if (rankTex != 0) {
-            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x18e], rankTex);
+            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x18e], (TPLPalette*)rankTex);
         }
 
         // Affinity rank name text.
@@ -556,7 +552,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         KizunaTextureView* tex = (KizunaTextureView*)((void* (*)(void*, u32, void*, u32))(
             (void**)sys)[0xc / 4])(sys, 0x74696d67, texName, 0);
         if (tex != 0) {
-            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x1db], tex);
+            PaneSetTexPaletteByName(layout, &lbl_eu_80505118[0x1db], (TPLPalette*)tex);
             nw4r::lyt::Pane* picPane = layout->GetRootPane();
             u16 w = tex->mHeader->mWidth;
             u16 h = tex->mHeader->mHeight;

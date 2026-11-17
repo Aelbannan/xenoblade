@@ -11,6 +11,7 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/math/math_types.h>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Retail imports (defined outside this TU). Animation frame constant.
 // `const` routes it into the readonly sdata2 pool so MWCC hoists the lfs above
@@ -24,15 +25,11 @@ extern "C" char lbl_eu_8050A62C[];
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Animate the attached anim-transform in reverse (returns true when done).
 // Retail symbol is unmangled (C linkage).
-extern "C" {
-u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-}
 // Draw a nw4r layout with the given draw info.
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Fire a per-window sound/effect event by id.
 void playUISound(u32);
 // Sum the translate of a pane and its ancestors into an output VEC3. C-ABI.
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // OnFileEvent imports (retail symbols, unmangled / pre-mangled C-ABI names).
 extern "C" {

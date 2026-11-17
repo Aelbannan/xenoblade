@@ -3,6 +3,8 @@
 // Unit-private import declarations split out of CTutorial.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CTutorial.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
 // Layout draw helper (retail reloc is the mangled
@@ -22,7 +24,6 @@ u32 getPackedFont();
 // Remaining helpers from the MenuStateInitFlags translation unit (same signatures
 // as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
@@ -39,9 +40,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Root-pane font bind (retail reloc is the literal unmangled name).
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 // BDAT field reader (retail reloc is the literal unmangled name).
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.

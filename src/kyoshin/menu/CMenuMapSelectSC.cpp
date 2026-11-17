@@ -3,6 +3,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers);
 // declared extern "C" so call sites emit the literal retail reloc names.
@@ -90,7 +91,6 @@ extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" void InfoCfCopySysWin(void* dest, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" char* BdatTouchStringCell(char* a, char* b, u32 id);
 extern "C" void __dt__9CFloorMapFv(CFloorMap* _this, int flags);
 extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);

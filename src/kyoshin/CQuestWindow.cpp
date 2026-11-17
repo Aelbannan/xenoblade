@@ -122,7 +122,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         char* fontStr = (char*)CUICfManager_getPackedFont9C();
         if (fontStr != 0) {
@@ -451,7 +451,7 @@ __attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
         UIWin_CreateItemMulti(self->field_0xD4, self->field_0xD6, self->field_0xD8,
                       0, 1, 1, 0, 1, 0);
     }
-    u8 r = BdatGetU8Direct(lbl_eu_80573D18[SearchThresholdIdx(self->field_B8)],
+    u8 r = BdatGetU8Direct((const void*)lbl_eu_80573D18[SearchThresholdIdx(self->field_B8)],
                          &lbl_eu_804FEC84[0xa2], self->field_B8);
     if (r == 0 || r == 3) {
         incrementEventCounter__FUl(0xb4);
@@ -506,8 +506,8 @@ void refreshQuestContent(CQuestWindow* self) {
         (BdatGetU16Direct((const void*)questRow, &base[0xb5], questId) & 0xFFFF) * 10;
     self->field_0xE0 =
         (BdatGetU16Direct((const void*)questRow, &base[0xc0], questId) & 0xFFFF) * 10;
-    self->field_0xE4 = BdatGetU8Direct(questRow, &base[0xcd], questId);
-    u8 v = BdatGetU8Direct(questRow, &base[0xa2], questId);
+    self->field_0xE4 = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
+    u8 v = BdatGetU8Direct((const void*)questRow, &base[0xa2], questId);
     if (v == 1) {
         setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
         setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
@@ -532,14 +532,14 @@ void refreshQuestContent(CQuestWindow* self) {
         break;
     }
     if (res != 0) {
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x13c], res);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x13c], (TPLPalette*)res);
     }
     if ((questId - 0x100) <= 4) {
         if ((CtrlRemote_TouchBitByArg(questId + 0x220) & 0xFF) == 0) {
             CtrlRemote_SetSharedBit(questId + 0x220, 1);
         }
     }
-    self->field_0xC4 = BdatGetU8Direct(questRow, &base[0x144], questId);
+    self->field_0xC4 = BdatGetU8Direct((const void*)questRow, &base[0x144], questId);
     char* s;
     if (self->field_0xC8 != 0) {
         s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x38);
@@ -563,7 +563,7 @@ void refreshQuestContent(CQuestWindow* self) {
             cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x195], questId);
         }
     } else {
-        if (BdatGetU8Direct(questRow, &base[0x1a0], questId) != 0) {
+        if (BdatGetU8Direct((const void*)questRow, &base[0x1a0], questId) != 0) {
             cur = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x1ad], questId);
         } else {
             cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x34);
@@ -577,7 +577,7 @@ void refreshQuestContent(CQuestWindow* self) {
         if (CtrlObjectParam_GetWorkField50() == questId) {
             CtrlObjectParam_SetWorkField50(0);
         }
-        u8 vcd = BdatGetU8Direct(questRow, &base[0xcd], questId);
+        u8 vcd = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
         if (vcd == 1) {
             s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
             LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
@@ -616,7 +616,7 @@ void refreshQuestContent(CQuestWindow* self) {
                     }
                     sprintf(buf, &base[0x1f5], i + 1);
                     if ((v22 & 0xFFFF) == 3) {
-                        u8 v204 = BdatGetU8Direct(lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
+                        u8 v204 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
                         s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {
@@ -634,7 +634,7 @@ void refreshQuestContent(CQuestWindow* self) {
             } while (i < 3);
         }
     } else {
-        u8 vcd = BdatGetU8Direct(questRow, &base[0xcd], questId);
+        u8 vcd = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
         if (vcd == 3) {
             s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x32);
             LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
@@ -671,7 +671,7 @@ void refreshQuestContent(CQuestWindow* self) {
                     }
                     sprintf(buf3, &base[0x1f5], i + 1);
                     if ((v30 & 0xFFFF) == 3) {
-                        u8 v204 = BdatGetU8Direct(lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
+                        u8 v204 = BdatGetU8Direct((const void*)lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
                         s = BdatTouchStringCell(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
                         buf2.format(&base[0x20d], cur, s);
                     } else {
@@ -701,8 +701,8 @@ void refreshQuestContent(CQuestWindow* self) {
     char* resName = MakeTplNameSysFile(BdatGetU16ByTableKey(&base[0x22d], cp, 0x2b));
     void* res2 = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, resName, 0);
     if (res2 != 0) {
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x268], res2);
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x271], res2);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x268], (TPLPalette*)res2);
+        PaneSetTexPaletteByName(self->mpLayout, &base[0x271], (TPLPalette*)res2);
         struct ResData {
             u8 pad[8];
             u16* pData;
@@ -742,7 +742,7 @@ void refreshQuestContent(CQuestWindow* self) {
             } else {
                 sprintf(buf4, &base[0x2a6], i + 1);
             }
-            u8 v2 = BdatGetU8Direct(questRow, buf4, questId);
+            u8 v2 = BdatGetU8Direct((const void*)questRow, (const char*)buf4, questId);
             if ((v27 & 0xFFFF) != 0) {
                 CtrlRemote_SetSharedBit((v27 & 0xFFFF) + 0x608, v2);
             }

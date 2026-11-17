@@ -4,12 +4,13 @@
 // KEEP (blockers-A 2026-10-23): 32-bit view of BdatGetU16Direct (canonical u16 in
 // kyoshin/code_80135FDC_Bdat.hpp); the u16 form adds clrlwi and moves the
 // callers here further from retail.
-extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 #include "kyoshin/CBaseCur.hpp"
 #include <cstring>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CFileHandle;
 struct CItemBoxInfo;
@@ -246,21 +247,18 @@ extern "C" void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
 // ScalePaneWorldPos lives in kyoshin/CSysWin.hpp (typed VEC3/Pane form).
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" void closeItemBox1(void*);
 extern "C" void hideItemBoxPanes(void*, u16);
 extern "C" void renderItemBoxByKind(void*, u32, u32, u32);
 extern "C" void setItemBoxNamedText(void*, int, void*);
 extern "C" u32 startItemBoxOpen(void*);
-extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
 extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 extern "C" void sysWinTermLayout(void*);
 extern "C" void* formatItemBoxName(void*, u32);
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
@@ -308,10 +306,6 @@ extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);
 extern "C" void copyVEC3(void*, void*);
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
-extern "C" u8   BdatGetU8Direct(u32, const char*, u32);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void Bdat_GetTable_AA34();

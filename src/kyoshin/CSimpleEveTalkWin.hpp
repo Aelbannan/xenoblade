@@ -9,6 +9,7 @@
 
 #include <nw4r/lyt.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 class CScn;
 
@@ -193,7 +194,6 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 // arg1 is the singleton pointer left in r3 by the caller's flag test (retail
 // does not set r3 for the call).
 void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner, u32 textId, u8* msgBuf);

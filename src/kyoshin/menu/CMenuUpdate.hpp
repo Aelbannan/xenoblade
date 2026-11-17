@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Forward declarations
 namespace nw4r { namespace lyt {
@@ -192,14 +193,9 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-extern "C" void ApplyFontToTxtPanes(void*, void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
-extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
-extern "C" void PaneSetVtxColorByName(void*, const char*, int);
-extern "C" void LayoutSetTextBoxFmtValue(void*, const char*, void*, int);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
-extern "C" u16 BdatGetU16ByTableKey(const char*, const char*, int);
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" bool CUICfManager_hasInUseSlot();
 extern "C" void CUICfManager_queueQuestLogMenu(u32);
@@ -241,6 +237,4 @@ extern "C" int MenuUpdate_CheckBootGates(void* self);
 extern "C" void MenuUpdate_EnterMode1Chime(void* self);
 extern "C" void MenuUpdate_MaintainActive(void* self);
 extern "C" f32 MenuUpdate_QueryUnk80Float();
-extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void MenuUpdate_GuardFirstEntry(void* self);

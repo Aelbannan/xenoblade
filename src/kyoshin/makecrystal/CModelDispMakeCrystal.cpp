@@ -3005,38 +3005,38 @@ void MakeCrystal_AppendItemSteps(void* selfp)
     switch (tier) {
     case 1: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x71, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x79, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x71, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x79, n);
         break;
     }
     case 2: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x81, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x89, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x81, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x89, n);
         break;
     }
     case 3: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x91, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0x99, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x91, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0x99, n);
         break;
     }
     case 4: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xa1, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xa9, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xa1, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xa9, n);
         break;
     }
     case 5: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xb1, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xb9, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xb1, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xb9, n);
         break;
     }
     case 6: {
         const char* t = &lbl_eu_805090FC[0];
-        first = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xc1, n);
-        second = BdatGetU8Direct(reinterpret_cast<u32>(g2), t + 0xc9, n);
+        first = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xc1, n);
+        second = BdatGetU8Direct((const void*)(reinterpret_cast<u32>(g2)), t + 0xc9, n);
         break;
     }
     }

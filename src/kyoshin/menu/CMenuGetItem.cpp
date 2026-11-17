@@ -119,7 +119,7 @@ void CMenuGetItem::Init() {
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-        ApplyFontToTxtPanes(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         mLayout->SetAnimationEnable(mField_78, true);
         reinterpret_cast<AnimFrameView*>(mField_78)->frame = 0.0f;

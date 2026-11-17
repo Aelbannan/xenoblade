@@ -3,13 +3,13 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern int lbl_eu_80663FA0;
 
 extern "C" {
 extern char lbl_eu_804FDEA8[];  // String table: +0xa layout, +0x18 anim, +0x26 pane name
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // Shared ARC resource accessor
-void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);  // Pane color setter
 }
 
 CMenuFade::CMenuFade(){

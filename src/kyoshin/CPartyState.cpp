@@ -454,7 +454,7 @@ extern "C" __declspec(noinline) void rebuildPartySelect(CPartyState* self) {
             u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, name, 0);
             if (tex != 0) {
                 sprintf(buf78, strs + 0x88, slotByte);
-                PaneSetTexPaletteByName(self->mLayout, buf78, tex);
+                PaneSetTexPaletteByName(self->mLayout, (const char*)buf78, (TPLPalette*)tex);
             }
         } else {
             CPartyCharData* data2 = (CPartyCharData*)CtrlObjectParam_GetCharEntry(member);
@@ -469,7 +469,7 @@ extern "C" __declspec(noinline) void rebuildPartySelect(CPartyState* self) {
                 u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, buf78, 0);
                 if (tex != 0) {
                     sprintf(buf78, strs + 0xc1, next);
-                    PaneSetTexPaletteByName(self->mLayout, buf78, tex);
+                    PaneSetTexPaletteByName(self->mLayout, (const char*)buf78, (TPLPalette*)tex);
                 }
             }
         }
@@ -490,7 +490,7 @@ extern "C" __declspec(noinline) void rebuildPartySelect(CPartyState* self) {
         u32 tex = (u32)CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {
             sprintf(buf18, strs + 0xed, k + 1);
-            PaneSetTexPaletteByName(self->mLayout, buf18, tex);
+            PaneSetTexPaletteByName(self->mLayout, (const char*)buf18, (TPLPalette*)tex);
         }
     }
 }
@@ -572,7 +572,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         // Bind the font: root pane + font object slot 7, push back onto root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::getFontInfo(1, mLayout));
-        ApplyFontToTxtPanes(rootPane, (void*)font->v7());
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((void*)font->v7()));
 
         u32 textVal = (u32)CUICfManager_getPackedFont9C();
         if (textVal != 0) {

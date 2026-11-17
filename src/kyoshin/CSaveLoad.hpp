@@ -3,6 +3,7 @@
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 class CBaseCur;
 #include <nw4r/lyt.h>
 
@@ -309,7 +310,6 @@ extern "C" void Cur_Update(void*);   // CCur per-frame update
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
 extern "C" u8 CSaveLoad_getIdle(CSaveLoad* self);

@@ -4,8 +4,8 @@
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 void playUISound(u32);
-extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
@@ -16,11 +16,9 @@ extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern void* lbl_eu_80535750[];
 
 // Forward declarations for functions not in included headers
-void SetLayoutSelfText(char*, const char*, int);
 void TagCopyVec2f(char*, const char*);
 void writePanePos(char*, char*);
 void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
-void code80135FDC_setVec3(float*, float, float, float);
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
@@ -114,20 +112,20 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
 
     mSubState = 1;
 
-    SetLayoutSelfText((char*)mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
-    SetLayoutSelfText((char*)mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
-    SetLayoutSelfText((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxC), &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        SetLayoutSelfText((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        SetLayoutSelfText((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -183,7 +181,7 @@ void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAcc
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
     u32 fontVal = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    ApplyFontToTxtPanes(root, fontVal);
+    ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)fontVal);
 
     u32 color = getPackedFont__Fv();
     setLayoutTextBoxFont(self->mLayout, &lbl_eu_805084BC[0x35], color);
@@ -211,7 +209,7 @@ void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAcc
     u8* sys = (u8*)CUICfManager_getArcResourceAccessor();
     u8* mat = (u8*)((nw4r::lyt::ArcResourceAccessor*)sys)->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat != NULL) {
-        PaneSetTexPaletteByName(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
+        PaneSetTexPaletteByName(self->mLayout, &lbl_eu_805084BC[0xa9], (TPLPalette*)mat);
 
         nw4r::lyt::Pane* picPane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xa9], true);
         u16 w = *(u16*)(*(u8**)mat + 8 + 2);
@@ -232,8 +230,8 @@ extern "C" void GridSubMenu_GetCursorPos(void* self, void* src) {
     arr[1] = *(void**)((u8*)src + 0x18);
     arr[2] = *(void**)((u8*)src + 0x1C);
     void* sel = arr[(s8)*(u8*)((u8*)src + 0x24)];
-    ScalePaneWorldPos(self, sel, *(void**)((u8*)src + 0x10),
-                  *(void**)((u8*)*(void**)((u8*)src + 8) + 0x10));
+    ScalePaneWorldPos((nw4r::math::VEC3*)self, (nw4r::lyt::Pane*)sel, (nw4r::lyt::Pane*)(*(void**)((u8*)src + 0x10)),
+                  (nw4r::lyt::Pane*)(*(void**)((u8*)*(void**)((u8*)src + 8) + 0x10)));
 }
 
 void GridSubMenu_GetOptionCount(){}

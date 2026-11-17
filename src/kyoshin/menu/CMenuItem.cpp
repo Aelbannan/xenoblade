@@ -15,7 +15,7 @@
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
-extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // ---- Declarations private to this unit (C-style imports and the copy views
 // used by Init until CItemBoxGrid and its members are real classes). ----

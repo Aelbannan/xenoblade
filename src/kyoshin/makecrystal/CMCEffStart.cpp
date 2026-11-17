@@ -383,7 +383,7 @@ void CMCEffUpPrm::init() {
         buildLayout(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
         bindLayoutAnimTransform(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
-        ApplyFontToTxtPanes(rootPane, (u32)CUICfManager_getPackedFont9C());
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((u32)CUICfManager_getPackedFont9C()));
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
         unkStructure->layout->Animate(0);
     }
@@ -618,7 +618,7 @@ void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // Virtual slot 9 (offset 0x24) on the font object yields the u32 the
     // crystal's font pane is set from.
     u32 result = fontObj->sf9();
-    ApplyFontToTxtPanes(rootPane, result);
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)result);
     buildLayout(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
     bindLayoutAnimTransform(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);
     bindInAnimTrace();
@@ -742,7 +742,7 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
     LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     void* resource = nullptr;
-    u8 result = BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
+    u8 result = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
     switch(result) {
         case 0:
             resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x29f], 0);
@@ -769,8 +769,8 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
             break;
     }
     if(resource != nullptr) {
-        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x336], resource);
-        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x33e], resource);
+        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x336], (TPLPalette*)resource);
+        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x33e], (TPLPalette*)resource);
     }
 }
 

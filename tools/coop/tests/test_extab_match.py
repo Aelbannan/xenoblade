@@ -184,5 +184,88 @@ class ExtabGateTest(unittest.TestCase):
             self.assertFalse(eg.baseline_has("v", p))
 
 
+class _FakeLayout:
+    """Minimal LinkerLayout: ``symbols.txt`` names -> (section, address)."""
+
+    def __init__(self, symbols: dict[str, tuple[str, int]]):
+        self.symbols = symbols
+
+    def resolve_name(self, name):
+        return self.symbols.get(name, (None, None))
+
+    def canon_reloc(self, name, addend):
+        sec, addr = self.symbols.get(name, (None, None))
+        return type("T", (), {"addr": None if addr is None else addr + addend})()
+
+
+class ExtabPairingAfterReorderTest(unittest.TestCase):
+    """Regression (CfScript, 2026-10-24): MWCC emitted the weak
+    ``format__Q22ml11FixStr<128>FPCce`` at the front of the decomp ``.text``
+    while retail has it at the end of the unit.  The old single ``.text``
+    base came from whichever named symbol was seen first (``format``), so
+    every function reached through a name ``symbols.txt`` lacks was keyed at
+    a shifted address: records showed up as retail-only / decomp-only pairs
+    and the gate went 4 -> 9.  extabindex entries must pair with functions
+    through their relocations, placed by the nearest anchor."""
+
+    LAYOUT = _FakeLayout({
+        "f0": (".text", 0x80001000),
+        "f1": (".text", 0x80001010),
+        "weak_tmpl": (".text", 0x80001020),
+        # A local name that symbols.txt also places in another unit.
+        "end": (".text", 0x80123450),
+    })
+
+    def _obj(self, path, *, layout_front: bool, f1_name: str, f1_global: bool,
+             f1_size: int = 0x10):
+        # (function, section offset); retail order: f0, f1, weak_tmpl.
+        order = [("weak_tmpl", 0), ("f0", 0x10), (f1_name, 0x20)] if layout_front \
+            else [("f0", 0), (f1_name, 0x10), ("weak_tmpl", 0x20)]
+        off = dict(order)
+        extab = REC_F0 + REC_F0 + REC_F0
+        index = b"".join(struct.pack(">III", 0, sz, 0)
+                         for sz in (0x10, f1_size, 0x10))
+        syms = [("f0", ".text", off["f0"], True),
+                (f1_name, ".text", off[f1_name], f1_global),
+                ("weak_tmpl", ".text", off["weak_tmpl"], True),
+                ("@1", "extab", 0, False), ("@2", "extab", 8, False),
+                ("@3", "extab", 16, False)]
+        if layout_front:  # MWCC: weak instance first in the symbol table too
+            syms = [syms[2]] + syms[:2] + syms[3:]
+        irel = [(0, "f0", 0), (8, "@1", 0), (12, f1_name, 0), (20, "@2", 0),
+                (24, "weak_tmpl", 0), (32, "@3", 0)]
+        return build_elf(path, text=b"\x60\0\0\0" * 12, extab=extab, index=index,
+                         symbols=syms, extab_relocs=[], index_relocs=irel)
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = Path(self.tmp.name)
+        self.retail = self._obj(self.d / "retail.o", layout_front=False,
+                                f1_name="f1", f1_global=True)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_weak_instance_moved_to_front_still_pairs(self):
+        decomp = self._obj(self.d / "decomp.o", layout_front=True,
+                           f1_name="f1__Q22cf3FooFv", f1_global=True)
+        self.assertEqual(extab_function_diffs(self.retail, decomp, layout=self.LAYOUT), [])
+
+    def test_real_size_diff_is_reported_against_the_right_function(self):
+        decomp = self._obj(self.d / "decomp.o", layout_front=True,
+                           f1_name="f1__Q22cf3FooFv", f1_global=True, f1_size=0x14)
+        diffs = extab_function_diffs(self.retail, decomp, layout=self.LAYOUT)
+        self.assertEqual(diffs, ["f1: function size 0x10 != 0x14"])
+
+    def test_colliding_local_name_is_not_an_anchor(self):
+        # Retail splitter label ``end`` is local; symbols.txt's ``end`` is elsewhere.
+        retail = self._obj(self.d / "r2.o", layout_front=False, f1_name="end",
+                           f1_global=False)
+        decomp = self._obj(self.d / "d2.o", layout_front=False,
+                           f1_name="end_80001010", f1_global=True)
+        self.assertTrue(check_extab_sections(retail, decomp, layout=self.LAYOUT).ok)
+        self.assertEqual(extab_function_diffs(retail, decomp, layout=self.LAYOUT), [])
+
+
 if __name__ == "__main__":
     unittest.main()

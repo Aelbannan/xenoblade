@@ -229,7 +229,7 @@ extern unsigned char lbl_eu_805396E8[];
 
 // Sub-object constructors (retail C-linkage names; C linkage keeps the
 // __-prefixed names unmangled, so call sites bind to the retail relocs).
-extern "C" void __ct__CScrollBar(CScrollBar* self, int arg);
+extern "C" void __ct__10CScrollBarFUc(CScrollBar* self, int arg);
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);
 extern "C" Class_80296898 lbl_eu_80577308;
 extern "C" u8 lbl_eu_8053948C[0x30];

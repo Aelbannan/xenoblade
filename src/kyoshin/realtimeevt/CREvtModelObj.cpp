@@ -5,6 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/realtimeevt/CREvtModelObj.hpp"
+#include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -37,7 +38,6 @@ struct CREvtModelObjResetView {
 extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
     extern void __ct__80172668(void* self, int);
-    extern void __dt__80185754(void* self);
     extern void EvtModelSetEventData(void* self, void* pData, void* pModelData);
     extern void EvtModelReleaseAnimsOnce(void* self);
     extern void EvtModelReleaseAnims(void* self);
@@ -214,7 +214,7 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
         __ct__80172668(self, 0);
 
         if (flag > 0) {
-            __dt__80185754(self);
+            cf::CREvtObj::operator delete(self);
         }
     }
 

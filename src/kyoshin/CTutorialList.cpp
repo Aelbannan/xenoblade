@@ -26,7 +26,7 @@ extern "C" void TutorialList_ClearSummaryCounts(u8* self);
 u8 CTutorialList::TutorialList_IsInitialized() { return this->mInitialized; }
 
 
-// Tutorial list constructor (retail __ct__CTutorialList). Constructs the
+// Tutorial list constructor (retail __ct__13CTutorialListFUs). Constructs the
 // embedded sub-objects in place, primes the control bytes, then builds
 // temp CScrollBar / CSortMenu+extension bodies on the stack and copies them
 // into the members the same way retail does (region copy ctor, field copies,
@@ -48,7 +48,7 @@ CTutorialList::CTutorialList(u16 count) {
     mAnim24 = 0;
     mAnim28 = 0;
     __ct__CCur18(&mCursor, 0);
-    __ct__CScrollBar(&mScrollBar, 0);
+    __ct__10CScrollBarFUc(&mScrollBar, 0);
     __ct__CSortMenu(&mSortMenu84[0]);
     mField174 = 0;
     mState175 = 0;
@@ -63,7 +63,7 @@ CTutorialList::CTutorialList(u16 count) {
     TutorialList_ClearSummaryCounts(&mSubObj180[0]);
 
     // Build a temp CScrollBar (flag 1) and copy its body into the member.
-    __ct__CScrollBar(&tmpSb, 1);
+    __ct__10CScrollBarFUc(&tmpSb, 1);
     copyScrollBarData(&mScrollBar, &tmpSb);
     __dt__10CScrollBarFv(&tmpSb, -1);
 

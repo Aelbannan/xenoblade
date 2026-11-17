@@ -88,7 +88,7 @@ extern void Walker_TryStartBattle();
 extern void Walker_BindBattleObj();
 } // extern "C"
 extern void* lbl_eu_80661D28;
-extern void* lbl_eu_80661BE0;
+extern void* __RTTI__Q22cf11IObjectInfo;
 extern void* lbl_eu_80661BF0;
 extern void* lbl_eu_80661C68;
 
@@ -119,7 +119,7 @@ const void* lbl_eu_8052A558[66] = {
 // .data 0x30: cross-TU RTTI-descriptor table.
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8052A660[12] = {
-    (void*)&lbl_eu_80661BE0, (void*)0x00000010, (void*)&lbl_eu_80661BF0, 0, // +0x108
+    (void*)&__RTTI__Q22cf11IObjectInfo, (void*)0x00000010, (void*)&lbl_eu_80661BF0, 0, // +0x108
     (void*)&lbl_eu_80661BE8, 0, (void*)&lbl_eu_80661C68, 0, // +0x118
     (void*)&lbl_eu_80661C60, 0, 0, 0, // +0x128
 };

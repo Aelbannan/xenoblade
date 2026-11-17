@@ -343,7 +343,7 @@ bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
             job = nullptr;
         }
         if (job != nullptr) {
-            if (((CDeviceFileJob*)job)->cancel((CDeviceFileJob_UnkStruct1*)pHandle)) {
+            if (((CDeviceFileJob*)job)->cancel(pHandle)) {
                 break;
             }
         }

@@ -8,30 +8,11 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 
-// Shared string pool in split1 .rodata: "/menu/jp/Battery.arc", "pic_%02d"...
-// lbl_* names at global (non-namespace) scope do not get mangled by C++.
-extern const char lbl_eu_8051399C[];
-
-// IWorkEvent vtable for CBattery (split1 .data on US/EU; __vt__8CBattery on JP).
-// 32-bit function-pointer slots (defined in the split1 unit that owns .data).
-extern u32 lbl_eu_8053B890[];
-
-/* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order). */
-struct CBatteryVtblBase {
-    void* mVtbl; // 0x0 - lbl_eu_8053B890
-
-    CBatteryVtblBase() {
-        mVtbl = lbl_eu_8053B890;
-    }
-};
-
-/* Battery HUD widget. Layout-compatible with IWorkEvent (vptr @ +0) for
-CDeviceFile::readFile, but not a C++ IWorkEvent subclass - that would emit weak
-default stubs into this TU's .text and blow the split budget. */
-class CBattery : public CBatteryVtblBase {
+/* Battery HUD widget; receives its archive through IWorkEvent::OnFileEvent. */
+class CBattery : public IWorkEvent {
 public:
     CBattery(u8 batteryLevel);
-    ~CBattery();
+    virtual ~CBattery();
     void loadBatteryArchive();
     void updateLayout();
     void drawBattery(void*);
@@ -39,7 +20,7 @@ public:
     void setBatteryLevel(u8 level);
     void updateBatteryImage();
     void onLayoutReady();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     UnkClass_8045F564 mMemRegion; // 0x4 - scratch region for layout build
     CFileHandle* mFileHandle; // 0x14

@@ -66,7 +66,7 @@ extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __dt__9CTutorialFv(CTutorial* self, int dealloc);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 

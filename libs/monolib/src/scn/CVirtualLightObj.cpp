@@ -13,9 +13,9 @@
 #include "monolib/scn/code_804BF59C.hpp"
 #undef ScnEnvLgt_noopF940
 
-// Sets byte at offset 0x1174.
-extern "C" void setLightEnvEnable(CVirtualLightObj* self, u8 val) {
-    self->mUnk1174 = val;
+// Arms/disarms the light environment (+0x1174).
+extern "C" void setLightEnvEnable(CLightEnv* self, u8 val) {
+    self->mByte1174 = val;
 }
 
 // ---------------------------------------------------------------------------

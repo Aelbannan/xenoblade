@@ -121,9 +121,8 @@ struct ChrAnmResult;
 
 // CREvtObj base-class functions
 // (defined in kyoshin/realtimeevt/CREvtObj.cpp / code_80185754 TU)
-extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
+extern "C" void __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg);
 extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-extern "C" void __dt__80185754(void* ptr);
 
 // Bdat / data loading
 extern "C" void* EvtSeqResolveListEntryAddr(u32 arg);

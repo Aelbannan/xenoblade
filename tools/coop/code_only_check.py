@@ -100,7 +100,10 @@ def check_unit(unit: str, region: str, root: Path = ROOT) -> UnitVerdict:
     verdict.violations, verdict.transitional = foreign_definitions(
         retail, decomp, _eds_sections(decomp_obj)
     )
-    verdict.promote = check_data_sections(retail_obj, decomp_obj).ok
+    from tools.coop.lib.weak_dedup import linked_view
+
+    view = linked_view(decomp_obj, root, region, unit).path
+    verdict.promote = check_data_sections(retail_obj, view).ok
     return verdict
 
 

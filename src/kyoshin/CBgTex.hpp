@@ -7,9 +7,6 @@
 
 #include <nw4r/lyt.h>
 
-// Shared string pool (split1 .rodata).
-extern char lbl_eu_80505370[];
-
 // SDA globals (retail names; defined in common/sbss splits).
 extern u32 lbl_eu_80664184;
 extern s32 lbl_eu_80664460;
@@ -41,7 +38,7 @@ struct CBgTexVtblBase {
 /* Background layout texture widget. Layout-compatible with IWorkEvent (vptr @0)
 for CDeviceFile::readFile, but not a C++ IWorkEvent subclass (avoids weak stubs).
 
-US retail strips most member manglings (__ct__CBgTex, BgTex_SetupRegion_3A24, ...); dtor and
+US retail strips most member manglings (__ct__6CBgTexFUc, BgTex_SetupRegion_3A24, ...); dtor and
 OnFileEvent keep C++ names. See CBgTex.cpp. */
 struct CBgTex : public CBgTexVtblBase {
     UnkClass_8045F564 mMemRegion; // 0x4

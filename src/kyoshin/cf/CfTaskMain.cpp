@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/cf/CfTaskMain.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -6,20 +7,6 @@
 // --- CTTask<cf::CfTaskMain> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
 // specializations produce the retail standalone Move/Draw/dtor symbols.
-template<>
-void CTTask<cf::CfTaskMain>::Move() {
-    if (mMoveFunc) {
-        (static_cast<cf::CfTaskMain*>(this)->*mMoveFunc)();
-    }
-}
-
-template<>
-void CTTask<cf::CfTaskMain>::Draw() {
-    if (mDrawFunc) {
-        (static_cast<cf::CfTaskMain*>(this)->*mDrawFunc)();
-    }
-}
-
 template<>
 CTTask<cf::CfTaskMain>::~CTTask() {}
 
@@ -36,8 +23,6 @@ extern u32 __ptmf_null[3];
 extern char lbl_eu_80526F58[];
 extern char lbl_eu_80526E80[];
 
-// The complete-object destructor is declared in CfTaskMain.hpp (tail-called
-// by the IWorkEvent dtor thunk).
 
 namespace cf {
 
@@ -126,9 +111,17 @@ void* __ct__800697E8(CProcess* parent, u32 field58val) {
     return obj;
 }
 
-// IWorkEvent dtor adjusting thunk: subtracts 0x54 from IWorkEvent* to recover
-// CfTaskMain*, then tail-calls the complete-object destructor.
-// Retail: subi r3, r3, 0x54; b __dt__Q22cf10CfTaskMainFv
-void CfTaskMain_dtorAdj54(void* self) {
-    __dt__Q22cf10CfTaskMainFv(static_cast<char*>(self) - 0x54);
+template<>
+void CTTask<cf::CfTaskMain>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CfTaskMain*>(this)->*mMoveFunc)();
+    }
 }
+
+template<>
+void CTTask<cf::CfTaskMain>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CfTaskMain*>(this)->*mDrawFunc)();
+    }
+}
+

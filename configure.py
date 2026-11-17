@@ -623,7 +623,6 @@ config.libs = [
                 extra_cflags=["-O4,s", "-func_align 4"],
                 link_transform={
                     "renames": [
-                        ("__ct__6CBgTexFUc", "__ct__CBgTex"),
                         ("BgTex_SetupRegion_3A24__6CBgTexFv", "BgTex_SetupRegion_3A24"),
                         ("BgTex_Acquire_3C14__6CBgTexFv", "BgTex_Acquire_3C14"),
                         ("BgTex_Tick_3D54__6CBgTexFv", "BgTex_Tick_3D54"),
@@ -731,7 +730,7 @@ config.libs = [
             # the TU defines no data sections (same residual as promoted
             # kyoshin/realtimeevt/CREvtLight).
             Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
-            Object(MatchingCodeOnly, "kyoshin/CTaskGamePic.cpp", extra_cflags=["-RTTI off"]),  # retail has no __RTTI__/type-name pools in this TU (manual lbl_eu_ vtables ship from split-asm); -RTTI off drops the dead local RTTI so the stripped sections stop emitting @61xx pool UNDEFs
+            Object(MatchingCodeOnly, "kyoshin/CTaskGamePic.cpp", extra_cflags=["-RTTI off", "-O4,s", "-func_align 4"]),  # retail has no __RTTI__/type-name pools in this TU (manual lbl_eu_ vtables ship from split-asm); -RTTI off drops the dead local RTTI so the stripped sections stop emitting @61xx pool UNDEFs
             Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(Matching, "kyoshin/code_80296898.cpp"),
@@ -1903,7 +1902,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/device/CDeviceFile.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileCri.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI/vtable data in this TU (blob lbl_eu_8056C354/408 are hand-built); -RTTI off kills MWCC __RTTI__/typeinfo names
             Object(NonMatching, "monolib/src/device/CDeviceFileDvd.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceFileJob.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI data in this TU (weak __RTTI__/typeinfo names the retail linker GC'd; .data/.rodata/.sdata all 0)
+            Object(NonMatching, "monolib/src/device/CDeviceFileJob.cpp"),  # vtable + __RTTI__14CDeviceFileJob emitted natively from the real virtual members
             Object(NonMatching, "monolib/src/device/CDeviceFileJobReadDvd.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFont.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFontInfoExt.cpp"),

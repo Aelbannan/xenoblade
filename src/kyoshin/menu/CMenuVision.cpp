@@ -46,7 +46,7 @@ void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
 u32 CfCode_GetOptPtr0C(void*);
 void* CfCode_GetSubObject(void*);
 int ScMain_GetSummedInt(void*);
-f32 ScMain_GetRoundedMetric(void*);
+struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void PaneSetTexPalette(void*, void*);
@@ -1059,7 +1059,7 @@ extern "C" void driveVisionUpdate(int flags) {
     if (flags & 0x10) {
         CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[5];
-        int value = (int)ScMain_GetRoundedMetric(battle);
+        int value = (int)ScMain_GetRoundedMetric(reinterpret_cast<ScMain*>(battle));
         if (value > 999) {
             value = 999;
         } else if (value < 0) {

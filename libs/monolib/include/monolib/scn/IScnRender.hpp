@@ -1,6 +1,6 @@
 #pragma once
 
-// Retail: IScnRender carries virtual cbRenderBefore (vtable lbl_eu_80525A00 slot 1)
+// Retail: IScnRender carries virtual cbRenderBefore (vtable __vt__10IScnRender slot 1)
 // plus legacy non-virtual empty handleEmptyRender (0x800444C0, blr; defined in
 // kyoshin/CTaskGame.cpp). Adjustor thunks take the overridden virtual's name.
 //

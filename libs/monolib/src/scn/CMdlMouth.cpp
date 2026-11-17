@@ -30,45 +30,23 @@ struct CMdlOwnerCtx {
     nw4r::g3d::ScnMdl* field_0x147C;     // 0x147C g3d scene object (ScnMdl)
 };
 
-extern "C" void MdlMouthSetValue(CMdlMouth* ths, float val) {
-    ths->value2C = val;
-}
 
-extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
-    // Mismatched own-node id: callers may only animate the bound node.
-    if ((u32)ths->field_0x0C != arg2) {
-        return 0;
-    }
-    // Closing-timer decrement: while it counts down the rest is skipped.
-    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
-        ths->field_0x28 -= 1;
-        if (ths->field_0x28 > 0) {
-            return 0;
-        }
-    }
-    if (ths->field_0x08 == 0) {
-        return 1;
-    }
-    // Integrate mouth-open angle from the owner view's delta.
-    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
-    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
-    if (ths->field_0x10 > ml::pi) {
-        // Reset to fully closed, then re-randomize open/close speeds.
-        ths->field_0x10 = lbl_eu_8066B310;
-        ths->field_0x14 = lbl_eu_8066B310;
-        if (ths->field_0x08 != 0) {
-            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-        }
-    }
-    nw4r::math::VEC3 v;
-    f32 o = ths->field_0x10;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
-    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
-    res->GetRotateDeg(&v);
-    v.z = lbl_eu_8066B334 * ths->field_0x1C + v.z;
-    res->SetRotateDeg(&v);
-    return 1;
+// Retail ctor fragment: stores the vtable pointer, then mirrors the retail
+// field-init order (field_0x20 is left uninitialized, as in retail).
+extern "C" void __ct__CMdlMouth(CMdlMouth* ths) {
+    // Manual vptr store; typed as u32* to match lbl array.
+    *reinterpret_cast<u32**>(ths) = lbl_eu_805701B0;
+    ths->field_0x04 = 0;
+    ths->field_0x08 = 0;
+    ths->field_0x0C = -1;
+    f32 z = lbl_eu_8066B310;
+    ths->field_0x10 = z;
+    ths->field_0x14 = z;
+    ths->field_0x18 = z;
+    ths->field_0x1C = z;
+    ths->field_0x24 = -1;
+    ths->field_0x28 = 0;
+    ths->value2C = lbl_eu_8066B314;
 }
 
 // Retail dtor fragment (deleting-dtor form: flag > 0 frees the object).
@@ -77,68 +55,6 @@ extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag) {
         operator delete(ths);
     }
     return ths;
-}
-
-extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
-    // Per-frame mouth update: bail when no material is bound (id < 0) or the
-    // closing timer still counts down; otherwise integrate the open angle and
-    // push the SRT offset-table row into the copied material's texture SRT.
-    if (ths->field_0x24 < 0) {
-        return;
-    }
-    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
-        ths->field_0x28 -= 1;
-        if (ths->field_0x28 > 0) {
-            return;
-        }
-    }
-    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
-    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
-    if (ths->field_0x10 > ml::pi) {
-        // Reset to fully closed, then re-randomize open/close speeds.
-        ths->field_0x10 = lbl_eu_8066B310;
-        ths->field_0x14 = lbl_eu_8066B310;
-        if (ths->field_0x08 != 0) {
-            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-        }
-    }
-    f32 o = ths->field_0x10;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
-    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
-    // Pick the SRT offset-table row from the open amount, clamped to [0,2].
-    s32 idx = (s32)(lbl_eu_8066B338 * ths->field_0x1C);
-    if ((u32)idx >= 3) {
-        idx = 2;
-    }
-    nw4r::g3d::ScnMdl* scnMdl =
-        ths->field_0x04->field_0x147C;
-    nw4r::g3d::ScnMdl::CopiedMatAccess cma(scnMdl, (u32)ths->field_0x24);
-    nw4r::g3d::ResTexSrt srt = cma.GetResTexSrt(false);
-    if (srt.IsValid()) {
-        // Reflection-scale SRT matrix; column 3 carries the per-index offset.
-        // Load the per-index offset into a local first: its web must be born
-        // before the two shared constants so the scratch colors come out
-        // f0=one, f1=neg, f2=offset (retail order), while the _03 store stays
-        // in offset order.
-        f32 t = lbl_eu_805247B4[idx];
-        nw4r::math::MTX34 m;
-        m._00 = lbl_eu_8066B314;
-        m._01 = lbl_eu_8066B310;
-        m._02 = lbl_eu_8066B310;
-        m._03 = t;
-        m._10 = lbl_eu_8066B310;
-        m._11 = lbl_eu_8066B314;
-        m._12 = lbl_eu_8066B310;
-        m._13 = lbl_eu_8066B310;
-        m._20 = lbl_eu_8066B310;
-        m._21 = lbl_eu_8066B310;
-        m._22 = lbl_eu_8066B314;
-        m._23 = lbl_eu_8066B310;
-        srt.SetEffectMtx(0, &m);
-        srt.SetEffectMtx(1, &m);
-        srt.SetEffectMtx(2, &m);
-    }
 }
 
 extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model) {
@@ -221,22 +137,107 @@ extern "C" void MdlMouthSetMode(CMdlMouth* ths, int arg2, int arg3) {
     }
 }
 
-// Retail ctor fragment: stores the vtable pointer, then mirrors the retail
-// field-init order (field_0x20 is left uninitialized, as in retail).
-extern "C" void __ct__CMdlMouth(CMdlMouth* ths) {
-    // Manual vptr store; typed as u32* to match lbl array.
-    *reinterpret_cast<u32**>(ths) = lbl_eu_805701B0;
-    ths->field_0x04 = 0;
-    ths->field_0x08 = 0;
-    ths->field_0x0C = -1;
-    f32 z = lbl_eu_8066B310;
-    ths->field_0x10 = z;
-    ths->field_0x14 = z;
-    ths->field_0x18 = z;
-    ths->field_0x1C = z;
-    ths->field_0x24 = -1;
-    ths->field_0x28 = 0;
-    ths->value2C = lbl_eu_8066B314;
+extern "C" void MdlMouthSetValue(CMdlMouth* ths, float val) {
+    ths->value2C = val;
+}
+
+extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
+    // Mismatched own-node id: callers may only animate the bound node.
+    if ((u32)ths->field_0x0C != arg2) {
+        return 0;
+    }
+    // Closing-timer decrement: while it counts down the rest is skipped.
+    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
+        ths->field_0x28 -= 1;
+        if (ths->field_0x28 > 0) {
+            return 0;
+        }
+    }
+    if (ths->field_0x08 == 0) {
+        return 1;
+    }
+    // Integrate mouth-open angle from the owner view's delta.
+    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
+    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
+    if (ths->field_0x10 > ml::pi) {
+        // Reset to fully closed, then re-randomize open/close speeds.
+        ths->field_0x10 = lbl_eu_8066B310;
+        ths->field_0x14 = lbl_eu_8066B310;
+        if (ths->field_0x08 != 0) {
+            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+        }
+    }
+    nw4r::math::VEC3 v;
+    f32 o = ths->field_0x10;
+    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
+    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
+    res->GetRotateDeg(&v);
+    v.z = lbl_eu_8066B334 * ths->field_0x1C + v.z;
+    res->SetRotateDeg(&v);
+    return 1;
+}
+
+extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
+    // Per-frame mouth update: bail when no material is bound (id < 0) or the
+    // closing timer still counts down; otherwise integrate the open angle and
+    // push the SRT offset-table row into the copied material's texture SRT.
+    if (ths->field_0x24 < 0) {
+        return;
+    }
+    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
+        ths->field_0x28 -= 1;
+        if (ths->field_0x28 > 0) {
+            return;
+        }
+    }
+    f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
+    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
+    if (ths->field_0x10 > ml::pi) {
+        // Reset to fully closed, then re-randomize open/close speeds.
+        ths->field_0x10 = lbl_eu_8066B310;
+        ths->field_0x14 = lbl_eu_8066B310;
+        if (ths->field_0x08 != 0) {
+            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+        }
+    }
+    f32 o = ths->field_0x10;
+    f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
+    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
+    // Pick the SRT offset-table row from the open amount, clamped to [0,2].
+    s32 idx = (s32)(lbl_eu_8066B338 * ths->field_0x1C);
+    if ((u32)idx >= 3) {
+        idx = 2;
+    }
+    nw4r::g3d::ScnMdl* scnMdl =
+        ths->field_0x04->field_0x147C;
+    nw4r::g3d::ScnMdl::CopiedMatAccess cma(scnMdl, (u32)ths->field_0x24);
+    nw4r::g3d::ResTexSrt srt = cma.GetResTexSrt(false);
+    if (srt.IsValid()) {
+        // Reflection-scale SRT matrix; column 3 carries the per-index offset.
+        // Load the per-index offset into a local first: its web must be born
+        // before the two shared constants so the scratch colors come out
+        // f0=one, f1=neg, f2=offset (retail order), while the _03 store stays
+        // in offset order.
+        f32 t = lbl_eu_805247B4[idx];
+        nw4r::math::MTX34 m;
+        m._00 = lbl_eu_8066B314;
+        m._01 = lbl_eu_8066B310;
+        m._02 = lbl_eu_8066B310;
+        m._03 = t;
+        m._10 = lbl_eu_8066B310;
+        m._11 = lbl_eu_8066B314;
+        m._12 = lbl_eu_8066B310;
+        m._13 = lbl_eu_8066B310;
+        m._20 = lbl_eu_8066B310;
+        m._21 = lbl_eu_8066B310;
+        m._22 = lbl_eu_8066B314;
+        m._23 = lbl_eu_8066B310;
+        srt.SetEffectMtx(0, &m);
+        srt.SetEffectMtx(1, &m);
+        srt.SetEffectMtx(2, &m);
+    }
 }
 
 // ===== Dissolved data owned by this TU =====

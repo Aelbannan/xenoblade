@@ -35,6 +35,32 @@ struct CMdlAnmEyeModel {
 extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag);
 extern "C" u32 lbl_eu_805701D0[];
 
+// Retail fragments. NOTE: these must stay free functions with C linkage:
+// the retail symbols are literally `__ct__CMdlAnmEye` (unmangled) and
+// `__dt__10CMdlAnmEyeFv`; defining them as real CMdlAnmEye members would
+// change the emitted mangled names.
+struct CMdlAnmEyeVptrView {
+    u32* vtPrimary; // 0x00
+};
+
+extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
+    ((CMdlAnmEyeVptrView*)self)->vtPrimary = lbl_eu_805701D0;
+    self->field_04 = 0;
+    self->field_1C = 0;
+    self->field_20 = 0;
+    self->field_24 = 0;
+    self->field_28 = lbl_eu_8066B360;
+    self->value2C = 1;
+    return self;
+}
+
+extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag) {
+    if (self != 0 && flag > 0) {
+        operator delete(self);
+    }
+    return self;
+}
+
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
 extern "C" void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
@@ -168,34 +194,8 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x805701D0-0x805701E0 (16B): CMdlAnmEye vtable {RTTI locator
 // lbl_eu_80663C90, 0, dtor, 0}. The class keeps virtual machinery declared in
-// the hpp but the ctor/dtor are defined as fragments below so MWCC emits no
+// the hpp but the ctor/dtor are defined as fragments above so MWCC emits no
 // auto vtable/RTTI for the class.
-
-// Retail fragments. NOTE: these must stay free functions with C linkage:
-// the retail symbols are literally `__ct__CMdlAnmEye` (unmangled) and
-// `__dt__10CMdlAnmEyeFv`; defining them as real CMdlAnmEye members would
-// change the emitted mangled names.
-struct CMdlAnmEyeVptrView {
-    u32* vtPrimary; // 0x00
-};
-
-extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
-    ((CMdlAnmEyeVptrView*)self)->vtPrimary = lbl_eu_805701D0;
-    self->field_04 = 0;
-    self->field_1C = 0;
-    self->field_20 = 0;
-    self->field_24 = 0;
-    self->field_28 = lbl_eu_8066B360;
-    self->value2C = 1;
-    return self;
-}
-
-extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag) {
-    if (self != 0 && flag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
 
 // [.rodata] 0x805247E8-0x80524810 (40B): eye-blink angle tables + RTTI name.
 // Exact retail values (0x3EAC0831 / 0x3F2C0831 / 0xBE000000 / 0xBE800000).

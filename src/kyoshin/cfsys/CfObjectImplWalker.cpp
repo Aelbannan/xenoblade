@@ -66,7 +66,7 @@ void Walker_SyncBattleFrame(cf::CfObjectImplWalker* self) {
                     self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
                     dispatchItemLoad(self->field_18, 3);
                     lbl_eu_80663E24 &= ~0x08000000;
-                    UIWin_BuildFlagBuf(2, 0, 0);
+                    UIWin_BuildFlagBufRec(2, 0, 0);
                 }
             }
             self->vfD4();
@@ -880,14 +880,14 @@ L3C68:
                 if (!(lbl_eu_80663E24 & 0x08000000)) {
                     u16 v5 = self->field_18->mSub.field_8C;
                     if (v5 == 8) v5 = 3;
-                    UIWin_BuildFlagBuf(3, ((cf::CfWalkTalkSrc*)actor)->field_8C,
+                    UIWin_BuildFlagBufRec(3, ((cf::CfWalkTalkSrc*)actor)->field_8C,
                                   v5);
                 }
                 CtrlObjectParam_SetWorkTailValue(mgr->field_8C);
             } else {
                 u32 f64 = ((cf::CfWalkActorObj*)actor)->field_64;
                 if ((f64 & 0x20000) != 0 || (f64 & 0x10000) != 0) {
-                    UIWin_BuildFlagBuf(5, ((cf::CfWalkTalkSrc*)actor)->field_8C,
+                    UIWin_BuildFlagBufRec(5, ((cf::CfWalkTalkSrc*)actor)->field_8C,
                                   0);
                 }
             }

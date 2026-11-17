@@ -69,6 +69,8 @@ class ParsedObject:
     #: symbol name -> (section index, st_value); the first definition wins.
     symbols: dict[str, tuple[int, int]] = field(default_factory=dict)
     section_names: dict[int, str] = field(default_factory=dict)
+    #: symbol name -> binding (STB_*) of the definition in ``symbols``.
+    binds: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -150,7 +152,9 @@ def _parse(path: Path) -> ParsedObject:
         if st_name == 0 or st_shndx == 0:
             continue
         name = sym_name(st_name)
-        parsed.symbols.setdefault(name, (st_shndx, st_value))
+        if name not in parsed.symbols:
+            parsed.symbols[name] = (st_shndx, st_value)
+            parsed.binds[name] = _st_info >> 4
 
     for i in range(shnum):
         nm = secname(i)
@@ -276,6 +280,30 @@ def compare_reloc_sets(
     return None
 
 
+def _linker_tail_pad(r, d, r_bytes, d_bytes, r_parsed, sec) -> int:
+    """Retail-only trailing bytes that are linker alignment padding, else 0.
+
+    Retail split sections run up to the next unit's start, so they include
+    the zero padding mwld inserts to align the next object.  The decomp
+    object ends at its last datum.  The tail is accepted only when it is
+    shorter than the retail section alignment, all zero (or zero-fill), and
+    carries no relocation.
+    """
+    if r is None or d is None:
+        return 0
+    rsz, dsz = r["size"], d["size"]
+    pad = rsz - dsz
+    align = max(r.get("align") or 0, 1)
+    if pad <= 0 or pad >= align or rsz % align:
+        return 0
+    if sec not in NOBITS:
+        if any(r_bytes[r["off"] + dsz: r["off"] + rsz]):
+            return 0
+    if any(dsz <= x.offset < rsz for x in (r_parsed.relocs.get(sec) or [])):
+        return 0
+    return pad
+
+
 def check_data_sections(
     retail_object: Path,
     decomp_object: Path,
@@ -302,7 +330,8 @@ def check_data_sections(
         d = d_secs.get(sec)
         rsz = r["size"] if r else 0
         dsz = d["size"] if d else 0
-        if rsz != dsz:
+        tail = _linker_tail_pad(r, d, r_bytes, d_bytes, r_parsed, sec) if rsz != dsz else 0
+        if rsz != dsz and not tail:
             result.sections.append(SectionResult(
                 sec, False, rsz, dsz,
                 f"retail size 0x{rsz:X} != decomp 0x{dsz:X}",
@@ -312,6 +341,9 @@ def check_data_sections(
         if rsz == 0:
             result.sections.append(SectionResult(sec, True, 0, 0, "empty both"))
             continue
+        if tail:
+            # Compare the decomp-sized prefix; the retail tail is link padding.
+            rsz = dsz
         r_align = r["align"] if r else 0
         d_align = d["align"] if d else 0
         if sec in NOBITS:
@@ -326,7 +358,8 @@ def check_data_sections(
         if rb == db:
             # MWCC .data/.rodata align 4 vs 8 is immaterial when bytes match (e.g. ResFontBase packed vtables)
             result.sections.append(SectionResult(
-                sec, True, rsz, dsz, f"{rsz} bytes identical (align {r_align} vs {d_align})"))
+                sec, True, rsz, dsz, f"{rsz} bytes identical (align {r_align} vs {d_align})"
+                + (f" + 0x{tail:X} retail link tail padding" if tail else "")))
         else:
             diffs = sum(1 for a, b in zip(rb, db) if a != b)
             first = next((i for i, (a, b) in enumerate(zip(rb, db)) if a != b), None)
@@ -355,29 +388,59 @@ def check_data_sections(
     return result
 
 
+#: Per section, ``(st_value, linked base)`` anchors sorted by ``st_value``.
+Anchors = dict[str, list[tuple[int, int]]]
+
+
 def _section_bases(parsed: ParsedObject, layout: LinkerLayout | None,
-                   sections: tuple[str, ...]) -> dict[str, int]:
-    """Linked base per section from the object's globally-named symbols
-    (like :func:`derive_section_bases`, for arbitrary sections)."""
-    bases: dict[str, int] = {}
+                   sections: tuple[str, ...]) -> Anchors:
+    """Linked-address anchors per section from the object's globally-named
+    symbols (like :func:`derive_section_bases`, for arbitrary sections).
+
+    An object offset is placed through the nearest anchor at or below it
+    (:func:`_anchored`), not through one section-wide base: the compiler can
+    emit a function at a different object offset than the linked image has
+    it (e.g. a weak template instance that MWCC puts at the front of
+    ``.text`` while the retail split has it at the end), and a non-matching
+    function shifts everything after it.  A single base taken from the first
+    named symbol would shift every other function key with it.
+    """
+    out: Anchors = {}
     if layout is None:
-        return bases
+        return out
     for name, (shndx, value) in parsed.symbols.items():
-        if _is_tu_local(name):
+        # Only global/weak names: local ones (``end``) collide across units.
+        if _is_tu_local(name) or parsed.binds.get(name, 1) == 0:
             continue
         section = parsed.section_names.get(shndx)
-        if section not in sections or section in bases:
+        if section not in sections:
             continue
         sec, addr = layout.resolve_name(name)
         if addr is None or sec != section or addr - value < 0x80000000:
             continue
-        bases[section] = addr - value
-    return bases
+        out.setdefault(section, []).append((value, addr - value))
+    for anchors in out.values():
+        anchors.sort()
+    return out
+
+
+def _anchored(anchors: list[tuple[int, int]] | int | None, off: int) -> int | None:
+    """Linked address of section offset *off* (see :func:`_section_bases`)."""
+    if anchors is None or isinstance(anchors, int):
+        return None if anchors is None else anchors + off
+    if not anchors:
+        return None
+    base = anchors[0][1]
+    for value, b in anchors:
+        if value > off:
+            break
+        base = b
+    return base + off
 
 
 def _extab_reloc_key(reloc: Reloc, parsed: ParsedObject,
                      layout: LinkerLayout | None,
-                     bases: dict[str, int] | None = None) -> tuple:
+                     bases: Anchors | None = None) -> tuple:
     """Spelling-independent key for one exception-table relocation.
 
     Targets defined in the object (functions in ``.text``, ``@N`` action
@@ -397,9 +460,9 @@ def _extab_reloc_key(reloc: Reloc, parsed: ParsedObject,
             sec, addr = layout.resolve_name(reloc.symbol)
             if addr is not None and sec == section:
                 return (reloc.type, "abs", addr + reloc.addend)
-        base = (bases or {}).get(section)
-        if base is not None:
-            return (reloc.type, "abs", base + reloc.value + reloc.addend)
+        addr = _anchored((bases or {}).get(section), reloc.value + reloc.addend)
+        if addr is not None:
+            return (reloc.type, "abs", addr)
         return (reloc.type, "sec", section, reloc.value + reloc.addend)
     if layout is not None and reloc.symbol:
         target = layout.canon_reloc(reloc.symbol, reloc.addend)
@@ -477,7 +540,7 @@ def check_extab_sections(
 
 
 def _extab_records(path: Path, parsed: ParsedObject, layout: LinkerLayout | None,
-                   bases: dict[str, int]) -> dict:
+                   bases: Anchors) -> dict:
     """Per-function exception records: function key -> (size, record, relocs).
 
     ``extabindex`` is a list of ``(function, function size, extab record)``

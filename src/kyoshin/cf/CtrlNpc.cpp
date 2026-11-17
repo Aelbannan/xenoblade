@@ -121,7 +121,7 @@ cf::CtrlNpc* __ct__CtrlNpc(cf::CtrlNpc* self, cf::CfObject* param) {
     self->field_28 = (cf::CfObjectMove*)func_800BBC0C(param);
     self->field_2C = 0;
     *(void**)self = (void*)lbl_eu_80527B38;   // final vtable
-    __ct__cf_CtrlMoveNpc((cf::CCtrlMoveNpc*)self->_sub30, self);
+    __ct__Q22cf12CCtrlMoveNpcFPv((cf::CCtrlMoveNpc*)self->_sub30, self);
     self->field_AC.f = lbl_eu_80666698;
     self->field_B0.f = lbl_eu_80666698;
     self->field_B4.f = lbl_eu_80666698;

@@ -42,7 +42,6 @@ extern "C" {
     // CREvtModel member (this, flag)
     extern void __ct__80172668(void* self, int flag);
     // Dealloc
-    extern void __dt__80185754(void* ptr);
 
     // CREvtModel helpers
     extern void EvtModelReleaseAnimsOnce(void* self);
@@ -162,7 +161,7 @@ extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
         __ct__80172668(self, 0);
 
         if (flag > 0) {
-            __dt__80185754(self);
+            cf::CREvtObj::operator delete(self);
         }
     }
 

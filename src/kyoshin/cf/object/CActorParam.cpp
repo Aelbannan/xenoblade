@@ -2502,17 +2502,17 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
         atk->unk60 = gauge;
     }
 }
-// us-8017cdb0: retail symbol is Fv; the real ABI passes (self, dt). Under a
+// us-8017cdb0: CActorParam::updateHateEntries (vtable 0x350). Under a
 // non-0x04000000 game flag, decay the 8 CActorParam_UnkStruct5 gauges at
 // 0x1928: entries whose actor (unk14 -> findObjectById/8016FE34) is gone or
 // busy (Func138 / battle state 0xF8) are reset to the sdata2 default; live
 // entries decay unk0 by dt*unk8 and unk4 by dt*unkC, clamped to
 // [lbl_eu_806677E8, lbl_eu_80667864].
-void CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv(cf::CActorParam* self, float dt) {
+void cf::CActorParam::CActorParam_updateHateEntries(float dt) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     for (int i = 0; i < 8; i++) {
-        cf::CActorParam_UnkStruct5* e = &self->unk1928[i];
+        cf::CActorParam_UnkStruct5* e = &this->unk1928[i];
         if (e->unk14 == 0) continue;
         void* actor = MapFx_ResolveOwner(findObjectById((int)e->unk14));
         if (actor == NULL || reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked() != 0 ||
@@ -2554,8 +2554,8 @@ void CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // from f1, applies arts-param percentage scaling (0x5C/0x5D/0x9D/0x5E/0x5F),
 // then decays the 3x8 arts matrix (unk7C/unk80) with the scaled deltas.
 void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, float f1) {
-    void* bm = getInstance__Q22cf14CBattleManagerFv();
-    u8 ch = *(u8*)((u8*)bm + 0x1AA);
+    cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+    u8 ch = bm->mChain.unk0[2];
     if (ch >= 1 && ch <= 0x18) return;
     int sum4 = 0;
     int sum5 = 0;
@@ -2728,26 +2728,26 @@ void CActorParam_applyTargetEvent__Q22cf11CActorParamFv(cf::CActorParam* self, c
         }
     }
 }
-// us-8017d83c: retail symbol is Fv; the real ABI passes (self, arg) where
+// us-8017d83c: CActorParam::applyStatusHeal (vtable 0xC0); arg
 // arg carries a u32 status word at +0x74 (bit 0x100 gate). When the actor
 // state (Func127) is active, the battle-state gate (Func138) is clear and
 // the flag is set: read the arts-slot value (IdTable_GetSum id 0x45), scale
 // it by the battle-rate factor (calcBattleDamage over the actor), the actor
 // gauge (Func38) and an sdata2 constant, round to int, and feed the result
 // back through the gauge setter Func34 (slot 0x11C).
-void CActorParam_applyStatusHeal__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam11Arg* arg) {
-    if (self->CActorParam_getStatusTable() == NULL) return;
-    if (self->CActorParam_isBattleLocked() != 0) return;
+void cf::CActorParam::CActorParam_applyStatusHeal(CActorParam11Arg* arg) {
+    if (this->CActorParam_getStatusTable() == NULL) return;
+    if (this->CActorParam_isBattleLocked() != 0) return;
     if ((arg->field_0x74 & 0x100) == 0) return;
     int val;
-    if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x45, &val) == 0) return;
+    if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x45, &val) == 0) return;
     getInstance__Q22cf14CBattleManagerFv();
-    void* actor = self->CActorParam_getActor();
-    float a = calcBattleDamage(self->CActorParam_getActor(), actor, NULL);
-    float b = self->CActorParam_getDamageScale();
+    void* actor = this->CActorParam_getActor();
+    float a = calcBattleDamage(this->CActorParam_getActor(), actor, NULL);
+    float b = this->CActorParam_getDamageScale();
     float v = a * (lbl_eu_80667830 * ((float)val * b));
     int iv = (int)v;
-    self->CActorParam_addHp((float)iv);
+    this->CActorParam_addHp((float)iv);
 }
 // us-8017d9a0: retail symbol is Fv; the real ABI passes (self, arg) where
 // arg carries a flags block (+0x50 -> +0x78), a u16 dispatch id (+0x80) and
@@ -3014,15 +3014,15 @@ void CActorParam_commitArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, i
         self->CActorParam_addHitCharge(self->unk17E4.field_14);
     }
 }
-// us-8017e644: retail symbol is Fv; the real ABI passes (self, val).
+// us-8017e644: CActorParam::UnkVirtualFunc6(int) (vtable 0xAC).
 // Clears the bit-25 status flag at 0x3374, then with val==0 triggers the
 // battle-start cue Func5(1), otherwise feeds val (as float) to Func34.
-void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(cf::CActorParam* self, int val) {
-    self->unk3374 &= ~0x02000000;
+void cf::CActorParam::CActorParam_UnkVirtualFunc6(int val) {
+    this->unk3374 &= ~0x02000000;
     if (val == 0) {
-        self->CActorParam_commitArtsStatus(1);
+        this->CActorParam_commitArtsStatus(1);
     } else {
-        self->CActorParam_addHp((float)val);
+        this->CActorParam_addHp((float)val);
     }
 }
 // us-8017e6b8: raise the battle-state cue (slot 0x20) for the 0x1530 arts
@@ -3154,19 +3154,19 @@ bool CActorParam_isBattleLocked__Q22cf11CActorParamFv(cf::CActorParam* self) {
     }
     return false;
 }
-// us-8017ed30: retail symbol is Fv; the real ABI passes (self, arg, f1, f2,
-// f3). Adds the three deltas to the 8-entry arts gauge block at 0x1928 for
+// us-8017ed30: CActorParam::addHate(void* target, f1, f2, f3) (vtable 0x2C4;
+// CfObjectActor override tail-calls it). Adds the three deltas to the 8-entry arts gauge block at 0x1928 for
 // the entry tracking the actor (id from arg+0x3F10), clamping to
 // [lbl_eu_806677E8, lbl_eu_80667864]; if no entry matches, a fresh slot is
 // initialised with the deltas (f1 clamped, 0x10 = f2/f3 spread).
-void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam140Target* arg, int id, float f1, float f2, float f3) {
-    (void)id;
+void cf::CActorParam::CActorParam_addHate(void* target, float f1, float f2, float f3) {
+    CActorParam140Target* arg = static_cast<CActorParam140Target*>(target);
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     if (arg == NULL) return;
     u32 actorId = arg->field_0x3F10;
     int firstFree = -1; // live across the probes below (retail keeps it in a saved reg)
-    if (isBattleStatusActive((u8*)self + 8, 0xF)) return;
+    if (isBattleStatusActive((u8*)this + 8, 0xF)) return;
     if (isBattleStatusActive(arg->cbstate, 0xC7)) return;
     if (isBattleStatusActive(arg->cbstate, 0x101)) {
         if (f1 != lbl_eu_806677E4) f1 = lbl_eu_806677E8;
@@ -3174,7 +3174,7 @@ void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActor
         if (f3 != lbl_eu_806677E4) f3 = lbl_eu_806677E8;
     }
     for (int i = 0; i < 8; i++) {
-        cf::CActorParam_UnkStruct5* e = &self->unk1928[i];
+        cf::CActorParam_UnkStruct5* e = &this->unk1928[i];
         if (firstFree == -1 && e->unk14 == 0) {
             firstFree = i;
         }
@@ -3217,7 +3217,7 @@ void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActor
         }
     }
     if (firstFree == -1) return;
-    cf::CActorParam_UnkStruct5* e = &self->unk1928[firstFree];
+    cf::CActorParam_UnkStruct5* e = &this->unk1928[firstFree];
     e->unk14 = actorId;
     e->unk0 = f2;
     e->unk4 = f3;

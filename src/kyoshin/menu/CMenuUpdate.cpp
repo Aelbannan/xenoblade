@@ -30,7 +30,7 @@ void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* acc
 void playUISound(u32);
 
 extern u32 lbl_eu_80525A10[];
-extern u32 lbl_eu_80525A00[];
+extern u32 __vt__10IScnRender[];
 extern u32 lbl_eu_8052D1F0[];
 extern u32 lbl_eu_8052D238[];
 extern u32 lbl_eu_8052E7B0[];
@@ -67,7 +67,7 @@ extern "C" __declspec(noinline) void __ct__IWorkEvent(void* self) {
 
 // IScnRender
 extern "C" __declspec(noinline) void __ct__IScnRender(void* self) {
-    *(u32*)self = (u32)lbl_eu_80525A00;
+    *(u32*)self = (u32)__vt__10IScnRender;
 }
 
 // CMenuUpdate_8014274C ctor

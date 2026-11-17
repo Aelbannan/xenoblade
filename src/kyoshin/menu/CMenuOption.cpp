@@ -53,7 +53,7 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
     vtSlots->mScnRenderVt = (u32*)(lbl_eu_805392C8 + 9);
     _this->mParentRef = parent;
 
-    __ct__CBgTex(&_this->mBgTex, 0);
+    __ct__6CBgTexFUc(&_this->mBgTex, 0);
     __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
     __ct__COption(&_this->mOption, 0);
     _this->mState = 0;
@@ -95,7 +95,7 @@ void CMenuOption::Init() {
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex(reinterpret_cast<CBgTex*>(tempBgTex), 0);
+    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tempBgTex), 0);
 
     __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&mBgTex.mMemRegion), reinterpret_cast<u8*>(&reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion));
     mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
@@ -129,7 +129,7 @@ void CMenuOption::Init() {
     mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tempTitle), -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded COption via a temporary ---
     u8 tempOption[0x104];

@@ -83,14 +83,14 @@ extern "C" u32 clpIsBusy(CCollepedia* self);
 
 // Widget ctor/dtor and Init helper calls (US retail strips these names).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CCollepedia(CCollepedia* self);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int dealloc);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int dealloc);
 extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void MenuShopSellCopyCursor(void* dst, void* src);

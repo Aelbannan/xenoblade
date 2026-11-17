@@ -14,6 +14,7 @@
 #include <types.h>
 #include <string.h>
 #include <monolib/util/FixStr.hpp>
+#include "libs/monolib/src/nand/CNReqSaveNand.hpp"
 
 // The NAND engine's object layouts are not part of this TU and are not
 // reconstructed here; these opaque types give the passing pointers a proper
@@ -56,17 +57,9 @@ extern "C" {
     extern u32 lbl_eu_80524888;
     extern u32 lbl_eu_80663B70;
 
-    const char* CNReqSaveBuildTempPath(u8 arg);  // NAND banner-id / temp-path primitive
-    s32 CNReqSaveNandChangeDir(const char* path); // NAND change-dir / open-banner primitive
-    s32 CNReqSaveNandOpen(const char* path, u8 flag);  // NAND set-buffer / open wrapper
-    s32 CNReqSaveNandTell(u32* pos);                   // NAND tell / read primitive
-    s32 CNReqSaveNandClose(void);            // NAND close primitive
     const char* CNReqtaskSaveBanner_BuildPath(CNReqtaskSaveBannerData* data);  // build the banner path string (in this file)
-    s32 CNReqSaveNandCreate(const char* path, u8 perm, u8 attr);   // NAND create (async)
     s32 Banner_AllocData_53DC(CNReqtaskSaveBannerTarget* ptr);        // NAND prim-task finish helper
     void CNReqSaveDeallocIfOpen(CNandTask* data, CNandTask* dealloc);  // NAND dealloc helper
-    s32 CNReqSaveNandWrite(u32 addr, u32 size);  // NAND buffer commit primitive
-    s32 CNReqSaveNandMove(const char* from, const char* to);      // NAND move (async)
     void __dt__804F5738(CNandBlock* ptr);   // task-block destructor
     void CNReqtaskSaveBanner_Release(CNandTask* data, CNandTask* dealloc);  // releases the banner data block
 }
@@ -93,37 +86,6 @@ extern "C" CNReqtaskSaveBannerVtbl** CNReqtaskSaveBanner_Init(CNReqtaskSaveBanne
     data->fC = arg2;
     data->state = 0;
     return &lbl_eu_80665A90;
-}
-
-// us-804f9638: CNReqtaskSaveBanner_BuildPath
-// Banner path builder: formats "%s%s" (prefix/meta from the shared .sdata
-// pointers) into the unit's static FixStr<32> buffer (lbl_eu_80661850) and
-// returns it. On the first call the buffer is cleared and the init flag
-// latched to 1; later calls skip straight to the format.
-// Mirrors CNReqtaskSave::CNReqSaveBuildSavePath (u8 buffer + reinterpret_cast FixStr).
-// noinline: retail CNReqtaskSaveBanner_Step emits `bl CNReqtaskSaveBanner_BuildPath`; without it MWCC
-// inlines this helper and blows the split budget.
-__declspec(noinline) const char* CNReqtaskSaveBanner_BuildPath(CNReqtaskSaveBannerData* data) {
-    if (lbl_eu_80665A94 == 0) {
-        reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850).clear();
-        lbl_eu_80665A94 = 1;
-    }
-    reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850)
-        .format(lbl_eu_805248A8, lbl_eu_80663CD0, lbl_eu_80663CD4);
-    return reinterpret_cast<const ml::FixStr<32>&>(lbl_eu_80661850).c_str();
-}
-
-// us-804f95e8: CNReqtaskSaveBanner_Release
-// Releases the dynamically-sizeable banner data block (destructor + dealloc)
-// before handing the task block back to the NAND allocator.
-void CNReqtaskSaveBanner_Release(CNandTask* data, CNandTask* dealloc) {
-    if (dealloc != 0) {
-        CNandBlock* block = dealloc->field_0;
-        if (block != 0) {
-            __dt__804F5738(block);
-        }
-    }
-    CNReqSaveDeallocIfOpen(data, dealloc);
 }
 
 // The banner-storage data object pointed to by d->f0. Only its last
@@ -282,6 +244,37 @@ extern "C" s32 CNReqtaskSaveBanner_Step(CNReqtaskSaveBannerVtbl* vtable_ptr, CNR
     return 0;
 }
 
+// us-804f95e8: CNReqtaskSaveBanner_Release
+// Releases the dynamically-sizeable banner data block (destructor + dealloc)
+// before handing the task block back to the NAND allocator.
+void CNReqtaskSaveBanner_Release(CNandTask* data, CNandTask* dealloc) {
+    if (dealloc != 0) {
+        CNandBlock* block = dealloc->field_0;
+        if (block != 0) {
+            __dt__804F5738(block);
+        }
+    }
+    CNReqSaveDeallocIfOpen(data, dealloc);
+}
+
+// us-804f9638: CNReqtaskSaveBanner_BuildPath
+// Banner path builder: formats "%s%s" (prefix/meta from the shared .sdata
+// pointers) into the unit's static FixStr<32> buffer (lbl_eu_80661850) and
+// returns it. On the first call the buffer is cleared and the init flag
+// latched to 1; later calls skip straight to the format.
+// Mirrors CNReqtaskSave::CNReqSaveBuildSavePath (u8 buffer + reinterpret_cast FixStr).
+// noinline: retail CNReqtaskSaveBanner_Step emits `bl CNReqtaskSaveBanner_BuildPath`; without it MWCC
+// inlines this helper and blows the split budget.
+__declspec(noinline) const char* CNReqtaskSaveBanner_BuildPath(CNReqtaskSaveBannerData* data) {
+    if (lbl_eu_80665A94 == 0) {
+        reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850).clear();
+        lbl_eu_80665A94 = 1;
+    }
+    reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850)
+        .format(lbl_eu_805248A8, lbl_eu_80663CD0, lbl_eu_80663CD4);
+    return reinterpret_cast<const ml::FixStr<32>&>(lbl_eu_80661850).c_str();
+}
+
 // us-804f96a8: sinit_804F5140
 // .ctors static initializer: installs the CNReqtaskSaveBanner vtable
 // (lbl_eu_80570358) into the task vtable pointer (lbl_eu_80665A90).
@@ -291,11 +284,12 @@ extern "C" s32 CNReqtaskSaveBanner_Step(CNReqtaskSaveBannerVtbl* vtable_ptr, CNR
 // the two bodies into one 0x18 symbol). The helper stores the vtable
 // address through r3. `char[]` type for the vtable keeps the address
 // constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804F96B0(CNReqtaskSaveBannerVtbl** dest) {
-    *dest = (CNReqtaskSaveBannerVtbl*)lbl_eu_80570358;
-}
+extern "C" void func_804F96B0(CNReqtaskSaveBannerVtbl** dest);
 extern "C" __declspec(noinline) void sinit_804F5140() {
     func_804F96B0(&lbl_eu_80665A90);
+}
+extern "C" __declspec(noinline) void func_804F96B0(CNReqtaskSaveBannerVtbl** dest) {
+    *dest = (CNReqtaskSaveBannerVtbl*)lbl_eu_80570358;
 }
 
 // ============================================================================

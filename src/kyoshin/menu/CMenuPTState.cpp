@@ -17,8 +17,8 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
-extern "C" void __ct__CPartyStateWin(CPartyStateWin* self, u32 arg1, u32 arg2);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
+extern "C" void __ct__14CPartyStateWinFUlUl(CPartyStateWin* self, u32 arg1, u32 arg2);
 
 // Real member functions defined in code_8018F8D8.cpp -- retail slice names keep
 // the exact (already-mangled) linker symbols so tail-call relocs match.
@@ -89,8 +89,8 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             shim->iscnVtbl = iscnVtbl;
             shim->storedParent = storedParent;
 
-            __ct__CBgTex(&shim->bgTex, 0);
-            __ct__CPartyStateWin(&shim->partyWin, 0, 0);
+            __ct__6CBgTexFUc(&shim->bgTex, 0);
+            __ct__14CPartyStateWinFUlUl(&shim->partyWin, 0, 0);
             shim->field6C6C = 0;
         }
 

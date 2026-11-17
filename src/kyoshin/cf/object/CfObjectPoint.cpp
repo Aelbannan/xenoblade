@@ -98,14 +98,14 @@ public:
 
 class __declspec(novtable) CfObject : public CObjectParam {
 public:
-    // 0x54 is the destructor slot in every retail table (Point's word holds
-    // __dt__Q22cf13CfObjectPointFv, CfObject's holds __dt__Q22cf8CfObjectFv).
-    // It is spelled as a plain virtual, not a C++ dtor: even an inline-empty
-    // base dtor makes MWCC emit a 0x40 weak D1 orphan that breaks the unit
-    // split (the retail linker GC'd it). The implicit trivial dtor keeps
-    // ~CfObjectPoint free of any base-dtor call; no compiler __vt__ is
-    // emitted (novtable), so this name never leaves the TU.
-    virtual void destroyObject(); //0x54 (dtor slot)
+    // 0x54: destructor slot. Inline: ~CfObjectPoint inlines it (vtable
+    // store + slot-0x68 call), and the dtor's cleanup action names the
+    // out-of-line copy (linked from the CfObject unit, PLAN.md 17.8).
+    // novtable: the tables live in code_800C17DC, so the store is explicit.
+    virtual ~CfObject() {
+        *reinterpret_cast<u32**>(this) = lbl_eu_805294E0;
+        releasePointLink();
+    }
 
     virtual void validatePointState(); //0x58 (overridden by CfObjectPoint)
     virtual void resetPointFlags(); //0x5C (overridden by CfObjectPoint)
@@ -238,15 +238,6 @@ public:
 
 } // namespace cf
 
-// Genuine C-linkage function: the retail symbol is the bare unmangled name
-// (no __Q2 class qualifier), so it must be defined with C linkage. Other TUs
-// (CfGimmick, CfMapMineManager) call it through their own C-linkage
-// declarations; the first parameter is the object pointer.
-extern "C" void ObjPoint_SetName_13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
-    ths->setObjectName(reinterpret_cast<const char*>(a));
-    ths->mFlag91 = val;
-}
-
 namespace cf {
 
 CfObjectPoint::~CfObjectPoint() {
@@ -259,14 +250,6 @@ CfObjectPoint::~CfObjectPoint() {
         ((void* (*)(void*, void*))ArtsSelect_Remove)(ArtsSelect_GetContainer(), this);
     }
     releasePointLink();
-    // D2 phase (base class): the base dtor is inline-empty so MWCC emits no
-    // standalone base-dtor body and no base call. The null guard + CfObject
-    // vtable store + slot-0x68 destroy are written out, reproducing retail's
-    // inlined D2 block exactly.
-    if (this != 0) {
-        *reinterpret_cast<u32**>(this) = lbl_eu_805294E0;
-        releasePointLink();
-    }
 }
 
 void CfObjectPoint::resetPointFlags() {
@@ -283,6 +266,19 @@ void CfObjectPoint::loadPointData() {
     u32 val = getBdatStringColumnValue(fp, lbl_eu_804FC648 + 5, mIndex8C);
     mFlag91 = *(u8*)&val;
 }
+
+} // namespace cf
+
+// Genuine C-linkage function: the retail symbol is the bare unmangled name
+// (no __Q2 class qualifier), so it must be defined with C linkage. Other TUs
+// (CfGimmick, CfMapMineManager) call it through their own C-linkage
+// declarations; the first parameter is the object pointer.
+extern "C" void ObjPoint_SetName_13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
+    ths->setObjectName(reinterpret_cast<const char*>(a));
+    ths->mFlag91 = val;
+}
+
+namespace cf {
 
 void CfObjectPoint::releasePointLink() {
     if (mSubObj38 != nullptr) {

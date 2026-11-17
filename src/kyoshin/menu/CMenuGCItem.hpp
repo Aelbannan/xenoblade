@@ -95,7 +95,7 @@ extern "C" int IsMenuState621F0();
 
 // CW-mangled ctors/dtors referenced at the retail call sites (extern "C" stops
 // C++ re-mangling of the retail CW names).
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 id);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __ct__8CProcessFv(CProcess* self);

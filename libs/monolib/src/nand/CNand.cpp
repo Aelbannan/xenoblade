@@ -88,9 +88,11 @@ extern "C" u32 lbl_eu_8056FD58[4] = {
 
 // --- destructors ----------------------------------------------------------
 
-// CNRequest deleting destructor (__dt__9CNRequestFv).
-extern "C" void* __dt__9CNRequestFv(CNRequest* self, int deleting) {
+// CNand deleting destructor (__dt__5CNandFv): destroys the 8-request array
+// then frees the object when the deleting flag is set.
+extern "C" void* __dt__5CNandFv(CNand* self, int deleting) {
     if (self != nullptr) {
+        __destroy_arr(self, reinterpret_cast<ConstructorDestructor*>(&__dt__9CNRequestFv), 0x24, 8);
         if (deleting > 0) {
             operator delete(self);
         }
@@ -98,11 +100,9 @@ extern "C" void* __dt__9CNRequestFv(CNRequest* self, int deleting) {
     return self;
 }
 
-// CNand deleting destructor (__dt__5CNandFv): destroys the 8-request array
-// then frees the object when the deleting flag is set.
-extern "C" void* __dt__5CNandFv(CNand* self, int deleting) {
+// CNRequest deleting destructor (__dt__9CNRequestFv).
+extern "C" void* __dt__9CNRequestFv(CNRequest* self, int deleting) {
     if (self != nullptr) {
-        __destroy_arr(self, reinterpret_cast<ConstructorDestructor*>(&__dt__9CNRequestFv), 0x24, 8);
         if (deleting > 0) {
             operator delete(self);
         }
@@ -134,17 +134,7 @@ extern "C" void NandMgrResetReady(CNand* self) {
     self->mStatus = 1;
 }
 
-// Ring buffer producer: claim the next free request slot (func_804DA47C).
-// Returns NULL when advancing the tail would collide with the head (full).
-extern "C" DECOMP_DONT_INLINE CNRequest* func_804DA47C(CNand* self) {
-    s16 next = (s16)((s16)(self->mTail + 1) % 8);
-    if (next == self->mHead) {
-        return nullptr;
-    }
-    CNRequest* req = &self->mReq[self->mTail];
-    self->mTail = next;
-    return req;
-}
+extern "C" CNRequest* func_804DA47C(CNand* nand);
 
 // Completion pump (NandMgrPumpCompletion): while the head request is active, poll it;
 // on success record its status byte and advance the head, else stop.
@@ -245,6 +235,18 @@ extern "C" int NandMgrEnqueueBannerLoad(CNand* self, u32 a1, u32 a2) {
         return 0;
     }
     return CNReqSaveInitLoad(req, (u32)(lbl_eu_805245B0 + 6), a1, a2, 0);
+}
+
+// Ring buffer producer: claim the next free request slot (func_804DA47C).
+// Returns NULL when advancing the tail would collide with the head (full).
+extern "C" DECOMP_DONT_INLINE CNRequest* func_804DA47C(CNand* self) {
+    s16 next = (s16)((s16)(self->mTail + 1) % 8);
+    if (next == self->mHead) {
+        return nullptr;
+    }
+    CNRequest* req = &self->mReq[self->mTail];
+    self->mTail = next;
+    return req;
 }
 
 // --- static initializer ---------------------------------------------------

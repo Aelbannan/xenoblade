@@ -1,5 +1,5 @@
 {
- "baseline_count": 305,
+ "baseline_count": 304,
  "entries": {
   "AXFXChorusExp.o": {
    "class": "content",
@@ -11810,14 +11810,6 @@
      [
       "__vt__Q22cf12CfObjectTbox",
       "lbl_eu_80534FB8"
-     ],
-     [
-      "__dt__Q22cf11CfObjectObjFv",
-      "__dt__800BFA14"
-     ],
-     [
-      "__ct__Q22cf11CfObjectObjFv",
-      "__ct__cf_CfObjectObj"
      ]
     ]
    },

@@ -1,6 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/CQstLogInfo
 // Replace stubs with high-level C/C++ during decomp.
 
+// Inline-empty ~IWorkEvent: the ctor's cleanup action references the (link-deduped)
+// weak copy, and ~CQstLogInfo elides the base call (retail shape).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
@@ -53,10 +56,9 @@ void CQstLogInfo::QstLogInfo_SetQuestIdSlot(u16 val) { mField3A = val; }
 CQstLogInfo::~CQstLogInfo() {}
 #pragma optimize_for_size off
 
-// Constructor: base ctor stores the vtable first, then the mMemRegion member
-// ctor runs (retail member-init order; CBatteryVtblBase pattern), then the
+// Constructor: IWorkEvent base, the mMemRegion member ctor, then the
 // zero/default field init.
-CQstLogInfo::CQstLogInfo() {
+CQstLogInfo::CQstLogInfo() : mMemRegion() {
     mFileHandle = nullptr;
     field_0x18 = nullptr;
     field_0x1C = 0;
@@ -116,7 +118,7 @@ extern "C" __declspec(noinline) void QstLogInfo_RewindState5To0(CQstLogInfo* sel
 // Load the quest-log arc into a mem2 file handle, then clear the loaded flag.
 void QstLogInfo_LoadArcHandle(CQstLogInfo* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
-                                              lbl_eu_8050A0B4, reinterpret_cast<IWorkEvent*>(self), 0, 0);
+                                              lbl_eu_8050A0B4, self, 0, 0);
     self->mField38 = 0;
 }
 
@@ -173,7 +175,7 @@ void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
         lbl_eu_80536320[SearchThresholdIdx(self->mField3A)],
-        reinterpret_cast<IWorkEvent*>(self), 0, 0);
+        self, 0, 0);
     self->mField38 = 0;
 }
 #pragma optimize_for_size off
@@ -757,7 +759,7 @@ extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* se
 // (field_0x18) primes the quest-category BDAT table (field_0x3C) and refreshes
 // the whole log display.
 #pragma optimize_for_size on
-int CQstLogInfo::OnFileEvent(CEventFile* event) {
+bool CQstLogInfo::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
         mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x10000,
                                 &lbl_eu_8050A0B4[0x35e], 0);

@@ -358,7 +358,7 @@ extern "C" CTitleAHelp* __dt__11CTitleAHelpFv(CTitleAHelp*, int);
 // the owning TUs; same scheme as the dtor declarations above).
 extern "C" void __ct__CTitleAHelp(CTitleAHelp*, char* name, u8 arg);
 extern "C" void __ct__CModelDisp(CModelDisp*, u32 arg);
-extern "C" void __ct__CPartyState(CPartyState*);
+extern "C" void __ct__11CPartyStateFv(CPartyState*);
 extern "C" void __ct__CModelDispEquip(CModelDispEquipView*, u32 arg1, u32 arg2);
 extern "C" void __ct__CEquipChange(CEquipChange*);
 extern "C" void __ct__CSysWin(CSysWin*, u32 arg);
@@ -718,7 +718,7 @@ struct PartyGaugeRecord {
 
 // Factory imports (retail unmangled names; the embedded sub-object headers
 // cannot be included here - see the forward-decl note at the top).
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 extern "C" void ModelDispInitPoseSlots(CModelDisp* self);
 extern "C" void loadPartyLayoutArc(CPartyState* self);

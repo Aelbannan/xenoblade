@@ -889,7 +889,7 @@ void CMenuPTState::Init() {
         // cached pointers in callee-saved registers across the copy.
         u32 bgStore[sizeof(CBgTex) / 4];
 #define bgTemp reinterpret_cast<CBgTex*>(bgStore)
-        __ct__CBgTex(bgTemp, 0);
+        __ct__6CBgTexFUc(bgTemp, 0);
         field_0x60.mMemRegion = bgTemp->mMemRegion;
         field_0x60.mFileHandle = bgTemp->mFileHandle;
         field_0x60.mLayout = bgTemp->mLayout;
@@ -905,7 +905,7 @@ void CMenuPTState::Init() {
 #define winTmp reinterpret_cast<CPartyStateWin*>(winStore)
 #define d reinterpret_cast<CMenuPTWinCopyView*>(&field_0x80)
 #define s reinterpret_cast<CMenuPTWinCopyView*>(winStore)
-    __ct__CPartyStateWin(winTmp, (u32)this, (u32)field_0x5C);
+    __ct__14CPartyStateWinFUlUl(winTmp, (u32)this, (u32)field_0x5C);
     // Memberwise copy of the freshly built window into the persistent member.
 
     d->v0008 = s->v0008;

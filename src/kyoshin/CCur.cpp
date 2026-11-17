@@ -53,40 +53,26 @@ Sdata2_CCur lbl_eu_80667FA4 = {
 // checkDeactivate() at +0x14 directly.)
 
 // ============================================================================
-// Cur_SetPaneTranslate: Set pane translate from VEC3
+// CBaseCur constructor
 // ============================================================================
-// Cur_SetPaneTranslate is declared extern "C" in CCur.hpp (retail unmangled name);
-// define it here with plain C++ syntax against that declaration.
-DECOMP_DONT_INLINE void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans) {
-    pane->SetTranslate(*trans);
+extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    _this->vtbl() = (void*)lbl_eu_805349A0;
+    _this->mArcResAcc = arcResAcc;
+    _this->mpLayout = nullptr;
+    _this->mpAnimTrans0 = nullptr;
+    _this->mpAnimTrans1 = nullptr;
+    _this->mActive = 0;
+    _this->mVisible = 0;
 }
 
 // ============================================================================
-// Cur_DeactivateTail: Deactivation tail handler
-// Unbinds the active anim transform, re-binds animTrans0, enables and resets
-// its frame, then re-animates. Retail reloads mpLayout before every call.
-// noinline: -ipa would fold this body into checkDeactivate's call site
-// (retail keeps the bl out-of-line).
-extern "C" __declspec(noinline) void Cur_DeactivateTail(CBaseCur* cur) {
-    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
-    cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
-    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
-    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4.f0);
-    cur->mpLayout->Animate(0);
-}
-
+// CBaseCur destructor
 // ============================================================================
-// Cur_ActivateTail: Activation tail handler
-// Unbinds the active anim transform, re-binds animTrans1, enables and resets
-// its frame, then re-animates. Retail reloads mpLayout before every call.
-// ============================================================================
-// noinline: retail callers tail-branch; an inline would fold the body in.
-extern "C" __declspec(noinline) void Cur_ActivateTail(CBaseCur* cur) {
-    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
-    cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
-    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
-    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4.f0);
-    cur->mpLayout->Animate(0);
+extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
+    if (_this != nullptr && flags > 0) {
+        operator delete(_this);
+    }
+    return _this;
 }
 
 // ============================================================================
@@ -143,6 +129,15 @@ extern "C" void setRootPaneTranslate__8CBaseCurFv(CBaseCur* cur, const nw4r::mat
 }
 
 // ============================================================================
+// Cur_SetPaneTranslate: Set pane translate from VEC3
+// ============================================================================
+// Cur_SetPaneTranslate is declared extern "C" in CCur.hpp (retail unmangled name);
+// define it here with plain C++ syntax against that declaration.
+DECOMP_DONT_INLINE void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans) {
+    pane->SetTranslate(*trans);
+}
+
+// ============================================================================
 // Cur_SetVisible: Set cursor visibility
 // ============================================================================
 extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val) {
@@ -170,26 +165,31 @@ void CBaseCur::checkDeactivate() {
 
 
 // ============================================================================
-// CBaseCur constructor
-// ============================================================================
-extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    _this->vtbl() = (void*)lbl_eu_805349A0;
-    _this->mArcResAcc = arcResAcc;
-    _this->mpLayout = nullptr;
-    _this->mpAnimTrans0 = nullptr;
-    _this->mpAnimTrans1 = nullptr;
-    _this->mActive = 0;
-    _this->mVisible = 0;
+// Cur_DeactivateTail: Deactivation tail handler
+// Unbinds the active anim transform, re-binds animTrans0, enables and resets
+// its frame, then re-animates. Retail reloads mpLayout before every call.
+// noinline: -ipa would fold this body into checkDeactivate's call site
+// (retail keeps the bl out-of-line).
+extern "C" __declspec(noinline) void Cur_DeactivateTail(CBaseCur* cur) {
+    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
+    cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
+    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
+    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4.f0);
+    cur->mpLayout->Animate(0);
 }
 
 // ============================================================================
-// CBaseCur destructor
+// Cur_ActivateTail: Activation tail handler
+// Unbinds the active anim transform, re-binds animTrans1, enables and resets
+// its frame, then re-animates. Retail reloads mpLayout before every call.
 // ============================================================================
-extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
-    if (_this != nullptr && flags > 0) {
-        operator delete(_this);
-    }
-    return _this;
+// noinline: retail callers tail-branch; an inline would fold the body in.
+extern "C" __declspec(noinline) void Cur_ActivateTail(CBaseCur* cur) {
+    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
+    cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
+    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
+    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4.f0);
+    cur->mpLayout->Animate(0);
 }
 
 // ============================================================================

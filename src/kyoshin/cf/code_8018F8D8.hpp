@@ -302,8 +302,8 @@ extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // Retail ctor/dtor symbols for the stack temporaries built by Init are the
 // unmangled slice names (not the C++-mangled member forms), so Init calls
 // them under C linkage into raw storage, mirroring CMenuPTState.cpp.
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
-extern "C" void __ct__CPartyStateWin(CPartyStateWin* self, u32 arg1, u32 arg2);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
+extern "C" void __ct__14CPartyStateWinFUlUl(CPartyStateWin* self, u32 arg1, u32 arg2);
 extern "C" CBgTex* __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" CPartyStateWin* __dt__14CPartyStateWinFv(CPartyStateWin* self,
                                                       int flags);

@@ -962,7 +962,7 @@ extern "C" void CScrollBar_loadLayoutArc(void*);
 extern "C" void* lbl_eu_80536908[];
 // Sub-object ctor/dtor/body-copy imports for CArtsList::CArtsList's temp
 // copy-init (retail emits the unmangled names at the call sites).
-extern "C" void __ct__CScrollBar(CScrollBar* self, int arg);
+extern "C" void __ct__10CScrollBarFUc(CScrollBar* self, int arg);
 extern "C" void __dt__10CScrollBarFv(void* self, int flags);
 extern "C" void __ct__CArtsInfo(void* self);
 extern "C" void __dt__9CArtsInfoFv(void* self, int flags);

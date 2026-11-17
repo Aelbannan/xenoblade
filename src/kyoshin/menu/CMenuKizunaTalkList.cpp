@@ -62,7 +62,7 @@ extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 // (memberized: drawTalkList -> CKizunaTalkList::drawTalkList; declaration moved into class CKizunaTalkList)
@@ -92,12 +92,12 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8);
 
 // CW-mangled constructors/destructors referenced by Init() (extern "C" stops
 // C++ re-mangling of the retail CW names).
-extern "C" void __ct__CBgTex(void*, int);
+extern "C" void __ct__6CBgTexFUc(void*, int);
 extern "C" void __dt__6CBgTexFv(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void*, void*);
 extern "C" void __ct__CTitleAHelp(void*, char*, int);
 extern "C" void __dt__11CTitleAHelpFv(void*, int);
-extern "C" void __ct__CKizunaTalkList(void*, int);
+extern "C" void __ct__15CKizunaTalkListFv(void*, int);
 extern "C" void __dt__15CKizunaTalkListFv(void*, int);
 extern "C" void __ct__8CProcessFv(CProcess* self);
 
@@ -135,9 +135,9 @@ extern "C" __declspec(noinline) CMenuKizunaTalkList* __ct__CMenuKizunaTalkList(
     *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80537CB8 + 0x24;
     self->mParentRef = parent;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CKizunaTalkList(&self->mKizunaTalkList, 0);
+    __ct__15CKizunaTalkListFv(&self->mKizunaTalkList, 0);
     self->mState = 0;
     return self;
 }
@@ -177,7 +177,7 @@ void CMenuKizunaTalkList::Init() {
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex(tempBgTex, 0);
+    __ct__6CBgTexFUc(tempBgTex, 0);
 
     __ct__UnkClass_8011C974((u8*)this + 0x64, tempBgTex + 0x4);
     *(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);
@@ -210,11 +210,11 @@ void CMenuKizunaTalkList::Init() {
     *(u8*)((u8*)this + 0xb7)  = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv(tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CKizunaTalkList ---
     u8 tempList[0x1494];
-    __ct__CKizunaTalkList(tempList, 0);
+    __ct__15CKizunaTalkListFv(tempList, 0);
 
     __ct__UnkClass_8011C974((u8*)this + 0xbc, tempList + 0x4);
     *(u32*)((u8*)this + 0xcc) = *(u32*)(tempList + 0x14);

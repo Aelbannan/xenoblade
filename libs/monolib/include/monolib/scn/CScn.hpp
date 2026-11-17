@@ -12,6 +12,7 @@
 
 class IScnRender;
 class ICulling;
+class CScnItemPool;
 struct CScnFrame;
 
 struct ScnRenderCB {
@@ -54,7 +55,9 @@ public:
     //0x000: vtable 1 (CTTask)
     //0x000-054: CTTask
     //0x054: vtable 2 (IWorkEvent)
-    u8 unk58[0x68 - 0x058]; //0x058
+    u8 unk58[0x60 - 0x058]; //0x058
+    CScnItemPool* mItemPool; //0x060 (CScnIdMan reads sub-pool 5)
+    u8 unk64[0x68 - 0x064]; //0x064
     UnkScn68* mCamWork; //0x068
     u8 unk6C[0x84 - 0x06C]; //0x06C
     CScnFrame* mFrame84; //0x084 scene frame (mElapsed/mStep read by Scn_GetFrameDelta/SetTimeScale)

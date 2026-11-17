@@ -1373,7 +1373,7 @@ CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
     mWork14 = 0;
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(&_pad18), 0, 0);
     __ct__CModelDisp(reinterpret_cast<CModelDisp*>(&_pad50), 0);
-    __ct__CPartyState(reinterpret_cast<CPartyState*>(&_pad3038));
+    __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038));
     __ct__CModelDispEquip(&mModelDispEquip, 0, 0);
     __ct__CEquipChange(reinterpret_cast<CEquipChange*>(&_pad4150));
     __ct__CSysWin(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
@@ -1509,7 +1509,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     ItemEx_CopyTitle(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   reinterpret_cast<CTitleAHelp*>(titleTmp));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(titleTmp), -1);
-    CTitleAHelp_load(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
+    reinterpret_cast<CTitleAHelp*>(&self->_pad18)->CTitleAHelp_load();
 
     __ct__CModelDisp(reinterpret_cast<CModelDisp*>(modelDispTmp), (u32)scn);
     PartyStateWin_CopyWinBlob(reinterpret_cast<CPartyStateWinCopy*>(&self->_pad50),
@@ -1517,7 +1517,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     __dt__10CModelDispFv(reinterpret_cast<CModelDisp*>(modelDispTmp), -1);
     ModelDispInitPoseSlots(reinterpret_cast<CModelDisp*>(&self->_pad50));
 
-    __ct__CPartyState(reinterpret_cast<CPartyState*>(partyStateTmp));
+    __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(partyStateTmp));
     PartyStateWin_CopyStateBlob58(reinterpret_cast<CPartyStateWinBlob58*>(&self->_pad3038),
                   reinterpret_cast<CPartyStateWinBlob58*>(partyStateTmp));
     __dt__11CPartyStateFv(reinterpret_cast<CPartyState*>(partyStateTmp), -1);

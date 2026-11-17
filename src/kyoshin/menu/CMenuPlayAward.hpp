@@ -325,7 +325,7 @@ extern "C" CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, CScn* scen
 // Embedded-widget ctors called by the menu ctor (US retail strips these
 // manglings; C-ABI wrappers, same scheme as CMenuTutorialList.hpp).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" __declspec(noinline) CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg);
 
@@ -376,7 +376,7 @@ extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
 extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
 
 // CScrollBar / CCur18 embedded-widget ctors (retail-unmangled names).
-extern "C" void __ct__CScrollBar(u8* scrollBar, int arg);
+extern "C" void __ct__10CScrollBarFUc(u8* scrollBar, int arg);
 
 // CScrollBar draw + cursor draw imports (retail-unmangled names; same reason
 // as CScrollBar_requestScrollIn -- the CScrollBar.hpp member decl would mangle them).
@@ -426,7 +426,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u8 code80135FDC_getByte_6407F();
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
 // Award-list array element ctor/dtor + MWCC array helpers (retail-unmangled
 // names). Declaring the element dtor with C linkage keeps the

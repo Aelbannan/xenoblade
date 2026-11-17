@@ -22,7 +22,7 @@ using cf::CCtrlMoveBase;
 // CfObject_getPosVector). Real owning class is CfObject, not a TU-local
 // pad with _vNNN dummies. Call the real virtual directly.
 static inline ml::CVec3* getPos(CCtrlMoveBase* self) {
-    cf::CCtrlMoveData* data = (cf::CCtrlMoveData*)self->mpDataPtr;
+    cf::CCtrlMoveData* data = self->mpDataPtr;
     return data->mPosObj->CfObject_getPosVector();
 }
 
@@ -60,7 +60,7 @@ static inline void lerpVel(CCtrlMoveBase* self, ml::CVec3* dir) {
 // base CCtrlMoveSecondary's vptr is at +0x48, so we write the retail label
 // there directly (same as CToken pattern).
 CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
-    *(void**)((u8*)this + 0x48) = (void*)lbl_eu_80527808;
+    setVtable(lbl_eu_80527808);
     // Interleaving matters: retail loads param1 before the mpSomePtr store
     // and param2 after it.
     f32 param2;
@@ -68,7 +68,7 @@ CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
     param1 = lbl_eu_80666598;
     mpSomePtr = 0;
     param2 = lbl_eu_8066659C;
-    mpDataPtr = dataPtr;
+    mpDataPtr = (cf::CCtrlMoveData*)dataPtr;
     mFlagsU16_1 = 0;
     mPosition = ml::CVec3::zero;
     mVelocity = ml::CVec3::zero;
@@ -269,7 +269,7 @@ haveOk:
         goto fail;
     {
         ml::CVec3* pos = getPos(self);
-        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+        if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
                                                  lbl_eu_806665A0,
                                                  lbl_eu_806665A0, 1) == 0)
             goto fail;
@@ -329,7 +329,7 @@ fail:
 // ============================================================================
 void aimMoveTarget(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
                    int flag) {
-    ml::CVec3* pos = ((cf::CCtrlMoveData*)self->mpDataPtr)->mPosObj->CfObject_getPosVector();
+    ml::CVec3* pos = self->mpDataPtr->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *src - *pos;
     *dst = diff;
     if (dst->x != 0.0f || dst->y != 0.0f || dst->z != 0.0f) {
@@ -412,9 +412,9 @@ void maskMoveBaseFlags(void* self) {
 // move data block. mpDataPtr is re-read per store, matching the two retail
 // loads at +0x34.
 void setMoveFacing(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
-    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x0C =
+    self->mpDataPtr->field_0x0C =
         nw4r::math::Atan2FIdx(vec->x, vec->z) * lbl_eu_806665AC;
-    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x14 = speed;
+    self->mpDataPtr->field_0x14 = speed;
 }
 
 // Move toward src: direction = normalized(src - entityPos), then lerp the
@@ -638,7 +638,7 @@ haveOk:
     int ok2;
     if (ok != 0) {
         ml::CVec3* pos2 = getPos(self);
-        ok2 = (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos2,
+        ok2 = (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos2,
                                                     &goal, lbl_eu_806665A0,
                                                     lbl_eu_806665A0, 1) != 0);
     } else {
@@ -701,7 +701,7 @@ haveOk:
         goto ret0;
     {
         ml::CVec3* pos = getPos(self);
-        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+        if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
                                                   lbl_eu_806665A0,
                                                   lbl_eu_806665A0, flag) != 0)
             return 1;

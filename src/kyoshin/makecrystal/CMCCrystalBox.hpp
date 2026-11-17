@@ -586,7 +586,7 @@ extern "C" CBaseCur* __ct__CCur11(void*, void*);
 extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CMCCrystalInfo(void*);
-extern "C" void __ct__CScrollBar(void*, int);
+extern "C" void __ct__10CScrollBarFUc(void*, int);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);

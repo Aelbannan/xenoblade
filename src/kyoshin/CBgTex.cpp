@@ -31,34 +31,34 @@ CBgTex::~CBgTex() {}
 
 void CBgTex::BgTex_SetupRegion_3A24() {
     u32 handle = mtl::MemManager::getHandleMEM2();
-    mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
+    mMemRegion.createRegion(handle, 0x2000, "CBgTexLyt", 1);
     Class_8045F858 unusedVar(&mMemRegion);
     mtl::MemManager::setMemInitFlag(false);
 
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
     if (regionId == 0x19) {
-        buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
+        buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg06.brlyt");
     } else if (regionId == 0x1A) {
-        buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
+        buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg07.brlyt");
     } else {
         switch (MapValueToRank6(regionId)) {
         case 1:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg01.brlyt");
             break;
         case 2:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg02.brlyt");
             break;
         case 3:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg03.brlyt");
             break;
         case 4:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg04.brlyt");
             break;
         case 5:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg05.brlyt");
             break;
         case 0:
-            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            buildLayout(&mLayout, lbl_eu_80664464, "mf00_reg_bg01.brlyt");
             break;
         default:
             break;
@@ -66,9 +66,9 @@ void CBgTex::BgTex_SetupRegion_3A24() {
     }
 
     nw4r::lyt::Pane* pane =
-        mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0x96, true);
+        mLayout->GetRootPane()->FindPaneByName("pic_ptm00", true);
     setPaneVisible(pane, !mPtmMode);
-    pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
+    pane = mLayout->GetRootPane()->FindPaneByName("pic_ptm01", true);
     setPaneVisible(pane, !mPtmMode);
     this->BgTex_MarkLoaded_3E3C();
     mMemRegion.validateHeap();
@@ -85,28 +85,28 @@ bool CBgTex::BgTex_Acquire_3C14() {
     char* file = nullptr;
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
     if (regionId == 0x19) {
-        file = lbl_eu_80505370 + 0xAA;
+        file = "menu/jp/BgTex06.arc";
     } else if (regionId == 0x1A) {
-        file = lbl_eu_80505370 + 0xBE;
+        file = "menu/jp/BgTex07.arc";
     } else {
         switch (MapValueToRank6(regionId)) {
         case 1:
-            file = lbl_eu_80505370 + 0xD2;
+            file = "menu/jp/BgTex01.arc";
             break;
         case 2:
-            file = lbl_eu_80505370 + 0xE6;
+            file = "menu/jp/BgTex02.arc";
             break;
         case 3:
-            file = lbl_eu_80505370 + 0xFA;
+            file = "menu/jp/BgTex03.arc";
             break;
         case 4:
-            file = lbl_eu_80505370 + 0x10E;
+            file = "menu/jp/BgTex04.arc";
             break;
         case 5:
-            file = lbl_eu_80505370 + 0x122;
+            file = "menu/jp/BgTex05.arc";
             break;
         case 0:
-            file = lbl_eu_80505370 + 0xD2;
+            file = "menu/jp/BgTex01.arc";
             break;
         }
     }
@@ -165,7 +165,7 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::ArcResourceAccessor* accessor =
             CLibLayout::createArcResourceAccessor();
         lbl_eu_80664464 = accessor;
-        accessor->Attach(pArchive, lbl_eu_80505370 + 0x136);
+        accessor->Attach(pArchive, "arc");
         mFileHandle = nullptr;
         this->BgTex_SetupRegion_3A24();
         return true;
@@ -174,36 +174,12 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
 }
 
 // ----- retail data (wave DL) -----
-// .rodata string pool (0x140, lbl_eu_80505370): layout/region/arc names.
-// Every lbl_eu_80505370+N site in SetupRegion/Acquire/OnFileEvent lands on
-// a string start (0x00 CBgTexLyt .. 0x136 arc); short init zero-fills the
-// 6 tail bytes to 0x140. Non-const + declspec holds it in .rodata.
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_80505370[0x140] =
-    "CBgTexLyt\0"
-    "mf00_reg_bg06.brlyt\0"
-    "mf00_reg_bg07.brlyt\0"
-    "mf00_reg_bg01.brlyt\0"
-    "mf00_reg_bg02.brlyt\0"
-    "mf00_reg_bg03.brlyt\0"
-    "mf00_reg_bg04.brlyt\0"
-    "mf00_reg_bg05.brlyt\0"
-    "pic_ptm00\0"
-    "pic_ptm01\0"
-    "menu/jp/BgTex06.arc\0"
-    "menu/jp/BgTex07.arc\0"
-    "menu/jp/BgTex01.arc\0"
-    "menu/jp/BgTex02.arc\0"
-    "menu/jp/BgTex03.arc\0"
-    "menu/jp/BgTex04.arc\0"
-    "menu/jp/BgTex05.arc\0"
-    "arc\0";
 // .data vtable block (retail rela.data order): DB8 head {extern,0,0,0},
 // DC8 IWorkEvent vtable {sdata-locator, 0, dtor, 31 handlers}, E50 RTTI
 // trailer {RTTI,0,0,0}. Plain defs stay in .data (every slot nonzero via
 // reloc or literal). Handler decls mirror data_vtables.hpp spellings but
 // stay TU-local (that header is intentionally not included here).
-extern u32 lbl_eu_80662410[];
+extern u32 __RTTI__Q22cf8CREvtObj[];
 extern u32 lbl_eu_80662650[];
 extern "C" {
 void __dt__6CBgTexFv();
@@ -243,7 +219,7 @@ void WorkEvent31__10IWorkEventFv();
 extern u32 rtti_10IWorkEvent[];
 }
 __declspec(section ".data") __attribute__((used, aligned(4)))
-u32 lbl_eu_80533DB8[4] = { (u32)lbl_eu_80662410, 0, 0, 0 };
+u32 lbl_eu_80533DB8[4] = { (u32)__RTTI__Q22cf8CREvtObj, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80533DC8[0x22] = {
     (u32)lbl_eu_80662650, 0, (u32)__dt__6CBgTexFv,
@@ -266,13 +242,13 @@ u32 lbl_eu_80533DC8[0x22] = {
 };
 __declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80533E50[4] = { (u32)&rtti_10IWorkEvent, 0, 0, 0 };
-// .sdata2: class-name tag + two conversion doubles (both code orphans).
+// .sdata2: class-name tag + u32 conversion double + 1.0f (both code orphans).
 __declspec(section ".sdata2") __attribute__((used, aligned(1)))
 char lbl_eu_80667F18[8] = "CBgTex";
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 extern const double lbl_eu_80667F20 = 4503599627370496.0;
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
-extern const double lbl_eu_80667F28 = 1.0;
+extern const float lbl_eu_80667F28 = 1.0f;
 // .sdata locator pair {class-name, vtable-RTTI-slot} (retail rela.sdata).
 // Plain def: nonzero small data lands in .sdata on its own (a declspec
 // def here would overload against the tentative decl above).

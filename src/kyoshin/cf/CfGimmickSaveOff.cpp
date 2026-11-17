@@ -4,44 +4,32 @@
 #include "kyoshin/cf/CfGimmickSaveOff.hpp"
 
 
-// The retail ctor symbol __ct__cf_CfGimmickSaveOff is a C-linkage name (no
-// C++ mangling markers), so it is emitted as an extern "C" free function
-// rather than a C++ member constructor (same convention as __ct__cf_CfGimmick).
-// The class carries a manual vptr at +0x00 (set to lbl_eu_8053A1E0).
-extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param) {
-    __ct__cf_CfGimmick((cf::CfGimmick*)self);
-    *(u32**)self = (u32*)lbl_eu_8053A1E0;
-    self->mFlag = 8;
+cf::CfGimmickSaveOff::CfGimmickSaveOff(s32 row) {
+    field_82 = 8;
 
     UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)Bdat_GetTable_AA34();
     void* holder = (void*)lbl_eu_80664140;
-    self->mParam = (u16)param;
+    field_64 = (u16)row;
 
-    CfGimmick_LoadBdatAreaPos((cf::CfGimmick*)self, &self->mVec04.x, mgr, &holder);
-    CfGimmick_LoadBdatAreaExtents((cf::CfGimmick*)self, (cf::CfGimmick*)self->mBlock1C, mgr, &holder);
-    CfGimmick_LoadBdatAreaRotation((cf::CfGimmick*)self, (f32*)self->mBlock10, mgr, &holder);
+    CfGimmick_LoadBdatAreaPos(this, &field_04.x, mgr, &holder);
+    CfGimmick_LoadBdatAreaExtents(this, (cf::CfGimmick*)field_1C, mgr, &holder);
+    CfGimmick_LoadBdatAreaRotation(this, &field_10.x, mgr, &holder);
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
     // Byte offsets into the pointer table (lbl_eu_805357E8 is void*[]).
     u8* colTab = (u8*)lbl_eu_805357E8;
-    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), param);
-    self->mMinVal = *(u16*)&vMin;
-    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), param);
-    self->mMaxVal = *(u16*)&vMax;
-    u32 vType = getBdatStringColumnValue(holder, (const char*)lbl_eu_80510B28, param);
-    self->mType = *(u8*)&vType;
+    u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), row);
+    field_6C = *(u16*)&vMin;
+    u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), row);
+    field_6E = *(u16*)&vMax;
+    u32 vType = getBdatStringColumnValue(holder, "naviOff", row);
+    mType = *(u8*)&vType;
 
-    // Invoke the derived vtable's init hook (slot 0x20: a real virtual call).
-    self->vinit();
-    return self;
+    CfGimmick_UpdateColliderMatrix();
 }
 
-// Complete-object destructor: MWCC auto-generates the this!=0 guard and the
-// delete-flag wrapper around this body (same convention as CfGimmickItem).
-cf::CfGimmickSaveOff::~CfGimmickSaveOff() {
-    __dt__Q22cf9CfGimmickFv((cf::CfGimmick*)this, 0);
-}
+cf::CfGimmickSaveOff::~CfGimmickSaveOff() {}
 
 // Opaque interface whose vtable slot 0x44 (offset 0x110) is the getter the
 // retail loop calls on each list node's object. Declared-only (pure virtual),
@@ -125,10 +113,10 @@ struct IUnkVt110 {
 
 // State machine tick: optional range gate on the game-manager counter,
 // then dispatch through the state jump table, then act on mType.
-extern "C" void CfGimmickSaveOff_Update(cf::CfGimmickSaveOff* self) {
-    if (self->mMaxVal != 0) {
+void cf::CfGimmickSaveOff::CfGimmick_Update() {
+    if (field_6E != 0) {
         u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-        if (self->mMinVal > count || count > self->mMaxVal) {
+        if (field_6C > count || count > field_6E) {
             return;
         }
     }
@@ -136,12 +124,12 @@ extern "C" void CfGimmickSaveOff_Update(cf::CfGimmickSaveOff* self) {
     // State dispatch via jumptable_eu_80535830 (5 case handlers); a zero
     // handler result returns early (retail checks the dispatched call's r3).
     int dispatchResult =
-        jumptable_eu_80535830[self->mState]((cf::CfGimmick*)self->mBlock1C, &lbl_eu_805765A0, &self->mVec04);
+        jumptable_eu_80535830[field_60]((cf::CfGimmick*)field_1C, &lbl_eu_805765A0, &field_04);
     if (dispatchResult == 0) {
         return;
     }
 
-    if ((s32)self->mType == 2) {
+    if ((s32)mType == 2) {
         // Walk an intrusive linked list; the terminator is re-read from
         // list+4 every iteration (sentinel node). Each node's vtable slot
         // 0x44 (0x110/4) returns an object whose +0x84 gets poked.
@@ -156,23 +144,9 @@ extern "C" void CfGimmickSaveOff_Update(cf::CfGimmickSaveOff* self) {
             }
             entry = entry->next;
         }
-    } else if ((s32)self->mType == 1) {
+    } else if ((s32)mType == 1) {
         CfGimmick_SetGlobalFlag200000();
     } else {
         CfGimmick_SetGlobalFlag8();
     }
 }
-
-// [.rodata] 0x80510B10-0x80510B30 (32B): class-name string + column-name
-// string. Retail holds one label per string (B10 0x15 bytes, B28 "naviOff"
-// 0x8 at +0x18); B10's 3 pad bytes fall out of B28's 8-alignment. B10 has no
-// code references (unreferenced pool bytes), B28 is the bdat column key.
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
-u8 lbl_eu_80510B10[0x15] = {
-    0x63,0x66,0x3A,0x3A,0x43,0x66,0x47,0x69,0x6D,0x6D,0x69,0x63,0x6B,0x53,0x61,0x76,
-    0x65,0x4F,0x66,0x66,0x00,
-};
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-u8 lbl_eu_80510B28[0x8] = {
-    0x6E,0x61,0x76,0x69,0x4F,0x66,0x66,0x00,
-};

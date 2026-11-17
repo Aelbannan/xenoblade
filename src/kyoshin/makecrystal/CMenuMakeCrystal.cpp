@@ -42,7 +42,7 @@ int  mkCrystalGetFlag4361(void* self);                            // CMakeCrysta
 void mkCrystalTick(void* self);                            // CMakeCrystalWin tick
 int  CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
-void __ct__CBgTex(void* self, int arg);
+void __ct__6CBgTexFUc(void* self, int arg);
 void __ct__UnkClass_8011C974(void* self, const void* src);
 void Scn_SetPauseFlag(void*, int);
 void BgTex_Release_3D9C(void*);
@@ -169,7 +169,7 @@ void CMenuMakeCrystal::Init() {
     // Build a temporary CBgTex, clone its UnkClass sub-object into this+0x64
     // plus its scalar fields into this+0x74..+0x7E, then destroy the temp.
     MCBgTemp bg;
-    __ct__CBgTex(&bg, 0);
+    __ct__6CBgTexFUc(&bg, 0);
     __ct__UnkClass_8011C974(reinterpret_cast<u8*>(this) + 0x64, bg.unk);
     reinterpret_cast<MCTailState*>(this)->field_0x74 = bg.field_0x14;
     reinterpret_cast<MCTailState*>(this)->field_0x78 = bg.field_0x18;
@@ -424,7 +424,7 @@ extern "C" CMenuMakeCrystal* __ct__CMenuMakeCrystal(CMenuMakeCrystal* pThis, voi
     p[0x16] = scnVt;                        // 0x58: IScnRender sub-vtable
     p[0x17] = reinterpret_cast<u32>(param); // 0x5C: owning scene
 
-    __ct__CBgTex(self + 0x60, 0);
+    __ct__6CBgTexFUc(self + 0x60, 0);
     __ct__CMakeCrystalWin(self + 0x80, 0, 0);
     self[0x43E4] = 0;
     self[0x43E5] = 1;

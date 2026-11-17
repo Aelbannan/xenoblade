@@ -18,20 +18,26 @@ namespace cf {
 //                  (0=camera, 1=effect, 2=light, 3=model, 4=movie)
 //   0x08 mCallback callback ptmf (3 words: [0]=pfn, [1]=obj, [2]=delta);
 //                  reset to the null sentinel by the base ctor
-class __declspec(novtable) CREvtObj {
+class CREvtObj {
 public:
+    CREvtObj(int type);
     virtual ~CREvtObj();
-    virtual void vfunc_04();
+    virtual void vfunc_04() = 0;
     virtual void vfunc_08();
-    virtual void vfunc_0C();
+    virtual int vfunc_0C();   // returns 0
     virtual void vfunc_10();
     virtual void vfunc_14();
     virtual bool isBusy();
-    virtual void vfunc_1C();
+    virtual void vfunc_1C();  // runs mCallback when set
     // C++ vptr occupies +0x00 (no separate explicit vtable member -- that
     // doubled the leading pointer and shifted mType/mCallback by +4).
     /* 0x04 */ u32 mType;
     /* 0x08 */ void (CREvtObj::*mCallback)();  // __ptmf (12 bytes: 3 x u32)
+
+    // Realtime-ev objects live in the CREvtMem arena (class-specific
+    // allocation; retail __dl__Q22cf8CREvtObjFPv is a tail call to
+    // freeEvtMemPtr).
+    static void operator delete(void* p);
 };
 
 } // namespace cf

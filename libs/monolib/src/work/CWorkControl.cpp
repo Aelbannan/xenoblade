@@ -83,6 +83,22 @@ CWorkControl* CWorkControl::getInstance(){
     return lbl_eu_806655D8[0];
 }
 
+#pragma optimize_for_size on
+DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
+    const char* name;
+    CWorkThread* pControl;
+
+    if(CWorkFlowSetup::getInstance() != nullptr){
+        return true;
+    }
+
+    name = &lbl_eu_80522688[0x10];
+    pControl = CWorkControl::getInstance();
+    CWorkFlowSetup::create(name, pControl);
+    return true;
+}
+#pragma optimize_for_size off
+
 void CWorkControl::pause(bool paused){
     getInstance()->wkSetEventChild(paused ? EVT_PAUSE : EVT_UNPAUSE);
 }
@@ -115,22 +131,6 @@ bool CWorkControl::wkStandbyLogin(){
     setFlowSetup();
     return CWorkThread::wkStandbyLogin();
 }
-
-#pragma optimize_for_size on
-DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
-    const char* name;
-    CWorkThread* pControl;
-
-    if(CWorkFlowSetup::getInstance() != nullptr){
-        return true;
-    }
-
-    name = &lbl_eu_80522688[0x10];
-    pControl = CWorkControl::getInstance();
-    CWorkFlowSetup::create(name, pControl);
-    return true;
-}
-#pragma optimize_for_size off
 
 bool CWorkControl::wkStandbyLogout(){
     if(mChildren.empty() && CDevice::getInstance() == nullptr){

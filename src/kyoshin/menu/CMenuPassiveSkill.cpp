@@ -30,7 +30,7 @@ void CMenuPassiveSkill::Init() {
     // No cached temp/sub pointers: every access folds to a sp/r31-relative
     // address so retail's single-saved-register prologue holds.
     u8 tempBgTex[0x20];
-    __ct__CBgTex((CBgTex*)tempBgTex, 0);
+    __ct__6CBgTexFUc((CBgTex*)tempBgTex, 0);
 
     __ct__UnkClass_8011C974(&mBgTex.mMemRegion, tempBgTex + 0x4);
     mBgTex.mFileHandle = *(CFileHandle**)(tempBgTex + 0x14);
@@ -64,7 +64,7 @@ void CMenuPassiveSkill::Init() {
     mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded UI::CPassiveSkill via a temporary ---
     u8 tempPS[0x1F4];
@@ -350,7 +350,7 @@ extern "C" __declspec(noinline) CMenuPassiveSkill* __ct__CMenuPassiveSkill(CMenu
     self->mIScnRenderVt = reinterpret_cast<u32>(iscnVt);
     self->mScnRef = reinterpret_cast<CScn*>(arg);
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__UI_CPassiveSkill(&self->mPassiveSkill[0]);
 

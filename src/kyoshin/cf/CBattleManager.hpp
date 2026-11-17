@@ -68,7 +68,7 @@ namespace cf{
     public:
         CBattleManager();
         virtual ~CBattleManager(); //0x8
-        virtual void FactoryEvent2(); //0x10
+        virtual void FactoryEvent2(CfObject* obj); //0x10
         virtual void setPartyMaskFlag(u32 r4, u32 r5); //0x1C
         virtual void CBattleMan_ClearStateMask(u32 mask); //0x20
         virtual void CBattleMan_ZeroStateMask(); //0x24

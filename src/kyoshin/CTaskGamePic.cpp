@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // kyoshin/CTaskGamePic.cpp
 // CTaskGamePic task wrapper: CProcess-derived task that hosts a scene render
 // callback (IScnRender subobject), an async file load, and a GX texture bound
@@ -16,28 +17,6 @@
 
 #include <revolution/tpl/TPL.h>
 
-// Helper import from another TU (retail C-linkage symbol, no mangling).
-
-// CTTask<CTaskGamePic> out-of-line Move/Draw/dtors (retail emits these as
-// standalone functions; the inline CTTask header copy would mark them inline).
-#pragma optimize_for_size on
-template <>
-CTTask<CTaskGamePic>::~CTTask() {}
-#pragma optimize_for_size off
-
-template <>
-void CTTask<CTaskGamePic>::Move() {
-    if (mMoveFunc) {
-        (static_cast<CTaskGamePic*>(this)->*mMoveFunc)();
-    }
-}
-
-template <>
-void CTTask<CTaskGamePic>::Draw() {
-    if (mDrawFunc) {
-        (static_cast<CTaskGamePic*>(this)->*mDrawFunc)();
-    }
-}
 
 // ---------------------------------------------------------------------------
 // ctor - Retail `__ct__CTaskGamePic` is a *stripped* symbol (no length
@@ -47,7 +26,6 @@ void CTTask<CTaskGamePic>::Draw() {
 // trailing texture byte, and initialises the three colour vectors at
 // 0x90/0xA0/0xB0 to the shared sdata2 LOD-bias float.
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 // C-linkage so the emitted symbol is exactly the retail `__ct__CTaskGamePic`
 // (stripped symbol; a C++ declaration would mangle to __ct__CTaskGamePicFi),
 // and so create()'s call reloc references the retail name (cf. CTaskGameEvt).
@@ -95,7 +73,78 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 
     return pThis;
 }
-#pragma optimize_for_size off
+
+// CTTask<CTaskGamePic> out-of-line Move/Draw/dtors (retail emits these as
+// standalone functions; the inline CTTask header copy would mark them inline).
+template <>
+CTTask<CTaskGamePic>::~CTTask() {}
+
+CTaskGamePic::~CTaskGamePic() {}
+
+// ---------------------------------------------------------------------------
+// GamePicShiftTexParams - shifts the 8-word texture/palette parameter block
+// (0x90..0xC4). If the 3rd source word is non-zero the source block also
+// overwrites the "current" block at 0x90.
+// ---------------------------------------------------------------------------
+extern "C" void GamePicShiftTexParams(CTaskGamePic* ths, u32 index, const u32* src) {
+    u32 sh = index << 8;
+    ths->param_A0 = ths->param_90;
+    ths->param_A4 = ths->param_94;
+    ths->param_A8 = ths->param_98;
+    ths->param_AC = ths->param_9C;
+    ths->param_B0 = src[0];
+    ths->param_B4 = src[1];
+    ths->param_B8 = src[2];
+    ths->param_BC = src[3];
+    ths->param_C0 = sh;
+    ths->param_C4 = sh;
+    if (index == 0) {
+        ths->param_90 = src[0];
+        ths->param_94 = src[1];
+        ths->param_98 = src[2];
+        ths->param_9C = src[3];
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GamePicStartFileLoad - kicks off an async file load for the scene's
+// resource, using the embedded file-event object at +0x54 as the callback.
+// Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
+// ---------------------------------------------------------------------------
+extern "C" void GamePicStartFileLoad(CTaskGamePic* ths, const char* path) {
+    IWorkEvent* ev = ths;
+    u32 handle = ths->mScene->getAllocHandle();
+    CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
+    ths->mFileHandle = fh;
+    CDeviceFile::tryUpdateJobPriority(fh, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Init - registers the render callback subobject with the scene,
+// using priority 0xb (HUD layer).
+// ---------------------------------------------------------------------------
+void CTaskGamePic::Init() {
+    IScnRender* rp = this;
+    mScene->addRenderCB(rp, 0xb, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Term - unregisters the render callback, cancels the async load,
+// waits for drawing to drain, and frees palette/texture memory.
+// ---------------------------------------------------------------------------
+void CTaskGamePic::Term() {
+    IScnRender* rp = this;
+    mScene->removeRenderCB(rp);
+    if (mFileHandle) {
+        CDeviceFile::cancel(mFileHandle);
+        mFileHandle = nullptr;
+    }
+    CDeviceVI::waitForDrawDone();
+    if (field_64) {
+        mtl::MemManager::deallocate(field_64);
+        field_64 = nullptr;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Move - animates the colour fade between the "from" (0xA0) and "to"
@@ -108,7 +157,6 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 // ---------------------------------------------------------------------------
 // Size-opt: retail keeps both /256 computations per counter (no CSE) and
 // interleaves the sdata2 float loads, matching the -Os scheduler.
-#pragma optimize_for_size on
 void CTaskGamePic::Move() {
     if (param_C0 == 0) return;
     s32 c1 = (s32)param_C0 - 0x100;
@@ -141,155 +189,6 @@ void CTaskGamePic::Move() {
     cur[2] = from[2] * t + to[2] * inv;
     cur[3] = from[3] * t + to[3] * inv;
 }
-#pragma optimize_for_size off
-// ---------------------------------------------------------------------------
-// Init - registers the render callback subobject with the scene,
-// using priority 0xb (HUD layer).
-// ---------------------------------------------------------------------------
-void CTaskGamePic::Init() {
-    IScnRender* rp = reinterpret_cast<IScnRender*>(this); // null-this -> this(0)
-    if (this) rp = reinterpret_cast<IScnRender*>(mRenderCB); // live: this + 0x58
-    mScene->addRenderCB(rp, 0xb, 0);
-}
-
-#pragma optimize_for_size on
-CTaskGamePic::~CTaskGamePic() {}
-#pragma optimize_for_size off
-
-// ---------------------------------------------------------------------------
-// GamePicShiftTexParams - shifts the 8-word texture/palette parameter block
-// (0x90..0xC4). If the 3rd source word is non-zero the source block also
-// overwrites the "current" block at 0x90.
-// ---------------------------------------------------------------------------
-extern "C" void GamePicShiftTexParams(CTaskGamePic* ths, u32 index, const u32* src) {
-    u32 sh = index << 8;
-    ths->param_A0 = ths->param_90;
-    ths->param_A4 = ths->param_94;
-    ths->param_A8 = ths->param_98;
-    ths->param_AC = ths->param_9C;
-    ths->param_B0 = src[0];
-    ths->param_B4 = src[1];
-    ths->param_B8 = src[2];
-    ths->param_BC = src[3];
-    ths->param_C0 = sh;
-    ths->param_C4 = sh;
-    if (index == 0) {
-        ths->param_90 = src[0];
-        ths->param_94 = src[1];
-        ths->param_98 = src[2];
-        ths->param_9C = src[3];
-    }
-}
-
-// ---------------------------------------------------------------------------
-// GamePicStartFileLoad - kicks off an async file load for the scene's
-// resource, using the embedded file-event object at +0x54 as the callback.
-// Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
-// ---------------------------------------------------------------------------
-#pragma optimize_for_size on
-extern "C" void GamePicStartFileLoad(CTaskGamePic* ths, const char* path) {
-    IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(ths); // null-this -> null
-    if (ths) ev = reinterpret_cast<IWorkEvent*>(&ths->field_54);
-    u32 handle = ths->mScene->getAllocHandle();
-    CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
-    ths->mFileHandle = fh;
-    CDeviceFile::tryUpdateJobPriority(fh, 0);
-}
-#pragma optimize_for_size off
-
-// ---------------------------------------------------------------------------
-// Term - unregisters the render callback, cancels the async load,
-// waits for drawing to drain, and frees palette/texture memory.
-// ---------------------------------------------------------------------------
-void CTaskGamePic::Term() {
-    IScnRender* rp = reinterpret_cast<IScnRender*>(this); // null-this -> this(0)
-    if (this) rp = reinterpret_cast<IScnRender*>(mRenderCB); // live: this + 0x58
-    mScene->removeRenderCB(rp);
-    if (mFileHandle) {
-        CDeviceFile::cancel(mFileHandle);
-        mFileHandle = nullptr;
-    }
-    CDeviceVI::waitForDrawDone();
-    if (field_64) {
-        mtl::MemManager::deallocate(field_64);
-        field_64 = nullptr;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// GamePicOnFileEvent - the file-event handler for the loaded texture.
-// Binds the palette, builds a GX texture object from it, then clears the load.
-// ---------------------------------------------------------------------------
-extern "C" bool GamePicOnFileEvent(CTaskGamePic* ths, CEventFile* pEvent) {
-    // Retail loads pEvent->mFileHandle first and compares it against
-    // ths->mFileHandle (cmplw r0, r5), so the event side is the left operand.
-    if (pEvent->mFileHandle == ths->mFileHandle) {
-        if (pEvent->unk0 == 1) {
-            u8* data = static_cast<u8*>(ths->mFileHandle->getData());
-            ths->field_64 = data;
-            ths->field_68 = data;
-            TPLBind((TPLPalette*)data);
-            TPLGetGXTexObjFromPalette((TPLPalette*)ths->field_68, &ths->mTexObj, 0);
-            f32 bias = lbl_eu_80668BB0;
-            GXInitTexObjLOD(&ths->mTexObj, GX_LINEAR, GX_LINEAR,
-                            bias, bias, bias, GX_FALSE, GX_FALSE, GX_ANISO_1);
-        }
-        ths->mFileHandle = nullptr;
-        return true;
-    }
-    return false;
-}
-
-// Forward declarations of this TU's out-of-line member symbols, seen from the
-// glue-thunk call sites as plain function pointers taking the subobject.
-void __dt__12CTaskGamePicFv(CTaskGamePic*);
-void cbRenderBefore__12CTaskGamePicFv(CTaskGamePic*);
-
-// Non-target glue thunks (preserved from scaffold; not part of the match set).
-// These are secondary-vtable entries for the +0x54 file-event / +0x58 render
-// subobjects: adjust `this` back to the CTaskGamePic primary, tail-call the
-// real member.
-void OnFileEvent__12CTaskGamePicFP10CEventFile(IWorkEvent* ths) {
-    ((void (*)(CTaskGamePic*))GamePicOnFileEvent)(
-        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
-}
-
-void GamePicDtorThunkEv(IWorkEvent* ths) {
-    ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
-        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
-}
-
-void GamePicRenderBeforeThunk(IScnRender* ths) {
-    reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58)->cbRenderBefore();
-}
-
-void GamePicDtorThunkRender(IScnRender* ths) {
-    ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
-        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58));
-}
-
-// Returns int (not s16) so callers re-sign-extend the result like retail.
-// Bottom edge of an ml::CRect (mPos.y + mSize.y).
-extern "C" s16 GamePicRectBottom(const ml::CRect* r) {
-    return (s16)(r->mPos.y + r->mSize.y);
-}
-// ---------------------------------------------------------------------------
-// create - factory. Retail symbol keeps the C-linkage Fv name although
-// the source takes a parent and a scene arg (cf. CTaskGameCf). Size-opt frame:
-// stmw r29/lmw r29, ctor NOT inlined (noinline on __ct__CTaskGamePic).
-// ---------------------------------------------------------------------------
-#pragma optimize_for_size on
-extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
-    u32 handle = CWorkThreadSystem::getWorkMem();
-    CTaskGamePic* ths = (CTaskGamePic*)mtl::MemManager::allocate(0xc8, handle);
-    if (ths) {
-        ths = __ct__CTaskGamePic(ths, arg);
-    }
-    ths->Regist(pParent, false);
-    return ths;
-}
-#pragma optimize_for_size off
-
 // ---------------------------------------------------------------------------
 // cbRenderBefore - pre-render hook: draws the loaded picture texture
 // (mTexObj) as a 4-vertex quad centered on the current view, then a full-
@@ -301,7 +200,6 @@ extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
 // so the function sits under the same optimize_for_size wrap as the ctor/
 // create (r28-r31 live across the many CDrawGX calls).
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 void CTaskGamePic::cbRenderBefore() {
     const CTaskGamePicTexData* tex;
     if (field_8C == 0) return;
@@ -381,8 +279,68 @@ void CTaskGamePic::cbRenderBefore() {
     CViewRoot::updateViewRoot();
 }
 
+// Returns int (not s16) so callers re-sign-extend the result like retail.
+// Bottom edge of an ml::CRect (mPos.y + mSize.y).
+extern "C" s16 GamePicRectBottom(const ml::CRect* r) {
+    return (s16)(r->mPos.y + r->mSize.y);
+}
+// ---------------------------------------------------------------------------
+// OnFileEvent - the file-event handler for the loaded texture.
+// Binds the palette, builds a GX texture object from it, then clears the load.
+// ---------------------------------------------------------------------------
+bool CTaskGamePic::OnFileEvent(CEventFile* pEvent) {
+    // Retail loads pEvent->mFileHandle first and compares it against
+    // this->mFileHandle (cmplw r0, r5), so the event side is the left operand.
+    if (pEvent->mFileHandle == this->mFileHandle) {
+        if (pEvent->unk0 == 1) {
+            u8* data = static_cast<u8*>(this->mFileHandle->getData());
+            this->field_64 = data;
+            this->field_68 = data;
+            TPLBind((TPLPalette*)data);
+            TPLGetGXTexObjFromPalette((TPLPalette*)this->field_68, &this->mTexObj, 0);
+            f32 bias = lbl_eu_80668BB0;
+            GXInitTexObjLOD(&this->mTexObj, GX_LINEAR, GX_LINEAR,
+                            bias, bias, bias, GX_FALSE, GX_FALSE, GX_ANISO_1);
+        }
+        this->mFileHandle = nullptr;
+        return true;
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------------------
+// create - factory. Retail symbol keeps the C-linkage Fv name although
+// the source takes a parent and a scene arg (cf. CTaskGameCf). Size-opt frame:
+// stmw r29/lmw r29, ctor NOT inlined (noinline on __ct__CTaskGamePic).
+// ---------------------------------------------------------------------------
+extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
+    u32 handle = CWorkThreadSystem::getWorkMem();
+    CTaskGamePic* ths = (CTaskGamePic*)mtl::MemManager::allocate(0xc8, handle);
+    if (ths) {
+        ths = __ct__CTaskGamePic(ths, arg);
+    }
+    ths->Regist(pParent, false);
+    return ths;
+}
+
+
 // Preserve empty Draw member (retail 4-byte body).
 void CTaskGamePic::Draw() {}
+
+template <>
+void CTTask<CTaskGamePic>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CTaskGamePic*>(this)->*mMoveFunc)();
+    }
+}
+
+template <>
+void CTTask<CTaskGamePic>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CTaskGamePic*>(this)->*mDrawFunc)();
+    }
+}
+
 // NOTE (wave DL-r4, verified): the five data labels for this TU (80538AD8/
 // 80538BC0 in .data, 80668BB0/BB4/BB8 in .sdata2) cannot land in source this
 // wave. .data/.rodata/.sdata: the TU's C++ classes emit __vt__12CTaskGamePic

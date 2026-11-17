@@ -1996,16 +1996,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_806665A0"),
         ),
     ),
-    "CtrlMoveNpc.o": UnitRules(
-        # retail exports the ctor under the friendly map name __ct__cf_CtrlMoveNpc
-        # (symbols.txt .text:0x801A0DAC); the TU defines the real C++ member ctor
-        # which MWCC mangles __ct__Q22cf12CCtrlMoveNpcFv - rename in postprocess
-        # (same recipe as CDeviceFileCri's ctor rename, MWCC_CASES ref:66fef79dfa).
-        # Category A: LOAD-BEARING (the retail CtrlNpc.o R_PPC_REL24 names
-        # __ct__cf_CtrlMoveNpc; the rename is the only definition). Removed from
-        # the A deletion batch and kept until the source declares the retail name.
-        exact_renames=(("__ct__Q22cf12CCtrlMoveNpcFv", "__ct__cf_CtrlMoveNpc"),),
-    ),
     "CtrlMoveEne.o": UnitRules(
         # magic -> lbl_eu_80666620, 2^52 -> lbl_eu_80666650 (content-equal
         # unit-ref'd labels); the extra unmatched-residual zero slot gets the
@@ -5856,11 +5846,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the stripped sections themselves, so strip without renames.
         exact_renames=(
             ("__vt__Q22cf12CfObjectTbox", "lbl_eu_80534FB8"),
-            # Derived dtor's base-dtor call: retail chains through CfObjectObj's
-            # dtor (forced flat name __dt__800BFA14, defined in CfObjectObj.o).
-            ("__dt__Q22cf11CfObjectObjFv", "__dt__800BFA14"),
-            # Derived ctor's base-ctor call: same scheme, __ct__cf_CfObjectObj.
-            ("__ct__Q22cf11CfObjectObjFv", "__ct__cf_CfObjectObj"),
         ),
     ),
     "CPartyStateWin.o": UnitRules(

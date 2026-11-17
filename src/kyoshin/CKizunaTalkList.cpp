@@ -26,7 +26,7 @@ CKizunaTalkList::CKizunaTalkList() {
     mpAnim24 = NULL;
     mpAnim28 = NULL;
     __ct__CCur18(&mCursor, NULL);
-    __ct__CScrollBar(mScrollBar, 0);
+    __ct__10CScrollBarFUc(mScrollBar, 0);
     mState84 = 0;
     mState85 = 0;
     mUnknown86 = 0;
@@ -36,7 +36,7 @@ CKizunaTalkList::CKizunaTalkList() {
     __ct__802726F4(&mEntryArray, 0);
 
     u8 tmpBuf[0x40];
-    __ct__CScrollBar(reinterpret_cast<CScrollBar*>(tmpBuf), 1);
+    __ct__10CScrollBarFUc(reinterpret_cast<CScrollBar*>(tmpBuf), 1);
     // Member-wise copy of the temp bar's body, skipping the vtable slot.
     reinterpret_cast<CScrollBar*>(mScrollBar)->mMemRegion =
         reinterpret_cast<CScrollBar*>(tmpBuf)->mMemRegion;

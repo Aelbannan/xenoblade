@@ -3,7 +3,6 @@
 
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CScnVirtualLight.hpp"
-#include "libs/monolib/src/scn/CVirtualLightAmb.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnFilterMan.hpp"
@@ -324,12 +323,7 @@ extern "C" void scnVlInitLights(CScnVirtualLight* self) {
 extern "C" __declspec(noinline) CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLightData* self, u8* field,
                               const CTaskGame_setVec4_tmp* data, f32 val) {
     CVirtualLightAmb* ptr;
-    void* mem = mtl::MemManager::allocate(0x34, self->value08);
-    if (mem != 0) {
-        ptr = __ct__CVirtualLightAmb((CVirtualLightAmb*)mem);
-    } else {
-        ptr = (CVirtualLightAmb*)mem;
-    }
+    ptr = new (self->value08) CVirtualLightAmb;
     scnVlInsertItem((CScnVirtualLightData*)field, (u32)&ptr);
     copyWord4Offset((u32*)ptr, (const u32*)data);
     scnVlSetIntens(ptr, val);
@@ -560,12 +554,7 @@ extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlFindFree(CScnVirtualL
 __declspec(noinline) CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field, const CTaskGame_setVec4_tmp* data,
                    f32 val1, f32 val2, f32 val3) {
     CVirtualLightDir* ptr;
-    void* mem = mtl::MemManager::allocate(0x3C, self->value08);
-    if (mem != 0) {
-        ptr = __ct__CVirtualLightDir((CVirtualLightDir*)mem);
-    } else {
-        ptr = (CVirtualLightDir*)mem;
-    }
+    ptr = new (self->value08) CVirtualLightDir;
     scnVlInsertItem((CScnVirtualLightData*)field, (u32)&ptr);
     copyWord4Offset((u32*)ptr, (const u32*)data);
     scnVlSetIntens(ptr, val1);

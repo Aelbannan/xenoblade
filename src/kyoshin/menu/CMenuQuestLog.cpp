@@ -76,10 +76,10 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
     _this->mScene = parent;
 
     // Embedded widgets in construction order.
-    __ct__CBgTex(&_this->mBgTex, 0);
+    __ct__6CBgTexFUc(&_this->mBgTex, 0);
     __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
-    __ct__CQstLogList(&_this->mQstLogList, 0);
-    __ct__CQstLogInfo(&_this->mQstLogInfo);
+    __ct__11CQstLogListFUs(&_this->mQstLogList, 0);
+    __ct__11CQstLogInfoFv(&_this->mQstLogInfo);
 
     _this->field_2280 = arg2;
     _this->mState = 0;
@@ -129,7 +129,7 @@ void CMenuQuestLog::Init() {
     } tmp;
 
     // --- CBgTex ---
-    __ct__CBgTex((CBgTex*)tmp.bg, 0);
+    __ct__6CBgTexFUc((CBgTex*)tmp.bg, 0);
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mBgTex.mMemRegion), (const u32*)(tmp.bg + 0x4));
     mBgTex.mFileHandle = *(CFileHandle**)(tmp.bg + 0x14);
     mBgTex.mLayout = *(nw4r::lyt::Layout**)(tmp.bg + 0x18);
@@ -157,10 +157,10 @@ void CMenuQuestLog::Init() {
     mTitleAHelp.unk36 = tmp.title[0x36];
     mTitleAHelp.unk37 = tmp.title[0x37];
     __dt__11CTitleAHelpFv((CTitleAHelp*)tmp.title, -1);
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- CQstLogList ---
-    __ct__CQstLogList((CQstLogList*)tmp.list, (u16)field_2280);
+    __ct__11CQstLogListFUs((CQstLogList*)tmp.list, (u16)field_2280);
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mUnk04[0]), (const u32*)(tmp.list + 0x4));
     mQstLogList.mFileHandle = *(CFileHandle**)(tmp.list + 0x14);
     mQstLogList.mArcResAcc = *(nw4r::lyt::ArcResourceAccessor**)(tmp.list + 0x18);
@@ -229,7 +229,7 @@ void CMenuQuestLog::Init() {
     QstLogList_LoadArc(&mQstLogList);
 
     // --- CQstLogInfo ---
-    __ct__CQstLogInfo((CQstLogInfo*)tmp.info);
+    __ct__11CQstLogInfoFv((CQstLogInfo*)tmp.info);
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogInfo.mMemRegion), (const u32*)(tmp.info + 0x4));
     mQstLogInfo.mFileHandle = *(CFileHandle**)(tmp.info + 0x14);
     mQstLogInfo.field_0x18 = *(CFileHandle**)(tmp.info + 0x18);

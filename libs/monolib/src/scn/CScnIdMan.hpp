@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/scn/CScn.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
 // A node in the scene-id circular linked list (single link at +0x00).
 struct CScnIdNode {
@@ -14,19 +16,16 @@ struct CScnIdPoolSlot {
     CScnIdNode* mAnchor;    // +0x04 list sentinel
 };
 
-// The CScnIdManager's parameter object; pool pointer at +0x60.
-struct CScnItemPool {};   // opaque item-pool handle (fields not read here)
-struct CScnIdParam {
-    u8 _00[0x60];           // +0x00
-    CScnItemPool* mPool;    // +0x60
-};
-
-// Scene ID manager: registers a render callback with CScn.
-struct __declspec(novtable) CScnIdMan {
+// Scene ID manager: registers itself as a render callback with its CScn.
+// Retail RTTI (__RTTI__9CScnIdMan) has a null base list, i.e. the
+// IScnRender base is not public.
+class CScnIdMan : IScnRender {
+public:
+    CScnIdMan(CScn* pScn);
     virtual ~CScnIdMan();
     virtual void cbRenderBefore();
 
-    // +0x00: vtable pointer (auto/compiler-managed)
-    CScnIdParam* mParam;    // +0x04
+    // +0x00: vtable pointer (IScnRender)
+    CScn* mScn;             // +0x04
     u8 mFlag;               // +0x08
 };

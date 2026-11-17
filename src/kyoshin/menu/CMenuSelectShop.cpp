@@ -106,7 +106,7 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
     self->mScene = (CScn*)scene;
 
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    __ct__CSelShopWin(&self->mSelShop);
+    __ct__11CSelShopWinFv(&self->mSelShop);
     __ct__CCur18(&self->mCursor, 0);
 
     self->mState = 0;
@@ -159,19 +159,18 @@ void CMenuSelectShop::Init() {
     // the window resources. The temp pointers are derived after the ctor so
     // MWCC folds the accesses to r1-relative addressing (CSysWinSave::Init
     // shape) instead of holding a callee-saved base register.
-    u8 rawShop[0x28];
-    __ct__CSelShopWin(reinterpret_cast<CSelShopWin*>(rawShop));
-    CSelShopWin* tempShop = reinterpret_cast<CSelShopWin*>(rawShop);
-    mSelShop.mMemRegion = tempShop->mMemRegion;
-    mSelShop.mFileHandle = tempShop->mFileHandle;
-    mSelShop.mAccessor = tempShop->mAccessor;
-    mSelShop.mLayout = tempShop->mLayout;
-    mSelShop.mAnimTransform = tempShop->mAnimTransform;
-    mSelShop.mIsLayoutBuilt = tempShop->mIsLayoutBuilt;
-    mSelShop.mIsLoaded = tempShop->mIsLoaded;
-    mSelShop.mAnimState = tempShop->mAnimState;
-    mSelShop.mAnimActive = tempShop->mAnimActive;
-    __dt__11CSelShopWinFv(rawShop, -1);
+    {
+        CSelShopWin tempShop;
+        mSelShop.mMemRegion = tempShop.mMemRegion;
+        mSelShop.mFileHandle = tempShop.mFileHandle;
+        mSelShop.mAccessor = tempShop.mAccessor;
+        mSelShop.mLayout = tempShop.mLayout;
+        mSelShop.mAnimTransform = tempShop.mAnimTransform;
+        mSelShop.mIsLayoutBuilt = tempShop.mIsLayoutBuilt;
+        mSelShop.mIsLoaded = tempShop.mIsLoaded;
+        mSelShop.mAnimState = tempShop.mAnimState;
+        mSelShop.mAnimActive = tempShop.mAnimActive;
+    }
 
     loadShopWinArc(&mSelShop);
 

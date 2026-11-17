@@ -8,11 +8,9 @@
  * picked up / collected in the game world (recovery items, key items,
  * etc.). Fields are populated from BDAT columns at construction.
  *
- * Like the other gimmick variants (CfGimmickElv/CfGimmickSaveOff) the class
- * carries a MANUAL vtable pointer at +0x00 (there is no C++ inheritance --
- * the shared CfGimmick base layout is replicated inline) so the retail
- * vtable `lbl_eu_80535A98` is stored verbatim instead of a compiler
- * generated vtable.
+ * Base fields used: field_04 (placement point), field_10 (rotation),
+ * field_1C (collider view), field_60 (checker index), field_7C (spawned
+ * object registration), field_82 (type id = 6).
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
@@ -20,38 +18,12 @@
 
 namespace cf {
 
-class CfGimmickItem {
+class CfGimmickItem : public CfGimmick {
 public:
-    ~CfGimmickItem();
+    CfGimmickItem(int rowId);
+    virtual ~CfGimmickItem();
+    virtual void CfGimmick_Update();   // PTMF state dispatch + spawn/cleanup
 
-    /* 0x00 */ u32* vtable;              // manual vptr (lbl_eu_80535A98)
-    /* 0x04 */ CfGimmickVec3 vvec04;     // base placement/sub-object 3-vector
-    /* 0x10 */ u8 pad10[0x0C];
-    /* 0x1C */ void* vobj;               // base sub-object slot
-    /* 0x20 */ u8 pad20[0x10];
-    /* 0x30 */ f32 field_30;
-    /* 0x34 */ f32 field_34;
-    /* 0x38 */ f32 field_38;
-    /* 0x3C */ f32 field_3C;
-    /* 0x40 */ f32 field_40;
-    /* 0x44 */ s32 field_44;
-    /* 0x48 */ u8 pad48[0x18];           // 0x48-0x5F
-    /* 0x60 */ s32 mType;                // jumptable_eu_80535830 dispatch index
-    /* 0x64 */ u16 field_64;
-    /* 0x66 */ u16 field_66;             // bit0 toggled state
-    /* 0x68 */ u16 field_68;
-    /* 0x6A */ u16 field_6A;
-    /* 0x6C */ u16 field_6C;
-    /* 0x6E */ u16 field_6E;
-    /* 0x70 */ u8 field_70;
-    /* 0x71 */ u8 field_71;
-    /* 0x72 */ u8 field_72;
-    /* 0x73 */ u8 field_73;
-    /* 0x74 */ u32 field_74;             // state flag word (0x8/0x10/0x20 bits)
-    /* 0x78 */ u32 field_78;
-    /* 0x7C */ CfGimmickReg field_7C;    // gimmick-object registration slot
-    /* 0x80 */ u16 field_80;
-    /* 0x82 */ u16 field_82;
     /* 0x84 */ u16 field_84[3];          // per-slot item ids
     /* 0x8A */ u16 field_8A;
     /* 0x8C */ u16 field_8C;
@@ -89,8 +61,6 @@ typedef void (CfGimmickItem::*CfGimmickItemState)();
 // have C linkage in retail so extern "C" is required to emit the raw name.
 // ---------------------------------------------------------------------------
 extern "C" {
-void __ct__cf_CfGimmick(cf::CfGimmick* self);
-void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int mode);  // ABI deleting-dtor twin
 void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self);                     // unregister field_7C object
 void CfGimmick_PostGimmickName(unsigned short id);
@@ -121,14 +91,11 @@ void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 }
 
-// Area manager object returned by createBattleActor (forward-declared class).
-class UnkClass_800817BC;
-extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
-    unsigned int a, unsigned int b);
+// Area manager object factory (void* form matches CTaskGameEff.hpp).
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 
 // Data symbols (global-scope objects, not mangled by MWCC).
 extern f32 lbl_eu_8066844C;            // spawn distance constant (sdata2)
-extern u8 lbl_eu_80535A98[];           // CfGimmickItem vtable (0x24)
 // NOTE: retail's 6-entry PTMF state table. Declared as untyped bytes (the
 // dispatch site casts to CfGimmickItemState*): a real PMF array cannot be
 // constructed from free functions, so the table is a byte blob with the

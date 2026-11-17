@@ -267,6 +267,39 @@ Adopted **Option C, transitioned through Option A labelling**
   constants (e.g. `ml::pi` in `MathConstants.cpp`, defined with an `extern const` in scope).
   Fix boundaries rather than labelling units code-only for `.sdata2`.
 
+### 17.8 Linker weak dedup in the unit gates (decision 2026-10-24)
+
+Retail split objects and `splits.txt` budgets come from the **linked** DOL. mwld keeps one copy of
+each weak definition (the first one it links) and discards the others. It then dead-strips data
+that nothing references any more. MWCC emits weak copies of inline functions that are referenced
+but not inlined (for example `IWorkEvent::~IWorkEvent` named by a ctor's extab cleanup action) and
+of base-class RTTI (`__RTTI__10IWorkEvent` and its name string). So a TU written with its real
+base classes compiles to a raw `.o` that is larger than its retail slice, even though it links to
+the same bytes. Hand-made "vtable stand-in" bases were added only to hide this, and they cost the
+extab cleanup actions.
+
+The unit gates therefore compare the decomp object **as mwld contributes it to the link**
+(`tools/coop/lib/weak_dedup.py::linked_view`). This applies to the split-size check
+(`object_size.py`), `run.py data diff`, `code_only_check.py`, `extab-gate`, and hexdiff's split and
+extab lines:
+
+- A decomp symbol is excluded **only** if it is `STB_WEAK`, defined in the object, and the same
+  name is in `config/<region>/symbols.txt` at an address that `splits.txt` assigns to a
+  **different** unit. Global and local symbols are never excluded. Neither are weak symbols that
+  retail places in this unit or whose address belongs to no split unit.
+- Local data is also excluded when **every** relocation that references it comes from an excluded
+  range. This is computed from relocations to a fixpoint, with no name lists. It covers the RTTI
+  name string, and the `extabindex` triple and `extab` record of an excluded function.
+- References to an excluded weak symbol become UNDEF references by name. They resolve through
+  `symbols.txt` to the surviving retail copy, as in the link.
+- Retail-only **link tail padding** is accepted in `data_match.check_data_sections`. A retail data
+  section may run past the decomp section by fewer bytes than the retail section alignment, if
+  those bytes are zero, carry no relocation, and end on that alignment. This is the padding mwld
+  inserts before the next object.
+- Every exclusion is printed (hexdiff `weak-dedup: excluded ...`, `data diff`) and is never silent.
+  `run.py link-gate` stays the end-to-end check that mwld resolves the deduplicated copies.
+  Tests: `tools/coop/tests/test_weak_dedup.py`.
+
 ### 17.3 Common mismatch categories
 
 - signed versus unsigned comparisons;

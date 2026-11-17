@@ -70,6 +70,7 @@ def scan(root: Path = ROOT, region: str = "us", verbose: bool = False) -> tuple[
     """(failing unit -> per-function diff count, units audited, missing objects)."""
     from tools.coop.lib.data_match import check_extab_sections, extab_function_diffs
     from tools.coop.lib.reloc_canon import LinkerLayout
+    from tools.coop.lib.weak_dedup import linked_view
 
     layout = LinkerLayout.load(root, region)
     failing: dict[str, int] = {}
@@ -81,6 +82,7 @@ def scan(root: Path = ROOT, region: str = "us", verbose: bool = False) -> tuple[
             missing.append(unit["name"])
             continue
         audited += 1
+        decomp = linked_view(decomp, root, region, unit["name"]).path
         if check_extab_sections(retail, decomp, layout=layout).ok:
             continue
         diffs = extab_function_diffs(retail, decomp, layout=layout)

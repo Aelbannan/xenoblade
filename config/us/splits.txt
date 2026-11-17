@@ -1630,7 +1630,7 @@ kyoshin/cf/CfGimmick.cpp:
 	.ctors      start:0x804FA060 end:0x804FA064
 
 	.bss        start:0x805765a0 end:0x80576658
-	.data        start:0x805357e8 end:0x80535844
+	.data        start:0x805357e8 end:0x80535868
 	.rodata        start:0x80508598 end:0x80508668
 	.sbss        start:0x806646b0 end:0x806646bc
 	.sdata        start:0x80662784 end:0x80662790
@@ -1640,7 +1640,7 @@ kyoshin/cf/CfGimmickElv.cpp:
 	extabindex  start:0x8002D2C8 end:0x8002D358
 	.text       start:0x8020C9D8 end:0x8020E18C
 
-	.data        start:0x80535844 end:0x805358c8
+	.data        start:0x80535868 end:0x80535900
 	.rodata        start:0x80508668 end:0x805086d8
 	.sdata2        start:0x80668380 end:0x806683a8
 kyoshin/cf/CfGimmickLock.cpp:
@@ -1656,7 +1656,7 @@ kyoshin/cf/CfGimmickWarp.cpp:
 	extabindex  start:0x8002D3B8 end:0x8002D460
 	.text       start:0x8020F1F8 end:0x80210D60
 
-	.data        start:0x805358c8 end:0x805359b0
+	.data        start:0x80535938 end:0x805359e8
 	.rodata        start:0x805086f8 end:0x80508728
 	.sdata2        start:0x806683c8 end:0x80668400
 kyoshin/cf/CfGimmickJump.cpp:
@@ -1664,7 +1664,7 @@ kyoshin/cf/CfGimmickJump.cpp:
 	extabindex  start:0x8002D460 end:0x8002D4CC
 	.text       start:0x80210D60 end:0x802120BC
 
-	.data        start:0x805359b0 end:0x80535a18
+	.data        start:0x805359e8 end:0x80535a50
 	.rodata        start:0x80508728 end:0x80508798
 	.sdata2        start:0x80668400 end:0x80668438
 kyoshin/cf/CfGimmickItem.cpp:
@@ -1672,19 +1672,19 @@ kyoshin/cf/CfGimmickItem.cpp:
 	extabindex  start:0x8002D4CC end:0x8002D52C
 	.text       start:0x802120BC end:0x80212A78
 
-	.data        start:0x80535a18 end:0x80535a98
+	.data        start:0x80535a50 end:0x80535ad0
 	.rodata        start:0x80508798 end:0x80508810
-	.sdata        start:0x806627a0 end:0x806627c0
+	.sdata        start:0x806627b8 end:0x806627c8
 	.sdata2        start:0x80668438 end:0x80668458
 kyoshin/makecrystal/CMenuMakeCrystal.cpp:
 	extab       start:0x8001339C end:0x80013488
 	extabindex  start:0x8002D52C end:0x8002D5B0
 	.text       start:0x80212A78 end:0x8021435C
 
-	.data        start:0x80535a98 end:0x80535b40
+	.data        start:0x80535ad0 end:0x80535b40
 	.rodata        start:0x80508810 end:0x80508828
 	.sbss        start:0x806646bc end:0x806646d0
-	.sdata        start:0x806627c0 end:0x806627d0
+	.sdata        start:0x806627c8 end:0x806627d0
 kyoshin/makecrystal/CMakeCrystalWin.cpp:
 	extab       start:0x80013488 end:0x8001360C
 	extabindex  start:0x8002D5B0 end:0x8002D694
@@ -2211,7 +2211,7 @@ kyoshin/realtimeevt/CREvtMovie.cpp:
 	extabindex  start:0x80031F84 end:0x80031FCC
 	.text       start:0x80296E70 end:0x802972B0
 
-	.data        start:0x80538aa0 end:0x80538ac8
+	.data        start:0x80538aa0 end:0x80538ad8
 	.rodata        start:0x8050fd88 end:0x8050fdb0
 	.sdata        start:0x80662b18 end:0x80662b20
 kyoshin/CTaskGamePic.cpp:
@@ -2219,7 +2219,7 @@ kyoshin/CTaskGamePic.cpp:
 	extabindex  start:0x80031FCC end:0x80032050
 	.text       start:0x802972B0 end:0x80297B60
 
-	.data        start:0x80538ac8 end:0x80538c00
+	.data        start:0x80538ad8 end:0x80538c00
 	.rodata        start:0x8050fdb0 end:0x8050fdd8
 	.sdata        start:0x80662b20 end:0x80662b30
 	.sdata2        start:0x80668bb0 end:0x80668bc8
@@ -2477,16 +2477,18 @@ kyoshin/cf/CfGimmickSaveOff.cpp:
 	extabindex  start:0x800331C0 end:0x800331E4
 	.text       start:0x802AE278 end:0x802AE4E8
 
+	.data        start:0x8053a1e0 end:0x8053a218
 	.rodata        start:0x80510b10 end:0x80510b30
+	.sdata        start:0x80662de0 end:0x80662de8
 kyoshin/menu/CMenuTutorialList.cpp:
 	extab       start:0x8001B1E0 end:0x8001B368
 	extabindex  start:0x800331E4 end:0x80033298
 	.text       start:0x802AE4E8 end:0x802AF314
 
-	.data        start:0x8053a1e0 end:0x8053a2a8
+	.data        start:0x8053a218 end:0x8053a2a8
 	.rodata        start:0x80510b30 end:0x80510b68
 	.sbss        start:0x80664be8 end:0x80664bf0
-	.sdata        start:0x80662de0 end:0x80662df0
+	.sdata        start:0x80662de8 end:0x80662df0
 	.sdata2        start:0x80668dc8 end:0x80668dd8
 kyoshin/CTutorialList.cpp:
 	extab       start:0x8001B368 end:0x8001B580
@@ -6414,6 +6416,7 @@ monolib/src/scn/CScnFrame.cpp:
 monolib/src/scn/CScnIdMan.cpp:
 	.data	start:0x8056EC80 end:0x8056EC90
 	.rodata	start:0x80524238 end:0x80524248
+	.sdata	start:0x80663A78 end:0x80663A80
 	.text	start:0x804A25B4 end:0x804A2738
 monolib/src/scn/CScnItemAnim.cpp:
 	.data	start:0x8056EC90 end:0x8056ECC0
@@ -6424,7 +6427,6 @@ monolib/src/scn/CScnItemCamera.cpp:
 	.ctors	start:0x804FA164 end:0x804FA168
 	.data	start:0x8056ECC0 end:0x8056F014
 	.rodata	start:0x80524268 end:0x80524428
-	.sdata	start:0x806638A8 end:0x80663A90
 	.text	start:0x804A2A20 end:0x804A3E08
 monolib/src/vm/yvm2.c:
 	.bss	start:0x80658680 end:0x8065CFA0

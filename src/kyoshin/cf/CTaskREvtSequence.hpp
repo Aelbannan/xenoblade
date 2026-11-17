@@ -145,8 +145,8 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param);
 extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self,
                                           CREvtParam* param);
 extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg);
-extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self,
-                                        CREvtMovieScript* scriptData);
+extern "C" CREvtMovie* __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
+    CREvtMovie* self, CREvtMovieScript* scriptData);
 extern "C" void* createEvtModelObj(void* self);
 extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
 extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv();

@@ -609,13 +609,13 @@ extern "C" void EffSys_DriveRandom(u16* self, f32 f1) {
     }
 }
 
-// EffSys_StepSchedules: no-arg per-frame hook - restore the fog state, then advance
-// the two global schedule lists (retail: two bare bl's in a 16-byte frame).
+// EffSys_StepSchedules: no-arg per-frame hook - advance the two global schedule
+// lists, then restore the fog state (retail: two bare bl's in a 16-byte frame).
 extern "C" void Trail_RestoreFog(void);
 extern "C" void SchedList_AdvanceBoth(void);
 void EffSys_StepSchedules() {
-    Trail_RestoreFog();
     SchedList_AdvanceBoth();
+    Trail_RestoreFog();
 }
 
 // func_804CBB84: on the 0x800 flag (with 0x2000 or 0x1000 also set), rebind

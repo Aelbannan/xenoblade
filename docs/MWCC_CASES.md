@@ -1986,7 +1986,7 @@ Exact retail size `0xBB4`. Historical peak ~**93.8%** (commit `28b3f22`) used op
 
 Retail stores an **IWorkEvent vtable pointer at +0** but the TU often **does not emit** C++ `IWorkEvent` weak defaults or a local vtable (vtable lives in split1 `.data`).
 
-**Do not** `class X : public IWorkEvent` in these TUs — inline/OOL defaults still tend to pull weak stubs or change dtor shape and blow the split `.text` budget.
+**Superseded 2026-10-24 (PLAN.md §17.8):** use the real base, `class X : public IWorkEvent` with `#define IWORK_EVENT_INLINE_DTOR`. The weak `__dt__10IWorkEventFv` / `__RTTI__10IWorkEvent` copies this emits are discarded by mwld, and the gates now exclude them (`tools/coop/lib/weak_dedup.py`). That is the only way to get retail's ctor extab cleanup action. CBattery is the reference: real base, literal strings, compiler vtable/RTTI, and FULL text, data and extab. The stand-in pattern below is historical.
 
 Pattern that matched:
 

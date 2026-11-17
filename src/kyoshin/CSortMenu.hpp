@@ -127,7 +127,7 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" u32 CItemBlock_getFlag120EC(int);
 
 // CScrollBar functions
-extern "C" void __ct__CScrollBar(void*, int);
+extern "C" void __ct__10CScrollBarFUc(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void CScrollBar_loadLayoutArc(void*);
 extern "C" void CScrollBar_UpdateDispatch(void*);

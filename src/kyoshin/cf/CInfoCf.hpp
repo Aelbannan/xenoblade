@@ -103,12 +103,12 @@ void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 void __dt__6CBgTexFv(CBgTex* self, int flags);
 // Retail-unmangled ctors/helpers used by CMenuItem::Init (US strips the
 // member manglings; the widget headers' C++ members would mangle the relocs).
-void __ct__CBgTex(CBgTex* self, u8 arg);
+void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
 void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 type, u32 unk, u32 scene, u32 flag);
 int BgTex_Acquire_3C14(CBgTex* self);
 void BgTex_SetupRegion_3A24(CBgTex* self);
-void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 void ClearListSlots(CItemBoxGrid* self);
 void LoadItemBoxFiles(CItemBoxGrid* self);
 void PushToList(CItemBoxGrid* self, u8 val);

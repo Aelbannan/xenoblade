@@ -61,7 +61,7 @@ CMapSel::CMapSel() {
     mFlag33 = 1;
 
     // Embedded sub-objects.
-    __ct__CScrollBar(&self->mScrollBar[0], 0);
+    __ct__10CScrollBarFUc(&self->mScrollBar[0], 0);
     __ct__CCur18(&self->mCursor, 0);
 
     float timer0 = lbl_eu_80668738;   // load early, store after the cell fields
@@ -74,7 +74,7 @@ CMapSel::CMapSel() {
     // Copy a flag-1 temporary scrollbar's body into the embedded scrollbar
     // (the +0x00 vtable was already set by the first ctor above).
     u8 tempBuf[0x40];
-    __ct__CScrollBar(tempBuf, 1);
+    __ct__10CScrollBarFUc(tempBuf, 1);
     // Copy the flag-1 scrollbar body over the embedded one, field by field
     // through inline casts so no pointer locals stay live across the block.
     CScrollBar& dst = *reinterpret_cast<CScrollBar*>(&self->mScrollBar[0]);

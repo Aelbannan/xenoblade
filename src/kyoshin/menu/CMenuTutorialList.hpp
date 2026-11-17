@@ -153,9 +153,9 @@ extern "C" void __dt__800FED0C(CProcess* self, int flags);
 // Embedded-widget ctors called by the member ctor (US retail strips these
 // manglings; C-ABI wrappers for the opaque embedded storages).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__CTutorialList(CTutorialList* self, int arg);
+extern "C" void __ct__13CTutorialListFUs(CTutorialList* self, int arg);
 extern "C" void __ct__CTutorial(CTutorial* self, int arg, int arg2);
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).

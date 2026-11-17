@@ -16,6 +16,9 @@ class ObjectSizeCheck:
     decomp_text: int | None
     ok: bool
     notes: str
+    #: Weak copies mwld discards (and data only they reference), excluded
+    #: from ``decomp_text`` -- see tools/coop/lib/weak_dedup.py.
+    excluded: tuple[str, ...] = ()
 
     @property
     def over_by(self) -> int | None:
@@ -141,6 +144,16 @@ def check_object_size(
 
     retail_text = elf_section_size(retail_object, ".text") if retail_object else None
     decomp_text = elf_section_size(decomp_object, ".text") if decomp_object else None
+    excluded: tuple[str, ...] = ()
+    if decomp_text is not None and split_unit is not None:
+        try:
+            from tools.coop.lib.weak_dedup import linked_view
+
+            view = linked_view(decomp_object, project_root, region, split_unit.path)
+            excluded = tuple(view.excluded)
+            decomp_text -= view.removed.get(".text", 0)
+        except Exception:  # fall back to the raw size (stricter)
+            pass
 
     notes: list[str] = []
     if split_unit is None:
@@ -164,6 +177,8 @@ def check_object_size(
     elif budget is not None and decomp_text is not None:
         spare = budget - decomp_text
         notes.append(f"within split budget (0x{spare:X} spare)")
+    if excluded:
+        notes.append(f"{len(excluded)} weak-dedup exclusion(s)")
 
     return ObjectSizeCheck(
         unit_hint=unit_hint,
@@ -173,6 +188,7 @@ def check_object_size(
         decomp_text=decomp_text,
         ok=ok,
         notes="; ".join(notes) if notes else "ok",
+        excluded=excluded,
     )
 
 

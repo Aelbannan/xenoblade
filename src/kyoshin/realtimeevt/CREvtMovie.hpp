@@ -8,14 +8,9 @@
  * Own vtable at 0x80538AA0
  * Size: 0x1A
  *
- * Virtual function table at 0x80538AA0 (7 virtual functions):
- *   vfunc 0: destructor  (__ct__802948D0)
- *   vfunc 1: EvtMovie_Noop_4CB0  -- empty override (just blr)
- *   vfunc 2: EvtMovie_MaybeAdvance_493C
- *   vfunc 3: inherited (EvtObj_ConstFalse -- returns 0)
- *   vfunc 4: inherited (CREvtObjVfunc10Default)
- *   vfunc 5: inherited (REvtCam_AlwaysTrue1)
- *   vfunc 6: inherited (CREvtObjIsBusyDefault)
+ * Virtual function table at 0x80538AA0 (8 slots):
+ *   dtor, vfunc_04 (empty), vfunc_08 (stop before trigger), inherited
+ *   vfunc_0C/vfunc_10/vfunc_14/isBusy, vfunc_1C (preload).
  *
  * The class constructs SFD movie file paths by concatenating
  *   "/ev/realtime/" + scriptName + ".sfd"
@@ -24,20 +19,6 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
-
-// Own vtable (retail .data:0x80538AA0), referenced by the ctor/dtor.
-// u32 words (cf::CREvtObj precedent: lbl_eu_80532320 is u32[], and the
-// vtable field is u32* -- void*[] trips MWCC 10209 on the &lbl[0] stores).
-extern u32 lbl_eu_80538AA0[];
-
-// String constant: "/ev/realtime/\0.sfd\0" packed together.
-// [0x00 .. 0x0D] = "/ev/realtime/", [0x0E .. ] = ".sfd"
-// Declared as an incomplete (unsized) array: MWCC cannot classify an
-// unsized extern as SDA-eligible, so it forms the address with `lis`/`addi`
-// (ADDR16_HA/LO) and holds the base in a callee-saved register (retail
-// shape). Referencing via array decay keeps `dir + 14` as runtime pointer
-// arithmetic from that held base (retail's `addi rN,rM,14`).
-extern char lbl_eu_8050FD98[];
 
 // Script data structure referenced by CREvtMovie::mScriptData.
 // Layout: [0x08] = event counter, [0x0C] = SFD script name (no extension).
@@ -56,31 +37,30 @@ struct CREvtMoviePathBuf {
     /* 0x20 */ u32 mLength;
 };
 
-// CREvtMovie - realtime event movie playback
-// Vtable at 0x80538AA0 (installed by hand by the ctor/dtor)
-// Size: 0x1A
-//
-// Do NOT inherit cf::CREvtObj here: that header declares virtuals, so MWCC
-// inserts a hidden C++ vptr in front of the explicit `vtable` member and
-// shifts every field by +4 (ctor stores land at 4/18/1C/1D vs retail 0/14/18/19).
-// Layout is the retail CREvtObj base (0x14) plus the two movie fields.
-struct CREvtMovie {
-    /* 0x00 */ u32* vtable;
-    /* 0x04 */ u32 mType;
-    /* 0x08 */ u32 mCallback[3];               // __ptmf
+namespace cf {
+
+// CREvtMovie - realtime event movie playback (RTTI name "cf::CREvtMovie").
+// Vtable at 0x80538AA0. Size: 0x1A.
+class CREvtMovie : public CREvtObj {
+public:
+    CREvtMovie(CREvtMovieScript* scriptData);
+    virtual ~CREvtMovie();
+    virtual void vfunc_04();  // empty override
+    virtual void vfunc_08();  // stop playback one tick before the trigger
+    virtual void vfunc_1C();  // preload the SFD ahead of its trigger tick
+
     /* 0x14 */ CREvtMovieScript* mScriptData;
     /* 0x18 */ u8 mFlag18;
     /* 0x19 */ u8 mFlag19;
 };
 
+} // namespace cf
+
+using cf::CREvtMovie;
+
 // C-linkage imports and TU targets (retail symbol names - keep
 // linkage/signatures verbatim so the definitions emit the unmangled names).
 extern "C" {
-
-// Base constructor/destructor -- defined in kyoshin/realtimeevt/CREvtObj.cpp.
-cf::CREvtObj* __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
-cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFlag);
-void __dt__80185754(void* ptr);
 
 // Movie playback functions (CLibCri streaming family).
 void evtStopMoviePlayback(void);
@@ -102,12 +82,7 @@ void* getMovieWorkSize__7CLibCriFv(void);
 
 // Targets defined in this TU (declared here so the definitions keep C
 // linkage and emit the retail unmangled symbol names).
-CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData);
-CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag);
-void EvtMovie_MaybeAdvance_493C(CREvtMovie* self);
 void EvtMovie_StartPlayback_4980(CREvtMovie* self);
-void EvtMovie_PreloadMovie_4A70(CREvtMovie* self);
 void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
-void EvtMovie_Noop_4CB0(void);
 
 } // extern "C"

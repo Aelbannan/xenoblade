@@ -7,6 +7,7 @@
 namespace cf {
 
     class CfObject; // real owner of position slot at +0xAC (CfObject_getPosVector)
+    struct CCtrlMoveData;
 
     // CCtrlMoveBase layout: 0x48 bytes of data (field_0x00..field_0x46) then
     // the vptr for its single virtual unk08 at +0x48. Retail secondary table
@@ -20,7 +21,7 @@ namespace cf {
         ml::CVec3 mVelocity;     // 0x18
         ml::CVec3 field_0x24;    // 0x24
         void* mpSomePtr;         // 0x30
-        void* mpDataPtr;         // 0x34
+        CCtrlMoveData* mpDataPtr; // 0x34 owner object (ctor param)
         f32 mFloatParam1;        // 0x38
         f32 mFloatParam2;        // 0x3C
         u16 mFlagsU16_1;         // 0x40
@@ -34,6 +35,13 @@ namespace cf {
     public:
         CCtrlMoveBase(void* dataPtr);
         virtual void unk08(); // +0x08 in secondary vtable -> lbl_eu_80527808[2]
+
+    protected:
+        // novtable hierarchy: each ctor installs its retail vtable label in
+        // the vptr slot (+0x48) by hand.
+        void setVtable(const void* vtable) {
+            *(const void**)((u8*)this + 0x48) = vtable;
+        }
     };
 
     struct CCtrlMoveData {
@@ -64,7 +72,7 @@ namespace cf {
 extern "C" void* allocFreeNode__17UnkClass_8047CD0CFv();
 extern "C" int runWalkerTick__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, const void* f);
-extern "C" int walkPathCheck__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
+extern "C" int updateWalker__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
                                                      f32 d, f32 e, int f);
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void ScnRes_CopyEntryHead(void* out, int a);

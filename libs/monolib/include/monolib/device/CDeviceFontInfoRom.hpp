@@ -17,28 +17,27 @@ public:
     CDeviceFontInfoRom();
     virtual ~CDeviceFontInfoRom();
 
-    // noinline keeps create()'s placement-new a call (retail bl __ct__);
-    // -ipa file would otherwise fold the ~0x190 ctor body into create().
     static CDeviceFontInfoRom* create();
 
-    // FULL_MATCH: Returns a pointer to the embedded RomFont (non-const).
-    nw4r::ut::RomFont* getRomFont() { return &mRomFont; }
+    virtual s32 getFlags();             // returns field_0x04
+    virtual u32 getState();             // OS font sheetWidth
+    virtual u32 getMode();              // OS font sheetHeight
+    virtual u32 getBufferSize();        // OS font sheetFormat
+    virtual u16 getLineHeight();        // OS font cellHeight
+    virtual const char* getCharGlyph(const char* str, void** texOut, u32* xOut,
+                                     u32* yOut, u32* widthOut);
+    virtual nw4r::ut::Font* getFont();            // &mRomFont
+    virtual const nw4r::ut::Font* getFontConst(); // &mRomFont
+    virtual void advanceState();
+    virtual void initState();
+    virtual u32 isStateNonZero();
+    virtual u32 isStateReady();
 
-    // FULL_MATCH: Returns a pointer to the embedded RomFont (const).
-    const nw4r::ut::RomFont* getRomFont() const { return &mRomFont; }
-
-    const char* getFontTexture(const char* str, void** texOut, u32* xOut,
-                              u32* yOut, u32* widthOut);
-    void advanceState();   // state machine step
-    void initState();   // state check
-    int isStateNonZero();    // returns (mState != 0)
-    int isStateReady();   // state comparison
-    u16 getCellHeight();    // returns mFontInfo->cellHeight
-    u16 getSheetFormat();    // returns mFontInfo->sheetFormat
-    u16 getSheetHeight();    // returns mFontInfo->sheetHeight
-    u16 getSheetWidth();    // returns mFontInfo->sheetWidth
-
-    // 0x00-0x13: CDeviceFontInfo base class
+    // 0x00: CDeviceFontInfo base (vptr)
+    u32 field_0x04;              // 0x04 - unknown init flag/counter
+    void* mFontData;             // 0x08 - allocated font data buffer
+    void* mFontInfo;             // 0x0C - font info pointer (set if OSInitFont succeeds)
+    u32 mState;                  // 0x10 - state machine value
     nw4r::ut::RomFont mRomFont;  // 0x14 - embedded ROM font instance
-    void* mFontBuffer;            // 0x30 - allocated buffer for RomFont (written from allocate_tail void*)
+    void* mFontBuffer;           // 0x30 - allocated buffer for RomFont
 };

@@ -1909,7 +1909,7 @@ extern "C" void evalVisionTrigger(CVision* self) {
             fr2->field_3388 &= 0xFFFD;
             fr2->field_04->v20(0x4000);
         }
-        sub->field_0C->field_7C = ScMain_GetRoundedMetric(sub);
+        sub->field_0C->field_7C = ScMain_GetRoundedMetric(reinterpret_cast<ScMain*>(sub));
         self->vt_1C();
     }
 }
@@ -3259,7 +3259,7 @@ extern "C" u8 lbl_eu_806618E0[];
 extern "C" u8 lbl_eu_806618F8[];
 extern "C" u8 lbl_eu_80661900[];
 extern "C" u8 lbl_eu_80662578[];
-extern "C" u8 lbl_eu_80661BE0[];
+extern "C" u8 __RTTI__Q22cf11IObjectInfo[];
 extern "C" void BattleWork_MarkSlotFFFF(void);
 // Address-of view of the member dtor for the vtable slot (cf. the
 // DEFINE_POD_DTOR idiom: same asm name, C linkage, defined by the member).
@@ -3297,7 +3297,7 @@ struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
     u32 w70; u32 w74; u32 w78; u32 w7c; u32 w80; u32 w84; u32 w88; u32 w8c;
     u32 w90; u32 w94; u32 w98; u32 w9c[15]; };
 extern "C" __declspec(section ".data") __attribute__((used)) VisionBlk33308 lbl_eu_80533308 = {
-    (u32)lbl_eu_80661BE0, {0, 0, 0, 0, 0, 0, 0}, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, 0, (u32)lbl_eu_80661900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, 0, (u32)lbl_eu_80661900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333E0[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333EC[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 

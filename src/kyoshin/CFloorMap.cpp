@@ -2650,7 +2650,7 @@ CFloorMap::CFloorMap() {
     field_5A = 0;
     cursor_idx_5C = 0;
     field_5D = 0;
-    __ct__CScrollBar(&mScrollBar[0], 0);
+    __ct__10CScrollBarFUc(&mScrollBar[0], 0);
     __ct__CCur18(&mCursorA0, 0);
     __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
     __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
@@ -2711,7 +2711,7 @@ CFloorMap::CFloorMap() {
     {
         u8 sbStorage[0x40];
         CScrollBar* sb = reinterpret_cast<CScrollBar*>(sbStorage);
-        __ct__CScrollBar(sb, 3);
+        __ct__10CScrollBarFUc(sb, 3);
         CScrollBar* dst = reinterpret_cast<CScrollBar*>(&mScrollBar[0]);
         dst->mMemRegion = sb->mMemRegion;
         dst->mFileHandle = sb->mFileHandle;

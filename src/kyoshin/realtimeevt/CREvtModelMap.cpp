@@ -108,7 +108,6 @@ void simRefreshFlag8(void* pEmote, float time);
 void scnLgtRemoveLgtItem(void* pData);
 void* scnLgtCreateEnvController(void* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
-void __dt__80185754(CREvtModelMap* self);
 void __ct__80172668(CREvtModelMap* self, int dealloc);
 void getField20();
 void EvtModelSetEventData();
@@ -263,7 +262,7 @@ CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
         restorePrimaryLOD__8CTaskLODFv();
         __ct__80172668(self, 0);
         if (dealloc > 0) {
-            __dt__80185754(self);
+            cf::CREvtObj::operator delete(self);
         }
     }
     return self;

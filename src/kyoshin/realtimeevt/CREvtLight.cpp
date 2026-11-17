@@ -40,9 +40,8 @@ extern "C" u32   REvtCam_IsTaskListEmpty(void);
 
 // Own vtable and math constants / helpers.
 extern "C" u32 lbl_eu_80533D90[];
-extern "C" void  __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
+extern "C" void  __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg);
 extern "C" void  __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-extern "C" void  __dt__80185754(void* ptr);
 
 extern "C" const f32 lbl_eu_80667F08;  // angle conversion factor
 extern "C" const f32 lbl_eu_80667F0C;  // pi
@@ -54,7 +53,7 @@ extern "C" const f32 lbl_eu_80667F10;  // pi/2 threshold base
 // Calls CREvtObj(this, 2), sets own vtable, initializes fields
 // ============================================================================
 extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
-    __ct__cf_CREvtObj((cf::CREvtObj*)self, 2);
+    __ct__Q22cf8CREvtObjFi((cf::CREvtObj*)self, 2);
     *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
     self->field_14 = 0;
     self->field_18 = arg;
@@ -98,7 +97,7 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
 
         // Optionally deallocate from CREvtMem
         if (dealloc_flag > 0) {
-            __dt__80185754(self);
+            cf::CREvtObj::operator delete(self);
         }
     }
 
@@ -245,10 +244,10 @@ extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
 
 // Cross-TU vtable slots (flat retail names).
 extern "C" void CREvtObjVfunc08Default();
-extern "C" void EvtObj_ConstFalse();
-extern "C" void CREvtObjVfunc10Default();
-extern "C" void REvtCam_AlwaysTrue1();
-extern "C" void CREvtObjIsBusyDefault();
+extern "C" void vfunc_0C__Q22cf8CREvtObjFv();
+extern "C" void vfunc_10__Q22cf8CREvtObjFv();
+extern "C" void vfunc_14__Q22cf8CREvtObjFv();
+extern "C" void isBusy__Q22cf8CREvtObjFv();
 extern u32 lbl_eu_80662648[];  // sdata word pair (defined below).
 
 // [.data] 0x80533D90-0x80533DB8 (40B): CREvtLight vtable (sdata locator,
@@ -256,9 +255,9 @@ extern u32 lbl_eu_80662648[];  // sdata word pair (defined below).
 u32 lbl_eu_80533D90[10] = {
     (u32)&lbl_eu_80662648, 0x00000000,
     (u32)&__ct__801C3604, (u32)&CREvtLight_noop7C8,
-    (u32)&CREvtObjVfunc08Default, (u32)&EvtObj_ConstFalse,
-    (u32)&CREvtObjVfunc10Default, (u32)&REvtCam_AlwaysTrue1,
-    (u32)&CREvtObjIsBusyDefault, (u32)&CREvtLight_noop7C4,
+    (u32)&CREvtObjVfunc08Default, (u32)&vfunc_0C__Q22cf8CREvtObjFv,
+    (u32)&vfunc_10__Q22cf8CREvtObjFv, (u32)&vfunc_14__Q22cf8CREvtObjFv,
+    (u32)&isBusy__Q22cf8CREvtObjFv, (u32)&CREvtLight_noop7C4,
 };
 
 // [.rodata] 0x80505360-0x80505370 (16B): class-name string (unreferenced pool

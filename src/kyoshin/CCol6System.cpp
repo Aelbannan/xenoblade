@@ -363,7 +363,7 @@ extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
     self->mField120 = 0;
     self->mField121 = 0;
     __ct__CCur18(&self->mCur18, 0);
-    __ct__CScrollBar(&self->mScrollBar, 0);
+    __ct__10CScrollBarFUc(&self->mScrollBar, 0);
     memset(self->mUnk9C, 0, 0x80);
     return self;
 }
@@ -407,10 +407,10 @@ void CCol6Hint::Init() {
 
     // Raw-storage temp so the retail (short) CScrollBar ctor symbol binds at
     // the call site (CScrollBar.hpp's member ctor would emit the mangled
-    // __ct__10CScrollBarFb name instead of retail's __ct__CScrollBar). The
+    // __ct__10CScrollBarFb name instead of retail's __ct__10CScrollBarFUc). The
     // explicit ~CScrollBar() call emits the 1-arg __dt__10CScrollBarFv form.
     u8 sbStorage[0x40];
-    __ct__CScrollBar(reinterpret_cast<CScrollBar*>(sbStorage), 3);
+    __ct__10CScrollBarFUc(reinterpret_cast<CScrollBar*>(sbStorage), 3);
     // Memberwise copy skipping the vptr (retail copies +0x04..+0x3C).
     mScrollBar.mMemRegion.unk0 =
         reinterpret_cast<CScrollBar*>(sbStorage)->mMemRegion.unk0;

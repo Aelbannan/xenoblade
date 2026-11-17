@@ -97,7 +97,7 @@ extern u32 __ptmf_null[3];
 // C-ABI imports: CProcess is abstract so its ctor is called by retail name,
 // and the US build strips the widget ctor manglings (see CInfoCf.hpp).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 arg1, u32 arg2,
                                    u32 arg3, u32 arg4);

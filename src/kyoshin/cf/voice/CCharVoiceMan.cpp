@@ -1500,7 +1500,7 @@ void __dt__Q22cf10CCharVoiceFv();
 void voiceNoop();
 }
 extern char lbl_eu_80662C90[];
-extern char lbl_eu_80661BE0[];
+extern char __RTTI__Q22cf11IObjectInfo[];
 extern char lbl_eu_80662CA0[];
 struct VoiceVtableRow {
     const void* typeinfo; // +0x0 sdata locator
@@ -1514,7 +1514,7 @@ const VoiceVtableRow lbl_eu_80539890 = {
     (const void*)__dt__Q22cf12CChainEffectFv, (const void*)chainClearLinkOnObjMatch,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
-const VoiceVtableRow lbl_eu_805398A0 = { lbl_eu_80661BE0, 0, 0, 0 };
+const VoiceVtableRow lbl_eu_805398A0 = { __RTTI__Q22cf11IObjectInfo, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const VoiceVtableRow lbl_eu_805398B0 = {
     lbl_eu_80662CA0, 0, (const void*)__dt__Q22cf10CCharVoiceFv, 0,

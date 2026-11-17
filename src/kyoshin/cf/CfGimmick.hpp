@@ -3,28 +3,61 @@
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/IObjectInfo.hpp"
 
 // Forward declarations for the C-linkage imports below.
 class UnkClass_805764CC;
 namespace cf { class CfObjectMove; }
 
+// Minimal 3-component vector used by the CfGimmick collision helpers.
+struct CfGimmickVec3 {
+    f32 x;  // 0x00
+    f32 y;  // 0x04
+    f32 z;  // 0x08
+};
+
+// Container whose first member (0x00) is a registered-object pointer used by
+// CfGimmick_UnregisterSpawnedObject to unregister from the global resource manager.
+struct CfGimmickObject;  // defined below
+struct CfGimmickReg {
+    CfGimmickObject* field_00;
+};
+
 namespace cf {
 
 class CfGameManager;
 
-class CfGimmick {
+class CfGimmick : public IObjectInfo {
 public:
-    ~CfGimmick();
+    CfGimmick();
+    virtual ~CfGimmick();                                        // +0x08
+    virtual void CfGimmick_DetachManager(CfGameManager* other);  // +0x0C
+    virtual void CfGimmick_Update();                             // +0x10 (per-frame update; base no-op)
+    virtual void GimNoopB();                                     // +0x14
+    virtual void GimNoopC();                                     // +0x18
+    virtual void GimNoopD();                                     // +0x1C
+    virtual void CfGimmick_UpdateColliderMatrix();               // +0x20
 
-    /* 0x00 */ u32* vtable;    // set to lbl_eu_80535844 by __ct__cf_CfGimmick
-    /* 0x04 */ u8 gap04[0x30 - 0x04];
+    // vptr at 0x00 (compiler-managed)
+    /* 0x04 */ CfGimmickVec3 field_04;  // bdat area position (CfGimmick_LoadBdatAreaPos)
+    /* 0x10 */ CfGimmickVec3 field_10;  // bdat area rotation (CfGimmick_LoadBdatAreaRotation)
+    // 0x1C: collider sub-object (CfGimmick-typed view: matrix at +0x00,
+    // extents at +0x30.., placement kind at +0x44 = absolute 0x60).
+    /* 0x1C */ u8 field_1C[0x30 - 0x1C];
     /* 0x30 */ f32 field_30;   // 0x30 - horizontal radius / half-extent
     /* 0x34 */ f32 field_34;   // 0x34 - vertical extent (low)
     /* 0x38 */ f32 field_38;   // 0x38 - vertical extent (high)
     /* 0x3C */ f32 field_3C;   // 0x3C - depth half-extent
     /* 0x40 */ f32 field_40;   // 0x40 - interaction distance
     /* 0x44 */ s32 field_44;   // 0x44 - rotation/placement kind (0..4); switch index for jumptable_eu_80535830
-    /* 0x48 */ u8 gap48[0x64 - 0x48];
+    // 0x48..0x5F: tail of the collider view (its extents at +0x30.. = absolute 0x4C..)
+    /* 0x48 */ f32 field_48;
+    /* 0x4C */ f32 field_4C;   // collider extent (+0x30)
+    /* 0x50 */ f32 field_50;   // collider extent (+0x34)
+    /* 0x54 */ f32 field_54;   // collider extent (+0x38)
+    /* 0x58 */ f32 field_58;   // collider extent (+0x3C)
+    /* 0x5C */ f32 field_5C;   // collider interaction distance (+0x40)
+    /* 0x60 */ u32 field_60;   // collider placement kind (field_44 of the +0x1C view)
     /* 0x64 */ u16 field_64;
     /* 0x66 */ u16 field_66;
     /* 0x68 */ u16 field_68;
@@ -37,24 +70,17 @@ public:
     /* 0x73 */ u8 field_73;
     /* 0x74 */ u32 field_74;
     /* 0x78 */ CfGameManager* field_78;
-    /* 0x7C */ u32 field_7C;
+    /* 0x7C */ CfGimmickReg field_7C;  // spawned gimmick-object registration slot
     /* 0x80 */ u16 field_80;
+    /* 0x82 */ u16 field_82;   // gimmick type id (set by the derived ctors)
 
     int CfGimmick_CheckerKind0Always();
-    void CfGimmick_DetachManager(CfGameManager* other);
-    void CfGimmick_UpdateColliderMatrix();
 };
 
 } // namespace cf
 
 #include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658 (owner)
 
-// Minimal 3-component vector used by the CfGimmick collision helpers.
-struct CfGimmickVec3 {
-    f32 x;  // 0x00
-    f32 y;  // 0x04
-    f32 z;  // 0x08
-};
 
 // u32-view of the 12-byte position block: CfGimmick_UpdatePartyAnchorState copies the player
 // target vector with integer lwz/stw moves (no float conversion).
@@ -64,12 +90,6 @@ struct CfGimmickVec3u {
     u32 z;  // 0x08
 };
 
-// Container whose first member (0x00) is a registered-object pointer used by
-// CfGimmick_UnregisterSpawnedObject to unregister from the global resource manager.
-struct CfGimmickObject;  // defined below
-struct CfGimmickReg {
-    CfGimmickObject* field_00;
-};
 
 // Object spawned by CfGimmick_UpdateProximity via spawnMaskedObject.  The vtable is used to
 // invoke slots 0x158 (activate) and 0x9C (set position); field_90 is the
@@ -157,8 +177,6 @@ extern "C" u32 lbl_eu_806646B8;
 extern "C" float lbl_eu_80662784;
 extern "C" u16 lbl_eu_806646C0;
 extern "C" int lbl_eu_805765B0[10];
-// CfGimmick vtable (stored at +0x00 by the constructor).
-extern "C" u8 lbl_eu_80535844[];
 
 // Reference point the gimmick range checks are measured from.
 extern "C" CfGimmickVec3 lbl_eu_805765A0;

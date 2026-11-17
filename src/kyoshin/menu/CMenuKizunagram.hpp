@@ -236,7 +236,7 @@ extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CKizunagram(UnkKizunaMenuSub98* self, int arg);
 extern "C" void __ct__CPcKizunagram(UnkKizunaMenuPcSub* self);
 extern "C" void __ct__CLoad(CLoad* self, u8 arg);
-extern "C" void __ct__CFade(CFade* self);
+extern "C" void __ct__5CFadeFv(CFade* self);
 
 // Ctor tail helpers (retail-unmangled).
 extern "C" void CTaskGame_deleteLoad();

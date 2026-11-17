@@ -224,7 +224,7 @@ extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, 
     __ct__CKizunagram(&self->mSub98, 0);
     __ct__CPcKizunagram(&self->mPcKizunagram);
     __ct__CLoad(&self->mLoad, 0);
-    __ct__CFade(&self->mFade);
+    __ct__5CFadeFv(&self->mFade);
 
     self->field_0x21C = 0;
     self->field_0x21D = 1;

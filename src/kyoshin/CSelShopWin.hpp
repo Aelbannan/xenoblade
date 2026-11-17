@@ -12,9 +12,6 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/math/math_types.h>
 
-// CSelShopWin vtable (lbl_eu_805365A8)
-extern "C" void* lbl_eu_805365A8[];
-
 // Retail imports (defined outside this TU). Animation frame constant.
 // `const` routes it into the readonly sdata2 pool so MWCC hoists the lfs above
 // the frame stores (CExchangeWin ExWin_AdvanceEnter/D244 pattern, MWCC_CASES).
@@ -49,23 +46,11 @@ int isClassicController__Q22cf13CfGameManagerFv(int);
 // C++-mangled retail helper (actor id -> action source).
 void* findObjectById(int id);
 
-/* Vtable base for CSelShopWin. Stores the vtable pointer at +0x00 so layout
-matches retail (IWorkEvent-compatible vptr), without inheriting from IWorkEvent
-which would emit weak stubs and blow the split budget. */
-struct CSelShopWinVtblBase {
-    void* mVtbl; // 0x0 - lbl_eu_805365A8
-
-    CSelShopWinVtblBase() {
-        mVtbl = lbl_eu_805365A8;
-    }
-};
-
-/* Shop window widget. Layout-compatible with IWorkEvent (vptr @ +0) for
-CDeviceFile::readFile. */
-class CSelShopWin : public CSelShopWinVtblBase {
+/* Shop window widget; receives its arc through IWorkEvent::OnFileEvent. */
+class CSelShopWin : public IWorkEvent {
 public:
     CSelShopWin();
-    ~CSelShopWin();
+    virtual ~CSelShopWin();
     void loadShopWinArc();
     void driveShopWinAnim();
     void drawShopWin(nw4r::lyt::DrawInfo* drawInfo);
@@ -74,12 +59,12 @@ public:
     void hideShopWin();
     void getShopWinPanePos(int);
     void markShopWinBuilt();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     u8 isShopWinLoaded();
     u8 isShopWinAnimActive();
 
-    // +0x00: vtable (lbl_eu_805365A8 via CSelShopWinVtblBase)
+    // +0x00: IWorkEvent vptr
     // +0x04: layout memory region
     UnkClass_8045F564 mMemRegion;
     // +0x14: file handle for loading arc resources

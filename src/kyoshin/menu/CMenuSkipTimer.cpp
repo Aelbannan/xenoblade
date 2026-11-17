@@ -62,7 +62,7 @@ extern "C" __declspec(noinline) CMenuSkipTimer* __ct__CMenuSkipTimer(CMenuSkipTi
     self->mParentRef = parent;
 
     // Embedded widget construction.
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CSkipTimer(&self->mTimerData);
 
@@ -106,7 +106,7 @@ void CMenuSkipTimer::Init() {
     // CBgTex* local: a persistent local costs MWCC an extra callee-saved
     // register (stmw vs stw prologue) and breaks the match.
     u8 tempBgTex[0x20];
-    __ct__CBgTex(tempBgTex, 0);
+    __ct__6CBgTexFUc(tempBgTex, 0);
 
     __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
     mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
@@ -139,7 +139,7 @@ void CMenuSkipTimer::Init() {
     mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv(tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CSkipTimer via a temporary ---
     u8 tempSkipTimer[0x98];

@@ -82,7 +82,7 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 // Retail-unmangled CW helpers used by Init()'s temporary-object re-init pattern.
-extern "C" void __ct__CBgTex(void*, int);
+extern "C" void __ct__6CBgTexFUc(void*, int);
 extern "C" void __dt__6CBgTexFv(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void*, void*);
 extern "C" void __ct__CTitleAHelp(void*, char*, int);
@@ -90,7 +90,7 @@ extern "C" void __dt__11CTitleAHelpFv(void*, int);
 extern "C" void __dt__10CSkipTimerFv(void*, int);
 extern "C" char* BdatTouchStringCell(char*, char*, int);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 // Game-side CProcess dtor wrapper (D2 form; defined in CMainMenu.cpp).
 extern "C" void __dt__800FED0C(void* self, int flags);
 // Draw/advance helpers for cbRenderBefore / SkipTimer_Phase2PollPad (retail keeps the

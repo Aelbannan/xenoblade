@@ -120,7 +120,7 @@ void CMenuItem::Init() {
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex(reinterpret_cast<CBgTex*>(tempBgTex), 0);
+    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tempBgTex), 0);
     CBgTex* tmpBgTex = reinterpret_cast<CBgTex*>(tempBgTex);
     // Field-by-field body copy (retail copies the UnkClass head inline, not
     // via its __as__ operator=).
@@ -162,7 +162,7 @@ void CMenuItem::Init() {
     mTitleAHelp.unk37 = tmpTitle->unk37;
     __dt__11CTitleAHelpFv(tmpTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CItemBoxGrid via a temporary ---
     u8 tempGrid[0x4a0c];

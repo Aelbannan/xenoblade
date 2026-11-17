@@ -138,7 +138,7 @@ void CMenuTutorial::Init() {
     mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // Re-initialise the embedded CTutorial via a second temporary.
     u8 tempTutorial[0x54];

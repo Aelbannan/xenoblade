@@ -4,6 +4,7 @@
 #include <types.h>
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/code_800B06A4.hpp"
+#include "kyoshin/cf/object/CfObjectObj.hpp"
 #include <string.h>
 #include <math.h>
 #include <new>
@@ -53,8 +54,8 @@ extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count);
 
-void clearResourceStack(void* self);
-void setResourceField04(void* self, cf::CfObject* obj);
+extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(void* self);
+extern "C" void setResourceField04__Q22cf13CfGameManagerFv(void* self, void* value);
 
 // us-800b0f70 - Store float and its square to several globals.
 // Retail emits frsp f2,f1 for `float sq` - the float->double->float round-trip
@@ -299,8 +300,8 @@ extern "C" void gmResetSubMgrs() {
 // us-800b9df0 - spawnObjFromRes
 void spawnObjFromRes(cf::CfObject* obj) {
     u8 stackBuf[0x28];
-    clearResourceStack(stackBuf);
-    setResourceField04(stackBuf, obj);
+    clearResourceStack__Q22cf13CfGameManagerFv(stackBuf);
+    setResourceField04__Q22cf13CfGameManagerFv(stackBuf, obj);
     spawnMaskedObject(getInstance(), 0x200, (const B20B4Payload*)stackBuf, 0);
 }
 
@@ -1863,9 +1864,9 @@ void* mapKindToSpawn(void* self, u32 arg) {
     return spawnMaskedObject(getInstance(), mask, (const B20B4Payload*)self, arg);
 }
 #pragma pop
-// CfGameManager imports used by spawnFromRecord (retail mangled names).
-extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(void* self);
-extern "C" void setResourceField04__Q22cf13CfGameManagerFv(void* self, void* value);
+// CfGameManager imports used by spawnFromRecord (retail mangled names);
+// clearResourceStack / setResourceField04 are declared at the top of this
+// TU (shared with spawnObjFromRes).
 extern "C" void setResourceField00__Q22cf13CfGameManagerFv(void* self, unsigned long value);
 extern "C" void* mapKindToSpawn(void* self, void* value);
 #pragma push
@@ -2562,7 +2563,6 @@ extern "C" void allocEventPool(void* listv, unsigned long handle, unsigned long 
 // CfGameManager / player objects whose status callback lives at vtable
 // slot 0x1D (+0x74).
 extern "C" IDispB74* getGameSubManager__Q22cf13CfGameManagerFv();
-extern "C" IDispB74* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" bool CfRes_checkFlags_2000400();
 extern "C" void CPartsChange_SetLoadFlag(int arg);
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(void* arg);
@@ -2579,7 +2579,7 @@ extern "C" bool CfRes_getE24Bit18();
 #pragma auto_inline off
 extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
     IDispB74* mgr = getGameSubManager__Q22cf13CfGameManagerFv();
-    IDispB74* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    IDispB74* player = (IDispB74*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (CfRes_checkFlags_2000400()) {
         CPartsChange_SetLoadFlag(1);
         disableGameFlag__Q22cf13CfGameManagerFv((void*)0x80000000);
@@ -2719,7 +2719,6 @@ extern "C" void set_u8_73A__17UnkClass_805764CCFUcUc(void* obj, unsigned long a,
 extern "C" void setObjField720(u8* self, u32 val);
 extern "C" void copyObjVec724(void* obj, void* arg);
 extern "C" void set_float_730__17UnkClass_805764CCFf(void* obj, float val);
-extern "C" void* CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long handle);
 
 // us-800b9fe0 - store arg at +0x734
@@ -2757,7 +2756,7 @@ extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, float val) {
         setObjField738(obj, argB);
         copyObjVec724(obj, argC);
         set_float_730__17UnkClass_805764CCFf(obj, val);
-        void* src = CfRes_getHeapHandle();
+        void* src = (void*)CfRes_getHeapHandle();
         void* child = allocate__Q23mtl10MemManagerFUlUl(0x7c, (unsigned long)src);
         if (child != 0) {
             child = __ct__800B970C(child);
@@ -3086,8 +3085,7 @@ extern "C" void refreshPartyStatus() {
                 } else if (isBattleStatusActive(&chr->m184, 0x35) == 0) {
                     chr->m184.unk05(0x35);
                 }
-                CfRes_getD80Flag();
-                Scn_GetFrameDelta();
+                Scn_GetFrameDelta((void*)CfRes_getD80Flag());
                 CActorParam_updateTick(&chr->m17c, 1);
             }
             it++;
@@ -3709,7 +3707,7 @@ extern "C" u32 checkAudibleDistance(int modeY, float scale, const B47Vec3* posA,
 extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other) {
     tickSpeedPass(self, arg);
     refreshCamItems(self);
-    Scn_FindCamItem(CfRes_getD80Flag(), -1);
+    Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
     s32 gmActive = getEffectFlagState__Q22cf13CfGameManagerFv();
     maybeNullThenFlag(0);
     CfReslistNode* cur;
@@ -4752,7 +4750,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         }
         void* mem = allocate__Q23mtl10MemManagerFUlUl(0x720, (unsigned long)CfRes_getHeapHandle());
         if (mem != 0) {
-            mem = __ct__cf_CfObjectObj(mem);
+            mem = new (mem) cf::CfObjectObj();
         }
         obj = mem;
         if (obj == 0) {

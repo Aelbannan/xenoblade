@@ -452,7 +452,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     // Block-scope externs inherit the retail C-linkage symbols.
     extern void __ct__17UnkClass_8045F564Fv(void*);
     extern void __ct__CSLCur(CSLCur*, int);
-    extern void __ct__CScrollBar(void*, int);
+    extern void __ct__10CScrollBarFUc(void*, int);
     extern void __ct__CSysWin(void*, int);
     extern void CSLSub_init(void*, int);
     extern void CSLCur_reset(CSLCur*);
@@ -482,7 +482,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
 
     __ct__CCur18(&self->mCur40, 0);
 
-    __ct__CScrollBar(self->mScrollbar, 0);
+    __ct__10CScrollBarFUc(self->mScrollbar, 0);
 
     __ct__CSysWin(&self->mSysWin98, 0);
     __ct__CSysWin(&self->mSysWinD4, 0);
@@ -511,7 +511,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     self->mField138 = nullptr;
 
     // Temporary CScrollBar for copy initialization
-    __ct__CScrollBar(tempScrollbar, 1);
+    __ct__10CScrollBarFUc(tempScrollbar, 1);
 
     __ct__UnkClass_8011C974((u8*)self + 0x5C, tempScrollbar + 4);
 

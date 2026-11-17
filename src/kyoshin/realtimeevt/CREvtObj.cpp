@@ -4,16 +4,16 @@
 // Size: 0x14 (vtable ptr + mType + __ptmf[3])
 //
 // Retail symbols in this split (.text 0x80186B18..0x80186BE8):
-//   __ct__cf_CREvtObj       0x30  base constructor
+//   __ct__Q22cf8CREvtObjFi       0x30  base constructor
 //   __dt__Q22cf8CREvtObjFv  0x40  base destructor
-//   EvtObj_RunCallback           0x48  run the callback ptmf if set
+//   vfunc_1C__Q22cf8CREvtObjFv   0x48  run the callback ptmf if set
 //   EvtObj_AllocBlock           0x0C  allocate a realtime-ev block (CREvtMem)
-//   __dt__80185754          0x04  free a realtime-ev block (CREvtMem)
-//   EvtObj_ConstFalse           0x08  constant-0 predicate
+//   __dl__Q22cf8CREvtObjFPv          0x04  free a realtime-ev block (CREvtMem)
+//   vfunc_0C__Q22cf8CREvtObjFv   0x08  constant-0 predicate
 //
 // Matching notes (why the ctor/dtor are C-linkage functions, not members):
-//   * __ct__cf_CREvtObj is the retail SHORT constructor form (no parameter
-//     suffix). MWCC 1.1 full-mangles member ctors (__ct__cf_CREvtObjFi), so
+//   * __ct__Q22cf8CREvtObjFi is the retail SHORT constructor form (no parameter
+//     suffix). MWCC 1.1 full-mangles member ctors (__ct__Q22cf8CREvtObjFiFi), so
 //     the ctor is written as a C-linkage function carrying the exact retail
 //     name (MWCC_CASES "Constructor symbol name: MWCC 1.1 emits full
 //     mangling, retail has short form").
@@ -26,12 +26,12 @@
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 
 // ============================================================================
-// __ct__cf_CREvtObj (0x80186B18)
+// __ct__Q22cf8CREvtObjFi (0x80186B18)
 // Base ctor: stores the object kind (r4) at +0x04, installs the cf::CREvtObj
 // vtable at +0x00, and resets the callback ptmf at +0x08 to the null
 // sentinel. Derived realtime-ev ctors pass their kind (0..4).
 // ============================================================================
-extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
+extern "C" void __ct__Q22cf8CREvtObjFi(cf::CREvtObj* self, int arg) {
     self->mType = arg;
     *(u32**)self = lbl_eu_80532320;
     self->mCallback = __ptmf_null;
@@ -52,21 +52,13 @@ extern "C" cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFl
 }
 
 // ============================================================================
-// EvtObj_RunCallback (0x80186B88)
+// CREvtObj::vfunc_1C (0x80186B88)
 // Runs the stored callback (mCallback) when it is non-null; used by the
 // per-frame step of derived realtime-ev objects (e.g. CREvtModel).
 // ============================================================================
-// Retail view of the CREvtObj base: C++ vptr @0, kind @4, callback ptmf @8.
-struct EvtObjBaseView {
-    u32* vtable;
-    u32 mType;
-    void (cf::CREvtObj::*mCallback)();
-};
-
-extern "C" void EvtObj_RunCallback(cf::CREvtObj* self) {
-    EvtObjBaseView* o = (EvtObjBaseView*)self;
-    if (__ptmf_test(&o->mCallback)) {
-        (self->*o->mCallback)();
+void cf::CREvtObj::vfunc_1C() {
+    if (mCallback) {
+        (this->*mCallback)();
     }
 }
 
@@ -82,16 +74,16 @@ extern "C" void* EvtObj_AllocBlock(u32 size) {
 }
 
 // ============================================================================
-// __dt__80185754 (0x80186BDC)
+// __dl__Q22cf8CREvtObjFPv (0x80186BDC)
 // Deleting-dtor alias: a 4-byte tail-call to freeEvtMemPtr. Derived-class
 // deleting-dtor epilogues call this to release the base through CREvtMem.
 // ============================================================================
-extern "C" void __dt__80185754(u8* block) {
+extern "C" void __dl__Q22cf8CREvtObjFPv(u8* block) {
     freeEvtMemPtr(block);
 }
 
 // ============================================================================
-// EvtObj_ConstFalse (0x80186BE0)
+// CREvtObj::vfunc_0C (0x80186BE0)
 // Constant-0 predicate (li r3,0 / blr).
 // ============================================================================
-extern "C" int EvtObj_ConstFalse() { return 0; }
+int cf::CREvtObj::vfunc_0C() { return 0; }

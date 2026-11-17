@@ -2,39 +2,26 @@
 
 #include <types.h>
 #include "libs/monolib/src/scn/CScnItemLightNw4r.hpp"
+#include "libs/monolib/src/scn/CScnItemLight.hpp"
 #include <monolib/util/FixStr.hpp>
-
-// Freshly allocated light item (size 0x1224); +0x1220 holds ScnRoot*.
-struct CScnItemLightNw4rAlloc {
-    u8 _00[0x1220];
-    nw4r::g3d::ScnRoot* mpScnRoot;  // +0x1220
-};
+#include "monolib/util/MemManager.hpp"
 
 extern "C" {
     extern char lbl_eu_80523ECC[];  // "Global(%d)" format string
-    extern char lbl_eu_8056DD38[];  // CScnItemLightNw4r vtable
     extern u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
-    extern u32 Scn_CallUnk8C_V8(CScnLightItemHost* scene);
-    extern void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
-    extern void __ct__CScnItemLight(CScnItemLightNw4rAlloc* ths, CScnLightItemHost* pHost,
-                                    ml::FixStr<32>* name, void* a2, void* a3);
-    extern void CScnItemPool_registerOtherList(u8* pool, CScnItemLightNw4rAlloc* item, u32 value);
+    extern mtl::ALLOC_HANDLE Scn_CallUnk8C_V8(CScnLightItemHost* scene);
+    extern void CScnItemPool_registerOtherList(u8* pool, CScnItemLightNw4r* item, u32 value);
 }
 
-extern "C" CScnItemLightNw4rAlloc* __ct__CScnItemLightNw4r(CScnLightItemHost* ths,
-                                                           int param2, void* param3) {
+extern "C" CScnItemLightNw4r* __ct__CScnItemLightNw4r(CScnLightItemHost* ths,
+                                                      int param2, void* param3) {
     if (CScnItemPool_hasFreeSlot(ths->mPool, 3) == 0) {
         return 0;
     }
     ml::FixStr<32> str(true);
     str.format(lbl_eu_80523ECC, param2);
-    CScnItemLightNw4rAlloc* light = static_cast<CScnItemLightNw4rAlloc*>(
-        allocate__Q23mtl10MemManagerFUlUl(0x1224, Scn_CallUnk8C_V8(ths)));
-    if (light != 0) {
-        __ct__CScnItemLight(light, ths, &str, (void*)param2, param3);
-        *(u32**)light = (u32*)lbl_eu_8056DD38;
-        light->mpScnRoot = ths->mRoot->mScnRoot;
-    }
+    CScnItemLightNw4r* light = new (Scn_CallUnk8C_V8(ths))
+        CScnItemLightNw4r(ths, (char*)str.c_str(), param2, param3);
     CScnItemPool_registerOtherList(ths->mPool, light, 0);
     return light;
 }

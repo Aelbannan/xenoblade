@@ -159,11 +159,11 @@ extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CPro
 // Ctor/re-init copy helpers for the embedded widgets (retail-unmangled).
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
-extern "C" void __ct__CFade(CFade* self);
+extern "C" void __ct__5CFadeFv(CFade* self);
 extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void InfoCfCopySysWin(void* dest, void* src);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" char* BdatTouchStringCell(char* a, char* b, u32 id);
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuMapSelectSC. __dt__800FED0C is the CProcess

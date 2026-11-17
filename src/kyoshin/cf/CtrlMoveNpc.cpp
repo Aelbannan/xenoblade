@@ -5,8 +5,7 @@
 // ctor). Own fields begin at 0x4C; mStateFunc (0x4C) is a ptmf, null by
 // default and set to a real state function by beginNpcMove.
 //
-// Layout / types are defined here (this TU has no unit header); struct layouts
-// recovered from the retail assembly in the session brief.
+// Class layout lives in kyoshin/cf/CtrlMoveNpc.hpp.
 
 #include "kyoshin/harness_catalog.hpp"
 #include <monolib/math/CVec3.hpp>
@@ -14,7 +13,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"
-#include "kyoshin/cf/CtrlMoveBase.hpp"
+#include "kyoshin/cf/CtrlMoveNpc.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 #include "monolib/scn/code_804BC9EC.hpp"
 
@@ -30,42 +29,6 @@ struct PTMF {
     int f_data;
 };
 
-namespace cf {
-
-// mBaseData @0x34 is CCtrlMoveData (from CtrlMoveBase.hpp): field_0x14 and
-// mPosObj @0x28 (CfObject*). Typed here so callers skip void* casts.
-
-class CCtrlMoveNpc {
-public:
-    CCtrlMoveNpc();
-
-    // --- base class (CCtrlMoveBase) region 0x00..0x4B ---
-    char mBase00[0x18];     // 0x00 primary fields
-    ml::CVec3 mVec18;       // 0x18 mVelocity (CCtrlMoveBase::mVelocity)
-    char mBase24[0x0C];     // 0x24..0x2F field_0x24
-    void* mBase30;          // 0x30 mpSomePtr
-    CCtrlMoveData* mBaseData; // 0x34 mpDataPtr
-    f32 mBase38;            // 0x38 mFloatParam1
-    f32 mBase3C;            // 0x3C mFloatParam2
-    u16 mBase40;            // 0x40 mFlagsU16_1
-    u16 mBase42;            // 0x42 mFlagsU16_2
-    u8  mBase44;            // 0x44 mByte1
-    u8  mBase45;            // 0x45 mByte2
-    char mBase46[2];        // 0x46..0x47
-    const char* mBaseVtable2; // 0x48 secondary vptr (CCtrlMoveBase::unk08's vtable, overwritten here)
-
-    // --- CCtrlMoveNpc own fields ---
-    int (CCtrlMoveNpc::*mStateFunc)();  // 0x4C state dispatch ptmf (12 bytes)
-    ml::CVec3 mField58;     // 0x58 movement target (raw-copied from vec)
-    u32 mField64;           // 0x64
-    f32 mField68;           // 0x68
-    f32 mField6C;           // 0x6C
-    f32 mField70;           // 0x70
-    f32 mField74;           // 0x74
-    u32 mField78;           // 0x78
-};
-
-} // namespace cf
 
 using cf::CCtrlMoveNpc;
 
@@ -77,8 +40,7 @@ using cf::CCtrlMoveNpc;
 // C linkage so the literal symbol name is resolved/emitted verbatim.
 extern "C" {
 
-// Base class ctor + ptmf runtime (CCtrlMoveBase's ctor, takes CCtrlMoveBase*).
-void __ct__80088904(cf::CCtrlMoveBase* ths);
+// ptmf runtime.
 long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
@@ -147,12 +109,11 @@ extern void* lbl_eu_806640B4;   // active table bdat data
 extern u32 lbl_eu_80663D90;     // global value copied into mField78
 
 // ---------------------------------------------------------------------------
-// __ct__cf_CtrlMoveNpc - constructor
+// CCtrlMoveNpc::CCtrlMoveNpc - constructor
 // ---------------------------------------------------------------------------
 namespace cf {
-CCtrlMoveNpc::CCtrlMoveNpc() {
-    __ct__80088904((cf::CCtrlMoveBase*)this);
-    this->mBaseVtable2 = (const char*)lbl_eu_80532DB4;
+CCtrlMoveNpc::CCtrlMoveNpc(void* owner) : CCtrlMoveBase(owner) {
+    setVtable(lbl_eu_80532DB4);
     this->mStateFunc = __ptmf_null;
 }
 }
@@ -182,13 +143,13 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
 
     // The base data pointer is re-loaded for each access in the retail.
     ths->mField74 =
-        *reinterpret_cast<float*>(ths->mBaseData->mPosObj->CfObject_getMoveRateScale());
+        *reinterpret_cast<float*>(ths->mpDataPtr->mPosObj->CfObject_getMoveRateScale());
     ths->mField78 = lbl_eu_80663D90;
     ths->mField70 = lbl_eu_80667C58;
-    ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
+    ths->mpDataPtr->field_0x14 = lbl_eu_80667C5C;
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3* pos = ths->mBaseData->mPosObj->CfObject_getPosVector();
+    ml::CVec3* pos = ths->mpDataPtr->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
@@ -216,7 +177,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     }
 
     maskMoveChildFlags((cf::CCtrlMoveBase*)ths);
-    ths->mVec18 = ml::CVec3::zero;
+    ths->mVelocity = ml::CVec3::zero;
     ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(lbl_eu_80532DA8);
 }
 }
@@ -325,7 +286,7 @@ extern "C" void refreshNpcRowFlags() {
 namespace cf {
 void tickNpcMove(CCtrlMoveNpc* ths) {
     const ml::CVec3* pos =
-        ths->mBaseData->mPosObj->CfObject_getPosVector();
+        ths->mpDataPtr->mPosObj->CfObject_getPosVector();
 
     // PS vector subtraction: delta = target - current position.
     ml::CVec3 diff = ths->mField58 - *pos;
@@ -362,9 +323,9 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
 
     // Idle tail: clear the approach rate; when paramB allows it, also run the
     // turn-rate helper before dropping back to the idle state function.
-    ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
+    ths->mpDataPtr->field_0x14 = lbl_eu_80667C5C;
     if (ths->mField6C < lbl_eu_80667C78[0]) {
-        CtrlMoveEne_CommitHeadAngle(ths->mBaseData,
+        CtrlMoveEne_CommitHeadAngle(ths->mpDataPtr,
                       ths->mField6C * ml::deg2rad);
         ths->mStateFunc = __ptmf_null;
         moveBaseUnlink(ths);
@@ -397,7 +358,7 @@ u32 lbl_eu_80532DA8[3] = {
 };
 
 // [.data] 0x80532DB4-0x80532DC0 (12B): secondary vtable (sdata locator,
-// zero, base hook); assigned to mBaseVtable2 by the ctor.
+// zero, base hook); stored at +0x48 by the ctor.
 void* lbl_eu_80532DB4[3] = {
     (void*)&lbl_eu_80662548, (void*)0, (void*)&emptyMoveBaseHook,
 };

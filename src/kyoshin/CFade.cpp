@@ -1,9 +1,12 @@
 // kyoshin/CFade
-// FULL_MATCH: __ct__CFade, CFade_Update, CFade_IsReady, CFade_IsVisible,
+// FULL_MATCH: CFade::CFade, CFade_Update, CFade_IsReady, CFade_IsVisible,
 // CFade_StepFadeIn, CFade_StepFadeOut, CFade_MarkLoaded.
 // The dtor/OnFileEvent need stmw r30/r28 which requires -O4,s (walls #13);
 // the source is byte-perfect apart from that fixed -O4,p save/restore split.
 
+// Inline-empty ~IWorkEvent: the ctor's cleanup action references the (link-deduped)
+// weak copy, and ~CFade elides the base call (retail shape).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CFade.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device.hpp"
@@ -11,23 +14,90 @@
 #include "monolib/util.hpp"
 #include "monolib/work/CEventFile.hpp"
 
-extern "C" int CFade_IsReady(CFade* self) { return self->mReady; }
+// Construct the embedded memory region, then zero the fields (mVisible=1).
+CFade::CFade() : mMemRegion() {
+    mFileHandle = nullptr;
+    mArcResAcc = nullptr;
+    mLayout = nullptr;
+    mAnimTrans = nullptr;
+    mIsLoaded = 0;
+    mFadeState = 0;
+    mReady = 0;
+    mVisible = 1;
+}
 
+// destructor (member region + conditional delete are compiler-emitted).
+#pragma push
+#pragma optimize_for_size on
+CFade::~CFade() {}
+#pragma pop
+
+// start an async read of the fade layout arc.
+extern "C" void CFade_StartLoad(CFade* self) {
+    self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
+        lbl_eu_8050B5A0, self, 0, 0);
+    CDeviceFile::setHandleFlag2(self->mFileHandle);
+}
+
+// per-frame update. Drive the fade-in/out animations, then refresh
+// the layout's animation once loaded and not idle. The s32 copy of the byte
+// state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
+// beq/fallthrough dispatch shape (if/else-if would invert the branches).
+extern "C" void CFade_Update(CFade* self) {
+    if (self->mIsLoaded == 0) return;
+    s32 state = self->mFadeState;
+    if (state == 0) return;
+    switch (state) {
+    case 1:
+        CFade_StepFadeIn(self);
+        break;
+    case 3:
+        CFade_StepFadeOut(self);
+        break;
+    }
+    self->mLayout->Animate(0);
+}
+
+// render the fade layout once loaded and fading.
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mIsLoaded == 0) return;
+    if (self->mFadeState == 0) return;
+    drawLayout(self->mLayout, drawInfo, 0, 1);
+}
+
+// unload, freeing the file handle, layout and arc resources.
+void CFade::Unload() {
+    closeFileHandle(&this->mFileHandle);
+    nw4r::lyt::Layout* layout = this->mLayout;
+    this->mIsLoaded = 0;
+    if (layout != nullptr) {
+        delete layout;
+        this->mLayout = nullptr;
+    }
+    releaseArcResourceAccessor(this->mArcResAcc);
+    this->mArcResAcc = nullptr;
+    this->mMemRegion.deleteRegion();
+}
+
+extern "C" int CFade_IsReady(CFade* self) { return self->mReady; }
 
 extern "C" int CFade_IsVisible(CFade* self) { return self->mVisible; }
 
-
-// Retail marks the fade overlay loaded/ready once the layout is attached.
-// noinline: retail keeps these as standalone `bl` targets (CFade_MarkLoaded is
-// called from OnFileEvent; the others from CFade_Update). C linkage comes
-// from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
-extern "C" __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
-    if (self->mLayout != nullptr) {
-        self->mReady = 1;
-        self->mIsLoaded = 1;
+// start fading in if currently idle.
+void CFade::In() {
+    if (this->mFadeState == 0) {
+        this->mFadeState = 1;
+        this->mVisible = 0;
     }
 }
 
+// start fading out if fully faded in.
+extern "C" void CFade_FadeOut(CFade* self) {
+    if (self->mFadeState == 2) {
+        self->mFadeState = 3;
+        self->mVisible = 0;
+    }
+}
 // once the fade-in animation reaches the target frame, mark faded-in.
 // once the fade-out animation rewinds, return to idle.
 // noinline keeps the retail `bl` instead of inlining the body into
@@ -42,6 +112,17 @@ extern "C" __declspec(noinline) void CFade_StepFadeOut(CFade* self) {
     if (AnimRewindFrame(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;
+    }
+}
+
+// Retail marks the fade overlay loaded/ready once the layout is attached.
+// noinline: retail keeps these as standalone `bl` targets (CFade_MarkLoaded is
+// called from OnFileEvent; the others from CFade_Update). C linkage comes
+// from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
+extern "C" __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
+    if (self->mLayout != nullptr) {
+        self->mReady = 1;
+        self->mIsLoaded = 1;
     }
 }
 
@@ -97,93 +178,6 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
 }
 #pragma pop
 
-// Retail C-linkage ctor (unmangled __ct__CFade): store the shared vtable,
-// construct the embedded memory region, then zero the fields (mVisible=1).
-// Returns self (retail keeps it in r3 across the stores); callers declare
-// it void and ignore the result (same idiom as __ct__CSortMenu).
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" CFade* __ct__CFade(CFade* self) {
-    self->mVtbl = lbl_eu_80536EA8;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = nullptr;
-    self->mArcResAcc = nullptr;
-    self->mLayout = nullptr;
-    self->mAnimTrans = nullptr;
-    self->mIsLoaded = 0;
-    self->mFadeState = 0;
-    self->mReady = 0;
-    self->mVisible = 1;
-    return self;
-}
-
-// destructor (member region + conditional delete are compiler-emitted).
-#pragma push
-#pragma optimize_for_size on
-CFade::~CFade() {}
-#pragma pop
-
-// start an async read of the fade layout arc.
-extern "C" void CFade_StartLoad(CFade* self) {
-    self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
-        lbl_eu_8050B5A0, reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    CDeviceFile::setHandleFlag2(self->mFileHandle);
-}
-
-// per-frame update. Drive the fade-in/out animations, then refresh
-// the layout's animation once loaded and not idle. The s32 copy of the byte
-// state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
-// beq/fallthrough dispatch shape (if/else-if would invert the branches).
-extern "C" void CFade_Update(CFade* self) {
-    if (self->mIsLoaded == 0) return;
-    s32 state = self->mFadeState;
-    if (state == 0) return;
-    switch (state) {
-    case 1:
-        CFade_StepFadeIn(self);
-        break;
-    case 3:
-        CFade_StepFadeOut(self);
-        break;
-    }
-    self->mLayout->Animate(0);
-}
-
-// render the fade layout once loaded and fading.
-extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (self->mIsLoaded == 0) return;
-    if (self->mFadeState == 0) return;
-    drawLayout(self->mLayout, drawInfo, 0, 1);
-}
-
-// unload, freeing the file handle, layout and arc resources.
-void CFade::Unload() {
-    closeFileHandle(&this->mFileHandle);
-    nw4r::lyt::Layout* layout = this->mLayout;
-    this->mIsLoaded = 0;
-    if (layout != nullptr) {
-        delete layout;
-        this->mLayout = nullptr;
-    }
-    releaseArcResourceAccessor(this->mArcResAcc);
-    this->mArcResAcc = nullptr;
-    this->mMemRegion.deleteRegion();
-}
-
-// start fading in if currently idle.
-void CFade::In() {
-    if (this->mFadeState == 0) {
-        this->mFadeState = 1;
-        this->mVisible = 0;
-    }
-}
-
-// start fading out if fully faded in.
-extern "C" void CFade_FadeOut(CFade* self) {
-    if (self->mFadeState == 2) {
-        self->mFadeState = 3;
-        self->mVisible = 0;
-    }
-}
 // ============================================================================
 // Retail data owned by this TU (dissolved blob; decomp emitted .text only).
 // Defined here at EOF so -ipa codegen for the functions above is unaffected.
@@ -191,90 +185,6 @@ extern "C" void CFade_FadeOut(CFade* self) {
 // stays out: only lbl_eu_80668750 carries a label and the section has no
 // other references. sdata2 therefore rebuilds as 4/16 bytes (gate notes it).
 // ============================================================================
-
-// Cross-TU vtable slots (flat retail names; CTaskManager vtable idiom).
-extern "C" void __dt__5CFadeFv();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern u32 lbl_eu_806628E8[];  // sdata word pair (defined below).
-
-// [.data] 0x80536EA8-0x80536F30 (136B): CFade vtable (sdata locator,
-// null word, dtor, W1 + OnFileEvent + W3-W31; retail lays one label over
-// the 34 words; the RTTI word at +0x88 carries its own label, below).
-void* lbl_eu_80536EA8[34] = {
-    (void*)&lbl_eu_806628E8, (void*)0,
-    (void*)&__dt__5CFadeFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
-    // W2 slot (OnFileEvent member address) is zero here: a member-function
-    // address is unsourcable in C++ (10247); it needs a rule-side
-    // inject_relocs entry like CTaskManager.o's three '<'-unspellable slots.
-    // W3 likewise: no object defines the retail Fv spelling yet (CGame.o
-    // carries the FPv arity instead -- signature dispute for its owner).
-    (void*)0, (void*)0,
-    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
-    (void*)&WorkEvent6__10IWorkEventFv,
-    (void*)&WorkEvent7__10IWorkEventFv,
-    (void*)&WorkEvent8__10IWorkEventFv,
-    (void*)&WorkEvent9__10IWorkEventFv,
-    (void*)&WorkEvent10__10IWorkEventFv,
-    (void*)&WorkEvent11__10IWorkEventFv,
-    (void*)&WorkEvent12__10IWorkEventFv,
-    (void*)&WorkEvent13__10IWorkEventFv,
-    (void*)&WorkEvent14__10IWorkEventFv,
-    (void*)&WorkEvent15__10IWorkEventFv,
-    (void*)&WorkEvent16__10IWorkEventFv,
-    (void*)&WorkEvent17__10IWorkEventFv,
-    (void*)&WorkEvent18__10IWorkEventFv,
-    (void*)&WorkEvent19__10IWorkEventFv,
-    (void*)&WorkEvent20__10IWorkEventFv,
-    (void*)&WorkEvent21__10IWorkEventFv,
-    (void*)&WorkEvent22__10IWorkEventFv,
-    (void*)&WorkEvent23__10IWorkEventFv,
-    (void*)&WorkEvent24__10IWorkEventFv,
-    (void*)&WorkEvent25__10IWorkEventFv,
-    (void*)&WorkEvent26__10IWorkEventFv,
-    (void*)&WorkEvent27__10IWorkEventFv,
-    (void*)&WorkEvent28__10IWorkEventFv,
-    (void*)&WorkEvent29__10IWorkEventFv,
-    (void*)&WorkEvent30__10IWorkEventFv,
-    (void*)&WorkEvent31__10IWorkEventFv,
-};
-
-// [.data] 0x80536F30-0x80536F40 (16B): RTTI word + 12 zero pad bytes.
-// Pragma-pinned to .data (plain zeros would bss-ify).
-#pragma section data_type ".data" ".data"
-extern __declspec(section ".data") u32 lbl_eu_80536F30[4] = {
-    // RTTI word is zero here: __RTTI__10IWorkEvent cannot be named in source
-    // (10322 vs the implicit type registration); needs a rule-side
-    // inject_relocs entry like CTaskManager.o's unspellable slots.
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
 
 // String labels (defined in the .rodata block below).
 extern char lbl_eu_8050B5E8[], lbl_eu_8050B5F8[], lbl_eu_8050B608[], lbl_eu_8050B618[];
@@ -435,17 +345,8 @@ char lbl_eu_8050B788[0x10] = {
     0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x34,0x30,0x31,0x00,0x00,
 };
 
-// [.sdata] 0x806628E8-0x806628F0 (8B): null word pair referenced by vtable[0].
-#pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") u32 lbl_eu_806628E8[2] = { 0x00000000, 0x00000000 };
-#pragma section data_type ".data" ".data"
-
-// [.sdata2] 0x80668750-0x80668760 (16B): 1.0f frame target + "CFade" pool
-// tail (80668754, 6B, unreferenced) + 2 pad + 4 zero gap = retail bytes.
+// [.sdata2] 0x80668750: 1.0f frame target (the "CFade" RTTI name string that
+// follows it is compiler-emitted).
 #pragma section data_type ".sdata2" ".sdata2"
 extern __declspec(section ".sdata2") const f32 lbl_eu_80668750 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(1)))
-char lbl_eu_80668754[6] = "CFade";
-__declspec(section ".sdata2") __attribute__((used, aligned(4)))
-u32 CFade_sdata2_tail[1] = { 0x00000000 };
 #pragma section data_type ".data" ".data"

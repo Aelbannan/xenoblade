@@ -64,7 +64,7 @@ __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
     self->mScene = scene;
     self->mField74 = arg;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0, 0);
     __ct__CItemBoxGrid(&self->mItemBoxGrid, 0, 0, 0, 1);
@@ -110,7 +110,7 @@ void CMenuItemExchange::Init() {
 
     // Background layout widget: temp CBgTex -> copy -> destroy, then load.
     u8 tmpBgRaw[0x20];
-    __ct__CBgTex(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
+    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
     ItemEx_CopyBgTex(&mBgTex, reinterpret_cast<CBgTex*>(tmpBgRaw));
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tmpBgRaw), -1);
 
@@ -124,7 +124,7 @@ void CMenuItemExchange::Init() {
     ItemEx_CopyTitle(&mTitleAHelp, reinterpret_cast<CTitleAHelp*>(tmpTitleRaw));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // Item-box line: temp CItemBoxLine -> copy -> destroy, then register the
     // tab entries (retail call order 2,4,5,6,7,8,0xb,3,0xa) and finish the

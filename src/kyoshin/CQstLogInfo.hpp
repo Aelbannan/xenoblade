@@ -5,6 +5,7 @@
 #include <nw4r/lyt.h>
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 // const float: MWCC hoists the SDA21 load into the prologue (pos 2) like
@@ -12,21 +13,6 @@
 extern const float lbl_eu_80668590;   // animation-completion sentinel (.sdata2)
 extern char lbl_eu_8050A0B4[];  // quest-log string pool (split1 .rodata)
 extern char* lbl_eu_80536320[];  // quest-name table (30 entries, split1 .data)
-
-// IWorkEvent-compatible vtable for CQstLogInfo (split1 .data; US/EU-stripped
-// name of __vt__11CQstLogInfo). Stored via a base-class ctor so the vtable
-// store lands before the member ctor (retail ctor order; see CBattery.cpp).
-extern void* lbl_eu_80536478[];
-
-// Base ctor runs first: sets mVtbl = lbl_eu_80536478, then the mMemRegion
-// member ctor, then the body field-init (CBatteryVtblBase pattern).
-struct CQstLogInfoVtblBase {
-    void* mVtbl; // 0x0 - lbl_eu_80536478
-
-    CQstLogInfoVtblBase() {
-        mVtbl = lbl_eu_80536478;
-    }
-};
 
 struct CFileHandle;
 struct CEventFile;
@@ -108,11 +94,12 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
     const char* table, u32 key, u8 v);
 extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self);
 
-class CQstLogInfo : public CQstLogInfoVtblBase {
+/* Quest-log info panel; receives its arcs through IWorkEvent::OnFileEvent. */
+class CQstLogInfo : public IWorkEvent {
 public:
     CQstLogInfo();
-    ~CQstLogInfo();
-    int OnFileEvent(CEventFile* event);
+    virtual ~CQstLogInfo();
+    virtual bool OnFileEvent(CEventFile* event);
 
     u8 QstLogInfo_GetLoadedMark();
     u8 QstLogInfo_GetReadyMark();

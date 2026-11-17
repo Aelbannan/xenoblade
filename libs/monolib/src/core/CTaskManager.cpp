@@ -88,22 +88,21 @@ public:
 // definitions referenced by the emitted interim CTTask<CRootProc> vtable.
 // (MWCC accepts these inside the unnamed namespace only because the template
 // members are declared-only; inline bodies would raise 10333 redefined.)
+// Move/Draw are inline specializations: MWCC defers them to the TU's weak tail,
+// after CRootProc's inline virtuals, which is the retail .text order.
 template<>
-void CTTask<CRootProc>::Move() {
+inline void CTTask<CRootProc>::Move() {
     if (mMoveFunc) {
         (static_cast<CRootProc*>(this)->*mMoveFunc)();
     }
 }
 
 template<>
-void CTTask<CRootProc>::Draw() {
+inline void CTTask<CRootProc>::Draw() {
     if (mDrawFunc) {
         (static_cast<CRootProc*>(this)->*mDrawFunc)();
     }
 }
-
-template<>
-CTTask<CRootProc>::~CTTask() {}
 
 } // namespace
 
@@ -113,6 +112,10 @@ void CTaskManager::Create() {
 
     Start();
 }
+
+// Retail .text places the CTTask<CRootProc> dtor right after Create.
+template<>
+CTTask<CRootProc>::~CTTask() {}
 
 // Inline: retail inlines Start into Create/Reset (both 0x23C bodies contain
 // the full registration sequence) and emits NO standalone Start symbol.
@@ -168,4 +171,3 @@ CProcess* CTaskManager::GetRootProcRealTime() {
 CProcess* CTaskManager::GetRootProcScn() {
     return lbl_eu_806655C0;
 }
-

@@ -54,7 +54,7 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp definition
 extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
-extern "C" float ScMain_GetRoundedMetric(void* obj);
+struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
 extern "C" void ScMain_Reset(void* obj);
 extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's

@@ -742,8 +742,8 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
             CREvtMovie* obj = reinterpret_cast<CREvtMovie*>(
                 EvtObj_AllocBlock(reinterpret_cast<void*>(0x1C)));
             if (obj != 0) {
-                __ct__CREvtMovie(obj,
-                                 reinterpret_cast<CREvtMovieScript*>(entry));
+                __ct__Q22cf10CREvtMovieFP16CREvtMovieScript(
+                    obj, reinterpret_cast<CREvtMovieScript*>(entry));
             }
             u32 idx = self->field_0xA8;
             self->field_0xA4[idx] = reinterpret_cast<UnkEvtListEntry*>(obj);

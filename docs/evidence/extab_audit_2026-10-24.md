@@ -167,3 +167,89 @@ baselined count.
 | `monolib/src/work/CProcess` | 1 fn not FULL | 1 | action records |
 | `monolib/src/work/CWorkControl` | 1 fn not FULL | 0 | order-only |
 | `monolib/src/work/CWorkSystemCache` | FULL | 2 | action records |
+
+## Follow-up: order-only units fixed (2026-10-24)
+
+All 14 order-only rows (the 9 `.text` FULL units plus CVS_THREAD_FAINT, CNand, CMdlAnmEye,
+CScnLightMan, CWorkControl) now have retail `.text` function order and matching extab. The fix in
+each was to reorder the definitions. In CTaskManager, the `CTTask<CRootProc>::Move/Draw`
+specializations became `inline`, so MWCC defers them to the weak tail after CRootProc's inline
+virtuals, which is where retail has them. The extab baseline was ratcheted. Function order is now
+gated separately by `run.py text-order-gate` (`tools/coop/text_order_gate.py`, shrink-only baseline
+`docs/evidence/text_order_baseline.json`, tests in `tools/coop/tests/test_text_order_gate.py`). It
+covers all completed units, including those without extab, and 71 units are baselined.
+
+## Follow-up: weak-dedup-aware gates and real-base restoration (2026-10-24, base agent)
+
+Restoring the real base (for example `class CBattery : public IWorkEvent`) gives the retail ctor
+cleanup action. MWCC then also emits a weak copy of the inline `__dt__10IWorkEventFv`, a weak
+`__RTTI__10IWorkEvent`, and that RTTI's local "IWorkEvent" name string. Retail has none of them in
+the unit. mwld kept the first copy (in CTaskGame / CGame), discarded this one, and dead-stripped
+the name string. Retail split slices and budgets are post-link, so the raw-object gates counted
+these copies against the unit. The split went 0x410 against 0x3D0, and `.sdata`, `.rodata` and
+extab drifted. That is why the stand-ins existed.
+
+The gates now compare the object as mwld contributes it to the link (PLAN.md §17.8,
+`tools/coop/lib/weak_dedup.py`). A symbol is excluded only if it is weak and `symbols.txt` places
+the same name in a different split unit. Local data whose every referencing relocation lies in an
+excluded range is excluded with it. Retail-only link tail padding (zero bytes, below the section
+alignment, no relocation) is accepted in the data compare. Exclusions are always printed. The
+weak-dedup and tail-padding rules turned no previously passing unit (data or extab) into a
+failure (full scan of every `objdiff.json` unit, raw object without the rules against the linked
+view). `link-gate` is unchanged (missing=87, multiply_defined=0). The `@local[CfTaskMain]` FAIL
+lines come from another agent's earlier rebuild of CfTaskMain.o, which also happen with the
+pre-change CBattery sources.
+
+Effect: CBattery is fixed with its real `IWorkEvent` base and literal strings in place of the
+hand-built vtable, RTTI and string pool (10/10 FULL, split PASS, data MATCH, extab MATCH).
+CDeviceGX, CDeviceSC and CLibStaticData now pass extab (their extra records were exactly such
+weak copies). Per-unit status of the remaining "missing cleanup action" units is in the next
+section.
+
+### Per-unit status of the 16 "missing cleanup action" units
+
+Fixed (all functions FULL, split PASS, extab MATCH, ratcheted out of `extab_baseline.json`):
+
+- `kyoshin/CBattery`: real `IWorkEvent` base. Data MATCH.
+- `monolib/src/device/CDeviceFontInfoRom`: real `CDeviceFontInfo` base (novtable, inline dtor),
+  compiler vtable/RTTI, placeholder method names renamed in us/eu `symbols.txt`. Data MATCH.
+- `kyoshin/cf/object/CfObjectPoint`: real inline `virtual ~CfObject()` in place of the
+  `destroyObject()` stand-in. Data MATCH.
+- `kyoshin/cf/CfTaskMain`: `CTTask<CfTaskMain>, IWorkEvent` bases, compiler adjustor thunk
+  (`CfTaskMain_dtorAdj54` renamed to `@84@__dt__Q22cf10CfTaskMainFv`). `.data` now matches;
+  `.rodata`/`.sdata` mismatches predate this.
+- `kyoshin/CTaskGamePic`: `CTTask<CTaskGamePic>, IWorkEvent, IScnRender` bases, real
+  `OnFileEvent`/`cbRenderBefore` virtuals, compiler thunks (5 symbol renames), unit flags
+  `-RTTI off -O4,s -func_align 4` in place of per-function pragmas. The `.data` mismatch shrank
+  (code-only unit).
+
+Remaining (each needs work across units outside its own TU):
+
+- `kyoshin/CFade`: its ctor is the extern "C" `__ct__CFade`. CMenuKizunagram, CMenuMapSelectSC and
+  code_802405F4 construct and destroy CFade by hand through that ctor and `__dt__5CFadeFv`, so they
+  have to become real C++ first.
+- `kyoshin/CSystemWindow`, `kyoshin/menu/CMenuSelectShop`, `kyoshin/menu/CMenuTitle`: the
+  actions destroy the IUIWindow / IWorkEvent / IScnRender bases. The whole menu family models
+  `IUIWindow`/`CTTask<IUIWindow>` as raw byte/ptmf layouts with hand-run ctors (see
+  `CMenuUpdate.hpp`). A real IUIWindow hierarchy is a family-wide project. CMenuTitle's ctor is
+  also called extern "C" from CTaskGame.
+- `kyoshin/cf/CfGimmickSaveOff`: the `cf::CfGimmick` base ctor is extern "C" `__ct__cf_CfGimmick`,
+  used across the gimmick family (21 references).
+- `kyoshin/cf/object/CfObjectObj`: needs real ctor/dtor names (`__ct__cf_CfObjectObj`,
+  `__dt__800BFA14`), which touches code_800B06A4, code_800C17DC and CfObjectTbox (whose frozen
+  UNIT_RULES `exact_renames` reference them).
+- `kyoshin/realtimeevt/CREvtMovie`: needs a declared `cf::CREvtObj` dtor. The placeholder
+  `__dt__80185754` is shared by the whole realtimeevt family.
+- `monolib/src/scn/CScnIdMan`: its RTTI record `lbl_eu_80663A78` lies in CScnItemCamera's `.sdata`
+  split range. The splits must move first. The zero base-list pointer suggests a non-public
+  `IScnRender` base.
+- `monolib/src/lod/CTaskLOD`: the action destroys the `LOD::LODMemMan` member via the placeholder
+  `__dt__8046D144`. It needs a real LODMemMan dtor and a real `new CTaskLOD` in place of the
+  hand-inlined `create()`.
+- `monolib/src/work/CWorkSystemCache`, `monolib/src/lib/CLibCri`: need a real
+  `reslist<CCacheItem*>` template and real CWorkThread/CDeviceVICb/IErrorWii bases in place of the
+  shared novtable views and the extern "C" ctor/dtor.
+
+Weak-copy record units: CDeviceGX, CDeviceSC and CLibStaticData pass now. `monolib/src/lib/CLib`
+still has a decomp-only record at 0x8045D354. That is a non-weak function naming/split issue, not
+weak dedup.

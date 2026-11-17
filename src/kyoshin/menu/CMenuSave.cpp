@@ -36,7 +36,7 @@ extern "C" __declspec(noinline) CMenuSave* __ct__CMenuSave(
     *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80538710 + 0x24;
     self->mParentRef = parent;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CSaveLoad(reinterpret_cast<CSaveLoad*>(self->mSaveLoad), 0, 0);
 
@@ -91,7 +91,7 @@ void CMenuSave::Init() {
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex(tempBgTex, 0);
+    __ct__6CBgTexFUc(tempBgTex, 0);
 
     __ct__UnkClass_8011C974((u8*)this + 0x64, tempBgTex + 0x4);
     *(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);
@@ -125,7 +125,7 @@ void CMenuSave::Init() {
     *(u8*)((u8*)this + 0xb7)  = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tempTitle), -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CSaveLoad via a temporary ---
     u8 tempSave[0x150];

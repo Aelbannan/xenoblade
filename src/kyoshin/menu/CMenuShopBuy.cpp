@@ -67,7 +67,7 @@ extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32
     self->mScene = scene;
     self->mField60 = arg;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CItemBoxLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 0, 0);
 
@@ -84,7 +84,7 @@ void CMenuShopBuy::Init() {
     // All member/temp addresses stay inline so MWCC recomputes the addi per
     // use (retail keeps only r31=self and r30 scratch - no cached pointers).
     u8 tmpBgRaw[0x20];
-    __ct__CBgTex(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
+    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
     __ct__UnkClass_8011C974(&mBgTex.mMemRegion,
                             &reinterpret_cast<CBgTex*>(tmpBgRaw)->mMemRegion);
     mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tmpBgRaw)->mFileHandle;
@@ -118,7 +118,7 @@ void CMenuShopBuy::Init() {
     mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tmpTitleRaw)->unk37;
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // Build a temporary CItemBoxLine (retail unmangled ctor with the u16
     // arg0 and file-id 1) and copy its whole data region (vtable excluded)

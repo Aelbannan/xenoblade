@@ -10,7 +10,7 @@
 // kyoshin/cf/CfMapItemManager.hpp.
 extern "C" s32 testActorStatus(void* obj, void* outFlags, u32 id);
 extern "C" void dispatchItemLoad(void* actor, u32 flags, const void* a, const void* b, const void* c);
-extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(void* self, int val);
+// CActorParam::CActorParam_UnkVirtualFunc6(int) is declared in CActorParam.hpp.
 
 // Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
 // retail declaration order (emission follows first use; code uses alone
@@ -221,8 +221,8 @@ extern "C" void CActorParam_addHate__Q22cf13CfObjectActorFv(
     if (arg == 0) return;
     u32 selfId = reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10;
     if (selfId == reinterpret_cast<cf::CfActorField3F10*>(arg)->field_0x3F10) return;
-    CActorParam_addHate__Q22cf11CActorParamFv(
-        self, arg, static_cast<int>(selfId), a, b, c);
+    // Non-virtual call of the CActorParam base (retail: tail-branch).
+    self->cf::CActorParam::CActorParam_addHate(arg, a, b, c);
 }
 // cf::CfObjectActor vtable thunks (retail: this-adjust + tail-branch)
 extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
@@ -593,7 +593,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
     // Forwards the incoming arts word (always null at every call site) as
     // the base-slot int flag: retail has no `li r4,0`, r4 flows straight
     // into the direct bl. A member call would virtual-dispatch slot 0xAC.
-    ::CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(self, (int)arts);
+    self->cf::CActorParam::CActorParam_UnkVirtualFunc6((int)arts);
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
             reinterpret_cast<cf::CActorState*>(self)->unk4)

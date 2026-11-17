@@ -11,29 +11,13 @@
 #include <stdarg.h>
 #include <string.h>
 
-// ml::FixStr<128>::format is defined below (inside namespace ml).  NOTE: MWCC
-// mangles the in-TU member call at CfScript_LoadScript to the generic-template name
-// format__Q22ml11FixStr<128>FPCce instead of the retail specialization name
-// (...10FixStr...) regardless of declaration order or scope - open item.
-
-// ml::FixStr<128>::format (retail standalone symbol): vsnprintf into a 0x100
-// stack buffer, then copy into the fixed string.  Defined BEFORE its callers
-// (same shape as CTaskGame's FixStr<32> version) so member calls bind to the
+// ml::FixStr<128>::format is an explicit specialization defined at the end of
+// this TU (retail places it after CfScriptManager::resetScripts). It is
+// declared here, before its callers, so member calls bind to the
 // specialization instead of instantiating the generic template.
 namespace ml {
-// Defined inside ml so the specialization emits/calls under the retail
-// mangling format__Q22ml10FixStr<128>FPCce.
 template <>
-void FixStr<128>::format(const char* fmt, ...) {
-    char buffer[0x100];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
-    va_end(args);
-
-    mLength = (int)strlen(buffer);
-    strcpy(mString, buffer);
-}
+void FixStr<128>::format(const char* fmt, ...);
 } // namespace ml
 
 namespace cf {
@@ -907,3 +891,19 @@ u8 cfscript_sbss_fill[4];
 // --- .ctors (retail 1 entry): static-init entry point ---
 __declspec(section ".ctors") __attribute__((used))
 static void (*cfscript_ctors_entry)() = cf::sinit_800696C8;
+
+// ml::FixStr<128>::format (retail standalone symbol, last in this unit's .text):
+// vsnprintf into a 0x100 stack buffer, then copy into the fixed string.
+namespace ml {
+template <>
+void FixStr<128>::format(const char* fmt, ...) {
+    char buffer[0x100];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    mLength = (int)strlen(buffer);
+    strcpy(mString, buffer);
+}
+} // namespace ml

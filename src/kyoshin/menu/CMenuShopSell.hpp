@@ -104,7 +104,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* sel
 
 // Base/subobject ctors (retail keeps the unmangled names at these call sites).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 id);
 extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 

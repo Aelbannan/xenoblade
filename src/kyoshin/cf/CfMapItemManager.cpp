@@ -30,7 +30,7 @@ extern const void* lbl_eu_805316E8[4];
 
 // .sdata 0x30: RTTI pair, key strings, scratch keys, RTTI pairs.
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_80662410[2] = { lbl_eu_80503334, 0 };
+const void* __RTTI__Q22cf8CREvtObj[2] = { lbl_eu_80503334, 0 };
 __declspec(section ".sdata") __attribute__((used))
 char lbl_eu_80662418[4] = "ref";
 __declspec(section ".sdata") __attribute__((used))
@@ -61,7 +61,7 @@ void rollItemLottery();
 void getMapItemTable();
 }
 __declspec(section ".data") __attribute__((used))
-const void* lbl_eu_805316C0[4] = { lbl_eu_80662410, 0, 0, 0 };
+const void* lbl_eu_805316C0[4] = { __RTTI__Q22cf8CREvtObj, 0, 0, 0 };
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_805316D0[6] = {
     lbl_eu_80662430, 0,

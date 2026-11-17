@@ -176,12 +176,12 @@ extern "C" void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src);
 
 // Subobject ctors/dtors/load hooks (retail keeps the unmangled ctor names for
 // these menu widgets; the dtors keep their C++ manglings).
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);

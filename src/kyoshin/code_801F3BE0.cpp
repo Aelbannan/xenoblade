@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/CfGimmickSaveOff.hpp"
+#include "kyoshin/cf/CfGimmickItem.hpp"
 
 // CChainBattleObj / CChainSub4: virtual-dispatch mirrors of the battle objects
 // reached from the gimmick list (-0x3E9C) in GimSetVisionResumeDist. Never instantiated
@@ -85,7 +87,6 @@ extern "C" u32 CfRes_getAllocHandle();
 extern "C" CGimmickEntry* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
-extern "C" CGimmickEntry* __ct__cf_CfGimmickSaveOff(CGimmickEntry* self, s32 row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
 extern u8* lbl_eu_8066412C;
 extern u8* lbl_eu_80664130;
@@ -94,22 +95,7 @@ extern u8* lbl_eu_80664134;
 // globals). u8* opaque buffers (no void* in this TU's imports).
 extern u8* lbl_eu_80664128;
 extern u8* lbl_eu_80664138;
-extern u8* lbl_eu_8066413C;
-extern u8* lbl_eu_80664140;  // save-off gimmick bdat table (sda21)
 extern u8* lbl_eu_80664144;
-
-// Circular gimmick object list returned by getReslistB48 (CfGimmick.hpp
-// layout): +0x00 opaque, +0x04 head node, nodes link through +0x00 and carry
-// the object at +0x08.
-struct CGimmickListNode {
-    CGimmickListNode* next;  // 0x00
-    u8 gap04[4];             // 0x04
-    u8* object;              // 0x08 - points at the +0x3E9C sub-object
-};
-struct CGimmickList {
-    u8* field_00;            // 0x00
-    CGimmickListNode* head;  // 0x04
-};
 
 // CfGimmick ctors for the remaining gimmick types. These are C-linkage retail
 // names (no C++ mangling markers; the defining TUs emit them with extern "C"
@@ -117,7 +103,6 @@ struct CGimmickList {
 // are declared with C linkage here to keep the call relocs on the retail
 // names. The row is passed untruncated (32-bit) like the retail call sites.
 extern "C" CGimmickEntry* __ct__cf_CfGimmickJump(CGimmickEntry* obj, int row);
-extern "C" CGimmickEntry* __ct__cf_CfGimmickItem(CGimmickEntry* obj, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickEne(CGimmickEntry* obj, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
                                                     CGimmickEntry** arr, int idx,
@@ -126,8 +111,6 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
 // CfGimmick shared bdat-row reset (CfGimmick.cpp): stores the row into a
 // global state slot.
 extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
-// Gimmick object list accessor (testActorStatus comes from CChainTimer.hpp).
-extern "C" CGimmickList* getReslistB48();
 
 
 CGimmickGlobal* getUnk80664658(void) {
@@ -216,9 +199,7 @@ void GimSpawnAll(CGimmickGlobal* self, void* obj) {
         s32 n = (s32)Bdat_GetMaxRow_B1EC(bdat);
         for (s32 i = 0; i < n; i++) {
             CGimmickEntry* obj =
-                (CGimmickEntry*)mtl::MemManager::allocate(0x88, CfRes_getAllocHandle());
-            if (obj)
-                obj = __ct__cf_CfGimmickSaveOff(obj, row);
+                (CGimmickEntry*)new (CfRes_getAllocHandle()) cf::CfGimmickSaveOff(row);
             self->mGimmicks[self->mGimmickCount] = obj;
             self->mGimmickCount++;
             if (self->mGimmickCount >= 0x80) {
@@ -365,7 +346,7 @@ bool GimSpawnJumps(CGimmickGlobal* self) {
 // GimSpawnItems: spawn the item gimmicks from the item bdat table; same shape
 // as GimSpawnLocks with the 0x2000 flag and 0xa4-byte objects.
 bool GimSpawnItems(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_8066413C;
+    u8* bdat = (u8*)lbl_eu_8066413C;  // item bdat table (CfGimmickItem.hpp)
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x2000;
@@ -374,9 +355,7 @@ bool GimSpawnItems(CGimmickGlobal* self) {
     s32 n = (s32)Bdat_GetMaxRow_B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
         CGimmickEntry* obj =
-            (CGimmickEntry*)mtl::MemManager::allocate(0xa4, CfRes_getAllocHandle());
-        if (obj)
-            obj = __ct__cf_CfGimmickItem(obj, row);
+            (CGimmickEntry*)new (CfRes_getAllocHandle()) cf::CfGimmickItem(row);
         self->mGimmicks[self->mGimmickCount] = obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
@@ -443,7 +422,7 @@ void GimTeardownAll(CGimmickGlobal* self) {
 
 void GimUpdateGlobal(CGimmickGlobal* self, void* obj) {}
 
-void GimNoopA(void) {}
+void cf::CfGimmick::CfGimmick_Update() {}
 
 // GimSetVisionResumeDist: enable/disable the vision-fusion resume distance. Passing
 // 0.0f sets the 0x20 flag; any other value clears it (and is a no-op when the
@@ -460,9 +439,9 @@ void GimSetVisionResumeDist(CGimmickGlobal* self, f32 value) {
         // for the clear instead of reusing the test's value)
         *(volatile u32*)&self->mFlags &= ~0x20;
     }
-    CGimmickList* list = getReslistB48();
+    CfGimmickList* list = getReslistB48();
     cf::CChainBattleObj* obj;
-    CGimmickListNode* node = list->head->next;
+    CfGimmickListNode* node = list->head->next;
     while (node != list->head) {
         obj = (cf::CChainBattleObj*)node->object;
         if (obj)
@@ -491,7 +470,7 @@ void GimDispatch14ByRow(CGimmickGlobal* self, s32 id) {
     }
 }
 
-void GimNoopB(void) {}
+void cf::CfGimmick::GimNoopB() {}
 
 // Dispatch slot 0x18 on every eligible (state bit 15) gimmick whose bdat row
 // id matches.
@@ -503,7 +482,7 @@ void GimDispatch18ByRow(CGimmickGlobal* self, s32 id) {
     }
 }
 
-void GimNoopC(void) {}
+void cf::CfGimmick::GimNoopC() {}
 
 // Dispatch slot 0x1C on the type-1 gimmick whose bdat row id matches.
 void GimDispatch1CType1(CGimmickGlobal* self, s32 id) {
@@ -514,7 +493,7 @@ void GimDispatch1CType1(CGimmickGlobal* self, s32 id) {
     }
 }
 
-void GimNoopD(void) {}
+void cf::CfGimmick::GimNoopD() {}
 
 // Look up the type-3 (elevator) gimmick with the given bdat row id and toggle
 // its LOD visibility (tail-call into GimmickElv_SetLodVisible).

@@ -54,7 +54,7 @@ extern "C" __declspec(noinline) CMenuCollepedia* __ct__CMenuCollepedia(
     *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_805372A0 + 0x24;
     self->mScene = scene;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CCollepedia(&self->mCollepedia);
     self->mState = 0;
@@ -87,7 +87,7 @@ void CMenuCollepedia::Init() {
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex((CBgTex*)tempBgTex, 0);
+    __ct__6CBgTexFUc((CBgTex*)tempBgTex, 0);
 
     __ct__UnkClass_8011C974(&mBgTex.mMemRegion, tempBgTex + 0x4);
     mBgTex.mFileHandle = *(CFileHandle**)(tempBgTex + 0x14);
@@ -121,7 +121,7 @@ void CMenuCollepedia::Init() {
     mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CCollepedia via a temporary ---
     u8 tempCollepedia[0x2900];

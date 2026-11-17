@@ -207,9 +207,12 @@ extern const char* lbl_eu_80527A80[];     // per-row column names (index / 3)
 // Signature matches the CfCam/CfCamEvent family form (void*(void*)) so the
 // declarations coexist when those headers are visible; call sites cast.
 extern "C" void* func_800BBC0C(void* obj);
-// CCtrlMoveNpc ctor (retail symbol keeps the flat name); parent is passed in
-// r4 at the retail call site even though the ctor body ignores it.
-extern "C" void __ct__cf_CtrlMoveNpc(cf::CCtrlMoveNpc* self, cf::CtrlNpc* parent);
+// CCtrlMoveNpc::CCtrlMoveNpc(void* owner) (kyoshin/cf/CtrlMoveNpc.hpp). The
+// owning __ct__CtrlNpc is still a free function (the CtrlBase/CtrlAct ctor
+// chain is not real C++ yet), so it cannot construct the +0x30 member through
+// a member-init; the real mangled ctor is named here until that family is
+// converted.
+extern "C" void __ct__Q22cf12CCtrlMoveNpcFPv(cf::CCtrlMoveNpc* self, void* owner);
 // Talk/page helper: takes the character object's field_C4 word, returns a
 // page id (unsigned compare at the call site).
 extern "C" u32 getAnimModelId(void* arg);

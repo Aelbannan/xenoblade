@@ -272,7 +272,7 @@ CMCCrystalBox* __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType) {
     __ct__CCur18(&self->pad_6C[0x78], 0);
     __ct__CSortMenu(&self->sortMenu);
     __ct__CMCCrystalInfo(&self->crystalInfo);
-    __ct__CScrollBar(self->pad_250, 0);
+    __ct__10CScrollBarFUc(self->pad_250, 0);
     __ct__CSysWin(self->sysWin, 0);
     self->unk2CC = 0;
     self->unk2CD = 0;
@@ -481,7 +481,7 @@ void initCrystalBoxResources(CMCCrystalBox* self) {
 
     // Re-init the scroll bar and the system window from default temps.
     CScrollBarData sbTmp;
-    __ct__CScrollBar(&sbTmp, 0);
+    __ct__10CScrollBarFUc(&sbTmp, 0);
     copyScrollBarData(self->pad_250, &sbTmp);
     __dt__10CScrollBarFv(&sbTmp, -1);
 

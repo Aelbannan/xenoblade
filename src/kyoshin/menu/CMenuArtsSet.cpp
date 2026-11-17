@@ -16,7 +16,7 @@
 // Singleton-factory ctor imports (retail-unmangled names).
 void __ct__8CProcessFv(CProcess* self); // CProcess base constructor
 // extern "C": US retail strips the parameter mangling on these ctor symbols.
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" CArtsList* __ct__CArtsList(CArtsList* self); // defined later in this TU
 extern char lbl_eu_8052BF70[];          // temp (CProcess) vtable
@@ -130,7 +130,7 @@ CMenuArtsSet* __ct__CMenuArtsSet(CProcess* parent, CScn* scene) {
         obj->field5C = (u32)scene;
 
         // Embedded widgets in construction order.
-        __ct__CBgTex(&obj->mBgTex, 0);
+        __ct__6CBgTexFUc(&obj->mBgTex, 0);
         __ct__CTitleAHelp(&obj->mTitleAHelp, 0, 0);
         __ct__CArtsList(&obj->mList);
         obj->field360 = 0;
@@ -2203,7 +2203,7 @@ extern "C" __declspec(noinline) CArtsList* __ct__CArtsList(CArtsList* self) {
     self->field_0x2C = 0;
     self->field_0x30 = 0;
     self->field_0x31 = 1;
-    __ct__CScrollBar(&self->mScrollBar, 0);
+    __ct__10CScrollBarFUc(&self->mScrollBar, 0);
     __ct__CArtsInfo(&self->mSubObj74);
     __ct__CSysWin(&self->mSysWinE8, 0);
     __ct__8022FA58((SArtsSub8022FA58*)&self->mSubObj124, 0, 0);
@@ -2215,7 +2215,7 @@ extern "C" __declspec(noinline) CArtsList* __ct__CArtsList(CArtsList* self) {
 
     // Temp CScrollBar(4): copy its body into the member (re-inits the
     // direction byte, which the member ctor above set to 0).
-    __ct__CScrollBar((CScrollBar*)tempSb, 4);
+    __ct__10CScrollBarFUc((CScrollBar*)tempSb, 4);
     __ct__UnkClass_8011C974(&self->mScrollBar.mMemRegion,
                             &((CScrollBar*)tempSb)->mMemRegion);
     self->mScrollBar.mFileHandle = ((CScrollBar*)tempSb)->mFileHandle;

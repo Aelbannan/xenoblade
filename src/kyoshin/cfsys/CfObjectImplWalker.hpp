@@ -925,7 +925,7 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self);
 void MoveImplRepositionEffect(void* self);
 void ObjPc_BattleChangeDriver_5B00(void);
 extern "C" void updatePosition(void* self);
-void UIWin_BuildFlagBuf(u32 a, u32 b, u32 c);
+void UIWin_BuildFlagBufRec(u32 a, u32 b, u32 c);
 bool QstCnt_HasInstance_6B94(void);
 u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 u32 getControllerWordA37C__Q22cf13CfGameManagerFv();

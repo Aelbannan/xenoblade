@@ -226,11 +226,7 @@
    "ptr_arith": 10,
    "void_ptr": 12
   },
-  "libs/monolib/src/device/CDeviceFileJob.cpp": {
-   "extern_c_nonlbl_decl": 41,
-   "extern_c_nonlbl_def": 2,
-   "self_params": 1
-  },
+  "libs/monolib/src/device/CDeviceFileJob.cpp": {},
   "libs/monolib/src/device/CDeviceFileJobReadDvd.cpp": {
    "extern_c_nonlbl_decl": 40,
    "extern_c_nonlbl_def": 6,
@@ -253,8 +249,7 @@
    "void_ptr": 5
   },
   "libs/monolib/src/device/CDeviceFontInfoRom.cpp": {
-   "extern_c_nonlbl_decl": 15,
-   "void_ptr": 1
+   "extern_c_nonlbl_decl": 1
   },
   "libs/monolib/src/device/CDeviceFontLayer.cpp": {
    "extern_c_nonlbl_decl": 51,
@@ -567,11 +562,11 @@
    "self_params": 7
   },
   "libs/monolib/src/nand/CNReqtaskSaveBanner.cpp": {
-   "extern_c_nonlbl_decl": 13,
+   "extern_c_nonlbl_decl": 6,
    "extern_c_nonlbl_def": 4
   },
   "libs/monolib/src/nand/CNand.cpp": {
-   "extern_c_nonlbl_decl": 11,
+   "extern_c_nonlbl_decl": 12,
    "extern_c_nonlbl_def": 14,
    "self_params": 29,
    "void_ptr": 8
@@ -697,10 +692,10 @@
    "self_params": 1
   },
   "libs/monolib/src/scn/CScnIdMan.cpp": {
-   "extern_c_nonlbl_decl": 9,
-   "extern_c_nonlbl_def": 2,
-   "self_params": 3,
-   "void_ptr": 10
+   "extern_c_nonlbl_decl": 5,
+   "extern_c_nonlbl_def": 1,
+   "self_params": 1,
+   "void_ptr": 7
   },
   "libs/monolib/src/scn/CScnItemAnim.cpp": {
    "extern_c_nonlbl_decl": 6,
@@ -734,8 +729,8 @@
    "void_ptr": 5
   },
   "libs/monolib/src/scn/CScnItemLightNw4r.cpp": {
-   "extern_c_nonlbl_decl": 6,
-   "void_ptr": 3
+   "extern_c_nonlbl_decl": 4,
+   "void_ptr": 1
   },
   "libs/monolib/src/scn/CScnItemModel.cpp": {
    "deref_arith": 2,
@@ -806,7 +801,7 @@
    "goto_count": 20,
    "ptr_arith": 11,
    "self_params": 109,
-   "void_ptr": 42
+   "void_ptr": 40
   },
   "libs/monolib/src/scn/CScn_80496B0C.cpp": {
    "extern_c_nonlbl_decl": 141,
@@ -816,9 +811,7 @@
    "void_ptr": 8
   },
   "libs/monolib/src/scn/CVirtualLightAmb.cpp": {
-   "extern_c_nonlbl_decl": 4,
-   "extern_c_nonlbl_def": 1,
-   "self_params": 3
+   "extern_c_nonlbl_decl": 3
   },
   "libs/monolib/src/scn/CVirtualLightDir.cpp": {
    "extern_c_nonlbl_decl": 3,
@@ -848,11 +841,11 @@
   },
   "libs/monolib/src/scn/code_8047D2AC.cpp": {
    "deref_arith": 3,
-   "extern_c_nonlbl_decl": 23,
+   "extern_c_nonlbl_decl": 22,
    "extern_c_nonlbl_def": 4,
    "ptr_arith": 3,
-   "self_params": 31,
-   "void_ptr": 31
+   "self_params": 29,
+   "void_ptr": 28
   },
   "libs/monolib/src/scn/code_8049431C.cpp": {
    "extern_c_nonlbl_decl": 6,
@@ -1432,7 +1425,7 @@
    "void_ptr": 11
   },
   "src/kyoshin/CBattery.cpp": {
-   "void_ptr": 2
+   "void_ptr": 1
   },
   "src/kyoshin/CBgTex.cpp": {
    "extern_c_nonlbl_decl": 32
@@ -1494,10 +1487,8 @@
    "void_ptr": 4
   },
   "src/kyoshin/CFade.cpp": {
-   "extern_c_nonlbl_decl": 31,
-   "extern_c_nonlbl_def": 10,
-   "self_params": 14,
-   "void_ptr": 2
+   "extern_c_nonlbl_def": 9,
+   "self_params": 12
   },
   "src/kyoshin/CFloorMap.cpp": {
    "deref_arith": 18,
@@ -1527,13 +1518,13 @@
    "void_ptr": 7
   },
   "src/kyoshin/CItemBoxInfo.cpp": {
-   "deref_arith": 154,
+   "deref_arith": 153,
    "extern_c_nonlbl_decl": 84,
    "extern_c_nonlbl_def": 13,
    "goto_count": 2,
-   "ptr_arith": 254,
+   "ptr_arith": 253,
    "self_params": 4,
-   "void_ptr": 194
+   "void_ptr": 193
   },
   "src/kyoshin/CItemBoxLine.cpp": {
    "deref_arith": 1,
@@ -1793,7 +1784,7 @@
    "void_ptr": 7
   },
   "src/kyoshin/CTaskGamePic.cpp": {
-   "extern_c_nonlbl_def": 6
+   "extern_c_nonlbl_def": 5
   },
   "src/kyoshin/CTimeLightGrp.cpp": {
    "extern_c_nonlbl_decl": 1,
@@ -1901,15 +1892,14 @@
    "void_ptr": 1
   },
   "src/kyoshin/cf/CBattleManager.cpp": {
-   "asm_code": 1,
-   "deref_arith": 447,
+   "deref_arith": 446,
    "extern_c_nonlbl_decl": 174,
    "extern_c_nonlbl_def": 16,
-   "goto_count": 140,
-   "ptr_arith": 902,
+   "goto_count": 131,
+   "ptr_arith": 890,
    "schedule_pragma": 2,
-   "self_params": 249,
-   "void_ptr": 476
+   "self_params": 241,
+   "void_ptr": 471
   },
   "src/kyoshin/cf/CCharEffect.cpp": {
    "self_params": 14,
@@ -2092,9 +2082,9 @@
   },
   "src/kyoshin/cf/CfGimmick.cpp": {
    "extern_c_nonlbl_decl": 14,
-   "extern_c_nonlbl_def": 42,
+   "extern_c_nonlbl_def": 39,
    "goto_count": 5,
-   "self_params": 29,
+   "self_params": 26,
    "void_ptr": 10
   },
   "src/kyoshin/cf/CfGimmickElv.cpp": {
@@ -2112,10 +2102,9 @@
   },
   "src/kyoshin/cf/CfGimmickItem.cpp": {
    "asm_code": 1,
-   "extern_c_nonlbl_decl": 8,
-   "extern_c_nonlbl_def": 2,
+   "extern_c_nonlbl_def": 1,
    "goto_count": 6,
-   "self_params": 12,
+   "self_params": 5,
    "void_ptr": 1
   },
   "src/kyoshin/cf/CfGimmickJump.cpp": {
@@ -2141,9 +2130,7 @@
    "void_ptr": 5
   },
   "src/kyoshin/cf/CfGimmickSaveOff.cpp": {
-   "extern_c_nonlbl_def": 2,
-   "self_params": 6,
-   "void_ptr": 2
+   "void_ptr": 1
   },
   "src/kyoshin/cf/CfGimmickWarp.cpp": {
    "extern_c_nonlbl_decl": 31,
@@ -2260,8 +2247,7 @@
    "self_params": 10
   },
   "src/kyoshin/cf/CfTaskMain.cpp": {
-   "self_params": 2,
-   "void_ptr": 4
+   "void_ptr": 3
   },
   "src/kyoshin/cf/CtrlAct.cpp": {
    "extern_c_nonlbl_decl": 1,
@@ -2284,7 +2270,7 @@
    "extern_c_nonlbl_decl": 2,
    "extern_c_nonlbl_def": 4,
    "goto_count": 45,
-   "ptr_arith": 12,
+   "ptr_arith": 11,
    "self_params": 37,
    "void_ptr": 13
   },
@@ -2294,20 +2280,20 @@
    "extern_c_nonlbl_def": 1,
    "goto_count": 7,
    "ptr_arith": 21,
-   "self_params": 105,
+   "self_params": 102,
    "void_ptr": 26
   },
   "src/kyoshin/cf/CtrlMoveNpc.cpp": {
-   "extern_c_nonlbl_decl": 19,
+   "extern_c_nonlbl_decl": 18,
    "extern_c_nonlbl_def": 4,
    "void_ptr": 8
   },
   "src/kyoshin/cf/CtrlMovePC.cpp": {
-   "extern_c_nonlbl_decl": 15,
-   "extern_c_nonlbl_def": 20,
+   "extern_c_nonlbl_decl": 11,
+   "extern_c_nonlbl_def": 19,
    "ptr_arith": 68,
-   "self_params": 64,
-   "void_ptr": 37
+   "self_params": 59,
+   "void_ptr": 33
   },
   "src/kyoshin/cf/CtrlNpc.cpp": {
    "extern_c_nonlbl_decl": 1,
@@ -2406,7 +2392,7 @@
    "self_params": 6
   },
   "src/kyoshin/cf/code_800C17DC.cpp": {
-   "extern_c_nonlbl_decl": 472,
+   "extern_c_nonlbl_decl": 473,
    "extern_c_nonlbl_def": 7,
    "self_params": 5,
    "void_ptr": 8
@@ -2437,12 +2423,12 @@
    "void_ptr": 110
   },
   "src/kyoshin/cf/object/CActorParam.cpp": {
-   "deref_arith": 601,
+   "deref_arith": 600,
    "extern_c_nonlbl_decl": 35,
    "extern_c_nonlbl_def": 17,
    "goto_count": 17,
-   "ptr_arith": 767,
-   "self_params": 124,
+   "ptr_arith": 766,
+   "self_params": 120,
    "void_ptr": 92
   },
   "src/kyoshin/cf/object/CBattleState.cpp": {
@@ -2456,11 +2442,11 @@
   },
   "src/kyoshin/cf/object/CfObjectActor.cpp": {
    "deref_arith": 1,
-   "extern_c_nonlbl_decl": 8,
+   "extern_c_nonlbl_decl": 7,
    "extern_c_nonlbl_def": 20,
    "ptr_arith": 36,
-   "self_params": 67,
-   "void_ptr": 22
+   "self_params": 64,
+   "void_ptr": 21
   },
   "src/kyoshin/cf/object/CfObjectColl.cpp": {
    "deref_arith": 3,
@@ -2517,7 +2503,7 @@
    "void_ptr": 5
   },
   "src/kyoshin/cf/object/CfObjectObj.cpp": {
-   "extern_c_nonlbl_def": 3
+   "extern_c_nonlbl_def": 2
   },
   "src/kyoshin/cf/object/CfObjectPc.cpp": {
    "deref_arith": 2,
@@ -2536,8 +2522,8 @@
    "void_ptr": 11
   },
   "src/kyoshin/cf/object/CfObjectTbox.cpp": {
-   "extern_c_nonlbl_def": 2,
-   "self_params": 5,
+   "extern_c_nonlbl_def": 1,
+   "self_params": 2,
    "void_ptr": 3
   },
   "src/kyoshin/cf/voice/CCharVoice.cpp": {
@@ -2719,12 +2705,12 @@
   },
   "src/kyoshin/code_800B06A4.cpp": {
    "deref_arith": 38,
-   "extern_c_nonlbl_decl": 102,
+   "extern_c_nonlbl_decl": 100,
    "extern_c_nonlbl_def": 93,
    "goto_count": 77,
    "ptr_arith": 115,
-   "self_params": 201,
-   "void_ptr": 277
+   "self_params": 199,
+   "void_ptr": 274
   },
   "src/kyoshin/code_80135FDC.cpp": {
    "deref_arith": 5,
@@ -2753,8 +2739,8 @@
    "void_ptr": 10
   },
   "src/kyoshin/code_801F3BE0.cpp": {
-   "extern_c_nonlbl_decl": 19,
-   "self_params": 38,
+   "extern_c_nonlbl_decl": 16,
+   "self_params": 37,
    "void_ptr": 6
   },
   "src/kyoshin/code_802405F4.cpp": {
@@ -2905,7 +2891,7 @@
   },
   "src/kyoshin/menu/CMenuArtsSelect.cpp": {
    "deref_arith": 8,
-   "extern_c_nonlbl_decl": 73,
+   "extern_c_nonlbl_decl": 72,
    "extern_c_nonlbl_def": 18,
    "goto_count": 35,
    "ptr_arith": 22,
@@ -3054,10 +3040,10 @@
   },
   "src/kyoshin/menu/CMenuKizunaTalkList.cpp": {
    "deref_arith": 54,
-   "extern_c_nonlbl_decl": 27,
+   "extern_c_nonlbl_decl": 26,
    "extern_c_nonlbl_def": 3,
    "ptr_arith": 58,
-   "self_params": 33,
+   "self_params": 32,
    "void_ptr": 4
   },
   "src/kyoshin/menu/CMenuKizunagram.cpp": {
@@ -3364,9 +3350,9 @@
   "src/kyoshin/plugin/pluginVoice.cpp": {},
   "src/kyoshin/plugin/pluginWait.cpp": {},
   "src/kyoshin/realtimeevt/CREvtCamera.cpp": {
-   "extern_c_nonlbl_decl": 32,
+   "extern_c_nonlbl_decl": 31,
    "extern_c_nonlbl_def": 13,
-   "self_params": 16,
+   "self_params": 15,
    "void_ptr": 14
   },
   "src/kyoshin/realtimeevt/CREvtEffect.cpp": {
@@ -3376,55 +3362,72 @@
    "void_ptr": 13
   },
   "src/kyoshin/realtimeevt/CREvtLight.cpp": {
-   "extern_c_nonlbl_decl": 11,
+   "extern_c_nonlbl_decl": 10,
    "extern_c_nonlbl_def": 4,
    "self_params": 9,
-   "void_ptr": 9
+   "void_ptr": 8
   },
   "src/kyoshin/realtimeevt/CREvtMem.cpp": {
    "extern_c_nonlbl_def": 1,
    "self_params": 1
   },
   "src/kyoshin/realtimeevt/CREvtModel.cpp": {
-   "extern_c_nonlbl_decl": 196,
+   "extern_c_nonlbl_decl": 194,
    "extern_c_nonlbl_def": 2,
    "ptr_arith": 6,
-   "self_params": 76,
-   "void_ptr": 82
+   "self_params": 74,
+   "void_ptr": 80
   },
   "src/kyoshin/realtimeevt/CREvtModelMap.cpp": {
    "deref_arith": 3,
-   "extern_c_nonlbl_decl": 45,
+   "extern_c_nonlbl_decl": 44,
    "extern_c_nonlbl_def": 2,
    "goto_count": 2,
    "ptr_arith": 20,
-   "self_params": 42,
+   "self_params": 41,
    "void_ptr": 39
   },
   "src/kyoshin/realtimeevt/CREvtModelObj.cpp": {
    "deref_arith": 1,
-   "extern_c_nonlbl_decl": 41,
+   "extern_c_nonlbl_decl": 40,
    "extern_c_nonlbl_def": 18,
    "ptr_arith": 10,
-   "self_params": 45,
-   "void_ptr": 59
+   "self_params": 44,
+   "void_ptr": 58
   },
   "src/kyoshin/realtimeevt/CREvtModelPc.cpp": {
-   "extern_c_nonlbl_decl": 28,
+   "extern_c_nonlbl_decl": 27,
    "extern_c_nonlbl_def": 11,
    "goto_count": 2,
    "ptr_arith": 5,
    "self_params": 27,
-   "void_ptr": 55
+   "void_ptr": 54
   },
   "src/kyoshin/realtimeevt/CREvtMovie.cpp": {
-   "extern_c_nonlbl_decl": 4,
-   "self_params": 9
+   "self_params": 2
   },
   "src/kyoshin/realtimeevt/CREvtObj.cpp": {
-   "extern_c_nonlbl_def": 6,
-   "self_params": 4,
+   "extern_c_nonlbl_def": 4,
+   "self_params": 3,
    "void_ptr": 1
   }
- }
+ },
+ "_ceiling_raises": [
+  {
+   "tu": "src/kyoshin/cf/code_800C17DC.cpp",
+   "metric": "extern_c_nonlbl_decl",
+   "from": 472,
+   "to": 473,
+   "date": "2026-10-24",
+   "reason": "hand-built cf::CfObjectObj vtable blob must name __dt__Q22cf11CfObjectObjFv (deleting dtor emitted in another TU); one extern \"C\" decl is required until the vtable is emitted natively"
+  },
+  {
+   "tu": "libs/monolib/src/nand/CNand.cpp",
+   "metric": "extern_c_nonlbl_decl",
+   "from": 11,
+   "to": 12,
+   "date": "2026-10-24",
+   "reason": "func_804DA47C (stripped retail name, C linkage) is defined after its NandMgrEnqueue* callers to match retail .text order, so it needs one forward extern \"C\" declaration"
+  }
+ ]
 }

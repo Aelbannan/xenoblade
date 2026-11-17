@@ -31,7 +31,7 @@ __declspec(section ".sdata2") const double lbl_eu_80667950 = 0x4330000080000000l
 // ============================================================================
 extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) {
     // Call CREvtObj base constructor with arg=1
-    __ct__cf_CREvtObj((cf::CREvtObj*)self, 1);
+    __ct__Q22cf8CREvtObjFi((cf::CREvtObj*)self, 1);
 
     // Set vtable pointers (main + secondary callback interface at +0x28)
     *(u32**)self = (u32*)((void*)lbl_eu_805322D8);
@@ -129,7 +129,7 @@ extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
         // Destroy the CREvtObj base, then free the allocation if requested
         __dt__Q22cf8CREvtObjFv((cf::CREvtObj*)self, 0);
         if (dealloc_flag > 0) {
-            __dt__80185754(self);
+            cf::CREvtObj::operator delete(self);
         }
     }
 

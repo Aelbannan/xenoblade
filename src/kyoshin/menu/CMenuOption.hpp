@@ -112,12 +112,12 @@ extern "C" void COptionBeginScrollSetup(COption* self);
 // Ctor/Init re-init helpers (retail-unmangled callee names - US strips
 // mangling for these __ct__/func_ helpers).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__COption(COption* self, u8 arg);
 // __ct__UnkClass_8011C974 is declared by COption.hpp; BdatTouchStringCell by CFloorMap.hpp.
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void COptionRebuildWidgets(COption* self);
 
 // Option-menu input-handler callees (retail-unmangled func_ names).

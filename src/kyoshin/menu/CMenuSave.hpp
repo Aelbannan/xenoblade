@@ -111,7 +111,7 @@ extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void CSaveLoad_update(CSaveLoad* self);
 extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int CSaveLoad_isBusy(CSaveLoad* self);
@@ -129,7 +129,7 @@ extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(void* self, int arg);
+extern "C" void __ct__6CBgTexFUc(void* self, int arg);
 extern "C" void __ct__CTitleAHelp(void* self, char* name, int id);
 extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);

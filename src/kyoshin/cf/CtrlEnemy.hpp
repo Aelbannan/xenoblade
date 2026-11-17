@@ -448,7 +448,7 @@ void moveBaseSway(void* self);  // one-arg delegate form
 void moveBaseRoute(void* self);  // one-arg delegate form
 void moveBaseScnCmd(void* self);  // one-arg delegate form
 void __ct__800D10DC(void* self, void* parent);  // CtrlEnemy base ctor
-void __ct__8008A104(void* self, void* parent);  // +0x84 sub-object ctor
+void __ct__Q22cf12CCtrlMoveEneFPQ22cf9CtrlEnemy(void* self, cf::CtrlEnemy* parent);  // +0x84 sub-object ctor (CCtrlMoveEne::CCtrlMoveEne(CtrlEnemy*); free-function owner ctor cannot member-init it yet)
 void* MapFx_ResolveOwner(void* source);              // voice/battle-list resolve
 void CtrlMoveEne_ForwardBaseRefresh(void* self);                 // +0x84 sub-object dtor (blr)
 void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,

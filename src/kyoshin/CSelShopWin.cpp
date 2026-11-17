@@ -5,6 +5,9 @@
 // driveShopWinAnim calls advanceShopWinOpen/rewindShopWinClose which are defined AFTER it,
 // so -inline auto leaves those as real `bl` calls.
 
+// Inline-empty ~IWorkEvent: the ctor's cleanup action references the (link-deduped)
+// weak copy, and ~CSelShopWin elides the base call (retail shape).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CSelShopWin.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -86,7 +89,7 @@ struct ShopActorView {
     virtual const char* getName();  // +0x40
 };
 
-CSelShopWin::CSelShopWin() : CSelShopWinVtblBase(), mMemRegion() {
+CSelShopWin::CSelShopWin() : mMemRegion() {
     mFileHandle = nullptr;
     mAccessor = nullptr;
     mLayout = nullptr;
@@ -110,7 +113,7 @@ CSelShopWin::~CSelShopWin() {
 void CSelShopWin::loadShopWinArc() {
     mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_8050A62C,
-        reinterpret_cast<IWorkEvent*>(this), 0, 0);
+        this, 0, 0);
     mIsLoaded = 0;
 }
 

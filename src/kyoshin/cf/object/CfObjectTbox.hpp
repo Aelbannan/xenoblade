@@ -29,12 +29,6 @@ namespace cf {
 struct CfResTboxImpl;  // full def in kyoshin/cf/CfResTboxImpl.hpp
 }
 
-// C-ABI import (retail unmangled name): the CfObjectObj base constructor.
-// Retail names it with the flat cf_ scheme (like __ct__cf_CfResObjImpl), so
-// the Tbox ctor calls it directly instead of through a C++ base initializer
-// (which would emit a mangled Q2- reloc the retail side doesn't carry).
-extern "C" void* __ct__cf_CfObjectObj(cf::CfObjectObj* self);
-
 // C-ABI import (retail unmangled name): constructs the 0x1C-byte textbox
 // resource object in place and returns it (defined in CfResTboxImpl.cpp).
 extern "C" void* __ct__cf_CfResTboxImpl(cf::CfResTboxImpl* self, void* parent);

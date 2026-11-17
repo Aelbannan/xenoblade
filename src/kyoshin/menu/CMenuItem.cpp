@@ -135,7 +135,7 @@ extern "C" CMenuItem* __ct__CMenuItem(CProcess* parent, CScn* scene,
         obj->mIScnRenderVt = reinterpret_cast<u32>(iscnVt);
         obj->mScene = scene;
 
-        __ct__CBgTex(&obj->mBgTex, 0);
+        __ct__6CBgTexFUc(&obj->mBgTex, 0);
         __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(&obj->mTitleAHelp[0]), 0, 0);
         __ct__CItemBoxGrid(reinterpret_cast<CItemBoxGrid*>(&obj->mItemBoxGrid[0]),
                            0, 0, 0, 1);

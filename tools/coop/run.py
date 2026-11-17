@@ -538,6 +538,7 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             if not has_data_sections(decomp) and not has_data_sections(retail):
                 # Neither side defines data: nothing to verify.
                 continue
+            decomp = _linked_object(project, config, unit, decomp).path
             result, _note = _compare(retail, decomp)
             extab_ok, extab_note = _extab_status(unit, retail, decomp)
             print(f"unit: {unit.name}  [{result.per_section_status()}{extab_note}]")
@@ -571,13 +572,24 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
     if not has_data_sections(decomp) and not has_data_sections(retail):
         print(f"unit: {unit.name}  [bypass:ok]")
         return 0
+    view = _linked_object(project, config, unit, decomp)
+    decomp = view.path
     result, note = _compare(retail, decomp)
     print(f"unit: {unit.name}")
+    for line in view.excluded:
+        print(f"  weak-dedup: excluded {line}")
     if note:
         print(f"  (postprocess: {note})")
     print(format_data_result(result))
     extab_ok = _print_extab_check(project, config, unit, retail, decomp)
     return 0 if result.ok and extab_ok else 1
+
+
+def _linked_object(project: Project, config: CoopConfig, unit, decomp: Path):
+    """Decomp object minus the weak copies mwld discards (PLAN.md §17.8)."""
+    from tools.coop.lib.weak_dedup import linked_view
+
+    return linked_view(decomp, project.root, config.region, unit.name)
 
 
 def _extab_layout(project: Project, config: CoopConfig):
@@ -2815,6 +2827,14 @@ def main() -> int:
     p_extab_gate.add_argument("--init", action="store_true", help="write the baseline from the current objects")
     p_extab_gate.add_argument("--verbose", action="store_true", help="print per-function diffs for failing units")
 
+    p_order_gate = sub.add_parser(
+        "text-order-gate",
+        help="Shrink-only .text function-order gate for completed units (docs/evidence/text_order_baseline.json)",
+    )
+    p_order_gate.add_argument("--ratchet", action="store_true", help="lower the baseline (shrink-only)")
+    p_order_gate.add_argument("--init", action="store_true", help="write the baseline from the current objects")
+    p_order_gate.add_argument("--verbose", action="store_true", help="print the order of failing units")
+
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -3030,6 +3050,11 @@ def main() -> int:
         from tools.coop import extab_gate
 
         return extab_gate.gate(config.region, args.ratchet, args.init, args.verbose)
+
+    if args.command == "text-order-gate":
+        from tools.coop import text_order_gate
+
+        return text_order_gate.gate(args.ratchet, args.init, args.verbose)
 
     parser.error(f"unknown command: {args.command}")
     return 2

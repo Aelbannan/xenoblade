@@ -7,9 +7,8 @@
 
 // External function declarations
 extern "C" {
-    void __ct__cf_CREvtObj(CREvtCamera* self, u32 param);
+    void __ct__Q22cf8CREvtObjFi(CREvtCamera* self, u32 param);
     void __dt__Q22cf8CREvtObjFv(CREvtCamera* self, int deleteFlag);
-    void __dt__80185754(CREvtCamera* self);
     CREvtCamManager* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
     void  cfCam_setClear04(void* mgr, u32 mask, int flag);
@@ -117,7 +116,7 @@ extern "C" void REvtCam_ActivateLodTasks(CREvtCamera* self) {
 // Constructor: __ct__CREvtCamera (0x80181374, size 0x110)
 // ============================================================================
 extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
-    __ct__cf_CREvtObj(self, 0);
+    __ct__Q22cf8CREvtObjFi(self, 0);
 
     // Declaration/use split reproduces retail scheduling: the first default
     // float loads before the vtable address formation, the other two inside
@@ -238,7 +237,7 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
         }
 
         __dt__Q22cf8CREvtObjFv(self, 0);
-        if (deleteFlag > 0) __dt__80185754(self);
+        if (deleteFlag > 0) cf::CREvtObj::operator delete(self);
     }
     return self;
 }

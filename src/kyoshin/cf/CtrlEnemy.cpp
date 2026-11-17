@@ -27,7 +27,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self);
 void* __ct__cf_CtrlEnemy(cf::CtrlEnemy* self, void* parent) {
     __ct__800D10DC(self, parent);
     *(void**)self = (void*)lbl_eu_80527738;
-    __ct__8008A104(&self->mSub84, self);
+    __ct__Q22cf12CCtrlMoveEneFPQ22cf9CtrlEnemy(&self->mSub84, self);
     self->field_0x80 = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(parent);
     return self;
 }

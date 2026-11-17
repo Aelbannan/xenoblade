@@ -19,7 +19,7 @@ extern void* lbl_eu_80537028[];
 
 // Sub-object ctor imports (retail emits the short unmangled names at the
 // call sites - the typed member ctors would mangle differently).
-extern "C" void __ct__CScrollBar(void* self, int direction);
+extern "C" void __ct__10CScrollBarFUc(void* self, int direction);
 extern "C" void __ct__CSysWin(CSysWin* self, int kind);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 

@@ -104,83 +104,6 @@ extern UnkClass_8047CD0C lbl_eu_80658540; // node pool (bss)
 extern u8* lbl_eu_806658C8;              // owned allocation slot (sbss)
 
 // ------------------------------------------------------------------
-// Pool "clear/reset" helpers
-// ------------------------------------------------------------------
-
-// refreshPoolMemory -- tail-call to createGlobalHeap (reallocate pool storage)
-void UnkClass_8047CD0C::refreshPoolMemory() {
-    createGlobalHeap();
-}
-
-// releasePoolMemory -- tail-call to freeGlobalHeap (release pool storage)
-void UnkClass_8047CD0C::releasePoolMemory() {
-    freeGlobalHeap();
-}
-
-// clearPoolFlags -- clear flags word. noinline so the CFBC/CFD0 callers emit a
-// tail-call `b` instead of inlining (retail keeps them as separate functions).
-void __declspec(noinline) UnkClass_8047CD0C::clearPoolFlags() {
-    mFlags = 0;
-}
-
-// clearPoolData -- clear own data pointer, then clear pool flags
-void UnkClass_8047CD0C::clearPoolData() {
-    mData = 0;
-    lbl_eu_80658540.clearPoolFlags();
-}
-
-// resetPoolState -- hand pool storage over to D1B0/D02C, clear own state
-void UnkClass_8047CD0C::resetPoolState() {
-    lbl_eu_80658540.freePoolAllocation();
-    mField04 = 0;
-    mField08 = 0;
-    mData = 0;
-    lbl_eu_80658540.clearPoolFlags();
-}
-
-// freePoolAllocation -- release owned allocation and reset pool fields
-void __declspec(noinline) UnkClass_8047CD0C::freePoolAllocation() {
-    if (!lbl_eu_806658C8) {
-        if (mData) {
-            mtl::MemManager::deallocate(mData);
-            mData = 0;
-        }
-    }
-    mData = 0;
-    mFlags = 0;
-}
-
-// createGlobalHeap -- (re)allocate the pool storage slot. noinline so refreshPoolMemory
-// emits a tail-call `b` rather than inlining this body. The duplicated `lbl || lbl`
-// makes MWCC CSE the null-test into one cmp + two beq (dead second branch).
-void __declspec(noinline) UnkClass_8047CD0C::createGlobalHeap() {
-    // Nested identical null-tests so MWCC emits two beq-skip branches (dead second
-    // branch) before the deallocate, matching retail's double-beq shape.
-    if (lbl_eu_806658C8) {
-        if (lbl_eu_806658C8) {
-            mtl::MemManager::deallocate(lbl_eu_806658C8);
-            lbl_eu_806658C8 = 0;
-        }
-    }
-    lbl_eu_806658C8 = static_cast<u8*>(
-        mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20));
-}
-
-// freeGlobalHeap -- release the pool storage slot. noinline so releasePoolMemory
-// emits a tail-call `b` rather than inlining this body. Same duplicate-null-test
-// trick as D208 for the retail dead-beq shape.
-void __declspec(noinline) UnkClass_8047CD0C::freeGlobalHeap() {
-    // Nested identical null-tests -> two beq-skip branches (dead second branch),
-    // matching retail's double-beq before deallocate.
-    if (lbl_eu_806658C8) {
-        if (lbl_eu_806658C8) {
-            mtl::MemManager::deallocate(lbl_eu_806658C8);
-        }
-    }
-    lbl_eu_806658C8 = 0;
-}
-
-// ------------------------------------------------------------------
 // initFromConfig -- constructor from a scene-config blob.
 // Config magic 0x57504F49: adopt node array (config+0x0C), resize the pool,
 // attach nodes. Retail calls init__17UnkClass_8047E110Fv(self, config+0x0C).
@@ -290,6 +213,41 @@ extern "C" void releaseNode__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 }
 
 // ------------------------------------------------------------------
+// Pool "clear/reset" helpers
+// ------------------------------------------------------------------
+
+// clearPoolData -- clear own data pointer, then clear pool flags
+void UnkClass_8047CD0C::clearPoolData() {
+    mData = 0;
+    lbl_eu_80658540.clearPoolFlags();
+}
+
+// resetPoolState -- hand pool storage over to D1B0/D02C, clear own state
+void UnkClass_8047CD0C::resetPoolState() {
+    lbl_eu_80658540.freePoolAllocation();
+    mField04 = 0;
+    mField08 = 0;
+    mData = 0;
+    lbl_eu_80658540.clearPoolFlags();
+}
+
+// refreshPoolMemory -- tail-call to createGlobalHeap (reallocate pool storage)
+void UnkClass_8047CD0C::refreshPoolMemory() {
+    createGlobalHeap();
+}
+
+// releasePoolMemory -- tail-call to freeGlobalHeap (release pool storage)
+void UnkClass_8047CD0C::releasePoolMemory() {
+    freeGlobalHeap();
+}
+
+// clearPoolFlags -- clear flags word. noinline so the CFBC/CFD0 callers emit a
+// tail-call `b` instead of inlining (retail keeps them as separate functions).
+void __declspec(noinline) UnkClass_8047CD0C::clearPoolFlags() {
+    mFlags = 0;
+}
+
+// ------------------------------------------------------------------
 // allocateNodeStorage -- (re)allocate the pool node storage.  If the global
 // owned slot is already populated, reuse it; otherwise free the current
 // allocation and allocate a fresh block sized for `nodeCount` 0x28-byte
@@ -372,6 +330,48 @@ extern "C" u16* getNodeBlock__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self, u32
         return self->mNodes + (index * self->mStride);
     }
     return 0;
+}
+
+// freePoolAllocation -- release owned allocation and reset pool fields
+void __declspec(noinline) UnkClass_8047CD0C::freePoolAllocation() {
+    if (!lbl_eu_806658C8) {
+        if (mData) {
+            mtl::MemManager::deallocate(mData);
+            mData = 0;
+        }
+    }
+    mData = 0;
+    mFlags = 0;
+}
+
+// createGlobalHeap -- (re)allocate the pool storage slot. noinline so refreshPoolMemory
+// emits a tail-call `b` rather than inlining this body. The duplicated `lbl || lbl`
+// makes MWCC CSE the null-test into one cmp + two beq (dead second branch).
+void __declspec(noinline) UnkClass_8047CD0C::createGlobalHeap() {
+    // Nested identical null-tests so MWCC emits two beq-skip branches (dead second
+    // branch) before the deallocate, matching retail's double-beq shape.
+    if (lbl_eu_806658C8) {
+        if (lbl_eu_806658C8) {
+            mtl::MemManager::deallocate(lbl_eu_806658C8);
+            lbl_eu_806658C8 = 0;
+        }
+    }
+    lbl_eu_806658C8 = static_cast<u8*>(
+        mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20));
+}
+
+// freeGlobalHeap -- release the pool storage slot. noinline so releasePoolMemory
+// emits a tail-call `b` rather than inlining this body. Same duplicate-null-test
+// trick as D208 for the retail dead-beq shape.
+void __declspec(noinline) UnkClass_8047CD0C::freeGlobalHeap() {
+    // Nested identical null-tests -> two beq-skip branches (dead second branch),
+    // matching retail's double-beq before deallocate.
+    if (lbl_eu_806658C8) {
+        if (lbl_eu_806658C8) {
+            mtl::MemManager::deallocate(lbl_eu_806658C8);
+        }
+    }
+    lbl_eu_806658C8 = 0;
 }
 
 // ------------------------------------------------------------------

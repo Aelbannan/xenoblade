@@ -864,7 +864,7 @@ CQstLogList::~CQstLogList() {
 }
 #pragma pop
 
-// Quest-log list constructor (retail symbol __ct__CQstLogList, C-linkage
+// Quest-log list constructor (retail symbol __ct__11CQstLogListFUs, C-linkage
 // ctor name). Builds the sub-objects, primes the shared quest text table
 // (lbl_eu_80576670) and copies the temp-constructed CSortMenu / QstData
 // bodies into the members the same way the retail ctor does.
@@ -890,7 +890,7 @@ CQstLogList::CQstLogList(u16 arg2) {
     mpAnim0 = 0;
     mpAnim1 = 0;
     __ct__CCur18(&mCur18, 0);
-    __ct__CScrollBar(&mScrollBar, 0);
+    __ct__10CScrollBarFUc(&mScrollBar, 0);
     __ct__CSortMenu(&mSortMenuData);
     field_0x170 = 0;
     field_0x174 = 0;
@@ -918,7 +918,7 @@ CQstLogList::CQstLogList(u16 arg2) {
     lbl_eu_80664728 = 0;
 
     // Build a temp CScrollBar (flag 1) and copy its body into the member.
-    __ct__CScrollBar(&tmp, 1);
+    __ct__10CScrollBarFUc(&tmp, 1);
     copyScrollBarData(&mScrollBar, &tmp);
     __dt__10CScrollBarFv(&tmp, -1);
 

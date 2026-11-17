@@ -74,7 +74,7 @@ public:
     /* 0x2C */ CCur18 mCursor;
     /* 0x44 */ u8 mScrollBar[0x40];  // CScrollBar widget; constructed/copied
                                      // explicitly in the ctor (retail calls
-                                     // __ct__CScrollBar in the body, so the
+                                     // __ct__10CScrollBarFUc in the body, so the
                                      // member is held as raw storage)
     /* 0x84 */ u8 mState84;
     /* 0x85 */ u8 mState85;         // state machine progression flag
@@ -142,7 +142,7 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
-extern "C" void __ct__CScrollBar(void* self, u8 direction);
+extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);
 extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);

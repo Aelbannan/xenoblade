@@ -14,27 +14,12 @@ namespace cf {
         //0x0: vtable 1
         //0x0-71C: CfObjectMove (mField718 is the base's last field)
 
-        // Retail constructs this class only through the forced-name free
-        // function __ct__cf_CfObjectObj (defined in the .cpp); there is no
-        // mangled member ctor symbol in retail.
-
         void reset();
         int initialize();
         void update();
 
-        // Declared but NOT defined in this fork: retail's CfObjectObj ctor
-        // exists under the forced flat name __ct__cf_CfObjectObj (defined as
-        // a free function in CfObjectObj.cpp). Derived ctors synthesize an
-        // UNDEF bl that postprocess exact_renames maps onto it.
         CfObjectObj();
-
-        // Declared but NOT defined in this fork: retail's CfObjectObj dtor
-        // exists under the forced flat name __dt__800BFA14 (defined as a
-        // free function in CfObjectObj.cpp). Derived dtors (CfObjectTbox)
-        // synthesize an UNDEF bl to the mangled name, which postprocess
-        // exact_renames maps onto that retail-named definition so both the
-        // call target and codegen shape match retail's dtor-chain.
-        ~CfObjectObj();
+        virtual ~CfObjectObj();
 
         //0x71C helper field (first field past the 0x71C base)
         u16 field_71C;
@@ -44,14 +29,6 @@ namespace cf {
 // CfObjectObj retail vtable (data TU; the ctor/dtor store it explicitly, same
 // scheme as CfObjectMove.hpp's lbl_eu_80529690).
 extern u8 lbl_eu_80529B4C[];
-
-// Base-class constructor import (defined in CfObjectMove.cpp as the real
-// member ctor): called directly by the forced-name __ct__cf_CfObjectObj.
-extern "C" void __ct__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
-
-// Base-class destructor chain import (defined in CfObjectMove.cpp): called
-// with flag 0 from the __dt__800BFA14 deleting destructor below.
-extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 
 // RTTI typeinfo pair for the ctor's __dynamic_cast guard: the 0x1C-byte
 // CfResObjImpl resource object is allocated only when the cast fails. Passed

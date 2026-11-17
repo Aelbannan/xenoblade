@@ -39,7 +39,7 @@ struct CTaskGame_setVec4_tmp {
 extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
 
 // Shared .sdata2 float used as the GX texture LOD bias in the file-event
-// handler (GamePicOnFileEvent). `const` routes it into the readonly sdata2 pool so
+// handler (OnFileEvent). `const` routes it into the readonly sdata2 pool so
 // MWCC schedules its load early (cf. CExchangeWin lfs-hoist fix).
 extern const f32 lbl_eu_80668BB0;
 
@@ -62,6 +62,9 @@ struct CRect;
 }
 extern "C" void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
 
+// Bottom edge of an ml::CRect (retail C-linkage helper defined in this unit).
+extern "C" s16 GamePicRectBottom(const ml::CRect* r);
+
 // Texture/palette file data header read by cbRenderBefore: the loaded TPL
 // palette (field_68) carries the texture's height/width at 0x14/0x16.
 struct CTaskGamePicTexData {
@@ -82,25 +85,20 @@ struct CDrawGXFlagWord {
 // explicit `template<>` specializations).
 #include "monolib/work/CTTask.hpp"
 
-class CTaskGamePic : public CTTask<CTaskGamePic> {
+class CTaskGamePic : public CTTask<CTaskGamePic>, public IWorkEvent, public IScnRender {
 public:
     CTaskGamePic();
     virtual ~CTaskGamePic();
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
     void create();
     void Draw();
-    void OnFileEvent();
+    virtual bool OnFileEvent(CEventFile* pEvent);
 
     // 0x0-0x54: CTTask<CTaskGamePic>
-    u32 field_54;                     // 0x54 - file-event object vptr slot
-    // 0x58 render callback subobject. Raw bytes, not a typed IScnRender
-    // member: a typed member makes MWCC emit a standalone
-    // __dt__10IScnRenderFv call in this TU's out-of-line dtor (retail keeps
-    // that copy only in CTaskGame.o). Same scheme as CTaskGameEvt.
-    u8 mRenderCB[4];                  // 0x58
+    // 0x54: IWorkEvent vptr, 0x58: IScnRender vptr
     CScn* mScene;                     // 0x5C
     CFileHandle* mFileHandle;         // 0x60 async file handle
     u8* field_64;                     // 0x64 palette / loaded data

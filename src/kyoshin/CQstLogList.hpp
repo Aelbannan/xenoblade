@@ -93,7 +93,7 @@ struct CQstLogListMsgObj {
 };
 
 struct CQstLogList {
-    CQstLogList(u16 arg2);   // retail symbol __ct__CQstLogList (unmangled ctor)
+    CQstLogList(u16 arg2);   // retail symbol __ct__11CQstLogListFUs (unmangled ctor)
     u8 QstLogList_IsSortEnabled();
     u8 QstLogList_IsSortDescending();
     int OnFileEvent(CEventFile* event);   // file-load completion callback
@@ -171,7 +171,7 @@ extern "C" void* __dt__80227030(void*, int);      // 0x400-byte QstInfo element 
 
 // Sub-object constructor imports (retail C-linkage names).
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__CScrollBar(void*, int);
+extern "C" void __ct__10CScrollBarFUc(void*, int);
 extern "C" void __ct__CSortMenu(CQstLogListSortMenuData*);
 extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src);   // 4-word mem-region copy
 extern "C" void copyScrollBarData(CScrollBarData*, const CScrollBarData*);  // CScrollBar copy

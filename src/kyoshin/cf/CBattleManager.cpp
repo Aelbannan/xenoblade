@@ -496,6 +496,24 @@ struct EnumListHolder {
     u32 handle;
 };
 
+// Re-arm every enumerated kind-0x20 object (battle-capable actors) once the
+// battle lists empty: re-run setup, refresh the battle status and reset the
+// status counter. Shared tail of FactoryEvent2 / unregisterBattleActor.
+static inline void resetEnumeratedBattleActors() {
+    EnumListHolder holder;
+    CTaskGame_enumListCtor(&holder);
+    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
+
+    for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
+        cf::CActorParam* actor = (cf::CActorParam*)MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
+        actor->CActorParam_setupActorState();
+        actor->CActorParam_refreshBattleStatus();
+        actor->CActorParam_initStatusCounter();
+    }
+
+    __dt__80043E88(&holder, -1);
+}
+
 namespace cf{
     //Plays attack sound effects when a player character hits an enemy?
     void applyBattleDamage(CfObjectPc* pObjectPc, CfObjectEne* pObjectEne){
@@ -631,25 +649,22 @@ CBattleManager* CBattleManager::getInstance() {
         setPartyMaskFlag(2, 0);
     }
 
-    void CBattleManager::FactoryEvent2(){
-        // The mBattleEventList reslist's first word carries the dispatch flags.
-        u32 listFlags = *(u32*)&mBattleEventList;
-
-        // Bit 0x20 = dynamic_cast / interface dispatch path.
-        if(listFlags & 0x20){
-            void* castResult = __dynamic_cast(this, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
-            this->CBattleMan_EmitVisionEvent(castResult);
+    void CBattleManager::FactoryEvent2(CfObject* obj){
+        // Removed-object callback from the factory manager; obj->unk64 holds
+        // the object's spawn-kind flags.
+        if(obj->unk64 & 0x20){
+            this->CBattleMan_EmitVisionEvent(__dynamic_cast(obj, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0));
             return;
         }
 
-        // Bits 0x02 or 0x04 = object removal / cleanup path.
-        if(!(listFlags & 0x02) && !(listFlags & 0x04)) return;
+        // Kinds 0x02 / 0x04 are battle actors: drop them from the lists.
+        if(!(obj->unk64 & 0x02) && !(obj->unk64 & 0x04)) return;
 
-        BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)MapFx_ResolveOwner(this);
+        BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)MapFx_ResolveOwner(obj);
 
         // If the target is a member of mActorList1, unregister it everywhere.
         if(mActorList1.find((CfObjectActor*)target) != mActorList1.end()){
-            mActorList1.remove((CfObjectActor*)target);
+            mActorList1.removeAll((CfObjectActor*)target);
             CChain_NotifyStateChange(&mChain, (CfObjectActor*)target);
 
             if(target->field_3f00 & 0x02){
@@ -679,17 +694,7 @@ CBattleManager* CBattleManager::getInstance() {
             lbl_eu_80663E28 &= ~0x8;
             CChain_ForwardVoiceClear(&mChain);
 
-            EnumListHolder holder;
-            CTaskGame_enumListCtor(&holder);
-            startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-
-            for(u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-                cf::CActorParam* action = (cf::CActorParam*)MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
-                action->CActorParam_setupActorState();
-                action->CActorParam_refreshBattleStatus();
-                action->CActorParam_initStatusCounter();
-            }
-            __dt__80043E88(&holder, -1);
+            resetEnumeratedBattleActors();
         }
     }
 
@@ -4278,8 +4283,8 @@ static inline int iterDistance(It first, It last) {
 }
 
 extern "C" void registerBattleActor(void* selfV, void* actorV) {
-    cf::CBattleManager* self = (cf::CBattleManager*)selfV;
     cf::CfObjectActor* actor = (cf::CfObjectActor*)actorV;
+    cf::CBattleManager* self = (cf::CBattleManager*)selfV;
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x4000000) != 0) return;
 
@@ -4332,34 +4337,34 @@ extern "C" void registerBattleActor(void* selfV, void* actorV) {
     }
 }
 void unregisterBattleActor(void* mgrV, void* targetV){
-    BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)targetV;
+    cf::CfObjectActor* target = (cf::CfObjectActor*)targetV;
     cf::CBattleManager* mgr = (cf::CBattleManager*)mgrV;
     cf::CfGameManager::getInstance();
     if(isGlobalCamFlagSet__Fi(0x4000000) != 0) return;
 
     // Only proceed if the target is actually a member of mActorList1.
-    if(mgr->mActorList1.find((cf::CfObjectActor*)target) != mgr->mActorList1.end()){
-        mgr->mActorList1.removeAll((cf::CfObjectActor*)target);
-        CChain_NotifyStateChange(&mgr->mChain, (cf::CfObjectActor*)target);
+    if(mgr->mActorList1.find(target) != mgr->mActorList1.end()){
+        mgr->mActorList1.removeAll(target);
+        CChain_NotifyStateChange(&mgr->mChain, target);
 
         // Check target flag bit 0x02 at +0x3F00 to decide list
-        if(target->field_3f00 & 0x02){
-            mgr->mActorList2.remove((cf::CfObjectActor*)target);
+        if(((BattleRemoveObjAccessor*)target)->field_3f00 & 0x02){
+            mgr->mActorList2.remove(target);
         }else{
-            mgr->mActorList3.remove((cf::CfObjectActor*)target);
+            mgr->mActorList3.remove(target);
         }
     }else{
         return;
     }
 
     // Call vfunc at +0x3ED4 object's vtable[0x7C]
-((cf::CfObject*)target->field_3ed4)->CfObject_notifyMemberRemoved();
+((cf::CfObject*)((BattleRemoveObjAccessor*)target)->field_3ed4)->CfObject_notifyMemberRemoved();
 
     // Call target's vtable[0x2E4]
     ((cf::CActorParam*)target)->CActorParam_resetGaugeEntries();
 
     // If target flag bit 0x04 at +0x3F00 is set, do extra cleanup
-    if(target->field_3f00 & 0x04){
+    if(((BattleRemoveObjAccessor*)target)->field_3f00 & 0x04){
         ((cf::CActorParam*)target)->CActorParam_setupActorState();
         ((cf::CActorParam*)target)->CActorParam_refreshBattleStatus();
         // Call secondary vtable at +0x3E9C, vtable[0x50]
@@ -4371,7 +4376,7 @@ void unregisterBattleActor(void* mgrV, void* targetV){
         _reslist_node<cf::IBattleEvent*>* cur = mgr->mBattleEventList.mStartNodePtr->mNext;
         while(cur != mgr->mBattleEventList.mStartNodePtr){
             cf::IBattleEvent* event = cur->mItem;
-            event->onActorUnregister((cf::CfObjectActor*)target);
+            event->onActorUnregister(target);
             cur = cur->mNext;
         }
     }
@@ -4386,7 +4391,7 @@ void unregisterBattleActor(void* mgrV, void* targetV){
     // Global list state gates (sequential, with CBattleMan_OnActorsEmpty between)
     if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
     CBattleMan_OnActorsEmpty(mgr);
-    if(!(target->field_3f00 & 0x04)){
+    if(!(((BattleRemoveObjAccessor*)target)->field_3f00 & 0x04)){
         if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
     }
 
@@ -4410,19 +4415,7 @@ void unregisterBattleActor(void* mgrV, void* targetV){
     lbl_eu_80663E28 &= ~0x8;
     CChain_ForwardVoiceClear(&mgr->mChain);
 
-    // Enum list iteration
-    EnumListHolder holder;
-    CTaskGame_enumListCtor(&holder);
-    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-
-    for(u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-        void* element = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
-        ((cf::CActorParam*)element)->CActorParam_setupActorState();
-        ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
-        ((cf::CActorParam*)element)->CActorParam_initStatusCounter();
-    }
-
-    __dt__80043E88(&holder, -1);
+    resetEnumeratedBattleActors();
 }
 
 // Actor/Sub/SubObj/Block deleted: use CfObjectActor / CActorParam_UnkStruct1 / UnkStruct2
@@ -4802,11 +4795,41 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
         }
     }
 }
+// World position of an actor (its CfObjectMove sub-object).
+static inline ml::CVec3* actorPos(cf::CfObjectActor* actor) {
+    return static_cast<cf::CfObjectMove&>(*actor).CfObject_getPosVector();
+}
+
+// Half-width of an actor's frontal hit cone.
+static inline f32 halfHitRange(cf::CActorParam* actor) {
+    f32 range = actor->CActorParam_getHitRange();
+    return range * lbl_eu_80666DE8;
+}
+
+// Bounds of an actor's side hit window: the half cone widened by the
+// window center (CActorParam_getHitCenter).
+static inline f32 sideConeMin(cf::CActorParam* actor) {
+    f32 center = actor->CActorParam_getHitCenter();
+    f32 range = actor->CActorParam_getHitRange();
+    return -(range * lbl_eu_80666DE8 + center);
+}
+static inline f32 sideConeMax(cf::CActorParam* actor) {
+    f32 center = actor->CActorParam_getHitCenter();
+    f32 range = actor->CActorParam_getHitRange();
+    return range * lbl_eu_80666DE8 + center;
+}
+
+// Bearing of (x, z) in radians (FIdx -> rad), relative to the given facing.
+static inline f32 relativeBearing(f32 x, f32 z, f32 facing) {
+    f32 bearing = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(x, z);
+    return bearing - facing;
+}
+
 // dispatchBattleAI: per-move ai dispatch. Fills the 13-entry ai table in arg4,
 // computes the bearing to the enemy (nw4r paired-single vector math), sets
 // the aim-sector flags, then dispatches to the arts-specific helpers by the
 // linked sub-object's type.
-extern "C" void dispatchBattleAI(void* self, void* obj, void* enemy, void* arg4){
+extern "C" void dispatchBattleAI(void* mgr, void* obj, void* enemy, void* arg4){
     if(enemy == nullptr) return;
 
     DB0FC_MoveTable* move = (DB0FC_MoveTable*)arg4;
@@ -4816,9 +4839,9 @@ extern "C" void dispatchBattleAI(void* self, void* obj, void* enemy, void* arg4)
     for(int i = 0; i < 13; i++){
         if(move->field_78 & 0x40) continue;
         move->table[i] = mtRand__Q22ml4mathFi(100);
-        if(((cf::CBattleManager*)self)->CheckUnk84Flag(0x2000) != 0){
+        if(((cf::CBattleManager*)mgr)->CheckUnk84Flag(0x2000) != 0){
             if(i == 4 || i == 0) move->table[i] = 0x63;
-        }else if(((cf::CBattleManager*)self)->CheckUnk84Flag(0x4000) != 0){
+        }else if(((cf::CBattleManager*)mgr)->CheckUnk84Flag(0x4000) != 0){
             if(i == 4 || i == 0) move->table[i] = 0;
         }
     }
@@ -4827,33 +4850,31 @@ extern "C" void dispatchBattleAI(void* self, void* obj, void* enemy, void* arg4)
     void* sub = *(void**)((u8*)move + 0x50);
     if(sub == nullptr) return;
 
-    // Bearing from the enemy to the move source (paired-single subtract).
-    void* objData = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_getPosVector();
-    void* enemyData = ((cf::CfObject*)(u8*)enemy + 0x3E9C)->CfObject_getPosVector();
-    ml::CVec3 diff = *(ml::CVec3*)enemyData - *(ml::CVec3*)objData;
+    // Bearing from the move source to the enemy (paired-single subtract).
+    ml::CVec3* objPos = actorPos((cf::CfObjectActor*)obj);
+    ml::CVec3 diff = *actorPos((cf::CfObjectActor*)enemy) - *objPos;
 
-    f32 f31;
+    // Relative angle, wrapped into [-pi, pi).
+    f32 angle;
     if(((BattleRemoveObjAccessor*)enemy)->field_3f00 & 0x02){
-        f32 f30 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
-f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_getAdjustedFacing();
+        f32 bearing = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
+        angle = bearing - ((cf::CfObjectActor*)enemy)->CfObjectActor_readFacingAngle();
+        while(ml::pi <= angle) angle -= ml::tau;
+        while(angle < -ml::pi) angle += ml::tau;
     }else{
-        void* subRet = ((cf::CfObject*)(u8*)enemy + 0x3E9C)->CfObject_getCurrentTarget();
-        f32 f30 = *(f32*)((u8*)subRet + 0xC);
-        f31 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z) - f30;
+        void* target = ((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getCurrentTarget();
+        angle = relativeBearing(diff.x, diff.z, *(f32*)((u8*)target + 0xC));
+        while(ml::pi <= angle) angle -= ml::tau;
+        while(angle < -ml::pi) angle += ml::tau;
     }
 
-    // Wrap the angle into [-pi, pi).
-    while(ml::pi <= f31) f31 -= ml::tau;
-    while(f31 < -ml::pi) f31 += ml::tau;
-
     // Aim-sector flags from the enemy's facing cone.
-    if(-(lbl_eu_80666DE8 * ((cf::CActorParam*)enemy)->CActorParam_getHitRange()) <= f31 &&
-       f31 <= lbl_eu_80666DE8 * ((cf::CActorParam*)enemy)->CActorParam_getHitRange()){
+    if(-halfHitRange((cf::CActorParam*)enemy) <= angle &&
+       angle <= halfHitRange((cf::CActorParam*)enemy)){
         move->field_74 |= 0x82000000;
     }else{
-        f32 t = ((cf::CActorParam*)enemy)->CActorParam_getHitCenter();
-        if(t - lbl_eu_80666DE8 * ((cf::CActorParam*)enemy)->CActorParam_getHitRange() <= f31 &&
-           f31 <= t + lbl_eu_80666DE8 * ((cf::CActorParam*)enemy)->CActorParam_getHitRange()){
+        if(sideConeMin((cf::CActorParam*)enemy) <= angle &&
+           angle <= sideConeMax((cf::CActorParam*)enemy)){
             move->field_74 |= 0x84000000;
         }else{
             move->field_74 |= 0x81000000;
@@ -4861,18 +4882,25 @@ f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_getAdjustedFacing();
     }
 
     // Dispatch by the linked sub-object's move type.
-    u16 type = ((BattleSubObjAccessor*)sub)->type_3c;
-    if((u32)(type - 4) <= 2){
-        CBattleMan_HandleMoveType45(self, obj, enemy, arg4);
-    }else if((u32)(type - 1) <= 1){
-        setupBattleMove(self, obj, enemy, arg4);
-    }else if(type == 3){
-        handleBattleMoveEvent(self, obj, enemy, arg4);
+    switch(((BattleSubObjAccessor*)sub)->type_3c){
+    case 1:
+    case 2:
+        setupBattleMove(mgr, obj, enemy, arg4);
+        break;
+    case 3:
+        handleBattleMoveEvent(mgr, obj, enemy, arg4);
+        break;
+    case 4:
+    case 5:
+    case 6:
+        CBattleMan_HandleMoveType45(mgr, obj, enemy, arg4);
+        break;
     }
 
     move->field_78 |= 0x40000010;
     // u16 dispatch counter at +0x80 of the move block.
-    *(u16*)&move->pad_80 = ((cf::CBattleManager*)self)->mVision.unk261C4.unk70++;
+    *(u16*)&move->pad_80 = ((cf::CBattleManager*)mgr)->mVision.unk261C4.unk70;
+    ((cf::CBattleManager*)mgr)->mVision.unk261C4.unk70++;
 }
 
 // Same-TU battle helper (retail-unmangled name; defined later in this file).
@@ -4967,83 +4995,59 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
 
     func_800DCB54(self, obj, enemyArg, (BattleMoveData*)arg4);
 }
-// Battle event handler: checks various flags and conditions on arg3/arg4,
-// sets flags on arg4->field_74, then tail-calls emitBattleEvents.
-void handleBattleMoveEvent(void* mgr, void* attacker, void* arg3, void* arg4) {
-    s32 flag;
-    if (arg3 == nullptr) return;    // retail: beq straight to the epilogue
+// Battle event handler: the damage-gap checks of setupBattleMove (status
+// windows, arts-type gates) that set the counter/knockback flags on
+// move->field_74, followed by the emitBattleEvents tail.
+void handleBattleMoveEvent(void* mgr, void* attacker, void* enemyArg, void* arg4) {
+    if (enemyArg == nullptr) return;
 
-    BattleTargetData* move = (BattleTargetData*)arg4;
-    DB7F8_MoveSub* sourceObj = (DB7F8_MoveSub*)move->artsData;
+    DB4FC_EnemyObj* enemy = (DB4FC_EnemyObj*)enemyArg;
+    DB4FC_MoveBlock* move = (DB4FC_MoveBlock*)arg4;
+    cf::CAttackParam* arts = (cf::CAttackParam*)move->artsData;
 
-    // Set flags on move->field_78
     move->field_78 |= 0x40000100;
 
-    // Check if move->field_74 & 2, skip if set
-    if (move->field_74 & 2) goto tailcall;
+    if (!(move->field_74 & 2) &&
+        !(enemy->field_3374 & 0x1000) &&
+        ((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getMoveFactor() &&
+        isBattleStatusActive(&enemy->statusBase, 0x32) == 0) {
+        s32 flag = 0;
 
-    // Check if arg3->field_3374 & 0x1000, skip if set
-    if (*(u32*)((u8*)arg3 + 0x3374) & 0x1000) goto tailcall;
-
-    // Virtual call on arg3's embedded sub-object at +0x3E9C, slot 0x140
-if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80666DDC) goto tailcall;
-
-    // Check flag 0x32 on arg3+8
-    if (isBattleStatusActive((u8*)arg3 + 8, 0x32)) goto tailcall;
-
-    // Check flag 0xCE
-    flag = 0;
-    if (isBattleStatusActive((u8*)arg3 + 8, 0xCE)) {
-        // Check if move->field_78 & 0x800
-        if (move->field_78 & 0x800) {
-            void* entry = findTopBattleStatusEntry((u8*)arg3 + 8, 0xCE);
-            // Dispatch the sub-vtable at sourceObj+0x84, slot 0xC, this = sourceObj
-            s32 val = ((cf::CActorParam*)sourceObj)->CActorParam_getActorType();
+        if (isBattleStatusActive(&enemy->statusBase, 0xCE) && (move->field_78 & 0x800)) {
+            void* entry = findTopBattleStatusEntry(&enemy->statusBase, 0xCE);
+            s32 val = arts->CAttackParam_getArtsFlagByte();
             if (*(s32*)((u8*)entry + 0x10) >= val) flag = 1;
         }
-    }
 
-    if (flag != 0) goto tailcall;
-
-    // Check sourceObj type
-    // int (not u16): retail loads via zero-extending lhz but compares with
-    // signed cmpi, which MWCC only emits for a signed local.
-    int type = sourceObj->type_58;
-    if (type == 1) {
-        if (isBattleStatusActive((u8*)arg3 + 8, 0xF)) goto tailcall;
-        if (isBattleStatusActive((u8*)arg3 + 8, 0x10)) goto tailcall;
-
-        if (isBattleStatusActive((u8*)arg3 + 8, 0x29)) {
-            void* entry = findBattleStatusEntry((u8*)arg3 + 8, 0x29);
-            if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) goto tailcall;
-        }
-
-        // Set flags on move->field_74
-        move->field_74 |= 0x80010000;
-        goto tailcall;
-    }
-
-    if (type == 2) {
-        flag = 1;
-
-        // Fetch the stat object through CActorParam_getStatusTable (vtable
-        // slot 0x290) on arg3 (twice, as retail does)
-        if (((cf::CActorParam*)arg3)->CActorParam_getStatusTable() != nullptr) {
-            if (Counter_TestBit(((cf::CActorParam*)arg3)->CActorParam_getStatusTable(), 0x76)) flag = 0;
-        }
-
-        if (isBattleStatusActive((u8*)arg3 + 8, 0x28)) {
-            void* entry = findBattleStatusEntry((u8*)arg3 + 8, 0x28);
-            if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) flag = 0;
-        }
-
-        if (flag != 0) {
-            move->field_74 |= 0x80020000;
+        if (flag == 0) {
+            int type = arts->unk58;
+            if (type == 1) {
+                if (!isBattleStatusActive(&enemy->statusBase, 0xF) &&
+                    !isBattleStatusActive(&enemy->statusBase, 0x10)) {
+                    if (isBattleStatusActive(&enemy->statusBase, 0x29)) {
+                        void* e = findBattleStatusEntry(&enemy->statusBase, 0x29);
+                        if (move->field_B4 >= *(s32*)((u8*)e + 0x10)) {
+                            move->field_74 |= 0x80010000;
+                        }
+                    } else {
+                        move->field_74 |= 0x80010000;
+                    }
+                }
+            } else if (type == 2) {
+                int canApply = 1;
+                if (((cf::CActorParam*)enemy)->CActorParam_getStatusTable()) {
+                    if (Counter_TestBit(((cf::CActorParam*)enemy)->CActorParam_getStatusTable(), 0x76)) canApply = 0;
+                }
+                if (isBattleStatusActive(&enemy->statusBase, 0x28)) {
+                    void* e = findBattleStatusEntry(&enemy->statusBase, 0x28);
+                    if (move->field_B4 < *(s32*)((u8*)e + 0x10)) canApply = 0;
+                }
+                if (canApply) move->field_74 |= 0x80020000;
+            }
         }
     }
 
-tailcall:
-    emitBattleEvents(mgr, attacker, arg3, arg4);
+    emitBattleEvents(mgr, attacker, enemyArg, arg4);
 }
 extern int getFirstFreeSlot();
 extern void spawnPcEffect(u16 type, int slotSel);
@@ -8398,13 +8402,10 @@ skipScan:
 // Calculates accumulated damage/healing value from various status effects.
 // Returns a float clamped to >= 0.
 struct E2A9C_BattleMoveData {
-    u8   unk00[0x34];   // 0x00
-    f32  field_34;      // 0x34
-    f32  field_38;      // 0x38
-    f32  field_3C;      // 0x3C
-    f32  field_40;      // 0x40
-    f32  field_44;      // 0x44
-    f32  field_48;      // 0x48
+    u32  field_00;      // 0x00
+    u32  field_04;      // 0x04
+    u32  unk08[16];     // 0x08
+    u32  field_48;      // 0x48
     u32  field_4C;      // 0x4C (retail prologue initialises to -1)
     void* field_50;     // 0x50 sub-object
     f32  field_54;      // 0x54
@@ -8416,23 +8417,23 @@ struct E2A9C_BattleMoveData {
     f32  field_6C;      // 0x6C
     s16  field_70;      // 0x70
     s16  field_72;      // 0x72
-    u32  field_74;      // 0x74 flags (see notes)
-    u32  field_78;      // 0x78 flags
+    struct { u32  field_74; u32  field_78; };
     u32  field_7C;      // 0x7C
-    u16  field_80;      // 0x80
-    u8   unk82[2];      // 0x82
-    u32  field_84;      // 0x84
-    u32  field_88;      // 0x88
-    u32  field_8C;      // 0x8C
-    u32  field_90;      // 0x90
-    u32  field_94;      // 0x94
-    u32  field_98;      // 0x98
-    u32  field_9C;      // 0x9C
-    u32  field_A0;      // 0xA0
-    u32  field_A4;      // 0xA4
-    u32  field_A8;      // 0xA8 (attack power threshold)
-    u32  field_AC;      // 0xAC
-    u32  field_B0;      // 0xB0 (combo count, %100 used)
+    u16  field_80;      // 0x80 (0x82: alignment padding, not copied)
+    struct {
+        u32  field_84;      // 0x84
+        u32  field_88;      // 0x88
+        u32  field_8C;      // 0x8C
+        u32  field_90;      // 0x90
+        u32  field_94;      // 0x94
+        u32  field_98;      // 0x98
+        u32  field_9C;      // 0x9C
+        u32  field_A0;      // 0xA0
+        u32  field_A4;      // 0xA4
+        u32  field_A8;      // 0xA8 (attack power threshold)
+        u32  field_AC;      // 0xAC
+        u32  field_B0;      // 0xB0 (combo count, %100 used)
+    };
     u32  field_B4;      // 0xB4
     u32  field_B8;      // 0xB8
 };
@@ -10459,6 +10460,14 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
     processBattleMove((cf::CBattleManager*)self, actor, target, move); // 0x800E9630
 }
 
+// Damage a finalised move block deals: field_5C + field_60 rounded half away
+// from zero; negative totals and blocked hits (field_74 & 0x80) deal none.
+static inline s32 roundedMoveDamage(E2A9C_BattleMoveData* slot) {
+    f32 sum = slot->field_5C + slot->field_60;
+    if (sum < 0.0f) return 0;
+    if (slot->field_74 & 0x80) return 0;
+    return (s32)(sum + (sum > 0.0f ? lbl_eu_80666E58 : lbl_eu_80666E60));
+}
 // ---- CBattleManager_preCalcTotalDamage (0x800E965C) -------------------------
 // Sums the pending party damage: for each of the outCount entries it lets
 // dispatchBattleAI finalise the 0x298 move block, adds the rounded
@@ -10477,7 +10486,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     if (sub == nullptr) return;
 
     // Hit count: 1 per sub-object flag, else a single hit.
-    if (*(u8*)((u8*)sub + 0x43) == 1) *outCount = *(u8*)((u8*)sub + 0x44);
+    if ((s32)*(u8*)((u8*)sub + 0x43) == 1) *outCount = *(u8*)((u8*)sub + 0x44);
     else *outCount = 1;
 
     // Clear the selection flag on the action, the 3 party members, and obj.
@@ -10494,22 +10503,16 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     *(E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats() = *(E2A9C_BattleMoveData*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord();
 
     // Store the base damage into the workspace (0x6C/0x68) and zero ticks.
-    {
-        f32 dmg = ((cf::CActorParam*)(obj))->CActorParam_getHp();                              // 0x800E9950
-        ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_6C = dmg;
-    }
-    {
-        f32 dmg = ((cf::CActorParam*)(action))->CActorParam_getHp();                           // 0x800E9980
-        ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_68 = dmg;
-    }
+    ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_6C = ((cf::CActorParam*)(obj))->CActorParam_getHp();
+    ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_68 = ((cf::CActorParam*)(action))->CActorParam_getHp();
+
     ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_70 = 0;     // 0x800E99B0
     ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_72 = 0;
 
-    // Accumulation loop: run the dispatcher per hit and round base+variance.
-    // zero stays live in f30 across the calls, mirroring retail. The int->
-    // float conversion is left to the compiler: its own 2^52 pool constant
-    // is the value retail binds to lbl_eu_80666DE0.
-    f32 zero = lbl_eu_80666DDC;
+    // Accumulation loop: run the dispatcher per hit and add the rounded
+    // damage. The int->float conversion is left to the compiler: its own
+    // 2^52 pool constant is the value retail binds to lbl_eu_80666DE0.
+
     s32 idx = 0;
     while (idx < (s32)*outCount) {                           // 0x800E99F8
         E2A9C_BattleMoveData* slot = (E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats();
@@ -10517,28 +10520,23 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
         dispatchBattleAI((void*)lbl_eu_80663F00, obj, action, slot);
         slot->field_78 = (slot->field_78 & ~0x04000000) | 0x48000000;
 
-        f32 sum = slot->field_5C + slot->field_60;
-        s32 ival = 0;
-        // retail folds both tests into a single fcmpo against zero
-        if (!(sum < zero || (slot->field_74 & 0x80))) {
-            ival = (s32)((f64)sum + (sum > zero ? lbl_eu_80666E58 : lbl_eu_80666E60));
-        }
-        *outDamage += (f32)ival;
+        *outDamage += (f32)roundedMoveDamage(slot);
+
         ((cf::CActorParam*)(obj))->CActorParam_pushBattleStats();                                        // 0x800E9AB4
         idx++;
     }
 
     // Restore a clean move-data copy into the target block.
     ((cf::CActorParam*)(obj))->CActorParam_resetStatsSlot();                                            // 0x800E9AD4
-    E2A9C_BattleMoveData* w = (E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats();
-    w->field_70 = 0;                                         // 0x800E9AE8
-    w = (E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats();
-    w->field_72 = 0;
+    ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_70 = 0;
+    ((E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats())->field_72 = 0;
+
     E2A9C_BattleMoveData* srcB = (E2A9C_BattleMoveData*)(void*)((cf::CActorParam*)(obj))->CActorParam_getBattleStats();
     E2A9C_BattleMoveData* dstB = (E2A9C_BattleMoveData*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord();
     *dstB = *srcB;
 
-    if (*outDamage < lbl_eu_80666DDC) *outDamage = lbl_eu_80666DDC;  // 0x800E9CCC
+    if (*outDamage < 0.0f) *outDamage = 0.0f;
+  // 0x800E9CCC
 }
 
 // ---- spreadChainArtsHits (0x800EA63C) --------------------------------------------
@@ -10788,35 +10786,19 @@ extern "C" void dispatchBattleMove(void* self, void* actor, void* target, void* 
     }
 }
 
-// s32 -> f32 conversion via the Gekko 2^52 bias trick. The magic double is
-// the named .sdata2 constant so the fsubs reloc binds to lbl_eu_80666DE0
-// instead of an MWCC pool @N (CfGimmick.cpp convention).
-static inline f32 bmS32ToF32(s32 v, cf::CfActorF64Conv& slot) {
-    slot.w[0] = 0x43300000;
-    slot.w[1] = (u32)v ^ 0x80000000;
-    return (f32)(slot.d - lbl_eu_80666DE0);
-}
-
 // Iterates through one of the actor lists (mActorList3 for the flags&2 path,
 // else mActorList2) and broadcasts the arts-damage triple (arg2/arg3/arg4 as
 // floats) to every idle actor; when arg5 == 1 the broadcast is gated on the
 // actor's sub-object id (vtable slot 0x4C) matching arg6.
-extern "C" void broadcastBattleDamage(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4,
-                              s32 arg5, void* arg6) {
-    // Two int->float conversion slots (Gekko 2^52-bias trick). Only the
-    // sign-flipped low words change per conversion; the 0x43300000 high words
-    // are written once up front.
-    cf::CfObjectActor* target = (cf::CfObjectActor*)arg1;
-    cf::CfActorF64Conv cvt[2];
-    cvt[0].w[0] = 0x43300000;
-    cvt[1].w[0] = 0x43300000;
-
+// Spreads hate (arg2/arg3/arg4 as floats) from target to every idle actor on
+// the opposing list (mActorList3 when target is a party member, else
+// mActorList2); with checkId == 1 only actors whose sub-object id matches id.
+extern "C" void broadcastBattleDamage(void* mgr, void* target, s32 arg2, s32 arg3, s32 arg4,
+                              s32 checkId, void* id) {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x4000000)) {
         return;
     }
-
-    f64 magic = lbl_eu_80666DE0;
 
     if (isBattleStatusActive((u8*)target + 8, 0x101)) {
         if (arg2 != 0) arg2 = 1;
@@ -10824,49 +10806,35 @@ extern "C" void broadcastBattleDamage(void* self, void* arg1, s32 arg2, s32 arg3
         if (arg4 != 0) arg4 = 1;
     }
 
-#define BM9FE4_LOOP(listName) \
-    do { \
-        /* Volatile head pointer: the sentinel is re-read from memory every */ \
-        /* iteration (retail reloads it after each virtual call); MWCC keeps */ \
-        /* pHead folded into rBase+0xNN addressing so no extra register is */ \
-        /* consumed. The branch-top magic load lands in a callee-saved fpr. */ \
-        _reslist_node<cf::CfObjectActor*>* const volatile* pHead = \
-            &((cf::CBattleManager*)self)->listName.mStartNodePtr; \
-        _reslist_node<cf::CfObjectActor*>* cur = *pHead; \
-        magic = lbl_eu_80666DE0; \
-        cf::CfObjectActor* obj; \
-        while ((cur = cur->mNext) != *pHead) { \
-            obj = cur->mItem; \
-            if (obj != target && obj->CActorParam_isBattleLocked() == 0) { \
-                if (arg5 == 1) { \
-                    if ((u32)(uintptr_t)arg6 == ((cf::CChainBattleObj*)obj)->mSub.v17()) { \
-                        cvt[0].w[1] = (u32)arg2 ^ 0x80000000; \
-                        cvt[1].w[1] = (u32)arg3 ^ 0x80000000; \
-                        f32 f1 = (f32)(cvt[0].d - magic); \
-                        cvt[0].w[1] = (u32)arg4 ^ 0x80000000; \
-                        f32 f2 = (f32)(cvt[1].d - magic); \
-                        f32 f3 = (f32)(cvt[0].d - magic); \
-                        obj->CActorParam_addHate(target, f1, f2, f3); \
-                    } \
-                } else { \
-                    cvt[0].w[1] = (u32)arg2 ^ 0x80000000; \
-                    cvt[1].w[1] = (u32)arg3 ^ 0x80000000; \
-                    f32 f1 = (f32)(cvt[0].d - magic); \
-                    cvt[0].w[1] = (u32)arg4 ^ 0x80000000; \
-                    f32 f2 = (f32)(cvt[1].d - magic); \
-                    f32 f3 = (f32)(cvt[0].d - magic); \
-                    obj->CActorParam_addHate(target, f1, f2, f3); \
-                } \
-            } \
-        } \
-    } while (0)
-
     if (((BattleObjAccessor*)target)->field_3f00 & 0x2) {
-        BM9FE4_LOOP(mActorList3);
+        for (reslist<cf::CfObjectActor*>::iterator it = ((cf::CBattleManager*)mgr)->mActorList3.begin();
+             it != ((cf::CBattleManager*)mgr)->mActorList3.end(); ++it) {
+            cf::CfObjectActor* obj = *it;
+            if (obj != target && obj->CActorParam_isBattleLocked() == 0) {
+                if (checkId == 1) {
+                    if ((void*)static_cast<cf::CfObjectMove&>(*obj).CObjectParam_getSelfObjectId() == id) {
+                        obj->CActorParam_addHate((cf::CfObjectActor*)target, (f32)arg2, (f32)arg3, (f32)arg4);
+                    }
+                } else {
+                    obj->CActorParam_addHate((cf::CfObjectActor*)target, (f32)arg2, (f32)arg3, (f32)arg4);
+                }
+            }
+        }
     } else {
-        BM9FE4_LOOP(mActorList2);
+        for (reslist<cf::CfObjectActor*>::iterator it = ((cf::CBattleManager*)mgr)->mActorList2.begin();
+             it != ((cf::CBattleManager*)mgr)->mActorList2.end(); ++it) {
+            cf::CfObjectActor* obj = *it;
+            if (obj != target && obj->CActorParam_isBattleLocked() == 0) {
+                if (checkId == 1) {
+                    if ((void*)static_cast<cf::CfObjectMove&>(*obj).CObjectParam_getSelfObjectId() == id) {
+                        obj->CActorParam_addHate((cf::CfObjectActor*)target, (f32)arg2, (f32)arg3, (f32)arg4);
+                    }
+                } else {
+                    obj->CActorParam_addHate((cf::CfObjectActor*)target, (f32)arg2, (f32)arg3, (f32)arg4);
+                }
+            }
+        }
     }
-#undef BM9FE4_LOOP
 }
 // Mirror of the actor vtable used to reach slot 0x2C8 as a direct virtual
 // call: MWCC then routes the dispatch through r12 (retail order) instead of a
@@ -11973,8 +11941,6 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
     s32 selector = entry->selector;
     s32 val3 = entry->val;
     s32 val2 = -1;
-    // Explicit copy pins the parameter homing (retail or r28,r5,r5).
-    void* o2 = obj2;
 
     if (val3 == 0x3e7) {
         val2 = 4;
@@ -12006,10 +11972,10 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
         }
     } else if (selector == 1) {
         if (val2 != -1) {
-            ((cf::CActorParam*)o2)->CActorParam_resetTensionState(val2);
-            ((cf::CActorParam*)o2)->CActorParam_raiseTensionValue(val3);
+            ((cf::CActorParam*)obj2)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)obj2)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)o2)->CActorParam_accumulateTension(val3);
+            ((cf::CActorParam*)obj2)->CActorParam_accumulateTension(val3);
         }
     } else if (selector == 2) {
         if (val2 != -1) {
@@ -12020,10 +11986,10 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
         }
 
         if (val2 != -1) {
-            ((cf::CActorParam*)o2)->CActorParam_resetTensionState(val2);
-            ((cf::CActorParam*)o2)->CActorParam_raiseTensionValue(val3);
+            ((cf::CActorParam*)obj2)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)obj2)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)o2)->CActorParam_accumulateTension(val3);
+            ((cf::CActorParam*)obj2)->CActorParam_accumulateTension(val3);
         }
     } else {
         // Iterate every node of mActorList2, dispatching to each item.

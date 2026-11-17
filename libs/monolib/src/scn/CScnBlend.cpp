@@ -99,20 +99,6 @@ extern "C" const u32 lbl_eu_805240A0[3] = {
     0x4353636E, 0x426C656E, 0x64000000,
 };
 
-// extern "C" free-function dtor (CFontLayer pattern): keeps MWCC from
-// auto-emitting __vt__/__RTTI__ for CScnBlend in this TU (the retail vtable
-// is the dissolved .data blob above).
-// MWCC destructors return the object pointer (see trailing mr r3, r30 in retail).
-extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag) {
-    if (ths != 0) {
-        __dt__10CScnFilterFv((CScnFilter*)ths, 0);
-        if (flag > 0) {
-            operator delete(ths);
-        }
-    }
-    return ths;
-}
-
 // Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
 // CScnBlend vtable, fills the default blend rect/tint region and the
 // blend-mode fields. Returns the object.
@@ -141,6 +127,20 @@ extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
     ths->field_0x60 = 4;
     ths->field_0x64 = 1;
     ths->field_0x68 = 0;
+    return ths;
+}
+
+// extern "C" free-function dtor (CFontLayer pattern): keeps MWCC from
+// auto-emitting __vt__/__RTTI__ for CScnBlend in this TU (the retail vtable
+// is the dissolved .data blob above).
+// MWCC destructors return the object pointer (see trailing mr r3, r30 in retail).
+extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag) {
+    if (ths != 0) {
+        __dt__10CScnFilterFv((CScnFilter*)ths, 0);
+        if (flag > 0) {
+            operator delete(ths);
+        }
+    }
     return ths;
 }
 

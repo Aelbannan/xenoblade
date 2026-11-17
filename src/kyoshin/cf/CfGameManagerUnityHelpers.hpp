@@ -1370,7 +1370,7 @@ extern "C" UnkDestructible* name(UnkDestructible* object, s32 deleteFlag) { \
 DEFINE_POD_DTOR(__dt__80080400)
 DEFINE_POD_DTOR(__dt__80080440)
 DEFINE_POD_DTOR(__dt__80080480)
-DEFINE_POD_DTOR(__dt__Q22cf11IObjectInfo)
+DEFINE_POD_DTOR(__dt__Q22cf11IObjectInfoFv)
 DEFINE_POD_DTOR(__dt__Q22cf10CCharVoiceFv)
 DEFINE_POD_DTOR(__dt__Q22cf16CfObjectImplMoveFv)
 DEFINE_POD_DTOR(__dt__Q22cf11CCharEffectFv)

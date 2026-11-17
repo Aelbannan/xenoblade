@@ -194,3 +194,6 @@ struct Sc46C0Other {
     u8 pad_3EA0[0x3F10 - (0x3E9C + sizeof(VirtBase_3E9C))];  // 0x3EA0 - 0x3F10
     void* field_3F10;            // 0x3F10
 };
+
+// Defined in kyoshin/cf/code_800F42AC.cpp (callers: CVision, CMenuVision).
+float ScMain_GetRoundedMetric(ScMain* self);

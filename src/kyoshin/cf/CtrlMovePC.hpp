@@ -4,6 +4,7 @@
 #include <revolution/MTX.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/code_801F3BE0.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 
 // MWCC pointer-to-member-function (12 bytes). Layout matches Runtime/ptmf.c:
 //   this_delta @+0, v_offset @+4, f_data @+8.
@@ -22,25 +23,10 @@ namespace cf {
 // Derived from CCtrlMoveBase (base occupies 0x00..0x4B; secondary vtable at
 // 0x48 is overwritten by the derived ctor). Own fields begin at 0x4C.
 // mStateFunc (0x108) is a ptmf updated on transitions and dispatched per tick.
-// Layout recovered from retail __ct__801993C4 and the state update functions.
-class CCtrlMovePC {
+// Layout recovered from the retail ctor and the state update functions.
+class __declspec(novtable) CCtrlMovePC : public CCtrlMoveBase {
 public:
-    // --- base class (CCtrlMoveBase) region 0x00..0x4B ---
-    char mBase00[0x18];        // 0x00 primary vtable + base fields
-    f32 mField18;              // 0x18 wall-slide lerp anchor x/z
-    f32 mField1C;              // 0x1C
-    f32 mField20;              // 0x20
-    char mBase24[0xC];         // 0x24..0x2F
-    void* mBase30;             // 0x30 (NULL-init)
-    void* mBaseData;           // 0x34 ctor param (data ptr)
-    f32 mBase38;               // 0x38
-    f32 mBase3C;               // 0x3C
-    u16 mBase40;               // 0x40
-    u16 mBase42;               // 0x42
-    u8 mBase44;                // 0x44
-    u8 mBase45;                // 0x45
-    char mBase46[2];           // 0x46..0x47
-    void* mBaseVtable2;        // 0x48 secondary vtable (overwritten here)
+    CCtrlMovePC(void* owner, void* obj);
 
     // --- CCtrlMovePC own fields ---
     u32 mFlags4C;              // 0x4C state/condition flags
@@ -86,7 +72,7 @@ struct CfMoveSub {
     u16 mField530;            // 0x530
 };
 
-// Move-data block referenced by CCtrlMovePC::mBaseData.
+// Move-data block referenced by CCtrlMovePC::mpDataPtr.
 struct CfMoveData {
     u8 pad_00[0x4];
     u32 mField04;             // 0x04
@@ -119,7 +105,7 @@ struct CfObjState {
     s16 mField1AC;            // 0x1AC
 };
 
-// Object referenced by CCtrlMovePC::mBase30 (u16 at +0x22).
+// Object referenced by CCtrlMovePC::mpSomePtr (u16 at +0x22).
 struct CfBase30Obj {
     u8 pad_00[0x22];
     u16 mField22;             // 0x22
@@ -276,7 +262,6 @@ struct CfPartyInfoIn {
 
 // The 20 retail functions (placeholder symbols). Implemented in CtrlMovePC.cpp.
 extern "C" {
-cf::CCtrlMovePC* __ct__801993C4(cf::CCtrlMovePC* self, void* baseParam, void* obj);
 void movePcTopTickDispatch(cf::CCtrlMovePC* self);
 void movePcReleaseTaskReset(cf::CCtrlMovePC* self);
 void movePcCondFullReset(void* ctrl, int flag); // matches CfGameManager.hpp / CfGimmickObject.hpp

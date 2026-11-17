@@ -42,7 +42,7 @@ extern "C" void importItemLightSetting(CScnItemLightNw4r* self) {
     self->field_0x121c = 0;
 }
 
-CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2,
+CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, int a2,
                              void* a3) {
     mpNw4r = pNw4r;
     field_0x8 = 3;

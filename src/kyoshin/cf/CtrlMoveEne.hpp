@@ -6,6 +6,7 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
@@ -17,17 +18,13 @@ struct CfObjectMoveC4Target {
     u32 field_0x270;        // 0x270
 };
 
-struct CNpcBaseDataView;  // forward decl (movement data block, defined below)
 
-class CCtrlMoveEne {
+class CtrlEnemy;
+
+class __declspec(novtable) CCtrlMoveEne : public CCtrlMoveBase {
 public:
-    // 0x00: vtable
-    u8 _pad[0x34];                    // 0x00-0x33
-    CNpcBaseDataView* field_0x34;     // 0x34 movement data block
-    f32 field_0x38;                   // 0x38 (ctor zeroes; base-controller float)
-    f32 field_0x3C;                   // 0x3C (CtrlMoveEne_TickMoveControl stores lbl_eu_806665F0)
-    u8 _pad40[0x48 - 0x40];           // 0x40-0x47
-    void* field_0x48;                 // 0x48 secondary vtable (ctor stores lbl_eu_805279FC)
+    CCtrlMoveEne(CtrlEnemy* owner);
+
     f32 field_0x4C;                   // 0x4C (ctor / CtrlMoveEne_InitMoveHook store the move-sub +0xCC result)
     u32 field_0x50;                   // 0x50 (CtrlMoveEne_InitMoveHook stores the bdat-derived state)
     u32 field_0x54;                   // 0x54 (CtrlMoveEne_InitMoveHook zeroes)
@@ -74,7 +71,7 @@ struct CfObjectMoveView9 {
     ml::CVec3 mVelocity;              // 0x18 (base CCtrlMoveBase)
     u8 _pad24[0x30 - 0x24];           // 0x24-0x2F
     void* field_0x30;                 // 0x30 (base mpSomePtr)
-    CNpcBaseDataView* field_0x34;     // 0x34 movement data block
+    CCtrlMoveData* field_0x34;     // 0x34 movement data block
     f32 field_0x38;                   // 0x38
     f32 field_0x3C;                   // 0x3C
     u8 _pad40[0x4C - 0x40];           // 0x40-0x4B
@@ -223,7 +220,7 @@ struct CFunc8008EF04Sub98 {
     u32 field_7A4;                  // 0x7A4 flags
 };
 
-// Movement sub-object behind CNpcBaseDataView::field_0x28 (the same object
+// Movement sub-object behind CCtrlMoveData::field_0x28 (the same object
 // CtrlMoveNpc.cpp calls through CfObject*). Its retail vtable carries the
 // CfObject chain plus the CfObjectMove leg: this TU provides the +0x1D8 slot
 // body (CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv, returning the
@@ -246,12 +243,6 @@ public:
 // View of the movement-data object CtrlMoveEne_CommitHeadAngle operates on (same layout as
 // CCtrlMoveNpc::mBaseData / CNpcBaseData in CtrlMoveNpc.cpp): +0xC holds a
 // float, +0x28 the movement sub-object.
-struct CNpcBaseDataView {
-    u8 _pad[0xC];                   // 0x00-0x0B
-    f32 field_0xC;                  // 0x0C
-    u8 _pad10[0x28 - 0x10];         // 0x10-0x27
-    CfObject* field_0x28;    // 0x28
-};
 
 // CtrlMoveEne_UpdateMoveHeading / CtrlMoveEne_UpdateFleeWander / CtrlMoveEne_ScanGimmickTargets extension of the move-data
 // block: the +0x14 float they clear when idling.
@@ -287,7 +278,7 @@ struct CfMoveSubEntry {
 // matched CtrlMoveEne_InitMoveHook / CtrlMoveEne_UpdateFleeWander read the same storage as f32s.
 struct CfObjectMoveInitView {
     u8 _pad[0x34];                  // 0x00-0x33
-    CNpcBaseDataView* field_0x34;   // 0x34
+    CCtrlMoveData* field_0x34;   // 0x34
     u8 _pad38[0x4C - 0x38];         // 0x38-0x4B
     f32 field_0x4C;                 // 0x4C
     f32 field_0x50;                 // 0x50
@@ -470,7 +461,7 @@ struct CFunc8008E760View {
     u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / CPartsChange_ProcessPartyInfo)
     f32 field_0x10;                     // 0x10
     u8 _pad14[0x34 - 0x14];             // 0x14-0x33
-    CNpcBaseDataView* field_0x34;       // 0x34
+    CCtrlMoveData* field_0x34;       // 0x34
     u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
     u32 field_4C;                       // 0x4C (word stores; float store via CCtrlMoveEne)
     u32 field_50;                       // 0x50
@@ -512,7 +503,7 @@ struct CFunc80090DB4View {
     ml::CVec3 mPosition;                // 0x0C
     ml::CVec3 mVelocity;                // 0x18
     u8 _pad24[0x34 - 0x24];             // 0x24-0x33
-    CNpcBaseDataView* field_0x34;       // 0x34
+    CCtrlMoveData* field_0x34;       // 0x34
     u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
     f32 field_0x4C;                     // 0x4C
     f32 field_0x50;                     // 0x50
@@ -592,7 +583,7 @@ struct CFunc8008D51CObj {
 // reads and writes (0x188 / 0x18E are s16s read with lha).
 struct CFunc8008D51CView {
     u8 _pad[0x34];                              // 0x00-0x33
-    CNpcBaseDataView* field_0x34;               // 0x34
+    CCtrlMoveData* field_0x34;               // 0x34
     u8 _pad38[0x144 - 0x38];                    // 0x38-0x143
     ml::CVec3 mVec144;                          // 0x144
     u8 _pad150[0x168 - 0x150];                  // 0x150-0x167
@@ -621,7 +612,7 @@ struct CFunc8008FE8CView {
     ml::CVec3 mPosition;                        // 0x0C
     ml::CVec3 mVelocity;                        // 0x18
     u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
-    CNpcBaseDataView* field_0x34;               // 0x34
+    CCtrlMoveData* field_0x34;               // 0x34
     u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
     f32 field_0x3C;                             // 0x3C
     u8 _pad40[0x4C - 0x40];                     // 0x40-0x4B
@@ -672,7 +663,7 @@ struct CFunc8008A2C8View {
     ml::CVec3 mPos0;                            // 0x0C
     ml::CVec3 mVelocity;                        // 0x18
     u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
-    CNpcBaseDataView* field_0x34;               // 0x34
+    CCtrlMoveData* field_0x34;               // 0x34
     u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
     f32 field_0x3C;                             // 0x3C
     u8 _pad40[0x138 - 0x40];                    // 0x40-0x137
@@ -749,7 +740,7 @@ struct CFunc80091864View {
     CFunc8008E760Vec3W mPos0W;                          // 0x0C
     ml::CVec3 mVelocity;                                // 0x18
     u8 _pad24[0x34 - 0x24];                             // 0x24-0x33
-    CNpcBaseDataView* field_0x34;                       // 0x34
+    CCtrlMoveData* field_0x34;                       // 0x34
     u8 _pad38[0x3C - 0x38];                             // 0x38-0x3B
     f32 field_0x3C;                                     // 0x3C
     u8 _pad40[0x4C - 0x40];                             // 0x40-0x4B
@@ -801,8 +792,8 @@ extern "C" int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self);
 // (ctrlActClearState30 / ctrlActUpdateData70); called by CtrlMoveEne_ResetMoveState on the move-data
 // block / controller.
 extern "C" void maskMoveChildFlags(cf::CCtrlMoveEne* self);
-extern "C" void ctrlActClearState30(cf::CNpcBaseDataView* data);
-extern "C" void ctrlActUpdateData70(cf::CNpcBaseDataView* data);
+extern "C" void ctrlActClearState30(cf::CCtrlMoveData* data);
+extern "C" void ctrlActUpdateData70(cf::CCtrlMoveData* data);
 // Per-frame move helpers (CtrlMoveBase.cpp / CtrlMoveNpc.cpp): moveBaseUpdate
 // computes the approach direction, setMoveFacing commits a velocity.
 extern "C" int moveBaseUpdate(cf::CCtrlMoveEne* self, ml::CVec3* out,
@@ -901,7 +892,7 @@ bool isGlobalCamFlagSet(int r3);
 extern const f32 lbl_eu_806665C0;  // 0.0f
 extern const f32 lbl_eu_806665E4;  // 1.0f (rand-gated fallback)
 
-// Further sdata2 constants used by the ctor (__ct__8008A104) and the
+// Further sdata2 constants used by the ctor (CCtrlMoveEne::CCtrlMoveEne) and the
 // CtrlMoveEne_TickMoveControl / CtrlMoveEne_InitMoveHook family.
 extern const f32 lbl_eu_806665C4;   // ctor -> field_0x160
 extern const f32 lbl_eu_806665C8;   // ctor -> field_0x170/0x174
@@ -1026,10 +1017,9 @@ extern const u8 lbl_eu_805279FC[];
 // Imports for the ctor / CtrlMoveEne_TickMoveControl / CtrlMoveEne_InitMoveHook call sites (retail
 // unmangled names). extern "C" keeps the call-site relocs unmangled - a plain
 // C++ declaration makes MWCC append the __FP<params> mangling at the call
-// site. __ct__80088904 / maskMoveBaseFlags / writeMoveSlotFloat are defined in
+// site. maskMoveBaseFlags / writeMoveSlotFloat are defined in
 // CtrlMoveBase.cpp; setSnapFlags in CActParamAnim.cpp; getEneBdatColumn in
 // CfObjectEne.cpp; CtrlMoveEne_ResetMoveState / CtrlMoveEne_CheckActorState in this TU.
-extern "C" void __ct__80088904(cf::CCtrlMoveEne* self);
 extern "C" void maskMoveBaseFlags(cf::CCtrlMoveEne* self);
 extern "C" void setSnapFlags(void* self, u32 a, u32 b, f32 value);
 extern "C" void* setAnimPosVec(void* out, const ml::CVec3* src);

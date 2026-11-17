@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "libs/monolib/src/scn/CScnItemLightNw4r.hpp"
 
 namespace nw4r {
 namespace g3d {
@@ -16,7 +17,7 @@ class CScnItemLightNw4r;
 // (+0x944) used to push lighting into a scene root, and a display name.
 class CScnItemLight {
 public:
-    CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2, void* a3);
+    CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, int a2, void* a3);
     ~CScnItemLight();
 
     void* field_0x0;           // +0x00: manually-managed vtable pointer
@@ -37,8 +38,16 @@ public:
     u8 _121d[0x1220 - 0x121d]; // +0x121D -> 0x1220
 };
 
+// CScnItemLightNw4r vtable (manually stored, see CScnItemLight::field_0x0).
+extern "C" u32 lbl_eu_8056DD38[];
+
 class CScnItemLightNw4r : public CScnItemLight {
 public:
+    CScnItemLightNw4r(CScnLightItemHost* pHost, char* name, int a2, void* a3)
+        : CScnItemLight(reinterpret_cast<CScnItemLightNw4r*>(pHost), name, a2, a3) {
+        field_0x0 = (void*)lbl_eu_8056DD38;
+        mpScnRoot = pHost->mRoot->mScnRoot;
+    }
     ~CScnItemLightNw4r();
 
     nw4r::g3d::ScnRoot* mpScnRoot; // +0x1220

@@ -42,9 +42,9 @@ extern "C" __declspec(noinline) CMenuTutorialList* __ct__CMenuTutorialList(
     self->mScene = reinterpret_cast<CScn*>(parent);
 
     // Embedded widgets in construction order.
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-    __ct__CTutorialList(reinterpret_cast<CTutorialList*>(self->mTutorialList), 0);
+    __ct__13CTutorialListFUs(reinterpret_cast<CTutorialList*>(self->mTutorialList), 0);
     __ct__CTutorial(reinterpret_cast<CTutorial*>(self->mTutorial), 0, 0);
 
     self->mTimer = lbl_eu_80668DC8;

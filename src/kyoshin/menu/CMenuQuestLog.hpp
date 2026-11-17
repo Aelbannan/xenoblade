@@ -101,7 +101,7 @@ extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 // Init() imports (retail unmangled names).
 extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void QstLogList_LoadArc(CQstLogList* self);
 extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
@@ -158,10 +158,10 @@ extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 // Embedded-widget ctors called by the member constructor (US retail strips
 // these manglings; C-ABI wrappers for the opaque embedded storages).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 mode);
-extern "C" void __ct__CQstLogList(CQstLogList* self, u16 arg);
-extern "C" void __ct__CQstLogInfo(CQstLogInfo* self);
+extern "C" void __ct__11CQstLogListFUs(CQstLogList* self, u16 arg);
+extern "C" void __ct__11CQstLogInfoFv(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);

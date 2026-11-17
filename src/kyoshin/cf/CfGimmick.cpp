@@ -122,45 +122,38 @@ extern "C" void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis
 
 using namespace cf;
 
-namespace cf {
-    extern "C" void CfGimmick_DetachManager(CfGimmick* self, CfGameManager* other) {
-        CfGameManager* cur = self->field_78;
-        if (cur != other) return;
-        cur->unkB0 = 0;
-        self->field_78 = 0;
-    }
-
-    extern "C" void CfGimmick_UpdateColliderMatrix(CfGimmick* self) {
-        CfGimmickColliderView* view = (CfGimmickColliderView*)self;
-        CfGimmick_BuildColliderMtx(&view->mtx1c, view->basis04, &view->point10);
-    }
-
-    int CfGimmick::CfGimmick_CheckerKind0Always() { return 1; }
+CfGimmick::CfGimmick() {
+    field_64 = 0;
+    field_80 = 0;
+    field_66 = 0;
+    field_68 = 0;
+    field_6A = 0;
+    field_6C = 0;
+    field_6E = 0;
+    field_78 = 0;
+    field_7C.field_00 = 0;
+    field_73 = 0;
+    field_72 = 0;
+    field_71 = 0;
+    field_70 = 0;
+    field_74 = 0;
 }
 
-// Constructor.  The retail symbol __ct__cf_CfGimmick is a C-linkage name (no
-// C++ mangling markers), so it must be emitted as an extern "C" free function
-// rather than a C++ member constructor.  Subclass constructors (CfGimmickElv,
-// CfGimmickWarp, ...) call this to init the shared CfGimmick base fields.
-extern "C" void __ct__cf_CfGimmick(CfGimmick* self) {
-    self->vtable = (u32*)lbl_eu_80535844;
-    self->field_64 = 0;
-    self->field_80 = 0;
-    self->field_66 = 0;
-    self->field_68 = 0;
-    self->field_6A = 0;
-    self->field_6C = 0;
-    self->field_6E = 0;
-    self->field_78 = 0;
-    self->field_7C = 0;
-    self->field_73 = 0;
-    self->field_72 = 0;
-    self->field_71 = 0;
-    self->field_70 = 0;
-    self->field_74 = 0;
+CfGimmick::~CfGimmick() {}
+
+void CfGimmick::CfGimmick_DetachManager(CfGameManager* other) {
+    CfGameManager* cur = field_78;
+    if (cur != other) return;
+    cur->unkB0 = 0;
+    field_78 = 0;
 }
 
-cf::CfGimmick::~CfGimmick() {}
+void CfGimmick::CfGimmick_UpdateColliderMatrix() {
+    CfGimmickColliderView* view = (CfGimmickColliderView*)this;
+    CfGimmick_BuildColliderMtx(&view->mtx1c, view->basis04, &view->point10);
+}
+
+int CfGimmick::CfGimmick_CheckerKind0Always() { return 1; }
 
 // Build a rotation/placement matrix for the gimmick's collider box from its
 // axis-extents (field_30/34/38/3C) and the requested point direction, then

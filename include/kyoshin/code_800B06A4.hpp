@@ -10,8 +10,8 @@
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 extern "C" void CfObjectMap_refreshRegion(void* self);
 extern "C" int isBattleStatusActive(void* obj, int id);
+#include "kyoshin/cf/object/CfObject.hpp"
 namespace cf {
-struct CfObject { char _pad[4]; };
 struct TboxInfo { char _pad[4]; };
 struct IFactoryEvent { char _pad[4]; };
 }
@@ -1012,13 +1012,7 @@ extern const float lbl_eu_80666A18;
 extern const double lbl_eu_80666A20;
 
 // ml::CVec3 static zero (retail symbol zero__Q22ml5CVec3).
-namespace ml {
-class CVec3 {
-public:
-    float x, y, z;
-    static CVec3 zero;
-};
-} // namespace ml
+#include "monolib/math/CVec3.hpp"
 
 // CfGameManager imports (retail mangled names).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
@@ -1208,11 +1202,10 @@ extern "C" void* func_80062CE4(s32 id);
 extern "C" void* func_80062D44(s32 id);
 extern "C" void func_80066714(int flag);
 extern void* lbl_eu_8052A3B0[];
-extern void* lbl_eu_805294E0[];
+extern u8 lbl_eu_805294E0[];
 extern void* lbl_eu_80529128[];
 extern void* lbl_eu_80528600[];
 // Flat constructors/dtor called from the spawner (retail symbol names).
-extern "C" void* __ct__cf_CfObjectObj(void* self);
 extern "C" void* __ct__cf_CfObjectEne(void* self);
 extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
@@ -1666,7 +1659,7 @@ extern "C" void* func_8009EC9C(u32 index);
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();
 // Scn_GetFrameDelta is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
-extern "C" void Scn_GetFrameDelta();
+extern "C" f32 Scn_GetFrameDelta(void* view);
 extern "C" void CActorParam_updateTick(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
@@ -2408,7 +2401,6 @@ extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float cfCam_xzLength(void* p);
 extern "C" void refreshCamItems(void* self);
-extern "C" void Scn_FindCamItem(int arg, int val);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
 extern "C" void* func_800BBC0C(void* data);

@@ -53,10 +53,10 @@ extern "C" void aiActionStoreWordB14(void* obj, unsigned int value);
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value helper
 
-// Retail symbol is Fv but the real ABI passes (self, arg, f1, f2, f3);
-// CfObjectActor::CActorParam_addHate tail-calls this base entry
-// (defined in CActorParam.cpp).
-extern "C" void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, int id, f32 a, f32 b, f32 c);
+// CfObjectActor::CActorParam_addHate tail-calls the base member
+// CActorParam::CActorParam_addHate(void*, f32, f32, f32) (CActorParam.hpp,
+// defined in CActorParam.cpp).
+//
 
 // Retail symbols are Fv; the real ABI passes (self, arg). The CfObjectActor
 // overrides of 179/180 forward to these base entries (defined in CActorParam.cpp).

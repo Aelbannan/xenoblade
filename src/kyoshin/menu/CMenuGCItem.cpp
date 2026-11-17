@@ -58,7 +58,7 @@ extern "C" __declspec(noinline) CMenuGCItem* __ct__CMenuGCItem(
         *(u32*)((u8*)obj + 0x58) = (u32)lbl_eu_8053AD08 + 0x24;
         obj->mParentRef = parent;
 
-        __ct__CBgTex(&obj->mBgTex, 0);
+        __ct__6CBgTexFUc(&obj->mBgTex, 0);
         __ct__CTitleAHelp(&obj->mTitleAHelp, 0, 0);
         __ct__CItemBoxGrid(&obj->mItemBoxGrid, 0, 0, 0, 1);
         obj->mState = 0;

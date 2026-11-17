@@ -107,6 +107,44 @@ extern "C" void attachOwner(CCharVoice* self, CVoiceOwnerIntf* owner)
     }
 }
 
+// formatVoiceFilePath (0x802A33EC) -- format voice file path into buffer
+extern "C" bool formatVoiceFilePath(char* buffer, int index, int value)
+{
+    if (index < 1 || index > 13) return false;
+    if (value < 0 || value > 9999) return false;
+
+    // Index 8 (battle-end) maps to category 3.
+    if (index == 8) {
+        index = 3;
+    }
+
+    // Copy the template and store its length.
+    char* src = lbl_eu_80662C98[0];
+    *(u32*)(buffer + 0x20) = strlen(src);
+    strcpy(buffer, src);
+
+    // index digit pair (written at two pc slots), then value 4-wide.
+    int idxTens = index / 10;
+    buffer[0x0A] = '0' + idxTens;
+    buffer[0x0F] = '0' + idxTens;
+    int idxOnes = index % 10;
+    buffer[0x0B] = '0' + idxOnes;
+    buffer[0x10] = '0' + idxOnes;
+
+    int hi = value / 100;
+    int lo = value % 100;
+    int hiTens = (u32)hi / 10;
+    int hiOnes = (u32)hi % 10;
+    int loTens = (u32)lo / 10;
+    int loOnes = (u32)lo % 10;
+    buffer[0x12] = '0' + hiTens;
+    buffer[0x13] = '0' + hiOnes;
+    buffer[0x15] = '0' + loTens;
+    buffer[0x16] = '0' + loOnes;
+
+    return true;
+}
+
 // updatePosition (0x802A353C)
 extern "C" void updatePosition(CCharVoice* self)
 {
@@ -313,43 +351,6 @@ extern "C" void voiceNoop()
 {
 }
 
-// formatVoiceFilePath (0x802A33EC) -- format voice file path into buffer
-extern "C" bool formatVoiceFilePath(char* buffer, int index, int value)
-{
-    if (index < 1 || index > 13) return false;
-    if (value < 0 || value > 9999) return false;
-
-    // Index 8 (battle-end) maps to category 3.
-    if (index == 8) {
-        index = 3;
-    }
-
-    // Copy the template and store its length.
-    char* src = lbl_eu_80662C98[0];
-    *(u32*)(buffer + 0x20) = strlen(src);
-    strcpy(buffer, src);
-
-    // index digit pair (written at two pc slots), then value 4-wide.
-    int idxTens = index / 10;
-    buffer[0x0A] = '0' + idxTens;
-    buffer[0x0F] = '0' + idxTens;
-    int idxOnes = index % 10;
-    buffer[0x0B] = '0' + idxOnes;
-    buffer[0x10] = '0' + idxOnes;
-
-    int hi = value / 100;
-    int lo = value % 100;
-    int hiTens = (u32)hi / 10;
-    int hiOnes = (u32)hi % 10;
-    int loTens = (u32)lo / 10;
-    int loOnes = (u32)lo % 10;
-    buffer[0x12] = '0' + hiTens;
-    buffer[0x13] = '0' + hiOnes;
-    buffer[0x15] = '0' + loTens;
-    buffer[0x16] = '0' + loOnes;
-
-    return true;
-}
 
 // Retail tables owned by this unit.
 // .rodata (0x48): class/path name strings. The 7-byte gap after

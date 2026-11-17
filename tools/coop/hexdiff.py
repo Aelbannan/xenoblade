@@ -1263,7 +1263,10 @@ def _extab_check(project: Project, config, unit, retail_path: Path, decomp_path:
         from tools.coop.lib.data_match import check_extab_sections, extab_function_diffs
         from tools.coop.lib.reloc_canon import LinkerLayout
 
+        from tools.coop.lib.weak_dedup import linked_view
+
         layout = LinkerLayout.load(project.root, config.region)
+        decomp_path = linked_view(decomp_path, project.root, config.region, unit.name).path
         res = check_extab_sections(retail_path, decomp_path, layout=layout)
         out = {"ok": res.ok, "baseline": False, "detail": [], "functions": []}
         if not res.ok:
@@ -1391,6 +1394,8 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
     if size_check is not None and size_check.budget is not None:
         color = _GREEN if size_check.ok else _RED
         print(f"split: {color}{format_size_check(size_check)}{_RESET}")
+    for line in (size_check.excluded if size_check is not None else ()):
+        print(f"weak-dedup: excluded {line}")
 
     n_match = 0
     print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'SIZE':>12s}  SYMBOL")

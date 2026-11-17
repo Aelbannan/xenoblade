@@ -12,8 +12,8 @@
 // Retail .data/.sdata2/.sbss externs for the hand-built tables below.
 // Free-function spellings name the exact retail (link) symbols; the
 // .text of this TU never calls them (10/10 matched), they only feed
-// ADDR32 relocs. CfGimmick_DetachManager now uses the flat retail name
-// (defined by kyoshin/cf/CfGimmick.cpp since the linkage wave).
+// ADDR32 relocs. CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager is the
+// virtual cf::CfGimmick::CfGimmick_DetachManager (kyoshin/cf/CfGimmick.cpp).
 extern "C" {
 void __dt__Q22cf12CfObjectTboxFv(void*, int); // ABI deleting dtor
 void __dt__Q22cf15CfGimmickObjectFv(void*, int); // ABI deleting dtor
@@ -35,7 +35,7 @@ void CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask__Q22cf12CObjectStateFv(void);
-void CfGimmick_DetachManager(void);
+void CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager(void);
 void CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv(void);
 void CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(void);
 void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void);
@@ -159,8 +159,8 @@ void initialize__Q22cf11CfObjectObjFv(void);
 void reset__Q22cf11CfObjectObjFv(void);
 }
 extern char lbl_eu_80662700[]; // .sdata RTTI (defined by CPartyStateWin.o)
-extern char lbl_eu_80661BE0[];
-extern char lbl_eu_80662708[];
+extern char __RTTI__Q22cf11IObjectInfo[];
+extern char __RTTI__Q22cf9CfGimmick[];
 
 using namespace cf;
 
@@ -286,7 +286,7 @@ void ResTbox_SetCellBit40(unsigned char* base, int idx1, int idx2, int idx3) {
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const void* lbl_eu_80534F70[9] = {
     lbl_eu_80662700, 0, (const void*)__dt__Q22cf15CfGimmickObjectFv,
-    (const void*)CfGimmick_DetachManager,
+    (const void*)CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager,
     (const void*)GimObjDriveStepMachine, (const void*)GimObjSetBusyBit,
     (const void*)GimObjClearStepBits, (const void*)GimObjFinishStep,
     (const void*)GimObjRebuildColliders,
@@ -294,13 +294,13 @@ const void* lbl_eu_80534F70[9] = {
 // T2 (80534F94): 5-word descriptor row (sdata locator, null, sdata, 0, 0).
 __declspec(section ".data") __attribute__((used, aligned(4)))
 const void* lbl_eu_80534F94[5] = {
-    lbl_eu_80661BE0, 0, lbl_eu_80662708, 0,
+    __RTTI__Q22cf11IObjectInfo, 0, __RTTI__Q22cf9CfGimmick, 0,
     0,
 };
 // T3 (80534FA8): 4-word descriptor row (sdata locator + zeros).
 __declspec(section ".data") __attribute__((used, aligned(4)))
 const void* lbl_eu_80534FA8[4] = {
-    lbl_eu_80661BE0, 0, 0, 0,
+    __RTTI__Q22cf11IObjectInfo, 0, 0, 0,
 };
 // T4 (80534FB8): CfObjectTbox full vtable (RTTI, null, 135 virtuals, null).
 // Layout from the retail .rela.data (every slot but +0x04/+0x224 carries

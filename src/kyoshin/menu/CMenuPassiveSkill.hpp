@@ -90,7 +90,7 @@ extern char lbl_eu_805378B0[];
 extern u32 __ptmf_null[3];
 
 // C-ABI widget ctor imports (US strips their member manglings).
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void* __ct__UI_CPassiveSkill(u8* self);
 
@@ -102,7 +102,7 @@ extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern char lbl_eu_8050DB4C[];
 extern "C" char* BdatTouchStringCell(char* base, char* entry, u32 len);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,
                                                       u32 prio, u32 arg);
 extern "C" void CPassiveSkill_loadSkillData(u8* self);

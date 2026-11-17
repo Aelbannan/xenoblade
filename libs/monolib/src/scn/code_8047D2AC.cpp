@@ -229,29 +229,7 @@ extern "C" s32 findWalkRoute__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     return 1;
 }
 
-// walkPathCheck -- solve + branch on arg3 to 8169C/819C4 or 8163C/81790 (0xC8)
-extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
-                                                     void* arg2, u32 arg3) {
-    u32 local;
-    if (solveWalkStep__17UnkClass_8047D2ACFv(self, &local, arg1)) {
-        void* manager = lbl_eu_80658560;
-
-        if (isNodeBlocked__17UnkClass_8047E110Fv(manager, local)) {
-            return 0;
-        }
-
-        if (arg3) {
-            setWalkBoxBounds__17UnkClass_8047E110Fv(manager, arg1, arg2);
-            return stepWalker__17UnkClass_8047E110Fv(manager, local);
-        }
-
-        setWalkBoxCenter__17UnkClass_8047E110Fv(manager, arg2);
-        return searchWalkGraph__17UnkClass_8047E110Fv(manager, local);
-    }
-
-    return 0;
-}
-
+// updateWalker -- solve + branch on arg3 to 8169C/819C4 or 8163C/81790 (0xC8)
 extern "C" s32 updateWalker__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;

@@ -24,10 +24,10 @@ struct CfPadDataView {
 };
 
 extern "C" {
-void __ct__8CProcessFv(CProcess* self);void __ct__CBgTex(CBgTex* self, u8 arg);
+void __ct__8CProcessFv(CProcess* self);void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
 void __ct__CMapSel(CMapSel* self);
-void __ct__CFade(CFade* self);
+void __ct__5CFadeFv(CFade* self);
 void __ct__CFloorMap(CFloorMap* self);
 
 extern PtmfNull __ptmf_null;
@@ -150,13 +150,13 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
         self->mParent = parentRef;
 
         CBgTex* bgTex = &self->mBgTex;
-        __ct__CBgTex(bgTex, 0);
+        __ct__6CBgTexFUc(bgTex, 0);
         CTitleAHelp* title = &self->mTitleAHelp;
         __ct__CTitleAHelp(title, 0, 0);
         CMapSel* mapSel = &self->mMapSel;
         __ct__CMapSel(mapSel);
         CFade* fade = &self->mFade;
-        __ct__CFade(fade);
+        __ct__5CFadeFv(fade);
         CFloorMap* floorMap = &self->mFloorMap;
         __ct__CFloorMap(floorMap);
 

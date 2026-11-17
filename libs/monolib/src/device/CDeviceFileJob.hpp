@@ -7,8 +7,8 @@ public:
     virtual ~CDeviceFileJob();
 
     // TODO: add fields
-    void cancel(CDeviceFileJob_UnkStruct1*);
-    void cancel(CDeviceFileJob_UnkStruct1*);
+    void cancel(const char*);
+    void cancel(CFileHandle*);
     void CDeviceFileJob_UnkVirtualFunc1();
 };
 

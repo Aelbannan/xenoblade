@@ -46,7 +46,7 @@ extern "C" CSortMenu* __ct__CSortMenu(CSortMenu* _this) {
     _this->field_0x29 = 0;
     _this->field_0x2A = 0;
     _this->field_0x2B = 1;
-    __ct__CScrollBar((u8*)_this + 0x2C, 0);
+    __ct__10CScrollBarFUc((u8*)_this + 0x2C, 0);
     _this->mCount = 0;
     _this->mPage = 0;
     _this->mSubPage = 0;
@@ -78,7 +78,7 @@ extern "C" void sortMenuInitFileRead(CSortMenu* _this) {
 
     // Build a temporary CScrollBar that carries the initial data for the member.
     CScrollBarData temp;
-    __ct__CScrollBar(&temp, 2);
+    __ct__10CScrollBarFUc(&temp, 2);
 
     // Copy the constructed body into the member (retail omits the vtable at +0x0).
     _this->mScrollBar.mMemRegion[0] = temp.mMemRegion[0];

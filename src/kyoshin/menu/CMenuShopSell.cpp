@@ -56,7 +56,7 @@ extern "C" __declspec(noinline) CMenuShopSell* __ct__CMenuShopSell(CMenuShopSell
     *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80532650 + 0x24;
     self->mScene = scene;
 
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CItemBoxGrid(&self->mItemBoxGrid, 0, 0, 0, 1);
     self->mState = 0;

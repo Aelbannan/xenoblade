@@ -14,7 +14,7 @@
    via vptr at +0x00 for CDeviceFile::readFile, but not a C++ IWorkEvent
    subclass (avoids emitting weak default stubs into this TU's .text).
 
-   Field layout (from retail __ct__CTutorialList 802AF55C + matched call sites):
+   Field layout (from retail __ct__13CTutorialListFUs 802AF55C + matched call sites):
    +0x00 vptr | +0x04 UnkClass_8045F564 (0x10) | +0x14 six pointers
    (+0x20 Layout*, +0x24/+0x28 AnimTransform*) | +0x2C CCur (0x18)
    | +0x44 CScrollBar (0x40) | +0x84 CSortMenu sub-object | +0x175 control bytes

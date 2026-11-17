@@ -110,7 +110,7 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__CSelShopWin(void*);
+extern "C" void __ct__11CSelShopWinFv(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, void*, u32, u32);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, UnkClass_8045F564*);

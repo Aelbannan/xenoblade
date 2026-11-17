@@ -536,7 +536,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     __ct__CMCEffCylinder(base + 0xdfc, 0);
     *reinterpret_cast<u32*>(base + 0xe1c) = 0;
     __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xe20), 0);
-    __ct__CScrollBar(base + 0xe38, 0);
+    __ct__10CScrollBarFUc(base + 0xe38, 0);
     __ct__CSysWin(base + 0xe78, 0);
     __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xeb4), 0);
     __ct__CMCGetItemBox(base + 0xecc);
@@ -643,7 +643,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     __dt__14CMCCrystalListFv(listTmp, -1);
 
     // --- re-init the embedded scroll bar from a default temp ---
-    __ct__CScrollBar(sbTmp, 0);
+    __ct__10CScrollBarFUc(sbTmp, 0);
     __ct__UnkClass_8011C974(base + 0xe3c, sbTmp + 0x4);
     *reinterpret_cast<void**>(base + 0xe4c) = *reinterpret_cast<void**>(sbTmp + 0x14);
     *reinterpret_cast<void**>(base + 0xe50) = *reinterpret_cast<void**>(sbTmp + 0x18);

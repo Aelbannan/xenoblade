@@ -128,8 +128,20 @@ extern "C" int CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id);
 // conflicts with this TU's stub CLight/CVirtualLightObj dtors.
 extern "C" void LightCtlSetAttnMode(u8* self, int value);
 
-struct CVirtualLightAmb;  // defined in CVirtualLightAmb.hpp
-class CVirtualLightDir;   // defined in CVirtualLightDir.cpp
+// TU-local views of the derived lights (real classes in CVirtualLightAmb.hpp /
+// monolib/scn/CVirtualLightDir.hpp; those derive from the full
+// CVirtualLightObj, which conflicts with this TU's dtor-only CVirtualLightObj
+// view). Only the ctor and allocation size are needed here.
+class CVirtualLightAmb {
+public:
+    CVirtualLightAmb();
+    u8 _00[0x34];
+};
+class CVirtualLightDir {
+public:
+    CVirtualLightDir();
+    u8 _00[0x3C];
+};
 
 // Dir-light factory (defined later in CScnVirtualLight.cpp). Declared with C
 // linkage here so scnVlDirFromVec's call reloc stays flat (retail scnVlCreateDir);
@@ -137,14 +149,6 @@ class CVirtualLightDir;   // defined in CVirtualLightDir.cpp
 extern "C" CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field,
                                            const CTaskGame_setVec4_tmp* data, f32 val1,
                                            f32 val2, f32 val3);
-
-// Amb-light constructor (defined in CVirtualLightAmb.cpp, flat-name symbol):
-// builds the base light, installs the vtable and arms the slot (+0x2C = 1).
-extern "C" CVirtualLightAmb* __ct__CVirtualLightAmb(CVirtualLightAmb* self);
-
-// Dir-light constructor (defined in CVirtualLightDir.cpp; retail flat name
-// __ct__CVirtualLightDir): builds the base light and sets +0x34/+0x38 to 1000.
-extern "C" CVirtualLightDir* __ct__CVirtualLightDir(CVirtualLightDir* self);
 
 // Two-float setter on the dir light (CVirtualLightDir.cpp, flat-name symbol):
 // writes the +0x34/+0x38 fields.

@@ -48,7 +48,7 @@ __declspec(noinline) CMenuPlayAward* __ct__CMenuPlayAward(CMenuPlayAward* self, 
     self->mScene = scene;
 
     // Embedded widgets in construction order.
-    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
     __ct__CPlayAwardList(&self->mPlayAwardList, 0);
 
@@ -86,7 +86,7 @@ void CMenuPlayAward::Init() {
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
-    __ct__CBgTex((CBgTex*)tempBgTex, 0);
+    __ct__6CBgTexFUc((CBgTex*)tempBgTex, 0);
 
     __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
     mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
@@ -120,7 +120,7 @@ void CMenuPlayAward::Init() {
     mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CPlayAwardList via a temporary ---
     u8 tempList[0x10A4];
@@ -584,7 +584,7 @@ CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
     self->mAnimTrans28 = 0;
     self->field_0x2C = 0;
     __ct__CCur18(&self->mCursor, 0);
-    __ct__CScrollBar(self->mScrollBar, 0);
+    __ct__10CScrollBarFUc(self->mScrollBar, 0);
     self->field_0x88 = 0;
     self->field_0x89 = 0;
     self->field_0x8A = 0;
@@ -597,7 +597,7 @@ CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
     // Temp scrollbar body copy (retail copies each field: lwz/stw, lbz/stb,
     // lfs/stfs).
     CScrollBarData temp;
-    __ct__CScrollBar((u8*)&temp, 5);
+    __ct__10CScrollBarFUc((u8*)&temp, 5);
     CScrollBarData* dst = reinterpret_cast<CScrollBarData*>(&self->mScrollBar[0]);
     dst->mMemRegion[0] = temp.mMemRegion[0];
     dst->mMemRegion[1] = temp.mMemRegion[1];

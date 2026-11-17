@@ -11,10 +11,8 @@ namespace nw4r { namespace db { void Panic(const char* file, int line, const cha
 
 // External declarations (C++ linkage for non-mangled symbols)
 extern "C" {
-extern void __ct__cf_CREvtObj(void* self, int arg);
+extern void __ct__Q22cf8CREvtObjFi(void* self, int arg);
 extern void* __dt__Q22cf8CREvtObjFv(void* self, int dealloc);
-extern void __dt__80185754(void* self);
-extern void EvtObj_RunCallback(void* self);
 extern void* EvtObj_AllocBlock(u32 size);
 extern u32 Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
@@ -87,7 +85,7 @@ extern const char lbl_eu_80530E88[];
 extern "C" {
 
 void* __ct__CREvtModel(void* self, void* pData, void* pArg) {
-    __ct__cf_CREvtObj(self, 3);
+    __ct__Q22cf8CREvtObjFi(self, 3);
     u32* base = (u32*)self;
     u32* vtable = (u32*)(void*)&lbl_eu_8053167C;
     u32 zero = 0;
@@ -109,7 +107,7 @@ void* __ct__80172668(void* self, int deallocFlag) {
         FLD(const void**, self, 0) = lbl_eu_8053167C;
         reinterpret_cast<CREvtModel*>(self)->reset();
         __dt__Q22cf8CREvtObjFv(self, 0);
-        if (deallocFlag > 0) { __dt__80185754(self); }
+        if (deallocFlag > 0) { cf::CREvtObj::operator delete(self); }
     }
     return self;
 }
@@ -139,7 +137,7 @@ void* evtModelDataPtr(void* self) {
 }
 
 void EvtModelUpdate(void* self) {
-    EvtObj_RunCallback(self);
+    reinterpret_cast<cf::CREvtObj*>(self)->cf::CREvtObj::vfunc_1C();
     s32 counter = FLD(s32, self, 0x34);
     if (counter < 4) {
         u16 val = *(u16*)((char*)FLD(void*, self, 0x1C) + counter * 2 + 0x6C);
@@ -342,7 +340,7 @@ int zeroEvtModelHook(void* self) {
 extern "C" {
 extern void* __RTTI__Q22cf13CfObjectActor;
 extern const void* lbl_eu_80662408[2];  // defined with the .sdata below
-extern void getField20(), CREvtObjIsBusyDefault(), CREvtObjVfunc24Default();  // cross-TU slots of the 0x44 table
+extern void getField20(), isBusy__Q22cf8CREvtObjFv(), CREvtObjVfunc24Default();  // cross-TU slots of the 0x44 table
 extern void CActorState_setObjStateBit3__Q22cf11CActorStateFv(), CBattleState_getOwner__Q22cf13CfObjectActorFv(), CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(), CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(), CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(), CBattleState_enterStatusEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry();
 extern void CBattleState_addStagingEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearStatusId__Q22cf12CBattleStateFv(), CBattleState_applyEventEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(), CBattleState_removeKeyedEntries__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry(), CBattleState_clearEntriesByMask__Q22cf12CBattleStateFUl();
 extern void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(), CBattleState_getStatusSlot__Q22cf12CBattleStateFi(), CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(), CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(), CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(), CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv();
@@ -350,7 +348,7 @@ extern void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(), CBattleStat
 extern void CBattleState_copyStatusEntries__Q22cf12CBattleStateFv(), CBattleState_getEntryArray__Q22cf12CBattleStateFv(), CBattleState_applyArtsTable__Q22cf12CBattleStateFPCQ22cf20CBattleStateSrcEntry(), CBattleState_getStatusBlock__Q22cf12CBattleStateFv(), CBattleState_getStagingRecord__Q22cf12CBattleStateFv(), CBattleState_clearStagingEntries__Q22cf12CBattleStateFv();
 extern void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv(), CBattleState_getEventMask__Q22cf12CBattleStateFUl(), CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(), CBattleState_getStatusMask__Q22cf12CBattleStateFUl(), CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(), CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv();
 extern void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(), CActorParam_resetArtsStatus__Q22cf11CActorParamFv(), CActorParam_commitArtsStatus__Q22cf11CActorParamFv(), CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(), CActorParam_setupActorState__Q22cf11CActorParamFv(), CActorParam_resetArtsMatrix__Q22cf11CActorParamFv();
-extern void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(), CActorParam_applyTargetEvent__Q22cf11CActorParamFv(), CActorParam_applyStatusHeal__Q22cf11CActorParamFv(), CActorParam_applyEventStatus__Q22cf11CActorParamFv(), CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv(), CActorParam_setStatByte__Q22cf11CActorParamFUc();
+extern void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(), CActorParam_applyTargetEvent__Q22cf11CActorParamFv(), CActorParam_applyStatusHeal__Q22cf11CActorParamFPQ22cf16CActorParam11Arg(), CActorParam_applyEventStatus__Q22cf11CActorParamFv(), CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv(), CActorParam_setStatByte__Q22cf11CActorParamFUc();
 extern void CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(), CActorParam_setStatScale__Q22cf11CActorParamFf(), CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(), CActorParam_getActorType__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv();
 extern void CActorParam_setScale__Q22cf13CfObjectActorFv(), CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(), CActorParam_getScale__Q22cf13CfObjectActorFv(), CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv(), CActorParam_getArtsLevel__Q22cf11CActorParamFv();
 extern void CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv(), CActorParam_getActorLevel__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv();
@@ -377,7 +375,7 @@ extern void CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(), CActorParam_U
 extern void CActorParam_accumulateTension__Q22cf11CActorParamFv(), CActorParam_raiseTensionValue__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(), CActorParam_resetTensionState__Q22cf11CActorParamFv(), CActorParam_getStatusCount__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv();
 extern void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(), CActorParam_initStatusCounter__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc161__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc162__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc163__Q22cf11CActorParamFv(), CActorParam_getActorModeFlags__Q22cf11CActorParamFv();
 extern void CActorParam_getBattleHitFlags__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc167__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv();
-extern void CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv();
+extern void CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(), CActorParam_updateHateEntries__Q22cf11CActorParamFf(), CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv();
 extern void CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv(), CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(), CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(), CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv(), CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv();
 extern void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(), CObjectState_setStateBitMask__Q22cf12CObjectStateFv(), CObjectState_checkStateFlags__Q22cf12CObjectStateFv(), CObjectState_setStateBitFlag__Q22cf12CObjectStateFv(), CObjectState_clearStateWord4__Q22cf12CObjectStateFv(), CObjectState_applyStateFlags__Q22cf12CObjectStateFv();
 extern void CObjectState_clearStateWord8__Q22cf12CObjectStateFv(), CObjectState_clearStateFlags8__Q22cf12CObjectStateFv(), CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(), CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(), CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(), CObjectState_getStateData__Q22cf12CObjectStateFv();
@@ -421,7 +419,7 @@ const void* lbl_eu_8053109C[373] = {
     (void*)CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv, (void*)CBattleState_getStatusMask__Q22cf12CBattleStateFUl, (void*)CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv, // +0x90
     (void*)CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv, (void*)CActorParam_resetArtsStatus__Q22cf11CActorParamFv, (void*)CActorParam_commitArtsStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv, // +0xA0
     (void*)CActorParam_setupActorState__Q22cf11CActorParamFv, (void*)CActorParam_resetArtsMatrix__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv, (void*)CActorParam_applyTargetEvent__Q22cf11CActorParamFv, // +0xB0
-    (void*)CActorParam_applyStatusHeal__Q22cf11CActorParamFv, (void*)CActorParam_applyEventStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv, (void*)CActorParam_setStatByte__Q22cf11CActorParamFUc, // +0xC0
+    (void*)CActorParam_applyStatusHeal__Q22cf11CActorParamFPQ22cf16CActorParam11Arg, (void*)CActorParam_applyEventStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv, (void*)CActorParam_setStatByte__Q22cf11CActorParamFUc, // +0xC0
     (void*)CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv, (void*)CActorParam_setStatScale__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv, // +0xD0
     (void*)CActorParam_getActorType__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv, (void*)CActorParam_setScale__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv, // +0xE0
     (void*)CActorParam_getScale__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv, (void*)CActorParam_getArtsLevel__Q22cf11CActorParamFv, // +0xF0
@@ -462,7 +460,7 @@ const void* lbl_eu_8053109C[373] = {
     (void*)CActorParam_UnkVirtualFunc163__Q22cf11CActorParamFv, (void*)CActorParam_getActorModeFlags__Q22cf11CActorParamFv, (void*)CActorParam_getBattleHitFlags__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv, // +0x320
     (void*)CActorParam_UnkVirtualFunc167__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv, // +0x330
     (void*)CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc173__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv, // +0x340
-    (void*)CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv, // +0x350
+    (void*)CActorParam_updateHateEntries__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc178__Q22cf11CActorParamFv, // +0x350
     (void*)CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv, &__RTTI__Q22cf13CfObjectActor, // +0x360
     (void*)0xFFFFCC80, (void*)CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv, (void*)CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv, &__RTTI__Q22cf13CfObjectActor, // +0x370
     (void*)0xFFFFC164, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv, // +0x380
@@ -517,7 +515,7 @@ __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8053167C[17] = {
     (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)EvtModelResetPose, // +0x0
     (void*)releaseEvtAnim28, (void*)getField20, (void*)isEvtFlagBit4Set, (void*)isEvtFlagBit0Set, // +0x10
-    (void*)CREvtObjIsBusyDefault, (void*)EvtModelUpdate, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
+    (void*)isBusy__Q22cf8CREvtObjFv, (void*)EvtModelUpdate, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
     (void*)EvtModelSetVisible, (void*)EvtModelSetEventData, (void*)emptyEvtModelHook, (void*)EvtModelReleaseAnimsOnce, // +0x30
     (void*)EvtModelReleaseAnims, // +0x40
 };

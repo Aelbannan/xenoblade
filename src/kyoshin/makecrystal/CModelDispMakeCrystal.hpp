@@ -203,7 +203,7 @@ extern "C" void func_8021E888(void* entries);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __ct__CMCCrystalList(void* self);
-extern "C" void __ct__CScrollBar(void* self, int arg);
+extern "C" void __ct__10CScrollBarFUc(void* self, int arg);
 extern "C" void __ct__CSysWin(void* self, int arg);
 extern "C" void __ct__CMCGetItemBox(void* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);

@@ -57,7 +57,7 @@ extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CPro
     self->mParentRef = arg;
 
     __ct__CTitleAHelp(help, 0, 0);
-    __ct__CFade(&self->mFade);
+    __ct__5CFadeFv(&self->mFade);
     __ct__CFloorMap(&self->mFloorMap);
 
     self->mState = 0;
@@ -112,23 +112,21 @@ void CMenuMapSelectSC::Init() {
     mTitleAHelp.unk37 = tmpTitle->unk37;
     __dt__11CTitleAHelpFv(tmpTitle, -1);
 
-    CTitleAHelp_load(&mTitleAHelp);
+    mTitleAHelp.CTitleAHelp_load();
 
     // --- Re-initialise the embedded CFade via a temporary ---
-    u8 tempFade[0x28];
-    __ct__CFade(reinterpret_cast<CFade*>(tempFade));
-
-    __ct__UnkClass_8011C974((u8*)this + 0x9c, tempFade + 0x4);
-    CFade* tmpFade = reinterpret_cast<CFade*>(tempFade);
-    mFade.mFileHandle = tmpFade->mFileHandle;
-    mFade.mArcResAcc = tmpFade->mArcResAcc;
-    mFade.mLayout = tmpFade->mLayout;
-    mFade.mAnimTrans = tmpFade->mAnimTrans;
-    mFade.mIsLoaded = tmpFade->mIsLoaded;
-    mFade.mFadeState = tmpFade->mFadeState;
-    mFade.mReady = tmpFade->mReady;
-    mFade.mVisible = tmpFade->mVisible;
-    __dt__5CFadeFv(tmpFade, -1);
+    {
+        CFade tmpFade;
+        __ct__UnkClass_8011C974((u8*)this + 0x9c, (u8*)&tmpFade + 0x4);
+        mFade.mFileHandle = tmpFade.mFileHandle;
+        mFade.mArcResAcc = tmpFade.mArcResAcc;
+        mFade.mLayout = tmpFade.mLayout;
+        mFade.mAnimTrans = tmpFade.mAnimTrans;
+        mFade.mIsLoaded = tmpFade.mIsLoaded;
+        mFade.mFadeState = tmpFade.mFadeState;
+        mFade.mReady = tmpFade.mReady;
+        mFade.mVisible = tmpFade.mVisible;
+    }
 
     CFade_StartLoad(&mFade);
 

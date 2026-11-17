@@ -233,7 +233,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self);
 extern "C" void advanceConfirmState(CMenuArtsSelect* self);
 extern "C" void driveArtsGauge(CMenuArtsSelect* self);
 extern "C" void driveTalentGauge(CMenuArtsSelect* self);
-extern "C" void updateSlotGauge(CMenuArtsSelect*, s32);
+// updateSlotGauge: member CMenuArtsSelect::updateSlotGauge(s32) (see header).
 extern "C" void updateSlotHighlight(CMenuArtsSelect*, s32);
 extern "C" void advanceSlotToggle(CMenuArtsSelect*, s32);
 extern "C" void updateSlotStates(CMenuArtsSelect*);
@@ -1023,7 +1023,7 @@ void CMenuArtsSelect::Move() {
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
-                        ::updateSlotGauge(this, i);
+                        updateSlotGauge(i);
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
@@ -2711,7 +2711,7 @@ void CMenuArtsSelect::updateSlotGauge(s32 index) {
             } else {
                 if (unk337[index] == 0) {
                     if (unk340 == 0) {
-                        setEffectEnabled__FUl(0x9f);
+                        playUISound(0x9f);
                     }
                     unk337[index] = 1;
                     unkA4[index]->SetAnimationEnable(unkC4[index], false);

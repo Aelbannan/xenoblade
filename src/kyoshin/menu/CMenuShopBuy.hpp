@@ -246,7 +246,7 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+// CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 extern char lbl_eu_80503B20[];  // split1 .rodata string pool (Init title name)
@@ -256,7 +256,7 @@ extern const f32 lbl_eu_80667A28;
 // Subobject ctors/dtors (retail keeps the unmangled names; __dt__800FED0C is
 // the game-side CProcess dtor wrapper defined in CMainMenu.cpp).
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CItemBoxLine(CItemBoxLine* self, u32 a, u32 b);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine*, int);

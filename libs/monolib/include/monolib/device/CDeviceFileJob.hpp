@@ -4,8 +4,8 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/device/CFileHandle.hpp"
 
-// Forward declaration for the parameter type of cancel overload
-struct CDeviceFileJob_UnkStruct1;
+// cancel(CFileHandle*) overload: retail cancel__14CDeviceFileJobFP11CFileHandle
+// (overridden by CDeviceFileJobReadDvd::cancel(CFileHandle*)).
 
 //Base class for jobs carried out by CDeviceFile.
 class CDeviceFileJob : public CWorkThread {
@@ -15,7 +15,7 @@ public:
     virtual ~CDeviceFileJob(){}
     virtual bool CDeviceFileJob_UnkVirtualFunc1(){ return false; }
     virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CDeviceFileJob_UnkStruct1* pStruct){ return false; }
+    virtual bool cancel(CFileHandle* pHandle);
 
     inline const char* getFilename(){
         return mHandle->mName.c_str();

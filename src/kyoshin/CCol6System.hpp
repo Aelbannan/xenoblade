@@ -386,7 +386,7 @@ void ScnData_FwdB7DD4(void*, u8);                                        // code
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
-extern "C" void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
+extern "C" void __ct__10CScrollBarFUc(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
 extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)

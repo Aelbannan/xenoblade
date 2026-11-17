@@ -1,7 +1,6 @@
 // cf::CfObjectObj - reconstructed functions for kyoshin/cf/object/CfObjectObj
 // Functions are kept in retail .text order so hexdiff's offset-based symbol
-// fallback maps the unmangled retail names (__ct__cf_CfObjectObj,
-// __dt__800BFA14, ObjObj_ReleaseModels_FAB0, ObjObj_SetMoveId_FBF4) onto the mangled decomp ones.
+// fallback maps the unmangled retail names (ObjObj_ReleaseModels_FAB0, ObjObj_SetMoveId_FBF4) onto the mangled decomp ones.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
@@ -33,49 +32,33 @@ namespace cf {
 class CfObjectPc;
 }
 
-// us-800c03d4  - forced-name constructor (retail symbol is the unmangled
-// free function __ct__cf_CfObjectObj, not a mangled member ctor): run the base
-// CfObjectMove ctor via its literal mangled name, restore the retail vtable
-// (novtable scheme), zero the helper field, then guard the CfResObjImpl
+// us-800c03d4  - constructor: the CfObjectMove base ctor runs first; novtable
+// (header) suppresses the implicit vptr store, so the retail vtable label is
+// assigned explicitly. Zero the helper field, then guard the CfResObjImpl
 // resource allocation behind a __dynamic_cast check (the cast succeeds only
 // when the object already carries the resource impl, in which case the
 // 0x1C-byte allocation is skipped).
-extern "C" cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
-    __ct__Q22cf12CfObjectMoveFv(ths);
-    // Manual vptr store (novtable); typed as u32* to match lbl array.
-    *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
-    ths->field_71C = 0;
-    if (__dynamic_cast(ths, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
+cf::CfObjectObj::CfObjectObj() {
+    *(void**)this = (void*)lbl_eu_80529B4C;
+    field_71C = 0;
+    if (__dynamic_cast(this, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
         // The ctor returns the object in r3, so assigning it back keeps `res`
         // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
         cf::CfResObjImpl* res =
             (cf::CfResObjImpl*)mtl::MemManager::allocate(0x1c, CfRes_getAllocHandle());
         if (res != 0) {
-            res = __ct__cf_CfResObjImpl(res, ths);
+            res = __ct__cf_CfResObjImpl(res, this);
         }
-        ((ObjB0View*)ths)->mSubObjB0 = res;
+        ((ObjB0View*)this)->mSubObjB0 = res;
     }
-    return ths;
 }
 
-// us-800c045c  - deleting destructor (retail forced-name __dt__800BFA14):
-// null-check, restore the retail vtable, run the slot +0x68 virtual cleanup,
-// run the base CfObjectMove dtor with flag 0, then free the object when the
-// delete flag is positive and return self. Written as a free function with
-// the literal retail name (CTaskGameEff __dt__80044BB0 / CTagProcessor
-// __dt__8012596C pattern): MWCC emits the name verbatim as a real .text
-// FUNC symbol, which the acceptance certifier requires (an ABS alias on a
-// member dtor is invisible to its symbol scan).
-cf::CfObjectObj* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag) {
-    if (ths != 0) {
-        *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
-        ths->CfObject_releaseMoveTargets();
-        __dt__Q22cf12CfObjectMoveFv(ths, 0);
-        if (deleteFlag > 0) {
-            operator delete(ths);
-        }
-    }
-    return ths;
+// us-800c045c  - virtual destructor: restore the retail vtable (novtable),
+// run the slot +0x68 virtual cleanup; MWCC appends the CfObjectMove base
+// dtor call (flag 0) and the delete-flag wrapper.
+cf::CfObjectObj::~CfObjectObj() {
+    *(void**)this = (void*)lbl_eu_80529B4C;
+    CfObject_releaseMoveTargets();
 }
 
 // us-800c04d0  - simple bool/int return after a virtual init call.

@@ -13,17 +13,6 @@ extern "C" void uploadLightEnv(u8* ths, int val);
 // Retail references this helper under its unmangled C name.
 extern "C" void ScnEnvLgt_ApplyLightRig(u8* ths);
 
-// Selects the active light: if the current pool light is armed, deactivate
-// its param block (uploadLightEnv) and clear the arm flag.
-// Flat retail symbol; declared extern "C" in CScnEnvLgtCtrl.hpp.
-extern "C" void LightManDeactivateArmedLight(CScnLightMan* ths) {
-    CScnItemLight* light = ths->mLight;
-    if (light->flag121C) {
-        uploadLightEnv(&light->_14[0], 0);
-        ths->mLight->flag121C = 0;
-    }
-}
-
 // Flat retail symbol (no class-size mangling), so it cannot be a regular
 // mangled member ctor; returns ths.
 extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* ths, CScnLightParam* param) {
@@ -56,6 +45,17 @@ CScnLightMan::~CScnLightMan() {}
 extern "C" void LightManArmSelectedLight(CScnLightMan* ths, u8* arg2) {
     ScnEnvLgt_ApplyLightRig(arg2);
     ths->mLight->flag121C = 1;
+}
+
+// Selects the active light: if the current pool light is armed, deactivate
+// its param block (uploadLightEnv) and clear the arm flag.
+// Flat retail symbol; declared extern "C" in CScnEnvLgtCtrl.hpp.
+extern "C" void LightManDeactivateArmedLight(CScnLightMan* ths) {
+    CScnItemLight* light = ths->mLight;
+    if (light->flag121C) {
+        uploadLightEnv(&light->_14[0], 0);
+        ths->mLight->flag121C = 0;
+    }
 }
 
 // Virtual dispatch thunk: invokes slot 3 of the object at +0x8 (flat retail

@@ -15,13 +15,10 @@
 
 extern u32 lbl_eu_80663E28; // .sbss global busy-flag word (bit 21)
 extern u32 lbl_eu_80664790;
-extern void startMapSelLoad(CMapSel* mapSel);
 extern void CFade_StartLoad(CFade* fade);
 void playUISound(u32);
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
-void MapSelCopy(CMapSel* dest, const CMapSel& src);
-void FadeCopy(CFade* dest, const CFade& src);
 void FloorMapCopy(CFloorMap* dest, const CFloorMap& src);
 void setupFloorMapPhase(CMenuMapSelect* self);
 void handleFloorMapInput(CMenuMapSelect* self);
@@ -153,87 +150,9 @@ struct CFloorMapCopyView {
     u32 f3344;
 };
 
-/* Tail of the CMapSel copy region starting at the unaligned offset +0x8E.
-   Retail copies these fields with unaligned word loads/stores (lwz/stw at
-   0x8E, 0x92, ... 0xAA), reproduced here via the packed attribute. */
-struct __attribute__((packed)) CMapSelCopyTail {
-    u32 w[7];   // +0x8E..0xA8
-    u32 aa;     // +0xAA..0xAD
-    u8 ae, af;  // +0xAE..0xAF
-    float b0;   // +0xB0
-};
 
-/* Whole-array word blocks: assigning these by value lets MWCC expand them
-   as a single unrolled ascending copy group. */
-struct CMapSelCopyW11 { u32 v[11]; };
-struct CMapSelCopyW8 { u32 v[8]; };
-
-/* Source-side view (distinct type from CMapSelCopyView so strict aliasing
-   lets MWCC hoist loads above stores, as in retail). */
-struct __attribute__((packed)) CMapSelCopyViewSrc {
-    u8 _00[4];                          // +0x00 vptr (skipped)
-    CMapSelCopyW11 f04;                 // +0x04..0x2C
-    u8 f30, f31, f32, f33;              // +0x30..0x33
-    u8 _34[4];                          // +0x34..0x37 (skipped)
-    CMapSelCopyW8 f38;                  // +0x38..0x54
-    u8 f58, f59, f5A, f5B;              // +0x58..0x5B
-    float f5C, f60, f64, f68, f6C;      // +0x5C..0x6C
-    u8 f70;                             // +0x70 (byte)
-    u8 _71[7];
-    u32 f78[4];                         // +0x78..0x84
-    u8 f88, f89, _8A[2], f8C, f8D;      // +0x88..0x8D
-    CMapSelCopyTail tail;               // +0x8E..0xB1 (packed, unaligned)
-};
-
-/* Field-exact view of CMapSel for the retail memberwise copy helper
-   MapFxStepPulseChannel-style (MapSelCopy). Widths follow the retail copy:
-   words for 0x04-0x2C / 0x38-0x54 / 0x70-0xAD, bytes for the flag fields,
-   floats for 0x5C-0x6C and 0xB0. The vtable word (+0x00) and +0x34-0x37
-   are not copied by retail. */
-struct CMapSelCopyView {
-    u8 _00[4];                          // +0x00 vptr (skipped)
-    CMapSelCopyW11 f04;                 // +0x04..0x2C
-    u8 f30, f31, f32, f33;              // +0x30..0x33
-    u8 _34[4];                          // +0x34..0x37 (skipped)
-    CMapSelCopyW8 f38;                  // +0x38..0x54
-    u8 f58, f59, f5A, f5B;              // +0x58..0x5B
-    float f5C, f60, f64, f68, f6C;      // +0x5C..0x6C
-    u8 f70;                             // +0x70 (byte)
-    u8 _71[7];
-    u32 f78[4];                         // +0x78..0x84
-    u8 f88, f89, _8A[2], f8C, f8D;      // +0x88..0x8D
-    CMapSelCopyTail tail;               // +0x8E..0xB1 (packed, unaligned)
-};
-
-/* Field-exact view of CFade for the retail memberwise copy helper
-   FadeCopy: everything from mMemRegion (+0x04) through the four flag
-   bytes (+0x24..0x27). The vtable word (+0x00) is not copied. Two
-   structurally identical but distinct types are used for the source and
-   destination views so strict aliasing lets MWCC hoist every load above
-   every store, matching the retail copy sequence. */
-struct CFadeCopyView {
-    UnkClass_8045F564 mMemRegion;               // +0x04..0x13
-    CFileHandle* mFileHandle;                   // +0x14
-    nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x18
-    nw4r::lyt::Layout* mLayout;                 // +0x1C
-    nw4r::lyt::AnimTransform* mAnimTrans;       // +0x20
-    u8 mIsLoaded, mFadeState, mReady, mVisible; // +0x24..0x27
-};
-
-// Distinct-type mirror of CFadeCopyView for the copy source.
-struct CFadeMemRegionSrc {
-    u32 unk0, unk4, unk8, unkC;
-};
-struct CFadeCopyViewSrc {
-    CFadeMemRegionSrc mMemRegion;
-    CFileHandle* mFileHandle;
-    nw4r::lyt::ArcResourceAccessor* mArcResAcc;
-    nw4r::lyt::Layout* mLayout;
-    nw4r::lyt::AnimTransform* mAnimTrans;
-    u8 mIsLoaded, mFadeState, mReady, mVisible;
-};
-
-// Out-of-line copy-assignment helpers of CBgTex / CTitleAHelp (defined in CMenuItemExchange.cpp).
+// Out-of-line CBgTex / CTitleAHelp copy assignment (retail global symbols in
+// CMenuItemExchange; not yet spelled as __as__ there).
 extern "C" CBgTex* ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src);
 extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 
@@ -244,16 +163,11 @@ void waitForDrawDone__9CDeviceVIFv();
 void Scn_SetPauseFlag(CScn* scn, int flag);
 void BgTex_Release_3D9C(CBgTex* self);
 void teardown(CTitleAHelp* self);
-void termMapSel(CMapSel* self);
 void FloorMap_Teardown(CFloorMap* self);
 void UIWin_ControlWindowLists(u32, u32);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CMainMenu_IsOpen();
 void func_8008413C__Q22cf13CfGameManagerFv(u32, u32);
-void updateMapSel(CMapSel* self);
-int getMapSelVisibleFlag(CMapSel* self);
-int getMapSelInitFlag(CMapSel* self);
-void initMapSel(CMapSel* self);
 int BgTex_IsLoaded_3E34(CBgTex* self);
 void BgTex_Tick_3D54(CBgTex* self);
 void updateHelp(CTitleAHelp* self);
@@ -268,7 +182,6 @@ int FloorMap_GetField42Gated(CFloorMap* self);
 void FloorMap_LoadStageLayout(CFloorMap* self);
 int FloorMap_GetField40Flag(CFloorMap* self);
 void FloorMap_UpdateFrame(CFloorMap* self);
-void drawMapSel(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo);
 void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
@@ -294,11 +207,6 @@ int CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);
 // (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
-void beginMapSelClose(CMapSel* self);
-void moveMapSelUp(CMapSel* self);
-void moveMapSelSelection(CMapSel* self);
-void moveMapSelPageUp(CMapSel* self);
-void moveMapSelPageDown(CMapSel* self);
 // (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
 void FloorMap_LoadMapFiles(CFloorMap* self);
 
@@ -346,6 +254,8 @@ inline CMenuMapSelect::CMenuMapSelect(CProcess* parentRef)
 
 CMenuMapSelect::~CMenuMapSelect() {}
 
+#pragma push
+#pragma dont_inline on
 void CMenuMapSelect::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
@@ -362,109 +272,18 @@ void CMenuMapSelect::Init() {
     }
     mTitleAHelp.CTitleAHelp_load();
 
-    MapSelCopy(&mMapSel, CMapSel());
-    startMapSelLoad(&mMapSel);
+    mMapSel = CMapSel();
+    mMapSel.startLoad();
 
-    FadeCopy(&mFade, CFade());
+    mFade = CFade();
     CFade_StartLoad(&mFade);
 
     FloorMapCopy(&mFloorMap, CFloorMap());
 
     static_cast<CScn*>(mParent)->addRenderCB(this, 0xd, 1);
 }
+#pragma pop
 
-
-// Copy helpers for member sub-object initialization (retail calls these from
-// Init; empty stubs must not be inlined away at -O4,p, so disable auto-inline
-// for their definitions).
-void MapSelCopy(CMapSel* dest, const CMapSel& src) {
-    // Memberwise copy matching retail's per-field widths. Tail fields from
-    // +0x8E on are copied with unaligned word accesses (packed view).
-    CMapSelCopyView& d = *reinterpret_cast<CMapSelCopyView*>(dest);
-    // Volatile pins every source load at its statement position, reproducing
-    // retail's exact load order; destination stores remain schedulable.
-    const volatile CMapSelCopyViewSrc& s = *reinterpret_cast<const volatile CMapSelCopyViewSrc*>(&src);
-
-    d.f5B = s.f5B;
-    d.f70 = s.f70;
-    d.f59 = s.f59;
-    d.f78[0] = s.f78[0];
-    d.f78[1] = s.f78[1];
-    d.f78[2] = s.f78[2];
-    d.f78[3] = s.f78[3];
-    d.f88 = s.f88;
-    d.f89 = s.f89;
-    d.f8C = s.f8C;
-    d.f8D = s.f8D;
-    d.tail.w[0] = s.tail.w[0];
-    d.tail.w[1] = s.tail.w[1];
-    d.tail.w[2] = s.tail.w[2];
-    d.tail.w[3] = s.tail.w[3];
-    d.tail.w[4] = s.tail.w[4];
-    d.tail.w[5] = s.tail.w[5];
-    d.tail.w[6] = s.tail.w[6];
-
-    // Retail loads +0xAA here but stores it only after the float block.
-    volatile u32 aav = s.tail.aa;
-
-    d.f04.v[0] = s.f04.v[0];
-    d.f04.v[1] = s.f04.v[1];
-    d.f04.v[2] = s.f04.v[2];
-    d.f04.v[3] = s.f04.v[3];
-    d.f04.v[4] = s.f04.v[4];
-    d.f04.v[5] = s.f04.v[5];
-    d.f04.v[6] = s.f04.v[6];
-    d.f04.v[7] = s.f04.v[7];
-    d.f04.v[8] = s.f04.v[8];
-    d.f04.v[9] = s.f04.v[9];
-    d.f04.v[10] = s.f04.v[10];
-    d.f30 = s.f30;
-    d.f31 = s.f31;
-    d.f32 = s.f32;
-    d.f33 = s.f33;
-    d.f38.v[0] = s.f38.v[0];
-    d.f38.v[1] = s.f38.v[1];
-    d.f38.v[2] = s.f38.v[2];
-    d.f38.v[3] = s.f38.v[3];
-    d.f38.v[4] = s.f38.v[4];
-    d.f38.v[5] = s.f38.v[5];
-    d.f38.v[6] = s.f38.v[6];
-    d.f38.v[7] = s.f38.v[7];
-    d.f58 = s.f58;
-    d.f5A = s.f5A;
-    d.f5C = s.f5C;
-    d.f60 = s.f60;
-    d.f64 = s.f64;
-    d.f68 = s.f68;
-    d.f6C = s.f6C;
-    d.tail.aa = aav;
-    d.tail.ae = s.tail.ae;
-    d.tail.af = s.tail.af;
-    d.tail.b0 = s.tail.b0;
-}
-
-// Memberwise CFade copy helper (copies everything after the vptr).
-// __restrict lets MWCC prove dest/src don't alias so it hoists all loads
-// above the stores; the four mMemRegion words are assigned ascending to
-// match retail's reversed scheduling within the word block.
-void FadeCopy(CFade* dest, const CFade& src) {
-    CFadeCopyView& d = *reinterpret_cast<CFadeCopyView*>(&dest->mMemRegion);
-    const CFadeCopyViewSrc& s = *reinterpret_cast<const CFadeCopyViewSrc*>(&src.mMemRegion);
-
-    // The distinct source view type plus __restrict let MWCC hoist all
-    d.mMemRegion.unk0 = s.mMemRegion.unk0;
-    d.mMemRegion.unk4 = s.mMemRegion.unk4;
-    d.mMemRegion.unk8 = s.mMemRegion.unk8;
-    d.mMemRegion.unkC = s.mMemRegion.unkC;
-    d.mFileHandle = s.mFileHandle;
-    d.mArcResAcc = s.mArcResAcc;
-    d.mLayout = s.mLayout;
-    d.mAnimTrans = s.mAnimTrans;
-    d.mIsLoaded = s.mIsLoaded;
-    d.mFadeState = s.mFadeState;
-    d.mReady = s.mReady;
-    d.mVisible = s.mVisible;
-}
 
 // Memberwise copy of a fully constructed CFloorMap into the process member
 // (retail copy helper used by Init). Field widths follow the retail copy; the
@@ -577,7 +396,7 @@ void CMenuMapSelect::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    termMapSel(&mMapSel);
+    mMapSel.term();
     (&mFade)->Unload();
     FloorMap_Teardown(&mFloorMap);
 
@@ -600,9 +419,9 @@ void CMenuMapSelect::Move() {
     case 0:
         if (BgTex_IsLoaded_3E34(&mBgTex) == 0) break;
         if (isInitialized(&mTitleAHelp) == 0) break;
-        if (getMapSelVisibleFlag(&mMapSel) == 0) break;
+        if (mMapSel.getVisibleFlag() == 0) break;
         func_801C412C(&mTitleAHelp);
-        initMapSel(&mMapSel);
+        mMapSel.init();
         mState = 1;
         playUISound(0x6d);
         UIWin_ControlWindowLists(1, 0);
@@ -611,7 +430,7 @@ void CMenuMapSelect::Move() {
 
     case 1:
         if (mTitleAHelp.isIdle() == 0) break;
-        if (getMapSelInitFlag(&mMapSel) == 0) break;
+        if (mMapSel.getInitFlag() == 0) break;
         mState = 2;
         break;
 
@@ -621,7 +440,7 @@ void CMenuMapSelect::Move() {
 
     case 3:
         if (mTitleAHelp.isIdle() == 0) break;
-        if (getMapSelInitFlag(&mMapSel) == 0) break;
+        if (mMapSel.getInitFlag() == 0) break;
         mField54 = 1;
         break;
 
@@ -685,7 +504,7 @@ void CMenuMapSelect::Move() {
 
     if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
         BgTex_Tick_3D54(&mBgTex);
-        updateMapSel(&mMapSel);
+        mMapSel.update();
     }
     updateHelp(&mTitleAHelp);
     CFade_Update(&mFade);
@@ -707,7 +526,7 @@ void CMenuMapSelect::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-        drawMapSel(&mMapSel, &drawInfo);
+        mMapSel.draw(&drawInfo);
     }
     FloorMap_Draw(&mFloorMap, &drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
@@ -795,16 +614,16 @@ void CMenuMapSelect::handleWorldMapInput() {
     } else if (triggerBit2 != 0) {
         // Show help overlay.
         beginClose(&this->mTitleAHelp);
-        beginMapSelClose(&this->mMapSel);
+        mMapSel.beginClose();
         this->mState = 3;
     } else if (cancel != 0) {
-        moveMapSelUp(&this->mMapSel);
+        mMapSel.moveUp();
     } else if (stickDir != 0) {
-        moveMapSelSelection(&this->mMapSel);
+        mMapSel.moveDown();
     } else if (confirm != 0) {
-        moveMapSelPageUp(&this->mMapSel);
+        mMapSel.movePageUp();
     } else if (menu != 0) {
-        moveMapSelPageDown(&this->mMapSel);
+        mMapSel.movePageDown();
     } else if (triggerBit3 != 0) {
         // Confirm selection.
         if (CMainMenu_GetInstancePtr() != 0) {

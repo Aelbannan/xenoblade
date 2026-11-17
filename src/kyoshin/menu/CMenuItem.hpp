@@ -11,7 +11,7 @@ class CScn;
 class CItemBoxGrid;
 
 // The 4-argument CItemBoxGrid constructor (retail unmangled name).
-extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 arg1, u32 arg2,
+extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 arg1, u32 arg2,
                                    u32 arg3, u32 arg4);
 
 /*
@@ -28,7 +28,7 @@ public:
         : mScene(scene), mBgTex(0), mTitleAHelp(0, 0) {
         // mItemBoxGrid is opaque storage; its constructor is called by the
         // C-ABI name (the 4-arg form has no C++ declaration).
-        __ct__CItemBoxGrid(grid(), 0, 0, 0, 1);
+        __ct__12CItemBoxGridFUcUsUlUc(grid(), 0, 0, 0, 1);
         mState = 0;
         mField4AC5 = flag5;
         mField4AC6 = flag6;

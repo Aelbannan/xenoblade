@@ -20,9 +20,7 @@
  *   0x5C: CProcess* mParentRef -- parent process reference
  *   0x60: CBgTex mBgTex        -- background layout widget
  *   0x80: CTitleAHelp          -- title/help bar
- *   0xB8: COption storage      -- core option menu logic (0x104 bytes; its
- *                                 ctor/dtor are the flat retail symbols, so the
- *                                 bytes are constructed/destroyed by hand)
+ *   0xB8: COption mOption      -- core option menu logic
  *  0x1BC: u8 mState            -- phase/state indicator (0..4)
  *  0x1BD: u8 mArg              -- constructor argument
  */
@@ -42,7 +40,7 @@ public:
     CProcess* mParentRef;         // 0x5C: parent process reference
     CBgTex mBgTex;                // 0x60
     CTitleAHelp mTitleAHelp;      // 0x80
-    u8 mOption[0x104];            // 0xB8: COption storage (see class comment)
+    COption mOption;              // 0xB8
     u8 mState;                    // 0x1BC
     u8 mArg;                      // 0x1BD
 };

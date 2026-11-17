@@ -14,8 +14,6 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 void playUISound(u32);
 
-// Same-TU blob copy helper (defined below); Init uses it twice.
-extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src);
 
 /*
  * Constructor. The IUICf base (CTTask + mField54/mField55) and the IScnRender
@@ -128,25 +126,6 @@ void CMenuShopBuy::cbRenderBefore() {
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mItemBoxLine.DrawLayout(&drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
-}
-
-// Copy the 0x159-byte shop-buy data blob field-by-field. Each sub-struct
-// assignment comes out as a mtctr/lwzu/stwu counted loop; the u32 slot group
-// is unrolled into 6 word pairs and the byte is a single lbz/stb.
-extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src) {
-    dst->m00 = src->m00;
-    dst->m18 = src->m18;
-    // Six independent word slots: MWCC schedules these as interleaved
-    // r8/r5 load/store pairs rather than a counted copy loop.
-    dst->mA8[0] = src->mA8[0];
-    dst->mA8[1] = src->mA8[1];
-    dst->mA8[2] = src->mA8[2];
-    dst->mA8[3] = src->mA8[3];
-    dst->mA8[4] = src->mA8[4];
-    dst->mA8[5] = src->mA8[5];
-    dst->mC0 = src->mC0;
-    dst->mD8 = src->mD8;
-    dst->mD9 = src->mD9;
 }
 
 // Shop-buy menu factory: if no instance exists yet, allocate 0x700 bytes from

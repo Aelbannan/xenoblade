@@ -194,10 +194,36 @@ extern "C" void* Bdat_GetTable_AA34();
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
 int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 
-#include "kyoshin/CItemBoxGrid.hpp"
-// BdatGetU8Direct comes from CItemBoxGrid.hpp's wide-view (u32) decl - the
-// callee's lbz already zero-extends and callers keep the raw result (mr),
-// masking only at use. The old rename guard + local redeclaration are gone.
+// C-linkage helpers formerly pulled in through CItemBoxGrid.hpp (which now
+// defines a real IWorkEvent-derived class and so cannot be included here).
+// BdatGetU8Direct keeps the wide-view (u32) decl: the callee's lbz already
+// zero-extends and callers keep the raw result (mr), masking only at use.
+extern "C" int KyoshinHeap_GetField44();
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void closeFileHandle__FPP11CFileHandle(void**);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void sysWinTermLayout(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
+extern "C" void __ct__7CSysWinFUc(void*, int);
+extern "C" void InfoCfCopySysWin(void*, void*);
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" void sysWinSetKindContent(void*, u32, int);
+extern "C" void sysWinApplyKind(void*, int);
+extern "C" void sysWinOpenPhase1(void*);
+extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
+extern "C" int CSysWin_isActive(void*);
+extern "C" void Cur_SetVisible(void*, u8);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
+extern "C" void sysWinAdvancePhase3(void*);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" char* MakeTplNameSysFile(u32);
+//@@KIZUNA_DECLS@@
 
 // u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
 // (subtracts the retail .sdata2 magic double lbl_eu_80667E70).

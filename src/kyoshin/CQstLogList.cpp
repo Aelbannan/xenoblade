@@ -835,3 +835,13 @@ void CQstLogList::ScrollUp() {
     }
     playUISound(1);
 }
+
+// Unreferenced in retail (mwld dead-strips it), but it must exist in this TU:
+// under -O4,s MWCC refuses to inline an inline/implicit function that has more
+// than one call site in the translation unit (docs/MWCC_CASES.md, "When MWCC
+// inlines a copy assignment"). Retail's ctor calls QstInfo's implicit
+// operator= out of line inside the inlined QstData copy, while CMenuQuestLog
+// (one site) inlines it, so the original CQstLogList.cpp had a second
+// QstInfo assignment in code that did not survive the link. Its exact shape
+// is unknown; this is the minimal stand-in.
+void QstLogList_CopyQstInfo(QstInfo* dst, const QstInfo* src) { *dst = *src; }

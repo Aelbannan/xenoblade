@@ -5,18 +5,20 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
 class CFileHandle;
+class CExchangeWin;
+extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val);
 class CEventFile;
 
-// Vtable for CExchangeWin (split1 .data)
-extern "C" void* lbl_eu_80536640[];
+#include "monolib/work/IWorkEvent.hpp"
 
-/* CExchangeWin - layout-compatible with IWorkEvent (vptr @ 0) for
-   CDeviceFile::readFile, but not a C++ IWorkEvent subclass.  Vtable is
-   provided by split1; the constructor stores it manually. */
-class CExchangeWin {
+/* CExchangeWin - item-exchange confirmation window (retail vtable
+   __vt__12CExchangeWin, IWorkEvent base list): receives its layout archive
+   through IWorkEvent::OnFileEvent. */
+class CExchangeWin : public IWorkEvent {
 public:
-    ~CExchangeWin();
-    bool OnFileEvent(CEventFile* pEventFile);
+    CExchangeWin();
+    virtual ~CExchangeWin();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     // field accessors - retail func_8022D094/08C/09C (recovered as members)
     int getField24();  // retail caller (CItemBoxGrid IsSubWinActive) compares the FULL word, no rlwinm mask
@@ -25,7 +27,16 @@ public:
     // recovered return type is int even though the body returns a byte.
     int getField27();
 
-    void* mVtbl;                                  // 0x00
+    void ExWin_LoadFile();
+    void ExWin_TickUpdate();
+    void ExWin_DrawLayout(nw4r::lyt::DrawInfo* drawInfo);
+    void ExWin_Teardown();
+    void ExWin_RequestOpen();
+    void ExWin_RequestClose();
+    void ExWin_SetTwoTexts(char* text1, char* text2);
+    void ExWin_AdvanceEnter();
+    void ExWin_AdvanceExit();
+
     UnkClass_8045F564 mMemRegion;                 // 0x04
     CFileHandle* mFileHandle;                      // 0x14
     nw4r::lyt::ArcResourceAccessor* mAccessor;     // 0x18
@@ -66,11 +77,6 @@ struct CExchangeWinFontView {
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-// Class_8045F858 scratch-region RAII guard ctor/dtor (retail C-ABI names; the
-// explicit dtor call is required so the -1 dealloc flag matches retail).
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
-extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 // Retail symbol is the pre-mangled Fv name but the call passes -1 in r3.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail reloc is the UNMANGLED name; the C++ member in CUICfManager.hpp

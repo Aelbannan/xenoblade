@@ -11,11 +11,16 @@
  *   QstInfo::QstInfo()  0x80228E44  weak, zeroes every field
  *   QstInfo::~QstInfo() 0x80228E68  weak, empty (only delete)
  *   QstData::~QstData() 0x80228EA8  weak, __destroy_arr(mList)
- *   QstInfo::operator=  0x8022905C  weak, after its first user QstData::Refresh;
- *                                   body in QstDataInline.hpp (see there)
- *   QstData::~QstData() is implicit (CQstLogList inlines it); no CMenuQstCnt
- *                       function references it, so this TU does not emit
- *                       the retail copy at 0x80228EA8.
+ *   QstInfo::operator=  0x8022905C  weak, implicit. Emitted out of line
+ *                                   after its first user QstData::Refresh
+ *                                   because -O4,s does not inline functions
+ *                                   with several call sites; CMenuQuestLog
+ *                                   (one site) inlines it.
+ *   QstData::~QstData() is implicit (CQstLogList inlines it); no live
+ *                       CMenuQstCnt function references it, so this TU does
+ *                       not emit the retail copy at 0x80228EA8 (its retail
+ *                       position suggests a dead-stripped user between the
+ *                       QstData ctor and Refresh).
  *   QstInfo(QstInfo&)      0x80229498  weak, after QstData::Sort; non-const
  *                                         source -> loads are not hoisted
  *                                         above the stores (may alias)
@@ -60,7 +65,6 @@ public:
         mOrder = rhs.mOrder;
     }
     ~QstInfo() {}
-    QstInfo& operator=(const QstInfo& rhs);
 
     u16 mId;        // 0x0 quest id
     u8  mKind;      // 0x2 kind class (1 / 2 / 3)

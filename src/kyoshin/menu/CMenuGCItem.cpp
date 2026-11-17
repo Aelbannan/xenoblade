@@ -27,16 +27,10 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsItemBoxReady(CItemBoxGrid* self);
-extern "C" void InitItemDisplay(CItemBoxGrid* self);
-extern "C" void UpdateItemBox(CItemBoxGrid* self);
-extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void UnloadItemBox(CItemBoxGrid* self);
-extern "C" int GetField61(CItemBoxGrid* self);
 extern "C" int IsMenuState621F0();
 
 // CItemBoxGrid is still driven through its C-linkage ctor/dtor (4-arg ctor).
-extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 
 // DrawInfo helper - retail emits the mangled nw4r form
@@ -55,7 +49,7 @@ CMenuGCItem* CMenuGCItem::sInstance;
  */
 inline CMenuGCItem::CMenuGCItem(CProcess* parent, u32 arg)
     : mParentRef(parent), mBgTex(0), mTitleAHelp(nullptr, 0) {
-    __ct__CItemBoxGrid((CItemBoxGrid*)mItemBoxGrid, 0, 0, 0, 1);
+    __ct__12CItemBoxGridFUcUsUlUc((CItemBoxGrid*)mItemBoxGrid, 0, 0, 0, 1);
     mState = 0;
     mArg = arg;
 }
@@ -95,7 +89,7 @@ void CMenuGCItem::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    UnloadItemBox((CItemBoxGrid*)mItemBoxGrid);
+    ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->UnloadItemBox();
 
     sInstance = nullptr;
 }
@@ -112,16 +106,16 @@ void CMenuGCItem::Move() {
         // Once the bg texture, title bar and item grid are all ready, start
         // the panel intro animations and play the open cue (sound 0x6d).
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
-            IsItemBoxReady((CItemBoxGrid*)mItemBoxGrid) != 0) {
+            ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->IsItemBoxReady() != 0) {
             func_801C412C(&mTitleAHelp);
-            InitItemDisplay((CItemBoxGrid*)mItemBoxGrid);
+            ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->InitItemDisplay();
             mState = 1;
             playUISound(0x6d);
         }
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid is ready.
-        if (mTitleAHelp.isIdle() != 0 && GetField61((CItemBoxGrid*)mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->GetField61() != 0) {
             mState = 2;
         }
         break;
@@ -130,7 +124,7 @@ void CMenuGCItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (mTitleAHelp.isIdle() != 0 && GetField61((CItemBoxGrid*)mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->GetField61() != 0) {
             mField54 = 1;
         }
         break;
@@ -138,7 +132,7 @@ void CMenuGCItem::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     updateHelp(&mTitleAHelp);
-    UpdateItemBox((CItemBoxGrid*)mItemBoxGrid);
+    ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->UpdateItemBox();
 }
 
 /* Render the GC-item screen through a stack DrawInfo: gate on the task/busy
@@ -155,7 +149,7 @@ void CMenuGCItem::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
-    DrawItemBoxGrid((CItemBoxGrid*)mItemBoxGrid, &drawInfo);
+    ((CItemBoxGrid*)((CItemBoxGrid*)mItemBoxGrid))->DrawItemBoxGrid(&drawInfo);
 }
 
 extern "C" int CMenuGCItem_IsActive() {

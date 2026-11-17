@@ -4,30 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include <math.h>
 
-// ---------------------------------------------------------------------------
-// Crystal-making state table. Same layout as CMCCrystalData (CMCCrystalBox.hpp),
-// kept TU-local because that header also declares these targets with
-// placeholder signatures that conflict with the real definitions below.
-// ---------------------------------------------------------------------------
-struct MakeCrystalEntry {
-    s16 id;      // +0x00 crystal id
-    u8  flag;    // +0x02
-    u8  pad3;    // +0x03
-};
-
-struct MakeCrystalTable {
-    MakeCrystalEntry entries[0x400]; // +0x0000 1024 entries x 4 bytes
-    u16 count;                       // +0x1000 filled-entry count
-    u8  byte_1002;                   // +0x1002 item category
-    u8  limit;                       // +0x1003 row count
-    u8  current;                     // +0x1004 current row cursor
-};
-
-// First word of a CItem_kindPtr item record (CMCItemBoxEntry / CrystalInfo
-// word0 shape). Live check and >>20 subcategory both read this word.
-struct MakeCrystalItemObj {
-    u32 word0;
-};
+#include "kyoshin/makecrystal/CMCCrystalData.hpp"
 
 // --- imports ---
 // Item-table helpers (retail unmangled symbols): declared with the proper
@@ -40,7 +17,7 @@ struct MakeCrystalItemObj {
 // dispatched. The first declared virtual lands at memory slot 2 because MWCC
 // reserves two RTTI slots (0x0/0x4) at the head of the vtable.
 struct CrystalItemImpl {
-    virtual u32 getCrystalItemId(MakeCrystalItemObj* slot) = 0; // vtable offset 8
+    virtual u32 getCrystalItemId(CMCCrystalItemObj* slot) = 0; // vtable offset 8
     virtual void vf04() = 0;
     virtual void vf08() = 0;
 };
@@ -59,157 +36,113 @@ extern __declspec(section ".sdata2") f32 lbl_eu_8066845C = 0.0f;
 // (f32)t casts; they cannot be named in source, so their reloc labels stay as
 // decomp-pool entries (@...) and register as un-fixable reloc drift.
 
-// sibling unit (CMCCrystalBox.cpp) helpers
-extern "C" void sortCrystalIdOrder(MakeCrystalTable* d);
-extern "C" void sortCrystalKeyOrder(MakeCrystalTable* d);
-
-// 4-byte {s16, u8} crystal-entry copy helper (defined below the callers so
-// MWCC treats it out-of-line, matching retail's bl).
-extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst,
-                                                  const MakeCrystalEntry* src);
-
-// Returns the table pointer (retail mr r3,r28 on the way out).
-extern "C" MakeCrystalTable* MakeCrystal_ResetTable(MakeCrystalTable* d) {
-    // Rolled do-while pointer walk (sth/stb per entry); bound kept inline in
-    // the condition.
-    MakeCrystalEntry* p = d->entries;
-    s16 clearId = -1;
-    u8 clearFlag = 0;
-    do {
-        p->id = clearId;
-        p->flag = clearFlag;
-        ++p;
-    } while (p < d->entries + 0x400);
-    d->count = 0;
-    d->byte_1002 = 9;
-    d->limit = 0;
-    d->current = 0;
+CMCCrystalData::CMCCrystalData() {
+    count = 0;
+    category = 9;
+    limit = 0;
+    current = 0;
     for (u16 i = 0; i < 0x400; ++i) {
-        MakeCrystalEntry tmp;
-        tmp.id = -1;
-        tmp.flag = 0;
-        MakeCrystal_CopyEntry(&d->entries[i], &tmp);
+        entries[i] = CMCCrystalDataEntry();
     }
-    return d;
 }
 
-// Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
-// out-of-line (bl) from the second reset loop; noinline keeps MWCC from
-// folding the body into the callers.
-extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst,
-                                                  const MakeCrystalEntry* src) {
-    // Retail 0x80215374: 0x14-byte {s16,u8} copy (lha/sth + lbz/stb).
-    // A struct assignment would also copy pad3 and change the emitted code.
-    dst->id = src->id;
-    dst->flag = src->flag;
+// Retail calls this out-of-line from the reset loops; it copies the two
+// named fields only.
+CMCCrystalDataEntry& CMCCrystalDataEntry::operator=(const CMCCrystalDataEntry& other) {
+    id = other.id;
+    flag = other.flag;
+    return *this;
 }
 
-// Retail 0x80213530: trivial deleting destructor (no members to destruct),
-// frees the object only when both the object and the flags-bit are non-zero.
-extern "C" MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
-    if (self != 0 && flags > 0)
-        operator delete(self);
-    return self;
-}
+// Out of line here: retail emits it in this unit right after the ctor. (The
+// retail CMCCrystalBox dtor inlines it, which an out-of-line definition
+// cannot reproduce; see docs/MWCC_CASES.md.)
+CMCCrystalData::~CMCCrystalData() {}
+
+
+
 
 // Retail 0x80213570: rebuild the crystal table. Resets every entry, walks the
 // item category and keeps the rows whose item id matches `target`, computes
-// the row count (limit) as ceil(filled-count / 30), then refreshes/sorts.
-extern "C" void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
-    d->count = 0;
+// the page count as ceil(filled-count / 30), then sorts.
+void CMCCrystalData::collectByTarget(u8 target) {
+    count = 0;
     for (u16 i = 0; i < 0x400; ++i) {
-        MakeCrystalEntry tmp;
-        tmp.id = -1;
-        tmp.flag = 0;
-        MakeCrystal_CopyEntry(&d->entries[i], &tmp);
+        entries[i] = CMCCrystalDataEntry();
     }
-    int total = (int)CItemBlock_countKindSlots(d->byte_1002);
+    int total = (int)CItemBlock_countKindSlots(category);
     u16 i = 0;
     while ((u16)i < total) {
-        MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, (s16)i);
+        CMCCrystalItemObj* obj =
+            (CMCCrystalItemObj*)CItem_kindPtr(category, (s16)i);
         if (obj != 0 && obj->word0 != 0) {
                 CrystalItemImpl* inst =
                     (CrystalItemImpl*)CItem_initItemImplInstances(obj);
             u32 rid = inst->getCrystalItemId(obj);
             if (target == (u16)rid) {
-                u16 n = d->count;
-                d->count = n + 1;
-                d->entries[n].id = (s16)i;
+                u16 n = count;
+                count = n + 1;
+                entries[n].id = (s16)i;
             }
         }
         i++;
     }
-    // Row count = ceil(filled count / 30); each row holds up to 30 crystals.
-    // Manual ceiling (retail inlines the rounding instead of calling libm).
-    f32 v = (f32)d->count;
+    // Page count = ceil(filled count / 30), rounded by hand.
+    f32 v = (f32)count;
     v = v / lbl_eu_80668458;
-    int t = (int)v;                      // floor since v >= 0 (fctiwz trunc)
+    int t = (int)v;
     f32 frac = v - (f32)t;
     if (lbl_eu_8066845C != frac)
         t++;
-    d->limit = (u8)t;
-    d->current = 0;
-    sortCrystalIdOrder(d);
+    limit = (u8)t;
+    current = 0;
+    sortIdOrder();
     if ((CItemBlock_getFlag120EC(9) & 0xffffU) == 0) {
-        sortCrystalKeyOrder(d);
+        sortKeyOrder();
     }
 }
 
-// Retail 0x802136E0: set the flag byte of the entry at the adjusted index.
-extern "C" void MakeCrystal_SetFlag(MakeCrystalTable* d, int idx, unsigned char val) {
-    u16 adj = (u16)(idx + (s8)d->current * 30);
-    if (adj >= d->count) return;
-    d->entries[adj].flag = val;
+void CMCCrystalData::setFlag(int idx, u8 val) {
+    u16 adj = (u16)(idx + current * 30);
+    if (adj >= count) return;
+    entries[adj].flag = val;
 }
 
-// Retail 0x80213710: return the flag of the entry at the adjusted index
-// (0 when out of range).
-extern "C" u8 MakeCrystal_GetFlag(MakeCrystalTable* d, u8 idx) {
-    u16 adj = (u16)(idx + (s8)d->current * 30);
-    if (adj < d->count)
-        return d->entries[adj].flag;
+int CMCCrystalData::getFlag(u8 idx) {
+    u16 adj = (u16)(idx + current * 30);
+    if (adj < count)
+        return entries[adj].flag;
     return 0;
 }
 
-// Retail 0x80213748: return 1 iff every entry's flag is non-zero.
-// NOTE: retail exports an unmangled `MakeCrystal_AllFlagsSet`; the mangled definition
-// here is mapped back to the retail name by the symbol-recovery tooling
-// (same mechanism as copyCrystalEntry -> MakeCrystal_CopyEntry).
-extern "C" int MakeCrystal_AllFlagsSet(MakeCrystalTable* d) {
-    // Retail caches count before the loop (read once into a register).
-    u16 count = d->count;
-    for (u16 i = 0; i < count; ++i) {
-        if (d->entries[i].flag == 0) {
+int CMCCrystalData::allFlagsSet() {
+    u16 n = count;
+    for (u16 i = 0; i < n; ++i) {
+        if (entries[i].flag == 0) {
             return 0;
         }
     }
     return 1;
 }
 
-// Retail 0x80213788: advance the current row cursor, wrapping to 0 when it
-// reaches the row limit.
-extern "C" void MakeCrystal_AdvanceCursor(MakeCrystalTable* d) {
-    u8 v = d->current + 1;
-    d->current = v;
-    if ((s8)v < d->limit) return;
-    d->current = 0;
+void CMCCrystalData::nextPage() {
+    u8 v = current + 1;
+    current = v;
+    if ((s8)v < limit) return;
+    current = 0;
 }
 
-// Retail 0x802137B4: step the row cursor back one, wrapping to limit - 1 at 0.
-extern "C" void func_802137B4(MakeCrystalTable* d) {
-    d->current = d->current - 1;
-    if ((s8)d->current < 0)
-        d->current = d->limit - 1;
+void CMCCrystalData::prevPage() {
+    current = current - 1;
+    if (current < 0)
+        current = limit - 1;
 }
 
-// Retail 0x802137DC: resolve the item at the adjusted index, return its
-// sub-category (bits 20..31) or 0 when out of range / unresolvable.
-extern "C" u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
-    u16 adj = (u16)(idx + (s8)d->current * 30);
-    if (adj < d->count) {
-        MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, d->entries[adj].id);
+u16 CMCCrystalData::getSubCategory(u8 idx) {
+    u16 adj = (u16)(idx + current * 30);
+    if (adj < count) {
+        CMCCrystalItemObj* obj =
+            (CMCCrystalItemObj*)CItem_kindPtr(category, entries[adj].id);
         if (obj != 0) {
             u32 v = obj->word0;
             if (v != 0) return v >> 20;
@@ -218,16 +151,12 @@ extern "C" u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
     return 0;
 }
 
-// Retail 0x8021384C: resolve the item at the adjusted index and return the
-// object pointer (0 when out of range or unresolvable).
-extern "C" MakeCrystalItemObj* MakeCrystal_GetItemObject(MakeCrystalTable* d, u8 idx) {
-    u16 adj = (u16)(idx + (s8)d->current * 30);
-    if (adj < d->count) {
-        MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, d->entries[adj].id);
+CMCCrystalItemObj* CMCCrystalData::getItemObject(u8 idx) {
+    u16 adj = (u16)(idx + current * 30);
+    if (adj < count) {
+        CMCCrystalItemObj* obj =
+            (CMCCrystalItemObj*)CItem_kindPtr(category, entries[adj].id);
         if (obj != 0 && obj->word0 != 0) return obj;
     }
     return 0;
 }
-
-// (definition above the callers so MWCC treats it out-of-line, matching retail)

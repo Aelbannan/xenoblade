@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPartyState.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CEquipItemBoxImports.hpp"
 
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"

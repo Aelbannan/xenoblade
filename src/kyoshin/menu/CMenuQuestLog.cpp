@@ -3,7 +3,6 @@
 
 
 #include "kyoshin/menu/CMenuQuestLog.hpp"
-#include "kyoshin/QstDataInline.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController

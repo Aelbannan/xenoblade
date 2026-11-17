@@ -7,6 +7,8 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
+#include "kyoshin/makecrystal/CMCCrystalData.hpp"
+#include "kyoshin/makecrystal/CMCCrystalParamTable.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -39,42 +41,36 @@ extern double lbl_eu_80668460;    // 2^52 double conversion constant (unsigned p
 extern double lbl_eu_80668468;    // 2^52 + 2^31 double conversion constant (signed path)
 extern float lbl_eu_8066847C;
 
-// 8-byte crystal box param: two s16 counters (selected id, quantity), a
-// spare s16, and two flag bytes. Inlined low-level value type for the
-// 32-slot sub-tables at CMCCrystalBox+0x2D8 and the transient sort table.
-struct CMCCrystalBoxParam {
-    s16 m0;   // +0x00 selected id
-    s16 m2;   // +0x02 quantity
-    s16 m4;   // +0x04 spare
-    u8  m6;   // +0x06 flag
-    u8  m7;   // +0x07 flag
-};
 
-// TU-local crystal-box param helpers. Retail symbols are unmangled C names
-// (per retail relocs); declared with C linkage so call sites emit the retail
-// reloc names. setCrystalBoxParam returns its first argument (callers reuse it as
-// the copy source for copyCrystalBoxParam).
-extern "C" CMCCrystalBoxParam* setCrystalBoxParam(CMCCrystalBoxParam*, s16, s16);
-extern "C" void copyCrystalBoxParam(CMCCrystalBoxParam*, const CMCCrystalBoxParam*);
 
-// Entry in the crystal-state table rooted at CMCCrystalBox+0x3D8.
-struct CMCCrystalDataEntry {
-    s16  id;     // +0x00
-    u8   flag;   // +0x02
-    u8   pad3;   // +0x03
-};
+// Transient (crystal id, quantity) pair of the aggregation loops
+// (CMCCrystalSelTable::buildIdList, getCrystalSelTopCount). set is emitted
+// out of line after its first user (retail 0x8021BB68).
+class CMCCrystalAggPair {
+public:
+    CMCCrystalAggPair(u16 id = 0, u16 count = 0) : id(id), count(count) {}
+    void set(const CMCCrystalAggPair& other) {
+        id = other.id;
+        count = other.count;
+    }
 
-// Transient (crystal id, quantity) pair used by the aggregation helpers
-// buildCrystalBoxIdList / getCrystalSelTopCount.
-struct MCAggPair {
     u16 id;     // +0x00
     u16 count;  // +0x02
 };
 
-// Two-halfword pair copy used by the aggregation helpers (this TU).
-// Retail relocs reference the unmangled C name, so the declaration and the
-// definition use C linkage.
-extern "C" void copyCrystalAggPair(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src);
+// {id, quantity, flag} record of the crystal-grid aggregation
+// (rebuildCrystalGridTable). Copy ctor and set are emitted out of line after
+// that function (retail 0x8021AE2C / 0x8021AE48).
+class CMCCrystalGridRec {
+public:
+    CMCCrystalGridRec(u16 id = 0, u16 count = 0, u8 flag = 0) : m0(id), m2(count), m4(flag) {}
+    CMCCrystalGridRec(const CMCCrystalGridRec& other) : m0(other.m0), m2(other.m2), m4(other.m4) {}
+    void set(const CMCCrystalGridRec& other) { *this = other; }
+
+    u16 m0;  // +0x00 crystal id
+    u16 m2;  // +0x02 quantity
+    u8  m4;  // +0x04 selected-crystal flag
+};
 
 
 
@@ -102,31 +98,32 @@ struct PanePosMirror {
     f32 m50;         // +0x50
 };
 
-// Crystal-state table rooted at CMCCrystalBox+0x3D8: 1024 entries (4 bytes
-// each), then a small state header, then the name buffer for sprintf.
-struct CMCCrystalData {
-    CMCCrystalDataEntry entries[0x400]; // +0x000
-    u16  count;                         // +0x1000
-    u8   byte_1002;                     // +0x1002 (category)
-    u8   limit;                         // +0x1003
-    s8   current;                       // +0x1004
-    char name[0x10C8 - 0x1005];         // +0x1005 (buffer passed to sprintf)
-};
 
 
-// Stack scratch initialised by initCrystalBoxScratch inside loadCrystalBoxArchive: the
-// helper views it as a bare box head (8 zeroed words at +0x00, count byte
-// at +0x20, -1-filled bytes at +0x21..0x28, flag bytes at +0x29/+0x6A).
-// The untouched middle bytes (+0x2A..0x49) are the page-slot copy source.
-// All-byte members keep the struct alignment-1 so the stack slot sits at
-// sp+8 like retail (u32 members get 16-aligned and pad the frame +0x10).
-struct CrystalBoxScratch {
-    u8  zeros[0x20];         // +0x00 (initCrystalBoxScratch 8-word clear)
-    u8  count;               // +0x20
-    s8  fill[8];             // +0x21..0x28 (-1 filled)
-    u8  flag29;              // +0x29
-    u8  pageSrc[0x6A - 0x2A];// +0x2A..0x69 (uninitialised copy source)
-    u8  flag6A;              // +0x6A
+// Placed-item selection table at CMCCrystalBox+0x1480 (retail ctor
+// 0x80215CE4, dtor 0x80215D24): 8 item pointers, the placement order, and the
+// aggregated crystal-id list built from them.
+class CMCCrystalSelTable {
+public:
+    CMCCrystalSelTable() : mCount(0), mTop(0), mIdCount(0) {
+        for (u8 i = 0; i < 8; i++) {
+            mItems[i] = 0;
+            mOrder[i] = -1;
+        }
+    }
+    ~CMCCrystalSelTable() {}
+
+    unsigned long getItem(unsigned int idx);
+    int getSelectEntry();
+    void release();
+    void buildIdList();
+
+    unsigned long mItems[8];   // +0x00 placed item records
+    u8  mCount;                // +0x20
+    s8  mOrder[8];             // +0x21 placement order (item slot per step)
+    u8  mTop;                  // +0x29 placement steps
+    u16 mIds[0x20];            // +0x2A aggregated crystal ids
+    u8  mIdCount;              // +0x6A
 };
 
 // Crystal-box list widget of the make-crystal window (retail vtable
@@ -161,7 +158,7 @@ public:
     void confirmCrystalUnselect();
     void toggleCrystalSortMenu();
     void advanceCrystalBoxSortMenu(int a);
-    u8* rebuildCrystalBoxSelTable();
+    CMCCrystalParamTable* rebuildCrystalBoxSelTable();
     u8 getCrystalBoxKindA();
     u8 getCrystalBoxKindB();
     void tickCrystalBoxPageFwd();
@@ -246,19 +243,12 @@ public:
     u8 unk2D3;                          // +0x2D3
     u8 unk2D4;                          // +0x2D4: read by getCrystalBoxKindA
     u8 unk2D5;                          // +0x2D5: read by getCrystalBoxKindB
-    u8 unk2D6;                          // +0x2D6: selected-crystal table cursor (written/returned by rebuildCrystalBoxSelTable)
-    u8 unk2D7;                          // +0x2D7: current item id byte
-    CMCCrystalBoxParam subTable[32];    // +0x2D8 to +0x3D8: selected-crystal table (32 slots)
-    CMCCrystalData data;                // +0x3D8: crystal-state table (ends at +0x14A0)
-    u8 field_14A0;                      // +0x14A0
-    u8 pad_14A1[0x14AA - 0x14A1];       // +0x14A1..0x14A9
-    u16 field_14AA[0x20];               // +0x14AA..0x14E9 (u16 page-slot table)
-    u8 field_14EA;                      // +0x14EA (page-slot count)
-    u8 field_14EB;                      // +0x14EB
+    CMCCrystalParamTable mParamTable;   // +0x2D6 selected-crystal table
+    CMCCrystalData data;                // +0x3D8 crystal-state table
+    CMCCrystalSelTable mSelTable;       // +0x1480 placed-item selection table
     u8 field_14EC[5];                   // +0x14EC..0x14F0 (indexed by field_14F2)
     u8 field_14F1;                      // +0x14F1
     u8 field_14F2;                      // +0x14F2: countdown ticker / index
-    u8 pad_14F3[0x14F4 - 0x14F3];       // +0x14F3
     f32 field_14F4;                     // +0x14F4
     f32 field_14F8;                     // +0x14F8
     f32 field_14FC;                     // +0x14FC
@@ -438,12 +428,7 @@ extern "C" char lbl_eu_8050888C[];
 extern "C" unsigned long lbl_eu_80508870[];
 // BDAT table pointer loaded via sda21 at the BdatGetPtrDirect call sites.
 extern unsigned long lbl_eu_806646D0;
-extern "C" __declspec(noinline) void initCrystalBoxScratch(CrystalBoxScratch* scratch);
 // Selection-table helpers on the +0x1480 box-head scratch (not CMCCrystalBox).
-extern "C" void releaseCrystalBoxSlot(CrystalBoxScratch* scratch);
-extern "C" void buildCrystalBoxIdList(CrystalBoxScratch* scratch);
-extern "C" void MakeCrystal_CollectByTarget(void*, u8);
-extern "C" unsigned long getSelectTableWord(unsigned long*, unsigned int);
 // Crystal-slot refresh callbacks (defined in this TU).
 // Item-kind check (defined in this TU); noinline keeps the bl in the slot
 // refresh callbacks instead of inlining the two-word test.
@@ -451,7 +436,6 @@ extern "C" __declspec(noinline) int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" void copyVEC3(void*, const void*);
-extern "C" char* getCrystalItemName(CMCCrystalData*, int);
 extern "C" void MCCrystal_PlayAnim4(void*);
 extern "C" void MCCrystal_OpenFromClosed(void*);
 extern "C" void MCCrystal_DrawLayout(void*, void*);
@@ -488,10 +472,6 @@ extern "C" float lbl_eu_80668488;
 extern "C" float lbl_eu_8066848C;
 extern "C" float lbl_eu_80668490;
 extern "C" void* CItem_kindPtr(u32, s16);
-extern "C" int MakeCrystal_GetFlag(void*, unsigned char);
-extern "C" void* MakeCrystal_GetItemObject(void*, unsigned char);
-extern "C" unsigned short MakeCrystal_GetSubCategory(void*, unsigned char);
-extern "C" void swapCrystalDataEntry(int, void*, void*);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -508,16 +488,11 @@ extern "C" void sysWinOpenPhase1(void*);
 extern "C" void MCCrystal_StepState(void*);
 extern "C" void Cur_Update(void*);
 extern "C" void sysWinDispatchPhase(void*);
-extern "C" void MakeCrystal_ResetTable(void*);
 extern "C" u32  IsSkillItem(void*);
 extern "C" u16 BdatGetItemId(u32);
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
 // unmangled like retail; noinline keeps the bodies out-of-line.
-extern "C" void MakeCrystal_AdvanceCursor(void* self);
-extern "C" void func_802137B4(void* self);
-extern "C" void MakeCrystal_SetFlag(void*, int, unsigned char);
-extern "C" int getCrystalSelectEntry(void*);
 extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
 extern "C" void Cur_ShowTwoPanes(void*, unsigned char);
 extern "C" int GetCollectedFlagByte(unsigned char);
@@ -537,7 +512,6 @@ extern float lbl_eu_80668484;
 // the copy source for copyCrystalBoxParam); its definition lives in this TU under
 // the name copyCrystalParamRet (linked by address via symbols.txt).
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" int MakeCrystal_AllFlagsSet(void*);   // all-flags-set check (code_80213488.cpp)
 // Retail's epilogue extends the result to 64 bits (subfc/subfze); every
 // call site reads the value truncated to the int in r3, hence the (int)
 // casts at the use sites.
@@ -553,5 +527,3 @@ extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);   // 4-word mem-region copy
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void MCCrystal_LoadLayouts(void*);   // crystal-info file-load (CMCCrystalInfo.cpp)
-extern "C" u8* initCrystalBoxParamTbl(u8*);      // param-table init (this TU)
-extern "C" CMCCrystalBoxParam* copyCrystalParamRet(CMCCrystalBoxParam*, const CMCCrystalBoxParam*);

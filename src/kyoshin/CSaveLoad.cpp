@@ -1,5 +1,4 @@
-// Auto-scaffolded catalog TU for kyoshin/CSaveLoad
-// Replace stubs with high-level C/C++ during decomp.
+#define IWORK_EVENT_INLINE_DTOR
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -46,6 +45,67 @@ extern "C" {
 #include <string.h>
 #include <revolution/os/OSCache.h>
 #include "monolib/device/CDeviceSC.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+
+// C-linkage imports - retail symbol names; extern "C" so calls bind to the
+// literal (un)mangled identifiers. (Retail names are the true symbol names;
+// do not rename.) Forward decls for structs whose full definitions live in
+// the TU.
+
+extern "C" void Cur_SetVisible(void*, u8);
+extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
+extern "C" u8 lbl_eu_80538858[];
+extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" u8 lbl_eu_8050F7CC[];
+extern "C" u32 lbl_eu_80662AD0;
+extern "C" s32 lbl_eu_80662AC8;
+extern "C" u32 lbl_eu_80662ACC;
+extern "C" int CSysWin_isActive(void*);
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" void requestLandTelop();
+extern "C" void MenuUpdate_SignalGlobalField64();
+extern "C" void CMenuGetItem_SetField54();
+extern "C" void invalidateQstFlag();
+extern "C" void CTaskGame_offerLoadCap();
+extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
+extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
+extern "C" void Cur_Update(void*);   // CCur per-frame update
+extern "C" void sysWinDrawLayout(void*, void*);
+extern "C" void Cur_DrawLayout(void*, void*);
+extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
+extern "C" void awardCollectCount(int val);
+extern "C" void awardQuestFlags(void);
+extern "C" u32 chkAwardFlags99(void);
+extern "C" u32 chkAwardFlags9B(void);
+extern "C" void sysWinAdvancePhase3(void*);
+extern "C" u32 CUICfManager_getPackedFontD8();
+extern "C" void* CUICfManager_getPackedFont9C();
+extern "C" void setPaneVisible(void* obj, u32 value);
+extern "C" u8 bdatLookupRes(u16, u8);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+extern "C" void sysWinSetKindContent(void*, u32, int);
+extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
+extern "C" void sysWinApplyKind(void*, int);
+extern "C" void sysWinOpenPhase1(void*);
+extern "C" int isCollepediaId(int v);
+extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));
+extern "C" void DevFile_SetByteA9(int);
+extern "C" void sysWinTermLayout(void*);
+extern "C" void NandQueueChk860(int, void*);
+extern "C" void NandQueueLoadCk(int, void*);
+extern "C" void NandQueueSaveCk(int, void*, u8);
+extern "C" void CtrlRemote_SetSharedBit(u32, u32);
+extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(int, int, int);
+extern "C" void code80135FDC_thunk_BFE8C(u8*);
+extern "C" void SysWinLog_QueueEvent(u32);
+extern "C" u32 SysWinLog_BumpEventValue(u32, u32);
+extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);
 void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
@@ -67,735 +127,522 @@ extern void CtrlRemote_ResetSlotArrayObj(void*);
 
 // CDeviceFile / MemManager / CSysWin / game system function declarations
 extern u32 lbl_eu_80663E28;
-extern u8 lbl_eu_805387B8[];
 // External function declarations needed by OnFileEvent
 // Declared as void* by kyoshin/cf/CfGameManager.hpp (via CWorkSystem.hpp)
 extern void* lbl_eu_806640A8;
 
-// Struct with three heap pointers at offsets 0, 4, 8
-struct UnkStruct_3Ptr {
-    void* p0;
-    void* p4;
-    void* p8;
-};
-// Flag-slot view over the CSLCur heap-slot bytes: the slot callback
-// (CSLCur_setFlag) sets the bytes at +0xB/+0xE of each entry, and
-// CSLCur_getSlot probes the byte at +0xF.
-struct CSLFlagSlot {
-    u8 _pad[0xB];
-    u8 f0B;      //0x0B
-    u8 _padC[2];
-    u8 f0E;      //0x0E
-    u8 f0F;      //0x0F
-};
-
-extern u32 lbl_eu_806649F0;
-
-// Allocate three 0xA000-byte buffers from MEM2 and store globally
-#pragma optimize_for_size on
-extern "C" void CSLCur_allocBufs(UnkStruct_3Ptr* p) {
-    u32 ptrVal;
-    ptrVal = (u32)p;
-    lbl_eu_806649F0 = ptrVal;
-    p->p0 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
-    p->p4 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
-    p->p8 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
-}
-#pragma optimize_for_size off
-
-extern "C" __declspec(noinline) void CSLCur_freeBufs(UnkStruct_3Ptr* p) {
-    mtl::MemManager::deallocate(p->p0);
-    mtl::MemManager::deallocate(p->p4);
-    mtl::MemManager::deallocate(p->p8);
-    lbl_eu_806649F0 = 0;
-}
-
-#pragma optimize_for_size on
-extern "C" void CSLCur_bindSlots(CSLCur* p) {
-    // Call NandRegHeapCb for each of the 3 heap pointers with the callback
-    NandRegHeapCb(p->mField0, 1, CSLCur_setFlag);
-    NandRegHeapCb(p->mField4, 2, CSLCur_setFlag);
-    NandRegHeapCb(p->mField8, 3, CSLCur_setFlag);
-    // Zero out the 6 byte fields at offsets 0x0C-0x11
-    p->mFieldC = 0;
-    p->mFieldD = 0;
-    p->mFieldE = 0;
-    p->_pad_0F = 0;
-    p->mField10 = 0;
-    p->mField11 = 0;
-}
-#pragma optimize_for_size off
-
-extern "C" u8 CSaveLoad_getIdle(CSaveLoad* self) { return self->mField123; }
-
-extern u8 lbl_eu_8053884C[];
+extern CSLData* lbl_eu_806649F0;
+extern CSaveLoad* lbl_eu_806649F4;
+extern "C" void InfoCfCopySysWin(void* dst, void* src);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 #pragma push
 #pragma dont_inline on
-extern "C" void __ct__CSLCur(CSLCur* self, int val) {
-    // Store vtable-like pointer, parameter val, and zero everything else
-    self->mField0 = (void*)&lbl_eu_8053884C;
-    self->mField4 = reinterpret_cast<void*>(static_cast<uintptr_t>(val));
-    self->mField8 = nullptr;
-    // Word write at +0xC covers mFieldC/D/E/_pad_0F
-    *reinterpret_cast<u32*>(&self->mFieldC) = 0;
-    // Word write at +0x10 covers mField10-mField13
-    *reinterpret_cast<u32*>(&self->mField10) = 0;
-    self->mField14 = 0;
-    self->mField15 = 0;
+CSLData::CSLData() {
+    mBuf[0] = nullptr;
+    mBuf[1] = nullptr;
+    mBuf[2] = nullptr;
+    mRead[0] = 1;
+    mRead[1] = 1;
+    mRead[2] = 1;
+    mValid[0] = 0;
+    mValid[1] = 0;
+    mValid[2] = 0;
 }
 #pragma pop
 
-// Reset a CSLCur to default state with mFieldC/D/E = 1
-// dont_inline: retail calls this out-of-line from the constructor.
-#pragma push
-#pragma dont_inline on
-extern "C" void CSLCur_reset(CSLCur* self) {
-    self->mField0 = nullptr;
-    self->mField4 = 0;
-    self->mField8 = nullptr;
-    self->mFieldC = 1;
-    self->mFieldD = 1;
-    self->mFieldE = 1;
-    self->_pad_0F = 0;
-    self->mField10 = 0;
-    self->mField11 = 0;
-}
-#pragma pop
+CSLData::~CSLData() {}
 
-// Struct with a pointer at +8 that has virtual functions
-struct UnkPtrHolder {
-    char _pad_00[0x08];
-    UnkPtrObj* mPtr;       // +0x08 - pointer to object with virtual functions
-    void* mField0C;     // +0x0C - pointer to object with float field at +0x10
-    void* mField10;     // +0x10 - AnimTransform*
-    u8 mField14;      // +0x14
-    u8 mField15;      // +0x15 - state byte (0=idle, 1=active)
-};
-
-// CSLCur_bindPane is a C-linkage function in retail (unmangled symbol); declare
-// it extern "C" so the call reloc inside CSLCur_tickAnim resolves unmangled.
-
-// Declarations for functions called by initLayout
-
-// optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair
-#pragma push
+// Allocate the three 0xA000-byte slot header buffers from MEM2
 #pragma optimize_for_size on
-void CSLCur::createLayout() {
-    // Create layout, then bind two anim transforms and finish via layout vtable
-    buildLayout(&mField8, (nw4r::lyt::ArcResourceAccessor*)mField4, (const char*)&lbl_eu_8050F7CC);
-
-    bindLayoutAnimTransform(mField8, (nw4r::lyt::AnimTransform**)&mFieldC, (nw4r::lyt::ArcResourceAccessor*)mField4, (char*)&lbl_eu_8050F7CC[0x18]);
-
-    bindLayoutAnimTransform(mField8, (nw4r::lyt::AnimTransform**)&mField10, (nw4r::lyt::ArcResourceAccessor*)mField4, (char*)&lbl_eu_8050F7CC[0x35]);
-
-    // Virtual call at vtable offset 0x24 (slot 9) on the layout
-    ((LayoutProxy24*)mField8)->vf9();
-
-    CSLCur_bindPane((UnkPtrHolder*)this);
+__declspec(noinline) void CSLData::allocBufs() {
+    lbl_eu_806649F0 = this;
+    mBuf[0] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
+    mBuf[1] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
+    mBuf[2] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
 }
-#pragma pop
+#pragma optimize_for_size off
 
-extern "C" __declspec(noinline) void CSLCur_update(UnkPtrHolder* self) {
-    if (self->mPtr == nullptr) return;
-
-    int state = self->mField15;
-    if (state == 0) goto case0;
-    if (state == 1) goto case1;
-    goto end;
-
-case0:
-    advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mField0C, lbl_eu_80668B68);
-    goto end;
-
-case1:
-    {
-        void (*fn)(UnkPtrHolder*) = CSLCur_tickAnim;
-        fn(self);
-    }
-
-end:
-    ((UnkVtblObj*)self->mPtr)->vf14(0);
+__declspec(noinline) void CSLData::freeBufs() {
+    mtl::MemManager::deallocate(mBuf[0]);
+    mtl::MemManager::deallocate(mBuf[1]);
+    mtl::MemManager::deallocate(mBuf[2]);
+    lbl_eu_806649F0 = nullptr;
 }
 
-// Store 1 at ptr[index+0xB] and value at ptr[index+0xE]
-// The global lbl_eu_806649F0 is a pointer to an array of struct-like slots
-// Pointer-arithmetic form ((u8*)lbl + index) is load-bearing: the plain
-// *(u8*)(lbl + index + off) form makes MWCC emit `add r3, r4, r0` for the
-// second store (index first); the pointer form emits retail's `add r3, r0, r4`
-// for both (a partial commutative-add swap breaks the witness rho).
-extern "C" void CSLCur_setFlag(int /*unused*/, int index, u8 value) {
-    if (lbl_eu_806649F0 == 0) return;
-    ((CSLFlagSlot*)((u8*)lbl_eu_806649F0 + index))->f0B = 1;
-    ((CSLFlagSlot*)((u8*)lbl_eu_806649F0 + index))->f0E = value;
+#pragma optimize_for_size on
+__declspec(noinline) void CSLData::bindSlots() {
+    NandRegHeapCb(mBuf[0], 1, onSlotRead);
+    NandRegHeapCb(mBuf[1], 2, onSlotRead);
+    NandRegHeapCb(mBuf[2], 3, onSlotRead);
+    mRead[0] = 0;
+    mRead[1] = 0;
+    mRead[2] = 0;
+    mValid[0] = 0;
+    mValid[1] = 0;
+    mValid[2] = 0;
 }
+#pragma optimize_for_size off
 
-void drawLayout(
-    nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-
-// Render layout with null + active guards; tail-calls drawLayout
-// noinline: retail keeps this out-of-line (called from CSaveLoad_draw).
-extern "C" __declspec(noinline) void CSLCur_draw(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mField8;
-    if (layout == nullptr) return;
-    if (self->mField14 == 0) return;
-    drawLayout(layout, drawInfo, 0, 1);
-}
-
-extern "C" __declspec(noinline) void CSLCur_destroy(UnkPtrHolder* self) {
-    void* ptr = self->mPtr;
-    self->mField14 = 0;
-    self->mField0C = 0;
-    self->mField10 = 0;
-
-    if (ptr != nullptr) {
-        // Redundant inner null check: MWCC CSEs the repeated test into one cmpi
-        // and re-tests it, reproducing the retail's second (dead) beq.
-        if (ptr != nullptr) {
-            // Virtual call at vtable offset 0x8 (slot 2 after RTTI pads),
-            // deleting-destructor pattern with arg 1.
-            ((UnkObj*)ptr)->vf2(1);
+__declspec(noinline) int CSLData::isReady() {
+    int result = 0;
+    if (mRead[0] != 0) {
+        if (mRead[1] != 0) {
+            if (mRead[2] != 0) {
+                result = 1;
+            }
         }
-        self->mPtr = nullptr;
     }
+    return result;
 }
 
-// Typed views over CSaveLoad's untyped sub-object slots (per-statement use
-// only: the views are never instantiated, only cast for address computation).
-struct Layout10View { u8 _00[0x10]; void* root; };
-struct Pos2CView { u8 _00[0x2c]; float pos[3]; };
-struct SaveCur28View { u8 _00[0x28]; CSLCur cur28; };
-// SaveCur40View retired -> CSaveLoad::mCur40 (declared in CSaveLoad.hpp).
-struct SaveHead04View { u8 _00[4]; UnkClass_8045F564 unk04; };
-struct SaveSub110View { u8 _00[0x110]; CSLCur sub110; };
-struct SysWinD440View { u8 _00[0x40]; nw4r::lyt::Layout* subLayout; };
-// Retail symbol is unmangled; C linkage required for correct call relocs.
-extern "C" void CSLCur_setPos(void* arg1, const void* arg2) {
-    void* ptr1 = ((CSLCur*)arg1)->mField8;
-    void* ptr2 = ((Layout10View*)ptr1)->root;
-    const float* src = (const float*)arg2;
-    float* dst = ((Pos2CView*)ptr2)->pos;
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
+// Slot record (+0x20 into the header buffer) when the slot holds valid data.
+__declspec(noinline) int CSLData::getSlot(u8 index) {
+    if (index >= 3) return 0;
+    void* ptr = mBuf[index];
+    if (ptr == nullptr) return 0;
+    if (mValid[index] != 0) {
+        return (int)((u8*)ptr + 0x20);
+    }
+    return 0;
 }
 
+// NAND read callback: slot numbers are 1-based.
+void CSLData::onSlotRead(int, int index, u8 valid) {
+    if (lbl_eu_806649F0 == nullptr) return;
+    (lbl_eu_806649F0->mRead - 1)[index] = 1;
+    (lbl_eu_806649F0->mValid - 1)[index] = valid;
+}
+
+#pragma push
 #pragma dont_inline on
-extern "C" void CSLCur_tickAnim(UnkPtrHolder* self) {
-    const float f = lbl_eu_80668B68;
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mField10, f) != 0) {
-        self->mField15 = 0;
-        // Use function pointer to prevent inlining
-        void (*fn)(UnkPtrHolder*) = CSLCur_bindPane;
-        fn(self);
-    }
-}
-#pragma dont_inline off
+CSLCur::CSLCur(nw4r::lyt::ArcResourceAccessor* accessor)
+    : mAccessor(accessor), mLayout(nullptr), mAnimLoop(nullptr), mAnimPush(nullptr), mVisible(0),
+      mState(0) {}
+#pragma pop
 
-void CSLSub_init(CSLCur* data, int initVal) {
-    data->mField0 = (void*)(uintptr_t)initVal;
-    data->mField4 = 0;
-    data->mField8 = 0;
-    data->mFieldC = 0;
-    data->mFieldD = 0;
-    data->mFieldE = 1;
-}
+CSLCur::~CSLCur() {}
 
-
-extern "C" void* __dt__8028E7F8(void* self, int dealloc_flag) {
-    if (self != nullptr && dealloc_flag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
-extern "C" void* __dt__8028EA34(void* self, int dealloc_flag) {
-    if (self != nullptr && dealloc_flag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
-extern "C" void* __dt__8028ED30(void* self, int dealloc_flag) {
-    if (self != nullptr && dealloc_flag > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
-struct UnkTwoPtr;
-
-// Abstract class to match the font object's vtable layout
-// The vtable has 2 MWCC implicit entries (RTTI/dtor) before user virtuals
-// Slot 9 (offset 0x24) returns a u32 value used by ApplyFontToTxtPanes
-class FontHelper {
-public:
-    virtual void v0() = 0;
-    virtual void v1() = 0;
-    virtual void v2() = 0;
-    virtual void v3() = 0;
-    virtual void v4() = 0;
-    virtual void v5() = 0;
-    virtual void v6() = 0;
-    virtual u32 v7() = 0; // vtable offset 0x24
-};
-
-// Layout initialization: create layout, anim transform, and set up font
-// This is a C-linkage function (retail symbol is unmangled). optimize_for_size
-// for the retail stmw r30/lmw r30 save pair.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void CSLSub_create(UnkED70_Struct* s) {
-    buildLayout(&s->mLayout, s->mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
-    
-    bindLayoutAnimTransform(s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
-    
-    // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
-    void* rootPane = ((Layout10View*)s->mLayout)->root;
-    void* fontObj = CDeviceFont::getFontInfo(1, s->mLayout);
-    
-    // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
-    u32 result = static_cast<FontHelper*>(fontObj)->v7();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, (const nw4r::ut::Font*)result);
-
-    CSLSub_bindPane((UnkTwoPtr*)s);
+__declspec(noinline) void CSLCur::createLayout() {
+    buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC);
+    bindLayoutAnimTransform(mLayout, &mAnimLoop, mAccessor, (char*)&lbl_eu_8050F7CC[0x18]);
+    bindLayoutAnimTransform(mLayout, &mAnimPush, mAccessor, (char*)&lbl_eu_8050F7CC[0x35]);
+    mLayout->UnbindAllAnimation();
+    bindPane();
 }
 #pragma pop
 
-// Dispatch to cursor animation update based on mFieldC state,
-// then call virtual slot 14 on the mField4 object
-extern "C" __declspec(noinline) void CSLSub_update(CSLCur* self) {
-    if (self->mField4 == 0) return;
+__declspec(noinline) void CSLCur::update() {
+    if (mLayout == nullptr) return;
 
-    switch (self->mFieldC) {
+    switch (mState) {
+    case 0:
+        advanceAnimTransform(mAnimLoop, lbl_eu_80668B68);
+        break;
     case 1:
-        // Function pointer cast prevents inlining
-        ((void (*)(CSLCur*))CSLSub_tickIn)(self);
+        tickAnim();
+        break;
+    }
+
+    mLayout->Animate(0);
+}
+
+__declspec(noinline) void CSLCur::draw(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mLayout == nullptr) return;
+    if (mVisible == 0) return;
+    drawLayout(mLayout, drawInfo, 0, 1);
+}
+
+__declspec(noinline) void CSLCur::destroy() {
+    mVisible = 0;
+    mAnimLoop = nullptr;
+    mAnimPush = nullptr;
+    if (mLayout != nullptr) {
+        delete mLayout;
+        mLayout = nullptr;
+    }
+}
+
+__declspec(noinline) void CSLCur::setPos(const nw4r::math::VEC3* pos) {
+    mLayout->GetRootPane()->SetTranslate(*pos);
+}
+
+__declspec(noinline) void CSLCur::tickAnim() {
+    if (advanceAnimTransform(mAnimPush, lbl_eu_80668B68) != 0) {
+        mState = 0;
+        bindPane();
+    }
+}
+
+__declspec(noinline) void CSLCur::bindPane() {
+    mLayout->UnbindAnimation(mAnimPush);
+    mLayout->BindAnimation(mAnimLoop);
+    mLayout->SetAnimationEnable(mAnimLoop, true);
+    mAnimLoop->SetFrame(lbl_eu_80668B6C);
+    mLayout->Animate(0);
+}
+
+#pragma push
+#pragma dont_inline on
+CSLSub::CSLSub(nw4r::lyt::ArcResourceAccessor* accessor)
+    : mAccessor(accessor), mLayout(nullptr), mAnimTrans(nullptr), mState(0), mShown(0), mIdle(1) {}
+#pragma pop
+
+CSLSub::~CSLSub() {}
+
+#pragma push
+#pragma optimize_for_size on
+__declspec(noinline) void CSLSub::create() {
+    buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
+    ApplyFontToTxtPanes(mLayout->GetRootPane(),
+                        (const nw4r::ut::Font*)static_cast<IDeviceFontInfo*>(
+                            CDeviceFont::getFontInfo(1, mLayout))->getFont());
+    bindPane();
+}
+#pragma pop
+
+__declspec(noinline) void CSLSub::update() {
+    if (mLayout == nullptr) return;
+
+    switch (mState) {
+    case 1:
+        tickIn();
         break;
     case 3:
-        ((void (*)(CSLCur*))CSLSub_tickOut)(self);
+        tickOut();
         break;
     }
 
-    // Virtual call at vtable slot 14 (0x38) on the mField4 object
-    ((UnkVtblObj*)(uintptr_t)self->mField4)->vf14(0);
+    mLayout->Animate(0);
 }
 
-// Struct with a pointer at +4 that has a vtable
-struct UnkSlot4Ptr {
-    void* mField0;  // +0x00
-    void* mPtr;     // +0x04 - pointer to an object with vtable
-};
-
-extern "C" __declspec(noinline) void CSLSub_destroy(UnkSlot4Ptr* self) {
-    UnkObj* ptr = (UnkObj*)self->mPtr;
-    if (ptr == nullptr) {
-        return;
-    }
-    if (ptr != nullptr) {
-        // Virtual destructor call at vtable slot 2 with delete flag 1
-        ptr->vf2(1);
-    }
-    self->mPtr = nullptr;
+__declspec(noinline) void CSLSub::destroy() {
+    if (mLayout == nullptr) return;
+    delete mLayout;
+    mLayout = nullptr;
 }
 
-// Retail defines this helper under an unmangled (C) symbol name.
-extern "C" __declspec(noinline) void CSLSub_setBusy(CSLCur* self) {
-    self->mFieldC = 1;
-    self->mFieldD = 1;
-    self->mFieldE = 0;
+__declspec(noinline) void CSLSub::setBusy() {
+    mState = 1;
+    mShown = 1;
+    mIdle = 0;
 }
-extern "C" void CSLSub_tickIn(CSLCur* cur) {
-    const float f = lbl_eu_80668B68;
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)cur->mField8, f) != 0) {
-        cur->mFieldC = 2;
-        cur->mFieldE = 1;
+
+__declspec(noinline) void CSLSub::tickIn() {
+    if (advanceAnimTransform(mAnimTrans, lbl_eu_80668B68) != 0) {
+        mState = 2;
+        mIdle = 1;
     }
 }
 
-extern "C" void CSLSub_tickOut(CSLCur* self) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mField8, lbl_eu_80668B68) != 0) {
-        self->mFieldC = 0;
-        self->mFieldD = 0;
-        self->mFieldE = 1;
+__declspec(noinline) void CSLSub::tickOut() {
+    if (AnimRewindFrame(mAnimTrans, lbl_eu_80668B68) != 0) {
+        mState = 0;
+        mShown = 0;
+        mIdle = 1;
     }
 }
 
-// Struct with two pointer fields at +4 and +8
-struct UnkTwoPtr {
-    char _pad_00[0x04];
-    UnkVtblObj* mObjA;  // +0x04 - object with virtuals at vtable 0x2C / 0x38
-    void* mObjB;        // +0x08 - object with a float field at +0x10
-};
-
-// Float field at +0x10 of an untyped layout object (CSLSub_bindPane's mObjB /
-// CSLCur_bindPane's mField0C). Exact layout, member access only.
-struct Float10View {
-    u8 _00[0x10];
-    float field10;  // +0x10
-};
-
-extern "C" __declspec(noinline) void CSLSub_bindPane(UnkTwoPtr* self) {
-    ((UnkVtblObj*)self->mObjA)->vf11(self->mObjB, 1);
-    ((Float10View*)self->mObjB)->field10 = lbl_eu_80668B6C;
-    ((UnkVtblObj*)self->mObjA)->vf14(0);
+__declspec(noinline) void CSLSub::bindPane() {
+    mLayout->SetAnimationEnable(mAnimTrans, true);
+    mAnimTrans->SetFrame(lbl_eu_80668B6C);
+    mLayout->Animate(0);
 }
 
-// CSaveLoad constructor (retail symbol __ct__CSaveLoad).
-// Builds the save/load screen: sub-object constructors run first, state
-// fields are initialized, then three temporaries (one CScrollBar, two
-// CSysWin) are constructed and copied into the embedded members.
-// optimize_for_size reproduces the retail _savegpr_28/_restgpr_28 prologue.
+// Sub-objects are built in the init list; the scroll bar and both windows
+// are then rebuilt from temporaries with their own construction arguments.
 #pragma push
 #pragma optimize_for_size on
-extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
-    // Block-scope externs inherit the retail C-linkage symbols.
-    extern void __ct__17UnkClass_8045F564Fv(void*);
-    extern void __ct__CSLCur(CSLCur*, int);
-    extern void __ct__10CScrollBarFUc(void*, int);
-    extern void __ct__7CSysWinFUc(void*, int);
-    extern void CSLSub_init(void*, int);
-    extern void CSLCur_reset(CSLCur*);
-    extern void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
-    extern void __dt__10CScrollBarFv(void*, int);
-    extern void InfoCfCopySysWin(void*, void*);
-    extern void __dt__7CSysWinFv(void*, int);
-
-    // Temp storage; declaration order fixes stack offsets (scrollbar
-    // @+0x80, arg-2 win @+0x44, arg-0 win @+0x08 in the retail frame).
-    u8 tempScrollbar[0x40];
-    u8 tempSysWin2[0x3C];
-    u8 tempSysWin0[0x3C];
-
-    // Set vtable at offset 0x00
-    *(void**)self = (void*)lbl_eu_805387B8;
-
-    __ct__17UnkClass_8045F564Fv((u8*)self + 0x04);
-
-    self->mFileHandle = nullptr;
-    self->mArcAccessor = nullptr;
-    self->mLayout = nullptr;
-    self->mAnimTransA = nullptr;
-    self->mAnimTransB = nullptr;
-
-    __ct__CSLCur((CSLCur*)((u8*)self + 0x28), 0);
-
-    __ct__CCur18(&self->mCur40, 0);
-
-    __ct__10CScrollBarFUc(self->mScrollbar, 0);
-
-    __ct__7CSysWinFUc(&self->mSysWin98, 0);
-    __ct__7CSysWinFUc(&self->mSysWinD4, 0);
-
-    CSLSub_init((u8*)self + 0x110, 0);
-
-    self->mField120 = 0;
-    self->mField121 = 0;
-    self->mField122 = 0;
-    self->mField123 = 1;
-    self->mField124 = 0;
-    self->mField126 = 0;
-    self->mField128 = 1;
-    self->mField129 = (u8)arg4;
-    self->mField12A = 0;
-    self->mField12B = (u8)arg5;
-    self->mField12C = 0;
-    self->mField12D = 0;
-    self->mField12E = 0;
-    self->mField12F = 0;
-
-    CSLCur_reset(&self->mCur);
-
-    self->mField130 = nullptr;
-    self->mField134 = nullptr;
-    self->mField138 = nullptr;
-
-    // Temporary CScrollBar for copy initialization
-    __ct__10CScrollBarFUc(tempScrollbar, 1);
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)self + 0x5C, tempScrollbar + 4);
-
-    // Copy scalar tail from tempScrollbar+0x14 into self+0x6C
-    *(u32*)((u8*)self + 0x6C) = *(u32*)(tempScrollbar + 0x14);
-    *(u32*)((u8*)self + 0x70) = *(u32*)(tempScrollbar + 0x18);
-    *(u32*)((u8*)self + 0x74) = *(u32*)(tempScrollbar + 0x1C);
-    *(u32*)((u8*)self + 0x78) = *(u32*)(tempScrollbar + 0x20);
-    *(u8*)((u8*)self + 0x7C) = *(u8*)(tempScrollbar + 0x24);
-    *(u8*)((u8*)self + 0x7D) = *(u8*)(tempScrollbar + 0x25);
-    *(u8*)((u8*)self + 0x7E) = *(u8*)(tempScrollbar + 0x26);
-    *(u8*)((u8*)self + 0x7F) = *(u8*)(tempScrollbar + 0x27);
-    *(float*)((u8*)self + 0x80) = *(float*)(tempScrollbar + 0x28);
-    *(float*)((u8*)self + 0x84) = *(float*)(tempScrollbar + 0x2C);
-    *(float*)((u8*)self + 0x88) = *(float*)(tempScrollbar + 0x30);
-    *(float*)((u8*)self + 0x8C) = *(float*)(tempScrollbar + 0x34);
-    *(float*)((u8*)self + 0x90) = *(float*)(tempScrollbar + 0x38);
-    *(u8*)((u8*)self + 0x94) = *(u8*)(tempScrollbar + 0x3C);
-
-    __dt__10CScrollBarFv(tempScrollbar, -1);
-
-    // Temporary CSysWin for copy initialization of mSysWin98
-    __ct__7CSysWinFUc(tempSysWin2, 2);
-    InfoCfCopySysWin(&self->mSysWin98, tempSysWin2);
-    __dt__7CSysWinFv(tempSysWin2, -1);
-
-    // Temporary CSysWin for copy initialization of mSysWinD4
-    __ct__7CSysWinFUc(tempSysWin0, 0);
-    InfoCfCopySysWin(&self->mSysWinD4, tempSysWin0);
-    __dt__7CSysWinFv(tempSysWin0, -1);
-
-    return self;
+CSaveLoad::CSaveLoad(u8 load, u8 arg)
+    : mFileHandle(nullptr), mArcAccessor(nullptr), mLayout(nullptr), mAnimTransA(nullptr),
+      mAnimTransB(nullptr), mCur(nullptr), mCur40(nullptr), mScrollBar(0), mSysWin98(0),
+      mSysWinD4(0), mSub(nullptr), mField120(0), mField121(0), mField122(0), mField123(1),
+      mField124(0), mField126(0), mField128(1), mField129(load), mField12A(0), mField12B(arg),
+      mField12C(0), mField12D(0), mField12E(0), mField12F(0) {
+    mSlotTex[0] = nullptr;
+    mSlotTex[1] = nullptr;
+    mSlotTex[2] = nullptr;
+    {
+        CScrollBar bar(1);
+        mScrollBar = bar;
+    }
+    {
+        CSysWin win(2);
+        InfoCfCopySysWin(&mSysWin98, &win);
+    }
+    {
+        CSysWin win(0);
+        InfoCfCopySysWin(&mSysWinD4, &win);
+    }
 }
 #pragma pop
 
-// CSaveLoad destructor. MWCC compiles this member dtor to the retail symbol
-// __dt__9CSaveLoadFv with the standard (this, flags) ABI.
 #pragma optimize_for_size on
-CSaveLoad::~CSaveLoad() {
-    CSaveLoad* self = this;
-    int flags = 0;
-    if (self != nullptr) {
-        __dt__7CSysWinFv((u8*)self + 0xD4, -1);
-        __dt__7CSysWinFv((u8*)self + 0x98, -1);
-        __dt__10CScrollBarFv((u8*)self + 0x58, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
-        if (flags > 0) {
-            operator delete((u8*)self);
-        }
-    }
-}
+CSaveLoad::~CSaveLoad() {}
 #pragma optimize_for_size off
 
 void CSaveLoad::loadSaveData() {
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
-    reinterpret_cast<CScrollBar*>(mScrollbar)->loadLayoutArc();
-
-    // Virtual call on CSysWin-like objects at offsets 0x98 and 0xD4
-    // Use virtual dispatch through CSysWinProxy to match retail r12 pattern
-    // v32 is at vtable slot 34 (offset 0x88) after 2 implicit entries
-    ((CSysWinProxy*)(&mSysWin98))->v32();
-    ((CSysWinProxy*)(&mSysWinD4))->v32();
-
+    mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
+                                        (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
+    mScrollBar.loadLayoutArc();
+    mSysWin98.loadSystemArc();
+    mSysWinD4.loadSystemArc();
     mField122 = 0;
     lbl_eu_806649F4 = this;
     lbl_eu_80662AD0 = -1;
 }
 
-
-// Draw the save/load screen layout and all sub-windows.
-// optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair.
-#pragma push
+// Per-frame update: dispatch on mField121 state, then refresh layout,
+// cursor, scrollbar, both syswins and the sub-cursor.
 #pragma optimize_for_size on
-extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (self->mField120 == 0) return;
+void CSaveLoad::update() {
+    if (mField120 == 0) return;
 
-    drawLayout(self->mLayout, drawInfo, 0, 1);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->draw(drawInfo);
-
-    // Cursor pane is only drawn while both windows are idle
-    if (CSysWin_getUnk34(&self->mSysWin98) == 0 &&
-        CSysWin_getUnk34(&self->mSysWinD4) == 0 &&
-        self->mField11D == 0 &&
-        self->mField121 <= 5) {
-        CSLCur_draw(&((SaveCur28View*)self)->cur28, drawInfo);
+    switch (mField121) {
+    case 0:
+        tickOpenA();
+        break;
+    case 1:
+        tickOpenB();
+        break;
+    case 2:
+        tickCloseB();
+        break;
+    case 3:
+        tickCloseA();
+        break;
+    case 4:
+        tickConf();
+        break;
+    case 5:
+        execOp();
+        break;
+    case 6:
+        // Second window finished: drop back to the selection state
+        if (CSysWin_isActive(&mSysWinD4) != 0) {
+            mField121 = 3;
+        }
+        break;
+    case 7:
+        finish();
+        break;
+    case 8:
+        tickWait();
+        break;
+    case 9:
+        tickWindow();
+        break;
+    case 10:
+    case 11:
+    case 12:
+        tickSlot();
+        break;
     }
 
-    sysWinDrawLayout(&self->mSysWin98, drawInfo);
-    Cur_DrawLayout(&self->mCur40, drawInfo);
-    sysWinDrawLayout(&self->mSysWinD4, drawInfo);
+    mLayout->Animate(0);
+    mCur.update();
+    mScrollBar.UpdateDispatch();
+    sysWinDispatchPhase(&mSysWin98);
+    Cur_Update(&mCur40);
+    sysWinDispatchPhase(&mSysWinD4);
+    mSub.update();
+}
+#pragma optimize_for_size off
 
-    // Sub-layout pointer stored inside the second CSysWin block (+0x114)
-    nw4r::lyt::Layout* subLayout = ((SysWinD440View*)&self->mSysWinD4)->subLayout;
-    if (subLayout != nullptr) {
-        drawLayout(subLayout, drawInfo, 0, 1);
+// Draw the save/load screen layout and all sub-windows.
+#pragma push
+#pragma optimize_for_size on
+void CSaveLoad::draw(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mField120 == 0) return;
+
+    drawLayout(mLayout, drawInfo, 0, 1);
+    mScrollBar.draw(drawInfo);
+
+    // Cursor pane is only drawn while both windows are idle
+    if (CSysWin_getUnk34(&mSysWin98) == 0 && CSysWin_getUnk34(&mSysWinD4) == 0 &&
+        mSub.mShown == 0 && mField121 <= 5) {
+        mCur.draw(drawInfo);
+    }
+
+    sysWinDrawLayout(&mSysWin98, drawInfo);
+    Cur_DrawLayout(&mCur40, drawInfo);
+    sysWinDrawLayout(&mSysWinD4, drawInfo);
+
+    if (mSub.mLayout != nullptr) {
+        drawLayout(mSub.mLayout, drawInfo, 0, 1);
     }
 }
 #pragma pop
 
-
 // Cleanup/reset function for CSaveLoad
-void CSaveLoad_reset(CSaveLoad* self) {
+void CSaveLoad::reset() {
     CWorkSystem::setSaveLoadInvalidReset(false);
     DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
-    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
-    self->mField120 = 0;
-    // Use local variable to prevent MWCC from optimizing &self->mCur to a load
-    UnkStruct_3Ptr* curPtr = reinterpret_cast<UnkStruct_3Ptr*>(&self->mCur);
-    CSLCur_freeBufs(curPtr);
+    closeFileHandle__FPP11CFileHandle(&mFileHandle);
+    mField120 = 0;
+    mData.freeBufs();
     
-    if (self->mLayout != nullptr) {
-        if (self->mLayout != nullptr) {
-            ((UnkObj*)self->mLayout)->vf2(1);
-        }
-        self->mLayout = nullptr;
+    if (mLayout != nullptr) {
+        delete mLayout;
+        mLayout = nullptr;
     }
     
-    releaseArcResourceAccessor(self->mArcAccessor);
+    releaseArcResourceAccessor(mArcAccessor);
     
-    if (self->mField130 != nullptr) {
-        mtl::MemManager::deallocate(self->mField130);
-        self->mField130 = nullptr;
+    if (mSlotTex[0] != nullptr) {
+        mtl::MemManager::deallocate(mSlotTex[0]);
+        mSlotTex[0] = nullptr;
     }
-    if (self->mField134 != nullptr) {
-        mtl::MemManager::deallocate(self->mField134);
-        self->mField134 = nullptr;
+    if (mSlotTex[1] != nullptr) {
+        mtl::MemManager::deallocate(mSlotTex[1]);
+        mSlotTex[1] = nullptr;
     }
-    if (self->mField138 != nullptr) {
-        mtl::MemManager::deallocate(self->mField138);
-        self->mField138 = nullptr;
+    if (mSlotTex[2] != nullptr) {
+        mtl::MemManager::deallocate(mSlotTex[2]);
+        mSlotTex[2] = nullptr;
     }
     
-    CSLCur_destroy((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->Teardown();
-    sysWinTermLayout(&self->mSysWin98);
-    self->mCur40.cleanup();
-    sysWinTermLayout(&self->mSysWinD4);
-    CSLSub_destroy((UnkSlot4Ptr*)&((SaveSub110View*)self)->sub110);
-    (&((SaveHead04View*)self)->unk04)->deleteRegion();
+    mCur.destroy();
+    mScrollBar.Teardown();
+    sysWinTermLayout(&mSysWin98);
+    mCur40.cleanup();
+    sysWinTermLayout(&mSysWinD4);
+    mSub.destroy();
+    mMemRegion.deleteRegion();
     lbl_eu_806649F4 = nullptr;
 }
 
-u8 CSaveLoad_isReady(CSaveLoad* p) {
-    if (!reinterpret_cast<CScrollBar*>(p->mScrollbar)->isVisible()) return 0;
-    if (!CSysWin_isReady((void*)&p->mSysWin98)) return 0;
-    if (!CSysWin_isReady((void*)&p->mSysWinD4)) return 0;
-    // Use function pointer to prevent inlining
-    {
-        int (*checkFn)(CSLCur*) = CSLCur_isReady;
-        if (!checkFn(&p->mCur)) return 0;
-    }
-    if (p->mField11D != 0) return 0;
-    return p->mField122;
+int CSaveLoad::isReady() {
+    if (!mScrollBar.isVisible()) return 0;
+    if (!CSysWin_isReady(&mSysWin98)) return 0;
+    if (!CSysWin_isReady(&mSysWinD4)) return 0;
+    if (!mData.isReady()) return 0;
+    if (mSub.mShown != 0) return 0;
+    return mField122;
 }
 
+int CSaveLoad::getIdle() { return mField123; }
 
 // Check save window state: returns 1 if window is active/accessible,
-// or mField11D if both windows are idle
-u8 CSaveLoad_isBusy(CSaveLoad* p) {
-    if (p->mField121 != 3) return 1;
-    if (CSysWin_getUnk34((void*)&p->mSysWin98) != 0) return 1;
-    if (CSysWin_getUnk34((void*)&p->mSysWinD4) != 0) return 1;
-    return p->mField11D;
+// or mSub.mShown if both windows are idle
+int CSaveLoad::isBusy() {
+    if (mField121 != 3) return 1;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) return 1;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return 1;
+    return mSub.mShown;
 }
 
-void CSaveLoad_open(CSaveLoad* p) {
-    if (p->mField121 != 0) return;
+void CSaveLoad::open() {
+    if (mField121 != 0) return;
 
-    p->mField121 = 1;
-    p->mField123 = 0;
-    // Use function pointers to prevent inlining
-    {
-        void (*fn907E4)(CSaveLoad*) = CSaveLoad_enAnimA;
-        void (*fn910D4)(CSaveLoad*) = CSaveLoad_bestSlot;
-        void (*fn908A4)(CSaveLoad*) = CSaveLoad_refresh;
-        fn907E4(p);
-        fn910D4(p);
-        fn908A4(p);
-    }
+    mField121 = 1;
+    mField123 = 0;
+    enAnimA();
+    bestSlot();
+    refresh();
 
     // Set up float array for scrollbar init
     float vec[3];
     vec[0] = lbl_eu_80668B70;
     vec[1] = lbl_eu_80668B74;
     vec[2] = lbl_eu_80668B6C;
-    reinterpret_cast<CScrollBar*>(p->mScrollbar)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
+    mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
     int val = (int)(u16)lbl_eu_80662AC8;
-    reinterpret_cast<CScrollBar*>(p->mScrollbar)->UpdateThumb(3, val);
+    mScrollBar.UpdateThumb(3, val);
 
-    {
-        void (*fn90994)(CSaveLoad*) = CSaveLoad_renderSlots;
-        fn90994(p);
-    }
+    renderSlots();
 }
 
 #pragma optimize_for_size on
-extern "C" void CSaveLoad_close(CSaveLoad* p) {
-    if (p->mField121 != 3) return;
-    p->mField121 = 4;
-    p->mField123 = 0;
-    // Function pointer cast prevents inlining of CSaveLoad_enAnimB's body
-    ((void (*)(CSaveLoad*))CSaveLoad_enAnimB)(p);
-    p->mField3C = 0;
-    reinterpret_cast<CScrollBar*>(p->mScrollbar)->requestScrollOut();
+void CSaveLoad::close() {
+    if (mField121 != 3) return;
+    mField121 = 4;
+    mField123 = 0;
+    enAnimB();
+    mCur.mVisible = 0;
+    mScrollBar.requestScrollOut();
     playUISound(6);
 }
 #pragma optimize_for_size off
 
 // Handle cursor up/left movement in save/load screen.
 // Decrements cursor position with wrap-around logic for both rows and columns.
-void CSaveLoad_curUp(CSaveLoad* self) {
-    if (self->mField121 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
-    if (self->mField11D != 0) return;
+void CSaveLoad::curUp() {
+    if (mField121 != 3) return;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (mSub.mShown != 0) return;
     
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
-        if (CSysWin_isActive(&self->mSysWin98) == 0) return;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) {
+        if (CSysWin_isActive(&mSysWin98) == 0) return;
         
         // Decrement mField128 with wrap from 0 to 1
-        u8 val = self->mField128 - 1;
-        self->mField128 = val;
+        u8 val = mField128 - 1;
+        mField128 = val;
         if ((s8)val < 0) {
-            self->mField128 = 1;
+            mField128 = 1;
         }
         
-        CSaveLoad_refresh(self);
+        refresh();
         playUISound(1);
         return;
     }
     
     // Decrement mField124
-    u8 f124 = self->mField124 - 1;
-    self->mField124 = f124;
+    u8 f124 = mField124 - 1;
+    mField124 = f124;
     if ((s8)f124 >= 0) goto normalPath;
     
     // Underflow: move to previous row
     // Signed predecrement of the field: MWCC loads with lha, decrements in
     // place, stores, and sign-extends into a scratch reg for the test
     // (subi/extsh./sth on one register), matching retail.
-    self->mField124 = 0;
-    if (--self->mField126 >= 0) goto normalPath;
+    mField124 = 0;
+    if (--mField126 >= 0) goto normalPath;
     
     // Underflow again: wrap to last row
     {
         s32 maxRows = (s32)lbl_eu_80662AC8;
         if (maxRows >= 3) {
-            self->mField124 = 2;
-            self->mField126 = (u16)((s32)lbl_eu_80662AC8 - 3);
+            mField124 = 2;
+            mField126 = (u16)((s32)lbl_eu_80662AC8 - 3);
         } else {
             u8 prev = (u8)(maxRows - 1);
-            self->mField124 = prev;
-            self->mField126 = 0;
+            mField124 = prev;
+            mField126 = 0;
             if ((s8)prev < 0) {
-                self->mField124 = 0;
+                mField124 = 0;
             }
         }
     }
     
 normalPath:
-    CSaveLoad_refresh(self);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
+    refresh();
+    mScrollBar.PlaceThumb(mField126);
     playUISound(1);
 }
 
 // Handle cursor down/right movement in save/load screen.
 // Increments cursor position with wrap-around logic.
-void CSaveLoad_curDown(CSaveLoad* self) {
-    if (self->mField121 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
-    if (self->mField11D != 0) return;
+void CSaveLoad::curDown() {
+    if (mField121 != 3) return;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (mSub.mShown != 0) return;
     
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
-        if (CSysWin_isActive(&self->mSysWin98) == 0) return;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) {
+        if (CSysWin_isActive(&mSysWin98) == 0) return;
         
-        u8 val = self->mField128 + 1;
-        self->mField128 = val;
+        u8 val = mField128 + 1;
+        mField128 = val;
         if ((s8)val > 1) {
-            self->mField128 = 0;
+            mField128 = 0;
         }
         
-        CSaveLoad_refresh(self);
+        refresh();
         playUISound(1);
         return;
     }
@@ -803,98 +650,98 @@ void CSaveLoad_curDown(CSaveLoad* self) {
     // Main scrollbar path
     if (lbl_eu_80662AC8 >= 3) {
         u8 f124;
-        f124 = self->mField124 + 1;
-        self->mField124 = f124;
+        f124 = mField124 + 1;
+        mField124 = f124;
         if ((s8)f124 >= 3) {
             s16 row;
-            self->mField124 = 2;
-            row = (s16)self->mField126 + 1;
-            self->mField126 = (u16)row;
+            mField124 = 2;
+            row = (s16)mField126 + 1;
+            mField126 = (u16)row;
             if (row > (lbl_eu_80662AC8 - 3)) {
-                self->mField124 = 0;
-                self->mField126 = 0;
+                mField124 = 0;
+                mField126 = 0;
             }
             goto updatePath;
         }
     } else {
         u8 f124;
-        f124 = self->mField124 + 1;
-        self->mField124 = f124;
+        f124 = mField124 + 1;
+        mField124 = f124;
         if ((s8)f124 >= lbl_eu_80662AC8) {
-            self->mField124 = 0;
-            self->mField126 = 0;
+            mField124 = 0;
+            mField126 = 0;
         }
     }
 
 updatePath:
-    CSaveLoad_refresh(self);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
+    refresh();
+    mScrollBar.PlaceThumb(mField126);
     playUISound(1);
 }
 
 // Handle cursor movement: if global count >= 3, move cursor back by 3 positions
 // with underflow handling. Otherwise reset cursor to 0.
-void CSaveLoad_pageUp(CSaveLoad* p) {
-    if (p->mField121 != 3) return;
-    if (CSysWin_getUnk34((void*)&p->mSysWin98) != 0) return;
-    if (CSysWin_getUnk34((void*)&p->mSysWinD4) != 0) return;
-    if (p->mField11D != 0) return;
+void CSaveLoad::pageUp() {
+    if (mField121 != 3) return;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (mSub.mShown != 0) return;
 
     if ((s32)lbl_eu_80662AC8 >= 3) {
-        s16 sval = (s16)p->mField126;
+        s16 sval = (s16)mField126;
         s16 newVal = sval - 3;
-        p->mField126 = (u16)newVal;
+        mField126 = (u16)newVal;
         if (newVal < 0) {
             int adj = (int)newVal + 2;
-            p->mField124 = (u8)adj;
-            p->mField126 = 0;
+            mField124 = (u8)adj;
+            mField126 = 0;
             if ((s8)(u8)adj < 0) {
-                p->mField124 = 0;
+                mField124 = 0;
             }
         }
     } else {
-        p->mField124 = 0;
-        p->mField126 = 0;
+        mField124 = 0;
+        mField126 = 0;
     }
 
-    CSaveLoad_refresh(p);
-    reinterpret_cast<CScrollBar*>(p->mScrollbar)->PlaceThumb(p->mField126);
+    refresh();
+    mScrollBar.PlaceThumb(mField126);
     playUISound(1);
 }
 
 // Page-down / advance the save-slot cursor by one entry (wraps every 3 rows).
-extern "C" void CSaveLoad_pageDown(CSaveLoad* self) {
-    if (self->mField121 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) return;
-    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
-    if (self->mField11D != 0) return;
+void CSaveLoad::pageDown() {
+    if (mField121 != 3) return;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (mSub.mShown != 0) return;
 
     if ((s32)lbl_eu_80662AC8 >= 3) {
         // Advance row cursor by 3; clamp/wrap when past the last page
-        s16 newVal = (s16)self->mField126 + 3;
-        self->mField126 = (u16)newVal;
+        s16 newVal = (s16)mField126 + 3;
+        mField126 = (u16)newVal;
         if ((int)newVal > lbl_eu_80662AC8 - 3) {
             // Wrapped past the final row: derive column and clamp to 2
             u8 diff = (u8)(newVal - (lbl_eu_80662AC8 - 3));
-            self->mField124 = diff;
-            self->mField126 = (u16)(lbl_eu_80662AC8 - 3);
+            mField124 = diff;
+            mField126 = (u16)(lbl_eu_80662AC8 - 3);
             if ((s8)diff >= 3) {
-                self->mField124 = 2;
+                mField124 = 2;
             }
         }
     } else {
         // Decrement last column; wrap to previous row on underflow
         int prev = lbl_eu_80662AC8 - 1;
         u8 prevU8 = prev;
-        self->mField124 = prev;
-        self->mField126 = 0;
+        mField124 = prev;
+        mField126 = 0;
         if ((s8)prevU8 < 0) {
-            self->mField124 = 0;
+            mField124 = 0;
         }
     }
 
-    CSaveLoad_refresh(self);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->PlaceThumb(self->mField126);
+    refresh();
+    mScrollBar.PlaceThumb(mField126);
     playUISound(1);
 }
 
@@ -902,44 +749,43 @@ extern "C" void CSaveLoad_pageDown(CSaveLoad* self) {
 // Checks syswin at 0x98 and 0xD4, sets up cursor strings and state.
 #pragma push
 #pragma optimize_for_size on
-void CSaveLoad_confirm(CSaveLoad* self) {
+void CSaveLoad::confirm() {
     char* s1;
     char* s2;
     char* s3;
 
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
-        if (CSysWin_isActive(&self->mSysWin98) != 0) {
-            if ((s8)self->mField128 == 0) {
+    if (CSysWin_getUnk34(&mSysWin98) != 0) {
+        if (CSysWin_isActive(&mSysWin98) != 0) {
+            if ((s8)mField128 == 0) {
                 playUISound(3);
             } else {
                 playUISound(6);
-                self->mField12C = 0;
+                mField12C = 0;
             }
-            sysWinAdvancePhase3(&self->mSysWin98);
-            Cur_SetVisible(&self->mCur40, 0);
-            self->mField121 = 7;
+            sysWinAdvancePhase3(&mSysWin98);
+            Cur_SetVisible(&mCur40, 0);
+            mField121 = 7;
         }
         return;
     }
 
-    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) {
-        if (CSysWin_isActive(&self->mSysWinD4) != 0) {
-            sysWinAdvancePhase3(&self->mSysWinD4);
-            self->mField121 = 9;
-            if (self->mField12C != 0) {
-                self->mField12C = 0;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) {
+        if (CSysWin_isActive(&mSysWinD4) != 0) {
+            sysWinAdvancePhase3(&mSysWinD4);
+            mField121 = 9;
+            if (mField12C != 0) {
+                mField12C = 0;
             }
             playUISound(3);
         }
         return;
     }
 
-    if (self->mField121 != 3) return;
+    if (mField121 != 3) return;
 
-    // Function pointer cast prevents MWCC from inlining CSLCur_getSlot (retail calls it)
-    if (((int (*)(CSLCur*, u8))CSLCur_getSlot)(&self->mCur, self->mField124) == 0) goto noCursor;
+    if (mData.getSlot(mField124) == 0) goto noCursor;
 
-    if (self->mField129 != 0) {
+    if (mField129 != 0) {
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x43);
         s2 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x44);
         s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x45);
@@ -952,57 +798,57 @@ void CSaveLoad_confirm(CSaveLoad* self) {
     goto common;
 
 noCursor:
-    if (self->mField129 != 0) return;
+    if (mField129 != 0) return;
     s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x38);
     s2 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x39);
     s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
 
 common:
-    sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
-    sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-    sysWinApplyKind(&self->mSysWin98, 0);
-    sysWinOpenPhase1(&self->mSysWin98);
-    self->mField128 = 1;
-    self->mField121 = 6;
+    sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
+    sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
+    sysWinApplyKind(&mSysWin98, 0);
+    sysWinOpenPhase1(&mSysWin98);
+    mField128 = 1;
+    mField121 = 6;
     playUISound(3);
 }
 #pragma pop
 
 // Handle window close event: if the first syswin is active and ready,
 // close it, reset the sub-object state, and update status fields
-void CSaveLoad_cancel(CSaveLoad* p) {
-    if (CSysWin_getUnk34((void*)&p->mSysWin98) == 0) return;
-    if (CSysWin_isActive((void*)&p->mSysWin98) == 0) return;
+void CSaveLoad::cancel() {
+    if (CSysWin_getUnk34(&mSysWin98) == 0) return;
+    if (CSysWin_isActive(&mSysWin98) == 0) return;
 
-    sysWinAdvancePhase3((void*)&p->mSysWin98);
-    Cur_SetVisible(&p->mCur40, 0);
+    sysWinAdvancePhase3(&mSysWin98);
+    Cur_SetVisible(&mCur40, 0);
 
-    p->mField121 = 7;
-    p->mField128 = 1;
-    p->mField12C = 0;
+    mField121 = 7;
+    mField128 = 1;
+    mField12C = 0;
 }
 
-extern "C" u8 CSaveLoad_getDone(CSaveLoad* self) { return self->mField12A; }
+int CSaveLoad::getDone() { return mField12A; }
 
 // Open the delete-confirm window for the selected slot.
 #pragma optimize_for_size on
-void CSaveLoad_openDel(CSaveLoad* self) {
-    if (self->mField121 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) return;
-    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
-    if (self->mField11D != 0) return;
-    if (((int (*)(CSLCur*, u8))CSLCur_getSlot)(&self->mCur, self->mField124) == 0) return;
+void CSaveLoad::openDel() {
+    if (mField121 != 3) return;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (mSub.mShown != 0) return;
+    if (mData.getSlot(mField124) == 0) return;
 
     char* s1 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3b);
     char* s2 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3c);
     char* s3 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3d);
-    sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
-    sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-    sysWinApplyKind(&self->mSysWin98, 0);
-    sysWinOpenPhase1(&self->mSysWin98);
-    self->mField128 = 1;
-    self->mField12C = 1;
-    self->mField121 = 6;
+    sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
+    sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
+    sysWinApplyKind(&mSysWin98, 0);
+    sysWinOpenPhase1(&mSysWin98);
+    mField128 = 1;
+    mField12C = 1;
+    mField121 = 6;
     playUISound(3);
 }
 #pragma optimize_for_size off
@@ -1012,67 +858,58 @@ void CSaveLoad_openDel(CSaveLoad* self) {
 // 0x69 = ready (no cursor) - mField129 == 0, CSLCur_getSlot returns 0
 // 0x6A = ready (has cursor) - mField129 == 0, CSLCur_getSlot returns > 0
 // 0x6B = ready (has cursor, mField129 != 0) - CSLCur_getSlot returns > 0
-int func_8028FFD4(CSaveLoad* p) {
-    if (p->mField121 != 3) return 0;
-    if (CSysWin_getUnk34((void*)&p->mSysWin98) != 0) return 0;
-    if (CSysWin_getUnk34((void*)&p->mSysWinD4) != 0) return 0;
-    if (p->mField11D != 0) return 0;
+u8 CSaveLoad::getHelpKind() {
+    if (mField121 != 3) return 0;
+    if (CSysWin_getUnk34(&mSysWin98) != 0) return 0;
+    if (CSysWin_getUnk34(&mSysWinD4) != 0) return 0;
+    if (mSub.mShown != 0) return 0;
 
-    if (p->mField129 != 0) {
+    if (mField129 != 0) {
         // Cursor active: return 0x6B if valid, 0 otherwise
-        // Use function pointer to prevent inlining (retail uses direct bl but MWCC inlines it)
-        int rv = ((int (*)(CSLCur*, u8))CSLCur_getSlot)(&p->mCur, p->mField124);
+        int rv = mData.getSlot(mField124);
         return rv > 0 ? 0x6B : 0;
     } else {
         // Cursor inactive: return 0x6A if valid, 0x69 otherwise
-        int rv = ((int (*)(CSLCur*, u8))CSLCur_getSlot)(&p->mCur, p->mField124);
+        int rv = mData.getSlot(mField124);
         return rv > 0 ? 0x6A : 0x69;
     }
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickOpenA(CSaveLoad* p) {
-    if (advanceAnimTransform(p->mAnimTransA, lbl_eu_80668B68) != 0) {
-        p->mField121 = 2;
-        // Use function pointer to prevent inlining
-        void (*fn)(CSaveLoad*) = CSaveLoad_enAnimB;
-        fn(p);
+__declspec(noinline) void CSaveLoad::tickOpenA() {
+    if (advanceAnimTransform(mAnimTransA, lbl_eu_80668B68) != 0) {
+        mField121 = 2;
+        enAnimB();
     }
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickOpenB(CSaveLoad* p) {
-    if (advanceAnimTransform(p->mAnimTransB, lbl_eu_80668B68) != 0) {
-        p->mField121 = 3;
-        p->mField3C = 1;
-        CSaveLoad_refresh(p);
-        p->mField123 = 1;
+__declspec(noinline) void CSaveLoad::tickOpenB() {
+    if (advanceAnimTransform(mAnimTransB, lbl_eu_80668B68) != 0) {
+        mField121 = 3;
+        mCur.mVisible = 1;
+        refresh();
+        mField123 = 1;
     }
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickCloseB(CSaveLoad* self) {
-    if (AnimRewindFrame(self->mAnimTransB, lbl_eu_80668B68) != 0) {
-        self->mField121 = 5;
-        {
-            void (*fn)(CSaveLoad*) = CSaveLoad_enAnimA;
-            fn(self);
-        }
+__declspec(noinline) void CSaveLoad::tickCloseB() {
+    if (AnimRewindFrame(mAnimTransB, lbl_eu_80668B68) != 0) {
+        mField121 = 5;
+        enAnimA();
     }
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickCloseA(CSaveLoad* self) {
-    if (AnimRewindFrame(self->mAnimTransA, lbl_eu_80668B68) != 0) {
-        self->mField121 = 0;
-        self->mField123 = 1;
+__declspec(noinline) void CSaveLoad::tickCloseA() {
+    if (AnimRewindFrame(mAnimTransA, lbl_eu_80668B68) != 0) {
+        mField121 = 0;
+        mField123 = 1;
     }
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickConf(CSaveLoad* self) {
-    if (CSysWin_isActive((void*)&self->mSysWin98) != 0) {
-        self->mField121 = 3;
-        Cur_SetVisible(&self->mCur40, 1);
-        {
-            void (*fn)(CSaveLoad*) = CSaveLoad_refresh;
-            fn(self);
-        }
+__declspec(noinline) void CSaveLoad::tickConf() {
+    if (CSysWin_isActive(&mSysWin98) != 0) {
+        mField121 = 3;
+        Cur_SetVisible(&mCur40, 1);
+        refresh();
     }
 }
 
@@ -1080,48 +917,48 @@ extern "C" __declspec(noinline) void CSaveLoad_tickConf(CSaveLoad* self) {
 // Checks window state, cursor status, and dispatches to delete/load/save logic.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
-    if (CSysWin_isActive((void*)&self->mSysWin98) == 0) return;
+__declspec(noinline) void CSaveLoad::execOp() {
+    if (CSysWin_isActive(&mSysWin98) == 0) return;
 
-    self->mField121 = 3;
-    if ((s8)self->mField128 != 0) return;
+    mField121 = 3;
+    if ((s8)mField128 != 0) return;
 
-    self->mField121 = 10;
+    mField121 = 10;
 
-    if (self->mField12C != 0) {
+    if (mField12C != 0) {
         // Delete/overwrite path
         CWorkSystem::setSaveLoadInvalidReset(true);
         DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
         char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
+        LayoutSetTextBoxFmtValue(mSub.mLayout, (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
-        CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
+        mSub.setBusy();
 
-        NandQueueChk860((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
+        NandQueueChk860((s8)mField124 + 1, (void*)onFile);
 
         lbl_eu_80662AD0 = 0;
-    } else if (self->mField129 != 0) {
+    } else if (mField129 != 0) {
         // Load path
         char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
+        LayoutSetTextBoxFmtValue(mSub.mLayout, (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
-        CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
+        mSub.setBusy();
 
-        NandQueueLoadCk((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
+        NandQueueLoadCk((s8)mField124 + 1, (void*)onFile);
 
         lbl_eu_80662AD0 = 2;
 
         // Retail runs the slot update only when the presentation bit is CLEAR
         // (rlwinm./bne skips over it otherwise).
         if ((lbl_eu_80663E28 & 0x01000000u) == 0) {
-            int result = CSLCur_getSlot(&self->mCur, self->mField124);
+            int result = mData.getSlot(mField124);
             clearGlobalState__Q22cf13CfGameManagerFv(*(u16*)(result + 0x0E), *(u8*)(result + 0x11), 1);
         }
     } else {
         // Save path
-        if (self->mField12B != 0) {
+        if (mField12B != 0) {
             CtrlRemote_SetSharedBit(0x3213, 1);
         }
 
@@ -1130,11 +967,11 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
         CLibHbm::setHbmStopFlag(true);
 
         char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
+        LayoutSetTextBoxFmtValue(mSub.mLayout, (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
-        CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
+        mSub.setBusy();
 
-        NandQueueSaveCk((s8)self->mField124 + 1, (void*)CSaveLoad_onFile, self->mField12B);
+        NandQueueSaveCk((s8)mField124 + 1, (void*)onFile, mField12B);
 
         lbl_eu_80662AD0 = 3;
     }
@@ -1143,13 +980,13 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
 }
 #pragma pop
 
-extern "C" __declspec(noinline) void CSaveLoad_finish(CSaveLoad* p) {
-    if (!CSysWin_isActive((void*)&p->mSysWinD4)) return;
+__declspec(noinline) void CSaveLoad::finish() {
+    if (!CSysWin_isActive(&mSysWinD4)) return;
 
-    if (p->mField129 == 0) goto setError3;
-    if (p->mField12D == 0) goto setError3;
+    if (mField129 == 0) goto setError3;
+    if (mField12D == 0) goto setError3;
 
-    p->mField12A = 1;
+    mField12A = 1;
     requestLandTelop();
     MenuUpdate_SignalGlobalField64();
     CMenuGetItem_SetField54();
@@ -1168,31 +1005,31 @@ extern "C" __declspec(noinline) void CSaveLoad_finish(CSaveLoad* p) {
     return;
 
 setError3:
-    p->mField121 = 3;
+    mField121 = 3;
 }
 
-extern "C" __declspec(noinline) void CSaveLoad_tickWait(CSaveLoad* p) {
-    if (p->mField11E != 0) {
-        p->mField121 = 3;
+__declspec(noinline) void CSaveLoad::tickWait() {
+    if (mSub.mIdle != 0) {
+        mField121 = 3;
     }
 }
 
 // Handle save/load window state machine.
-// Checks mField11E, mField12E, mField12C, mField129, mField12B
+// Checks mSub.mIdle, mField12E, mField12C, mField129, mField12B
 // and sets up the appropriate syswin with strings.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void CSaveLoad_tickWindow(CSaveLoad* self) {
+__declspec(noinline) void CSaveLoad::tickWindow() {
     char* s1;
     char* s2;
     char* s3;
 
-    if (self->mField11E == 0) return;
+    if (mSub.mIdle == 0) return;
 
-    self->mField121 = 8;
+    mField121 = 8;
 
-    if (self->mField12E != 0) {
-        int val = self->mField12F;
+    if (mField12E != 0) {
+        int val = mField12F;
         // Forward-goto structure mirrors retail layout:
         // dispatch, body1, body2, 3-string block, then mField12E=0
         if ((u32)(val - 3) <= 1u) goto threeString;
@@ -1201,15 +1038,15 @@ extern "C" __declspec(noinline) void CSaveLoad_tickWindow(CSaveLoad* self) {
         goto clear12E;
 win54:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
-        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&self->mSysWinD4, 1);
-        sysWinOpenPhase1(&self->mSysWinD4);
+        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&mSysWinD4, 1);
+        sysWinOpenPhase1(&mSysWinD4);
         goto clear12E;
 win55:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
-        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&self->mSysWinD4, 1);
-        sysWinOpenPhase1(&self->mSysWinD4);
+        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&mSysWinD4, 1);
+        sysWinOpenPhase1(&mSysWinD4);
         goto clear12E;
 threeString:
         // 3-string path: update syswin 0x98 with strings
@@ -1217,49 +1054,49 @@ threeString:
         s2 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x59);
         // Statement-form selection keeps MWCC branchy (cmpi/li/beq/li), matching retail
         int msgIdx;
-        if (self->mField129 != 0)
+        if (mField129 != 0)
             msgIdx = 0x58;
         else
             msgIdx = 0x57;
         // Single call site
         s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2],
                                   msgIdx);
-        sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
-        sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-        sysWinApplyKind(&self->mSysWin98, 0);
-        sysWinOpenPhase1(&self->mSysWin98);
-        self->mField128 = 1;
-        self->mField12C = 1;
-        self->mField121 = 6;
+        sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
+        sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
+        sysWinApplyKind(&mSysWin98, 0);
+        sysWinOpenPhase1(&mSysWin98);
+        mField128 = 1;
+        mField12C = 1;
+        mField121 = 6;
 clear12E:
-        self->mField12E = 0;
+        mField12E = 0;
         return;
     }
 
-    if (self->mField12C != 0) {
+    if (mField12C != 0) {
         CWorkSystem::setSaveLoadInvalidReset(false);
         DevFile_SetByteA9(1);
         CLibHbm::setHbmStopFlag(false);
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
-        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&self->mSysWinD4, 1);
-        sysWinOpenPhase1(&self->mSysWinD4);
+        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&mSysWinD4, 1);
+        sysWinOpenPhase1(&mSysWinD4);
         playUISound(0x7A);
         return;
     }
 
-    if (self->mField129 != 0) {
+    if (mField129 != 0) {
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
-        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&self->mSysWinD4, 1);
-        sysWinOpenPhase1(&self->mSysWinD4);
-        lbl_eu_80662ACC = (u32)(s8)self->mField124;
-        self->mField12D = 1;
+        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&mSysWinD4, 1);
+        sysWinOpenPhase1(&mSysWinD4);
+        lbl_eu_80662ACC = (u32)(s8)mField124;
+        mField12D = 1;
         playUISound(0x28);
         return;
     }
 
-    if (self->mField12B != 0) {
+    if (mField12B != 0) {
         CtrlRemote_SetSharedBit(0x3213, 0);
     }
 
@@ -1267,154 +1104,64 @@ clear12E:
     DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
     s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
-    sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
-    sysWinApplyKind(&self->mSysWinD4, 1);
-    sysWinOpenPhase1(&self->mSysWinD4);
-    lbl_eu_80662ACC = (u32)(s8)self->mField124;
+    sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
+    sysWinApplyKind(&mSysWinD4, 1);
+    sysWinOpenPhase1(&mSysWinD4);
+    lbl_eu_80662ACC = (u32)(s8)mField124;
     playUISound(0x28);
 }
 #pragma pop
 
-extern "C" __declspec(noinline) void CSaveLoad_tickSlot(CSaveLoad* p) {
-    // Function pointer to prevent MWCC from inlining CSLCur_isReady
-    int (*checkFn)(CSLCur*) = CSLCur_isReady;
-    if (checkFn(&p->mCur) != 0) {
-        p->mField121 = 0xb;
-        p->mField11C = 3;
-        p->mField11E = 0;
-        CSaveLoad_renderSlots(p);
+__declspec(noinline) void CSaveLoad::tickSlot() {
+    if (mData.isReady() != 0) {
+        mField121 = 0xb;
+        mSub.mState = 3;
+        mSub.mIdle = 0;
+        renderSlots();
     }
 }
 
-// Per-frame update: dispatch on mField121 state, then refresh layout,
-// cursor, scrollbar, both syswins and the sub-cursor.
-#pragma optimize_for_size on
-void CSaveLoad_update(CSaveLoad* self) {
-    if (self->mField120 == 0) return;
-
-    switch (self->mField121) {
-    case 0:
-        CSaveLoad_tickOpenA(self);
-        break;
-    case 1:
-        CSaveLoad_tickOpenB(self);
-        break;
-    case 2:
-        CSaveLoad_tickCloseB(self);
-        break;
-    case 3:
-        CSaveLoad_tickCloseA(self);
-        break;
-    case 4:
-        CSaveLoad_tickConf(self);
-        break;
-    case 5:
-        CSaveLoad_execOp(self);
-        break;
-    case 6:
-        // Second window finished: drop back to the selection state
-        if (CSysWin_isActive(&self->mSysWinD4) != 0) {
-            self->mField121 = 3;
-        }
-        break;
-    case 7:
-        CSaveLoad_finish(self);
-        break;
-    case 8:
-        CSaveLoad_tickWait(self);
-        break;
-    case 9:
-        CSaveLoad_tickWindow(self);
-        break;
-    case 10:
-    case 11:
-    case 12:
-        CSaveLoad_tickSlot(self);
-        break;
-    }
-
-    ((UnkVtblObj*)self->mLayout)->vf14(0);
-    CSLCur_update((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
-    reinterpret_cast<CScrollBar*>(self->mScrollbar)->UpdateDispatch();
-    sysWinDispatchPhase(&self->mSysWin98);
-    Cur_Update(&self->mCur40);
-    sysWinDispatchPhase(&self->mSysWinD4);
-    CSLSub_update(&((SaveSub110View*)self)->sub110);
-}
-#pragma optimize_for_size off
-
-int CSLCur_isReady(CSLCur* cur) {
-    int result = 0;
-    if (cur->mFieldC != 0) {
-        if (cur->mFieldD != 0) {
-            if (cur->mFieldE != 0) {
-                result = 1;
-            }
-        }
-    }
-    return result;
-}
-
-// Check if a given slot (index 0-2) is valid and has its flag byte set.
-// Returns the slot's pointer + 0x20 if valid, 0 otherwise.
-extern "C" __declspec(noinline) int CSLCur_getSlot(CSLCur* cur, u8 index) {
-    if (index >= 3) return 0;
-
-    // Load pointer from the array of 3 pointers at offsets 0, 4, 8
-    void* ptr = ((void**)cur)[index];
-    if (ptr == nullptr) return 0;
-
-    // Check flag byte at offset 0xF from the indexed entry
-    if (((CSLFlagSlot*)((u8*)cur + index))->f0F != 0) {
-        return (int)((u8*)ptr + 0x20);
-    }
-    return 0;
-}
-
-void CSaveLoad_enAnimA(CSaveLoad* p) {
+__declspec(noinline) void CSaveLoad::enAnimA() {
     // Enable animation B, disable animation A
-    p->mLayout->SetAnimationEnable(p->mAnimTransB, false);
-    p->mLayout->SetAnimationEnable(p->mAnimTransA, true);
+    mLayout->SetAnimationEnable(mAnimTransB, false);
+    mLayout->SetAnimationEnable(mAnimTransA, true);
 }
 
-void CSaveLoad_enAnimB(CSaveLoad* p) {
+__declspec(noinline) void CSaveLoad::enAnimB() {
     // Enable animation A, disable animation B
-    p->mLayout->SetAnimationEnable(p->mAnimTransA, false);
-    p->mLayout->SetAnimationEnable(p->mAnimTransB, true);
+    mLayout->SetAnimationEnable(mAnimTransA, false);
+    mLayout->SetAnimationEnable(mAnimTransB, true);
 }
 
 // Refresh cursor/button display state for the save/load screen.
-// dont_inline: retail calls this as an out-of-line helper everywhere.
 #pragma push
-#pragma dont_inline on
 #pragma optimize_for_size on
-extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
-    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
+__declspec(noinline) void CSaveLoad::refresh() {
+    if (CSysWin_getUnk34(&mSysWin98) != 0) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
-        sysWinGetPaneScreenPos(btnBuf, &self->mSysWin98, self->mField128);
-        self->mCur40.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(btnBuf));
+        sysWinGetPaneScreenPos(btnBuf, &mSysWin98, mField128);
+        mCur40.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(btnBuf));
     } else {
         char* strBase = (char*)&lbl_eu_8050F7CC;
         char numBuf[0x18];
         char paneBuf[0xC];
 
         // Format the slot number text and set it on the root panes
-        sprintf(numBuf, strBase + 0xb7, (s8)self->mField124 + 1);
-        void* paneA = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(numBuf, 1);
-        void* paneB = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(
+        sprintf(numBuf, strBase + 0xb7, (s8)mField124 + 1);
+        void* paneA = mLayout->GetRootPane()->FindPaneByName(numBuf, 1);
+        void* paneB = mLayout->GetRootPane()->FindPaneByName(
             strBase + 0xc4, 1);
-        ScalePaneWorldPos((nw4r::math::VEC3*)paneBuf, (nw4r::lyt::Pane*)paneA, (nw4r::lyt::Pane*)paneB, (nw4r::lyt::Pane*)(((Layout10View*)self->mLayout)->root));
-        CSLCur_setPos(&((SaveCur28View*)self)->cur28, paneBuf);
+        ScalePaneWorldPos((nw4r::math::VEC3*)paneBuf, (nw4r::lyt::Pane*)paneA, (nw4r::lyt::Pane*)paneB, mLayout->GetRootPane());
+        mCur.setPos(reinterpret_cast<nw4r::math::VEC3*>(paneBuf));
     }
 }
-#pragma optimize_for_size reset
 #pragma pop
 
 // Render the save/load screen for all 3 slots.
 // Gets localized strings, sets up text elements, buttons, and scrollbar
 // for each save slot based on slot data (or empty if no data).
-void CSaveLoad_renderSlots(CSaveLoad* self) {
+__declspec(noinline) void CSaveLoad::renderSlots() {
     char* strBase = (char*)lbl_eu_8050F7CC;
 
     char* str4a = (char*)BdatTouchStringCell(&strBase[0xa7], &strBase[0xb2], 0x4a);
@@ -1439,22 +1186,22 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
         sprintf(slotNameBuf, (const char*)&strBase[0xd3], slotNum);
 
         // Set up default background text for the slot
-        LayoutSetTextBoxFmtValue(self->mLayout, slotNameBuf, str4c, 0u);
+        LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, str4c, 0u);
 
         // Check if the slot has save data
-        u8* slotData = (u8*)CSLCur_getSlot(&self->mCur, slot);
+        u8* slotData = (u8*)mData.getSlot(slot);
         if (slotData == NULL) {
             // Empty slot
             sprintf(textBuf, (const char*)&strBase[0xde], str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
-            LayoutSetTextBoxFmtValue(self->mLayout, slotNameBuf, (char*)&strBase[0xfd], 0u);
+            LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, (char*)&strBase[0xfd], 0u);
 
             sprintf(textBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             // Language-specific formatting
             if (isJapanese != 0) {
@@ -1469,18 +1216,18 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             // Format empty slot detail text
             sprintf(textBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             // Hide all 7 per-slot buttons
             for (u8 btn = 0; btn < 7; btn++) {
                 sprintf(emptyBtnBuf, (const char*)&strBase[0x15c], btn, btn + 1);
                 void* pane =
-                    ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(emptyBtnBuf, 1);
+                    mLayout->GetRootPane()->FindPaneByName(emptyBtnBuf, 1);
                 if (pane != 0) {
                     setPaneVisible(pane, 0u);
                 }
@@ -1488,29 +1235,29 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
 
             // Set up empty slot indicator
             sprintf(slotNameBuf, (const char*)&strBase[0x170], slotNum);
-            LayoutSetTextBoxFmtValue(self->mLayout, slotNameBuf, (char*)&strBase[0xfd], 0u);
+            LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, (char*)&strBase[0xfd], 0u);
 
             // Check for award data
-            void* awardData = self->mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x17c], 0);
+            void* awardData = mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x17c], 0);
             if (awardData != 0) {
                 sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
-                PaneSetTexPaletteByName(self->mLayout, (const char*)slotNameBuf, (TPLPalette*)awardData);
+                PaneSetTexPaletteByName(mLayout, (const char*)slotNameBuf, (TPLPalette*)awardData);
             }
 
             // Hide the main slot button
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
             void* pane =
-                ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(slotNameBuf, 1);
+                mLayout->GetRootPane()->FindPaneByName(slotNameBuf, 1);
             setPaneVisible(pane, 0u);
         } else {
             // Slot has save data
             // Format slot data strings
             sprintf(textBuf, (const char*)&strBase[0x1aa], *(u16*)(slotData + 0x64));
             sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
 
             // Format time played string (minutes clamped to 59 when over an hour cap)
             u16 playTime = *(u16*)(slotData + 0xa);
@@ -1526,7 +1273,7 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             // Format slot details based on language and save data
             if (isJapanese != 0) {
@@ -1547,18 +1294,18 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(textBuf, (const char*)&strBase[0x1ba],
                     *(u8*)(slotData + 0x8), str4a, *(u8*)(slotData + 0x2));
             sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
-            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             // Set up the 7 award buttons
             for (u8 btn = 0; btn < 7; btn++) {
                 sprintf(dataBtnBuf, (const char*)&strBase[0x15c], btn, btn + 1);
                 void* pane =
-                    ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(dataBtnBuf, 1);
+                    mLayout->GetRootPane()->FindPaneByName(dataBtnBuf, 1);
 
                 // Record presence flag lives in the low byte of a word entry
                 u32 rec = *(u32*)(slotData + btn * 4 + 0x14);
@@ -1574,8 +1321,8 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
                             ->GetResource(0x74696D67, iconName, 0);
                     if (awardRes != 0) {
                         sprintf(textBuf, (const char*)&strBase[0x1ff], slotNum, btn + 1);
-                        ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(textBuf, 1);
-                        PaneSetTexPaletteByName(self->mLayout, (const char*)textBuf, (TPLPalette*)awardRes);
+                        mLayout->GetRootPane()->FindPaneByName(textBuf, 1);
+                        PaneSetTexPaletteByName(mLayout, (const char*)textBuf, (TPLPalette*)awardRes);
                     }
                 } else {
                     if (pane != 0) {
@@ -1599,29 +1346,29 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x170], slotNum);
-            LayoutSetTextBoxFmtValue(self->mLayout, slotNameBuf, slotIndicator, 0u);
+            LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, slotIndicator, 0u);
 
             // Copy slot data to the heap buffer and flush it for GX
-            memcpy(*(void**)((u8*)self + 0x130 + slot * 4), (const void*)(slotData + 0x80), 0x9C00);
-            DCStoreRange(*(void**)((u8*)self + 0x130 + slot * 4), 0x9C00);
+            memcpy(mSlotTex[slot], (const void*)(slotData + 0x80), 0x9C00);
+            DCStoreRange(mSlotTex[slot], 0x9C00);
 
             // Handle class-specific data
             void* classData;
             if (*(u8*)(slotData + 0x66) != 0) {
-                classData = self->mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x211], 0);
+                classData = mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x211], 0);
             } else {
-                classData = *(void**)((u8*)self + 0x130 + slot * 4);
+                classData = mSlotTex[slot];
             }
 
             if (classData != 0) {
                 sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
-                PaneSetTexPaletteByName(self->mLayout, (const char*)slotNameBuf, (TPLPalette*)classData);
+                PaneSetTexPaletteByName(mLayout, (const char*)slotNameBuf, (TPLPalette*)classData);
             }
 
             // Show/hide the final button depending on the character's sex flag
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
             void* pane =
-                ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(slotNameBuf, 1);
+                mLayout->GetRootPane()->FindPaneByName(slotNameBuf, 1);
             setPaneVisible(pane, (*(u8*)(slotData + 0x67) != 0) ? 1u : 0u);
         }
     }
@@ -1634,25 +1381,22 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
 // priority fields at +2/+3 (bytes), +4/+6 (halfwords), +8/+9 (bytes).
 struct SaveSlotView { u8 b00; u8 b01; u8 b02; u8 b03; u16 w04; u16 w06; u8 b08; u8 b09; };
 #pragma optimize_for_size on
-extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
-    // Cast to function pointer to prevent MWCC from inlining CSLCur_getSlot
-    typedef u8* (*GetSlotFn)(CSLCur*, u8);
-
+__declspec(noinline) void CSaveLoad::bestSlot() {
     s32 globalVal = (s32)lbl_eu_80662ACC;
     if (globalVal >= 0) {
-        self->mField124 = (u8)globalVal;
+        mField124 = (u8)globalVal;
         return;
     }
 
     s32 best = -1;
     u32 i;
     for (i = 0; i < 3; i++) {
-        SaveSlotView* slot = (SaveSlotView*)((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)i);
+        SaveSlotView* slot = (SaveSlotView*)mData.getSlot((u8)i);
         if (slot == nullptr) continue;
 
         // Compare fields in priority order: +4, +6, +9, +8, +2, +3
         if (best >= 0) {
-            SaveSlotView* bestSlot = (SaveSlotView*)((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)best);
+            SaveSlotView* bestSlot = (SaveSlotView*)mData.getSlot((u8)best);
             if (bestSlot->w04 < slot->w04) {
                 best = i & 0xFF;
             } else if (bestSlot->w04 == slot->w04) {
@@ -1685,7 +1429,7 @@ extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
     }
 
     if (best != -1) {
-        self->mField124 = (u8)best;
+        mField124 = (u8)best;
     }
 }
 #pragma optimize_for_size off
@@ -1696,219 +1440,135 @@ extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
 // r3 and r4 are unused params - they exist so r5/r6 are in the correct register slots.
 // No local variable for the global pointer - access lbl_eu_806649F4 directly
 // to force MWCC to reload after each function call, matching retail's repeated @sda21 loads.
-void CSaveLoad_onFile(int, int, int completed, int msgKind) {
+void CSaveLoad::onFile(int, int, int completed, int msgKind) {
     if (lbl_eu_806649F4 == nullptr) return;
 
     if (completed != 0) {
         if (lbl_eu_806649F4->mField12C != 0) {
             lbl_eu_806649F4->mField121 = 0xc;
-            // Cast call prevents MWCC from inlining CSLCur_bindSlots's body
-            // (same TU, -inline auto) while keeping a direct bl call.
-            ((void (*)(CSLCur*))CSLCur_bindSlots)(&lbl_eu_806649F4->mCur);
+            lbl_eu_806649F4->mData.bindSlots();
         } else if (lbl_eu_806649F4->mField129 != 0) {
             lbl_eu_806649F4->mField121 = 0xb;
             // Local pointer so MWCC reuses it for both stores (retail keeps
-            // the reloaded pointer in one register for mField11C/mField11E).
+            // the reloaded pointer in one register for mSub.mState/mSub.mIdle).
             CSaveLoad* q = lbl_eu_806649F4;
-            q->mField11C = 3;
-            q->mField11E = 0;
+            q->mSub.mState = 3;
+            q->mSub.mIdle = 0;
         } else {
             lbl_eu_806649F4->mField121 = 0xc;
-            ((void (*)(CSLCur*))CSLCur_bindSlots)(&lbl_eu_806649F4->mCur);
+            lbl_eu_806649F4->mData.bindSlots();
         }
         code80135FDC_thunk_BFE8C((u8*)0x80);
     } else {
         lbl_eu_806649F4->mField121 = 0xb;
-        // Local pointer so MWCC reuses it for the mField11C/mField11E pair
+        // Local pointer so MWCC reuses it for the mSub.mState/mSub.mIdle pair
         // (retail keeps one register for both stores).
         CSaveLoad* q = lbl_eu_806649F4;
-        q->mField11C = 3;
-        q->mField11E = 0;
+        q->mSub.mState = 3;
+        q->mSub.mIdle = 0;
         lbl_eu_806649F4->mField12E = 1;
         lbl_eu_806649F4->mField12F = (u8)msgKind;
     }
 }
 
-// Despite Fv mangling, receives (self, event) with event in r4.
-// Checks if the event's file handle matches self->mFileHandle before proceeding
-// with layout initialization, text setup, and cursor state initialization.
-// Returns 1 on success, 0 on failure (file handle mismatch).
-// optimize_for_size gives the retail stmw r28 / lmw r28 save-restore pair.
+// Builds the layout from the loaded archive, then rebuilds the cursor,
+// sub-window and slot-data members from temporaries bound to the accessor.
 #pragma push
 #pragma optimize_for_size on
-int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
-    // if-equal form reproduces retail's fallthrough-body / tail return-0 shape
-    if (self->mFileHandle == event->mFileHandle) {
-    // handle fetched first, consumed immediately (dies after createRegion)
-    int regionHandle = (int)getHandleMEM2__Q23mtl10MemManagerFv();
+bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle == pEventFile->mFileHandle) {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     u8* strBase = lbl_eu_8050F7CC;
+    mMemRegion.createRegion(handle, 0x10000, (const char*)&strBase[0x224], 0);
+    Class_8045F858 regionGuard(&mMemRegion);
 
-    // Create the resource region for the base class at offset 4
-    ((UnkClass_8045F564*)((u8*)self + 4))->createRegion(
-        regionHandle, 0x10000, (const char*)&strBase[0x224], 0);
-
-    // RAII scratch-region guard plus stack temporaries, declared in retail
-    // frame-slot order (guard sp+0x08, sub-cursor out sp+0x10, cursor-reset
-    // out sp+0x20, CCur18 temp sp+0x38, CSLCur temp sp+0x50).
-    // Distinct pointer-expression spellings defeat MWCC CSE of (self+4),
-    // which otherwise pins an extra nonvolatile register.
-    Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&self->_pad_04[0]));
-    u8 subCurBuf[0x10];
-    u8 curResetBuf[0x18];
-    CCur18 cur18Tmp;
-    u8 slCurBuf[0x18];
-
-    // Detach the payload pointer from the file handle (cleared to null)
-    FileHandleView* fh = (FileHandleView*)self->mFileHandle;
-    void* fileData = fh->mData;
-    fh->mData = nullptr;
+    void* fileData = mFileHandle->getData();
     mtl::MemManager::setMemInitFlag(false);
 
-    // Fresh arc resource accessor bound to the detached arc payload
-    // (local keeps the value in r3 for the Attach call, matching retail)
     nw4r::lyt::ArcResourceAccessor* accessor = CLibLayout::createArcResourceAccessor();
-    self->mArcAccessor = accessor;
-    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-        accessor, fileData, (const char*)&strBase[0x22e]);
+    mArcAccessor = accessor;
+    accessor->Attach(fileData, (const char*)&strBase[0x22e]);
 
-    // Create layout and both animation transforms
-    buildLayout(&self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
-    bindLayoutAnimTransform(self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
+    buildLayout(&mLayout, mArcAccessor, (const char*)&strBase[0x232]);
+    bindLayoutAnimTransform(mLayout, &mAnimTransA, mArcAccessor, (char*)&strBase[0x248]);
+    bindLayoutAnimTransform(mLayout, &mAnimTransB, mArcAccessor, (char*)&strBase[0x261]);
 
-    // Font setup: root pane -> font object -> apply font to pane
-    void* rootPane = *(void**)((char*)self->mLayout + 0x10);
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
-    u32 fontResult = static_cast<FontHelper*>(fontObj)->v7();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, (const nw4r::ut::Font*)fontResult);
+    ApplyFontToTxtPanes(mLayout->GetRootPane(),
+                        (const nw4r::ut::Font*)static_cast<IDeviceFontInfo*>(
+                            CDeviceFont::getFontInfo(1, mLayout))->getFont());
 
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)CUICfManager_getPackedFontD8();
     if (capJp != nullptr) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x27f], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x288], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x295], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x29e], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2ab], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2b4], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x27f], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x288], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x295], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x29e], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2ab], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2b4], (u32)capJp);
     }
 
     // Localized caption strings applied to fifteen fixed pane names
     char* capLoc = (char*)CUICfManager_getPackedFont9C();
     if (capLoc != nullptr) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x30a], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x316], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x322], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x32d], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x33b], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x347], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x353], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x35f], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x36a], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x30a], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x316], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x322], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x32d], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x33b], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x347], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x353], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x35f], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x36a], (u32)capLoc);
     }
 
-    // Function-pointer casts keep MWCC from inlining these same-TU helpers
-    // (retail calls them out-of-line).
-    ((void (*)(CSaveLoad*))CSaveLoad_enAnimA)(self);
-    ((UnkVtblObj*)self->mLayout)->vf14(0);
+    enAnimA();
+    mLayout->Animate(0);
 
     // L/R button labels for all three rows
     char* str31 = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
     char* str32 = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x378], str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x389], str31, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x39a], str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3ab], str31, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3bc], str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3cd], str31, 0u);
 
-    // Set up text on layout with the button labels
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x378], str32, 0u);
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x389], str31, 0u);
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x39a], str32, 0u);
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x3ab], str31, 0u);
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x3bc], str32, 0u);
-    LayoutSetTextBoxFmtValue(self->mLayout, (char*)&strBase[0x3cd], str31, 0u);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3de], true), 0);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3ea], true), 0);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3f6], true), 0);
 
-    // Hide three named panes via the root pane lookup virtual
-    void* pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3de], 1);
-    setPaneVisible(pane, 0);
-    pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3ea], 1);
-    setPaneVisible(pane, 0);
-    pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3f6], 1);
-    setPaneVisible(pane, 0);
+    mCur = CSLCur(mArcAccessor);
+    mCur.createLayout();
 
-    // Build a stack CSLCur bound to the arc accessor and spill its fields into
-    // the embedded cursor object at self+0x28, then run its slot-8 virtual.
-    __ct__CSLCur((CSLCur*)slCurBuf, (int)self->mArcAccessor);
-    CurMirror28* src28 = reinterpret_cast<CurMirror28*>(slCurBuf);
-    CurMirror28* dst28 = reinterpret_cast<CurMirror28*>((u8*)self + 0x28);
-    dst28->w0 = src28->w0;
-    dst28->w4 = src28->w4;
-    dst28->w8 = src28->w8;
-    dst28->wC = src28->wC;
-    dst28->b14 = src28->b14;
-    dst28->b15 = src28->b15;
-    ((VtSlot8Call*)((u8*)self + 0x28))->vf2();
+    mCur40 = CCur18(CUICfManager_getArcResourceAccessor());
+    mCur40.initLayout();
 
-    // Same pattern for the CCur18 sub-object at self+0x40
-    __ct__CCur18(&cur18Tmp, CUICfManager_getArcResourceAccessor());
-    self->mCur40 = cur18Tmp;
-    __dt__6CCur18Fv(&cur18Tmp, -1);
-    self->mCur40.initLayout();
+    mSub = CSLSub(mArcAccessor);
+    mSub.create();
 
-    // Sub-layout cursor built on the stack, then spilled to self+0x110
-    ((void (*)(CSLCur*, int))CSLSub_init)(
-        reinterpret_cast<CSLCur*>(subCurBuf), (int)self->mArcAccessor);
-    {
-        CurMirror110* src110 = reinterpret_cast<CurMirror110*>(subCurBuf);
-        CurMirror110* dst110 = reinterpret_cast<CurMirror110*>((u8*)self + 0x110);
-        dst110->w0 = src110->w0;
-        dst110->w4 = src110->w4;
-        dst110->w8 = src110->w8;
-        dst110->bC = src110->bC;
-        dst110->bD = src110->bD;
-        dst110->bE = src110->bE;
+    mData = CSLData();
+    mData.allocBufs();
+    mData.bindSlots();
+
+    mField122 = 1;
+    mField120 = 1;
+    mFileHandle = nullptr;
+    mMemRegion.validateHeap();
+
+    mSlotTex[0] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x9C00, 0x20);
+    mSlotTex[1] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x9C00, 0x20);
+    mSlotTex[2] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x9C00, 0x20);
+    return true;
     }
-
-    ((void (*)(UnkED70_Struct*))CSLSub_create)(
-        reinterpret_cast<UnkED70_Struct*>((u8*)self + 0x110));
-
-    // Reset the main cursor via a stack temporary, then spill it to self+0x13C.
-    // The copy uses typed members (u16/u8) so MWCC reproduces retail's
-    // halfword/byte store widths exactly.
-    ((void (*)(CSLCur*))CSLCur_reset)(reinterpret_cast<CSLCur*>(curResetBuf));
-    CurMirror13C* src13C = reinterpret_cast<CurMirror13C*>(curResetBuf);
-    CurMirror13C* dst13C = reinterpret_cast<CurMirror13C*>(&self->mCur);
-    dst13C->w0 = src13C->w0;
-    dst13C->w4 = src13C->w4;
-    dst13C->w8 = src13C->w8;
-    dst13C->hwC = src13C->hwC;
-    dst13C->bE = src13C->bE;
-    dst13C->hwF = src13C->hwF;
-    dst13C->b11 = src13C->b11;
-
-    // Allocate the three save-data buffers and register their callbacks
-    ((void (*)(UnkStruct_3Ptr*))CSLCur_allocBufs)(
-        reinterpret_cast<UnkStruct_3Ptr*>(&self->mCur));
-    ((void (*)(CSLCur*))CSLCur_bindSlots)(reinterpret_cast<CSLCur*>(&self->mCur));
-
-    // Set flags
-    self->mField122 = 1;
-    self->mField120 = 1;
-    self->mFileHandle = 0;
-    ((UnkClass_8045F564*)((char*)self + 0x04))->validateHeap();
-
-    // Allocate three 0x9C00-byte buffers from MEM2 (size written as
-    // 0x10000-0x6400 to reproduce retail's lis/subi pair)
-    self->mField130 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0x10000 - 0x6400, 0x20);
-    self->mField134 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0x10000 - 0x6400, 0x20);
-    self->mField138 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0x10000 - 0x6400, 0x20);
-
-    // regionGuard destructor runs here (retail __dt__14Class_8045F858Fv)
-    return 1;
-    }
-    return 0;
+    return false;
 }
 #pragma pop
 
@@ -2597,14 +2257,3 @@ extern "C" void sinit_802930E0() {
     __register_global_object(&lbl_eu_806649F8, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
 
-// Virtual dispatch through self->mPtr using proper typed virtual calls
-// Use local variables for the pointer and vtable to match retail's register allocation
-// (self saved to r31, mPtr loaded into r3 each time)
-// noinline: retail keeps this out-of-line (called from CSLCur::initLayout etc.)
-extern "C" __declspec(noinline) void CSLCur_bindPane(UnkPtrHolder* self) {
-    self->mPtr->vf8(self->mField10);
-    self->mPtr->vf7(self->mField0C);
-    self->mPtr->vf11(self->mField0C, 1);
-    ((Float10View*)self->mField0C)->field10 = lbl_eu_80668B6C;
-    self->mPtr->vf14(0);
-}

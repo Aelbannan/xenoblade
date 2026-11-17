@@ -6,14 +6,11 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CSaveLoad.hpp"
 
 class CProcess;
 
 // Menu save/load screen process (IUICf task + IScnRender render callback).
-//
-// The CSaveLoad region is kept as an opaque byte array: CSaveLoad's declared
-// sizeof is larger than its real retail extent, so it is constructed and
-// destroyed by hand from the constructor/destructor bodies.
 class CMenuSave : public IUICf, public IScnRender {
 public:
     CMenuSave(CProcess* parent, u32 arg208, u32 arg209, u32 arg20A);
@@ -33,7 +30,7 @@ public:
     /* 0x5C */ CProcess* mParentRef;
     /* 0x60 */ CBgTex mBgTex;
     /* 0x80 */ CTitleAHelp mTitleAHelp;
-    /* 0xB8 */ u8 mSaveLoad[0x150]; // CSaveLoad storage (opaque, see above)
+    /* 0xB8 */ CSaveLoad mSaveLoad;
     /* 0x208 */ u8 mField208;
     /* 0x209 */ u8 mField209;
     /* 0x20A */ u8 mField20A;

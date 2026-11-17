@@ -107,26 +107,6 @@ struct CMCrystalDispSub {
     u8 field_5c8;              // +0x5c8 built flag
 };
 
-// 8-byte param record written at each crystal slot entry's +2 (entries have
-// an 8-byte stride, so the record overlaps 2 bytes into the next slot). Same
-// layout as CMCCrystalBoxParam; copied by copyCrystalBoxParam.
-struct CMCrySlotParam {
-    u16 m0;   // +0x00
-    u16 m2;   // +0x02
-    u16 m4;   // +0x04
-    u8  m6;   // +0x06
-    u8  m7;   // +0x07
-};
-
-// 8-byte crystal slot entry (stride 8, array at this+0). A CMCrySlotParam
-// record overlaps starting at +2, so its last two bytes spill into the next
-// slot. func_8021E888 scans entry.m2 for zero and stores the index in byte 0.
-struct CMCrySlotEntry {
-    u8 _00[0x2];   // +0..1 (byte 0 receives the found slot index)
-    u16 m2;        // +0x02 first u16 of the overlapped param record
-    u8 _04[0x8 - 0x4];
-};
-
 // CModelDispMakeCrystal fields used by MakeCrystal_BuildCrystalList.
 struct CMCCrySelfFields {
     u8 _00[0xc];
@@ -188,8 +168,6 @@ extern "C" void CItem_initKind9Rec(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
-extern "C" void MakeCrystal_ClearSlotParam(void* entries, u16 idx);
-extern "C" void func_8021E888(void* entries);
 
 // C-linkage imports for the constructor (retail bare-name symbols - the
 // member ctors in the sub-object headers would mangle differently).

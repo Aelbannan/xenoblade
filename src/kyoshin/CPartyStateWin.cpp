@@ -8,6 +8,7 @@
 #include "monolib/core/CTaskManager.hpp"
 #include "functions.hpp"
 #include "kyoshin/CPartyStateWinImports.hpp"
+#include "kyoshin/CEquipChange.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/core/CViewFrame.hpp"
@@ -285,7 +286,7 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     self->f148 = vLo;
     self->f150 = src->f150;
     self->f152 = src->f152;
-    ShopBuy_CopyData(&self->f154[0], &src->f154[0]);
+    __as__12CItemBoxPageFRC12CItemBoxPage(&self->f154[0], &src->f154[0]);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2b4[0], &src->f2b4[0]);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f2c4[0], &src->f2c4[0]);
     for (int i = 0; i < 7; i++) {
@@ -344,7 +345,7 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     self->f4b0 = vLo;
     self->f4b8 = src->f4b8;
     self->f4bc = src->f4bc;
-    ShopBuy_CopyData(&self->f4c0[0], &src->f4c0[0]);
+    __as__12CItemBoxPageFRC12CItemBoxPage(&self->f4c0[0], &src->f4c0[0]);
     self->f61c = src->f61c;
     self->f620 = src->f620;
     for (int i = 0; i < 11; i++) {
@@ -421,7 +422,7 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
     ModelDispTeardownAll(reinterpret_cast<CModelDisp*>(&self->_pad50));
     termPartyState(reinterpret_cast<CPartyState*>(&self->_pad3038));
     ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
-    EquipChange_CleanupFiles(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+    reinterpret_cast<CEquipChange*>(&self->_pad4150)->CleanupFiles();
     sysWinTermLayout(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
     CScn* scene2 = self->mScene;
     if (scene2 != 0) {
@@ -497,7 +498,7 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     case 0x4: PartyStateWin_StateRefresh(self); break;
     case 0x5:
         reopenFromClose(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
-        EquipChange_InitScreen(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->InitScreen();
         self->field_6BE4 = 0x6;
         break;
     case 0x6: PartyStateWin_StateGateEquip(self); break;
@@ -533,7 +534,7 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     advancePartyPanel(reinterpret_cast<CPartyState*>(&self->_pad3038));
     ModelDispEquip_StepStateDispatch(&self->mModelDispEquip);
     if (self->field_6BE4 != 0x12) {
-        EquipChange_AdvanceScreen(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->AdvanceScreen();
     }
     sysWinDispatchPhase(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
     if (self->mWork14 != 0) {
@@ -576,7 +577,7 @@ int PartyStateWin_QueryMenuClose(CPartyStateWin* self) {
     if (CSysWin_getUnk34(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
         return 1;
     }
-    return EquipChange_IsSubcurBusy(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+    return reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSubcurBusy();
 }
 
 // us-801fc258 | PartyStateWin_StateOpen
@@ -709,7 +710,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50)) &&
-        EquipChange_GetSelWhenReady(reinterpret_cast<CEquipChange*>(&self->_pad4150)) &&
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetSelWhenReady() &&
         CSysWin_isReady(reinterpret_cast<CSysWin*>(&self->_pad6BA8))) {
         ModelDispTeardownAll(reinterpret_cast<CModelDisp*>(&self->_pad50));
         char* name =
@@ -722,8 +723,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
         // receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24 -
         // same shape as PartyStateWin_StateEquipNext).
         u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
-        EquipChange_RefreshCategory(reinterpret_cast<CEquipChange*>(&self->_pad4150),
-                      (u8)equipSlot);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->RefreshCategory((u8)equipSlot);
         self->field_6BE4 = 0x5;
     }
 }
@@ -731,7 +731,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
 // Gate: when the help sub-object is idle and the +0x4150 window accepts
 // input, raise the +0x6BE4 state byte to 7.
 extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
-    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() && EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)))
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() && reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag())
         self->field_6BE4 = 7;
 }
 
@@ -750,19 +750,19 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
     if (self->field_6BE8 > lbl_eu_806681E0) {
         self->field_6BE8 = lbl_eu_806681E0;
     }
-    if (EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+    if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag() == 0) {
         return;
     }
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // -- classic-controller chain --
-        EquipChange_ShowSubPanes(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->ShowSubPanes(0);
         if ((cfPad->mTurboPressButtonFlags & 0x02000000) != 0 &&
             code80135FDC_getByte_64077() > 1 &&
-            EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-            EquipChange_IsWeaponRow(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
-                (u8)EquipChange_MapCursorToCat(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
+                (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
                 sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                               0);
@@ -778,10 +778,10 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
         }
         if ((cfPad->mTurboPressButtonFlags & 0x04000000) != 0 &&
             code80135FDC_getByte_64077() > 1 &&
-            EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-            EquipChange_IsWeaponRow(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
-                (u8)EquipChange_MapCursorToCat(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
+                (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
                 sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                               0);
@@ -796,13 +796,13 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
-            EquipChange_ConfirmSelect(reinterpret_cast<CEquipChange*>(&self->_pad4150));
-            if (EquipChange_GetBoxCount(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->ConfirmSelect();
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxCount() != 0) {
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;
                 goto tail;
             }
-            if ((u8)EquipChange_GetLockedState(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
+            if ((u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetLockedState() == 2) {
                 playUISound(0x5);
                 sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
@@ -812,8 +812,8 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
-            if (EquipChange_GetBoxTailByte(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                u16 v = EquipChange_GetEquippedResId(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxTailByte() != 0) {
+                u16 v = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(1);
                 if (v == 0x296 || v == 0x2A0) {
                     sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                   BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
@@ -827,45 +827,45 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00400000) != 0) {
-            if (EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag() == 0) {
                 return;
             }
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_OpenSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->OpenSubPage();
                 goto tail;
             }
             markReplayClose(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
-            EquipChange_CloseScreen(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CloseScreen();
             ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0x8;
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x8004) != 0) {
-            EquipChange_CursorPrev(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorPrev();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x00010008) != 0) {
-            EquipChange_CursorNext(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorNext();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
-            EquipChange_CursorUp(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorUp();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
-            EquipChange_CursorRight(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorRight();
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x01000000) != 0) {
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_ConfirmSort(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->ConfirmSort();
                 goto tail;
             }
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x10000000) != 0) {
-            if (EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
-                u8 v = (u8)EquipChange_RunMainFlow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0) {
+                u8 v = (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->RunMainFlow();
                 if (v == 1) {
                     ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                     self->field_6BE4 = 0xC;
@@ -882,7 +882,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 }
                 if (v != 3) {
                     playUISound(0x5);
-                    u16 w = EquipChange_GetEquippedResId(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+                    u16 w = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(0);
                     if (w == 0x296 || w == 0x2A0) {
                         sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                       BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
@@ -897,43 +897,43 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
-            if (EquipChange_IsMenuBusy(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-                EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_HandleEIBName(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsMenuBusy() == 0 &&
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->HandleEIBName();
                 goto tail;
             }
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000400) != 0) {
-            if (EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
                 ModelDispEquip_GetState21(&self->mModelDispEquip) != 0 &&
-                EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() == 0) {
                 self->field_6BE4 = 0x10;
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 playUISound(0x2);
                 goto tail;
             }
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_TryCloseEIBRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->TryCloseEIBRow();
                 goto tail;
             }
         }
         goto tail;
     } else {
         // -- Wii-layout chain --
-        EquipChange_ShowSubPanes(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->ShowSubPanes(0);
         if ((cfPad->mPad.mHeldButtonFlags & 0x00001000) != 0 &&
             code80135FDC_getByte_64077() > 1 &&
-            EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-            EquipChange_IsWeaponRow(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
             if (self->field_6BE8 > lbl_eu_806681DC) {
                 playUISound(0x2);
             }
             self->field_6BE8 = lbl_eu_806681D8;
-            EquipChange_ShowSubPanes(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->ShowSubPanes(1);
             if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
-                if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
-                    (u8)EquipChange_MapCursorToCat(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
+                    (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
                     sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                   BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                                   0);
@@ -948,8 +948,8 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 goto tail;
             }
             if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
-                if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
-                    (u8)EquipChange_MapCursorToCat(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
+                    (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
                     sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                   BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
                                   0);
@@ -966,13 +966,13 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x10) != 0) {
-            EquipChange_ConfirmSelect(reinterpret_cast<CEquipChange*>(&self->_pad4150));
-            if (EquipChange_GetBoxCount(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->ConfirmSelect();
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxCount() != 0) {
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 self->field_6BE4 = 0xC;
                 goto tail;
             }
-            if ((u8)EquipChange_GetLockedState(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
+            if ((u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetLockedState() == 2) {
                 playUISound(0x5);
                 sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
@@ -982,8 +982,8 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
-            if (EquipChange_GetBoxTailByte(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                u16 v = EquipChange_GetEquippedResId(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxTailByte() != 0) {
+                u16 v = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(1);
                 if (v == 0x296 || v == 0x2A0) {
                     sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                   BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
@@ -997,45 +997,45 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x20) != 0) {
-            if (EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag() == 0) {
                 return;
             }
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_OpenSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->OpenSubPage();
                 goto tail;
             }
             markReplayClose(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
-            EquipChange_CloseScreen(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CloseScreen();
             ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
             self->field_6BE4 = 0x8;
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x8004) != 0) {
-            EquipChange_CursorPrev(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorPrev();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x00010008) != 0) {
-            EquipChange_CursorNext(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorNext();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
-            EquipChange_CursorUp(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorUp();
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
-            EquipChange_CursorRight(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            reinterpret_cast<CEquipChange*>(&self->_pad4150)->CursorRight();
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x800) != 0) {
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_ConfirmSort(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->ConfirmSort();
                 goto tail;
             }
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x80) != 0) {
-            if (EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
-                u8 v = (u8)EquipChange_RunMainFlow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0) {
+                u8 v = (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->RunMainFlow();
                 if (v == 1) {
                     ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                     self->field_6BE4 = 0xC;
@@ -1052,7 +1052,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 }
                 if (v != 3) {
                     playUISound(0x5);
-                    u16 w = EquipChange_GetEquippedResId(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+                    u16 w = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(0);
                     if (w == 0x296 || w == 0x2A0) {
                         sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                                       BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
@@ -1067,24 +1067,24 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
-            if (EquipChange_IsMenuBusy(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
-                EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_HandleEIBName(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsMenuBusy() == 0 &&
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->HandleEIBName();
                 goto tail;
             }
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x40) != 0) {
-            if (EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSortOrSubPage() == 0 &&
                 ModelDispEquip_GetState21(&self->mModelDispEquip) != 0 &&
-                EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() == 0) {
                 self->field_6BE4 = 0x10;
                 ModelDispEquip_StartFadeIn(&self->mModelDispEquip);
                 playUISound(0x2);
                 goto tail;
             }
-            if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_TryCloseEIBRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0) {
+                reinterpret_cast<CEquipChange*>(&self->_pad4150)->TryCloseEIBRow();
             }
         }
     }
@@ -1095,7 +1095,7 @@ tail:
         // The equip-change result goes through a u32 local so the mask lands after
         // the receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24 -
         // same shape as PartyStateWin_StateRefresh / PartyStateWin_StateEquipNext).
-        u32 v = EquipChange_GetMenuId(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+        u32 v = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetMenuId();
         func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), (u8)v);
     }
 }
@@ -1107,7 +1107,7 @@ tail:
 extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         ModelDispEquip_GetState20(&self->mModelDispEquip) &&
-        EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150))) {
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag()) {
         ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
         char* name = BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
         setNameText(reinterpret_cast<CTitleAHelp*>(&self->_pad18), name);
@@ -1135,8 +1135,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipNext(CPartyStateWin
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         ModelDispEquip_NextEquipSlot(&self->mModelDispEquip);
         u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
-        EquipChange_RefreshCategory(reinterpret_cast<CEquipChange*>(&self->_pad4150),
-                      (u8)equipSlot);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->RefreshCategory((u8)equipSlot);
         self->field_6BE4 = 0x7;
     }
 }
@@ -1149,8 +1148,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipPrev(CPartyStateWin
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         ModelDispEquip_PrevEquipSlot(&self->mModelDispEquip);
         u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
-        EquipChange_RefreshCategory(reinterpret_cast<CEquipChange*>(&self->_pad4150),
-                      (u8)equipSlot);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->RefreshCategory((u8)equipSlot);
         self->field_6BE4 = 0x7;
     }
 }
@@ -1169,7 +1167,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyState
         // The slot value goes through a local so the mask lands after the
         // receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24).
         u32 v = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
-        EquipChange_RefreshCategory(reinterpret_cast<CEquipChange*>(&self->_pad4150), (u8)v);
+        reinterpret_cast<CEquipChange*>(&self->_pad4150)->RefreshCategory((u8)v);
         if ((u8)ModelDispEquip_GetEquipSlot(&self->mModelDispEquip) < 3) {
             u32 names[3];
             // Post-increment loads fold the base materialization into the
@@ -1381,7 +1379,7 @@ CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
     __ct__CModelDisp(reinterpret_cast<CModelDisp*>(&_pad50), 0);
     __ct__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038));
     __ct__CModelDispEquip(&mModelDispEquip, 0, 0);
-    __ct__CEquipChange(reinterpret_cast<CEquipChange*>(&_pad4150));
+    __ct__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(&_pad4150));
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&_pad6BA8), 0);
     field_6BE4 = 0;
     field_6BE5 = 0;
@@ -1415,8 +1413,7 @@ body:
     drawPartyState(reinterpret_cast<CPartyState*>(&_pad3038),
                   &drawInfo);
     if (field_6BE4 < 0x10) {
-        EquipChange_DrawLayouts(reinterpret_cast<CEquipChange*>(&_pad4150),
-                      &drawInfo);
+        reinterpret_cast<CEquipChange*>(&_pad4150)->DrawLayouts(&drawInfo);
     }
     sysWinDrawLayout(reinterpret_cast<CSysWin*>(&_pad6BA8),
                   &drawInfo);
@@ -1436,7 +1433,7 @@ body:
 #pragma dont_inline on
 CPartyStateWin::~CPartyStateWin() {
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&_pad6BA8), -1);
-    __dt__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(&_pad4150), -1);
+    reinterpret_cast<CEquipChange*>(&_pad4150)->CEquipChange::~CEquipChange();
     __dt__15CModelDispEquipFv(&mModelDispEquip, -1);
     __dt__11CPartyStateFv(reinterpret_cast<CPartyState*>(&_pad3038), -1);
     __dt__10CModelDispFv(reinterpret_cast<CModelDisp*>(&_pad50), -1);
@@ -1532,11 +1529,11 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
         reinterpret_cast<CModelDispEquipView*>(equipViewTmp), -1);
     ModelDispEquip_SyncScalePose(&self->mModelDispEquip);
 
-    __ct__CEquipChange(reinterpret_cast<CEquipChange*>(equipChangeTmp));
+    __ct__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(equipChangeTmp));
     PartyStateWin_CopyEquipChange(reinterpret_cast<CEquipChange*>(&self->_pad4150),
                   reinterpret_cast<CEquipChange*>(equipChangeTmp));
-    __dt__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(equipChangeTmp), -1);
-    EquipChange_LoadBindFiles(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+    reinterpret_cast<CEquipChange*>(equipChangeTmp)->CEquipChange::~CEquipChange();
+    reinterpret_cast<CEquipChange*>(&self->_pad4150)->LoadFiles();
 
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(sysWinTmp), 0);
     InfoCfCopySysWin(&self->_pad6BA8[0], reinterpret_cast<const u8*>(sysWinTmp));

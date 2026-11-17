@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include <nw4r/lyt.h>
+#include "monolib/work/IWorkEvent.hpp"
 
 // CItemBoxGridSubMenu -- submenu overlay for the item grid screen.
 //
@@ -14,8 +15,8 @@
 //   mSubState      Sub-menu action (1, 2, 3 = different sub-actions)
 //   mSelectedIdx   Index into [mTxtBoxA, mTxtBoxB, mTxtBoxC] selected item
 
-struct CItemBoxGridSubMenu {
-    void* mVtbl;                                     // 0x00
+class CItemBoxGridSubMenu : public IWorkEvent {
+public:
     nw4r::lyt::ArcResourceAccessor* mAccessor;       // 0x04 -- resource accessor
     nw4r::lyt::Layout* mLayout;                      // 0x08 -- layout
     nw4r::lyt::AnimTransform* mAnimDefault;          // 0x0C -- default animation
@@ -29,29 +30,25 @@ struct CItemBoxGridSubMenu {
     u8 mSubState;                                    // 0x23 -- 0=idle, 1/2/3 = sub-action
     s8 mSelectedIdx;                                 // 0x24 -- index of selected item, -1 = none
 
-    ~CItemBoxGridSubMenu();
+    CItemBoxGridSubMenu();
+    virtual ~CItemBoxGridSubMenu();
 
-    u8 GridSubMenu_IsVisibleFlag();
-    u8 GridSubMenu_IsOpenedFlag();
+    void GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor* accessor);
+    void GridSubMenu_Move();
+    void GridSubMenu_DrawLayoutGated(void* drawInfo);
+    void GridSubMenu_TermLayout();
+    void GridSubMenu_AdvanceState2To3();
+    void GridSubMenu_ClearSelection();
+    void GridSubMenu_FinishOpenAnim();
+    void GridSubMenu_RewindSelection();
+
+    int GridSubMenu_IsVisibleFlag();
+    int GridSubMenu_IsOpenedFlag();
     void GridSubMenu_MoveSelectionPrev();
     void GridSubMenu_BeginOpenAnim();
     void GridSubMenu_MoveSelectionNext();
     void GridSubMenu_SetupOptions(int arg);
 };
 
-void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
+extern "C" void GridSubMenu_GetCursorPos(void* self, void* src);
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" char lbl_eu_805084BC[];
-extern "C" const float lbl_eu_80668300; // 80.0f
-extern "C" const float lbl_eu_80668304; // 0.0f
-extern "C" const float lbl_eu_80668308; // 3.0f
-extern "C" const float lbl_eu_8066830C; // 100.0f
-extern "C" const float lbl_eu_80668310; // -17.0f
-extern "C" const float lbl_eu_80668314; // 120.0f
-extern "C" const float lbl_eu_80668318; // -37.0f
-extern "C" const double lbl_eu_806682F8;
-extern "C" u32 getPackedFont__Fv();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);

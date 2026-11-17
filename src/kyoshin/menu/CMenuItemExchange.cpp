@@ -70,7 +70,7 @@ __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
     __ct__6CBgTexFUc(&self->mBgTex, 0);
     __ct__11CTitleAHelpFPcUc(&self->mTitleAHelp, 0, 0);
     new (&self->mItemBoxLine) CItemBoxLine(0, 0);
-    __ct__CItemBoxGrid(&self->mItemBoxGrid, 0, 0, 0, 1);
+    __ct__12CItemBoxGridFUcUsUlUc(&self->mItemBoxGrid, 0, 0, 0, 1);
 
     const f32 initTimer = lbl_eu_80667E78;
     self->mFloat511C = initTimer;
@@ -152,13 +152,13 @@ void CMenuItemExchange::Init() {
     // Item-box grid: temp CItemBoxGrid -> copy -> destroy, then register the
     // two tab lists.
     u8 tmpGridRaw[0x4a0c];
-    __ct__CItemBoxGrid(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), 2, (u16)mField74, 0, 0);
+    __ct__12CItemBoxGridFUcUsUlUc(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), 2, (u16)mField74, 0, 0);
     ItemEx_CopyGrid(&mItemBoxGrid, reinterpret_cast<CItemBoxGrid*>(tmpGridRaw));
     __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), -1);
 
-    ClearListSlots(&mItemBoxGrid);
-    PushToList(&mItemBoxGrid, 0xb);
-    PushToList(&mItemBoxGrid, 0xa);
+    ((CItemBoxGrid*)(&mItemBoxGrid))->ClearListSlots();
+    ((CItemBoxGrid*)(&mItemBoxGrid))->PushToList(0xb);
+    ((CItemBoxGrid*)(&mItemBoxGrid))->PushToList(0xa);
 
     // Register the OC render callback (adjusted-this idiom: null this stays
     // null, otherwise the +0x6c sub-object).
@@ -252,7 +252,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     for (int i = 0x24; i < 0xB0; i++) {
         dest->info2D0[i] = src->info2D0[i];
     }
-    ShopBuy_CopyData(&dest->info2D0[0xB0], &src->info2D0[0xB0]);
+    *reinterpret_cast<CItemBoxPage*>(&dest->info2D0[0xB0]) = *reinterpret_cast<const CItemBoxPage*>(&src->info2D0[0xB0]);
 
     InfoCfCopyObjD4(&dest->numSel2DC[0], &src->numSel2DC[0]);
     *reinterpret_cast<CScrollBar*>(&dest->scrollBar310[0]) = *reinterpret_cast<const CScrollBar*>(&src->scrollBar310[0]);
@@ -285,7 +285,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     dest->str438 = src->str438;
     dest->str45C = src->str45C;
 
-    ShopBuy_CopyData(&dest->pageWords4E0[0], &src->pageWords4E0[0]);
+    *reinterpret_cast<CItemBoxPage*>(&dest->pageWords4E0[0]) = *reinterpret_cast<const CItemBoxPage*>(&src->pageWords4E0[0]);
 }
 
 extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src) {
@@ -296,7 +296,6 @@ extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBo
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void BgTex_Release_3D9C(void*);
 extern "C" void teardown(void*);
-extern "C" void UnloadItemBox(void*);
 extern u32 lbl_eu_80664428;
 
 // Detach the render callback, tear down the embedded widgets, clear the
@@ -309,7 +308,7 @@ void CMenuItemExchange::Term() {
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     mItemBoxLine.UnloadFiles();
-    UnloadItemBox(&mItemBoxGrid);
+    ((CItemBoxGrid*)(&mItemBoxGrid))->UnloadItemBox();
     lbl_eu_80664428 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
@@ -357,7 +356,7 @@ body:
     }
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxLine.UpdateStates();
-    UpdateItemBox(&mItemBoxGrid);
+    ((CItemBoxGrid*)(&mItemBoxGrid))->UpdateItemBox();
     updateHelp(&mTitleAHelp);
 }
 
@@ -383,7 +382,7 @@ body:
         SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         mItemBoxLine.DrawLayout(&drawInfo);
-        DrawItemBoxGrid(&mItemBoxGrid, &drawInfo);
+        ((CItemBoxGrid*)(&mItemBoxGrid))->DrawItemBoxGrid(&drawInfo);
         drawHelp(&mTitleAHelp, &drawInfo);
     }
 }
@@ -423,7 +422,7 @@ __declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
         self->mItemBoxLine.GetSelectReady() != 0) {
         func_801C412C(&self->mTitleAHelp);
         self->mItemBoxLine.OpenLine();
-        LoadItemBoxFiles(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->LoadItemBoxFiles();
         self->field_5118 = 1;
         playUISound(0x6d);
     }
@@ -445,7 +444,7 @@ __declspec(noinline) void ItemEx_Phase2Idle(CMenuItemExchange* self){}
 __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         self->mItemBoxLine.IsReadyFlag() != 0 &&
-        GetField61(&self->mItemBoxGrid) != 0) {
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
         self->field_64 = 1;
     }
 }
@@ -456,15 +455,14 @@ __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
 __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
         self->mItemBoxLine.IsReadyFlag() != 0 &&
-        IsItemBoxReady(&self->mItemBoxGrid) != 0) {
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->IsItemBoxReady() != 0) {
         self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
         if (!(self->mFloat5120 <= lbl_eu_80667E7C)) {
             self->mFloat5120 = lbl_eu_80667E78;
-            func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
-            SetInfoMsgId(&self->mItemBoxGrid,
-                          self->mItemBoxLine.TouchTabEntryItem());
+            func_801C41E8(&self->mTitleAHelp, ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetPromptState());
+            ((CItemBoxGrid*)(&self->mItemBoxGrid))->SetInfoMsgId(self->mItemBoxLine.TouchTabEntryItem());
             reopenFromClose(&self->mTitleAHelp);
-            InitItemDisplay(&self->mItemBoxGrid);
+            ((CItemBoxGrid*)(&self->mItemBoxGrid))->InitItemDisplay();
             self->field_5118 = 5;
             playUISound(0x6d);
         }
@@ -475,7 +473,7 @@ __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
  * advances the menu to phase 6 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom5(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        GetField61(&self->mItemBoxGrid) != 0) {
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
         self->field_5118 = 6;
     }
 }
@@ -503,41 +501,41 @@ __declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
     }
 
     if (up != 0) {
-        func_801CCAF0(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->func_801CCAF0();
     } else if (down != 0) {
-        if (IsItemBoxActive(&self->mItemBoxGrid) != 0) {
-            HandleCancelBtn(&self->mItemBoxGrid, 0);
-        } else if (GetExchFlag52C(&self->mItemBoxGrid) == 0 &&
-                   IsSubWinActive(&self->mItemBoxGrid) == 0) {
+        if (((CItemBoxGrid*)(&self->mItemBoxGrid))->IsItemBoxActive() != 0) {
+            ((CItemBoxGrid*)(&self->mItemBoxGrid))->HandleCancelBtn(0);
+        } else if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetExchFlag52C() == 0 &&
+                   ((CItemBoxGrid*)(&self->mItemBoxGrid))->IsSubWinActive() == 0) {
             markReplayClose(&self->mTitleAHelp);
-            AdvanceBoxState(&self->mItemBoxGrid);
+            ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
             self->field_5118 = 7;
         }
     } else if (turboCancel != 0) {
-        GridMoveCursorLeft(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorLeft();
     } else if (pageTurn != 0) {
-        GridMoveCursorRight(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorRight();
     } else if (cancel != 0) {
-        GridMoveCursorDown(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorDown();
     } else if (decide != 0) {
-        GridMoveCursorUp(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorUp();
     } else if (leftTrigger != 0) {
-        OpenSortMenu(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->OpenSortMenu();
     } else if (yHeld != 0) {
-        SelectCatRow(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->SelectCatRow();
     }
 
     // Help bar follows the grid's current mode.
-    func_801C41E8(&self->mTitleAHelp, GetPromptState(&self->mItemBoxGrid));
-    if (GetExchFlag52C(&self->mItemBoxGrid) != 0) {
-        lbl_eu_8066442C = GetField52D(&self->mItemBoxGrid);
+    func_801C41E8(&self->mTitleAHelp, ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetPromptState());
+    if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetExchFlag52C() != 0) {
+        lbl_eu_8066442C = ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField52D();
         beginClose(&self->mTitleAHelp);
-        AdvanceBoxState(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
         self->field_5118 = 3;
     }
-    if (GetIdleFlag542(&self->mItemBoxGrid) != 0) {
+    if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetIdleFlag542() != 0) {
         markReplayClose(&self->mTitleAHelp);
-        AdvanceBoxState(&self->mItemBoxGrid);
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
         self->field_5118 = 7;
     }
 }
@@ -547,7 +545,7 @@ __declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
  * load and advance the menu to phase 8 (field_5118). */
 __declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
     if (self->mTitleAHelp.isIdle() != 0 &&
-        GetField61(&self->mItemBoxGrid) != 0) {
+        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
         func_801C41E8(&self->mTitleAHelp, 0);
         reopenFromClose(&self->mTitleAHelp);
         self->mItemBoxLine.OpenLine();

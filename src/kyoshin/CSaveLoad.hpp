@@ -7,75 +7,144 @@
 class CBaseCur;
 #include <nw4r/lyt.h>
 
+#include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CEventFile.hpp"
+
 class CFileHandle;
 
+/* Save-slot highlight cursor (retail RTTI "CSLCur"; vtable has a single
+virtual, createLayout, and no destructor slot). */
 class CSLCur {
 public:
-    CSLCur();
-    void createLayout();
-    void initLayout() { createLayout(); } // compat
-    // Retail defines CSLSub_setBusy
+    CSLCur(nw4r::lyt::ArcResourceAccessor* accessor);
+    ~CSLCur();
+    virtual void createLayout();
+    void update();
+    void draw(nw4r::lyt::DrawInfo* drawInfo);
+    void destroy();
+    void setPos(const nw4r::math::VEC3* pos);
+    void tickAnim();
+    void bindPane();
 
-    // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
-    void* mField0;    // 0x00
-    void* mField4;    // 0x04 - ArcResourceAccessor* (or int from constructor); assigned from void* rvalue -> kept void*
-    nw4r::lyt::Layout* mField8;    // 0x08 - Layout* (or null)
-    u8 mFieldC;       // 0x0C
-    u8 mFieldD;       // 0x0D
-    u8 mFieldE;       // 0x0E
-    u8 _pad_0F;       // 0x0F (padding byte)
-    u8 mField10;      // 0x10
-    u8 mField11;      // 0x11
-    u8 mField12;      // 0x12
-    u8 mField13;      // 0x13
-    u8 mField14;      // 0x14
-    u8 mField15;      // 0x15
+    nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x04
+    nw4r::lyt::Layout* mLayout;                // 0x08
+    nw4r::lyt::AnimTransform* mAnimLoop;       // 0x0C
+    nw4r::lyt::AnimTransform* mAnimPush;       // 0x10
+    u8 mVisible;                               // 0x14
+    u8 mState;                                 // 0x15 - 0 loop, 1 push
 };
 
-class CSaveLoad {
+/* "Now saving" sub-window layout (no vtable; CSaveLoad +0x110). */
+class CSLSub {
 public:
-    CSaveLoad();
-    virtual ~CSaveLoad();
-    void loadSaveData();
-    void initLayout() { loadSaveData(); } // compat
+    CSLSub(nw4r::lyt::ArcResourceAccessor* accessor);
+    ~CSLSub();
+    void create();
+    void update();
+    void destroy();
+    void setBusy();
+    void tickIn();
+    void tickOut();
+    void bindPane();
 
-    // +0x00: vtable (implicit)
-    char _pad_04[0x14 - 0x04];                         // 0x04-0x13
-    CFileHandle* mFileHandle;                            // 0x14 - file handle from readFile
-    nw4r::lyt::ArcResourceAccessor* mArcAccessor;       // 0x18 - arc resource accessor (passed to releaseArcResourceAccessor)
-    nw4r::lyt::Layout* mLayout;                         // 0x1C - layout for animation control
-    nw4r::lyt::AnimTransform* mAnimTransA;              // 0x20 - animation transform A
-    nw4r::lyt::AnimTransform* mAnimTransB;              // 0x24 - animation transform B
-    char _pad_28[0x3C - 0x28];                          // 0x28-0x3B
-    u8 mField3C;                                         // 0x3C
-    char _pad_3D[0x40 - 0x3D];                          // 0x3D-0x3F
-    CCur18 mCur40;                                      // 0x40-0x57
-    u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (a CScrollBar)
-    char mSysWin98[0xD4 - 0x98];                           // 0x98-0xD3 - first CSysWin-like object
-    char mSysWinD4[0x11C - 0xD4];                          // 0xD4-0x11B - second CSysWin-like object
-    u8 mField11C;                                        // 0x11C
-    u8 mField11D;                                        // 0x11D (padding/gap)
-    u8 mField11E;                                        // 0x11E
-    u8 _pad_11F;                                        // 0x11F
-    u8 mField120;                                       // 0x120
-    u8 mField121;                                        // 0x121
-    u8 mField122;                                        // 0x122
-    u8 mField123;                                        // 0x123
-    u8 mField124;                                        // 0x124
-    u8 _pad_125;                                         // 0x125
-    s16 mField126;                                       // 0x126 (halfword cursor position, signed)
-    u8 mField128;                                        // 0x128
-    u8 mField129;                                        // 0x129
-    u8 mField12A;                                        // 0x12A
-    u8 mField12B;                                        // 0x12B
-    u8 mField12C;                                        // 0x12C
-    u8 mField12D;                                        // 0x12D
-    u8 mField12E;                                        // 0x12E
-    u8 mField12F;                                        // 0x12F
-    void* mField130;                                    // 0x130 - heap pointer to deallocate (assigned from void* allocate_head -> kept void*)
-    void* mField134;                                    // 0x134 - heap pointer to deallocate
-    void* mField138;                                    // 0x138 - heap pointer to deallocate
-    CSLCur mCur;                                         // 0x13C - cursor/save slot state
+    nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x00
+    nw4r::lyt::Layout* mLayout;                // 0x04
+    nw4r::lyt::AnimTransform* mAnimTrans;      // 0x08
+    u8 mState;                                 // 0x0C - 0 idle, 1 in, 2 shown, 3 out
+    u8 mShown;                                 // 0x0D
+    u8 mIdle;                                  // 0x0E
+};
+
+/* Save-slot header buffers read through the NAND queue (no vtable;
+CSaveLoad +0x13C). */
+class CSLData {
+public:
+    CSLData();
+    ~CSLData();
+    void allocBufs();
+    void freeBufs();
+    void bindSlots();
+    int isReady();
+    int getSlot(u8 index);
+    static void onSlotRead(int, int index, u8 valid);
+
+    void* mBuf[3];   // 0x00
+    u8 mRead[3];     // 0x0C - header read finished
+    u8 mValid[3];    // 0x0F - header valid
+};
+
+class CSaveLoad : public IWorkEvent {
+public:
+    CSaveLoad(u8 load, u8 arg);
+    virtual ~CSaveLoad();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+
+    void loadSaveData();
+    void update();
+    void draw(nw4r::lyt::DrawInfo* drawInfo);
+    void reset();
+    int isReady();
+    int getIdle();
+    int isBusy();
+    void open();
+    void close();
+    void curUp();
+    void curDown();
+    void pageUp();
+    void pageDown();
+    void confirm();
+    void cancel();
+    int getDone();
+    void openDel();
+    u8 getHelpKind();
+    void tickOpenA();
+    void tickOpenB();
+    void tickCloseB();
+    void tickCloseA();
+    void tickConf();
+    void execOp();
+    void finish();
+    void tickWait();
+    void tickWindow();
+    void tickSlot();
+    void enAnimA();
+    void enAnimB();
+    void refresh();
+    void renderSlots();
+    void bestSlot();
+    static void onFile(int, int, int completed, int msgKind);
+
+    UnkClass_8045F564 mMemRegion;                  // 0x04
+    CFileHandle* mFileHandle;                      // 0x14
+    nw4r::lyt::ArcResourceAccessor* mArcAccessor;  // 0x18
+    nw4r::lyt::Layout* mLayout;                    // 0x1C
+    nw4r::lyt::AnimTransform* mAnimTransA;         // 0x20
+    nw4r::lyt::AnimTransform* mAnimTransB;         // 0x24
+    CSLCur mCur;                                   // 0x28
+    CCur18 mCur40;                                 // 0x40
+    CScrollBar mScrollBar;                         // 0x58
+    CSysWin mSysWin98;                             // 0x98 - confirm window
+    CSysWin mSysWinD4;                             // 0xD4 - result window
+    CSLSub mSub;                                   // 0x110
+    u8 mField120;                                  // 0x120
+    u8 mField121;                                  // 0x121 - state
+    u8 mField122;                                  // 0x122
+    u8 mField123;                                  // 0x123
+    u8 mField124;                                  // 0x124 - cursor row
+    s16 mField126;                                 // 0x126 - scroll top
+    u8 mField128;                                  // 0x128
+    u8 mField129;                                  // 0x129 - load mode
+    u8 mField12A;                                  // 0x12A
+    u8 mField12B;                                  // 0x12B
+    u8 mField12C;                                  // 0x12C
+    u8 mField12D;                                  // 0x12D
+    u8 mField12E;                                  // 0x12E
+    u8 mField12F;                                  // 0x12F
+    void* mSlotTex[3];                             // 0x130 - per-slot thumbnail buffers
+    CSLData mData;                                 // 0x13C
 };
 
 namespace cf {
@@ -93,277 +162,4 @@ struct CfAward {
 
 } // namespace cf
 
-// Abstract struct for CSysWin vtable dispatch at slot 34 (offset 0x88)
-// MWCC adds 2 implicit entries (RTTI/dtor) before first user function.
-// MWCC doesn't generate a vtable for pure abstract classes.
-struct CSysWinProxy {
-    virtual void v0() = 0;
-    virtual void v1() = 0;
-    virtual void v2() = 0;
-    virtual void v3() = 0;
-    virtual void v4() = 0;
-    virtual void v5() = 0;
-    virtual void v6() = 0;
-    virtual void v7() = 0;
-    virtual void v8() = 0;
-    virtual void v9() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0; // vtable slot 34 = offset 0x88 (after 2 implicit entries)
-};
-
-// Opaque object whose first virtual (vtable offset 0x8 after RTTI pad slots) is a
-// deleting-destructor-like virtual taking an int flag. Abstract (pure virtual)
-// so MWCC emits no vtable.
-class UnkObj {
-public:
-    virtual void vf2(int) = 0;
-};
-
-// Abstract proxy for nw4r::lyt::Layout virtual dispatch at vtable offset 0x24
-// (2 MWCC implicit entries at 0x00/0x04, then user virtuals).
-class LayoutProxy24 {
-public:
-    virtual void vf2() = 0;   // 0x08
-    virtual void vf3() = 0;   // 0x0C
-    virtual void vf4() = 0;   // 0x10
-    virtual void vf5() = 0;   // 0x14
-    virtual void vf6() = 0;   // 0x18
-    virtual void vf7() = 0;   // 0x1C
-    virtual void vf8() = 0;   // 0x20
-    virtual void vf9() = 0;   // 0x24
-};
-
-// Abstract proxy for the layout root pane object; target virtual at vtable
-// offset 0x3C looks up a pane by name and returns it.
-class RootPaneProxy {
-public:
-    virtual void vf2(int) = 0;                      // 0x08
-    virtual void vf3(int) = 0;
-    virtual void vf4(int) = 0;
-    virtual void vf5(int) = 0;
-    virtual void vf6(int) = 0;
-    virtual void vf7(int) = 0;
-    virtual void vf8(int) = 0;
-    virtual void vf9(int) = 0;
-    virtual void vf10(int) = 0;
-    virtual void vf11(int) = 0;
-    virtual void vf12(int) = 0;
-    virtual void vf13(int) = 0;
-    virtual void vf14(int) = 0;                     // 0x38
-    virtual void* vf15(const char* name, int flag) = 0; // 0x3C
-};
-
-// Struct with ArcResourceAccessor at +0x00, Layout at +0x04, AnimTransform at +0x08.
-// Used by CSLSub_create; compatible with UnkTwoPtr (UnkTwoPtr's _pad_00[4] absorbs the accessor).
-struct UnkED70_Struct {
-    nw4r::lyt::ArcResourceAccessor* mAccessor;  // +0x00
-    nw4r::lyt::Layout* mLayout;                  // +0x04
-    nw4r::lyt::AnimTransform* mAnimTrans;        // +0x08
-};
-
-// Abstract class matching the vtable layout of the object pointed to by
-// UnkPtrHolder::mPtr. vf2 is the first user virtual (vtable offset 0x08,
-// after 2 MWCC implicit RTTI/dtor entries). Has virtuals at slots 7 (0x1C),
-// 8 (0x20), 11 (0x2C), and 14 (0x38). Pure abstract so MWCC emits no vtable.
-class UnkPtrObj {
-public:
-    virtual void vf2(int) = 0;      // slot 2 (0x8) - deleting destructor (first user virtual)
-    virtual void v3() = 0;
-    virtual void v4() = 0;
-    virtual void v5() = 0;
-    virtual void v6() = 0;
-    virtual void vf7(void*) = 0;    // slot 7 (0x1C)
-    virtual void vf8(void*) = 0;    // slot 8 (0x20)
-    virtual void vf9() = 0;
-    virtual void vf10() = 0;
-    virtual void vf11(void*, int) = 0;  // slot 11 (0x2C)
-    virtual void vf12() = 0;
-    virtual void vf13() = 0;
-    virtual void vf14(int) = 0;     // slot 14 (0x38)
-};
-
-// Argless virtual call at vtable offset 0x08 (used on embedded cursor objects)
-class VtSlot8Call {
-public:
-    virtual void v0() = 0;
-    virtual void vf2() = 0;   // vtable 0x08
-};
-
-// Field-view mirrors used to reproduce retail's typed field-copy widths
-// when spilling stack-constructed cursors into the CSaveLoad sub-objects.
-struct CurMirror28 {
-    void* w0;                       // +0x00
-    void* w4;                       // +0x04
-    void* w8;                       // +0x08
-    void* wC;                       // +0x0C
-    u8 _pad10[4];                   // +0x10
-    u8 b14;                         // +0x14
-    u8 b15;                         // +0x15
-};
-
-struct CurMirror110 {
-    void* w0;                       // +0x00
-    void* w4;                       // +0x04
-    void* w8;                       // +0x08
-    u8 bC;                          // +0x0C
-    u8 bD;                          // +0x0D
-    u8 bE;                          // +0x0E
-};
-
-struct CurMirror13C {
-    void* w0;                       // +0x00
-    void* w4;                       // +0x04
-    void* w8;                       // +0x08
-    u16 hwC;                        // +0x0C
-    u8 bE;                          // +0x0E
-    u16 hwF;                        // +0x0F
-    u8 b11;                         // +0x11
-};
-
-// Read-only view of the file handle payload pointer at +0x04
-struct FileHandleView {
-    u8 _pad00[4];
-    void* mData;                    // +0x04
-};
-
-// Opaque object whose vtable (after 2 RTTI pad slots) has virtuals at
-// slots 11 (0x2C) and 14 (0x38) - used by CSLSub_bindPane's dispatch.
-// Abstract so MWCC emits no vtable.
-class UnkVtblObj {
-public:
-    virtual void vf2(int) = 0;
-    virtual void vf3(int) = 0;
-    virtual void vf4(int) = 0;
-    virtual void vf5(int) = 0;
-    virtual void vf6(int) = 0;
-    virtual void vf7(int) = 0;
-    virtual void vf8(int) = 0;
-    virtual void vf9(int) = 0;
-    virtual void vf10(int) = 0;
-    virtual void vf11(void* arg, int flag) = 0; // vtable 0x2C
-    virtual void vf12(int) = 0;
-    virtual void vf13(int) = 0;
-    virtual void vf14(int) = 0;                 // vtable 0x38
-};
-
-// C-linkage imports - retail symbol names; extern "C" so calls bind to the
-// literal (un)mangled identifiers. (Retail names are the true symbol names;
-// do not rename.) Forward decls for structs whose full definitions live in
-// the TU.
-struct UnkPtrHolder;
-struct UnkTwoPtr;
-
-extern "C" void Cur_SetVisible(void*, u8);
-extern "C" int CSLCur_isReady(CSLCur* cur);
-extern "C" int CSLCur_getSlot(CSLCur* cur, u8 index);
-extern "C" void CSaveLoad_enAnimB(CSaveLoad* p);
-extern "C" void CSaveLoad_refresh(CSaveLoad* p);
-extern "C" void CSaveLoad_renderSlots(CSaveLoad* p);
-extern "C" void CSaveLoad_enAnimA(CSaveLoad* p);
-extern "C" void CSaveLoad_bestSlot(CSaveLoad* p);
-extern "C" void CSLSub_tickIn(CSLCur* cur);
-extern "C" void CSLSub_tickOut(CSLCur* self);
-extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
-extern "C" u8 lbl_eu_80538858[];
-extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u8 lbl_eu_8050F7CC[];
-extern "C" CSaveLoad* lbl_eu_806649F4;
-extern "C" u32 lbl_eu_80662AD0;
-extern "C" s32 lbl_eu_80662AC8;
-extern "C" u32 lbl_eu_80662ACC;
-extern "C" int CSysWin_isActive(void*);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" void requestLandTelop();
-extern "C" void MenuUpdate_SignalGlobalField64();
-extern "C" void CMenuGetItem_SetField54();
-extern "C" void invalidateQstFlag();
-extern "C" void CTaskGame_offerLoadCap();
-extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
-extern "C" void Cur_Update(void*);   // CCur per-frame update
-extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void CSaveLoad_pageDown(CSaveLoad* self);
-extern "C" u8 CSaveLoad_getIdle(CSaveLoad* self);
-extern "C" u8 CSaveLoad_getDone(CSaveLoad* self);
-extern "C" void CSLSub_init(CSLCur* data, int r4);
-extern "C" void CSaveLoad_update(CSaveLoad* self);
-extern "C" void CSaveLoad_reset(CSaveLoad* self);
-extern "C" u8 CSaveLoad_isReady(CSaveLoad* p);
-extern "C" u8 CSaveLoad_isBusy(CSaveLoad* p);
-extern "C" void CSaveLoad_open(CSaveLoad* p);
-extern "C" void CSaveLoad_curUp(CSaveLoad* self);
-extern "C" void CSaveLoad_curDown(CSaveLoad* self);
-extern "C" void CSaveLoad_pageUp(CSaveLoad* p);
-extern "C" void CSaveLoad_confirm(CSaveLoad* self);
-extern "C" void CSaveLoad_cancel(CSaveLoad* p);
-extern "C" void CSaveLoad_openDel(CSaveLoad* self);
 extern "C" u32 getSaveLoadOp(void);
-extern "C" void awardCollectCount(int val);
-extern "C" void awardQuestFlags(void);
-extern "C" u32 chkAwardFlags99(void);
-extern "C" u32 chkAwardFlags9B(void);
-extern "C" void sysWinAdvancePhase3(void*);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
-extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" u32 CUICfManager_getPackedFontD8();
-extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void setPaneVisible(void* obj, u32 value);
-extern "C" u8 bdatLookupRes(u16, u8);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
-extern "C" void sysWinApplyKind(void*, int);
-extern "C" void sysWinOpenPhase1(void*);
-extern "C" int isCollepediaId(int v);
-extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));
-extern "C" void CSLCur_setFlag(int, int, u8);
-extern "C" void CSLCur_bindPane(UnkPtrHolder* self);
-extern "C" void CSLCur_tickAnim(UnkPtrHolder* self);
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void CSLSub_bindPane(UnkTwoPtr*);
-extern "C" void DevFile_SetByteA9(int);
-extern "C" void sysWinTermLayout(void*);
-extern "C" void CSaveLoad_onFile(int, int, int, u8);
-extern "C" void NandQueueChk860(int, void*);
-extern "C" void NandQueueLoadCk(int, void*);
-extern "C" void NandQueueSaveCk(int, void*, u8);
-extern "C" void CtrlRemote_SetSharedBit(u32, u32);
-extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(int, int, int);
-extern "C" void code80135FDC_thunk_BFE8C(u8*);
-extern "C" void SysWinLog_QueueEvent(u32);
-extern "C" u32 SysWinLog_BumpEventValue(u32, u32);
-extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);

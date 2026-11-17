@@ -7,6 +7,7 @@
 
 #include "kyoshin/CTaskGameApi.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+#include "kyoshin/makecrystal/CMCCrystalParamTable.hpp"
 
 
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
@@ -275,9 +276,6 @@ void EffSched_LookupA(void*);
 void* initMcaFile(void*, unsigned int, const char*);
 void attachAnimObj(void*, void*, void*, unsigned int);
 void ModelDispEquip_SetActParamParent(void*, void*);
-void MakeCrystal_SortSlotEntries(void*);
-void copyCrystalBoxParam(void*, void*);
-void* copyCrystalParamRet(void*, const void*); // param copy helper (returns dst)
 void crystalListClearSlots(void*, u8);
 void __dt__80222984(void*);
 void func_80222B14(void*, u8, u16, u16);
@@ -2045,8 +2043,8 @@ void __declspec(noinline) MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* se
     u8 n = ((u8*)self)[0x2dc0];
     ((u8*)self)[0x2dc0] = n + 1;
     CItem_copyRecMasked((u8*)self + n * 0x34 + 0x13c0, &item);
-    MakeCrystal_ClearSlotParam(entries, idx);
-    func_8021E888(entries);
+    reinterpret_cast<CMCCrystalParamTable*>(entries)->clearSlot(idx);
+    reinterpret_cast<CMCCrystalParamTable*>(entries)->refreshCount();
     ((u8*)self)[0x2dc1] = 0;
     ((u8*)self)[0x2dc2] = 0;
     u8 buf[0xc];
@@ -2065,88 +2063,56 @@ void __declspec(noinline) MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* se
     }
 }
 
-void MakeCrystal_ClearSlotParam(CModelDispMakeCrystal* self, u16 idx)
+void CMCCrystalParamTable::clearSlot(u16 idx)
 {
-    // Clear the 8-byte param record for the crystal slot and copy it into
-    // the slot entry (entry layout: 8-byte stride, param at +2).
-    u8* base = reinterpret_cast<u8*>(self);
-    CMCrySlotParam param;
-    param.m0 = 0;
-    param.m2 = 0;
-    param.m4 = 0;
-    param.m6 = 0;
-    param.m7 = 0;
-    copyCrystalBoxParam(base + ((u32)idx << 3) + 2, &param);
+    mSlots[idx].set(CMCCrystalBoxParam());
 }
 
-// Retail 0x802206E0: refresh the crystal slot entry list, then find the first
-// entry whose param u16 (at +2) is zero and record its index in byte 0.
-// NOTE: -O4,s keeps this as an mtctr/bdnz countdown loop; plain -O4,p
-// unrolls it (MWCC_CASES Sec.856).
-void func_8021E888(CModelDispMakeCrystal* self)
+// Retail 0x802206E0: sort the slots, then record the index of the first empty
+// slot as the used count.
+void CMCCrystalParamTable::refreshCount()
 {
-    CMCrySlotEntry* entries = reinterpret_cast<CMCrySlotEntry*>(self);
-    MakeCrystal_SortSlotEntries(self);
-    // Single-counter constant-trip loop so -O4,s uses the CTR (bdnz) form.
+    sortSlots();
     for (u8 i = 0; i < 0x20; i++) {
-        if (*reinterpret_cast<u16*>(reinterpret_cast<u8*>(self) + (i << 3) + 2) == 0) {
-            reinterpret_cast<u8*>(self)[0] = i;
+        if (mSlots[i].m0 == 0) {
+            mCount = i;
             break;
         }
     }
 }
 
-// Retail 0x8022073C: two-pass bubble-sort of the crystal-slot entries,
-// then clear their +9 flag bytes.
-// pass 2 by the byte at entry+9 (both ascending, early-exit when a pass
-// makes no swap). Swaps move the 8-byte param record at entry+2 through
-// the retail copy helpers (copyCrystalParamRet reads, copyCrystalBoxParam writes).
-void MakeCrystal_SortSlotEntries(CModelDispMakeCrystal* self)
+// Retail 0x8022073C: two-pass bubble sort of the used slots (by quantity,
+// then by the m7 flag), then clear every used slot's m7 flag.
+void CMCCrystalParamTable::sortSlots()
 {
     u8 i;                          // pass-1 outer / pass-2 inner
-    u8* base = reinterpret_cast<u8*>(self);
     u8 j;                          // pass-1 inner / pass-2 outer
-    // Pass 1: sort by the u16 key at entry+4 (bubble sort, early exit).
-    for (i = 0; i < base[0] - 1; i++) {
+    for (i = 0; i < mCount - 1; i++) {
         int swapped = 0;
-        for (j = 0; j < base[0] - 1 - i; j++) {
-            u8* e1 = base + ((u8)j << 3);
-            u8* e2 = base + ((u16)(j + 1) << 3);
-            u8* p_cur = e1 + 2;
-            u8* p_next = e2 + 2;
-            u16 vi = *(u16*)(e1 + 4);
-            u16 vi1 = *(u16*)(p_next + 2);
-            if ((u32)vi < (u32)vi1) {
-                CMCrySlotParam tA, tB, tC;
-                copyCrystalParamRet(&tA, p_cur);
-                copyCrystalBoxParam(p_cur, copyCrystalParamRet(&tB, p_next));
-                copyCrystalBoxParam(p_next, copyCrystalParamRet(&tC, &tA));
+        for (j = 0; j < mCount - 1 - i; j++) {
+            if (mSlots[j].m2 < mSlots[j + 1].m2) {
+                CMCCrystalBoxParam t(mSlots[j]);
+                mSlots[j].set(CMCCrystalBoxParam(mSlots[j + 1]));
+                mSlots[j + 1].set(CMCCrystalBoxParam(t));
                 swapped = 1;
             }
         }
         if (swapped == 0) break;
     }
-    // Pass 2: sort by the byte at entry+9 (outer/inner roles swapped).
-    for (j = 0; j < base[0] - 1; j++) {
+    for (j = 0; j < mCount - 1; j++) {
         int swapped = 0;
-        for (i = 0; i < base[0] - 1 - j; i++) {
-            u8* e1 = base + ((u8)i << 3);
-            u8* e2 = base + ((u16)(i + 1) << 3);
-            u8* p_cur = e1 + 2;
-            u8* p_next = e2 + 2;
-            if ((u32)e1[9] < (u32)p_next[7]) {
-                CMCrySlotParam tA, tB, tC;
-                copyCrystalParamRet(&tA, p_cur);
-                copyCrystalBoxParam(p_cur, copyCrystalParamRet(&tB, p_next));
-                copyCrystalBoxParam(p_next, copyCrystalParamRet(&tC, &tA));
+        for (i = 0; i < mCount - 1 - j; i++) {
+            if (mSlots[i].m7 < mSlots[i + 1].m7) {
+                CMCCrystalBoxParam t(mSlots[i]);
+                mSlots[i].set(CMCCrystalBoxParam(mSlots[i + 1]));
+                mSlots[i + 1].set(CMCCrystalBoxParam(t));
                 swapped = 1;
             }
         }
         if (swapped == 0) break;
     }
-    // Clear the +9 flag byte of every entry.
-    for (u8 m = 0; m < base[0]; m++) {
-        base[((u8)m << 3) + 9] = 0;
+    for (u8 m = 0; m < mCount; m++) {
+        mSlots[m].m7 = 0;
     }
 }
 
@@ -2716,7 +2682,7 @@ extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal* self, u8 arg4)
     u8* base = reinterpret_cast<u8*>(self);
     u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
     if (entries == nullptr) return;
-    MakeCrystal_SortSlotEntries(entries);
+    reinterpret_cast<CMCCrystalParamTable*>(entries)->sortSlots();
     crystalListClearSlots(base + 0xc18, arg4);
     u8 count = entries[0];
     u8 i;
@@ -3062,8 +3028,8 @@ void MakeCrystal_AppendItemSteps(void* selfp)
         base[0x2dc0] = (u8)(stepN + 1);
         CItem_copyRecMasked(base + 0x13c0 + stepN * 0x34, &item);
     }
-    MakeCrystal_ClearSlotParam(entries, 0);
-    func_8021E888(entries);
+    reinterpret_cast<CMCCrystalParamTable*>(entries)->clearSlot(0);
+    reinterpret_cast<CMCCrystalParamTable*>(entries)->refreshCount();
     MakeCrystal_ResetSlotList(reinterpret_cast<CModelDispMakeCrystal*>(selfp), 0);
     reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateThumb(8, entries[0]);
     crystalListResetAnim4Play(base + 0xc18);

@@ -28,7 +28,6 @@ extern "C" {
 void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 void BgTex_Release_3D9C(CBgTex* self);
 void teardown(CTitleAHelp* self);
-void UnloadItemBox(CItemBoxGrid* self);
 void CfRes_getInstPtrBC();
 int KyoshinHeap_GetActive54();
 u32 KyoshinHeap_GetSize500000();
@@ -39,9 +38,6 @@ void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 int BgTex_Acquire_3C14(CBgTex* self);
 void BgTex_SetupRegion_3A24(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-void ClearListSlots(CItemBoxGrid* self);
-void LoadItemBoxFiles(CItemBoxGrid* self);
-void PushToList(CItemBoxGrid* self, u8 val);
 }
 
 // CInfoCf vtable (retail .data:0x805309B0), the UI-state singleton pointer
@@ -466,7 +462,6 @@ extern "C" void CMenuItem_HandleInput(CMenuItem* self);
 
 // CItemBoxGrid C-ABI helper (body lives in kyoshin/CItemBoxGrid.cpp); no
 // header declares the retail-unmangled name, so declare it here.
-extern "C" u32 IsSubWinActive(CItemBoxGrid* self);
 
 // Render-gate mode bitfield (.sbss; bit 21 = busy), shared with the other
 // menu-screen TUs.
@@ -492,8 +487,6 @@ struct CfMenuPadData {
 extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void beginClose(CTitleAHelp* self);
-extern "C" int IsItemBoxReady(CItemBoxGrid* self);
-extern "C" void InitItemDisplay(CItemBoxGrid* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
@@ -501,24 +494,9 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int IsMenuState621F0();
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void UpdateItemBox(CItemBoxGrid* self);
-extern "C" int GetField61(CItemBoxGrid* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801CCAF0(CItemBoxGrid* self);
-extern "C" u32 IsItemBoxActive(CItemBoxGrid* self);
-extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
-extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
-extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
-extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
-extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
-extern "C" void OpenSortMenu(CItemBoxGrid* self);
-extern "C" void TickItemBoxGrid(CItemBoxGrid* self);
-extern "C" void SelectCatRow(CItemBoxGrid* self);
-extern "C" u8 GetPromptState(CItemBoxGrid* self);
 
 
 // Global: UI state flag read by InfoCfGetUiFlags.
@@ -563,7 +541,7 @@ void CMenuItem::Init() {
 
     // --- Re-initialise the embedded CItemBoxGrid via a temporary ---
     u8 tempGrid[0x4a0c];
-    __ct__CItemBoxGrid(reinterpret_cast<CItemBoxGrid*>(tempGrid),
+    __ct__12CItemBoxGridFUcUsUlUc(reinterpret_cast<CItemBoxGrid*>(tempGrid),
                        mField4AC5 ? 3 : 0, 0, (u32)mScene, mField4AC6);
 
     // Copy the whole temporary into the member, region by region (retail
@@ -640,26 +618,26 @@ void CMenuItem::Init() {
     InfoCfCopyObj4D0(&dstBody->obj54C, &srcBody->obj54C);
     __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tempGrid), -1);
 
-    ClearListSlots(grid());
+    ((CItemBoxGrid*)(grid()))->ClearListSlots();
 
     if (mField4AC5 == 0) {
         // Single-player item list ordering.
-        PushToList(grid(), 2);
-        PushToList(grid(), 4);
-        PushToList(grid(), 5);
-        PushToList(grid(), 6);
-        PushToList(grid(), 7);
-        PushToList(grid(), 8);
-        PushToList(grid(), 0xb);
-        PushToList(grid(), 0xd);
-        PushToList(grid(), 0xc);
-        PushToList(grid(), 3);
-        PushToList(grid(), 9);
-        PushToList(grid(), 0xa);
+        ((CItemBoxGrid*)(grid()))->PushToList(2);
+        ((CItemBoxGrid*)(grid()))->PushToList(4);
+        ((CItemBoxGrid*)(grid()))->PushToList(5);
+        ((CItemBoxGrid*)(grid()))->PushToList(6);
+        ((CItemBoxGrid*)(grid()))->PushToList(7);
+        ((CItemBoxGrid*)(grid()))->PushToList(8);
+        ((CItemBoxGrid*)(grid()))->PushToList(0xb);
+        ((CItemBoxGrid*)(grid()))->PushToList(0xd);
+        ((CItemBoxGrid*)(grid()))->PushToList(0xc);
+        ((CItemBoxGrid*)(grid()))->PushToList(3);
+        ((CItemBoxGrid*)(grid()))->PushToList(9);
+        ((CItemBoxGrid*)(grid()))->PushToList(0xa);
     } else {
-        PushToList(grid(), mField4AC5);
+        ((CItemBoxGrid*)(grid()))->PushToList(mField4AC5);
     }
-    LoadItemBoxFiles(grid());
+    ((CItemBoxGrid*)(grid()))->LoadItemBoxFiles();
 
     mScene->addRenderCB(this, 0xd, 0);
 }
@@ -854,7 +832,7 @@ void CMenuItem::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    UnloadItemBox(grid());
+    ((CItemBoxGrid*)(grid()))->UnloadItemBox();
 
     sInstance = nullptr;
     if (mField4AC5 == 0) {
@@ -878,7 +856,7 @@ void CMenuItem::Move() {
     }
     if (pressed != 0) {
         // Close a pending item-box interaction, then mark the menu done.
-        if (IsSubWinActive(grid()) == 0) {
+        if (((CItemBoxGrid*)(grid()))->IsSubWinActive() == 0) {
             if (CMainMenu_GetInstancePtr() != 0) {
                 ArtsInfo_SetReadyFlag();
             }
@@ -893,16 +871,16 @@ void CMenuItem::Move() {
         // Once the bg texture, title bar and item grid are all ready,
         // start the panel intro animations and play the open cue.
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
-            IsItemBoxReady(grid()) != 0) {
+            ((CItemBoxGrid*)(grid()))->IsItemBoxReady() != 0) {
             func_801C412C(&mTitleAHelp);
-            InitItemDisplay(grid());
+            ((CItemBoxGrid*)(grid()))->InitItemDisplay();
             mState = 1;
             playUISound(0x6d);
         }
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid ready.
-        if (mTitleAHelp.isIdle() != 0 && GetField61(grid()) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && ((CItemBoxGrid*)(grid()))->GetField61() != 0) {
             mState = 2;
         }
         break;
@@ -911,14 +889,14 @@ void CMenuItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (mTitleAHelp.isIdle() != 0 && GetField61(grid()) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && ((CItemBoxGrid*)(grid()))->GetField61() != 0) {
             mField54 = 1;
         }
         break;
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    UpdateItemBox(grid());
+    ((CItemBoxGrid*)(grid()))->UpdateItemBox();
     updateHelp(&mTitleAHelp);
 }
 
@@ -931,7 +909,7 @@ void CMenuItem::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-    DrawItemBoxGrid(grid(), &drawInfo);
+    ((CItemBoxGrid*)(grid()))->DrawItemBoxGrid(&drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
 }
 
@@ -963,7 +941,7 @@ unsigned long ItemMenu_IsPresent(void) { return CMenuItem::sInstance != nullptr;
  * (classic vs. others). Dispatches one grid action in priority order. */
 void CMenuItem_HandleInput(CMenuItem* self) {
     // Help bar follows the grid's current mode.
-    u8 mode = GetPromptState(self->grid());
+    u8 mode = ((CItemBoxGrid*)(self->grid()))->GetPromptState();
     func_801C41E8(&self->mTitleAHelp, mode);
 
     CfMenuPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -994,30 +972,30 @@ void CMenuItem_HandleInput(CMenuItem* self) {
     }
 
     if (up != 0) {
-        func_801CCAF0(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->func_801CCAF0();
     } else if (down != 0) {
-        if (IsItemBoxActive(self->grid()) != 0) {
-            HandleCancelBtn(self->grid(), 0);
+        if (((CItemBoxGrid*)(self->grid()))->IsItemBoxActive() != 0) {
+            ((CItemBoxGrid*)(self->grid()))->HandleCancelBtn(0);
         } else {
             // Scroll failed: hide the help prompt, refresh the grid and move
             // to state 3.
             beginClose(&self->mTitleAHelp);
-            AdvanceBoxState(self->grid());
+            ((CItemBoxGrid*)(self->grid()))->AdvanceBoxState();
             self->mState = 3;
         }
     } else if (turboCancel != 0) {
-        GridMoveCursorLeft(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->GridMoveCursorLeft();
     } else if (pageTurn != 0) {
-        GridMoveCursorRight(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->GridMoveCursorRight();
     } else if (cancel != 0) {
-        GridMoveCursorDown(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->GridMoveCursorDown();
     } else if (decide != 0) {
-        GridMoveCursorUp(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->GridMoveCursorUp();
     } else if (leftTrigger != 0) {
-        OpenSortMenu(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->OpenSortMenu();
     } else if (xHeld != 0) {
-        TickItemBoxGrid(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->TickItemBoxGrid();
     } else if (yHeld != 0) {
-        SelectCatRow(self->grid());
+        ((CItemBoxGrid*)(self->grid()))->SelectCatRow();
     }
 }

@@ -32,32 +32,14 @@ void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // anim-completion callbacks; MWCC -O4,p would otherwise inline them into the
 // small callers. C linkage carries over from the header declarations.
 
-// Refresh/name-label helpers: retail calls these out-of-line from the update
-// callbacks (tickCrystalBoxPageFwd/98, confirmCrystalSelect); keep them non-inlined so the
-// callers emit `bl` like retail instead of cascading virtual-call bodies.
-__declspec(noinline) char* getCrystalItemName(CMCCrystalData* d, int v);
-
-// More refresh/state helpers called out-of-line (bl) by the update callbacks
-// and aggregation paths; without these MWCC -O4,p cascades the callee bodies
-// into the callers.
-__declspec(noinline) unsigned long getSelectTableWord(unsigned long* table, unsigned int idx);
-__declspec(noinline) CMCCrystalBoxParam* copyCrystalParamRet(CMCCrystalBoxParam* dest, const CMCCrystalBoxParam* src);
-__declspec(noinline) void sortCrystalIdOrder(CMCCrystalData* d);
-__declspec(noinline) void sortCrystalKeyOrder(CMCCrystalData* d);
-
-// Crystal-box param helpers: retail calls these out-of-line (bl) from the
-// init/refresh loops; keep them non-inlined so the callers emit bl like
-// retail instead of cascading the store/copy bodies into the loops.
-__declspec(noinline) CMCCrystalBoxParam* setCrystalBoxParam(CMCCrystalBoxParam*, s16, s16);
-__declspec(noinline) void copyCrystalBoxParam(CMCCrystalBoxParam*, const CMCCrystalBoxParam*);
 
 // Retail 0x80219E70: refresh the crystal box display / name.
 // -O4,s: retail uses the stmw r30/lmw r30 frame; plain -O4,p
 // splits the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
 __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxName() {
     CMCCrystalData* d = &this->data;
-    if (this->field_14A0 == 0) {
-        MakeCrystal_CollectByTarget(d, this->field_14EC[(s8)this->field_14F2]);
+    if (this->mSelTable.mCount == 0) {
+        d->collectByTarget(this->field_14EC[(s8)this->field_14F2]);
     }
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
                   lbl_eu_8050888C + 0x12e, d->limit != 0 ? d->limit : 1);
@@ -76,7 +58,7 @@ __declspec(noinline) void CMCCrystalBox::setCrystalNameLabel() {
     u16 p;
     u8 idx = this->unk2CC + (u8)this->unk2CD * 10;
     CMCCrystalData* d = &this->data;
-    char* name = getCrystalItemName(d, idx);
+    char* name = d->getItemName(idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout,
                   lbl_eu_8050888C + 0x18e, name, 0);
     if (func_8021A8EC(&this->crystalInfo) != 0) {
@@ -84,8 +66,8 @@ __declspec(noinline) void CMCCrystalBox::setCrystalNameLabel() {
             // Retail evaluates MakeCrystal_GetItemObject before MakeCrystal_GetSubCategory and keeps
             // the object pointer result in a saved register across the second
             // call.
-            q = MakeCrystal_GetItemObject(d, idx);
-            p = MakeCrystal_GetSubCategory(d, idx);
+            q = d->getItemObject(idx);
+            p = d->getSubCategory(idx);
             MCCrystal_ShowItem(&this->crystalInfo, p, q);
         } else {
             MCCrystal_ShowItem(&this->crystalInfo, 0, 0);
@@ -97,16 +79,16 @@ __declspec(noinline) void CMCCrystalBox::setCrystalNameLabel() {
 // from a freshly-created item instance, and format it into the name buffer.
 // Single trailing `return 0` (nested ifs) so MWCC merges all failure paths
 // into one epilogue `li r3, 0` like retail.
-char* getCrystalItemName(CMCCrystalData* d, int v) {
-    int cur = d->current;
+char* CMCCrystalData::getItemName(int v) {
+    int cur = current;
     u16 adj = (u16)(v + cur * 30);          // row-scaled index
-    if ((u32)adj < d->count) {
-        void* obj = CItem_kindPtr(d->byte_1002, d->entries[adj].id);
+    if ((u32)adj < count) {
+        void* obj = CItem_kindPtr(category, entries[adj].id);
         if (obj != 0 && *(void**)obj != 0) {
             void* inst = CItem_initItemImplInstances(obj);
-            char* name = ((CItemImplDispatch*)inst)->getName(obj);
-            sprintf(d->name, lbl_eu_8050888C, name);
-            return d->name;
+            char* itemName = ((CItemImplDispatch*)inst)->getName(obj);
+            sprintf(name, lbl_eu_8050888C, itemName);
+            return name;
         }
     }
     return 0;
@@ -115,19 +97,19 @@ char* getCrystalItemName(CMCCrystalData* d, int v) {
 // Swap the 4-byte payload (s16 + u8) of two crystal-data entries.
 // noinline: retail calls this out-of-line (bl) from the bubble sort; without
 // it MWCC inlines the body and the swapCrystalDataEntry reloc disappears.
-__declspec(noinline) void swapCrystalDataEntry(int unused, void* a, void* b) {
+__declspec(noinline) void CMCCrystalData::swapEntry(CMCCrystalDataEntry* a, CMCCrystalDataEntry* b) {
     short b_lo;
     unsigned char b_hi;
     unsigned char a_hi;
     short a_lo;
-    a_lo = *(short*)a;
-    a_hi = ((unsigned char*)a)[2];
-    b_hi = ((unsigned char*)b)[2];
-    b_lo = *(short*)b;
-    *(short*)a = b_lo;
-    ((unsigned char*)a)[2] = b_hi;
-    *(short*)b = a_lo;
-    ((unsigned char*)b)[2] = a_hi;
+    a_lo = a->id;
+    a_hi = a->flag;
+    b_hi = b->flag;
+    b_lo = b->id;
+    a->id = b_lo;
+    a->flag = b_hi;
+    b->id = a_lo;
+    b->flag = a_hi;
 }
 
 // TU-local head view of a CItemExt record (see cf/CItem.hpp): packed word at
@@ -136,7 +118,7 @@ __declspec(noinline) void swapCrystalDataEntry(int unused, void* a, void* b) {
 struct CrystalItemHead { u32 word00; u16 key04; u8 _pad06; u8 flag07; };
 
 // Retail 0x802157E8: bubble-sort the crystal-state entries.
-void sortCrystalIdOrder(CMCCrystalData* d) {
+void CMCCrystalData::sortIdOrder() {
     // Declaration order steers MWCC's saved-register homes toward the retail
     // map {i:r31, swapped:r30, j:r29, pa:r28, d:r27, tmp:r26, a:r25,
     // pb:r24, o1:r23, o2:r22, b:r21}.
@@ -150,11 +132,11 @@ void sortCrystalIdOrder(CMCCrystalData* d) {
     void* o2;
     u32 b;
 
-    for (i = 0; i < d->count - 1; i++) {
+    for (i = 0; i < count - 1; i++) {
         swapped = 0;
-        for (j = 0; j < d->count - 1 - i; j++) {
-            pa = &d->entries[j];
-            pb = &d->entries[j + 1];
+        for (j = 0; j < count - 1 - i; j++) {
+            pa = &entries[j];
+            pb = &entries[j + 1];
             o1 = CItem_kindPtr(9, pa->id);
             o2 = CItem_kindPtr(9, pb->id);
             // Retail loads *o2 before *o1 and keeps (*o2)>>20 live across
@@ -173,14 +155,14 @@ void sortCrystalIdOrder(CMCCrystalData* d) {
             }
             if (a != 0 || b != 0) {
                 if (a > b) {
-                    swapCrystalDataEntry((int)d, pa, pb);
+                    swapEntry(pa, pb);
                     swapped = 1;
                 }
             } else {
                 // Both keys zero: fall back to the entry flag byte's bits
                 // 2..7 (shift+mask folds to one rlwinm).
                                 if ((u32)((((const CrystalItemHead*)o1)->flag07 >> 2) & 0x3F) > (u32)((((const CrystalItemHead*)o2)->flag07 >> 2) & 0x3F)) {
-                    swapCrystalDataEntry((int)d, pa, pb);
+                    swapEntry(pa, pb);
                     swapped = 1;
                 }
             }
@@ -191,14 +173,14 @@ void sortCrystalIdOrder(CMCCrystalData* d) {
 
 // Retail 0x80215974: bubble-sort the crystal-state entries by their %+4
 // key using CItem_kindPtr until no swap occurs in a pass.
-void sortCrystalKeyOrder(CMCCrystalData* d) {
+void CMCCrystalData::sortKeyOrder() {
     u16 o = 0;
-    while (o < d->count - 1) {
+    while (o < count - 1) {
         int swapped = 0;
         u16 i = 0;
-        while (i < (d->count - 1) - o) {
-            CMCCrystalDataEntry* pa = &d->entries[i];
-            CMCCrystalDataEntry* pb = &d->entries[i + 1];
+        while (i < (count - 1) - o) {
+            CMCCrystalDataEntry* pa = &entries[i];
+            CMCCrystalDataEntry* pb = &entries[i + 1];
             // Retail keeps obj1 in a saved register across the second call
             // and loads both %+4 keys only after both resolves.
             void* obj1 = CItem_kindPtr(9, pa->id);
@@ -206,7 +188,7 @@ void sortCrystalKeyOrder(CMCCrystalData* d) {
             u32 av = ((const CrystalItemHead*)obj1)->key04;
             u32 bv = ((const CrystalItemHead*)obj2)->key04;
             if (av > bv) {
-                swapCrystalDataEntry((int)d, pa, pb);
+                swapEntry(pa, pb);
                 swapped = 1;
             }
             i++;
@@ -226,9 +208,6 @@ CMCCrystalBox::CMCCrystalBox(u8 parentType)
       mAnim6(0), mAnim7(0), mAnim8(0), unk60(0), unk64(0), unk68(0), unk69(1),
       mScrollBar(0), sysWin(0), unk2CC(0), unk2CD(0), unk2CE(0), unk2CF(0),
       unk2D0(parentType), unk2D1(0), unk2D2(1), unk2D3(0), unk2D4(0), unk2D5(0) {
-    initCrystalBoxParamTbl(&unk2D6);
-    MakeCrystal_ResetTable(&data);
-    initCrystalBoxScratch(reinterpret_cast<CrystalBoxScratch*>((u8*)this + 0x1480));
     field_14F1 = 0;
     field_14F2 = 0;
     unk1500 = 0;
@@ -239,95 +218,6 @@ CMCCrystalBox::CMCCrystalBox(u8 parentType)
     field_1506 = 0;
     field_1507 = 0;
     memset(&field_14EC[0], 0, 5);
-}
-
-// Retail 0x80215C5C: set all fields of a crystal-box param (selected id,
-// quantity, spare, two flags) and return the param pointer.
-CMCCrystalBoxParam* setCrystalBoxParam(CMCCrystalBoxParam* p, s16 a, s16 b) {
-    p->m0 = a;
-    p->m2 = b;
-    p->m4 = 0;
-    p->m6 = 0;
-    p->m7 = 0;
-    return p;
-}
-
-// Retail 0x80215C78: copy an 8-byte crystal-box param (three s16, two u8).
-void copyCrystalBoxParam(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src) {
-    unsigned short *d16 = (unsigned short*)dst;
-    const unsigned short *s16 = (const unsigned short*)src;
-    d16[0] = s16[0];
-    d16[1] = s16[1];
-    d16[2] = s16[2];
-    unsigned char *d8 = (unsigned char*)dst;
-    const unsigned char *s8 = (const unsigned char*)src;
-    d8[6] = s8[6];
-    d8[7] = s8[7];
-}
-
-// Retail 0x80215BCC: initialise the 32-slot param table at base+2 (pointer
-// walk), then re-init every slot through a stack-temp copy so each
-// entry is written by copyCrystalBoxParam (matching retail's two-loop shape).
-// noinline: retail calls this out-of-line (bl) from rebuildCrystalBoxSelTable; without
-// it MWCC inlines the two-loop body into the caller.
-// stmw r29 frame (end:r31, p:r30, base:r29, i reused in r30, tmp at r1+8)
-// is the -O4,s shape.
-__declspec(noinline) u8* initCrystalBoxParamTbl(u8* base) {
-    // end declared first (r31) but initialized after p, matching retail's
-    // addi r30 / addi r31 emission order.
-    CMCCrystalBoxParam* end;
-    CMCCrystalBoxParam* p = (CMCCrystalBoxParam*)(base + 2);
-    end = (CMCCrystalBoxParam*)(base + 0x102);
-    do {
-        setCrystalBoxParam(p, 0, 0);
-        p++;
-    } while (p < end);
-
-    base[0] = 0;
-    base[1] = 0;
-
-    // unsigned counter: retail compares with cmpli but keeps the u8 mask at
-    // the i*8 subscript scale (clrlslwi r0,i,24,3).
-    unsigned int i = 0;
-    do {
-        CMCCrystalBoxParam tmp;
-        copyCrystalBoxParam(&((CMCCrystalBoxParam*)(base + 2))[(u8)i],
-                      setCrystalBoxParam(&tmp, 0, 0));
-        i++;
-    } while (i < 0x20);
-
-    return base;
-}
-
-void* __dt__80213E4C(void* obj, int flags) {
-    if (obj != 0 && flags > 0) {
-        operator delete(obj);
-    }
-    return obj;
-}
-
-// Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
-// up-counter (clrlslwi/clrlwi masks) -- the -O4,s shape; -O4,p unrolls the
-// constant-trip loop. -O4,s forces the rolled form.
-// Retail zeroes a 32-byte word array at +0, the +0x20 byte, an 8-byte
-// array at +0x21 (filled with 0xFF), +0x29 and +0x6A -- with a rolled
-// mtctr/bdnz loop (the -O4,s shape; -O4,p unrolls). The header's +4-shifted
-// pad_00/subObjPtrs view doesn't match this region, so raw offsets are used.
-__declspec(noinline) void initCrystalBoxScratch(CrystalBoxScratch* scratch) {
-    reinterpret_cast<CrystalBoxScratch*>(scratch)->count = 0;
-    reinterpret_cast<CrystalBoxScratch*>(scratch)->flag29 = 0;
-    reinterpret_cast<CrystalBoxScratch*>(scratch)->flag6A = 0;
-    for (u8 i = 0; i < 8; i++) {
-        reinterpret_cast<u32*>(scratch)[i] = 0;
-        reinterpret_cast<CrystalBoxScratch*>(scratch)->fill[i] = -1;
-    }
-}
-
-void* __dt__80213ECC(void* obj, int flags) {
-    if (obj != 0 && flags > 0) {
-        operator delete(obj);
-    }
-    return obj;
 }
 
 // Retail 0x80215D64: destroy all placed member subobjects in reverse order.
@@ -502,7 +392,7 @@ void CMCCrystalBox::openCrystalBox() {
     // Nested-call form: MWCC evaluates MakeCrystal_GetItemObject (rightmost arg) first
     // like retail.
     MCCrystal_ShowItem(&this->crystalInfo,
-                  MakeCrystal_GetSubCategory(d, idx), MakeCrystal_GetItemObject(d, idx));
+                  d->getSubCategory(idx), d->getItemObject(idx));
     rebuildCrystalGridTable();
     float vec[3];
     // Retail reuses setVec3's returned dest pointer as the vec argument.
@@ -621,17 +511,17 @@ void CMCCrystalBox::stepCrystalBoxCursorPrev() {
         // chain jumps into the step code (beq/blt) or over it to the exit
         // (the trailing `b`), so the guards must share a single `if`.
         if (this->data.count == 0 ||
-            (this->field_14A0 != 8 && (int)getCrystalSelTopCount() == 0 &&
-             (this->field_14A0 < 2 || MakeCrystal_AllFlagsSet(&this->data) == 0))) {
+            (this->mSelTable.mCount != 8 && (int)getCrystalSelTopCount() == 0 &&
+             (this->mSelTable.mCount < 2 || this->data.allFlagsSet() == 0))) {
             // Step the item cursor down, wrapping -3 back to 2.
             s8 v = this->unk2CD - 1;
             this->unk2CD = v;
             if ((s8)this->unk2CD < -2) {
                 this->unk2CD = 2;
             }
-            if (*(volatile u8*)&this->field_14A0 > 1) { // per-arm reload
+            if (*(volatile u8*)&this->mSelTable.mCount > 1) { // per-arm reload
                 if ((s8)this->unk2CD == -1) this->unk2CD = -2;
-            } else if (this->field_14A0 == 1) {
+            } else if (this->mSelTable.mCount == 1) {
                 if ((s8)this->unk2CD < 0) this->unk2CD = 2;
             } else {
                 if ((s8)this->unk2CD == -2) this->unk2CD = 2;
@@ -689,17 +579,17 @@ void CMCCrystalBox::stepCrystalBoxCursorNext() {
         // into the step code (beq/blt) or over it to the exit (trailing `b`).
         if (this->unk2D1 == 0 &&
             (this->data.count == 0 ||
-             (this->field_14A0 != 8 && (int)getCrystalSelTopCount() == 0 &&
-              (this->field_14A0 < 2 || MakeCrystal_AllFlagsSet(&this->data) == 0)))) {
+             (this->mSelTable.mCount != 8 && (int)getCrystalSelTopCount() == 0 &&
+              (this->mSelTable.mCount < 2 || this->data.allFlagsSet() == 0)))) {
             // Step the item cursor (s8 unk2CD), wrapping at 2.
             s8 v = this->unk2CD + 1;
             this->unk2CD = v;
             if ((s8)this->unk2CD > 2) {
                 this->unk2CD = -2;
             }
-            if (this->field_14A0 >= 2) {
+            if (this->mSelTable.mCount >= 2) {
                 if ((s8)this->unk2CD == -1) this->unk2CD = 0;
-            } else if (this->field_14A0 >= 1) {
+            } else if (this->mSelTable.mCount >= 1) {
                 if ((s8)this->unk2CD == -2) this->unk2CD = 0;
             } else {
                 if ((s8)this->unk2CD == -2) this->unk2CD = -1;
@@ -922,7 +812,7 @@ __declspec(noinline) void CMCCrystalBox::confirmCrystalSelect() {
     if (this->unk2D1 != 0) return;
     if ((s8)this->unk2CD == -2) return;
 
-    MakeCrystal_AdvanceCursor(&this->data);
+    this->data.nextPage();
     updateCrystalBoxRows();
     setCrystalNameLabel();
     rebuildCrystalGridTable();
@@ -935,7 +825,7 @@ __declspec(noinline) void CMCCrystalBox::confirmCrystalUnselect() {
     if (this->unk2D1 != 0) return;
     if ((s8)this->unk2CD == -2) return;
 
-    func_802137B4(&this->data);
+    this->data.prevPage();
     updateCrystalBoxRows();
     setCrystalNameLabel();
     rebuildCrystalGridTable();
@@ -1029,13 +919,13 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
         }
     } else {
         u16 count = this->data.count;
-        u8 a0 = this->field_14A0;
-        u8* selTable = (u8*)this + 0x1480;
+        u8 a0 = this->mSelTable.mCount;
+        CMCCrystalSelTable* selTable = &this->mSelTable;
         if (count != 0 &&
             (a0 == 8 || (int)getCrystalSelTopCount() != 0 ||
-             MakeCrystal_AllFlagsSet(&this->data) != 0)) {
+             this->data.allFlagsSet() != 0)) {
             // scan #1: walk the 10 rows x 30 columns for the selected slot
-            void* sel = (void*)getCrystalSelectEntry(selTable);
+            void* sel = (void*)selTable->getSelectEntry();
             CMCCrystalData* d = &this->data;
             u8 cur = (u8)d->current;
             u8 last = (u8)((u8)(cur + 1) - 1);
@@ -1045,8 +935,8 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 d->current = row;
                 u8 col;
                 for (col = 0; col < 30; col++) {
-                    if (MakeCrystal_GetItemObject(d, col) == sel) {
-                        MakeCrystal_SetFlag((void*)d, col, 0);
+                    if (d->getItemObject(col) == sel) {
+                        d->setFlag(col, 0);
                         this->unk2CD = col != 0 ? col / 10 : 0;
                         this->unk2CC = col != 0 ? col - this->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors();
@@ -1057,7 +947,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 }
                 if (found != 0) break;
             }
-            releaseCrystalBoxSlot((CrystalBoxScratch*)selTable);
+            selTable->release();
             if (found == 0) d->current = last;
             updateCrystalBoxRows();
             setCrystalNameLabel();
@@ -1068,7 +958,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 this->unk69 = 0;
             } else {
                 // scan #2: same search for the a0 != 0 fallback
-                void* sel = (void*)getCrystalSelectEntry(selTable);
+                void* sel = (void*)selTable->getSelectEntry();
             CMCCrystalData* d = &this->data;
             u8 cur = (u8)d->current;
             u8 last = (u8)((u8)(cur + 1) - 1);
@@ -1078,8 +968,8 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 d->current = row;
                 u8 col;
                 for (col = 0; col < 30; col++) {
-                    if (MakeCrystal_GetItemObject(d, col) == sel) {
-                        MakeCrystal_SetFlag((void*)d, col, 0);
+                    if (d->getItemObject(col) == sel) {
+                        d->setFlag(col, 0);
                         this->unk2CD = col != 0 ? col / 10 : 0;
                         this->unk2CC = col != 0 ? col - this->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors();
@@ -1090,7 +980,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 }
                 if (found != 0) break;
             }
-            releaseCrystalBoxSlot((CrystalBoxScratch*)selTable);
+            selTable->release();
             if (found == 0) d->current = last;
             updateCrystalBoxRows();
             setCrystalNameLabel();
@@ -1100,7 +990,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
         }
         setPaneVisible((*(CLytVf3C**)((u8*)this->mLayout + 0x10))
                           ->vf_3C(lbl_eu_8050888C + 0x7c, 1),
-                      selTable[0x20] < 2);
+                      selTable->mCount < 2);
     }
     if (a != 0) playUISound(6);
 }
@@ -1108,55 +998,39 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
 // Retail 0x80217940: return the 8-slot selection-table word selected by the
 // header (count byte at +0x20, head index at +0x29, slot index byte at
 // 0x20+head). Used by the crystal-scan in advanceCrystalBoxSortMenu.
-int getCrystalSelectEntry(void* obj) {
-    CrystalBoxScratch* p = (CrystalBoxScratch*)obj;
-    if (p->count == 0) return 0;
-    return *(int*)((u8*)p + 4 * (s8)((u8*)p)[0x20 + p->flag29]);
+int CMCCrystalSelTable::getSelectEntry() {
+    if (mCount == 0) return 0;
+    return mItems[mOrder[mTop - 1]];
 }
 
-// Retail tail-calls the aggregator (b buildCrystalBoxIdList); keep it out-of-line.
+void CMCCrystalSelTable::release() {
+    // Unclaim the item placed by the last step and drop the step.
+    if (mCount == 0) return;
 
-void releaseCrystalBoxSlot(CrystalBoxScratch* scratch) {
-    // Free-slot bookkeeping on the scratch selection table: unclaim the slot
-    // owned at [0x20+slotIdx] and decrement the header counter. Reads after
-    // the store are cached in locals so MWCC reloads them once (aliasing).
-    if (reinterpret_cast<CrystalBoxScratch*>(scratch)->count == 0) return;
+    if (mItems[mOrder[mTop - 1]] == 0) return;
 
-    int* table = (int*)scratch;
-    signed char owner = (s8)((u8*)scratch)[0x20 + ((u8*)scratch)[0x29]];
-    if (table[owner] == 0) return;
-
-    table[owner] = 0;
-    u8 cnt = ((u8*)scratch)[0x20];
-    u8 t = ((u8*)scratch)[0x29];
-    reinterpret_cast<CrystalBoxScratch*>(scratch)->count = cnt - 1;
-    ((s8*)scratch)[0x21 + t] = -1;
-    ((u8*)scratch)[0x29] = t - 1;
-    buildCrystalBoxIdList(scratch);
+    mItems[mOrder[mTop - 1]] = 0;
+    u8 cnt = mCount;
+    u8 t = mTop;
+    mCount = cnt - 1;
+    mOrder[t] = -1;
+    mTop = t - 1;
+    buildIdList();
 }
 
 // stmw r26 frame + rolled constant-trip loops are the -O4,s shape (unit flag).
 // Retail 0x802179D0: aggregate the 8 item-list slots of the scratch head into
 // (id, quantity) pairs, bubble-sort them by descending quantity, then publish
 // the id list into the head itself (ids at +0x2A, count byte at +0x6A).
-__declspec(noinline) void buildCrystalBoxIdList(CrystalBoxScratch* scratch) {
-    MCAggPair pairs[32];
-    MCAggPair* p;
+__declspec(noinline) void CMCCrystalSelTable::buildIdList() {
+    CMCCrystalAggPair pairs[32];
     u8 n;
-
-    // Zero-fill the transient pair table (pointer walk, matching retail).
-    p = pairs;
-    do {
-        p->id = 0;
-        p->count = 0;
-        p++;
-    } while (p < &pairs[32]);
 
     n = 0;
 
     // The head's first 8 words are the placed item pointers.
     for (u8 i = 0; i < 8; i++) {
-        void* item = ((void**)scratch)[i];
+        void* item = (void*)mItems[i];
         if (item == 0) continue;
         for (u8 j = 0; j < 4; j++) {
             // Call the virtual directly on the returned instance pointer:
@@ -1199,8 +1073,8 @@ __declspec(noinline) void buildCrystalBoxIdList(CrystalBoxScratch* scratch) {
             if (pairs[j].count < pairs[j + 1].count) {
                 // Halfword-wise exchange through explicit element pointers:
                 // keeps the temp in registers while matching retail size.
-                MCAggPair* a = &pairs[j];
-                MCAggPair* b = &pairs[j + 1];
+                CMCCrystalAggPair* a = &pairs[j];
+                CMCCrystalAggPair* b = &pairs[j + 1];
                 u16 tid = a->id;
                 u16 tcnt = a->count;
                 a->id = b->id;
@@ -1212,15 +1086,14 @@ __declspec(noinline) void buildCrystalBoxIdList(CrystalBoxScratch* scratch) {
     }
 
     // Publish: ids packed at +0x2A, count byte at +0x6A.
-    u8* base = (u8*)scratch;
-    base[0x6A] = 0;
+    mIdCount = 0;
     if (n != 0) {
-        *(u16*)(base + 0x2A) = pairs[0].id;
-        base[0x6A] = 1;
+        mIds[0] = pairs[0].id;
+        mIdCount = 1;
         for (u8 k = 1; k < n; k++) {
-            u8 flag = base[0x6A];
-            ((u16*)(base + 0x2A))[flag] = pairs[k].id;
-            base[0x6A] = flag + 1;
+            u8 flag = mIdCount;
+            mIds[flag] = pairs[k].id;
+            mIdCount = flag + 1;
         }
     }
 }
@@ -1237,152 +1110,102 @@ u8 CMCCrystalBox::getCrystalBoxKindB() { return this->unk2D5; }
 // quantity, and copies the result into the +0x2D8 sub-table, then refreshes
 // the current-item byte and drives the item-implementation virtuals.
 // stmw r23 frame is the -O4,s shape (unit flag).
-u8* CMCCrystalBox::rebuildCrystalBoxSelTable() {
-    // Stack layout (retail): sel block (head+32 slots) at +0x138, sort table
-    // at +0x38, then the six temps at +0x30..+0x8.
-    struct SelTable {
-        u8 head[2];                   // +0x00
-        CMCCrystalBoxParam slots[32]; // +0x02
-    };
-    struct ParamBlock { CMCCrystalBoxParam slots[32]; };
-    SelTable selT;                    // +0x138 (initialised by initCrystalBoxParamTbl)
-    CMCCrystalBoxParam sortTable[32]; // +0x38
-    CMCCrystalBoxParam t1;            // +0x30 (bubble-sort temp)
-    CMCCrystalBoxParam pa;            // +0x28 (re-init temp)
-    CMCCrystalBoxParam tmp2;          // +0x20 (add-entry temp)
-    CMCCrystalBoxParam t2;            // +0x18 (bubble-sort temp)
-    CMCCrystalBoxParam t3;            // +0x10 (bubble-sort temp)
-    CMCCrystalBoxParam tmp3;          // +0x8  (fill-loop temp)
-
-    // Exactly nine working variables mirroring retail's saved-register
-    // homes; each serves several phases (like retail's register reuse):
-    // count:r31, tb:r30 (clear sentinel / selection-table base),
-    // wk:r28 (sort-table walk / item ptr / bubble limit), ii:r27,
-    // jj:r26, nm:r25 (item name / bubble outer), sa:r24, sb:r23.
+CMCCrystalParamTable* CMCCrystalBox::rebuildCrystalBoxSelTable() {
+    // Saved-register homes: count:r31, tb:r30, wk:r28, ii:r27, jj:r26,
+    // nm:r25, sa:r24, sb:r23.
     u8 count;
-    unsigned long tb;
+    CMCCrystalSelTable* tb;
     unsigned long wk;
-    unsigned int ii;
-    unsigned int jj;
+    u8 ii;
+    u8 jj;
     u16 nm;
     CMCCrystalBoxParam* sa;
     CMCCrystalBoxParam* sb;
 
-    // Initialise the selection table (head + 32 slots) and copy the slots
-    // into the +0x2D8 sub-table.
-    initCrystalBoxParamTbl(selT.head);
-    this->unk2D6 = selT.head[0];
-    this->unk2D7 = selT.head[1];
-    // 0x100-byte block assignment lowers to MWCC's rolled update-form
-    // word-copy loop.
-    *(ParamBlock*)this->subTable = *(ParamBlock*)selT.slots;
+    mParamTable = CMCCrystalParamTable();
 
-    // Clear the sort table twice: a pointer walk, then a slot re-init via a
-    // stack temp so each entry is written by copyCrystalBoxParam.
-    wk = (unsigned long)sortTable;
-    tb = (unsigned long)&selT;
+    CMCCrystalBoxParam sortTable[32];
     count = 0;
-    do {
-        setCrystalBoxParam((CMCCrystalBoxParam*)wk, 0, 0);
-        wk += 8;
-    } while (wk < tb);
-    ii = 0;
-    do {
-        copyCrystalBoxParam(&sortTable[ii], setCrystalBoxParam(&pa, 0, 0));
-        ii++;
-    } while (ii < 0x20);
+    for (ii = 0; ii < 0x20; ii++) {
+        sortTable[ii].set(CMCCrystalBoxParam());
+    }
 
     // Aggregate the 8-slot selection table: for each placed item, walk its
     // 4 sub-items, accumulate quantities of matching crystal ids in the sort
     // table, and append new ids.
-    tb = (unsigned long)((u8*)this + 0x1480);
+    tb = &this->mSelTable;
     for (ii = 0; ii < 8; ii++) {
-        wk = getSelectTableWord((unsigned long*)tb, (u8)ii);
+        wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
         for (jj = 0; jj < 4; jj++) {
             CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
             nm = inst->GetName((unsigned long*)wk, (u8)jj);
-            if ((s16)nm <= 0) continue;
+            if (nm == 0) continue;
             u16 flag = inst->GetFlag((unsigned long*)wk, (u8)jj);
             int found = 0;
             for (u8 k = 0; k < count; k++) {
-                if (sortTable[k].m0 == (s16)nm) {
+                if (sortTable[k].m0 == nm) {
                     sortTable[k].m2 += flag;
                     found = 1;
                     break;
                 }
             }
             if (found == 0) {
-                copyCrystalBoxParam(&sortTable[count],
-                              setCrystalBoxParam(&tmp2, (s16)nm, (s16)flag));
+                sortTable[count].set(CMCCrystalBoxParam(nm, flag));
                 count++;
             }
         }
     }
 
-    // Bubble-sort the sort table by quantity (ascending).
+    // Bubble-sort the sort table by quantity (descending).
     wk = (unsigned long)((u8)count - 1);
     for (nm = 0; nm < (u8)wk; nm++) {
         for (jj = 0; jj < (unsigned int)(wk - (u8)nm); jj++) {
             if (sortTable[jj].m2 < sortTable[jj + 1].m2) {
                 sa = &sortTable[jj];
                 sb = &sortTable[jj + 1];
-                copyCrystalParamRet(&t1, sa);
-                copyCrystalBoxParam(sa, copyCrystalParamRet(&t2, sb));
-                copyCrystalBoxParam(sb, copyCrystalParamRet(&t3, &t1));
+                CMCCrystalBoxParam t1(*sa);
+                sa->set(CMCCrystalBoxParam(*sb));
+                sb->set(CMCCrystalBoxParam(t1));
             }
         }
     }
 
-    // Copy the sorted table into the +0x2D8 sub-table, bumping the cursor.
+    // Copy the sorted table into the param table, bumping its count.
     for (u8 fk = 0; fk < (u8)count; fk++) {
-        setCrystalBoxParam(&tmp3, sortTable[fk].m0, sortTable[fk].m2);
-        u8 cur = this->unk2D6;
-        this->unk2D6 = cur + 1;
-        copyCrystalBoxParam(&this->subTable[cur], &tmp3);
+        mParamTable.mSlots[mParamTable.mCount++].set(
+            CMCCrystalBoxParam(sortTable[fk].m0, sortTable[fk].m2));
     }
 
     // Refresh the current-item byte from the first placed item, then drive
     // each placed item's slot-0x10 virtual.
     for (ii = 0; ii < 8; ii++) {
-        wk = getSelectTableWord((unsigned long*)tb, (u8)ii);
+        wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
         CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
-        this->unk2D7 = (u8)inst->GetCount((unsigned long*)wk);
+        mParamTable.mItemId = (u8)inst->GetCount((unsigned long*)wk);
         break;
     }
     for (ii = 0; ii < 8; ii++) {
-        wk = getSelectTableWord((unsigned long*)tb, (u8)ii);
+        wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
         CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
         inst->vf_08((unsigned long*)wk);
     }
 
-    return &this->unk2D6;
+    return &mParamTable;
 }
 
 // Table lookup used by the 8-slot selection loop (placeCrystalBoxSlots). Retail calls
 // it out-of-line; keep it non-inlined so the caller emits `bl getSelectTableWord`
 // instead of the compiler eliminating the read chain.
-__declspec(noinline) unsigned long getSelectTableWord(unsigned long* table, unsigned int idx) {
+unsigned long CMCCrystalSelTable::getItem(unsigned int idx) {
     if (idx >= 8) {
         return 0;
     }
-    return table[(unsigned char)idx];
+    return mItems[(unsigned char)idx];
 }
 
-CMCCrystalBoxParam* copyCrystalParamRet(CMCCrystalBoxParam *dest, const CMCCrystalBoxParam *src) {
-    unsigned short *d = (unsigned short *)dest;
-    const unsigned short *s = (const unsigned short *)src;
-    d[0] = s[0];
-    d[1] = s[1];
-    d[2] = s[2];
-    unsigned char *db = (unsigned char *)dest;
-    const unsigned char *sb = (const unsigned char *)src;
-    db[6] = sb[6];
-    db[7] = sb[7];
-    return dest;
-}
 
 __declspec(noinline) void CMCCrystalBox::tickCrystalBoxPageFwd() {
     if (this->unk2CE != 0) return;
@@ -1526,7 +1349,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
     if (this->sortMenu.IsOpen() != 0) return;
     if ((s8)this->unk2CD == -1) return;
 
-    if (this->field_14A0 == 0) {
+    if (this->mSelTable.mCount == 0) {
         if (CSysWin_getUnk34(&this->sysWin) != 0) {
             // Window already open: keep it alive while the crystal animates.
             if (this->unk1500 == 0) return;
@@ -1537,7 +1360,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
             return;
         }
         // No window: only open it when a crystal exists at the current slot.
-        if (MakeCrystal_GetItemObject(&this->data,
+        if (this->data.getItemObject(
                           (u8)(this->unk2CC + (u8)this->unk2CD * 10)) == 0) {
             playUISound(5);
             return;
@@ -1591,8 +1414,8 @@ int CMCCrystalBox::getCrystalBoxAction() {
     if ((s8)this->unk2CD == -1) return 0x35;
     if ((s8)this->unk2CD == -2) return 0x34;
     u8 idx = this->unk2CC + (u8)this->unk2CD * 10;
-    if (MakeCrystal_GetFlag(&this->data, idx) != 0) return 0x33;
-    return 0x30 + (this->field_14A0 != 0);
+    if (this->data.getFlag(idx) != 0) return 0x33;
+    return 0x30 + (this->mSelTable.mCount != 0);
 }
 
 void CMCCrystalBox::deselectCrystalBoxItem() {
@@ -1600,7 +1423,7 @@ void CMCCrystalBox::deselectCrystalBoxItem() {
     if (this->unk1500 != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
-    if (this->field_14A0 != 0) return;
+    if (this->mSelTable.mCount != 0) return;
     this->unk2CD = -1;
     refreshCrystalBoxCursors();
     setCrystalNameLabel();
@@ -1720,29 +1543,10 @@ void CMCCrystalBox::loadCrystalBoxArchive() {
 end:
     return;
 reload:;
-    CrystalBoxScratch scr;
     BuildSlotItemLists(1);
     initCrystalPageLabels();
-    MakeCrystal_CollectByTarget(&this->data, this->field_14EC[(s8)this->field_14F2]);
-
-    initCrystalBoxScratch(&scr);
-
-    // Struct-wrapped assignments: MWCC lowers these to the rolled
-    // mtctr/bdnz word-pair loops retail emits (base-4 pointer walk).
-    {
-        struct BoxWords { u32 w[8]; };
-        struct PageSlots { u16 w[0x20]; };
-        *(BoxWords*)((u8*)this + 0x1480) = *(BoxWords*)&scr.zeros[0];
-        this->field_14A0 = scr.count;
-        // Double-buffer both fill words before storing (retail r6/r3 pairing).
-        u32 loFill = *(u32*)&scr.fill[0];
-        u32 hiFill = *(u32*)&scr.fill[4];
-        *(u32*)&this->pad_14A1[4] = hiFill;
-        *(u32*)&this->pad_14A1[0] = loFill;
-        this->pad_14A1[8] = scr.flag29;
-        *(PageSlots*)&this->field_14AA[0] = *(PageSlots*)&scr.pageSrc[0];
-    }
-    this->field_14EA = scr.flag6A;
+    this->data.collectByTarget(this->field_14EC[(s8)this->field_14F2]);
+    mSelTable = CMCCrystalSelTable();
 
     refreshCrystalBoxName();
     placeCrystalBoxSlots();
@@ -2157,9 +1961,9 @@ __declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
                       0);
     }
     for (u8 i = 0; i < 0x1E; i++) {
-        u16 v = MakeCrystal_GetSubCategory(d, i);
+        u16 v = d->getSubCategory(i);
         unsigned int* obj =
-            reinterpret_cast<unsigned int*>(MakeCrystal_GetItemObject(d, i));
+            reinterpret_cast<unsigned int*>(d->getItemObject(i));
         setCrystalSlotTexture(v, obj, i);
         setCrystalSlotCapacity(v, obj, i);
         u8 i1 = i + 1;
@@ -2169,17 +1973,17 @@ __declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
         // register (retail passes it straight through).
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
                           buf2, 1),
-                      MakeCrystal_GetFlag(d, i));
+                      d->getFlag(i));
         // Grey out slots whose crystal is not among the currently held page
         // slots (field_14AA); the second state call returning 0 means the
         // slot is empty this page.
         u8 found = 0;
-        int cnt2 = MakeCrystal_GetFlag(d, i);
+        int cnt2 = d->getFlag(i);
         if (cnt2 == 0) {
             u8 k = 0;
-            while (k < this->field_14EA) {
+            while (k < this->mSelTable.mIdCount) {
                 u16 id2 =
-                    (k < this->field_14EA) ? this->field_14AA[k] : 0;
+                    (k < this->mSelTable.mIdCount) ? this->mSelTable.mIds[k] : 0;
                 if (obj != 0) {
                     u8 j = 0;
                     do {
@@ -2239,7 +2043,7 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalSortMenu() {
 __declspec(noinline) void CMCCrystalBox::placeCrystalBoxSlots() {
     unsigned int i;
     for (i = 0; i < 8; i++) {
-        unsigned int* item = (unsigned int*)getSelectTableWord((unsigned long*)((u8*)this + 0x1480), (unsigned char)i);
+        unsigned int* item = (unsigned int*)this->mSelTable.getItem((unsigned char)i);
         unsigned int raw;
         if (item != 0) {
             raw = item[0] >> 20;
@@ -2353,30 +2157,6 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
     }
 }
 
-struct CMCCrystalRec5 { unsigned short m0; unsigned short m2; unsigned char m4; };
-
-struct CMCCrystalRec5Ex {
-    unsigned short a;
-    unsigned short b;
-    unsigned char c;
-};
-
-// Retail keeps these tiny record copies out-of-line (every merge/sort step is
-// a bl); C linkage carries the unmangled retail symbol names.
-extern "C" __declspec(noinline) void copyCrystalRec5(CMCCrystalRec5* dst, const CMCCrystalRec5* src) {
-    *dst = *src;
-}
-
-extern "C" __declspec(noinline) void copyCrystalRec5Ex(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
-    unsigned short a = src->a;
-    unsigned short b = src->b;
-    unsigned char c = src->c;
-    dst->a = a;
-    dst->b = b;
-    dst->c = c;
-}
-
-
 // Retail 0x80218B10: rebuild the 8x8 crystal-grid aggregation table. Clears a
 // 32-slot transient table of {id, qty, flag} records, merges every item found
 // in the 8 page slots (name id via vtable slot 0x4C, quantity via 0x64) plus
@@ -2388,24 +2168,13 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
     // reverse declaration order): sort2 temps C/B/A at +0x08/+0x10/+0x40,
     // sort1 temps C/B/A at +0x18/+0x20/+0x48, append temps at +0x28/+0x30,
     // fill tmp at +0x38, table at +0x50.
-    CMCCrystalRec5 table[32];
-    CMCCrystalRec5Ex sort1A;
-    CMCCrystalRec5Ex sort2A;
-    CMCCrystalRec5 tmp;
-    CMCCrystalRec5 pageTmp;
-    CMCCrystalRec5 selTmp;
-    CMCCrystalRec5Ex sort1B;
-    CMCCrystalRec5Ex sort1C;
-    CMCCrystalRec5Ex sort2B;
-    CMCCrystalRec5Ex sort2C;
+    CMCCrystalGridRec table[32];
     u8 count = 0;
     u32 flag = 0;
     // Shared loop state: retail reuses one register per role across every
     // phase (walk/fill index, page+sort j, merge k, obj, id/qty), so declare
     // them once here to mirror the liveness pattern.
-    CMCCrystalRec5* z;
-    CMCCrystalRec5* e;
-    unsigned long* slots;
+    CMCCrystalSelTable* slots;
     u8 i;
     u8 j;
     u8 k;
@@ -2415,25 +2184,14 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
     int qty;
     int found;
 
-    // Rolling-pointer zero walk over the whole array (retail shape).
-    z = table;
-    do {
-        z->m0 = 0;
-        z->m2 = 0;
-        z->m4 = 0;
-        ++z;
-    } while (z < table + 32);
     for (i = 0; i < 32; i++) {
-        tmp.m0 = 0;
-        tmp.m2 = 0;
-        tmp.m4 = flag;
-        copyCrystalRec5(&table[i], &tmp);
+        table[i].set(CMCCrystalGridRec(0, 0, flag));
     }
 
     // Merge items from all 8 page slots (this+0x1480 sub-table).
-    slots = (unsigned long*)((u8*)this + 0x1480);
+    slots = &this->mSelTable;
     for (j = 0; j < 8; j++) {
-        obj = (void*)getSelectTableWord(slots, j);
+        obj = (void*)slots->getItem(j);
         if (obj == 0 || *(void**)obj == 0) {
             continue;
         }
@@ -2453,10 +2211,7 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
                     }
                 }
                 if (found == 0) {
-                    pageTmp.m2 = qty;
-                    pageTmp.m0 = id;
-                    pageTmp.m4 = flag;
-                    copyCrystalRec5(&table[count], &pageTmp);
+                    table[count].set(CMCCrystalGridRec(id, qty, flag));
                     count++;
                 }
             }
@@ -2468,8 +2223,8 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
     if ((s8)this->unk2CD >= 0) {
         CMCCrystalData* d = &this->data;
         u8 idx = this->unk2CC + this->unk2CD * 10;
-        if (MakeCrystal_GetFlag(d, idx) == 0) {
-            obj = MakeCrystal_GetItemObject(d, idx);
+        if (d->getFlag(idx) == 0) {
+            obj = d->getItemObject(idx);
             if (obj != 0 && *(void**)obj != 0) {
                 flag = 1;
                 for (k = 0; k < 4; k++) {
@@ -2488,10 +2243,7 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
                             }
                         }
                         if (found == 0) {
-                            selTmp.m2 = qty;
-                            selTmp.m0 = id;
-                            selTmp.m4 = flag;
-                            copyCrystalRec5(&table[count], &selTmp);
+                            table[count].set(CMCCrystalGridRec(id, qty, flag));
                             count++;
                         }
                     }
@@ -2504,27 +2256,23 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
     u8 limit = count - 1;
     for (i = 0; i < limit; i++) {
         for (j = 0; j < limit - i; j++) {
-            CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
-            CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
-            if (pa->b < pb->b) {
-                copyCrystalRec5Ex(&sort1A, pa);
-                copyCrystalRec5Ex(&sort1B, pb);
-                copyCrystalRec5((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sort1B);
-                copyCrystalRec5Ex(&sort1C, &sort1A);
-                copyCrystalRec5((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sort1C);
+            CMCCrystalGridRec* pa = &table[j];
+            CMCCrystalGridRec* pb = &table[j + 1];
+            if (pa->m2 < pb->m2) {
+                CMCCrystalGridRec t(*pa);
+                pa->set(CMCCrystalGridRec(*pb));
+                pb->set(CMCCrystalGridRec(t));
             }
         }
     }
     for (i = 0; i < limit; i++) {
         for (j = 0; j < limit - i; j++) {
-            CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
-            CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
-            if (pa->c < pb->c) {
-                copyCrystalRec5Ex(&sort2A, pa);
-                copyCrystalRec5Ex(&sort2B, pb);
-                copyCrystalRec5((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sort2B);
-                copyCrystalRec5Ex(&sort2C, &sort2A);
-                copyCrystalRec5((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sort2C);
+            CMCCrystalGridRec* pa = &table[j];
+            CMCCrystalGridRec* pb = &table[j + 1];
+            if (pa->m4 < pb->m4) {
+                CMCCrystalGridRec t(*pa);
+                pa->set(CMCCrystalGridRec(*pb));
+                pb->set(CMCCrystalGridRec(t));
             }
         }
     }
@@ -2538,7 +2286,7 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
         if (idx >= (int)count) {
             break;
         }
-        e = &table[idx];
+        CMCCrystalGridRec* e = &table[idx];
         if ((int)i == (int)(s8)this->unk1501) {
             this->unk1504 = e->m0;
         }
@@ -2753,10 +2501,10 @@ __declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
     // becomes the outer loop counter; n:r30; tableBase:r29 (the init-pass
     // index k dies before tableBase is computed and shares its register);
     // item:r28; j:r27; this:r26.
-    MCAggPair pairs[32];
+    CMCCrystalAggPair pairs[32];
     u8 z;
     u8 n;
-    u8* tableBase;
+    CMCCrystalSelTable* tableBase;
     void* item;
     u8 j;
 
@@ -2764,26 +2512,14 @@ __declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
     // sth loop).
     n = 0;
 
-    // Zero-fill the transient pair table (pointer walk, matching retail).
-    MCAggPair* p = pairs;
-    do {
-        p->id = 0;
-        p->count = 0;
-        p++;
-    } while (p < &pairs[32]);
-
-    // Redundant helper-based zero fill (retail does both passes).
     z = 0;
     for (u8 k = 0; k < 0x20; k++) {
-        MCAggPair tmpInit;
-        tmpInit.id = z;
-        tmpInit.count = z;
-        copyCrystalAggPair((CMCCrystalBoxParam*)&pairs[k], (CMCCrystalBoxParam*)&tmpInit);
+        pairs[k].set(CMCCrystalAggPair(z, z));
     }
 
-    tableBase = (u8*)this + 0x1480;
+    tableBase = &this->mSelTable;
     for (z = 0; z < 8; z++) {
-        item = (void*)getSelectTableWord((unsigned long*)tableBase, z);
+        item = (void*)tableBase->getItem(z);
         if (item == NULL || *(u32*)item == 0) continue;
         for (j = 0; j < 4; j++) {
             u16 id =
@@ -2803,13 +2539,7 @@ __declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
                     }
                 }
                 if (found == 0) {
-                    MCAggPair tmpAdd;  // append temp
-                    tmpAdd.id = id;
-                    tmpAdd.count = cnt;
-                    // Post-increment in the subscript: retail bumps n between
-                    // the address computation and the call.
-                    copyCrystalAggPair((CMCCrystalBoxParam*)&pairs[n++],
-                                  (CMCCrystalBoxParam*)&tmpAdd);
+                    pairs[n++].set(CMCCrystalAggPair(id, cnt));
                 }
             }
         }
@@ -2823,8 +2553,8 @@ __declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
         for (u8 sj = 0; sj < lim; sj++) {
             if (pairs[sj].count < pairs[sj + 1].count) {
                 // Halfword-wise exchange through explicit element pointers.
-                MCAggPair* a = &pairs[sj];
-                MCAggPair* b = &pairs[sj + 1];
+                CMCCrystalAggPair* a = &pairs[sj];
+                CMCCrystalAggPair* b = &pairs[sj + 1];
                 u16 tid = a->id;
                 u16 tcnt = a->count;
                 a->id = b->id;
@@ -2838,10 +2568,6 @@ __declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
     return (s64)pairs[0].count - 100;
 }
 
-void copyShortPair_80219D10(void* dst, void* src){
-    *(unsigned short*)dst = *(unsigned short*)src;
-    *(unsigned short*)((char*)dst + 2) = *(unsigned short*)((char*)src + 2);
-}
 
 // Retail 0x8021BB7C: file-load completion callback. The box issues three async
 // reads (main crystal-box layout +0x24, crystal-info arc +0x28, BDAT table
@@ -3087,11 +2813,4 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         return true;
     }
     return false;
-}
-
-// noinline: retail calls this out-of-line from getCrystalSelTopCount; without it
-// MWCC's IPO folds both call sites away.
-extern "C" __declspec(noinline) void copyCrystalAggPair(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src) {
-    dst->m0 = (unsigned short)src->m0;
-    dst->m2 = (unsigned short)src->m2;
 }

@@ -158,7 +158,6 @@ struct CMIExPadData {
 // func_ helpers; isIdle keeps its C++ mangling). int returns keep the caller's
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
-extern "C" int GetField61(CItemBoxGrid* self);
 
 // 0x10-byte region copy helper used by the CBgTex copy routine (and the other
 // menu widget copy ctors); retail keeps the unmangled name.
@@ -186,17 +185,14 @@ extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine* self, int flags);
-extern "C" void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
-extern "C" void ClearListSlots(CItemBoxGrid* self);
-extern "C" void PushToList(CItemBoxGrid* self, u8 val);
 
 // Load/anim hooks used by the phase gates (retail unmangled names).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-done query
 extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animation
 extern "C" int isInitialized(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
-extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
 extern "C" void __ct__8CProcessFv(CMenuItemExchange* _this);
@@ -214,7 +210,6 @@ extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
-extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 
@@ -223,31 +218,11 @@ extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int MenuTutorialIsCreated();
-extern "C" int func_801CCAF0(CItemBoxGrid* self);
-extern "C" int IsItemBoxActive(CItemBoxGrid* self);
-extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
-extern "C" int GetExchFlag52C(CItemBoxGrid* self);
-extern "C" int IsSubWinActive(CItemBoxGrid* self);
-extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
-extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
-extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
-extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
-extern "C" void OpenSortMenu(CItemBoxGrid* self);
-extern "C" void SelectCatRow(CItemBoxGrid* self);
-extern "C" u8 GetPromptState(CItemBoxGrid* self);
-extern "C" int GetIdleFlag542(CItemBoxGrid* self);
-extern "C" int GetField52D(CItemBoxGrid* self);
 
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);          // bg per-frame update
-extern "C" void UpdateItemBox(CItemBoxGrid* self);    // grid per-frame update
 extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
-extern "C" int IsItemBoxReady(CItemBoxGrid* self);     // grid ready query (phase 4)
-extern "C" void SetInfoMsgId(CItemBoxGrid* self, u16 arg); // grid page apply
-extern "C" void InitItemDisplay(CItemBoxGrid* self);    // grid refresh
 extern "C" void MenuShopSellCopyCursor(void*, void*);          // CBaseCur body copy
-extern "C" void ShopBuy_CopyData(void*, void*);          // page-table copy helper
 extern "C" void InfoCfCopyObjD4(void*, void*);          // CNumSelectFull copy
 
 // Shared data imports (MWCC does not mangle global-scope data names).

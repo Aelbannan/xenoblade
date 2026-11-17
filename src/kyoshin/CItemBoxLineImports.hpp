@@ -218,39 +218,24 @@ extern "C" void MenuShopSellCopyCursor(void*, void*);               // copy stac
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);
-extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
-extern "C" u32 NumSel_GetActiveFlag_B020(void*);          // num-select busy flag (+0x2C)
-extern "C" u32 NumSel_GetField2D_B018(void*);          // num-select busy flag (+0x2D)
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" void advanceItemBox2State__FP13CItemBoxInfo2(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(s32);
-extern "C" void NumSel_SetCaption_B030(void*, void*);
-extern "C" void NumSel_SetCaptionNum_B04C(void*, u8);
-extern "C" void NumSel_FormatPicName_B064(void*, unsigned int);
-extern "C" void NumSel_EnterState1Close_B0D4(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44(void);
-extern "C" void loadItemBox2Files(void*);
-extern "C" void NumSel_LoadArchive_AE8C(void*);
 // per-frame update helpers (external retail symbols, same merged unit)
 extern "C" void Cur_Update(void*);            // cursor per-frame update (CCur)
-extern "C" void updateItemBox2Anims(void*);            // item-box info2 per-frame update
-extern "C" void NumSel_DispatchState_AED4(void*);            // num-select per-frame update
 extern "C" void sysWinDispatchPhase(void*);            // syswin per-frame update
-extern "C" void startItemBox2Open(void*);                // info2 state open
-extern "C" void setItemBox2NamedText(void*, char*, char*);  // info2 tab-name set
 extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
 extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
 extern "C" int ItemBoxLine_ProbeNameSlot(void*, unsigned int);   // name-dispatch lookup (external overload)
@@ -259,9 +244,7 @@ extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
 extern "C" void* lbl_eu_806640D8;
-extern "C" void drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void NumSel_DrawLayout_AF7C(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 
@@ -328,7 +311,6 @@ extern "C" char* getErrMesText15(void);
 // (defined in CItemBoxInfo.cpp): C-linkage so calls bind to the retail names.
 extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinOpenPhase1(void*);
-extern "C" u32 formatItemBoxName(void*, u32);
 
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
@@ -339,17 +321,12 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
 
 extern "C" void sysWinAdvancePhase3(void*);
-extern "C" int NumSel_GetField2E_B028(void*);
-extern "C" void NumSel_ShowPaneB_B314(CNumSelect* self); // num-select display step
-extern "C" void NumSel_EnterState3Open_B178(void*);
 
 // --- teardown helpers called by ItemBoxLine_UnloadFiles (retail plain names) ---
-extern "C" void NumSel_Teardown_AF9C(CNumSelect*);          // num-select destroy
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void closeItemBox2(CItemBoxInfo2*);           // info2 destroy
 extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 // Tab-page helpers used by ItemBoxLine_RefreshPageList (retail plain names).
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
@@ -360,7 +337,7 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-for
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
 // KEEP (blockers-A 2026-10-23): this TU models every BDAT table as a u32 handle
-// (LookupItemTypeTable, lbl_eu_8066464C/806640F4/...), so it keeps the u32-table
+// (LookupItemTypeTable, gMnuItemMesB/806640F4/...), so it keeps the u32-table
 // view of BdatGetU16Direct instead of kyoshin/code_80135FDC_Bdat.hpp until those
 // table globals are retyped.
 extern "C" char* MakeTplNameSysFile(u32);
@@ -387,9 +364,9 @@ extern "C" FourShorts PaneMatGetS16QuadByName(void*, void*, u32);  // animation 
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32); // RGB color builder
 
 // ItemBoxLine_CompactTabList: .sbss item-box guard words (SDA-accessed, compared to 0).
-extern u32 lbl_eu_80664648;
-extern u32 lbl_eu_8066464C;
-extern u32 lbl_eu_80664650;
+extern u32 gMnuItemMesA; // BDAT "MNU_item_mes_a" table cache
+extern u32 gMnuItemMesB; // BDAT "MNU_item_mes_b" table cache
+extern u32 gMnuSkill;    // BDAT "MNU_skill" table cache
 
 // sinit_801F32EC: the fourteen 8-byte .sbss color objects, constructed in
 // retail call order (SplitU32ToS16s resets, setGXColorS10 sets RGBA).
@@ -413,13 +390,10 @@ extern u8 lbl_eu_80664640[8];
 // (CItemBoxInfo.hpp's forms are renamed at its include above).
 extern "C" FourShorts PaneMatGetS16Quad(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 LookupItemTypeTable(u32);
-extern "C" void renderItemBox2ByKind(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
 extern "C" void* BuildItemNameStr(u32);
 extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 extern "C" int Counter_TestBit(u32, u32);
 extern "C" u32 GetCollectedFlagByte(u32);
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
-extern "C" void NumSel_ShowPaneB_B314(CNumSelect* self); // num-select display step
-extern "C" void NumSel_Teardown_AF9C(CNumSelect*);          // num-select destroy
 extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 

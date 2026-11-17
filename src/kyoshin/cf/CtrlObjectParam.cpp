@@ -10,8 +10,6 @@ extern const void* lbl_eu_805280D8[];
 #include "kyoshin/cf/CfGameManager.hpp"        // cf::CfGameManager static accessors
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
-#include "kyoshin/CItemBoxInfo.hpp"             // CItem_initItemImplInstances shim
-#undef CItem_initItemImplInstances
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
 // int tables as word arrays, sdata2 floats/tags/doubles in retail order.
@@ -69,7 +67,12 @@ public:
     virtual u32 vf50(CItemData* p, u32 x, u16 y);
     virtual void vf54();
 };
+// CfGameManager.hpp declares the void* form of this import; the typed form
+// (same unmangled symbol) lives in a namespace so both prototypes coexist.
+namespace itemimplshim {
 extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
+}
+#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 // findObjB28ById (actor lookup): declared locally - CAIAction.hpp conflicts
 // with CfGameManager.hpp's getInstance__Q22cf14CBattleManagerFv return type.
 extern "C" void* findObjB28ById(s32);

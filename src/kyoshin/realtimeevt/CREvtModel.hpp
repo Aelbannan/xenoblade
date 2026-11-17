@@ -40,11 +40,18 @@ public:
     int isEvtDataFlagSet();
     void setupShadow(CScnItemModel* pModel);
     void applyHideParts(void* pAnim, CScnItemModel* pModel, int flag);
+    // Event-sequence hooks, defined in CTaskREvtSequence.cpp (retail text order).
+    int checkRunGuard();
+    void insertRtEvent();
+    int probeEvtSlot(u32* out);
 
     static CREvtModel* create(void* pData);
+    bool isFlag(u32 f) const { return (mFlags & f) != 0; }
+    void setFlag(u32 f) { mFlags |= f; }
+    void clrFlag(u32 f) { mFlags &= ~f; }
 
     /* 0x14 */ u32 mField14;            // kind (1 map, 2 pc, 3 obj)
-    /* 0x18 */ volatile u32 mFlags;              // 0x400: toggled at the mPtr1C toggle frames
+    /* 0x18 */ u32 mFlags;              // 0x400: toggled at the mPtr1C toggle frames
     /* 0x1C */ void* mPtr1C;            // event data (name at +0x10)
     /* 0x20 */ CScnItemModel* mModel;
     /* 0x24 */ void* mData;             // current animation

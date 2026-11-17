@@ -1,3 +1,4 @@
+#define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CItemBoxInfo
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -11,6 +12,68 @@
 // declaration inside this header.
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+
+// Unit-local imports (kept out of the class header so includers only see the classes).
+extern "C" char lbl_eu_805063BC[];
+extern "C" char lbl_eu_8050634C[];
+extern "C" char lbl_eu_80506380[];extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" int Counter_TestBit(void*, u32);extern "C" u32 IdTable_SumValues(void*, u32);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
+extern "C" void setPaneVisible(void*, u32);
+extern "C" u16 BdatGetItemId(u32);
+extern "C" u32 BdatGetItemType(u32);
+extern "C" u32 LookupItemTypeTable(void*);
+extern "C" void SplitU32ToS16s(void*, u32);
+extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
+extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
+extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" char lbl_eu_8052E590[];
+extern "C" char lbl_eu_8052E568[];
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" void copyVEC3(void*, const void*);
+// C-linkage position-set helper (retail-unmangled ScalePaneWorldPos; same
+// signature as CSysWin.hpp / CMenuPlayAward.hpp).
+// More flat retail (unmangled) helpers used by the item-box renderers.
+extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
+extern "C" u32 func_801392C0();
+extern "C" int GetCollectedFlagByte(u8);
+extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
+// cf/CfGameManager.hpp (pulled in via harness_catalog) already declares the
+// singleton no-arg form of this import at global scope; MWCC rejects a second,
+// differently-prototyped extern "C" declaration as an illegal overload. Keep
+// the item-pointer form (same unmangled symbol) in a namespace and shim the
+// call sites through it.
+namespace itemimplshim {
+extern "C" void* CItem_initItemImplInstances(void*);
+}
+#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
+extern "C" void setItemBoxVtxColor(void*, u32, const void*);
+// 9-byte flag-record builder: (out, unused, data) - param2 is never read in
+// retail (callers pass the item-box pointer through it).
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
+extern "C" int IsSkillItem(void*);
+extern "C" u32 isItemBoxType9Flagged(void*);
+
+// 0xA8-byte detail record built by buildItemBoxNameRec for renderItemBoxKind3; only the
+extern "C" char* BuildItemNameStr(u32);
+extern "C" void* CItemBlock_getPtr20E8();
+extern "C" char* MakeTplNameSysFile(u32);
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+
+// Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
+// signature shapes verbatim so the mangled names line up).
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" char* CUICfManager_getPackedFont9C(void);
+extern "C" char* GetBdatNameByNumId(const char* msg);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+
+extern "C" u32 MapSexFlagGroup(u16);
+extern u32 lbl_eu_80664098;
+
+extern "C" CItemBoxGXColor PaneMatGetS16Quad(void* obj, int index);
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 // Real item-impl accessor (CItem.hpp) for this TU only: undo the
@@ -52,16 +115,13 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
 struct Rodata_ItemBoxTail {
     u32 ints[6];
     const void* t[7];
-    char s9C[0x10];
-    char sAC[0x10];
     char blob[0x84C];
 };
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTail rodata_ItemBoxTail = {
     { 2, 4, 5, 6, 7, 8 },
     { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
-    "CItemBoxInfo2",
-    "CItemBoxInfo",
-    "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000"
+   
+    "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000",
 };
 #define lbl_eu_80506380 (rodata_ItemBoxTail.t)
 // Interior blob is at +0x54 (non-8-aligned): member decay emits parent+0x54+imm.
@@ -73,14 +133,6 @@ extern "C" char lbl_eu_805063BC[];
 // pads live in the hand-typed .data at file end.
 extern "C" char lbl_eu_8050639C[];
 extern "C" char lbl_eu_805063AC[];
-extern "C" const void* lbl_eu_80534B18[];
-extern "C" const void* lbl_eu_80534BB0[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__13CItemBoxInfo2[2] = {
-    lbl_eu_8050639C, lbl_eu_80534B18
-};
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__12CItemBoxInfo[2] = {
-    lbl_eu_805063AC, lbl_eu_80534BB0
-};
 
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
@@ -162,39 +214,13 @@ struct LayoutRootPaneView {
 u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" f32 GetFloatTableEntry(u32);
-void clearItemBoxTripleRows(CItemBoxInfo*);
-extern "C" void buildItemBoxNameRec(void*, void*, void*, void*);
-void setupItemBoxSlotPanes(CItemBoxInfo*);
-extern "C" void buildItemBoxCmpRecord(void*, void*, void*);
-extern "C" void renderItemBoxTripleRows(CItemBoxInfo*, u32, void*);
-void clearItemBoxQuadTexts(CItemBoxInfo*);
-extern "C" void setupItemBoxDetail(CItemBoxInfo*, u32, void*, u32);
-extern "C" void buildItemBox2CmpRecord(void*, void*, void*);
 extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* findObjB28ById(u32);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void*, u32);
 extern "C" s32 RoundHalfAway0(float);
 extern "C" void PaneMatSetTevColors(void*, void*, void*);
-extern "C" u32 sumItemBox2TypeCounts(void*, u16, void*);
-extern "C" u32 getItemBoxCondStatById(void*, u32, u32);
-extern "C" u32 getItemBox2Effect(void*, void*, u32, void*);
-extern "C" s32 calcItemBox2Bonus1(void*, u16, s32, void*);
-extern "C" s32 calcItemBox2Bonus2(void*, u16, s32, void*);
-extern "C" u32 testItemBox2BdatFlag(CItemBoxInfo2*, u32, u32);
 char* BuildItemNameStr(u32);
-u32 sumItemBox2TypeCounts(void*, u16, void*);
-bool testItemBox2Equip(void*, u16, void*);
-extern "C" u32 getItemBoxCondStat(void*, void*, u32);
-extern "C" u32 testItemBoxBdatFlag(CItemBoxInfo*, u32, void*);
-extern "C" u32 getItemBoxEffect(void*, void*, u32, void*);
-extern "C" u32 sumItemBoxTypeCounts(CItemBoxInfo*, u16, void*);
-extern "C" u32 checkItemBoxGemChain(CItemBoxInfo*, u16, void*, void*);
-extern "C" s32 calcItemBoxBonus1(void*, u16, s32, void*);
-extern "C" s32 calcItemBoxBonus2(void*, u16, s32, void*);
-u32 getItemBoxCondStat2D(void*, void*);
-u32 getItemBox2Effect(void*, void*, u32, void*);
-void hideItemBoxPanes(CItemBoxInfo*, u16, void*, u16);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F4;
@@ -208,35 +234,34 @@ extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80664110;
 extern void* lbl_eu_80664090;
 
-void __declspec(noinline) resetCItemBox() {}
 
 // --- CItemBoxInfo methods ---
 
-u8 getItemBoxState(CItemBoxInfo* self) {
-    return self->state.current;
+u32 CItemBoxInfo::GetState() {
+    return mCurrent;
 }
 
-u8 getItemBox2State(CItemBoxInfo2* self) {
-    return self->state.current;
+u32 CItemBoxInfo2::GetState() {
+    return mCurrent;
 }
 
-void advanceItemBoxState(CItemBoxInfo* info) {
-    if (info->state.state == 3) {
-        info->state.state = 4;
-        info->state.visible = 0;
+void CItemBoxInfo::Close() {
+    if (mState == 3) {
+        mState = 4;
+        mVisible = 0;
     }
 }
 
 #pragma push
-__declspec(noinline) void tryActivateItemBox(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::Activate() {
     // Goto-gate (PLAN 17.6), same shape as activateItemBox2.
-    if (info->state.layout != 0 && info->state.resource != 0) {
+    if (mpLayout != 0 && mTexArcResAcc != 0) {
         goto body;
     }
     return;
 body:
-    info->state.current = 1;
-    info->state.active = 1;
+    mCurrent = 1;
+    mActive = 1;
 }
 #pragma pop
 
@@ -256,39 +281,37 @@ __declspec(noinline) u32 isItemBoxType9Flagged(void* arg) {
 
 #pragma push
 #pragma optimize_for_size on
-void setItemBoxNamedText(CItemBoxInfo* info, char* arg1, char* arg2) {
+void CItemBoxInfo::SetNamedText(int index, char* text) {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_805063BC[0x151], arg1);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
+    sprintf(buf, &lbl_eu_805063BC[0x151], index);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text, 0);
 }
 #pragma pop
 
 #pragma push
 #pragma optimize_for_size on
-void setItemCounts(CItemBoxInfo* info, u8 arg2, u8 arg3) {
-    if (info->state.layout != 0) {
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x17d], arg2);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x188], arg3);
+void CItemBoxInfo::SetCounts(u8 arg2, u8 arg3) {
+    if (mpLayout != 0) {
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x17d], arg2);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x188], arg3);
     }
 }
 #pragma pop
 
 // --- Remaining CItemBoxInfo stubs ---
 
-extern "C" void stampItemBoxSlotTex(CItemBoxInfo*);
-extern "C" void stampItemBox2SlotTex(CItemBoxInfo2*);
 
-void startItemBoxOpen(CItemBoxInfo* info) {
-    if (info->state.state != 0) return;
-    info->state.state = 1;
-    info->state.visible = 0;
+void CItemBoxInfo::Open() {
+    if (mState != 0) return;
+    mState = 1;
+    mVisible = 0;
     // Retail tail-calls stampItemBoxSlotTex (b, not bl) - dont_inline pragma keeps it a call.
-    stampItemBoxSlotTex(info);
+    StampSlotTex();
 }
 
-void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
-    if (info->state.active != 0) {
-        drawLayout((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
+void CItemBoxInfo::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mActive != 0) {
+        drawLayout((nw4r::lyt::Layout*)mpLayout, drawInfo, 0, 1);
     }
 }
 
@@ -314,12 +337,12 @@ struct CItemBoxCharEntryView {
 
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void initItemBoxVecTable(void* sub) {
+__declspec(noinline) void CItemBoxPage::Clear() {
     float f = 0.0f;
     for (u8 i = 0; i < 12; i++) {
-        ((CItemBoxVecTable*)sub)->ids[i] = 0;
+        ((CItemBoxVecTable*)this)->ids[i] = 0;
         float temp[3] = {f, f, f};
-        copyVEC3(((CItemBoxVecTable*)sub)->vecs[i], temp);
+        copyVEC3(((CItemBoxVecTable*)this)->vecs[i], temp);
     }
 }
 #pragma pop
@@ -329,14 +352,14 @@ __declspec(noinline) void initItemBoxVecTable(void* sub) {
 // prologue merge). The setHandleFlag1 call reuses the readFile result in r3.
 #pragma push
 #pragma optimize_for_size on
-void loadItemBoxFiles(CItemBoxInfo* info) {
+void CItemBoxInfo::LoadFiles() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    CFileHandle* fh1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
-    info->state.fileHandle1 = fh1;
+    CFileHandle* fh1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    mFileHandle1 = fh1;
     CDeviceFile::setHandleFlag1(fh1);
     handle = mtl::MemManager::getHandleMEM2();
-    CFileHandle* fh2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(info), 0, 0);
-    info->state.fileHandle2 = fh2;
+    CFileHandle* fh2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    mFileHandle2 = fh2;
     CDeviceFile::setHandleFlag1(fh2);
 }
 #pragma pop
@@ -345,11 +368,11 @@ void loadItemBoxFiles(CItemBoxInfo* info) {
 // post-call pointer clears, so both survive the closeFileHandle/80139124 calls.
 #pragma push
 #pragma optimize_for_size on
-void closeItemBox1(CItemBoxInfo* info) {
-    closeFileHandle(&info->state.fileHandle1);
-    closeFileHandle(&info->state.fileHandle2);
-    void* layout = info->state.layout;
-    info->state.active = 0;
+void CItemBoxInfo::UnloadFiles() {
+    closeFileHandle(&mFileHandle1);
+    closeFileHandle(&mFileHandle2);
+    void* layout = mpLayout;
+    mActive = 0;
     if (layout != 0) {
         // Retail calls the Layout deleting destructor (vtable +0x08,
         // delete flag in r4); plain `delete` reproduces the r12/CTR
@@ -357,16 +380,16 @@ void closeItemBox1(CItemBoxInfo* info) {
         // single manual check plus delete's own null check give the
         // retail two-branch shape.
         delete (nw4r::lyt::Layout*)layout;
-        info->state.layout = 0;
+        mpLayout = 0;
     }
-    info->state.animTransform1 = 0;
-    info->state.animTransform2 = 0;
-    releaseArcResourceAccessor(info->state.arcResourceAccessor);
-    releaseArcResourceAccessor(info->state.resource);
-    info->state.arcResourceAccessor = 0;
-    info->state.resource = 0;
-    info->state.memRegion1.deleteRegion();
-    info->state.memRegion2.deleteRegion();
+    mAnimIn = 0;
+    mAnimInfoIn = 0;
+    releaseArcResourceAccessor(mArcResAcc);
+    releaseArcResourceAccessor(mTexArcResAcc);
+    mArcResAcc = 0;
+    mTexArcResAcc = 0;
+    mRegion1.deleteRegion();
+    mRegion2.deleteRegion();
 }
 #pragma pop
 
@@ -376,60 +399,62 @@ void closeItemBox1(CItemBoxInfo* info) {
 // prologue merge) for arg0/child/first-result in r29/r30/r31.
 #pragma push
 #pragma optimize_for_size on
-void calcItemBoxPaneVec(u8* arg0, CItemBoxInfo* info, u32 arg2) {
+nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
     char buf[0x20];
     // Declare `first` before `child`: low-degree webs color in reverse birth
-    // order, so child (declared later) colors first into info's dead r30 and
+    // order, so child (declared later) colors first into this's dead r30 and
     // first reuses the pool base's r31 (matches retail r29/r30/r31 layout).
     nw4r::lyt::Pane* first;
     nw4r::lyt::Pane* second;
     nw4r::lyt::Pane* child;
     char* base = lbl_eu_805063BC;
+    nw4r::math::VEC3 pos;
     sprintf(buf, base + 0x161, arg2 + 1);
-    child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
+    child = ((LayoutRootPaneView*)mpLayout)->rootPane10;
     first = child->FindPaneByName(base + 0x16e, true);
     second = child->FindPaneByName(buf, true);
-    ScalePaneWorldPos((nw4r::math::VEC3*)arg0, second, first, child);
+    ScalePaneWorldPos(&pos, second, first, child);
+    return pos;
 }
 #pragma pop
 
-void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
-    if (info->state.layout == 0) return;
-    nw4r::lyt::Pane* child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
+void CItemBoxInfo::SetResultPane(u32 visible) {
+    if (mpLayout == 0) return;
+    nw4r::lyt::Pane* child = ((LayoutRootPaneView*)mpLayout)->rootPane10;
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
-    setPaneVisible(result, (u32)arg2);
+    setPaneVisible(result, visible);
 }
 
 #pragma push
 #pragma auto_inline off
-void openItemBoxPhase1(CItemBoxInfo* info) {
+void CItemBoxInfo::OpenPhase1() {
     float arg = 1.0f;
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, true);
-        info->state.state = 2;
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)mAnimIn, arg) != 0) {
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimIn, false);
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimInfoIn, true);
+        mState = 2;
     }
 }
 
-void openItemBoxPhase2(CItemBoxInfo* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
-        info->state.state = 3;
-        info->state.visible = 1;
+void CItemBoxInfo::OpenPhase2() {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)mAnimInfoIn, 1.0f) != 0) {
+        mState = 3;
+        mVisible = 1;
     }
 }
 
-void closeItemBoxPhase1(CItemBoxInfo* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
-        info->state.state = 5;
+void CItemBoxInfo::ClosePhase1() {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)mAnimInfoIn, 1.0f) != 0) {
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimInfoIn, false);
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimIn, true);
+        mState = 5;
     }
 }
 
-void closeItemBoxPhase2(CItemBoxInfo* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
-        info->state.visible = 1;
-        info->state.state = 0;
+void CItemBoxInfo::ClosePhase2() {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)mAnimIn, 1.0f) != 0) {
+        mVisible = 1;
+        mState = 0;
     }
 }
 #pragma pop
@@ -442,7 +467,7 @@ void closeItemBoxPhase2(CItemBoxInfo* info) {
 // the candidate item's.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
+__declspec(noinline) CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
     // Scratch doubles for MWCC's int->float magic (2^52 unsigned repair,
     // 2^63 sign-repair); retail materializes both high words up front.
     CItemBoxCompRecord rec;
@@ -477,9 +502,9 @@ extern "C" __declspec(noinline) void buildItemBoxCmpRecord(void* out, void* memb
         u16 flag = BdatGetU8Direct((const void*)global, (const char*)buf, v2);
         // name-flag bank (+0x16): set when the slot tag resolves; slot 0xB
         // is forced on for candidate category 0x4C.
-        rec._16[i] = (flag != 0);
-        if ((u8)slot == 0xb && v2 == 0x4c) rec._16[i] = 1;
-        if (rec._16[i] == 0) continue;
+        rec.flags[0][i] = (flag != 0);
+        if ((u8)slot == 0xb && v2 == 0x4c) rec.flags[0][i] = 1;
+        if (rec.flags[0][i] == 0) continue;
         rec.f38 += GetFloatTableEntry((u8)slot);
         void* lookup = CtrlObjectParam_GetCharEntry((u8)slot);
         void* item = CItem_kindPtr(2, *(s16*)((u8*)lookup + 0x26));
@@ -492,29 +517,19 @@ extern "C" __declspec(noinline) void buildItemBoxCmpRecord(void* out, void* memb
         rec.f28 = BlendFloatAvgScale((u32)a, (u32)b, 0, ratio);
         u8 v1ab = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
         u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
-        if (rec.f28 > ratio) rec.flags1[i] = 1;
-        else if (rec.f28 < ratio) rec.flags1[i] = 2;
-        else rec.flags1[i] = 0;
-        if (rec.s30 > v1ab) rec.flags2[i] = 1;
-        else if (rec.s30 < v1ab) rec.flags2[i] = 2;
-        else rec.flags2[i] = 0;
-        if (rec.s32 > v1b3) rec.flags3[i] = 1;
-        else if (rec.s32 < v1b3) rec.flags3[i] = 2;
-        else rec.flags3[i] = 0;
+        if (rec.f28 > ratio) rec.flags[1][i] = 1;
+        else if (rec.f28 < ratio) rec.flags[1][i] = 2;
+        else rec.flags[1][i] = 0;
+        if (rec.s30 > v1ab) rec.flags[2][i] = 1;
+        else if (rec.s30 < v1ab) rec.flags[2][i] = 2;
+        else rec.flags[2][i] = 0;
+        if (rec.s32 > v1b3) rec.flags[3][i] = 1;
+        else if (rec.s32 < v1b3) rec.flags[3][i] = 2;
+        else rec.flags[3][i] = 0;
     }
     // 0x34-byte copy: pair-copy with s[1]/s[2] accesses reproduces the retail
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,6 + 4-byte tail).
-    {
-        u32* s = (u32*)&rec - 1;
-        u32* d = (u32*)out - 1;
-        for (u32 k = 0; k < 6; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    return rec;
 }
 #pragma pop
 #pragma push
@@ -524,7 +539,7 @@ extern "C" __declspec(noinline) void buildItemBoxCmpRecord(void* out, void* memb
 // null path memsets the record, copies, and returns early; the filled path
 // falls through to its own copy of the same loop. Per-slot flag banks are
 // addressed through one walked pointer (&flags[i], +0/+7/+14).
-extern "C" __declspec(noinline) CItemBoxSlotFlags buildItemBoxSlotFlags(void* owner, u32 item) {
+__declspec(noinline) CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
     CItemBoxSlotFlags rec;
     if (item == 0) {
         memset(&rec, 0, 0x1C);
@@ -588,7 +603,7 @@ extern "C" __declspec(noinline) CItemBoxSlotFlags buildItemBoxSlotFlags(void* ow
 // Shift-JIS-aware.
 #pragma push
 #pragma optimize_for_size on
-void __declspec(noinline) buildItemBoxNameRec(void* out, void* unused, void* data, void* arg3) {
+__declspec(noinline) CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
     u32 cat;
     u32 count;
     void* item = arg3 != NULL ? arg3 : NULL;
@@ -718,17 +733,7 @@ void __declspec(noinline) buildItemBoxNameRec(void* out, void* unused, void* dat
     }
     // 0xA4-byte copy: pair-copy with s[1]/s[2] accesses reproduces the retail
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,0x14 + 4-byte tail).
-    {
-        u32* s = (u32*)&rec - 1;
-        u32* d = (u32*)out - 1;
-        for (u32 k = 0; k < 0x14; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    return rec;
 }
 #pragma pop
 
@@ -738,7 +743,7 @@ void __declspec(noinline) buildItemBoxNameRec(void* out, void* unused, void* dat
 // spills the four results to stack slots, reloading them for the final four
 // output-word stores. dont_inline keeps IPA from folding this body into
 // renderItemBoxLabels/renderItemBox2Labels, which lets them keep both stack arrays.
-__declspec(noinline) CItemBoxLabelRec getItemBoxLabelRec(CItemBoxInfo* info, u32 item) {
+__declspec(noinline) CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     BdatGetItemType(item);
@@ -765,7 +770,7 @@ __declspec(noinline) CItemBoxLabelRec getItemBoxLabelRec(CItemBoxInfo* info, u32
 
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) CItemBoxSelRec buildItemBoxSelRec(CItemBoxInfo* info, u32 item) {
+__declspec(noinline) CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     void* global = lbl_eu_80664110;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
@@ -794,7 +799,7 @@ __declspec(noinline) CItemBoxSelRec buildItemBoxSelRec(CItemBoxInfo* info, u32 i
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) CItemBoxSlotRecord1 buildItemBoxSlotRec(CItemBoxInfo* info, u32 item, void* arg3) {
+__declspec(noinline) CItemBoxSlotRecord1 CItemBoxInfo::BuildSlotRec(u32 item, void* arg3) {
     void* p;
     if (arg3 != NULL)
         p = arg3;
@@ -832,14 +837,14 @@ __declspec(noinline) CItemBoxSlotRecord1 buildItemBoxSlotRec(CItemBoxInfo* info,
 // slot colours the row pane and stamps the candidate-item texture.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
-    setupItemBoxSlotPanes(info);
+__declspec(noinline) void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
+    SetupSlotPanes();
     // Declaration order follows the retail frame layout (high -> low):
     // staged colour temps > copied record > FixStr storage > source record >
     // pane-name buffers.
     CItemBoxColorBlock selB;
     CItemBoxColorBlock selA;
-    CItemBoxCompRecord local;
+    CItemBoxCompRecord local = BuildCmpRecord((void*)(u32)arg2);
     // Layout-compatible POD stand-in for ml::FixStr<32>: the format() calls
     // cast its address inline so no FixStr pointer web stays live across the
     // lookup calls (retail touches the buffer purely through sp offsets).
@@ -847,23 +852,8 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
         char mString[0x20];
         u32 mLength;
     } text;
-    CItemBoxCompRecord record;
     char paneName[0x20];
     char label[0x20];
-    buildItemBoxCmpRecord(&record, info, (void*)(u32)arg2);
-    // 0x34-byte copy: load both words of each pair before storing so MWCC
-    // keeps the retail lwz/lwzu + stw/stwu pair-loop shape (li r0,6 + tail).
-    {
-        u32* d = (u32*)&local - 1;
-        u32* s = (u32*)&record - 1;
-        for (u32 k = 0; k < 6; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
     char* base = (char*)&lbl_eu_805063BC;
     // Raw-storage binding: retail inlines the bool-ctor clear as bare stb/stw
     // stores; format() is invoked through a cast so no reference web occupies
@@ -875,9 +865,9 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
     // the diff; one cached base pointer is the closest shape tried so far.
     char* lbl = BdatTouchStringCell(&base[0x130], &base[0x139], 0xb);
     ((ml::FixStr<32>*)&text)->format(&base[0x254], local.s2C, lbl, local.s2E);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &base[0x25b], text.mString, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &base[0x267], (u8)local.s30);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &base[0x273], (u8)local.s32);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x25b], text.mString, 0);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &base[0x267], (u8)local.s30);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &base[0x273], (u8)local.s32);
     char* str7f = BdatTouchStringCell(&base[0x130], &base[0x139], 0x7f);
     char* str80 = BdatTouchStringCell(&base[0x130], &base[0x139], 0x80);
     if (local.s34 != 0) {
@@ -885,7 +875,7 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
     } else {
         ((ml::FixStr<32>*)&text)->format(&base[0x13e], local.s34, str80);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &base[0x286], text.mString, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x286], text.mString, 0);
     str7f = BdatTouchStringCell(&base[0x130], &base[0x139], 0x7f);
     str80 = BdatTouchStringCell(&base[0x130], &base[0x139], 0x80);
     if (local.s3C != 0) {
@@ -893,32 +883,32 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
     } else {
         ((ml::FixStr<32>*)&text)->format(&base[0x13e], local.s3C, str80);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &base[0x292], text.mString, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &base[0x29e], &base[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &base[0x2ab], &base[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2b6], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2c1], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2cc], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2d7], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2e2], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &base[0x2f8], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x292], text.mString, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x29e], &base[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x2ab], &base[0x2aa], 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2b6], &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2c1], &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2cc], &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2d7], &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2e2], &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2f8], &lbl_eu_806645A8, &lbl_eu_806645B0);
     u32 playerIdx = (arg4 >> 16) & 0xFF;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
     u32 darkBase = 0x77770000;
     u32 tagHi = 0x74690000;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 flag = local._16[(u8)i];
+        u8 flag = local.flags[0][(u8)i];
         u32 color = darkBase + 0x77ff;  // 0x777777ff
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(paneName, base + 0x303, (u8)i + 1);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, paneName, color);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, paneName, color);
         // Default vertex colours carry data only in the alpha channel
-        // (info+0xA2 / info+0xAA); the selected-slot pair comes from
-        // info+0x9C/0xA4 when the slot is active.
-        s16 vA2 = info->state.quadA.s[3];
-        s16 vAA = info->state.quadB.s[3];
+        // (this+0xA2 / this+0xAA); the selected-slot pair comes from
+        // this+0x9C/0xA4 when the slot is active.
+        s16 vA2 = mColorA.s[3];
+        s16 vAA = mColorB.s[3];
         // Loop-scope slots descend: args (sp+0x18) > defA2 (sp+0x10) >
         // defAA (sp+0x08); POD types keep the builds as bare halfword stores.
         u32 args[4];
@@ -939,8 +929,8 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
         // Selected colour is staged through the named temp then reloaded into
         // the sprintf argument block (retail stores to sp+0xf8/sp+0x100 first).
         if (flag != 0) {
-            selA.w[0] = info->state.quadA.w[0];
-            selA.w[1] = info->state.quadA.w[1];
+            selA.w[0] = mColorA.w[0];
+            selA.w[1] = mColorA.w[1];
         } else {
             selA.w[0] = *(u32*)&defA2.r;
             selA.w[1] = *(u32*)&defA2.a;
@@ -948,8 +938,8 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
         args[0] = selA.w[0];
         args[1] = selA.w[1];
         if (flag != 0) {
-            selB.w[0] = info->state.quadB.w[0];
-            selB.w[1] = info->state.quadB.w[1];
+            selB.w[0] = mColorB.w[0];
+            selB.w[1] = mColorB.w[1];
         } else {
             selB.w[0] = *(u32*)&defAA.r;
             selB.w[1] = *(u32*)&defAA.a;
@@ -958,7 +948,7 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
         args[3] = selB.w[1];
         sprintf(paneName, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(paneName, true);
+            mpLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -975,21 +965,21 @@ extern "C" __declspec(noinline) void renderItemBoxKind2(CItemBoxInfo* info, u16 
                     sprintf(label, base + 0x30e, (u8)i + 1);
                     u32 tex;
                     if (slot == (u8)GetCollectedFlagByte(playerIdx)) {
-                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
                     } else {
-                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
                     }
                     if (tex == 0) {
-                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
                     }
                     if (tex != 0) {
-                        PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)label, (TPLPalette*)tex);
+                        PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)label, (TPLPalette*)tex);
                     }
                 }
             }
         }
     }
-    renderItemBoxTripleRows(info, arg2, arg3);
+    RenderTripleRows(arg2, arg3);
 }
 #pragma pop
 
@@ -1000,27 +990,27 @@ void __declspec(noinline) setItemBoxVtxColor(void* arr, u32 index, const void* c
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
 
-void updateItemBoxAnims(CItemBoxInfo* info) {
-    if (info->state.active != 0) {
-        switch (info->state.state) {
-            case 1: openItemBoxPhase1(info); break;
-            case 2: openItemBoxPhase2(info); break;
-            case 4: closeItemBoxPhase1(info); break;
-            case 5: closeItemBoxPhase2(info); break;
+void CItemBoxInfo::UpdateAnims() {
+    if (mActive != 0) {
+        switch (mState) {
+            case 1: OpenPhase1(); break;
+            case 2: OpenPhase2(); break;
+            case 4: ClosePhase1(); break;
+            case 5: ClosePhase2(); break;
         }
-        ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
+        ((nw4r::lyt::Layout*)mpLayout)->Animate(0);
     }
 }
 
-void updateItemBox2Anims(CItemBoxInfo2* info) {
-    if (info->state.active != 0) {
-        switch (info->state.state) {
-            case 1: openItemBox2Phase1(info); break;
-            case 2: openItemBox2Phase2(info); break;
-            case 4: closeItemBox2Phase1(info); break;
-            case 5: closeItemBox2Phase2(info); break;
+void CItemBoxInfo2::UpdateAnims() {
+    if (mActive != 0) {
+        switch (mState) {
+            case 1: OpenPhase1(); break;
+            case 2: OpenPhase2(); break;
+            case 4: ClosePhase1(); break;
+            case 5: ClosePhase2(); break;
         }
-        ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
+        ((nw4r::lyt::Layout*)mpLayout)->Animate(0);
     }
 }
 
@@ -1028,7 +1018,7 @@ void updateItemBox2Anims(CItemBoxInfo2* info) {
 // record for the candidate item (buildItemBoxSlotFlags), lays out the label/stat
 // panes, then per-slot colours the row panes and stamps the item name onto
 // the slot whose record matches the candidate.
-__declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
+__declspec(noinline) void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
     // Locals are declared in retail stack-slot order (low -> high addresses):
     // colour pair, vertex-colour pair, comparison record, pane-name buffers,
     // record copy, per-colour word temporaries.
@@ -1039,15 +1029,15 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
     char buf[0x20];
     // per-slot comparison record for the candidate item, built by
     // buildItemBoxSlotFlags and block-copied to a second local.
-    resetItemBoxRowPanes(info);
-    CItemBoxSlotFlags flags = buildItemBoxSlotFlags(info, itemId);
+    ResetRowPanes();
+    CItemBoxSlotFlags flags = BuildSlotFlags(itemId);
     char* base = lbl_eu_805063BC;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x25b, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x286, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x292, base + 0x2aa, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, (u8)flags.v[0]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, (u8)flags.v[1]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, (u8)flags.v[2]);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x25b, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x286, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x292, base + 0x2aa, 0);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x267, (u8)flags.v[0]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x273, (u8)flags.v[1]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x29e, (u8)flags.v[2]);
     u32 v1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x1eb, (u16)BdatGetItemId(itemId));
     char* s1;
     switch ((u8)v1) {
@@ -1059,7 +1049,7 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
             s1 = BdatTouchStringCell(base + 0x130, base + 0x139, 0x2e); break;
         default: s1 = 0; break;
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x354, s1, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x354, s1, 0);
     char* s2;
     switch ((u8)v1) {
         case 4: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x77); break;
@@ -1072,14 +1062,14 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
         case 11: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7e); break;
         case 12: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7f); break;
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x2ab, s2, 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2c1, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2cc, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2ed, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2f8, &lbl_eu_80664598, &lbl_eu_806645A0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x2ab, s2, 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2c1, &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2cc, &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2ed, &lbl_eu_80664598, &lbl_eu_806645A0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2f8, &lbl_eu_80664598, &lbl_eu_806645A0);
     u32 cur = (arg4 >> 16) & 0xFF;
     u32 tag = 0x74696D67;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
@@ -1088,19 +1078,19 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
         if (flag != 0) color = 0xFFFFFFFF;
         u32 idx = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
-        // two vertex colours: filled slots use the info stat words, empty ones
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
+        // two vertex colours: filled slots use the this stat words, empty ones
         // fall back to transparent-black quads built member-wise here.
-        cB.r = 0; cB.g = 0; cB.b = 0; cB.a = info->state.quadA.s[3];
-        cA.r = 0; cA.g = 0; cA.b = 0; cA.a = info->state.quadB.s[3];
+        cB.r = 0; cB.g = 0; cB.b = 0; cB.a = mColorA.s[3];
+        cA.r = 0; cA.g = 0; cA.b = 0; cA.a = mColorB.s[3];
         quadCol[0].r = 0; quadCol[0].g = 0; quadCol[0].b = 0; quadCol[0].a = 0;
         quadCol[1].r = 0; quadCol[1].g = 0; quadCol[1].b = 0; quadCol[1].a = 0;
-        // filled slots take the raw stat word pair from info; empty slots fall
+        // filled slots take the raw stat word pair from this; empty slots fall
         // back to the (zero) RGB halves of the member-wise colour locals.
         u32 w0, w1, w2, w3;
         if (flag != 0) {
-            w0 = info->state.quadA.w[0];
-            w1 = info->state.quadA.w[1];
+            w0 = mColorA.w[0];
+            w1 = mColorA.w[1];
         } else {
             w0 = *(u32*)&cB.r;
             w1 = *(u32*)&cB.b;
@@ -1108,8 +1098,8 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
         *(u32*)&quadCol[0].r = w0;
         *(u32*)&quadCol[0].b = w1;
         if (flag != 0) {
-            w2 = info->state.quadB.w[0];
-            w3 = info->state.quadB.w[1];
+            w2 = mColorB.w[0];
+            w3 = mColorB.w[1];
         } else {
             w2 = *(u32*)&cA.r;
             w3 = *(u32*)&cA.b;
@@ -1118,7 +1108,7 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
         *(u32*)&quadCol[1].b = w3;
         sprintf(buf2, base + 0x161, idx);
         nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+            mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* mat = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1144,18 +1134,18 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
         int curSlot = GetCollectedFlagByte(cur);
         u32 tex;
         if ((u8)slot == (u8)curSlot) {
-            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x319, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, base + 0x319, NULL);
         } else {
-            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x32d, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, base + 0x32d, NULL);
         }
         if (tex == 0) {
-            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x341, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, base + 0x341, NULL);
         }
         if (tex != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)buf2, (TPLPalette*)tex);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf2, (TPLPalette*)tex);
         }
     }
-    renderItemBoxTripleRows(info, itemId, record);
+    RenderTripleRows(itemId, record);
 }
 // Retail renderItemBoxTripleRows: item-box slot renderer. With a candidate record it
 // walks the three slot panes showing per-slot item info (regular items via
@@ -1165,9 +1155,9 @@ __declspec(noinline) void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, vo
 // same-TU helpers kept as real bl calls.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId, void* record) {
+__declspec(noinline) void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
     ml::FixStr<32> text(true);
-    clearItemBoxTripleRows(info);
+    ClearTripleRows();
     char* base = lbl_eu_805063BC;
     char buf[0x20];
     char buf2[0x20];
@@ -1181,7 +1171,7 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
         for (u32 i = 0; i < 3; i++) {
             u32 idx = (u8)i + 1;
             sprintf(buf, base + 0x35f, idx);
-            nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
             if ((u8)i < count) {
                 setPaneVisible(pane, 1);
                 s16 itemVal = 0;
@@ -1194,27 +1184,27 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                     // regular item path: look the item up and format its name.
                     void* rec = CItem_kindPtr(3, v40);
                     u32 cat = *(u32*)rec >> 20;
-                    CItemBoxNameRecord2 rec2;
-                    buildItemBoxNameRec(&rec2, info, (void*)cat, rec);
+                    CItemBoxNameRecord rec2;
+                    rec2 = BuildNameRec((void*)cat, rec);
                     // Retail copies the 0xA4-byte record to a second local via
                     // the memcpy mtctr 8-byte-pair loop (li r0,0x14 + tail).
                     // Whole-struct assign: MWCC expands the POD copy to the
                     // retail mtctr 8-byte-pair loop.
-                    CItemBoxNameRecord2 rec2b = rec2;
+                    CItemBoxNameRecord rec2b = rec2;
                     {
                         // (was switch: retail compiles this dispatch as compares)
                         u32 _e = (u32)(rec2b.e1);
-                        if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
-                        else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
-                        else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
-                        else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
-                        else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
-                        else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
-                        else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
+                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
+                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
+                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
+                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
+                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
+                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
+                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
                     }
                     if (rec2b.name[0] == '0') {
                         sprintf(buf, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(info->state.layout, buf, base + 0x2aa, 0);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf, base + 0x2aa, 0);
                     } else {
                         if (rec2b.e0 == 0) {
                             text.format(base + 0x41e, rec2b.name);
@@ -1224,7 +1214,7 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                             text.format(base + 0x41e, rec2b.name);
                         }
                         sprintf(buf, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(info->state.layout, buf, text.c_str(), 0);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                     }
                     inst = CItem_initItemImplInstances((CItemData*)rec);
                     itemVal = inst->vf54((CItemData*)rec);
@@ -1234,7 +1224,7 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                     // equipped-gear path via the sub-record; no-item fallback.
                     CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst->vf2C((CItemData*)record, (u8)i);
                     if (sub == NULL || (sub->field_04 & 1) == 0) {
-                        tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
+                        tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
                         text.format(base + 0x18, BdatTouchStringCell(base + 0x130, base + 0x139, 0x2a));
                     } else {
                         u16 equip = (u16)((sub->field_04 >> 16) & 0xFFF);
@@ -1244,13 +1234,13 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                         {
                             // (was switch: retail compiles this dispatch as compares)
                             u32 _e = (u32)(st & 0xFF);
-                            if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
-                            else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
-                            else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
-                            else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
-                            else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
-                            else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
-                            else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
+                            if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
+                            else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
+                            else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
+                            else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
+                            else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
+                            else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
+                            else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
                         }
                         s16 val = (s16)((w >> 11) & 0x7FF);
                         if (val != 0) {
@@ -1261,10 +1251,10 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                                 text.format(base + 0x422, val);
                             }
                             sprintf(buf, base + 0x408, idx);
-                            LayoutSetTextBoxFmtValue(info->state.layout, buf, text.c_str(), 0);
+                            LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                         } else {
                             sprintf(buf, base + 0x408, idx);
-                            LayoutSetTextBoxFmtValue(info->state.layout, buf, base + 0x2aa, 0);
+                            LayoutSetTextBoxFmtValue(mpLayout, buf, base + 0x2aa, 0);
                         }
                         char* s = BdatGetPtrDirect((const void*)lbl_eu_806640D8, base + 0x139, equip);
                         text.format(base + 0x419, s, label);
@@ -1273,24 +1263,24 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                     }
                 }
                 sprintf(buf, base + 0x426, idx);
-                LayoutSetTextBoxFmtValue(info->state.layout, buf, text.c_str(), 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                 if (tex != 0) PaneSetTexPalette(pane, (TPLPalette*)tex);
-                if (((u8*)info)[0x9A] != 4) {
-                    nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x16e, true);
+                if (((u8*)this)[0x9A] != 4) {
+                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
                     // POD vectors: default/copy ctors would emit extra bl calls
                     // absent from retail; field-wise staging reproduces the
                     // three lwz/stw word pairs before copyVEC3.
                     nw4r::math::_VEC3 pos;
-                    ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2, (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+                    ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2, mpLayout->GetRootPane());
                     nw4r::math::_VEC3 tmp;
-                    if ((u8)i < 12) *(s16*)((u8*)info + 0xB0 + (u8)i * 2) = itemVal;
-                    if ((u8)i < 12) ((u8*)info)[0x158 + (u8)i] = 3;
-                    if ((u8)i < 12) ((u8*)info)[0x164 + (u8)i] = itemCount;
-                    if ((u8)i < 12) *(s16*)((u8*)info + 0x170 + (u8)i * 2) = value;
+                    if ((u8)i < 12) *(s16*)&mPage.mItemIds[(u8)i] = itemVal;
+                    if ((u8)i < 12) ((u8*)this)[0x158 + (u8)i] = 3;
+                    if ((u8)i < 12) ((u8*)this)[0x164 + (u8)i] = itemCount;
+                    if ((u8)i < 12) mPage.mValues[(u8)i] = value;
                     tmp.x = pos.x;
                     tmp.y = pos.y;
                     tmp.z = pos.z;
-                    if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
+                    if ((u8)i < 12) copyVEC3(&mPage.mPos[(u8)i], &tmp);
                 }
             } else {
                 setPaneVisible(pane, 0);
@@ -1305,7 +1295,7 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
         for (u32 i = 0; i < 3; i++) {
             u32 idx = (u8)i + 1;
             sprintf(buf2, base + 0x35f, idx);
-            nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf2, true);
+            nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf2, true);
             if ((u8)i < sel) {
                 setPaneVisible(pane, 1);
                 u32 itemVal = 0;
@@ -1315,26 +1305,26 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                 text.format(base + 0x43b, idx);
                 u16 nameId = (u16)BdatGetU16Direct((void*)obj, text.c_str(), (u16)cat);
                 if (nameId == 0) {
-                    tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
+                    tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
                     text.format(base + 0x18, BdatTouchStringCell(base + 0x130, base + 0x139, 0x2a));
                 } else {
-                    CItemBoxNameRecord2 rec3;
-                    buildItemBoxNameRec(&rec3, info, (void*)nameId, 0);
-                    CItemBoxNameRecord2 rec3b = rec3;
+                    CItemBoxNameRecord rec3;
+                    rec3 = BuildNameRec((void*)nameId, 0);
+                    CItemBoxNameRecord rec3b = rec3;
                     {
                         // (was switch: retail compiles this dispatch as compares)
                         u32 _e = (u32)(rec3b.e1);
-                        if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
-                        else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
-                        else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
-                        else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
-                        else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
-                        else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
-                        else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
+                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
+                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
+                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
+                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
+                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
+                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
+                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
                     }
                     if (rec3b.name[0] == '0') {
                         sprintf(buf2, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(info->state.layout, buf2, base + 0x2aa, 0);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf2, base + 0x2aa, 0);
                     } else {
                         if (rec3b.e0 == 0) {
                             text.format(base + 0x41e, rec3b.name);
@@ -1344,7 +1334,7 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                             text.format(base + 0x41e, rec3b.name);
                         }
                         sprintf(buf2, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(info->state.layout, buf2, text.c_str(), 0);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf2, text.c_str(), 0);
                     }
                     char* s = BuildItemNameStr(nameId);
                     text.format(base + 0x419, rec3b.str, s);
@@ -1353,21 +1343,21 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
                     val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, base + 0x447, nameId);
                 }
                 sprintf(buf2, base + 0x426, idx);
-                LayoutSetTextBoxFmtValue(info->state.layout, buf2, text.c_str(), 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf2, text.c_str(), 0);
                 if (tex != 0) PaneSetTexPalette(pane, (TPLPalette*)tex);
-                if (((u8*)info)[0x9A] != 4) {
-                    nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x16e, true);
+                if (((u8*)this)[0x9A] != 4) {
+                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
                     nw4r::math::_VEC3 pos;
-                    ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2, (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+                    ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2, mpLayout->GetRootPane());
                     nw4r::math::_VEC3 tmp;
-                    if ((u8)i < 12) *(s16*)((u8*)info + 0xB0 + (u8)i * 2) = (s16)itemVal;
-                    if ((u8)i < 12) ((u8*)info)[0x158 + (u8)i] = 3;
-                    if ((u8)i < 12) ((u8*)info)[0x164 + (u8)i] = (u8)itemCount;
-                    if ((u8)i < 12) *(s16*)((u8*)info + 0x170 + (u8)i * 2) = (s16)val;
+                    if ((u8)i < 12) *(s16*)&mPage.mItemIds[(u8)i] = (s16)itemVal;
+                    if ((u8)i < 12) ((u8*)this)[0x158 + (u8)i] = 3;
+                    if ((u8)i < 12) ((u8*)this)[0x164 + (u8)i] = (u8)itemCount;
+                    if ((u8)i < 12) mPage.mValues[(u8)i] = (s16)val;
                     tmp.x = pos.x;
                     tmp.y = pos.y;
                     tmp.z = pos.z;
-                    if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
+                    if ((u8)i < 12) copyVEC3(&mPage.mPos[(u8)i], &tmp);
                 }
             } else {
                 setPaneVisible(pane, 0);
@@ -1378,9 +1368,9 @@ __declspec(noinline) void renderItemBoxTripleRows(CItemBoxInfo* info, u32 itemId
 }
 
 #pragma push
-__declspec(noinline) void setItemBoxIndex(CItemBoxInfo* info, unsigned char index, short value) {
+__declspec(noinline) void CItemBoxPage::SetValue(unsigned char index, short value) {
     if (index >= 12) return;
-    info->state.values[index] = value;
+    mValues[index] = value;
 }
 #pragma pop
 
@@ -1389,36 +1379,36 @@ __declspec(noinline) void setItemBoxIndex(CItemBoxInfo* info, unsigned char inde
 // folding applyItemBoxSelColors/resetItemBoxRowPanes/buildItemBoxSelRec into this body).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
-    applyItemBoxSelColors(info);
-    resetItemBoxRowPanes(info);
+__declspec(noinline) void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
+    ApplySelColors();
+    ResetRowPanes();
     char buf[0x20];
     // 9-byte per-slot selection record: sel[1..8] are per-slot flags, flag2
     // also selects the row-height label size.
-    CItemBoxSelRec local = buildItemBoxSelRec(info, arg2);
+    CItemBoxSelRec local = BuildSelRec(arg2);
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], rowHeight);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], label, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = local.selected[(u8)i];
         u32 color = 0x777777ff;
         if (flag) color = 0xFFFFFFFF;
         sprintf(buf, &lbl_eu_805063BC[0x303], (u8)i + 1);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
         dimA.s[0] = dimA.s[1] = dimA.s[2] = 0;
-        dimA.s[3] = info->state.quadA.s[3];
+        dimA.s[3] = mColorA.s[3];
         CItemBoxQuadColorView dimB;
         dimB.s[0] = dimB.s[1] = dimB.s[2] = 0;
-        dimB.s[3] = info->state.quadB.s[3];
+        dimB.s[3] = mColorB.s[3];
         CItemBoxQuadColorView colors[2] = {
-            flag ? info->state.quadA : dimA,
-            flag ? info->state.quadB : dimB,
+            flag ? mColorA : dimA,
+            flag ? mColorB : dimB,
         };
         sprintf(buf, &lbl_eu_805063BC[0x161], (u8)i + 1);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1435,13 +1425,13 @@ __declspec(noinline) void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
 // row from the layout panes, stash the equip summary at info+0xB0.., then per
 // player slot recolor the row panes and stamp the owning player's name onto
 // equipment entries that resolve back to the selected item.
-__declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
-    // Frame order mirrors retail (descending slots): record > body > caption
-    // storage > position > colours > slot values > cursor temp > staged pair.
-    // body must be copy-INITIALIZED (not default-decl + assign): an assignment
-    // compiles to an out-of-line __as__ call, while copy-init emits the
-    // retail mtctr 8-byte-pair copy loop.
-    CItemBoxDetailRec rec;
+__declspec(noinline) void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
+    ClearQuadTexts();
+    ResetRowPanes();
+    CItemBoxNameRecord rec = BuildNameRec((void*)(u32)arg2, arg3);
+    // The record must be copy-INITIALIZED from the by-value return: MWCC
+    // builds the result in a temp and emits the retail mtctr 8-byte-pair
+    // copy loop into rec.
     char textStorage[sizeof(ml::FixStr<32>)];
     ml::FixStr<32>& caption = *reinterpret_cast<ml::FixStr<32>*>(textStorage);
     nw4r::math::_VEC3 pos;
@@ -1450,13 +1440,9 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
     nw4r::math::_VEC3 tmp;
     CItemBoxTagStage cur;
 
-    clearItemBoxQuadTexts(info);
-    resetItemBoxRowPanes(info);
-    buildItemBoxNameRec(&rec, info, (void*)(u32)arg2, arg3);
-    CItemBoxDetailBody body = rec.body;
 
     char* base = (char*)&lbl_eu_805063BC;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x45a, body.text, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x45a, (char*)rec.str, 0);
 
     caption.mString[0] = 0;
     caption.mLength = 0;
@@ -1464,48 +1450,47 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
     if (arg3 != NULL) {
         item = arg3;
     }
-    if (body.kind == 0x30) {
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x466, base + 0x2aa, 0);
+    if (rec.name[0] == 0x30) {
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, base + 0x2aa, 0);
     } else {
-        if (body.flag18 != 0) {
+        if (rec.e0 != 0) {
             // Flag values 3/4 pick a count-formatted caption label.
-            if ((u32)(body.flag18 - 3) <= 1) {
+            if ((u32)(rec.e0 - 3) <= 1) {
                 char* label = BdatTouchStringCell(base + 0x130, base + 0x139, 0x21);
-                caption.format(base + 0x419, &body.kind, label);
+                caption.format(base + 0x419, &rec.name[0], label);
             } else {
-                caption.format(base + 0x41e, &body.kind);
+                caption.format(base + 0x41e, &rec.name[0]);
             }
         } else {
-            caption.format(base + 0x41e, &body.kind);
+            caption.format(base + 0x41e, &rec.name[0]);
         }
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x466, caption.mString, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, caption.mString, 0);
     }
 
     // Ternaries kept inline at their use sites so the results stay in the
     // ABI return register instead of living across the whole state!=4 block.
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x472,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x472,
                   (arg3 != NULL)
                       ? CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item)
                       : BuildItemNameStr(arg2),
                   0);
 
-    if (info->state.field_9A != 4) {
+    if (mKind != 4) {
         nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x472, true);
+            mpLayout->GetRootPane()->FindPaneByName(base + 0x472, true);
         nw4r::lyt::Pane* pane2 =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x16e, true);
+            mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
         ScalePaneWorldPos((nw4r::math::VEC3*)((nw4r::math::_VEC3*)&pos), pane, pane2,
-                      (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+                      mpLayout->GetRootPane());
 
-        *(s16*)((u8*)info + 0xB0) = (arg3 != NULL)
+        *(s16*)&mPage.mItemIds[0] = (arg3 != NULL)
             ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
             : BdatGetItemId(arg2);
-        *(u8*)((u8*)info + 0x158) = (arg3 != NULL) ? 3 : 9;
-        *(u8*)((u8*)info + 0x164) = (u8)((arg3 != NULL)
+        mPage.mBytesA8[0] = (arg3 != NULL) ? 3 : 9;
+        mPage.mBytesB4[0] = (u8)((arg3 != NULL)
             ? (u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item)
             : 0);
-        setItemBoxIndex((CItemBoxInfo*)((u8*)info + 0xB0), 0,
-                        (s16)((arg3 != NULL)
+        mPage.SetValue(0, (s16)((arg3 != NULL)
                             ? (s16)CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item)
                             : 0));
         // Field-wise copy: retail expands this as three lwz/stw word pairs
@@ -1513,14 +1498,14 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
         tmp.x = pos.x;
         tmp.y = pos.y;
         tmp.z = pos.z;
-        copyVEC3((u8*)info + 0xC8, &tmp);
+        copyVEC3(&mPage.mPos[0], &tmp);
     }
 
     u16 cat2 = (arg3 != NULL)
         ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
         : BdatGetItemId(arg2);
     u8 rows = (u8)BdatGetU8Direct((const void*)((u32)(&lbl_eu_806640D8)[cat2]), base + 0x47d, cat2);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x484,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x484,
                   BdatTouchStringCell(base + 0x130, base + 0x139, rows + 0x15), 0);
 
     // volatile: retail retains this never-read slot-kind table copy; a plain
@@ -1531,18 +1516,18 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
     for (u32 i = 0; (u32)(u8)i < (u32)(u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
         sprintf(caption.mString, base + 0x303, idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, caption.mString, -1);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, caption.mString, -1);
         cols.w[0] = 0;
         cols.w[1] = 0;
         cols.w[2] = 0;
         cols.w[3] = 0;
-        cols.w[0] = info->state.quadA.w[0];
-        cols.w[1] = info->state.quadA.w[1];
-        cols.w[2] = info->state.quadB.w[0];
-        cols.w[3] = info->state.quadB.w[1];
+        cols.w[0] = mColorA.w[0];
+        cols.w[1] = mColorA.w[1];
+        cols.w[2] = mColorB.w[0];
+        cols.w[3] = mColorB.w[1];
         sprintf(caption.mString, base + 0x161, idx);
         nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textStorage, true);
+            mpLayout->GetRootPane()->FindPaneByName(textStorage, true);
         if (pane != NULL) {
             void* colorObj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1573,15 +1558,15 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
                 u8 owner = GetCollectedFlagByte((u32)playerByte);
                 u32 name;
                 if (flag == owner) {
-                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x319, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x319, NULL);
                 } else {
-                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x32d, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x32d, NULL);
                 }
                 if (name == 0) {
-                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x341, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x341, NULL);
                 }
                 if (name != 0) {
-                    PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)caption.mString, (TPLPalette*)name);
+                    PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)caption.mString, (TPLPalette*)name);
                 }
             }
         }
@@ -1591,101 +1576,101 @@ __declspec(noinline) void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void*
 #pragma push
 #pragma optimize_for_size on
 
-__declspec(noinline) void renderItemBoxLabels(CItemBoxInfo* info, u32 arg2) {
-    clearItemBoxPairTexts(info);
-    resetItemBoxRowPanes(info);
-    CItemBoxLabelRec rec = getItemBoxLabelRec(info, arg2);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
+__declspec(noinline) void CItemBoxInfo::RenderLabels(u32 arg2) {
+    ClearPairTexts();
+    ResetRowPanes();
+    CItemBoxLabelRec rec = GetLabelRec(arg2);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
 #pragma pop
-void __declspec(noinline) clearItemBoxSlotTexts(CItemBoxInfo*);
+
 // Retail renderItemBoxSlotList: item-box slot-list renderer. Rebuilds the per-slot
 // record (buildItemBoxSlotRec), stamps the header pane with the formatted item
 // string, then per filled pair sets the row-name pane text and (unless mode
 // 0x9A==4) measures the row position and caches value/count/pos per slot.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void renderItemBoxSlotList(CItemBoxInfo* info, u16 arg2, void* arg3) {
+__declspec(noinline) void CItemBoxInfo::RenderSlotList(u16 arg2, void* arg3) {
     // Frame layout (descending): cur > text > call temp > buf > pos > tmp.
     // The 9 constant claims r31 first (Rule A).
     u8 slotState = 9;
     char buf[0x20];
     nw4r::math::_VEC3 pos;
-    clearItemBoxSlotTexts(info);
-    resetItemBoxRowPanes(info);
-    CItemBoxSlotRecord1 cur = buildItemBoxSlotRec(info, arg2, arg3);
+    ClearSlotTexts();
+    ResetRowPanes();
+    CItemBoxSlotRecord1 cur = BuildSlotRec(arg2, arg3);
     ml::FixStr<32> text(false);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.str, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x4a7], (char*)cur.str, 0);
     u8 count = cur.counter;
     for (u8 i = 0; (u8)i < count; i++) {
         sprintf(buf, &lbl_eu_805063BC[0x4b3], (u32)((u8)i * 2) + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)cur.text[(u8)i], 0);
-        if (((u8*)info)[0x9A] != 4) {
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, (char*)cur.text[(u8)i], 0);
+        if (((u8*)this)[0x9A] != 4) {
             nw4r::lyt::Pane* pane =
-                ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                mpLayout->GetRootPane()->FindPaneByName(buf, true);
             nw4r::lyt::Pane* pane2 =
-                ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16e], true);
+                mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805063BC[0x16e], true);
             ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2,
-                          (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+                          mpLayout->GetRootPane());
             // Bounds-checked per-slot cache writes; the count is loaded before
             // the index check, and the _VEC3 copy-init is a lwz/stw block copy.
             {
                 u16 v = cur.counts[(u8)i];
-                if ((u8)i < 12) ((u16*)((u8*)info + 0xB0))[(u8)i] = v;
+                if ((u8)i < 12) mPage.mItemIds[(u8)i] = v;
             }
-            if ((u8)i < 12) ((u8*)info)[0x158 + (u8)i] = slotState;
+            if ((u8)i < 12) ((u8*)this)[0x158 + (u8)i] = slotState;
             nw4r::math::_VEC3 tmp = pos;
-            if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
+            if ((u8)i < 12) copyVEC3(&mPage.mPos[(u8)i], &tmp);
         }
         text.clear();
         sprintf(buf, &lbl_eu_805063BC[0x4c0], (u32)(u8)i + 0x1f);
         text.format(&lbl_eu_805063BC[0x13e], cur.vals[(u8)i],
                     BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, text.c_str(), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text.c_str(), 0);
     }
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void setupItemBoxSlotPanes(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::SetupSlotPanes() {
     // No local base pointer: MWCC CSEs the repeated symbol offsets into one
     // register, splitting the address into a pre-stmw volatile lis plus a
     // post-stmw callee-saved addi exactly like retail.
     char buf[0x20];
     u32 i;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x354], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2ab], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2f8], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x354], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ab], &lbl_eu_805063BC[0x2aa], 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2f8], &lbl_eu_806645A8, &lbl_eu_806645B0);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
         sprintf(buf, &lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         u32 args[4];
         // Zero via a variable: MWCC materializes it in a register and cannot
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
-        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+        s16 c0hi[2] = {zero, mColorA.s[3]};
         // All-zero pairs: retail stores the halfwords in DESCENDING element
         // order; the four colour words are copied to args[] in ASCENDING
         // slot order (see resetItemBox2RowPanes finding).
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+        s16 c1hi[2] = {zero, mColorB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -1694,7 +1679,7 @@ __declspec(noinline) void setupItemBoxSlotPanes(CItemBoxInfo* info) {
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
         sprintf(buf, &lbl_eu_805063BC[0x161], idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1704,55 +1689,55 @@ __declspec(noinline) void setupItemBoxSlotPanes(CItemBoxInfo* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (tex != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)buf, (TPLPalette*)tex);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
     }
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void resetItemBoxRowPanes(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::ResetRowPanes() {
     u32 i;
     char* base = (char*)&lbl_eu_805063BC;
     u32 idx;
     u32 tag;
     u32 white;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x267, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x273, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x354, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x2ab, base + 0x2aa, 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, base + 0x2f8, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x267, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x273, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x29e, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x354, base + 0x2aa, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x2ab, base + 0x2aa, 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2f8, &lbl_eu_806645A8, &lbl_eu_806645B0);
     char buf[0x20];
     tag = 0x74696D67u;
     white = 0x777777FFu;
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u32)((u8)i + 1);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, white);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, white);
         u32 args[4];
         // zero via a variable: MWCC materializes it in a register and cannot
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
-        s16 c0hi[2] = {0, info->state.quadA.s[3]};
+        s16 c0hi[2] = {0, mColorA.s[3]};
         s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, info->state.quadB.s[3]};
+        s16 c1hi[2] = {0, mColorB.s[3]};
         s16 c1lo[2] = {0, 0};
         args[1] = *(u32*)c0hi;
         args[0] = *(u32*)c0lo;
         args[3] = *(u32*)c1hi;
         args[2] = *(u32*)c1lo;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1762,9 +1747,9 @@ __declspec(noinline) void resetItemBoxRowPanes(CItemBoxInfo* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, base + 0x30e, idx);
-        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x341, NULL);
+        u32 tex = (u32)mArcResAcc->GetResource(tag, base + 0x341, NULL);
         if (tex != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)buf, (TPLPalette*)tex);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
     }
 }
@@ -1774,7 +1759,7 @@ __declspec(noinline) void resetItemBoxRowPanes(CItemBoxInfo* info) {
 // string-pool base in r31.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBoxTripleRows(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::ClearTripleRows() {
     char buf[0x20];
     // Declaration order fixes the r29/r30 coloring: retail claims index (r30)
     // before the loop counter i (r29) - saved regs go high->low by birth order.
@@ -1783,12 +1768,12 @@ __declspec(noinline) void clearItemBoxTripleRows(CItemBoxInfo* info) {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* r = ((LayoutRootPaneView*)info->state.layout)->rootPane10->FindPaneByName(buf, true);
+        void* r = ((LayoutRootPaneView*)mpLayout)->rootPane10->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
 #pragma pop
@@ -1798,8 +1783,8 @@ __declspec(noinline) void clearItemBoxTripleRows(CItemBoxInfo* info) {
 // vertex buffer via setItemBoxVtxColor. layout is reloaded per use (lwz 0x34).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void applyItemBoxSelColors(CItemBoxInfo* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
+__declspec(noinline) void CItemBoxInfo::ApplySelColors() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
     u32 idx;
     // Retail re-evaluates the slot count on every iteration (bl in the
@@ -1807,16 +1792,16 @@ __declspec(noinline) void applyItemBoxSelColors(CItemBoxInfo* info) {
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u32)((u8)i + 1);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         // Selection colours: two 8-byte pairs built from the s16s at +0xA2
         // and +0xAA; retail stages the four arrays at sp+0x08..0x17 and the
         // u32 varargs copy at sp+0x18..0x27.
         s16 zero = 0;
-        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+        s16 c0hi[2] = {zero, mColorA.s[3]};
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+        s16 c1hi[2] = {zero, mColorB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -1826,7 +1811,7 @@ __declspec(noinline) void applyItemBoxSelColors(CItemBoxInfo* info) {
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -1840,17 +1825,17 @@ __declspec(noinline) void applyItemBoxSelColors(CItemBoxInfo* info) {
 // prologue merge); the first call's arg4 zero is hoisted into the prologue.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBoxQuadTexts(CItemBoxInfo* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+__declspec(noinline) void CItemBoxInfo::ClearQuadTexts() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x466],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x484],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
@@ -1860,17 +1845,17 @@ __declspec(noinline) void clearItemBoxQuadTexts(CItemBoxInfo* info) {
 // prologue merge): info in r29, loop counter in r30, string-pool base in r31.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBoxSlotTexts(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::ClearSlotTexts() {
     char buf[0x20];
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
     for (u32 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, &lbl_eu_805063BC[0x4c0], (u8)i + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
@@ -1878,11 +1863,11 @@ __declspec(noinline) void clearItemBoxSlotTexts(CItemBoxInfo* info) {
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void clearItemBoxPairTexts(CItemBoxInfo* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+__declspec(noinline) void CItemBoxInfo::ClearPairTexts() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
@@ -1895,7 +1880,7 @@ extern "C" __declspec(noinline) void clearItemBoxPairTexts(CItemBoxInfo* info) {
 // buffers stay separate locals (retail sp+0x48 / sp+0x28).
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void stampItemBoxSlotTex(CItemBoxInfo* info) {
+__declspec(noinline) void CItemBoxInfo::StampSlotTex() {
     // Shape mirrors the proven stampItemBox2SlotTex (ItemBox2 twin): if/else instead
     // of continue-guards, hoisted i/idx, direct lbl refs, typed name lookup.
     u32 i;
@@ -1906,7 +1891,7 @@ extern "C" __declspec(noinline) void stampItemBoxSlotTex(CItemBoxInfo* info) {
     for (i = 0; i < 7; i++) {
         if ((u8)i >= count) {
             sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
-            nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(bufElse, true);
+            nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(bufElse, true);
             setPaneVisible(pane, 0);
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
@@ -1917,16 +1902,16 @@ extern "C" __declspec(noinline) void stampItemBoxSlotTex(CItemBoxInfo* info) {
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-                nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(buf, true);
                 PaneSetTexPalette(pane2, (TPLPalette*)found);
                 PaneSetVtxColorAll(pane2, 0x777777ffu);
                 s16 zero = 0;
-                s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+                s16 c0hi[2] = {zero, mColorA.s[3]};
                 // All-zero pairs stored DESCENDING (retail order).
                 s16 c0lo[2];
                 c0lo[1] = zero;
                 c0lo[0] = zero;
-                s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+                s16 c1hi[2] = {zero, mColorB.s[3]};
                 s16 c1lo[2];
                 c1lo[1] = zero;
                 c1lo[0] = zero;
@@ -1936,7 +1921,7 @@ extern "C" __declspec(noinline) void stampItemBoxSlotTex(CItemBoxInfo* info) {
                 args[2] = *(u32*)c1lo;
                 args[3] = *(u32*)c1hi;
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
-                nw4r::lyt::Pane* pane3 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                nw4r::lyt::Pane* pane3 = mpLayout->GetRootPane()->FindPaneByName(buf, true);
                 void* vertexObj = pane3->GetMaterial();
                 for (u32 j = 0; j < 2; j++) {
                     setItemBoxVtxColor(vertexObj, (u8)j, (u8*)args + (u8)j * 8);
@@ -1953,11 +1938,10 @@ struct D8EQuad {
 struct D8ERenderQuad {
     f32 values[8];
 };
-struct D8EEntry {
-    union {
-        u32 words[13];
-        s16 halfWords[26];
-    };
+union D8EEntry {
+    CItemBoxCompRecord rec;
+    u32 words[13];
+    s16 halfWords[26];
 };
 struct D8EArmorEntry {
     union {
@@ -1993,25 +1977,25 @@ static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
     entry.etherDefense = (s16)(s32)((f32)entry.etherDefense * scale);
 }
 
-static inline void applyArmorEffects(void* info, u16 member,
+static inline void applyArmorEffects(CItemBoxInfo* info, u16 member,
                                      D8EArmorEntry& entry, u8 armorType) {
     switch (armorType) {
         case 3: {
-            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
+            s32 effect = info->GetCondStat((void*)(u32)member, 0x0D);
             if (effect != 0) scaleArmorDefense(entry, effect);
-            effect = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
+            effect = info->GetCondStat((void*)(u32)member, 0x24);
             if (effect != 0) {
                 entry.etherDefense = (s16)(entry.etherDefense + (s16)effect);
             }
             break;
         }
         case 2: {
-            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
+            s32 effect = info->GetCondStat((void*)(u32)member, 0x0C);
             if (effect != 0) scaleArmorDefense(entry, effect);
             break;
         }
         case 1: {
-            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
+            s32 effect = info->GetCondStat((void*)(u32)member, 0x0B);
             if (effect != 0) scaleArmorDefense(entry, effect);
             break;
         }
@@ -2085,7 +2069,7 @@ static inline void applyItemBoxDeltaColorAt(CItemBoxInfo* info, u32 valueIndex,
         __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
         __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
     }
-    nw4r::lyt::Pane** panes = info->state.slotPanes;
+    nw4r::lyt::Pane** panes = &info->mSlotPane0;
     PaneMatSetTevColors(panes[valueIndex], &valueTop, &valueBottom);
     PaneMatSetTevColors(panes[labelIndex], &labelTop, &labelBottom);
 }
@@ -2117,7 +2101,6 @@ static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstL
 void copyItemBoxEntry(CItemBoxInfoEntry*, const CItemBoxInfoEntry*);
 void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
 extern const u32 lbl_eu_80506368[6];
-extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 
 // Named views keep the item-stat calculations readable while leaving the
 // backing entry as a plain 13-word record, which is how MWCC copies it.
@@ -2130,7 +2113,7 @@ extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 #pragma optimize_for_size on
 // Prefer labeled SDA symbols over float literals / parent+offset member decays
 // so bar formulas emit retail lfs relocs (0.01f/100.0f).
-extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
+__declspec(noinline) void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     // Packed selection: retail emits slot (rlwinm.->r26/CR0), then member
     // (r18), then type (r27). Declaring member before type matches that
     // emission order; type stays longest-lived for r27.
@@ -2200,13 +2183,13 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
     // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) -- 3-arg.
     // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
     // so immediates stay plain +0x139, not parent+0x54+imm.
-    LayoutSetTextBoxFmtValue(info->state.layout, &base[0x4D7],
+    LayoutSetTextBoxFmtValue(mpLayout, &base[0x4D7],
         ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, &base[0x139], member), 0);
-    setLayoutTextBoxNumber(info->state.layout, &base[0x4E3], (u8)stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber(info->state.layout, &base[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
-    LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], hp1);
-    LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], hp2);
-    SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[3], BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
+    setLayoutTextBoxNumber(mpLayout, &base[0x4E3], (u8)stats->CActorParam_getActorLevel());
+    setLayoutTextBoxNumber(mpLayout, &base[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
+    LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hp2);
+    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
@@ -2215,121 +2198,119 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
     CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
-    s32 artsSum = (s32)sumItemBoxTypeCounts(info, member, NULL);
-    u32 w = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
+    s32 artsSum = (s32)SumTypeCounts(member, NULL);
+    u32 w = GetCondStat((void*)(u32)member, 0x97);
     if (w != 0) {
         artsSum = artsSum - (s32)w;
         if (artsSum < 0) artsSum = 0;
     }
 
     // ---- stat bars (display formula) ----
-    s32 effect = getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL);
+    s32 effect = GetEffect(member, 0x21, NULL);
     // volatile keeps early bars in distinct slots (non-volatile CSE'd ~0x10C
     // of body away under optimize_for_size). Float literals here match the
     // ~7% HighFrame baseline; SDA 68040/44 names elsewhere still open.
     volatile s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
+    effect = GetEffect(member, 0x1, NULL);
     volatile s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
+    effect = GetEffect(member, 0x31, NULL);
     s16 bar3 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL);
+    effect = GetEffect(member, 0x41, NULL);
     volatile s16 bar4 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E) * (f32)(stA->s1E - (s16)artsSum + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
+    effect = GetEffect(member, 0x51, NULL);
     s16 bar5 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL);
+    effect = GetEffect(member, 0x54, NULL);
     s16 bar6 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + effect)));
-    effect = getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL);
+    effect = GetEffect(member, 0x11, NULL);
     s16 hpStat = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
         0.01f * stB->f10 * (f32)(stC->s06 + effect)));
     if (hpStat > 9999) hpStat = 9999;
 
     // ---- equip-mode gate: recompute bars with the equipped stat (0x30) ----
-    if (checkItemBoxGemChain(info, member, NULL, NULL)) {
-        s32 eq = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+    if (CheckGemChain(member, NULL, NULL)) {
+        s32 eq = GetCondStat((void*)(u32)member, 0x30);
         if (eq != 0) {
-            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
+            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + GetEffect(member, 0x21, NULL))));
+            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + GetEffect(member, 0x41, NULL) - artsSum)));
             hpStat = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
                 0.01f * stB->f10 *
-                (f32)(stC->s06 + eq + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
+                (f32)(stC->s06 + eq + GetEffect(member, 0x11, NULL))));
 
             // ---- current weapon block ----
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry e1;
-                buildItemBoxCmpRecord(&e1, (void*)(u32)member, (void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
+                e1.rec = BuildCmpRecord((void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
                 D8EEntry e2 = e1;
-                s32 s1 = calcItemBoxBonus1(info, member,
-                                       (u16)e2.w04, NULL);
-                s32 s2 = calcItemBoxBonus2(info, member,
-                                       (u16)(e2.w04 >> 16), NULL);
+                s32 s1 = CalcBonus1(member, (u16)e2.w04, NULL);
+                s32 s2 = CalcBonus2(member, (u16)(e2.w04 >> 16), NULL);
                 s32 atk1 = (s32)barB + s1;
                 s32 atk2 = (s32)barB + s2;
                 if (atk1 > atk2) atk1 = atk2;
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 textBuffer.format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], (const char*)textBuffer.mString, 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
             }
 
             // ---- numbers ----
             if (barC <= 0) barC = 1;
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], (s16)barB);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)barC);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], (s16)barA);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)bar5);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)bar3);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], hpStat);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, (s16)barB);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)barC);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, (s16)barA);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)bar5);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)bar3);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hpStat);
             char* percentSuffix = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
             textBufferB.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], (const char*)textBuffer.mString, 0);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], (const char*)textBufferB.mString, 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, (const char*)textBufferB.mString, 0);
 
             // ---- 20x color application ----
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
             D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane19, &q1, &q2);
         }
     }
 
     // ---- stat panel (arg4 != 0, type in {2,4,5,6,7,8}) ----
     if (arg4 != 0 && (type == 2 || (type >= 4 && type <= 8))) {
         s32 e1 = 0;
-        if (checkItemBoxGemChain(info, member, NULL, NULL)) e1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+        if (CheckGemChain(member, NULL, NULL)) e1 = GetCondStat((void*)(u32)member, 0x30);
         s32 e2 = 0;
-        if (checkItemBoxGemChain(info, member, arg3, NULL)) e2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+        if (CheckGemChain(member, arg3, NULL)) e2 = GetCondStat((void*)(u32)member, 0x30);
 
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + GetEffect(member, 0x21, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2345,16 +2326,16 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
         }
 
         // row B: 0x1 -> panes 0x50/0x54
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
             dB = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2370,12 +2351,12 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
         }
 
-        s32 comparisonArtsSum = (s32)sumItemBoxTypeCounts(info, member, NULL);
-        u32 comparisonWeight = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
+        s32 comparisonArtsSum = (s32)SumTypeCounts(member, NULL);
+        u32 comparisonWeight = GetCondStat((void*)(u32)member, 0x97);
         if (comparisonWeight != 0) {
             comparisonArtsSum -= (s32)comparisonWeight;
             if (comparisonArtsSum < 0) comparisonArtsSum = 0;
@@ -2386,13 +2367,11 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             s16 oldAgilityBase = (s16)(stA->s1E - (s16)comparisonArtsSum);
             if (oldAgilityBase <= 0) oldAgilityBase = 1;
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) *
-                (f32)(oldAgilityBase + getItemBoxEffect(
-                    info, (void*)(u32)member, 0x41, NULL))));
+                (f32)(oldAgilityBase + GetEffect(member, 0x41, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) *
-                (f32)(oldAgilityBase + getItemBoxEffect(
-                    info, (void*)(u32)member, 0x41, arg3))));
+                (f32)(oldAgilityBase + GetEffect(member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2408,21 +2387,21 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
         }
 
         // row D: 0x11 + RoundHalfAway0 -> panes 0x40/0x48
         {
-            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3))));
+            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e1 + GetEffect(member, 0x11, NULL))));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e2 + GetEffect(member, 0x11, arg3))));
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], nb);
+                LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2438,10 +2417,10 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
@@ -2460,43 +2439,42 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             // c_cur@2296 (380B apart), not adjacent array slots.
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EEntry& e_cur = comparisonStorage.weapon[0];
-            buildItemBoxCmpRecord(&e_cur, (void*)(u32)member, (void*)(u32)w0);
+            e_cur.rec = BuildCmpRecord((void*)(u32)w0);
             comparisonStorage.weapon[1] = e_cur;
             D8EEntry& c_cur = comparisonStorage.weapon[1];
             D8EEntry& e_new = comparisonStorage.weapon[2];
-            buildItemBoxCmpRecord(&e_new, (void*)(u32)member, arg3);
+            e_new.rec = BuildCmpRecord(arg3);
             comparisonStorage.weapon[3] = e_new;
             D8EEntry& c_new = comparisonStorage.weapon[3];
             s32 eq1 = 0;
-            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+            if (CheckGemChain(member, NULL, NULL)) eq1 = GetCondStat((void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
-            s32 atkA = (s32)pb + calcItemBoxBonus1(info, member, (u16)c_cur.w04, NULL);
-            s32 atkC = (s32)pb + calcItemBoxBonus2(info, member, (u16)(c_cur.w04 >> 16), NULL);
-            s32 atkB = (s32)nb + calcItemBoxBonus1(info, member, (u16)c_new.w04, arg3);
-            s32 atkD = (s32)nb + calcItemBoxBonus2(info, member,
-                (u16)(c_new.w04 >> 16), arg3);
+            if (CheckGemChain(member, arg3, NULL)) eq2 = GetCondStat((void*)(u32)member, 0x30);
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
+            s32 atkA = (s32)pb + CalcBonus1(member, (u16)c_cur.w04, NULL);
+            s32 atkC = (s32)pb + CalcBonus2(member, (u16)(c_cur.w04 >> 16), NULL);
+            s32 atkB = (s32)nb + CalcBonus1(member, (u16)c_new.w04, arg3);
+            s32 atkD = (s32)nb + CalcBonus2(member, (u16)(c_new.w04 >> 16), arg3);
             if (atkB < atkD) atkB = atkD;
             s16 dW = (s16)(atkC - atkA);
-            s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             s16 v612 = (s16)c_new._0C;
             s16 v646 = (s16)c_cur._0C;
             v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
+            c1 = GetEffect(member, 0x31, NULL);
             v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
+            c1 = GetEffect(member, 0x51, arg3);
             s16 v610 = (s16)c_new._10;
             s16 v644 = (s16)c_cur._10;
             v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x54, arg3);
+            c1 = GetEffect(member, 0x54, arg3);
             s16 v614 = c_new.w14;
             s16 v648 = c_cur.w14;
             v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL);
+            c1 = GetEffect(member, 0x54, NULL);
             v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
             s16 snap644 = v644;
             s16 snap646 = v646;
@@ -2510,18 +2488,18 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             char* rangeSeparator = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
             textBuffer.format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], (const char*)textBuffer.mString, 0);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)disp1);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)disp2);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)disp1);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)disp2);
             char* percentSuffix2 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], (const char*)textBuffer.mString, 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
             char* percentSuffix3 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             textBuffer.format(&lbl_eu_805063BC[0x13E],
                            (s32)stA->b55 + (s32)d3, percentSuffix3);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], (const char*)textBuffer.mString, 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, (const char*)textBuffer.mString, 0);
             // delta colors (5 rows)
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2539,8 +2517,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2558,8 +2536,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2577,8 +2555,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2596,8 +2574,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane17, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2615,32 +2593,30 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane19, &q1, &q2);
             }
         } else {
             // ---- armor block (0x801E7DA0) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry& e_cur = comparisonStorage.armor[0];
-            const CItemBoxSlotFlags& e_curFlags = buildItemBoxSlotFlags((void*)(u32)member, w0);
+            const CItemBoxSlotFlags& e_curFlags = BuildSlotFlags(w0);
             e_cur = *(const D8EArmorEntry*)&e_curFlags;
             comparisonStorage.armor[1] = e_cur;
             D8EArmorEntry& c_cur = comparisonStorage.armor[1];
             D8EArmorEntry& e_new = comparisonStorage.armor[2];
-            const CItemBoxSlotFlags& e_newFlags = buildItemBoxSlotFlags((void*)(u32)member, (u32)arg3);
+            const CItemBoxSlotFlags& e_newFlags = BuildSlotFlags((u32)arg3);
             e_new = *(const D8EArmorEntry*)&e_newFlags;
             comparisonStorage.armor[3] = e_new;
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
-            s16 v484 = (s16)sumItemBoxTypeCounts(
-                info, member,
-                (item != NULL && *(u32*)item != 0)
+            s16 v484 = (s16)SumTypeCounts(member, (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            s16 v468 = (s16)sumItemBoxTypeCounts(info, member, arg3);
+            s16 v468 = (s16)SumTypeCounts(member, arg3);
             s32 eq1 = 0;
-            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+            if (CheckGemChain(member, NULL, NULL)) eq1 = GetCondStat((void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+            if (CheckGemChain(member, arg3, NULL)) eq2 = GetCondStat((void*)(u32)member, 0x30);
             // arm-type scaling of the entry value pairs
             u8 arm1 = BdatGetU8Direct(
                 (const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
@@ -2650,20 +2626,20 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             {
                     switch (arm1) {
                         case 3: {
-                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = GetCondStat((void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
-                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = GetCondStat((void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_cur.etherDefense = (s16)(c_cur.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = GetCondStat((void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
@@ -2672,7 +2648,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = GetCondStat((void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
@@ -2686,20 +2662,20 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             {
                     switch (arm2) {
                         case 3: {
-                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = GetCondStat((void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
-                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = GetCondStat((void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_new.etherDefense = (s16)(c_new.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = GetCondStat((void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
@@ -2708,7 +2684,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = GetCondStat((void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
@@ -2719,7 +2695,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     }
                 }
             // weight
-            s32 wv = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
+            s32 wv = GetCondStat((void*)(u32)member, 0x97);
             if (wv != 0) {
                 v484 = (s16)(v484 - (s16)wv);
                 v468 = (s16)(v468 - (s16)wv);
@@ -2729,22 +2705,22 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                getItemBoxCondStat(info, (void*)(u32)member, 0x1A);
+                GetCondStat((void*)(u32)member, 0x1A);
             }
             // Recalculate the two armor values in candidate/current pairs.  Keeping
             // each result adjacent to its query mirrors the original UI pipeline
             // and makes the current-value subtraction explicit.
-            s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
+            c1 = GetEffect(member, 0x31, NULL);
             c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
+            c1 = GetEffect(member, 0x51, arg3);
             c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             c_cur.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)(stA->s2E + c1)));
             s16 d1;
@@ -2757,20 +2733,17 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry previewWeapon;
-                buildItemBoxCmpRecord(&previewWeapon, (void*)(u32)member,
-                    (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                previewWeapon.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
                 s16 newPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
-                    (f32)(stA->s38 + getItemBoxEffect(
-                        info, (void*)(u32)member, 0x54, arg3))));
+                    (f32)(stA->s38 + GetEffect(member, 0x54, arg3))));
                 s16 oldPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
-                    (f32)(stA->s38 + getItemBoxEffect(
-                        info, (void*)(u32)member, 0x54, NULL))));
+                    (f32)(stA->s38 + GetEffect(member, 0x54, NULL))));
                 percentDelta = (s16)(newPercent - oldPercent);
                 char* percentSuffix = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
                 textBuffer.format(&lbl_eu_805063BC[0x13E], newPercent,
                                    percentSuffix);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16],
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16,
                               (const char*)textBuffer.mString, 0);
 
                 d1 = (s16)(c_new.etherDefense - c_cur.etherDefense);
@@ -2778,40 +2751,38 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
 
                 s16 oldAgility = (s16)(s32)(0.01f *
                     ((100.0f + (f32)stC->s0E + (f32)eq1) *
-                     (f32)((stA->s1E - (s16)v484) + getItemBoxEffect(
-                         info, (void*)(u32)member, 0x41, NULL))));
+                     (f32)((stA->s1E - (s16)v484) + GetEffect(member, 0x41, NULL))));
                 s16 newAgility = (s16)(s32)(0.01f *
                     ((100.0f + (f32)stC->s0E + (f32)eq2) *
-                     (f32)((stA->s1E - (s16)v468) + getItemBoxEffect(
-                         info, (void*)(u32)member, 0x41, arg3))));
+                     (f32)((stA->s1E - (s16)v468) + GetEffect(member, 0x41, arg3))));
                 if (oldAgility <= 0) oldAgility = 1;
                 if (newAgility <= 0) newAgility = 1;
                 agilityDelta = (s16)(newAgility - oldAgility);
                 b14 = newAgility;
 
                 D8EEntry ew;
-                buildItemBoxCmpRecord(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
-                s32 c3 = getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
+                s32 c3 = GetEffect(member, 0x1, NULL);
                 s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
-                c3 = getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3);
+                c3 = GetEffect(member, 0x1, arg3);
                 s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
-                s32 wa = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wnb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wnb + calcItemBoxBonus1(info, member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wnb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), arg3);
+                s32 wa = (s32)wpb + CalcBonus1(member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + CalcBonus2(member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + CalcBonus1(member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 attackDelta = (s16)(wd - wa);
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], (const char*)textBuffer.mString, 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
 
             }
             // numbers
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], c_new.physicalDefense);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], c_new.etherDefense);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)b14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, c_new.physicalDefense);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, c_new.etherDefense);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // delta colors (4 rows)
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2829,8 +2800,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2848,8 +2819,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2867,8 +2838,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2886,8 +2857,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane7, &q1, &q2);
             }
             {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
@@ -2905,7 +2876,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(8)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(9)], &labelTop, &labelBottom);
 }
@@ -2916,13 +2887,13 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
         // item and selected slot in its lookup.
         {
         s32 currentEquipBonus = 0;
-        if (checkItemBoxGemChain(info, member, NULL, NULL)) {
-            currentEquipBonus = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+        if (CheckGemChain(member, NULL, NULL)) {
+            currentEquipBonus = GetCondStat((void*)(u32)member, 0x30);
         }
-        s16 oldStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL)))));
-        s16 newStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x21, arg3, slot)))));
+        s16 oldStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (GetEffect(member, 0x21, NULL)))));
+        s16 newStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (SumGemBonus((void*)(u32)member, 0x21, arg3, slot)))));
         s16 strengthDelta = (s16)(newStrength - oldStrength);
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], newStrength);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, newStrength);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -2939,15 +2910,15 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(8)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(9)], &labelTop, &labelBottom);
 }
 
-        s16 oldPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (getItemBoxEffect(info, (void*)(u32)member, 0x01, NULL)))));
-        s16 newPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x01, arg3, slot)))));
+        s16 oldPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (GetEffect(member, 0x01, NULL)))));
+        s16 newPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (SumGemBonus((void*)(u32)member, 0x01, arg3, slot)))));
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], newPhysical);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, newPhysical);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -2964,24 +2935,24 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(4)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(5)], &labelTop, &labelBottom);
 }
 
         s16 oldHp = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
             0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
-                getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
+                GetEffect(member, 0x11, NULL))));
         s16 newHp = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
             0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
-                sumItemBoxGemBonus(info, (void*)(u32)member, 0x11, arg3, slot))));
+                SumGemBonus((void*)(u32)member, 0x11, arg3, slot))));
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
         s16 hpDelta = (s16)(newHp - oldHp);
         if (stats->CActorParam_getHp() > (f32)newHp) {
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], newHp);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, newHp);
         }
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], newHp);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, newHp);
         {
             D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -2998,20 +2969,20 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[0],
+            PaneMatSetTevColors(mSlotPane0,
                           &valueTop, &valueBottom);
-            PaneMatSetTevColors(info->state.slotPanes[1],
+            PaneMatSetTevColors(mSlotPane1,
                           &labelTop, &labelBottom);
-            PaneMatSetTevColors(info->state.slotPanes[2],
+            PaneMatSetTevColors(mSlotPane2,
                           &valueTop, &valueBottom);
-            PaneMatSetTevColors(info->state.slotPanes[3],
+            PaneMatSetTevColors(mSlotPane3,
                           &labelTop, &labelBottom);
         }
 
-        s16 oldEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL)))));
-        s16 newEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x31, arg3, slot)))));
+        s16 oldEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (GetEffect(member, 0x31, NULL)))));
+        s16 newEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (SumGemBonus((void*)(u32)member, 0x31, arg3, slot)))));
         s16 etherDelta = (s16)(newEther - oldEther);
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], newEther);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, newEther);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3028,28 +2999,27 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(12)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(13)], &labelTop, &labelBottom);
 }
 
-        s32 oldArtsTotal = (s32)sumItemBoxTypeCounts(info, member, NULL);
-        s32 weightPenalty = (s32)getItemBoxCondStat(info, (void*)(u32)member, 0x97);
+        s32 oldArtsTotal = (s32)SumTypeCounts(member, NULL);
+        s32 weightPenalty = (s32)GetCondStat((void*)(u32)member, 0x97);
         if (weightPenalty != 0) {
             oldArtsTotal -= weightPenalty;
             if (oldArtsTotal < 0) oldArtsTotal = 0;
         }
         s16 oldAgilityBase = (s16)(stA->s1E - (s16)oldArtsTotal);
         if (oldAgilityBase <= 0) oldAgilityBase = 1;
-        s16 oldAgilityEffect = (s16)getItemBoxEffect(
-            info, (void*)(u32)member, 0x41, NULL);
+        s16 oldAgilityEffect = (s16)GetEffect(member, 0x41, NULL);
         s16 oldAgility = (s16)(s32)(0.01f *
             ((100.0f + (f32)stC->s0E + (f32)currentEquipBonus) *
              (f32)(oldAgilityBase + oldAgilityEffect)));
 
-        s16 newAgility = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x41, arg3, slot)))));
+        s16 newAgility = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (SumGemBonus((void*)(u32)member, 0x41, arg3, slot)))));
         s16 agilityDelta = (s16)(newAgility - oldAgility);
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], newAgility);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, newAgility);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3066,15 +3036,15 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(6)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(7)], &labelTop, &labelBottom);
 }
 
-        s16 oldDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL)))));
-        s16 newDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x51, arg3, slot)))));
+        s16 oldDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (GetEffect(member, 0x51, NULL)))));
+        s16 newDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (SumGemBonus((void*)(u32)member, 0x51, arg3, slot)))));
         s16 defenseDelta = (s16)(newDefense - oldDefense);
-        LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], newDefense);
+        LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, newDefense);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3091,18 +3061,18 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(14)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(15)], &labelTop, &labelBottom);
 }
 
-        s16 oldResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL)))));
-        s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x54, arg3, slot)))));
+        s16 oldResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (GetEffect(member, 0x54, NULL)))));
+        s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (SumGemBonus((void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = BdatTouchStringCell(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
         textBuffer.format(&lbl_eu_805063BC[0x13E], newResistance,
                               percentSuffix);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], (const char*)textBuffer.mString, 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
         s16 resistanceDelta = (s16)(newResistance - oldResistance);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
@@ -3120,7 +3090,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(16)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(17)], &labelTop, &labelBottom);
 }
@@ -3129,35 +3099,25 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
         s16 attackDelta = 0;
         if (currentWeaponItem != NULL && *(u32*)currentWeaponItem != 0) {
             D8EEntry currentWeapon;
-            buildItemBoxCmpRecord(&currentWeapon, (void*)(u32)member,
-                (void*)(u32)(u16)(*(u32*)currentWeaponItem >> 20));
+            currentWeapon.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)currentWeaponItem >> 20));
             D8EEntry weaponStats = currentWeapon;
-            s32 oldBaseEffect = getItemBoxEffect(
-                info, (void*)(u32)member, 0x01, NULL);
+            s32 oldBaseEffect = GetEffect(member, 0x01, NULL);
             s16 oldAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
-            s32 newBaseEffect = sumItemBoxGemBonus(
-                info, (void*)(u32)member, 0x01, arg3, slot);
+            s32 newBaseEffect = SumGemBonus((void*)(u32)member, 0x01, arg3, slot);
             s16 newAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
 
             // The low-bound lookup is retained for its item-effect traversal;
             // the comparison display uses the high bound as its old endpoint.
-            calcItemBoxBonus1(info, member,
-                          (u16)weaponStats.w04, NULL);
-            s32 oldAttackHigh = oldAttackBase + calcItemBoxBonus2(
-                info, member,
-                (u16)(weaponStats.w04 >> 16), NULL);
+            CalcBonus1(member, (u16)weaponStats.w04, NULL);
+            s32 oldAttackHigh = oldAttackBase + CalcBonus2(member, (u16)(weaponStats.w04 >> 16), NULL);
 
-            s32 lowScale = (s32)getItemBoxCondStat(
-                info, (void*)(u32)member, 0x2D);
-            lowScale += (s32)sumItemBoxGemBonus(
-                info, (void*)(u32)member, 0x52, arg3, slot);
+            s32 lowScale = (s32)GetCondStat((void*)(u32)member, 0x2D);
+            lowScale += (s32)SumGemBonus((void*)(u32)member, 0x52, arg3, slot);
             s32 newAttackLow = newAttackBase + (s32)(0.01f *
                 (f32)((u16)weaponStats.w04 * (100 + lowScale)));
 
-            s32 highScale = (s32)getItemBoxCondStat(
-                info, (void*)(u32)member, 0x2D);
-            highScale += (s32)sumItemBoxGemBonus(
-                info, (void*)(u32)member, 0x53, arg3, slot);
+            s32 highScale = (s32)GetCondStat((void*)(u32)member, 0x2D);
+            highScale += (s32)SumGemBonus((void*)(u32)member, 0x53, arg3, slot);
             s32 newAttackHigh = newAttackBase + (s32)(0.01f *
                 (f32)((u16)(weaponStats.w04 >> 16) * (100 + highScale)));
             s32 displayLow = newAttackLow < newAttackHigh
@@ -3168,7 +3128,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
             textBuffer.format(&lbl_eu_805063BC[0x254], displayLow,
                               rangeSeparator, newAttackHigh);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10],
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10,
                           (const char*)textBuffer.mString, 0);
         }
         {
@@ -3187,7 +3147,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = info->state.slotPanes;
+        nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(10)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(11)], &labelTop, &labelBottom);
 }
@@ -3197,7 +3157,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
 
     // ---- equip-detail / simple path (arg4 == 0, type in {2,4,5,6,7,8}) ----
     if (arg4 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
-        if (type != 2 && testItemBoxBdatFlag(info, member, arg3)) {
+        if (type != 2 && TestBdatFlag(member, arg3)) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             // (was switch: retail compiles this dispatch as compares)
@@ -3210,37 +3170,35 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry e_cur;
-            const CItemBoxSlotFlags& e_curFlags = buildItemBoxSlotFlags((void*)(u32)member, w0);
+            const CItemBoxSlotFlags& e_curFlags = BuildSlotFlags(w0);
             e_cur = *(const D8EArmorEntry*)&e_curFlags;
             D8EArmorEntry c_cur = e_cur;
             D8EArmorEntry e_new;
-            const CItemBoxSlotFlags& e_newFlags = buildItemBoxSlotFlags((void*)(u32)member, (u32)arg3);
+            const CItemBoxSlotFlags& e_newFlags = BuildSlotFlags((u32)arg3);
             e_new = *(const D8EArmorEntry*)&e_newFlags;
             D8EArmorEntry c_new = e_new;
-            s16 v44C = (s16)sumItemBoxTypeCounts(
-                info, member,
-                (item != NULL && *(u32*)item != 0)
+            s16 v44C = (s16)SumTypeCounts(member, (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            s16 v430 = (s16)sumItemBoxTypeCounts(info, member, arg3);
+            s16 v430 = (s16)SumTypeCounts(member, arg3);
             s32 eq1 = 0;
-            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
+            if (CheckGemChain(member, NULL, NULL)) eq1 = GetCondStat((void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
-            getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL);
-            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], (s16)bA);
-            getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
-            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], (s16)bB);
-            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL)));
-            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
+            if (CheckGemChain(member, arg3, NULL)) eq2 = GetCondStat((void*)(u32)member, 0x30);
+            GetEffect(member, 0x21, NULL);
+            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, (s16)bA);
+            GetEffect(member, 0x1, NULL);
+            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, (s16)bB);
+            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + GetEffect(member, 0x11, NULL)));
+            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + GetEffect(member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)statValue);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], nb);
+                LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = BdatGetU8Direct(
                 (const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
@@ -3250,20 +3208,20 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             {
                     switch (arm1) {
                         case 3: {
-                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = GetCondStat((void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
-                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = GetCondStat((void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_cur.etherDefense = (s16)(c_cur.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = GetCondStat((void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
@@ -3272,7 +3230,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = GetCondStat((void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
@@ -3286,20 +3244,20 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             {
                     switch (arm2) {
                         case 3: {
-                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = GetCondStat((void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
-                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = GetCondStat((void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_new.etherDefense = (s16)(c_new.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = GetCondStat((void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
@@ -3308,7 +3266,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = GetCondStat((void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
@@ -3319,7 +3277,7 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                     }
                 }
             // weight
-            s32 wv = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
+            s32 wv = GetCondStat((void*)(u32)member, 0x97);
             if (wv != 0) {
                 v44C = (s16)(v44C - (s16)wv);
                 v430 = (s16)(v430 - (s16)wv);
@@ -3329,24 +3287,24 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                getItemBoxCondStat(info, (void*)(u32)member, 0x1A);
+                GetCondStat((void*)(u32)member, 0x1A);
             }
             // Recalculate candidate and current armor values in matched pairs.
-            s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
+            c1 = GetEffect(member, 0x31, NULL);
             c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
+            c1 = GetEffect(member, 0x51, arg3);
             c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
-            c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             volatile s16 currentPhysicalDefense = (s16)(s32)(0.01f *
                 ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
-            getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL);
-            s32 c2 = getItemBoxEffect(info, (void*)(u32)member, 0x41, arg3);
+            GetEffect(member, 0x41, NULL);
+            s32 c2 = GetEffect(member, 0x41, arg3);
             s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)eq2) *
                 (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
@@ -3354,51 +3312,50 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry ew;
-                buildItemBoxCmpRecord(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
-                getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
+                GetEffect(member, 0x1, NULL);
                 s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) *
-                    (f32)(stA->s1C + getItemBoxEffect(
-                        info, (void*)(u32)member, 0x1, arg3))));
-                s32 wa = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wpb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wpb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), arg3);
+                    (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
+                s32 wa = (s32)wpb + CalcBonus1(member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + CalcBonus1(member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], (const char*)textBuffer.mString, 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
             }
             // numbers
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], c_new.physicalDefense);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], c_new.etherDefense);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)b14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, c_new.physicalDefense);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, c_new.etherDefense);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
             D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane19, &q1, &q2);
 
         }
         // ---- simple path ----
@@ -3406,34 +3363,34 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
         D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
         D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
         D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[0], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[2], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[3], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[4], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[6], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[8], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[12], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[14], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane19, &q1, &q2);
     }
 
     // ---- common tail: two 8-entry item lists (live in highFrame) ----
@@ -3835,14 +3792,14 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
         }
 
         // per-slot render
@@ -3857,33 +3814,33 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf1, true);
-            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10)));
+            nw4r::lyt::Pane* pane1 = mpLayout->GetRootPane()->FindPaneByName(buf1, true);
+            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, mpLayout->GetRootPane());
             // Transpose alternating UI rows into the two four-slot columns.
             s32 idx = (s32)(0.5f * (f32)i);
             if (((s8)i % 2) != 0) idx += 4;
             if ((u8)idx < 12) {
-                *(s16*)((u8*)info + 0xB0 + (u8)idx * 2) = id;
+                *(s16*)&mPage.mItemIds[(u8)idx] = id;
             }
             if ((u8)idx < 12) {
-                *(u8*)((u8*)info + 0x158 + (u8)idx) = 3;
+                mPage.mBytesA8[(u8)idx] = 3;
             }
             if ((u8)idx < 12) {
-                *(u8*)((u8*)info + 0x164 + (u8)idx) = flag;
+                mPage.mBytesB4[(u8)idx] = flag;
             }
             if ((u8)idx < 12) {
-                *(s16*)((u8*)info + 0x170 + (u8)idx * 2) = (s16)val;
+                mPage.mValues[(u8)idx] = (s16)val;
             }
             u32 dstWords[3] = {
                 ((u32*)&quad)[0], ((u32*)&quad)[1], ((u32*)&quad)[2]
             };
             if ((u8)idx < 12) {
-                copyVEC3((void*)((u8*)info + 0xC8 + (u8)idx * 12),
+                copyVEC3(&mPage.mPos[(u8)idx],
                          (void*)dstWords);
             }
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
             if (val == 0) {
-                LayoutSetTextBoxFmtValue(info->state.layout,
+                LayoutSetTextBoxFmtValue(mpLayout,
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             u8 rvs = BdatGetU8Direct((const void*)lbl_eu_806640D8,
@@ -3899,12 +3856,12 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
             } else {
                 textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
             }
-            LayoutSetTextBoxFmtValue(info->state.layout,
+            LayoutSetTextBoxFmtValue(mpLayout,
                           buf2, textBuffer.mString, 0);
             if (arg3 != NULL && arg4 == 0 &&
-                (cf != 0 || type == 2 || !testItemBoxBdatFlag(info, member, arg3))) {
+                (cf != 0 || type == 2 || !TestBdatFlag(member, arg3))) {
                 cf = 0;
-                LayoutSetTextBoxFmtValue(info->state.layout,
+                LayoutSetTextBoxFmtValue(mpLayout,
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -3934,8 +3891,8 @@ extern "C" __declspec(noinline) void setupItemBoxDetail(CItemBoxInfo* info, u32 
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_806645C8);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_806645D0);
             }
-            PaneMatSetTevColorsByName(info->state.layout, buf1, &q1, &q2);
-            PaneMatSetTevColorsByName(info->state.layout, buf2, &q3, &q4);
+            PaneMatSetTevColorsByName(mpLayout, buf1, &q1, &q2);
+            PaneMatSetTevColorsByName(mpLayout, buf2, &q3, &q4);
         }
     }
 }
@@ -3961,22 +3918,22 @@ void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
     self->state = c;
 }
 
-s32 calcItemBoxBonus1(void* a, u16 b, s32 arg2, void* d) {
+s32 CItemBoxInfo::CalcBonus1(u16 b, s32 arg2, void* d) {
     // MWCC emits the 0x4330/xoris int->float trick natively for the plain
-    // (f32) cast on Broadway (no fcfid); keep it as a simple cast.
+    // (f32) cast on Broadway (no fcfid); keep it as this simple cast.
     // Same shape as calcItemBoxBonus2: statement-ordered calls, builtin
     // s32->f32 cast emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = getItemBoxCondStat(a, (void*)(u32)b, 0x2d);
-    u32 t2 = getItemBoxEffect(a, (void*)(u32)b, 0x52, d);
+    u32 t1 = GetCondStat((void*)(u32)b, 0x2d);
+    u32 t2 = GetEffect(b, 0x52, d);
     return (s32)(0.01f * (f32)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 
-s32 calcItemBoxBonus2(void* a, u16 b, s32 arg2, void* d) {
+s32 CItemBoxInfo::CalcBonus2(u16 b, s32 arg2, void* d) {
     // Statement-ordered calls keep the retail bl order; single-expression sum
     // keeps the values in registers like retail. The builtin s32->f32 cast
     // emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = getItemBoxCondStat(a, (void*)(u32)b, 0x2d);
-    u32 t2 = getItemBoxEffect(a, (void*)(u32)b, 0x53, d);
+    u32 t1 = GetCondStat((void*)(u32)b, 0x2d);
+    u32 t2 = GetEffect(b, 0x53, d);
     return (s32)(0.01f * (float)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 // Retail getItemBoxEffect: sum the equipped-effect values for one stat category.
@@ -3986,7 +3943,7 @@ s32 calcItemBoxBonus2(void* a, u16 b, s32 arg2, void* d) {
 // sub-items, and add the category-matching values (vtable+0x54 category,
 // +0x90 value for equipped, or the +0x2C sub-record for passives). The id==-1
 // slot accepts only the candidate item. Result is clamped by the table cap.
-u32 getItemBoxEffect(void* unused, u16 lookup_key, u32 category, void* arg3) {
+u32 CItemBoxInfo::GetEffect(u16 lookup_key, u32 category, void* arg3) {
     void* lookup = CtrlObjectParam_GetCharEntry(lookup_key);
     s16 slotIds[6];
     slotIds[0] = *(s16*)((u8*)lookup + 0x26);
@@ -4087,8 +4044,8 @@ u32 getItemBoxEffect(void* unused, u16 lookup_key, u32 category, void* arg3) {
 // pass when one of its gems matches, so the sum pass treats it as unequipped.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, s32 slot) {
-    (void)info;
+__declspec(noinline) u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, void* candidate, s32 slot) {
+    (void)this;
     u32 type = 0;
     u32 index = 0;
     // Consecutive cases 1..3 lower to the retail range check
@@ -4193,7 +4150,7 @@ __declspec(noinline) u32 sumItemBoxGemBonus(void* info, void* member, u32 catego
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) u32 getItemBoxCondStat(void* a, void* b, u32 arg2) {
+__declspec(noinline) u32 CItemBoxInfo::GetCondStat(void* b, u32 arg2) {
     // Retail keeps obj in r31 and result in r30 (obj declared first gets the
     // highest saved register); stmw/lmw frame from optimize_for_size.
     void* obj;
@@ -4208,7 +4165,7 @@ __declspec(noinline) u32 getItemBoxCondStat(void* a, void* b, u32 arg2) {
 
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2) {
+__declspec(noinline) u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
     // Retail keeps obj in r31 and result in r30 (obj declared first gets the
     // highest saved register); the result=0 init lands before the call.
     void* obj;
@@ -4221,7 +4178,7 @@ __declspec(noinline) u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2)
 }
 #pragma pop
 
-u32 getItemBoxCondStat2D(void* dummy, void* arg1) {
+u32 CItemBoxInfo2::GetCondStat2D(void* arg1) {
     void* obj = (u8*)CtrlObjectParam_GetCharEntry((u8)(u32)arg1) + 0x3534;
     if (Counter_TestBit(obj, 0x2d) != 0) {
         return IdTable_SumValues(obj, 0x2d);
@@ -4232,7 +4189,7 @@ u32 getItemBoxCondStat2D(void* dummy, void* arg1) {
 
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) u32 testItemBoxBdatFlag(CItemBoxInfo* dummy, u32 arg1, void* arg2) {
+__declspec(noinline) u32 CItemBoxInfo::TestBdatFlag(u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -4241,7 +4198,7 @@ __declspec(noinline) u32 testItemBoxBdatFlag(CItemBoxInfo* dummy, u32 arg1, void
     return result != 0;
 }
 #pragma pop
-u32 sumItemBoxTypeCounts(CItemBoxInfo* global, u16 arg2, void* arg3) {
+u32 CItemBoxInfo::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : 0;
@@ -4272,7 +4229,7 @@ u32 sumItemBoxTypeCounts(CItemBoxInfo* global, u16 arg2, void* arg3) {
     }
     return result;
 }
-u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void* unused2) {
+u32 CItemBoxInfo::CheckGemChain(u16 lookup_key, void* arg3, void* unused2) {
     void* lookup = CtrlObjectParam_GetCharEntry(lookup_key);
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
@@ -4350,71 +4307,71 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
 // globals. Finally caches the 20 slot panes at +0x40..+0x8C.
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     char* base = lbl_eu_805063BC;
-    if (state.fileHandle1 == file->mFileHandle) {
-        state.memRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x14000,
+    if (mFileHandle1 == file->mFileHandle) {
+        mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x14000,
                                       &lbl_eu_805063BC[0x524], 1);
-        Class_8045F858 host(&state.memRegion1);
-        u8* data = (u8*)state.fileHandle1->getData();
+        Class_8045F858 host(&mRegion1);
+        u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
-        state.arcResourceAccessor = acc;
+        mArcResAcc = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        buildLayout(&state.layout, acc, &lbl_eu_805063BC[0x535]);
-        bindLayoutAnimTransform(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
-        bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
-        nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
+        buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
+        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
+        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane();
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
         char* text = CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x17d], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6d2], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x188], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x25b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x267], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x273], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x286], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x292], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x29e], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x45a], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x466], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4a7], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x57f], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x58b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x597], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5a3], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5af], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5be], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5cd], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x143], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4e3], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4f0], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5dc], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5e9], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5f6], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x603], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x610], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x61d], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x62a], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x637], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x644], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x651], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x65e], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x66b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x678], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x685], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x692], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x69f], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6ac], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6b9], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6c6], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x17d], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6d2], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x188], (u32)text);
 
-        state.layout->SetAnimationEnable(state.animTransform2, false);
-        state.layout->SetAnimationEnable(state.animTransform1, true);
-        state.layout->Animate(0);
+        mpLayout->SetAnimationEnable(mAnimInfoIn, false);
+        mpLayout->SetAnimationEnable(mAnimIn, true);
+        mpLayout->Animate(0);
 
-        u8 mode = *(u8*)((u8*)this + 0x9A);
+        u8 mode = mKind;
         if (mode != 1 && mode != 2) {
             setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
         }
@@ -4423,49 +4380,49 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         }
 
         // Fixed label texts for the closed item-box view.
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2b6],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xa), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2d7],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xd), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2e2],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x11), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2c1],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x12), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2cc],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xc), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2ed],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x13), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x6f2],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6f2],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x18), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x6fd],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6fd],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x18), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x708],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x708],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x24), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x713],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x713],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x25), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x71e],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x71e],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x70), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x72a],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x72a],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x72), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x736],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x736],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x73), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x742],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x742],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x74), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x74e],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x74e],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x79), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x75a],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x75a],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x75), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x766],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x766],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x7b), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x772],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x772],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x76), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x77e],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x77e],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x77), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x78a],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x78a],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x78), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x796],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x796],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x7e), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x2f8],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2f8],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2f), 0);
 
         // Per-mode caption: modes 0/1 show the owned-item count; mode 3 shows
@@ -4474,10 +4431,10 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
             ml::FixStr<32> caption(true);
             caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(),
                            BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3));
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x143],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
                           caption.c_str(), 0);
         } else if (mode == 3) {
-            u16 itemId = *(u16*)((u8*)this + 0xAC);
+            u16 itemId = mMode;
             u8 kind = (u8)MapSexFlagGroup(itemId);
             char* s;
             if (kind == 0) {
@@ -4485,16 +4442,16 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
             } else {
                 s = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], kind + 0x1F);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7ad], s, 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7ad], s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
                 &lbl_eu_80664098, &lbl_eu_805063BC[0x139], itemId);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7b9],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7b9],
                           GetBdatNameByNumId(name), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7c5],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7c5],
                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2d), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7d2],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7d2],
                           &lbl_eu_805063BC[0x2aa], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7e0],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7e0],
                           &lbl_eu_805063BC[0x2aa], 0);
         }
 
@@ -4545,57 +4502,57 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         *(s16*)((char*)&lbl_eu_806645C8 + 6) = *(s16*)((char*)&lbl_eu_806645B8 + 6);
         *(s16*)((char*)&lbl_eu_806645D0 + 6) = *(s16*)((char*)&lbl_eu_806645C0 + 6);
 
-        stampItemBoxSlotTex(this);
+        StampSlotTex();
 
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7f9],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7f9],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 6), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x6d2],
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6d2],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 9), 0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], (u8)0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], (u8)0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x17d], (u8)0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x188], (u8)0);
         setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
 
         // Cache the slot panes at +0x40..+0x8C for the renderer (retail keeps
         // the layout's root pane live in r28 across all 20 lookups).
-        nw4r::lyt::Pane* cacheRoot = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x40) = cacheRoot->FindPaneByName(&base[0x5dc], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x44) = cacheRoot->FindPaneByName(&base[0x736], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x48) = cacheRoot->FindPaneByName(&base[0x5e9], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x4c) = cacheRoot->FindPaneByName(&base[0x6c6], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x50) = cacheRoot->FindPaneByName(&base[0x5f6], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x54) = cacheRoot->FindPaneByName(&base[0x742], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x58) = cacheRoot->FindPaneByName(&base[0x603], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x5c) = cacheRoot->FindPaneByName(&base[0x75a], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x60) = cacheRoot->FindPaneByName(&base[0x610], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x64) = cacheRoot->FindPaneByName(&base[0x772], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x68) = cacheRoot->FindPaneByName(&base[0x61d], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x6c) = cacheRoot->FindPaneByName(&base[0x74e], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x70) = cacheRoot->FindPaneByName(&base[0x637], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x74) = cacheRoot->FindPaneByName(&base[0x77e], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x78) = cacheRoot->FindPaneByName(&base[0x644], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x7c) = cacheRoot->FindPaneByName(&base[0x78a], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x80) = cacheRoot->FindPaneByName(&base[0x62a], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x84) = cacheRoot->FindPaneByName(&base[0x766], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x88) = cacheRoot->FindPaneByName(&base[0x651], true);
-        *(nw4r::lyt::Pane**)((u8*)this + 0x8c) = cacheRoot->FindPaneByName(&base[0x796], true);
+        nw4r::lyt::Pane* cacheRoot = mpLayout->GetRootPane();
+        mSlotPane0 = cacheRoot->FindPaneByName(&base[0x5dc], true);
+        mSlotPane1 = cacheRoot->FindPaneByName(&base[0x736], true);
+        mSlotPane2 = cacheRoot->FindPaneByName(&base[0x5e9], true);
+        mSlotPane3 = cacheRoot->FindPaneByName(&base[0x6c6], true);
+        mSlotPane4 = cacheRoot->FindPaneByName(&base[0x5f6], true);
+        mSlotPane5 = cacheRoot->FindPaneByName(&base[0x742], true);
+        mSlotPane6 = cacheRoot->FindPaneByName(&base[0x603], true);
+        mSlotPane7 = cacheRoot->FindPaneByName(&base[0x75a], true);
+        mSlotPane8 = cacheRoot->FindPaneByName(&base[0x610], true);
+        mSlotPane9 = cacheRoot->FindPaneByName(&base[0x772], true);
+        mSlotPane10 = cacheRoot->FindPaneByName(&base[0x61d], true);
+        mSlotPane11 = cacheRoot->FindPaneByName(&base[0x74e], true);
+        mSlotPane12 = cacheRoot->FindPaneByName(&base[0x637], true);
+        mSlotPane13 = cacheRoot->FindPaneByName(&base[0x77e], true);
+        mSlotPane14 = cacheRoot->FindPaneByName(&base[0x644], true);
+        mSlotPane15 = cacheRoot->FindPaneByName(&base[0x78a], true);
+        mSlotPane16 = cacheRoot->FindPaneByName(&base[0x62a], true);
+        mSlotPane17 = cacheRoot->FindPaneByName(&base[0x766], true);
+        mSlotPane18 = cacheRoot->FindPaneByName(&base[0x651], true);
+        mSlotPane19 = cacheRoot->FindPaneByName(&base[0x796], true);
 
-        tryActivateItemBox(this);
-        state.fileHandle1 = 0;
-        state.memRegion1.validateHeap();
+        Activate();
+        mFileHandle1 = 0;
+        mRegion1.validateHeap();
         return true;
     }
-    if (state.fileHandle2 == file->mFileHandle) {
-        state.memRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
+    if (mFileHandle2 == file->mFileHandle) {
+        mRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
                                       &lbl_eu_805063BC[0x804], 1);
-        Class_8045F858 host(&state.memRegion2);
-        u8* data = (u8*)state.fileHandle2->getData();
+        Class_8045F858 host(&mRegion2);
+        u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
-        state.resource = acc2;
+        mTexArcResAcc = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
-        tryActivateItemBox(this);
-        state.fileHandle2 = 0;
-        state.memRegion2.validateHeap();
+        Activate();
+        mFileHandle2 = 0;
+        mRegion2.validateHeap();
         return true;
     }
     return false;
@@ -4608,62 +4565,24 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
 // bl (the callee is __declspec(noinline)).
 #pragma push
 #pragma optimize_for_size on
-CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
-    *(void**)info = (void*)lbl_eu_80534B28;
-    __ct__17UnkClass_8045F564Fv(&info->state.memRegion1);
-    __ct__17UnkClass_8045F564Fv(&info->state.memRegion2);
-    info->state.fileHandle1 = 0;
-    info->state.fileHandle2 = 0;
-    info->state.arcResourceAccessor = 0;
-    info->state.resource = 0;
-    info->state.layout = 0;
-    info->state.animTransform1 = 0;
-    info->state.animTransform2 = 0;
-    info->state.slotPanes[0] = 0;
-    info->state.slotPanes[1] = 0;
-    info->state.slotPanes[2] = 0;
-    info->state.slotPanes[3] = 0;
-    info->state.slotPanes[4] = 0;
-    info->state.slotPanes[5] = 0;
-    info->state.slotPanes[6] = 0;
-    info->state.slotPanes[7] = 0;
-    info->state.slotPanes[8] = 0;
-    info->state.slotPanes[9] = 0;
-    info->state.slotPanes[10] = 0;
-    info->state.slotPanes[11] = 0;
-    info->state.slotPanes[12] = 0;
-    info->state.slotPanes[13] = 0;
-    info->state.slotPanes[14] = 0;
-    info->state.slotPanes[15] = 0;
-    info->state.slotPanes[16] = 0;
-    info->state.slotPanes[17] = 0;
-    info->state.slotPanes[18] = 0;
-    info->state.slotPanes[19] = 0;
-    info->state.active = 0;
-    info->state.state = 0;
-    info->state.current = 0;
-    info->state.visible = 1;
-    info->state.field_9A = arg2;
-    info->state.field_AC = arg3;
-    info->state.field_AE = 0;
-    // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
-    // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
-    // the extra-arg setup and then fold to the direct bl of the Fv symbol.
-    ((void(*)(void*))resetCItemBox)((u8*)info + 0xB0);
-    return info;
+CItemBoxInfo::CItemBoxInfo(u8 kind, u16 mode)
+    : mFileHandle1(NULL), mFileHandle2(NULL), mArcResAcc(NULL), mTexArcResAcc(NULL), mpLayout(NULL),
+      mAnimIn(NULL), mAnimInfoIn(NULL),
+      mSlotPane0(NULL), mSlotPane1(NULL), mSlotPane2(NULL), mSlotPane3(NULL), mSlotPane4(NULL),
+      mSlotPane5(NULL), mSlotPane6(NULL), mSlotPane7(NULL), mSlotPane8(NULL), mSlotPane9(NULL),
+      mSlotPane10(NULL), mSlotPane11(NULL), mSlotPane12(NULL), mSlotPane13(NULL), mSlotPane14(NULL),
+      mSlotPane15(NULL), mSlotPane16(NULL), mSlotPane17(NULL), mSlotPane18(NULL), mSlotPane19(NULL),
+      mActive(0), mState(0), mCurrent(0), mVisible(1),
+      mKind(kind), mMode(mode), mFlagAE(0) {
+    mPage.Reset();
 }
+
+__declspec(noinline) void CItemBoxPage::Reset() {}
 #pragma pop
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
-    if (info != NULL) {
-        __dt__17UnkClass_8045F564Fv(&info->state.memRegion2, -1);
-        __dt__17UnkClass_8045F564Fv(&info->state.memRegion1, -1);
-        if (flags > 0) ::operator delete(info);
-    }
-    return info;
-}
+CItemBoxInfo::~CItemBoxInfo() {}
 #pragma pop
 
 // Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame
@@ -4672,48 +4591,16 @@ extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
 // bl (the callee is __declspec(noinline)).
 #pragma push
 #pragma optimize_for_size on
-CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
-    *(void**)info = (void*)lbl_eu_80534A90;
-    __ct__17UnkClass_8045F564Fv(&info->state.memRegion1);
-    __ct__17UnkClass_8045F564Fv(&info->state.memRegion2);
-    info->state.fileHandle1 = 0;
-    info->state.fileHandle2 = 0;
-    info->state.arcResourceAccessor = 0;
-    info->state.resource = 0;
-    info->state.layout = 0;
-    info->state.animTransform1 = 0;
-    info->state.animTransform2 = 0;
-    info->state.slotPanes[0] = 0;
-    info->state.slotPanes[1] = 0;
-    info->state.slotPanes[2] = 0;
-    info->state.slotPanes[3] = 0;
-    info->state.slotPanes[4] = 0;
-    info->state.slotPanes[5] = 0;
-    info->state.slotPanes[6] = 0;
-    info->state.slotPanes[7] = 0;
-    info->state.slotPanes[8] = 0;
-    info->state.slotPanes[9] = 0;
-    info->state.slotPanes[10] = 0;
-    info->state.slotPanes[11] = 0;
-    info->state.slotPanes[12] = 0;
-    info->state.slotPanes[13] = 0;
-    info->state.slotPanes[14] = 0;
-    info->state.slotPanes[15] = 0;
-    info->state.slotPanes[16] = 0;
-    info->state.slotPanes[17] = 0;
-    info->state.slotPanes[18] = 0;
-    info->state.slotPanes[19] = 0;
-    info->state.active = 0;
-    info->state.state = 0;
-    info->state.current = 0;
-    info->state.visible = 1;
-    info->state.field_9A = arg2;
-    info->state.field_AC = arg3;
-    // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
-    // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
-    // the extra-arg setup and then fold to the direct bl of the Fv symbol.
-    ((void(*)(void*))resetCItemBox)((u8*)info + 0xB0);
-    return info;
+CItemBoxInfo2::CItemBoxInfo2(u8 kind, u16 mode)
+    : mFileHandle1(NULL), mFileHandle2(NULL), mArcResAcc(NULL), mTexArcResAcc(NULL), mpLayout(NULL),
+      mAnimIn(NULL), mAnimInfoIn(NULL),
+      mSlotPane0(NULL), mSlotPane1(NULL), mSlotPane2(NULL), mSlotPane3(NULL), mSlotPane4(NULL),
+      mSlotPane5(NULL), mSlotPane6(NULL), mSlotPane7(NULL), mSlotPane8(NULL), mSlotPane9(NULL),
+      mSlotPane10(NULL), mSlotPane11(NULL), mSlotPane12(NULL), mSlotPane13(NULL), mSlotPane14(NULL),
+      mSlotPane15(NULL), mSlotPane16(NULL), mSlotPane17(NULL), mSlotPane18(NULL), mSlotPane19(NULL),
+      mActive(0), mState(0), mCurrent(0), mVisible(1),
+      mKind(kind), mMode(mode) {
+    mPage.Reset();
 }
 #pragma pop
 
@@ -4722,32 +4609,25 @@ CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
 // into separate stw's. Same pattern as the matched kyoshin dtors.
 #pragma push
 #pragma optimize_for_size on
-CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, s32 flags) {
-    if (info != NULL) {
-        __dt__17UnkClass_8045F564Fv(&info->state.memRegion2, -1);
-        __dt__17UnkClass_8045F564Fv(&info->state.memRegion1, -1);
-        if (flags > 0) ::operator delete(info);
-    }
-    return info;
-}
+CItemBoxInfo2::~CItemBoxInfo2() {}
 #pragma pop
 
 // Retail loadItemBox2Files uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge) like the sibling ItemBox1/2 dtors.
 #pragma push
 #pragma optimize_for_size on
-void loadItemBox2Files(CItemBoxInfo2* info) {
+void CItemBoxInfo2::LoadFiles() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    info->state.fileHandle1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
+    mFileHandle1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(this), 0, 0);
     handle = mtl::MemManager::getHandleMEM2();
-    info->state.fileHandle2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(info), 0, 0);
+    mFileHandle2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(this), 0, 0);
 }
 #pragma pop
 
 
-void drawItemBox2Layout(CItemBoxInfo2* info, nw4r::lyt::DrawInfo* drawInfo) {
-    if (info->state.active != 0) {
-        drawLayout((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
+void CItemBoxInfo2::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mActive != 0) {
+        drawLayout((nw4r::lyt::Layout*)mpLayout, drawInfo, 0, 1);
     }
 }
 
@@ -4755,39 +4635,39 @@ void drawItemBox2Layout(CItemBoxInfo2* info, nw4r::lyt::DrawInfo* drawInfo) {
 // frame (only r31 = `this` survives the calls; zeros are re-loaded per store),
 // so unlike closeItemBox1 it must NOT use optimize_for_size, and it does not
 // clear the 0x2C/0x30 accessor/resource pointers after releasing them.
-extern "C" void closeItemBox2(CItemBoxInfo2* info) {
-    closeFileHandle(&info->state.fileHandle1);
-    closeFileHandle(&info->state.fileHandle2);
-    void* layout = info->state.layout;
-    info->state.active = 0;
+void CItemBoxInfo2::UnloadFiles() {
+    closeFileHandle(&mFileHandle1);
+    closeFileHandle(&mFileHandle2);
+    void* layout = mpLayout;
+    mActive = 0;
     if (layout != 0) {
         // Layout deleting destructor via plain delete (see closeItemBox1).
         delete (nw4r::lyt::Layout*)layout;
-        info->state.layout = 0;
+        mpLayout = 0;
     }
-    info->state.animTransform1 = 0;
-    info->state.animTransform2 = 0;
-    releaseArcResourceAccessor(info->state.arcResourceAccessor);
-    releaseArcResourceAccessor(info->state.resource);
-    info->state.memRegion1.deleteRegion();
-    info->state.memRegion2.deleteRegion();
+    mAnimIn = 0;
+    mAnimInfoIn = 0;
+    releaseArcResourceAccessor(mArcResAcc);
+    releaseArcResourceAccessor(mTexArcResAcc);
+    mRegion1.deleteRegion();
+    mRegion2.deleteRegion();
 }
 
 
 #pragma push
 #pragma auto_inline off
-void startItemBox2Open(CItemBoxInfo2* info) {
-    if (info->state.state != 0) return;
-    info->state.state = 1;
-    info->state.visible = 0;
-    stampItemBox2SlotTex(info);
+void CItemBoxInfo2::Open() {
+    if (mState != 0) return;
+    mState = 1;
+    mVisible = 0;
+    StampSlotTex();
 }
 #pragma pop
 
-void advanceItemBox2State(CItemBoxInfo2* info) {
-    if (info->state.state == 3) {
-        info->state.state = 4;
-        info->state.visible = 0;
+void CItemBoxInfo2::Close() {
+    if (mState == 3) {
+        mState = 4;
+        mVisible = 0;
     }
 }
 
@@ -4798,49 +4678,49 @@ void advanceItemBox2State(CItemBoxInfo2* info) {
 // stmw/lmw frame (optimize_for_size prologue merge).
 #pragma push
 #pragma optimize_for_size on
-void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    initItemBoxVecTable((u8*)info + 0xB0);
-    if (info->state.field_9A == 4) {
-        setupItemBoxDetail(info, arg2, arg3, arg4);
+void CItemBoxInfo::SetItem(u16 arg2, void* arg3, u16 arg4) {
+    mPage.Clear();
+    if (mKind == 4) {
+        SetupDetail(arg2, arg3, arg4);
     }
     CItemData* item = arg3 != NULL ? (CItemData*)arg3 : NULL;
     u16 id = item != NULL ? (u16)(item->field_00 >> 20) : 0;
-    u16 slot = info->state.field_9A == 4 ? id : arg2;
+    u16 slot = mKind == 4 ? id : arg2;
     int kind = (u8)BdatGetItemType(slot);
     if (item != NULL && (IsSkillItem(item) != 0 || isItemBoxType9Flagged(item) != 0)) {
         kind = 9;
     }
     switch (kind) {
     case 2:
-        renderItemBoxKind2(info, slot, arg3, (u16)(info->state.field_9A > 2 ? (s32)arg2 : -1));
+        RenderKind2(slot, arg3, (u16)(mKind > 2 ? (s32)arg2 : -1));
         break;
     case 3:
-        renderItemBoxKind3(info, slot, arg3, (u16)(info->state.field_9A > 2 ? (s32)arg2 : -1));
+        RenderKind3(slot, arg3, (u16)(mKind > 2 ? (s32)arg2 : -1));
         break;
     case 4:
     case 5:
     case 6:
     case 7:
     case 8:
-        renderItemBoxDetail(info, slot, arg3, (u16)(info->state.field_9A > 2 ? (s32)arg2 : -1));
+        RenderDetail(slot, arg3, (u16)(mKind > 2 ? (s32)arg2 : -1));
         break;
     case 9:
-        renderItemBoxSlotList(info, slot, arg3);
+        RenderSlotList(slot, arg3);
         break;
     case 10:
-        renderItemBoxLabels(info, slot);
+        RenderLabels(slot);
         break;
     case 13:
-        refreshItemBoxSlotRows(info, slot);
+        RefreshSlotRows(slot);
         break;
     default:
-        setupItemBoxSlotPanes(info);
-        resetItemBoxRowPanes(info);
-        clearItemBoxTripleRows(info);
-        applyItemBoxSelColors(info);
-        clearItemBoxQuadTexts(info);
-        clearItemBoxPairTexts(info);
-        clearItemBoxSlotTexts(info);
+        SetupSlotPanes();
+        ResetRowPanes();
+        ClearTripleRows();
+        ApplySelColors();
+        ClearQuadTexts();
+        ClearPairTexts();
+        ClearSlotTexts();
         break;
     }
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
@@ -4848,52 +4728,52 @@ void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     // retail stb/stw pair; the default ctor would emit a __ct__ call instead.
     ml::FixStr<32> text(true);
     text.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(), label);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x143],
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
                   text.c_str(), NULL);
 }
 #pragma pop
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" void renderItemBox2ByKind(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5) {
-    initItemBoxVecTable((u8*)info + 0xB0);
-    setupItemBox2Detail(info, arg2, arg3, arg4, arg5);
+void CItemBoxInfo2::SetItem(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
+    mPage.Clear();
+    SetupDetail(arg2, arg3, arg4, arg5);
     CItemData* item = arg3 != NULL ? (CItemData*)arg3 : NULL;
     u16 id = item != NULL ? (u16)(item->field_00 >> 20) : 0;
-    if (info->state.field_9A == 4) arg2 = id;
+    if (mKind == 4) arg2 = id;
     int kind = (u8)BdatGetItemType(arg2);
     if (item != NULL && (IsSkillItem(item) != 0 || isItemBoxType9Flagged(item) != 0)) kind = 9;
     switch (kind) {
     case 2:
-        renderItemBox2Kind2(info, arg2, arg3, arg4);
+        RenderKind2(arg2, arg3, arg4);
         break;
     case 3:
-        renderItemBox2Kind3(info, arg2, arg3, arg4);
+        RenderKind3(arg2, arg3, arg4);
         break;
     case 4:
     case 5:
     case 6:
     case 7:
     case 8:
-        renderItemBox2Detail(info, arg2, arg3, arg4);
+        RenderDetail(arg2, arg3, arg4);
         break;
     case 9:
-        renderItemBox2SlotList(info, (void*)(u32)arg2, arg3);
+        RenderSlotList((void*)(u32)arg2, arg3);
         break;
     case 10:
-        renderItemBox2Labels(info, arg2);
+        RenderLabels(arg2);
         break;
     case 13:
-        refreshItemBox2SlotRows(info, arg2);
+        RefreshSlotRows(arg2);
         break;
     default:
-        setupItemBox2SlotPanes(info);
-        resetItemBox2RowPanes(info);
-        clearItemBox2TripleRows(info);
-        applyItemBox2SelColors(info);
-        clearItemBox2QuadTexts(info);
-        clearItemBox2PairTexts(info);
-        clearItemBox2SlotTexts(info);
+        SetupSlotPanes();
+        ResetRowPanes();
+        ClearTripleRows();
+        ApplySelColors();
+        ClearQuadTexts();
+        ClearPairTexts();
+        ClearSlotTexts();
         break;
     }
     char* s = BdatTouchStringCell((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 3);
@@ -4901,64 +4781,66 @@ extern "C" void renderItemBox2ByKind(CItemBoxInfo2* info, u16 arg2, void* arg3, 
     // setupItemBoxDetail is still in scope until its #undef below.
     ml::FixStr<32> caption(true);
     caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(), s);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x143], caption.c_str(), 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143], caption.c_str(), 0);
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-void setItemBox2NamedText(CItemBoxInfo2* info, char* arg1, char* arg2) {
+void CItemBoxInfo2::SetNamedText(int index, char* text) {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_805063BC[0x151], arg1);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
+    sprintf(buf, &lbl_eu_805063BC[0x151], index);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text, 0);
 }
 #pragma pop
 
 // Retail calcItemBox2PaneVec (CItemBoxInfo2 variant) uses the same stmw/lmw frame.
 #pragma push
 #pragma optimize_for_size on
-void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
+nw4r::math::VEC3 CItemBoxInfo2::GetSlotPos(u32 arg2) {
+    nw4r::math::VEC3 pos;
     char buf[0x20];
     // Same declaration-order trick as calcItemBoxPaneVec: `first` before `child`
-    // so child colors into dead info's r30 and first reuses base's r31.
+    // so child colors into dead this's r30 and first reuses base's r31.
     nw4r::lyt::Pane* first;
     nw4r::lyt::Pane* second;
     nw4r::lyt::Pane* child;
     char* base = lbl_eu_805063BC;
     sprintf(buf, base + 0x161, arg2 + 1);
-    child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
+    child = ((LayoutRootPaneView*)mpLayout)->rootPane10;
     first = child->FindPaneByName(base + 0x16e, true);
     second = child->FindPaneByName(buf, true);
-    ScalePaneWorldPos((nw4r::math::VEC3*)arg0, second, first, child);
+    ScalePaneWorldPos(&pos, second, first, child);
+    return pos;
 }
 #pragma pop
 #pragma push
 #pragma auto_inline off
-void openItemBox2Phase1(CItemBoxInfo2* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), 1.0f) != 0) {
-        (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
-        (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
-        info->state.state = 2;
+void CItemBoxInfo2::OpenPhase1() {
+    if (advanceAnimTransform(mAnimIn, 1.0f) != 0) {
+        (mpLayout)->SetAnimationEnable(mAnimIn, false);
+        (mpLayout)->SetAnimationEnable(mAnimInfoIn, true);
+        mState = 2;
     }
 }
 
-void openItemBox2Phase2(CItemBoxInfo2* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
-        info->state.state = 3;
-        info->state.visible = 1;
+void CItemBoxInfo2::OpenPhase2() {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)mAnimInfoIn, 1.0f) != 0) {
+        mState = 3;
+        mVisible = 1;
     }
 }
 
-void closeItemBox2Phase1(CItemBoxInfo2* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
-        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
-        info->state.state = 5;
+void CItemBoxInfo2::ClosePhase1() {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)mAnimInfoIn, 1.0f) != 0) {
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimInfoIn, false);
+        ((nw4r::lyt::Layout*)mpLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)mAnimIn, true);
+        mState = 5;
     }
 }
-void closeItemBox2Phase2(CItemBoxInfo2* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
-        info->state.visible = 1;
-        info->state.state = 0;
+void CItemBoxInfo2::ClosePhase2() {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)mAnimIn, 1.0f) != 0) {
+        mVisible = 1;
+        mState = 0;
     }
 }
 #pragma pop
@@ -4970,7 +4852,7 @@ void closeItemBox2Phase2(CItemBoxInfo2* info) {
 #pragma push
 #pragma optimize_for_size on
 #pragma auto_inline off
-__declspec(noinline) void buildItemBox2CmpRecord(void* out, void* arg2, void* arg3) {
+__declspec(noinline) CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
     CItemBoxCompRecord rec;
     // 0x43300000 integer->double conversion scratch; retail stores both high
     // words before the null-item branch.
@@ -4982,18 +4864,7 @@ __declspec(noinline) void buildItemBox2CmpRecord(void* out, void* arg2, void* ar
     // immediately and returns; the build path has its own copy at the end).
     if (arg3 == NULL) {
         memset(&rec, 0, 0x34);
-        {
-            u32* d = (u32*)out - 1;
-            u32* s = (u32*)&rec - 1;
-            for (u32 k = 0; k < 6; k++) {
-                d[1] = s[1];
-                d[2] = s[2];
-                s += 2;
-                d += 2;
-            }
-            d[1] = s[1];
-        }
-        return;
+        return rec;
     }
     {
         void* global = lbl_eu_806640F4;
@@ -5027,8 +4898,8 @@ __declspec(noinline) void buildItemBox2CmpRecord(void* out, void* arg2, void* ar
             sprintf(buf, base + 0x1d7, slot);
             u8 v = (u8)BdatGetU8Direct((const void*)global, (const char*)buf, (u16)v2);
             // +0x16 flag bank: slot has a resolvable entry at all.
-            rec._16[(u8)i] = (v != 0);
-            if (rec._16[(u8)i] == 0) continue;
+            rec.flags[0][(u8)i] = (v != 0);
+            if (rec.flags[0][(u8)i] == 0) continue;
             // Accumulate the slot's stat contribution into the ratio total.
             rec.f38 += GetFloatTableEntry(slot);
             void* lookup = CtrlObjectParam_GetCharEntry(slot);
@@ -5043,31 +4914,21 @@ __declspec(noinline) void buildItemBox2CmpRecord(void* out, void* arg2, void* ar
             u8 v1ab = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
             u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
             f32 curRatio = rec.f28;
-            if (curRatio > slotRatio) rec.flags1[(u8)i] = 1;
-            else if (curRatio < slotRatio) rec.flags1[(u8)i] = 2;
-            else rec.flags1[(u8)i] = 0;
-            if ((s32)rec.s30 > (s32)v1ab) rec.flags2[(u8)i] = 1;
-            else if ((s32)rec.s30 < (s32)v1ab) rec.flags2[(u8)i] = 2;
-            else rec.flags2[(u8)i] = 0;
-            if ((s32)rec.s32 > (s32)v1b3) rec.flags3[(u8)i] = 1;
-            else if ((s32)rec.s32 < (s32)v1b3) rec.flags3[(u8)i] = 2;
-            else rec.flags3[(u8)i] = 0;
+            if (curRatio > slotRatio) rec.flags[1][(u8)i] = 1;
+            else if (curRatio < slotRatio) rec.flags[1][(u8)i] = 2;
+            else rec.flags[1][(u8)i] = 0;
+            if ((s32)rec.s30 > (s32)v1ab) rec.flags[2][(u8)i] = 1;
+            else if ((s32)rec.s30 < (s32)v1ab) rec.flags[2][(u8)i] = 2;
+            else rec.flags[2][(u8)i] = 0;
+            if ((s32)rec.s32 > (s32)v1b3) rec.flags[3][(u8)i] = 1;
+            else if ((s32)rec.s32 < (s32)v1b3) rec.flags[3][(u8)i] = 2;
+            else rec.flags[3][(u8)i] = 0;
         }
         rec.f28 = BlendFloatAvgScale((u32)rec.s2C, (u32)rec.s2E, 0, rec.f38);
     }
     // 0x34-byte copy: pair-copy with s[1]/s[2] accesses reproduces the retail
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,6 + 4-byte tail).
-    {
-        u32* s = (u32*)&rec - 1;
-        u32* d = (u32*)out - 1;
-        for (u32 k = 0; k < 6; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    return rec;
 }
 #pragma pop
 // Retail buildItemBox2SlotFlags builds the 0x1C-byte comparison record like
@@ -5084,7 +4945,7 @@ __declspec(noinline) void buildItemBox2CmpRecord(void* out, void* arg2, void* ar
 // optimize_for_size like the other matched stmw-frame functions here.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) CItemBoxSlotFlags buildItemBox2SlotFlags(void* owner, u32 item) {
+__declspec(noinline) CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
     CItemBoxSlotFlags rec;
     if (item == 0) {
         memset(&rec, 0, 0x1C);
@@ -5146,7 +5007,7 @@ extern "C" __declspec(noinline) CItemBoxSlotFlags buildItemBox2SlotFlags(void* o
 // the 6-pair mtctr copy loop reads it directly.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void buildItemBox2NameRec(void* out, void* unused, void* data, void* arg3) {
+__declspec(noinline) CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     void* item = arg3 != NULL ? arg3 : NULL;
     // Retail hoists this global into a register (r26) across all the calls;
     // a local copy reproduces the single sda21 load in the prologue.
@@ -5171,7 +5032,7 @@ __declspec(noinline) void buildItemBox2NameRec(void* out, void* unused, void* da
     // base is only materialized after the cat/count joins (retail lis/addi at
     // the join point, not in the prologue).
     char* base = (char*)&lbl_eu_805063BC;
-    CItemBoxNameRecord2 rec;
+    CItemBoxNameRecord rec;
     rec.count = (u8)count;
     rec.str = (u32)BdatTouchStringCell(base + 0x130, base + 0x139, 0x1e - ((u8)count - 1));
     char* s2 = BdatTouchStringCell(base + 0x202, base + 0x139, 0xf);
@@ -5285,17 +5146,7 @@ __declspec(noinline) void buildItemBox2NameRec(void* out, void* unused, void* da
     }
     // 0xA4-byte copy: pair-copy with s[1]/s[2] accesses reproduces the retail
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,0x14 + 4-byte tail).
-    {
-        u32* s = (u32*)&rec - 1;
-        u32* d = (u32*)out - 1;
-        for (u32 k = 0; k < 0x14; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    return rec;
 }
 #pragma pop
 
@@ -5303,7 +5154,7 @@ __declspec(noinline) void buildItemBox2NameRec(void* out, void* unused, void* da
 #pragma optimize_for_size on
 // Twin of getItemBoxLabelRec (see comment there). dont_inline keeps IPA from
 // folding this body into renderItemBox2Labels.
-__declspec(noinline) CItemBoxLabelRec getItemBox2LabelRec(CItemBoxInfo2* info, u32 item) {
+__declspec(noinline) CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     BdatGetItemType(item);
@@ -5334,7 +5185,7 @@ __declspec(noinline) CItemBoxLabelRec getItemBox2LabelRec(CItemBoxInfo2* info, u
 // stmw/lmw frame (optimize_for_size prologue merge).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) CItemBoxSelRec buildItemBox2SelTable(CItemBoxInfo2* info, u32 item) {
+__declspec(noinline) CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     void* global = lbl_eu_80664110;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
@@ -5367,7 +5218,7 @@ __declspec(noinline) CItemBoxSelRec buildItemBox2SelTable(CItemBoxInfo2* info, u
 // kept because MWCC never elides calls). Param 2 (info) is unused in retail.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) CItemBoxSlotRecord buildItemBox2SlotRec(CItemBoxInfo2* info, u32 item, void* arg4) {
+__declspec(noinline) CItemBoxSlotRecord CItemBoxInfo2::BuildSlotRec(u32 item, void* arg4) {
     CItemBoxSlotRecord rec;
     void* p = arg4 != 0 ? arg4 : 0;
     BdatGetItemType(item);
@@ -5398,50 +5249,33 @@ __declspec(noinline) CItemBoxSlotRecord buildItemBox2SlotRec(CItemBoxInfo2* info
 // mtctr copy loop for the 0x34-byte comparison record.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
-    setupItemBox2SlotPanes(info);
+__declspec(noinline) void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
+    SetupSlotPanes();
     // Declaration order follows the retail frame layout (high -> low):
     // copied record, pane-name/label buffers, source record, colour defaults.
-    CItemBoxCompRecord local;
+    CItemBoxCompRecord local = BuildCmpRecord((void*)arg1);
     char paneName[0x20];
     char label[0x20];
-    CItemBoxCompRecord record;
-    buildItemBox2CmpRecord(&record, info, (void*)arg1);
-    // 0x34-byte copy: pair-copy with s[1]/s[2] accesses reproduces the retail
-    // mtctr lwzu/stwu 8-byte-pair loop (li r0,6 + 4-byte tail).
-    {
-        // dst declared first: low-degree webs color in reverse birth order,
-        // putting the source pointer in the lower retail register.
-        u32* d = (u32*)&local - 1;
-        u32* s = (u32*)&record - 1;
-        for (u32 k = 0; k < 6; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
     char* base = (char*)&lbl_eu_805063BC;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 flag = local._16[(u8)i];
+        u8 flag = local.flags[0][(u8)i];
         u32 color = 0x777777FF;
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(paneName, base + 0x303, (u8)i + 1);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, paneName, color);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, paneName, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
         dimA.s[0] = dimA.s[1] = dimA.s[2] = 0;
-        dimA.s[3] = info->state.quadA.s[3];
+        dimA.s[3] = mColorA.s[3];
         CItemBoxQuadColorView dimB;
         dimB.s[0] = dimB.s[1] = dimB.s[2] = 0;
-        dimB.s[3] = info->state.quadB.s[3];
+        dimB.s[3] = mColorB.s[3];
         CItemBoxQuadColorView colors[2] = {
-            flag ? info->state.quadA : dimA,
-            flag ? info->state.quadB : dimB,
+            flag ? mColorA : dimA,
+            flag ? mColorB : dimB,
         };
         sprintf(paneName, &lbl_eu_805063BC[0x161], (u8)i + 1);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(paneName, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5460,15 +5294,15 @@ __declspec(noinline) void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, voi
                         u8 otherSlot = (u8)GetCollectedFlagByte(arg3);
                         u32 tex;
                         if (slot == otherSlot) {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x319, NULL);
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x319, NULL);
                         } else {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x32d, NULL);
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x32d, NULL);
                         }
                         if (tex == 0) {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x341, NULL);
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x341, NULL);
                         }
                         if (tex != 0) {
-                            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)label, (TPLPalette*)tex);
+                            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)label, (TPLPalette*)tex);
                         }
                     }
                 }
@@ -5490,14 +5324,14 @@ __declspec(noinline) void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, voi
 #pragma optimize_for_size on
 // dont_inline: retail keeps this out-of-line; MWCC would otherwise inline it
 // into renderItemBox2ByKind (forward declaration makes the body visible).
-__declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
-    resetItemBox2RowPanes(info);
+__declspec(noinline) void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
+    ResetRowPanes();
     // Frame-slot order: record > buf > bufName > local > args > cols >
     // selB/selA (the staged colour temps; retail keeps its copies above the
     // record, ours sit lowest - offsets inside the staging block differ).
     char buf[0x20];
     char bufName[0x20];
-    CItemBoxSlotFlags record = buildItemBox2SlotFlags(info, arg2);
+    CItemBoxSlotFlags record = BuildSlotFlags(arg2);
     char* base = (char*)&lbl_eu_805063BC;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
@@ -5508,20 +5342,20 @@ __declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, vo
         u32 color = darkBase + 0x77ff;  // 0x777777ff
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
         dimA.s[0] = dimA.s[1] = dimA.s[2] = 0;
-        dimA.s[3] = info->state.quadA.s[3];
+        dimA.s[3] = mColorA.s[3];
         CItemBoxQuadColorView dimB;
         dimB.s[0] = dimB.s[1] = dimB.s[2] = 0;
-        dimB.s[3] = info->state.quadB.s[3];
+        dimB.s[3] = mColorB.s[3];
         CItemBoxQuadColorView colors[2] = {
-            flag ? info->state.quadA : dimA,
-            flag ? info->state.quadB : dimB,
+            flag ? mColorA : dimA,
+            flag ? mColorB : dimB,
         };
         sprintf(buf, &lbl_eu_805063BC[0x161], (u8)i + 1);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5547,15 +5381,15 @@ __declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, vo
                         sprintf(bufName, base + 0x30e, (u8)i + 1);
                         u32 tex;
                         if (slot == (u8)GetCollectedFlagByte(arg4)) {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
                         } else {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
                         }
                         if (tex == 0) {
-                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
                         }
                         if (tex != 0) {
-                            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)bufName, (TPLPalette*)tex);
+                            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)bufName, (TPLPalette*)tex);
                         }
                     }
                 }
@@ -5573,9 +5407,9 @@ __declspec(noinline) void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, vo
 // visible slot colours the pane (white when selected) and pushes two vertex
 // colours - the item-specific pair from info+0x9c when selected, otherwise
 // alpha-only defaults built from info+0xa2/0xaa - through setItemBoxVtxColor.
-__declspec(noinline) void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2) {
-    applyItemBox2SelColors(info);
-    resetItemBox2RowPanes(info);
+__declspec(noinline) void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
+    ApplySelColors();
+    ResetRowPanes();
     // Selection-colour staging: the aggregate ternaries below force MWCC to
     // materialize each selected 8-byte colour into a stack temp (retail
     // sp+0x68..0x74) before copying it into out[].
@@ -5584,22 +5418,22 @@ __declspec(noinline) void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2)
     CItemBoxColorRaw cols[2];
     // 9-byte per-slot selection record: bytes [1..8] are the per-slot flags,
     // byte [8] also selects the row-height label size.
-    CItemBoxSelRec local = buildItemBox2SelTable(info, arg2);
+    CItemBoxSelRec local = BuildSelRec(arg2);
     char* base = (char*)&lbl_eu_805063BC;
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell(base + 0x130, base + 0x139, rowHeight);
-    LayoutSetTextBoxFmtValue(info->state.layout, base + 0x44f, label, 0);
+    LayoutSetTextBoxFmtValue(mpLayout, base + 0x44f, label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = local.selected[(u8)i];
         u32 color = 0x777777ff;
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
-        PaneSetVtxColorByName(info->state.layout, buf, color);
-        s16 vA2 = info->state.quadA.s[3];
-        s16 vAA = info->state.quadB.s[3];
+        PaneSetVtxColorByName(mpLayout, buf, color);
+        s16 vA2 = mColorA.s[3];
+        s16 vAA = mColorB.s[3];
         // Retail builds cols[1] first, then cols[0], each as three zero
-        // halfwords plus the alpha from the info block.
+        // halfwords plus the alpha from the this block.
         cols[1].r = 0; cols[1].g = 0; cols[1].b = 0; cols[1].a = vA2;
         cols[0].r = 0; cols[0].g = 0; cols[0].b = 0; cols[0].a = vAA;
         out[0].w[0] = 0;
@@ -5608,12 +5442,12 @@ __declspec(noinline) void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2)
         out[1].w[1] = 0;
         // Aggregate ternaries: selected 8-byte colour is staged through a
         // stack temp then copied as one block (retail lwz/stw pairs).
-        out[0] = (flag != 0) ? *(CItemBoxColorBlock*)&info->state.quadA
+        out[0] = (flag != 0) ? *(CItemBoxColorBlock*)&mColorA
                              : *(CItemBoxColorBlock*)&cols[1];
-        out[1] = (flag != 0) ? *(CItemBoxColorBlock*)&info->state.quadB
+        out[1] = (flag != 0) ? *(CItemBoxColorBlock*)&mColorB
                              : *(CItemBoxColorBlock*)&cols[0];
         sprintf(buf, base + 0x161, (u8)i + 1, cols[0]);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5632,41 +5466,21 @@ __declspec(noinline) void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2)
 // six equip values resolve to the candidate item, stamps its texture.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
-    // Frame-slot order matters: vals > out > textBuf > buf2 > cols > entry
-    // > stage (descending first-declared = highest slot).
-    CItemBoxInfo2LabelRec vals;
-    CItemBoxInfo2LabelRec out;
+__declspec(noinline) void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
+    ClearQuadTexts();
+    ResetRowPanes();
+    CItemBoxNameRecord vals = BuildNameRec((void*)(u32)arg2, arg3);
     char textBuf[0x20];
     char buf2[0x20];
     CItemBoxVertexColors cols;
     CItemBoxSlotEntry entry;
 
-    clearItemBox2QuadTexts(info);
-    resetItemBox2RowPanes(info);
-    buildItemBox2NameRec(&out, info, (void*)(u32)arg2, arg3);
-    // 0xA0-byte record copy: pair-copy reproduces the retail mtctr lwzu/stwu
-    // 8-byte-pair loop (li r0,0x14, no tail). NOTE: struct assign is not
-    // usable here - MWCC emits an out-of-line __as__ call for any 0xA0-byte
-    // record (scalar-only or not), so the copy must stay a manual loop.
-    {
-        // volatile forces retail's conservative load-load/store-store order;
-        // non-volatile locals let the scheduler interleave the pairs.
-        volatile u32* d = (volatile u32*)&vals - 1;
-        volatile u32* s = (volatile u32*)&out - 1;
-        for (u32 k = 0; k < 20; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-    }
     // Retail materializes the pool base only after the record copy.
     char* base = (char*)&lbl_eu_805063BC;
 
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x45a, (char*)vals.str, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x45a, (char*)vals.str, 0);
     if ((s8)vals.name[0] == 0x30) {
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x466, base + 0x2aa, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, base + 0x2aa, 0);
     } else {
         if (vals.e0 != 0) {
             if ((u8)(vals.e0 - 3) <= 1) {
@@ -5678,7 +5492,7 @@ __declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, voi
         } else {
             sprintf(textBuf, base + 0x41e, vals.name);
         }
-        LayoutSetTextBoxText((nw4r::lyt::Layout*)info->state.layout, base + 0x466, textBuf, 0);
+        LayoutSetTextBoxText((nw4r::lyt::Layout*)mpLayout, base + 0x466, textBuf, 0);
     }
 
     // Candidate item name (via the item vtable) or the raw item-name lookup.
@@ -5691,7 +5505,7 @@ __declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, voi
         item = NULL;
         txt = ((char* (*)(u32))BuildItemNameStr)(arg2);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x472, txt, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x472, txt, 0);
 
     u16 cat;
     if (arg3 != NULL) {
@@ -5701,24 +5515,24 @@ __declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, voi
     }
     u8 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x47d, cat);
     char* label = BdatTouchStringCell(base + 0x130, base + 0x139, (u8)st + 0x15);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x484, label, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x484, label, 0);
 
     // Table handle pair is loop-invariant: staged once before the loop.
     CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
         sprintf(textBuf, base + 0x303, idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, textBuf, -1);
-        // Row colour pair: zeroed memberwise, then filled from the info
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, textBuf, -1);
+        // Row colour pair: zeroed memberwise, then filled from the this
         // selection block; passed to sprintf as one 0x10-byte vararg.
         cols.w[0] = 0; cols.w[1] = 0; cols.w[2] = 0; cols.w[3] = 0;
-        cols.w[0] = info->state.quadA.w[0];
-        cols.w[1] = info->state.quadA.w[1];
-        cols.w[2] = info->state.quadB.w[0];
-        cols.w[3] = info->state.quadB.w[1];
+        cols.w[0] = mColorA.w[0];
+        cols.w[1] = mColorA.w[1];
+        cols.w[2] = mColorB.w[0];
+        cols.w[3] = mColorB.w[1];
         sprintf(textBuf, base + 0x161, idx, cols);
         nw4r::lyt::Pane* pane =
-            ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textBuf, true);
+            mpLayout->GetRootPane()->FindPaneByName(textBuf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5750,15 +5564,15 @@ __declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, voi
                 sprintf(buf2, base + 0x30e, idx);
                 u32 tex;
                 if (slot == (u8)GetCollectedFlagByte(arg4)) {
-                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x319, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x319, NULL);
                 } else {
-                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x32d, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x32d, NULL);
                 }
                 if (tex == 0) {
-                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x341, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x341, NULL);
                 }
                 if (tex != 0) {
-                    PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)buf2, (TPLPalette*)tex);
+                    PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf2, (TPLPalette*)tex);
                 }
             }
         }
@@ -5767,12 +5581,12 @@ __declspec(noinline) void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, voi
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void renderItemBox2Labels(CItemBoxInfo2* info, u32 arg2) {
-    clearItemBox2PairTexts(info);
-    resetItemBox2RowPanes(info);
-    CItemBoxLabelRec rec = getItemBox2LabelRec(info, arg2);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
+__declspec(noinline) void CItemBoxInfo2::RenderLabels(u32 arg2) {
+    ClearPairTexts();
+    ResetRowPanes();
+    CItemBoxLabelRec rec = GetLabelRec(arg2);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
 #pragma pop
 // Retail renderItemBox2SlotList: run the two layout preps, build a 0x24-byte slot
@@ -5789,23 +5603,23 @@ union CItemBoxSlotRecAny {
     CItemBoxSlotRecord rec;
     u32 w[9];
 };
-__declspec(noinline) void renderItemBox2SlotList(CItemBoxInfo2* info, void* arg1, void* arg2) {
+__declspec(noinline) void CItemBoxInfo2::RenderSlotList(void* arg1, void* arg2) {
     // Retail runs the two layout preps before the FixStr ctor bl.
     char paneName[0x20];
-    clearItemBox2SlotTexts(info);
-    resetItemBox2RowPanes(info);
-    CItemBoxSlotRecord cur = buildItemBox2SlotRec(info, (u32)arg1, arg2);
+    ClearSlotTexts();
+    ResetRowPanes();
+    CItemBoxSlotRecord cur = BuildSlotRec((u32)arg1, arg2);
     ml::FixStr<32> text(false);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.str, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x4a7], (char*)cur.str, 0);
     u8 count = cur.tail[1];
     for (u8 i = 0; i < count; i++) {
         sprintf(paneName, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, paneName, (char*)cur.text[i], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, paneName, (char*)cur.text[i], 0);
         text.clear();
         sprintf(paneName, &lbl_eu_805063BC[0x4c0], (u8)i + 0x1f);
         text.format(&lbl_eu_805063BC[0x13e], cur.vals[i],
                     BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, paneName, text.c_str(), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, paneName, text.c_str(), 0);
     }
 }
 #pragma auto_inline reset
@@ -5814,7 +5628,7 @@ __declspec(noinline) void renderItemBox2SlotList(CItemBoxInfo2* info, void* arg1
 #pragma optimize_for_size on
 // dont_inline keeps IPA from folding this body into its callers
 // (renderItemBox2ByKind etc.) - retail always calls it.
-__declspec(noinline) void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
+__declspec(noinline) void CItemBoxInfo2::SetupSlotPanes() {
     // i declared first: retail claims r31 for the loop counter before any
     // other saved local (register_mapping.md Rule A).
     // No named base local: retail holds &lbl_eu_805063BC purely as a compiler
@@ -5824,30 +5638,30 @@ __declspec(noinline) void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
     u32 i;
     u32 idx;
     s16 zero = 0;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u8)i + 1;
         sprintf(buf, &lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         u32 args[4];
-        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+        s16 c0hi[2] = {zero, mColorA.s[3]};
         // All-zero pairs stored DESCENDING; colour words copied to args[]
         // ASCENDING (retail order - see resetItemBox2RowPanes finding).
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+        s16 c1hi[2] = {zero, mColorB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -5856,7 +5670,7 @@ __declspec(noinline) void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
         sprintf(buf, &lbl_eu_805063BC[0x161], idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5866,9 +5680,9 @@ __declspec(noinline) void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (tex != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)buf, (TPLPalette*)tex);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
     }
 }
@@ -5877,36 +5691,36 @@ __declspec(noinline) void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
 #pragma optimize_for_size on
 // dont_inline keeps IPA from folding this body into its callers
 // (renderItemBox2Labels etc.) - retail always calls it.
-__declspec(noinline) void resetItemBox2RowPanes(CItemBoxInfo2* info) {
+__declspec(noinline) void CItemBoxInfo2::ResetRowPanes() {
     // No named base local: retail holds &lbl_eu_805063BC purely as a
     // compiler CSE temporary (lis into a scratch register during prologue
     // argument prep), which fixes both its schedule and its register.
     char text[0x20];
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], &lbl_eu_806645A8, &lbl_eu_806645B0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], &lbl_eu_806645A8, &lbl_eu_806645B0);
     // Zero lives outside the loop: retail materializes it once in the
     // preheader (a loop-invariant CSE), not per-iteration.
     s16 shade = 0;
     for (u32 index = 0; (u8)index < (u8)code80135FDC_getByte_64077(); index++) {
         u32 slot = (u8)index + 1;
         sprintf(text, &lbl_eu_805063BC[0x303], slot);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, text, 0x777777ff);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, text, 0x777777ff);
         u32 args[4];
-        s16 hiA[2] = {shade, info->state.quadA.s[3]};
+        s16 hiA[2] = {shade, mColorA.s[3]};
         // All-shade pairs: retail emits the two halfword stores in DESCENDING
         // address order (element 1 before element 0); explicit assignments
         // reproduce that order where the initializer list emits ascending.
         s16 loA[2];
         loA[1] = shade;
         loA[0] = shade;
-        s16 hiB[2] = {shade, info->state.quadB.s[3]};
+        s16 hiB[2] = {shade, mColorB.s[3]};
         s16 loB[2];
         loB[1] = shade;
         loB[0] = shade;
@@ -5917,7 +5731,7 @@ __declspec(noinline) void resetItemBox2RowPanes(CItemBoxInfo2* info) {
         args[2] = *(u32*)loB;
         args[3] = *(u32*)hiB;
         sprintf(text, &lbl_eu_805063BC[0x161], slot);
-        nw4r::lyt::Pane* pPane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(text, true);
+        nw4r::lyt::Pane* pPane = mpLayout->GetRootPane()->FindPaneByName(text, true);
         if (pPane != NULL) {
             nw4r::lyt::Material* pMaterial = pPane->GetMaterial();
             for (u32 k = 0; k < 2; k++) {
@@ -5927,16 +5741,16 @@ __declspec(noinline) void resetItemBox2RowPanes(CItemBoxInfo2* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(text, &lbl_eu_805063BC[0x30e], slot);
-        u32 texId = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        u32 texId = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (texId != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)info->state.layout, (const char*)text, (TPLPalette*)texId);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)text, (TPLPalette*)texId);
         }
     }
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBox2TripleRows(CItemBoxInfo2* info) {
+__declspec(noinline) void CItemBoxInfo2::ClearTripleRows() {
     char buf[0x20];
     // Declaration order fixes r29/r30: retail claims index (r30) before i (r29).
     u32 index;
@@ -5944,19 +5758,19 @@ __declspec(noinline) void clearItemBox2TripleRows(CItemBoxInfo2* info) {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* r = ((LayoutRootPaneView*)info->state.layout)->rootPane10->FindPaneByName(buf, true);
+        void* r = ((LayoutRootPaneView*)mpLayout)->rootPane10->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
-        LayoutSetTextBoxFmtValue(info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
-        LayoutSetTextBoxFmtValue(info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void applyItemBox2SelColors(CItemBoxInfo2* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
+__declspec(noinline) void CItemBoxInfo2::ApplySelColors() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
     u32 idx;
     // Retail re-evaluates the slot count on every iteration (bl in the
@@ -5964,16 +5778,16 @@ __declspec(noinline) void applyItemBox2SelColors(CItemBoxInfo2* info) {
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u32)((u8)i + 1);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         // Selection colours: two 8-byte pairs built from the s16s at +0xA2
         // and +0xAA; retail stages the four arrays at sp+0x08..0x17 and the
         // u32 varargs copy at sp+0x18..0x27.
         s16 zero = 0;
-        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+        s16 c0hi[2] = {zero, mColorA.s[3]};
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+        s16 c1hi[2] = {zero, mColorB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -5983,7 +5797,7 @@ __declspec(noinline) void applyItemBox2SelColors(CItemBoxInfo2* info) {
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5997,17 +5811,17 @@ __declspec(noinline) void applyItemBox2SelColors(CItemBoxInfo2* info) {
 // the first call's arg4 zero and the string base are hoisted into the prologue.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBox2QuadTexts(CItemBoxInfo2* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+__declspec(noinline) void CItemBoxInfo2::ClearQuadTexts() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x466],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x484],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
@@ -6015,11 +5829,11 @@ __declspec(noinline) void clearItemBox2QuadTexts(CItemBoxInfo2* info) {
 
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBox2PairTexts(CItemBoxInfo2* info) {
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+__declspec(noinline) void CItemBoxInfo2::ClearPairTexts() {
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
@@ -6030,17 +5844,17 @@ __declspec(noinline) void clearItemBox2PairTexts(CItemBoxInfo2* info) {
 // (renderItemBox2SlotList etc.) - retail always calls it.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void clearItemBox2SlotTexts(CItemBoxInfo2* info) {
+__declspec(noinline) void CItemBoxInfo2::ClearSlotTexts() {
     char buf[0x20];
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
     for (u32 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, &lbl_eu_805063BC[0x4c0], (u8)i + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
@@ -6053,7 +5867,7 @@ __declspec(noinline) void clearItemBox2SlotTexts(CItemBoxInfo2* info) {
 // shared by sprintf and the per-vertex setItemBoxVtxColor loop.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void stampItemBox2SlotTex(CItemBoxInfo2* info) {
+__declspec(noinline) void CItemBoxInfo2::StampSlotTex() {
     u32 i;
     char bufElse[0x20];
     char buf[0x20];
@@ -6062,7 +5876,7 @@ extern "C" __declspec(noinline) void stampItemBox2SlotTex(CItemBoxInfo2* info) {
     for (i = 0; i < 7; i++) {
         if ((u8)i >= count) {
             sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
-            nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(bufElse, true);
+            nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(bufElse, true);
             setPaneVisible(pane, 0);
         } else {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
@@ -6074,18 +5888,18 @@ extern "C" __declspec(noinline) void stampItemBox2SlotTex(CItemBoxInfo2* info) {
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
-                nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(buf, true);
                 PaneSetTexPalette(pane2, (TPLPalette*)found);
                 PaneSetVtxColorAll(pane2, 0x777777ffu);
                 // Selection colours: two 8-byte pairs built from the s16s at +0xA2
                 // and +0xAA. All-zero pairs: retail stores the halfwords in
                 // DESCENDING element order (see resetItemBox2RowPanes finding).
                 s16 zero = 0;
-                s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+                s16 c0hi[2] = {zero, mColorA.s[3]};
                 s16 c0lo[2];
                 c0lo[1] = zero;
                 c0lo[0] = zero;
-                s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+                s16 c1hi[2] = {zero, mColorB.s[3]};
                 s16 c1lo[2];
                 c1lo[1] = zero;
                 c1lo[0] = zero;
@@ -6095,7 +5909,7 @@ extern "C" __declspec(noinline) void stampItemBox2SlotTex(CItemBoxInfo2* info) {
                 args[2] = *(u32*)c1lo;
                 args[3] = *(u32*)c1hi;
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
-                nw4r::lyt::Pane* pane3 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                nw4r::lyt::Pane* pane3 = mpLayout->GetRootPane()->FindPaneByName(buf, true);
                 void* vertexObj = pane3->GetMaterial();
                 for (u32 j = 0; j < 2; j++) {
                     setItemBoxVtxColor(vertexObj, (u8)j, (u8*)args + (u8)j * 8);
@@ -6110,14 +5924,14 @@ extern "C" __declspec(noinline) void stampItemBox2SlotTex(CItemBoxInfo2* info) {
 // accessor (+0x30) are present, set the current/active bytes. Goto-gate
 // layout matches retail's branch-over-branch shape (bne over a blr with
 // the body placed after the return - see CTitle CTitleLogo_draw family).
-__declspec(noinline) void activateItemBox2(CItemBoxInfo2* info) {
-    if (info->state.layout != 0 && info->state.resource != 0) {
+__declspec(noinline) void CItemBoxInfo2::Activate() {
+    if (mpLayout != 0 && mTexArcResAcc != 0) {
         goto body;
     }
     return;
 body:
-    info->state.current = 1;
-    info->state.active = 1;
+    mCurrent = 1;
+    mActive = 1;
 }
 #pragma pop
 // ============================================================================
@@ -6126,16 +5940,19 @@ body:
 // NOTE: arg3 (r5) is dead in retail - clobbered by the prologue (lis r5, 0x4330).
 // ============================================================================
 // TU-local stat-object shapes (retail lha/lfs/lbz offsets from setupItemBox2Detail).
-struct E43Entry {          // 0x34-byte item-stat entry (buildItemBox2CmpRecord/801E1E0C output)
-    u16 w00;
-    u16 _02;
-    u32 w04;                       // +0x04 value (u16 pairs read via lhz at +4/+6)
-    u8 _08[4];
-    u32 _0C;
-    u32 _10;
-    s16 w14;                       // +0x14 (delta-compared)
-    s16 _16;
-    u8 _18[0x34 - 0x18];
+union E43Entry {          // 0x34-byte item-stat entry (BuildCmpRecord output)
+    CItemBoxCompRecord rec;
+    struct {
+        u16 w00;
+        u16 _02;
+        u32 w04;                       // +0x04 value (u16 pairs read via lhz at +4/+6)
+        u8 _08[4];
+        u32 _0C;
+        u32 _10;
+        s16 w14;                       // +0x14 (delta-compared)
+        s16 _16;
+        u8 _18[0x34 - 0x18];
+    };
 };
 struct E43StatC {          // vtable[0x22C] result - s16 stat block
     u8 _00[6];
@@ -6194,7 +6011,7 @@ __declspec(noinline) void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a
 }
 #pragma pop
 
-extern "C" void setupItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5) {
+void CItemBoxInfo2::SetupDetail(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     // ---- type (main switch key) ----
     u8 type = (u8)BdatGetItemType((u32)arg2);
 
@@ -6228,12 +6045,12 @@ extern "C" void setupItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    LayoutSetTextBoxFmtValue(info->state.layout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_805063BC[0x139], member), 0);
-    setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
-    LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], hp1);
-    LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], hp2);
-    SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[3], BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
+    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_805063BC[0x139], member), 0);
+    setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
+setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
+    LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hp2);
+    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
     E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
@@ -6242,103 +6059,103 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
     CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
-    s32 artsSum = (s32)sumItemBox2TypeCounts(info, member, NULL);
-    u32 w = getItemBoxCondStatById(info, member, 0x97);
+    s32 artsSum = (s32)SumTypeCounts(member, NULL);
+    u32 w = GetCondStatById(member, 0x97);
     if (w != 0) {
         artsSum = artsSum - (s32)w;
         if (artsSum < 0) artsSum = 0;
     }
 
     // ---- stat bars (display formula) ----
-    s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL))));
-    s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x31, NULL))));
-    s16 bar3 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL))));
-    s16 bar4 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E) * (f32)(stA->s1E + getItemBox2Effect(info, (void*)(u32)member, 0x51, NULL) - artsSum)));
-    s16 bar5 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + getItemBox2Effect(info, (void*)(u32)member, 0x54, NULL))));
-    s16 bar6 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL))));
-    RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL)));
+    s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + GetEffect(member, 0x21, NULL))));
+    s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + GetEffect(member, 0x31, NULL))));
+    s16 bar3 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + GetEffect(member, 0x41, NULL))));
+    s16 bar4 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E) * (f32)(stA->s1E + GetEffect(member, 0x51, NULL) - artsSum)));
+    s16 bar5 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + GetEffect(member, 0x54, NULL))));
+    s16 bar6 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + GetEffect(member, 0x11, NULL))));
+    RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + GetEffect(member, 0x11, NULL)));
 
     // ---- equip-mode gate: recompute bars with the equipped stat (0x30) ----
-    if (testItemBox2Equip(info, member, NULL)) {
-        s32 eq = getItemBoxCondStatById(info, member, 0x30);
+    if (TestEquip(member, NULL)) {
+        s32 eq = GetCondStatById(member, 0x30);
         if (eq != 0) {
-            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
-            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL)));
+            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + GetEffect(member, 0x21, NULL))));
+            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + GetEffect(member, 0x41, NULL) - artsSum)));
+            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq + GetEffect(member, 0x11, NULL)));
 
             // ---- current weapon block ----
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
-                ItemBoxInfoCopy e1;
-                buildItemBox2CmpRecord(&e1, info, (void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
-                ItemBoxInfoCopy e2 = e1;  // 7-word copy
-                s32 s1 = calcItemBox2Bonus1(info, member, e2.value & 0xFFFF, NULL);
-                s32 s2 = calcItemBox2Bonus2(info, member, *(u16*)((u8*)&e2 + 6), NULL);
+                E43Entry e1;
+                e1.rec = BuildCmpRecord((void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
+                E43Entry e2 = e1;
+                s32 s1 = CalcBonus1(member, e2.w04 & 0xFFFF, NULL);
+                s32 s2 = CalcBonus2(member, *(u16*)((u8*)&e2 + 6), NULL);
                 s32 atk1 = (s32)barB + s1;
                 s32 atk2 = (s32)barB + s2;
                 if (atk1 > atk2) atk1 = atk2;
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], atk1, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atk2);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
 
             // ---- numbers ----
             if (barC <= 0) barC = 1;
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], (s16)barB);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)barC);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], (s16)barA);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)bar5);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)bar3);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, (s16)barB);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)barC);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, (s16)barA);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)bar5);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)bar3);
             ml::FixStr<32> fmtBuf2;
             fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)bar6, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], fmtBuf2.c_str(), 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
             fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], fmtBuf3.c_str(), 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
 
             // ---- 20x color application ----
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
             E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane19, &q1, &q2);
         }
     }
 
     // ---- stat panel (arg5 != 0, type in {2,4,5,6,7,8}) ----
     if (arg5 != 0 && (type == 2 || (type >= 4 && type <= 8))) {
         s32 e1 = 0;
-        if (testItemBox2Equip(info, member, NULL)) e1 = getItemBoxCondStatById(info, member, 0x30);
+        if (TestEquip(member, NULL)) e1 = GetCondStatById(member, 0x30);
         s32 e2 = 0;
-        if (testItemBox2Equip(info, member, arg3)) e2 = getItemBoxCondStatById(info, member, 0x30);
+        if (TestEquip(member, arg3)) e2 = GetCondStatById(member, 0x30);
 
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + GetEffect(member, 0x21, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6354,16 +6171,16 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
         }
 
         // row B: 0x1 -> panes 0x50/0x54
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
             dB = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6379,16 +6196,16 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
         }
 
         // row C: 0x41 -> panes 0x58/0x5C
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) * (f32)(dB + getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + getItemBox2Effect(info, (void*)(u32)member, 0x41, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) * (f32)(dB + GetEffect(member, 0x41, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + GetEffect(member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6404,21 +6221,21 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
         }
 
         // row D: 0x11 + RoundHalfAway0 -> panes 0x40/0x48
         {
-            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e1 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL))));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e2 + getItemBox2Effect(info, (void*)(u32)member, 0x11, arg3))));
+            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e1 + GetEffect(member, 0x11, NULL))));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e2 + GetEffect(member, 0x11, arg3))));
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], nb);
+                LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6434,10 +6251,10 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
@@ -6453,34 +6270,34 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             // ---- weapon block (0x801E7300) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             E43Entry e_cur;
-            buildItemBox2CmpRecord(&e_cur, info, (void*)(u32)w0);
+            e_cur.rec = BuildCmpRecord((void*)(u32)w0);
             E43Entry c_cur = e_cur;
             E43Entry e_new;
-            buildItemBox2CmpRecord(&e_new, info, arg3);
+            e_new.rec = BuildCmpRecord(arg3);
             E43Entry c_new = e_new;
             s32 eq1 = 0;
-            if (testItemBox2Equip(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
+            if (TestEquip(member, NULL)) eq1 = GetCondStatById(member, 0x30);
             s32 eq2 = 0;
-            if (testItemBox2Equip(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
-            s32 atkA = (s32)pb + calcItemBox2Bonus1(info, member, (u16)c_cur.w04, NULL);
-            s32 atkB = (s32)nb + calcItemBox2Bonus1(info, member, (u16)c_new.w04, arg3);
-            s32 atkC = (s32)atkA + calcItemBox2Bonus2(info, member, (u16)(c_cur.w04 >> 16), NULL);
+            if (TestEquip(member, arg3)) eq2 = GetCondStatById(member, 0x30);
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + GetEffect(member, 0x1, NULL))));
+            s32 atkA = (s32)pb + CalcBonus1(member, (u16)c_cur.w04, NULL);
+            s32 atkB = (s32)nb + CalcBonus1(member, (u16)c_new.w04, arg3);
+            s32 atkC = (s32)atkA + CalcBonus2(member, (u16)(c_cur.w04 >> 16), NULL);
             s32 atkD = atkB < atkC ? atkB : atkC;
             s16 dW = (s16)(atkC - atkA);
             s16 v610, v612, v614, v644, v646, v648;
-            s32 c1 = getItemBox2Effect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x51, arg3);
+            c1 = GetEffect(member, 0x51, arg3);
             v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x54, arg3);
+            c1 = GetEffect(member, 0x54, arg3);
             v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x54, NULL);
+            c1 = GetEffect(member, 0x54, NULL);
             v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x54, NULL);
+            c1 = GetEffect(member, 0x54, NULL);
             v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
             s16 snap644 = v644;
             s16 snap646 = v646;
@@ -6497,7 +6314,7 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             }
             ml::FixStr<32> fmtBuf;
             fmtBuf.format(&lbl_eu_805063BC[0x254], atkD, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atkC);
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], fmtBuf.c_str(), 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             s16 disp1 = v610;
             s16 disp2 = v612;
             s16 disp3 = v614;
@@ -6506,14 +6323,14 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 disp2 = snap646;
                 disp3 = v648;
             }
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)disp1);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)disp2);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)disp1);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)disp2);
             ml::FixStr<32> fmtBuf2;
             fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)disp3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], fmtBuf2.c_str(), 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
             fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s32)stA->b55 + (s32)d3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], fmtBuf3.c_str(), 0);
+            SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
             // delta colors (5 rows)
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6531,8 +6348,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6550,8 +6367,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6569,8 +6386,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6588,8 +6405,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane17, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6607,46 +6424,46 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane19, &q1, &q2);
             }
         } else {
             // ---- armor block (0x801E7DA0) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             E43Entry e_cur;
-            const CItemBoxSlotFlags& e_curFlags = buildItemBox2SlotFlags(info, w0);
+            const CItemBoxSlotFlags& e_curFlags = BuildSlotFlags(w0);
             e_cur = *(const E43Entry*)&e_curFlags;
             E43Entry c_cur = e_cur;
             E43Entry e_new;
-            const CItemBoxSlotFlags& e_newFlags = buildItemBox2SlotFlags(info, (u32)arg3);
+            const CItemBoxSlotFlags& e_newFlags = BuildSlotFlags((u32)arg3);
             e_new = *(const E43Entry*)&e_newFlags;
             E43Entry c_new = e_new;
             s32 eq1 = 0;
-            if (testItemBox2Equip(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
+            if (TestEquip(member, NULL)) eq1 = GetCondStatById(member, 0x30);
             s32 eq2 = 0;
-            if (testItemBox2Equip(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
-            u16 v484 = (u16)sumItemBox2TypeCounts(info, member, (void*)(u32)w0);
-            u16 v468 = (u16)sumItemBox2TypeCounts(info, member, arg3);
+            if (TestEquip(member, arg3)) eq2 = GetCondStatById(member, 0x30);
+            u16 v484 = (u16)SumTypeCounts(member, (void*)(u32)w0);
+            u16 v468 = (u16)SumTypeCounts(member, arg3);
             // arm-type scaling of the entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
             if (arm1 == 3) {
-                s32 v = getItemBoxCondStatById(info, member, 0xD);
+                s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = getItemBoxCondStatById(info, member, 0x24);
+                v = GetCondStatById(member, 0x24);
                 if (v != 0) {
                     c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
                 }
             } else if (arm1 == 2) {
-                s32 v = getItemBoxCondStatById(info, member, 0xC);
+                s32 v = GetCondStatById(member, 0xC);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm1 == 1) {
-                s32 v = getItemBoxCondStatById(info, member, 0xB);
+                s32 v = GetCondStatById(member, 0xB);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
@@ -6654,30 +6471,30 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             }
             u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
-                s32 v = getItemBoxCondStatById(info, member, 0xD);
+                s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = getItemBoxCondStatById(info, member, 0x24);
+                v = GetCondStatById(member, 0x24);
                 if (v != 0) {
                     c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
                 }
             } else if (arm2 == 2) {
-                s32 v = getItemBoxCondStatById(info, member, 0xC);
+                s32 v = GetCondStatById(member, 0xC);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm2 == 1) {
-                s32 v = getItemBoxCondStatById(info, member, 0xB);
+                s32 v = GetCondStatById(member, 0xB);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
             // weight
-            s32 wv = getItemBoxCondStatById(info, member, 0x97);
+            s32 wv = GetCondStatById(member, 0x97);
             if (wv != 0) {
                 s32 t1 = (s32)v484 - wv;
                 if (t1 < 0) t1 = 0;
@@ -6689,20 +6506,20 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                getItemBoxCondStatById(info, member, 0x1A);
+                GetCondStatById(member, 0x1A);
             }
             // bars (armor stat pair updates)
-            s32 c1 = getItemBox2Effect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             c_new.w14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - (s16)(u16)c_cur.w04) + (c1 + c_new.w14))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - (s16)(u16)c_cur.w04) + (c1 + (s16)(u16)c_new.w04))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL);
+            c1 = GetEffect(member, 0x41, NULL);
             c_cur.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             s16 d1 = (s16)(c_new.w14 - (s16)(u16)c_cur.w14);
             s16 d2 = (s16)((s16)(u16)c_new.w04 - (s16)(u16)c_cur.w04);
-            s32 c2 = getItemBox2Effect(info, (void*)(u32)member, 0x41, arg3);
+            s32 c2 = GetEffect(member, 0x41, arg3);
             s16 b27 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq1) * (f32)((stA->s1E - (s16)v484) + c2)));
-            c2 = getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL);
+            c2 = GetEffect(member, 0x41, NULL);
             s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq2) * (f32)((stA->s1E - (s16)v468) + c2)));
             if (b27 <= 0) b27 = 1;
             if (b14 <= 0) b14 = 1;
@@ -6711,26 +6528,26 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
                 E43Entry ew;
-                buildItemBox2CmpRecord(&ew, info, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
                 E43Entry cw = ew;
-                s32 c3 = getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
+                s32 c3 = GetEffect(member, 0x1, NULL);
                 s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
-                c3 = getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
+                c3 = GetEffect(member, 0x1, NULL);
                 s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
-                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wnb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wnb + calcItemBox2Bonus1(info, member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wnb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), arg3);
+                s32 wa = (s32)wpb + CalcBonus1(member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + CalcBonus2(member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + CalcBonus1(member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 dW = (s16)(wd - wa);
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
             // numbers
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)(u16)c_new.w04);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)c_new.w14);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)b14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)(u16)c_new.w04);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)c_new.w14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // delta colors (4 rows)
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6748,8 +6565,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6767,8 +6584,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6786,8 +6603,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6805,8 +6622,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-                PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+                PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+                PaneMatSetTevColors(mSlotPane7, &q1, &q2);
             }
         }
 
@@ -6814,7 +6631,7 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
 
     // ---- equip-detail / simple path (arg5 == 0, type in {2,4,5,6,7,8}) ----
     if (arg5 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
-        if (type != 2 && testItemBox2BdatFlag(info, member, (u32)arg3)) {
+        if (type != 2 && TestBdatFlag(member, (u32)arg3)) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             switch (type) {
@@ -6827,53 +6644,53 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             E43Entry e_cur;
-            const CItemBoxSlotFlags& e_curFlags = buildItemBox2SlotFlags(info, w0);
+            const CItemBoxSlotFlags& e_curFlags = BuildSlotFlags(w0);
             e_cur = *(const E43Entry*)&e_curFlags;
             E43Entry c_cur = e_cur;
             E43Entry e_new;
-            const CItemBoxSlotFlags& e_newFlags = buildItemBox2SlotFlags(info, (u32)arg3);
+            const CItemBoxSlotFlags& e_newFlags = BuildSlotFlags((u32)arg3);
             e_new = *(const E43Entry*)&e_newFlags;
             E43Entry c_new = e_new;
-            u16 v44C = (u16)sumItemBox2TypeCounts(info, member, (void*)(u32)w0);
-            u16 v430 = (u16)sumItemBox2TypeCounts(info, member, arg3);
+            u16 v44C = (u16)SumTypeCounts(member, (void*)(u32)w0);
+            u16 v430 = (u16)SumTypeCounts(member, arg3);
             s32 eq1 = 0;
-            if (testItemBox2Equip(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
+            if (TestEquip(member, NULL)) eq1 = GetCondStatById(member, 0x30);
             s32 eq2 = 0;
-            if (testItemBox2Equip(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
-            getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL);
-            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, arg3))));
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[8], (s16)bA);
-            getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
-            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[4], (s16)bB);
-            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL)));
-            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBox2Effect(info, (void*)(u32)member, 0x11, arg3)));
+            if (TestEquip(member, arg3)) eq2 = GetCondStatById(member, 0x30);
+            GetEffect(member, 0x21, NULL);
+            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, (s16)bA);
+            GetEffect(member, 0x1, NULL);
+            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, (s16)bB);
+            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + GetEffect(member, 0x11, NULL)));
+            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + GetEffect(member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)statValue);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[0], nb);
+                LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[2], nb);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
             if (arm1 == 3) {
-                s32 v = getItemBoxCondStatById(info, member, 0xD);
+                s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = getItemBoxCondStatById(info, member, 0x24);
+                v = GetCondStatById(member, 0x24);
                 if (v != 0) {
                     c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
                 }
             } else if (arm1 == 2) {
-                s32 v = getItemBoxCondStatById(info, member, 0xC);
+                s32 v = GetCondStatById(member, 0xC);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm1 == 1) {
-                s32 v = getItemBoxCondStatById(info, member, 0xB);
+                s32 v = GetCondStatById(member, 0xB);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
@@ -6881,30 +6698,30 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             }
             u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
-                s32 v = getItemBoxCondStatById(info, member, 0xD);
+                s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = getItemBoxCondStatById(info, member, 0x24);
+                v = GetCondStatById(member, 0x24);
                 if (v != 0) {
                     c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
                 }
             } else if (arm2 == 2) {
-                s32 v = getItemBoxCondStatById(info, member, 0xC);
+                s32 v = GetCondStatById(member, 0xC);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm2 == 1) {
-                s32 v = getItemBoxCondStatById(info, member, 0xB);
+                s32 v = GetCondStatById(member, 0xB);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
             // weight
-            s32 wv = getItemBoxCondStatById(info, member, 0x97);
+            s32 wv = GetCondStatById(member, 0x97);
             if (wv != 0) {
                 s32 t1 = (s32)v44C - wv;
                 if (t1 < 0) t1 = 0;
@@ -6916,66 +6733,66 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                getItemBoxCondStatById(info, member, 0x1A);
+                GetCondStatById(member, 0x1A);
             }
             // bars (armor stat pair updates)
-            s32 c1 = getItemBox2Effect(info, (void*)(u32)member, 0x31, arg3);
+            s32 c1 = GetEffect(member, 0x31, arg3);
             c_new.w14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - (s16)(u16)c_cur.w04) + (c1 + c_new.w14))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x51, arg3);
+            c1 = GetEffect(member, 0x51, arg3);
             c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x51, NULL);
+            c1 = GetEffect(member, 0x51, NULL);
             c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - (s16)(u16)c_cur.w04) + (c1 + (s16)(u16)c_new.w04))));
-            c1 = getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL);
+            c1 = GetEffect(member, 0x41, NULL);
             c_cur.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
-            s32 c2 = getItemBox2Effect(info, (void*)(u32)member, 0x41, arg3);
+            s32 c2 = GetEffect(member, 0x41, arg3);
             s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq2) * (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
             // embedded weapon block
             void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
             if (item2 != NULL && *(u32*)item2 != 0) {
                 E43Entry ew;
-                buildItemBox2CmpRecord(&ew, info, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
                 E43Entry cw = ew;
-                getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
-                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
-                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wpb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wpb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), arg3);
+                GetEffect(member, 0x1, NULL);
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
+                s32 wa = (s32)wpb + CalcBonus1(member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + CalcBonus1(member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
-                SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
             // numbers
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[12], (s16)(u16)c_new.w04);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[14], (s16)c_new.w14);
-            LayoutSetTextBoxInt((nw4r::lyt::Layout*)info->state.slotPanes[6], (s16)b14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)(u16)c_new.w04);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)c_new.w14);
+            LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
             E43Quad q1 = *(E43Quad*)&lbl_eu_806645A8;
             E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
             E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
             E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
-            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+            PaneMatSetTevColors(mSlotPane0, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane2, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane3, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+            PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+            PaneMatSetTevColors(mSlotPane19, &q1, &q2);
 
         }
         // ---- simple path ----
@@ -6983,34 +6800,34 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
         E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
         E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
         E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[0], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[2], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[3], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[4], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[6], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[8], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[10], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[12], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[14], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[16], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)info->state.slotPanes[18], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
-        PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane1, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane4, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane5, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane6, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane7, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane8, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane9, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane10, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane11, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane12, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane13, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane14, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane15, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane16, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane17, &q1, &q2);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(mSlotPane18, &q3, &q4);
+        PaneMatSetTevColors(mSlotPane19, &q1, &q2);
     }
 
     // ---- common tail: two 8-entry item lists ----
@@ -7278,14 +7095,14 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
         }
 
         // per-slot render
@@ -7299,48 +7116,48 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf1, true);
-            nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf2, true);
+            nw4r::lyt::Pane* pane1 = mpLayout->GetRootPane()->FindPaneByName(buf1, true);
+            nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(buf2, true);
             CItemBoxQuad quad;
-            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10)));
+            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, mpLayout->GetRootPane());
             // slot index transposition: idx = (s32)(0.5f * i) + ((i & 1) ? 4 : 0)
             s32 idx = (s32)(0.5f * (f32)i) + ((i & 1) ? 4 : 0);
             if (idx < 12) {
-                *(s16*)((u8*)info + 0xB0 + idx * 2) = id;
+                *(s16*)&mPage.mItemIds[idx] = id;
             }
             if (idx < 12) {
-                *(u8*)((u8*)info + 0x158 + idx) = 3;
+                mPage.mBytesA8[idx] = 3;
             }
             if (idx < 12) {
-                *(u8*)((u8*)info + 0x164 + idx) = flag;
+                mPage.mBytesB4[idx] = flag;
             }
             if (idx < 12) {
-                *(s16*)((u8*)info + 0x170 + idx * 2) = (s16)val;
+                mPage.mValues[idx] = (s16)val;
             }
             if (idx < 12) {
                 f32 v0 = ((f32*)&quad)[0];
                 f32 v1 = ((f32*)&quad)[1];
                 f32 v2 = ((f32*)&quad)[2];
                 f32 dst[3] = {v0, v1, v2};
-                copyVEC3((void*)((u8*)info + 0xC8 + idx * 12), (void*)dst);
+                copyVEC3(&mPage.mPos[idx], (void*)dst);
             }
-            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
             if (val == 0) {
-                LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
             } else {
                 u8 rvs = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x3], id);
                 if (rvs != 0 && (rvs == 0xFF || rvs == 0xFE)) {
                     ml::FixStr<32> fmtBuf;
                     fmtBuf.format(&lbl_eu_805063BC[0x13E], (s32)val, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
-                    LayoutSetTextBoxFmtValue(info->state.layout, buf2, fmtBuf.c_str(), 0);
+                    LayoutSetTextBoxFmtValue(mpLayout, buf2, fmtBuf.c_str(), 0);
                 } else {
                     ml::FixStr<32> fmtBuf;
                     fmtBuf.format(&lbl_eu_805063BC[0x422], (s32)val);
-                    LayoutSetTextBoxFmtValue(info->state.layout, buf2, fmtBuf.c_str(), 0);
+                    LayoutSetTextBoxFmtValue(mpLayout, buf2, fmtBuf.c_str(), 0);
                 }
             }
             if (arg5 == 0) {
-                LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
@@ -7380,21 +7197,21 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
 
 #pragma push
 #pragma auto_inline off
-s32 calcItemBox2Bonus1(void* a, u16 b, s32 arg2, void* d) {
+s32 CItemBoxInfo2::CalcBonus1(u16 b, s32 arg2, void* d) {
     // Single-expression sum; builtin s32->f32 cast emits MWCC's
     // 0x4330/xoris double-trick.
     // b is the u16 character id: the u16 param fixes the param-save order.
-    s32 prod = arg2 * (s32)(getItemBox2Effect(a, (void*)(u32)b, 0x52, d) + getItemBoxCondStat2D(a, (void*)(u32)b) + 0x64);
+    s32 prod = arg2 * (s32)(GetEffect(b, 0x52, d) + GetCondStat2D((void*)(u32)b) + 0x64);
     return (s32)(0.01f * (f32)prod);
 }
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
-s32 calcItemBox2Bonus2(void* a, u16 b, s32 arg2, void* d) {
+s32 CItemBoxInfo2::CalcBonus2(u16 b, s32 arg2, void* d) {
     // Standalone SDA (not sdata2_ItemBox members) so lfd/lfs use r0@sda21
     // instead of li r3,0 / lfs 56(r3); u16 b gives retail or r28,r4 first.
-    s32 prod = (s32)(getItemBox2Effect(a, (void*)(u32)b, 0x53, d) + getItemBoxCondStat2D(a, (void*)(u32)b) + 0x64) * arg2;
+    s32 prod = (s32)(GetEffect(b, 0x53, d) + GetCondStat2D((void*)(u32)b) + 0x64) * arg2;
     return (s32)(0.01f * (f32)prod);
 }
 #pragma pop
@@ -7408,8 +7225,8 @@ s32 calcItemBox2Bonus2(void* a, u16 b, s32 arg2, void* d) {
 // name v = BdatGetU16Direct(v1, buf, v2) resolves a category (BdatGetItemId)
 // matching the requested item id, and the name-count byte is added. The
 // id==-1 slot only runs the name lookup. Result is clamped by the table cap.
-u32 getItemBox2Effect(void* a, void* b, u32 c, void* d) {
-    void* lookup = CtrlObjectParam_GetCharEntry((u32)b);
+u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
+    void* lookup = CtrlObjectParam_GetCharEntry(b);
     u32 nameObj = (u32)((char* (*)(void*))LookupItemTypeTable)(d);
     // u16 local: MWCC saves the raw callee return and re-extracts per
     // argument site (see testItemBox2Equip note).
@@ -7499,7 +7316,7 @@ u32 getItemBox2Effect(void* a, void* b, u32 c, void* d) {
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-__declspec(noinline) u32 testItemBox2BdatFlag(CItemBoxInfo2* dummy, u32 arg1, u32 arg2) {
+__declspec(noinline) u32 CItemBoxInfo2::TestBdatFlag(u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -7509,7 +7326,7 @@ __declspec(noinline) u32 testItemBox2BdatFlag(CItemBoxInfo2* dummy, u32 arg1, u3
 #pragma pop
 #pragma push
 #pragma auto_inline off
-u32 sumItemBox2TypeCounts(void* global, u16 arg2, void* arg3) {
+u32 CItemBoxInfo2::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : (u16)0;
@@ -7543,7 +7360,7 @@ u32 sumItemBox2TypeCounts(void* global, u16 arg2, void* arg3) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
-__declspec(noinline) bool testItemBox2Equip(void*, u16 b, void* c) {
+__declspec(noinline) bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
     // Validates every equip slot against candidate item c before an exchange:
     // for each of the six slots either the indexed item names must still
     // resolve (when the slot holds the equipped item) or no indexed entry may
@@ -7616,69 +7433,69 @@ __declspec(noinline) bool testItemBox2Equip(void*, u16 b, void* c) {
 #pragma push
 #pragma optimize_for_size on
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
-    if (state.fileHandle1 == file->mFileHandle) {
-        state.memRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x18000,
+    if (mFileHandle1 == file->mFileHandle) {
+        mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x18000,
                                       &lbl_eu_805063BC[0x826], 1);
-        Class_8045F858 host(&state.memRegion1);
-        u8* data = (u8*)state.fileHandle1->getData();
+        Class_8045F858 host(&mRegion1);
+        u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
-        state.arcResourceAccessor = acc;
+        mArcResAcc = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        buildLayout(&state.layout, acc, &lbl_eu_805063BC[0x535]);
-        bindLayoutAnimTransform(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
-        bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
-        nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
+        buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
+        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
+        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane();
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
         char* text = CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x25b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x267], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x273], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x286], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x292], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x29e], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x45a], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x466], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4a7], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x57f], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x58b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x597], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5a3], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5af], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5be], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5cd], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x143], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4e3], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4f0], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5dc], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5e9], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5f6], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x603], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x610], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x61d], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x62a], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x637], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x644], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x651], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x65e], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x66b], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x678], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x685], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x692], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x69f], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6ac], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6b9], (u32)text);
+        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6c6], (u32)text);
 
-        state.layout->SetAnimationEnable(state.animTransform2, false);
-        state.layout->SetAnimationEnable(state.animTransform1, true);
-        state.layout->Animate(0);
+        mpLayout->SetAnimationEnable(mAnimInfoIn, false);
+        mpLayout->SetAnimationEnable(mAnimIn, true);
+        mpLayout->Animate(0);
 
         char* base = lbl_eu_805063BC;
-        u8 mode = *(u8*)((u8*)this + 0x9A);
+        u8 mode = mKind;
 
         // Mode-gated pane clears (retail: mode!=1&&mode!=2 / mode!=3).
         if (mode != 1 && mode != 2) {
@@ -7690,7 +7507,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         // Fixed label texts: each pane gets string-table entry [len].
         #define SEED_ITEMBOX2_LABEL(off, len) \
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[off], \
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[off], \
                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], len), 0)
         SEED_ITEMBOX2_LABEL(0x2b6, 10);
         SEED_ITEMBOX2_LABEL(0x2d7, 13);
@@ -7722,10 +7539,10 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
             ml::FixStr<32> caption(true);
             caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(),
                            BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3));
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x143],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
                           caption.c_str(), 0);
         } else if (mode == 3) {
-            u16 itemId = *(u16*)((u8*)this + 0xAC);
+            u16 itemId = mMode;
             u8 kind = (u8)MapSexFlagGroup(itemId);
             char* s;
             if (kind == 0) {
@@ -7733,16 +7550,16 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
             } else {
                 s = BdatTouchStringCell(&lbl_eu_805063BC[0x7a2], &lbl_eu_805063BC[0x139], kind + 0x1F);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7ad], s, 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7ad], s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
                 &lbl_eu_80664098, &lbl_eu_805063BC[0x139], itemId);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7b9],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7b9],
                           GetBdatNameByNumId(name), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7c5],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7c5],
                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2d), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7d2],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7d2],
                           &lbl_eu_805063BC[0x2aa], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x7e0],
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7e0],
                           &lbl_eu_805063BC[0x2aa], 0);
         }
 
@@ -7803,7 +7620,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         *(s16*)((char*)&lbl_eu_806645C8 + 6) = *(s16*)((char*)&lbl_eu_806645B8 + 6);
         *(s16*)((char*)&lbl_eu_806645D0 + 6) = *(s16*)((char*)&lbl_eu_806645C0 + 6);
 
-        stampItemBox2SlotTex(this);
+        StampSlotTex();
 
         // Pane clears for the selection view.
         setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xc2], true), 0);
@@ -7819,44 +7636,44 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         // Cache the 20 slot panes at +0x40..+0x8C for the renderer (retail
         // keeps the layout's root pane live in r28 across all lookups).
-        state.slotPanes[0] = root->FindPaneByName(base + 0x5dc, true);
-        state.slotPanes[1] = root->FindPaneByName(base + 0x736, true);
-        state.slotPanes[2] = root->FindPaneByName(base + 0x5e9, true);
-        state.slotPanes[3] = root->FindPaneByName(base + 0x6c6, true);
-        state.slotPanes[4] = root->FindPaneByName(base + 0x5f6, true);
-        state.slotPanes[5] = root->FindPaneByName(base + 0x742, true);
-        state.slotPanes[6] = root->FindPaneByName(base + 0x603, true);
-        state.slotPanes[7] = root->FindPaneByName(base + 0x75a, true);
-        state.slotPanes[8] = root->FindPaneByName(base + 0x610, true);
-        state.slotPanes[9] = root->FindPaneByName(base + 0x772, true);
-        state.slotPanes[10] = root->FindPaneByName(base + 0x61d, true);
-        state.slotPanes[11] = root->FindPaneByName(base + 0x74e, true);
-        state.slotPanes[12] = root->FindPaneByName(base + 0x637, true);
-        state.slotPanes[13] = root->FindPaneByName(base + 0x77e, true);
-        state.slotPanes[14] = root->FindPaneByName(base + 0x644, true);
-        state.slotPanes[15] = root->FindPaneByName(base + 0x78a, true);
-        state.slotPanes[16] = root->FindPaneByName(base + 0x62a, true);
-        state.slotPanes[17] = root->FindPaneByName(base + 0x766, true);
-        state.slotPanes[18] = root->FindPaneByName(base + 0x651, true);
-        state.slotPanes[19] = root->FindPaneByName(base + 0x796, true);
+        mSlotPane0 = root->FindPaneByName(base + 0x5dc, true);
+        mSlotPane1 = root->FindPaneByName(base + 0x736, true);
+        mSlotPane2 = root->FindPaneByName(base + 0x5e9, true);
+        mSlotPane3 = root->FindPaneByName(base + 0x6c6, true);
+        mSlotPane4 = root->FindPaneByName(base + 0x5f6, true);
+        mSlotPane5 = root->FindPaneByName(base + 0x742, true);
+        mSlotPane6 = root->FindPaneByName(base + 0x603, true);
+        mSlotPane7 = root->FindPaneByName(base + 0x75a, true);
+        mSlotPane8 = root->FindPaneByName(base + 0x610, true);
+        mSlotPane9 = root->FindPaneByName(base + 0x772, true);
+        mSlotPane10 = root->FindPaneByName(base + 0x61d, true);
+        mSlotPane11 = root->FindPaneByName(base + 0x74e, true);
+        mSlotPane12 = root->FindPaneByName(base + 0x637, true);
+        mSlotPane13 = root->FindPaneByName(base + 0x77e, true);
+        mSlotPane14 = root->FindPaneByName(base + 0x644, true);
+        mSlotPane15 = root->FindPaneByName(base + 0x78a, true);
+        mSlotPane16 = root->FindPaneByName(base + 0x62a, true);
+        mSlotPane17 = root->FindPaneByName(base + 0x766, true);
+        mSlotPane18 = root->FindPaneByName(base + 0x651, true);
+        mSlotPane19 = root->FindPaneByName(base + 0x796, true);
 
-        activateItemBox2(this);
-        state.fileHandle1 = 0;
-        state.memRegion1.validateHeap();
+        Activate();
+        mFileHandle1 = 0;
+        mRegion1.validateHeap();
         return true;
     }
-    if (state.fileHandle2 == file->mFileHandle) {
-        state.memRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
+    if (mFileHandle2 == file->mFileHandle) {
+        mRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
                                       &lbl_eu_805063BC[0x834], 1);
-        Class_8045F858 host(&state.memRegion2);
-        u8* data = (u8*)state.fileHandle2->getData();
+        Class_8045F858 host(&mRegion2);
+        u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
-        state.resource = acc2;
+        mTexArcResAcc = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
-        activateItemBox2(this);
-        state.fileHandle2 = 0;
-        state.memRegion2.validateHeap();
+        Activate();
+        mFileHandle2 = 0;
+        mRegion2.validateHeap();
         return true;
     }
     return false;
@@ -7899,12 +7716,12 @@ void sinit_801EABC4() {
 // the stmw frame and keeps the mtctr table-copy loop (size-optimized).
 #pragma push
 #pragma optimize_for_size on
-char* formatItemBoxName(void* item_data, u8 index) {
+char* CItemBoxPage::GetItemName(u8 index) {
     if (index >= 12) return NULL;
-    u16 item_id = *(u16*)((u8*)item_data + index * 2);
+    u16 item_id = mItemIds[index];
     if (item_id == 0) return NULL;
-    u8 category = *(u8*)((u8*)item_data + index + 0xB4);
-    s16 val = *(s16*)((u8*)item_data + index * 2 + 0xC0);
+    u8 category = mBytesB4[index];
+    s16 val = mValues[index];
     char tailBuf[0x40];
     char tmp[0x40];
     char buf[0x40];
@@ -7912,7 +7729,7 @@ char* formatItemBoxName(void* item_data, u8 index) {
     sprintf(buf, base, val);
     u8 fmt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 3, item_id);
     char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, base + 0xC, item_id);
-    char* out = (char*)item_data + 0xD9;
+    char* out = mName;
     sprintf(out, base + 0x18, name);
     u8 is_jp = 1;
     u8 lang = getLanguage__9CDeviceSCFv();
@@ -7988,10 +7805,10 @@ char* formatItemBoxName(void* item_data, u8 index) {
 // (optimize_for_size prologue merge).
 #pragma push
 #pragma optimize_for_size on
-void hideItemBoxPanes(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
+void CItemBoxInfo::HidePanes(u16 arg2) {
     char* base = (char*)&lbl_eu_805063BC;
 #define SET_PANE(_off, _val) \
-    setPaneVisible(((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + _off, true), _val)
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName(base + _off, true), _val)
     SET_PANE(0xc2, 0x0);
     SET_PANE(0xce, 0x0);
     SET_PANE(0xda, 0x0);
@@ -8001,8 +7818,8 @@ void hideItemBoxPanes(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     SET_PANE(0x10b, 0x0);
     SET_PANE(0x113, 0x0);
     SET_PANE(0x121, 0x0);
-    if (info->state.field_9A == 4) {
-        if (info->state.field_AE == 0) {
+    if (mKind == 4) {
+        if (mFlagAE == 0) {
             SET_PANE(0xfe, 0x1);
             SET_PANE(0x121, 0x1);
         } else {
@@ -8088,93 +7905,5 @@ extern "C" __declspec(noinline) void __as__11_GXColorS10FRC11_GXColorS10(void* d
     d[3] = s[3];
 }
 #pragma pop
-// Typified wave7: retail .data tables. The TU's switches in
-// renderItemBoxTripleRows/801D8E34/801E43BC/801D4260 are relowered above to
-// if-chains (retail compiles them as compares), so the only native
-// .data jumptable left is renderItemBoxDetail's keeper (anchored at that
-// function, first in the section); MWCC 8-aligns A90 over the
-// retail gap word. Own-TU OnFileEvent slots use dummy-(int) decls
-// (CNBanner/CMenuEnemyState recipe: same-signature member decls are
-// MWCC 10322 poison); RTTI uses an UNDEF stand-in (zero bytes).
-// The typeinfo object is declared inside a namespace: at global scope MWCC
-// 10322 ("illegal name overloading") rejects the __RTTI__* spelling in this TU.
-// extern "C" names are not mangled, so the tables below still reference
-// __RTTI__10IWorkEvent exactly (the same workaround as CView.cpp).
-namespace RTTIExterns {
-extern "C" const void* __RTTI__10IWorkEvent[];
-}
-extern "C" {
-extern void WorkEvent1__10IWorkEventFPvPCc();
-extern void WorkEvent3__10IWorkEventFPv();
-extern void WorkEvent4__10IWorkEventFv();
-extern void OnPauseTrigger__10IWorkEventFb();
-extern void WorkEvent6__10IWorkEventFv();
-extern void WorkEvent7__10IWorkEventFv();
-extern void WorkEvent8__10IWorkEventFv();
-extern void WorkEvent9__10IWorkEventFv();
-extern void WorkEvent10__10IWorkEventFv();
-extern void WorkEvent11__10IWorkEventFv();
-extern void WorkEvent12__10IWorkEventFv();
-extern void WorkEvent13__10IWorkEventFv();
-extern void WorkEvent14__10IWorkEventFv();
-extern void WorkEvent15__10IWorkEventFv();
-extern void WorkEvent16__10IWorkEventFv();
-extern void WorkEvent17__10IWorkEventFv();
-extern void WorkEvent18__10IWorkEventFv();
-extern void WorkEvent19__10IWorkEventFv();
-extern void WorkEvent20__10IWorkEventFv();
-extern void WorkEvent21__10IWorkEventFv();
-extern void WorkEvent22__10IWorkEventFv();
-extern void WorkEvent23__10IWorkEventFv();
-extern void WorkEvent24__10IWorkEventFv();
-extern void WorkEvent25__10IWorkEventFv();
-extern void WorkEvent26__10IWorkEventFv();
-extern void WorkEvent27__10IWorkEventFv();
-extern void WorkEvent28__10IWorkEventFv();
-extern void WorkEvent29__10IWorkEventFv();
-extern void WorkEvent30__10IWorkEventFv();
-extern void WorkEvent31__10IWorkEventFv();
-extern void OnFileEvent__13CItemBoxInfo2FP10CEventFile(int);
-extern void OnFileEvent__12CItemBoxInfoFP10CEventFile(int);
 
-// .data 0x88: CItemBoxInfo2 vtable (RTTI + dtor + IWorkEvent slots).
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
-void* lbl_eu_80534A90[34] = {
-    (void*)__RTTI__13CItemBoxInfo2, 0, (void*)__dt__13CItemBoxInfo2Fv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0x28+0
-    (void*)OnFileEvent__13CItemBoxInfo2FP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0x28+10
-    (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0x28+20
-    (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0x28+30
-    (void*)WorkEvent14__10IWorkEventFv, (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv, (void*)WorkEvent17__10IWorkEventFv, // +0x28+40
-    (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0x28+50
-    (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0x28+60
-    (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0x28+70
-    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, // +0x28+80
-};
-
-// .data 0x10: RTTI descriptor + pad.
-__declspec(section ".data") __attribute__((used))
-const void* lbl_eu_80534B18[4] = {
-    RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
-};
-
-// .data 0x88: CItemBoxInfo vtable.
-__declspec(section ".data") __attribute__((used))
-void* lbl_eu_80534B28[34] = {
-    (void*)__RTTI__12CItemBoxInfo, 0, (void*)__dt__12CItemBoxInfoFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xC0+0
-    (void*)OnFileEvent__12CItemBoxInfoFP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0xC0+10
-    (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0xC0+20
-    (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0xC0+30
-    (void*)WorkEvent14__10IWorkEventFv, (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv, (void*)WorkEvent17__10IWorkEventFv, // +0xC0+40
-    (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0xC0+50
-    (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xC0+60
-    (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xC0+70
-    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, // +0xC0+80
-};
-
-// .data 0x10: RTTI descriptor + pad.
-__declspec(section ".data") __attribute__((used))
-const void* lbl_eu_80534BB0[4] = {
-    RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0
-};
-} // extern "C"
 

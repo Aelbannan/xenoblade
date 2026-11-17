@@ -67,9 +67,9 @@ struct CREvtItemModelView {
 namespace cf {
 
 CREvtModel::CREvtModel(void* pData, int kind)
-    : CREvtObj(3), mField14(kind), mPtr1C(pData), mModel(nullptr), mData(nullptr),
+    : CREvtObj(3), mField14(kind), mFlags(0), mPtr1C(pData), mModel(nullptr), mData(nullptr),
       mPtr28(nullptr), mField2C(0), mField30(0), mField34(0) {
-    mFlags = 0x8;
+    setFlag(0x8);
 }
 
 CREvtModel::~CREvtModel() {
@@ -115,10 +115,10 @@ void CREvtModel::vfunc_1C() {
         CREvtModelData* data = static_cast<CREvtModelData*>(mPtr1C);
         if (data->mToggleFrame[mField34] != 0 &&
             EvtSeqGetCounter104() == static_cast<CREvtModelData*>(mPtr1C)->mToggleFrame[mField34]) {
-            if (!(mFlags & 0x400)) {
-                mFlags |= 0x400;
+            if (!isFlag(0x400)) {
+                setFlag(0x400);
             } else {
-                mFlags &= ~0x400;
+                clrFlag(0x400);
             }
             mField34++;
         }
@@ -290,12 +290,4 @@ int CREvtModel::vfunc_20() {
 
 } // namespace cf
 
-// Retail .sdata of this split starts with cf::CfMapEffectManager's type_info
-// (its name string is in CfMapEffectManager's .rodata). CfMapEffectManager is
-// not a polymorphic class in the decomp yet, so the record stays hand-built
-// here, in its retail position.
-extern "C" char lbl_eu_80503230[];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* __RTTI__Q22cf18CfMapEffectManager[2] = {
-    lbl_eu_80503230, 0
-};
 

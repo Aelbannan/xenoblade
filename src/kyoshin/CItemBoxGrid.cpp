@@ -9,6 +9,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/CNumSelect.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CSortMenu.hpp"
 #include <new>
 #include "kyoshin/CUIWindowManagerApi.hpp"
@@ -2588,7 +2590,7 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     // TODO: real member construction once this is CItemBoxGrid::CItemBoxGrid;
     // placement new adds a null check retail does not have.
     new (&((CibgOuterSlots*)p)->mSortMenu) CSortMenu;
-    __ct__CItemBoxInfo(p + 0x1d8, 0, 0);
+    __ct__12CItemBoxInfoFUcUs(p + 0x1d8, 0, 0);
     __ct__CNumSelect(p + 0x3e4, 1);
     __ct__CItemBoxGridSubMenu(p + 0x418);
     __ct__CExchangeWin(p + 0x440);
@@ -2628,9 +2630,9 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     int modeId = 0;
     if (mode == 1) modeId = 1;
     else if (mode == 2) modeId = 3;
-    __ct__CItemBoxInfo(tmpInfo, modeId, *(u16*)(p + 0x52a));
+    __ct__12CItemBoxInfoFUcUs(tmpInfo, modeId, *(u16*)(p + 0x52a));
     *(CibgInfoMember*)(p + 0x1dc) = *(CibgInfoMember*)(tmpInfo + 4);
-    __dt__12CItemBoxInfoFv(tmpInfo, -1);
+    ((CItemBoxInfo*)tmpInfo)->CItemBoxInfo::~CItemBoxInfo();
 
     // num-select temp
     __ct__CNumSelect(tmpNum, 1);
@@ -2706,7 +2708,7 @@ __dt__11CPresentWinFv(((CibgOuterSlots*)self)->m468, -1);
 __dt__12CExchangeWinFv(((CibgOuterSlots*)self)->m440, -1);
 __dt__19CItemBoxGridSubMenuFv(((CibgOuterSlots*)self)->m418, -1);
 __dt__10CNumSelectFv(((CibgOuterSlots*)self)->m3E4, -1);
-__dt__12CItemBoxInfoFv(((CibgOuterSlots*)self)->m1D8, -1);
+((CItemBoxInfo*)((CibgOuterSlots*)self)->m1D8)->CItemBoxInfo::~CItemBoxInfo();
 ((CibgOuterSlots*)self)->mSortMenu.CSortMenu::~CSortMenu();
 __dt__6CCur11Fv(((CibgOuterSlots*)self)->mD0, -1);
 __dt__6CCur16Fv(((CibgOuterSlots*)self)->mB8, -1);
@@ -2758,8 +2760,8 @@ extern "C" void LoadItemBoxFiles(void* self, int reserved) {
     }
 
     ((CSortMenu*)(p + 0xe8))->Init();
-    loadItemBoxFiles(p + 0x1d8);
-    NumSel_LoadArchive_AE8C(p + 0x3e4);
+    ((CItemBoxInfo*)(p + 0x1d8))->LoadFiles();
+    reinterpret_cast<CNumSelect*>(p + 0x3e4)->LoadFiles();
 
     if (((CItemBoxGridHeadView*)p)->field_527 == 2) {
         ExWin_LoadFile(p + 0x440);
@@ -2798,7 +2800,7 @@ AdvanceCloseAnim((CItemBoxGrid*)self);
             FinishCloseAnim(self);
             break;
         case 6:
-            if (NumSel_GetField2E_B028(p + 0x3e4)) {
+            if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
                 ((CItemBoxGridHeadView*)p)->field_58 = 0x19;
             }
             break;
@@ -2812,12 +2814,12 @@ ShowSubMenuCur((CItemBoxGrid*)self);
             DispatchSubmenuConfirm(self);
             break;
         case 12:
-            if (NumSel_GetField2E_B028(p + 0x3e4)) {
+            if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
                 ((CItemBoxGridHeadView*)p)->field_58 = 0xA;
             }
             break;
         case 14:
-            if (NumSel_GetField2E_B028(p + 0x3e4)) {
+            if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
                 ((CItemBoxGridHeadView*)p)->field_58 = 0x3;
             }
             break;
@@ -2860,8 +2862,8 @@ FinishSysWin((CItemBoxGrid*)self);
     Cur_Update(p + 0xb8);
     Cur_Update(p + 0xd0);
     ((CSortMenu*)(p + 0xe8))->Move();
-    updateItemBoxAnims(p + 0x1d8);
-    NumSel_DispatchState_AED4(p + 0x3e4);
+    ((CItemBoxInfo*)(p + 0x1d8))->UpdateAnims();
+    reinterpret_cast<CNumSelect*>(p + 0x3e4)->UpdateStates();
     GridSubMenu_Move(p + 0x418);
     ExWin_TickUpdate(p + 0x440);
     updatePresentWin(p + 0x468);
@@ -2877,7 +2879,7 @@ extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
     if (!p[0x54]) return;
     if (!((CItemBoxGridHeadView*)p)->field_58) return;
 
-    renderItemBox(p + 0x1d8);
+    ((CItemBoxInfo*)(p + 0x1d8))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(((CItemBoxGridHeadView*)p)->field_44, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 
     u8 r = p[0x2d4f];
@@ -2896,7 +2898,7 @@ extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
     Cur_DrawLayout(p + 0x70, (void*)drawInfo);
     Cur_DrawLayout(p + 0xa0, (void*)drawInfo);
     Cur_DrawLayout(p + 0xb8, (void*)drawInfo);
-    NumSel_DrawLayout_AF7C(p + 0x3e4, (void*)drawInfo);
+    reinterpret_cast<CNumSelect*>(p + 0x3e4)->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
 }
 
 // Teardown: release the CBdat banners, file handles, heap block, layout
@@ -2953,8 +2955,8 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
     ((CBaseCur*)(p + 0xd0))->cleanup();
 
     ((CSortMenu*)(p + 0xe8))->Term();
-    closeItemBox1(p + 0x1d8);
-    NumSel_Teardown_AF9C(p + 0x3e4);
+    ((CItemBoxInfo*)(p + 0x1d8))->UnloadFiles();
+    reinterpret_cast<CNumSelect*>(p + 0x3e4)->UnloadFiles();
     GridSubMenu_TermLayout(p + 0x418);
     ExWin_Teardown(p + 0x440);
     termPresentWin(p + 0x468);
@@ -2966,8 +2968,8 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
 extern "C" u32 IsItemBoxReady(void* self) {
     u8* p = (u8*)self;
     if (!((CSortMenu*)(p + 0xe8))->IsReady()) return 0;
-    if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
-    if (!NumSel_GetField2D_B018(p + 0x3e4)) return 0;
+    if (!((CItemBoxInfo*)(p + 0x1d8))->GetState()) return 0;
+    if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsLoaded()) return 0;
     if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
     if (!CSysWin_isReady(p + 0x4ac)) return 0;
     if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
@@ -2998,7 +3000,7 @@ u8 CItemBoxGrid::GetField549() { return reinterpret_cast<CItemBoxGridFull*>(this
 // Check if any sub-system is active.
 extern "C" u32 IsSubWinActive(void* self) {
     u8* p = (u8*)self;
-    if (NumSel_GetActiveFlag_B020(p + 0x3e4)) return 1;
+    if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsOpen()) return 1;
     if (GridSubMenu_IsVisibleFlag(p + 0x418)) return 1;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
     if (isPresentActive(p + 0x468)) return 1;
@@ -3016,20 +3018,20 @@ void InitItemDisplay(void* self) {
     p[0x61] = 0;
     RefreshCategoryTabs(self);
     func_801D0BD8(self);
-    startItemBoxOpen(p + 0x1D8);
-    hideItemBoxPanes(p + 0x1D8, (p + (s8)p[0x6F])[0x62]);
+    ((CItemBoxInfo*)(p + 0x1D8))->Open();
+    ((CItemBoxInfo*)(p + 0x1D8))->HidePanes((p + (s8)p[0x6F])[0x62]);
     u8 idx0 = p[0x525];
     u8 idx1 = p[0x524];
     u32 entry_idx = (idx1 + idx0 * 10) & 0xFF;
     u8* sub = p + 0x54C;
     item = (u32)GetCellItemPtr((CItemBoxGridFull*)sub, (u16)entry_idx);
     u32 r2 = GetCellKind((CItemBoxGridFull*)sub, (u16)entry_idx);
-    renderItemBoxByKind(p + 0x1D8, r2 & 0xFFFF, item, 1);
+    ((CItemBoxInfo*)(p + 0x1D8))->SetItem(r2 & 0xFFFF, (void*)item, 1);
     u32 v = FormatCellName(sub, entry_idx);
-    setItemBoxNamedText((void*)(p + 0x1D8), 1, (void*)v);
+    ((CItemBoxInfo*)((void*)(p + 0x1D8)))->SetNamedText(1, (char*)v);
     Cur_SetVisible(p + 0xB8, 0);
     p[0x549] = 0;
-    if (p[0x527] == 4) setItemBoxResultPane(p + 0x1D8, 1);
+    if (p[0x527] == 4) ((CItemBoxInfo*)(p + 0x1D8))->SetResultPane(1);
 }
 
 // Advance item box state.
@@ -3046,7 +3048,7 @@ extern "C" void AdvanceBoxState(void* self) {
     Cur_SetVisible(p + 0x88, 0);
     Cur_SetVisible(p + 0xd0, 0);
     Cur_SetVisible(p + 0xb8, 0);
-    advanceItemBoxState__FP12CItemBoxInfo(p + 0x1d8);
+    ((CItemBoxInfo*)(p + 0x1d8))->Close();
     if (!((CItemBoxGridHeadView*)p)->field_52C) playUISound(6);
 }
 
@@ -3150,7 +3152,7 @@ void GridMoveCursorLeft(void* self) {
     }
     if (p[0x528]) {
         if (p[0x527] == 1) {
-            if (NumSel_GetField2E_B028(p + 0x3e4)) {
+            if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
                 u8* sub = p + 0x54c;
                 u8 entry = (u8)(p[0x525] * 10 + p[0x524]);
                 u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
@@ -3160,11 +3162,11 @@ void GridMoveCursorLeft(void* self) {
                     p[0x529] += 1;
                     if ((s8)p[0x529] > (s8)count) p[0x529] = 1;
                 }
-                NumSel_ShowPaneA_B218(p + 0x3e4);
-                NumSel_SetCaptionNum_B04C((void*)(p + 0x3e4), (u32)p[0x529]);
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->CountUp();
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetCount((u32)p[0x529]);
                 u32 cost = GetCellSellPrice((CItemBoxGridFull*)sub, entry);
                 u32 total = (s8)p[0x529] * cost;
-                NumSel_FormatPicName_B064((void*)(p + 0x3e4), total);
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetTotal(total);
                 goto sound_and_return;
             }
             return;
@@ -3303,7 +3305,7 @@ void GridMoveCursorRight(void* self) {
         }
         if (p[0x528]) {
             if (p[0x527] == 1) {
-                if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
+                if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) return;
                 sub = p + 0x54c;
                 entry = (u8)(p[0x525] * 10 + p[0x524]);
                 BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3313,10 +3315,9 @@ void GridMoveCursorRight(void* self) {
                     p[0x529] = val;
                     if ((s8)val < 1) p[0x529] = (u8)count;
                 }
-                NumSel_ShowPaneB_B314(p + 0x3e4);
-                NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
-                NumSel_FormatPicName_B064(p + 0x3e4,
-                              GetCellSellPrice((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->CountDown();
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetCount(p[0x529]);
+                reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetTotal(GetCellSellPrice((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
                 goto sound_and_return2;
             } else if (p[0x527] == 2) {
                 if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
@@ -3377,7 +3378,7 @@ void GridMoveCursorDown(void* self) {
     }
     if (p[0x528]) {
         if (p[0x527] != 1) return;
-        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
+        if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) return;
         sub = p + 0x54c;
         entry = (u8)(p[0x524] + p[0x525] * 10);
         BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3389,10 +3390,10 @@ void GridMoveCursorDown(void* self) {
             p[0x529] = (u8)cnt;
             if ((s8)(u8)cnt < 1) p[0x529] = 1;
         }
-        NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
+        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetCount(p[0x529]);
         u32 v = GetCellSellPrice((CItemBoxGridFull*)sub, entry);
         s32 total = (s8)p[0x529] * v;
-        NumSel_FormatPicName_B064(p + 0x3e4, total);
+        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetTotal(total);
         playUISound(1);
         return;
     }
@@ -3462,7 +3463,7 @@ void GridMoveCursorUp(void* self) {
     }
     if (p[0x528]) {
         if (p[0x527] != 1u) return;
-        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
+        if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) return;
         entry = (u8)(p[0x524] + p[0x525] * 10);
         sub = p + 0x54c;
         BdatGetItemType(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF);
@@ -3474,9 +3475,9 @@ void GridMoveCursorUp(void* self) {
             p[0x529] = (u8)cnt;
             if ((s8)(u8)cnt > chk) p[0x529] = (u8)chk;
         }
-        NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
+        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetCount(p[0x529]);
         s32 total = (s8)p[0x529] * GetCellSellPrice((CItemBoxGridFull*)sub, entry);
-        NumSel_FormatPicName_B064(p + 0x3e4, total);
+        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetTotal(total);
         playUISound(1);
         return;
     }
@@ -3675,9 +3676,9 @@ void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
     }
     if (((CItemBoxGridHeadView*)p)->field_528) {
         if (((CItemBoxGridHeadView*)p)->field_527 == 1) {
-            if (!NumSel_GetField2E_B028(p + 0x3e4)) goto exit;
+            if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) goto exit;
             if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 0x19) goto exit;
-            NumSel_EnterState3Open_B178(p + 0x3e4);
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->Close();
             ((CItemBoxGridHeadView*)p)->field_58 = 0x1a;
         } else if (((CItemBoxGridHeadView*)p)->field_527 == 2) {
             if (!((CExchangeWin*)(p + 0x440))->getField27()) goto exit;
@@ -3912,7 +3913,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
     }
     if (mode == 1) {
         if (p[0x528]) {
-            if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
+            if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) return;
             if (*(s32*)(p + 0x58) != 0x19) return;
             sub = (CItemBoxGridFull*)(p + 0x54c);
             entry = (u8)(p[0x524] + p[0x525] * 10);
@@ -3937,12 +3938,12 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             CItemBlock_setCount((s32)((u32)CItemBlock_getPtr20E8() + add));
             DispatchItemEvt(p, item, (s8)count - (s8)p[0x529]);
             RebuildGridCat(p);
-            NumSel_EnterState3Open_B178(p + 0x3e4);
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->Close();
             *(u32*)(p + 0x58) = 0x1a;
             playUISound(0x2f);
             return;
         }
-        if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
+        if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) return;
         if (*(s32*)(p + 0x58) != 3) return;
         {
             sub = (CItemBoxGridFull*)(p + 0x54c);
@@ -3950,9 +3951,9 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             u32 kindSell = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
             if (!(kindSell & 0xFFFF)) return;
             p[0x529] = 1;
-            NumSel_SetCaption_B030(p + 0x3e4, (void*)FormatCellName(sub, entry));
-            NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
-            NumSel_FormatPicName_B064(p + 0x3e4, (s8)p[0x529] * GetCellSellPrice(sub, entry));
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetItemName((char*)FormatCellName(sub, entry));
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetCount(p[0x529]);
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetTotal((s8)p[0x529] * GetCellSellPrice(sub, entry));
             if (((int (*)(CItemBoxGridFull*, u16))GetCellFlag1)(sub, entry)) {
                 *(u32*)(p + 0x58) = 0x12;
                 u32 msg2 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
@@ -4005,11 +4006,11 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                 sell_qty:
                     u32 lv = (p + (s8)p[0x6f])[0x62];
                     if (lv - 2 <= 7) {
-                        NumSel_ApplyPaneVis_B410(p + 0x3e4, 0);
+                        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(0);
                     } else {
-                        NumSel_ApplyPaneVis_B410(p + 0x3e4, 1);
+                        reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(1);
                     }
-                    NumSel_EnterState1Close_B0D4(p + 0x3e4);
+                    reinterpret_cast<CNumSelect*>(p + 0x3e4)->Open();
                     *(u32*)(p + 0x58) = 0x18;
                     p[0x528] = 1;
                     Cur_SetVisible(p + 0x70, 0);
@@ -4123,7 +4124,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
 void SetInfoMsgId(CItemBoxGrid* self, u32 val) {
     ((CItemBoxGridHeadView*)self)->field_52E = (u16)val;
     void* res = BuildItemNameStr(val & 0xFFFF);
-    setItemBoxNamedText(((CibgOuterSlots*)self)->m1D8, 0, res);
+    ((CItemBoxInfo*)(((CibgOuterSlots*)self)->m1D8))->SetNamedText(0, (char*)res);
     RebuildGridCat(self);
 }
 
@@ -4165,7 +4166,7 @@ void TickItemBoxGrid(void* self) {
         u8 bt = (idx < 12) ? p[0x288 + idx + 0xa8] : 0;
         void* obj;
         if (bt == 3) {
-            obj = (void*)formatItemBoxName(list, idx);
+            obj = (void*)((CItemBoxPage*)(list))->GetItemName(idx);
         } else {
             obj = (void*)BdatGetPtrDirect((const void*)*(u32*)(lbl_eu_80664510), &lbl_eu_8050566C[0x321], val & 0xFFFF);
         }
@@ -4233,7 +4234,7 @@ extern "C" void SelectCatRow(void* self) {
 extern "C" u32 GetPromptState(void* self) {
     u8* p = (u8*)self;
     if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return 0;
-    if (NumSel_GetActiveFlag_B020(p + 0x3e4)) return 0;
+    if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsOpen()) return 0;
     if (GridSubMenu_IsVisibleFlag(p + 0x418)) return 0;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
     if (isPresentActive(p + 0x468)) return 0;
@@ -4322,7 +4323,7 @@ __declspec(noinline) void FinishCloseAnim(void* self) { // noinline: dispatch ta
 }
 extern "C" __declspec(noinline) void FinishNumSelect(CItemBoxGrid* self) {
     u8* p = (u8*)self;
-    if (NumSel_GetField2E_B028((void*)(p + 0x3e4))) {
+    if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
         ((CItemBoxGridHeadView*)p)->field_58 = 3;
         p[0x528] = 0;
         Cur_SetVisible((void*)(p + 0x70), 1);
@@ -4539,11 +4540,11 @@ void HandleSysWinOK(CItemBoxGrid* self) {
         u8 cat = ((CItemBoxGridHeadView*)self)->field_62[(s8)idx];
         u32 diff = cat - 2;
         if (diff <= 7) {
-            NumSel_ApplyPaneVis_B410(p + 0x3e4, 0);
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(0);
         } else {
-            NumSel_ApplyPaneVis_B410(p + 0x3e4, 1);
+            reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(1);
         }
-        NumSel_EnterState1Close_B0D4(p + 0x3e4);
+        reinterpret_cast<CNumSelect*>(p + 0x3e4)->Open();
         ((CItemBoxGridHeadView*)p)->field_58 = 0x18;
         ((CItemBoxGridHeadView*)p)->field_528 = 1;
     } else {
@@ -5021,8 +5022,8 @@ void RebuildGridCat(void* self) {
     RebuildGridUI(self);
     RefreshSelectedCellText(self);
     func_801D0BD8(self);
-    if (getItemBoxState__FP12CItemBoxInfo(p + 0x1d8) != 0) {
-        hideItemBoxPanes(p + 0x1d8, ((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F]);
+    if (((CItemBoxInfo*)(p + 0x1d8))->GetState() != 0) {
+        ((CItemBoxInfo*)(p + 0x1d8))->HidePanes(((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F]);
     }
 }
 
@@ -5151,23 +5152,23 @@ __declspec(noinline) void RefreshSelectedCellText(void* self) {
     char buf[0x30];
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x596], qty, (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 3));
     LayoutSetTextBoxText((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x59b], buf, 0);
-    if (getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) {
+    if (((CItemBoxInfo*)(p + 0x1d8))->GetState()) {
         u32 kind2;
         if ((s8)p[0x525] > -1) {
             void* obj2 = GetCellItemPtr((CItemBoxGridFull*)sub, (u16)(u8)idx);
             kind2 = GetCellKind((CItemBoxGridFull*)sub, (u16)(u8)idx) & 0xFFFF;
-            renderItemBoxByKind((void*)(p + 0x1d8), kind2, (u32)obj2, 1);
+            ((CItemBoxInfo*)((void*)(p + 0x1d8)))->SetItem(kind2, obj2, 1);
         } else {
-            renderItemBoxByKind((void*)(p + 0x1d8), 0, 0, 1);
+            ((CItemBoxInfo*)((void*)(p + 0x1d8)))->SetItem(0, 0, 1);
         }
         u32 val2;
         if ((s8)p[0x525] > -1)
             val2 = FormatCellName(sub, (u16)(u8)idx);
         else
             val2 = 0;
-        setItemBoxNamedText(p + 0x1d8, 1, (void*)val2);
+        ((CItemBoxInfo*)(p + 0x1d8))->SetNamedText(1, (char*)val2);
         // Right-to-left evaluation: retail calls C6840 first.
-        setItemCounts(p + 0x1d8, CountMarkedCells(sub) & 0xFF, GetCategoryCap(sub) & 0xFF);
+        ((CItemBoxInfo*)(p + 0x1d8))->SetCounts(CountMarkedCells(sub) & 0xFF, GetCategoryCap(sub) & 0xFF);
     }
 }
 

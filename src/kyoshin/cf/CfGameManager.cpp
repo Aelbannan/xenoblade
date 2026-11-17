@@ -4,6 +4,7 @@
 #define __ct__Q22cf17UnkClass_8018EF3CFv ct_UnkClass_8018EF3C_2arg
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 
 #include "monolib/scn/CScnTimeApi.hpp"
 #undef __ct__Q22cf17UnkClass_8018EF3CFv
@@ -123,7 +124,6 @@ extern "C" void CtrlObjectParam_WriteEquipSlotValue(void* self, unsigned long in
 extern "C" void loadBdatFileTable__Q22cf6CfBdatFv();
 extern "C" void* __ct__cf_CfTFile(void* self);
 extern "C" void* __ct__80075298(void* self);
-extern "C" void* __ct__cf_CfMapEffectManager(void* self);
 extern "C" void* __ct__80186578(void* self);
 extern "C" void* __ct__801BF76C(void* self);
 extern "C" void MenuSnd_ClearSlot_88584(void* self);
@@ -245,7 +245,7 @@ cf::CfGameManager::~CfGameManager() {
         BattleWork_InitCtrlWork(unkA8);
     }
     if (unkA0 != 0) {
-        MapFx_ReleaseHandle(unkA0);
+        unkA0->releaseHandle();
     }
     if (field_0xA4 != nullptr) {
         ArtsSelect_FreeSlots(field_0xA4);
@@ -732,7 +732,7 @@ void cf::CfGameManager::teardownGameManager() {
         BattleWork_InitCtrlWork(manager->unkA8);
     }
     if (manager->unkA0 != 0) {
-        MapFx_ReleaseHandle(manager->unkA0);
+        manager->unkA0->releaseHandle();
     }
     if (manager->field_0xA4 != nullptr) {
         ArtsSelect_FreeSlots(manager->field_0xA4);
@@ -746,7 +746,7 @@ void cf::CfGameManager::teardownGameManager() {
         manager->unkA8 = nullptr;
     }
     if (manager->unkA0 != 0) {
-        delete reinterpret_cast<CfDtor08*>(manager->unkA0);
+        delete manager->unkA0;
         manager->unkA0 = 0;
     }
     if (manager->field_0xA4 != nullptr) {
@@ -1117,8 +1117,6 @@ void cf::CfGameManager::tickGameManager() {
 // 0x1000, 0x400000, 0x40000|0x8000, 0x2000000|0x400; E28 0x1000000, 0x200,
 // 0x8000000.
 int CfCmd_PumpRingBuf(void* buf, u32* outFlag);
-void MapFx_ForwardReload(void* self);
-void MapFx_UpdateSceneFx(void* self);
 void NpcMove_ClearRowBmp();
 void gmNotifyCA0();
 void KyoshinHeap_Init();
@@ -1157,10 +1155,10 @@ void* cf::CfGameManager::func_8007C8C8() {
                 ArtsSelect_SyncRows(this->field_0xA4);
             }
         } else if ((lbl_eu_80663E6C & 1) == 1 && (lbl_eu_80663E24 & 0x1000)) {
-            MapFx_ForwardReload((void*)this->unkA0);
+            this->unkA0->forwardReload();
         }
         if ((lbl_eu_80663E24 & 0x1000) && !(lbl_eu_80663E28 & 0x1000000)) {
-            MapFx_UpdateSceneFx((void*)this->unkA0);
+            this->unkA0->updateSceneFx();
         }
         this->updateCameraState();
     }
@@ -1395,7 +1393,6 @@ void* cf::CfGameManager::getResetDataPtr() { return lbl_eu_8065FC18; }
 // presentation globals and the E24/E28 flag masks.
 extern "C" void CfSoundMan_ClearFxEffect(u32 first, u32 second);
 extern "C" void gmCallInit1954();
-extern "C" void MapFx_SetGlobalFloat(float value);
 extern "C" void resetBattleState__Q22cf14CBattleManagerFv(void* battle);
 extern "C" void CfRes_updateEntry(u32 a, u32 b, u32 c, u32 d);
 extern "C" void CfRes_getInstPtr170();
@@ -1433,7 +1430,7 @@ void cf::CfGameManager::func_8007D84C() {
         BattleWork_InitCtrlWork(unkA8);
     }
     if (unkA0 != 0) {
-        MapFx_ReleaseHandle(unkA0);
+        unkA0->releaseHandle();
     }
     if (field_0xA4 != nullptr) {
         ArtsSelect_FreeSlots(field_0xA4);
@@ -1468,7 +1465,7 @@ void cf::CfGameManager::func_8007D84C() {
     lbl_eu_80663E24 = lbl_eu_80663E24 & 0x505B0208;
     lbl_eu_80663E28 = lbl_eu_80663E28 & 0xFBFFF430;
     NpcMove_ClearRowBmp();
-    MapFx_SetGlobalFloat(lbl_eu_80667700);
+    cf::CfMapEffectManager::setGlobalFloat(lbl_eu_80667700);
 }
 #pragma dont_inline reset
 
@@ -1924,11 +1921,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
 
     heap = CfRes_getAllocHandle();
     memory = allocate__Q23mtl10MemManagerFUlUl(0x13C, heap);
-    object = memory;
-    if (memory != nullptr) {
-        object = __ct__cf_CfMapEffectManager(memory);
-    }
-    self->unkA0 = static_cast<cf::CfMapEffectManager*>(object);
+    self->unkA0 = new (memory) cf::CfMapEffectManager;
 
     heap = CfRes_getAllocHandle();
     memory = allocate__Q23mtl10MemManagerFUlUl(0x180, heap);

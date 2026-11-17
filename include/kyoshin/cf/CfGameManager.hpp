@@ -196,7 +196,7 @@ namespace cf{
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
-        CfMapEffectManager* unkA0; // built by __ct__cf_CfMapEffectManager, freed by MapFx_ReleaseHandle
+        CfMapEffectManager* unkA0; // map-effect manager (releaseHandle on map change)
         // opaque widget-list block torn down by func_80186664 (u8* ABI; the
         // func_80186D20 helper also takes void*), so keep the member as u8*.
         u8* field_0xA4;
@@ -508,7 +508,6 @@ public:
 // ---------------------------------------------------------------------------
 
 extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
-extern "C" void MapFx_ReleaseHandle(cf::CfMapEffectManager* pSelf);
 extern "C" void CamEvtReleaseAllSlots(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);

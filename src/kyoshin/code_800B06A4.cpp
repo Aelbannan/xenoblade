@@ -8,6 +8,7 @@
 #include <string.h>
 #include <math.h>
 #include <new>
+#include "monolib/util/MemManager.hpp"
 void* findObjectById(int id);
 
 void UnkClass_800B0AD8::clearCounters() {
@@ -309,7 +310,6 @@ void spawnObjFromRes(cf::CfObject* obj) {
 // Reset pass over the singleton: copy the default float, then release each
 // optional sub-object (each null-guarded) with its own teardown entry point.
 extern "C" void CPartsChange_DispatchChangeList(u32 obj);
-extern "C" void clearMapItems(u32 obj);
 extern "C" void hikariResetManagerRecords(u32 obj);
 extern "C" void mineReleasePoints(u32 obj);
 extern "C" int reslistIsBusy(void* self);
@@ -327,11 +327,11 @@ void resetSubManagers(UnkClass_805764CC* self) {
     if (self->field_0xCA0 != 0) {
         CPartsChange_DispatchChangeList(self->field_0xCA0);
     }
-    if (self->field_0xCA4 != 0) {
-        clearMapItems(self->field_0xCA4);
+    if (self->mMapItemManager != nullptr) {
+        self->mMapItemManager->clearMapItems();
     }
-    if (self->field_0xCA8 != 0) {
-        clearMapItems(self->field_0xCA8);
+    if (self->mValueItemManager != nullptr) {
+        self->mValueItemManager->clearMapItems();
     }
     if (self->field_0xCFC != 0) {
         GimTeardownAll(self->field_0xCFC);
@@ -506,19 +506,6 @@ extern "C" void resetTboxThenMask(void* self) {
     ::walkReslistByMask(self, 256);
 }
 
-// us-800b1bf8 - cf::CfValueItemManager ctor: base ctor call then
-// derived vtable install (retail lbl_eu_805316D0); returns this (retail
-// emits the mr r3, r31 return-this after the vtable load).
-extern "C" void* __ct__cf_CfMapItemManager(void* self);
-#pragma push
-#pragma auto_inline off
-extern "C" void* __ct__cf_CfValueItemManager(void* self) {
-    extern void* lbl_eu_805316D0[];
-    __ct__cf_CfMapItemManager(self);
-    *(u32*)((u8*)self + 0) = (u32)lbl_eu_805316D0;
-    return self;
-}
-#pragma pop
 
 void init_1A8C(){}
 void* node_getDataPtr_alt(void* self){return (char*)(*(void**)self) + 8;}
@@ -561,11 +548,11 @@ extern "C" s32 gflagGateMask8() {
 // to `self` via setItemEnable, each null-guarded.
 void bindPadSubobjects(UnkClass_805764CC* self) {
     UnkClass_805764CC* obj = getInstance();
-    if (obj->field_0xCA4 != 0) {
-        setItemEnable((void*)obj->field_0xCA4, self);
+    if (obj->mMapItemManager != nullptr) {
+        obj->mMapItemManager->setItemEnable(self);
     }
-    if (obj->field_0xCA8 != 0) {
-        setItemEnable((void*)obj->field_0xCA8, self);
+    if (obj->mValueItemManager != nullptr) {
+        obj->mValueItemManager->setItemEnable(self);
     }
 }
 void init_1CDC(){}
@@ -643,11 +630,11 @@ void tickPadSubobjects(UnkClass_805764CC* self) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
-    if (self->field_0xCA4 != 0) {
-        ((IDispB1F6C*)self->field_0xCA4)->unk02();
+    if (self->mMapItemManager != nullptr) {
+        self->mMapItemManager->collectItems();
     }
-    if (self->field_0xCA8 != 0) {
-        ((IDispB1F6C*)self->field_0xCA8)->unk02();
+    if (self->mValueItemManager != nullptr) {
+        self->mValueItemManager->collectItems();
     }
 }
 #pragma pop
@@ -656,11 +643,11 @@ void tickPadSubobjects(UnkClass_805764CC* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" void releasePadObjects(UnkClass_805764CC* self) {
-    if (self->field_0xCA4 != 0) {
-        tryPickupMapItem((void*)self->field_0xCA4);
+    if (self->mMapItemManager != nullptr) {
+        self->mMapItemManager->tryPickupMapItem();
     }
-    if (self->field_0xCA8 != 0) {
-        tryPickupMapItem((void*)self->field_0xCA8);
+    if (self->mValueItemManager != nullptr) {
+        self->mValueItemManager->tryPickupMapItem();
     }
     if (self->field_0xD00 != 0) {
         hikariSetFlagBit1((void*)self->field_0xD00);
@@ -1947,8 +1934,8 @@ UnkClass_805764CC::UnkClass_805764CC() {
     __ct__reslist_cf_TboxInfo((u8*)this + 0xc48);
     __ct__reslist_cf_IFactoryEvent((u8*)this + 0xc80);
     field_0xCA0 = 0;
-    field_0xCA4 = 0;
-    field_0xCA8 = 0;
+    mMapItemManager = nullptr;
+    mValueItemManager = nullptr;
     field_0xCAC = 0;
     new ((void*)&field_0xCB0) ml::FixStr<64>();
     field_0xCFC = 0;
@@ -3277,12 +3264,8 @@ void buildSingleton(UnkClass_805764CC* self) {
     void* p = allocate__Q23mtl10MemManagerFUlUl(0xB27C, CfRes_getAllocHandle());
     self->field_0xCA0 =
         (u32)(p != 0 ? __ct__80193270(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, CfRes_getAllocHandle());
-    self->field_0xCA4 =
-        (u32)(p != 0 ? __ct__cf_CfMapItemManager(p) : p);
-    p = allocate__Q23mtl10MemManagerFUlUl(0x3808, CfRes_getAllocHandle());
-    self->field_0xCA8 =
-        (u32)(p != 0 ? __ct__cf_CfValueItemManager(p) : p);
+    self->mMapItemManager = new ((mtl::ALLOC_HANDLE)CfRes_getAllocHandle()) cf::CfMapItemManager;
+    self->mValueItemManager = new ((mtl::ALLOC_HANDLE)CfRes_getAllocHandle()) cf::CfValueItemManager;
     p = allocate__Q23mtl10MemManagerFUlUl(0x220, CfRes_getAllocHandle());
     self->field_0xCFC =
         p != 0 ? __ct__801F3BE8((CGimmickGlobal*)p) : (CGimmickGlobal*)p;
@@ -3318,6 +3301,12 @@ check:
     }
 }
 
+// us-800b1bf8: emitted right after its only caller, buildSingleton.
+#pragma push
+#pragma auto_inline off
+cf::CfValueItemManager::CfValueItemManager() {}
+#pragma pop
+
 // us-800b1e70 - teardownGameMgr
 // Singleton teardown: release each optional sub-manager (each null-guarded,
 // field_0xD00 via its slot-2 reset), re-file every game-manager object into
@@ -3337,13 +3326,13 @@ void teardownGameMgr(UnkClass_805764CC* self) {
         __dt__80206170((void*)self->field_0xCAC, 1);
         self->field_0xCAC = 0;
     }
-    if (self->field_0xCA8 != 0) {
-        __dt__801732F8((void*)self->field_0xCA8, 1);
-        self->field_0xCA8 = 0;
+    if (self->mValueItemManager != nullptr) {
+        delete self->mValueItemManager;
+        self->mValueItemManager = nullptr;
     }
-    if (self->field_0xCA4 != 0) {
-        __dt__801732F8((void*)self->field_0xCA4, 1);
-        self->field_0xCA4 = 0;
+    if (self->mMapItemManager != nullptr) {
+        delete self->mMapItemManager;
+        self->mMapItemManager = nullptr;
     }
     if (self->field_0xCA0 != 0) {
         __dt__80193538((void*)self->field_0xCA0, 1);

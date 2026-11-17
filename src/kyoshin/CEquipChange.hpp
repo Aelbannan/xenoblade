@@ -152,7 +152,7 @@ struct CPaneScaleView {
 extern "C" void __ct__CCur14(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CCur15(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CSubCur(void* self, nw4r::lyt::ArcResourceAccessor* arc);
-extern "C" void __ct__CItemBoxInfo(void* self, int a, int b);
+extern "C" void __ct__12CItemBoxInfoFUcUs(void* self, int a, int b);
 extern "C" void __ct__CEquipItemBox(void* self);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void ShopBuy_CopyData(void* dst, void* src);
@@ -369,15 +369,9 @@ extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 // linkage. Cur_BothSubPanesOn/CEquipItemBox gates take the object and return status.
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
-extern "C" u32 startItemBoxOpen(CItemBoxInfo* info);
-extern "C" u32 hideItemBoxPanes(CItemBoxInfo* info, u8 arg2);
-extern "C" void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
 extern "C" void Cur_Update(void* cur);
-extern "C" void updateItemBoxAnims(CItemBoxInfo* info);
-extern "C" void closeItemBox1(CItemBoxInfo* info);
 
 // Free-function form (retail: advanceItemBoxState__FP12CItemBoxInfo).
-void advanceItemBoxState(CItemBoxInfo* info);
 
 extern "C" void updateEIBBox(CEquipItemBox* box);
 // 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
@@ -390,7 +384,6 @@ extern "C" int getEIBActiveMark(CEquipItemBox* box);
 extern "C" int eibInputBlocked(CEquipItemBox* box);
 extern "C" void finishEIBEntry(CEquipItemBox* box);
 extern "C" void eibHandleSubPage(CEquipItemBox* box, int arg);
-extern "C" void calcItemBoxPaneVec(void*, CItemBoxInfo*, u32);
 extern "C" int eibMenuBusy(CEquipItemBox* box);
 extern "C" int getEIBNamePane(CEquipItemBox* box);
 extern "C" int eibSysWinBusy(CEquipItemBox* box);
@@ -398,7 +391,6 @@ extern "C" int eibWindowsReady(CEquipItemBox* box);
 extern "C" int takeEIBAction(CEquipItemBox* box);
 extern "C" void eibConfirmSort(CEquipItemBox* box);
 extern "C" void EquipChange_RefreshCursorPos(CEquipChange* self);
-extern "C" void loadItemBoxFiles(void* info);
 extern "C" void loadEIBFiles(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void EquipChange_RebuildCursorList(CEquipChange* self);
@@ -413,7 +405,6 @@ extern "C" int eibHudPrompt(CEquipItemBox* box);
 extern "C" void drawEIBBox(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void* EquipChange_ResolveEquipItem(CEquipChange* self);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
 extern "C" void eibNavDown(CEquipItemBox* box);
@@ -468,5 +459,4 @@ extern "C" void* __dt__7CSubCurFv(CBaseCur* _this, int flags);
 extern "C" void* __dt__6CCur14Fv(CBaseCur* _this, int flags);
 extern "C" void* __dt__6CCur15Fv(CBaseCur* _this, int flags);
 extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
-extern "C" void* __dt__12CItemBoxInfoFv(CItemBoxInfo* _this, int flags);
 extern "C" void* __dt__13CEquipItemBoxFv(CEquipItemBox* _this, int flags);

@@ -35,16 +35,16 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
 
-// Talk list entry (0x14 bytes each, 256 max)
-struct TalkListEntry {
-    u32 field_00;   // 0x00
-    u32 field_04;   // 0x04
-    u32 field_08;   // 0x08
-    u32 field_0C;   // 0x0C
-    s16 field_10;   // 0x10
-    s8 field_12;    // 0x12, initialised to -1
-    u8 field_13;    // 0x13
-
+// Talk list entry (0x14 bytes each, 256 max).
+// Retail emits the inline members weak after their first user
+// TalkListEntryArray::Build, in this order: the field ctor (fillTalkEntry),
+// Copy (copyTalkEntry: non-const source, so the loads are not hoisted above
+// the stores - the source may alias) and the implicit operator=. The order
+// only comes out this way with operator= compiler-generated; a second
+// operator=(TalkListEntry&) overload instead of Copy makes MWCC reject the
+// implicit TalkListEntryArray::operator=.
+class TalkListEntry {
+public:
     TalkListEntry() {
         field_00 = 0;
         field_04 = 0;
@@ -54,17 +54,47 @@ struct TalkListEntry {
         field_12 = -1;
         field_13 = 0;
     }
+    TalkListEntry(u32 title, u32 cond, u32 icon1, u32 icon2, s8 type, s16 value, u8 order) {
+        field_00 = title;
+        field_04 = cond;
+        field_08 = icon1;
+        field_0C = icon2;
+        field_10 = value;
+        field_12 = type;
+        field_13 = order;
+    }
+    void Copy(TalkListEntry& src) {
+        field_00 = src.field_00;
+        field_04 = src.field_04;
+        field_08 = src.field_08;
+        field_0C = src.field_0C;
+        field_10 = src.field_10;
+        field_12 = src.field_12;
+        field_13 = src.field_13;
+    }
     ~TalkListEntry() {}
+
+    u32 field_00;   // 0x00 title string
+    u32 field_04;   // 0x04 condition string
+    u32 field_08;   // 0x08 icon palette 1
+    u32 field_0C;   // 0x0C icon palette 2
+    s16 field_10;   // 0x10 affinity value
+    s8 field_12;    // 0x12 entry type, initialised to -1
+    u8 field_13;    // 0x13 sort order
 };
 
 // Array container holding up to 256 entries; mParent is the layout's
 // resource accessor used to resolve the entry icons.
-struct TalkListEntryArray {
+class TalkListEntryArray {
+public:
     TalkListEntry mEntries[256];                  // 0x000-0x13FF
     u8 mCount;                                    // 0x1400
     nw4r::lyt::ArcResourceAccessor* mParent;      // 0x1404
 
     TalkListEntryArray(nw4r::lyt::ArcResourceAccessor* parent);
+    void Build();
+    TalkListEntry* GetEntry(int idx);
+    u32 FindIcon(u8 type);
 };
 
 // Kizuna (affinity) talk list widget; receives archive completion through IWorkEvent.
@@ -103,4 +133,13 @@ public:
     void showTalkList();
     void drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo);
     void updateTalkList();
+    void advanceTalkAnim24();
+    void advanceTalkAnim28();
+    void rewindTalkAnim28();
+    void rewindTalkAnim24();
+    void bindScrollOutAnims();
+    void bindScrollInAnims();
+    void renderTalkRows();
+    void moveTalkCursor();
+    void rebuildTalkList();
 };

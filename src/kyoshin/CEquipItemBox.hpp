@@ -582,15 +582,13 @@ extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 struct CItemBoxInfo;
 // Item-box state query (retail mangled getItemBoxState__FP12CItemBoxInfo;
 // u32 return avoids the u8 call-site mask; same decl as CItemBoxGrid.hpp).
-extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
 // Per-index value store into the embedded CItemBoxInfo at +0x210
 // (retail mangled setItemBoxIndex__FP12CItemBoxInfoUcs; C++ linkage).
-void setItemBoxIndex(CItemBoxInfo* info, unsigned char index, short value);
 
 /* Fields written by rebuildEIBKind3Page (kind-3 rebuild): the selected kind halfword
    at +0x220, the fixed state byte 3 at +0x2c0, the vf08 byte at +0x2cc, the
    cursor anchor position copied to +0x288, and the embedded CItemBoxInfo at
-   +0x210 that receives setItemBoxIndex(8, vf90). */
+   +0x210 that receives ((CItemBoxPage*)(8))->SetValue(vf90). */
 struct CEquipItemBoxKind3View {
     u8 pad00[0x220];
     u16 field_220;              // 0x220 selected item kind (u16)
@@ -602,9 +600,7 @@ struct CEquipItemBoxKind3View {
     u8 field_2cc;               // 0x2cc item vf08 byte
 };
 // Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
-extern "C" void setItemBoxNamedText(CItemBoxInfo* info, int arg2, void* arg3);
 extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);
-extern "C" u32 hideItemBoxPanes(CItemBoxInfo* info, u8 arg2);
 // Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // Same-TU grid helper (retail plain name; defined in this .cpp).
@@ -699,7 +695,6 @@ extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinApplyKind(void*, u32);
 extern "C" void sysWinOpenPhase1(void*);
 // Per-slot detail-text builder (handleEIBNamePane's ==3 lookup path).
-extern "C" void* formatItemBoxName(void*, u32);
 extern const float lbl_eu_80668B24;
 // Item-kind -> display-count probe (calcEIBCountKey's default band).
 extern "C" u32 LookupItemTypeTable(u32);

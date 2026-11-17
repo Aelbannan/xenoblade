@@ -12,6 +12,7 @@ extern "C" void CfObjectMap_refreshRegion(void* self);
 extern "C" int isBattleStatusActive(void* obj, int id);
 #include "kyoshin/cf/object/CfObject.hpp"
 namespace cf {
+class CfMapItemManager;
 struct TboxInfo { char _pad[4]; };
 struct IFactoryEvent { char _pad[4]; };
 }
@@ -704,12 +705,7 @@ struct CfObjFieldView {
 };
 
 // Virtual-dispatch interfaces matching the retail vtable shapes:
-// IDispB1F6C: callback objects with the target method at slot 2.
 // IDispB79A4: iteration nodes with the target method at slot 0x67.
-class IDispB1F6C {
-public:
-    virtual void unk02();
-};
 class IDispB79A4 {
 public:
     virtual void unk00();
@@ -878,8 +874,8 @@ public:
     reslist<cf::TboxInfo> field_0xC48;      // 0xC48 (0x38 bytes)
     reslist<cf::IFactoryEvent*> field_0xC80;
     u32 field_0xCA0;
-    u32 field_0xCA4;
-    u32 field_0xCA8;
+    cf::CfMapItemManager* mMapItemManager;    // 0xCA4
+    cf::CfMapItemManager* mValueItemManager;  // 0xCA8 (a cf::CfValueItemManager)
     u32 field_0xCAC;
     // raw 0x44 buffer for the FixStr<64> at 0xCB0; kept as bytes so the ctor
     // can placement-new it in body order (a real FixStr member would
@@ -1892,7 +1888,6 @@ extern "C" u32 wordsDiffer(void* a, void* b);
 // Sub-object ctors/dtors driven by func_800B1120 / teardownGameMgr.
 extern "C" void __dt__800B183C(void* self);
 extern "C" void __dt__80206170(void* self, int flags);
-extern "C" void __dt__801732F8(void* self, int flags);
 extern "C" void __dt__80193538(void* self, int flags);
 extern "C" void* __ct__80193270(void* self);
 extern "C" void* __ct__80205A7C(void* self);

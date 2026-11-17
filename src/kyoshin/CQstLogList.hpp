@@ -11,6 +11,7 @@
 
 #include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/QstData.hpp"
 
 namespace nw4r { namespace math { struct VEC3; } }
 
@@ -20,58 +21,6 @@ struct CQstLogListEntry {
     s8 mField0;          // 0x0 (retail li r5,-1 store - signed)
     u8 mField1;          // 0x1
     u8 mData[0x20];      // 0x2..0x21
-};
-
-// 8-byte quest-info record (mirror of QstInfo in CMenuQstCnt.hpp).
-struct CQstLogListQstInfo {
-    u16 f0;              // 0x0 quest id
-    u8  f2;              // 0x2
-    u8  f3;              // 0x3
-    u8  f4;              // 0x4
-    u8  f5;              // 0x5
-    u8  f6;              // 0x6
-    u8  f7;              // 0x7
-};
-
-struct CQstLogListQstData;
-// Imports used by the member wrappers below (retail C-linkage names).
-extern "C" void QstCnt_InitRecords_6FAC(u8*);               // QstData construct (8x0x400)
-extern "C" void __destroy_arr(void*, void*, int, int);
-extern "C" void* __dt__80227030(void*, int);      // 0x400-byte QstInfo element dtor
-
-// Quest-info buffer maintained by QstCnt_InitRecords_6FAC (mirror of QstData in
-// CMenuQstCnt.cpp): an 8x0x400 array whose elements are destroyed via
-// __dt__80227030, plus a 6-byte tail.
-struct CQstLogListQstData {
-    u8   mList[8 * 0x400];  // 0x0000 (0x2000 bytes)
-    u16  field_2000;        // 0x2000
-    s16  field_2002;        // 0x2002
-    u8   field_2004;        // 0x2004
-    u8   field_2005;        // 0x2005
-
-    // QstData is its own class in retail (ctor QstCnt_InitRecords_6FAC, element
-    // dtor __dt__80227030 inlined here with the member-array null guard).
-    CQstLogListQstData() { QstCnt_InitRecords_6FAC(&mList[0]); }
-    ~CQstLogListQstData() {
-        __destroy_arr(&mList[0], (void*)&__dt__80227030, 8, 0x400);
-    }
-    // Record-wise copy (8-byte QstInfo records, then the 6-byte tail).
-#pragma always_inline on
-    CQstLogListQstData& operator=(const CQstLogListQstData& rhs) {
-        u8* pDst = &mList[0];
-        const u8* pSrc = &rhs.mList[0];
-        do {
-            *reinterpret_cast<CQstLogListQstInfo*>(pDst) = *reinterpret_cast<const CQstLogListQstInfo*>(pSrc);
-            pDst += 8;
-            pSrc += 8;
-        } while (pDst < &mList[8 * 0x400]);
-        field_2000 = rhs.field_2000;
-        field_2002 = rhs.field_2002;
-        field_2004 = rhs.field_2004;
-        field_2005 = rhs.field_2005;
-        return *this;
-    }
-#pragma always_inline off
 };
 
 /* Quest log list widget. Owned by CMenuQuestLog.
@@ -160,7 +109,7 @@ public:
     s8 field_0x17D;                  // 0x17D - current row index byte (signed)
     s16 field_0x17E;                 // 0x17E - scroll position (signed halfword)
     u16 field_0x180;                 // 0x180 - quest-log list id (ctor arg)
-    CQstLogListQstData mQstData;     // 0x182..0x2187 quest-info buffer (0x2006)
+    QstData mQstData;                // 0x182..0x2187 quest-info table (0x2006)
 };
 
 extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
@@ -169,14 +118,7 @@ extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void Cur_Update(void*);                 // CCur18 per-frame update
 extern "C" void Cur_DrawLayout(void*, void*);
 
-// Quest-info buffer helpers (defined in CMenuQstCnt.cpp).
-extern "C" void QstCnt_SortRecords(u8*, u32, u32);
-extern "C" u16 selectQstIndex(const u8*);
-extern "C" CQstLogListQstInfo* QstCnt_GetInfoAt_76F4(u8*, u16);
 extern "C" u32 SearchThresholdIdx(u16);
-extern "C" void QstCnt_RefreshRecords(u8*);               // QstData refresh
-// Quest-list row count for the given quest-log list id (returns u16).
-extern "C" u16 QstCnt_FindInfoIndex(u8*, u16);
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count

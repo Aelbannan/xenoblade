@@ -29,15 +29,6 @@ struct QstMenuData {
 
 extern void playUISound(u32);
 
-// The quest-info buffer QstCnt_InitRecords_6FAC / QstCnt_RefreshRecords maintain.
-struct QstData {
-    QstInfo mList[0x400];                       // 0x0000
-    u16 field_2000;                             // 0x2000
-    s16 field_2002;                             // 0x2002
-    u8  field_2004;                             // 0x2004
-    u8  field_2005;                             // 0x2005
-};
-
 // C-linkage (retail symbols are unmangled) declarations for the free
 // functions defined in this TU. Definitions keep the same linkage.
 extern "C" {
@@ -53,38 +44,6 @@ void QstCnt_AdvanceToOpen_6C18(QstMenuData* self);
 void QstCnt_TickToOpened_6C5C(QstMenuData* self);
 void QstCnt_FinishAnim(CMenuQstCnt* self);
 // (memberized: QstCnt_RefreshDisplay -> CMenuQstCnt::RefreshDisplay; declaration moved into class CMenuQstCnt)
-QstData* QstCnt_InitRecords_6FAC(QstData* self);
-void* __dt__80227070(QstData* self, int flags);
-void QstCnt_RefreshRecords(QstData* self);
-void QstCnt_SortRecords(QstData* self, u32 kind, u32 filter);
-// Retail emits the -O3 copy shape (load r0; store r0; per-field, no load
-// hoisting) while the unit is -O4,s. `#pragma scheduling off` reproduces the
-// interleaved single-register copy exactly (verified Wii/1.1 -O4,s); the
-// optimization_level pragma alone cannot (MWCC_CASES §1302).
-#pragma push
-#pragma scheduling off
-void QstCnt_CopyInfoA(QstInfo* dst, const QstInfo* src) {
-    dst->f0 = src->f0;
-    dst->f2 = src->f2;
-    dst->f3 = src->f3;
-    dst->f4 = src->f4;
-    dst->f5 = src->f5;
-    dst->f6 = src->f6;
-    dst->f7 = src->f7;
-}
-#pragma pop
-void QstCnt_CopyInfoB(QstInfo* dst, const QstInfo* src) {
-    dst->f0 = src->f0;
-    dst->f2 = src->f2;
-    dst->f3 = src->f3;
-    dst->f4 = src->f4;
-    dst->f5 = src->f5;
-    dst->f6 = src->f6;
-    dst->f7 = src->f7;
-}
-unsigned short selectQstIndex(unsigned char* p);
-QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx);
-void QstCnt_FindInfoIndex();
 }
 
 // --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
@@ -514,48 +473,18 @@ void CMenuQstCnt::RefreshDisplay() {
     setLayoutTextBoxNumber(this->mLayout, &lbl_eu_80509A10[0x4d], this->mSelEntry.f5);
 }
 
-QstData* QstCnt_InitRecords_6FAC(QstData* self) {
-    __construct_array(self, (void*)initQstInfo, (void*)&__dt__80227030, 8, 0x400);
-    self->field_2000 = 0;
-    self->field_2002 = 0;
-    self->field_2004 = 0xff;
-    self->field_2005 = 0xff;
-    return self;
-}
-
-void initQstInfo(QstInfo* ptr) {
-    ptr->f0 = 0;
-    ptr->f2 = 0;
-    ptr->f3 = 0;
-    ptr->f4 = 0;
-    ptr->f5 = 0;
-    ptr->f6 = 0;
-    ptr->f7 = 0;
-}
-
-void* __dt__80227030(void* self, int mode) {
-    if (self != 0 && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
-
-// Destructor (retail __dt__80227070): destroys the 0x400-element QstInfo
-// member array via __destroy_arr, then frees the object if deleting.
-void* __dt__80227070(QstData* self, int flags) {
-    if (self == 0) goto end;
-    __destroy_arr(self, (void*)&__dt__80227030, 8, 0x400);
-    if (flags > 0)
-        operator delete(self);
-end:
-    return self;
+QstData::QstData() {
+    mCount = 0;
+    mFilterCount = 0;
+    mSortKind = 0xff;
+    mSortFilter = 0xff;
 }
 
 // Rebuild the 0x400-entry quest-info table from the game's quest catalog.
 // Categories 1..0x1A (ranges from GetU16PairEntry) each contribute their quests;
 // entries whose kind is 0 / 0xC8 are skipped.
-void QstCnt_RefreshRecords(QstData* self) {
-    self->field_2000 = 0;
+void QstData::Refresh() {
+    mCount = 0;
     u16 cat;
     for (cat = 1; cat < 0x1B; cat++) {
         u32 start = GetU16PairEntry(cat);
@@ -580,87 +509,68 @@ void QstCnt_RefreshRecords(QstData* self) {
             u32 showFlag = (res & 0xff) == 1;
             if (kindClass == 3) showFlag = 0;
             u8 x = (u8)BdatGetU8Direct((const void*)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
-            u16 idx = self->field_2000;
-            self->field_2000 = idx + 1;
-            QstInfo src;
-            src.f0 = i;
-            src.f2 = kindClass;
-            src.f3 = cat;
-            src.f4 = kind;
-            src.f5 = showFlag;
-            src.f6 = (u8)res;
-            src.f7 = x;
-            copyQstInfo(&self->mList[idx], &src);
+            mList[mCount++] = QstInfo(i, kindClass, cat, kind, showFlag, res, x);
         }
     }
 }
 
-void QstCnt_SortRecords(QstData* self, u32 kind, u32 filter) {
+void QstData::Sort(u32 kind, u32 filter) {
     // Select/re-select the sort column. kind==4 uses the quest-level filter
-    // (field_2005); otherwise kind is the column (field_2004). If the selection
+    // (mSortFilter); otherwise kind is the column (mSortKind). If the selection
     // didn't change, there is nothing to re-sort.
     if (kind == 4) {
-        if (self->field_2005 == filter) return;
-        self->field_2004 = kind;
-        self->field_2005 = filter;
+        if (mSortFilter == filter) return;
+        mSortKind = kind;
+        mSortFilter = filter;
     } else {
-        if (self->field_2004 == kind) return;
-        self->field_2004 = kind;
-        self->field_2005 = 0;
+        if (mSortKind == kind) return;
+        mSortKind = kind;
+        mSortFilter = 0;
     }
-    self->field_2002 = -1;   // "unsorted" marker until the count is recomputed
+    mFilterCount = -1;   // "unsorted" marker until the count is recomputed
 
-    // Pass 1: bubble sort quest entries by quest id (f0) descending.
-    for (u16 i = 0; i < self->field_2000 - 1; i++) {
+    // Pass 1: bubble sort quest entries by quest id ascending.
+    for (u16 i = 0; i < mCount - 1; i++) {
         bool changed = true;
-        for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
-            QstInfo* pa = &self->mList[j];
-            QstInfo* pb = &self->mList[j + 1];
-            if (pa->f0 > pb->f0) {
-                QstInfo t1, t2, t3;
-                QstCnt_CopyInfoA(&t1, pa);
-                QstCnt_CopyInfoA(&t2, pb);
-                copyQstInfo(pa, &t2);
-                QstCnt_CopyInfoB(&t3, &t1);
-                copyQstInfo(pb, &t3);
+        for (u16 j = 0; j < mCount - 1 - i; j++) {
+            QstInfo* pa = &mList[j];
+            QstInfo* pb = &mList[j + 1];
+            if (pa->mId > pb->mId) {
+                const QstInfo tmp(*pa);
+                *pa = QstInfo(*pb);
+                *pb = QstInfo(tmp);
                 changed = false;
             }
         }
         if (changed) break;
     }
 
-    // Pass 2: bubble sort by flag byte f7 descending.
-    for (u16 i = 0; i < self->field_2000 - 1; i++) {
+    // Pass 2: bubble sort by category order ascending.
+    for (u16 i = 0; i < mCount - 1; i++) {
         bool changed = true;
-        for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
-            QstInfo* pa = &self->mList[j];
-            QstInfo* pb = &self->mList[j + 1];
-            if (pa->f7 > pb->f7) {
-                QstInfo t1, t2, t3;
-                QstCnt_CopyInfoA(&t1, pa);
-                QstCnt_CopyInfoA(&t2, pb);
-                copyQstInfo(pa, &t2);
-                QstCnt_CopyInfoB(&t3, &t1);
-                copyQstInfo(pb, &t3);
+        for (u16 j = 0; j < mCount - 1 - i; j++) {
+            QstInfo* pa = &mList[j];
+            QstInfo* pb = &mList[j + 1];
+            if (pa->mOrder > pb->mOrder) {
+                const QstInfo tmp(*pa);
+                *pa = QstInfo(*pb);
+                *pb = QstInfo(tmp);
                 changed = false;
             }
         }
         if (changed) break;
     }
 
-    // Pass 3: bubble sort by f5 ascending.
-    for (u16 i = 0; i < self->field_2000 - 1; i++) {
+    // Pass 3: bubble sort by show flag descending.
+    for (u16 i = 0; i < mCount - 1; i++) {
         bool changed = true;
-        for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
-            QstInfo* pa = &self->mList[j];
-            QstInfo* pb = &self->mList[j + 1];
-            if (pa->f5 < pb->f5) {
-                QstInfo t1, t2, t3;
-                QstCnt_CopyInfoA(&t1, pa);
-                QstCnt_CopyInfoA(&t2, pb);
-                copyQstInfo(pa, &t2);
-                QstCnt_CopyInfoB(&t3, &t1);
-                copyQstInfo(pb, &t3);
+        for (u16 j = 0; j < mCount - 1 - i; j++) {
+            QstInfo* pa = &mList[j];
+            QstInfo* pb = &mList[j + 1];
+            if (pa->mShow < pb->mShow) {
+                const QstInfo tmp(*pa);
+                *pa = QstInfo(*pb);
+                *pb = QstInfo(tmp);
                 changed = false;
             }
         }
@@ -670,63 +580,53 @@ void QstCnt_SortRecords(QstData* self, u32 kind, u32 filter) {
     // When a column filter is active, bubble the matching entries to the front
     // (sort by match flag ascending, so matches land first), then count them.
     if (kind != 0) {
-        for (u16 i = 0; i < self->field_2000 - 1; i++) {
+        for (u16 i = 0; i < mCount - 1; i++) {
             bool changed = true;
-            for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
-                QstInfo* pa = &self->mList[j];
-                QstInfo* pb = &self->mList[j + 1];
-                u8 m1 = (kind == 4) ? (pa->f3 == filter)
-                                    : (pa->f2 == kind);
-                u8 m2 = (kind == 4) ? (pb->f3 == filter)
-                                    : (pb->f2 == kind);
+            for (u16 j = 0; j < mCount - 1 - i; j++) {
+                QstInfo* pa = &mList[j];
+                QstInfo* pb = &mList[j + 1];
+                u8 m1 = (kind == 4) ? (pa->mCategory == filter)
+                                    : (pa->mKind == kind);
+                u8 m2 = (kind == 4) ? (pb->mCategory == filter)
+                                    : (pb->mKind == kind);
                 if (m1 < m2) {
-                    QstInfo t1, t2, t3;
-                    QstCnt_CopyInfoA(&t1, pa);
-                    QstCnt_CopyInfoA(&t2, pb);
-                    copyQstInfo(pa, &t2);
-                    QstCnt_CopyInfoB(&t3, &t1);
-                    copyQstInfo(pb, &t3);
+                    const QstInfo tmp(*pa);
+                    *pa = QstInfo(*pb);
+                    *pb = QstInfo(tmp);
                     changed = false;
                 }
             }
             if (changed) break;
         }
 
-        self->field_2002 = 0;
-        for (u16 k = 0; k < self->field_2000; k++) {
-            u8 m = (kind == 4) ? (self->mList[k].f3 == filter)
-                               : (self->mList[k].f2 == kind);
+        mFilterCount = 0;
+        for (u16 k = 0; k < mCount; k++) {
+            u8 m = (kind == 4) ? (mList[k].mCategory == filter)
+                               : (mList[k].mKind == kind);
             if (m == 0) break;
-            self->field_2002++;
+            mFilterCount++;
         }
     }
 }
 
-
-unsigned short selectQstIndex(unsigned char* p) {
-    QstData* data = reinterpret_cast<QstData*>(p);
-    short r = data->field_2002;
-    // field_2002 (signed) is negative -> use the u16 count instead. Keep the
+u16 QstData::GetCount() {
+    short r = mFilterCount;
+    // mFilterCount (signed) is negative -> use the u16 count instead. Keep the
     // temp as short so the single u16 conversion/clrlwi happens at the join.
     if (r < 0)
-        r = (short)data->field_2000;
+        r = (short)mCount;
     return (unsigned short)r;
 }
 
-QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx) {
-    // clrlslwi 16,3 = (idx & 0xFFFF) << 3 -> pointer into an 8-byte QstInfo array
+QstInfo* QstData::GetInfo(u16 idx) {
     if (idx >= 0x400) return 0;
-    return base + idx;
+    return &mList[idx];
 }
 
-// Search the 8-byte-stride table for the arg; the u16 count lives at
-// +0x2000 but the table reads are base-relative (retail lhzx r0,r3,r0 with
-// r3 unmodified -- the table starts at offset 0). Returns the matching index
-// or 0 (retail returns 0, not -1).
-u16 QstCnt_FindInfoIndex(void* self, u32 arg) {
-    u16 count = *(u16*)((u8*)self + 0x2000);
-    for (u16 i = 0; i < count; i++) {
-        if (*(u16*)((u8*)self + i * 8) == arg) return i;
+// Returns the index of the entry with the given quest id, or 0.
+u16 QstData::FindIndex(u16 id) {
+    for (u16 i = 0; i < mCount; i++) {
+        if (mList[i].mId == id) return i;
     }
     return 0;
 }
@@ -749,19 +649,3 @@ void dtorQstBase_6C(u8* sub) {
 void dtorQstBase_70(u8* sub) {
     ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x70);
 }
-
-
-// --- restored from git history (base:gone repo-search) ---
-// from commit d6f90339a272 path=src/kyoshin/menu/CMenuQstCnt.cpp needle=copyQstInfo
-
-extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src) {
-    dst->f0 = src->f0;
-    dst->f2 = src->f2;
-    dst->f3 = src->f3;
-    dst->f4 = src->f4;
-    dst->f5 = src->f5;
-    dst->f6 = src->f6;
-    dst->f7 = src->f7;
-    return dst;
-}
-

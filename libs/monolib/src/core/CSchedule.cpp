@@ -60,26 +60,18 @@ int CSchedule::RebuildHandles() {
     return 1;
 }
 
-// Local view of a schedule child's interface: slot 3 receives the owning
-// CSchedule when the parent is destroyed.
-struct CScheduleChildItf {
-    virtual ~CScheduleChildItf() {}
-    virtual void field_0x08(CSchedule* schedule);
-    // resolves to vtable+0xc
-};
-
 // us-804e77dc: CSchedule::~CSchedule()
 CSchedule::~CSchedule() {
     mTablePtr = (u8*)lbl_eu_80570068;
     if (mEntries != nullptr) {
         s16 freeSlot;
-        // Notify each child (virtual slot 3, passing this)
+        // Notify each registered child
         CScheduleChild* child;
         u32 i;
         for (i = 0; i < 4; i++) {
             child = mChildren[i];
             if (child != nullptr) {
-                ((CScheduleChildItf*)child)->field_0x08(this);
+                child->OnScheduleDelete(this);
             }
         }
         // Release resolved handles

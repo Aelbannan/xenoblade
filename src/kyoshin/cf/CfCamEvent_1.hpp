@@ -1382,7 +1382,6 @@ extern "C" void notifyCameraManager__Q22cf13CfGameManagerFv(void);
 
 // GameManager helpers used by the cam-event advance.
 extern "C" void cleanupMapEffects__Q22cf13CfGameManagerFv();
-extern "C" void MapFx_PushFlash(f32 a, f32 b);
 extern "C" void MapFxStepAllEntries(u32 state);
 extern "C" void MapFxApplyEntryPositions(u32 state, void* p);
 extern "C" f32 lbl_eu_80666470;

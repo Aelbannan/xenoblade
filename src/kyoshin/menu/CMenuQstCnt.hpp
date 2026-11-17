@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/QstData.hpp"
+#include "kyoshin/QstDataInline.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace nw4r { namespace lyt {
@@ -33,17 +35,6 @@ struct QstEntry {
     u8  f4;   // 0x04
     u8  f5;   // 0x05
     u8  f6;   // 0x06
-};
-
-// 8-byte quest-info record (element of the 0x400-element list in QstData).
-struct QstInfo {
-    u16 f0;
-    u8  f2;
-    u8  f3;
-    u8  f4;
-    u8  f5;
-    u8  f6;
-    u8  f7;
 };
 
 /*
@@ -98,11 +89,6 @@ struct CMenuQstCnt {
 extern "C" int isLandTelopIdle();
 extern "C" int getLandTelopE0(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void initQstInfo(QstInfo* ptr);
-extern "C" void* __dt__80227030(void* self, int mode);
-extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);
-extern "C" void QstCnt_CopyInfoA(QstInfo* dst, const QstInfo* src);
-extern "C" void QstCnt_CopyInfoB(QstInfo* dst, const QstInfo* src);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);

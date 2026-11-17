@@ -21,15 +21,30 @@ struct CfMapEffectObject {
     u32 field_0xB0; // 0xB0
 };
 
-// Layout recovered from __ct__cf_CfMapEffectManager / MapFx_ReloadFromBdat /
-// MapFx_SetPointEnabled / MapFx_SetSlotFlag. The vtable pointer at 0x00 is stored
-// manually (lbl_eu_80531080) so the ctor emits the exact retail reloc name
-// instead of an MWCC auto-generated __vt__ label.
+// Map-effect manager (RTTI "cf::CfMapEffectManager", no bases). The game
+// manager owns the single instance (CfGameManager +0xA0); the static
+// accessors work on sInstance. Vtable: ~CfMapEffectManager, releaseObject.
 class CfMapEffectManager {
 public:
-    ~CfMapEffectManager();
+    CfMapEffectManager();
+    virtual ~CfMapEffectManager();
+    virtual void releaseObject(CfObject* target);
 
-    u8* field_0x0;                    // 0x00 vtable pointer (lbl_eu_80531080)
+    void releaseHandle();
+    void resetSlots();
+    int checkRowRange(int index);
+    void forwardReload();
+    void updateSceneFx();
+    void updateRow(int index, u8* bdat);
+    void reloadFromBdat();
+    int matchKind(int b, int c, int d);
+    void setSlotFlag(int flag);
+    static void setPointEnabled(u8 enable);
+    static void pushFlash(float first, float second);
+    static void setGlobalFloat(float val);
+
+    static CfMapEffectManager* sInstance;
+
     s16 field_0x4;                    // 0x04
     s16 field_0x6;                    // 0x06
     s16 field_0x8;                    // 0x08
@@ -165,45 +180,3 @@ public:
 };
 
 } // namespace cf
-
-// ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// ---------------------------------------------------------------------------
-extern "C" {
-void setChild5CFl_(char* obj, int flag); // CfObjectEff flag setter
-u16 getReloadParam0();                     // play-time seconds getter
-// Sibling functions of this unit (retail 0x801702E0 / 0x801706A0). Kept as
-// declared-only externs so calls from matched functions emit a real bl - a
-// same-TU stub definition would be inlined by MWCC (-O4).
-void MapFx_ResetSlots(cf::CfMapEffectManager* pSelf);
-void MapFx_UpdateRow(cf::CfMapEffectManager* pSelf, int index, u8* bdat);
-void setChildScl__(cf::CfObject* object, float first, float second);
-// CfGameManager phase/counter getters (same signatures as CfGimmickItem.hpp;
-// CfGimmickItem.hpp itself cannot be included here - its CfGimmick.hpp
-// re-declares CtrlRemote_TouchBitByArg with a conflicting signature).
-u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
-u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
-int MapFx_CheckRowRange(int unused, int index);
-void MapFx_ReleaseObject(cf::CfMapEffectManager* pSelf, cf::CfObject* target);
-void MapFx_PushFlash(float first, float second);
-int MapFx_MatchKind(int unused, int b, int c, int d); // same-TU definition below
-void CfT_DispatchFrameCounts();
-void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-}
-
-// Retail data symbols (linker-provided)
-extern u8 lbl_eu_80531080[];                  // data: vtable
-extern cf::CfMapEffectManager* lbl_eu_80664290; // sbss: singleton instance
-extern u8* lbl_eu_806640AC;                   // sbss: bdat file pointer
-extern float lbl_eu_806623E8;                 // sdata: global float (set by MapFx_SetGlobalFloat)
-extern const float lbl_eu_80667730;           // sdata2: clamp threshold
-// rodata: BDAT column-name string table (7 strings at 0x00/0x08/0x11/0x1A/0x20/0x26/0x2C)
-extern char lbl_eu_80503248[];
-extern u16 lbl_eu_80661AF4;                   // sdata: play-clock / BGM frame counter
-extern u8* lbl_eu_806623EC;                   // sdata: scratch pointer (byte at +0x06)
-// sdata2 float/double pool constants (MapFx_UpdateRow)
-extern const float lbl_eu_80667710;           // default flash value (setChildScl__ arg 2)
-extern const float lbl_eu_80667714;           // u32 column -> float scale
-extern const float lbl_eu_80667718;           // s16 column -> float scale
-extern const double lbl_eu_80667720;          // 2^52 + 2^31 (u32/s16 -> float magic)
-extern const double lbl_eu_80667728;          // 2^52 (u16 -> float magic)

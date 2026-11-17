@@ -57,6 +57,10 @@ namespace cf {
     class CfObjectMap;
 }
 
+namespace cf {
+class CfMapEffectManager;
+}
+
 extern "C" {
     // ---- CTaskLOD task helpers ----
     void acquireLODResource__8CTaskLODFv(void* task, u32 value);
@@ -79,8 +83,7 @@ extern "C" {
     void resetPoolState__17UnkClass_8047CD0CFv(void* self);
 
     // ---- CfGameManager / map-effect helpers ----
-    u32 getMapEffectManager__Q22cf13CfGameManagerFv();
-    void MapFx_SetSlotFlag(u32 manager, void* task);
+    cf::CfMapEffectManager* getMapEffectManager__Q22cf13CfGameManagerFv();
     u32 getReloadParam2();
     u32 getReloadParam1();
 

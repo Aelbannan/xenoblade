@@ -87,6 +87,11 @@ public:
     /* 0x1E8 */ s32 mCreatureCount;
     /* 0x1EC */ s32 mCreatureId;
 
+    // Hide/show the map's collision points and LOD while an event runs
+    // (CTaskREvtSequence); no-ops while a guest map model is loading.
+    static void disablePoints();
+    static void enablePoints();
+
     static CREvtModelMap* sLoadingGuest;   // 0x806642B0
     static CREvtModelMap* sVisibleModel;   // 0x806642B4
 };

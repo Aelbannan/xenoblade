@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
@@ -3256,7 +3257,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
 
     if (updateResult != 0) {
         cleanupMapEffects__Q22cf13CfGameManagerFv();
-        MapFx_PushFlash(lbl_eu_80666470, lbl_eu_80666428);
+        cf::CfMapEffectManager::pushFlash(lbl_eu_80666470, lbl_eu_80666428);
     }
 
     if (self->field_0x38 != 0) {

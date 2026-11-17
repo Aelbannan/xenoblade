@@ -2,8 +2,7 @@
 
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
-#include "kyoshin/code_80135FDC_Bdat.hpp"
-#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -11,124 +10,51 @@ class Layout;
 class DrawInfo;
 class AnimTransform;
 class ArcResourceAccessor;
-class Pane;
 }
 }
 
-// Full object layout for CNumSelect (used by C-linkage accessors)
 class CFileHandle;
 class CEventFile;
 
-struct CNumSelectFull {
-    u8 _00[0x2C];
-    u8 field_2C;
-    u8 field_2D;
-    u8 field_2E;
-};
-
-// String pool in split .rodata ("pic_%02d" style format strings and archive
-// paths used by the number-select HUD).
-extern char lbl_eu_80506C14[];
-
-// Name/label helpers from code_80135FDC (retail unmangled C symbols).
-
-/* Font-info objects from CDeviceFont::getFontInfo dispatch through
- * IDeviceFontInfo::getFont (+0x24); see monolib/device/CDeviceFont.hpp. */
-
-/* 'timg' texture record chain resolved through the cursor accessor source:
- * obj->vf01(0x74696d67, name, 0) returns a record whose +0x8 points at a
- * pointer to the {u16 width, u16 height} pair used to size the panes. */
-struct CNumSelectTimgDims {
-    u16 m00;
-    u16 m02;
-};
-
-class CNumSelectTimgRef {
+/* Quantity selector popup used by the shop/exchange item lists (retail RTTI
+ * "CNumSelect", base list IWorkEvent; vtable slot +0x10 = OnFileEvent). */
+class CNumSelect : public IWorkEvent {
 public:
-    CNumSelectTimgDims* dims; // 0x0
-};
+    CNumSelect(u8 region);
+    virtual ~CNumSelect();
 
-class CNumSelectTimg {
-public:
-    u32 unk0;                // 0x0
-    u32 unk4;                // 0x4
-    CNumSelectTimgRef* unk8; // 0x8
-};
+    void LoadFiles();
+    void UpdateStates();
+    void DrawLayout(nw4r::lyt::DrawInfo* drawInfo);
+    void UnloadFiles();
+    int IsLoaded();
+    int IsOpen();
+    int IsIdle();
+    void SetItemName(char* name);
+    void SetCount(u8 count);
+    void SetTotal(int value);
+    void Open();
+    void Close();
+    void CountUp();
+    void CountDown();
+    void SetArrowVisible(u32 visible);
+    void UpdateOpen();
+    void UpdateClose();
+    void UpdateCountUp();
+    void UpdateCountDown();
 
-/* The 'timg' source from CUICfManager_getArcResourceAccessor is an nw4r::lyt::ArcResourceAccessor;
- * GetResource(+0x0C) resolves the named texture record. */
-
-// code_80135FDC layout-build helpers (retail mangled C++ names).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
-                   nw4r::lyt::ArcResourceAccessor*, char*);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-
-// Retail-unmangled C-ABI imports used by OnFileEvent.
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
-extern "C" char* CUICfManager_getPackedFont9C();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" char* MakeTplNameSysFile(u32);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-
-// u32->float cast-magic constant shared with the retail sdata2 pool.
-extern const double lbl_eu_80668090;
-
-// Draw helper (retail symbol keeps its C++ mangling).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
-
-// Resource release / anim helpers (C++-mangled imports; see CItemBoxInfo.hpp).
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-// Retail symbol is unmangled (plain AnimRewindFrame), so keep C linkage.
-// Retail symbol is unmangled (plain setPaneVisible), so keep C linkage.
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
-void playUISound(u32);
-extern const f32 lbl_eu_80668088;
-extern const f32 lbl_eu_8066808C;
-
-// (Layout teardown goes through `delete`: the deleting-dtor vcall at +0x08
-// matches retail.)
-
-// CNumSelect vtable (retail .data label; extern here, defined via retail linkage).
-extern void* lbl_eu_80534BC0[];
-
-/* Stores the retail vtable label at +0x00 before the members construct,
-mirroring the CBattery/CLoad pattern (MWCC's implicit __vt__10CNumSelect
-reloc name would drift from the retail lbl_eu_80534BC0). */
-struct CNumSelectVtblBase {
-    void* mVtbl; // +0x00
-    CNumSelectVtblBase() : mVtbl(lbl_eu_80534BC0) {}
-};
-
-class CNumSelect : public CNumSelectVtblBase {
-public:
-    CNumSelect(u8 arg);
-    ~CNumSelect();
-    bool OnFileEvent(CEventFile* evt);
-
-    void NumSel_LoadArchive_AE8C();
-    void NumSel_DrawLayout_AF7C(nw4r::lyt::DrawInfo* drawInfo);
-    void NumSel_SetCaption_B030(char* str);
-    void NumSel_FormatPicName_B064(int value);
+    virtual bool OnFileEvent(CEventFile* evt);
 
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
-    /* 0x14 */ CFileHandle* field_14;
-    /* 0x18 */ nw4r::lyt::ArcResourceAccessor* field_18;
+    /* 0x14 */ CFileHandle* mFileHandle;
+    /* 0x18 */ nw4r::lyt::ArcResourceAccessor* mArcResAcc;
     /* 0x1C */ nw4r::lyt::Layout* mpLayout;
-    /* 0x20 */ nw4r::lyt::AnimTransform* field_20;
-    /* 0x24 */ nw4r::lyt::AnimTransform* field_24;
-    /* 0x28 */ nw4r::lyt::AnimTransform* field_28;
-    /* 0x2C */ u8 field_2C;
-    /* 0x2D */ u8 field_2D;
-    /* 0x2E */ u8 field_2E;
-    /* 0x2F */ u8 field_2F;
-    /* 0x30 */ u8 field_30;
-    void Sel_AdvanceOpen();
-    void Sel_RewindReset();
-    void Sel_RestartAnim();
-    void Sel_RestartAnimAlt();
+    /* 0x20 */ nw4r::lyt::AnimTransform* mAnimIn;
+    /* 0x24 */ nw4r::lyt::AnimTransform* mAnimLoop;
+    /* 0x28 */ nw4r::lyt::AnimTransform* mAnimOn;
+    /* 0x2C */ u8 mOpen;
+    /* 0x2D */ u8 mLoaded;
+    /* 0x2E */ u8 mIdle;
+    /* 0x2F */ u8 mState;
+    /* 0x30 */ u8 mRegion;
 };

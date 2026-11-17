@@ -68,7 +68,7 @@ public:
     u32 mField74;                    // 0x74 (u16 arg passed to item-box ctors)
     CBgTex mBgTex;                   // 0x78 background layout widget (0x20)
     CTitleAHelp mTitleAHelp;         // 0x98 (sizeof 0x38) -> 0xD0
-    u8  mItemBoxLine[0x63C];         // 0xD0 opaque CItemBoxLine storage -> 0x70C
+    CItemBoxLine mItemBoxLine;       // 0xD0 -> 0x70C
     CItemBoxGrid mItemBoxGrid;       // 0x70C (vptr sub-object)
     u8  mPadGrid[0x5118 - 0x70C - sizeof(CItemBoxGrid)]; // 0x710
     u8  field_5118;                  // 0x5118

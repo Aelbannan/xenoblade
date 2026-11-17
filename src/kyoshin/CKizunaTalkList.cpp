@@ -24,30 +24,211 @@ TalkListEntryArray::TalkListEntryArray(nw4r::lyt::ArcResourceAccessor* parent) {
     mParent = parent;
 }
 
+// Build the talk-list entry table from the affinity talk data (retail
+// buildTalkList). Reads the shared character database handed off in
+// lbl_eu_806648B8, collects the candidate character IDs that have talk
+// entries, then runs four passes to assemble type-1/type-2/type-3/name0
+// entries and finally bubble-sorts the table by entry subtype (field_13).
+void TalkListEntryArray::Build() {
+    void* fp = lbl_eu_806648B8;
+    u16 charCount = (u16)Bdat_GetMaxRow_B1EC(fp);
+    char* fmt12 = BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
+    BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
+
+    mCount = 0;
+    u16 collect[0x100];
+    memset(collect, 0, 0x200);
+    u16 ccount = 0;
+
+    // Pass A: collect IDs of characters that have a talk flag set.
+    for (u16 c = 1; (u32)(u16)c <= (u32)charCount; c++) {
+        if (CtrlRemote_TouchBitByArg((u32)((u16)c + 0x3440)) != 0)
+            collect[ccount++] = c;
+    }
+
+    // Pass B: type-1 entries (affinity value below the BDAT threshold).
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
+        u16 id = collect[k];
+        if (id == 0) continue;
+        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
+
+        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
+        if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
+
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
+        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
+        } else if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
+        }
+        if ((u32)n4 > (u32)LookupRelateValue(m1, m2)) continue;
+
+        u32 v1 = FindIcon(m1);
+        u32 v2 = FindIcon(m2);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
+
+        mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
+        collect[k] = 0;
+    }
+
+    // Pass C: type-2 entries (same guard/filter logic, no BDAT-threshold
+    // affinity comparison).
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
+        u16 id = collect[k];
+        if (id == 0) continue;
+        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
+
+        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
+        if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
+
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
+        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
+        } else if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
+        }
+
+        u32 v1 = FindIcon(m1);
+        u32 v2 = FindIcon(m2);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
+
+        mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
+        collect[k] = 0;
+    }
+
+    // Pass D: type-3 entries - same guard as B/C but no affinity-value or
+    // icon checks; the icon rows are queried with subtype 0 and the stored
+    // affinity value is -1.
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
+        u16 id = collect[k];
+        if (id == 0) continue;
+        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
+
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
+        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
+        }
+
+        u32 v1 = FindIcon(0);
+        u32 v2 = FindIcon(0);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
+
+        mEntries[mCount++] = TalkListEntry((u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
+        collect[k] = 0;
+    }
+
+    // Pass E: flagged-character entries (talk flag set), titled by character
+    // name instead of the shared format string.
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
+        u16 id = collect[k];
+        if (id == 0) continue;
+        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) == 0) continue;
+
+        char* name0 = BdatGetPtrDirect(fp, &lbl_eu_8050E990[0x40], id);
+        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
+        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
+        if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
+        }
+
+        u32 v1 = FindIcon(m1);
+        u32 v2 = FindIcon(m2);
+        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
+
+        mEntries[mCount++] = TalkListEntry((u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
+        collect[k] = 0;
+    }
+
+    // Bubble-sort the assembled table ascending by subtype (field_13).
+    for (u16 outer = 0; (s32)outer < (s32)(mCount - 1); outer++) {
+        int swapped = 0;
+        for (u16 inner = 0; (s32)inner < (s32)(mCount - 1 - outer); inner++) {
+            TalkListEntry* e1 = &mEntries[inner];
+            TalkListEntry* e2 = &mEntries[inner + 1];
+            if ((u32)e1->field_13 > (u32)e2->field_13) {
+                TalkListEntry tmp;
+                tmp.Copy(*e1);
+                e1->Copy(*e2);
+                e2->Copy(tmp);
+                swapped = 1;
+            }
+        }
+        if (!swapped) break;
+    }
+}
+
+// Entry accessor (retail talkEntryAt): null past the 256-entry table.
+TalkListEntry* TalkListEntryArray::GetEntry(int idx) {
+    if (idx >= 0x100) return 0;
+    return &mEntries[idx];
+}
+
+// Virtual slot 3: resource lookup (this, "timg", name, 0).
+typedef u32 (*KtlResFn)(void*, const char*, const char*, u32);
+
+// Pure-virtual view of the BDAT/resource-list object whose vtable slot at
+// offset 0x0C resolves a "timg" resource by name. MWCC prepends
+// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
+// index 1 -> +0x0C. All-pure so MWCC emits no vtable for the view itself.
+class KtlResView {
+public:
+    virtual void v00() = 0;                                              // 0x08
+    virtual void* v01(const char* type, const char* name, u32 unk) = 0; // 0x0C
+};
+
+// Whether an icon/texture row exists for the given subtype, by asking the
+// owning layout's shared resource accessor for the "timg" resource (retail
+// findTalkIcon). v==0 queries the parent accessor directly; v!=0 re-resolves
+// the icon name through the shared character table first. 
+u32 TalkListEntryArray::FindIcon(u8 v) {
+    if (v == 0) {
+        char* strs = lbl_eu_8050E990;
+        void* found = ((KtlResView*)(void*)mParent)->v01(
+            (const char*)0x74696d67 /* "timg" */, strs + 0x46, 0);
+        if (found != 0)
+            return (u32)found;
+        return 0;
+    }
+    u16 id = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
+    char* name = MakeTplNameSysFile(id);
+    void* resAcc = CUICfManager_getArcResourceAccessor();
+    void* found = ((KtlResView*)resAcc)->v01(
+        (const char*)0x74696d67 /* "timg" */, name, 0);
+    if (found != 0)
+        return (u32)found;
+    return 0;
+}
+
 CKizunaTalkList::CKizunaTalkList(int)
     : mMemRegion(), mFileHandle(NULL), mBdatHandle(NULL), mAccessor(NULL), mpLayout20(NULL),
       mpAnim24(NULL), mpAnim28(NULL), mCursor(NULL), mScrollBar(0), mState84(0), mState85(0),
       mUnknown86(0), mNeedsRebuild(1), mUnknown88(0), mUnknown8A(0), mEntryArray(NULL) {
-    // Re-initialise the bar as a vertical one. CScrollBar is still a
-    // non-polymorphic view (hand vptr member), so its implicit operator= would
-    // copy the vptr; retail's `mScrollBar = CScrollBar(1);` skips it. Copy the
-    // body of a real temporary member by member until CScrollBar is real.
-    CScrollBar tmp(1);
-    mScrollBar.mMemRegion = tmp.mMemRegion;
-    mScrollBar.mFileHandle = tmp.mFileHandle;
-    mScrollBar.mAccessor = tmp.mAccessor;
-    mScrollBar.mLayout = tmp.mLayout;
-    mScrollBar.mAnimTransform = tmp.mAnimTransform;
-    mScrollBar.mReady = tmp.mReady;
-    mScrollBar.mVisible = tmp.mVisible;
-    mScrollBar.mState = tmp.mState;
-    mScrollBar.mActive = tmp.mActive;
-    mScrollBar.mAnimOffset = tmp.mAnimOffset;
-    mScrollBar.mScrollPosY = tmp.mScrollPosY;
-    mScrollBar.mScrollRatio = tmp.mScrollRatio;
-    mScrollBar.mThumbHeight = tmp.mThumbHeight;
-    mScrollBar.mContentHeight = tmp.mContentHeight;
-    mScrollBar.mDirection = tmp.mDirection;
+    // Re-initialise the bar as a vertical one.
+    mScrollBar = CScrollBar(1);
 }
 
 CKizunaTalkList::~CKizunaTalkList() {}
@@ -64,27 +245,21 @@ void CKizunaTalkList::initTalkList() {
 
 // Per-frame update while visible (retail updateTalkList): advance the state
 // machine, then refresh the layout and the embedded widgets.
-// Retail symbols are unmangled (advanceTalkAnim24 etc.), so these helpers are
-// declared with C linkage even though they take the list as a parameter.
-extern "C" __declspec(noinline) void advanceTalkAnim24(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void advanceTalkAnim28(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void rewindTalkAnim28(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self);
 
 void CKizunaTalkList::updateTalkList() {
     if (this->mState84 != 0) {
         switch (this->mState85) {
         case 1:
-            advanceTalkAnim24(this);
+            advanceTalkAnim24();
             break;
         case 2:
-            advanceTalkAnim28(this);
+            advanceTalkAnim28();
             break;
         case 4:
-            rewindTalkAnim28(this);
+            rewindTalkAnim28();
             break;
         case 5:
-            rewindTalkAnim24(this);
+            rewindTalkAnim24();
             break;
         }
 
@@ -124,239 +299,6 @@ void CKizunaTalkList::teardownTalkList() {
     lbl_eu_806648B8 = NULL;
 }
 
-// Populate a talk-list entry with the given fields (retail fillTalkEntry).
-// noinline: retail keeps these as out-of-line calls from buildTalkList.
-__declspec(noinline) void fillTalkEntry(TalkListEntry* entry, u32 a, u32 b,
-                                        u32 c, u32 d, s8 in12, s16 in10,
-                                        u8 in13) {
-    entry->field_00 = a;
-    entry->field_04 = b;
-    entry->field_08 = c;
-    entry->field_0C = d;
-    entry->field_10 = in10;   // s16
-    entry->field_12 = in12;   // s8, init to -1
-    entry->field_13 = in13;   // u8
-}
-
-// Copy one talk-list entry into another (retail copyTalkEntry).
-__declspec(noinline) void copyTalkEntry(TalkListEntry* dst, TalkListEntry* src) {
-    dst->field_00 = src->field_00;
-    dst->field_04 = src->field_04;
-    dst->field_08 = src->field_08;
-    dst->field_0C = src->field_0C;
-    dst->field_10 = src->field_10;
-    dst->field_12 = src->field_12;
-    dst->field_13 = src->field_13;
-}
-
-
-// Virtual slot 3: resource lookup (this, "timg", name, 0).
-typedef u32 (*KtlResFn)(void*, const char*, const char*, u32);
-
-// Pure-virtual view of the BDAT/resource-list object whose vtable slot at
-// offset 0x0C resolves a "timg" resource by name. MWCC prepends
-// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
-// index 1 -> +0x0C. All-pure so MWCC emits no vtable for the view itself.
-class KtlResView {
-public:
-    virtual void v00() = 0;                                              // 0x08
-    virtual void* v01(const char* type, const char* name, u32 unk) = 0; // 0x0C
-};
-
-// Whether an icon/texture row exists for the given subtype, by asking the
-// owning layout's shared resource accessor for the "timg" resource (retail
-// findTalkIcon). v==0 queries the parent accessor directly; v!=0 re-resolves
-// the icon name through the shared character table first. noinline keeps
-// buildTalkList emitting a real bl (retail keeps it out-of-line).
-__declspec(noinline) u32 findTalkIcon(TalkListEntryArray* self, u8 v) {
-    if (v == 0) {
-        char* strs = lbl_eu_8050E990;
-        void* found = ((KtlResView*)(void*)self->mParent)->v01(
-            (const char*)0x74696d67 /* "timg" */, strs + 0x46, 0);
-        if (found != 0)
-            return (u32)found;
-        return 0;
-    }
-    u16 id = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
-    char* name = MakeTplNameSysFile(id);
-    void* resAcc = CUICfManager_getArcResourceAccessor();
-    void* found = ((KtlResView*)resAcc)->v01(
-        (const char*)0x74696d67 /* "timg" */, name, 0);
-    if (found != 0)
-        return (u32)found;
-    return 0;
-}
-
-// Build the talk-list entry table from the affinity talk data (retail
-// buildTalkList). Reads the shared character database handed off in
-// lbl_eu_806648B8, collects the candidate character IDs that have talk
-// entries, then runs four passes to assemble type-1/type-2/type-3/name0
-// entries and finally bubble-sorts the table by entry subtype (field_13).
-void buildTalkList(TalkListEntryArray* arr) {
-    void* fp = lbl_eu_806648B8;
-    u16 charCount = (u16)Bdat_GetMaxRow_B1EC(fp);
-    char* fmt12 = BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
-    BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
-
-    arr->mCount = 0;
-    u16 collect[0x100];
-    memset(collect, 0, 0x200);
-    u16 ccount = 0;
-    TalkListEntry tmpB, tmpC, tmpD, tmpE, tmpSort;
-
-    // Pass A: collect IDs of characters that have a talk flag set.
-    for (u16 c = 1; (u32)(u16)c <= (u32)charCount; c++) {
-        if (CtrlRemote_TouchBitByArg((u32)((u16)c + 0x3440)) != 0)
-            collect[ccount++] = c;
-    }
-
-    // Pass B: type-1 entries (affinity value below the BDAT threshold).
-    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
-        u16 id = collect[k];
-        if (id == 0) continue;
-        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
-
-        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
-        if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
-
-        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
-        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
-        if ((u32)v >= 0x2a && (u32)v < 0x113) {
-            if ((u32)m1 == 3) continue;
-            if ((u32)m2 == 3) continue;
-        } else if ((u32)v >= 0x113) {
-            if ((u32)m1 == 3) m1 = 8;
-            if ((u32)m2 == 3) m2 = 8;
-        }
-        if ((u32)n4 > (u32)LookupRelateValue(m1, m2)) continue;
-
-        u32 v1 = findTalkIcon(arr, m1);
-        u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
-
-        fillTalkEntry(&tmpB, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
-        u8 c = arr->mCount;
-        arr->mCount = c + 1;
-        arr->mEntries[c] = tmpB;
-        collect[k] = 0;
-    }
-
-    // Pass C: type-2 entries (same guard/filter logic, no BDAT-threshold
-    // affinity comparison).
-    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
-        u16 id = collect[k];
-        if (id == 0) continue;
-        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
-
-        u16 a = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x10], id);
-        if ((u32)a > CtrlRemote_TouchBitByArg(0x20)) continue;
-
-        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
-        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
-        if ((u32)v >= 0x2a && (u32)v < 0x113) {
-            if ((u32)m1 == 3) continue;
-            if ((u32)m2 == 3) continue;
-        } else if ((u32)v >= 0x113) {
-            if ((u32)m1 == 3) m1 = 8;
-            if ((u32)m2 == 3) m2 = 8;
-        }
-
-        u32 v1 = findTalkIcon(arr, m1);
-        u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
-
-        fillTalkEntry(&tmpC, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
-        u8 c = arr->mCount;
-        arr->mCount = c + 1;
-        arr->mEntries[c] = tmpC;
-        collect[k] = 0;
-    }
-
-    // Pass D: type-3 entries - same guard as B/C but no affinity-value or
-    // icon checks; the icon rows are queried with subtype 0 and the stored
-    // affinity value is -1.
-    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
-        u16 id = collect[k];
-        if (id == 0) continue;
-        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) != 0) continue;
-
-        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
-        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
-        if ((u32)v >= 0x2a && (u32)v < 0x113) {
-            if ((u32)m1 == 3) continue;
-            if ((u32)m2 == 3) continue;
-        }
-
-        u32 v1 = findTalkIcon(arr, 0);
-        u32 v2 = findTalkIcon(arr, 0);
-        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
-
-        fillTalkEntry(&tmpD, (u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
-        u8 c = arr->mCount;
-        arr->mCount = c + 1;
-        arr->mEntries[c] = tmpD;
-        collect[k] = 0;
-    }
-
-    // Pass E: flagged-character entries (talk flag set), titled by character
-    // name instead of the shared format string.
-    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
-        u16 id = collect[k];
-        if (id == 0) continue;
-        if (CtrlRemote_TouchBitByArg((u32)(id + 0x24b0)) == 0) continue;
-
-        char* name0 = BdatGetPtrDirect(fp, &lbl_eu_8050E990[0x40], id);
-        u16 n4 = BdatGetU16Direct(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x27], id);
-        u16 v = (u16)CtrlRemote_TouchBitByArg(0x20);
-        if ((u32)v >= 0x113) {
-            if ((u32)m1 == 3) m1 = 8;
-            if ((u32)m2 == 3) m2 = 8;
-        }
-
-        u32 v1 = findTalkIcon(arr, m1);
-        u32 v2 = findTalkIcon(arr, m2);
-        u8 x = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x30], id);
-        char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)BdatGetU8Direct((const void*)fp, &lbl_eu_8050E990[0x3b], id);
-
-        fillTalkEntry(&tmpE, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
-        u8 c = arr->mCount;
-        arr->mCount = c + 1;
-        arr->mEntries[c] = tmpE;
-        collect[k] = 0;
-    }
-
-    // Bubble-sort the assembled table ascending by subtype (field_13).
-    for (u16 outer = 0; (s32)outer < (s32)(arr->mCount - 1); outer++) {
-        int swapped = 0;
-        for (u16 inner = 0; (s32)inner < (s32)(arr->mCount - 1 - outer); inner++) {
-            TalkListEntry* e1 = &arr->mEntries[inner];
-            TalkListEntry* e2 = &arr->mEntries[inner + 1];
-            if ((u32)e1->field_13 > (u32)e2->field_13) {
-                tmpSort = TalkListEntry();
-                copyTalkEntry(&tmpSort, e1);
-                copyTalkEntry(e1, e2);
-                copyTalkEntry(e2, &tmpSort);
-                swapped = 1;
-            }
-        }
-        if (!swapped) break;
-    }
-}
-
 // Whether the talk-list has anything to show (retail hasVisibleTalks): returns
 // the unknown-0x86 state byte when the scroll bar is visible, else 0.
 bool CKizunaTalkList::hasVisibleTalks() {
@@ -366,6 +308,12 @@ bool CKizunaTalkList::hasVisibleTalks() {
     return 0;
 }
 
+// Rebuild-pending flag (retail func_8027355C): the pending-rebuild byte at
+// +0x87, read as an int so external callers keep a plain cmpwi on the result.
+// Member alias: CKizunaTalkList::needsRebuild.
+int CKizunaTalkList::needsTalkRebuild() {
+    return this->mNeedsRebuild;
+}
 
 // Begin showing the talk list (retail showTalkList): when idle, mark state 1,
 // bind the entry-depart/entry animations and configure the scroll bar.
@@ -373,8 +321,8 @@ void CKizunaTalkList::showTalkList() {
     if (this->mState85 == 0) {
         this->mState85 = 1;
         this->mNeedsRebuild = 0;
-        bindScrollOutAnims(this);
-        moveTalkCursor(this);
+        bindScrollOutAnims();
+        moveTalkCursor();
         f32 vec[3];
         vec[0] = lbl_eu_806689C8;
         vec[1] = lbl_eu_806689CC;
@@ -391,7 +339,7 @@ void CKizunaTalkList::hideTalkList() {
     if (this->mState85 == 3u) {
         this->mState85 = 4;
         this->mNeedsRebuild = 0;
-        bindScrollInAnims(this);
+        bindScrollInAnims();
         Cur_SetVisible(&this->mCursor, 0);
         this->mScrollBar.requestScrollOut();
         playUISound(6);
@@ -420,8 +368,8 @@ void CKizunaTalkList::scrollTalkListUp() {
             }
         }
     }
-    renderTalkRows(this);
-    moveTalkCursor(this);
+    renderTalkRows();
+    moveTalkCursor();
     this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
@@ -447,8 +395,8 @@ void CKizunaTalkList::scrollTalkListDown() {
             this->mUnknown8A = 0;
         }
     }
-    renderTalkRows(this);
-    moveTalkCursor(this);
+    renderTalkRows();
+    moveTalkCursor();
     this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
@@ -469,8 +417,8 @@ void CKizunaTalkList::pageTalkListUp() {
         this->mUnknown88 = 0;
         this->mUnknown8A = 0;
     }
-    renderTalkRows(this);
-    moveTalkCursor(this);
+    renderTalkRows();
+    moveTalkCursor();
     this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
@@ -493,109 +441,108 @@ void CKizunaTalkList::pageTalkListDown() {
         if (this->mUnknown88 < 0)
             this->mUnknown88 = 0;
     }
-    renderTalkRows(this);
-    moveTalkCursor(this);
+    renderTalkRows();
+    moveTalkCursor();
     this->mScrollBar.PlaceThumb((u16)this->mUnknown8A);
     playUISound(1);
 }
 
-extern "C" __declspec(noinline) void advanceTalkAnim24(CKizunaTalkList* self) {
+void CKizunaTalkList::advanceTalkAnim24() {
     // Advance the entry-show animation; when it completes, step the state
     // machine forward (retail advanceTalkAnim24).
-    if (advanceAnimTransform(self->mpAnim24, lbl_eu_806689D4) != 0) {
-        self->mState85 = 2;
-        bindScrollInAnims(self);
+    if (advanceAnimTransform(this->mpAnim24, lbl_eu_806689D4) != 0) {
+        this->mState85 = 2;
+        bindScrollInAnims();
     }
 }
 
-extern "C" __declspec(noinline) void advanceTalkAnim28(CKizunaTalkList* self) {
-    if (advanceAnimTransform(self->mpAnim28, 2.0f) != 0) {
-        self->mState85 = 3;
-        moveTalkCursor(self);
-        self->mNeedsRebuild = 1;
+void CKizunaTalkList::advanceTalkAnim28() {
+    if (advanceAnimTransform(this->mpAnim28, 2.0f) != 0) {
+        this->mState85 = 3;
+        moveTalkCursor();
+        this->mNeedsRebuild = 1;
     }
 }
 
-extern "C" __declspec(noinline) void rewindTalkAnim28(CKizunaTalkList* self) {
-    if (AnimRewindFrame(self->mpAnim28, lbl_eu_806689D4) != 0) {
-        self->mState85 = 5;
-        bindScrollOutAnims(self);
+void CKizunaTalkList::rewindTalkAnim28() {
+    if (AnimRewindFrame(this->mpAnim28, lbl_eu_806689D4) != 0) {
+        this->mState85 = 5;
+        bindScrollOutAnims();
     }
 }
 
-extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self) {
-    if (AnimRewindFrame(self->mpAnim24, lbl_eu_806689D4) != 0) {
-        self->mState85 = 0;
-        self->mNeedsRebuild = 1;
+void CKizunaTalkList::rewindTalkAnim24() {
+    if (AnimRewindFrame(this->mpAnim24, lbl_eu_806689D4) != 0) {
+        this->mState85 = 0;
+        this->mNeedsRebuild = 1;
     }
 }
 
 // Bind the scroll-out animations for the talk list (retail bindScrollOutAnims).
-extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self) {
-    self->mpLayout20->SetAnimationEnable(self->mpAnim28, 0);
-    self->mpLayout20->SetAnimationEnable(self->mpAnim24, 1);
+void CKizunaTalkList::bindScrollOutAnims() {
+    this->mpLayout20->SetAnimationEnable(this->mpAnim28, 0);
+    this->mpLayout20->SetAnimationEnable(this->mpAnim24, 1);
 }
 
 // Bind the scroll-in animations for the talk list (retail bindScrollInAnims).
-extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self) {
-    self->mpLayout20->SetAnimationEnable(self->mpAnim24, 0);
-    self->mpLayout20->SetAnimationEnable(self->mpAnim28, 1);
+void CKizunaTalkList::bindScrollInAnims() {
+    this->mpLayout20->SetAnimationEnable(this->mpAnim24, 0);
+    this->mpLayout20->SetAnimationEnable(this->mpAnim28, 1);
 }
-
 
 // Rebuild/render the visible list. For each of the (up to) 7 visible rows it
 // pulls the entry, binds the pane names (built with sprintf row suffixes),
 // resolves the affinity-level animation string and the row highlight colour,
 // and drives the pane visibility flag (retail renderTalkRows).
-extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
+void CKizunaTalkList::renderTalkRows() {
     char buf[0x10];
     char* lbl = lbl_eu_8050E990;
     int i = 0;
     do {
-        int base = i + self->mUnknown8A;                       // current row index + cursor
-        TalkListEntry* entry = (TalkListEntry*)talkEntryAt(&self->mEntryArray, (u8)base);
+        int base = i + this->mUnknown8A;                       // current row index + cursor
+        TalkListEntry* entry = this->mEntryArray.GetEntry((u8)base);
         u8 dispIdx = (u8)(i + 1);                              // 1-based display index
 
         // Row number ("00/01") style panes x3, each with an optional highlight.
         sprintf(buf, &lbl[0x9e], dispIdx);
-        void* pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
+        void* pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(self->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & self->mEntryArray.mCount)) >> 31));
+            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
+            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         sprintf(buf, &lbl[0xae], dispIdx);
-        pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
+        pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(self->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & self->mEntryArray.mCount)) >> 31));
+            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
+            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);
-        pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
+        pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(self->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & self->mEntryArray.mCount)) >> 31));
+            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
+            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         // Title / description text.
         sprintf(buf, &lbl[0xcb], dispIdx);
-        LayoutSetTextBoxFmtValue(self->mpLayout20, buf, (char*)entry->field_00, 0u);
+        LayoutSetTextBoxFmtValue(this->mpLayout20, buf, (char*)entry->field_00, 0u);
         sprintf(buf, &lbl[0xd7], dispIdx);
-        LayoutSetTextBoxFmtValue(self->mpLayout20, buf, (char*)entry->field_04, 0u);
+        LayoutSetTextBoxFmtValue(this->mpLayout20, buf, (char*)entry->field_04, 0u);
 
         if (entry->field_12 != -1) {
             sprintf(buf, &lbl[0xe3], dispIdx);
-            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_08));
+            PaneSetTexPaletteByName(this->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_08));
             sprintf(buf, &lbl[0xf1], dispIdx);
-            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_0C));
+            PaneSetTexPaletteByName(this->mpLayout20, (const char*)buf, (TPLPalette*)((void*)entry->field_0C));
         }
 
         sprintf(buf, &lbl[0xff], dispIdx);
-        pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
+        pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(self->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & self->mEntryArray.mCount)) >> 31));
+            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
+            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         // Resolve the affinity-level animation string.
@@ -614,9 +561,9 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
         else
             lvlStr = &lbl[0x10f];
 
-        void* anim = self->mAccessor->GetResource(0x74696d67, lvlStr, 0);
+        void* anim = this->mAccessor->GetResource(0x74696d67, lvlStr, 0);
         if (anim)
-            PaneSetTexPaletteByName(self->mpLayout20, (const char*)buf, (TPLPalette*)anim);
+            PaneSetTexPaletteByName(this->mpLayout20, (const char*)buf, (TPLPalette*)anim);
 
         // Row highlight colour / visibility from the entry subtype.
         GXColorS10* c0;
@@ -641,9 +588,9 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);
-        PaneMatSetTevColorsByName(self->mpLayout20, buf, c0, c1);
+        PaneMatSetTevColorsByName(this->mpLayout20, buf, c0, c1);
         sprintf(buf, &lbl[0x19f], dispIdx);
-        pane = ((void* (*)(void*))(((void**)*(void**)((char*)self->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)self->mpLayout20 + 0x10));
+        pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane)
             setPaneVisible(pane, vis);
 
@@ -654,38 +601,38 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
 // Rebuild/render the cursor row highlight (retail moveTalkCursor): resolve the
 // two layout panes named after the current row, build the cursor target
 // position from them and hand it to the cursor via its vtable slot 4.
-extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
+void CKizunaTalkList::moveTalkCursor() {
     nw4r::math::VEC3 pos;
     u32 _pad;
     char name[0x28];
     char* lbl = lbl_eu_8050E990;
-    sprintf(name, lbl + 0xcb, (int)self->mUnknown88 + 1);
-    Cur_SetVisible(&self->mCursor, 1);
+    sprintf(name, lbl + 0xcb, (int)this->mUnknown88 + 1);
+    Cur_SetVisible(&this->mCursor, 1);
 
     // Layout object re-read for every access so nothing extra gets
     // enregistered across the virtual calls.
     nw4r::lyt::Pane* paneA =
-        self->mpLayout20->GetRootPane()->FindPaneByName(name, true);
+        this->mpLayout20->GetRootPane()->FindPaneByName(name, true);
     nw4r::lyt::Pane* paneB =
-        self->mpLayout20->GetRootPane()->FindPaneByName(lbl + 0x1aa, true);
+        this->mpLayout20->GetRootPane()->FindPaneByName(lbl + 0x1aa, true);
 
-    ScalePaneWorldPos(&pos, paneA, paneB, self->mpLayout20->GetRootPane());
+    ScalePaneWorldPos(&pos, paneA, paneB, this->mpLayout20->GetRootPane());
 
-    self->mCursor.setRootPaneTranslate(&pos);
+    this->mCursor.setRootPaneTranslate(&pos);
 }
 
 // Rebuild the visible talk list (retail rebuildTalkList): requires both the
 // shared BDAT data and the layout accessor. Builds a fresh local table via
 // a temporary table, assigns it over the member array, then rebuilds/sorts.
-void rebuildTalkList(CKizunaTalkList* self) {
-    if (self->mAccessor == NULL || lbl_eu_806648B8 == NULL)
+void CKizunaTalkList::rebuildTalkList() {
+    if (this->mAccessor == NULL || lbl_eu_806648B8 == NULL)
         return;
 
-    self->mEntryArray = TalkListEntryArray(self->mAccessor);
-    buildTalkList(&self->mEntryArray);
-    self->mUnknown86 = 1;
-    self->mState84 = 1;
-    renderTalkRows(self);
+    this->mEntryArray = TalkListEntryArray(this->mAccessor);
+    this->mEntryArray.Build();
+    this->mUnknown86 = 1;
+    this->mState84 = 1;
+    renderTalkRows();
 }
 
 // ---------------------------------------------------------------------------
@@ -723,14 +670,14 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
                              CDeviceFont::getFontInfo(1, this->mpLayout20))->getFont();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-        bindScrollOutAnims(this);
+        bindScrollOutAnims();
 
         this->mpLayout20->Animate(0);
 
         mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         mCursor.initLayout();
 
-        rebuildTalkList(this);
+        rebuildTalkList();
 
         this->mFileHandle = NULL;
         this->mMemRegion.validateHeap();
@@ -744,7 +691,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
         lbl_eu_806648B8 = (void*)getFP(&lbl_eu_8050E990[0x217]);
-        rebuildTalkList(this);
+        rebuildTalkList();
         this->mBdatHandle = NULL;
         return 1;
     }
@@ -760,15 +707,4 @@ void sinit_80274458() {
     setGXColorS10(&lbl_eu_806648D8, 0x48, 0x3a, 0x21, 0xff);
 }
 
-extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 idx) {
-    // Use signed compare to match retail cmpwi
-    if ((s32)idx >= 0x100) return 0;
-    return (u8*)self + idx * 0x14;
-}
 
-// Rebuild-pending flag (retail func_8027355C): the pending-rebuild byte at
-// +0x87, read as an int so external callers keep a plain cmpwi on the result.
-// Member alias: CKizunaTalkList::needsRebuild.
-int CKizunaTalkList::needsTalkRebuild() {
-    return this->mNeedsRebuild;
-}

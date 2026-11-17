@@ -4,30 +4,8 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CSysWin.hpp"
-// CItemBoxInfo.hpp declares these retail helpers with different parameter
-// types than this TU (illegal C-linkage overloads); its forms are renamed.
-#define PaneMatGetS16Quad PaneMatGetS16Quad_ibinfo_dup
-#define LookupItemTypeTable LookupItemTypeTable_ibinfo_dup
-#define renderItemBox2ByKind renderItemBox2ByKind_ibinfo_dup
-#define BuildItemNameStr BuildItemNameStr_ibinfo_dup
-#define BlendFloatAvgScale BlendFloatAvgScale_ibinfo_dup
-#define Counter_TestBit Counter_TestBit_ibinfo_dup
-#define GetCollectedFlagByte GetCollectedFlagByte_ibinfo_dup
-#define __as__11_GXColorS10FRC11_GXColorS10 __as__11_GXColorS10FRC11_GXColorS10_ibinfo_dup
 #include "kyoshin/CItemBoxInfo.hpp"
-#undef PaneMatGetS16Quad
-#undef LookupItemTypeTable
-#undef renderItemBox2ByKind
-#undef BuildItemNameStr
-#undef BlendFloatAvgScale
-#undef Counter_TestBit
-#undef GetCollectedFlagByte
-#undef __as__11_GXColorS10FRC11_GXColorS10
-// CNumSelect.hpp declares setPaneVisible(nw4r::lyt::Pane*, u32), which is an
-// illegal C-linkage overload next to CScrollBar.hpp's (void*, u32) form.
-#define setPaneVisible setPaneVisible_numsel_dup
 #include "kyoshin/CNumSelect.hpp"
-#undef setPaneVisible
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -178,10 +156,7 @@ public:
     CCur18 mCur88;                      // +0x88
     CIBLTabCur mCurA0;                      // +0xA0: embedded cursor (retail ctor __ct__CIBLTabCur; see CIBLTabCur note)
     CSubCur mCurB8;                     // +0xB8: embedded cursor (__ct__CSubCur, vtable[2] tab-name dispatcher)
-    CItemBoxInfo2 mInfo2;               // +0xD0 (retail size 0x20C)
-    // CItemBoxInfo.hpp only declares the leading part of CItemBoxInfo2; the rest
-    // of its retail 0x20C bytes is reserved here until that class is complete.
-    u8 mInfo2Rest[0x20C - sizeof(CItemBoxInfo2)];
+    CItemBoxInfo2 mInfo2;               // +0xD0
     CNumSelect mNumSel;                 // +0x2DC
     CScrollBar mScrollBar;              // +0x310
     CSysWin mSysWin;                    // +0x350
@@ -201,9 +176,5 @@ public:
     CIBLTab unk3A4;             // +0x3A4: tab entries (0x94 bytes, ends +0x437)
     ml::FixStr<32> str438;      // +0x438: tab name buffer (mLength at +0x458)
     ml::FixStr<128> str45C;     // +0x45C: second tab name buffer (mLength at +0x4DC)
-    u16 pageWords4E0[12];       // +0x4E0: per-page words (zeroed by ItemBoxLine_ResetPageTables)
-    CIBLVec3 pageVecs4F8[12];   // +0x4F8: per-page vectors (set by ItemBoxLine_ResetPageTables)
-    u8 pageBytes588[12];        // +0x588
-    u8 pageBytes594[12];        // +0x594
-    s16 pageShorts5A0[12];      // +0x5A0
+    CItemBoxPage mPage;         // +0x4E0: per-page item table (ends +0x63C)
 };

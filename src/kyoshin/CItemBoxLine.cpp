@@ -36,8 +36,8 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 // sub-system (info2 state, num-select, scrollbar, syswin) reports active/ready.
 // ============================================================================
 int CItemBoxLine::GetSelectReady() {
-    if (getItemBox2State__FP13CItemBoxInfo2(&mInfo2) == 0) return 0;
-    if (NumSel_GetField2D_B018(&mNumSel) == 0) return 0;
+    if (mInfo2.GetState() == 0) return 0;
+    if (mNumSel.IsLoaded() == 0) return 0;
     if (mScrollBar.isVisible() == 0) return 0;
     if (CSysWin_isReady(&mSysWin) != 0) return field58;
     return 0;
@@ -54,7 +54,7 @@ void CItemBoxLine::LeaveState3() {
     Cur_SetVisible(&mCurB8, 0);
     Cur_SetVisible(&mCur70, 0);
     Cur_SetVisible(&mCurA0, 0);
-    advanceItemBox2State__FP13CItemBoxInfo2(&mInfo2);
+    mInfo2.Close();
     mScrollBar.requestScrollOut();
     if (!unk39E) playUISound(6);
 }
@@ -64,7 +64,7 @@ void CItemBoxLine::LeaveState3() {
 // ============================================================================
 void CItemBoxLine::RefreshTabSelect() {
     if (unk38C == -1) return;
-    if (NumSel_GetActiveFlag_B020(&mNumSel)) return;
+    if (mNumSel.IsOpen()) return;
     if (CSysWin_getUnk34(&mSysWin)) return;
     if (field3A0) return;
     unk38C = -1;
@@ -383,9 +383,9 @@ extern "C" __declspec(noinline) char* ItemBoxLine_FormatDisplayName(CIBLTabFull*
     } else {
         // Non-composed selectors: resolve the name through the kind-owner
         // tables (a guarded alternate table pair when the selector exceeds 5).
-        u32 table = lbl_eu_8066464C;
+        u32 table = gMnuItemMesB;
         if ((u8)(sel + 0xfc) > 5 && sel != 2) {
-            table = lbl_eu_80664648;
+            table = gMnuItemMesA;
         }
         u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, pool + 0xfe, f0);
         char* name = BdatGetPtrDirect((const void*)table, pool + 0xfe, v);
@@ -463,7 +463,6 @@ ret0:
 // through. Result is returned *10.
 // ============================================================================
 extern "C" u32 __cvt_fp2unsigned(double);
-extern "C" void NumSel_ShowPaneA_B218(void*);
 extern const float lbl_eu_80668118;
 /* 24-byte float record copied off lbl_eu_8050715C by ItemBoxLine_CalcCountKey and read
    back indexed by the owner lookup byte (mask allows past the end on
@@ -516,21 +515,33 @@ void CIBLTabCur::initLayout() {
 
 void ItemBoxLine_InitTabFormat(CIBLTabFull* self);
 
-// CItemBoxLine constructor (retail __ct__CItemBoxLine). Reconstructed up to the
-// member initialisation; the retail body then re-initialises mInfo2, mNumSel,
-// mScrollBar, mSysWin and the tab table from temporaries (`mX = X(...)`),
-// which needs CItemBoxInfo2 and CNumSelect as real classes (both still store
-// their vtables by hand) and is not written yet.
+// CItemBoxLine constructor (retail __ct__12CItemBoxLineFUsUc). After the member
+// initialisation the retail body re-initialises mInfo2, mNumSel, mScrollBar,
+// mSysWin and the tab table by assignment from temporaries.
 CItemBoxLine::CItemBoxLine(u16 pageId, u8 mode)
     : field24(0), field28(0), field2C(0), field30(0), field34(0), field38(0), field3C(0),
       field40(0), field44(0), field48(0), field4C(0), field50(0), field54(0), field58(0),
       unk59(1), tabCount(0), field6D(0), mCur70(0), mCur88(0), mCurA0(0), mCurB8(0),
-      mNumSel(1), mScrollBar(0), mSysWin(0), unk38C(0), unk38E(0), field390(mode),
+      mInfo2(0, 0), mNumSel(1), mScrollBar(0), mSysWin(0), unk38C(0), unk38E(0), field390(mode),
       field392(1), field394(pageId), unk39E(0), field39F(0), field3A0(0), field3A1(0),
       field3A2(0), field3A3(1) {
     ItemBoxLine_InitTabFormat(reinterpret_cast<CIBLTabFull*>(&unk3A4));
     memset(tabEntries, 0, 9);
     memset(unk64, 0, 9);
+    u8 kind = 0;
+    if (mode == 1) {
+        kind = 2;
+    } else if (mode == 2) {
+        kind = 3;
+    }
+    mInfo2 = CItemBoxInfo2(kind, field394);
+    mNumSel = CNumSelect(0);
+    mScrollBar = CScrollBar(0);
+    mSysWin = CSysWin(0);
+    CIBLTabFull tab;
+    ItemBoxLine_InitTabFormat(&tab);
+    *reinterpret_cast<CIBLTabFull*>(&unk3A4) = tab;
+    gMnuItemMesA = gMnuItemMesB = gMnuSkill = 0;
 }
 
 // ============================================================================
@@ -558,8 +569,8 @@ void CItemBoxLine::LoadFiles() {
         (u32)KyoshinHeap_GetField44(), &lbl_eu_805071B0[0x1a2], this, 0, 0);
     field30 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x1bf], this, 0, 0);
-    loadItemBox2Files(&mInfo2);
-    NumSel_LoadArchive_AE8C(&mNumSel);
+    mInfo2.LoadFiles();
+    mNumSel.LoadFiles();
     mScrollBar.loadLayoutArc();
     mSysWin.loadSystemArc();
 }
@@ -572,12 +583,12 @@ void CItemBoxLine::UpdateStates() {
     case 2: EnterState2(); break;
     case 3: EnterState3(); break;
     case 4:
-        if (NumSel_GetField2E_B028(&mNumSel)) {
+        if (mNumSel.IsIdle()) {
             field50 = 7;
         }
         break;
     case 5:
-        if (NumSel_GetField2E_B028(&mNumSel)) {
+        if (mNumSel.IsIdle()) {
             field50 = 3;
         }
         break;
@@ -596,18 +607,18 @@ void CItemBoxLine::UpdateStates() {
     Cur_Update(&mCur88);
     Cur_Update(&mCurA0);
     Cur_Update(&mCurB8);
-    updateItemBox2Anims(&mInfo2);
-    NumSel_DispatchState_AED4(&mNumSel);
+    mInfo2.UpdateAnims();
+    mNumSel.UpdateStates();
     mScrollBar.UpdateDispatch();
     sysWinDispatchPhase(&mSysWin);
 }
 
 void CItemBoxLine::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
     if (field4C == 0) return;
-    drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(&mInfo2, drawInfo);
+    mInfo2.DrawLayout(drawInfo);
     drawLayout(field40, drawInfo, 0, 1);    // "line not busy" flag: both the tab-name cursor and the num-select idle.
     int noBusy = 0;
-    if (Cur_BothSubPanesOn(&mCurB8) == 0 && NumSel_GetActiveFlag_B020(&mNumSel) == 0) noBusy = 1;
+    if (Cur_BothSubPanesOn(&mCurB8) == 0 && mNumSel.IsOpen() == 0) noBusy = 1;
     if (noBusy != 0) {
         if (CSysWin_getUnk34(&mSysWin) == 0) {
             Cur_DrawLayout(&mCur88, drawInfo);
@@ -616,7 +627,7 @@ void CItemBoxLine::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
     }
     Cur_DrawLayout(&mCurB8, drawInfo);
     mScrollBar.draw(drawInfo);
-    NumSel_DrawLayout_AF7C(&mNumSel, drawInfo);
+    mNumSel.DrawLayout(drawInfo);
     sysWinDrawLayout(&mSysWin, drawInfo);
     // "syswin overlay armed" flag: overlay busy and nav state before 9.
     int syswinArmed = 0;
@@ -663,8 +674,8 @@ void CItemBoxLine::UnloadFiles() {
     mCur88.cleanup();
     ((CBaseCur*)&mCurA0)->cleanup();
     ((CBaseCur*)&mCurB8)->cleanup();
-    closeItemBox2(reinterpret_cast<CItemBoxInfo2*>(&mInfo2));
-    NumSel_Teardown_AF9C(&mNumSel);
+    mInfo2.UnloadFiles();
+    mNumSel.UnloadFiles();
     mScrollBar.Teardown();
     sysWinTermLayout(&mSysWin);
 }
@@ -677,7 +688,7 @@ int CItemBoxLine::IsBusy() {
     if (CSysWin_getUnk34(&mSysWin)) {
         return 1;
     }
-    if (NumSel_GetActiveFlag_B020(&mNumSel)) {
+    if (mNumSel.IsOpen()) {
         return 1;
     }
     return field3A0;
@@ -689,14 +700,14 @@ void CItemBoxLine::OpenLine() {
     field4C = 1;
     unk59 = 0;
     unk39E = 0;
-    startItemBox2Open(&mInfo2);
+    mInfo2.Open();
     // Four values stay live across the calls below (this / tabs / idx / f9):
     // retail keeps them in r28..r31 behind a _savegpr_28 prologue.
     CIBLTab* tabs = &unk3A4;
     u8 idx = (u8)(unk38C + unk38E);
     int f9 = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
-    renderItemBox2ByKind(&mInfo2, (u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, field39F, f9);
-    setItemBox2NamedText(&mInfo2, 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
+    mInfo2.SetItem((u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, field39F, f9);
+    mInfo2.SetNamedText(0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
     SetInfo2Item((u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
     mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, lbl_eu_8066811C, lbl_eu_80668120, lbl_eu_806680F8)));
@@ -714,7 +725,7 @@ void CItemBoxLine::PushTabByte(unsigned char val) {
 }
 
 void CItemBoxLine::TabNext() {
-    if (NumSel_GetActiveFlag_B020(&mNumSel)) return;
+    if (mNumSel.IsOpen()) return;
     field6D = field6D + 1;
     if ((s8)field6D >= (int)tabCount) {
         field6D = 0;
@@ -741,7 +752,7 @@ void CItemBoxLine::TabNext() {
 }
 
 void CItemBoxLine::TabPrev() {
-    if (NumSel_GetActiveFlag_B020(&mNumSel)) return;
+    if (mNumSel.IsOpen()) return;
     field6D = field6D - 1;
     if ((s8)field6D < 0) {
         field6D = tabCount - 1;
@@ -800,29 +811,29 @@ void CItemBoxLine::CursorPageBack() {
         return;
     }
     if (field3A0 != 0) {
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A2 - 1);
         while (a != (s8)field3A2) {
             if (a < 0) a = 3;
-            if (ArrayGet12(page->pageWords180, (u8)((s8)field3A1 * 4 + a)) != 0) {
+            if (ArrayGet12(page->mItemIds, (u8)((s8)field3A1 * 4 + a)) != 0) {
                 field3A2 = (u8)a;
                 break;
             }
             a--;
         }
         CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page->pageWords180, (u8)((s8)field3A1 * 4 + field3A2));
+        CopyTabSlotVec(&vec, page->mItemIds, (u8)((s8)field3A1 * 4 + field3A2));
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-    } else if (NumSel_GetActiveFlag_B020(&mNumSel) != 0) {
-        if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
+    } else if (mNumSel.IsOpen() != 0) {
+        if (mNumSel.IsIdle() == 0) return;
         u8 idx = (u8)(unk38C + unk38E);
         CIBLTab* tabs = &unk3A4;
         u16 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         field392 += 1;
         if (!((u16)field392 > lim)) field392 = 1;
-        NumSel_ShowPaneA_B218(&mNumSel);
-        NumSel_SetCaptionNum_B04C(&mNumSel, (u8)field392);
-        NumSel_FormatPicName_B064(&mNumSel, field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.CountUp();
+        mNumSel.SetCount((u8)field392);
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
     } else {
         if (unk38C == 0 && unk38E == 0) {
             unk38C = -1;
@@ -881,29 +892,29 @@ void CItemBoxLine::CursorPageDown() {
         return;
     }
     if (field3A0 != 0) {
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A2 + 1);
         while (a != (s8)field3A2) {
             if (a >= 4) a = 0;
-            if (ArrayGet12(page->pageWords180, (u8)((s8)field3A1 * 4 + a)) != 0) {
+            if (ArrayGet12(page->mItemIds, (u8)((s8)field3A1 * 4 + a)) != 0) {
                 field3A2 = (u8)a;
                 break;
             }
             a++;
         }
         CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page->pageWords180, (u8)((s8)field3A1 * 4 + field3A2));
+        CopyTabSlotVec(&vec, page->mItemIds, (u8)((s8)field3A1 * 4 + field3A2));
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-    } else if (NumSel_GetActiveFlag_B020(&mNumSel) != 0) {
-        if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
+    } else if (mNumSel.IsOpen() != 0) {
+        if (mNumSel.IsIdle() == 0) return;
         u8 idx = (u8)(unk38C + unk38E);
         CIBLTab* tabs = &unk3A4;
         s16 lim = (s16)ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         field392 -= 1;
         if ((s16)field392 < 1) field392 = lim;
-        NumSel_ShowPaneB_B314(&mNumSel);
-        NumSel_SetCaptionNum_B04C(&mNumSel, (u8)field392);
-        NumSel_FormatPicName_B064(&mNumSel, field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.CountDown();
+        mNumSel.SetCount((u8)field392);
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
     } else {
         u16 count = unk3A4.count;
         if (count >= 7) {
@@ -948,32 +959,32 @@ void CItemBoxLine::CursorPageDown() {
 void CItemBoxLine::CursorPageUp() {
     if (CSysWin_getUnk34(&mSysWin) != 0) return;
     if (field3A0 != 0) {
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A1 - 1);
         while (a != (s8)field3A1) {
             if (a < 0) a = 2;
-            if (ArrayGet12(page->pageWords180, (u8)(field3A2 + (s8)a * 4)) != 0) {
+            if (ArrayGet12(page->mItemIds, (u8)(field3A2 + (s8)a * 4)) != 0) {
                 field3A1 = (u8)a;
                 break;
             }
             a--;
         }
         CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page->pageWords180, (u8)(field3A2 + (s8)field3A1 * 4));
+        CopyTabSlotVec(&vec, page->mItemIds, (u8)(field3A2 + (s8)field3A1 * 4));
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound(1);
         return;
     }
-    if (NumSel_GetActiveFlag_B020(&mNumSel) != 0) {
-        if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
+    if (mNumSel.IsOpen() != 0) {
+        if (mNumSel.IsIdle() == 0) return;
         u8 idx = (u8)(unk38C + unk38E);
         CIBLTab* tabs = &unk3A4;
         if (ItemBoxLine_ProbePageSlot((void*)tabs, idx) != 0) {
             field392 -= 10;
             if (field392 < 1) field392 = 1;
         }
-        NumSel_SetCaptionNum_B04C(&mNumSel, (u8)field392);
-        NumSel_FormatPicName_B064(&mNumSel, field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetCount((u8)field392);
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
         playUISound(1);
     } else {
         if (unk38C == -1) {
@@ -1009,24 +1020,24 @@ void CItemBoxLine::CursorPageUp() {
 void CItemBoxLine::CursorPageDownRow() {
     if (CSysWin_getUnk34(&mSysWin) != 0) return;
     if (field3A0 != 0) {
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A1 + 1);
         while (a != (s8)field3A1) {
             if (a >= 3) a = 0;
-            if (ArrayGet12(page->pageWords180, (u8)(field3A2 + (s8)a * 4)) != 0) {
+            if (ArrayGet12(page->mItemIds, (u8)(field3A2 + (s8)a * 4)) != 0) {
                 field3A1 = (u8)a;
                 break;
             }
             a++;
         }
         CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page->pageWords180, (u8)(field3A2 + (s8)field3A1 * 4));
+        CopyTabSlotVec(&vec, page->mItemIds, (u8)(field3A2 + (s8)field3A1 * 4));
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound(1);
         return;
     }
-    if (NumSel_GetActiveFlag_B020(&mNumSel) != 0) {
-        if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
+    if (mNumSel.IsOpen() != 0) {
+        if (mNumSel.IsIdle() == 0) return;
         u8 idx = (u8)(unk38C + unk38E);
         CIBLTab* tabs = &unk3A4;
         u8 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
@@ -1034,8 +1045,8 @@ void CItemBoxLine::CursorPageDownRow() {
             field392 += 10;
             if ((u32)field392 > (u32)lim) field392 = (s16)lim;
         }
-        NumSel_SetCaptionNum_B04C(&mNumSel, (u8)field392);
-        NumSel_FormatPicName_B064(&mNumSel, field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetCount((u8)field392);
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
         playUISound(1);
         return;
     }
@@ -1089,9 +1100,9 @@ void CItemBoxLine::ConfirmOverlayOrHint() {
             Cur_SetVisible(&mCur88, 0);
             playUISound(6);
         } else {
-            if (NumSel_GetActiveFlag_B020(&mNumSel) == 0) return;
-            if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
-            NumSel_EnterState3Open_B178(&mNumSel);
+            if (mNumSel.IsOpen() == 0) return;
+            if (mNumSel.IsIdle() == 0) return;
+            mNumSel.Close();
             field50 = 8;
             playUISound(6);
         }
@@ -1123,9 +1134,9 @@ void CItemBoxLine::ResolveEntry() {
     if (field3A0 != 0) return;
     CIBLTab* tabs = &unk3A4;
     u32 key = (u8)(unk38C + unk38E);
-    if (field390 == 1 && NumSel_GetActiveFlag_B020(&mNumSel)) {
+    if (field390 == 1 && mNumSel.IsOpen()) {
         // Num-select confirm: rebuild the tab list for the confirmed entry.
-        if (NumSel_GetField2E_B028(&mNumSel) == 0) return;
+        if (mNumSel.IsIdle() == 0) return;
         if (field50 != 7) return;
         ItemBoxLine_AllocEntryStock(reinterpret_cast<CIBLTabFull*>(tabs), key, (u8)field392);
         u32 v = GetCollectedFlagByte(field39F);
@@ -1134,7 +1145,7 @@ void CItemBoxLine::ResolveEntry() {
         RebuildTabList();
         RefreshTabPanes();
         RefreshPageList();
-        NumSel_EnterState3Open_B178(&mNumSel);
+        mNumSel.Close();
         field50 = 8;
         playUISound(0x2f);
         return;
@@ -1303,9 +1314,8 @@ void CItemBoxLine::Info2SelectPrev() {
     if ((s8)n < 0) {
         field39F = b - 1;
     }
-    u8 tmp[16];
-    calcItemBox2PaneVec(tmp, &mInfo2, field39F);
-    ((CBaseCur*)&mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+    nw4r::math::VEC3 tmp = mInfo2.GetSlotPos(field39F);
+    ((CBaseCur*)&mCurB8)->setRootPaneTranslate(&tmp);
     RefreshLineState();
     playUISound(0xa);
 }
@@ -1322,9 +1332,8 @@ void CItemBoxLine::Info2SelectNext() {
     if ((signed char)n >= (int)maxPos) {
         field39F = 0;
     }
-    unsigned char tmp[16];
-    calcItemBox2PaneVec(tmp, &mInfo2, field39F);
-    ((CBaseCur*)&mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+    nw4r::math::VEC3 tmp = mInfo2.GetSlotPos(field39F);
+    ((CBaseCur*)&mCurB8)->setRootPaneTranslate(&tmp);
     RefreshLineState();
     playUISound(0xa);
 }
@@ -1339,7 +1348,7 @@ void CItemBoxLine::Info2SelectNext() {
 // slot%4 via a float multiply), prime the cursors and push the slot VEC3.
 // ============================================================================
 void CItemBoxLine::ShowDetailWin() {
-    if (NumSel_GetActiveFlag_B020(&mNumSel) != 0) return;
+    if (mNumSel.IsOpen() != 0) return;
     if (field3A0 != 0) {
         if (CSysWin_getUnk34(&mSysWin) != 0) {
             if (CSysWin_isActive(&mSysWin) != 0) {
@@ -1347,14 +1356,14 @@ void CItemBoxLine::ShowDetailWin() {
             }
             return;
         }
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         u8 idx = (u8)(field3A2 + (s8)field3A1 * 4);
-        u16 v = ArrayGet12(page->pageWords180, idx);
+        u16 v = ArrayGet12(page->mItemIds, idx);
         if (v != 0) {
             u8 bt = ItemBoxGetTab((const u8*)page, idx);
             u32 obj;
             if (bt == 3) {
-                obj = formatItemBoxName(page, idx);
+                obj = (u32)page->GetItemName(idx);
             } else {
                 obj = (u32)BdatTouchStringCell(&lbl_eu_805071B0[0x1f0], &lbl_eu_805071B0[0x1fa], (u16)v);
             }
@@ -1366,18 +1375,18 @@ void CItemBoxLine::ShowDetailWin() {
         return;
     }
     if (CSysWin_getUnk34(&mSysWin) != 0) return;
-    CIBLPageData* page2 = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+    CItemBoxPage* page2 = &mInfo2.mPage;
     u8 found = 0;
     for (u8 i = 0; i < 12; i++) {
-        if (page2->pageWords180[i] != 0) {
-            page2->pageSlot258 = i;
-            if (page2->pageWords180[8] != 0) page2->pageSlot258 = 8;
+        if (page2->mItemIds[i] != 0) {
+            page2->mSelSlot = i;
+            if (page2->mItemIds[8] != 0) page2->mSelSlot = 8;
             found = 1;
             break;
         }
     }
     if (found != 0) {
-        u8 sel = page2->pageSlot258;
+        u8 sel = page2->mSelSlot;
         field3A0 = 1;
         field3A1 = (u8)((float)sel * lbl_eu_80668124);
         field3A2 = (u8)(sel - (s8)field3A1 * 4);
@@ -1385,7 +1394,7 @@ void CItemBoxLine::ShowDetailWin() {
         Cur_SetVisible(&mCur70, 0);
         Cur_SetVisible(&mCur88, 1);
         CIBLVec3 vec;
-        CopyTabSlotVec(&vec, page2->pageWords180, sel);
+        CopyTabSlotVec(&vec, page2->mItemIds, sel);
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound(2);
     } else {
@@ -1399,7 +1408,7 @@ void CItemBoxLine::ShowDetailWin() {
 // ============================================================================
 u8 CItemBoxLine::ResolveFocusId() {
     if (field50 >= 6) return 0;
-    if (NumSel_GetActiveFlag_B020(&mNumSel)) return 0;
+    if (mNumSel.IsOpen()) return 0;
     if (CSysWin_getUnk34(&mSysWin)) return 0;
     if (Cur_BothSubPanesOn(&mCurB8)) return 0xa;
     bool flag = code80135FDC_getByte_64077() > 1;
@@ -1440,9 +1449,8 @@ void CItemBoxLine::EnterState1() {
     RefreshPageList();
     Cur_SetVisible(&mCur70, 1);
     Cur_SetVisible(&mCurB8, 1);
-    u8 tmp[16];
-    calcItemBox2PaneVec(tmp, &mInfo2, field39F);
-    ((CBaseCur*)&mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+    nw4r::math::VEC3 tmp = mInfo2.GetSlotPos(field39F);
+    ((CBaseCur*)&mCurB8)->setRootPaneTranslate(&tmp);
     RefreshLineRows();
 }
 
@@ -1504,10 +1512,10 @@ void CItemBoxLine::CommitOverlayState() {
     // ItemBoxLine_GetTabEntryValue (retail object boundary) instead of inlining the same-TU
     // definitions.
     u8* tabs = (u8*)&unk3A4;
-    NumSel_SetCaption_B030(&mNumSel, ItemBoxLine_FormatTabEntryName(tabs, tabidx));
-    NumSel_SetCaptionNum_B04C(&mNumSel, (u8)field392);
-    NumSel_FormatPicName_B064(&mNumSel, field392 * ItemBoxLine_GetTabEntryValue(tabs, tabidx));
-    NumSel_EnterState1Close_B0D4(&mNumSel);
+    mNumSel.SetItemName((char*)ItemBoxLine_FormatTabEntryName(tabs, tabidx));
+    mNumSel.SetCount((u8)field392);
+    mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, tabidx));
+    mNumSel.Open();
     field50 = 6;
 }
 
@@ -1519,9 +1527,9 @@ void CItemBoxLine::CommitOverlayState() {
 __declspec(noinline) void CItemBoxLine::CompactTabList() {
     if (field40 == 0) return;
     if (field3C == 0) return;
-    if (lbl_eu_80664648 == 0) return;
-    if (lbl_eu_8066464C == 0) return;
-    if (lbl_eu_80664650 == 0) return;
+    if (gMnuItemMesA == 0) return;
+    if (gMnuItemMesB == 0) return;
+    if (gMnuSkill == 0) return;
     BuildSlotItemLists(0);
     if (field390 == 2) unk3A4.field93 = 1;
     u8 i = 0;
@@ -1761,7 +1769,7 @@ u32 CItemBoxLine::RefreshLineState() {
                   field394, (u8)sel);
     RefreshTabPanes();
     RefreshPageList();
-    return getItemBox2State__FP13CItemBoxInfo2((unsigned char*)this + 0xd0);
+    return mInfo2.GetState();
 }
 
 // ============================================================================
@@ -1776,37 +1784,36 @@ void CItemBoxLine::RefreshPageList() {
     char* name = ItemBoxLine_FormatDisplayName(reinterpret_cast<CIBLTabFull*>(tabs), idx);
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x3c0], name,
                   reinterpret_cast<u32>(field54));
-    if (getItemBox2State__FP13CItemBoxInfo2(&mInfo2) != 0) {
+    if (mInfo2.GetState() != 0) {
         u8 f9 = ItemBoxLine_GetTabEntryReady(reinterpret_cast<u8*>(tabs), idx);
         u16 f0 = ItemBoxLine_GetTabEntryItem(tabs, idx);
-        renderItemBox2ByKind(reinterpret_cast<u8*>(&mInfo2), f0, 0,
-                      field39F, f9);
+        mInfo2.SetItem(f0, 0, field39F, f9);
         char* tabName = reinterpret_cast<char*>(
             ItemBoxLine_FormatTabEntryName(reinterpret_cast<u8*>(tabs), idx));
-        setItemBox2NamedText(reinterpret_cast<u8*>(&mInfo2), 0, tabName);
+        mInfo2.SetNamedText(0, tabName);
         SetInfo2Item(
                       ItemBoxLine_GetTabEntryItem(tabs, idx));
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mInfo2.mPage;
         u16 i = 0;
         do {
-            u16 v = ArrayGet12(page->pageWords4E0, (u8)i);
+            u16 v = ArrayGet12(mPage.mItemIds, (u8)i);
             if (v != 0) {
-                page->pageWords180[(u8)i] = v;
-                page->pageFlags228[(u8)i] = ItemBoxGetTab(
-                    reinterpret_cast<const u8*>(page->pageWords4E0), (u8)i);
+                page->mItemIds[(u8)i] = v;
+                page->mBytesA8[(u8)i] = ItemBoxGetTab(
+                    reinterpret_cast<const u8*>(mPage.mItemIds), (u8)i);
                 u8 b594 = 0;
                 if ((u8)i < 12) {
-                    b594 = page->pageBytes594[(u8)i];
+                    b594 = mPage.mBytesB4[(u8)i];
                 }
-                page->pageFlags234[(u8)i] = b594;
+                page->mBytesB4[(u8)i] = b594;
                 s16 s5A0 = 0;
                 if ((u8)i < 12) {
-                    s5A0 = page->pageShorts5A0[(u8)i];
+                    s5A0 = mPage.mValues[(u8)i];
                 }
-                page->pageShorts2C0[(u8)i] = s5A0;
+                page->mValues2[(u8)i] = s5A0;
                 CIBLVec3 vec;
-                CopyTabSlotVec(&vec, page->pageWords4E0, (u8)i);
-                copyVEC3(&page->pageVec198[(u8)i], &vec);
+                CopyTabSlotVec(&vec, mPage.mItemIds, (u8)i);
+                copyVEC3(&page->mPos[(u8)i], &vec);
             }
             i++;
         } while (i < 12);
@@ -1883,9 +1890,9 @@ void CItemBoxLine::RefreshLineRows() {
 // ============================================================================
 void CItemBoxLine::ResetPageTables(u32 itemData) {
     for (u8 i = 0; i < 12; i++) {
-        pageWords4E0[i] = 0;
+        mPage.mItemIds[i] = 0;
         CIBLVec3 vec;
-        copyVEC3(&pageVecs4F8[i],
+        copyVEC3(&mPage.mPos[i],
                  reinterpret_cast<const CIBLVec3*>(code80135FDC_setVec3(
                      (nw4r::math::VEC3*)((float*)&vec), lbl_eu_806680F8, lbl_eu_806680F8, lbl_eu_806680F8)));
     }
@@ -2348,25 +2355,25 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
         CIBLVec3 pos;
         ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, find, field40->GetRootPane());
         u8 idx = (u8)(i + 8);
-        CIBLPageData* page = reinterpret_cast<CIBLPageData*>(reinterpret_cast<u8*>(&mInfo2) + 0xB0);
+        CItemBoxPage* page = &mPage;
         if (idx < 12) {
-            page->pageWords4E0[idx] = kindV;
+            page->mItemIds[idx] = kindV;
         }
         if (idx < 12) {
-            page->pageBytes588[idx] = 3;
+            page->mBytesA8[idx] = 3;
         }
         if (idx < 12) {
-            page->pageBytes594[idx] = b;
+            page->mBytesB4[idx] = b;
         }
         if (idx < 12) {
-            page->pageShorts5A0[idx] = a;
+            page->mValues[idx] = a;
         }
         CIBLVec3 tmp;
         tmp.x = pos.x;
         tmp.y = pos.y;
         tmp.z = pos.z;
         if (idx < 12) {
-            copyVEC3(&page->pageVecs4F8[idx], &tmp);
+            copyVEC3(&page->mPos[idx], &tmp);
         }
     }
 }
@@ -2613,9 +2620,9 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             CBdat::setBdatEntry(2, data2C);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664648 = (u32)getFP(&lbl_eu_805071B0[0x7ca]);
+        gMnuItemMesA = (u32)getFP(&lbl_eu_805071B0[0x7ca]);
         Bdat_GetTable_AA34();
-        lbl_eu_8066464C = (u32)getFP(&lbl_eu_805071B0[0x7d9]);
+        gMnuItemMesB = (u32)getFP(&lbl_eu_805071B0[0x7d9]);
         CompactTabList();
         this->field2C = 0;
         return true;
@@ -2629,7 +2636,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         if (fpB == 0) {
             CBdat::setBdatEntry(5, this->field34);
         }
-        lbl_eu_80664650 = (u32)getFP(&lbl_eu_805071B0[0x1f0]);
+        gMnuSkill = (u32)getFP(&lbl_eu_805071B0[0x1f0]);
         CompactTabList();
         this->field30 = 0;
         return true;

@@ -11,8 +11,7 @@
 #include "kyoshin/CTitleAHelp.hpp"
 
 // Forward declarations: the owning scene is kept opaque (same scheme as
-// CMenuBattleEnd); the CItemBoxLine storage member is an opaque byte region
-// because CItemBoxLine's declared sizeof differs from its retail extent.
+// CMenuBattleEnd).
 class CScn;
 
 // 8-byte pane-colour vector: CItemBoxLine.hpp references this type but relies
@@ -53,82 +52,6 @@ struct ShopBuyData {
     ShopBuyData128 mD9;     // 0xD9..0x159 (16 x 8B copy loop)
 };
 
-/* 10-byte / 8-byte byte-packed chunks of the item-box line data region.
- * Init copies these as aggregates so MWCC emits the retail's word-pair loads
- * (unaligned lwz for the odd-offset tab chunk) instead of byte copies. */
-struct ShopBuyIBL10 {
-    u8 v[10];
-};
-
-struct ShopBuyIBL8 {
-    u8 v[8];
-};
-
-/* 0x10-byte mem-region slot (4-aligned, no ctors so embedding it in the
- * mirror/temp does not generate implicit UnkClass_8045F564 construction). */
-struct ShopBuyIBLRegion {
-    u32 v[4];
-};
-
-/* Mirror of the CItemBoxLine data region (base = vtable + 4), used by Init
- * to copy the stack-temporary layout into the embedded member. Offsets are
- * relative to the first data byte (the vtable at +0 is never copied); the
- * named fields match CItemBoxLine.hpp where the member maps 1:1. */
-struct ShopBuyIBLData {
-    ShopBuyIBLRegion mRegion04;       // 0x00..0x0F mem region
-    ShopBuyIBLRegion mRegion14;       // 0x10..0x1F mem region
-    u32 field_0x20[10];               // 0x20..0x47 (10 words)
-    u8 field_0x48;                    // 0x48
-    u32 field_0x4C;                   // 0x4C (CItemBoxLine::field50)
-    u32 field_0x50;                   // 0x50 (pad_54[0..3])
-    u8 field_0x54;                    // 0x54 (pad_54[4])
-    u8 unk59;                         // 0x55 (CItemBoxLine::unk59)
-    ShopBuyIBL10 tabEntries10;        // 0x56..0x5F (tabEntries[9] + tabCount)
-    ShopBuyIBL10 pad6410;             // 0x60..0x69 (pad_64[9] + field6D)
-    u8 cursors[4][0x18];              // 0x6C..0xCB (4 x 0x18 cursor objects)
-    ShopBuyIBLRegion mRegionD4;       // 0xD0..0xDF mem region
-    ShopBuyIBLRegion mRegionE4;       // 0xE0..0xEF mem region
-    u32 field_0xF0[27];               // 0xF0..0x15B (27 words)
-    u8 field_0x15C;                   // 0x15C
-    u32 field_0x160;                  // 0x160
-    u8 field_0x164;                   // 0x164
-    u8 field_0x165;                   // 0x165
-    u8 field_0x166;                   // 0x166
-    ShopBuyIBL8 chunk168;             // 0x168..0x16F (2-word chunk)
-    ShopBuyIBL8 chunk170;             // 0x170..0x177 (2-word chunk)
-    u16 field_0x178;                  // 0x178
-    ShopBuyData blob17C;              // 0x17C..0x2D4 (ShopBuy_CopyData)
-    ShopBuyIBLRegion mRegion2DC;      // 0x2DC..0x2EB mem region
-    u32 field_0x2EC[6];               // 0x2EC..0x303 (6 words)
-    u8 field_0x304[5];                // 0x304..0x308
-    ShopBuyIBLRegion mRegion310;      // 0x310..0x31F mem region
-    u32 field_0x320[4];               // 0x320..0x32F (4 words)
-    u8 field_0x330[4];                // 0x330..0x333
-    f32 field_0x334[5];               // 0x334..0x347 (5 floats)
-    u8 field_0x348;                   // 0x348
-    ShopBuyIBLRegion mRegion350;      // 0x350..0x35F mem region
-    u32 field_0x360[5];               // 0x360..0x373 (5 words)
-    u8 field_0x374[18];               // 0x374..0x385
-    u8 _pad386[2];                    // 0x386..0x387
-    s16 unk38C;                       // 0x388 (CItemBoxLine::unk38C)
-    s16 unk38E;                       // 0x38A (CItemBoxLine::unk38E)
-    u8 field_0x38C;                   // 0x38C (pad_390[0])
-    s16 field_0x38E;                  // 0x38E (pad_390[2..3])
-    u16 field_0x390;                  // 0x390 (pad_390[4..5])
-    ShopBuyIBL8 chunk392;             // 0x392..0x399 (pad_390[6..13])
-    u8 field_0x39A[6];                // 0x39A..0x39F (unk39E..field3A3)
-    ShopBuyData144 data3A0;           // 0x3A0..0x42F (CIBLTab entries, 18x8 loop)
-    u16 tabCount;                     // 0x430 (CIBLTab.count)
-    u8 field_0x432;                   // 0x432
-    u8 field_0x433;                   // 0x433
-    char str434[0x20];                // 0x434..0x453 (FixStr<32>)
-    u32 len454;                       // 0x454
-    char str458[0x20];                // 0x458..0x477 (FixStr<32>)
-    u32 len4D8;                       // 0x4D8
-    u8 _pad478[0x4D8 - 0x478];        // 0x478..0x4D7
-    ShopBuyData blob4DC;              // 0x4DC..0x634 (ShopBuy_CopyData)
-};
-
 /* Local shim for cf::CfPadData - only the flag words ShopBuy_HandleInput reads
  * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
  * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
@@ -137,14 +60,6 @@ struct ShopBuyPadData {
     u32 mPressedFlags;                // +0x04 (CPad::mPressedButtonFlags)
     u8 _pad08[0x104 - 0x08];          // 0x08..0x103
     u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
-};
-
-/* Stack temporary for Init: the CItemBoxLine blob (vtable + data mirror).
- * Declared as a typed object so MWCC folds field accesses to sp-relative
- * loads (retail keeps no base register for the temp). */
-struct ShopBuyItemBoxLine {
-    u32 mItemBoxVtbl;                 // 0x00..0x03 (vtable)
-    ShopBuyIBLData mData;             // 0x04..0x638 data region
 };
 
 /*
@@ -158,7 +73,7 @@ struct ShopBuyItemBoxLine {
  *   0x60: u32 mField60    -- ctor arg 3
  *   0x64: CBgTex          -- background layout widget (0x20 bytes)
  *   0x84: CTitleAHelp     -- title/help bar (0x38 bytes)
- *   0xBC: CItemBoxLine    -- item box line storage (0x63C bytes, opaque)
+ *   0xBC: CItemBoxLine    -- item box line (0x63C bytes)
  *  0x6F8: u8 mState       -- phase/state indicator
  *  0x6FC: f32 mFloat6FC   -- float init (lbl_eu_80667A20 pool constant)
  *  total: 0x700
@@ -177,15 +92,7 @@ public:
     u32 mField60;               // 0x60: ctor arg 3
     CBgTex mBgTex;              // 0x64
     CTitleAHelp mTitleAHelp;    // 0x84
-    // CItemBoxLine storage at 0xBC (0x63C bytes, opaque) overlapped with the
-    // data-region mirror Init copies into (vtable at +0xBC excluded).
-    union {
-        u8 mItemBoxLine[0x63C];               // 0xBC..0x6F7 raw storage
-        struct {
-            u32 mItemBoxVtbl;                 // 0xBC..0xBF (vtable, not copied)
-            ShopBuyIBLData mIBLData;          // 0xC0..0x6F5 data mirror
-        } mItemBox;
-    };
+    CItemBoxLine mItemBoxLine;  // 0xBC
     u8 mState;                  // 0x6F8
     f32 mFloat6FC;              // 0x6FC: float init
 };
@@ -218,7 +125,6 @@ extern const f32 lbl_eu_80667A24;  // .sdata2 float pool constants (timer inc/cl
 extern const f32 lbl_eu_80667A28;
 
 // Subobject ctors/dtors (retail keeps the unmangled names).
-extern "C" void __dt__12CItemBoxLineFv(CItemBoxLine*, int);
 
 // Subobject draw/update hooks called by Move / cbRenderBefore (retail names
 // are unmangled for these helpers too).

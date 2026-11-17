@@ -37,7 +37,6 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u16 LookupRelateValue(u8 a, u8 b);
-u32 findTalkIcon(TalkListEntryArray* self, u8 v);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer
 
 // data / rodata labels
@@ -54,14 +53,5 @@ extern "C" f32 lbl_eu_806689CC;
 extern "C" f32 lbl_eu_806689D0;
 extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entry show/hide
 
-// State-transition helpers for CKizunaTalkList (defined in CKizunaTalkList.cpp;
-// extern "C" + noinline keeps callers emitting real unmangled bl branches -
-// retail keeps them as separate out-of-line functions in this TU).
-extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self);
-
 // Misc helpers used by the row-draw / visibility paths.
 extern "C" void setPaneVisible(void*, u32);
-extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 r4);

@@ -403,15 +403,6 @@ struct UnkState_80664268 {
 };
 extern UnkState_80664268* lbl_eu_80664268;
 
-// Minimal layout view of the realtime-event model object passed to
-// EvtSeqProbeEvtSlot (type word 0x14, flag word 0x18, data pointer 0x1C).
-struct EvtBdabModel {
-    u8 gap00[0x14];   // 0x00
-    u32 field_0x14;   // 0x14: event type word (+6 vs +1 counter bump)
-    u32 field_0x18;   // 0x18: flag word (bit 8 selects the packed-slot path)
-    void* field_0x1C; // 0x1C: id/slot table (EvtBdabPtr1C)
-    int SeqProbeEvtSlot(u32* out);
-};
 
 
 // View of the buffer at UnkState_80664268::field_0xC4 exposing the slot
@@ -495,7 +486,6 @@ public:
     u32 field_0x40;            // 0x40: busy flag (tested by EvtSeqIsSameNameType3Busy)
     u8 gap44[0x04];            // 0x44-0x47
     u32 field_0x48;            // 0x48: busy flag (tested by EvtSeqIsSameNameType3Busy)
-    void SeqInsertRtEvent();
     int SeqIsSameNameType3Busy();
     int SeqCheckRunGate();
 };  // size 0x4C
@@ -576,7 +566,7 @@ struct UnkEvtName2 {
     u32 field_0x20;    // 0x20
 };  // size 0x24
 
-// Object behind UnkObj80168514::field_0x1C: id word at +0x34 (tested against
+// Object behind CREvtModel::mPtr1C as read by checkRunGuard: id word at +0x34 (tested against
 // 0xFFFFFFFF) and packed halfword at +0x38 (bits 8-15 compared against
 // UnkState_80664268::field_0xF8).
 struct UnkObj1C80168514 {
@@ -585,32 +575,6 @@ struct UnkObj1C80168514 {
     u16 field_0x38;    // 0x38
 };  // size 0x3A
 
-// Object passed to EvtSeqCheckEventRunGuard: standard MWCC vtable at +0x0 (2-word
-// header, first user virtual at +0x08), flag word at +0x18, data object at
-// +0x1C. The dispatched slots are user virtual 13 (vtable+0x3C, returns a
-// tested value) and user virtual 14 (vtable+0x40).
-class UnkObj80168514 {
-public:
-    virtual void vf_0x08();   // user 0
-    virtual void vf_0x0C();   // user 1
-    virtual void vf_0x10();   // user 2
-    virtual void vf_0x14();   // user 3
-    virtual void vf_0x18();   // user 4
-    virtual void vf_0x1C();   // user 5
-    virtual void vf_0x20();   // user 6
-    virtual void vf_0x24();   // user 7
-    virtual void vf_0x28();   // user 8
-    virtual void vf_0x2C();   // user 9
-    virtual void vf_0x30();   // user 10
-    virtual void vf_0x34();   // user 11
-    virtual void vf_0x38();   // user 12
-    virtual int vf_0x3C();    // user 13 -> vtable+0x3C
-    virtual void vf_0x40();   // user 14 -> vtable+0x40
-    u8 gap04[0x14];           // 0x04-0x17
-    u32 field_0x18;           // 0x18
-    UnkObj1C80168514* field_0x1C;  // 0x1C
-    int EvtSeqCheckEventRunGuard();
-};  // size 0x20
 
 // Object destructed by __dt__801682AC: memory-block wrapper with a data
 // buffer (0x0), flag word (0x4), spare word (0x8) and ALLOC_HANDLE (0xC,
@@ -852,13 +816,11 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqFinishSequence(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx);
-// (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
 extern "C" u32 EvtSeqResolvePackedResId(u32 resId);
 extern "C" int EvtSeqCheckRegionStatus(u8* data);
 // (memberized: EvtSeqIsSameNameType3Busy -> UnkEvtListEntry::SeqIsSameNameType3Busy; declaration moved into class UnkEvtListEntry)
 // (memberized: EvtSeqCheckRunGate -> UnkEvtListEntry::SeqCheckRunGate; declaration moved into class UnkEvtListEntry)
 extern "C" void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self);
-// (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
 extern "C" bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev);
 extern "C" int EvtSeqFindResAddr(u8* data, const char* name, s32* out);
 extern "C" int EvtSeqResolveAnmChr2(u8* data, const char* name, s32* out, s32* out2);
@@ -906,10 +868,6 @@ extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 handle, u32 a
                               u32 a5, u32 a6, float volume);
 // Fade-volume scale source (CTaskREvent.cpp): returns a float in f1.
 extern "C" f32 evtCalcStreamVolume();
-// Minimap/system reset (CREvtModelMap.cpp).
-extern "C" void MapFx_SetPointEnabled(int val);
-// Guest-mode-off reset (CREvtModelMap.cpp).
-extern "C" void MapModel_DisablePoints();
 // Second/third CfGameManager object-list getters (same scheme as
 // getGimmickListHead above).
 extern "C" EvtSeqMgrView* getGimmickList__Q22cf13CfGameManagerFv();

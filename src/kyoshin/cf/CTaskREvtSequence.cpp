@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include <string.h>
 
@@ -11,6 +12,7 @@
 #include "kyoshin/cf/CTaskCulling.hpp"
 
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
+#include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 // CTaskGameEffAfter.hpp pre-declares the retail __ptmf_test runtime helper
 // with C linkage (the out-of-line Move specialization below dispatches its
 // callback through it).
@@ -305,13 +307,13 @@ u32 EvtSeqGetStateBit10() {
     return (p->field_0x5C >> 10) & 1;
 }
 
-int UnkObj80168514::EvtSeqCheckEventRunGuard() {
+int cf::CREvtModel::checkRunGuard() {
     // Event-run guard chain: flag bits 7/8 off, state byte gate + flag bit 16
     // clear, state count >= 5, id word != 0xFFFFFFFF; then compare id+1
     // against state->field_0xF8 (signed). On the high side, dispatch the
     // +0x40 table slot when the +0x38 halfword's bits 16-23 match; otherwise
     // dispatch the +0x3C slot and arm the state byte on a nonzero return.
-    u32 flags = this->field_0x18;
+    u32 flags = mFlags;
     if (flags & 0x80) {
         return 0;
     }
@@ -325,18 +327,18 @@ int UnkObj80168514::EvtSeqCheckEventRunGuard() {
     if ((s32)st->field_0x100 < 5) {
         return 0;
     }
-    if (this->field_0x1C->field_0x34 == 0xFFFFFFFF) {
+    if (static_cast<UnkObj1C80168514*>(mPtr1C)->field_0x34 == 0xFFFFFFFF) {
         return 0;
     }
     u32 f8 = st->field_0xF8;
-    if ((s32)(this->field_0x1C->field_0x34 + 1) > (s32)f8) {
-        u32 h = this->field_0x1C->field_0x38;
+    if ((s32)(static_cast<UnkObj1C80168514*>(mPtr1C)->field_0x34 + 1) > (s32)f8) {
+        u32 h = static_cast<UnkObj1C80168514*>(mPtr1C)->field_0x38;
         if (h != 0 && (s32)((h >> 8) & 0xFF) == (s32)f8) {
-            this->vf_0x40();
+            releaseAnims();
         }
         return 0;
     }
-    if (this->vf_0x3C()) {
+    if (reset()) {
         lbl_eu_80664268->field_0x114 = 1;
     }
     return 1;
@@ -1106,7 +1108,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
                 }
                 node = node->field_0x0;
             }
-            MapFx_SetPointEnabled(0);
+            cf::CfMapEffectManager::setPointEnabled(0);
         }
     }
     if (isEventPending() != 0) {
@@ -1125,7 +1127,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
             scaled += 4;
         }
     }
-    MapModel_DisablePoints();
+    cf::CREvtModelMap::disablePoints();
     EvtSeqDispatchObjs(self);
     {
         u32 scaled = 0;
@@ -1871,7 +1873,7 @@ void EvtSeqStopSequence(void* selfv) {
         lbl_eu_80663E28 &= ~0x00800000u;
         stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 0);
     }
-    MapModel_EnablePoints();
+    cf::CREvtModelMap::enablePoints();
     if (self->field_0x10C != 0) {
         mtl::MemManager::deallocate(
             reinterpret_cast<void*>(self->field_0x10C));
@@ -1924,7 +1926,7 @@ void EvtSeqStopSequence(void* selfv) {
             }
             node = node->field_0x0;
         }
-        MapFx_SetPointEnabled(1);
+        cf::CfMapEffectManager::setPointEnabled(1);
     }
     if (isEventPending() != 0) {
         bindPadSubobjects(1);
@@ -2735,7 +2737,7 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
     }
 }
 
-void UnkEvtListEntry::SeqInsertRtEvent() {
+void cf::CREvtModel::insertRtEvent() {
     // Insert `this` into the realtime-event list, sorted by the name-data
     // priority word (+0x30): find an existing same-name entry with a HIGHER
     // priority and replace it in place, otherwise append at the end. Either
@@ -2776,12 +2778,12 @@ void UnkEvtListEntry::SeqInsertRtEvent() {
     while (i < count) {
         // Load order mirrors retail: base, this's name data, then the entry
         // (lwzx), then the entry's name data.
-        selfName = this->field_0x1C;
+        selfName = static_cast<UnkEvtNameData*>(mPtr1C);
         eName = (*(UnkEvtListEntry**) (
             (u8*)state->field_0x10C + scaled))->field_0x1C;
         if (strcmp(&eName->mName[0], &selfName->mName[0]) == 0) {
             if (eName->field_0x30 > selfName->field_0x30) {
-                state->field_0x10C[i] = this;
+                state->field_0x10C[i] = reinterpret_cast<UnkEvtListEntry*>(this);
                 // Bubble-sort pass 1 (list unchanged in length).
                 int swapped;
                 s32 j;
@@ -2816,7 +2818,7 @@ void UnkEvtListEntry::SeqInsertRtEvent() {
         i++;
     }
     // Append at the end of the list, then bubble-sort pass 2.
-    lbl_eu_80664268->field_0x10C[state->field_0x110] = this;
+    lbl_eu_80664268->field_0x10C[state->field_0x110] = reinterpret_cast<UnkEvtListEntry*>(this);
     state->field_0x110 = state->field_0x110 + 1;
     int swapped;
     s32 j;
@@ -2843,7 +2845,7 @@ void UnkEvtListEntry::SeqInsertRtEvent() {
     } while (swapped != 0);
 }
 
-int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
+int cf::CREvtModel::probeEvtSlot(u32* out) {
     // Event-slot claim probe (called from the realtime-event dispatcher).
     // Inactive while the shared state walk is past its first frame window;
     // otherwise scans this model's claimed id/slot table for a slot matching
@@ -2855,7 +2857,7 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     if ((s32)st->field_0xF8 >= 1 && (s32)st->field_0x100 < 3) {
         return 0;
     }
-    if (this->field_0x18 & 0x100) {
+    if (mFlags & 0x100) {
         // Packed-slot path: scan the eight halfword slots at mPtr1C+0x38.
         // A nonzero slot whose low byte minus (slot-table base + 2) equals
         // field_0xF8 claims the frame.
@@ -2864,7 +2866,7 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
         // rolled. Everything reads through this/state directly.
         for (int row = 0; row < 2; row++) {
             for (int k = 0; k < 4; k++) {
-                u16 h = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)
+                u16 h = static_cast<EvtBdabPtr1C*>(mPtr1C)
                             ->field_0x38[row * 4 + k];
                 if (h == 0) {
                     goto notFound;
@@ -2885,7 +2887,7 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     notFound:
         return 0;
     }
-    EvtBdabPtr1C* p1c = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C);
+    EvtBdabPtr1C* p1c = static_cast<EvtBdabPtr1C*>(mPtr1C);
     u32 idv = p1c->field_0x30;
     if (idv < 2) {
         if (out != 0) {
@@ -2901,11 +2903,11 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     // live (< 8) counter byte triggers the advance. Then a second, unweighted
     // backward scan accepts any live counter byte.
     sum = 0;
-    if (reinterpret_cast<cf::CREvtModel*>(this)->isEvtDataFlagSet() == 0) {
+    if (isEvtDataFlagSet() == 0) {
         // Re-read the shared state and this model's slot object after the
         // probe call - neither is kept live across the call.
         UnkState_80664268* post = lbl_eu_80664268;
-        EvtBdabPtr1C* pc = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C);
+        EvtBdabPtr1C* pc = static_cast<EvtBdabPtr1C*>(mPtr1C);
         u32 idv2 = pc->field_0x30;
         u32 f8 = post->field_0xF8;
         u32 base = reinterpret_cast<EvtSeqC4View80*>(post->field_0xC4)->field_0x80;
@@ -2921,10 +2923,9 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
                            ->field_0xC;
                 if (post->field_0x13C[idx] < 8 && sum >= 0x96) {
                     post->field_0x13C[f8] +=
-                        (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
+                        (u8)((s32)mField14 == 2 ? 6 : 1);
                     if (out != 0) {
-                        *out = reinterpret_cast<EvtBdabPtr1C*>(
-                                   this->field_0x1C)
+                        *out = static_cast<EvtBdabPtr1C*>(mPtr1C)
                                    ->field_0x30;
                     }
                     return 1;
@@ -2939,10 +2940,9 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
             while ((s32)idx >= (s32)f8) {
                 if (cur->field_0x13C[idx] < 8) {
                     post->field_0x13C[f8] +=
-                        (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
+                        (u8)((s32)mField14 == 2 ? 6 : 1);
                     if (out != 0) {
-                        *out = reinterpret_cast<EvtBdabPtr1C*>(
-                                   this->field_0x1C)
+                        *out = static_cast<EvtBdabPtr1C*>(mPtr1C)
                                    ->field_0x30;
                     }
                     return 1;
@@ -2953,13 +2953,13 @@ int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     }
     // Final gate: only when the claimed slot directly follows the state index.
     u32 finId =
-        reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)->field_0x30;
+        static_cast<EvtBdabPtr1C*>(mPtr1C)->field_0x30;
     UnkState_80664268* fin = lbl_eu_80664268;
     if (fin->field_0xF8 == finId - 1) {
         fin->field_0x13C[fin->field_0xF8] +=
-            (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
+            (u8)((s32)mField14 == 2 ? 6 : 1);
         if (out != 0) {
-            *out = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)
+            *out = static_cast<EvtBdabPtr1C*>(mPtr1C)
                        ->field_0x30;
         }
         return 1;

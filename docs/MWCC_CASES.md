@@ -11747,3 +11747,81 @@ record differed.
   null check retail lacks (CMenuShopBuy ctor 100% -> 27.6%); the fix is a real
   `CItemBoxLine` member, blocked on the owners' `Init` temp-copy blocks, which need
   CItemBoxInfo2/CNumSelect as real classes.
+
+## CREvtModel family / CfMapItemManager / CfMapEffectManager real classes (2026-11)
+
+- `CREvtModel::mFlags` reload shape: retail reloads `mFlags` after every flag
+  test/set in `releaseAnims`/`stepProbe`/`initCounter`. That comes from the inline
+  accessors `isFlag(u32)`, `setFlag(u32)` and `clrFlag(u32)` on a plain (non-volatile)
+  field, not from `volatile`. The ctor matches 100% (was 69.7%) with `mFlags(0)` in the
+  init list plus `setFlag(0x8)` in the body: MWCC folds these into one `li`/`ori` store
+  sequence. All five reload functions stay at 100%.
+- `CTaskREvtSequence` `checkRunGuard`: a hoisted `UnkObj1C80168514* data = ...` local
+  drops the function to 52.4%. Repeating `static_cast<...>(mPtr1C)->` at each use
+  matches 100%. The view struct is still a cast; the field type of `mPtr1C` is unknown.
+- `__dt__80081C20` is the weak `~CScheduleChild` (`__dt__14CScheduleChildFv`). It stays
+  a POD-dtor macro until `__ct__80081B80` (an enemy object with a CScheduleChild base at
+  +0x68) is a real class.
+- Hierarchy: the retail base list at 0x805316E8 shows `CfValueItemManager : CfMapItemManager`,
+  not the reverse.
+  - `CfValueItemManager()` must be out of line (defined after `buildSingleton` under
+    `#pragma auto_inline off`) and allocated with `new (mtl::ALLOC_HANDLE)`. If it is
+    inlined, buildSingleton falls to 10.2%; with placement new, p stays in r31.
+- The CfMapItemManager BDAT column-name blob (old `lbl_eu_805033C0`) is the unit's
+  pooled `@stringBase0`. Writing the column names as string literals makes .rodata match.
+- `__RTTI__Q22cf18CfMapEffectManager` at 0x806623F0 is compiler RTTI owned by
+  CfMapEffectManager. The us splits.txt .sdata boundary between CfMapEffectManager and
+  CREvtModel moved from 0x806623F0 to 0x806623F8.
+- Obj/Pc .data: retail splits disagree with the decomp layout.
+  - The Obj split starts with a 0x94 blob, and the trailing 0x30 base-list blob sits
+    after the vtable.
+  - The Pc split starts with 0xCC bytes that include an nw4r g3d_resfile_ac.h assertion
+    string.
+  - So the ptmf `@N` locals sit at different offsets and were not renamed. A split
+    re-cut needs more evidence.
+
+## Copy-function shape, nested implicit operator=, and overload pitfalls (QstInfo / TalkListEntry)
+
+- A fieldwise copy taking a **non-const** reference (`QstInfo(QstInfo&)`) is emitted with load/store pairs interleaved, because the source may alias the destination. The same body with a `const&` source is scheduled, with all the loads hoisted. Retail CMenuQstCnt has both shapes as separate weak functions, so both ctors exist in the source.
+- When an implicit class operator= copies an array member, it **calls** the element's out-of-line `operator=` only if that operator= has already been generated in the TU by a direct use somewhere. Placement in the file does not matter. Otherwise the element copy is inlined. An inline operator= declared in the header but never called does not trigger generation. Verified with CQstLogList ctor `mQstData = QstData();`.
+- An element type that declares both `operator=(X&)` and `operator=(const X&)` makes MWCC reject the containing class's implicit array operator= with "illegal operands". TalkListEntry's non-const copy is therefore a named member (`Copy`), not an overload.
+- Weak emission order is first-use order. With operator= left implicit, TalkListEntry emits fill ctor, `Copy`, then `__as__`, which matches retail.
+
+## CItemBoxInfo / CItemBoxInfo2 / CNumSelect real classes; CItemBoxLine ctor temporaries (2026-11-18)
+
+- **Copy-init versus assignment from a by-value return.** `T x = Func();` makes the call write
+  straight into the local, then copies with the retail 8-byte-pair `mtctr` loop.
+  `x = Func();` copies field by field instead. The Info2 RenderKind2/3 and Info1 RenderKind2/3
+  record locals use copy-init (Info2 RenderKind2 went from 82% to 91.7%).
+- **Struct copy scalarisation.** MWCC copies a struct with many scalar fields one field at a
+  time. If the struct ends in a single array (CItemBoxCompRecord `u8 flags[4][7]`), it copies
+  the scalar head and then runs a `mtctr` pair loop over the array.
+- **Hand-written string pools stay undefined externs.** If the CItemBoxInfo pool
+  (`lbl_eu_805063BC`) is defined in the TU, at either the top or the end, register allocation
+  changes across many functions. Keep it extern and keep the blob inside the rodata struct.
+  The cost is that the compiler RTTI name strings land after the pool, so `.rodata` cannot
+  match until the pool becomes literals.
+- **Store order in the ctor init list.** Retail CItemBoxInfo/2 ctors store all 20 slot panes,
+  then mActive/mState/..., and call the page last. That needs 20 individually named
+  `Pane*` members in the init list; a loop or array does not give the order. The page
+  (CItemBoxPage) has no ctor. The Info ctors end with a call to the empty out-of-line
+  `CItemBoxPage::Reset()` (0x801D5ACC). Both ctors match 100%.
+- **Layout evidence from the implicit `operator=`.** CItemBoxLine's ctor does
+  `mInfo2 = CItemBoxInfo2(kind, field394);`. In the copy, retail skips +0xAE, so CItemBoxInfo2
+  has no `mFlagAE` (only CItemBoxInfo does). Retail also copies the page tail as one
+  0x80-byte block from +0xD9 and copies nothing after +0x159. Both this ctor and
+  `ShopBuy_CopyData` show it, so the real CItemBoxPage tail is `u8 sel; char name[0x80];`. The
+  decomp still declares `mName[0x67]` + `s16 mValues2[12]`, because CItemBoxLine::RefreshPageList
+  writes s16s at page+0x140 (open).
+- **Return type of state getters.** Callers of `CItemBoxInfo{,2}::GetState` compare the result
+  without `clrlwi`. Declare the return as `u32`, not `u8`. With `u8`, CItemBoxLine
+  GetSelectReady/RefreshLineState and CItemBoxGrid IsItemBoxReady each gain a mask.
+- **Member writes through a local page pointer.** CItemBoxLine::BuildPageData keeps retail
+  register allocation only when the `mPage` stores go through a local
+  `CItemBoxPage* page = &mPage;` (29.5%). Writing `mPage.x[i]` directly gives 4%.
+- **Out-of-line weak `operator=` in CMenuItemExchange.** `ItemEx_CopyBgTex/CopyTitle/CopyLine/
+  CopyGrid` sit directly after `Init` and are almost certainly the classes' weak operator=s.
+  Our compile inlines the implicit `CItemBoxLine::operator=` (Init grows from 0x1BC to 0x5D8),
+  so that unit keeps the explicit `ItemEx_CopyLine` call. CMenuShopBuy inlines the line copy in
+  retail too, except for the page (ShopBuy_CopyData). There, `mItemBoxLine = CItemBoxLine(...)`
+  matches the size (0x664). The ctor and dtor match once CItemBoxLine is a real member.

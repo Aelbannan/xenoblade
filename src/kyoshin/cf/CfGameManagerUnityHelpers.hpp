@@ -270,7 +270,7 @@ extern "C" void resetManagerState__Q22cf13CfGameManagerFv(
     lbl_eu_80570CF0.field_0x44 = 0;
     manager->unk90 = nullptr;
     if (manager->unkA0 != 0) {
-        MapFx_ReleaseHandle(manager->unkA0);
+        manager->unkA0->releaseHandle();
     }
     if (manager->field_0xA4 != nullptr) {
         ArtsSelect_FreeSlots(manager->field_0xA4);
@@ -478,7 +478,6 @@ extern "C" bool isPlayerInEventRange__Q22cf13CfGameManagerFv() {
 extern "C" ItemListManager* getListB28__Fv();
 extern "C" void loadLayoutScales();
 extern "C" void CfRes_callFunc_67FE0();
-extern "C" void MapFx_SetPointEnabled(bool enable);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(
     void* object);
 extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
@@ -517,7 +516,7 @@ extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv() {
         lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
     }
     CfRes_callFunc_67FE0();
-    MapFx_SetPointEnabled(true);
+    cf::CfMapEffectManager::setPointEnabled(true);
     ItemListManager* manager = getListB28__Fv();
     Unk80EE4Data* object;
     ItemListNode* node = manager->sentinel->next;
@@ -1378,7 +1377,7 @@ DEFINE_POD_DTOR(__dt__Q22cf13CCharEffectPcFv)
 DEFINE_POD_DTOR(__dt__Q22cf14CfObjectImplPcFv)
 DEFINE_POD_DTOR(__dt__Q22cf14CCharEffectNpcFv)
 DEFINE_POD_DTOR(__dt__Q22cf14CCharEffectObjFv)
-DEFINE_POD_DTOR(__dt__80081C20)
+DEFINE_POD_DTOR(__dt__14CScheduleChildFv)  // weak ~CScheduleChild, kept from __ct__80081B80 (+0x68 base)
 DEFINE_POD_DTOR(__dt__Q22cf14CCharEffectEneFv)
 #undef DEFINE_POD_DTOR
 

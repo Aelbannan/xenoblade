@@ -601,21 +601,9 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
     }
 }
 
-// .data tables (retail 0x1C) as typed pointer tables. Reloc sites read as
-// zero in the .o (relocs skipped when bytes match), so these stay MATCH.
-// lbl_eu_80531080 is the CfMapEffectManager vtable whose bytes live in this
-// split range (cf. CfMapEffectManager.hpp:101 decl); its dtor/RTTI owners
-// are not decompiled yet, so those slots extern-ref their retail symbols.
-void MapFx_ReleaseObject();
+// .data table (retail 0xC) as a typed pointer table. Reloc sites read as
+// zero in the .o (relocs skipped when bytes match), so it stays MATCH.
 void func_801A4194();
-extern "C" void __dt__Q22cf18CfMapEffectManagerFv(void* self);
-extern u8 __RTTI__Q22cf18CfMapEffectManager[];
-__declspec(section ".data") __attribute__((used))
-const void* lbl_eu_80531080[4] = {
-    __RTTI__Q22cf18CfMapEffectManager, 0,
-    (const void*)__dt__Q22cf18CfMapEffectManagerFv,
-    (const void*)MapFx_ReleaseObject
-};
 __declspec(section ".data") __attribute__((used))
 const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)func_801A4194 };
 

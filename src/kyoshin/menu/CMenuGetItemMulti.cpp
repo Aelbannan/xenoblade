@@ -3,6 +3,7 @@
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 
 // code_80135FDC.hpp declares ml::epsilon as u32, conflicting with the
 // const-float ml::math epsilon copy in monolib FloatUtils.hpp (pulled in via
@@ -2928,7 +2929,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 u8 flag = (idx < 0xc) ? self->mRankSlotFlag[idx] : 0;
                 char* text;
                 if (flag == 3) {
-                    text = formatItemBoxName();
+                    text = reinterpret_cast<CItemBoxPage*>(self->mRankSlotIds)->GetItemName(idx);
                 } else {
                     text = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664418),
                                          &lbl_eu_80504A3C[0x141], slotId);

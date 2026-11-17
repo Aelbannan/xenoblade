@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
 // NOTE: CfBdat.hpp is intentionally not included here - its `s32` (long)
 // getBdatStringColumnValue declaration clashes with code_801862C0.hpp's
@@ -1224,7 +1225,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     v &= ~0x1800;
     lbl_eu_80663E44 = arg3;
     lbl_eu_80663E24 = v;
-    MapFx_ReleaseHandle(self->field_408->unkA0);
+    self->field_408->unkA0->releaseHandle();
     ArtsSelect_FreeSlots(self->field_408->field_0xA4);
     cf::CfBdat::resetMapBdatFileDataPointers();
     cf::CfResPcLookupEntry* entry = (cf::CfResPcLookupEntry*)CfRes_getInstPtr170();

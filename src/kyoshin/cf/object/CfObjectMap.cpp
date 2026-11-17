@@ -3,6 +3,7 @@
 
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -406,7 +407,7 @@ extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, vo
     }
     setLODFilterFlag__8CTaskLODFv(task);
     if (getMapEffectManager__Q22cf13CfGameManagerFv() != 0) {
-        MapFx_SetSlotFlag(getMapEffectManager__Q22cf13CfGameManagerFv(), task);
+        getMapEffectManager__Q22cf13CfGameManagerFv()->setSlotFlag((int)task);
     }
 }
 

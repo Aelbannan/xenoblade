@@ -12,7 +12,7 @@
 // Per-character body variant used in co-op mode (indexed by character id).
 static const u32 sCoopVariant[12] = {0, 2, 3, 2, 2, 2, 3, 2, 4};
 
-#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
 
 extern "C" {
     // Task helpers
@@ -108,7 +108,7 @@ CREvtModelPc::CREvtModelPc(void* pData) : CREvtModel(pData, 2) {
     }
 
     mCallback = static_cast<CREvtObjCallback>(&CREvtModelPc::initCounter);
-    reinterpret_cast<UnkEvtListEntry*>(this)->SeqInsertRtEvent();
+    insertRtEvent();
 
     u32 field30 = ((CREvtModelPcEvtData*)mPtr1C)->mField30;
     if (field30 == 0xFFFFFFFF) {
@@ -184,10 +184,10 @@ void CREvtModelPc::releaseAnims() {
         }
     }
 
-    if (mFlags & 0x100) {
+    if (isFlag(0x100)) {
         return;
     }
-    mFlags |= 0x100;
+    setFlag(0x100);
 
     CREvtModel::releaseAnims();
 
@@ -221,9 +221,9 @@ void CREvtModelPc::releaseAnims() {
 void CREvtModelPc::initCounter() {
     mCounter = -1;
 
-    if (reinterpret_cast<EvtBdabModel*>(this)->SeqProbeEvtSlot((u32*)&mCounter) != 0) {
-        if (mFlags & 0x100) {
-            mFlags &= ~0x100;
+    if (probeEvtSlot((u32*)&mCounter) != 0) {
+        if (isFlag(0x100)) {
+            clrFlag(0x100);
         }
         mCallback = static_cast<CREvtObjCallback>(&CREvtModelPc::loadFiles);
     }
@@ -484,7 +484,7 @@ void CREvtModelPc::updatePos() {
     }
 
     if (mFlags & 0x800) {
-        reinterpret_cast<UnkObj80168514*>(this)->EvtSeqCheckEventRunGuard();
+        checkRunGuard();
     }
 }
 

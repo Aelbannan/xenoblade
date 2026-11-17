@@ -3,6 +3,7 @@
 // High-level C++ reconstruction.
 
 #include <string.h>
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 #include <decomp.h>
@@ -64,7 +65,7 @@ public:
 
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CEventFile.hpp"
-#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
 
 extern "C" {
 void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
@@ -73,7 +74,6 @@ u32 EvtSeqGetStateBit5();
 u32 REvtCam_IsField98Set();
 s32 REvtCam_IsMode2B0Eq1();
 s32 REvtCam_IsMode2B0Eq2();
-void MapFx_SetPointEnabled(int val);
 void enableLOD__8CTaskLODFv();
 void restorePrimaryLOD__8CTaskLODFv();
 void disableLOD__8CTaskLODFv();
@@ -121,7 +121,7 @@ CREvtModelMap::CREvtModelMap(void* pData)
         sVisibleModel = this;
     } else {
         mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::probeSlot);
-        reinterpret_cast<UnkEvtListEntry*>(this)->SeqInsertRtEvent();
+        insertRtEvent();
         if (*(s32*)((char*)mPtr1C + 0x30) != 0) {
             mFlags |= 0x30;
         }
@@ -148,7 +148,7 @@ CREvtModelMap::~CREvtModelMap()
         sLoadingGuest = 0;
         if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
             getMapEffectManager__Q22cf13CfGameManagerFv();
-            MapFx_SetPointEnabled(1);
+            cf::CfMapEffectManager::setPointEnabled(1);
         }
     }
     reset();
@@ -215,11 +215,7 @@ int CREvtModelMap::reset()
     return 1;
 }
 
-} // namespace cf
-
-// No `this`: called from CTaskREvtSequence.cpp under these C names
-// (likely static members of CREvtModelMap; callers not owned here).
-extern "C" void MapModel_DisablePoints()
+void CREvtModelMap::disablePoints()
 {
     if (CREvtModelMap::sLoadingGuest) {
         return;
@@ -231,7 +227,7 @@ extern "C" void MapModel_DisablePoints()
     }
 }
 
-extern "C" void MapModel_EnablePoints()
+void CREvtModelMap::enablePoints()
 {
     if (CREvtModelMap::sLoadingGuest) {
         return;
@@ -241,13 +237,11 @@ extern "C" void MapModel_EnablePoints()
     enableLOD__8CTaskLODFv();
 }
 
-namespace cf {
-
 void CREvtModelMap::probeSlot()
 {
     s32* pId = &mCreatureId;
     *pId = -1;
-    if (reinterpret_cast<EvtBdabModel*>(this)->SeqProbeEvtSlot(reinterpret_cast<u32*>(pId))) {
+    if (probeEvtSlot(reinterpret_cast<u32*>(pId))) {
         mCallback = static_cast<void (CREvtObj::*)()>(&CREvtModelMap::loadFiles);
     }
 }
@@ -373,7 +367,7 @@ void CREvtModelMap::update()
         simRefreshFlag8(mEmoteModel, fTime);
     }
     setVisible(REvtCam_IsField98Set());
-    reinterpret_cast<UnkObj80168514*>(this)->EvtSeqCheckEventRunGuard();
+    checkRunGuard();
 }
 
 void CREvtModelMap::onEvent(u32 visible)
@@ -407,7 +401,7 @@ void CREvtModelMap::onEvent(u32 visible)
         }
         if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
             getMapEffectManager__Q22cf13CfGameManagerFv();
-            MapFx_SetPointEnabled(visible);
+            cf::CfMapEffectManager::setPointEnabled(visible);
         }
         s32 i = 0;
         CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;

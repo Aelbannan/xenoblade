@@ -13,7 +13,7 @@
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
-#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -84,7 +84,7 @@ CREvtModelObj::CREvtModelObj(void* pData)
       mExtractData(nullptr), mFileHandle2(nullptr), mAllocData2(nullptr), mField74(-1),
       mAllocData3(nullptr), mSchedule(nullptr), mCount80(0), mState84(0) {
     mCallback = static_cast<EvtStep>(&CREvtModelObj::stepProbe);
-    reinterpret_cast<UnkEvtListEntry*>(this)->SeqInsertRtEvent();
+    insertRtEvent();
 
     u32 mode = evtData()->mField30;
     if (mode == 0xFFFFFFFF) {
@@ -212,11 +212,11 @@ int CREvtModelObj::reset() {
 
 void CREvtModelObj::releaseAnims() {
     if (mFileState == 1) return;
-    if (mFlags & 0x100) return;
+    if (isFlag(0x100)) return;
     if (mRefCount > 0) return;
 
     CSchedule* sched = mSchedule;
-    mFlags |= 0x100;
+    setFlag(0x100);
     if (sched != nullptr) {
         schedClearFlag15Update(sched);
         mSchedule = nullptr;
@@ -263,9 +263,9 @@ void CREvtModelObj::releaseAnims() {
 void CREvtModelObj::stepProbe() {
     scanPlayers();
     mField74 = -1;
-    if (reinterpret_cast<EvtBdabModel*>(this)->SeqProbeEvtSlot(reinterpret_cast<u32*>(&mField74))) {
-        if (mFlags & 0x100) {
-            mFlags &= ~0x100;
+    if (probeEvtSlot(reinterpret_cast<u32*>(&mField74))) {
+        if (isFlag(0x100)) {
+            clrFlag(0x100);
         }
         mCallback = static_cast<EvtStep>(&CREvtModelObj::stepLoad);
     }
@@ -652,7 +652,7 @@ void CREvtModelObj::stepUpdate() {
     if (mModel != nullptr) {
         simRefreshFlag8(mModel, (int)EvtSeqGetCounter100());
     }
-    reinterpret_cast<UnkObj80168514*>(this)->EvtSeqCheckEventRunGuard();
+    checkRunGuard();
     scanPlayers();
 }
 

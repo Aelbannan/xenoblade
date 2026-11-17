@@ -1,4 +1,5 @@
 #include "kyoshin/plugin/pluginGame.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/plugin/pluginCam.hpp"
 #include "monolib/vm/yvm2.h"
 #include "monolib/math.hpp"
@@ -66,7 +67,6 @@ void isEffectReady__Q22cf13CfGameManagerFv(u32 first, ml::CVec3* pos,
                                            ml::CVec3* lookat, u32 extra, f32 seventh);
 void CamEvtForwardShakeFlag(void* data, int flag);
 void CamEvtLookupStateVal(s32 val);
-void MapFx_PushFlash(f32 val1, f32 val2);
 }
 
 static inline f32 fixedToFloat(s32 fixed) {
@@ -161,7 +161,7 @@ extern "C" int setLookat(VMThread* pThread) {
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setLookAt(&lookat);
-    MapFx_PushFlash(lbl_eu_80666178, lbl_eu_8066617C);
+    cf::CfMapEffectManager::pushFlash(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
 }
 
@@ -264,7 +264,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     void* obj = ArtsSelect_GetContainer();
     void* slot = ArtsSelect_Lookup(obj, oc->field_0x04);
     cam->setLookAtOfs(slot, &lookat, -flags);
-    MapFx_PushFlash(lbl_eu_80666178, lbl_eu_8066617C);
+    cf::CfMapEffectManager::pushFlash(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
 }
 

@@ -24,9 +24,8 @@ extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src);
  * then the scalar tail (state 0 + float init).
  */
 CMenuShopBuy::CMenuShopBuy(CScn* scene, u32 arg)
-    : mScene(scene), mField60(arg), mBgTex(0), mTitleAHelp(0, 0) {
-    new (mItemBoxLine) CItemBoxLine(0, 0);
-
+    : mScene(scene), mField60(arg), mBgTex(0), mTitleAHelp(0, 0),
+      mItemBoxLine(0, 0) {
     mState = 0;
     mFloat6FC = lbl_eu_80667A20;
 }
@@ -37,7 +36,6 @@ CMenuShopBuy::CMenuShopBuy(CScn* scene, u32 arg)
  * are destroyed by the compiler after this body.
  */
 CMenuShopBuy::~CMenuShopBuy() {
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->CItemBoxLine::~CItemBoxLine();
 }
 
 void CMenuShopBuy::Init() {
@@ -55,161 +53,19 @@ void CMenuShopBuy::Init() {
 
     mTitleAHelp.CTitleAHelp_load();
 
-    // Build a temporary CItemBoxLine (retail unmangled ctor with the u16
-    // arg0 and file-id 1) and copy its whole data region (vtable excluded)
-    // field-by-field into the embedded member, then destroy the temp. The
-    // typed temp and union member keep every access self/sp-relative so MWCC
-    // needs no cached base pointers (retail saves only r30/r31).
-    ShopBuyItemBoxLine tmpLine;
-    new (&tmpLine) CItemBoxLine((u16)mField60, 1);
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion04, &tmpLine.mData.mRegion04);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion14, &tmpLine.mData.mRegion14);
-    mItemBox.mIBLData.field_0x20[0] = tmpLine.mData.field_0x20[0];
-    mItemBox.mIBLData.field_0x20[1] = tmpLine.mData.field_0x20[1];
-    mItemBox.mIBLData.field_0x20[2] = tmpLine.mData.field_0x20[2];
-    mItemBox.mIBLData.field_0x20[3] = tmpLine.mData.field_0x20[3];
-    mItemBox.mIBLData.field_0x20[4] = tmpLine.mData.field_0x20[4];
-    mItemBox.mIBLData.field_0x20[5] = tmpLine.mData.field_0x20[5];
-    mItemBox.mIBLData.field_0x20[6] = tmpLine.mData.field_0x20[6];
-    mItemBox.mIBLData.field_0x20[7] = tmpLine.mData.field_0x20[7];
-    mItemBox.mIBLData.field_0x20[8] = tmpLine.mData.field_0x20[8];
-    mItemBox.mIBLData.field_0x20[9] = tmpLine.mData.field_0x20[9];
-    mItemBox.mIBLData.field_0x48 = tmpLine.mData.field_0x48;
-    mItemBox.mIBLData.field_0x4C = tmpLine.mData.field_0x4C;
-    mItemBox.mIBLData.field_0x50 = tmpLine.mData.field_0x50;
-    mItemBox.mIBLData.field_0x54 = tmpLine.mData.field_0x54;
-    mItemBox.mIBLData.unk59 = tmpLine.mData.unk59;
-    mItemBox.mIBLData.tabEntries10 = tmpLine.mData.tabEntries10;
-    mItemBox.mIBLData.pad6410 = tmpLine.mData.pad6410;
-    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[0], &tmpLine.mData.cursors[0]);
-    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[1], &tmpLine.mData.cursors[1]);
-    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[2], &tmpLine.mData.cursors[2]);
-    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[3], &tmpLine.mData.cursors[3]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegionD4, &tmpLine.mData.mRegionD4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegionE4, &tmpLine.mData.mRegionE4);
-    mItemBox.mIBLData.field_0xF0[0] = tmpLine.mData.field_0xF0[0];
-    mItemBox.mIBLData.field_0xF0[1] = tmpLine.mData.field_0xF0[1];
-    mItemBox.mIBLData.field_0xF0[2] = tmpLine.mData.field_0xF0[2];
-    mItemBox.mIBLData.field_0xF0[3] = tmpLine.mData.field_0xF0[3];
-    mItemBox.mIBLData.field_0xF0[4] = tmpLine.mData.field_0xF0[4];
-    mItemBox.mIBLData.field_0xF0[5] = tmpLine.mData.field_0xF0[5];
-    mItemBox.mIBLData.field_0xF0[6] = tmpLine.mData.field_0xF0[6];
-    mItemBox.mIBLData.field_0xF0[7] = tmpLine.mData.field_0xF0[7];
-    mItemBox.mIBLData.field_0xF0[8] = tmpLine.mData.field_0xF0[8];
-    mItemBox.mIBLData.field_0xF0[9] = tmpLine.mData.field_0xF0[9];
-    mItemBox.mIBLData.field_0xF0[10] = tmpLine.mData.field_0xF0[10];
-    mItemBox.mIBLData.field_0xF0[11] = tmpLine.mData.field_0xF0[11];
-    mItemBox.mIBLData.field_0xF0[12] = tmpLine.mData.field_0xF0[12];
-    mItemBox.mIBLData.field_0xF0[13] = tmpLine.mData.field_0xF0[13];
-    mItemBox.mIBLData.field_0xF0[14] = tmpLine.mData.field_0xF0[14];
-    mItemBox.mIBLData.field_0xF0[15] = tmpLine.mData.field_0xF0[15];
-    mItemBox.mIBLData.field_0xF0[16] = tmpLine.mData.field_0xF0[16];
-    mItemBox.mIBLData.field_0xF0[17] = tmpLine.mData.field_0xF0[17];
-    mItemBox.mIBLData.field_0xF0[18] = tmpLine.mData.field_0xF0[18];
-    mItemBox.mIBLData.field_0xF0[19] = tmpLine.mData.field_0xF0[19];
-    mItemBox.mIBLData.field_0xF0[20] = tmpLine.mData.field_0xF0[20];
-    mItemBox.mIBLData.field_0xF0[21] = tmpLine.mData.field_0xF0[21];
-    mItemBox.mIBLData.field_0xF0[22] = tmpLine.mData.field_0xF0[22];
-    mItemBox.mIBLData.field_0xF0[23] = tmpLine.mData.field_0xF0[23];
-    mItemBox.mIBLData.field_0xF0[24] = tmpLine.mData.field_0xF0[24];
-    mItemBox.mIBLData.field_0xF0[25] = tmpLine.mData.field_0xF0[25];
-    mItemBox.mIBLData.field_0xF0[26] = tmpLine.mData.field_0xF0[26];
-    mItemBox.mIBLData.field_0x15C = tmpLine.mData.field_0x15C;
-    mItemBox.mIBLData.field_0x160 = tmpLine.mData.field_0x160;
-    mItemBox.mIBLData.field_0x164 = tmpLine.mData.field_0x164;
-    mItemBox.mIBLData.field_0x165 = tmpLine.mData.field_0x165;
-    mItemBox.mIBLData.field_0x166 = tmpLine.mData.field_0x166;
-    mItemBox.mIBLData.chunk168 = tmpLine.mData.chunk168;
-    mItemBox.mIBLData.chunk170 = tmpLine.mData.chunk170;
-    mItemBox.mIBLData.field_0x178 = tmpLine.mData.field_0x178;
-    ShopBuy_CopyData(&mItemBox.mIBLData.blob17C, &tmpLine.mData.blob17C);
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion2DC, &tmpLine.mData.mRegion2DC);
-    mItemBox.mIBLData.field_0x2EC[0] = tmpLine.mData.field_0x2EC[0];
-    mItemBox.mIBLData.field_0x2EC[1] = tmpLine.mData.field_0x2EC[1];
-    mItemBox.mIBLData.field_0x2EC[2] = tmpLine.mData.field_0x2EC[2];
-    mItemBox.mIBLData.field_0x2EC[3] = tmpLine.mData.field_0x2EC[3];
-    mItemBox.mIBLData.field_0x2EC[4] = tmpLine.mData.field_0x2EC[4];
-    mItemBox.mIBLData.field_0x2EC[5] = tmpLine.mData.field_0x2EC[5];
-    mItemBox.mIBLData.field_0x304[0] = tmpLine.mData.field_0x304[0];
-    mItemBox.mIBLData.field_0x304[1] = tmpLine.mData.field_0x304[1];
-    mItemBox.mIBLData.field_0x304[2] = tmpLine.mData.field_0x304[2];
-    mItemBox.mIBLData.field_0x304[3] = tmpLine.mData.field_0x304[3];
-    mItemBox.mIBLData.field_0x304[4] = tmpLine.mData.field_0x304[4];
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion310, &tmpLine.mData.mRegion310);
-    mItemBox.mIBLData.field_0x320[0] = tmpLine.mData.field_0x320[0];
-    mItemBox.mIBLData.field_0x320[1] = tmpLine.mData.field_0x320[1];
-    mItemBox.mIBLData.field_0x320[2] = tmpLine.mData.field_0x320[2];
-    mItemBox.mIBLData.field_0x320[3] = tmpLine.mData.field_0x320[3];
-    mItemBox.mIBLData.field_0x330[0] = tmpLine.mData.field_0x330[0];
-    mItemBox.mIBLData.field_0x330[1] = tmpLine.mData.field_0x330[1];
-    mItemBox.mIBLData.field_0x330[2] = tmpLine.mData.field_0x330[2];
-    mItemBox.mIBLData.field_0x330[3] = tmpLine.mData.field_0x330[3];
-    mItemBox.mIBLData.field_0x334[0] = tmpLine.mData.field_0x334[0];
-    mItemBox.mIBLData.field_0x334[1] = tmpLine.mData.field_0x334[1];
-    mItemBox.mIBLData.field_0x334[2] = tmpLine.mData.field_0x334[2];
-    mItemBox.mIBLData.field_0x334[3] = tmpLine.mData.field_0x334[3];
-    mItemBox.mIBLData.field_0x334[4] = tmpLine.mData.field_0x334[4];
-    mItemBox.mIBLData.field_0x348 = tmpLine.mData.field_0x348;
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mItemBox.mIBLData.mRegion350, &tmpLine.mData.mRegion350);
-    mItemBox.mIBLData.field_0x360[0] = tmpLine.mData.field_0x360[0];
-    mItemBox.mIBLData.field_0x360[1] = tmpLine.mData.field_0x360[1];
-    mItemBox.mIBLData.field_0x360[2] = tmpLine.mData.field_0x360[2];
-    mItemBox.mIBLData.field_0x360[3] = tmpLine.mData.field_0x360[3];
-    mItemBox.mIBLData.field_0x360[4] = tmpLine.mData.field_0x360[4];
-    mItemBox.mIBLData.field_0x374[0] = tmpLine.mData.field_0x374[0];
-    mItemBox.mIBLData.field_0x374[1] = tmpLine.mData.field_0x374[1];
-    mItemBox.mIBLData.field_0x374[2] = tmpLine.mData.field_0x374[2];
-    mItemBox.mIBLData.field_0x374[3] = tmpLine.mData.field_0x374[3];
-    mItemBox.mIBLData.field_0x374[4] = tmpLine.mData.field_0x374[4];
-    mItemBox.mIBLData.field_0x374[5] = tmpLine.mData.field_0x374[5];
-    mItemBox.mIBLData.field_0x374[6] = tmpLine.mData.field_0x374[6];
-    mItemBox.mIBLData.field_0x374[7] = tmpLine.mData.field_0x374[7];
-    mItemBox.mIBLData.field_0x374[8] = tmpLine.mData.field_0x374[8];
-    mItemBox.mIBLData.field_0x374[9] = tmpLine.mData.field_0x374[9];
-    mItemBox.mIBLData.field_0x374[10] = tmpLine.mData.field_0x374[10];
-    mItemBox.mIBLData.field_0x374[11] = tmpLine.mData.field_0x374[11];
-    mItemBox.mIBLData.field_0x374[12] = tmpLine.mData.field_0x374[12];
-    mItemBox.mIBLData.field_0x374[13] = tmpLine.mData.field_0x374[13];
-    mItemBox.mIBLData.field_0x374[14] = tmpLine.mData.field_0x374[14];
-    mItemBox.mIBLData.field_0x374[15] = tmpLine.mData.field_0x374[15];
-    mItemBox.mIBLData.field_0x374[16] = tmpLine.mData.field_0x374[16];
-    mItemBox.mIBLData.field_0x374[17] = tmpLine.mData.field_0x374[17];
-    mItemBox.mIBLData.unk38C = tmpLine.mData.unk38C;
-    mItemBox.mIBLData.unk38E = tmpLine.mData.unk38E;
-    mItemBox.mIBLData.field_0x38C = tmpLine.mData.field_0x38C;
-    mItemBox.mIBLData.field_0x38E = tmpLine.mData.field_0x38E;
-    mItemBox.mIBLData.field_0x390 = tmpLine.mData.field_0x390;
-    mItemBox.mIBLData.chunk392 = tmpLine.mData.chunk392;
-    mItemBox.mIBLData.field_0x39A[0] = tmpLine.mData.field_0x39A[0];
-    mItemBox.mIBLData.field_0x39A[1] = tmpLine.mData.field_0x39A[1];
-    mItemBox.mIBLData.field_0x39A[2] = tmpLine.mData.field_0x39A[2];
-    mItemBox.mIBLData.field_0x39A[3] = tmpLine.mData.field_0x39A[3];
-    mItemBox.mIBLData.field_0x39A[4] = tmpLine.mData.field_0x39A[4];
-    mItemBox.mIBLData.field_0x39A[5] = tmpLine.mData.field_0x39A[5];
-    mItemBox.mIBLData.data3A0 = tmpLine.mData.data3A0;
-    mItemBox.mIBLData.tabCount = tmpLine.mData.tabCount;
-    mItemBox.mIBLData.field_0x432 = tmpLine.mData.field_0x432;
-    mItemBox.mIBLData.field_0x433 = tmpLine.mData.field_0x433;
-    mItemBox.mIBLData.len454 = strlen(tmpLine.mData.str434);
-    strcpy(mItemBox.mIBLData.str434, tmpLine.mData.str434);
-    mItemBox.mIBLData.len4D8 = strlen(tmpLine.mData.str458);
-    strcpy(mItemBox.mIBLData.str458, tmpLine.mData.str458);
-    ShopBuy_CopyData(&mItemBox.mIBLData.blob4DC, &tmpLine.mData.blob4DC);
-    __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(&tmpLine), -1);
+    mItemBoxLine = CItemBoxLine((u16)mField60, 1);
 
     // Reset the real member and register the render callback (same
     // `if (this)` IScnRender idiom as Term).
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->ResetTabBytes();
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(2);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(4);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(5);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(6);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(7);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(8);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->PushTabByte(0xd);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->LoadFiles();
+    mItemBoxLine.ResetTabBytes();
+    mItemBoxLine.PushTabByte(2);
+    mItemBoxLine.PushTabByte(4);
+    mItemBoxLine.PushTabByte(5);
+    mItemBoxLine.PushTabByte(6);
+    mItemBoxLine.PushTabByte(7);
+    mItemBoxLine.PushTabByte(8);
+    mItemBoxLine.PushTabByte(0xd);
+    mItemBoxLine.LoadFiles();
 
     addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 0xd, 0);
 }
@@ -225,7 +81,7 @@ void CMenuShopBuy::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->UnloadFiles();
+    mItemBoxLine.UnloadFiles();
 
     lbl_eu_806642F8 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -256,7 +112,7 @@ void CMenuShopBuy::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->UpdateStates();
+    mItemBoxLine.UpdateStates();
     updateHelp(&mTitleAHelp);
 }
 
@@ -270,7 +126,7 @@ void CMenuShopBuy::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-    reinterpret_cast<CItemBoxLine*>(mItemBoxLine)->DrawLayout(&drawInfo);
+    mItemBoxLine.DrawLayout(&drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
 }
 
@@ -320,9 +176,9 @@ extern "C" bool ShopBuy_HasInstance() { return lbl_eu_806642F8 != 0; }
 extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
         if (isInitialized(&self->mTitleAHelp) != 0) {
-            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->GetSelectReady() != 0) {
+            if (self->mItemBoxLine.GetSelectReady() != 0) {
                 func_801C412C(&self->mTitleAHelp);
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->OpenLine();
+                self->mItemBoxLine.OpenLine();
                 self->mState = 1;
                 playUISound(0x6d);
             }
@@ -334,7 +190,7 @@ extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
 // is ready, move to the next phase.
 extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
+        if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mState = 2;
         }
     }
@@ -355,86 +211,86 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
         // Pointer input enabled: turbo flags move the cursor, pressed flags
         // run the confirm/cancel flow. The item-box pointer is recomputed per
         // call (addi r3,r31,0xbc) exactly like retail - no cached local.
-        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(0);
+        self->mItemBoxLine.ResetCursorB8(0);
         if ((pad->mTurboFlags & 0x02000000) &&
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
+            self->mItemBoxLine.IsBusy() == 0 &&
             code80135FDC_getByte_64077() > 1) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectPrev();
+            self->mItemBoxLine.Info2SelectPrev();
         } else if ((pad->mTurboFlags & 0x04000000) &&
-                   reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
+                   self->mItemBoxLine.IsBusy() == 0 &&
                    code80135FDC_getByte_64077() > 1) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectNext();
+            self->mItemBoxLine.Info2SelectNext();
         } else if (pad->mPressedFlags & 0x00200000) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveEntry();
+            self->mItemBoxLine.ResolveEntry();
         } else if (pad->mPressedFlags & 0x00400000) {
-            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() != 0) {
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ConfirmOverlayOrHint();
+            if (self->mItemBoxLine.IsBusy() != 0) {
+                self->mItemBoxLine.ConfirmOverlayOrHint();
             } else {
                 beginClose(&self->mTitleAHelp);
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->LeaveState3();
+                self->mItemBoxLine.LeaveState3();
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageBack();
+            self->mItemBoxLine.CursorPageBack();
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDown();
+            self->mItemBoxLine.CursorPageDown();
         } else if (pad->mTurboFlags & 0x2001) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageUp();
+            self->mItemBoxLine.CursorPageUp();
         } else if (pad->mTurboFlags & 0x4002) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDownRow();
+            self->mItemBoxLine.CursorPageDownRow();
         } else if (pad->mPressedFlags & 0x200) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ShowDetailWin();
+            self->mItemBoxLine.ShowDetailWin();
         } else if (pad->mPressedFlags & 0x400) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->RefreshTabSelect();
+            self->mItemBoxLine.RefreshTabSelect();
         }
     } else {
         // Pointer input disabled: pad-held/pressed bits drive the flow, and
         // the inner A/B chain exits straight to the shared refresh.
-        reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(0);
+        self->mItemBoxLine.ResetCursorB8(0);
         if ((pad->mHeldFlags & 0x1000) &&
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() == 0 &&
+            self->mItemBoxLine.IsBusy() == 0 &&
             code80135FDC_getByte_64077() > 1) {
             if (self->mFloat6FC > lbl_eu_80667A24) playUISound(2);
             self->mFloat6FC = lbl_eu_80667A20;
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResetCursorB8(1);
+            self->mItemBoxLine.ResetCursorB8(1);
             if (pad->mTurboFlags & 0x2001) {
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectPrev();
+                self->mItemBoxLine.Info2SelectPrev();
             } else if (pad->mTurboFlags & 0x4002) {
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->Info2SelectNext();
+                self->mItemBoxLine.Info2SelectNext();
             }
         } else if (pad->mPressedFlags & 0x10) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveEntry();
+            self->mItemBoxLine.ResolveEntry();
         } else if (pad->mPressedFlags & 0x20) {
-            if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsBusy() != 0) {
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ConfirmOverlayOrHint();
+            if (self->mItemBoxLine.IsBusy() != 0) {
+                self->mItemBoxLine.ConfirmOverlayOrHint();
             } else {
                 beginClose(&self->mTitleAHelp);
-                reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->LeaveState3();
+                self->mItemBoxLine.LeaveState3();
                 self->mState = 3;
             }
         } else if (pad->mTurboFlags & 0x8004) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageBack();
+            self->mItemBoxLine.CursorPageBack();
         } else if ((pad->mTurboFlags & 0x10000) != 0 || (pad->mTurboFlags & 0x8) != 0) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDown();
+            self->mItemBoxLine.CursorPageDown();
         } else if (pad->mTurboFlags & 0x2001) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageUp();
+            self->mItemBoxLine.CursorPageUp();
         } else if (pad->mTurboFlags & 0x4002) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->CursorPageDownRow();
+            self->mItemBoxLine.CursorPageDownRow();
         } else if (pad->mPressedFlags & 0x200) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ShowDetailWin();
+            self->mItemBoxLine.ShowDetailWin();
         } else if (pad->mPressedFlags & 0x40) {
-            reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->RefreshTabSelect();
+            self->mItemBoxLine.RefreshTabSelect();
         }
     }
     func_801C41E8(&self->mTitleAHelp,
-                  reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->ResolveFocusId());
+                  self->mItemBoxLine.ResolveFocusId());
 }
 
 // Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
-        if (reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)->IsReadyFlag() != 0) {
+        if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mField54 = 1;
         }
     }

@@ -257,7 +257,6 @@ extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags
 extern "C" void CItem_thunkAllocRecord(u32 id, u32 flags);
 extern "C" void UIWin_BuildFlagBuf(u32 a, u32 id, u32 b);
 // Slot-window name source used by GetItemMulti_HandlePad's A-press open (no args).
-extern "C" char* formatItemBoxName();
 // Cursor position + window selection helpers (pad-input handlers).
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, u8* syswin, u8 sel);
 extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val); // cursor visibility setter

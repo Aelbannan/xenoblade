@@ -1046,7 +1046,7 @@ kyoshin/cf/CfMapEffectManager.cpp:
 
 	.rodata        start:0x80503230 end:0x80503300
 	.sbss        start:0x80664290 end:0x80664298
-	.sdata        start:0x806623e0 end:0x806623f0
+	.sdata        start:0x806623e0 end:0x806623f8
 	.sdata2        start:0x80667708 end:0x80667738
 	.data       start:0x80531080 end:0x80531090
 kyoshin/cf/object/CfObjectActor.cpp:
@@ -1063,7 +1063,7 @@ kyoshin/realtimeevt/CREvtModel.cpp:
 
 	.data        start:0x80531670 end:0x805316d0
 	.rodata        start:0x80503300 end:0x80503390
-	.sdata        start:0x806623F0 end:0x80662420
+	.sdata        start:0x806623F8 end:0x80662420
 	.sdata2     start:0x80667770 end:0x80667780
 kyoshin/cf/CfMapItemManager.cpp:
 	extab       start:0x8000E370 end:0x8000E400

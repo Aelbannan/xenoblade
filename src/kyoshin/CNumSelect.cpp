@@ -1,7 +1,4 @@
-// Auto-scaffolded catalog TU for kyoshin/CNumSelect
-// Replace stubs with high-level C/C++ during decomp.
-
-#include "kyoshin/harness_catalog.hpp"
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CNumSelect.hpp"
 #include <cstdio>
 #include <nw4r/lyt/lyt_layout.h>
@@ -12,379 +9,316 @@
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/device/CDeviceFont.hpp"
-// Retail sdata2 layout is [1.0f, 0.0f, u32->float magic]: the two user
-// floats are file-scope constants (emitted in declaration order), the
-// magic is compiler-generated from the u16->f32 casts below.
-extern const volatile float kOneF = 1.0f;
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
-// Forward decls so the dispatch below stays independent of the helper bodies
-// (retail keeps every helper as an out-of-line bl call).
-// (memberized: NumSel_AdvanceOpen_B49C -> CNumSelect::Sel_AdvanceOpen; declaration moved into class CNumSelect)
-// (memberized: NumSel_RewindReset_B530 -> CNumSelect::Sel_RewindReset; declaration moved into class CNumSelect)
-// (memberized: NumSel_RestartAnim_B580 -> CNumSelect::Sel_RestartAnim; declaration moved into class CNumSelect)
-// (memberized: NumSel_RestartAnimAlt_B644 -> CNumSelect::Sel_RestartAnimAlt; declaration moved into class CNumSelect)
+// Layout/resource helpers used by this TU (code_80135FDC / CUICfManager).
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+                             nw4r::lyt::ArcResourceAccessor*, char*);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void closeFileHandle(CFileHandle**);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
+void playUISound(u32);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
+extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
+extern "C" char* CUICfManager_getPackedFont9C();
+extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
+extern "C" char* MakeTplNameSysFile(u32);
+// Retail symbol name is a placeholder guess (the call passes -1 in r3).
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
-// Keep every helper out-of-line: MWCC -inline auto would otherwise fold them
-// into the state dispatcher below (retail keeps all five as bl calls).
-#pragma push
-#pragma auto_inline off
-struct CNumSelectFull;
+/* 'timg' texture record resolved through the shared arc accessor: +0x8 points
+ * at a pointer to the {u16 width, u16 height} pair used to size the panes. */
+struct CNumSelectTimgDims {
+    u16 m00;
+    u16 m02;
+};
 
-u8 NumSel_GetField2D_B018(CNumSelectFull* self) { return self->field_2D; }
+struct CNumSelectTimgRef {
+    CNumSelectTimgDims* dims; // 0x0
+};
 
+struct CNumSelectTimg {
+    u32 unk0;                // 0x0
+    u32 unk4;                // 0x4
+    CNumSelectTimgRef* unk8; // 0x8
+};
 
-u8 NumSel_GetActiveFlag_B020(CNumSelectFull* self) { return self->field_2C; }
-
-u8 NumSel_GetField2E_B028(CNumSelectFull* self) { return self->field_2E; }
-
-
-/* State step 3: rebind the open animation (anim at 0x20) and play cue 0xe.
- * States 1 and 3 leave the widget untouched. */
-extern "C" void NumSel_EnterState3Open_B178(CNumSelect* self) {
-    u8 state = self->field_2F;
-    if (state == 1 || state == 3) {
-        return;
-    }
-    self->field_2F = 3;
-    self->field_2E = 0;
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_20);
-    self->mpLayout->SetAnimationEnable(self->field_20, true);
-    playUISound(0xe);
-}
-
-/* State step 4: bind the loop animation at +0x28, then reveal both number
- * panes (first pane shown via flag 1, second hidden via flag 0). */
-extern "C" void NumSel_ShowPaneA_B218(CNumSelect* self) {
-    u8 state = self->field_2F;
-    if (state == 1 || state == 3) {
-        return;
-    }
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_28);
-    self->mpLayout->SetAnimationEnable(self->field_28, true);
-    self->field_28->SetFrame(0.0f);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 1);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 0);
-    self->field_2F = 4;
-}
-
-/* State step 5: same as step 4 but with the pane visibility flags swapped. */
-extern "C" void NumSel_ShowPaneB_B314(CNumSelect* self) {
-    u8 state = self->field_2F;
-    if (state == 1 || state == 3) {
-        return;
-    }
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_28);
-    self->mpLayout->SetAnimationEnable(self->field_28, true);
-    self->field_28->SetFrame(0.0f);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x47], true), 0);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x55], true), 1);
-    self->field_2F = 5;
-}
-
-// Shows/hides the two number panes according to the given value.
-// Retail frame merges the three callee-saves via stmw/lmw (-O4,s).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void NumSel_ApplyPaneVis_B410(CNumSelect* self, int value) {
-    if (self->mpLayout != NULL) {
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x63], true), value);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x6a], true), value);
-    }
-}
-#pragma pop
+CNumSelect::CNumSelect(u8 region)
+    : mFileHandle(NULL), mArcResAcc(NULL), mpLayout(NULL), mAnimIn(NULL),
+      mAnimLoop(NULL), mAnimOn(NULL), mOpen(0), mLoaded(0), mIdle(1),
+      mState(0), mRegion(region) {}
 
-// Fade-out step: once anim 0x20 reaches 1.0, swap in anim 0x24 and enable it.
-void CNumSelect::Sel_AdvanceOpen() {
-    if (advanceAnimTransform(this->field_20, kOneF)) {
-        this->field_2F = 2;
-        this->field_2E = 1;
-        this->mpLayout->UnbindAllAnimation();
-        this->mpLayout->BindAnimation(this->field_24);
-        this->mpLayout->SetAnimationEnable(this->field_24, true);
-    }
-}
-
-// When the +0x20 animation has finished (AnimRewindFrame with the 1.0 constant),
-// reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
-void CNumSelect::Sel_RewindReset() {
-    if (AnimRewindFrame(this->field_20, kOneF)) {
-        this->field_2F = 0;
-        this->field_2E = 1;
-        this->field_2C = 0;
-    }
-}
-
-/* Restart the +0x28 animation from frame 0: unbind everything, attach anim
- * +0x24, rewind its frame, and advance the state machine to step 2. */
-void CNumSelect::Sel_RestartAnim() {
-    if (advanceAnimTransform(this->field_28, kOneF) == 0) {
-        return;
-    }
-    this->field_28->SetFrame(0.0f);
-    this->mpLayout->Animate();
-    this->mpLayout->UnbindAllAnimation();
-    this->mpLayout->BindAnimation(this->field_24);
-    this->mpLayout->SetAnimationEnable(this->field_24, true);
-    this->field_24->SetFrame(0.0f);
-    this->field_2F = 2;
-    this->field_2E = 1;
-}
-
-// Identical body to NumSel_RestartAnim_B580 (retail duplicates it byte for byte).
-void CNumSelect::Sel_RestartAnimAlt() {
-    if (advanceAnimTransform(this->field_28, kOneF) == 0) {
-        return;
-    }
-    this->field_28->SetFrame(0.0f);
-    this->mpLayout->Animate();
-    this->mpLayout->UnbindAllAnimation();
-    this->mpLayout->BindAnimation(this->field_24);
-    this->mpLayout->SetAnimationEnable(this->field_24, true);
-    this->field_24->SetFrame(0.0f);
-    this->field_2F = 2;
-    this->field_2E = 1;
-}
-#pragma pop
-
-/* File-load completion handler: builds the whole number-select HUD from the
- * freshly loaded archive - MEM2 scratch region (RAII guard), arc accessor,
- * layout + three animation transforms, font bind, text seeding, the 'timg'
- * sized highlight panes - then releases the file handle and region.
- * Retail keeps the _savegpr_29 prologue, so match its -O4,s codegen. */
-#pragma push
-#pragma optimize_for_size on
-bool CNumSelect::OnFileEvent(CEventFile* evt) {
-    if (field_14 == evt->mFileHandle) {
-    mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    mMemRegion.createRegion(mem2, 0x8000, &lbl_eu_80506C14[0x73], 0);
-    Class_8045F858 host(&mMemRegion);
-    void* data = field_14->getData();
-    mtl::MemManager::setMemInitFlag(false);
-
-    field_18 = CLibLayout::createArcResourceAccessor();
-    field_18->Attach(data, &lbl_eu_80506C14[0x7e]);
-    buildLayout(&mpLayout, field_18, &lbl_eu_80506C14[0x82]);
-    bindLayoutAnimTransform(mpLayout, &field_20, field_18, &lbl_eu_80506C14[0x9b]);
-    bindLayoutAnimTransform(mpLayout, &field_24, field_18, &lbl_eu_80506C14[0xbd]);
-    bindLayoutAnimTransform(mpLayout, &field_28, field_18, &lbl_eu_80506C14[0xdb]);
-
-    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
-    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
-    ApplyFontToTxtPanes(rootPane,
-                  (const nw4r::ut::Font*)(((IDeviceFontInfo*)fontObj)->getFont()));
-    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)CUICfManager_getPackedFont9C());
-    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)CUICfManager_getPackedFont9C());
-
-    mpLayout->UnbindAllAnimation();
-    setPaneVisible(
-        mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0xf7], true), 0);
-
-    // Digit-count depends on the region flag at +0x30 (11 vs 12 entries).
-    // Materialize the format-string addresses before the region check so
-    // MWCC schedules them ahead of the count select (retail order).
-    char* fmtStr = &lbl_eu_80506C14[0x102];
-    char* idxStr = &lbl_eu_80506C14[0x33];
-    u32 numCount = 11;
-    if (field_30 == 1) {
-        numCount = 12;
-    }
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x10b],
-                  BdatTouchStringCell(fmtStr, idxStr, numCount),
-                  0);
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x115],
-                  BdatTouchStringCell(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 13),
-                  0);
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x11f],
-                  BdatTouchStringCell(&lbl_eu_80506C14[0x102], &lbl_eu_80506C14[0x33], 14),
-                  0);
-
-    char* rangeText = BdatTouchStringCell(&lbl_eu_80506C14[0x129], &lbl_eu_80506C14[0x137], 0x2b);
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x13c], rangeText, 0);
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x148], rangeText, 0);
-
-    // Resolve the 'timg' texture named by the language-dependent message and
-    // size both highlight panes to its dimensions.
-    // Ternary form reproduces retail's select: default 0x15d, bt-eq skips
-    // the 0x154 overwrite.
-    const char* msgKey = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
-                             ? &lbl_eu_80506C14[0x154]
-                             : &lbl_eu_80506C14[0x15d];
-    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
-    char* timgName = MakeTplNameSysFile(msgId);
-    CNumSelectTimg* timg = (CNumSelectTimg*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, timgName, 0);
-    if (timg != NULL) {
-        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x166], (TPLPalette*)((u32)timg));
-        PaneSetTexPaletteByName(mpLayout, &lbl_eu_80506C14[0x170], (TPLPalette*)((u32)timg));
-        u16 timgH = timg->unk8->dims->m02;
-        u16 timgW = timg->unk8->dims->m00;
-
-        nw4r::lyt::Pane* paneA =
-            mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x166], true);
-        if (paneA != NULL) {
-            // MWCC lowers u16->f32 via the sdata2 cast-magic double itself.
-            f32 sz[2];
-            sz[0] = static_cast<f32>(timgH);
-            sz[1] = static_cast<f32>(timgW);
-            writePanePos(paneA, sz);
-        }
-        nw4r::lyt::Pane* paneB =
-            mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x170], true);
-        if (paneB != NULL) {
-            f32 sz[2];
-            sz[0] = static_cast<f32>(timgH);
-            sz[1] = static_cast<f32>(timgW);
-            writePanePos(paneB, sz);
-        }
-    }
-
-    if (mpLayout != NULL) {
-        field_2D = 1;
-    }
-    field_14 = NULL;
-    mMemRegion.validateHeap();
-    return true;
-    }
-    return false;
-}
-#pragma pop
-
-// Out-of-line dtor (retail symbol __dt__10CNumSelectFv); the inline header
-// body would not emit the symbol.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 CNumSelect::~CNumSelect() {}
-#pragma optimize_for_size off
+#pragma pop
 
-extern "C" void NumSel_SetCaptionNum_B04C(CNumSelect* self, u8 captionNum) {
-    setLayoutTextBoxNumber(self->mpLayout, &lbl_eu_80506C14[0x20], captionNum);
+void CNumSelect::LoadFiles() {
+    mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), "menu/jp/ShopSubWin.arc",
+                                        this, 0, 0);
 }
 
-// Loads the number-select brlyt archive into the MEM2 scratch region and
-// stores the resulting file handle at +0x14.
-void CNumSelect::NumSel_LoadArchive_AE8C() {
-    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    field_14 = CDeviceFile::readFile(handle, &lbl_eu_80506C14[0], reinterpret_cast<IWorkEvent*>(this), 0, 0);
-}
-
-/* Per-state update dispatch: runs the step handler for field_2F, then
- * animates the layout while the widget is active (field_2C gate). */
-// Per-state update dispatch; defined before the helper bodies so MWCC cannot
-// inline them into this switch (retail emits five separate bl calls).
-extern "C" void NumSel_DispatchState_AED4(CNumSelect* self) {
-    if (self->field_2C == 0) {
+void CNumSelect::UpdateStates() {
+    if (mOpen == 0) {
         return;
     }
-    switch (self->field_2F) {
+    switch (mState) {
     case 1:
-        self->Sel_AdvanceOpen();
+        UpdateOpen();
         break;
     case 2:
-        advanceAnimTransform(self->field_24, kOneF);
+        advanceAnimTransform(mAnimLoop, 1.0f);
         break;
     case 3:
-        self->Sel_RewindReset();
+        UpdateClose();
         break;
     case 4:
-        self->Sel_RestartAnim();
+        UpdateCountUp();
         break;
     case 5:
-        self->Sel_RestartAnimAlt();
+        UpdateCountDown();
         break;
     }
-    self->mpLayout->Animate();
+    mpLayout->Animate();
 }
 
-// Draws the layout once the loaded file has been processed (field_2C gate).
-// Retail forwards its own r4 (drawInfo) through to drawLayout untouched.
-void CNumSelect::NumSel_DrawLayout_AF7C(nw4r::lyt::DrawInfo* drawInfo) {
-    if (field_2C == 0) {
+void CNumSelect::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mOpen == 0) {
         return;
     }
     drawLayout(mpLayout, drawInfo, 0, 1);
 }
 
-/* Destructor helper: releases the file handle, destroys the layout through its
- * deleting-dtor vtable slot, frees the arc accessor, then tears down the
- * memory region. Retail double-checks the non-null layout (nested identical
- * guards), so both are reproduced. */
-extern "C" void NumSel_Teardown_AF9C(CNumSelect* self) {
-    closeFileHandle(&self->field_14);
-    self->field_2C = 0;
-    if (self->mpLayout != NULL) {
-        delete self->mpLayout;
-        self->mpLayout = NULL;
+void CNumSelect::UnloadFiles() {
+    closeFileHandle(&mFileHandle);
+    mOpen = 0;
+    if (mpLayout != NULL) {
+        delete mpLayout;
+        mpLayout = NULL;
     }
-    releaseArcResourceAccessor(self->field_18);
-    self->field_18 = NULL;
-    self->mMemRegion.deleteRegion();
+    releaseArcResourceAccessor(mArcResAcc);
+    mArcResAcc = NULL;
+    mMemRegion.deleteRegion();
 }
 
-// Updates the pane named by lbl_eu_80506C14+0x17 with the given string.
-void CNumSelect::NumSel_SetCaption_B030(char* str) {
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80506C14[0x17], str, 0);
+int CNumSelect::IsLoaded() { return mLoaded; }
+
+int CNumSelect::IsOpen() { return mOpen; }
+
+int CNumSelect::IsIdle() { return mIdle; }
+
+void CNumSelect::SetItemName(char* name) {
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_name", name, 0);
+}
+
+void CNumSelect::SetCount(u8 count) {
+    setLayoutTextBoxNumber(mpLayout, "txt_value", count);
 }
 
 #pragma push
 #pragma optimize_for_size on
-
-// Builds "pic_NN"-style pane text: extracts the digits via BdatTouchStringCell,
-// formats them, and pushes the result into the layout pane.
-void CNumSelect::NumSel_FormatPicName_B064(int value) {
+void CNumSelect::SetTotal(int value) {
     char buf[0x1C];
-    char* digits = BdatTouchStringCell(&lbl_eu_80506C14[0x2A], &lbl_eu_80506C14[0x33], 3);
-    sprintf(buf, &lbl_eu_80506C14[0x38], value, digits);
-    LayoutSetTextBoxText(mpLayout, &lbl_eu_80506C14[0x3D], buf, 0);
+    char* unit = BdatTouchStringCell("MNU_item", "name", 3);
+    sprintf(buf, "%d%s", value, unit);
+    LayoutSetTextBoxText(mpLayout, "txt_total", buf, 0);
 }
 
-/* State step 1: rebind the close animation (anim at 0x20), mark the pane
- * visible, and play cue 0xd. States 1 and 3 leave the widget untouched. */
-extern "C" void NumSel_EnterState1Close_B0D4(CNumSelect* self) {
-    u8 state = self->field_2F;
+void CNumSelect::Open() {
+    u8 state = mState;
     if (state == 1 || state == 3) {
         return;
     }
-    self->field_2F = 1;
-    self->field_2E = 0;
-    self->field_2C = 1;
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_20);
-    self->mpLayout->SetAnimationEnable(self->field_20, true);
+    mState = 1;
+    mIdle = 0;
+    mOpen = 1;
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimIn);
+    mpLayout->SetAnimationEnable(mAnimIn, true);
     playUISound(0xd);
 }
-
-// Retail ctor stores the vtable label explicitly before constructing the
-// memory-region member, then zeroes all state fields. Kept inside the
-// -O4,s region: retail's stmw r30 frame requires it.
-CNumSelect::CNumSelect(u8 arg)
-    : mMemRegion(), field_14(0), field_18(0), mpLayout(0), field_20(0),
-      field_24(0), field_28(0), field_2C(0), field_2D(0), field_2E(1),
-      field_2F(0), field_30(arg) {}
 #pragma pop
 
-// --- absorb: retail data sections (split1) ---
-// .rodata 0x188 (typeinfo name + pooled string literals; no relocs).
-// Functions reference this blob via extern lbl_eu_80506C14 + offset.
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __rodata_CNumSelect[0x188] = {
-    0x43,0x4E,0x75,0x6D,0x53,0x65,0x6C,0x65,0x63,0x74,0x00,0x00,0x6D,0x65,0x6E,0x75,0x2F,0x6A,0x70,0x2F,
-    0x53,0x68,0x6F,0x70,0x53,0x75,0x62,0x57,0x69,0x6E,0x2E,0x61,0x72,0x63,0x00,0x74,0x78,0x74,0x5F,0x6E,
-    0x61,0x6D,0x65,0x00,0x74,0x78,0x74,0x5F,0x76,0x61,0x6C,0x75,0x65,0x00,0x4D,0x4E,0x55,0x5F,0x69,0x74,
-    0x65,0x6D,0x00,0x6E,0x61,0x6D,0x65,0x00,0x25,0x64,0x25,0x73,0x00,0x74,0x78,0x74,0x5F,0x74,0x6F,0x74,
-    0x61,0x6C,0x00,0x70,0x69,0x63,0x5F,0x61,0x72,0x72,0x6F,0x77,0x5F,0x6F,0x30,0x31,0x00,0x70,0x69,0x63,
-    0x5F,0x61,0x72,0x72,0x6F,0x77,0x5F,0x75,0x30,0x31,0x00,0x70,0x69,0x63,0x5F,0x75,0x70,0x00,0x70,0x69,
-    0x63,0x5F,0x64,0x6F,0x77,0x6E,0x00,0x43,0x4E,0x75,0x6D,0x53,0x65,0x6C,0x65,0x63,0x74,0x00,0x61,0x72,
-    0x63,0x00,0x6D,0x66,0x37,0x30,0x5F,0x63,0x66,0x36,0x30,0x5F,0x73,0x79,0x73,0x77,0x69,0x6E,0x30,0x35,
-    0x2E,0x62,0x72,0x6C,0x79,0x74,0x00,0x6D,0x66,0x37,0x30,0x5F,0x63,0x66,0x36,0x30,0x5F,0x73,0x79,0x73,
-    0x77,0x69,0x6E,0x30,0x35,0x5F,0x69,0x6E,0x5F,0x76,0x61,0x6C,0x75,0x65,0x2E,0x62,0x72,0x6C,0x61,0x6E,
-    0x00,0x6D,0x66,0x37,0x30,0x5F,0x63,0x66,0x36,0x30,0x5F,0x73,0x79,0x73,0x77,0x69,0x6E,0x30,0x35,0x5F,
-    0x72,0x6F,0x6F,0x70,0x2E,0x62,0x72,0x6C,0x61,0x6E,0x00,0x6D,0x66,0x37,0x30,0x5F,0x63,0x66,0x36,0x30,
-    0x5F,0x73,0x79,0x73,0x77,0x69,0x6E,0x30,0x35,0x5F,0x6F,0x6E,0x2E,0x62,0x72,0x6C,0x61,0x6E,0x00,0x6E,
-    0x75,0x6C,0x5F,0x73,0x68,0x73,0x6C,0x63,0x74,0x00,0x4D,0x4E,0x55,0x5F,0x73,0x68,0x6F,0x70,0x00,0x74,
-    0x78,0x74,0x5F,0x62,0x75,0x79,0x30,0x31,0x00,0x74,0x78,0x74,0x5F,0x62,0x75,0x79,0x30,0x32,0x00,0x74,
-    0x78,0x74,0x5F,0x62,0x75,0x79,0x30,0x33,0x00,0x4D,0x4E,0x55,0x5F,0x6B,0x79,0x65,0x61,0x73,0x73,0x69,
-    0x67,0x6E,0x00,0x68,0x65,0x6C,0x70,0x00,0x74,0x78,0x74,0x5F,0x63,0x6C,0x6F,0x73,0x65,0x30,0x30,0x00,
-    0x74,0x78,0x74,0x5F,0x63,0x6C,0x6F,0x73,0x65,0x30,0x31,0x00,0x66,0x69,0x6C,0x65,0x49,0x44,0x5F,0x32,
-    0x00,0x66,0x69,0x6C,0x65,0x49,0x44,0x5F,0x31,0x00,0x70,0x69,0x63,0x5F,0x62,0x74,0x6E,0x30,0x30,0x00,
-    0x70,0x69,0x63,0x5F,0x62,0x74,0x6E,0x30,0x31,0x00,0x00,0x00,
-};
+void CNumSelect::Close() {
+    u8 state = mState;
+    if (state == 1 || state == 3) {
+        return;
+    }
+    mState = 3;
+    mIdle = 0;
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimIn);
+    mpLayout->SetAnimationEnable(mAnimIn, true);
+    playUISound(0xe);
+}
+
+void CNumSelect::CountUp() {
+    u8 state = mState;
+    if (state == 1 || state == 3) {
+        return;
+    }
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimOn);
+    mpLayout->SetAnimationEnable(mAnimOn, true);
+    mAnimOn->SetFrame(0.0f);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_arrow_o01", true), 1);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_arrow_u01", true), 0);
+    mState = 4;
+}
+
+void CNumSelect::CountDown() {
+    u8 state = mState;
+    if (state == 1 || state == 3) {
+        return;
+    }
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimOn);
+    mpLayout->SetAnimationEnable(mAnimOn, true);
+    mAnimOn->SetFrame(0.0f);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_arrow_o01", true), 0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_arrow_u01", true), 1);
+    mState = 5;
+}
+
+#pragma push
+#pragma optimize_for_size on
+void CNumSelect::SetArrowVisible(u32 visible) {
+    if (mpLayout != NULL) {
+        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_up", true), visible);
+        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_down", true), visible);
+    }
+}
+#pragma pop
+
+// Retail keeps the four state steps out of line (bl from UpdateStates).
+#pragma push
+#pragma auto_inline off
+void CNumSelect::UpdateOpen() {
+    if (advanceAnimTransform(mAnimIn, 1.0f)) {
+        mState = 2;
+        mIdle = 1;
+        mpLayout->UnbindAllAnimation();
+        mpLayout->BindAnimation(mAnimLoop);
+        mpLayout->SetAnimationEnable(mAnimLoop, true);
+    }
+}
+
+void CNumSelect::UpdateClose() {
+    if (AnimRewindFrame(mAnimIn, 1.0f)) {
+        mState = 0;
+        mIdle = 1;
+        mOpen = 0;
+    }
+}
+
+void CNumSelect::UpdateCountUp() {
+    if (advanceAnimTransform(mAnimOn, 1.0f) == 0) {
+        return;
+    }
+    mAnimOn->SetFrame(0.0f);
+    mpLayout->Animate();
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimLoop);
+    mpLayout->SetAnimationEnable(mAnimLoop, true);
+    mAnimLoop->SetFrame(0.0f);
+    mState = 2;
+    mIdle = 1;
+}
+
+void CNumSelect::UpdateCountDown() {
+    if (advanceAnimTransform(mAnimOn, 1.0f) == 0) {
+        return;
+    }
+    mAnimOn->SetFrame(0.0f);
+    mpLayout->Animate();
+    mpLayout->UnbindAllAnimation();
+    mpLayout->BindAnimation(mAnimLoop);
+    mpLayout->SetAnimationEnable(mAnimLoop, true);
+    mAnimLoop->SetFrame(0.0f);
+    mState = 2;
+    mIdle = 1;
+}
+
+#pragma pop
+
+#pragma push
+#pragma optimize_for_size on
+bool CNumSelect::OnFileEvent(CEventFile* evt) {
+    if (mFileHandle == evt->mFileHandle) {
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x8000, "CNumSelect", 0);
+        Class_8045F858 host(&mMemRegion);
+        void* data = mFileHandle->getData();
+        mtl::MemManager::setMemInitFlag(false);
+
+        mArcResAcc = CLibLayout::createArcResourceAccessor();
+        mArcResAcc->Attach(data, "arc");
+        buildLayout(&mpLayout, mArcResAcc, "mf70_cf60_syswin05.brlyt");
+        bindLayoutAnimTransform(mpLayout, &mAnimIn, mArcResAcc, "mf70_cf60_syswin05_in_value.brlan");
+        bindLayoutAnimTransform(mpLayout, &mAnimLoop, mArcResAcc, "mf70_cf60_syswin05_roop.brlan");
+        bindLayoutAnimTransform(mpLayout, &mAnimOn, mArcResAcc, "mf70_cf60_syswin05_on.brlan");
+
+        nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((IDeviceFontInfo*)CDeviceFont::getFontInfo(1, mpLayout))->getFont());
+        setLayoutTextBoxFont(mpLayout, "txt_value", (u32)CUICfManager_getPackedFont9C());
+        setLayoutTextBoxFont(mpLayout, "txt_total", (u32)CUICfManager_getPackedFont9C());
+
+        mpLayout->UnbindAllAnimation();
+        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_shslct", true), 0);
+
+        // The region flag selects the buy-caption row (11 vs 12).
+        char* table = "MNU_shop";
+        char* column = "name";
+        u32 row = 11;
+        if (mRegion == 1) {
+            row = 12;
+        }
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_buy01", BdatTouchStringCell(table, column, row), 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_buy02", BdatTouchStringCell("MNU_shop", "name", 13), 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_buy03", BdatTouchStringCell("MNU_shop", "name", 14), 0);
+
+        char* closeText = BdatTouchStringCell("MNU_kyeassign", "help", 0x2b);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_close00", closeText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_close01", closeText, 0);
+
+        const char* key = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? "fileID_2" : "fileID_1";
+        u16 fileId = BdatGetU16ByTableKey("MNU_kyeassign", key, 0x2b);
+        char* tplName = MakeTplNameSysFile(fileId);
+        CNumSelectTimg* timg =
+            (CNumSelectTimg*)CUICfManager_getArcResourceAccessor()->GetResource(0x74696d67, tplName, 0);
+        if (timg != NULL) {
+            PaneSetTexPaletteByName(mpLayout, "pic_btn00", (TPLPalette*)timg);
+            PaneSetTexPaletteByName(mpLayout, "pic_btn01", (TPLPalette*)timg);
+            u16 h = timg->unk8->dims->m02;
+            u16 w = timg->unk8->dims->m00;
+
+            nw4r::lyt::Pane* paneA = mpLayout->GetRootPane()->FindPaneByName("pic_btn00", true);
+            if (paneA != NULL) {
+                f32 sz[2];
+                sz[0] = static_cast<f32>(h);
+                sz[1] = static_cast<f32>(w);
+                writePanePos(paneA, sz);
+            }
+            nw4r::lyt::Pane* paneB = mpLayout->GetRootPane()->FindPaneByName("pic_btn01", true);
+            if (paneB != NULL) {
+                f32 sz[2];
+                sz[0] = static_cast<f32>(h);
+                sz[1] = static_cast<f32>(w);
+                writePanePos(paneB, sz);
+            }
+        }
+
+        if (mpLayout != NULL) {
+            mLoaded = 1;
+        }
+        mFileHandle = NULL;
+        mMemRegion.validateHeap();
+        return true;
+    }
+    return false;
+}
+#pragma pop

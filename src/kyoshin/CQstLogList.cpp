@@ -26,6 +26,36 @@ extern "C" {
 
 #include <stdio.h>
 
+// Quest-log list constructor. Members come up in declaration order (the
+// CSortMenu/QstData wrappers run the retail ctor calls); the three re-init
+// blocks are assignments from temporaries, like the menu Init functions.
+CQstLogList::CQstLogList(u16 arg2)
+    : mFileHandle(0), mArcResAcc(0), mpLayout(0), mpAnim0(0), mpAnim1(0),
+      mCur18(0), mScrollBar(0), field_0x170(0), field_0x174(0), field_0x178(0),
+      mSortEnabled(1), mSortDescending(0), field_0x17B(0), field_0x17C(0),
+      field_0x17D(0), field_0x17E(0), field_0x180(arg2) {
+    CQstLogListEntry buf;          // per-entry text buffer
+
+    // Prime the 32 quest text entries: 0xFF/0x00 head bytes + a cleared
+    // "%s" string, copied into the shared table. Counter is u32 truncated
+    // at the multiply (retail clrlwi) with an unsigned loop compare.
+    for (u32 tbl_i = 0; tbl_i < 0x20; tbl_i++) {
+        buf.mField0 = -1;
+        buf.mField1 = 0;
+        sprintf((char*)&buf.mData[0], &lbl_eu_80509AB4[0x10], 0);
+        QstLogList_CopyEntry(
+            (CQstLogListEntry*)&lbl_eu_80576670[(u8)tbl_i * 0x22], &buf);
+    }
+
+    lbl_eu_80664728 = 0;
+
+    // CScrollBar's implicit operator= is emitted out of line (weak
+    // __as__10CScrollBarFRC10CScrollBar) because the class is polymorphic.
+    mScrollBar = CScrollBar(1);
+    mSortMenu = CSortMenu();
+    mQstData = QstData();
+}
+
 int CQstLogList::IsSortEnabled() { return mSortEnabled; }
 
 // Copies a 0x22-byte quest-log entry: 2 head bytes + 4x8-byte word loop.
@@ -37,6 +67,8 @@ extern "C" __declspec(noinline) CQstLogListEntry* QstLogList_CopyEntry(CQstLogLi
     return pDst;
 }
 
+
+CQstLogList::~CQstLogList() {}
 
 int CQstLogList::IsSortDescending() { return mSortDescending; }
 
@@ -366,21 +398,21 @@ __declspec(noinline) void CQstLogList::RefreshRows() {
     e1 = row[1];
     ClearRows();
     lbl_eu_8066472C = 0;
-    QstCnt_SortRecords(&mQstData.mList[0], e1, (u8)e0);
+    mQstData.Sort(e1, (u8)e0);
 
     // Rebuild the visible rows from the quest-info buffer, starting at the
     // current scroll position; stop after ten rows or the list end.
     int i = 0;
-    u16 total = selectQstIndex(&mQstData.mList[0]);
+    u16 total = mQstData.GetCount();
     u32 cur = (u16)field_0x17E;
     for (; (u16)cur < total; i++, cur++) {
         if (i >= 10) break;
-        CQstLogListQstInfo* entry = QstCnt_GetInfoAt_76F4(&mQstData.mList[0], (u16)cur);
-        questId = entry->f0;
+        QstInfo* entry = mQstData.GetInfo((u16)cur);
+        questId = entry->mId;
         u32 idx = SearchThresholdIdx(questId);
         u8 res = (u8)CtrlRemote_TouchBitByArg(questId + 0x220);
         DrawRow((const char*)lbl_eu_80573D18[idx], questId,
-                      (u8)(i + 1), res, entry->f5, entry->f6);
+                      (u8)(i + 1), res, entry->mShow, entry->mState);
         if (i == field_0x17D) {
             lbl_eu_80664730 = questId;
             lbl_eu_80664734 = idx;
@@ -640,11 +672,11 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
                           ->FindPaneByName(&s[0x1b1], true)
                           ->GetVtxColor(0);
 
-    QstCnt_RefreshRecords(&mQstData.mList[0]);
+    mQstData.Refresh();
     RefreshRows();
 
     // Position the selection on the quest-log's own list entry.
-    u16 listIdx = QstCnt_FindInfoIndex(&mQstData.mList[0], field_0x180);
+    u16 listIdx = mQstData.FindIndex(field_0x180);
     if (listIdx < 10) {
         field_0x17D = (s8)listIdx;
         field_0x17E = 0;
@@ -802,36 +834,4 @@ void CQstLogList::ScrollUp() {
         mScrollBar.PlaceThumb((u16)field_0x17E);
     }
     playUISound(1);
-}
-
-CQstLogList::~CQstLogList() {}
-
-// Quest-log list constructor. Members come up in declaration order (the
-// CSortMenu/QstData wrappers run the retail ctor calls); the three re-init
-// blocks are assignments from temporaries, like the menu Init functions.
-CQstLogList::CQstLogList(u16 arg2)
-    : mFileHandle(0), mArcResAcc(0), mpLayout(0), mpAnim0(0), mpAnim1(0),
-      mCur18(0), mScrollBar(0), field_0x170(0), field_0x174(0), field_0x178(0),
-      mSortEnabled(1), mSortDescending(0), field_0x17B(0), field_0x17C(0),
-      field_0x17D(0), field_0x17E(0), field_0x180(arg2) {
-    CQstLogListEntry buf;          // per-entry text buffer
-
-    // Prime the 32 quest text entries: 0xFF/0x00 head bytes + a cleared
-    // "%s" string, copied into the shared table. Counter is u32 truncated
-    // at the multiply (retail clrlwi) with an unsigned loop compare.
-    for (u32 tbl_i = 0; tbl_i < 0x20; tbl_i++) {
-        buf.mField0 = -1;
-        buf.mField1 = 0;
-        sprintf((char*)&buf.mData[0], &lbl_eu_80509AB4[0x10], 0);
-        QstLogList_CopyEntry(
-            (CQstLogListEntry*)&lbl_eu_80576670[(u8)tbl_i * 0x22], &buf);
-    }
-
-    lbl_eu_80664728 = 0;
-
-    // CScrollBar's implicit operator= is emitted out of line (weak
-    // __as__10CScrollBarFRC10CScrollBar) because the class is polymorphic.
-    mScrollBar = CScrollBar(1);
-    mSortMenu = CSortMenu();
-    mQstData = CQstLogListQstData();
 }

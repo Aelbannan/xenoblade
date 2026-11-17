@@ -243,22 +243,15 @@ extern "C" int   IsSkillItem(void*);
 extern "C" void CItemData_lookupOrAlloc(CMCItemBoxEntry*, int);
 extern "C" u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
 extern "C" u32 CItemBlock_countEmpty(u8);
-extern "C" void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
 // ScalePaneWorldPos lives in kyoshin/CSysWin.hpp (typed VEC3/Pane form).
 extern "C" void setPaneVisible(void*, u32);
-extern "C" void closeItemBox1(void*);
-extern "C" void hideItemBoxPanes(void*, u16);
-extern "C" void renderItemBoxByKind(void*, u32, u32, u32);
-extern "C" void setItemBoxNamedText(void*, int, void*);
-extern "C" u32 startItemBoxOpen(void*);
 extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
 extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 extern "C" void sysWinTermLayout(void*);
-extern "C" void* formatItemBoxName(void*, u32);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
@@ -293,8 +286,7 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub
 // ---------------------------------------------------------------------------
 // __ct__17UnkClass_8045F564Fv lives in kyoshin/CSysWin.hpp (typed form).
 extern "C" void __ct__7CSysWinFUc(void* syswin, int arg);
-extern "C" void __ct__CItemBoxInfo(void* info, int arg2, int arg3);
-extern "C" void __dt__12CItemBoxInfoFv(void* info, int flags);
+extern "C" void __ct__12CItemBoxInfoFUcUs(void* info, int arg2, int arg3);
 extern "C" void __dt__7CSysWinFv(void* syswin, int flags);
 
 // ---------------------------------------------------------------------------

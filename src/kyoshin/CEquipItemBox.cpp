@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
@@ -33,7 +34,6 @@ extern "C" void* CItem_kindPtr(u8, s16);
 // but retail passes the full 32-bit word (r6 -> mr -> setupItemBoxDetail), so the
 // u32 form is declared here to avoid a call-site mask. Kept local like
 // CItem_kindPtr (the sibling headers disagree on the signature).
-extern "C" void renderItemBoxByKind(CItemBoxInfo*, u16, void*, u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Pane-visibility helpers (C-ABI retail symbols; declared in CEquipItemBox.hpp
 // with extern "C" so MWCC emits the plain names).
@@ -2098,7 +2098,7 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
             if (v == 0) return;
             void* text;
             if (ItemBoxGetTab((const u8*)list, idx) == 3) {
-                text = formatItemBoxName(list, idx);
+                text = ((CItemBoxPage*)(list))->GetItemName(idx);
             } else {
                 text = BdatGetPtrDirect((const void*)lbl_eu_806649E0,
                                      &lbl_eu_8050EFDC[0x1a2], v);
@@ -2655,15 +2655,15 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
     }
     u8 idx2 = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
     void* item2 = getEIBItemObj(grid, idx2);
-    renderItemBoxByKind((CItemBoxInfo*)self->unk_20c, self->unk_1fc, item2, 1);
-    setItemBoxNamedText((CItemBoxInfo*)self->unk_20c, 1, fmtEIBItemName(grid, idx2));
+    ((CItemBoxInfo*)(self->unk_20c))->SetItem(self->unk_1fc, item2, 1);
+    ((CItemBoxInfo*)(self->unk_20c))->SetNamedText(1, fmtEIBItemName(grid, idx2));
     u32 x = countEIBPages(grid);
     setLayoutTextBoxNumber(self->field_38, &lbl_eu_8050EFDC[0x27c], (u8)x);
     refreshEIBPageDisp(self);
     refreshEIBItemList(self);
     fillEIBSortMenu(self);
-    if (getItemBoxState__FP12CItemBoxInfo((void*)self->unk_20c) != 0) {
-        hideItemBoxPanes((CItemBoxInfo*)self->unk_20c, page);
+    if (((CItemBoxInfo*)((void*)self->unk_20c))->GetState() != 0) {
+        ((CItemBoxInfo*)(self->unk_20c))->HidePanes(page);
     }
 }
 
@@ -2747,12 +2747,12 @@ __declspec(noinline) void CEquipItemBox::refreshEIBItemList() {
     } else {
         LayoutSetTextBoxFmtValue(field_38, &lbl_eu_8050EFDC[0x2bf], fmtEIBItemName(grid, idx), 0);
     }
-    if (getItemBoxState__FP12CItemBoxInfo((void*)unk_20c) == 0) return;
+    if (((CItemBoxInfo*)((void*)unk_20c))->GetState() == 0) return;
     void* item;
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
-    renderItemBoxByKind((CItemBoxInfo*)unk_20c, unk_1fc, item, getEIBByte6(grid, idx));
-    setItemBoxNamedText((CItemBoxInfo*)unk_20c, 1, fmtEIBItemName(grid, idx));
+    ((CItemBoxInfo*)(unk_20c))->SetItem(unk_1fc, item, getEIBByte6(grid, idx));
+    ((CItemBoxInfo*)(unk_20c))->SetNamedText(1, fmtEIBItemName(grid, idx));
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
     u16 kind;
@@ -3421,8 +3421,7 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
     view->field_220 = (u16)key;
     view->field_2c0 = 3;
     view->field_2cc = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf08(obj);
-    setItemBoxIndex((CItemBoxInfo*)((u8*)self + 0x210), 8,
-                    (short)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
+    ((CItemBoxPage*)((CItemBoxInfo*)((u8*)self + 0x210)))->SetValue(8, (short)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
     copyVEC3(view->field_288, pos);
 }
 

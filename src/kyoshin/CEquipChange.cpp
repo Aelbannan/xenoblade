@@ -62,7 +62,7 @@ extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
 extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
     if (self != 0) {
         __dt__13CEquipItemBoxFv(&self->mEquipItemBox, -1);
-        __dt__12CItemBoxInfoFv((CItemBoxInfo*)self->_padA4, -1);
+        ((CItemBoxInfo*)self->_padA4)->CItemBoxInfo::~CItemBoxInfo();
         __dt__7CSubCurFv((CBaseCur*)self->field_80, -1);
         __dt__6CCur15Fv((CBaseCur*)self->_pad68, -1);
         __dt__6CCur14Fv((CBaseCur*)self->_pad50, -1);
@@ -106,7 +106,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     __ct__CSubCur((u8*)self + 0x80, (nw4r::lyt::ArcResourceAccessor*)0);
     self->field_98 = 0;
     self->field_99 = 0;
-    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&self->_padA4[0]), 0, 0);
+    __ct__12CItemBoxInfoFUcUs(reinterpret_cast<CItemBoxInfo*>(&self->_padA4[0]), 0, 0);
     __ct__CEquipItemBox(&self->mEquipItemBox);
 
     CEqChStateView* v = reinterpret_cast<CEqChStateView*>(self);
@@ -114,7 +114,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     CEqChBoxTemp boxTmp;
 
     // --- copy config out of a fresh CItemBoxInfo(4,0) temp ---
-    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&boxTmp), 4, 0);
+    __ct__12CItemBoxInfoFUcUs(reinterpret_cast<CItemBoxInfo*>(&boxTmp), 4, 0);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->fa8[0], &boxTmp.f04[0]);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&v->fb8[0], &boxTmp.f14[0]);
     v->fc8[0] = boxTmp.f24[0];
@@ -160,7 +160,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f150 = boxTmp.f150;
     v->f152 = boxTmp.f152;
     ShopBuy_CopyData(&v->f154[0], &boxTmp.f154[0]);
-    __dt__12CItemBoxInfoFv(reinterpret_cast<CItemBoxInfo*>(&boxTmp), -1);
+    reinterpret_cast<CItemBoxInfo*>(&boxTmp)->CItemBoxInfo::~CItemBoxInfo();
 
     // --- copy config out of a fresh default CEquipItemBox temp ---
     CEqChEquipTemp eqTmp;
@@ -284,7 +284,7 @@ void EquipChange_LoadBindFiles(CEquipChange* self) {
     self->field_28 = (u32)CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                                 path + 0x18, reinterpret_cast<IWorkEvent*>(self), 0, 0);
     CDeviceFile::setHandleFlag1((CFileHandle*)self->field_28);
-    loadItemBoxFiles((CItemBoxInfo*)self->_padA4);
+    ((CItemBoxInfo*)(self->_padA4))->LoadFiles();
     loadEIBFiles(&self->mEquipItemBox);
 }
 
@@ -307,7 +307,7 @@ int EquipChange_IsSortOrSubPage(CEquipChange* self) {
 
 // Target us-8020405c: read selection at 0xA4 unless the item box confirm op is busy.
 int EquipChange_GetSelWhenReady(CEquipChange* self) {
-    if (getItemBoxState__FP12CItemBoxInfo((CItemBoxInfo*)self->_padA4) == 0)
+    if (((CItemBoxInfo*)(self->_padA4))->GetState() == 0)
         return 0;
     if (eibWindowsReady(&self->mEquipItemBox) != 0)
         return self->field_4C;
@@ -336,14 +336,12 @@ void EquipChange_InitScreen(CEquipChange* self) {
     if (self->field_48 == 0) {
         self->field_48 = 1;
         self->field_4D = 0;
-        startItemBoxOpen((CItemBoxInfo*)((u8*)self + 0xA4));
-        hideItemBoxPanes((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
+        ((CItemBoxInfo*)(((u8*)self + 0xA4)))->Open();
+        ((CItemBoxInfo*)(((u8*)self + 0xA4)))->HidePanes((u8)EquipChange_MapCursorToCat(self));
         u8 f99 = self->field_99;
         u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
         u32 cur3a = (u32)EquipChange_MapCursorToSlot(self);
-        renderItemBoxByKind((CItemBoxInfo*)self->_padA4,
-                      (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
-                      EquipChange_ResolveEquipItem(self), 1);
+        ((CItemBoxInfo*)(self->_padA4))->SetItem((u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)), EquipChange_ResolveEquipItem(self), 1);
         playUISound(0x6d);
     }
 }
@@ -358,7 +356,7 @@ void EquipChange_CloseScreen(CEquipChange* self) {
         Cur_SetVisible((void*)self->_pad50, 0);
         Cur_SetVisible((void*)self->_pad68, 0);
         Cur_SetVisible((void*)self->field_80, 0);
-        advanceItemBoxState((CItemBoxInfo*)self->_padA4);
+        ((CItemBoxInfo*)(self->_padA4))->Close();
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_3C, 0);
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_40, 0);
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_38, 1);
@@ -406,9 +404,9 @@ void EquipChange_CursorPrev(CEquipChange* self) {
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
-    renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
+    ((CItemBoxInfo*)(self->_padA4))->SetItem(packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
-    hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
+    ((CItemBoxInfo*)(self->_padA4))->HidePanes((u8)v38);
     playUISound(1);
 }
 
@@ -449,9 +447,9 @@ void EquipChange_CursorNext(CEquipChange* self) {
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
-    renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
+    ((CItemBoxInfo*)(self->_padA4))->SetItem(packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
-    hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
+    ((CItemBoxInfo*)(self->_padA4))->HidePanes((u8)v38);
     playUISound(1);
 }
 
@@ -491,9 +489,9 @@ void EquipChange_CursorUp(CEquipChange* self) {
     // first makes MWCC fold the unshifted cur3a into the clrlwi base.
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
-    renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
+    ((CItemBoxInfo*)(self->_padA4))->SetItem(packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
-    hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
+    ((CItemBoxInfo*)(self->_padA4))->HidePanes((u8)v38);
     playUISound(1);
 }
 
@@ -530,9 +528,9 @@ void EquipChange_CursorRight(CEquipChange* self) {
     // Two-step pack (same shape as matched EquipChange_OnAnim40ToSt7).
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
-    renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
+    ((CItemBoxInfo*)(self->_padA4))->SetItem(packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
-    hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
+    ((CItemBoxInfo*)(self->_padA4))->HidePanes((u8)v38);
     playUISound(1);
 }
 
@@ -810,7 +808,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         inst->vf44((CItemData*)kind, (u8)v, -1);
     }
     EquipChange_RebuildCursorList(self);
-    hideItemBoxPanes((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
+    ((CItemBoxInfo*)(((u8*)self + 0xA4)))->HidePanes((u8)EquipChange_MapCursorToCat(self));
     // Lifetimes mirror retail: f99 (r28) and cur38 (r29) feed rlwimi inserts
     // into the packed word based on the fresh EquipChange_MapCursorToSlot low nibble.
     u8 f99 = self->field_99;
@@ -818,7 +816,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     u32 packed = (u32)EquipChange_MapCursorToSlot(self) & 0xF;
     packed |= ((u32)(cur38 & 0xF) << 4);
     packed |= ((u32)f99 << 8);
-    renderItemBoxByKind((CItemBoxInfo*)((u8*)self + 0xA4), (u16)packed, EquipChange_ResolveEquipItem(self), 1);
+    ((CItemBoxInfo*)(((u8*)self + 0xA4)))->SetItem((u16)packed, EquipChange_ResolveEquipItem(self), 1);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         eibOpenPages(&self->mEquipItemBox, (u16)packed, 0, 1);
     playUISound(0x77);
@@ -946,9 +944,8 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt3(CEquipChange* sel
         return;
     self->field_48 = 3;
     self->field_4D = 1;
-    char buf[0x10];
-    calcItemBoxPaneVec(buf, (CItemBoxInfo*)self->_padA4, self->field_99);
-    ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
+    nw4r::math::VEC3 buf = ((CItemBoxInfo*)(self->_padA4))->GetSlotPos(self->field_99);
+    ((CBaseCur*)self->field_80)->setRootPaneTranslate(&buf);
     Cur_SetVisible((void*)self->field_80, 1);
     EquipChange_RefreshCursorPos(self);
 }
@@ -1013,9 +1010,7 @@ extern "C" void __declspec(noinline) EquipChange_OnApplyToStA(CEquipChange* self
     int hi = EquipChange_MapCursorToSlot(self);
     int packed = (hi & 0xF) | ((lo & 0xF) << 4);
     int m = (int)EquipChange_ResolveEquipItem(self);
-    renderItemBoxByKind((CItemBoxInfo*)((u8*)self + 0xA4),
-                  (u16)(packed | ((u32)f99 << 8)),
-                  (void*)m, 1);}
+    ((CItemBoxInfo*)(((u8*)self + 0xA4)))->SetItem((u16)(packed | ((u32)f99 << 8)), (void*)m, 1);}
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
 extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt3(CEquipChange* self) {
@@ -1605,13 +1600,12 @@ void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat
     // item-box info pack at 0x10, per-category id row at 0x1C.
     u32 catWord;
     u8 catByte;
-    char buf[0x10];
     s16 ids[5];
-    calcItemBoxPaneVec(buf, (CItemBoxInfo*)((u8*)self + 0xA4), cat);
-    ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
+    nw4r::math::VEC3 buf = ((CItemBoxInfo*)(((u8*)self + 0xA4)))->GetSlotPos(cat);
+    ((CBaseCur*)self->field_80)->setRootPaneTranslate(&buf);
     Cur_SetActive((CBaseCur*)self->field_80);
     EquipChange_RebuildCursorList(self);
-    hideItemBoxPanes((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
+    ((CItemBoxInfo*)(((u8*)self + 0xA4)))->HidePanes((u8)EquipChange_MapCursorToCat(self));
     u8 f99 = self->field_99;
     int cur38 = EquipChange_MapCursorToCat(self);
     int cur3a = EquipChange_MapCursorToSlot(self);
@@ -1659,7 +1653,7 @@ void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat
         }
         if (flag == 0) {
             EquipChange_RebuildCursorList(self);
-            hideItemBoxPanes((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
+            ((CItemBoxInfo*)(((u8*)self + 0xA4)))->HidePanes((u8)EquipChange_MapCursorToCat(self));
             EquipChange_RefreshCursorPos(self);
             f99 = self->field_99;
             cur38 = EquipChange_MapCursorToCat(self);
@@ -1668,7 +1662,7 @@ void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat
     }
     u16 packed = (u16)(((cur38 & 0xF) << 4) | (cur3a & 0xF));
     packed = (u16)(packed | ((u32)f99 << 8));
-    renderItemBoxByKind((CItemBoxInfo*)((u8*)self + 0xA4), packed, EquipChange_ResolveEquipItem(self), 1);
+    ((CItemBoxInfo*)(((u8*)self + 0xA4)))->SetItem(packed, EquipChange_ResolveEquipItem(self), 1);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         eibOpenPages(&self->mEquipItemBox, packed, 0, 1);
 }
@@ -1843,7 +1837,7 @@ tail:
     Cur_Update((void*)self->_pad50);
     Cur_Update((void*)self->_pad68);
     Cur_Update((void*)self->field_80);
-    updateItemBoxAnims((CItemBoxInfo*)self->_padA4);
+    ((CItemBoxInfo*)(self->_padA4))->UpdateAnims();
     updateEIBBox(&self->mEquipItemBox);
 }
 // Target us-80203edc: draw the equip-change screen. Draws the main layout
@@ -1861,7 +1855,7 @@ extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo*
     } else {
         self->mEquipItemBox.unk_37b = 0;
     }
-    renderItemBox((CItemBoxInfo*)self->_padA4, drawInfo);
+    ((CItemBoxInfo*)(self->_padA4))->DrawLayout(drawInfo);
     Cur_DrawLayout((CBaseCur*)self->field_80, drawInfo);
     drawEIBBox(&self->mEquipItemBox, drawInfo);
 }
@@ -1891,6 +1885,6 @@ void EquipChange_CleanupFiles(CEquipChange* self) {
     ((CBaseCur*)self->_pad50)->cleanup();
     ((CBaseCur*)self->_pad68)->cleanup();
     ((CBaseCur*)self->field_80)->cleanup();
-    closeItemBox1((CItemBoxInfo*)self->_padA4);
+    ((CItemBoxInfo*)(self->_padA4))->UnloadFiles();
     closeEIBBox(&self->mEquipItemBox);
 }

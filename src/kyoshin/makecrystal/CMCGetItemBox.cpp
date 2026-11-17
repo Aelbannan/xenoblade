@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
@@ -48,21 +49,17 @@ void sysWinOpenPhase1(CMCGetItemBoxSysWin*);
 // C++-linkage (mangled) retail symbols.
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
 void playUISound(u32);                             // playUISound__FUl
-int getItemBoxState(CItemBoxInfo*);                    // getItemBoxState__FP12CItemBoxInfo (retail call sites compare the full 32-bit return)
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
-extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void renderItemBox(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void updateItemBoxAnims(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void Cur_Update(CBaseCur*);
 extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDrawLayout(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDispatchPhase(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
-// Use the header's extern "C" __dt__12CItemBoxInfoFv / __dt__7CSysWinFv
+// Use the header's extern "C" __dt__7CSysWinFv (CItemBoxInfo is destroyed via its real dtor)
 // so call-site relocs stay the retail unmangled names (C++ redecls here
 // were emitting __dt__...Fv__FP... extra-signature names).
 // Retail reloc names for the cursor dtors are unmanged C symbols.
@@ -402,7 +399,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     __ct__CCur16(&self->subObj_88, 0);
     __ct__CCur18(&self->subObj_A0, 0);
     __ct__7CSysWinFUc(&self->sysWin_B8, 0);
-    __ct__CItemBoxInfo(self->itemBox, 0, 0);
+    __ct__12CItemBoxInfoFUcUs(self->itemBox, 0, 0);
 
     self->field_300 = 0;
     self->field_301 = 0;
@@ -415,12 +412,12 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     //     assignment (dest = src + 0xf4); word-array members lower to the
     //     retail paired lwzu/stwu bdnz loops. ---
     u8 boxTmp[0x210];
-    __ct__CItemBoxInfo(boxTmp, 0, 0);
+    __ct__12CItemBoxInfoFUcUs(boxTmp, 0, 0);
     *(CMCBoxMember*)&self->itemBox[0x04] = *(CMCBoxMember*)&boxTmp[0x04];
     // trailing 128-byte run starts one byte past a word boundary (retail
     // keeps it outside the aligned member block)
     *(CMCW32*)&self->itemBox[0x189] = *(CMCW32*)&boxTmp[0x189];
-    __dt__12CItemBoxInfoFv(boxTmp, -1);
+    ((CItemBoxInfo*)boxTmp)->CItemBoxInfo::~CItemBoxInfo();
 
     // --- default sys-win temp -> embedded window: one struct assignment ---
     {
@@ -458,7 +455,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
 // member dtors at retail offsets, and the flags>0 delete tail.
 extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
     if (this_ != NULL) {
-        __dt__12CItemBoxInfoFv((CItemBoxInfo*)this_->itemBox, -1);
+        ((CItemBoxInfo*)this_->itemBox)->CItemBoxInfo::~CItemBoxInfo();
         __dt__7CSysWinFv(&this_->sysWin_B8, -1);
         __dt__6CCur18Fv(&this_->subObj_A0, -1);
         __dt__6CCur16Fv(&this_->subObj_88, -1);
@@ -485,7 +482,7 @@ void loadMCGetItemBoxFiles(CMCGetItemBox* self) {
                                                           &lbl_eu_8050FF8C[0xe0], (IWorkEvent*)self, 0, 0);
     self->fileHandle4 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xfd], (IWorkEvent*)self, 0, 0);
-    loadItemBoxFiles((CItemBoxInfo*)self->itemBox);
+    ((CItemBoxInfo*)(self->itemBox))->LoadFiles();
     ((CSysWin*)&self->sysWin_B8)->loadSystemArc();
 }
 
@@ -505,7 +502,7 @@ void updateMCGetItemBox(CMCGetItemBox* self) {
     Cur_Update(&self->subObj_70);
     Cur_Update(&self->subObj_88);
     Cur_Update(&self->subObj_A0);
-    updateItemBoxAnims((CItemBoxInfo*)self->itemBox);
+    ((CItemBoxInfo*)(self->itemBox))->UpdateAnims();
     sysWinDispatchPhase(&self->sysWin_B8);
 }
 
@@ -515,7 +512,7 @@ void updateMCGetItemBox(CMCGetItemBox* self) {
 void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->field_4C == 0) return;
     if (self->field_4D == 0) return;
-    renderItemBox((CItemBoxInfo*)self->itemBox);
+    ((CItemBoxInfo*)(self->itemBox))->DrawLayout(di);
     drawLayout(self->layout40, di, 0, 1);
     u8 active = self->sub_314.limit ? self->sub_314.limit : 1;
     if (active > 1) Cur_DrawLayout(&self->subObj_70, di);
@@ -563,7 +560,7 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
     self->subObj_70.cleanup();
     self->subObj_88.cleanup();
     self->subObj_A0.cleanup();
-    closeItemBox1((void*)self->itemBox);
+    ((CItemBoxInfo*)((void*)self->itemBox))->UnloadFiles();
     sysWinTermLayout((void*)&self->sysWin_B8);
 }
 
@@ -571,7 +568,7 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
 // Retail layout: first return-0 inline after the state check (bne over it),
 // then the ready!=0 path returns field_54 inline with the final return-0 at the tail.
 u8 isMCGetItemBoxActive(CMCGetItemBox* self) {
-    if (getItemBoxState((CItemBoxInfo*)self->itemBox) == 0) return 0;
+    if (((CItemBoxInfo*)(self->itemBox))->GetState() == 0) return 0;
     if (CSysWin_isReady(&self->sysWin_B8) != 0) return self->field_54;
     return 0;
 }
@@ -590,9 +587,9 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     self->field_300 = 0;
     // Signed lvalue keeps the constant negative (li r0,-1, not li r0,255).
     (s8&)self->field_301 = -1;
-    startItemBoxOpen((CItemBoxInfo*)self->itemBox);
+    ((CItemBoxInfo*)(self->itemBox))->Open();
     initMCGetItemBoxList(self, arg, unk, byte);
-    hideItemBoxPanes((CItemBoxInfo*)self->itemBox, arg);
+    ((CItemBoxInfo*)(self->itemBox))->HidePanes(arg);
     // Declared in this order so MWCC colors the callee-saved regs like retail
     // (entry->r31, idx->r30, sub->r29).
     CMCItemBoxEntry* entry;
@@ -602,8 +599,8 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     sub = &self->sub_314;
     entry = getMCItemSubEntry(sub, idx);
     u32 iconId = getMCItemSubItemId(sub, idx);   // held in a reg temp in retail
-    renderItemBoxByKind((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
-    setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, getMCItemSubName(sub, idx));
+    ((CItemBoxInfo*)(self->itemBox))->SetItem((u16)iconId, (void*)entry, 1);
+    ((CItemBoxInfo*)(self->itemBox))->SetNamedText(1, getMCItemSubName(sub, idx));
 }
 
 // When the item-box widget is done (state 3), advance to state 4, detach the
@@ -615,7 +612,7 @@ void confirmMCGetItemBox(CMCGetItemBox* self) {
     Cur_SetVisible(&self->subObj_58, 0);
     Cur_SetVisible(&self->subObj_70, 0);
     Cur_SetVisible(&self->subObj_88, 0);
-    advanceItemBoxState__FP12CItemBoxInfo((CItemBoxInfo*)self->itemBox);
+    ((CItemBoxInfo*)(self->itemBox))->Close();
     playUISound(0x6);
 }
 
@@ -876,7 +873,7 @@ void advanceMCGetItemBox(CMCGetItemBox* self) {
                 u8 v = combined < 0xc ? arr->flags[combined] : 0;
                 void* res;
                 if (v == 3) {
-                    res = formatItemBoxName(arr->table, combined);
+                    res = ((CItemBoxPage*)(arr->table))->GetItemName(combined);
                 } else {
                     res = BdatTouchStringCell(&lbl_eu_8050FF8C[0x119],
                                         &lbl_eu_8050FF8C[0x123], r);
@@ -1211,8 +1208,8 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
     }
     refreshMCGetItemBoxSlots(self);
     refreshMCGetItemBoxTexts(self);
-    if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
-        hideItemBoxPanes((void*)self->itemBox, arg);
+    if (((CItemBoxInfo*)(self->itemBox))->GetState() != 0) {
+        ((CItemBoxInfo*)((void*)self->itemBox))->HidePanes(arg);
     }
 }
 
@@ -1289,11 +1286,11 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* sel
     CMCItemBoxSub* sub = &self_->sub_314;
     LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1c7], getMCItemSubName(sub, (u16)idx), 0);
     LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1d0], getMCItemSubText(sub, (u16)idx), (u32)self->objAt50);
-    if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
+    if (((CItemBoxInfo*)(self->itemBox))->GetState() != 0) {
         CMCItemBoxEntry* entry = getMCItemSubEntry(sub, (u16)idx);
         u32 iconId = getMCItemSubItemId(sub, (u16)idx);   // held in a reg temp in retail
-        renderItemBoxByKind((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
-        setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, getMCItemSubName(sub, (u16)idx));
+        ((CItemBoxInfo*)(self_->itemBox))->SetItem((u16)iconId, (void*)entry, 1);
+        ((CItemBoxInfo*)(self_->itemBox))->SetNamedText(1, getMCItemSubName(sub, (u16)idx));
     }
 }
 

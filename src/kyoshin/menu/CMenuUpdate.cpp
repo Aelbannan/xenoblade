@@ -3,12 +3,13 @@
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 // code80135FDC_getByte_64059: owner decl (u8 return) lives in
 // CfGameManagerUnityHelpers.hpp, which isn't self-contained here; local
 // caller-shape copy with the owner's exact signature until that header is
 // includable (owner: kyoshin/code_80135FDC).
 // int return: retail tests the result with a bare cmpwi (no rlwinm mask).
-extern "C" int code80135FDC_getByte_64059();
 // Scn_QueryUnk80State: retail branches here WITHOUT setting up r3 (stale-register
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
@@ -24,10 +25,6 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
-void playUISound(u32);
 
 extern u32 lbl_eu_80525A10[];
 extern u32 __vt__10IScnRender[];
@@ -256,8 +253,8 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
     nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(obj->mLayout, &drawInfo, 0, 1);
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(obj->mLayout, &drawInfo, 0, 1);
     // No explicit dtor: the implicit member destruction emits the retail's
     // single __dt__ call (an explicit call would double it).
 }

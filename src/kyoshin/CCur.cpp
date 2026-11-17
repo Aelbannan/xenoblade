@@ -5,6 +5,8 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CCur.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // String table for cursor layout/anim resource names
 // (declared in include/lbls_kyoshin.hpp; keep local extern for MWCC relocs)
@@ -15,7 +17,6 @@ extern char lbl_eu_80505DE8[];
 // exactly the split's 0x4C.
 
 // Pane visibility helper (retail bare symbol; canonical extern "C" decl).
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // --- .sdata2 (retail content 0x4C): 0.0f + class-name strings ---

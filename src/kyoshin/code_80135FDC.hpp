@@ -26,47 +26,8 @@ class CScn;
 // single canonical declarations live in the lean headers below.
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
-extern "C" {
-// Retail symbols for these ARE the Itanium-mangled names; declare them under
-// C linkage so calls bind to the literal mangled identifier (declaring them
-// as C++ functions would re-derive the same mangling, but the extern "C" +
-// mangled-identifier form is what the definitions in code_80135FDC.cpp use).
-void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
-}
-
-// Retail symbols that ARE the mangled C++ names stay C++-linkage. Declare the
-// UNMANGLED identifier so MWCC mangles drawLayout to the retail symbol
-// (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii); declaring the
-// pre-mangled name here would double-mangle it (see CEquipItemBox.hpp).
-// The extern "C" + mangled-identifier declarations above serve the pre-mangled
-// call sites (CMenuUpdate, CMCCrystalSupport, CMCEffStart, CPcKizunagram); the
-// unmangled forms below serve the (majority) unmangled call sites. Both bind
-// to the same retail symbols.
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-
-// Retail symbols are unmangled (C linkage) -- keep them extern "C" so calls
-// bind to the unmangled name, not an Itanium-mangled re-derivation.
-extern "C" {
-#ifndef CODE_80135FDC_CPP
-u8 MapValueToRank6(u32);
-#endif
-#ifndef CODE_80135FDC_CPP
-char* MakeTplNameSysFile(u32);
-void PaneMatSetTevColorsByName(void*, void*, void*, void*);
-#endif
-}
-extern "C" int IsMenuState621F0();
-extern "C" u8 code80135FDC_getByte_64077();
 
 // Frame object returned by Scn_HasCamItem as consumed by drawLayout: the
 // view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
@@ -94,9 +55,6 @@ struct CViewFrame37038 {
 struct XBMapTable1 { u32 w[35]; };   // 140 B -> 17x8 loop + tail word
 struct XBMapTable2 { u32 w[31]; };   // 124 B -> 15x8 loop + tail word
 struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
-#ifndef CODE_80135FDC_CPP
-extern "C" u8 GetCollectedFlagByte(u32);
-#endif
 
 // Pane colour / material dispatches (PaneSetVtxColorByName and siblings) go through
 // real nw4r virtuals: slot 0x28 is Pane::SetVtxColor, slot 0x3C is

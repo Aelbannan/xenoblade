@@ -1,4 +1,5 @@
 #include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
@@ -6,6 +7,7 @@
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // --- CTTask<CUICfManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -85,8 +87,6 @@ void CItem_copyRecMasked(CUICfInitBlock*, const CUICfInitBlock*);
 void CtrlRemote_FetchSharedBufPtr();
 void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent*);
 void CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent*);
-void closeFileHandle__FPP11CFileHandle(CFileHandle**);
-void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
 // with the adjusted `this`, so it is referenced through the flat retail name.
 void __dt__12CUICfManagerFv(CUICfManager*);
@@ -223,13 +223,13 @@ void CUICfManager::Init() {
 }
 
 void CUICfManager::Term() {
-    closeFileHandle__FPP11CFileHandle(&mFileHandle);
+    closeFileHandle(&mFileHandle);
 
     mtl::MemManager::deallocate(mPackedFont60.Destroy());
     mtl::MemManager::deallocate(mPackedFont9C.Destroy());
     mtl::MemManager::deallocate(mPackedFontD8.Destroy());
 
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(mArcResourceAccessor);
+    releaseArcResourceAccessor(mArcResourceAccessor);
     mArcResourceAccessor = NULL;
     unk118 = -1;
 
@@ -279,8 +279,6 @@ void CUICfManager::Term() {
 
 extern "C" {
 int lbl_eu_80664050;
-int SearchThresholdIdx(int);
-u32 code80135FDC_setByte_6407F(u8);
 int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 // Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
 u32 createOptionMenu(CUICfUnk144*, u32, u32);
@@ -386,7 +384,6 @@ u16 lbl_eu_804FFFDC[];
 }
 
 // C++ mangling -> retail `incrementEventCounter__FUl`.
-void incrementEventCounter(u32);
 
 void CUICfManager::eventDispatch(int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
@@ -1258,12 +1255,11 @@ extern "C" void CUICfManager_setFlagState(int value) {
     reload = (CUICfManagerCreateView*)lbl_eu_80664054;
     reload->field_0xC90 = 0;
 }
-void* getPackedFont__Fv() {
+nw4r::ut::PackedFont* getPackedFont() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    return m == 0 ? 0 : reinterpret_cast<CUICfManagerCreateView*>(m)->field_0x60;
+    return m == 0 ? 0 : reinterpret_cast<nw4r::ut::PackedFont*>(reinterpret_cast<CUICfManagerCreateView*>(m)->field_0x60);
 }
-extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void* CUICfManager_getPackedFontD8() {
+extern "C" nw4r::ut::PackedFont* CUICfManager_getPackedFontD8() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFontD8();
 }
@@ -4369,7 +4365,7 @@ void CUICfManager::onFileEventThunk() {
 
 // retail: lwz r3,lbl_eu_80664054; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
 // returns the process sub-object at +0x9C, or null when the process is absent.
-extern "C" void* CUICfManager_getPackedFont9C() {
+extern "C" nw4r::ut::PackedFont* CUICfManager_getPackedFont9C() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     if (m == 0) return 0;
     return m->getPackedFont9C();

@@ -4,6 +4,9 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Forward declarations
 namespace nw4r { namespace lyt {
@@ -191,10 +194,7 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" bool CUICfManager_hasInUseSlot();
@@ -204,21 +204,17 @@ extern "C" void UIWin_CreateSysWinBuff(u32);
 extern "C" void CUICfManager_queueTutorialListMenu(u32);
 extern "C" bool hasQuestWindow();
 extern "C" bool QstCnt_HasInstance_6B94();
-extern "C" void setPaneVisible(void*, u32);
 extern "C" void writePanePos(void*, void*);
 extern "C" bool isGlobalCamFlagSet__Fi(int);
 extern "C" bool isKizunaTalkActive();
 extern "C" bool MenuTutorialIsCreated();
 extern "C" bool SkipTimer_IsActiveFlag();
-extern "C" bool GetSysStateFlag22();
 // Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
 
-extern "C" int IsMenuState621F0();
 extern "C" void* CfRes_getE14();
 extern "C" bool CtrlRemote_TouchBitByArg(int);
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-extern "C" char* MakeTplNameSysFile(u32);
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv();

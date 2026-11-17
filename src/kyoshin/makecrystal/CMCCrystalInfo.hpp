@@ -3,14 +3,16 @@
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CItemBoxGrid_Color.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 
 // Opaque item-object handle. `void*` is banned by TU lint; a typedef of
 // void keeps MWCC's mangled form (`Pv`) and emitted bytes identical.
 typedef void CMCCItemHandle;
 
-// 4 packed shorts returned in r3:r4 by PaneMatGetS16Quad.
-struct FourShorts { s16 a, b, c, d; };
 
 // Item/crystal data header read by MCCrystal_ShowItem. word0 packs the item code
 // (bits 20-31) and a type field (bits 12-15); byte 7 holds flags in bits 0-1.
@@ -135,9 +137,6 @@ extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata
 // Imports whose retail symbols are unmangled (plain global C++ would be
 // mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) -- C linkage keeps the call relocs
 // bound to the retail names.
-extern "C" u32 CUICfManager_getPackedFont9C();
-extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
-extern "C" void CopyVec4s(short* dst, const short* src);
 // GXColorS10-style shared slot colours (4 s16 channels each); the alpha
 // channel is refreshed from the layout panes during file load.
 extern s16 lbl_eu_806646D8[4];
@@ -151,6 +150,4 @@ extern s16 lbl_eu_80664710[4];
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).
-extern "C" u32 BdatGetItemType(u32);
-extern "C" u16 BdatGetItemId(u32);
 extern "C" void* CItem_initItemImplInstances(void*);

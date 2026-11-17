@@ -12,7 +12,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 
 /*

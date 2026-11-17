@@ -173,10 +173,10 @@ namespace cf {
     }
 }
 
-extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    return static_cast<const char*>(reinterpret_cast<cf::CObjectParam*>(self->unk15DC)->CObjectParam_getParamPtr());
+void* cf::CActorParam::CObjectParam_getParamPtr() {
+    return reinterpret_cast<cf::CObjectParam*>(unk15DC)->CObjectParam_getParamPtr();
 }
-void* CActorParam_getActor__Q22cf11CActorParamFv(cf::CActorParam* self) { return 0; }
+void* cf::CActorParam::CBattleState_getOwner() { return 0; }
 extern "C" void CActorParam_applyDamage__Q22cf11CActorParamFv(
     cf::CActorParam* self, float value, int a, int b, int c) {
   (void)a;
@@ -213,17 +213,17 @@ void CActorParam_addSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self, int
     }
 }
 
-extern "C" void CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_clearGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
     self->unk160C = 0;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_clearSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
     self->unk1614 = 0;
 }
 // Retail symbol is Fv; the real ABI passes (self, id). Scans the 8
 // CActorParam_UnkStruct5 entries at +0x1928 for id; on hit, resets the
 // entry's vector fields to the sdata2 defaults.
-void CActorParam_resetGaugeEntry__Q22cf11CActorParamFv(cf::CActorParam* self, u32 id) {
+void CActorParam_resetGaugeEntry__Q22cf11CActorParamFPv(cf::CActorParam* self, u32 id) {
     for (int i = 0; i < 8; i++) {
         cf::CActorParam_UnkStruct5* e = &self->unk1928[i];
         if (e->unk14 == id) {
@@ -274,7 +274,7 @@ void CActorParam_UnkVirtualFunc143__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // us-8017f1d0: retail symbol is Fv; the real ABI passes (self, id).
 // Returns a pointer to the CActorParam_UnkStruct5 entry at +0x1928 whose
 // unk14 matches id, or NULL. Retail is a fully unrolled scan.
-cf::CActorParam_UnkStruct5* CActorParam_findGaugeEntry__Q22cf11CActorParamFv(cf::CActorParam* self, u32 id) {
+cf::CActorParam_UnkStruct5* CActorParam_findGaugeEntry__Q22cf11CActorParamFUi(cf::CActorParam* self, u32 id) {
     for (int i = 0; i < 8; i++) {
         cf::CActorParam_UnkStruct5* e = &self->unk1928[i];
         if (e->unk14 == id) {
@@ -699,7 +699,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
             st.unk10 = self->CActorParam_getGaugeMax();
             st.unk20 = self->CActorParam_getGaugeRateA();
             st.unk24 = lbl_eu_806677E4;
-            CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
+            CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CBattleState_getOwner(), &st, 0);
             if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                 self->CActorParam_clearGauge();
             }
@@ -726,7 +726,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
                 st.unk20 = self->CActorParam_getGaugeRateB();
                 st.unk24 = lbl_eu_806677E4;
                 st.unk30 |= 0x80;
-                CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
+                CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CBattleState_getOwner(), &st, 0);
                 if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                     self->CActorParam_clearSecondGauge();
                 }
@@ -736,7 +736,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
     self->CActorParam_decayArtsMatrix(f31);
 }
 
-extern "C" void CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv(cf::CActorParam* self, float dt) {
+extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActorParam* self, float dt) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x10)) return;
@@ -818,7 +818,7 @@ unk28_done:
                 double rate = 0.15 * (double)cl;
                 a = (int)((double)a - (double)a * rate);
                 getInstance__Q22cf14CBattleManagerFv();
-                float f = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                float f = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                 a = (int)((float)a * f);
                 if (a > 0) self->CActorParam_addHp((float)a);
                 break;
@@ -1085,7 +1085,7 @@ unk28_done:
                 case 9: code = 0x48; break;
                 default: code = 0; break;
                 }
-                void* p = self->CActorParam_getActor();
+                void* p = self->CBattleState_getOwner();
                 if (p) p = (u8*)p + 0x3E9C;
                 bindIndexedEffect(code, p);
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
@@ -1113,18 +1113,18 @@ unk28_done:
                 break;
             }
             case 0xC5: {
-                void* p = self->CActorParam_getActor();
+                void* p = self->CBattleState_getOwner();
                 if (!p) break;
                 void* base = (u8*)p + 0x3E9C;
                 int v = reinterpret_cast<cf::CObjectParam*>(base)->CObjectParam_getSelfObjectId();
                 void* actor = MapFx_ResolveOwner(findObjectById(v));
                 if (!actor) break;
                 if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked()) break;
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_addHate(self->CActorParam_getActor(), (float)e->unk10, (float)e->unk14, (float)e->unk16);
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_addHate(self->CBattleState_getOwner(), (float)e->unk10, (float)e->unk14, (float)e->unk16);
                 break;
             }
             case 0xC6: {
-                void* dmgSrc = self->CActorParam_getActor();
+                void* dmgSrc = self->CBattleState_getOwner();
                 broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), dmgSrc, e->unk10, e->unk14, e->unk16, 0, 0);
                 break;
             }
@@ -1156,11 +1156,11 @@ unk28_done:
                 break;
             }
             case 0x10: {
-                if (!self->CActorParam_getActor()) break;
-                if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F60) == 0) break;
-                void* q = *(void**)((u8*)self->CActorParam_getActor() + 0x3F60);
+                if (!self->CBattleState_getOwner()) break;
+                if (*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F60) == 0) break;
+                void* q = *(void**)((u8*)self->CBattleState_getOwner() + 0x3F60);
                 if (!(*(u32*)((u8*)q + 0x4EC) & 2)) break;
-                if (!(*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2)) break;
+                if (!(*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F00) & 2)) break;
                 self->CBattleState_applyEventEntry(e);
                 break;
             }
@@ -1168,7 +1168,7 @@ unk28_done:
             case 0x77: case 0x78: case 0x79: case 0x7A:
             case 0x7B: case 0x7C: {
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x117)) break;
-                void* p = self->CActorParam_getActor();
+                void* p = self->CBattleState_getOwner();
                 if (!p) break;
                 if (self->unk3374 & 0x40000) {
                     u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
@@ -1177,18 +1177,18 @@ unk28_done:
                 {
                     CfEnumListHolder holder;
                     void* list = holder.get();
-                    if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) {
+                    if (*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F00) & 2) {
                         startEnumObjects(list, 0x4000, 0x800);
-                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
+                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CBattleState_getOwner() + 0x3E9C)->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, (float)e->unk14);
                     } else {
                         startEnumObjects(list, 0x20, 0x800);
-                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
+                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CBattleState_getOwner() + 0x3E9C)->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, (float)e->unk14);
                     }
                     cf::CBattleStateEntry st;
                     std::memset(&st, 0, sizeof(st));
-                    st.unk00 = *(u32*)((u8*)self->CActorParam_getActor() + 0x3F10);
+                    st.unk00 = *(u32*)((u8*)self->CBattleState_getOwner() + 0x3F10);
                     st.unk04 = 0;
                     u16 id = e->unk0C;
                     if (id - 0x73 <= 3) {
@@ -1217,7 +1217,7 @@ unk28_done:
                 loop73:
                     {
                         void* actor = MapFx_ResolveOwner(getObjectAt(holder.get(), i2));
-                        if (self->CActorParam_getActor() != actor) {
+                        if (self->CBattleState_getOwner() != actor) {
                             if (!isBattleStatusActive((u8*)actor + 8, st.unk0C)) {
                                 CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
                             }
@@ -1232,25 +1232,25 @@ unk28_done:
                 break;
             }
             case 0x125: case 0x126: case 0x127: case 0x128: case 0x129: case 0x12A: {
-                void* p = self->CActorParam_getActor();
+                void* p = self->CBattleState_getOwner();
                 if (!p) break;
                 float f15 = (float)e->unk14;
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x109)) f15 *= 2.5f;
                 {
                     CfEnumListHolder holder;
                     void* list = holder.get();
-                    if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) {
+                    if (*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F00) & 2) {
                         startEnumObjects(list, 0x20, 0x800);
-                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
+                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CBattleState_getOwner() + 0x3E9C)->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, f15);
                     } else {
                         startEnumObjects(list, 0x4000, 0x800);
-                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CActorParam_getActor() + 0x3E9C)->CfObject_getPosVector();
+                        void* tgt = reinterpret_cast<cf::CfObject*>((u8*)self->CBattleState_getOwner() + 0x3E9C)->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, f15);
                     }
                     cf::CBattleStateEntry st;
                     std::memset(&st, 0, sizeof(st));
-                    st.unk00 = *(u32*)((u8*)self->CActorParam_getActor() + 0x3F10);
+                    st.unk00 = *(u32*)((u8*)self->CBattleState_getOwner() + 0x3F10);
                     st.unk20 = 1.0f;
                     int slotId = 0;
                     switch (e->unk0C) {
@@ -1306,7 +1306,7 @@ unk28_done:
 
 
 
-extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, void* arts) {
+void cf::CActorParam::CActorParam_resetArtsStatus(void* arts) {
     // Early flag->r16, delta->r15 across the holder loops. Both must be dead
     // before the snapshot flood so those GPRs can be reused for temps.
     // Mid-section combat state is a separate local (reclaims r16 after vf34C).
@@ -1315,14 +1315,14 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     if (arts != NULL) {
         if (findObjB28ById(*(u16*)arts)) flag = 1;
     }
-    if (self->CActorParam_getActor()) flag = 1;
-    if (self->CActorParam_getStatusTable() != NULL) {
+    if (CBattleState_getOwner()) flag = 1;
+    if (CActorParam_getStatusTable() != NULL) {
         CfEnumListHolder holder;
         void* list = holder.get();
         startEnumObjects(list, 32, 1);
 
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 31) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 31);
+        if (Counter_TestBit(CActorParam_getStatusTable(), 31) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 31);
             if (r != 0) {
                 delta = r;
                 for (u32 i = 0; i < *(u32*)((u8*)holder.get() + 0x620); i++) {
@@ -1335,8 +1335,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             }
         }
 
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 150) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 150);
+        if (Counter_TestBit(CActorParam_getStatusTable(), 150) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 150);
             if (r != 0 && flag) {
                 delta = r;
                 for (u32 i = 0; i < *(u32*)((u8*)holder.get() + 0x620); i++) {
@@ -1354,7 +1354,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     // t1660/t1658/t165C reserve scratch holes (retail f10/f12/f11). artsArg is
     // formed with a t1650-dependent no-op so the 0x1650 load stays early and
     // t1650's web stays in the flood clique (avoids volatile->r0 coalesce).
-    float v17E8 = *(float*)((u8*)self + 0x17E8);
+    float v17E8 = *(float*)((u8*)this + 0x17E8);
     float v17F4;
     float v17EC;
     float v17F0;
@@ -1362,7 +1362,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     float t1660;
     float t1658;
     float t165C;
-    cf::CActorParam* selfArg = self;
+    cf::CActorParam* selfArg = this;
     u32 t1650 = *(u32*)((u8*)selfArg + 0x1650);
     void* artsArg = (void*)((u32)arts | (t1650 & 0));
     float t1654 = *(float*)((u8*)selfArg + 0x1654);
@@ -1445,20 +1445,20 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     *(u32*)((u8*)selfArg + 0x1854) = t16C0;
     *(u32*)((u8*)selfArg + 0x1858) = t16C4;
     selfArg->CActorParam_applyArtsStats(artsArg);
-    if (self->CActorParam_getStatusTable() != NULL) {
+    if (CActorParam_getStatusTable() != NULL) {
         // Retail post-fdivs: f26=0, gm->r14, bLT from cror->r15, combat->r16.
         float ratio = v17E8 / v17F4;
         float f26 = lbl_eu_806677E4;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
         int bLT = ratio <= lbl_eu_8066782C;
-        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
+        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(CActorState::unk4)->CObjectState_getStateData());
         int combat = ((t & 0x3F) == 6);
         if (combat == 0) combat = ((t & 0x3F) == 7);
         if (combat == 0) combat = ((t & 0x7C0) == 448);
         if (combat == 0) {
             combat = 0;
-            if (testActorStatus(self, &t, 9) || testActorStatus(self, &t, 10) ||
-                testActorStatus(self, &t, 11)) {
+            if (testActorStatus(this, &t, 9) || testActorStatus(this, &t, 10) ||
+                testActorStatus(this, &t, 11)) {
                 combat = 1;
             }
         }
@@ -1467,8 +1467,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (combat == 0) combat = ((t & 0x3F) == 20);
         if (combat == 0) {
             combat = 0;
-            if (testActorStatus(self, &t, 22) || testActorStatus(self, &t, 23) ||
-                testActorStatus(self, &t, 15)) {
+            if (testActorStatus(this, &t, 22) || testActorStatus(this, &t, 23) ||
+                testActorStatus(this, &t, 15)) {
                 combat = 1;
             }
         }
@@ -1482,202 +1482,202 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (combat == 0) combat = ((t & 0x3F) == 15);
         if (combat == 0) combat = ((t & 0x3F) == 31);
         if (combat != 0) f26 = lbl_eu_806677E8;
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 37) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 37);
-            if (r != 0) *(s16*)((u8*)self + 0x1746) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 37) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 37);
+            if (r != 0) *(s16*)((u8*)this + 0x1746) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 1) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 1);
-            if (r != 0) *(s16*)((u8*)self + 0x16E4) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 1) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 1);
+            if (r != 0) *(s16*)((u8*)this + 0x16E4) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 16) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 16);
-            if (r != 0) *(s16*)((u8*)self + 0x16E8) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 16) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 16);
+            if (r != 0) *(s16*)((u8*)this + 0x16E8) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 20) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 20);
-            if (r != 0) *(s16*)((u8*)self + 0x16E6) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 20) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 20);
+            if (r != 0) *(s16*)((u8*)this + 0x16E6) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 152) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 152);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x174E) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 152) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 152);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)this + 0x174E) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 34) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 34);
-            if (r != 0) *(s16*)((u8*)self + 0x16F6) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 34) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 34);
+            if (r != 0) *(s16*)((u8*)this + 0x16F6) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 35) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 35);
-            if (r != 0) *(s16*)((u8*)self + 0x16FA) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 35) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 35);
+            if (r != 0) *(s16*)((u8*)this + 0x16FA) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 44) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 44);
-            if (r != 0) *(s16*)((u8*)self + 0x181C) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 44) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 44);
+            if (r != 0) *(s16*)((u8*)this + 0x181C) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 2) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 2);
-            if (r != 0 && gm != 4) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 2) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 2);
+            if (r != 0 && gm != 4) *(s16*)((u8*)this + 0x174C) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 3) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 3);
-            if (r != 0 && gm == 4) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 3) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 3);
+            if (r != 0 && gm == 4) *(s16*)((u8*)this + 0x174C) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 4) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 4);
-            if (r != 0 && ratio >= lbl_eu_806677E8 && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 4) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 4);
+            if (r != 0 && ratio >= lbl_eu_806677E8 && f26 != lbl_eu_806677E4) *(s16*)((u8*)this + 0x174C) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 9) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 9);
-            if (r != 0) *(s16*)((u8*)self + 0x1758) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 9) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 9);
+            if (r != 0) *(s16*)((u8*)this + 0x1758) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 10) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 10);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x1758) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 10) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 10);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)this + 0x1758) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 149) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 149);
+        if (Counter_TestBit(CActorParam_getStatusTable(), 149) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 149);
             if (r != 0) {
-                *(s16*)((u8*)self + 0x1758) += (s16)r;
-                *(s16*)((u8*)self + 0x175C) += (s16)r;
+                *(s16*)((u8*)this + 0x1758) += (s16)r;
+                *(s16*)((u8*)this + 0x175C) += (s16)r;
             }
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 17) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 17);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x1750) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 17) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 17);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)this + 0x1750) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 21) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 21);
-            if (r != 0) *(s16*)((u8*)self + 0x16FE) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 21) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 21);
+            if (r != 0) *(s16*)((u8*)this + 0x16FE) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 22) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 22);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x16FE) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 22) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 22);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)this + 0x16FE) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 27) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 27);
-            if (r != 0) *(s16*)((u8*)self + 0x16FC) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 27) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 27);
+            if (r != 0) *(s16*)((u8*)this + 0x16FC) += (s16)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 30) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 30);
+        if (Counter_TestBit(CActorParam_getStatusTable(), 30) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 30);
             if (r != 0) {
-                *(s16*)((u8*)self + 0x1728) += (s16)r;
-                *(s16*)((u8*)self + 0x172A) += (s16)r;
+                *(s16*)((u8*)this + 0x1728) += (s16)r;
+                *(s16*)((u8*)this + 0x172A) += (s16)r;
             }
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 39) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 39);
-            if (r != 0) *(u8*)((u8*)self + 0x171D) += (u8)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 39) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 39);
+            if (r != 0) *(u8*)((u8*)this + 0x171D) += (u8)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 40) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 40);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)self + 0x171D) += (u8)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 40) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 40);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)this + 0x171D) += (u8)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 41) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 41);
-            if (r != 0) *(u8*)((u8*)self + 0x171E) += (u8)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 41) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 41);
+            if (r != 0) *(u8*)((u8*)this + 0x171E) += (u8)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 42) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 42);
-            if (r != 0) *(u8*)((u8*)self + 0x171F) += (u8)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 42) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 42);
+            if (r != 0) *(u8*)((u8*)this + 0x171F) += (u8)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 43) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 43);
-            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)self + 0x171F) += (u8)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 43) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 43);
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)this + 0x171F) += (u8)r;
         }
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 114) != 0) {
-            int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 114);
-            if (r != 0) *(s16*)((u8*)self + 0x177C) += (s16)r;
+        if (Counter_TestBit(CActorParam_getStatusTable(), 114) != 0) {
+            int r = IdTable_SumValues(CActorParam_getStatusTable(), 114);
+            if (r != 0) *(s16*)((u8*)this + 0x177C) += (s16)r;
         }
         int stat45 = 0;
-        if (Counter_TestBit(self->CActorParam_getStatusTable(), 45) != 0) {
-            stat45 = IdTable_SumValues(self->CActorParam_getStatusTable(), 45);
+        if (Counter_TestBit(CActorParam_getStatusTable(), 45) != 0) {
+            stat45 = IdTable_SumValues(CActorParam_getStatusTable(), 45);
             if (stat45 != 0) {
-                float f2 = *(float*)((u8*)self + 0x1808) *
+                float f2 = *(float*)((u8*)this + 0x1808) *
                            (lbl_eu_806677E8 + (float)stat45 / lbl_eu_80667818);
-                float f0 = *(float*)((u8*)self + 0x180C) *
+                float f0 = *(float*)((u8*)this + 0x180C) *
                            (lbl_eu_806677E8 + (float)stat45 / lbl_eu_80667818);
-                *(float*)((u8*)self + 0x1808) = f2;
-                *(float*)((u8*)self + 0x180C) = f0;
-                if (f2 > f0) *(float*)((u8*)self + 0x1808) = f0;
+                *(float*)((u8*)this + 0x1808) = f2;
+                *(float*)((u8*)this + 0x180C) = f0;
+                if (f2 > f0) *(float*)((u8*)this + 0x1808) = f0;
             }
         }
 
-        *(u32*)((u8*)self + 0x185C) = *(u32*)((u8*)self + 0x17E4) + *(u32*)((u8*)self + 0x16C8);
-        *(s16*)((u8*)self + 0x1878) = *(s16*)((u8*)self + 0x1800) + *(s16*)((u8*)self + 0x16E4);
-        *(s16*)((u8*)self + 0x187A) = *(s16*)((u8*)self + 0x1802) + *(s16*)((u8*)self + 0x16E6);
-        *(s16*)((u8*)self + 0x187C) = *(s16*)((u8*)self + 0x1804) + *(s16*)((u8*)self + 0x16E8);
-        *(float*)((u8*)self + 0x1860) = *(float*)((u8*)self + 0x17E8);
-        *(float*)((u8*)self + 0x1864) = *(float*)((u8*)self + 0x17EC);
-        *(float*)((u8*)self + 0x1868) = *(float*)((u8*)self + 0x17F0);
-        *(float*)((u8*)self + 0x186C) = *(float*)((u8*)self + 0x17F4);
-        *(float*)((u8*)self + 0x1870) = *(float*)((u8*)self + 0x17F8);
-        *(float*)((u8*)self + 0x1874) = *(float*)((u8*)self + 0x17FC);
-        *(float*)((u8*)self + 0x1880) = *(float*)((u8*)self + 0x1808);
-        *(float*)((u8*)self + 0x1884) = *(float*)((u8*)self + 0x180C);
-        *(s16*)((u8*)self + 0x1888) = *(s16*)((u8*)self + 0x1810);
-        *(s16*)((u8*)self + 0x188C) = *(s16*)((u8*)self + 0x1814);
-        *(s16*)((u8*)self + 0x1894) = *(s16*)((u8*)self + 0x181C);
-        *(s16*)((u8*)self + 0x1896) = *(s16*)((u8*)self + 0x181E);
-        *(u8*)((u8*)self + 0x1898) = *(u8*)((u8*)self + 0x1820);
-        *(float*)((u8*)self + 0x189C) = *(float*)((u8*)self + 0x1824);
-        *(float*)((u8*)self + 0x18A0) = *(float*)((u8*)self + 0x1828);
-        *(float*)((u8*)self + 0x18A4) = *(float*)((u8*)self + 0x182C);
-        *(float*)((u8*)self + 0x18A8) = *(float*)((u8*)self + 0x1830);
-        *(float*)((u8*)self + 0x18AC) = *(float*)((u8*)self + 0x1834);
-        *(u8*)((u8*)self + 0x18B0) = *(u8*)((u8*)self + 0x1838);
-        *(u8*)((u8*)self + 0x18B4) = *(u8*)((u8*)self + 0x183C);
-        *(float*)((u8*)self + 0x18B8) = *(float*)((u8*)self + 0x1840);
-        *(u32*)((u8*)self + 0x18BC) = *(u32*)((u8*)self + 0x1844);
-        *(u32*)((u8*)self + 0x18C0) = *(u32*)((u8*)self + 0x1848);
-        *(u32*)((u8*)self + 0x18C4) = *(u32*)((u8*)self + 0x184C);
-        *(u32*)((u8*)self + 0x18C8) = *(u32*)((u8*)self + 0x1850);
-        *(u32*)((u8*)self + 0x18CC) = *(u32*)((u8*)self + 0x1854);
-        *(u32*)((u8*)self + 0x18D0) = *(u32*)((u8*)self + 0x1858);
-        *(s16*)((u8*)self + 0x1890) = *(s16*)((u8*)self + 0x1818) + *(s16*)((u8*)self + 0x16FC);
-        *(s16*)((u8*)self + 0x1892) = *(s16*)((u8*)self + 0x181A) + *(s16*)((u8*)self + 0x16FE);
-        *(u8*)((u8*)self + 0x18B1) = *(u8*)((u8*)self + 0x1839) + *(u8*)((u8*)self + 0x171D);
-        *(s16*)((u8*)self + 0x188A) = *(s16*)((u8*)self + 0x1812) + *(s16*)((u8*)self + 0x16F6);
-        *(s16*)((u8*)self + 0x188E) = *(s16*)((u8*)self + 0x1816) + *(s16*)((u8*)self + 0x16FA);
-        *(u8*)((u8*)self + 0x18B2) = *(u8*)((u8*)self + 0x183A) + *(u8*)((u8*)self + 0x171E);
-        *(u8*)((u8*)self + 0x18B3) = *(u8*)((u8*)self + 0x183B) + *(u8*)((u8*)self + 0x171F);
-        *(s16*)((u8*)self + 0x18BC) += *(s16*)((u8*)self + 0x1728);
-        *(s16*)((u8*)self + 0x18BE) += *(s16*)((u8*)self + 0x172A);
-        *(s16*)((u8*)self + 0x18E0) = *(s16*)((u8*)self + 0x174C);
-        *(s16*)((u8*)self + 0x18E2) = *(s16*)((u8*)self + 0x174E);
-        *(s16*)((u8*)self + 0x18E4) = *(s16*)((u8*)self + 0x1750);
-        *(s16*)((u8*)self + 0x18EC) = *(s16*)((u8*)self + 0x1758);
-        *(s16*)((u8*)self + 0x18F0) = *(s16*)((u8*)self + 0x175C);
-        *(s16*)((u8*)self + 0x18DA) = *(s16*)((u8*)self + 0x1746);
+        *(u32*)((u8*)this + 0x185C) = *(u32*)((u8*)this + 0x17E4) + *(u32*)((u8*)this + 0x16C8);
+        *(s16*)((u8*)this + 0x1878) = *(s16*)((u8*)this + 0x1800) + *(s16*)((u8*)this + 0x16E4);
+        *(s16*)((u8*)this + 0x187A) = *(s16*)((u8*)this + 0x1802) + *(s16*)((u8*)this + 0x16E6);
+        *(s16*)((u8*)this + 0x187C) = *(s16*)((u8*)this + 0x1804) + *(s16*)((u8*)this + 0x16E8);
+        *(float*)((u8*)this + 0x1860) = *(float*)((u8*)this + 0x17E8);
+        *(float*)((u8*)this + 0x1864) = *(float*)((u8*)this + 0x17EC);
+        *(float*)((u8*)this + 0x1868) = *(float*)((u8*)this + 0x17F0);
+        *(float*)((u8*)this + 0x186C) = *(float*)((u8*)this + 0x17F4);
+        *(float*)((u8*)this + 0x1870) = *(float*)((u8*)this + 0x17F8);
+        *(float*)((u8*)this + 0x1874) = *(float*)((u8*)this + 0x17FC);
+        *(float*)((u8*)this + 0x1880) = *(float*)((u8*)this + 0x1808);
+        *(float*)((u8*)this + 0x1884) = *(float*)((u8*)this + 0x180C);
+        *(s16*)((u8*)this + 0x1888) = *(s16*)((u8*)this + 0x1810);
+        *(s16*)((u8*)this + 0x188C) = *(s16*)((u8*)this + 0x1814);
+        *(s16*)((u8*)this + 0x1894) = *(s16*)((u8*)this + 0x181C);
+        *(s16*)((u8*)this + 0x1896) = *(s16*)((u8*)this + 0x181E);
+        *(u8*)((u8*)this + 0x1898) = *(u8*)((u8*)this + 0x1820);
+        *(float*)((u8*)this + 0x189C) = *(float*)((u8*)this + 0x1824);
+        *(float*)((u8*)this + 0x18A0) = *(float*)((u8*)this + 0x1828);
+        *(float*)((u8*)this + 0x18A4) = *(float*)((u8*)this + 0x182C);
+        *(float*)((u8*)this + 0x18A8) = *(float*)((u8*)this + 0x1830);
+        *(float*)((u8*)this + 0x18AC) = *(float*)((u8*)this + 0x1834);
+        *(u8*)((u8*)this + 0x18B0) = *(u8*)((u8*)this + 0x1838);
+        *(u8*)((u8*)this + 0x18B4) = *(u8*)((u8*)this + 0x183C);
+        *(float*)((u8*)this + 0x18B8) = *(float*)((u8*)this + 0x1840);
+        *(u32*)((u8*)this + 0x18BC) = *(u32*)((u8*)this + 0x1844);
+        *(u32*)((u8*)this + 0x18C0) = *(u32*)((u8*)this + 0x1848);
+        *(u32*)((u8*)this + 0x18C4) = *(u32*)((u8*)this + 0x184C);
+        *(u32*)((u8*)this + 0x18C8) = *(u32*)((u8*)this + 0x1850);
+        *(u32*)((u8*)this + 0x18CC) = *(u32*)((u8*)this + 0x1854);
+        *(u32*)((u8*)this + 0x18D0) = *(u32*)((u8*)this + 0x1858);
+        *(s16*)((u8*)this + 0x1890) = *(s16*)((u8*)this + 0x1818) + *(s16*)((u8*)this + 0x16FC);
+        *(s16*)((u8*)this + 0x1892) = *(s16*)((u8*)this + 0x181A) + *(s16*)((u8*)this + 0x16FE);
+        *(u8*)((u8*)this + 0x18B1) = *(u8*)((u8*)this + 0x1839) + *(u8*)((u8*)this + 0x171D);
+        *(s16*)((u8*)this + 0x188A) = *(s16*)((u8*)this + 0x1812) + *(s16*)((u8*)this + 0x16F6);
+        *(s16*)((u8*)this + 0x188E) = *(s16*)((u8*)this + 0x1816) + *(s16*)((u8*)this + 0x16FA);
+        *(u8*)((u8*)this + 0x18B2) = *(u8*)((u8*)this + 0x183A) + *(u8*)((u8*)this + 0x171E);
+        *(u8*)((u8*)this + 0x18B3) = *(u8*)((u8*)this + 0x183B) + *(u8*)((u8*)this + 0x171F);
+        *(s16*)((u8*)this + 0x18BC) += *(s16*)((u8*)this + 0x1728);
+        *(s16*)((u8*)this + 0x18BE) += *(s16*)((u8*)this + 0x172A);
+        *(s16*)((u8*)this + 0x18E0) = *(s16*)((u8*)this + 0x174C);
+        *(s16*)((u8*)this + 0x18E2) = *(s16*)((u8*)this + 0x174E);
+        *(s16*)((u8*)this + 0x18E4) = *(s16*)((u8*)this + 0x1750);
+        *(s16*)((u8*)this + 0x18EC) = *(s16*)((u8*)this + 0x1758);
+        *(s16*)((u8*)this + 0x18F0) = *(s16*)((u8*)this + 0x175C);
+        *(s16*)((u8*)this + 0x18DA) = *(s16*)((u8*)this + 0x1746);
 
         s16 t45 = (s16)stat45;
         float floorMul = lbl_eu_80667858; // 0.7f
-        if ((float)t45 < floorMul * (float)*(s16*)((u8*)self + 0x166C)) {
-            *(s16*)((u8*)self + 0x1878) =
-                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166C));
+        if ((float)t45 < floorMul * (float)*(s16*)((u8*)this + 0x166C)) {
+            *(s16*)((u8*)this + 0x1878) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)this + 0x166C));
         }
-        if ((float)*(s16*)((u8*)self + 0x187C) <
-            floorMul * (float)*(s16*)((u8*)self + 0x1670)) {
-            *(s16*)((u8*)self + 0x187C) =
-                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x1670));
+        if ((float)*(s16*)((u8*)this + 0x187C) <
+            floorMul * (float)*(s16*)((u8*)this + 0x1670)) {
+            *(s16*)((u8*)this + 0x187C) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)this + 0x1670));
         }
-        if ((float)*(s16*)((u8*)self + 0x187A) <
-            floorMul * (float)*(s16*)((u8*)self + 0x166E)) {
-            *(s16*)((u8*)self + 0x187A) =
-                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166E));
+        if ((float)*(s16*)((u8*)this + 0x187A) <
+            floorMul * (float)*(s16*)((u8*)this + 0x166E)) {
+            *(s16*)((u8*)this + 0x187A) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)this + 0x166E));
         }
         {
-            s16 add1898 = (s16)*((u8*)self + 0x1898);
-            *(s16*)((u8*)self + 0x1894) =
-                (s16)(*(s16*)((u8*)self + 0x1894) + add1898);
+            s16 add1898 = (s16)*((u8*)this + 0x1898);
+            *(s16*)((u8*)this + 0x1894) =
+                (s16)(*(s16*)((u8*)this + 0x1894) + add1898);
         }
 
         // Retail re-checks getStatusTable before id-48 (null -> skip to loop).
-        if (self->CActorParam_getStatusTable() != NULL) {
-            if (Counter_TestBit(self->CActorParam_getStatusTable(), 48) != 0) {
+        if (CActorParam_getStatusTable() != NULL) {
+            if (Counter_TestBit(CActorParam_getStatusTable(), 48) != 0) {
                 // Reuse gm's r14 for the status-48 value (retail overwrites gm).
-                gm = IdTable_SumValues(self->CActorParam_getStatusTable(), 48);
+                gm = IdTable_SumValues(CActorParam_getStatusTable(), 48);
                 if (gm != 0) {
-                    u8* o = (u8*)static_cast<cf::CBattleState&>(*self)
+                    u8* o = (u8*)static_cast<cf::CBattleState&>(*this)
                                 .CBattleState_getStatusBlock();
                     int ok;
                     if (*(u16*)(o + 4) != 0) {
@@ -1721,159 +1721,159 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 status48_done:
                     if (ok != 0) {
                         s16 d = (s16)gm;
-                        *(s16*)((u8*)self + 0x174C) =
-                            (s16)(*(s16*)((u8*)self + 0x174C) + d);
-                        *(s16*)((u8*)self + 0x1750) =
-                            (s16)(*(s16*)((u8*)self + 0x1750) + d);
-                        *(s16*)((u8*)self + 0x174E) =
-                            (s16)(*(s16*)((u8*)self + 0x174E) + d);
-                        *(s16*)((u8*)self + 0x1746) =
-                            (s16)(*(s16*)((u8*)self + 0x1746) + d);
+                        *(s16*)((u8*)this + 0x174C) =
+                            (s16)(*(s16*)((u8*)this + 0x174C) + d);
+                        *(s16*)((u8*)this + 0x1750) =
+                            (s16)(*(s16*)((u8*)this + 0x1750) + d);
+                        *(s16*)((u8*)this + 0x174E) =
+                            (s16)(*(s16*)((u8*)this + 0x174E) + d);
+                        *(s16*)((u8*)this + 0x1746) =
+                            (s16)(*(s16*)((u8*)this + 0x1746) + d);
                     }
                 }
             }
         }
 
-        // 104 status-entry walk at CBattleState+0x8 (== self+0x10), stride 0x34.
+        // 104 status-entry walk at CBattleState+0x8 (== this+0x10), stride 0x34.
         // Load entry->unk10 inside each case (not hoisted) so MWCC emits the
         // per-case lwz+extsh retail uses for the binary-search switch bodies.
         cf::CBattleStateEntry* entry =
-            reinterpret_cast<cf::CBattleStateEntry*>((u8*)self + 0x10);
+            reinterpret_cast<cf::CBattleStateEntry*>((u8*)this + 0x10);
         for (int i = 0; i < 104; i++, entry++) {
             switch (entry->unk0C) {
             case 2:
-                *(s16*)((u8*)self + 0x1768) =
-                    (s16)(*(s16*)((u8*)self + 0x1768) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1768) =
+                    (s16)(*(s16*)((u8*)this + 0x1768) + (s16)entry->unk10);
                 break;
             case 3:
-                *(s16*)((u8*)self + 0x177C) =
-                    (s16)(*(s16*)((u8*)self + 0x177C) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x177C) =
+                    (s16)(*(s16*)((u8*)this + 0x177C) + (s16)entry->unk10);
                 break;
             case 4:
-                *(s16*)((u8*)self + 0x1768) =
-                    (s16)(*(s16*)((u8*)self + 0x1768) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1768) =
+                    (s16)(*(s16*)((u8*)this + 0x1768) - (s16)entry->unk10);
                 break;
             case 5:
-                *(s16*)((u8*)self + 0x177C) =
-                    (s16)(*(s16*)((u8*)self + 0x177C) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x177C) =
+                    (s16)(*(s16*)((u8*)this + 0x177C) - (s16)entry->unk10);
                 break;
             case 7:
-                *((u8*)self + 0x183C) = (u8)entry->unk10;
+                *((u8*)this + 0x183C) = (u8)entry->unk10;
                 break;
             case 60:
-                *(s16*)((u8*)self + 0x1844) =
-                    (s16)(*(s16*)((u8*)self + 0x1844) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1844) =
+                    (s16)(*(s16*)((u8*)this + 0x1844) - (s16)entry->unk10);
                 break;
             case 61:
-                *(s16*)((u8*)self + 0x1846) =
-                    (s16)(*(s16*)((u8*)self + 0x1846) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1846) =
+                    (s16)(*(s16*)((u8*)this + 0x1846) - (s16)entry->unk10);
                 break;
             case 68:
-                *(s16*)((u8*)self + 0x1844) =
-                    (s16)(*(s16*)((u8*)self + 0x1844) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1844) =
+                    (s16)(*(s16*)((u8*)this + 0x1844) + (s16)entry->unk10);
                 break;
             case 69:
-                *(s16*)((u8*)self + 0x1846) =
-                    (s16)(*(s16*)((u8*)self + 0x1846) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1846) =
+                    (s16)(*(s16*)((u8*)this + 0x1846) + (s16)entry->unk10);
                 break;
             case 82:
-                *(s16*)((u8*)self + 0x174C) =
-                    (s16)(*(s16*)((u8*)self + 0x174C) - (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E4) =
-                    (s16)(*(s16*)((u8*)self + 0x16E4) - entry->unk14);
+                *(s16*)((u8*)this + 0x174C) =
+                    (s16)(*(s16*)((u8*)this + 0x174C) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E4) =
+                    (s16)(*(s16*)((u8*)this + 0x16E4) - entry->unk14);
                 break;
             case 83:
-                *(s16*)((u8*)self + 0x174E) =
-                    (s16)(*(s16*)((u8*)self + 0x174E) - (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E6) =
-                    (s16)(*(s16*)((u8*)self + 0x16E6) - entry->unk14);
+                *(s16*)((u8*)this + 0x174E) =
+                    (s16)(*(s16*)((u8*)this + 0x174E) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E6) =
+                    (s16)(*(s16*)((u8*)this + 0x16E6) - entry->unk14);
                 break;
             case 84:
-                *(s16*)((u8*)self + 0x1750) =
-                    (s16)(*(s16*)((u8*)self + 0x1750) - (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E8) =
-                    (s16)(*(s16*)((u8*)self + 0x16E8) - entry->unk14);
+                *(s16*)((u8*)this + 0x1750) =
+                    (s16)(*(s16*)((u8*)this + 0x1750) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E8) =
+                    (s16)(*(s16*)((u8*)this + 0x16E8) - entry->unk14);
                 break;
             case 85:
-                *(s16*)((u8*)self + 0x1758) =
-                    (s16)(*(s16*)((u8*)self + 0x1758) - (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16F6) =
-                    (s16)(*(s16*)((u8*)self + 0x16F6) - entry->unk14);
+                *(s16*)((u8*)this + 0x1758) =
+                    (s16)(*(s16*)((u8*)this + 0x1758) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16F6) =
+                    (s16)(*(s16*)((u8*)this + 0x16F6) - entry->unk14);
                 break;
             case 86:
-                *(s16*)((u8*)self + 0x175C) =
-                    (s16)(*(s16*)((u8*)self + 0x175C) - (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16FA) =
-                    (s16)(*(s16*)((u8*)self + 0x16FA) - entry->unk14);
+                *(s16*)((u8*)this + 0x175C) =
+                    (s16)(*(s16*)((u8*)this + 0x175C) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16FA) =
+                    (s16)(*(s16*)((u8*)this + 0x16FA) - entry->unk14);
                 break;
             case 87:
-                *(s16*)((u8*)self + 0x1746) =
-                    (s16)(*(s16*)((u8*)self + 0x1746) - (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1746) =
+                    (s16)(*(s16*)((u8*)this + 0x1746) - (s16)entry->unk10);
                 break;
             case 88:
-                *(s16*)((u8*)self + 0x174C) =
-                    (s16)(*(s16*)((u8*)self + 0x174C) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E4) =
-                    (s16)(*(s16*)((u8*)self + 0x16E4) + entry->unk14);
+                *(s16*)((u8*)this + 0x174C) =
+                    (s16)(*(s16*)((u8*)this + 0x174C) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E4) =
+                    (s16)(*(s16*)((u8*)this + 0x16E4) + entry->unk14);
                 break;
             case 89:
-                *(s16*)((u8*)self + 0x174E) =
-                    (s16)(*(s16*)((u8*)self + 0x174E) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E6) =
-                    (s16)(*(s16*)((u8*)self + 0x16E6) + entry->unk14);
+                *(s16*)((u8*)this + 0x174E) =
+                    (s16)(*(s16*)((u8*)this + 0x174E) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E6) =
+                    (s16)(*(s16*)((u8*)this + 0x16E6) + entry->unk14);
                 break;
             case 90:
-                *(s16*)((u8*)self + 0x1750) =
-                    (s16)(*(s16*)((u8*)self + 0x1750) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16E8) =
-                    (s16)(*(s16*)((u8*)self + 0x16E8) + entry->unk14);
+                *(s16*)((u8*)this + 0x1750) =
+                    (s16)(*(s16*)((u8*)this + 0x1750) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16E8) =
+                    (s16)(*(s16*)((u8*)this + 0x16E8) + entry->unk14);
                 break;
             case 91:
-                *(s16*)((u8*)self + 0x1758) =
-                    (s16)(*(s16*)((u8*)self + 0x1758) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16F6) =
-                    (s16)(*(s16*)((u8*)self + 0x16F6) + entry->unk14);
+                *(s16*)((u8*)this + 0x1758) =
+                    (s16)(*(s16*)((u8*)this + 0x1758) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16F6) =
+                    (s16)(*(s16*)((u8*)this + 0x16F6) + entry->unk14);
                 break;
             case 92:
-                *(s16*)((u8*)self + 0x175C) =
-                    (s16)(*(s16*)((u8*)self + 0x175C) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x16FA) =
-                    (s16)(*(s16*)((u8*)self + 0x16FA) + entry->unk14);
+                *(s16*)((u8*)this + 0x175C) =
+                    (s16)(*(s16*)((u8*)this + 0x175C) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16FA) =
+                    (s16)(*(s16*)((u8*)this + 0x16FA) + entry->unk14);
                 break;
             case 93:
-                *(s16*)((u8*)self + 0x16FE) =
-                    (s16)(*(s16*)((u8*)self + 0x16FE) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16FE) =
+                    (s16)(*(s16*)((u8*)this + 0x16FE) + (s16)entry->unk10);
                 break;
             case 94:
-                *(s16*)((u8*)self + 0x16FC) =
-                    (s16)(*(s16*)((u8*)self + 0x16FC) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x16FC) =
+                    (s16)(*(s16*)((u8*)this + 0x16FC) + (s16)entry->unk10);
                 break;
             case 95:
-                *(s16*)((u8*)self + 0x1746) =
-                    (s16)(*(s16*)((u8*)self + 0x1746) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x1746) =
+                    (s16)(*(s16*)((u8*)this + 0x1746) + (s16)entry->unk10);
                 break;
             case 96:
-                *((u8*)self + 0x183A) =
-                    (u8)(*((u8*)self + 0x183A) + (u8)entry->unk10);
+                *((u8*)this + 0x183A) =
+                    (u8)(*((u8*)this + 0x183A) + (u8)entry->unk10);
                 break;
             case 97:
-                *((u8*)self + 0x183B) =
-                    (u8)(*((u8*)self + 0x183B) + (u8)entry->unk10);
+                *((u8*)this + 0x183B) =
+                    (u8)(*((u8*)this + 0x183B) + (u8)entry->unk10);
                 break;
             case 98:
-                *(s16*)((u8*)self + 0x181C) =
-                    (s16)(*(s16*)((u8*)self + 0x181C) + (s16)entry->unk10);
-                *(s16*)((u8*)self + 0x181E) =
-                    (s16)(*(s16*)((u8*)self + 0x181E) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x181C) =
+                    (s16)(*(s16*)((u8*)this + 0x181C) + (s16)entry->unk10);
+                *(s16*)((u8*)this + 0x181E) =
+                    (s16)(*(s16*)((u8*)this + 0x181E) + (s16)entry->unk10);
                 break;
             case 273:
-                *(u32*)((u8*)self + 0x16C8) += (u32)entry->unk10;
-                *(s16*)((u8*)self + 0x16E4) =
-                    (s16)(*(s16*)((u8*)self + 0x16E4) + entry->unk14);
-                *(s16*)((u8*)self + 0x16E6) =
-                    (s16)(*(s16*)((u8*)self + 0x16E6) + entry->unk16);
-                *(s16*)((u8*)self + 0x16E8) =
-                    (s16)(*(s16*)((u8*)self + 0x16E8) + entry->unk18);
+                *(u32*)((u8*)this + 0x16C8) += (u32)entry->unk10;
+                *(s16*)((u8*)this + 0x16E4) =
+                    (s16)(*(s16*)((u8*)this + 0x16E4) + entry->unk14);
+                *(s16*)((u8*)this + 0x16E6) =
+                    (s16)(*(s16*)((u8*)this + 0x16E6) + entry->unk16);
+                *(s16*)((u8*)this + 0x16E8) =
+                    (s16)(*(s16*)((u8*)this + 0x16E8) + entry->unk18);
                 break;
             default:
                 break;
@@ -1884,129 +1884,129 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         // merge bonus fields, clamp floors, then scale gauges from 0x177C/0x1768.
         {
             float rateAtk =
-                (float)(*(s16*)((u8*)self + 0x174C) + 100) / lbl_eu_80667818;
+                (float)(*(s16*)((u8*)this + 0x174C) + 100) / lbl_eu_80667818;
             float rateEth =
-                (float)(*(s16*)((u8*)self + 0x174E) + 100) / lbl_eu_80667818;
+                (float)(*(s16*)((u8*)this + 0x174E) + 100) / lbl_eu_80667818;
             float rateAgi =
-                (float)(*(s16*)((u8*)self + 0x1750) + 100) / lbl_eu_80667818;
-            s16 sumAtk = (s16)(*(s16*)((u8*)self + 0x1800) + *(s16*)((u8*)self + 0x16E4));
-            s16 sumEth = (s16)(*(s16*)((u8*)self + 0x1802) + *(s16*)((u8*)self + 0x16E6));
-            s16 sumAgi = (s16)(*(s16*)((u8*)self + 0x1804) + *(s16*)((u8*)self + 0x16E8));
-            *(u32*)((u8*)self + 0x17E4) =
-                *(u32*)((u8*)self + 0x17E4) + *(u32*)((u8*)self + 0x16C8);
-            *(s16*)((u8*)self + 0x181A) =
-                (s16)(*(s16*)((u8*)self + 0x181A) + *(s16*)((u8*)self + 0x16FE));
-            *(s16*)((u8*)self + 0x1818) =
-                (s16)(*(s16*)((u8*)self + 0x1818) + *(s16*)((u8*)self + 0x16FC));
-            *((u8*)self + 0x1839) =
-                (u8)(*((u8*)self + 0x1839) + *((u8*)self + 0x171D));
-            *((u8*)self + 0x183A) =
-                (u8)(*((u8*)self + 0x183A) + *((u8*)self + 0x171E));
-            *((u8*)self + 0x183B) =
-                (u8)(*((u8*)self + 0x183B) + *((u8*)self + 0x171F));
-            *(s16*)((u8*)self + 0x1844) =
-                (s16)(*(s16*)((u8*)self + 0x1844) + *(s16*)((u8*)self + 0x1728));
-            *(s16*)((u8*)self + 0x1846) =
-                (s16)(*(s16*)((u8*)self + 0x1846) + *(s16*)((u8*)self + 0x172A));
-            *(s16*)((u8*)self + 0x1800) =
+                (float)(*(s16*)((u8*)this + 0x1750) + 100) / lbl_eu_80667818;
+            s16 sumAtk = (s16)(*(s16*)((u8*)this + 0x1800) + *(s16*)((u8*)this + 0x16E4));
+            s16 sumEth = (s16)(*(s16*)((u8*)this + 0x1802) + *(s16*)((u8*)this + 0x16E6));
+            s16 sumAgi = (s16)(*(s16*)((u8*)this + 0x1804) + *(s16*)((u8*)this + 0x16E8));
+            *(u32*)((u8*)this + 0x17E4) =
+                *(u32*)((u8*)this + 0x17E4) + *(u32*)((u8*)this + 0x16C8);
+            *(s16*)((u8*)this + 0x181A) =
+                (s16)(*(s16*)((u8*)this + 0x181A) + *(s16*)((u8*)this + 0x16FE));
+            *(s16*)((u8*)this + 0x1818) =
+                (s16)(*(s16*)((u8*)this + 0x1818) + *(s16*)((u8*)this + 0x16FC));
+            *((u8*)this + 0x1839) =
+                (u8)(*((u8*)this + 0x1839) + *((u8*)this + 0x171D));
+            *((u8*)this + 0x183A) =
+                (u8)(*((u8*)this + 0x183A) + *((u8*)this + 0x171E));
+            *((u8*)this + 0x183B) =
+                (u8)(*((u8*)this + 0x183B) + *((u8*)this + 0x171F));
+            *(s16*)((u8*)this + 0x1844) =
+                (s16)(*(s16*)((u8*)this + 0x1844) + *(s16*)((u8*)this + 0x1728));
+            *(s16*)((u8*)this + 0x1846) =
+                (s16)(*(s16*)((u8*)this + 0x1846) + *(s16*)((u8*)this + 0x172A));
+            *(s16*)((u8*)this + 0x1800) =
                 (s16)(int)((float)sumAtk * rateAtk + lbl_eu_806677E4);
-            *(s16*)((u8*)self + 0x1802) =
+            *(s16*)((u8*)this + 0x1802) =
                 (s16)(int)((float)sumEth * rateEth + lbl_eu_806677E4);
-            *(s16*)((u8*)self + 0x1804) =
+            *(s16*)((u8*)this + 0x1804) =
                 (s16)(int)((float)sumAgi * rateAgi + lbl_eu_806677E4);
 
             float rateHit =
-                (float)(*(s16*)((u8*)self + 0x1758) + 100) / lbl_eu_80667818;
+                (float)(*(s16*)((u8*)this + 0x1758) + 100) / lbl_eu_80667818;
             float rateEva =
-                (float)(*(s16*)((u8*)self + 0x175C) + 100) / lbl_eu_80667818;
+                (float)(*(s16*)((u8*)this + 0x175C) + 100) / lbl_eu_80667818;
             float rateBlk =
-                (float)(*(s16*)((u8*)self + 0x1746) + 100) / lbl_eu_80667818;
-            s16 hit = (s16)(*(s16*)((u8*)self + 0x1812) + *(s16*)((u8*)self + 0x16F6));
-            s16 eva = (s16)(*(s16*)((u8*)self + 0x1816) + *(s16*)((u8*)self + 0x16FA));
-            *(s16*)((u8*)self + 0x1812) =
+                (float)(*(s16*)((u8*)this + 0x1746) + 100) / lbl_eu_80667818;
+            s16 hit = (s16)(*(s16*)((u8*)this + 0x1812) + *(s16*)((u8*)this + 0x16F6));
+            s16 eva = (s16)(*(s16*)((u8*)this + 0x1816) + *(s16*)((u8*)this + 0x16FA));
+            *(s16*)((u8*)this + 0x1812) =
                 (s16)(int)((float)hit * rateHit + lbl_eu_806677E4);
-            *(float*)((u8*)self + 0x17F4) =
-                *(float*)((u8*)self + 0x17F4) * rateBlk + lbl_eu_806677E4;
-            *(s16*)((u8*)self + 0x1816) =
+            *(float*)((u8*)this + 0x17F4) =
+                *(float*)((u8*)this + 0x17F4) * rateBlk + lbl_eu_806677E4;
+            *(s16*)((u8*)this + 0x1816) =
                 (s16)(int)((float)eva * rateEva + lbl_eu_806677E4);
 
-            if ((float)*(s16*)((u8*)self + 0x1800) <
-                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166C)) {
-                *(s16*)((u8*)self + 0x1800) =
-                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166C));
+            if ((float)*(s16*)((u8*)this + 0x1800) <
+                lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x166C)) {
+                *(s16*)((u8*)this + 0x1800) =
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x166C));
             }
-            if ((float)*(s16*)((u8*)self + 0x1804) <
-                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x1670)) {
-                *(s16*)((u8*)self + 0x1804) =
-                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x1670));
+            if ((float)*(s16*)((u8*)this + 0x1804) <
+                lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x1670)) {
+                *(s16*)((u8*)this + 0x1804) =
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x1670));
             }
-            if ((float)*(s16*)((u8*)self + 0x1802) <
-                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166E)) {
-                *(s16*)((u8*)self + 0x1802) =
-                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166E));
+            if ((float)*(s16*)((u8*)this + 0x1802) <
+                lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x166E)) {
+                *(s16*)((u8*)this + 0x1802) =
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)this + 0x166E));
             }
 
-            s16 phys = *(s16*)((u8*)self + 0x177C);
+            s16 phys = *(s16*)((u8*)this + 0x177C);
             if (phys < -50) {
                 phys = -50;
-                *(s16*)((u8*)self + 0x177C) = -50;
+                *(s16*)((u8*)this + 0x177C) = -50;
             } else if (phys > 100) {
                 phys = 100;
-                *(s16*)((u8*)self + 0x177C) = 100;
+                *(s16*)((u8*)this + 0x177C) = 100;
             }
-            s16 eth = *(s16*)((u8*)self + 0x1768);
-            *(s16*)((u8*)self + 0x177C) =
-                (s16)(int)((float)phys + *(float*)((u8*)self + 0x337C));
-            *(float*)((u8*)self + 0x1840) =
-                *(float*)((u8*)self + 0x1840) *
+            s16 eth = *(s16*)((u8*)this + 0x1768);
+            *(s16*)((u8*)this + 0x177C) =
+                (s16)(int)((float)phys + *(float*)((u8*)this + 0x337C));
+            *(float*)((u8*)this + 0x1840) =
+                *(float*)((u8*)this + 0x1840) *
                 ((float)(phys + 100) / lbl_eu_80667818);
             if (eth < -50) {
                 eth = -50;
-                *(s16*)((u8*)self + 0x1768) = -50;
+                *(s16*)((u8*)this + 0x1768) = -50;
             } else if (eth > 100) {
                 eth = 100;
-                *(s16*)((u8*)self + 0x1768) = 100;
+                *(s16*)((u8*)this + 0x1768) = 100;
             }
-            eth = *(s16*)((u8*)self + 0x1768);
+            eth = *(s16*)((u8*)this + 0x1768);
             if (eth >= 0) {
-                *(float*)((u8*)self + 0x1824) =
-                    *(float*)((u8*)self + 0x1824) /
+                *(float*)((u8*)this + 0x1824) =
+                    *(float*)((u8*)this + 0x1824) /
                     ((float)(eth + 100) / lbl_eu_80667818);
             } else {
-                *(float*)((u8*)self + 0x1824) =
-                    *(float*)((u8*)self + 0x1824) *
+                *(float*)((u8*)this + 0x1824) =
+                    *(float*)((u8*)this + 0x1824) *
                     ((float)(100 - eth) / lbl_eu_80667818);
             }
 
-            if (self->CActorParam_getActor() != NULL) {
-                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
-                    void* actor = self->CActorParam_getActor();
+            if (CBattleState_getOwner() != NULL) {
+                if ((*(u32*)((u8*)CBattleState_getOwner() + 0x3F00) & 2) != 0) {
+                    void* actor = CBattleState_getOwner();
                     float* scale = reinterpret_cast<float*>(
                         reinterpret_cast<cf::CfObject*>((u8*)actor + 0x3E9C)
                             ->CfObject_getMoveRateScale());
                     float lim = lbl_eu_806677E8 / *scale;
-                    float cur = *(float*)((u8*)self + 0x1840);
+                    float cur = *(float*)((u8*)this + 0x1840);
                     if (cur < lbl_eu_806677E4) {
-                        *(float*)((u8*)self + 0x1840) = lbl_eu_806677E4;
+                        *(float*)((u8*)this + 0x1840) = lbl_eu_806677E4;
                     } else if (cur > lim) {
-                        *(float*)((u8*)self + 0x1840) = lim;
+                        *(float*)((u8*)this + 0x1840) = lim;
                     }
                 }
             }
 
-            *(s16*)((u8*)self + 0x1810) = *(s16*)((u8*)self + 0x1800);
-            *(s16*)((u8*)self + 0x1814) = *(s16*)((u8*)self + 0x1804);
-            self->CActorParam_UnkVirtualFunc173();
-            *(s16*)((u8*)self + 0x181C) =
-                (s16)(*(s16*)((u8*)self + 0x181C) + (s16)*((u8*)self + 0x1820));
+            *(s16*)((u8*)this + 0x1810) = *(s16*)((u8*)this + 0x1800);
+            *(s16*)((u8*)this + 0x1814) = *(s16*)((u8*)this + 0x1804);
+            CActorParam_UnkVirtualFunc173();
+            *(s16*)((u8*)this + 0x181C) =
+                (s16)(*(s16*)((u8*)this + 0x181C) + (s16)*((u8*)this + 0x1820));
 
-            if (self->CActorParam_getActor() != NULL) {
-                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
-                    float hp = *(float*)((u8*)self + 0x17F4);
+            if (CBattleState_getOwner() != NULL) {
+                if ((*(u32*)((u8*)CBattleState_getOwner() + 0x3F00) & 2) != 0) {
+                    float hp = *(float*)((u8*)this + 0x17F4);
                     if (hp < lbl_eu_806677E4) {
-                        *(float*)((u8*)self + 0x17F4) = lbl_eu_806677E4;
+                        *(float*)((u8*)this + 0x17F4) = lbl_eu_806677E4;
                     } else if (hp > lbl_eu_80667860) {
-                        *(float*)((u8*)self + 0x17F4) = lbl_eu_80667860;
+                        *(float*)((u8*)this + 0x17F4) = lbl_eu_80667860;
                     }
                 }
             }
@@ -2016,7 +2016,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             // explicit double+magic form restores the dual-magic path
             // (.scratch/hp_cast4.c explicit_dual2).
             {
-                float hp = *(float*)((u8*)self + 0x17F4);
+                float hp = *(float*)((u8*)this + 0x17F4);
                 double mag;
                 double d;
                 // Select magic first, then hp + mag -> retail fadd f0,f1,f0.
@@ -2027,153 +2027,153 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
                 d = (double)hp + mag;
                 hp = (float)(int)d;
-                *(float*)((u8*)self + 0x17F4) = hp;
+                *(float*)((u8*)this + 0x17F4) = hp;
                 if (v17E8 > hp) {
                     v17E8 = hp;
                 }
-                float curB = *(float*)((u8*)self + 0x17F8);
+                float curB = *(float*)((u8*)this + 0x17F8);
                 if (v17EC > curB) {
                     v17EC = curB;
                 }
-                float curC = *(float*)((u8*)self + 0x17FC);
+                float curC = *(float*)((u8*)this + 0x17FC);
                 if (v17F0 > curC) {
                     v17F0 = curC;
                 }
             }
-            *(float*)((u8*)self + 0x17E8) = v17E8;
-            *(float*)((u8*)self + 0x17EC) = v17EC;
-            *(float*)((u8*)self + 0x17F0) = v17F0;
+            *(float*)((u8*)this + 0x17E8) = v17E8;
+            *(float*)((u8*)this + 0x17EC) = v17EC;
+            *(float*)((u8*)this + 0x17F0) = v17F0;
 
             // Per-call MI ref-cast: +8 adjust without null-check, no CSE'd base.
-            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*self), 100)) {
+            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*this), 100)) {
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)findBattleStatusEntry(
-                        &static_cast<cf::CBattleState&>(*self), 100);
+                        &static_cast<cf::CBattleState&>(*this), 100);
                 float add = (float)e->unk10 / lbl_eu_80667818;
-                *(float*)((u8*)self + 0x180C) =
-                    *(float*)((u8*)self + 0x180C) * (lbl_eu_806677E8 + add);
+                *(float*)((u8*)this + 0x180C) =
+                    *(float*)((u8*)this + 0x180C) * (lbl_eu_806677E8 + add);
             }
-            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*self), 99)) {
+            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*this), 99)) {
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)findBattleStatusEntry(
-                        &static_cast<cf::CBattleState&>(*self), 99);
+                        &static_cast<cf::CBattleState&>(*this), 99);
                 float add = (float)e->unk10 / lbl_eu_80667818;
-                float f1 = *(float*)((u8*)self + 0x1808) * (lbl_eu_806677E8 + add);
-                *(float*)((u8*)self + 0x1808) = f1;
-                if (f1 > *(float*)((u8*)self + 0x180C)) {
-                    *(float*)((u8*)self + 0x1808) = *(float*)((u8*)self + 0x180C);
+                float f1 = *(float*)((u8*)this + 0x1808) * (lbl_eu_806677E8 + add);
+                *(float*)((u8*)this + 0x1808) = f1;
+                if (f1 > *(float*)((u8*)this + 0x180C)) {
+                    *(float*)((u8*)this + 0x1808) = *(float*)((u8*)this + 0x180C);
                 }
             }
-            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*self), 188)) {
+            if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*this), 188)) {
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)findBattleStatusEntry(
-                        &static_cast<cf::CBattleState&>(*self), 188);
+                        &static_cast<cf::CBattleState&>(*this), 188);
                 float factor = (float)(100 - (s32)e->unk10) / lbl_eu_80667818;
-                float cur = *(float*)((u8*)self + 0x3368);
+                float cur = *(float*)((u8*)this + 0x3368);
                 if (cur != factor) {
-                    *(float*)((u8*)self + 0x3368) = factor;
-                    *(s16*)((u8*)self + 0x3358) = (s16)(int)(
-                        factor * ((float)*(s16*)((u8*)self + 0x3358) / cur));
+                    *(float*)((u8*)this + 0x3368) = factor;
+                    *(s16*)((u8*)this + 0x3358) = (s16)(int)(
+                        factor * ((float)*(s16*)((u8*)this + 0x3358) / cur));
                 } else {
                     // Retail reloads 0x3368 before comparing to zero (extra lfs).
-                    float cur2 = *(volatile float*)((u8*)self + 0x3368);
+                    float cur2 = *(volatile float*)((u8*)this + 0x3368);
                     if (cur2 != f27) {
-                        s16 s3358 = *(s16*)((u8*)self + 0x3358);
-                        *(float*)((u8*)self + 0x3368) = f27;
-                        *(s16*)((u8*)self + 0x3358) =
+                        s16 s3358 = *(s16*)((u8*)this + 0x3358);
+                        *(float*)((u8*)this + 0x3368) = f27;
+                        *(s16*)((u8*)this + 0x3358) =
                             (s16)(int)(f27 * ((float)s3358 / cur2));
                     }
                 }
             }
 
             // Rematerialize dest each time (retail addi r3,r31,imm -- not CSE).
-            std::memset((u8*)self + 0x16C8, 0, 120);
+            std::memset((u8*)this + 0x16C8, 0, 120);
 
             // int temps -> stw spills (retail 124(sp)); s16 would sth lower.
-            // Memset(82) dest is formed as (u8*)self+0x1740 at the call so
+            // Memset(82) dest is formed as (u8*)this+0x1740 at the call so
             // MWCC can schedule addi r3 / li r4 / li r5 early while the
             // 0x1770 shuffle spills and the 0x1740 block occupies r16-r30.
-            int s1770 = *(s16*)((u8*)self + 0x1770);
-            int s1772 = *(s16*)((u8*)self + 0x1772);
-            int s176C = *(s16*)((u8*)self + 0x176C);
-            int s1774 = *(s16*)((u8*)self + 0x1774);
-            int s1776 = *(s16*)((u8*)self + 0x1776);
-            int s1778 = *(s16*)((u8*)self + 0x1778);
-            int s177A = *(s16*)((u8*)self + 0x177A);
-            int s177C = *(s16*)((u8*)self + 0x177C);
-            u32 w177E = *(u32*)((u8*)self + 0x177E);
-            u32 w1782 = *(u32*)((u8*)self + 0x1782);
-            u32 w1786 = *(u32*)((u8*)self + 0x1786);
-            u32 w178A = *(u32*)((u8*)self + 0x178A);
-            u32 w178E = *(u32*)((u8*)self + 0x178E);
+            int s1770 = *(s16*)((u8*)this + 0x1770);
+            int s1772 = *(s16*)((u8*)this + 0x1772);
+            int s176C = *(s16*)((u8*)this + 0x176C);
+            int s1774 = *(s16*)((u8*)this + 0x1774);
+            int s1776 = *(s16*)((u8*)this + 0x1776);
+            int s1778 = *(s16*)((u8*)this + 0x1778);
+            int s177A = *(s16*)((u8*)this + 0x177A);
+            int s177C = *(s16*)((u8*)this + 0x177C);
+            u32 w177E = *(u32*)((u8*)this + 0x177E);
+            u32 w1782 = *(u32*)((u8*)this + 0x1782);
+            u32 w1786 = *(u32*)((u8*)this + 0x1786);
+            u32 w178A = *(u32*)((u8*)this + 0x178A);
+            u32 w178E = *(u32*)((u8*)this + 0x178E);
 
-            int c1740 = *(s16*)((u8*)self + 0x1740);
-            int c1742 = *(s16*)((u8*)self + 0x1742);
-            int c1744 = *(s16*)((u8*)self + 0x1744);
-            int c1746 = *(s16*)((u8*)self + 0x1746);
-            int c1748 = *(s16*)((u8*)self + 0x1748);
-            int c174A = *(s16*)((u8*)self + 0x174A);
-            int c174C = *(s16*)((u8*)self + 0x174C);
-            int c174E = *(s16*)((u8*)self + 0x174E);
-            int c1750 = *(s16*)((u8*)self + 0x1750);
-            int c1752 = *(s16*)((u8*)self + 0x1752);
-            int c1754 = *(s16*)((u8*)self + 0x1754);
-            int c1756 = *(s16*)((u8*)self + 0x1756);
-            int c1758 = *(s16*)((u8*)self + 0x1758);
-            int c175A = *(s16*)((u8*)self + 0x175A);
-            int c175C = *(s16*)((u8*)self + 0x175C);
-            int c175E = *(s16*)((u8*)self + 0x175E);
-            int c1760 = *(s16*)((u8*)self + 0x1760);
-            int c1762 = *(s16*)((u8*)self + 0x1762);
-            int c1764 = *(s16*)((u8*)self + 0x1764);
-            int c1766 = *(s16*)((u8*)self + 0x1766);
-            int c1768 = *(s16*)((u8*)self + 0x1768);
-            int c176A = *(s16*)((u8*)self + 0x176A);
-            int c176E = *(s16*)((u8*)self + 0x176E);
+            int c1740 = *(s16*)((u8*)this + 0x1740);
+            int c1742 = *(s16*)((u8*)this + 0x1742);
+            int c1744 = *(s16*)((u8*)this + 0x1744);
+            int c1746 = *(s16*)((u8*)this + 0x1746);
+            int c1748 = *(s16*)((u8*)this + 0x1748);
+            int c174A = *(s16*)((u8*)this + 0x174A);
+            int c174C = *(s16*)((u8*)this + 0x174C);
+            int c174E = *(s16*)((u8*)this + 0x174E);
+            int c1750 = *(s16*)((u8*)this + 0x1750);
+            int c1752 = *(s16*)((u8*)this + 0x1752);
+            int c1754 = *(s16*)((u8*)this + 0x1754);
+            int c1756 = *(s16*)((u8*)this + 0x1756);
+            int c1758 = *(s16*)((u8*)this + 0x1758);
+            int c175A = *(s16*)((u8*)this + 0x175A);
+            int c175C = *(s16*)((u8*)this + 0x175C);
+            int c175E = *(s16*)((u8*)this + 0x175E);
+            int c1760 = *(s16*)((u8*)this + 0x1760);
+            int c1762 = *(s16*)((u8*)this + 0x1762);
+            int c1764 = *(s16*)((u8*)this + 0x1764);
+            int c1766 = *(s16*)((u8*)this + 0x1766);
+            int c1768 = *(s16*)((u8*)this + 0x1768);
+            int c176A = *(s16*)((u8*)this + 0x176A);
+            int c176E = *(s16*)((u8*)this + 0x176E);
 
-            *(s16*)((u8*)self + 0x17BE) = (s16)s176C;
-            *(s16*)((u8*)self + 0x17C2) = (s16)s1770;
-            *(s16*)((u8*)self + 0x17C4) = (s16)s1772;
-            *(s16*)((u8*)self + 0x17C6) = (s16)s1774;
-            *(s16*)((u8*)self + 0x17C8) = (s16)s1776;
-            *(s16*)((u8*)self + 0x17CA) = (s16)s1778;
-            *(s16*)((u8*)self + 0x17CC) = (s16)s177A;
-            *(s16*)((u8*)self + 0x17CE) = (s16)s177C;
-            *(u32*)((u8*)self + 0x17D0) = w177E;
-            *(u32*)((u8*)self + 0x17D4) = w1782;
-            *(u32*)((u8*)self + 0x17D8) = w1786;
-            *(u32*)((u8*)self + 0x17DC) = w178A;
-            *(u32*)((u8*)self + 0x17E0) = w178E;
+            *(s16*)((u8*)this + 0x17BE) = (s16)s176C;
+            *(s16*)((u8*)this + 0x17C2) = (s16)s1770;
+            *(s16*)((u8*)this + 0x17C4) = (s16)s1772;
+            *(s16*)((u8*)this + 0x17C6) = (s16)s1774;
+            *(s16*)((u8*)this + 0x17C8) = (s16)s1776;
+            *(s16*)((u8*)this + 0x17CA) = (s16)s1778;
+            *(s16*)((u8*)this + 0x17CC) = (s16)s177A;
+            *(s16*)((u8*)this + 0x17CE) = (s16)s177C;
+            *(u32*)((u8*)this + 0x17D0) = w177E;
+            *(u32*)((u8*)this + 0x17D4) = w1782;
+            *(u32*)((u8*)this + 0x17D8) = w1786;
+            *(u32*)((u8*)this + 0x17DC) = w178A;
+            *(u32*)((u8*)this + 0x17E0) = w178E;
 
-            *(float*)((u8*)self + 0x1724) = lbl_eu_806677E8;
-            *(s16*)((u8*)self + 0x1792) = (s16)c1740;
-            *(s16*)((u8*)self + 0x1794) = (s16)c1742;
-            *(s16*)((u8*)self + 0x1796) = (s16)c1744;
-            *(s16*)((u8*)self + 0x1798) = (s16)c1746;
-            *(s16*)((u8*)self + 0x179A) = (s16)c1748;
-            *(s16*)((u8*)self + 0x179C) = (s16)c174A;
-            *(s16*)((u8*)self + 0x179E) = (s16)c174C;
-            *(s16*)((u8*)self + 0x17A0) = (s16)c174E;
-            *(s16*)((u8*)self + 0x17A2) = (s16)c1750;
-            *(s16*)((u8*)self + 0x17A4) = (s16)c1752;
-            *(s16*)((u8*)self + 0x17A6) = (s16)c1754;
-            *(s16*)((u8*)self + 0x17A8) = (s16)c1756;
-            *(s16*)((u8*)self + 0x17AA) = (s16)c1758;
-            *(s16*)((u8*)self + 0x17AC) = (s16)c175A;
-            *(s16*)((u8*)self + 0x17AE) = (s16)c175C;
-            *(s16*)((u8*)self + 0x17B0) = (s16)c175E;
-            *(s16*)((u8*)self + 0x17B2) = (s16)c1760;
-            *(s16*)((u8*)self + 0x17B4) = (s16)c1762;
-            *(s16*)((u8*)self + 0x17B6) = (s16)c1764;
-            *(s16*)((u8*)self + 0x17B8) = (s16)c1766;
-            *(s16*)((u8*)self + 0x17BA) = (s16)c1768;
-            *(s16*)((u8*)self + 0x17BC) = (s16)c176A;
-            *(s16*)((u8*)self + 0x17C0) = (s16)c176E;
-            std::memset((u8*)self + 0x1740, 0, 82);
+            *(float*)((u8*)this + 0x1724) = lbl_eu_806677E8;
+            *(s16*)((u8*)this + 0x1792) = (s16)c1740;
+            *(s16*)((u8*)this + 0x1794) = (s16)c1742;
+            *(s16*)((u8*)this + 0x1796) = (s16)c1744;
+            *(s16*)((u8*)this + 0x1798) = (s16)c1746;
+            *(s16*)((u8*)this + 0x179A) = (s16)c1748;
+            *(s16*)((u8*)this + 0x179C) = (s16)c174A;
+            *(s16*)((u8*)this + 0x179E) = (s16)c174C;
+            *(s16*)((u8*)this + 0x17A0) = (s16)c174E;
+            *(s16*)((u8*)this + 0x17A2) = (s16)c1750;
+            *(s16*)((u8*)this + 0x17A4) = (s16)c1752;
+            *(s16*)((u8*)this + 0x17A6) = (s16)c1754;
+            *(s16*)((u8*)this + 0x17A8) = (s16)c1756;
+            *(s16*)((u8*)this + 0x17AA) = (s16)c1758;
+            *(s16*)((u8*)this + 0x17AC) = (s16)c175A;
+            *(s16*)((u8*)this + 0x17AE) = (s16)c175C;
+            *(s16*)((u8*)this + 0x17B0) = (s16)c175E;
+            *(s16*)((u8*)this + 0x17B2) = (s16)c1760;
+            *(s16*)((u8*)this + 0x17B4) = (s16)c1762;
+            *(s16*)((u8*)this + 0x17B6) = (s16)c1764;
+            *(s16*)((u8*)this + 0x17B8) = (s16)c1766;
+            *(s16*)((u8*)this + 0x17BA) = (s16)c1768;
+            *(s16*)((u8*)this + 0x17BC) = (s16)c176A;
+            *(s16*)((u8*)this + 0x17C0) = (s16)c176E;
+            std::memset((u8*)this + 0x1740, 0, 82);
 
-            if (self->CActorParam_getActor() != NULL) {
-                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
-                    void* actor = self->CActorParam_getActor();
+            if (CBattleState_getOwner() != NULL) {
+                if ((*(u32*)((u8*)CBattleState_getOwner() + 0x3F00) & 2) != 0) {
+                    void* actor = CBattleState_getOwner();
                     void* cd = CtrlObjectParam_GetCharEntry(*(u16*)((u8*)actor + 0x3F28));
                     if (cd != NULL) {
                         u8* dst = (u8*)reinterpret_cast<cf::CActorParam*>(
@@ -2181,196 +2181,196 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                                          ->CActorParam_getBattleParams();
                         if (dst != NULL) {
                             // Working-stat block 0x17E4.. mirrored into battle-params.
-                            *(u32*)(dst + 0x00) = *(u32*)((u8*)self + 0x17E4);
-                            *(float*)(dst + 0x04) = *(float*)((u8*)self + 0x17E8);
-                            *(float*)(dst + 0x08) = *(float*)((u8*)self + 0x17EC);
-                            *(float*)(dst + 0x0C) = *(float*)((u8*)self + 0x17F0);
-                            *(float*)(dst + 0x10) = *(float*)((u8*)self + 0x17F4);
-                            *(float*)(dst + 0x14) = *(float*)((u8*)self + 0x17F8);
-                            *(float*)(dst + 0x18) = *(float*)((u8*)self + 0x17FC);
-                            *(s16*)(dst + 0x1C) = *(s16*)((u8*)self + 0x1800);
-                            *(s16*)(dst + 0x1E) = *(s16*)((u8*)self + 0x1802);
-                            *(s16*)(dst + 0x20) = *(s16*)((u8*)self + 0x1804);
-                            *(float*)(dst + 0x24) = *(float*)((u8*)self + 0x1808);
-                            *(float*)(dst + 0x28) = *(float*)((u8*)self + 0x180C);
-                            *(s16*)(dst + 0x2C) = *(s16*)((u8*)self + 0x1810);
-                            *(s16*)(dst + 0x2E) = *(s16*)((u8*)self + 0x1812);
-                            *(s16*)(dst + 0x30) = *(s16*)((u8*)self + 0x1814);
-                            *(s16*)(dst + 0x32) = *(s16*)((u8*)self + 0x1816);
-                            *(s16*)(dst + 0x34) = *(s16*)((u8*)self + 0x1818);
-                            *(s16*)(dst + 0x36) = *(s16*)((u8*)self + 0x181A);
-                            *(s16*)(dst + 0x38) = *(s16*)((u8*)self + 0x181C);
-                            *(s16*)(dst + 0x3A) = *(s16*)((u8*)self + 0x181E);
-                            dst[0x3C] = *((u8*)self + 0x1820);
-                            *(float*)(dst + 0x40) = *(float*)((u8*)self + 0x1824);
-                            *(float*)(dst + 0x44) = *(float*)((u8*)self + 0x1828);
-                            *(float*)(dst + 0x48) = *(float*)((u8*)self + 0x182C);
-                            *(float*)(dst + 0x4C) = *(float*)((u8*)self + 0x1830);
-                            *(float*)(dst + 0x50) = *(float*)((u8*)self + 0x1834);
-                            dst[0x54] = *((u8*)self + 0x1838);
-                            dst[0x55] = *((u8*)self + 0x1839);
-                            dst[0x56] = *((u8*)self + 0x183A);
-                            dst[0x57] = *((u8*)self + 0x183B);
-                            dst[0x58] = *((u8*)self + 0x183C);
-                            *(float*)(dst + 0x5C) = *(float*)((u8*)self + 0x1840);
-                            *(u32*)(dst + 0x60) = *(u32*)((u8*)self + 0x1844);
-                            *(u32*)(dst + 0x64) = *(u32*)((u8*)self + 0x1848);
-                            *(u32*)(dst + 0x68) = *(u32*)((u8*)self + 0x184C);
-                            *(u32*)(dst + 0x6C) = *(u32*)((u8*)self + 0x1850);
-                            *(u32*)(dst + 0x70) = *(u32*)((u8*)self + 0x1854);
-                            *(u32*)(dst + 0x74) = *(u32*)((u8*)self + 0x1858);
+                            *(u32*)(dst + 0x00) = *(u32*)((u8*)this + 0x17E4);
+                            *(float*)(dst + 0x04) = *(float*)((u8*)this + 0x17E8);
+                            *(float*)(dst + 0x08) = *(float*)((u8*)this + 0x17EC);
+                            *(float*)(dst + 0x0C) = *(float*)((u8*)this + 0x17F0);
+                            *(float*)(dst + 0x10) = *(float*)((u8*)this + 0x17F4);
+                            *(float*)(dst + 0x14) = *(float*)((u8*)this + 0x17F8);
+                            *(float*)(dst + 0x18) = *(float*)((u8*)this + 0x17FC);
+                            *(s16*)(dst + 0x1C) = *(s16*)((u8*)this + 0x1800);
+                            *(s16*)(dst + 0x1E) = *(s16*)((u8*)this + 0x1802);
+                            *(s16*)(dst + 0x20) = *(s16*)((u8*)this + 0x1804);
+                            *(float*)(dst + 0x24) = *(float*)((u8*)this + 0x1808);
+                            *(float*)(dst + 0x28) = *(float*)((u8*)this + 0x180C);
+                            *(s16*)(dst + 0x2C) = *(s16*)((u8*)this + 0x1810);
+                            *(s16*)(dst + 0x2E) = *(s16*)((u8*)this + 0x1812);
+                            *(s16*)(dst + 0x30) = *(s16*)((u8*)this + 0x1814);
+                            *(s16*)(dst + 0x32) = *(s16*)((u8*)this + 0x1816);
+                            *(s16*)(dst + 0x34) = *(s16*)((u8*)this + 0x1818);
+                            *(s16*)(dst + 0x36) = *(s16*)((u8*)this + 0x181A);
+                            *(s16*)(dst + 0x38) = *(s16*)((u8*)this + 0x181C);
+                            *(s16*)(dst + 0x3A) = *(s16*)((u8*)this + 0x181E);
+                            dst[0x3C] = *((u8*)this + 0x1820);
+                            *(float*)(dst + 0x40) = *(float*)((u8*)this + 0x1824);
+                            *(float*)(dst + 0x44) = *(float*)((u8*)this + 0x1828);
+                            *(float*)(dst + 0x48) = *(float*)((u8*)this + 0x182C);
+                            *(float*)(dst + 0x4C) = *(float*)((u8*)this + 0x1830);
+                            *(float*)(dst + 0x50) = *(float*)((u8*)this + 0x1834);
+                            dst[0x54] = *((u8*)this + 0x1838);
+                            dst[0x55] = *((u8*)this + 0x1839);
+                            dst[0x56] = *((u8*)this + 0x183A);
+                            dst[0x57] = *((u8*)this + 0x183B);
+                            dst[0x58] = *((u8*)this + 0x183C);
+                            *(float*)(dst + 0x5C) = *(float*)((u8*)this + 0x1840);
+                            *(u32*)(dst + 0x60) = *(u32*)((u8*)this + 0x1844);
+                            *(u32*)(dst + 0x64) = *(u32*)((u8*)this + 0x1848);
+                            *(u32*)(dst + 0x68) = *(u32*)((u8*)this + 0x184C);
+                            *(u32*)(dst + 0x6C) = *(u32*)((u8*)this + 0x1850);
+                            *(u32*)(dst + 0x70) = *(u32*)((u8*)this + 0x1854);
+                            *(u32*)(dst + 0x74) = *(u32*)((u8*)this + 0x1858);
                             // Aggregated 0x185C.. mirror onto char-data (+0x19D8).
-                            *(u32*)((u8*)cd + 0x19D8) = *(u32*)((u8*)self + 0x185C);
-                            *(float*)((u8*)cd + 0x19DC) = *(float*)((u8*)self + 0x1860);
-                            *(float*)((u8*)cd + 0x19E0) = *(float*)((u8*)self + 0x1864);
-                            *(float*)((u8*)cd + 0x19E4) = *(float*)((u8*)self + 0x1868);
-                            *(float*)((u8*)cd + 0x19E8) = *(float*)((u8*)self + 0x186C);
-                            *(float*)((u8*)cd + 0x19EC) = *(float*)((u8*)self + 0x1870);
-                            *(float*)((u8*)cd + 0x19F0) = *(float*)((u8*)self + 0x1874);
-                            *(s16*)((u8*)cd + 0x19F4) = *(s16*)((u8*)self + 0x1878);
-                            *(s16*)((u8*)cd + 0x19F6) = *(s16*)((u8*)self + 0x187A);
-                            *(s16*)((u8*)cd + 0x19F8) = *(s16*)((u8*)self + 0x187C);
-                            *(float*)((u8*)cd + 0x19FC) = *(float*)((u8*)self + 0x1880);
-                            *(float*)((u8*)cd + 0x1A00) = *(float*)((u8*)self + 0x1884);
-                            *(s16*)((u8*)cd + 0x1A04) = *(s16*)((u8*)self + 0x1888);
-                            *(s16*)((u8*)cd + 0x1A06) = *(s16*)((u8*)self + 0x188A);
-                            *(s16*)((u8*)cd + 0x1A08) = *(s16*)((u8*)self + 0x188C);
-                            *(s16*)((u8*)cd + 0x1A0A) = *(s16*)((u8*)self + 0x188E);
-                            *(s16*)((u8*)cd + 0x1A0C) = *(s16*)((u8*)self + 0x1890);
-                            *(s16*)((u8*)cd + 0x1A0E) = *(s16*)((u8*)self + 0x1892);
-                            *(s16*)((u8*)cd + 0x1A10) = *(s16*)((u8*)self + 0x1894);
-                            *(s16*)((u8*)cd + 0x1A12) = *(s16*)((u8*)self + 0x1896);
-                            ((u8*)cd)[0x1A14] = *((u8*)self + 0x1898);
-                            *(float*)((u8*)cd + 0x1A18) = *(float*)((u8*)self + 0x189C);
-                            *(float*)((u8*)cd + 0x1A1C) = *(float*)((u8*)self + 0x18A0);
-                            *(float*)((u8*)cd + 0x1A20) = *(float*)((u8*)self + 0x18A4);
-                            *(float*)((u8*)cd + 0x1A24) = *(float*)((u8*)self + 0x18A8);
-                            *(float*)((u8*)cd + 0x1A28) = *(float*)((u8*)self + 0x18AC);
-                            ((u8*)cd)[0x1A2C] = *((u8*)self + 0x18B0);
-                            ((u8*)cd)[0x1A2D] = *((u8*)self + 0x18B1);
-                            ((u8*)cd)[0x1A2E] = *((u8*)self + 0x18B2);
-                            ((u8*)cd)[0x1A2F] = *((u8*)self + 0x18B3);
-                            ((u8*)cd)[0x1A30] = *((u8*)self + 0x18B4);
-                            *(float*)((u8*)cd + 0x1A34) = *(float*)((u8*)self + 0x18B8);
-                            *(u32*)((u8*)cd + 0x1A38) = *(u32*)((u8*)self + 0x18C0);
-                            *(u32*)((u8*)cd + 0x1A3C) = *(u32*)((u8*)self + 0x18BC);
-                            *(u32*)((u8*)cd + 0x1A40) = *(u32*)((u8*)self + 0x18C8);
-                            *(u32*)((u8*)cd + 0x1A44) = *(u32*)((u8*)self + 0x18C4);
-                            *(u32*)((u8*)cd + 0x1A48) = *(u32*)((u8*)self + 0x18CC);
-                            *(u32*)((u8*)cd + 0x1A4C) = *(u32*)((u8*)self + 0x18D0);
-                            *(s16*)((u8*)cd + 0x1A50) = *(s16*)((u8*)self + 0x18D4);
-                            *(s16*)((u8*)cd + 0x1A52) = *(s16*)((u8*)self + 0x18D6);
-                            *(s16*)((u8*)cd + 0x1A54) = *(s16*)((u8*)self + 0x18D8);
-                            *(s16*)((u8*)cd + 0x1A56) = *(s16*)((u8*)self + 0x18DA);
-                            *(s16*)((u8*)cd + 0x1A58) = *(s16*)((u8*)self + 0x18DC);
-                            *(s16*)((u8*)cd + 0x1A5A) = *(s16*)((u8*)self + 0x18DE);
-                            *(s16*)((u8*)cd + 0x1A5C) = *(s16*)((u8*)self + 0x18E0);
-                            *(s16*)((u8*)cd + 0x1A5E) = *(s16*)((u8*)self + 0x18E2);
-                            *(s16*)((u8*)cd + 0x1A60) = *(s16*)((u8*)self + 0x18E4);
-                            *(s16*)((u8*)cd + 0x1A62) = *(s16*)((u8*)self + 0x18E6);
-                            *(s16*)((u8*)cd + 0x1A64) = *(s16*)((u8*)self + 0x18E8);
-                            *(s16*)((u8*)cd + 0x1A66) = *(s16*)((u8*)self + 0x18EA);
-                            *(s16*)((u8*)cd + 0x1A68) = *(s16*)((u8*)self + 0x18EC);
-                            *(s16*)((u8*)cd + 0x1A6A) = *(s16*)((u8*)self + 0x18EE);
-                            *(s16*)((u8*)cd + 0x1A6C) = *(s16*)((u8*)self + 0x18F0);
-                            *(s16*)((u8*)cd + 0x1A6E) = *(s16*)((u8*)self + 0x18F2);
-                            *(s16*)((u8*)cd + 0x1A70) = *(s16*)((u8*)self + 0x18F4);
-                            *(s16*)((u8*)cd + 0x1A72) = *(s16*)((u8*)self + 0x18F6);
-                            *(s16*)((u8*)cd + 0x1A74) = *(s16*)((u8*)self + 0x18F8);
-                            *(s16*)((u8*)cd + 0x1A76) = *(s16*)((u8*)self + 0x18FA);
-                            *(s16*)((u8*)cd + 0x1A78) = *(s16*)((u8*)self + 0x18FC);
-                            *(s16*)((u8*)cd + 0x1A7A) = *(s16*)((u8*)self + 0x18FE);
-                            *(s16*)((u8*)cd + 0x1A7C) = *(s16*)((u8*)self + 0x1900);
-                            *(s16*)((u8*)cd + 0x1A7E) = *(s16*)((u8*)self + 0x1902);
-                            *(s16*)((u8*)cd + 0x1A80) = *(s16*)((u8*)self + 0x1904);
-                            *(s16*)((u8*)cd + 0x1A82) = *(s16*)((u8*)self + 0x1906);
-                            *(s16*)((u8*)cd + 0x1A84) = *(s16*)((u8*)self + 0x1908);
-                            *(s16*)((u8*)cd + 0x1A86) = *(s16*)((u8*)self + 0x190A);
-                            *(s16*)((u8*)cd + 0x1A88) = *(s16*)((u8*)self + 0x190C);
-                            *(s16*)((u8*)cd + 0x1A8A) = *(s16*)((u8*)self + 0x190E);
-                            *(s16*)((u8*)cd + 0x1A8C) = *(s16*)((u8*)self + 0x1910);
-                            *(u32*)((u8*)cd + 0x1A8E) = *(u32*)((u8*)self + 0x1916);
-                            *(u32*)((u8*)cd + 0x1A92) = *(u32*)((u8*)self + 0x1912);
-                            *(u32*)((u8*)cd + 0x1A96) = *(u32*)((u8*)self + 0x191E);
-                            *(u32*)((u8*)cd + 0x1A9A) = *(u32*)((u8*)self + 0x191A);
-                            *(u32*)((u8*)cd + 0x1A9E) = *(u32*)((u8*)self + 0x1922);
-                            *(s16*)((u8*)cd + 0x18BC) = *(s16*)((u8*)self + 0x1740);
-                            *(s16*)((u8*)cd + 0x18BE) = *(s16*)((u8*)self + 0x1742);
-                            *(s16*)((u8*)cd + 0x18C0) = *(s16*)((u8*)self + 0x1744);
-                            *(s16*)((u8*)cd + 0x18C2) = *(s16*)((u8*)self + 0x1746);
-                            *(s16*)((u8*)cd + 0x18C4) = *(s16*)((u8*)self + 0x1748);
-                            *(s16*)((u8*)cd + 0x18C6) = *(s16*)((u8*)self + 0x174A);
-                            *(s16*)((u8*)cd + 0x18C8) = *(s16*)((u8*)self + 0x174C);
-                            *(s16*)((u8*)cd + 0x18CA) = *(s16*)((u8*)self + 0x174E);
-                            *(s16*)((u8*)cd + 0x18CC) = *(s16*)((u8*)self + 0x1750);
-                            *(s16*)((u8*)cd + 0x18CE) = *(s16*)((u8*)self + 0x1752);
-                            *(s16*)((u8*)cd + 0x18D0) = *(s16*)((u8*)self + 0x1754);
-                            *(s16*)((u8*)cd + 0x18D2) = *(s16*)((u8*)self + 0x1756);
-                            *(s16*)((u8*)cd + 0x18D4) = *(s16*)((u8*)self + 0x1758);
-                            *(s16*)((u8*)cd + 0x18D6) = *(s16*)((u8*)self + 0x175A);
-                            *(s16*)((u8*)cd + 0x18D8) = *(s16*)((u8*)self + 0x175C);
-                            *(s16*)((u8*)cd + 0x18DA) = *(s16*)((u8*)self + 0x175E);
-                            *(s16*)((u8*)cd + 0x18DC) = *(s16*)((u8*)self + 0x1760);
-                            *(s16*)((u8*)cd + 0x18DE) = *(s16*)((u8*)self + 0x1762);
-                            *(s16*)((u8*)cd + 0x18E0) = *(s16*)((u8*)self + 0x1764);
-                            *(s16*)((u8*)cd + 0x18E2) = *(s16*)((u8*)self + 0x1766);
-                            *(s16*)((u8*)cd + 0x18E4) = *(s16*)((u8*)self + 0x1768);
-                            *(s16*)((u8*)cd + 0x18E6) = *(s16*)((u8*)self + 0x176A);
-                            *(s16*)((u8*)cd + 0x18E8) = *(s16*)((u8*)self + 0x176C);
-                            *(s16*)((u8*)cd + 0x18EA) = *(s16*)((u8*)self + 0x176E);
-                            *(s16*)((u8*)cd + 0x18EC) = *(s16*)((u8*)self + 0x1770);
-                            *(s16*)((u8*)cd + 0x18EE) = *(s16*)((u8*)self + 0x1772);
-                            *(s16*)((u8*)cd + 0x18F0) = *(s16*)((u8*)self + 0x1774);
-                            *(s16*)((u8*)cd + 0x18F2) = *(s16*)((u8*)self + 0x1776);
-                            *(s16*)((u8*)cd + 0x18F4) = *(s16*)((u8*)self + 0x1778);
-                            *(s16*)((u8*)cd + 0x18F6) = *(s16*)((u8*)self + 0x177A);
-                            *(s16*)((u8*)cd + 0x18F8) = *(s16*)((u8*)self + 0x177C);
-                            *(u32*)((u8*)cd + 0x18FA) = *(u32*)((u8*)self + 0x1782);
-                            *(u32*)((u8*)cd + 0x18FE) = *(u32*)((u8*)self + 0x177E);
-                            *(u32*)((u8*)cd + 0x1902) = *(u32*)((u8*)self + 0x178A);
-                            *(u32*)((u8*)cd + 0x1906) = *(u32*)((u8*)self + 0x1786);
-                            *(u32*)((u8*)cd + 0x190A) = *(u32*)((u8*)self + 0x178E);
-                            *(s16*)((u8*)cd + 0x190E) = *(s16*)((u8*)self + 0x1792);
-                            *(s16*)((u8*)cd + 0x1910) = *(s16*)((u8*)self + 0x1794);
-                            *(s16*)((u8*)cd + 0x1912) = *(s16*)((u8*)self + 0x1796);
-                            *(s16*)((u8*)cd + 0x1914) = *(s16*)((u8*)self + 0x1798);
-                            *(s16*)((u8*)cd + 0x1916) = *(s16*)((u8*)self + 0x179A);
-                            *(s16*)((u8*)cd + 0x1918) = *(s16*)((u8*)self + 0x179C);
-                            *(s16*)((u8*)cd + 0x191A) = *(s16*)((u8*)self + 0x179E);
-                            *(s16*)((u8*)cd + 0x191C) = *(s16*)((u8*)self + 0x17A0);
-                            *(s16*)((u8*)cd + 0x191E) = *(s16*)((u8*)self + 0x17A2);
-                            *(s16*)((u8*)cd + 0x1920) = *(s16*)((u8*)self + 0x17A4);
-                            *(s16*)((u8*)cd + 0x1922) = *(s16*)((u8*)self + 0x17A6);
-                            *(s16*)((u8*)cd + 0x1924) = *(s16*)((u8*)self + 0x17A8);
-                            *(s16*)((u8*)cd + 0x1926) = *(s16*)((u8*)self + 0x17AA);
-                            *(s16*)((u8*)cd + 0x1928) = *(s16*)((u8*)self + 0x17AC);
-                            *(s16*)((u8*)cd + 0x192A) = *(s16*)((u8*)self + 0x17AE);
-                            *(s16*)((u8*)cd + 0x192C) = *(s16*)((u8*)self + 0x17B0);
-                            *(s16*)((u8*)cd + 0x192E) = *(s16*)((u8*)self + 0x17B2);
-                            *(s16*)((u8*)cd + 0x1930) = *(s16*)((u8*)self + 0x17B4);
-                            *(s16*)((u8*)cd + 0x1932) = *(s16*)((u8*)self + 0x17B6);
-                            *(s16*)((u8*)cd + 0x1934) = *(s16*)((u8*)self + 0x17B8);
-                            *(s16*)((u8*)cd + 0x1936) = *(s16*)((u8*)self + 0x17BA);
-                            *(s16*)((u8*)cd + 0x1938) = *(s16*)((u8*)self + 0x17BC);
-                            *(s16*)((u8*)cd + 0x193A) = *(s16*)((u8*)self + 0x17BE);
-                            *(s16*)((u8*)cd + 0x193C) = *(s16*)((u8*)self + 0x17C0);
-                            *(s16*)((u8*)cd + 0x193E) = *(s16*)((u8*)self + 0x17C2);
-                            *(s16*)((u8*)cd + 0x1940) = *(s16*)((u8*)self + 0x17C4);
-                            *(s16*)((u8*)cd + 0x1942) = *(s16*)((u8*)self + 0x17C6);
-                            *(s16*)((u8*)cd + 0x1944) = *(s16*)((u8*)self + 0x17C8);
-                            *(s16*)((u8*)cd + 0x1946) = *(s16*)((u8*)self + 0x17CA);
-                            *(s16*)((u8*)cd + 0x1948) = *(s16*)((u8*)self + 0x17CC);
-                            *(s16*)((u8*)cd + 0x194A) = *(s16*)((u8*)self + 0x17CE);
-                            *(u32*)((u8*)cd + 0x194C) = *(u32*)((u8*)self + 0x17D4);
-                            *(u32*)((u8*)cd + 0x1950) = *(u32*)((u8*)self + 0x17D0);
-                            *(u32*)((u8*)cd + 0x1954) = *(u32*)((u8*)self + 0x17DC);
-                            *(u32*)((u8*)cd + 0x1958) = *(u32*)((u8*)self + 0x17D8);
-                            *(u32*)((u8*)cd + 0x195C) = *(u32*)((u8*)self + 0x17E0);
+                            *(u32*)((u8*)cd + 0x19D8) = *(u32*)((u8*)this + 0x185C);
+                            *(float*)((u8*)cd + 0x19DC) = *(float*)((u8*)this + 0x1860);
+                            *(float*)((u8*)cd + 0x19E0) = *(float*)((u8*)this + 0x1864);
+                            *(float*)((u8*)cd + 0x19E4) = *(float*)((u8*)this + 0x1868);
+                            *(float*)((u8*)cd + 0x19E8) = *(float*)((u8*)this + 0x186C);
+                            *(float*)((u8*)cd + 0x19EC) = *(float*)((u8*)this + 0x1870);
+                            *(float*)((u8*)cd + 0x19F0) = *(float*)((u8*)this + 0x1874);
+                            *(s16*)((u8*)cd + 0x19F4) = *(s16*)((u8*)this + 0x1878);
+                            *(s16*)((u8*)cd + 0x19F6) = *(s16*)((u8*)this + 0x187A);
+                            *(s16*)((u8*)cd + 0x19F8) = *(s16*)((u8*)this + 0x187C);
+                            *(float*)((u8*)cd + 0x19FC) = *(float*)((u8*)this + 0x1880);
+                            *(float*)((u8*)cd + 0x1A00) = *(float*)((u8*)this + 0x1884);
+                            *(s16*)((u8*)cd + 0x1A04) = *(s16*)((u8*)this + 0x1888);
+                            *(s16*)((u8*)cd + 0x1A06) = *(s16*)((u8*)this + 0x188A);
+                            *(s16*)((u8*)cd + 0x1A08) = *(s16*)((u8*)this + 0x188C);
+                            *(s16*)((u8*)cd + 0x1A0A) = *(s16*)((u8*)this + 0x188E);
+                            *(s16*)((u8*)cd + 0x1A0C) = *(s16*)((u8*)this + 0x1890);
+                            *(s16*)((u8*)cd + 0x1A0E) = *(s16*)((u8*)this + 0x1892);
+                            *(s16*)((u8*)cd + 0x1A10) = *(s16*)((u8*)this + 0x1894);
+                            *(s16*)((u8*)cd + 0x1A12) = *(s16*)((u8*)this + 0x1896);
+                            ((u8*)cd)[0x1A14] = *((u8*)this + 0x1898);
+                            *(float*)((u8*)cd + 0x1A18) = *(float*)((u8*)this + 0x189C);
+                            *(float*)((u8*)cd + 0x1A1C) = *(float*)((u8*)this + 0x18A0);
+                            *(float*)((u8*)cd + 0x1A20) = *(float*)((u8*)this + 0x18A4);
+                            *(float*)((u8*)cd + 0x1A24) = *(float*)((u8*)this + 0x18A8);
+                            *(float*)((u8*)cd + 0x1A28) = *(float*)((u8*)this + 0x18AC);
+                            ((u8*)cd)[0x1A2C] = *((u8*)this + 0x18B0);
+                            ((u8*)cd)[0x1A2D] = *((u8*)this + 0x18B1);
+                            ((u8*)cd)[0x1A2E] = *((u8*)this + 0x18B2);
+                            ((u8*)cd)[0x1A2F] = *((u8*)this + 0x18B3);
+                            ((u8*)cd)[0x1A30] = *((u8*)this + 0x18B4);
+                            *(float*)((u8*)cd + 0x1A34) = *(float*)((u8*)this + 0x18B8);
+                            *(u32*)((u8*)cd + 0x1A38) = *(u32*)((u8*)this + 0x18C0);
+                            *(u32*)((u8*)cd + 0x1A3C) = *(u32*)((u8*)this + 0x18BC);
+                            *(u32*)((u8*)cd + 0x1A40) = *(u32*)((u8*)this + 0x18C8);
+                            *(u32*)((u8*)cd + 0x1A44) = *(u32*)((u8*)this + 0x18C4);
+                            *(u32*)((u8*)cd + 0x1A48) = *(u32*)((u8*)this + 0x18CC);
+                            *(u32*)((u8*)cd + 0x1A4C) = *(u32*)((u8*)this + 0x18D0);
+                            *(s16*)((u8*)cd + 0x1A50) = *(s16*)((u8*)this + 0x18D4);
+                            *(s16*)((u8*)cd + 0x1A52) = *(s16*)((u8*)this + 0x18D6);
+                            *(s16*)((u8*)cd + 0x1A54) = *(s16*)((u8*)this + 0x18D8);
+                            *(s16*)((u8*)cd + 0x1A56) = *(s16*)((u8*)this + 0x18DA);
+                            *(s16*)((u8*)cd + 0x1A58) = *(s16*)((u8*)this + 0x18DC);
+                            *(s16*)((u8*)cd + 0x1A5A) = *(s16*)((u8*)this + 0x18DE);
+                            *(s16*)((u8*)cd + 0x1A5C) = *(s16*)((u8*)this + 0x18E0);
+                            *(s16*)((u8*)cd + 0x1A5E) = *(s16*)((u8*)this + 0x18E2);
+                            *(s16*)((u8*)cd + 0x1A60) = *(s16*)((u8*)this + 0x18E4);
+                            *(s16*)((u8*)cd + 0x1A62) = *(s16*)((u8*)this + 0x18E6);
+                            *(s16*)((u8*)cd + 0x1A64) = *(s16*)((u8*)this + 0x18E8);
+                            *(s16*)((u8*)cd + 0x1A66) = *(s16*)((u8*)this + 0x18EA);
+                            *(s16*)((u8*)cd + 0x1A68) = *(s16*)((u8*)this + 0x18EC);
+                            *(s16*)((u8*)cd + 0x1A6A) = *(s16*)((u8*)this + 0x18EE);
+                            *(s16*)((u8*)cd + 0x1A6C) = *(s16*)((u8*)this + 0x18F0);
+                            *(s16*)((u8*)cd + 0x1A6E) = *(s16*)((u8*)this + 0x18F2);
+                            *(s16*)((u8*)cd + 0x1A70) = *(s16*)((u8*)this + 0x18F4);
+                            *(s16*)((u8*)cd + 0x1A72) = *(s16*)((u8*)this + 0x18F6);
+                            *(s16*)((u8*)cd + 0x1A74) = *(s16*)((u8*)this + 0x18F8);
+                            *(s16*)((u8*)cd + 0x1A76) = *(s16*)((u8*)this + 0x18FA);
+                            *(s16*)((u8*)cd + 0x1A78) = *(s16*)((u8*)this + 0x18FC);
+                            *(s16*)((u8*)cd + 0x1A7A) = *(s16*)((u8*)this + 0x18FE);
+                            *(s16*)((u8*)cd + 0x1A7C) = *(s16*)((u8*)this + 0x1900);
+                            *(s16*)((u8*)cd + 0x1A7E) = *(s16*)((u8*)this + 0x1902);
+                            *(s16*)((u8*)cd + 0x1A80) = *(s16*)((u8*)this + 0x1904);
+                            *(s16*)((u8*)cd + 0x1A82) = *(s16*)((u8*)this + 0x1906);
+                            *(s16*)((u8*)cd + 0x1A84) = *(s16*)((u8*)this + 0x1908);
+                            *(s16*)((u8*)cd + 0x1A86) = *(s16*)((u8*)this + 0x190A);
+                            *(s16*)((u8*)cd + 0x1A88) = *(s16*)((u8*)this + 0x190C);
+                            *(s16*)((u8*)cd + 0x1A8A) = *(s16*)((u8*)this + 0x190E);
+                            *(s16*)((u8*)cd + 0x1A8C) = *(s16*)((u8*)this + 0x1910);
+                            *(u32*)((u8*)cd + 0x1A8E) = *(u32*)((u8*)this + 0x1916);
+                            *(u32*)((u8*)cd + 0x1A92) = *(u32*)((u8*)this + 0x1912);
+                            *(u32*)((u8*)cd + 0x1A96) = *(u32*)((u8*)this + 0x191E);
+                            *(u32*)((u8*)cd + 0x1A9A) = *(u32*)((u8*)this + 0x191A);
+                            *(u32*)((u8*)cd + 0x1A9E) = *(u32*)((u8*)this + 0x1922);
+                            *(s16*)((u8*)cd + 0x18BC) = *(s16*)((u8*)this + 0x1740);
+                            *(s16*)((u8*)cd + 0x18BE) = *(s16*)((u8*)this + 0x1742);
+                            *(s16*)((u8*)cd + 0x18C0) = *(s16*)((u8*)this + 0x1744);
+                            *(s16*)((u8*)cd + 0x18C2) = *(s16*)((u8*)this + 0x1746);
+                            *(s16*)((u8*)cd + 0x18C4) = *(s16*)((u8*)this + 0x1748);
+                            *(s16*)((u8*)cd + 0x18C6) = *(s16*)((u8*)this + 0x174A);
+                            *(s16*)((u8*)cd + 0x18C8) = *(s16*)((u8*)this + 0x174C);
+                            *(s16*)((u8*)cd + 0x18CA) = *(s16*)((u8*)this + 0x174E);
+                            *(s16*)((u8*)cd + 0x18CC) = *(s16*)((u8*)this + 0x1750);
+                            *(s16*)((u8*)cd + 0x18CE) = *(s16*)((u8*)this + 0x1752);
+                            *(s16*)((u8*)cd + 0x18D0) = *(s16*)((u8*)this + 0x1754);
+                            *(s16*)((u8*)cd + 0x18D2) = *(s16*)((u8*)this + 0x1756);
+                            *(s16*)((u8*)cd + 0x18D4) = *(s16*)((u8*)this + 0x1758);
+                            *(s16*)((u8*)cd + 0x18D6) = *(s16*)((u8*)this + 0x175A);
+                            *(s16*)((u8*)cd + 0x18D8) = *(s16*)((u8*)this + 0x175C);
+                            *(s16*)((u8*)cd + 0x18DA) = *(s16*)((u8*)this + 0x175E);
+                            *(s16*)((u8*)cd + 0x18DC) = *(s16*)((u8*)this + 0x1760);
+                            *(s16*)((u8*)cd + 0x18DE) = *(s16*)((u8*)this + 0x1762);
+                            *(s16*)((u8*)cd + 0x18E0) = *(s16*)((u8*)this + 0x1764);
+                            *(s16*)((u8*)cd + 0x18E2) = *(s16*)((u8*)this + 0x1766);
+                            *(s16*)((u8*)cd + 0x18E4) = *(s16*)((u8*)this + 0x1768);
+                            *(s16*)((u8*)cd + 0x18E6) = *(s16*)((u8*)this + 0x176A);
+                            *(s16*)((u8*)cd + 0x18E8) = *(s16*)((u8*)this + 0x176C);
+                            *(s16*)((u8*)cd + 0x18EA) = *(s16*)((u8*)this + 0x176E);
+                            *(s16*)((u8*)cd + 0x18EC) = *(s16*)((u8*)this + 0x1770);
+                            *(s16*)((u8*)cd + 0x18EE) = *(s16*)((u8*)this + 0x1772);
+                            *(s16*)((u8*)cd + 0x18F0) = *(s16*)((u8*)this + 0x1774);
+                            *(s16*)((u8*)cd + 0x18F2) = *(s16*)((u8*)this + 0x1776);
+                            *(s16*)((u8*)cd + 0x18F4) = *(s16*)((u8*)this + 0x1778);
+                            *(s16*)((u8*)cd + 0x18F6) = *(s16*)((u8*)this + 0x177A);
+                            *(s16*)((u8*)cd + 0x18F8) = *(s16*)((u8*)this + 0x177C);
+                            *(u32*)((u8*)cd + 0x18FA) = *(u32*)((u8*)this + 0x1782);
+                            *(u32*)((u8*)cd + 0x18FE) = *(u32*)((u8*)this + 0x177E);
+                            *(u32*)((u8*)cd + 0x1902) = *(u32*)((u8*)this + 0x178A);
+                            *(u32*)((u8*)cd + 0x1906) = *(u32*)((u8*)this + 0x1786);
+                            *(u32*)((u8*)cd + 0x190A) = *(u32*)((u8*)this + 0x178E);
+                            *(s16*)((u8*)cd + 0x190E) = *(s16*)((u8*)this + 0x1792);
+                            *(s16*)((u8*)cd + 0x1910) = *(s16*)((u8*)this + 0x1794);
+                            *(s16*)((u8*)cd + 0x1912) = *(s16*)((u8*)this + 0x1796);
+                            *(s16*)((u8*)cd + 0x1914) = *(s16*)((u8*)this + 0x1798);
+                            *(s16*)((u8*)cd + 0x1916) = *(s16*)((u8*)this + 0x179A);
+                            *(s16*)((u8*)cd + 0x1918) = *(s16*)((u8*)this + 0x179C);
+                            *(s16*)((u8*)cd + 0x191A) = *(s16*)((u8*)this + 0x179E);
+                            *(s16*)((u8*)cd + 0x191C) = *(s16*)((u8*)this + 0x17A0);
+                            *(s16*)((u8*)cd + 0x191E) = *(s16*)((u8*)this + 0x17A2);
+                            *(s16*)((u8*)cd + 0x1920) = *(s16*)((u8*)this + 0x17A4);
+                            *(s16*)((u8*)cd + 0x1922) = *(s16*)((u8*)this + 0x17A6);
+                            *(s16*)((u8*)cd + 0x1924) = *(s16*)((u8*)this + 0x17A8);
+                            *(s16*)((u8*)cd + 0x1926) = *(s16*)((u8*)this + 0x17AA);
+                            *(s16*)((u8*)cd + 0x1928) = *(s16*)((u8*)this + 0x17AC);
+                            *(s16*)((u8*)cd + 0x192A) = *(s16*)((u8*)this + 0x17AE);
+                            *(s16*)((u8*)cd + 0x192C) = *(s16*)((u8*)this + 0x17B0);
+                            *(s16*)((u8*)cd + 0x192E) = *(s16*)((u8*)this + 0x17B2);
+                            *(s16*)((u8*)cd + 0x1930) = *(s16*)((u8*)this + 0x17B4);
+                            *(s16*)((u8*)cd + 0x1932) = *(s16*)((u8*)this + 0x17B6);
+                            *(s16*)((u8*)cd + 0x1934) = *(s16*)((u8*)this + 0x17B8);
+                            *(s16*)((u8*)cd + 0x1936) = *(s16*)((u8*)this + 0x17BA);
+                            *(s16*)((u8*)cd + 0x1938) = *(s16*)((u8*)this + 0x17BC);
+                            *(s16*)((u8*)cd + 0x193A) = *(s16*)((u8*)this + 0x17BE);
+                            *(s16*)((u8*)cd + 0x193C) = *(s16*)((u8*)this + 0x17C0);
+                            *(s16*)((u8*)cd + 0x193E) = *(s16*)((u8*)this + 0x17C2);
+                            *(s16*)((u8*)cd + 0x1940) = *(s16*)((u8*)this + 0x17C4);
+                            *(s16*)((u8*)cd + 0x1942) = *(s16*)((u8*)this + 0x17C6);
+                            *(s16*)((u8*)cd + 0x1944) = *(s16*)((u8*)this + 0x17C8);
+                            *(s16*)((u8*)cd + 0x1946) = *(s16*)((u8*)this + 0x17CA);
+                            *(s16*)((u8*)cd + 0x1948) = *(s16*)((u8*)this + 0x17CC);
+                            *(s16*)((u8*)cd + 0x194A) = *(s16*)((u8*)this + 0x17CE);
+                            *(u32*)((u8*)cd + 0x194C) = *(u32*)((u8*)this + 0x17D4);
+                            *(u32*)((u8*)cd + 0x1950) = *(u32*)((u8*)this + 0x17D0);
+                            *(u32*)((u8*)cd + 0x1954) = *(u32*)((u8*)this + 0x17DC);
+                            *(u32*)((u8*)cd + 0x1958) = *(u32*)((u8*)this + 0x17D8);
+                            *(u32*)((u8*)cd + 0x195C) = *(u32*)((u8*)this + 0x17E0);
                         }
                     }
                 }
             }
-            *(float*)((u8*)self + 0x337C) = lbl_eu_806677E4;
+            *(float*)((u8*)this + 0x337C) = lbl_eu_806677E4;
         }
     }
 }
@@ -2379,12 +2379,12 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
 // six arts-stats rows (CtrlObjectParam_GetArtsStatsRow at +0x1C) into the stat fields, applies
 // the 0x1A-type arts-param blend, then updates 0x181A/0x174E from arts
 // params and refreshes the 6-slot attack-parameter records.
-void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam174Arg* arg) {
+void CActorParam_applyArtsStats__Q22cf11CActorParamFPv(cf::CActorParam* self, cf::CActorParam174Arg* arg) {
     if (arg == NULL) {
-        if (self->CActorParam_getActor() == NULL) return;
-        if (!(*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2)) return;
+        if (self->CBattleState_getOwner() == NULL) return;
+        if (!(*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F00) & 2)) return;
         arg = reinterpret_cast<cf::CActorParam174Arg*>(
-            CtrlObjectParam_GetCharEntry(*(u16*)((u8*)self->CActorParam_getActor() + 0x3F28)));
+            CtrlObjectParam_GetCharEntry(*(u16*)((u8*)self->CBattleState_getOwner() + 0x3F28)));
     }
     // Absolute field offsets (the 0x17E4 block predates the layout shift and
     // 0x3374/0x3378 are past it; raw addresses keep retail codegen, so every
@@ -2547,7 +2547,7 @@ void cf::CActorParam::CActorParam_updateHateEntries(float dt) {
 // 0x2B/0x2D into another), clamps the sums, derives per-axis gauge deltas
 // from f1, applies arts-param percentage scaling (0x5C/0x5D/0x9D/0x5E/0x5F),
 // then decays the 3x8 arts matrix (unk7C/unk80) with the scaled deltas.
-void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, float f1) {
+void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, float f1) {
     cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
     u8 ch = bm->mChain.unk0[2];
     if (ch >= 1 && ch <= 0x18) return;
@@ -2684,7 +2684,7 @@ void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // 0x98/0xC9 battle-state entries into gauge deltas, then pushes either the
 // 0x162A/0x1629 byte gauges or the target's own slot-0xC value through
 // Func48.
-void CActorParam_applyTargetEvent__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam10Arg* arg) {
+void CActorParam_applyTargetEvent__Q22cf11CActorParamFPQ22cf16CActorParam10Arg(cf::CActorParam* self, cf::CActorParam10Arg* arg) {
     cf::CActorParam10Target* tgt = (cf::CActorParam10Target*)arg->field_0x50;
     if (tgt == NULL) return;
     if (!(arg->field_0x74 & 1)) return;
@@ -2698,10 +2698,10 @@ void CActorParam_applyTargetEvent__Q22cf11CActorParamFv(cf::CActorParam* self, c
         max = lbl_eu_806677E4 + (float)(u32)*(s16*)((u8*)findBattleStatusEntry((u8*)self + 8, 0x98) + 0x14);
     }
     if (tgt->field_0x78 & 0x40000000) {
-        if (self->CActorParam_getActor() != NULL) {
-            void* o1 = self->CActorParam_getActor();
+        if (self->CBattleState_getOwner() != NULL) {
+            void* o1 = self->CBattleState_getOwner();
             if (*(u32*)((u8*)o1 + 0x3F00) & 2) {
-                void* o2 = self->CActorParam_getActor();
+                void* o2 = self->CBattleState_getOwner();
                 if (*(u16*)((u8*)o2 + 0x3F28) == 5) {
                     if (isBattleStatusActive((u8*)self + 8, 0xC9) != 0) {
                         cur = cur * (lbl_eu_806677E8 - (float)(u32)*(u32*)((u8*)findBattleStatusEntry((u8*)self + 8, 0xC9) + 0x10) / lbl_eu_80667818);
@@ -2736,8 +2736,8 @@ void cf::CActorParam::CActorParam_applyStatusHeal(CActorParam11Arg* arg) {
     int val;
     if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x45, &val) == 0) return;
     getInstance__Q22cf14CBattleManagerFv();
-    void* actor = this->CActorParam_getActor();
-    float a = calcBattleDamage(this->CActorParam_getActor(), actor, NULL);
+    void* actor = this->CBattleState_getOwner();
+    float a = calcBattleDamage(this->CBattleState_getOwner(), actor, NULL);
     float b = this->CActorParam_getDamageScale();
     float v = a * (lbl_eu_80667830 * ((float)val * b));
     int iv = (int)v;
@@ -2751,7 +2751,7 @@ void cf::CActorParam::CActorParam_applyStatusHeal(CActorParam11Arg* arg) {
 // the unk15E0 (Func127) block: 0x37/0x38 stat transfers, 0x46 arts-gauge roll
 // and an actor sweep (list type 0x20, filter 0x800) applying the arts
 // magnitude to the target.
-void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam12Arg* arg) {
+void CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg(cf::CActorParam* self, cf::CActorParam12Arg* arg) {
     // Magic-constant converters pinned to the named sdata2 doubles: u8 via
     // 0x4330000000000000 (lbl_eu_806677F0), s32 via 0x4330000080000000
     // (lbl_eu_806677F8). Declared up front so MWCC hoists the two
@@ -2810,12 +2810,12 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                 if (self->CActorParam_getHp() != f31) {
                     s32 unk10 = e->unk10;
                     getInstance__Q22cf14CBattleManagerFv();
-                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                    float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                     int v = (int)((float)unk10 * rate);
                     broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
-                                  self->CActorParam_getActor(),
+                                  self->CBattleState_getOwner(),
                                   (int)(lbl_eu_80667868 * (float)v), 0, 0, 1,
-                                  (void*)(uintptr_t)*(u32*)((u8*)self->CActorParam_getActor() + 0x3F10));
+                                  (void*)(uintptr_t)*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F10));
                     cs32.w[1] = (u32)v ^ 0x80000000;
                     self->CActorParam_addHp(cs32.d - lbl_eu_806677F8);
                     if (e->unk14 > 0) {
@@ -2848,7 +2848,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                     if (arg->field_0xA8 % 100 < unk1A) {
                         s32 unk10 = e37->unk10;
                         getInstance__Q22cf14CBattleManagerFv();
-                        float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                        float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                         int v = (int)((float)unk10 * rate);
                         cs32.w[1] = (u32)v ^ 0x80000000;
                         self->CActorParam_addHp(cs32.d - lbl_eu_806677F8);
@@ -2866,11 +2866,11 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                 if (self->CActorParam_getHp() != f31) {
                     int v = (int)((float)e->unk14 * self->CActorParam_getDamageScale() / lbl_eu_80667818);
                     getInstance__Q22cf14CBattleManagerFv();
-                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                    float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                     broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
-                                  self->CActorParam_getActor(),
+                                  self->CBattleState_getOwner(),
                                   (int)(lbl_eu_80667868 * (float)v), 0, 0, 1,
-                                  (void*)(uintptr_t)*(u32*)((u8*)self->CActorParam_getActor() + 0x3F10));
+                                  (void*)(uintptr_t)*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F10));
                     cs32.w[1] = (u32)v ^ 0x80000000;
                     self->CActorParam_addHp(cs32.d - lbl_eu_806677F8);
                     if (e->unk10 > 0) {
@@ -2885,7 +2885,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
     }
 
     if (self->CActorParam_getStatusTable() != NULL) {
-        if (*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) {
+        if (*(u32*)((u8*)self->CBattleState_getOwner() + 0x3F00) & 2) {
             if (self->CActorParam_isBattleLocked() == 0) {
                 s32 v;
                 if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x37, &v)) {
@@ -2909,7 +2909,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                                     int vv = (int)((float)(cs32.d - lbl_eu_806677F8) *
                                                    (self->CActorParam_getDamageScale() / lbl_eu_80667818));
                                     getInstance__Q22cf14CBattleManagerFv();
-                                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                                    float rate = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
                                     cs32.w[1] = (u32)vv ^ 0x80000000;
                                     int vv2 = (int)((float)(cs32.d - lbl_eu_806677F8) * rate);
                                     cs32.w[1] = (u32)vv2 ^ 0x80000000;
@@ -2936,16 +2936,16 @@ void cf::CActorParam::CActorParam_resetGaugesAndRefresh() {
 // arg carries a u16 dispatch id at +0xC (CfObjectActor's override calls this
 // base with the same arg). Id 0x10 -> getter slot 0x178 then setter 0x16C;
 // id 0xF -> getter slot 0x190 then setter 0x184.
-void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg) {
-    switch ((int)((cf::CActorParam179Arg*)arg)->field_0xC) {
+void cf::CActorParam::CBattleState_notifyEntryUpdated(CBattleStateEntry* entry) {
+    switch ((int)((cf::CActorParam179Arg*)entry)->field_0xC) {
     case 0x10: {
-        int v = self->CActorParam_getGaugeMax();
-        self->CActorParam_addGauge(v);
+        int v = CActorParam_getGaugeMax();
+        CActorParam_addGauge(v);
         break;
     }
     case 0xF: {
-        int v = self->CActorParam_getSecondGaugeMax();
-        self->CActorParam_addSecondGauge(v);
+        int v = CActorParam_getSecondGaugeMax();
+        CActorParam_addSecondGauge(v);
         break;
     }
     default:
@@ -2960,25 +2960,26 @@ void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // (slot 0x24). Finally dispatches on the id: 0x10 -> Func58, 0xF -> Func64,
 // 0x11 -> re-raise battle state 0x11 on the target actor (id from arg+0x10,
 // s16 gate at arg+0x14).
-void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam180Arg* arg) {
+void cf::CActorParam::CBattleState_getLinkedActorId(CBattleStateEntry* entry) {
+    cf::CActorParam180Arg* arg = (cf::CActorParam180Arg*)entry;
     if (getInstance__Q22cf14CBattleManagerFv() != NULL) {
         getInstance__Q22cf14CBattleManagerFv();
     }
     if (isBattleEventKind3(arg->field_0xC) != 0) {
-        if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*self), 0x90) != 0) {
-            void* r = matchBattleStatusEntry(&static_cast<cf::CBattleState&>(*self), 0x34,
-                *(u32*)((u8*)self->CActorParam_getActor() + 0x3F10), 0x90, 0);
+        if (isBattleStatusActive(&static_cast<cf::CBattleState&>(*this), 0x90) != 0) {
+            void* r = matchBattleStatusEntry(&static_cast<cf::CBattleState&>(*this), 0x34,
+                *(u32*)((u8*)CBattleState_getOwner() + 0x3F10), 0x90, 0);
             if (r != NULL) {
-                self->CBattleState_applyEventEntry((cf::CBattleStateEntry*)r);
+                CBattleState_applyEventEntry((cf::CBattleStateEntry*)r);
             }
         }
     }
     switch ((int)arg->field_0xC) {
     case 0x10:
-        self->CActorParam_clearGauge();
+        CActorParam_clearGauge();
         break;
     case 0xF:
-        self->CActorParam_clearSecondGauge();
+        CActorParam_clearSecondGauge();
         break;
     case 0x11:
         if (arg->field_0x10 != NULL) {
@@ -2997,7 +2998,7 @@ void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // us-8017e5b8: retail symbol is Fv; the real ABI passes (self, flag). With
 // flag!=0 feeds the 0x17F4/0x17F8 floats to vtable slots 0x118/0x138
 // (Func33/41); with flag==0 to slots 0x11C/0x13C (Func34/42).
-void CActorParam_commitArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, int flag) {
+void CActorParam_commitArtsStatus__Q22cf11CActorParamFi(cf::CActorParam* self, int flag) {
     if (flag != 0) {
         self->CActorParam_setHp(self->unk17E4.field_10);
         self->CActorParam_setHitCharge(self->unk17E4.field_14);
@@ -3023,7 +3024,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc6(int val) {
 // idle at the default gauge with the 0x1C busy mask clear. Finally, when
 // the actor's arts-gauge type is the 0x3F28==5 group, feed the default
 // gauge value to slot 0x150.
-extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_refreshBattleStatus__Q22cf11CActorParamFv(cf::CActorParam* self) {
     u32 cue = *(u32*)((u8*)self + 0x1530);
     if (cue != 0) {
         self->CBattleState_clearStatusId(cue);
@@ -3057,10 +3058,10 @@ extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorPara
             }
         }
     }
-    if (self->CActorParam_getActor() != NULL) {
-        void* o1 = self->CActorParam_getActor();
+    if (self->CBattleState_getOwner() != NULL) {
+        void* o1 = self->CBattleState_getOwner();
         if (*(u32*)((u8*)o1 + 0x3F00) & 2) {
-            void* o2 = self->CActorParam_getActor();
+            void* o2 = self->CBattleState_getOwner();
             if (*(u16*)((u8*)o2 + 0x3F28) == 5) {
                 self->CActorParam_setTensionPoints(lbl_eu_806677E4);
             }
@@ -3070,7 +3071,7 @@ extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorPara
 // us-8017e9d4: retail symbol is Fv; the real ABI passes (self, delta). Adds
 // delta to the arts gauge at 0x17F0, clamps it to [default, 0x17FC], then
 // pushes the two Func49 gauge readings (second first) to CCharVoiceMan_EnqueueGaugePairVoice.
-void CActorParam_addArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self, float delta) {
+void CActorParam_addArtsGauge__Q22cf11CActorParamFf(cf::CActorParam* self, float delta) {
     float b;
     float a = self->CActorParam_getArtsGauge();
     float cur = self->unk17E4.field_0C + delta;
@@ -3082,7 +3083,7 @@ void CActorParam_addArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self, float
         self->unk17E4.field_0C = max;
     }
     b = self->CActorParam_getArtsGauge();
-    self->CActorParam_getActor();
+    self->CBattleState_getOwner();
     CCharVoiceMan_EnqueueGaugePairVoice(b, a);
 }
 // us-8017eab4: find the battle-state entry with id 0x10 in the CBattleState
@@ -3249,16 +3250,16 @@ void cf::CActorParam::CActorParam_addHate(void* target, float f1, float f2, floa
 // 0x335A counter is already positive, runs the id-0x73 arts scan: a hit sets
 // the counter to 1 (clamped), notifies SysWinLog_TickCounter2C and clears 0x3358.
 // Finally forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
-void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
+void CActorParam_accumulateTension__Q22cf11CActorParamFi(cf::CActorParam* self, int arg) {
     // Plain byte-base alias for the absolute status fields (0x3358/0x335A
     // live past the layout shift; members would address the wrong bytes).
     // Kept as a local so MWCC folds base+displacement per use (retail shape)
     // instead of CSE-ing one address across the loop.
     u8* sb = (u8*)self;
     if (arg < 0) {
-        void* obj = self->CActorParam_getActor();
+        void* obj = self->CBattleState_getOwner();
         if (obj != NULL) {
-            void* obj2 = self->CActorParam_getActor();
+            void* obj2 = self->CBattleState_getOwner();
             if (isBattleStatusActive((u8*)obj2 + 8, 0xBF) != 0) {
                 return;
             }
@@ -3268,7 +3269,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
     stepItemNotch((u16*)(sb + 0x3358), arg);
     if (*(s16*)(sb + 0x335A) <= 0) {
         if (self->CActorParam_getStatusTable() != NULL) {
-            void* obj = self->CActorParam_getActor();
+            void* obj = self->CBattleState_getOwner();
             if (*(u32*)((u8*)obj + 0x3F00) & 2) {
                 if (Counter_TestBit(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     CfEnumListHolder holder;
@@ -3295,7 +3296,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
     }
     s16 clamped = *(s16*)(sb + 0x335A);
-    u8* obj = (u8*)self->CActorParam_getActor();
+    u8* obj = (u8*)self->CBattleState_getOwner();
     if (obj != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
@@ -3303,11 +3304,11 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // us-8017f5f0: retail symbol is Fv; the real ABI passes (self, val).
 // Raises the 0x3358 status field up to val, unless the actor (Func2) exists
 // and reports an active blocker (isBattleStatusActive at obj+8 with id 0xBF).
-void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, int val) {
+void CActorParam_raiseTensionValue__Q22cf11CActorParamFi(cf::CActorParam* self, int val) {
     if (val < (s16)self->unk3358) {
-        void* obj = self->CActorParam_getActor();
+        void* obj = self->CBattleState_getOwner();
         if (obj != NULL) {
-            void* obj2 = self->CActorParam_getActor();
+            void* obj2 = self->CBattleState_getOwner();
             if (isBattleStatusActive((u8*)obj2 + 8, 0xBF) != 0) {
                 return;
             }
@@ -3320,12 +3321,12 @@ void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice. A blocker on the
 // actor (isBattleStatusActive id 0xBF) aborts the update; the id-0x73 arts scan
 // (arg <= 0) cancels it for dead arts.
-void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
+void CActorParam_resetTensionState__Q22cf11CActorParamFi(cf::CActorParam* self, int arg) {
     s16 orig = (s16)self->unk335A;
     if (arg < orig) {
-        void* obj = self->CActorParam_getActor();
+        void* obj = self->CBattleState_getOwner();
         if (obj != NULL) {
-            void* obj2 = self->CActorParam_getActor();
+            void* obj2 = self->CBattleState_getOwner();
             if (isBattleStatusActive((u8*)obj2 + 8, 0xBF) != 0) {
                 return;
             }
@@ -3333,7 +3334,7 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
     }
     if (arg <= 0) {
         if (self->CActorParam_getStatusTable() != NULL) {
-            void* obj = self->CActorParam_getActor();
+            void* obj = self->CBattleState_getOwner();
             if (*(u32*)((u8*)obj + 0x3F00) & 2) {
                 if (Counter_TestBit(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     CfEnumListHolder holder;
@@ -3359,7 +3360,7 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
     SysWinLog_TickCounter2C(arg);
     self->unk3358 = 0;
     s16 clamped = (s16)self->unk335A;
-    u8* obj = (u8*)self->CActorParam_getActor();
+    u8* obj = (u8*)self->CBattleState_getOwner();
     if (obj != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
@@ -3381,7 +3382,7 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
     SysWinLog_TickCounter2C(delta);
     self->unk3358 = 0;
     s16 clamped = (s16)self->unk335A;
-    u8* obj = (u8*)self->CActorParam_getActor();
+    u8* obj = (u8*)self->CBattleState_getOwner();
     if (obj != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
     }
@@ -3393,9 +3394,9 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // sets the counter to 1, notifies SysWinLog_TickCounter2C and clears 0x3358. Finally
 // forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
-    void* obj = self->CActorParam_getActor();
+    void* obj = self->CBattleState_getOwner();
     if (obj != NULL) {
-        void* obj2 = self->CActorParam_getActor();
+        void* obj2 = self->CBattleState_getOwner();
         if (isBattleStatusActive((u8*)obj2 + 8, 0xBF) != 0) {
             return;
         }
@@ -3415,7 +3416,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
     self->unk3358 = (u16)(int)(self->unk3368 * (float)self->unk335C[idx]);
     if ((s16)self->unk335A <= 0) {
         if (self->CActorParam_getStatusTable() != NULL) {
-            void* o = self->CActorParam_getActor();
+            void* o = self->CBattleState_getOwner();
             if (*(u32*)((u8*)o + 0x3F00) & 2) {
                 if (Counter_TestBit(self->CActorParam_getStatusTable(), 0x73) != 0) {
                     CfEnumListHolder holder;
@@ -3442,7 +3443,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
     }
     s16 clamped = (s16)self->unk335A;
-    u8* o = (u8*)self->CActorParam_getActor();
+    u8* o = (u8*)self->CBattleState_getOwner();
     if (o != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)o, clamped, orig);
     }
@@ -3462,7 +3463,7 @@ int cf::CActorParam::CActorParam_getCurrencyBalance() {
 // (Func26) + 1; returns 1 when the row index exceeds the 0x63-row table.
 // The bdat pointer is read before the virtual call (retail keeps it in r31
 // across the call).
-extern "C" u32 CActorParam_UnkVirtualFunc87__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" u32 CActorParam_getLevelExp__Q22cf11CActorParamFv(cf::CActorParam* self) {
     void* bdat = lbl_eu_806640DC;
     u32 row = self->CActorParam_getArtsLevel() + 1;
     if (row > 0x63) {
@@ -3503,7 +3504,7 @@ void cf::CActorParam::CActorParam_reinitBattleStats() {
 // us-8017fd2c: (re)initialize the 10 CActorParam_UnkStruct1 entries at
 // 0x2A84: zero the int/flag fields, -1 the unk4C id, and stamp the float
 // gauge fields (unk54..unk6C) with the sdata2 default instead of 0.
-extern "C" void CActorParam_UnkVirtualFunc136__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_initBattleStats__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // Layout now matches retail (CArtsSet/CAttackSet de-virtualized); the
     // entry base is this+0x2A84 with absolute displacements.
     cf::CActorParam_UnkStruct1* s = self->unk2A84;
@@ -3579,42 +3580,35 @@ void CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv(cf::CActorParam* self) 
 // thunk is spelled as a direct tail call with the real arity: no
 // function-pointer casts, no mismatched prototypes.
 
-void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam180Arg* arg);
-extern "C" void CBattleState_getLinkedActorId__Q22cf11CActorParamFv(void* self, cf::CActorParam180Arg* arg) {
-    CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv((cf::CActorParam*)((char*)self - 8), arg);
+// Hand-spelled with legal identifiers because the CActorParam vtable is
+// still a hand table (the compiler names these @8@<member>).
+// dont_inline: compiler-emitted thunks never inline their target.
+#pragma push
+#pragma dont_inline on
+extern "C" void thunk_8_CBattleState_getLinkedActorId__Q22cf11CActorParamFPQ22cf17CBattleStateEntry(void* self, cf::CBattleStateEntry* entry) {
+    reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_getLinkedActorId(entry);
 }
 
-// us-80180170 (void* arg unifies with the CfObjectActor.hpp decl of this base
-// entry; the body recovers the CActorParam179Arg layout with a cast).
-void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
-extern "C" void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self, cf::CActorParam179Arg* arg) {
-    // Indirect call through the shared void* prototype (matches the
-    // CfObjectActor.hpp decl of this base entry): it keeps MWCC from
-    // inlining the same-TU Func179 body here, preserving retail's
-    // subi+b tail shape with r4 forwarded live.
-    ((void(*)(cf::CActorParam*, void*))CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv)((cf::CActorParam*)((char*)self - 8), arg);
+// us-80180170
+extern "C" void thunk_8_CBattleState_notifyEntryUpdated__Q22cf11CActorParamFPQ22cf17CBattleStateEntry(void* self, cf::CBattleStateEntry* entry) {
+    reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_notifyEntryUpdated(entry);
 }
 
-// us-80180178: battle thunk adjusting this by -8, tail-calling UVF1.
-extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self);
-extern "C" const char* CBattleState_UnkVirtualFunc3__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    // Same indirect-call shape (blocks inlining of the same-TU Func1 body).
-    return ((const char*(*)(cf::CActorParam*))CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv)((cf::CActorParam*)((char*)self - 8));
+// us-80180178
+extern "C" void* thunk_8_CObjectParam_getParamPtr__Q22cf11CActorParamFv(void* self) {
+    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CObjectParam_getParamPtr();
 }
 
 // us-80180180
-int CActorParam_getActor__Q22cf11CActorParamFv(void* self);
-extern "C" int CBattleState_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    return CActorParam_getActor__Q22cf11CActorParamFv((char*)self - 8);
+extern "C" void* thunk_8_CBattleState_getOwner__Q22cf11CActorParamFv(void* self) {
+    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_getOwner();
 }
 
-// us-80180188: target is the CActorParam slot-0xA0 body owned by CArtsParam.cpp
-// (declared u32/no-arg there, so it cannot be named with real arity here);
-// the call is still spelled with the true (this-only) prototype instead of
-// the generic function-pointer typedef.
-extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    ((void(*)(cf::CActorParam*))CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv)((cf::CActorParam*)((char*)self - 8));
+// us-80180188: target body lives in CArtsParam.cpp.
+extern "C" void* thunk_8_CBattleState_callOwnerObject__Q22cf11CActorParamFv(void* self) {
+    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_callOwnerObject();
 }
+#pragma pop
 
 // us-8017e9xx family: thin float-forwarders onto owned gauge slots.
 extern "C" void CActorParam_applyStoredHp__Q22cf11CActorParamFv(cf::CActorParam* self) {

@@ -10,6 +10,9 @@
 #include <nw4r/lyt.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Vtable symbol for CPcKizunagram (stored by CPcKizunagramVtblBase).
 extern "C" void* lbl_eu_80537618[];
@@ -262,8 +265,6 @@ extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 // so this TU saw an int/unsigned return, not u8.
 extern "C" int isPaneVisible(void);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u32 CUICfManager_getPackedFont9C(void);
-extern "C" void FetchRelatePair(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)
 extern "C" const u32 lbl_eu_8066889C;
@@ -272,8 +273,6 @@ extern "C" const u32 lbl_eu_806688A4;
 // u16-param view: retail passes the affinity value with only a clrlwi 16
 // (no low-byte mask at the call site), so this TU saw a u16 parameter.
 // Literal mangled identifier links to the same symbol as setLayoutTextBoxNumber.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
-extern "C" void setPaneVisible(void*, u32);
 
 // Cursor destroy helper (external retail symbol, not in this TU).
 extern "C" void KizunaCurDestroyLayout(CPcKizunaCur* cur);

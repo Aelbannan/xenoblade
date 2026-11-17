@@ -8,6 +8,7 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 namespace cf { class CfObjectMove; }
 #include "kyoshin/CPartyStateWin.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // C-linkage imports for the embedded CModelDispEquip region (retail names are
 // unmangled; the definitions live in kyoshin/menu/parts/CModelDispEquip.cpp
@@ -53,7 +54,6 @@ extern "C" void startPartyPanelClose(CPartyState*);
 extern "C" void markReplayClose(CTitleAHelp*);
 extern "C" void beginClose(CTitleAHelp*);
 extern "C" void ModelDispStartFadeIn(CModelDisp*);
-extern "C" void BuildSlotItemLists(u32);
 
 // C-linkage imports for the embedded CTitleAHelp sub-object (retail unmangled
 // names; CTitleAHelp.cpp defines the same symbols). int return for isInitialized
@@ -86,7 +86,6 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // UI sound effect (playUISound__FUl). C++ linkage so MWCC emits the mangled
 // retail name.
-void playUISound(u32);
 
 // Sibling in this TU (retail unmangled name; extern "C" so the call site in
 // PartyStateWin_StateOpen binds to the retail symbol).
@@ -124,7 +123,6 @@ extern "C" void func_801C41E8(CTitleAHelp*, u8);
 
 // Party-size byte / config-word lookups (retail unmangled; also declared in
 // CPartyState.hpp / CMapSel.hpp, which cannot be included here).
-extern "C" u8 code80135FDC_getByte_64077();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Scene object behind the common-archive alloc handle; its alloc-handle

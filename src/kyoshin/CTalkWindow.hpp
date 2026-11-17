@@ -10,6 +10,8 @@
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 /*
  * CTalkWindow - talk-window process (created by TalkWin_Create_CC78 on the work
@@ -247,14 +249,10 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-int IsMenuState621F0();
 void updateTalkWindow(CTalkWindow* self);
 void driveTalkIntro(CTalkWindow* self);
 void driveTalkMessage(CTalkWindow* self);
 void layoutTalkPanes(CTalkWindow* self);
-int code80135FDC_getByte_64058();
-int code80135FDC_getByte_64059();
-int GetSysStateFlag31();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 CTalkWinTalkSrc* func_800BBC0C();
 int getAnimModelId(CTalkWinTalkC4* talkC4);
@@ -270,8 +268,6 @@ void UIWin_CreateQuestWin(u16 id, int a, int b);
 void UIWin_CreateShopWin(u16 id);
 void UIWin_CreateBEDE0Win(u16 id);
 void CUICfManager_queueMakeCrystalMenu();
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-char* GetBdatNameByNumId(const char* msg);
 void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
 void* __ct__CTagProcessor(void* self);
@@ -283,12 +279,7 @@ void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CTalkWinPose* pose,
 }
 
 // C++-linkage imports (retail emits the mangled forms).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
-                   int a, int b);
 void* findObjectById(int id);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void playUISound(unsigned long id);
 
 // The CTalkWindow ctor is a C-ABI global (retail `__ct__CTalkWindow`, no
 // class-length mangling); defined in CTalkWindow.cpp - the factory

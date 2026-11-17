@@ -5,6 +5,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Declared BEFORE the monolib includes: functions.hpp (pulled in via
 // monolib/scn/CScnNw4r.hpp) declares CTaskGame_setLoadScreen as a plain C++ function,
@@ -507,7 +508,6 @@ extern "C" int getWiimoteBattery__Q22cf9CfPadTaskFv();
 
 // nw4r DrawInfo raw-storage helpers (retail pre-mangled names; same scheme
 // as CQuestWindow.hpp).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Virtual-delete views for the loading screen / battery objects (vtable dtor
 // at +8, flag 1); same scheme as CfObjEnumListVtView.

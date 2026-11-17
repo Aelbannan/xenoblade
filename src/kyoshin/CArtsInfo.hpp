@@ -7,6 +7,10 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/CItemBoxGrid_Color.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class CEventFile;
 
@@ -103,20 +107,6 @@ struct CArtsPanePos {
     CArtsFpu z; // +0x34
 };
 
-// 4x s16 colour records shared through the small-data area (sinit'd by
-// sinit_8023BC8C).
-struct CArtsQuadColor {
-    s16 c0;
-    s16 c2;
-    s16 c4;
-    s16 c6;
-};
-
-// 8-byte pane colour pair returned in r3/r4 by PaneMatGetS16Quad.
-struct CArtsColorPair {
-    u32 lo;
-    u32 hi;
-};
 
 
 
@@ -182,8 +172,6 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void closeFileHandle__FPP11CFileHandle(void*);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
@@ -194,13 +182,11 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 // to 8 bits at the call site, so the param is u8.
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16); // colour init
-extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
 // rejects differing extern "C" redeclarations as illegal overloading).
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
-extern "C" u16 BdatGetItemId(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
 // (CItem_kindPtr is declared by kyoshin/cf/CItem.hpp: the real 2-arg
@@ -280,18 +266,9 @@ extern void* lbl_eu_806640D8;
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" char* CUICfManager_getPackedFont9C(void);
-extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" char* MakeTplNameSysFile(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void setPaneVisible(void*, u32);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
-extern "C" CArtsColorPair PaneMatGetS16Quad(void* pane, int idx);
-extern "C" void CopyVec4s(CArtsQuadColor* dst, const CArtsColorPair* src);
 
 // Float constant in the small data area (sda21-accessed via lfs): the anchor
 // pane x-translate written by OnFileEvent.

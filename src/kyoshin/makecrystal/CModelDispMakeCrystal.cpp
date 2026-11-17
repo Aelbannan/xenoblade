@@ -14,6 +14,8 @@
 #include "kyoshin/makecrystal/CMCCylinderGauge.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 // code_80135FDC.hpp:254 declares ml::epsilon as extern u32 while
 // monolib/math/FloatUtils.hpp (via CDeviceVI.hpp) declares it const float -
 // MWCC 10563. This TU never references the symbol; rename the later copies.
@@ -58,7 +60,6 @@
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
-void playUISound(u32);
 #undef writeVec3f
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
@@ -147,7 +148,6 @@ float scaleByGlobal(float val);
 void initCrystalData(unsigned char* p);
 int CSysWin_isActive(void* self);
 int CSysWin_isReady(void* self);
-extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 int isMCGetItemBoxActive(void* self);
 int crystalListGetDataFlag(void* self);
 void crystalListState3To4(void* self);
@@ -192,7 +192,6 @@ void MakeCrystal_AppendItemSteps(void*);
 void MakeCrystal_TeardownUI(void*);
 void CrySupSetTexByIndex(void*, u8);
 void CrySupStartState(void*);
-void incrementEventCounter__FUl(u32);
 void CCharVoiceMan_FlushAll(void);
 void MenuSnd_StopAllSlots_89C88(void);
 void CTaskGame_stopVision(void);
@@ -268,7 +267,6 @@ void init__16CMCCylinderGaugeFv(void*);
 void CrySupBuildLayout(void*);
 void MakeCrystalCopyParamBlock(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
 void EffSched_LookupA(void*);
@@ -292,7 +290,6 @@ void* Scn_FindCamItem(void*, int);
 void ScnCamPointAt(void*, void*, void*);
 s32 getInstance__Q22ml6MTRandFv();
 s32 rand31__Q22ml6MTRandFv();
-u16 LookupRelateValue(u8, u8);
 void* CtrlObjectParam_GetCharEntry(u32);
 int Counter_TestBit(void*, int);
 u8 IdTable_SumValues(void*, int);
@@ -972,7 +969,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
     sysWinTermLayout(base + 0xe78);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->cleanup();
     teardownMCGetItemBox(base + 0xecc);
-    closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
+    closeFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
     releaseArcResourceAccessor(*reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
     *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) = nullptr;
     deleteRegion__17UnkClass_8045F564Fv(base + 0x2c);
@@ -1280,9 +1277,9 @@ void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
     if (*vel < lbl_eu_806684DC) return;
     *vel = lbl_eu_806684A4;
     MakeCrystal_PlaceCrystals(self);
-    incrementEventCounter__FUl(0x79);
-    incrementEventCounter__FUl(0x7a);
-    incrementEventCounter__FUl(0x7b);
+    incrementEventCounter(0x79);
+    incrementEventCounter(0x7a);
+    incrementEventCounter(0x7b);
     if (base[0x2dd0] == 0 && (GetCollectedFlagByte(base[0x5f0]) & 0xFF) == 6) {
         base[0x2dd0] = 1;
         return;
@@ -1328,8 +1325,8 @@ void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
                 }
             }
         }
-        incrementEventCounter__FUl(0x7c);
-        incrementEventCounter__FUl(0x7d);
+        incrementEventCounter(0x7c);
+        incrementEventCounter(0x7d);
         MakeCrystal_SpawnCrystalItem(self, 3, 0);
 }
 
@@ -1491,8 +1488,8 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
             MakeCrystal_ResetSlotList((CModelDispMakeCrystal*)selfp, 0);
             CrySupSetTexByIndex(base + 0xc70, base[0x13b8 + i]);
             CrySupStartState(base + 0xc70);
-            incrementEventCounter__FUl(0x7e);
-            incrementEventCounter__FUl(0x7f);
+            incrementEventCounter(0x7e);
+            incrementEventCounter(0x7f);
             playUISound(0x8e);
             MakeCrystal_SpawnCrystalItem(selfp, 4, base[0x13b8 + i]);
             base[0x13b8 + i] = 0;
@@ -3043,8 +3040,8 @@ void MakeCrystal_TeardownUI(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     if (base[0x2dd4] == 0) {
         CDeviceVI::waitForDrawDone();
-        closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x18));
-        closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x24));
+        closeFileHandle(reinterpret_cast<CFileHandle**>(base + 0x18));
+        closeFileHandle(reinterpret_cast<CFileHandle**>(base + 0x24));
         void* arc = &lbl_eu_8065FC18[0];
         if (arc != nullptr) {
             // Release the file-state machine's object references.
@@ -3076,7 +3073,7 @@ void MakeCrystal_TeardownUI(CModelDispMakeCrystal* self)
         for (u8 i = 0; i < 2; i++) {
             u8* sub = base + (u32)i * 0x5cc + 0x44;
             for (u8 j = 0; j < 6; j++) {
-                closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(sub + (u32)j * 0xc + 0x564));
+                closeFileHandle(reinterpret_cast<CFileHandle**>(sub + (u32)j * 0xc + 0x564));
             }
         }
         // Release the built display models for both slots.
@@ -3729,7 +3726,7 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
     ScnCamPointAt(m, &v2, &v1);
     for (u8 j = 0; j < 2; j++) {
         for (u8 i = 0; i < 6; i++) {
-            closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(
+            closeFileHandle(reinterpret_cast<CFileHandle**>(
                 base + (u32)j * 0x5cc + 0x44 + (u32)i * 0xc + 0x564));
         }
     }

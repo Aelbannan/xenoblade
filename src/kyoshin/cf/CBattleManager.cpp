@@ -4161,7 +4161,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
             if (src != nullptr && (src->field_78 & 0x40000000)) {
                 if (IdTable_GetSum(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x3f, &v) != 0 &&
                     target != nullptr &&
-                    ((cf::CfObjectActor*)obj)->CfObjectActor_sharesMoveFlags(target) != nullptr &&
+                    ((cf::CfObjectActor*)obj)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)target) != 0 &&
                     ((cf::CActorParam*)target)->CActorParam_getHitRate() < lbl_eu_80666DE8) {
                     result += 0.01f * (f32)v;
                 }
@@ -4836,7 +4836,7 @@ extern "C" void dispatchBattleAI(void* mgr, void* obj, void* enemy, void* arg4){
     f32 angle;
     if(((BattleRemoveObjAccessor*)enemy)->field_3f00 & 0x02){
         f32 bearing = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
-        angle = bearing - ((cf::CfObjectActor*)enemy)->CfObjectActor_readFacingAngle();
+        angle = bearing - ((cf::CfObjectActor*)enemy)->CfObject_getMoveHeadAngle();
         while(ml::pi <= angle) angle -= ml::tau;
         while(angle < -ml::pi) angle += ml::tau;
     }else{
@@ -5228,7 +5228,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
         }
     } else if (sub->field_3C == 2 || sub->field_3C == 6) {
         if (isBattleStatusActive((u8*)arg2 + 8, 0xf7)) {
-            if (((cf::CfObjectActor*)arg2)->CfObjectActor_sharesMoveFlags((void*)arg1) == 0) {
+            if (((cf::CfObjectActor*)arg2)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)arg1) == 0) {
                 if (move->mFlagsArray[0].flags & 1) {
                     findBattleStatusEntry((u8*)arg2 + 8, 0xf7);
                     u32 f78 = move->mFlagsArray[1].flags;
@@ -6910,7 +6910,7 @@ static void func_staleMove(void* self, void* arg1, void* arg2, BattleTargetData*
     // the event source falls back to arg1.
     if (!(move->field_74 & 0x08)) {
         if (isBattleStatusActive((u8*)arg2 + 8, 0xF7)) {
-            if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags(arg1) == 0) {
+            if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)arg1) == 0) {
                 findBattleStatusEntry((u8*)arg2 + 8, 0xF7);
                 u32 f78 = move->field_78;
                 if ((f78 & 0x200) || ((f78 & 0x400) && !(f78 & 0x800))) {
@@ -7193,7 +7193,7 @@ postEmit:
         if (ival > 0) {
             if (!(move->field_74 & 0x10)) {
                 if (isBattleStatusActive((u8*)arg2 + 8, 0xF7)) {
-                    if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags(arg1) == 0) {
+                    if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)arg1) == 0) {
                         u32 m78 = move->field_78;
                         if ((m78 & 0x200) || ((m78 & 0x400) && !(m78 & 0x800))) {
                             move->field_74 |= 0x80000080;
@@ -7444,7 +7444,7 @@ void emitBattleEvents(void* self_, void* attacker_, void* target_, void* move_) 
 
     if (!(move->mFlagsArray[0].flags & 0x08)) {
         if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
-            if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags(attacker) == 0) {
+            if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)attacker) == 0) {
                 findBattleStatusEntry((u8*)target + 8, 0xF7);
                 if ((move->mFlagsArray[1].flags & 0x200) ||
                     ((move->mFlagsArray[1].flags & 0x400) && !(move->mFlagsArray[1].flags & 0x800))) {
@@ -7700,7 +7700,7 @@ tail2:
         if (cnt > 0) {
             if (!(move->mFlagsArray[0].flags & 0x10000000)) {
                 if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
-                    if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags(attacker) == 0) {
+                    if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)attacker) == 0) {
                         if ((move->mFlagsArray[1].flags & 0x200) ||
                             ((move->mFlagsArray[1].flags & 0x400) && !(move->mFlagsArray[1].flags & 0x800))) {
                             move->mFlagsArray[0].flags |= 0x80000080;
@@ -8594,7 +8594,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                                      // otherwise -- declared here for safety)
 
         if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
-            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags(attacker) == 0) {
+            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)attacker) == 0) {
                 findBattleStatusEntry((u8*)target + 8, 0xF7);
                 u32 f = move->field_78;
                 if ((f & 0x00000200) || ((f & 0x00000400) && !(f & 0x00000800))) {
@@ -9179,14 +9179,14 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
                             void* st = *(void**)((u8*)target + 0x3F60);
                             if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
-                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle());
+                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             // retail: horizontal dist^2 = x^2+z^2 only (y stored, unused)
                             f32 dist2 = d.x * d.x + d.z * d.z;
                             void* st2 = *(void**)((u8*)target + 0x3F60);
                             if (dist2 <= lbl_eu_80666E74) {
-                                *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle();
+                                *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x46C) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
@@ -9203,13 +9203,13 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
                             void* st = *(void**)((u8*)target + 0x3F60);
                             if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
-                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle());
+                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             f32 dist2 = d.x * d.x + d.z * d.z;   // horizontal only
                             void* st2 = *(void**)((u8*)target + 0x3F60);
                             if (dist2 <= lbl_eu_80666E74) {
-                                *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle();
+                                *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObject_getMoveHeadAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x478) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
@@ -9650,7 +9650,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
 
     if (bm->mFlags78 & 0x1) {                       // 0x7090-0x70D8
         if (!inActorList1(self, target)) {
-            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags(actor) != 0)
+            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)actor) != 0)
                 return;                               // 0x70DC-0x70F8
         }
     }
@@ -9852,7 +9852,7 @@ postLoop:
     // ---- post-loop: target switch + per-sub event dispatch (0x7FE0-0x8FEC) --
     if (!(bm->mFlags74 & 0x8)) {                    // 0x7FE0-0x7FE8
         if (isBattleStatusActive((u8*)target + 8, 0xF7)) {   // 0x7FEC-0x7FFC
-            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags(actor) == 0) {  // 0x8000-0x801C
+            if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)actor) == 0) {  // 0x8000-0x801C
                 findBattleStatusEntry((u8*)target + 8, 0xF7); // 0x8020-0x8028
                 u32 f78 = bm->mFlags78;             // 0x802C
                 if ((f78 & 0x200) || ((f78 & 0x400) && !(f78 & 0x800))) {   // 0x8030-0x8044
@@ -10146,7 +10146,7 @@ postLoop:
                 if (bm->mFlags74 & 0x10000) {       // 0x8C24
                     BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
                     if (!(md->mFlags530 & 1)) {
-                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + f1);
                     }
                     // face the actor (0x8C70-0x8D24)
@@ -10157,7 +10157,7 @@ postLoop:
                         f32 dz = pt->z - pa->z;
                         BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
                         if (dx * dx + dz * dz <= lbl_eu_80666E74) {
-                            md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                            md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
                             md2->mFacing46C = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * lbl_eu_80666E10;
                         }
@@ -10171,7 +10171,7 @@ postLoop:
                 } else if (bm->mFlags74 & 0x4000) { // 0x8D84
                     BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
                     if (!(md->mFlags530 & 1)) {
-                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(ml::pi + f1);
                     }
                     // approach values (0x8DCC-0x8EF4)
@@ -10182,7 +10182,7 @@ postLoop:
                         f32 dz = pt->z - pa->z;
                         BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
                         if (dx * dx + dz * dz <= lbl_eu_80666E74) {
-                            md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                            md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObject_getMoveHeadAngle();
                         } else {
                             md2->mFacing478 = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * lbl_eu_80666E10;
                         }
@@ -10217,7 +10217,7 @@ postLoop:
 
 afterType3:
         // ---- final (0x8FEC-0x9080) -----------------------------------------
-        if ((u32)((cf::CfObjectActor*)(actor))->CfObjectActor_sharesMoveFlags(target) == 0) {
+        if ((u32)((cf::CfObjectActor*)(actor))->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)target) == 0) {
             ((cf::CfObjectActor*)(target))->CActorParam_addHate(actor, lbl_eu_80666DD4, lbl_eu_80666DD4, lbl_eu_80666DD4);   // (1,1,1) 0x900C-0x9030
         } else {
             void* sub4 = *(void**)((u8*)target + 0x04);
@@ -10932,8 +10932,8 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
                 E484_VisionPair* vp = (E484_VisionPair*)vision;
                 void* ownerA = MapFx_ResolveOwner(findObjectById((s32)vp->field_00));
                 void* ownerB = MapFx_ResolveOwner(findObjectById((s32)vp->field_04));
-    ((cf::CfObjectActor*)ownerA)->CfObjectActor_pushRefreshValue((float)value);
-    ((cf::CfObjectActor*)ownerB)->CfObjectActor_pushRefreshValue((float)value);
+    ((cf::CfObjectActor*)ownerA)->CfObject_pushRefreshValue((float)value);
+    ((cf::CfObjectActor*)ownerB)->CfObject_pushRefreshValue((float)value);
                 startEnumObjects(h2.get(), 0x80000, 0);
                 for (u32 i = 0; i < ((cf::CVisionEnumList*)h2.get())->count; i++) {
                     void* typeObj = __dynamic_cast(getObjectAt(h2.get(), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);

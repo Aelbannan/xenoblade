@@ -7,6 +7,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -131,7 +134,6 @@ void __dt__8CProcessFv(CProcess* _this, int flags);
 CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags);
 void cbRenderBefore__14CMenuLandTelopFv(void* _this);
 int QstCnt_HasInstance_6B94();
-int IsMenuState621F0();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
 // their canonical headers via the include chain (u32 / void* from
 // kyoshin/cf/CBattleManagerApi.hpp).
@@ -147,9 +149,6 @@ const char* getTelopString(int index);
 }
 
 // C++-linkage helpers (retail symbols are their mangled forms).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
-                   int a, int b);
 
 
 // Font handles dispatch through IDeviceFontInfo::getFont at +0x24 (real
@@ -170,7 +169,6 @@ extern f64 lbl_eu_806673F8;       // u32->double conversion bias
 // C-linkage imports whose retail symbols are unmangled or pre-mangled
 // identifiers (declaring them C++ would emit a mangled reloc).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* BpsStateSingletonToInt();                    // system menu open gate
 unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();
@@ -189,7 +187,6 @@ unsigned int SysWinGetSingleton();             // system-menu gate
 }
 
 // C++-linkage import (retail symbol is the mangled playUISound__FUl).
-void playUISound(u32 cue);
 
 // Global data imports (sbss/rodata; MWCC does not mangle global-scope data).
 extern CLandTelopGlobal* lbl_eu_806641A0;

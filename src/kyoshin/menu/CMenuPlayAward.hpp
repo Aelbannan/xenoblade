@@ -21,6 +21,8 @@
 class CScn;
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // 8-byte award list entry (array element).
 class CPlayAwardEntry {
@@ -225,11 +227,9 @@ extern const float lbl_eu_80668998;
 extern "C" int KyoshinHeap_GetField44();
 
 // Scene-active query (retail-unmangled; gates cbRenderBefore draws).
-extern "C" int IsMenuState621F0();
 
 // DrawInfo layout setup (retail MANGLED name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo;
 // declared with C++ linkage so MWCC re-derives the mangled reloc).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Retail-unmangled free functions of this unit (US retail strips the
 // mangling). C linkage keeps call relocs on the bare retail names;
@@ -305,7 +305,6 @@ extern "C" void ArtsInfo_SetReadyFlag();
 
 // Shared layout-arc resource manager (retail-unmangled; ArcResourceAccessor
 // with GetResource at vtable +0x0C, used by PlayAward_RefreshPageTitles).
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // CfGameManager controller-type query (retail pre-mangled name; declared
 // under C linkage so calls bind the literal identifier).
@@ -336,10 +335,8 @@ extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u8 code80135FDC_getByte_6407F();
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 

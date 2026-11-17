@@ -12,6 +12,7 @@
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt.h>
 #include "kyoshin/menu/CMenuTitle.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // CfPadData access shim - only holds the flags this handler reads (see CfPadData.hpp).
 struct CfPadDataLocal {
@@ -61,7 +62,6 @@ void CMenuTitle::Move() {
 
 // CMenuTitle::cbRenderBefore (us-802b87f0) - when the input-enable byte is
 // set, disable Z testing and draw the title with a layout DrawInfo.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 void CMenuTitle::cbRenderBefore() {
     if (mInputEnable != 0) {

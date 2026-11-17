@@ -8,6 +8,7 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Render-gate mode bitfield (.sbss); bit 21 set means rendering is blocked.
 extern u32 lbl_eu_80663E28;
@@ -31,8 +32,6 @@ struct CMakeCrystalCopyBlock {
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
 void CUICfManager_createQueuedMenus();
-void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
-int  IsMenuState621F0();
 void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
 void BgTex_Tick_3D54(void* self);                            // CBgTex animate
 int  mkCrystalGetFlag4361(void* self);                            // CMakeCrystalWin query
@@ -67,7 +66,6 @@ void __ct__CMakeCrystalWin(void* self, u32 arg4, u32 arg5);
 }
 
 // UI sound effect (playUISound__FUl).
-void playUISound(u32 op);
 // MakeCrystalInitWin helper: init the CBgTex sub-object and arm the state byte.
 // (declared extern "C" above -- retail symbol is unmangled)
 
@@ -250,6 +248,7 @@ MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRe
 }
 
 #include "monolib/scn/CScn.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Typed view over the +0x58..+0x80 sub-objects (exact layout, explicit
 // pads): render anchor, owning scene, CBgTex block, CMakeCrystalWin head.
@@ -340,7 +339,7 @@ void CMenuMakeCrystal::cbRenderBefore() {
         return;
     GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
     nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(reinterpret_cast<u8*>(this) + 0x60, &drawInfo);
 }
 

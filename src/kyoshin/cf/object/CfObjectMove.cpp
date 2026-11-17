@@ -235,7 +235,7 @@ extern "C" void CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 // Wave-62: override of CfObject_releaseMoveTargets (+0x68). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CfObject_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+extern "C" void CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     // Teardown pair (vtable +0x17C then +0x178), then release the C4 target
     // (vtable +0xE0) and the NPC movement target (vtable +0x8, flag 1),
     // clearing both pointers.
@@ -371,7 +371,7 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
 // Wave-62: override of CfObject_updateMoveRate (+0x64). Free-function Fv
 // form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+extern "C" void CfObject_updateMoveRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     float v = Scn_GetFrameDelta(lbl_eu_80663E14);
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
     // The flag word is read once for the direction tests (kept in a local)
@@ -449,7 +449,7 @@ extern "C" void CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 // run the position query (vtable +0x138) and write its x component into the
 // C4 target's scale fields (0x430/0x43C, then 0x434 scaled by
 // lbl_eu_80666AD0).
-void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, void* arg) {
+void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, void* arg) {
     if (self->mTarget6C0 != 0) {
         if (arg != self->mTarget6C0) {
             if (self->mTarget6C0 != 0) {
@@ -718,7 +718,7 @@ ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
 // Wave-62: override of CfObject_setRotVec (+0xBC). Free-function FPv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
 extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, void* src);
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, void* src) {
+extern "C" void CfObject_setRotVec__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, void* src) {
     // Z-only movement (X within epsilon but Z outside it) marks the target
     // with the 0x20 flag so its next update re-aims instead of sliding.
     const ml::CVec3* vec = (const ml::CVec3*)src;
@@ -742,7 +742,7 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMo
 // setTurnAngle, 6C0 +0xC store) - forced-name form carrying the hidden
 // float arg (same scheme as CfObject_UnkVirtualFunc30). (Old method body
 // moved verbatim onto the retail Fv name.)
-void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
     CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
@@ -760,7 +760,7 @@ void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, fl
 // as CfObject_setMoveHeadAngle). Base call, then the C4 target's busy flag
 // (bit 2) gates a setTurnScale call plus a +0x400 flag set (mTargetC4 is
 // re-read after the call), and the 6C0 target's +0xC word receives the value.
-void CfObject_UnkVirtualFunc30__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+void CfObject_setMoveYaw__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
     CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
@@ -797,7 +797,7 @@ extern "C" void* CfObjectMove_getSubObj54(CfObjectMove* self) { return &self->mS
 // Retail symbol is Fv but the body consumes f1 (store to self+0x6E4 and to
 // the C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObjectMove_recordMoveValue).
-extern "C" void CfObject_UnkVirtualFunc57__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+extern "C" void CfObject_UnkVirtualFunc57__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
     cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
     self->mField6E4 = value;
     if (target != 0) {
@@ -809,7 +809,7 @@ extern "C" void CfObject_UnkVirtualFunc57__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // Retail symbol is Fv but the body consumes f1 (store to self and to the
 // C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObject_UnkVirtualFunc32/33 below).
-extern "C" void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+extern "C" void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
     void* target = self->mTargetC4;
     self->mField6E8 = value;
     if (target != 0) {
@@ -820,8 +820,8 @@ extern "C" void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFv(cf::CfObject
 // Wave-63: override of CObjectParam slot +0x40. Fv keeps Unk linker name
 // from lbl_eu_80529690; base call targets Model's retail UnkVirtualFunc2.
 extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
-extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    return CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(self);
+void* cf::CfObjectMove::CObjectParam_getParamPtr() {
+    return CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(this);
 }
 
 
@@ -850,16 +850,16 @@ void* cf::CfObjectMove::CfObject_pushRefreshValue(float value) {
 // Retail CfObjectMove_setNpcMoveRange (0x800BEC44, slot 0x1EC): store the
 // incoming float to the +0x6C0 movement target's +0xD4 arrival range
 // (ocUnit walkR feeds it the walk range). Forced-name Fv form keeps the
-// Unk linker name CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv with
+// Unk linker name CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf with
 // the hidden float arg (same scheme as the writeTargetField sibling below).
-extern "C" void CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+extern "C" void CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
     void* o = *(void**)((u8*)self + 0x6c0);
     if (o != 0) {
         *(float*)((u8*)o + 0xd4) = value;
     }
 }
 
-extern "C" void CfObjectMove_writeTargetField__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u16 v) {
+extern "C" void CfObjectMove_writeTargetField__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, u16 v) {
     void* o = *(void**)((u8*)self + 0x6c0);
     if (o) *(u16*)((u8*)o + 0xde) = v;
 }
@@ -891,7 +891,7 @@ extern "C" float CfObject_readRefreshValue__Q22cf12CfObjectMoveFv(cf::CfObjectMo
 // the bctr (ignored here; tail call takes r3 only) - forced-name form with
 // hidden args (recordMoveValue precedent). Converted from a method so the
 // widened class decl keeps compiling; same Fv symbol, same body.
-extern "C" void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int modeA, int modeB, int count, const ml::CVec3* start, double angle) {
+extern "C" void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFiiiPCQ22ml5CVec3d(cf::CfObjectMove* self, int modeA, int modeB, int count, const ml::CVec3* start, double angle) {
     (void)modeA; (void)modeB; (void)count; (void)start; (void)angle;
     // Dispatch to the NPC movement-target handler (tail call, r3 only).
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
@@ -904,7 +904,7 @@ extern "C" void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFv(cf::CfObject
 // the bctr (ignored here; tail call takes r3 only) - forced-name form with
 // hidden args (refreshNpcState precedent). Converted from a method so the
 // widened class decl keeps compiling; same Fv symbol, same body.
-extern "C" void CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec, float step, int flag, int angle) {
+extern "C" void CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3fii(cf::CfObjectMove* self, const ml::CVec3* vec, float step, int flag, int angle) {
     (void)vec;
     (void)step;
     (void)flag;
@@ -915,7 +915,7 @@ extern "C" void CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObject
     }
 }
 
-extern "C" void CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
+extern "C" void CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3(cf::CfObjectMove* self, const ml::CVec3* vec) {
     (void)vec;
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
     if (target != 0) {
@@ -923,7 +923,7 @@ extern "C" void CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjec
     }
 }
 
-extern "C" void CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
+extern "C" void CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int arg) {
     (void)arg;
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
     if (target != 0) {
@@ -931,7 +931,7 @@ extern "C" void CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjec
     }
 }
 
-extern "C" void CfObjectMove_restartNpcTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int a, int b, int c) {
+extern "C" void CfObjectMove_restartNpcTarget__Q22cf12CfObjectMoveFiii(cf::CfObjectMove* self, int a, int b, int c) {
     (void)a; (void)b; (void)c;
     // Tail-call the NPC movement-target handler (r3 only); see Func7/8/12/13.
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
@@ -983,7 +983,7 @@ extern "C" void* CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFv(cf::CfObjectMo
 // vtable query result leftover in r3). Query the +0x38 sub-object's vtable
 // slot +0xE4; on a non-zero result re-run the query (retail reloads the
 // sub pointer) and forward the query result plus the incoming index.
-void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
+void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
@@ -993,7 +993,7 @@ void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
     }
 }
 
-void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
+void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
@@ -1008,7 +1008,7 @@ void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
 // (same scheme as CfObjectMove_setEffectSlotBit/18). The +0x38 sub-object's
 // vtable +0xE4 is queried twice; on success the query result plus the five
 // args go to CharEffRegisterSlot (the s16 arg emits the retail extsh).
-void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
+void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
@@ -1046,7 +1046,7 @@ void cf::CfObjectMove::CfObjectMove_setAllEffectBits() {
 // slot query) and returns the helper's bool result (0 on the null path) -
 // forced-name form carrying the hidden arg and the return. Same sub-object
 // +0xE4 double-query scheme as CfObjectModel_UnkVirtualFunc18.
-bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
+bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
@@ -1057,7 +1057,7 @@ bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
     return 0;
 }
 
-void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
+void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
@@ -1088,7 +1088,7 @@ void CfObjectModel_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CfObjectMove* sel
 
 // Retail symbol is Fv but the body takes a hidden arg (r4) and returns a
 // pointer (the CfGameManager loader result, or 0) - forced-name form.
-extern "C" void* CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, void* param) {
+extern "C" void* CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, void* param) {
     void* a = self->mField6DC;
     bool cond = (a != 0 && self->mField6E0 != 0);
     if (cond) {
@@ -1182,7 +1182,7 @@ void cf::CfObjectMove::virtCall10(){
 
 // Retail symbol is Fv but the body is a bcctr thunk that leaves the caller's
 // r4/r5 live into CfResObjImpl::ResObj_SetWork_CD68 (slot +0x30).
-extern "C" void CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int idx, int value) {
+extern "C" void CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl(cf::CfObjectMove* self, int idx, int value) {
     reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_SetWork_CD68(idx, value);
 }
 
@@ -1194,7 +1194,7 @@ extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 
 // Wave-62: override of CfObject_refreshSubB0 (+0x80). Free-function Fv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
-extern "C" void CfObject_UnkVirtualFunc12__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+extern "C" void CfObject_refreshSubB0__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     // Double-hop through the +0xB0 sub-object's vtable slots +0x0C and
     // +0x10 (Shift-padded view: the vptr sits at object+0x10). Retail
     // reloads mSubObjB0 for each call, so keep the two calls as separate
@@ -1211,7 +1211,7 @@ extern "C" void CfObject_UnkVirtualFunc12__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // the +0x38 sub-object's +0xE4 query, release the model list, and clear the
 // slot. Then clears the matching +0x6C flag bit (18 for slot 1, 17 for
 // slot 0).
-void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int index) {
+void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int index) {
     if (index < 2) {
         if (self->mField6F8[index] != 0) {
             if (self->mSubObj98 != 0) {
@@ -1239,7 +1239,7 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self,
 // base implementation, which the base header declares with an int param) -
 // forced-name form carrying the hidden arg, same scheme as
 // CfObject_setMoveReadyFlag.
-void CfObject_UnkVirtualFunc66__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag) {
+void setPointEnabled__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int flag) {
     CfObjectModel_setPointEnabled(self, flag);
     if ((self->unk64 & 8) != 0 && flag == 0 && lbl_eu_80665958 != 0) {
         // flag is provably 0 here, so the attach path never runs; it is

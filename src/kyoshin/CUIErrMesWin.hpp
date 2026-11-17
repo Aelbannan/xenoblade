@@ -9,6 +9,7 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <nw4r/math/math_types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void cbRenderBefore__12CUIErrMesWinFv();
@@ -108,7 +109,6 @@ extern "C" void __dt__7CSysWinFv(u8* self, int flags);
 
 // Layout DrawInfo setup helper - retail emits the mangled name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Circular-list views used by ErrWin_ClearAllLists_58A4's active-flag sweeps. The lists
 // returned by getListB28__Fv / getReslistC08 share the same shape: the

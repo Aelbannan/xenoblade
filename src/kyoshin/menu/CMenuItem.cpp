@@ -16,6 +16,8 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // ---- Declarations private to this unit (C-style imports and the copy views
 // used by Init until CItemBoxGrid and its members are real classes). ----
@@ -490,8 +492,6 @@ extern "C" void beginClose(CTitleAHelp* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C412C(CTitleAHelp* self);

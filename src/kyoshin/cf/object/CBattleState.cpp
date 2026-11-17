@@ -1924,9 +1924,9 @@ kind_done:
 extern "C" bool isBattleStatusKind0(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
 extern "C" bool isBattleStatusValid(unsigned int value) { return value - 0x125u <= 5u; }
 extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
-extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0; }
-extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
-extern "C" void CBattleState_getLinkedActorId__Q22cf12CBattleStateFv() {}
+void* cf::CBattleState::CBattleState_getOwner() { return 0; }
+void cf::CBattleState::CBattleState_notifyEntryUpdated(CBattleStateEntry* entry) {}
+void cf::CBattleState::CBattleState_getLinkedActorId(CBattleStateEntry* entry) {}
 
 // Batch 2026-08: battlestate-vfunc12 owns CBattleState_clearStagingEntry
 // exclusively. The decl above carries the behavior name; the def below keeps
@@ -1936,7 +1936,7 @@ extern "C" void CBattleState_getLinkedActorId__Q22cf12CBattleStateFv() {}
 // explicit self/id params emits the exact Fv symbol (MWCC_CASES sect.3908).
 // Walks the 8-entry array at self+0x1388 (stride 0x34); on an id match,
 // whole slot via a tail-call to memset (retail `b memset`).
-extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {
+extern "C" void CBattleState_clearStagingEntry__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 id) {
     if (id >= 0x12f) {
         return;
     }
@@ -1957,14 +1957,14 @@ extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattle
 void* cf::CBattleState::CBattleState_getStatusSlot(int index) {
     return (char*)&((cf::CBattleStateEntryArray*)this)->entries[index];
 }
-extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
+extern "C" void* CBattleState_fetchStatusSlot__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntryArray*)self)->entries[idx];
 }
-extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
+extern "C" void* CBattleState_getEventSlot__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x688))[idx];
 }
 // Recovered extern "C" forms keep the retail Fv symbol (vfunc15 precedent).
-extern "C" void* CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(void* self, int idx) {
+extern "C" void* CBattleState_readStatusSlot__Q22cf12CBattleStateFv(void* self, int idx) {
     return (char*)self + idx * 0x34 + 0xd08;
 }
 // countBattleStatusEntries: r3 = self, r4 = id. Counts the 0x68 status slots at
@@ -2085,14 +2085,14 @@ extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(cf::CBattleState* self,
     }
     return 0;
 }
-extern "C" void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 flags) {
+extern "C" void CBattleState_addStatusBits4__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 flags) {
     *(u16*)((u8*)self + 0x4) = (u16)(*(u16*)((u8*)self + 0x4) | flags);
 }
-extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 flags) {
+extern "C" void CBattleState_addStatusBits6__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 flags) {
     *(u16*)((u8*)self + 0x6) = (u16)(*(u16*)((u8*)self + 0x6) | flags);
 }
-int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return (int)&lbl_eu_80662248; }
-extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0; }
+void* cf::CBattleState::CObjectParam_getParamPtr() { return &lbl_eu_80662248; }
+void* cf::CBattleState::CBattleState_callOwnerObject() { return 0; }
 
 // Batch 2026-08: battlestate-vfunc4 owns CBattleState_setBattleParam
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
@@ -2113,7 +2113,7 @@ extern "C" u8 classifyBattleCommand(int index) {
     u.w = getBdatStringColumnValue(lbl_eu_806640E0, &lbl_eu_805018A8[0xf], index);
     return u.b;
 }
-extern "C" void CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {
+extern "C" void CBattleState_setBattleParam__Q22cf12CBattleStateFi(cf::CBattleState* self, u32 id) {
     if (id >= 0x12f) {
         return;
     }
@@ -2164,7 +2164,7 @@ extern "C" int isArtsUsable(u32 id, u32 flag) {
 // 13-word block (lwz/stw pairs): struct assignment would emit per-field
 // widths (lhz/lha) and memcpy would call out -- explicit u32-pair copies
 // reproduce the word copy (same convention as vfunc8/10).
-extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(
+extern "C" void CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi(
     cf::CBattleState* self, u32 id) {
     // Pure-u32 block view: a struct copy of this shape makes MWCC's block
     // copy backend emit the paired lwz/stw schedule with retail's r5/r0
@@ -2188,7 +2188,7 @@ extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(
 // id == 0, and isBattleStatusActive(self, id) == 0 all bail early. Otherwise
 // builds a zeroed CBattleStateEntry (unk0C = id, unk30 |= 0x200,
 // unk2E = id) and dispatches it through vt+0x24 (UnkVirtualFunc8).
-extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
+extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFUl(
     cf::CBattleState* self, u32 id) {
     cf::CBattleStateEntry entry;
 

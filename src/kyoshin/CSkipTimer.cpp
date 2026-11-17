@@ -3,7 +3,6 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/CSkipTimer.hpp"
-extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(void*); }
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSysWinImports.hpp"
@@ -14,8 +13,8 @@ extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(v
 
 #include <cstdio>
 #include "kyoshin/CSkipTimerImports.hpp"
-extern "C" u32 CUICfManager_getPackedFontD8();
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // .sdata2 float constant used as the "animation reached frame" bound.
 // (AnimRewindFrame stays as declared in code_80135FDC.hpp - read-only header)
@@ -480,7 +479,7 @@ void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 // CSkipTimerTeardown (CSkipTimer): tear down the whole widget (dtor-style cleanup).
 void CSkipTimerTeardown(CSkipTimer* self) {
-    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout2;
     self->mField28 = 0;
     if (layout != 0) {
@@ -767,7 +766,7 @@ __declspec(noinline) void CSkipTimer2RebuildLayout(CSkipTimer2* self) {
                   &lbl_eu_80510568[0x25]);
     CSkipTimer2RebindAnim(self);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
-                  &lbl_eu_80510568[0x41], CUICfManager_getPackedFontD8());
+                  &lbl_eu_80510568[0x41], (u32)CUICfManager_getPackedFontD8());
     nw4r::lyt::Pane* pane = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                                 ->GetRootPane()
                                 ->FindPaneByName(&lbl_eu_80510568[0x41], true);

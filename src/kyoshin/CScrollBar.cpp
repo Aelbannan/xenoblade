@@ -10,12 +10,12 @@
 
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Cross-TU layout helpers (kyoshin .text). Retail keeps these unmangled at
 // CScrollBar call sites; extern "C" stops MWCC from emitting __F... tails.
 extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
-void closeFileHandle(CFileHandle**);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
 

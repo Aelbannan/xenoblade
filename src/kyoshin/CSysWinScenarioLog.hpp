@@ -6,6 +6,8 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class CFileHandle;
 class CScn;
@@ -882,14 +884,9 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _thi
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
 // but takes a vestigial bool arg - same convention as isClassicController above).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-extern "C" u8   DecMenuCounter64080();
-extern "C" u8   code80135FDC_getByte_64080();
-extern "C" void code80135FDC_postIncByte_64080();
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor).
-void closeFileHandle(CFileHandle** handle);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // Float thresholds used by SysWinLog_PollBattleEnd's player-range check.
 extern "C" f32 lbl_eu_80668AE0;
@@ -905,8 +902,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-coun
 // call sites truncate with an explicit (u16) cast (see SysWinLog_OpenContent).
 // BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
-extern "C" char* MakeTplNameSysFile(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
@@ -918,7 +913,6 @@ extern char lbl_eu_8050EE24[];
 extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
-extern "C" int IsMenuState621F0();
 extern "C" s32  MenuTutorialIsCreated();
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
@@ -930,7 +924,4 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 // inline body at each call site (retail calls them out-of-line).
 extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg);
 extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
-                   int arg2, int arg3);
 extern "C" u32 KyoshinHeap_GetField44();

@@ -90,9 +90,11 @@ public:
         return *reinterpret_cast<CAIActionVtbl**>(this);
     }
 
-    // Declared Fv for vtable; body is extern "C" with outA/outB args
-    virtual void CAIAction_UnkVirtualFunc1(); // 0x8
-    virtual void CAIAction_UnkVirtualFunc2(); // 0xC
+    // 0x8: export the trailer slot to outA and the ring entries to outB.
+    virtual void CAIAction_UnkVirtualFunc1(CAIActionSlot* outA, CAIActionExport* outB);
+    // 0xC: inverse of 0x8 (import trailer from inA, ring entries from inB).
+    virtual void CAIAction_UnkVirtualFunc2(CAIActionSlot* inA, CAIActionExport* inB);
+    void CAIAction_setOwner(u32 owner);
 
     // 0x0: vtable
     u32 unk4;          // 0x4
@@ -124,17 +126,6 @@ extern cf::CAIActionVtbl lbl_eu_8052F598;
 // CVision.hpp / chain/CChain.hpp (MWCC 10197) in every TU that includes
 // both headers. The definitions in CAIAction.cpp are marked extern "C"
 // directly; callers use the canonical extern "C" header decls.)
-
-// Fv mangling, but callers leave outA in r4 and outB in r5
-extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* outA,
-                                                              cf::CAIActionExport* outB);
-
-// Inverse of UnkVirtualFunc1: imports trailer from inA, then imports ring
-// entries from inB into this->unk20C. Same Fv mangling / r4-r5 ABI.
-extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* inA,
-                                                              cf::CAIActionExport* inB);
 
 extern void initAIActionTable(void*);
 extern void clearAIActionTable();

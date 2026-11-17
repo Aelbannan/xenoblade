@@ -13,8 +13,7 @@
 #include <monolib/work/CProcess.hpp>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class IWorkEvent;
 class IScnRender;
@@ -354,114 +353,114 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     case 1: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A68, lbl_eu_80664A70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A68, (const GXColorS10*)lbl_eu_80664A70);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D70);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D70);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D70);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D90, lbl_eu_80662D94);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AE8, lbl_eu_80664AF0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B68, lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B68, lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B68, lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B68, lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664AE8, (const GXColorS10*)lbl_eu_80664AF0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
         break;
     }
     case 2: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A78, lbl_eu_80664A80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A78, (const GXColorS10*)lbl_eu_80664A80);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D74);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D74);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D74);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D98, lbl_eu_80662D9C);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AF8, lbl_eu_80664B00);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B78, lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B78, lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B78, lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B78, lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664AF8, (const GXColorS10*)lbl_eu_80664B00);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
         break;
     }
     case 3: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A88, lbl_eu_80664A90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A88, (const GXColorS10*)lbl_eu_80664A90);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D78);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D78);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D78);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA0, lbl_eu_80662DA4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B08, lbl_eu_80664B10);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B88, lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B88, lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B88, lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B88, lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B08, (const GXColorS10*)lbl_eu_80664B10);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
         break;
     }
     case 4: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A98, lbl_eu_80664AA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A98, (const GXColorS10*)lbl_eu_80664AA0);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D7C);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D7C);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D7C);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA8, lbl_eu_80662DAC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B18, lbl_eu_80664B20);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B98, lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664B98, lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664B98, lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664B98, lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B18, (const GXColorS10*)lbl_eu_80664B20);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
         break;
     }
     case 5: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AA8, lbl_eu_80664AB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AA8, (const GXColorS10*)lbl_eu_80664AB0);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D80);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D80);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D80);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB0, lbl_eu_80662DB4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B28, lbl_eu_80664B30);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BA8, lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BA8, lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B28, (const GXColorS10*)lbl_eu_80664B30);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
         break;
     }
     case 6: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AB8, lbl_eu_80664AC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AB8, (const GXColorS10*)lbl_eu_80664AC0);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D84);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D84);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D84);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB8, lbl_eu_80662DBC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B38, lbl_eu_80664B40);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BB8, lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BB8, lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B38, (const GXColorS10*)lbl_eu_80664B40);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
         break;
     }
     case 7: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AC8, lbl_eu_80664AD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AC8, (const GXColorS10*)lbl_eu_80664AD0);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D88);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D88);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D88);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC0, lbl_eu_80662DC4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B48, lbl_eu_80664B50);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BC8, lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BC8, lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B48, (const GXColorS10*)lbl_eu_80664B50);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
         break;
     }
     case 8: {
         char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AD8, lbl_eu_80664AE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AD8, (const GXColorS10*)lbl_eu_80664AE0);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D8C);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D8C);
         PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D8C);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC8, lbl_eu_80662DCC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B58, lbl_eu_80664B60);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], lbl_eu_80664BD8, lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], lbl_eu_80664BD8, lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B58, (const GXColorS10*)lbl_eu_80664B60);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
         break;
     }
     }
@@ -492,8 +491,8 @@ extern "C" void tickChainCounter(CMenuBattleChain* self) {
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x115], true)->SetVisible(true);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x124], true)->SetVisible(false);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x133], true)->SetVisible(true);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0xf4], self->mField9E);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0x133], self->mField9E);
+        setLayoutTextBoxNumber(self->mLayout, &base[0xf4], self->mField9E);
+        setLayoutTextBoxNumber(self->mLayout, &base[0x133], self->mField9E);
     }
 }
 

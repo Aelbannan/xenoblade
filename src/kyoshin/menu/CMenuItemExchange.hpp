@@ -9,6 +9,8 @@
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CScn;
 class IScnRender;
@@ -206,9 +208,7 @@ extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool in
 extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
-extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)

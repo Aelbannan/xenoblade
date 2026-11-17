@@ -5,6 +5,7 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 // Forward-declare cf::CfGameManager before the include chain pulls in
 // CfGameManager.hpp (its UnkClass_8007DAE0::init declaration references the
 // type before the namespace block that declares it).
@@ -16,8 +17,6 @@ class CfGameManager;
 #include "monolib/device/CDeviceFile.hpp"
 
 #include <string.h>
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "monolib/scn/code_804BC9EC.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
@@ -1856,7 +1855,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<CCol6FontView*>(fontObj)->vf7()));
 
     // If the font value is present, label all 21 count panes with it.
-    u32 fontVal = CUICfManager_getPackedFont9C();
+    u32 fontVal = (u32)CUICfManager_getPackedFont9C();
     if (fontVal != 0) {
         setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x105], fontVal);
         setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x10f], fontVal);
@@ -1942,7 +1941,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
         u32 c = CtrlRemote_TouchBitByArg(i + 0x7fe);
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], idx);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf, c);
+        setLayoutTextBoxNumber(self->mpLayout, buf, c);
         sprintf(buf, &lbl_eu_80502050[0x26a], idx);
         LayoutSetTextBoxFmtValue(self->mpLayout, buf, s46, 0);
         sprintf(buf, &lbl_eu_80502050[0x275], idx);
@@ -1977,10 +1976,10 @@ extern "C" void col6SysLayout(CCol6System* self) {
                   0);
 
     // Player counts on the two slots.
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
                                             CtrlRemote_TouchBitByArg(0x7fc));
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
                                             CtrlRemote_TouchBitByArg(0x7fd));
 
@@ -2006,7 +2005,7 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
     for (s32 i = 0; i < 4; i++) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], i + 1);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf,
+        setLayoutTextBoxNumber(self->mpLayout, buf,
                                                 CtrlRemote_TouchBitByArg(i + 0x7fe));
     }
 
@@ -2020,12 +2019,12 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
             u32 n = (u32)(f + playerIdx * 5 + 1);
             u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0x2cc],
                                    &lbl_eu_80502050[0x2dd], n);
-            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber(
                 self->mpLayout, &lbl_eu_80502050[0x1a4], id * 100);
             char* s3 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
             LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199], s3, 0);
-            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber(
                 self->mpLayout, &lbl_eu_80502050[0x212], CItemBlock_getPtr20E8());
             char* s4 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
@@ -2052,10 +2051,10 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
                     u8 v = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x2cc], bufC8,
                                              n);
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf148, name, 0);
-                    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+                    setLayoutTextBoxNumber(self->mpLayout,
                                                             buf128, v);
                     u32 cnt = CItem_sumFamilyByte6(id2);
-                    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+                    setLayoutTextBoxNumber(self->mpLayout,
                                                             buf108, cnt);
                 } else {
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf148,
@@ -2819,10 +2818,10 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x474], n);
 
     // Player counts on the two slots.
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
                                             CtrlRemote_TouchBitByArg(0x7fc));
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
                                             CtrlRemote_TouchBitByArg(0x7fd));
 

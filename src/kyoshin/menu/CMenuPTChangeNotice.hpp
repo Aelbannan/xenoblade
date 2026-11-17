@@ -5,6 +5,9 @@
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -119,24 +122,12 @@ void __dt__9IUIWindowFv(void* self, int flags);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
 // Layout/message/input helpers used by the file-load completion handler.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-char* MakeTplNameSysFile(u32);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void setPaneVisible(nw4r::lyt::Pane*, u32);
 void writePanePos(nw4r::lyt::Pane*, float*);
 u32 CtrlRemote_TouchBitByArg(u32);
-void BuildSlotItemLists(u32);
-u8 GetCollectedFlagByte(u32);
-u8 GetCollectedFlagWord8(u32);
-u8 code80135FDC_getByte_64077();
-u8 code80135FDC_getByte_6407E();
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
 // C++-linkage helpers (retail symbols are their MWCC-mangled forms).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float f1);
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
-                   nw4r::lyt::ArcResourceAccessor*, char*);
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).

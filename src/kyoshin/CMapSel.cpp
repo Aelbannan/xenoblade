@@ -5,6 +5,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMapSelImports.hpp"
 #include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 // CMapSel.hpp declares the C-ABI layout helpers (PaneSetTexPaletteByName 2-arg etc.);
 // skip code_80135FDC.hpp's caller-tuned exports so the differing arity decls
 // don't clash (same mechanism code_80135FDC.cpp itself uses).
@@ -16,7 +18,6 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
-void playUISound(u32);
 
 /* __ct__CMapSel - Construct the map-selection widget: set the IWorkEvent
    vtable, construct the sub-objects (UnkClass_8045F564 mem region, scrollbar,
@@ -166,7 +167,6 @@ __declspec(noinline) void CMapSel::update() {
 
 /* draw - Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on mActive (widget active) and mState (not uninitialized). */
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Retail uses an stmw/lmw r30 frame; the scoped size-optimization pragma is
    what selects that shape under -O4,p (also fixes the param copy order). */

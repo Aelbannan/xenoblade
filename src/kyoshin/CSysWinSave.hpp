@@ -8,6 +8,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 /*
  * System window "save" process (singleton, created by __ct__802944D8).
@@ -160,7 +163,6 @@ void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Cur_DrawLayout(void*, void*);
-int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__7CSysWinFUc(void* syswin, int arg);
@@ -172,7 +174,6 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 
 // Additional C-ABI imports used by Init/Move/SysWinSaveHandleInput (retail symbols
 // are unmangled / non-namespace, so C linkage is required).
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 u32 CSysWin_isReady(void* syswin);
@@ -190,7 +191,6 @@ void CUICfManager_queueSaveMenu(int a, int b);
 }
 
 // DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSave* lbl_eu_80664A08;   // singleton instance pointer (.sbss)

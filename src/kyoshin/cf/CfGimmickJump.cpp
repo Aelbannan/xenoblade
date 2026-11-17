@@ -170,7 +170,7 @@ static inline const CfGimmickJumpVec3* jumpPlayerPosition(int index) {
 }
 
 static inline f32 jumpPlayerAngle(cf::CfObjectActor* actor) {
-    return actor->CfObjectActor_readFacingAngle();
+    return actor->CfObject_getMoveHeadAngle();
 }
 
 static inline f32 normalizeJumpAngle(f32 angle) {

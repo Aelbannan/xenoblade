@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CTitleAHelp.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
@@ -30,7 +31,6 @@ struct HelpRow {
 extern HelpRow lbl_eu_80533E60[];
 
 // Global (retail-unmangled) helper returning the UI layout resource accessor.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Retail-unmangled CfGameManager static helper (takes a selector mask).
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);

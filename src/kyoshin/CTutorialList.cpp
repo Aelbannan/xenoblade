@@ -23,14 +23,14 @@
 #include <stdio.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Layout / BDAT helpers with unmangled retail names.
-extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int KyoshinHeap_GetField44();
 
 

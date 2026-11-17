@@ -15,8 +15,8 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 extern void playUISound(u32);
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 
 
@@ -81,7 +81,7 @@ void CExchangeWin::ExWin_DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
 // ExWin_Teardown - teardown: releases file handle, destroys the layout,
 // releases the arc resource accessor, and cleans up the memory region.
 void CExchangeWin::ExWin_Teardown() {
-    closeFileHandle__FPP11CFileHandle(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     field_24 = 0;
     if (mLayout != NULL) {
         delete mLayout;

@@ -22,6 +22,8 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Unknown per-entry object, deleted via virtual dispatch (vtable+8, flag 1).
 // Only the virtual-dtor shape is required -- the real class lives in the
@@ -166,12 +168,10 @@ void waitForDrawDone__9CDeviceVIFv();
 void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 bool isSceneLoading__Q22cf13CfGameManagerFv();
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
 MenuLvUpActor* findObjectById(int id);
-void playUISound(u32);   // UI sound effect (playUISound__FUl)
 
 // C-linkage data imports (retail names; global-scope plain externs keep the
 // unmangled symbol -- MWCC does not mangle global variables).

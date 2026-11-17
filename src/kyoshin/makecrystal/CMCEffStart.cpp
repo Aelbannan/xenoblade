@@ -1,4 +1,5 @@
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
 
 // NOTE: CfBdat.hpp is intentionally NOT included. It declares
 // `extern void* lbl_eu_806640F4;` while code_80135FDC.hpp declares the same
@@ -10,6 +11,7 @@
 #include "monolib/device/CDeviceFont.hpp"
 
 #include "nw4r/lyt/lyt_pane.h"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // (data_vtables.hpp is intentionally NOT included: its extern "C" __RTTI__*
 // decls trip MWCC 10322 under -ipa file. Slots are declared locally in the
@@ -193,9 +195,7 @@ char lbl_eu_805095EC[] =
 "mf10_cry06_chn_out.brlan\0txt_num\0\0\0\0\0\0";
 
 // Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
-extern u32 CUICfManager_getPackedFont9C();
 
 // Minimal abstract mirror of the font object returned by
 // CDeviceFont::getFontInfo. Its slot 9 sits at vtable offset 0x24 and
@@ -940,7 +940,7 @@ void CMCEffCylinder::init() {
     bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x3b9]);
     bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x3d1]);
     bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, &lbl_eu_805095EC[0x3ed]);
-    u32 ul = getPackedFont__Fv();
+    u32 ul = (u32)getPackedFont();
     if(ul) {
         setLayoutTextBoxFont(mLayout, &lbl_eu_805095EC[0x406], ul);
     }

@@ -69,7 +69,7 @@ extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, i
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
 // (pulled in via CAIAction.hpp).
-extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
+extern "C" void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(
     cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
 extern "C" void CtrlObjectParam_RaiseArtsLevelBy(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)

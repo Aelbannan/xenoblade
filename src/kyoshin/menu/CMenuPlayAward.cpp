@@ -10,7 +10,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-void playUISound(u32 cue); // defined in code_80135FDC.cpp
 #include "kyoshin/code_80135FDC.hpp" // AnimRewindFrame / advanceAnimTransform (anim frame advance)
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad / getCfPadData
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
@@ -23,10 +22,10 @@ void playUISound(u32 cue); // defined in code_80135FDC.cpp
 #include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 // CScn (with removeRenderCB) comes from the minimal declaration in
 // CTaskGameEff.hpp via harness_catalog.hpp -- CScn.hpp redefines it.
 
-void closeFileHandle(CFileHandle**);
 
 // Out-of-line constructor (retail __ct__CMenuPlayAward, separate from the
 // factory). The IUICf base, the IScnRender subobject and the null PMF slots

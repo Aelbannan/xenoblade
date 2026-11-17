@@ -1,10 +1,12 @@
 #pragma once
 
 #include <types.h>
+#include <revolution/gx/GXTypes.h>
 
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -35,13 +37,6 @@ struct CMenuGetItemPaneView {
     u8 flags;
 };
 
-// 4 x s16 pane colour/position entry (RGBA-style; alpha (.d) stays 0).
-struct CMenuGetItemFourShorts {
-    s16 a;
-    s16 b;
-    s16 c;
-    s16 d;
-};
 
 class CMenuGetItemMulti {
 public:
@@ -172,20 +167,20 @@ extern u32 lbl_eu_80664418;
 extern void* lbl_eu_806640D8;
 
 // Pane colour/position defaults (.sbss, written by sinit_801B9FC8).
-extern CMenuGetItemFourShorts lbl_eu_806643A0;
-extern CMenuGetItemFourShorts lbl_eu_806643A8;
-extern CMenuGetItemFourShorts lbl_eu_806643B0;
-extern CMenuGetItemFourShorts lbl_eu_806643B8;
-extern CMenuGetItemFourShorts lbl_eu_806643C0;
-extern CMenuGetItemFourShorts lbl_eu_806643C8;
-extern CMenuGetItemFourShorts lbl_eu_806643D0;
-extern CMenuGetItemFourShorts lbl_eu_806643D8;
-extern CMenuGetItemFourShorts lbl_eu_806643E0;
-extern CMenuGetItemFourShorts lbl_eu_806643E8;
-extern CMenuGetItemFourShorts lbl_eu_806643F0;
-extern CMenuGetItemFourShorts lbl_eu_806643F8;
-extern CMenuGetItemFourShorts lbl_eu_80664400;
-extern CMenuGetItemFourShorts lbl_eu_80664408;
+extern GXColorS10 lbl_eu_806643A0;
+extern GXColorS10 lbl_eu_806643A8;
+extern GXColorS10 lbl_eu_806643B0;
+extern GXColorS10 lbl_eu_806643B8;
+extern GXColorS10 lbl_eu_806643C0;
+extern GXColorS10 lbl_eu_806643C8;
+extern GXColorS10 lbl_eu_806643D0;
+extern GXColorS10 lbl_eu_806643D8;
+extern GXColorS10 lbl_eu_806643E0;
+extern GXColorS10 lbl_eu_806643E8;
+extern GXColorS10 lbl_eu_806643F0;
+extern GXColorS10 lbl_eu_806643F8;
+extern GXColorS10 lbl_eu_80664400;
+extern GXColorS10 lbl_eu_80664408;
 
 // Global flag word: bit 21 (0x200000) gates the render path (cbRenderBefore)
 // and is cleared by Term.
@@ -240,8 +235,6 @@ struct CfGameManagerTermFields {
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
 extern "C" void Bdat_GetTable_AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
-extern "C" u8 DecMenuCounter64080();                      // flag reset alongside code80135FDC_getByte_64080
-extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void sysWinTermLayout(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
 extern "C" void sysWinDrawLayout(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void Cur_DrawLayout(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
@@ -271,12 +264,9 @@ extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers
 extern "C" u32 ItemMenu_IsPresent();
 extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
-extern "C" f32 GetFloatTableEntry(u32 idx);
-extern "C" void BlendFloatAvgScale(u16 a, u16 b, int c, f32 d);
 extern "C" void removeTboxById(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
 // UI sound effect (retail pre-mangled name).
 // Rank-item pane text setter (retail symbol is the C++-mangled name).
-void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* paneName, u8 value);
 // Retail ctor symbol is the unmangled `__ct__CMenuGetItemMulti` (constructs
 // the singleton stored in lbl_eu_80664414); 8 reg args + a byte on the stack.
 extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 c,

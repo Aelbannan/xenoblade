@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CSkipTimer.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CSkipTimer.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
 
 
 // C-linkage imports - retail symbol names; extern "C" so calls bind to the
@@ -38,7 +39,6 @@ extern "C" const float lbl_eu_80668C48;
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void sysWinTermLayout(void*);
 // C-exported retail symbol: unmangled reloc name must be emitted at call sites.
-extern "C" void setPaneVisible(void*, u32);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" u32 CMainMenu_GetInstancePtr();

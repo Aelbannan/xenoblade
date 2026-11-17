@@ -10,6 +10,8 @@
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 // Forward decl instead of including kyoshin/code_80135FDC.hpp: that header's
 // extern "C" BdatGetU8Direct (u8) overload-clashes with CTutorial.hpp's
 // (u32) (same clash CMenuPlayAward.cpp works around); this TU only needs
@@ -41,11 +43,7 @@ extern "C" {
     void beginClose(CTitleAHelp* self);
 
     // CF / ui helpers (retail-unmangled names).
-    int IsMenuState621F0();
-    u8 DecMenuCounter64080();
     void CUICfManager_setTimeout30();
-    u8 code80135FDC_getByte_64080();
-    void code80135FDC_postIncByte_64080();
     void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
     // CfGameManager controller-type query: retail loads r3=-1 into the symbol
     // (the no-arg member wrapper drops it), so call through the C name directly.
@@ -62,7 +60,6 @@ extern "C" {
 // DrawInfo layout setup (retail MANGLED name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo; declared as plain C++ so MWCC
 // re-derives the same mangling).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Retail-unmangled string pool entries are now literals: "MNU_main"/"name"
 // (Init title lookup), "MNU_ttrl"/"title" (Phase0 name lookup).

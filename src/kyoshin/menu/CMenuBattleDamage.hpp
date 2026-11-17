@@ -7,6 +7,8 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -306,15 +308,10 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self,
                                                  UnkClass_8045F564* base);
 void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-int GetSysStateFlag24();
-int IsMenuState621F0();
 const char* getTelopString(int index);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
 // full slot word with no rlwinm truncation at the call site (the callee only
 // reads the low byte), so the declaration must not force a u32->u8 mask.
-void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
-                                              u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 CMenuBattleDamagePose* Scn_FindCamItem(CScn* scene, int index);
@@ -326,16 +323,7 @@ const char* getErrMesText14();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
-void playUISound(u32 op);  // playUISound__FUl
-u32 getPackedFont();        // getPackedFont__Fv
 CMenuBattleDamageActor* findObjectById(int id);  // findObjectById__Fi
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
-                   const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
-                   nw4r::lyt::ArcResourceAccessor*, char*);
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shared data symbols (global-scope plain externs keep the unmangled names).
 extern char lbl_eu_804FD524[];

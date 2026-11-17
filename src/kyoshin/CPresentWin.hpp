@@ -7,6 +7,9 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 #include "kyoshin/CPresentWinClass.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Mirror of the font object returned by CDeviceFont::getFontInfo.
 // vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
@@ -70,14 +73,9 @@ public:
 // reloc and drift at the reloc gate).
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void setPaneVisible(nw4r::lyt::Pane*, u32);
 void writePanePos(nw4r::lyt::Pane*, float*);
-u32 BdatGetItemId(u32);
-void AdjustRelateValue(u16, u16, s8);
 void repaintPresentItemA(CPresentWin* self);
 void repaintPresentItemB(CPresentWin* self);
 void stepPresentCounterBack(CPresentWin* self);
 u8 lookupPresentRank(CPresentWin* self, u32 r4);
 }
-void playUISound(u32); // mangles to playUISound__FUl

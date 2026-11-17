@@ -24,13 +24,15 @@
 #include <functions.hpp>
 #include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
-// Layout text-setter helper: retail reloc is the literal mangled name
-// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc. The retail callers pass an
-// int-width (sign-extended) value with no u8 mask, so the third parameter is
-// declared int here; code_80135FDC.hpp declares it u8, so do not include both.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
-                                                        char*, int);
+// KNOWN EXCEPTION to the single-declaration rule: retail calls
+// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc (u8 param, canonical
+// declaration in code_80135FDC_Lyt.hpp) but passes an extsb'd int with no u8
+// mask, which no call through the u8 prototype reproduces. Bind the same
+// retail symbol through an int-typed C-linkage alias until the caller-side
+// shape is understood.
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
 // Tex palette binder (const char* pane name; code_80135FDC.hpp types it void*).
 
 // (Layout teardown goes through `delete`, whose deleting-dtor vcall
@@ -132,9 +134,9 @@ void CTutorial::Tutorial_TeardownTutorial() {
     if (field_53 != 0) {
         CBdat::getEntry(4);
     }
-    closeFileHandle__FPP11CFileHandle(&mFileHandle0);
-    closeFileHandle__FPP11CFileHandle(&mFileHandle1);
-    closeFileHandle__FPP11CFileHandle(&mFileHandle2);
+    closeFileHandle(&mFileHandle0);
+    closeFileHandle(&mFileHandle1);
+    closeFileHandle(&mFileHandle2);
     field_44 = 0;
     nw4r::lyt::Layout* layout = mpLayout;
     if (layout != nullptr) {
@@ -335,7 +337,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
                              CDeviceFont::getFontInfo(1, mpLayout))->getFont();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
-        u32 lang = getPackedFont();
+        u32 lang = (u32)getPackedFont();
         if (lang != 0) {
             setLayoutTextBoxFont(mpLayout, "txt_pg00", lang);
             setLayoutTextBoxFont(mpLayout, "txt_pg01", lang);

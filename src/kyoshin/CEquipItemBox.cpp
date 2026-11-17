@@ -20,7 +20,7 @@
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
 // KEEP (blockers-A 2026-10-23): BdatGetU16Direct is declared int here
@@ -36,7 +36,6 @@ extern "C" void* CItem_kindPtr(u8, s16);
 // but retail passes the full 32-bit word (r6 -> mr -> setupItemBoxDetail), so the
 // u32 form is declared here to avoid a call-site mask. Kept local like
 // CItem_kindPtr (the sibling headers disagree on the signature).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Pane-visibility helpers (C-ABI retail symbols; declared in CEquipItemBox.hpp
 // with extern "C" so MWCC emits the plain names).
 // Float constants in .sdata2, referenced via sda21 reloc.
@@ -943,9 +942,9 @@ __declspec(noinline) void CEquipItemGrid::sortEIBByNameKey() {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
-            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x61, BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x61, (u16)BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
-            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x61, BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x61, (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -977,9 +976,9 @@ __declspec(noinline) void CEquipItemGrid::sortEIBByNameKey69() {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
-            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x69, BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x69, (u16)BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
-            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x69, BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x69, (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1467,16 +1466,16 @@ void CEquipItemBox::drawEIBBox(nw4r::lyt::DrawInfo* drawInfo) {
 // then tear down the embedded cursors, sort menu and both system windows.
 void CEquipItemBox::closeEIBBox() {
     CBdat::getEntry(5);
-    closeFileHandle__FPP11CFileHandle(&field_24);
-    closeFileHandle__FPP11CFileHandle(&field_28);
-    closeFileHandle__FPP11CFileHandle(&field_2C);
+    closeFileHandle((CFileHandle**)&field_24);
+    closeFileHandle((CFileHandle**)&field_28);
+    closeFileHandle((CFileHandle**)&field_2C);
     unk_40 = 0;
     if (field_38) {
         delete field_38;
         field_38 = 0;
     }
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(field_30);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(field_34);
+    releaseArcResourceAccessor(field_30);
+    releaseArcResourceAccessor(field_34);
     mRegion04.deleteRegion();
     mRegion14.deleteRegion();
     mCur44.Reset();
@@ -2388,18 +2387,18 @@ __declspec(noinline) void CEquipItemBox::refreshEIBCellText(s8 v,
         char* str = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36],
                                   0x1e - ((u8)n - 1));
         sprintf(bufText, &lbl_eu_8050EFDC[0x2a], str);
-        PaneMatSetTevColorsByName(field_38, bufName, lbl_eu_806649B0, lbl_eu_806649B8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649B0, (const GXColorS10*)lbl_eu_806649B8);
     } else if (v > 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x225]);
-        PaneMatSetTevColorsByName(field_38, bufName, lbl_eu_806649B0, lbl_eu_806649B8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649B0, (const GXColorS10*)lbl_eu_806649B8);
     } else if (v == 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     } else if (v == -2) {
         sprintf(bufText, getErrMesText16());
-        PaneMatSetTevColorsByName(field_38, bufName, lbl_eu_806649C0, lbl_eu_806649C8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649C0, (const GXColorS10*)lbl_eu_806649C8);
     } else if (v == -3) {
         sprintf(bufText, getErrMesText15());
-        PaneMatSetTevColorsByName(field_38, bufName, lbl_eu_806649D0, lbl_eu_806649D8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649D0, (const GXColorS10*)lbl_eu_806649D8);
     } else {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     }
@@ -2862,11 +2861,11 @@ void CEquipItemBox::refreshEIBSortTabs() {
                 flagB = 1;
             }
             if ((u32)(v - 4) <= 4 || (int)v == 2 || (int)v == 0xb) {
-                PaneMatSetTevColorsByName(field_38, buf1, lbl_eu_80664940, lbl_eu_80664948);
-                PaneMatSetTevColorsByName(field_38, buf2, lbl_eu_80664940, lbl_eu_80664948);
+                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
             } else {
-                PaneMatSetTevColorsByName(field_38, buf1, lbl_eu_80664930, lbl_eu_80664938);
-                PaneMatSetTevColorsByName(field_38, buf2, lbl_eu_80664930, lbl_eu_80664938);
+                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
             }
         }
         nw4r::lyt::Pane* pane1 = field_38->GetRootPane()->FindPaneByName(buf1, true);
@@ -2964,37 +2963,37 @@ void CEquipItemBox::refreshEIBSortPages(int a) {
     }
     u8 v2 = unk_36c[(s8)unk_373];
     if ((u32)(v2 - 4) <= 4 || v2 == 2 || v2 == 0xb) {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], lbl_eu_80664940, lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], lbl_eu_80664940, lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
     } else {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], lbl_eu_80664930, lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], lbl_eu_80664930, lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
     }
 }
 
@@ -3174,13 +3173,13 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     LayoutSetTextBoxFmtValue(field_38, base + 0x55e, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(field_38, base + 0x50c, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(field_38, base + 0x517, base + 0x228, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, lbl_eu_80664980, lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, lbl_eu_80664980, lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
     rebuildEIBKind2Cells(a, b);
 }
 
@@ -3219,7 +3218,7 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     // bdat-name lookups below).
     u32 g = lbl_eu_806640F8;
     BdatGetItemType(kind);
-    kind2 = BdatGetItemId(kind);
+    kind2 = (u16)BdatGetItemId(kind);
     nameA = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
     nameB = BdatGetU8Direct((const void*)g, base + 0x7a, kind2);
     nameC = BdatGetU8Direct((const void*)g, base + 0x82, kind2);
@@ -3228,7 +3227,7 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     setLayoutTextBoxNumber(field_38, base + 0x55e, (u8)nameC);
     // Retail reloads lbl_eu_806640F8 here: the three setLayoutTextBoxNumber calls
     // above are opaque, so the global must not be cached across them.
-    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x17, BdatGetItemId(kind));
+    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x17, (u16)BdatGetItemId(kind));
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
@@ -3259,13 +3258,13 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
         }
     }
     LayoutSetTextBoxFmtValue(field_38, base + 0x517, str2, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, lbl_eu_80664980, lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, lbl_eu_80664980, lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, lbl_eu_80664980, lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, lbl_eu_80664970, lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, lbl_eu_80664970, lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
     rebuildEIBKind2Cells(kind, item);
 }
 
@@ -3654,10 +3653,10 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)font)->getFont()));
-        char* msg = getPackedFont();
+        char* msg = (char*)getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
         setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
-        char* msg2 = CUICfManager_getPackedFont9C();
+        char* msg2 = (char*)CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf2[0x20];
             sprintf(buf2, base + 0x219, i);
@@ -3699,10 +3698,10 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
             field_38->GetRootPane()->FindPaneByName(base + 0x784, true);
         copyVEC3((float*)&((CEquipItemBoxPagePosView*)this)->pos[0],
                  &((CEquipItemBoxPaneView*)posPane)->mTranslate[0]);
-        CEquipItemBoxFourShorts c0 = PaneMatGetS16QuadByName(field_38, base + 0x791, 0);
-        CopyVec4s(lbl_eu_80664920, &c0);
-        CEquipItemBoxFourShorts c1 = PaneMatGetS16QuadByName(field_38, base + 0x791, 1);
-        CopyVec4s(lbl_eu_80664928, &c1);
+        GXColorS10 c0 = PaneMatGetS16QuadByName(field_38, base + 0x791, 0);
+        CopyVec4s((GXColorS10*)lbl_eu_80664920, &c0);
+        GXColorS10 c1 = PaneMatGetS16QuadByName(field_38, base + 0x791, 1);
+        CopyVec4s((GXColorS10*)lbl_eu_80664928, &c1);
         s16 v0c = lbl_eu_80664920[3];
         s16 v1c = lbl_eu_80664928[3];
         lbl_eu_80664930[3] = v0c;
@@ -3729,7 +3728,7 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         mPageCur.initLayout();
         ccur18 = CCur18(CUICfManager_getArcResourceAccessor());
         ccur18.initLayout();
-        char* msg3 = CUICfManager_getPackedFont9C();
+        char* msg3 = (char*)CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x552, (u32)msg3);
@@ -3754,26 +3753,26 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         LayoutSetTextBoxFmtValue(field_38, base + 0x5a5, base + 0x228, 0);
         nw4r::lyt::Pane* paneB =
             field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true);
-        CEquipItemBoxFourShorts p1 = PaneMatGetS16Quad(paneB, 0);
-        CopyVec4s(lbl_eu_80664970, &p1);
-        CEquipItemBoxFourShorts p2 = PaneMatGetS16Quad(paneB, 1);
-        CopyVec4s(lbl_eu_80664978, &p2);
+        GXColorS10 p1 = PaneMatGetS16Quad(paneB, 0);
+        CopyVec4s((GXColorS10*)lbl_eu_80664970, &p1);
+        GXColorS10 p2 = PaneMatGetS16Quad(paneB, 1);
+        CopyVec4s((GXColorS10*)lbl_eu_80664978, &p2);
         lbl_eu_80664980[3] = lbl_eu_80664970[3];
         lbl_eu_80664988[3] = lbl_eu_80664978[3];
         nw4r::lyt::Pane* pane5 =
             field_38->GetRootPane()->FindPaneByName(base + 0x522, true);
         p1 = PaneMatGetS16Quad(pane5, 0);
-        CopyVec4s(lbl_eu_80664990, &p1);
+        CopyVec4s((GXColorS10*)lbl_eu_80664990, &p1);
         p2 = PaneMatGetS16Quad(pane5, 1);
-        CopyVec4s(lbl_eu_80664998, &p2);
+        CopyVec4s((GXColorS10*)lbl_eu_80664998, &p2);
         lbl_eu_806649A0[3] = lbl_eu_80664990[3];
         lbl_eu_806649A8[3] = lbl_eu_80664998[3];
         nw4r::lyt::Pane* pane79 =
             field_38->GetRootPane()->FindPaneByName(base + 0x79e, true);
         p1 = PaneMatGetS16Quad(pane79, 0);
-        CopyVec4s(lbl_eu_806649B0, &p1);
+        CopyVec4s((GXColorS10*)lbl_eu_806649B0, &p1);
         p2 = PaneMatGetS16Quad(pane79, 1);
-        CopyVec4s(lbl_eu_806649B8, &p2);
+        CopyVec4s((GXColorS10*)lbl_eu_806649B8, &p2);
         lbl_eu_806649C0[3] = lbl_eu_806649B0[3];
         lbl_eu_806649C8[3] = lbl_eu_806649B8[3];
         lbl_eu_806649D0[3] = lbl_eu_806649B0[3];

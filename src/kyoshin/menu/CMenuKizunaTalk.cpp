@@ -14,20 +14,16 @@
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // KEEP (extern-C cleanup 2026-10-23): CLibLayout.hpp cannot be included here
 // (it brings the canonical IWorkEvent, which clashes with this TU's KEEP copy).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 #include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
-extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void SplitU32ToS16s(short*, unsigned long);
-extern "C" u32 BdatGetItemId(u32);
-extern "C" void* CUICfManager_getPackedFont9C(void);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
-void playUISound(u32);
 
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
@@ -111,8 +107,8 @@ void CMenuKizunaTalk::Init() {
 void CMenuKizunaTalk::Term() {
     waitForDrawDone__9CDeviceVIFv();
     CBdat::getEntry(2);
-    closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile1));
-    closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile2));
+    closeFileHandle((CFileHandle**)&mFile1);
+    closeFileHandle((CFileHandle**)&mFile2);
 
     mScene->removeRenderCB(this);
 
@@ -126,7 +122,7 @@ void CMenuKizunaTalk::Term() {
         mLayout = 0;
     }
 
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(mArcAccessor);
+    releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
     sysWinTermLayout(&mSysWin[0]);
 

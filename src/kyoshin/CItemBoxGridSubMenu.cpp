@@ -6,6 +6,8 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char lbl_eu_805084BC[];
@@ -17,11 +19,7 @@ extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
 extern "C" const double lbl_eu_806682F8;
-extern "C" u32 getPackedFont__Fv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-void playUISound(u32);
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
@@ -64,7 +62,7 @@ void CItemBoxGridSubMenu::GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor*
     u32 fontVal = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)fontVal);
 
-    u32 color = getPackedFont__Fv();
+    u32 color = (u32)getPackedFont();
     setLayoutTextBoxFont(mLayout, &lbl_eu_805084BC[0x35], color);
 
     mLayout->BindAnimation(mAnimDefault);
@@ -106,7 +104,7 @@ void CItemBoxGridSubMenu::GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor*
 // retail: if (field_20) tail drawLayout(*(self+8), drawInfo passthrough, 0, 1)
 void CItemBoxGridSubMenu::GridSubMenu_DrawLayoutGated(void* drawInfo) {
     if (mIsVisible == 0) return;
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, drawInfo, 0, 1);
+    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 }
 
 int CItemBoxGridSubMenu::GridSubMenu_IsVisibleFlag() {

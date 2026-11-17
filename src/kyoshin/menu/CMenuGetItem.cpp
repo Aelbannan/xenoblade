@@ -19,8 +19,9 @@
 #include <revolution/GX.h>
 
 #include <stdio.h>
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Get-item string table (layout name, anim name, pane names, sprintf formats).
 extern char lbl_eu_805018D0[];
@@ -55,8 +56,6 @@ struct AnimFrameView {
 // MWCC mangles plain global-scope free functions with a __F suffix, so the
 // declarations must sit under extern "C" to emit the retail reloc names).
 extern "C" u8 isLandTelopActive();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void* BuildItemNameStr(u32);
 // Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
 // extern "C" keeps the literal identifier (no double mangling).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);

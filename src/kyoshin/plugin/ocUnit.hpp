@@ -13,6 +13,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Forward decls for CollObjLoadResourceTimed's signature (defined in
 // kyoshin/cf/object/CfObjectColl.cpp); that header cannot be included here
@@ -105,7 +106,6 @@ void UIWin_CreateTalkWin(void* obj, const char* str, int mode);
 void UIWin_CreateEveTalkWin(void* obj, const char* str);
 unsigned int UIWin_GetTimer();
 // Retail caller compares the raw register (cmpwi), so declare as int, not u8.
-int code80135FDC_getByte_64058();
 
 // VM array element accessor (defined in libs/monolib/src/vm/yvm2.c).
 VMArg* vmArrayGet(VMThread* pThread, VMArg* pArray, int index);

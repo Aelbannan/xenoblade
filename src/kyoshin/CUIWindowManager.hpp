@@ -9,6 +9,8 @@
 #include <new>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class IUIWindow;
 class IUIWindowSubView; // timer view behind IUIWindow::unk5C (defined in CUIWindowManager.cpp)
@@ -98,13 +100,11 @@ int CUICfManager_claimSlotByIdState(u16 arg);
 int CUICfManager_claimSlotFormatted();
 int CUICfManager_claimSlotByTwoIds();
 namespace nw4r { namespace lyt { class ArcResourceAccessor; } }
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* Bdat_GetTable_AA34();
 u32 Bdat_GetMaxRow_B1EC(void* fp);
 
 // Quest-entry index lookup (owning TU: CUICfManager). Full-width arg/result
 // (retail passes/returns the register unmasked).
-u32 SearchThresholdIdx(u32 idx);                 // quest id -> name-table index
 
 // Multi-item entry guard (owning TU: CUICfManager): 5 u16 args, nonzero
 // blocks the window creation.
@@ -200,7 +200,6 @@ void* findObjectById(int id);
 extern "C" {
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void CtrlObjectParam_SetWorkTailValue(u32 id);
-void TryRevealMapArea(u8 v);
 }
 
 // findObjectById result view used by the 0x608 window path: +0x64 flags word

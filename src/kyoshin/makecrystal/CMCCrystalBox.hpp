@@ -13,6 +13,9 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 class CBaseCur;
 class CEventFile;
 
@@ -434,7 +437,6 @@ extern unsigned long lbl_eu_806646D0;
 // refresh callbacks instead of inlining the two-word test.
 extern "C" __declspec(noinline) int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
-extern "C" char* MakeTplNameSysFile(u32);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" void MCCrystal_PlayAnim4(void*);
 extern "C" void MCCrystal_OpenFromClosed(void*);
@@ -454,15 +456,10 @@ extern "C" void* CItem_initItemImplInstances(void*);
 }
 #define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" u16 CItemBlock_getFlag120EC(int);
-extern "C" void setPaneVisible(void*, u32);   // pane visibility setter
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
 // linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
 // plain C++ forms that re-derive the retail mangled names.
-extern "C" u32 CUICfManager_getPackedFont9C();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();   // shared timg resource accessor
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
-u32 getPackedFont();
-extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
@@ -472,10 +469,7 @@ extern "C" float lbl_eu_8066848C;
 extern "C" float lbl_eu_80668490;
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 CItemBlock_countKindSlots(u8);
-extern "C" void closeFileHandle__FPP11CFileHandle(void**);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void BuildSlotItemLists(u32);
 extern "C" void MCCrystal_Teardown(void*);
 extern "C" void sysWinTermLayout(void*);
 extern "C" int CSysWin_getUnk34(void*);
@@ -489,19 +483,15 @@ extern "C" void MCCrystal_StepState(void*);
 extern "C" void Cur_Update(void*);
 extern "C" void sysWinDispatchPhase(void*);
 extern "C" u32  IsSkillItem(void*);
-extern "C" u16 BdatGetItemId(u32);
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
 // unmangled like retail; noinline keeps the bodies out-of-line.
 extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
 extern "C" void Cur_ShowTwoPanes(void*, unsigned char);
-extern "C" int GetCollectedFlagByte(unsigned char);
-extern "C" unsigned short LookupRelateValue(unsigned char, unsigned char);
 // Wide-param view of the pane-number setter used by the window-kind refresh:
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
 // symbol as setLayoutTextBoxNumber.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;
 extern float lbl_eu_80668484;
@@ -511,7 +501,6 @@ extern float lbl_eu_80668484;
 // retail names. copyCrystalParamRet returns its first argument (callers chain it as
 // the copy source for copyCrystalBoxParam); its definition lives in this TU under
 // the name copyCrystalParamRet (linked by address via symbols.txt).
-extern "C" u8 code80135FDC_getByte_64077();
 // Retail's epilogue extends the result to 64 bits (subfc/subfze); every
 // call site reads the value truncated to the int in r3, hence the (int)
 // casts at the use sites.

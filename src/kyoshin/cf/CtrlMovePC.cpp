@@ -215,9 +215,9 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
     if (self->mFlags4C & 0x00040000u) {        // rlwinm. bit 13
         self->mVec90.y = lbl_eu_80667B60;      // 0x94 = 0.0
         cf::CfObjectActor* w = (cf::CfObjectActor*)self->mObject;
-        f32 s = w->CfObjectActor_readFacingAngle();                 // vtable 0x5b4
+        f32 s = w->CfObject_getMoveHeadAngle();                 // vtable 0x5b4
         self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * s);
-        f32 c = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
+        f32 c = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
         self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * c);
         setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
     } else {
@@ -238,9 +238,9 @@ extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
         void* sub = ((cf::CfObjWrap*)w)->mSub;
         u16 flag = ((cf::CfMoveSub*)sub)->mField530;
         if ((flag & 1u) == 0) {                // clrlwi. bit 31
-            f32 a = w->CfObjectActor_readFacingAngle();             // vtable 0x5b4
+            f32 a = w->CfObject_getMoveHeadAngle();             // vtable 0x5b4
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
-            f32 b = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
+            f32 b = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * b);
             setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
             return 0;
@@ -455,7 +455,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     self->mVec6C = self->mPos;
     self->mPos = *((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_getPosVector();
-    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObjectActor_readFacingAngle();   // vtable 0x5b4
+    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObject_getMoveHeadAngle();   // vtable 0x5b4
     if (self->mFlags4C & 0x80000000u) {
         self->mFlags4C &= 0x7FFFFFFFu;
         self->mVec6C = self->mPos;
@@ -1362,7 +1362,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     self->mVec6C = self->mPos;
     ml::CVec3* pp = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_getPosVector();
     self->mPos = *pp;
-    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObjectActor_readFacingAngle();
+    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObject_getMoveHeadAngle();
     if (self->mFlags4C & 0x80000000u) {
         self->mFlags4C &= 0x7FFFFFFFu;
         self->mVec6C = self->mPos;
@@ -1857,9 +1857,9 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
 
         // --- steer: rotate the facing toward the approach vector ---
         f32 cosA = CosFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle());
+            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
         f32 sinA = SinFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle());
+            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
 
         ml::CVec3 facing(sinA, lbl_eu_80667B60, cosA);
         ml::CVec3 up(lbl_eu_80667B60, lbl_eu_80667B68, lbl_eu_80667B60);
@@ -2490,7 +2490,7 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
     ml::CVec3 diff;
     ml::CVec3 sum;
     for (int i = 0; i < 2; i++) {
-        f32 ang = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();   // vtable 0x5b4
+        f32 ang = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();   // vtable 0x5b4
         for (int j = 0; j < 4; j++) {
             dir.z = lbl_eu_80667B70 * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
             dir.y = lbl_eu_80667B60;
@@ -2510,7 +2510,7 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
         }
         goal.y = goal.y - lbl_eu_80667BDC;
     }
-    return ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
+    return ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
 }
 // ============================================================================
 // movePcUpdatePairFollow - pair-follow mode update (0x2A8 bytes)

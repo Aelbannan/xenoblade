@@ -4,6 +4,7 @@
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class CProcess;
 
@@ -78,7 +79,6 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void* __dt__11CMenuVisionFv(void*, int);
 extern "C" void cbRenderBefore__11CMenuVisionFv(void*);

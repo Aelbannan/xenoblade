@@ -15,9 +15,8 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 #include "kyoshin/plugin/ocBdat.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Tab entry accessors (retail symbols are plain func_XXXX names).
 u8 ItemBoxGetTab(const u8* table, unsigned int index);
@@ -27,9 +26,7 @@ extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, 
 u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
 u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 
 // ============================================================================
 // ItemBoxLine_GetSelectReady: busy-guard chain - only read the selector byte when every
@@ -124,7 +121,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
             if (arg4 != 0) {
                 if (self->field92 == 0xd) {
                     if (BdatGetU8Direct((const void*)lbl_eu_80664110, &lbl_eu_805071B0[0xe],
-                                      BdatGetItemId(result)) != 0) {
+                                      (u16)BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                 } else {
@@ -138,7 +135,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     } else {
                         str.format(&lbl_eu_805071B0[0x21], arg4);
                     }
-                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, BdatGetItemId(result)) != 0) {
+                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, (u16)BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
@@ -203,7 +200,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     } else {
                         str.format(&lbl_eu_805071B0[0x21], arg4);
                     }
-                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, BdatGetItemId(result)) != 0) {
+                    if (BdatGetU8Direct((const void*)t, (const char*)str.mString, (u16)BdatGetItemId(result)) != 0) {
                         entry->f9 = 1;
                     }
                     if (self->field92 != 2) {
@@ -1139,7 +1136,7 @@ void CItemBoxLine::ResolveEntry() {
         if (mNumSel.IsIdle() == 0) return;
         if (field50 != 7) return;
         ItemBoxLine_AllocEntryStock(reinterpret_cast<CIBLTabFull*>(tabs), key, (u8)field392);
-        u32 v = GetCollectedFlagByte(field39F);
+        u8 v = GetCollectedFlagByte(field39F);
         ItemBoxLine_BuildTabEntries(tabs, tabEntries[(s8)field6D], field394, (u8)v);
         RefreshLineState();
         RebuildTabList();
@@ -1271,12 +1268,12 @@ void CItemBoxLine::RefreshTabPanes() {
             sprintf(nameBuf1, pool + 0x39d, i + 1);
             LayoutSetTextBoxFmtValue(field40, nameBuf1,
                           (char*)ItemBoxLine_FormatTabEntryName((void*)tabs, idx), 0);
-            FourShorts fs0 = PaneMatGetS16QuadByName(field40, nameBuf1, 0);
-            FourShorts fs1 = fs0;
-            FourShorts fs2 = PaneMatGetS16QuadByName(field40, nameBuf1, 1);
-            FourShorts fs3 = fs2;
-            colors[8].a = fs1.d;
-            colors[9].a = fs2.d;
+            GXColorS10 fs0 = PaneMatGetS16QuadByName(field40, nameBuf1, 0);
+            GXColorS10 fs1 = fs0;
+            GXColorS10 fs2 = PaneMatGetS16QuadByName(field40, nameBuf1, 1);
+            GXColorS10 fs3 = fs2;
+            colors[8].a = fs1.a;
+            colors[9].a = fs2.a;
             PaneMatSetTevColorsByName(field40, nameBuf1, &colors[8], &colors[9]);
             char* name = BdatTouchStringCell(pool + 0x248, pool + 0x6c, 3);
             u32 count = ItemBoxLine_GetTabEntryValue((void*)tabs, idx);
@@ -1284,12 +1281,12 @@ void CItemBoxLine::RefreshTabPanes() {
             sprintf(buf3, pool + 0x3bb, count, name);
             sprintf(nameBuf1, pool + 0x3aa, i + 1);
             LayoutSetTextBoxText(field40, nameBuf1, buf3, 0);
-            FourShorts fs4 = PaneMatGetS16QuadByName(field40, nameBuf1, 0);
-            FourShorts fs5 = fs4;
-            FourShorts fs6 = PaneMatGetS16QuadByName(field40, nameBuf1, 1);
-            FourShorts fs7 = fs6;
-            colors[10].a = fs5.d;
-            colors[11].a = fs6.d;
+            GXColorS10 fs4 = PaneMatGetS16QuadByName(field40, nameBuf1, 0);
+            GXColorS10 fs5 = fs4;
+            GXColorS10 fs6 = PaneMatGetS16QuadByName(field40, nameBuf1, 1);
+            GXColorS10 fs7 = fs6;
+            colors[10].a = fs5.a;
+            colors[11].a = fs6.a;
             PaneMatSetTevColorsByName(field40, nameBuf1, &colors[10], &colors[11]);
         }
     }
@@ -1627,19 +1624,19 @@ void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
         u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], arg4);
         char* name = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x1e - (v - 1));
         str.format(&lbl_eu_805071B0[0x57], name);
-        PaneMatSetTevColorsByName(field40, buf, lbl_eu_80664618, lbl_eu_80664620);
+        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)lbl_eu_80664618, (const GXColorS10*)lbl_eu_80664620);
     } else if (arg5 > 0) {
         str.format(&lbl_eu_805071B0[0x251]);
-        PaneMatSetTevColorsByName(field40, buf, lbl_eu_80664618, lbl_eu_80664620);
+        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)lbl_eu_80664618, (const GXColorS10*)lbl_eu_80664620);
     } else if (arg5 == 0) {
         const char* s = &lbl_eu_805071B0[0x254];
         str = s;
     } else if (arg5 == -2) {
         str = getErrMesText16();
-        PaneMatSetTevColorsByName(field40, buf, lbl_eu_80664628, lbl_eu_80664630);
+        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)lbl_eu_80664628, (const GXColorS10*)lbl_eu_80664630);
     } else if (arg5 == -3) {
         str = getErrMesText15();
-        PaneMatSetTevColorsByName(field40, buf, lbl_eu_80664638, lbl_eu_80664640);
+        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)lbl_eu_80664638, (const GXColorS10*)lbl_eu_80664640);
     } else {
         const char* s = &lbl_eu_805071B0[0x254];
         str = s;
@@ -1764,7 +1761,7 @@ __declspec(noinline) void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
 // declarations to keep the relocs external.
 // ============================================================================
 u32 CItemBoxLine::RefreshLineState() {
-    u32 sel = GetCollectedFlagByte(field39F);
+    u8 sel = GetCollectedFlagByte(field39F);
     ItemBoxLine_BuildTabEntries(&unk3A4, tabEntries[(s8)field6D],
                   field394, (u8)sel);
     RefreshTabPanes();
@@ -2006,8 +2003,8 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     char* nameB = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0xb);
     str.format(&lbl_eu_805071B0[0x5ca], (u16)v23, nameB, (u16)v22);
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x4a6], str.mString, 0);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4ca], c);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4d6], d);
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4ca], c);
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4d6], d);
     char* n7f = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x7f);
     char* n80 = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x80);
     if (e != 0) {
@@ -2027,13 +2024,13 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x4e2], &lbl_eu_805071B0[0x254], 0);
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x490], &lbl_eu_805071B0[0x254], 0);
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x49b], &lbl_eu_805071B0[0x254], 0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], lbl_eu_806645E8, lbl_eu_806645F0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], lbl_eu_806645E8, lbl_eu_806645F0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], (const GXColorS10*)lbl_eu_806645E8, (const GXColorS10*)lbl_eu_806645F0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], (const GXColorS10*)lbl_eu_806645E8, (const GXColorS10*)lbl_eu_806645F0);
     BuildPageData(itemData);
 }
 
@@ -2071,9 +2068,9 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
     u8 b = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5a6], kind);
     u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x5d8], kind);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4ca], a);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4d6], b);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x4e2], c);
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4ca], a);
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4d6], b);
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x4e2], c);
 
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
@@ -2120,13 +2117,13 @@ selDone:
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x49b], name2, 0);
 
     // Refresh the slot pane colors.
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], lbl_eu_806645E8, lbl_eu_806645F0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], lbl_eu_806645E8, lbl_eu_806645F0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], lbl_eu_806645E8, lbl_eu_806645F0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], lbl_eu_806645D8, lbl_eu_806645E0);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], lbl_eu_806645D8, lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], (const GXColorS10*)lbl_eu_806645E8, (const GXColorS10*)lbl_eu_806645F0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], (const GXColorS10*)lbl_eu_806645E8, (const GXColorS10*)lbl_eu_806645F0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], (const GXColorS10*)lbl_eu_806645E8, (const GXColorS10*)lbl_eu_806645F0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], (const GXColorS10*)lbl_eu_806645D8, (const GXColorS10*)lbl_eu_806645E0);
     BuildPageData(itemData);
 }
 
@@ -2137,7 +2134,7 @@ selDone:
 // ============================================================================
 void CItemBoxLine::SetInfo2Item(u32 itemData) {
     ResetPageTables(itemData);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(field40, &lbl_eu_805071B0[0x3e6], CItem_sumFamilyByte6(itemData));
+    setLayoutTextBoxNumber(field40, &lbl_eu_805071B0[0x3e6], CItem_sumFamilyByte6(itemData));
     switch ((int)tabEntries[(s8)field6D]) {
     case 2:
     case 4:
@@ -2318,7 +2315,7 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
                 a = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x649], (u16)v);
                 b = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805071B0[0x5a], (u16)v);
                 u8 sel = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805071B0[0x651],
-                                          (u16)BdatGetItemId(v));
+                                          BdatGetItemId(v));
                 if (sel == 0) {
                     tex = (u32)((nw4r::lyt::ArcResourceAccessor*)field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
                 } else if (sel == 4) {
@@ -2452,7 +2449,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)fontObj)->getFont()));
 
         // Seed the seven slot-name textboxes with the line text.
-        char* text = CUICfManager_getPackedFont9C();
+        char* text = (char*)CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 7; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_805071B0[0x3aa], i);
@@ -2480,7 +2477,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         }
 
         // Bind the line text into the sixteen label panes.
-        char* text2 = CUICfManager_getPackedFont9C();
+        char* text2 = (char*)CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4a6], (u32)text2);
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4ca], (u32)text2);
         setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4d6], (u32)text2);
@@ -2531,10 +2528,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         // the alpha shorts into the paired highlight entries.
         nw4r::lyt::Pane* pane443 = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x443], true);
-        FourShorts c0 = PaneMatGetS16Quad((void*)pane443, 0);
+        GXColorS10 c0 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645D8[0],
                                             (const GXColorS10*)&c0);
-        FourShorts c1 = PaneMatGetS16Quad((void*)pane443, 1);
+        GXColorS10 c1 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645E0[0],
                                             (const GXColorS10*)&c1);
         *(s16*)&lbl_eu_806645E8[6] = *(s16*)&lbl_eu_806645D8[6];
@@ -2542,10 +2539,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         nw4r::lyt::Pane* pane4A6 = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x4a6], true);
-        FourShorts c2 = PaneMatGetS16Quad((void*)pane4A6, 0);
+        GXColorS10 c2 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645F8[0],
                                             (const GXColorS10*)&c2);
-        FourShorts c3 = PaneMatGetS16Quad((void*)pane4A6, 1);
+        GXColorS10 c3 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664600[0],
                                             (const GXColorS10*)&c3);
         *(s16*)&lbl_eu_80664608[6] = *(s16*)&lbl_eu_806645F8[6];
@@ -2553,10 +2550,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         nw4r::lyt::Pane* pane76B = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x76b], true);
-        FourShorts c4 = PaneMatGetS16Quad((void*)pane76B, 0);
+        GXColorS10 c4 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664618[0],
                                             (const GXColorS10*)&c4);
-        FourShorts c5 = PaneMatGetS16Quad((void*)pane76B, 1);
+        GXColorS10 c5 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664620[0],
                                             (const GXColorS10*)&c5);
         *(s16*)&lbl_eu_80664628[6] = *(s16*)&lbl_eu_80664618[6];

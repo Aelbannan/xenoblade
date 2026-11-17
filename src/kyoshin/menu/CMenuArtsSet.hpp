@@ -384,7 +384,7 @@ public:
     virtual void v10();
     virtual void v11();
     virtual void v12();
-    virtual void* v13(void* label, int flag); // idx 13 -> vtable +0x3C
+    virtual nw4r::lyt::Pane* v13(void* label, int flag); // idx 13 -> vtable +0x3C
 };
 
 // Layout driver shared by the ArtsLayoutPair_loadSlots / ArtsTableLayout_load layout-pair

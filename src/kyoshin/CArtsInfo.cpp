@@ -9,9 +9,9 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/lyt.h>
 #include <stdlib.h>
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 #include "kyoshin/plugin/ocBdat.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Extern declarations for referenced symbols
 
@@ -32,8 +32,8 @@ extern const float lbl_eu_80668684; // 1.0f (const: retail hoists the pool load)
 // Small data objects (.sdata, addressed via @sda21): declared as complete
 // 4-byte objects so MWCC emits EMB_SDA21 relocs like retail (an incomplete
 // char[] extern would force lis/addi absolute addressing).
-extern u32 lbl_eu_80664748;
-extern u32 lbl_eu_80664750;
+extern GXColorS10 lbl_eu_80664748;
+extern GXColorS10 lbl_eu_80664750;
 extern u32 lbl_eu_80664758;
 extern u32 lbl_eu_80664760;
 
@@ -45,7 +45,6 @@ extern void* lbl_eu_806640F4;
 // declared in CArtsInfo.hpp; referenced by name so the conversion lfd's emit
 // retail SDA21 relocs instead of TU-local pool labels.
 
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Forward declarations for state machine functions (defined later in this TU).
 // CArtsInfo_RefreshLayout/CArtsInfo_UpdateCursor are extern "C": retail calls the C names (not
@@ -242,8 +241,8 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
 __declspec(noinline) void CArtsInfo_Cleanup(CArtsInfo* self) {
     CBdat::getEntry(2);
 
-    closeFileHandle__FPP11CFileHandle(&self->field_0x14);
-    closeFileHandle__FPP11CFileHandle(&self->field_0x18);
+    closeFileHandle((CFileHandle**)&self->field_0x14);
+    closeFileHandle((CFileHandle**)&self->field_0x18);
 
     self->field_0x40 = 0;
 
@@ -262,7 +261,7 @@ __declspec(noinline) void CArtsInfo_Cleanup(CArtsInfo* self) {
     }
 
     // Cleanup arc resource accessor (field holds the pointer by value)
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_0x1C);
 
     // Call virtual cleanup on cursor (+0x0C)
     self->mCursor.cleanup();
@@ -1189,7 +1188,7 @@ void CArtsInfo_FmtRow01(CArtsInfo* self, u32 arg2, int arg3) {
         CArtsInfo_DotToCommaDE(self, arg2, buf3);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf3, 0);
         if (fv != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1271,7 +1270,7 @@ void CArtsInfo_FmtRow03(CArtsInfo* self_, u32 arg2_, int arg3_) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1310,7 +1309,7 @@ void CArtsInfo_FmtRow04(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1352,7 +1351,7 @@ void CArtsInfo_FmtRow05(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1410,7 +1409,7 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, value1n, str2, value2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1523,7 +1522,7 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u32 const arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1548,7 +1547,7 @@ void CArtsInfo_FmtRow08(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1606,7 +1605,7 @@ void CArtsInfo_FmtRow09(CArtsInfo* self_, u32 arg2_, int arg3_) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1647,7 +1646,7 @@ void CArtsInfo_FmtRow0A(CArtsInfo* self, u32 const arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, val2, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (val1 != val2) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1700,7 +1699,7 @@ void CArtsInfo_FmtRow0B(CArtsInfo* self_, u32 arg2_, int arg3_) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, x1, str2, x3n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1738,7 +1737,7 @@ void CArtsInfo_FmtRow0C(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, grid2, str2, grid1);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
-        PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
     }
 }
 
@@ -1761,7 +1760,7 @@ void CArtsInfo_FmtRow0D(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1785,7 +1784,7 @@ void CArtsInfo_FmtRow0E(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1809,7 +1808,7 @@ void CArtsInfo_FmtRow0F(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1865,7 +1864,7 @@ void CArtsInfo_FmtRow10(CArtsInfo* self_, u32 arg2_, int arg3_) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1905,7 +1904,7 @@ void CArtsInfo_FmtRow21(CArtsInfo* self_, u32 arg2_, int arg3_) {
         CArtsInfo_DotToCommaDE(self, arg2, buf1);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -1951,7 +1950,7 @@ void CArtsInfo_FmtRow12(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -2267,7 +2266,7 @@ void CArtsInfo_FmtRow23(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -2294,7 +2293,7 @@ void CArtsInfo_FmtRow24(CArtsInfo* self, u32 arg2, int arg3) {
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (level != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -2348,7 +2347,7 @@ void CArtsInfo_FmtRow26(CArtsInfo* self_, u32 arg2_, int arg3_) {
         sprintf(buf1, lbl_eu_8050B00C + 0x282, 5, str2, nxt);
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
-            PaneMatSetTevColorsByName(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+            PaneMatSetTevColorsByName(self->mpLayout2, buf2, (const GXColorS10*)&lbl_eu_80664758, (const GXColorS10*)&lbl_eu_80664760);
         }
     }
 }
@@ -2491,7 +2490,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
         ApplyFontToTxtPanes(root1, (const nw4r::ut::Font*)((u32)((IDeviceFontInfo*)fontObj1)->getFont()));
 
-        char* lang = CUICfManager_getPackedFont9C();
+        char* lang = (char*)CUICfManager_getPackedFont9C();
         if (lang != 0) {
             setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[71], (u32)lang);
             setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[388], (u32)lang);
@@ -2592,10 +2591,10 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Snapshot the message pane's two vertex-colour pairs into the sbss
         // colour globals.
-        CArtsColorPair col1 = PaneMatGetS16Quad(pn238, 0);
-        CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664748), &col1);
-        CArtsColorPair col2 = PaneMatGetS16Quad(pn238, 1);
-        CopyVec4s(reinterpret_cast<CArtsQuadColor*>(&lbl_eu_80664750), &col2);
+        GXColorS10 col1 = PaneMatGetS16Quad(pn238, 0);
+        CopyVec4s(&lbl_eu_80664748, &col1);
+        GXColorS10 col2 = PaneMatGetS16Quad(pn238, 1);
+        CopyVec4s(&lbl_eu_80664750, &col2);
 
         // Swap the last halfword of the two cached colour records (retail
         // exchanges element [3] between lbl_eu_80664748/64750 via sda21).

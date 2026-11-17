@@ -7,6 +7,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // .sdata2 pool plant: MWCC's implicit int->double conversion magic
 // (2^52 + 2^31). With this planted under its retail name AND the other
@@ -46,7 +47,6 @@ extern "C" {
     void UIWin_CreateTalkWin(void* subObj, const char* str, int flag);
     void UIWin_CreateEveTalkWin(void* subObj, const char* str);
     unsigned int UIWin_GetTimer();
-    int code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);

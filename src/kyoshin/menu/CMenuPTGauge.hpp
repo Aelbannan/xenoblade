@@ -6,6 +6,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // PTGauge widget state machine:
 //   mPhase 0 = entry/appear, 1 = appearing anim, 2 = active, 3 = disappearing anim
@@ -76,6 +77,5 @@ struct CMenuPTGaugeFont {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor(); // shared ARC accessor (retail unmangled)
 // Global pointer to the active CMenuPTGauge instance (sda21-relative in retail).
 extern CMenuPTGauge* lbl_eu_806642D8;

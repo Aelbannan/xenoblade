@@ -1,15 +1,14 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuEnemyState.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Unit-private imports (retail symbol names - keep linkage/signatures verbatim)
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* MapFx_ResolveOwner(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
-extern "C" u32 CUICfManager_getPackedFontD8();
 // 4-short colour pairs read off a pane (unmangled retail symbol).
-extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
-extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).
@@ -17,7 +16,6 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
 // declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
 // later plain redeclaration inherit it (same signature).
-extern "C" char* MakeTplNameSysFile(u32 id);
 // Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
 // (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
 extern "C" void* findObjB28ById(s32 a);
@@ -25,9 +23,7 @@ extern "C" void* findObjB28ById(s32 a);
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int ScMain_GetSummedInt(void* self);
 extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
-extern "C" char* GetBdatNameByNumId(const char* s);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
-extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
 extern "C" void* lookupCA0By45C0(void);
 int sprintf(char*, const char*, ...);
 // Retail linker name is the already-mangled C++ symbol.
@@ -520,7 +516,6 @@ extern "C" void* MapFx_ResolveOwner(void* obj);
 #define lbl_eu_8066704C (sdata2_MESPool.f4C)
 #define lbl_eu_80667050 (sdata2_MESPool.f50)
 #define lbl_eu_80667054 (sdata2_MESPool.f54)
-int GetSysStateFlag23();
 void CfModel_NotifyReady(void* model);
 void CfModel_GetSpeedRate(void* model);
 
@@ -1356,7 +1351,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
         quadB.h[2] = lbl_eu_80663F90[2];
         quadB.h[3] = lbl_eu_80663F90[3];
     }
-    PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), quadA.w, quadB.w);
+    PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)quadA.w, (const GXColorS10*)quadB.w);
 
     reinterpret_cast<ObjBBFlag*>(panel->unk38)->flagBB &= 0xFE;
     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
@@ -1530,8 +1525,8 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
             bu[2] = static_cast<u16>(lbl_eu_80663F90[2]);
             bu[3] = static_cast<u16>(lbl_eu_80663F90[3]);
         }
-        PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a),
-                      reinterpret_cast<void*>(b));
+        PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)(reinterpret_cast<void*>(a)),
+                      (const GXColorS10*)(reinterpret_cast<void*>(b)));
 
         // Clear the highlight bits on the panel + shared panes.
         reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
@@ -1692,8 +1687,8 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
             bu2[2] = static_cast<u16>(lbl_eu_80663F90[2]);
             bu2[3] = static_cast<u16>(lbl_eu_80663F90[3]);
         }
-        PaneMatSetTevColors(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a2),
-                      reinterpret_cast<void*>(b2));
+        PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)(reinterpret_cast<void*>(a2)),
+                      (const GXColorS10*)(reinterpret_cast<void*>(b2)));
 
         // Clear the highlight bits on the panel + shared panes.
         reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
@@ -2749,16 +2744,16 @@ void CMenuEnemyState::Init() {
         if (i == 0) {
             nw4r::lyt::Pane* pane = (*pLayout2)->GetRootPane()
                 ->FindPaneByName(&lbl_eu_804FDBF8[0x147], true);
-            FourShorts fs0 = PaneMatGetS16Quad(pane, 0);
-            lbl_eu_80663F58[0] = fs0.a;
-            lbl_eu_80663F58[1] = fs0.b;
-            lbl_eu_80663F58[2] = fs0.c;
-            lbl_eu_80663F58[3] = fs0.d;
-            FourShorts fs1 = PaneMatGetS16Quad(pane, 1);
-            lbl_eu_80663F60[0] = fs1.a;
-            lbl_eu_80663F60[1] = fs1.b;
-            lbl_eu_80663F60[2] = fs1.c;
-            lbl_eu_80663F60[3] = fs1.d;
+            GXColorS10 fs0 = PaneMatGetS16Quad(pane, 0);
+            lbl_eu_80663F58[0] = fs0.r;
+            lbl_eu_80663F58[1] = fs0.g;
+            lbl_eu_80663F58[2] = fs0.b;
+            lbl_eu_80663F58[3] = fs0.a;
+            GXColorS10 fs1 = PaneMatGetS16Quad(pane, 1);
+            lbl_eu_80663F60[0] = fs1.r;
+            lbl_eu_80663F60[1] = fs1.g;
+            lbl_eu_80663F60[2] = fs1.b;
+            lbl_eu_80663F60[3] = fs1.a;
             lbl_eu_80663F68[3] = lbl_eu_80663F58[3];
             lbl_eu_80663F70[3] = lbl_eu_80663F60[3];
             lbl_eu_80663F78[3] = lbl_eu_80663F58[3];
@@ -2794,8 +2789,8 @@ void CMenuEnemyState::Init() {
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0)));
 
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], CUICfManager_getPackedFontD8());
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], (u32)CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], (u32)CUICfManager_getPackedFontD8());
 
     unk74->SetAnimationEnable(unk78, true);
     reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = lbl_eu_80666FEC;

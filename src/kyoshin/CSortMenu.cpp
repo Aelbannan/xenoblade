@@ -14,10 +14,10 @@
 
 #include <cstdio>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Pane-position helper from code_80135FDC (retail-unmangled).
 
-void closeFileHandle(CFileHandle**);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 
 // Text panes of the five visible rows.

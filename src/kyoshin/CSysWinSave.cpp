@@ -1,6 +1,7 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
 #include "kyoshin/CSysWinSave.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 // sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
 // (forward decl for kChainGaugeTwo, defined below after the pooling functions).
 extern const volatile f64 kChainGaugeTwo;
@@ -25,7 +26,6 @@ extern char lbl_eu_8050FD50[];
 #include "monolib/device/CDeviceVI.hpp"
 #include <new>
 #include <revolution/gx/GXPixel.h>
-void playUISound(u32);
 
 // Global-view declaration so the catalog thunks can address the member render
 // callback by its retail symbol name (the definition below emits that symbol).

@@ -22,6 +22,7 @@ class DrawInfo;
 class CScn;
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Battle-chain menu state shared by the trackChainPlayer..requestAnimReset helpers:
 // the current player reference plus two pending toggle flags consumed when the
@@ -181,7 +182,6 @@ extern u32 lbl_eu_80662DC8;
 extern u32 lbl_eu_80662DCC;
 
 // Font-pane helper (retail mangled name getPackedFont__Fv).
-u32 getPackedFont();
 
 // Result of CMenuArtsSelect_getSelectState: signed state bytes at +0x0/+0x1
 // (see cf::chain CArtsSelectStateView).
@@ -192,9 +192,7 @@ struct CArtsSelectStateView {
 
 // C-linkage imports (retail unmangled symbols - keep linkage verbatim).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void tickChainCounter(CMenuBattleChain* self);
 void applyChainColorScheme(CMenuBattleChain* self);
 void sinit_802AAF24();

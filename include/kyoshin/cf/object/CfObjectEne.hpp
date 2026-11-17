@@ -661,16 +661,16 @@ struct CActorParam17ECView {
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(void* self);
-extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(void* self);
-extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
-extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
-extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
+extern "C" void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry(void* self);
+extern "C" void CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry(void* self);
+extern "C" void CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CBattleState_getOwner__Q22cf13CfObjectActorFv(void);
+extern "C" void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(void);
 extern "C" void loadEnemyParams__Q22cf11CfObjectEneFv(void* self);
 // Verbatim `__`-named free function (retail emits the literal name with C
 // linkage; the def in CfObjectEne.cpp carries extern "C").
 extern "C" int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
-extern "C" void CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);
 extern "C" void updateEnemyBattleState__Q22cf11CfObjectEneFv(void* self);

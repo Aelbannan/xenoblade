@@ -7,6 +7,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 #include <stdio.h>
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Destructor - base object destructor (D2); MWCC emits D1 with delete check
 CPresentWin::~CPresentWin() {
@@ -131,7 +132,6 @@ tail:
 
 // Store the anim index (+0x34), call the anim loader, then bind the loaded
 // frame (+0xB7 offset string) through the +8 layout.
-extern "C" void* BuildItemNameStr(u32);
 extern "C" void setPresentAnimText(void* self, u16 idx) {
     *(u16*)((u8*)self + 0x34) = idx;
     void* anim = BuildItemNameStr(idx);

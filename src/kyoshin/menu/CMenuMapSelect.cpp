@@ -12,12 +12,12 @@
 #include <monolib/scn/CScn.hpp>
 #include "kyoshin/CTaskGame.hpp"
 #include <revolution/GX.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern u32 lbl_eu_80663E28; // .sbss global busy-flag word (bit 21)
 extern u32 lbl_eu_80664790;
 extern void CFade_StartLoad(CFade* fade);
-void playUISound(u32);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 void FloorMapCopy(CFloorMap* dest, const CFloorMap& src);
 void setupFloorMapPhase(CMenuMapSelect* self);
@@ -186,7 +186,6 @@ void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
-int IsMenuState621F0();
 }
 
 // View of cf::CfPadData (incomplete in CfGameManager.hpp): embedded CPad at
@@ -242,7 +241,6 @@ void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void beginClose(CTitleAHelp* self);
 
 // C++-linkage helper (retail emits the mangled form playUISound__FUl).
-void playUISound(unsigned long op);
 
 CMenuMapSelect* CMenuMapSelect::sInstance;
 

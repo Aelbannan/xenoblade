@@ -18,8 +18,7 @@
 #include <nw4r/lyt.h>
 #include <cstdio>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).
@@ -47,13 +46,9 @@ void sysWinOpenPhase1(CMCGetItemBoxSysWin*);
 // sysWinSwitchKindPane / sysWinApplyKind come from kyoshin/CSysWin.hpp (CSysWin* forms).
 }
 // C++-linkage (mangled) retail symbols.
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
-void playUISound(u32);                             // playUISound__FUl
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void Cur_Update(CBaseCur*);
 extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
@@ -528,10 +523,10 @@ void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
 void teardownMCGetItemBox(CMCGetItemBox* self) {
     CBdat::getEntry(2);
     CBdat::getEntry(5);
-    closeFileHandle__FPP11CFileHandle(&self->fileHandle1);
-    closeFileHandle__FPP11CFileHandle(&self->fileHandle2);
-    closeFileHandle__FPP11CFileHandle(&self->fileHandle3);
-    closeFileHandle__FPP11CFileHandle(&self->fileHandle4);
+    closeFileHandle(&self->fileHandle1);
+    closeFileHandle(&self->fileHandle2);
+    closeFileHandle(&self->fileHandle3);
+    closeFileHandle(&self->fileHandle4);
     self->field_4C = 0;
     if (self->memManagerPtr != 0) {
         mtl::MemManager::deallocate(self->memManagerPtr);
@@ -543,8 +538,8 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
         }
         self->layout40 = 0;
     }
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc1);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc2);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc1);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc2);
     void* o = self->objAt50;
     self->arcAcc1 = 0;
     self->arcAcc2 = 0;
@@ -1365,17 +1360,17 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((u32)fontData));
 
         u32 w = (u32)getPackedFont();
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x17b], w);
+        setLayoutTextBoxFont(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);
+        setLayoutTextBoxFont(this->layout40, &lbl_eu_8050FF8C[0x17b], w);
 
         // Stamp every item-slot text pane with the loaded character set.
         u32 sh = (u32)CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_8050FF8C[0x16e], i);
-            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, buf, sh);
+            setLayoutTextBoxFont(this->layout40, buf, sh);
         }
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x25a], sh);
+        setLayoutTextBoxFont(this->layout40, &lbl_eu_8050FF8C[0x25a], sh);
 
         this->layout40->SetAnimationEnable(this->animTrans2, false);
         this->layout40->SetAnimationEnable(this->animTrans1, true);

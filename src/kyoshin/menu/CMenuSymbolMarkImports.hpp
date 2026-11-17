@@ -23,6 +23,7 @@
 
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Global float constant pool (SDA-relative float loads). Declared const so
 // MWCC treats the loads as constants and hoists them above the frame stores.
@@ -262,7 +263,6 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 
 // Unmangled retail helper imports.
 extern "C" {
-int CheckEntryConditions(const void* table, u32 index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);
 void* Bdat_GetTable_AA34(void);

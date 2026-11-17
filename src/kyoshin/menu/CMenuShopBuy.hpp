@@ -9,17 +9,13 @@
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Forward declarations: the owning scene is kept opaque (same scheme as
 // CMenuBattleEnd).
 class CScn;
 
-// 8-byte pane-colour vector: CItemBoxLine.hpp references this type but relies
-// on includers having seen it first (CEquipItemBox.hpp owns the canonical
-// definition); defined here because that header cannot be edited.
-struct CEquipBoxFourShorts {
-    s16 a, b, c, d;
-};
 
 /* 8-byte copy unit used by the shop-buy data blob. ShopBuy_CopyData copies the
  * blob's sub-struct members; MWCC turns each struct assignment into the
@@ -106,7 +102,6 @@ extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" u8 code80135FDC_getByte_64077();
 
 // ShopBuy_HandleInput pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
@@ -133,7 +128,6 @@ extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // DrawInfo setup helper (C++ mangled name).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Phase handlers (same TU, extern "C" definitions in CMenuShopBuy.cpp) plus
 // the factory (retail unmangled name). __declspec(noinline) stops
@@ -159,7 +153,6 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 // CMenuUpdate). isFlag01Set takes the task-game instance in r3.
 
 // Shared data imports (MWCC does not mangle global-scope data names).
-extern "C" int IsMenuState621F0();
 extern u32 lbl_eu_80663E28;       // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern u32 lbl_eu_806642F8;       // shop-buy singleton flag (cleared by Term)
 extern const f32 lbl_eu_80667A20; // .sdata2 float pool constant (ctor mFloat6FC init)

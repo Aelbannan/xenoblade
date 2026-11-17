@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <nw4r/lyt.h>
+#include "kyoshin/CQuestWindow_Pane.hpp"
 
 class CBaseCur;
 
@@ -11,7 +12,6 @@ class CBaseCur;
 
 // Pane-visibility helpers (retail C-linkage names; same convention as
 // CSysWin.hpp / CKizunagram.hpp / CEquipItemBox.hpp).
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 // Pane translate setter (defined in CCur.cpp; retail keeps C linkage).
 // never_inline on the declaration so call sites keep the out-of-line bl.

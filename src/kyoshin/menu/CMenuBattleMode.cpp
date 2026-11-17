@@ -2,6 +2,7 @@
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 // Conflicting free-function redeclarations between CAIAction.hpp (via
 // CBattleManager.hpp -> CfObjectActor.hpp), plugin/ocBdat.hpp and
 // chain/CChainActorList.hpp trip MWCC 10197 when they land in one TU.
@@ -61,7 +62,6 @@ extern const f32 lbl_eu_80667C84;
 // ARC resource name string table base.
 extern char lbl_eu_80503D80[];
 // Shared battle ARC resource accessor -- retail calls the unmangled name.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // TU-local mirror of reslist::size(); declaration order walks the counter
 // between cursor and sentinel so MWCC colors cursor->r3, counter->r4,

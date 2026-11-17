@@ -5,6 +5,7 @@
 #include "kyoshin/menu/CMenuPTGauge.hpp"
 
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 // Owner headers (single winning decls):
 // - getArtsSlotRC / getArtsParamRC2 / IdTable_SumValues -> CChainActorList.hpp
 //   (int/const void* arts-query forms match the CActorParam.cpp definitions;
@@ -54,7 +55,6 @@ extern char lbl_eu_80532450[]; // final composite vtable set
 extern u32 __ptmf_null[3];     // runtime ptmf.o null member-fn descriptor
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 // Layout/anim helpers: declared extern "C" where the retail symbol is unmangled.
-int IsMenuState621F0(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
 }
 
 extern void playUISound(u32);

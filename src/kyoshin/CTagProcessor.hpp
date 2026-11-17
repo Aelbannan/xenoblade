@@ -8,7 +8,7 @@
 #include <nw4r/ut/ut_Rect.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Forward decls only: this TU defines its own byte-wise nw4r::ut::Color, so the
 // real lyt headers (which pull ut_Color.h) cannot be included here.
@@ -811,7 +811,6 @@ int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* pane);
 s32 MenuSnd_QuerySlotLive_89A04(s32 index);                                // sound-slot busy check
 void MenuSnd_SilenceByName_8986C(int handle, f32 fadeTime);                 // stop voice
 // Plugin UI mode query (pluginUi.cpp).
-int MenuStateCheck64064or30();
 int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);
 // Retail r5 is a string (wcscpy source), not a flag. The CSimpleEveTalkWin.hpp
 // copy still declares the older int-flag shape; the two headers are never
@@ -951,12 +950,6 @@ extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 u32 CtrlRemote_TouchBitByArg(u32 id);
 void CtrlRemote_SetSharedBit(u32 owner, u32 value);
 void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
-void MenuStateClear6405A();
-u8 code80135FDC_getByte_6405A();
-u8 code80135FDC_getByte_6405B();
-u32 code80135FDC_getWord_6405C();
-u32 code80135FDC_getWord_64060();
-void code80135FDC_setPair_6405C_64060(u32 a, u32 b);
 // cf::CfGameManager controller-mode query. Retail name keeps the Fv suffix
 // but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -971,7 +964,6 @@ void copyVEC2(float* dst, const float* src);
 
 // C++-linkage imports (retail emits the mangled forms).
 void* findObjectById(int id);  // findObjectById__Fi (talk-source index lookup)
-void playUISound(u32 op);   // playUISound(UI sound effect)
 
 // Tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038, 4 bytes
 // each - just the vtable pointer). Declared with plain u32 so MWCC treats

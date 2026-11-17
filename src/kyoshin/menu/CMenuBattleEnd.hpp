@@ -15,6 +15,8 @@ class CProcess;
 class IScnRender;
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // One entry of the internal message/queue array (stride 8).
 struct UnkBattleEntry {
@@ -104,7 +106,6 @@ extern char lbl_eu_8050E6F8[];      // layout/animation/pane name string table
 extern u32 __ptmf_null[];           // null member-function-pointer triple
 extern f32 lbl_eu_80668990;         // anim frame target for advanceAnimTransform
 extern f32 lbl_eu_80668994;         // anim reset frame for SetFrame
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void __ct__17UnkClass_8045F564Fv(void*);
@@ -116,8 +117,6 @@ void deleteRegion__17UnkClass_8045F564Fv(void*);
 }
 
 // C++-linkage helpers (retail symbols are their Itanium-mangled forms).
-u32 getPackedFont();
-void playUISound(u32);
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).

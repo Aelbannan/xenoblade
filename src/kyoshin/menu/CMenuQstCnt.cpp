@@ -19,6 +19,7 @@
 #include <revolution/gx/GXTypes.h>
 
 #include "kyoshin/menu/CMenuQstCnt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 struct QstMenuData {
     u8 mPad88[0x88];                            // 0x00
@@ -158,7 +159,6 @@ extern "C" CMenuQstCnt* __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
 
 // C++-linkage retail symbol (getPackedFont__Fv): returns a u32 message/flag
 // value used to fill the text fields below.
-u32 getPackedFont();
 
 void CMenuQstCnt::Init() {
     // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame);
@@ -187,9 +187,9 @@ void CMenuQstCnt::Init() {
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // First three text fields are filled straight from the message table.
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], getPackedFont());
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x4d], getPackedFont());
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x59], getPackedFont());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], (u32)getPackedFont());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x4d], (u32)getPackedFont());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x59], (u32)getPackedFont());
 
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x64], &lbl_eu_80509A10[0x73], 0);
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x74], &lbl_eu_80509A10[0x73], 0);

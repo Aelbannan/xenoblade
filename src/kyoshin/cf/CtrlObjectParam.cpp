@@ -951,7 +951,7 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
 // (work + idx*0x3DD4), init entryA via CtrlObjectParam_RampEntryArtsLevel, snapshot entryB's
 // param sub-region (blocks at +0x188/+0x16AC/+0x1730) to stack locals, copy
 // entryB's CActorParam into entryA's via CActorParam_copyAll, then restore the
-// snapshots. The dead lbl_eu_8052E9B0 address store is kept by retail.
+// snapshots. The dead __vt__Q22cf12CBattleState address store is kept by retail.
 void __ct__8009ED08(u32 rowA, u32 rowB) {
     const char* strBase = lbl_eu_804FBCB0;   // materialized early (retail lis/addi)
     void* fp = getFP(&strBase[0x78]);
@@ -961,7 +961,7 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
     CtrlObjectParam_RampEntryArtsLevel(reinterpret_cast<cf::CtrlObjectParamSlotView*>(entryA), v);
     cf::CtrlObjectParamEntry* entryB = reinterpret_cast<cf::CtrlObjectParamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_80663E88) + ((u16)rowB * 0x3DD4) + 0x41F0);
-    volatile u32 lblAddr = (u32)lbl_eu_8052E9B0;  // dead store kept by retail
+    volatile u32 lblAddr = (u32)__vt__Q22cf12CBattleState;  // dead store kept by retail
 
     // Snapshot entryB's param sub-region (inside the CActorParam area),
     // refresh entryA's CActorParam from entryB's, then restore the snapshot.

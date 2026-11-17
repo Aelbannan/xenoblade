@@ -44,9 +44,13 @@ namespace cf {
     // CActorParam::unk15E0 (object+0x15E0), NOT a CBattleState member.
     class CBattleState {
     public:
-        virtual void* CBattleState_UnkVirtualFunc1();  //0x8 (returns the owner object)
-        virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual int CBattleState_UnkVirtualFunc3();  //0x10
+        // Slots 0x8/0xC/0x10/0x48/0x4C are overridden by CActorParam (which
+        // re-declares them in its own vtable tail) and again by CfObjectActor;
+        // 0x10 shares its name with CObjectParam's +0x40 slot so the one
+        // CfObjectActor override serves both bases.
+        virtual void* CBattleState_getOwner();  //0x8 (base: null; actors return the container)
+        virtual void* CBattleState_callOwnerObject();  //0xC
+        virtual void* CObjectParam_getParamPtr();  //0x10 (owner name pointer)
         virtual void CBattleState_setBattleParam(int val);  //0x14 - takes int 0x35 in CtrlObjectParam (retail li r4,0x35)
         virtual void CBattleState_enterStatusEntry(CBattleStateEntry* entry);  //0x18: full enter-status pipeline (state machine + slot scan + copy)
         virtual void CBattleState_addStagingEntry(CBattleStateEntry* entry);  //0x1C: bitfield set + 8-slot staging match/clamp/fill
@@ -60,8 +64,8 @@ namespace cf {
         virtual void CBattleState_fetchStatusSlot(); //0x3C: base status array slot by ulong index in r4 (retail Fv; primitive behind 0x58)
         virtual void CBattleState_getEventSlot(); //0x40: event-window slot (entries[32..]) by ulong index in r4 (retail Fv; primitive behind 0x5C)
         virtual void CBattleState_readStatusSlot(); //0x44: upper status-window slot (entries[64..]) by int index in r4 (retail Fv; primitive behind 0x60)
-        virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
-virtual void* CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0); //0x4C (retail Fv at CBattleManager sites; this TU passes the slot in r4)
+        virtual void CBattleState_notifyEntryUpdated(CBattleStateEntry* entry); //0x48: post-update notify (base is an empty stub)
+        virtual void CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0); //0x4C
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void* CBattleState_getEntryByIndex(int index); //0x54: indexed entry via slot 0x38, r3 passthrough
         virtual cf::CBattleStateEntry* CBattleState_fetchStatusEntry(int index); //0x58
@@ -77,13 +81,6 @@ virtual void* CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0); //0x4
         virtual int CBattleState_getEventMask(u32 id); //0x80: event-id to bit mask (0 = unknown)
         virtual void CBattleState_addStatusBits6(u32 flags); //0x84: OR flags into the +0x6 status halfword (retail Fv)
         virtual int CBattleState_getStatusMask(u32 id); //0x88: status-id to bit mask on unk6 (twin of 0x80 getEventMask)
-
-        // Remaining same-slot forwarders (non-virtual, inline): the virtuals
-        // keep legacy Unk names because slots 0x08/0x48 belong to the shared
-        // base line overridden in CfObjectActor and CActorParam (out of scope).
-        // MWCC inlines each to identical virtual-dispatch code at call sites.
-        void* CBattleState_getOwner() { return CBattleState_UnkVirtualFunc1(); } //0x08: owner object (base returns null; overrides return the container)
-        void CBattleState_notifyEntryUpdated(CBattleStateEntry* entry) { CBattleState_UnkVirtualFunc17(entry); } //0x48: post-update notify (base is an empty stub)
 
         CBattleState();
 

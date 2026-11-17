@@ -12,6 +12,8 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Retail imports (defined outside this TU). Animation frame constant.
 // `const` routes it into the readonly sdata2 pool so MWCC hoists the lfs above
@@ -22,19 +24,14 @@ extern const double lbl_eu_80668608;
 // Shop window arc file path string (split1 .rodata).
 extern "C" char lbl_eu_8050A62C[];
 // Animate the attached anim-transform forward to a frame (returns true when done).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Animate the attached anim-transform in reverse (returns true when done).
 // Retail symbol is unmangled (C linkage).
 // Draw a nw4r layout with the given draw info.
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Fire a per-window sound/effect event by id.
-void playUISound(u32);
 // Sum the translate of a pane and its ancestors into an output VEC3. C-ABI.
 
 // OnFileEvent imports (retail symbols, unmangled / pre-mangled C-ABI names).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void* GetBdatNameByNumId(const char*);
 void writePanePos(nw4r::lyt::Pane*, float*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 void* getPlayer__Q22cf13CfGameManagerFi(int);

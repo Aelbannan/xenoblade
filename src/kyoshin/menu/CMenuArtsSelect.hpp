@@ -41,18 +41,13 @@ struct ArtsParamLocal : ArtsParamLocalBase {
     virtual f32 mFn14();     // slot 5 (+0x14) - getMax
 };
 
-// 4 x s16 aggregate returned by PaneMatGetS16QuadByName in r3:r4 (retail FourShorts).
-struct FourShorts {
-    s16 a, b, c, d;
-};
-
 // Gauge highlight box passed to PaneMatSetS16QuadByName (us-801079b0): three window
 // coords, a fourth filled from the gauge quad's last short, then the whole
 // quad copied verbatim (MWCC lowers the initializer to a word-pair copy of
-// the FourShorts plus an lha readback for .w).
+// the GXColorS10 plus an lha readback for .w).
 struct ArtsGaugeBox {
     s16 x, y, z, w;
-    FourShorts quad;
+    GXColorS10 quad;
 };
 
 // Per-mode arts name/gauge-id rodata tables (refreshPaneTextures copies them

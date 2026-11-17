@@ -3,6 +3,8 @@
 #include <types.h>
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 // CCol6Invite.hpp declares Col6FormatBufferString with C++ linkage, which mangles
 // the retail-unmangled symbol at call sites (reloc-name drift). Shadow that
 // declaration so this unit's extern "C" decl (below) is the only visible one.
@@ -303,10 +305,6 @@ class CCol6Fade;
 // C++-linkage (mangled retail symbols) declared with the unmangled identifier
 // so MWCC derives the retail mangled name (moved from code_80135FDC.hpp, which
 // this unit no longer includes).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage imports (retail symbols are unmangled - keep linkage verbatim)
 extern "C" {
@@ -347,16 +345,10 @@ void sysWinSetKindContent(void* syswin, const char* msg, int flag);          // 
 void sysWinApplyKind(void* syswin, int flag);                           // CSysWin.cpp
 void sysWinOpenPhase1(void* syswin);                                     // CSysWin.cpp
 void sysWinDispatchPhase(void* syswin);                                     // CSysWin.cpp (per-frame update)
-int IsMenuState621F0();                                                  // code_80135FDC.cpp
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void Cur_Update(void* cursor);                                     // CCur.cpp
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();                                              // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
-u32 CUICfManager_getPackedFont9C();                                                    // CUICfManager.cpp (font value)
-void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
-void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
-char* BuildItemNameStr(u16);                                            // CItemBoxInfo.cpp
 void* Bdat_GetTable_AA34();                                               // bdat manager
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
 void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
@@ -380,8 +372,6 @@ int sprintf(char*, const char*, ...);                                // stdio (C
 // etc.); declare with the full mangled name so the call-site relocs bind
 // verbatim (same convention as CItemBoxGrid.hpp / CTalkWindow.hpp).
 extern "C" {
-void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout* layout,
-                                            char* paneName, u8 value);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 }
@@ -391,9 +381,6 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf / playUISound__FUl).
 // NOTE: AnimRewindFrame is NOT in this group - retail keeps the bare unmangled
 // symbol, so it is declared extern "C" below.
-void setLayoutTextBoxFont(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
-int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void playUISound(u32 soundId);
 
 // Split1 .rodata string pool (arc paths / layout region names / format strings).
 extern char lbl_eu_80502050[];

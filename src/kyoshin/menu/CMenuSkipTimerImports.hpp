@@ -4,6 +4,8 @@
 // stays includable next to other headers.
 #include "kyoshin/menu/CMenuSkipTimer.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
 extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
@@ -56,9 +58,7 @@ extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 // Scene-active gate for HUD draws (retail-unmangled; code_80135FDC.cpp).
-extern "C" int IsMenuState621F0();
 // String-table base for the skip-timer title/help name lookup.
 extern char lbl_eu_80510540[];
 // Retail-mangled CfGameManager helper that accepts a pad-channel arg (keeps the

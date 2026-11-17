@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Unit-private imports.
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
@@ -29,8 +31,6 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
 extern u32 lbl_eu_80663E28; // mode bitfield (bit 21 = realtime event busy)
 extern "C" void artsMenuInput(CMenuArtsSet* self);
 u8 CArtsList_isReady(CArtsList* self);
@@ -52,7 +52,6 @@ extern const double lbl_eu_80668670;    // int->double conversion bias (.sdata2)
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CSysWinImports.hpp"
-void playUISound(u32);
 
 // Struct view of the null pointer-to-member-function constant. Reading
 // through named members keeps MWCC from emitting duplicate @l references.
@@ -64,7 +63,6 @@ struct PtmfNullWordsArts {
 
 
 // C++-linkage draw helper (mangles to the retail symbol).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Arts archive path string (accessed via sda21 small-data relocation).
 extern char lbl_eu_8050AC70[];
@@ -458,11 +456,8 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_advance(SArts2FDF4* self) {
     self->field_0x8->v14(0);
 }
 
-// 2-arg C++ overload of setPaneVisible (separate mangled symbol), used by ArtsBusyPane_showPrimary.
-void setPaneVisible(void*, u32);
 
 // AnimTransform frame-check helper (defined in COption.cpp / CArtsInfo.cpp).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // State-progression byte table (sdata, 8 bytes). Fixed-size decl: incomplete
 // array types are not sdata-eligible and force lis/addi instead of sda21.
 extern u8 lbl_eu_806628A8[8];
@@ -649,7 +644,7 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
     SArtsManagerRoot* root = (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(id);
     char* buf = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50, lbl_eu_8050AC70 + 0x5b,
                               0x18);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
+    setLayoutTextBoxNumber(
         (nw4r::lyt::Layout*)self->field_0x00, lbl_eu_8050AC70 + 0x6f,
         root->mObj17C.v128());
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field_0x00, lbl_eu_8050AC70 + 0x100,
@@ -705,7 +700,7 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_loadSlots(SArts304C4* self) 
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
     self->field_0x14->v14(0);
-    setPaneVisible(self->field_0x14->field_0x10, 0);
+    setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     ArtsSlotCursor_refresh((SArtsSub8022FA58*)self);
 }
 #pragma optimize_for_size off
@@ -764,7 +759,7 @@ extern "C" __declspec(noinline) void ArtsDrawBox_draw(SArtsDrawBox* self, nw4r::
 // bl (not an inline).
 extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, u8 val) {
     if (self->field_0x27 != 0) {
-        setPaneVisible(((SArts080C*)(self->field_0x08))->field_0x10, val);
+        setPaneVisible((nw4r::lyt::Pane*)((SArts080C*)(self->field_0x08))->field_0x10, val);
     } else {
         self->field_0x22 = val;
         return ArtsSlotCursor_refresh(self);
@@ -909,7 +904,7 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
             }
             u32 w = e->field_0x00;
             u32 tblEntry = *(u32*)((char*)&lbl_eu_806640F8 + w);
-            u32 cat = BdatGetItemId(w >> 20);
+            u32 cat = (u16)BdatGetItemId(w >> 20);
             u32 k = BdatGetU8Direct((const void*)tblEntry, (char*)lbl_eu_8050AC70 + 0x1df,
                                   cat) -
                     4;
@@ -986,8 +981,8 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
 extern "C" __declspec(noinline) void ArtsBusyPane_showPrimary(SArts30D18* self) {
     if (self->field_0x23 != 0) {
         self->field_0x24 = 0;
-        setPaneVisible(self->field_0x08->field_0x10, 1);
-        setPaneVisible(self->field_0x14->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     }
 }
 
@@ -1256,13 +1251,13 @@ extern "C" __declspec(noinline) u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* sel
 extern "C" __declspec(noinline) void ArtsBusyPane_toggle(SArts313E0* self) {
     if (self->field_0x27 != 0) {
         self->field_0x27 = 0;
-        setPaneVisible(self->field_0x08->field_0x10, 1);
-        setPaneVisible(self->field_0x14->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     } else {
         self->field_0x27 = 1;
         self->field_0x21 = self->field_0x20;
         ArtsBusyPane_refreshCursor(self);
-        setPaneVisible(self->field_0x14->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
     }
 }
 
@@ -1335,8 +1330,8 @@ __declspec(noinline) void ArtsLayout_runLayoutIn(SArts3150C* self) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
-        setPaneVisible(self->field_0x08->field_0x10, 0);
-        setPaneVisible(self->field_0x14->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
         self->field_0x23 = 1;
     }
@@ -1365,8 +1360,8 @@ __declspec(noinline) void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
-        setPaneVisible(self->field_0x08->field_0x10, 1);
-        setPaneVisible(self->field_0x14->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
         self->field_0x23 = 1;
     }
@@ -1456,7 +1451,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_load(SArts304C4* self) {
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
     self->field_0x14->v14(0);
-    setPaneVisible(self->field_0x14->field_0x10, 0);
+    setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     SArtsVec2 v2 = {lbl_eu_80668658, lbl_eu_80668658};
     CMenuArtsSet_setPaneScale((SArtsPaneScaleObj*)self->field_0x14->field_0x10, &v2);
     ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1931,12 +1926,12 @@ extern "C" __declspec(noinline) void artsCursorFix(SArts322BC* self) {
 extern "C" __declspec(noinline) void ArtsTable_toggleBusyPanes(SArts32888* self) {
     if (self->field_0x12D != 0) {
         self->field_0x12D = 0;
-        setPaneVisible(self->field_0x08->field_0x10, 1);
-        setPaneVisible(self->field_0x14->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     } else {
         self->field_0x12D = 1;
-        setPaneVisible(self->field_0x08->field_0x10, 0);
-        setPaneVisible(self->field_0x14->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
     }
 }
 
@@ -1961,8 +1956,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutIn(SArts3150C* sel
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
-        setPaneVisible(self->field_0x08->field_0x10, 0);
-        setPaneVisible(self->field_0x14->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
         self->field_0x23 = 1;
     }
@@ -1987,8 +1982,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutIn(SArts31648*
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
-        setPaneVisible(self->field_0x08->field_0x10, 1);
-        setPaneVisible(self->field_0x14->field_0x10, 0);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
+        setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
         self->field_0x23 = 1;
     }
@@ -2036,7 +2031,7 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
 
     for (int i = 0; i < 5; i++) {
         sprintf(buf, base + 0x24b, i + 9);
-        void* pane = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
+        nw4r::lyt::Pane* pane = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
         if ((s8)self->field_0x21 + i >= (int)self->field_0x12C) {
             // Row past the end of the table: hide its label pane entirely.
             setPaneVisible(pane, 0);
@@ -2063,7 +2058,7 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
             (nw4r::lyt::Layout*)self->field_0x00, buf, row->field_0x0C, 0);
 
         sprintf(buf, base + 0x27e, i + 9);
-        void* pane2 = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
+        nw4r::lyt::Pane* pane2 = ((SArts308B0Layout*)self->field_0x00)->field_0x10->v13(buf, 1);
         if (pane2 != NULL) {
             setPaneVisible(pane2, 0);
         }
@@ -2095,7 +2090,7 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
                 pct /= 100;
             }
             sprintf(buf, base + 0x28a, i + 9);
-            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber(
                 (nw4r::lyt::Layout*)self->field_0x00, buf, pct);
             char* txt = BdatTouchStringCell(
                 base + 0x50, base + 0x5b, 0x18);
@@ -3218,29 +3213,29 @@ bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     ApplyFontToTxtPanes((nw4r::lyt::Pane*)pane, (const nw4r::ut::Font*)fontHandle);
     void* text = CUICfManager_getPackedFont9C();
     if (text != 0) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x6F, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x336, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x33F, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x348, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x351, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x35A, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x100, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x363, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x36C, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x375, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x37E, (u32)text);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x387, (u32)text);
     }
     field_0x1C->v11(field_0x24, 0);

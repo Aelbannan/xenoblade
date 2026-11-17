@@ -15,18 +15,16 @@
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSysWinImports.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 // Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
 // Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
 // bool isPaneVisible(Pane*), Pane* PaneSetTexPalette, VEC3 ScalePaneWorldPos,
-// u8 setLayoutTextBoxNumber, void* Class_8045F858 ct/dt vs header spellings).
+// void* Class_8045F858 ct/dt vs header spellings).
 #define isPaneVisible isPaneVisible_kiz_hidden
-#define setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc setLayoutTextBoxNumber_kiz_hidden
 #define __ct__14Class_8045F858FP17UnkClass_8045F564 __ct__14Class_8045F858_kiz_hidden
 #define __dt__14Class_8045F858Fv __dt__14Class_8045F858_kiz_hidden
 #include "kyoshin/CPcKizunagram.hpp"
-#include "kyoshin/code_80135FDC_Lyt.hpp"
 #undef isPaneVisible
-#undef setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
 #undef __ct__14Class_8045F858FP17UnkClass_8045F564
 #undef __dt__14Class_8045F858Fv
 #include "kyoshin/code_80135FDC.hpp"
@@ -298,7 +296,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
     CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)font->vf7());
-    u32 textVal = CUICfManager_getPackedFont9C();
+    u32 textVal = (u32)CUICfManager_getPackedFont9C();
     if (textVal != 0) {
         setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
         setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x139], textVal);
@@ -1061,7 +1059,6 @@ extern "C" __declspec(noinline) void* __ct__UI_CPassiveSkillLine(UI::CPassiveSki
 __declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 #pragma optimize_for_size off
 
-extern "C" void BuildSlotItemLists(u32 arg);
 extern "C" void __dt__Q22UI17CPassiveSkillInfoFv(UI_CPassiveSkillInfo* self, int flag);
 
 // Line-subobject rebuild (retail CPassiveSkillLine_rebuildLayouts): called from OnFileEvent after
@@ -2660,23 +2657,23 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_updateSkillTabs(UI::CPass
             if (res3 != 0) {
                 sprintf(buf, &lbl_eu_8050DC20[0x736], rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)buf, (TPLPalette*)res3);
-                CPSkillFourShorts fs0 = PaneMatGetS16QuadByName(self->field_8, buf, 0);
-                CPSkillFourShorts fs1 = fs0;
-                CPSkillFourShorts fs2 = PaneMatGetS16QuadByName(self->field_8, buf, 1);
-                CPSkillFourShorts fs3 = fs2;
+                GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_8, buf, 0);
+                GXColorS10 fs1 = fs0;
+                GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_8, buf, 1);
+                GXColorS10 fs3 = fs2;
                 // Each branch declares its own colour pair so MWCC gives
                 // them distinct stack slots (retail r1+0x20/0x18 vs
                 // r1+0x10/0x8).
                 if (word == 0) {
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 } else {
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 }
             }
             sprintf(buf, &lbl_eu_8050DC20[0x749], rowP1, i);
@@ -2889,19 +2886,19 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
             if (res3 != 0) {
                 sprintf(bufB, &lbl_eu_8050DC20[0x736], rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)bufB, (TPLPalette*)res3);
-                CPSkillFourShorts fs0 = PaneMatGetS16QuadByName(self->field_8, bufB, 0);
-                CPSkillFourShorts fs1 = fs0;
-                CPSkillFourShorts fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
-                CPSkillFourShorts fs3 = fs2;
+                GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_8, bufB, 0);
+                GXColorS10 fs1 = fs0;
+                GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
+                GXColorS10 fs3 = fs2;
                 CPSkillColorS10 c1, c2;
                 if (word == 0) {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, bufB, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 } else {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, bufB, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 }
             }
             sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
@@ -2919,14 +2916,14 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
                 nw4r::lyt::Pane* pane2 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
                 if (pane2 != 0) {
                     PaneSetTexPaletteByName(self->field_8, (const char*)bufB, (TPLPalette*)res4);
-                    CPSkillFourShorts fs0 = PaneMatGetS16QuadByName(self->field_8, bufB, 0);
-                    CPSkillFourShorts fs1 = fs0;
-                    CPSkillFourShorts fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
-                    CPSkillFourShorts fs3 = fs2;
+                    GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_8, bufB, 0);
+                    GXColorS10 fs1 = fs0;
+                    GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
+                    GXColorS10 fs3 = fs2;
                     CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.d);
-                    PaneMatSetTevColors(pane2, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.a);
+                    PaneMatSetTevColors(pane2, (const GXColorS10*)col2, (const GXColorS10*)col1);
                     reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
                 }
             }
@@ -2957,7 +2954,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
                         CPSkillColorS10 c1, c2;
                         CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
                         CPSkillColorS10* col2 = setGXColorS10(&c2, 0x48, 0x3a, 0x21, 0);
-                        PaneMatSetTevColors(pane5, col2, col1);
+                        PaneMatSetTevColors(pane5, (const GXColorS10*)col2, (const GXColorS10*)col1);
                     }
                 } else {
                     u32 sum = 0;
@@ -2988,7 +2985,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
                                 CPSkillColorS10 c1, c2;
                                 CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
                                 CPSkillColorS10* col2 = setGXColorS10(&c2, 0xff, 0xff, 0xfa, 0);
-                                PaneMatSetTevColors(pane6b, col2, col1);
+                                PaneMatSetTevColors(pane6b, (const GXColorS10*)col2, (const GXColorS10*)col1);
                             }
                             self->field_104[row * 5 + i - 1] = 1;
                         }
@@ -2999,7 +2996,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
                             CPSkillColorS10 c1, c2;
                             CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
                             CPSkillColorS10* col2 = setGXColorS10(&c2, 0xaa, 0x19, 0x19, 0);
-                            PaneMatSetTevColors(pane5, col2, col1);
+                            PaneMatSetTevColors(pane5, (const GXColorS10*)col2, (const GXColorS10*)col1);
                         }
                     }
                 }
@@ -3104,19 +3101,19 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_refreshLearnGrid(UI::CPas
             if (res3 != 0) {
                 sprintf(buf, &lbl_eu_8050DC20[0x9a9], slot, s);
                 PaneSetTexPaletteByName(self->field_18, (const char*)buf, (TPLPalette*)res3);
-                CPSkillFourShorts fs0 = PaneMatGetS16QuadByName(self->field_18, buf, 0);
-                CPSkillFourShorts fs1 = fs0;
-                CPSkillFourShorts fs2 = PaneMatGetS16QuadByName(self->field_18, buf, 1);
-                CPSkillFourShorts fs3 = fs2;
+                GXColorS10 fs0 = PaneMatGetS16QuadByName(self->field_18, buf, 0);
+                GXColorS10 fs1 = fs0;
+                GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_18, buf, 1);
+                GXColorS10 fs3 = fs2;
                 CPSkillColorS10 c1, c2;
                 if ((slotPtr->byte14 & 1) == 0) {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_18, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 } else {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.d);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.d);
-                    PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
+                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_18, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
                 }
             }
             if (s > 1 && (slotPtr->byte14 & 1) != 0) {
@@ -3771,8 +3768,6 @@ extern "C" void CPassiveSkill_draw(UI_CPassiveSkill* self, u8* arg2) {
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
-extern "C" void closeFileHandle__FPP11CFileHandle(void*);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 extern "C" void sysWinTermLayout(void*);
@@ -3783,12 +3778,12 @@ extern "C" void sysWinTermLayout(void*);
 // object, then clear each character's skill-blob pointer (rows 1..8).
 extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     CBdat::getEntry(2);
-    closeFileHandle__FPP11CFileHandle(&self->field_18);
-    closeFileHandle__FPP11CFileHandle(&self->field_1C);
+    closeFileHandle((CFileHandle**)&self->field_18);
+    closeFileHandle((CFileHandle**)&self->field_1C);
     self->field_24 = 0;
     CPassiveSkillLine_teardown(&self->mLine);
     sysWinTermLayout(&self->mSysWin);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_20);
     self->field_20 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
     for (u8 i = 1; i <= 8; i++) {

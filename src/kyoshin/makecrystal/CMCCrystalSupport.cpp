@@ -5,10 +5,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 extern "C" void func_8022EB0C(CMCCrystalSupport* self);
 
 extern "C" {
@@ -17,9 +14,6 @@ extern void* lbl_eu_80664090;
 extern const float lbl_eu_80668630;
 extern const float lbl_eu_80668634;
 
-char* MakeTplNameSysFile(u16);
-void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-    nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 }
 
 CMCCrystalSupport::CMCCrystalSupport(nw4r::lyt::ArcResourceAccessor* accessor)
@@ -54,7 +48,7 @@ extern "C" void CrySupDrawLayout(CMCCrystalSupport* self,
     if (self->mLoaded == 0) {
         return;
     }
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+    drawLayout(
         self->mLayout, drawInfo, 0, 1);
 }
 

@@ -17,7 +17,8 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 #include "kyoshin/menu/CMenuSelectShop.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // ---------------------------------------------------------------------------
 // ShopSel_CreateSingleton  (us-8018bb40)
@@ -391,7 +392,7 @@ void CMenuSelectShop::cbRenderBefore() {
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     drawShopWin(&mSelShop, &drawInfo);
     if ((s32)mSelIndex >= 0)
         Cur_DrawLayout(&mCursor, &drawInfo);

@@ -17,8 +17,8 @@
 
 #include <stdio.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 
 u8 CQstLogInfo::QstLogInfo_GetLoadedMark() { return mField38; }
 
@@ -152,8 +152,8 @@ extern "C" __declspec(noinline) void QstLogInfo_StepStateMachine(CQstLogInfo* se
 // down the scratch region.
 extern "C" __declspec(noinline) void QstLogInfo_TeardownLayout(CQstLogInfo* self) {
     CBdat::getEntry(2);
-    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
-    closeFileHandle__FPP11CFileHandle(&self->field_0x18);
+    closeFileHandle(&self->mFileHandle);
+    closeFileHandle(&self->field_0x18);
     self->mUnk30 = 0;
     if (self->mUnk20 != nullptr) {
         delete self->mUnk20;
@@ -547,8 +547,8 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
             }
             u32 val = BdatGetU16Direct(table, buf48, key);
             if ((u16)val != 0) {
-                u32 v1 = BdatGetItemType((u16)val);
-                u32 v2 = BdatGetItemId((u16)val);
+                u16 v1 = BdatGetItemType((u16)val);
+                u16 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
                     str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
@@ -646,8 +646,8 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
             }
             u32 val = BdatGetU16Direct(table, buf8, key);
             if ((u16)val != 0) {
-                u32 v1 = BdatGetItemType((u16)val);
-                u32 v2 = BdatGetItemId((u16)val);
+                u16 v1 = BdatGetItemType((u16)val);
+                u16 v2 = BdatGetItemId((u16)val);
                 switch ((u16)v1) {
                 case 0:
                     str = BdatGetPtrDirect((const void*)lbl_eu_806640F4,
@@ -788,7 +788,7 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(((CQstLogInfoFontView*)font)->sf9()));
 
-        char* questName = CUICfManager_getPackedFont9C();
+        char* questName = (char*)CUICfManager_getPackedFont9C();
         if (questName != 0) {
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x238], (u32)questName);
             setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x3b2], (u32)questName);

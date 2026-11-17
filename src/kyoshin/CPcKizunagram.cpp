@@ -6,10 +6,9 @@
 
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Forward declarations of intra-TU callees.
 void KizunagramBuildRowLookup(CPcKizunagram* self);
@@ -17,7 +16,6 @@ void KizunaCurDestroyLayout(CPcKizunaCur* self);
 extern "C" CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p);
 
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // String base for the affinity-chart layout paths (targets add byte offsets).
 extern char lbl_eu_8050D868[];
@@ -30,9 +28,6 @@ extern char lbl_eu_8050DB18[];
 // Named float constants in .sdata2 referenced via @sda21 by KizunagramPulseRise/E5A8.
 
 // Layout / file helpers with C++ (mangled) retail names.
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 u8 KizunagramIsHidden(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
@@ -399,7 +394,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
         }
 
         char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
+        setLayoutTextBoxNumber(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) setPaneVisible(pane3, 1);
     }
@@ -576,7 +571,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
         }
 
         char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
+        setLayoutTextBoxNumber(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) setPaneVisible(pane3, 1);
     }

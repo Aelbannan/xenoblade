@@ -8,6 +8,7 @@
 #include "kyoshin/CTaskGameEffApi.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/vm/yvm2.h"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Flag context block passed to some plugin callbacks; flags at offset 8.
 struct UiFlags {
@@ -99,7 +100,6 @@ void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
 
 void startEnumObjects(void* list, int type, int value);
 void* getEntryAt(void* list, int index);
-u8 code80135FDC_getByte_64059();
 void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
 int CtrlRemote_TouchBitByArg(int index);
 void CtrlRemote_SetSharedBit(int index, int value);
@@ -110,7 +110,6 @@ void UIWin_CreateSysWin1(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.
 int UIWin_HasPendingUpdate(int v);
 // SE-talk voice busy probe (code80135FDC split unit).
-int MenuStateCheck64064or30();
 // Player accessor on the game manager (retail mangled global).
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Start/queue a party-chat line on the battle sub-object.

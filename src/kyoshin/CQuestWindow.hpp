@@ -12,6 +12,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Window base class: quest/menu windows are CRTP task objects whose Move/Draw
 // behavior is dispatched through the +0x3C/+0x48 pointer-to-member-function
@@ -228,13 +231,6 @@ extern const f32 lbl_eu_80667138;
 // cbRenderBefore busy flag (.sbss; bit 0x200000 gates the draw).
 extern u32 lbl_eu_80663E28;
 
-// nw4r::lyt::Pane flag byte at +0xBB (mFlag; bit0 = visible). setPaneVisible
-// (the quest-window pane toggle) clears bit 0 and ORs in the caller's flag
-// byte, mirroring SetVisible without the branchy nw4r SetBit helper.
-struct PaneFlagRef {
-    u8 pad[0xBB]; // +0x00..0xBA
-    u8 mFlag;     // +0xBB
-};
 
 // C-ABI imports for the quest-window free functions. These retail symbols are
 // unmangled, so they must stay C linkage to stop MWCC appending a
@@ -246,7 +242,6 @@ u32 menuPTStateIsActive();                       // party-state screen active?
 void Cur_Update(void* cur);             // cursor per-frame update (CCur)
 void Cur_DrawLayout(void*, void*); // cursor draw
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
-u32 SearchThresholdIdx(u32 questId);             // quest id -> name-table index
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
 void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
@@ -279,13 +274,8 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 
 // C-ABI UI / misc imports used by Term, closeQuestWindow, handleQuestInput.
-u8 DecMenuCounter64080();
 u32 GetItemMulti_IsActiveFlag();
 void CUICfManager_setTimeout30();
-u8 code80135FDC_getByte_64080();
-void code80135FDC_postIncByte_64080();
-void code80135FDC_setByte_6405B();
-void incrementEventCounter__FUl(u32);
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 void UIWin_CreateSysWin0(char* msg, int a, int b);
@@ -302,25 +292,16 @@ void CItemBlock_setCount(s32 value);
 // CUICfManager font helpers (onQuestFileEvent binds the font and rebuilds the
 // cursor). CUICfManager_getPackedFont9C returns the font string, CUICfManager_getArcResourceAccessor the shared
 // arc accessor.
-extern "C" void* CUICfManager_getPackedFont9C(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // BDAT archive attach helpers (onQuestFileEvent common-archive branch).
 
 // Quest-content helpers (refreshQuestContent). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
 // unmasked value in a callee-saved register between the call and the mask).
-u32 BdatGetItemType(u32);
-extern "C" u16 BdatGetItemId(u32);
-u32 BdatGetRankByName(u32);
-void* GetBdatNameByNumId(const char*);
 u32 CtrlObjectParam_GetWorkField50();
 void CtrlObjectParam_SetWorkField50(u16);
 void UIWin_CreateMenuUpdate(u32, u32, u32, u32);
 
-// Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs
-// the caller's flag byte; refreshQuestContent pane show/hide calls).
-extern "C" void setPaneVisible(void*, u32);
 
 // Copy 2 floats from src to self+0x4C (refreshQuestContent cursor-pane placement).
 void writePanePos(u8* self, const float* src);

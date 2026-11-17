@@ -13,9 +13,9 @@
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle (TutorialList_PlayTutorialVoice)
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
-void playUISound(u32);
 
 // Tutorial id table: the ids of every unlocked tutorial in display order plus
 // the page/scroll split of the selected entry.

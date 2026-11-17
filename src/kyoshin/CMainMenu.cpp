@@ -7,6 +7,7 @@
 #include <string.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
 // Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
@@ -92,12 +93,8 @@ extern "C" void Cur_SetVisible(void* cur, u8 flag);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
-extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout* layout, const char* paneName,
-                              const void* src, u32 idx);
 // Menu open/close gate (defined in code_80135FDC.cpp).
-extern "C" void BuildSlotItemLists(u32 arg);
 // System-window busy gate (defined in code_80135FDC.cpp).
-extern "C" int IsMenuState621F0();
 // Another menu-open gate (kizuna-talk-list / message-log family).
 extern "C" u32 hasPassiveSkillMenu();
 // Message-log busy gate (CSysWinMsgLog.cpp).
@@ -219,8 +216,6 @@ extern "C" void CUICfManager_queueOptionMenu(u32 value);
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void playUISound(u32);
 // Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
 // CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
 // pulling the full CfGimmick header which conflicts on several extern "C" globals
@@ -265,8 +260,6 @@ public:
 };
 
 // C-linkage import (retail unmangled symbol).
-void closeFileHandle(CFileHandle** handle);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
 // CBaseCur shared helpers (defined in CCur.cpp)
 extern "C" void Cur_DeactivateTail(CBaseCur* cur);
@@ -1403,14 +1396,14 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
             pos[2] = 0x1e;
             pos[1] = 0x32;
             pos[0] = 0x3c;
-            PaneMatSetS16QuadByName(self->field_0x7C, buf, pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, buf, (const GXColorS10*)pos, 1);
         } else {
             s16 pos[4];
             pos[3] = 0xff;
             pos[2] = 0xff;
             pos[1] = 0xff;
             pos[0] = 0xff;
-            PaneMatSetS16QuadByName(self->field_0x7C, buf, pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, buf, (const GXColorS10*)pos, 1);
         }
     }
 
@@ -1425,14 +1418,14 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
             pos[2] = 0x1e;
             pos[1] = 0x32;
             pos[0] = 0x3c;
-            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], (const GXColorS10*)pos, 1);
         } else {
             s16 pos[4];
             pos[3] = 0xff;
             pos[2] = 0xff;
             pos[1] = 0xff;
             pos[0] = 0xff;
-            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], (const GXColorS10*)pos, 1);
         }
     }
 }

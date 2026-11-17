@@ -395,6 +395,7 @@ namespace cf {
         CfObjectMove();
         //vtable 1 (CfObject)
         virtual ~CfObjectMove();
+        void* CObjectParam_getParamPtr(); // CObjectParam 0x40 override
         //vtable 1 (CfObjectMove)
         virtual void CfObjectMove_dropMoveRequest();  //0x1C8
         virtual void CfObjectMove_detachModelList();  //0x1CC
@@ -418,7 +419,7 @@ namespace cf {
         virtual void CfObjectMove_updateNpcTarget(const ml::CVec3* vec, float step, int flag, int angle);  //0x1E4
         virtual int CfObjectMove_queryNpcAdvance();   //0x1E8 (retail returns int: 1 or the CtrlNpc action-advance query)
         // Wave-61: Unk primary flipped. Fv body
-        // CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv keeps Unk name.
+        // CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf keeps Unk name.
         virtual void CfObjectMove_setNpcMoveRange(float value); //0x1EC
         // Wave-61 Unk aliases (non-virtual, inline): legacy Unk spellings for
         // the three Move slots renamed above. Same arity; MWCC inlines each
@@ -441,7 +442,7 @@ namespace cf {
         virtual void CfObjectMove_signalEffectSlot(u32 arg); //0x214
         virtual void CfObjectMove_flushEffectSlots(); //0x218
         virtual void CfObjectMove_setAllEffectBits(); //0x21C
-        virtual void* CfObjectMove_loadResourceById(u32 id); //0x220: retail 0x800BF1C4 takes id in r4, returns loader result (0 when mField6DC/mField6E0 NULL); forced-name impl CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv
+        virtual void* CfObjectMove_loadResourceById(u32 id); //0x220: retail 0x800BF1C4 takes id in r4, returns loader result (0 when mField6DC/mField6E0 NULL); forced-name impl CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl
 
         //0x0: vtable
         //0x0-BE: CfObjectModel

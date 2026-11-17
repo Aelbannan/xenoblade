@@ -9,6 +9,9 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 /* Cursor widget embedded at +0x34 (loads layout "curs22"). Its constructor
    and destructor are defined in the CCur unit (__ct__CCur22 / __dt__6CCur22Fv);
@@ -143,40 +146,30 @@ public:
 /* ---- imports (declared here, never locally in the .cpp) ---- */
 
 // UI sound effect; retail symbol is the C++ mangled playUISound__FUl.
-void playUISound(u32);
 
 // nw4r anim-transform frame checker; retail symbol is the C++ mangled
 // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // nw4r anim-transform frame checker; retail symbol is unmangled (C linkage).
 
 // Layout/accessor release helpers (C++ mangled retail symbols, mirroring the
 // canonical declarations in code_80135FDC.hpp, which conflicts with
 // CEquipItemBox.hpp's BdatTouchStringCell in this TU).
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).
 // Cur_SetVisible / BuildSlotItemLists are declared in CEquipItemBox.hpp.
 extern "C" void Cur_HighlightPane(CBaseCur*, u8);
-extern "C" u8 code80135FDC_getByte_64077();
 
 // Party-select helpers (unmangled retail symbols).
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void CtrlObjectParam_SwapSlotValues(int*, u8, u8);
-extern "C" u8 GetCollectedFlagWord8(u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" char* MakeTplNameSysFile(u32);
 
 // Party-slot data-table pointers (.sdata).
 extern void* lbl_eu_80664090;
 extern char* lbl_eu_80664098;
 
 // Character stats getters (unmangled retail symbols).
-extern "C" char* CUICfManager_getPackedFont9C();
-extern "C" u32 CUICfManager_getPackedFontD8();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" char* CItemBlock_getPtr20E8();
 
 // BDAT string/value lookups (unmangled retail symbols).
@@ -184,16 +177,10 @@ extern "C" char* CItemBlock_getPtr20E8();
 // Layout text/pane binding helpers (unmangled retail symbols; the canonical
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
 // CEquipItemBox.hpp in this TU).
-extern "C" void setPaneVisible(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Slot-pane byte counter getter (unmangled retail symbol).
-extern "C" u8 code80135FDC_getByte_6407E();
 
 // cf::CfGameManager helper. US retail keeps the no-arg Fv suffix but the call
 // site passes two arguments; declare the retail symbol verbatim under C

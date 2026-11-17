@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "monolib/util/FixStr.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern "C" void* __dt__17CMenuBattleDamageFv(void*, int);
 
@@ -169,7 +170,7 @@ void CMenuBattleDamage::Init() {
 
         {
             nw4r::lyt::Pane* root = e.mLayout0->GetRootPane();
-            u32 font = getPackedFont();
+            u32 font = (u32)getPackedFont();
             ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)font);
         }
         e.mLayout0->UnbindAllAnimation();
@@ -624,6 +625,10 @@ void BtlDmg_QueueEnqueue(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
 // Draw one queued damage number: find the first non-empty digit slot, write
 // its three digits into the layout panes, play the hit sound and clear it.
 // If every slot is empty, mark the queue idle.
+// KNOWN EXCEPTION (see CTutorial.cpp): retail passes the raw slot words to
+// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc with no u8 mask; bind the
+// retail symbol through a word-typed C-linkage alias.
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageSlot& s = self->mSlots[i];

@@ -11,6 +11,7 @@
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Data imports (retail symbol names; global data is not C++-mangled).
 extern const float lbl_eu_80668DF0;
@@ -18,12 +19,6 @@ extern const float lbl_eu_80668DF4;
 extern char lbl_eu_80510CC8[];
 
 // nw4r layout animation helpers (retail names; resolved by symbol tooling).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 
 #pragma push

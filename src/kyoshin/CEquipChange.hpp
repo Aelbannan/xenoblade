@@ -7,17 +7,8 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
-/* CItemBoxInfo.hpp declares LookupItemTypeTable(void*) while CEquipItemBox.hpp
-   (included above) already declares the real u32(u32) - MWCC rejects the
-   overload. This unit never calls it, so rename the stale declaration away
-   for this inclusion only. */
-#define LookupItemTypeTable LookupItemTypeTable_stale_voidp
-#define GetCollectedFlagByte GetCollectedFlagByte_stale_int_u8
-#define PaneMatGetS16Quad PaneMatGetS16Quad_stale_gxcolor
+#include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
-#undef LookupItemTypeTable
-#undef GetCollectedFlagByte
-#undef PaneMatGetS16Quad
 
 namespace nw4r {
 namespace lyt {
@@ -114,7 +105,6 @@ public:
 
 
 // C++ linkage so MWCC mangles to the retail symbol advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 struct CEqChCursorRec {
     u16 field_00;
@@ -220,7 +210,6 @@ extern "C" void Cur_Update(void* cur);
 // 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);
 extern "C" int Cur_BothSubPanesOn(CBaseCur*);
-extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);

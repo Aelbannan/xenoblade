@@ -5,6 +5,9 @@
 #include "kyoshin/CItemBoxLine.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // CItemBoxInfo2 layout lives in CItemBoxInfo.hpp (not included: it redeclares
 // __dt__17UnkClass_8045F564Fv with a void* arg, clashing with CSysWin.hpp's
@@ -16,22 +19,13 @@ class CNumSelect;   // full layout in kyoshin/CNumSelect.hpp (not included, see 
 struct CScrollBar;  // full layout in kyoshin/CScrollBar.hpp (not included, see above)
 class CFileHandle;
 
-extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag (C-ABI)
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
 extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
 extern "C" void sysWinApplyKind(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
-/* 8-byte r3:r4 copy unit (mirrored from CEquipItemBox.hpp; see include note). */
-struct CEquipBoxFourShorts {
-    s16 a, b, c, d;
-};
 
 
 
-/* 8-byte animation-color vector (4 shorts) returned by PaneMatGetS16QuadByName. */
-struct FourShorts {
-    s16 a, b, c, d;
-};
 
 
 /* Tab holder with a trailing FixStr<32> name buffer at +0x94 (ItemBoxLine_FormatTabEntryName). */
@@ -211,9 +205,6 @@ extern "C" void __dt__7CSubCurFv(CBaseCur*, int);
 extern "C" void* Bdat_GetTable_AA34();                           // bdat manager reset (no args)
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
-extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);
@@ -222,9 +213,6 @@ extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" u8 code80135FDC_getByte_64077();
-extern "C" u32 BdatGetItemType(u32);
-extern "C" u16 BdatGetItemId(u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(s32);
@@ -256,8 +244,6 @@ extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 // unmangled C++ forms mangle to the retail symbols
 // (buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc /
 // bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // Cursor deactivation tail handler (CCur unit) - genuine C-ABI helper.
 extern "C" void Cur_DeactivateTail(void*);
 
@@ -279,7 +265,6 @@ extern const double lbl_eu_80668100;
 
 // ItemBoxLine_ShowSlotCounts: character-data / item helpers (C-ABI).
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
-extern "C" float GetFloatTableEntry(unsigned int);
 
 // ItemBoxLine_BuildTabEntries: tab-format / item-name helpers + rodata tables.
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
@@ -288,7 +273,6 @@ extern "C" u8 getLanguage__9CDeviceSCFv();
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
 
-extern "C" u32 MapValueToRank6(unsigned int);
 extern "C" u16 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 ItemBoxLine_CalcCountKey(void*, unsigned int);
 
@@ -302,8 +286,6 @@ extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
 extern "C" u8 ItemBoxLine_ProbePageSlot(void*, unsigned int);
 
 // Sibling tab-dispatch helpers in this merged unit (external relocs in retail).
-extern "C" void BuildSlotItemLists(unsigned int);
-extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
 // Syswin content-setter helpers (defined in CSysWin.cpp) + item-name provider
@@ -314,7 +296,6 @@ extern "C" void sysWinOpenPhase1(void*);
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
 // C-ABI (plain retail names).
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 
 // Item-box-line refresh helpers (external retail symbols).
 extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
@@ -324,8 +305,6 @@ extern "C" void sysWinAdvancePhase3(void*);
 // --- teardown helpers called by ItemBoxLine_UnloadFiles (retail plain names) ---
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 // Tab-page helpers used by ItemBoxLine_RefreshPageList (retail plain names).
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
@@ -339,7 +318,6 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-for
 // (LookupItemTypeTable, gMnuItemMesB/806640F4/...), so it keeps the u32-table
 // view of BdatGetU16Direct instead of kyoshin/code_80135FDC_Bdat.hpp until those
 // table globals are retyped.
-extern "C" char* MakeTplNameSysFile(u32);
 
 // .sbss item-kind owner tables (u32 values; SDA-accessed).
 extern u32 lbl_eu_806640F4;
@@ -358,7 +336,6 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" FourShorts PaneMatGetS16QuadByName(void*, void*, u32);  // animation color fetch
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32); // RGB color builder
 
@@ -387,12 +364,7 @@ extern u8 lbl_eu_80664640[8];
 // ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
 // Retail helpers whose CItemBoxInfo.hpp declarations use other parameter types
 // (CItemBoxInfo.hpp's forms are renamed at its include above).
-extern "C" FourShorts PaneMatGetS16Quad(void*, u32);                   // pane colour getter (r3:r4 pair)
-extern "C" u32 LookupItemTypeTable(u32);
-extern "C" void* BuildItemNameStr(u32);
-extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 extern "C" int Counter_TestBit(u32, u32);
-extern "C" u32 GetCollectedFlagByte(u32);
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
 extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 

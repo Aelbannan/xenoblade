@@ -14,6 +14,8 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <revolution/GX.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // CSysWin.hpp declares typed __ct__/__dt__17UnkClass_8045F564Fv forms that
 // clash with the void* forms in CItemBoxInfo.hpp (via CtrlObjectParam.hpp,
@@ -47,7 +49,6 @@ struct CfPadDataView {
 };
 
 // DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // C-ABI imports (retail symbols are unmangled / pre-mangled C names).
 extern "C" {
@@ -56,7 +57,6 @@ void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Cur_DrawLayout(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
-int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
 }
 

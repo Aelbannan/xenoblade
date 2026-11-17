@@ -55,8 +55,6 @@ struct MenuEnemyPanel {
           unk3C(0), unk40(0), unk44(0), unk48(0) {}
 };
 
-// 4 packed shorts returned in r3:r4 by PaneMatGetS16Quad.
-struct FourShorts { s16 a, b, c, d; };
 
 // Embedded target-select cursor (0x48 bytes at +0x7E4 of CMenuEnemyState).
 // Virtual destructor only; the ctor is defined in CMenuEnemyState.cpp.

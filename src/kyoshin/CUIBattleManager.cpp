@@ -2,6 +2,7 @@
 #include "kyoshin/CUIBattleManager.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // --- CTTask<CUIBattleManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -140,10 +141,8 @@ int CMainMenu_IsOpen();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
 bool isGlobalCamFlagSet__Fi(UNKWORD flag);
-void* CUICfManager_getArcResourceAccessor();
 }
 
-extern u32 getPackedFont();
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 void* findObjectById(int id);

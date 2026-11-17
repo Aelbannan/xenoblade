@@ -6,6 +6,7 @@
 #include "kyoshin/code_80135FDC.hpp"              // advanceAnimTransform (anim frame wait)
 #include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::setInputDisableTime
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
+#include "kyoshin/code_80135FDC_State.hpp"
 // Implicit-r3 form: retail call sites that do NOT set r3 (the def in
 // ocBdat.cpp takes no args); header decl is the 1-arg caller-tuned form.
 extern "C" void* Bdat_GetTable_AA34(void); extern "C" void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32);
@@ -17,7 +18,6 @@ extern "C" void* Bdat_GetTable_AA34(void); extern "C" void CtrlObjectParam_Apply
 #include <new>
 #include <revolution/gx/GXPixel.h>                 // GXSetZMode
 #include "kyoshin/plugin/ocBdat.hpp"
-void playUISound(u32);
 
 // completeWindowOpen calls enableAnimB, which is defined later in this TU.
 // extern "C": the retail symbol is unmangled, so both the definition and the
@@ -454,11 +454,11 @@ __attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
     u8 r = BdatGetU8Direct((const void*)lbl_eu_80573D18[SearchThresholdIdx(self->field_B8)],
                          &lbl_eu_804FEC84[0xa2], self->field_B8);
     if (r == 0 || r == 3) {
-        incrementEventCounter__FUl(0xb4);
-        incrementEventCounter__FUl(0xb5);
-        incrementEventCounter__FUl(0xb6);
-        incrementEventCounter__FUl(0xb7);
-        incrementEventCounter__FUl(0xb8);
+        incrementEventCounter(0xb4);
+        incrementEventCounter(0xb5);
+        incrementEventCounter(0xb6);
+        incrementEventCounter(0xb7);
+        incrementEventCounter(0xb8);
     }
     if (self->field_B8 - 0x100 <= 4) {
         CtrlRemote_SetSharedBit(self->field_B8 + 0x704, 2);
@@ -509,15 +509,15 @@ void refreshQuestContent(CQuestWindow* self) {
     self->field_0xE4 = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
     u8 v = BdatGetU8Direct((const void*)questRow, &base[0xa2], questId);
     if (v == 1) {
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
     } else {
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
     }
     char* res = 0;
     switch (v) {
@@ -602,8 +602,8 @@ void refreshQuestContent(CQuestWindow* self) {
                 }
                 u32 v30 = BdatGetU16Direct((const void*)questRow, buf, questId);
                 if ((v30 & 0xFFFF) != 0) {
-                    u32 v22 = BdatGetItemType(v30 & 0xFFFF);
-                    u32 v5 = BdatGetItemId(v30 & 0xFFFF);
+                    u16 v22 = BdatGetItemType(v30 & 0xFFFF);
+                    u16 v5 = BdatGetItemId(v30 & 0xFFFF);
                     switch (v22 & 0xFFFF) {
                     case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
                     case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
@@ -657,8 +657,8 @@ void refreshQuestContent(CQuestWindow* self) {
                 sprintf(buf3, &base[0x1ea], i + 1);
                 u32 v31 = BdatGetU16Direct((const void*)questRow, buf3, questId);
                 if ((v31 & 0xFFFF) != 0) {
-                    u32 v30 = BdatGetItemType(v31 & 0xFFFF);
-                    u32 v5 = BdatGetItemId(v31 & 0xFFFF);
+                    u16 v30 = BdatGetItemType(v31 & 0xFFFF);
+                    u16 v5 = BdatGetItemId(v31 & 0xFFFF);
                     switch (v30 & 0xFFFF) {
                     case 0: cur = BdatGetPtrDirect((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
                     case 1: cur = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
@@ -776,21 +776,21 @@ void refreshQuestContent(CQuestWindow* self) {
             i++;
         } while (i < 4);
     }
-    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
-    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
-    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
-    setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
+    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
     if (self->field_0xC8 == 0) {
         if (self->field_0xC4 == 0) {
-            setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
+            setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
         } else {
-            setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+            setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
         }
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
         playUISound(0x19);
     } else {
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
-        setPaneVisible((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
         playUISound(0x1c);
         self->field_0xC0 = 0;
     }
@@ -801,8 +801,12 @@ void refreshQuestContent(CQuestWindow* self) {
 
 // Pane-flag toggle: clear bit 0 of the pane's +0xBB flag byte (nw4r
 // visible bit) and OR in the caller's flag byte (0/1 = hide/show).
-void setPaneVisible(PaneFlagRef* self, u32 flag) {
-    self->mFlag = (self->mFlag & 0xFE) | (flag & 0xFF);
+extern "C" void setPaneVisible(nw4r::lyt::Pane* pane, u32 visible) {
+    // TODO: retail is Pane::SetVisible(bool) (byte-identical with a bool
+    // parameter); callers must pass bool-typed values first, otherwise they
+    // normalise. Until then write the flag byte directly.
+    u8* flag = (u8*)pane + 0xBB;
+    *flag = (*flag & 0xFE) | (u8)visible;
 }
 
 // retail: lfs f1,0(r4); lfs f0,4(r4); stfs f1,0x4c(r3); stfs f0,0x50(r3)

@@ -8,6 +8,7 @@
 
 #include <nw4r/lyt.h>
 #include <revolution/gx/GXTypes.h>
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Forward decls (nw4r math VEC3 is only used as a pointer in the cursor view).
 namespace nw4r { namespace math { struct VEC3; } }
@@ -111,7 +112,6 @@ extern "C" void Cur_Update(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).
-void playUISound(u32);
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
 extern "C" void __declspec(noinline) CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
 

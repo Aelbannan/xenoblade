@@ -2,6 +2,7 @@
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/math/MTRand.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern u32 getPackedFont();
 extern void playUISound(u32);
@@ -13,7 +14,6 @@ extern void incrementEventCounter(u32);
 // that retail symbol (see pre-mangled decl in code_80135FDC.hpp). Do NOT use
 // extern "C" (lint forbids it for non-lbl_ relocs) nor the pre-mangled name
 // (that would double-mangle).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Retail data slices owned by this TU (splits: .rodata 80509210-805092B0,
 // .data 80535F48-80535F58, .sdata 806627F0-806627F8). The class is novtable

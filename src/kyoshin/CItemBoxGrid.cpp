@@ -17,6 +17,8 @@
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 #undef CItem_initItemImplInstances
 // This TU declares six table handles + two helpers with stale types that
 // clash with cf/CItem.hpp's decls; rename CItem.hpp's copies so the TU decls
@@ -58,27 +60,19 @@
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 
 // Retail helper forms used by this TU (kept out of CItemBoxGrid.hpp: owners
 // that also include CItemBoxInfo.hpp declare them with other parameter types).
-extern "C" u32 BdatGetItemId(u32);
-extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void SplitU32ToS16s(short*, unsigned long);
-extern "C" void* CUICfManager_getPackedFont9C(void);
-void playUISound(u32);
 
 // Forward declarations for external functions
 void* __dt__13CArtsBookItemFv(void* self, int mode);
 void* __dt__11CVisionItemFv(void* self, int mode);
 void* __dt__10CQuestItemFv(void* self, int mode);
 
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Forward declarations for functions defined later in this file
 extern "C" long RoundHalfAway0(double f);
@@ -86,8 +80,6 @@ extern "C" {
 void CopyTabSlotVec(u32*, void*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
-void closeFileHandle__FPP11CFileHandle(void**);
-void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
 void sysWinTermLayout(void*);
 // .sdata2 conversion magics referenced by ((CItemBoxGridFull*)(retail pool
@@ -556,7 +548,7 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
                     default: ownerTbl = (u32)lbl_eu_806640F8; break;
                 }
                 u32 kindId = (*(u32*)item) >> 20;
-                u32 shortKind = BdatGetItemId(kindId);
+                u16 shortKind = BdatGetItemId(kindId);
                 char nameBuf[64];
                 const char* fmt = (cat == 2) ? &lbl_eu_8050566C[0x132] : &lbl_eu_8050566C[0x13d];
                 sprintf(nameBuf, fmt, ownerIdx);
@@ -601,7 +593,7 @@ entry_done:
             entry[5] = (u8)this->mVisionItems.HasSlotIdMatch(kind3);
             entry[4] = (u8)this->mQuestItems.HasSlotIdMatch(kind3);
             if (cat == 0xd) {
-                u32 shortKind = BdatGetItemId(kind3);
+                u16 shortKind = BdatGetItemId(kind3);
                 entry[6] = (u8)this->mArtsBookItems.HasSlotIdMatch(shortKind & 0xFFFF);
             }
         }
@@ -728,7 +720,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
 
     u32 kind = *(u32*)obj >> 20;
     LookupItemTypeTable(kind);
-    u32 type = BdatGetItemType(kind);
+    u16 type = BdatGetItemType(kind);
     BdatGetItemId(kind);
     u32 price = ((CItemBoxGridFull*)(this))->GetItemBasePrice(obj);
 
@@ -1624,7 +1616,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
     u32 word = *(u32*)item;
     u32 kind = word >> 20;
     u32 type = (word >> 16) & 0xF;
-    u32 shortKind = BdatGetItemId(kind);
+    u16 shortKind = BdatGetItemId(kind);
     u32 result = 0;
 
     if (type == 3) {
@@ -1909,9 +1901,9 @@ void CItemBoxGridFull::SortByKindNameD() {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 k1 = BdatGetItemId(w1 >> 20);
+            u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 k2 = BdatGetItemId(w2 >> 20);
+            u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
             if ((u32)c1 <= (u32)c2) continue;
@@ -2318,11 +2310,11 @@ void CItemBoxGridFull::SortGridByKindNameAlt() {
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u8 c1 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w1)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
-                                   (u16)BdatGetItemId(w1 >> 20));
+                                   BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
             u8 c2 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w2)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
-                                   (u16)BdatGetItemId(w2 >> 20));
+                                   BdatGetItemId(w2 >> 20));
             if (c1 >= c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2349,9 +2341,9 @@ void CItemBoxGridFull::SortByCapKeyAsc() {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 k1 = BdatGetItemId(w1 >> 20);
+            u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 k2 = BdatGetItemId(w2 >> 20);
+            u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
             if ((u32)c1 >= (u32)c2) continue;
@@ -2379,9 +2371,9 @@ void CItemBoxGridFull::SortByCapKey2Asc() {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 k1 = BdatGetItemId(w1 >> 20);
+            u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 k2 = BdatGetItemId(w2 >> 20);
+            u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
             if ((u32)c1 >= (u32)c2) continue;
@@ -2416,8 +2408,8 @@ void CItemBoxGridFull::GroupByCapKey(u32 target) {
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             // Both kind keys are looked up before either byte is truncated:
             // retail keeps the first lookup result live across the second call.
-            u32 k1 = BdatGetItemId(*(u32*)obj1 >> 20);
-            u32 k2 = BdatGetItemId(*(u32*)obj2 >> 20);
+            u16 k1 = BdatGetItemId(*(u32*)obj1 >> 20);
+            u16 k2 = BdatGetItemId(*(u32*)obj2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, strBase + 0x248, k2 & 0xFFFF);
             // Swap only when entry j+1 matches the target and entry j doesn't:
@@ -2451,9 +2443,9 @@ void CItemBoxGridFull::SortByCapKeyDesc() {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 k1 = BdatGetItemId(w1 >> 20);
+            u16 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 k2 = BdatGetItemId(w2 >> 20);
+            u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
             if ((u32)c1 <= (u32)c2) continue;
@@ -2571,7 +2563,7 @@ void CItemBoxGridFull::GroupByKindName(u32 target) {
 float CItemBoxGridFull::GetItemValueFloat(void* entry) {
     u32 word = *(u32*)entry;
     u32 tbl = (u32)(size_t)lbl_eu_806640F4;
-    u32 kind = BdatGetItemId(word >> 20);
+    u16 kind = BdatGetItemId(word >> 20);
     u32 idx = BdatGetU16Direct((void*)tbl, (const char*)&lbl_eu_8050566C[0x25a], (u16)kind);
     // Bit 2 of the kind flag entry gates a party-bonus multiplier.
     if ((BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x261], (u16)kind) & 4)) {
@@ -2607,7 +2599,7 @@ __declspec(noinline) u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
 __declspec(noinline) u32 CItemBoxGridFull::FindKindPoolIdx(void* entry) {
     u32 val = *(u32*)entry;
     u32 obj = (u32)lbl_eu_806640F4;
-    u32 kind = BdatGetItemId(val >> 20);
+    u16 kind = BdatGetItemId(val >> 20);
     u32 i;
     for (i = 1; i <= 10; i++) {
         char buf[40];
@@ -2837,7 +2829,7 @@ void CItemBoxGrid::DrawItemBoxGrid(nw4r::lyt::DrawInfo* drawInfo) {
     if (!((CItemBoxGridHeadView*)p)->field_58) return;
 
     ((CItemBoxInfo*)(p + 0x1d8))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(((CItemBoxGridHeadView*)p)->field_44, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
+    drawLayout(((CItemBoxGridHeadView*)p)->field_44, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 
     u8 r = p[0x2d4f];
     u8 v = (r != 0) ? r : 1;
@@ -2870,10 +2862,10 @@ void CItemBoxGrid::UnloadItemBox() {
         CBdat::getEntry(5);
     }
 
-    closeFileHandle__FPP11CFileHandle(&((CItemBoxGridHeadView*)p)->field_28);
-    closeFileHandle__FPP11CFileHandle(&((CItemBoxGridHeadView*)p)->field_2C);
-    closeFileHandle__FPP11CFileHandle(&((CItemBoxGridHeadView*)p)->field_30);
-    closeFileHandle__FPP11CFileHandle(&((CItemBoxGridHeadView*)p)->field_34);
+    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_28);
+    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_2C);
+    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_30);
+    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_34);
 
     void* ptr38 = ((CItemBoxGridHeadView*)p)->field_38;
     ((CItemBoxGridHeadView*)p)->field_54 = 0;
@@ -2888,8 +2880,8 @@ void CItemBoxGrid::UnloadItemBox() {
         ((CItemBoxGridHeadView*)p)->field_44 = 0;
     }
 
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_3C);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_40);
+    releaseArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_3C);
+    releaseArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_40);
 
     void* obj5c = ((CItemBoxGridHeadView*)p)->field_5C;
     if (obj5c) {
@@ -3768,31 +3760,31 @@ void CItemBoxGrid::func_801CCAF0() {
                     u32 table = lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 7) {
-                        incrementEventCounter__FUl(0x87);
+                        incrementEventCounter(0x87);
                     }
                 } else if ((u8)teachState == 2) {
-                    if ((*(u32*)item >> 20) == 0x75a) incrementEventCounter__FUl(0x88);
+                    if ((*(u32*)item >> 20) == 0x75a) incrementEventCounter(0x88);
                 } else if ((u8)teachState == 4) {
-                    if ((*(u32*)item >> 20) == 0x775) incrementEventCounter__FUl(0x8a);
+                    if ((*(u32*)item >> 20) == 0x775) incrementEventCounter(0x8a);
                 } else if ((u8)teachState == 5) {
                     u32 table = lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 2) {
-                        incrementEventCounter__FUl(0x8b);
+                        incrementEventCounter(0x8b);
                     }
                 }
                 if ((u8)teachType == 3 || (u8)teachType == 8) {
-                    if ((u8)teachState == 1) incrementEventCounter__FUl(0x89);
+                    if ((u8)teachState == 1) incrementEventCounter(0x89);
                 } else if ((u8)teachType == 6) {
                     u32 table = lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 5) {
-                        incrementEventCounter__FUl(0x8d);
+                        incrementEventCounter(0x8d);
                     }
                 } else if ((u8)teachType == 7) {
-                    incrementEventCounter__FUl(0x8c);
+                    incrementEventCounter(0x8c);
                 }
-                if ((*(u32*)item >> 20) == 0x867) incrementEventCounter__FUl(0x8e);
+                if ((*(u32*)item >> 20) == 0x867) incrementEventCounter(0x8e);
                 DispatchItemEvt(item, (s8)count - 1);
                 RebuildGridCat();
             }
@@ -4005,15 +3997,10 @@ void CItemBoxGrid::func_801CCAF0() {
                 BdatGetItemId(*(u16*)(p + 0x52e));
                 CItem_thunkAllocRecord(*(u16*)(p + 0x52e), 1);
                 UIWin_BuildFlagBufRec(2, *(u16*)(p + 0x52e), 0);
-                incrementEventCounter__FUl(0xbb);
-                incrementEventCounter__FUl(0xbc);
-                incrementEventCounter__FUl(0xbd);
+                incrementEventCounter(0xbb);
+                incrementEventCounter(0xbc);
+                incrementEventCounter(0xbd);
                 switch ((s32)*(u16*)(p + 0x52e)) {
-                case 0x7ee: incrementEventCounter__FUl(0xbe); break;
-                case 0x835: incrementEventCounter__FUl(0xbf); break;
-                case 0x7ef: incrementEventCounter__FUl(0xc0); break;
-                case 0x837: incrementEventCounter__FUl(0xc1); break;
-                case 0x836: incrementEventCounter__FUl(0xc2); break;
                 }
             }
             ((CExchangeWin*)(p + 0x440))->ExWin_RequestClose();
@@ -4374,7 +4361,7 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
                         subMsg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x3a);
                         showDetail = 1;
                         seenNew = 1;
-                        incrementEventCounter__FUl(0x46);
+                        incrementEventCounter(0x46);
                     } else {
                         msg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x40);
                     }
@@ -4389,8 +4376,8 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
                         subMsg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x3b);
                         showDetail = 1;
                         seenNew = 1;
-                        incrementEventCounter__FUl(0x46);
-                        incrementEventCounter__FUl(0x47);
+                        incrementEventCounter(0x46);
+                        incrementEventCounter(0x47);
                     } else {
                         msg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x40);
                     }
@@ -4804,18 +4791,18 @@ void CItemBoxGrid::SetCellCaption(s8 kind, void* item, u16 idx) {
         char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158],
                                   (u32)(0x1e - ((cnt & 0xFF) - 1)));
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (void*)&lbl_eu_806644D8, (void*)&lbl_eu_806644E0);
+        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
     } else if (kind > 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x162], kind);
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (void*)&lbl_eu_806644D8, (void*)&lbl_eu_806644E0);
+        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
     } else if (kind == 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     } else if (kind == -2) {
         sprintf(msgBuf, getErrMesText16());
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (void*)&lbl_eu_806644E8, (void*)&lbl_eu_806644F0);
+        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644E8, (const GXColorS10*)&lbl_eu_806644F0);
     } else if (kind == -3) {
         sprintf(msgBuf, getErrMesText15());
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (void*)&lbl_eu_806644F8, (void*)&lbl_eu_80664500);
+        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644F8, (const GXColorS10*)&lbl_eu_80664500);
     } else {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     }
@@ -4907,7 +4894,7 @@ void CItemBoxGrid::SetCellMarkVis(u32 val, u32 idx) {
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x513], idx + 1);
     nw4r::lyt::Layout* obj = ((CItemBoxGridHeadView*)p)->field_44;
     nw4r::lyt::Pane* sub = obj->GetRootPane();
-    void* ret = sub->FindPaneByName(buf, 1);
+    nw4r::lyt::Pane* ret = sub->FindPaneByName(buf, 1);
     setPaneVisible(ret, val);
 }
 
@@ -4938,18 +4925,18 @@ void CItemBoxGrid::RefreshCategoryTabs() {
                 isOtherTab = 1;
             }
             if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xb) {
-                PaneMatSetTevColorsByName(*(void**)(p + 0x44), buf1, &lbl_eu_806644A8, &lbl_eu_806644B0);
-                PaneMatSetTevColorsByName(*(void**)(p + 0x44), buf2, &lbl_eu_806644A8, &lbl_eu_806644B0);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
             } else {
-                PaneMatSetTevColorsByName(*(void**)(p + 0x44), buf1, &lbl_eu_80664498, &lbl_eu_806644A0);
-                PaneMatSetTevColorsByName(*(void**)(p + 0x44), buf2, &lbl_eu_80664498, &lbl_eu_806644A0);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+                PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
             }
         }
         void* pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
-        void* t1 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf1, 1);
+        nw4r::lyt::Pane* t1 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf1, 1);
         setPaneVisible(t1, isCurTab);
         pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
-        void* t2 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf2, 1);
+        nw4r::lyt::Pane* t2 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf2, 1);
         setPaneVisible(t2, isOtherTab);
         SetTabHeader(cat, (u8)i);
     }
@@ -4999,7 +4986,7 @@ void CItemBoxGrid::RebuildGridUI() {
     rows = ((CItemBoxGridFull*)(sub))->CalcGridRowCount();
     if ((u8)rows > 1) {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
+        nw4r::lyt::Pane* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
         setPaneVisible(ret, 1);
         u32 visRows = rows & 0xFF;
         u8 i;
@@ -5007,7 +4994,7 @@ void CItemBoxGrid::RebuildGridUI() {
             char buf[32];
             sprintf(buf, (char*)&lbl_eu_8050566C[0x54e], i + 1);
             void* pane2 = *(void**)(*(u32**)(p + 0x44) + 4);
-            void* ret2 = ((nw4r::lyt::Pane*)pane2)->FindPaneByName(buf, 1);
+            nw4r::lyt::Pane* ret2 = ((nw4r::lyt::Pane*)pane2)->FindPaneByName(buf, 1);
             // visible while i < visRows (borrow trick)
             setPaneVisible(ret2, ((u32)i - visRows) >> 31);
         }
@@ -5039,7 +5026,7 @@ void CItemBoxGrid::RebuildGridUI() {
         copyVEC3((u8*)ret3 + 0x2c, v);
     } else {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
+        nw4r::lyt::Pane* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
         setPaneVisible(ret, 0);
     }
     u8 i;
@@ -5047,7 +5034,7 @@ void CItemBoxGrid::RebuildGridUI() {
         char buf[32];
         sprintf(buf, (char*)&lbl_eu_8050566C[0x574], i + 1);
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf, 1);
+        nw4r::lyt::Pane* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf, 1);
         if (ret) {
             u8 max = (u8)((CItemBoxGridFull*)((char*)sub))->LookupIndexedByte();
             setPaneVisible(ret, ((u32)i - (u32)max) >> 31);
@@ -5182,32 +5169,32 @@ void CItemBoxGrid::MoveTabPage(int val) {
             char* strbase = (char*)lbl_eu_8050566C;
             // Layout pointer re-derived per call: PaneMatSetTevColorsByName clobbers
             // memory, so MWCC reloads *(p+0x44) before every call.
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5aa, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5b6, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5c2, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5ce, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5da, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5e6, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5f2, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5fe, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x60a, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x616, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x621, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x62c, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5aa, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5b6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5c2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5ce, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5da, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5e6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5f2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5fe, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x60a, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x616, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x621, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x62c, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
         } else {
             char* strbase = (char*)lbl_eu_8050566C;
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5aa, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5b6, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5c2, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5ce, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5da, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5e6, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5f2, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x5fe, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x60a, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x616, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x621, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((void*)*(u32*)(p + 0x44), strbase + 0x62c, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5aa, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5b6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5c2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5ce, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5da, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5e6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5f2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5fe, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x60a, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x616, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x621, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x62c, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
         }
     }
 }
@@ -5229,9 +5216,9 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     }
     s8 idx = (s8)p[0x525];
     if (idx == -2) {
-        void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
+        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
         AccumPaneWorldPos(&posT2, (nw4r::lyt::Pane*)((void*)t1));
-        void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
         Cur_SetVisible(p + 0x70, 0);
@@ -5241,9 +5228,9 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     if (idx == -1) {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x507], (s8)p[0x6f] + 1);
-        void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
+        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
         AccumPaneWorldPos(&posT1, (nw4r::lyt::Pane*)((void*)t1));
-        void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
         Cur_SetVisible(p + 0x70, 1);
@@ -5253,9 +5240,9 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x396], (s8)p[0x524] + idx * 10 + 1);
-        void* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
+        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
         AccumPaneWorldPos(&posDef, (nw4r::lyt::Pane*)((void*)t1));
-        void* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
         Cur_SetVisible(p + 0x70, 1);
@@ -5440,7 +5427,7 @@ u32 CItemBoxGrid::GetCatLabelMsg() {
 u32 CItemBoxGrid::IsItemTeachable(u32 kind) {
     u32 bdat = lbl_eu_80664110;
     BdatGetItemType(kind);
-    u32 shortKind = BdatGetItemId(kind);
+    u16 shortKind = BdatGetItemId(kind);
     u8 flag = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x109], (u16)shortKind);
     u8 v;
     u8 charId = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x115], (u16)shortKind);
@@ -5463,7 +5450,12 @@ u32 CItemBoxGrid::IsItemTeachable(u32 kind) {
 }
 
 
-void CopyVec4s(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
+extern "C" void CopyVec4s(GXColorS10* dst, const GXColorS10* src) {
+    dst->r = src->r;
+    dst->g = src->g;
+    dst->b = src->b;
+    dst->a = src->a;
+}
 
 // Split a u32 into its four bytes, stored as shorts (big-endian order).
 extern "C" void SplitU32ToS16s(short* dst, unsigned long val) {
@@ -5509,17 +5501,17 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
     void* fontData = ((IDeviceFontInfo*)font)->getFont();
     ApplyFontToTxtPanes(paneHost, (const nw4r::ut::Font*)((u32)fontData));
-    u32 screenW = (u32)getPackedFont__Fv();
-    setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
-    setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x53e], screenW);
+    u32 screenW = (u32)getPackedFont();
+    setLayoutTextBoxFont(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
+    setLayoutTextBoxFont(layout, (char*)&lbl_eu_8050566C[0x53e], screenW);
     u32 screenH = (u32)CUICfManager_getPackedFont9C();
     u8 i;
     for (i = 1; i <= 0x1e; i++) {
         char nameBuf[0x20];
         sprintf(nameBuf, (const char*)&lbl_eu_8050566C[0x3a3], i);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, nameBuf, screenH);
+        setLayoutTextBoxFont(layout, nameBuf, screenH);
     }
-    setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x59b], screenH);
+    setLayoutTextBoxFont(layout, (char*)&lbl_eu_8050566C[0x59b], screenH);
     // Initial animation visibility: only the 0x48 transform starts shown.
     (layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)(p + 0x4c), 0);
     (layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)(p + 0x50), 0);
@@ -5556,10 +5548,10 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     }
     // Hide the icons that do not apply to this box mode.
     if (p[0x527] != 1) {
-        void* iconPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6c2], 1);
+        nw4r::lyt::Pane* iconPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6c2], 1);
         setPaneVisible(iconPane, 0);
         if (p[0x527] != 2) {
-            void* iconPane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x59b], 1);
+            nw4r::lyt::Pane* iconPane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x59b], 1);
             setPaneVisible(iconPane2, 0);
         }
     }
@@ -5567,10 +5559,10 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     void* posPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x709], 1);
     copyVEC3(p + 0x534, (u8*)posPane + 0x2c);
     // Snapshot both cursor colour states into the global colour tables.
-    CEquipBoxFourShorts colA = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x716], 0);
-    CopyVec4s(&lbl_eu_80664488, &colA);
-    CEquipBoxFourShorts colB = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x716], 1);
-    CopyVec4s(&lbl_eu_80664490, &colB);
+    GXColorS10 colA = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x716], 0);
+    CopyVec4s((GXColorS10*)&lbl_eu_80664488, &colA);
+    GXColorS10 colB = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x716], 1);
+    CopyVec4s((GXColorS10*)&lbl_eu_80664490, &colB);
     // Fan the two base colours' kind indices out over the eight table rows.
     s16 colAW = *(s16*)((u8*)&lbl_eu_80664488 + 6);
     s16 colBW = *(s16*)((u8*)&lbl_eu_80664490 + 6);
@@ -5604,10 +5596,10 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     // Group colour snapshot for the grid cells.
     void* grpPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x723], 1);
     if (grpPane != NULL) {
-        CEquipBoxFourShorts gcolA = PaneMatGetS16Quad(grpPane, 0);
-        CopyVec4s(&lbl_eu_806644D8, &gcolA);
-        CEquipBoxFourShorts gcolB = PaneMatGetS16Quad(grpPane, 1);
-        CopyVec4s(&lbl_eu_806644E0, &gcolB);
+        GXColorS10 gcolA = PaneMatGetS16Quad((nw4r::lyt::Pane*)grpPane, 0);
+        CopyVec4s((GXColorS10*)&lbl_eu_806644D8, &gcolA);
+        GXColorS10 gcolB = PaneMatGetS16Quad((nw4r::lyt::Pane*)grpPane, 1);
+        CopyVec4s((GXColorS10*)&lbl_eu_806644E0, &gcolB);
         s16 gAW = *(s16*)((u8*)&lbl_eu_806644D8 + 6);
         s16 gBW = *(s16*)((u8*)&lbl_eu_806644E0 + 6);
         *(s16*)((u8*)&lbl_eu_806644E8 + 6) = gAW;
@@ -5618,7 +5610,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     char* msgD = BdatTouchStringCell(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 7);
     LayoutSetTextBoxFmtValue(layout, (char*)&lbl_eu_8050566C[0x72d], msgD, 0);
     if (p[0x527] != 4) {
-        void* iconPane3 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
+        nw4r::lyt::Pane* iconPane3 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
         setPaneVisible(iconPane3, 0);
         LayoutSetTextBoxFmtValue(layout, (char*)&lbl_eu_8050566C[0x72d], (char*)&lbl_eu_8050566C[0x3af], 0);
     }
@@ -5630,8 +5622,8 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
         for (j = 0; j < cnt; j++) {
             void* chp = (u8*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte(j)) + 0x3534;
             if (!Counter_TestBit(chp, 0x8f) && !Counter_TestBit(chp, 0x93)) continue;
-            CEquipBoxFourShorts cA = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x59b], 0);
-            CEquipBoxFourShorts cB = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x59b], 1);
+            GXColorS10 cA = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x59b], 0);
+            GXColorS10 cB = PaneMatGetS16QuadByName(layout, &lbl_eu_8050566C[0x59b], 1);
             struct FadeRefBlk {
                 void* layout;
                 const char* name;
@@ -5644,11 +5636,11 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
             FadeRefBlk blk2 = { layout, &lbl_eu_8050566C[0x59b] };
             ColPairBlk cbCol;
             cbCol.lo = 0x0046B400;
-            cbCol.hi = (u32)(u16)cB.d << 16;
+            cbCol.hi = (u32)(u16)cB.a << 16;
             ColPairBlk caCol;
             caCol.lo = 0;
-            caCol.hi = (u32)(u16)cA.d << 16;
-            PaneMatSetTevColorsByName(layout, (char*)&lbl_eu_8050566C[0x59b], &caCol, &cbCol);
+            caCol.hi = (u32)(u16)cA.a << 16;
+            PaneMatSetTevColorsByName(layout, (char*)&lbl_eu_8050566C[0x59b], (const GXColorS10*)&caCol, (const GXColorS10*)&cbCol);
             break;
         }
     }

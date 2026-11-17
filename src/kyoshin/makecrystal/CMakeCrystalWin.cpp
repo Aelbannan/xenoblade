@@ -9,7 +9,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 /*
  * Constructor (retail unmangled `__ct__CMakeCrystalWin`). Written as a

@@ -14,6 +14,8 @@
 #include "kyoshin/cf/CfPadData.hpp"        // cf::CfPadData layout
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CFade.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Shield CLoad.hpp's C++-linkage helper declarations: this TU needs the
 // CLoad class, but declares the func_802AExxxx helpers itself below as
@@ -89,7 +91,6 @@ extern "C" void __dt__11CKizunagramFv(UnkKizunaMenuSub98* _this, int flags);
 
 
 // C++-linkage helper - retail emits the mangled form playUISound__FUl.
-void playUISound(unsigned long op);
 
 // Scene/task-system helpers (retail-unmangled callee names).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
@@ -98,10 +99,7 @@ extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // code_80135FDC helpers (retail-unmangled).
-extern "C" u8 DecMenuCounter64080();
-extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void CUICfManager_createQueuedMenus();
-extern "C" int IsMenuState621F0();
 
 // CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
 // the mangling for these member helpers).
@@ -180,7 +178,6 @@ extern "C" void MiniMapSetActiveFlag();
 
 // C++-linkage helper - retail emits the mangled form
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Flat pad-data view exposing only the flag words KizunagramHandleCharInput reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at

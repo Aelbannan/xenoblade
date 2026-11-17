@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // IScnRender without a virtual destructor (CMenuQuestLog.cpp defines
 // ISCN_RENDER_NO_DTOR): odr-using the inline `virtual ~IScnRender(){}` from this
@@ -96,9 +97,7 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 
 // Term tail helpers.
-extern "C" u8 DecMenuCounter64080();
 extern "C" void CUICfManager_setTimeout30();
-extern "C" u8 code80135FDC_getByte_64080();
 
 // Singleton pointer for the quest-log menu (.sbss).
 extern CMenuQuestLog* lbl_eu_80663FC0[2];
@@ -132,4 +131,3 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 // Frame counter post-increment helper (code_80135FDC.cpp).
-extern "C" void code80135FDC_postIncByte_64080();

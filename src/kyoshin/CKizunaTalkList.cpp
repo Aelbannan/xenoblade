@@ -7,13 +7,12 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_80135FDC.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CKizunaTalkListImports.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
-void playUISound(u32);
 
 // Entry table constructor: all 256 entries are default-constructed
 // (cleared, subtype -1), the count is reset and the owning resource accessor
@@ -508,21 +507,21 @@ void CKizunaTalkList::renderTalkRows() {
         void* pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
             int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         sprintf(buf, &lbl[0xae], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
             int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
             int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         // Title / description text.
@@ -542,7 +541,7 @@ void CKizunaTalkList::renderTalkRows() {
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
             int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible(pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
         }
 
         // Resolve the affinity-level animation string.
@@ -592,7 +591,7 @@ void CKizunaTalkList::renderTalkRows() {
         sprintf(buf, &lbl[0x19f], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane)
-            setPaneVisible(pane, vis);
+            setPaneVisible((nw4r::lyt::Pane*)pane, vis);
 
         i++;
     } while (i < 7);

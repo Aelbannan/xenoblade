@@ -5,6 +5,8 @@
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers);
 // declared extern "C" so call sites emit the literal retail reloc names.
@@ -84,7 +86,6 @@ extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 // (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 // UI/sound + scene-active helpers.
 extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
-extern "C" int IsMenuState621F0();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // Ctor/re-init helpers for the embedded widgets (retail-unmangled).
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
@@ -97,8 +98,6 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
 
 // C++-linkage helpers - retail emits the mangled forms
 // playUISound__FUl / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
-void playUISound(unsigned long op);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80664184;   // current map id (bdat row) -> floor map select

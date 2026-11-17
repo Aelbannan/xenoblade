@@ -93,8 +93,6 @@ extern const f32 lbl_eu_80666FC8; // HP gauge width multiplier
 
 extern "C" {
 extern nw4r::lyt::ArcResourceAccessor* UIBattleGetWordEC();
-extern u32 CUICfManager_getPackedFont9C();
-extern u32 CUICfManager_getPackedFontD8();
 }
 
 extern void playUISound(u32);
@@ -181,20 +179,20 @@ void CMenuBattlePlayerState::Init() {
         for (u8 i = 0; i < 3; i++) {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk00, accessor, tbl + 0x10E);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk00, &slot.unk04, accessor, tbl + 0x12E);
 
             slot.unk00->SetAnimationEnable(slot.unk04, true);
             slot.unk04->SetFrame(0.0f);
             slot.unk00->Animate(0);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk08, accessor, tbl + 0x151);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk08, &slot.unk0C, accessor, tbl + 0x174);
             bindLayoutAnimTransform(slot.unk08, &slot.unk10, accessor, tbl + 0x19A);
             bindLayoutAnimTransform(slot.unk08, &slot.unk14, accessor, tbl + 0x1C5);
@@ -205,19 +203,19 @@ void CMenuBattlePlayerState::Init() {
             slot.unk0C->SetFrame(0.0f);
             slot.unk08->Animate(0);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk18, accessor, tbl + 0x1F0);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk18, &slot.unk1C, accessor, tbl + 0x210);
 
             {
                 nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
-                u32 fontHandle = CUICfManager_getPackedFont9C();
+                u32 fontHandle = (u32)CUICfManager_getPackedFont9C();
                 ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
             }
             {
-                u32 fontAccessor = CUICfManager_getPackedFontD8();
+                u32 fontAccessor = (u32)CUICfManager_getPackedFontD8();
                 setLayoutTextBoxFont(slot.unk18, tbl + 0x233, fontAccessor);
                 setLayoutTextBoxFont(slot.unk18, tbl + 0x23C, fontAccessor);
             }
@@ -225,11 +223,11 @@ void CMenuBattlePlayerState::Init() {
             {
                 // Bounding-rect query; the four halfwords fan out into the
                 // shared color tables (A gets all four, B/C only the last).
-                unsigned long long rect = PaneMatGetS16QuadByName(slot.unk18, tbl + 0x245, 1);
-                s16 v0 = static_cast<s16>(rect);
-                s16 v1 = static_cast<s16>(rect >> 16);
-                s16 v2 = static_cast<s16>(rect >> 32);
-                s16 v3 = static_cast<s16>(rect >> 48);
+                GXColorS10 rect = PaneMatGetS16QuadByName(slot.unk18, tbl + 0x245, 1);
+                s16 v0 = rect.r;
+                s16 v1 = rect.g;
+                s16 v2 = rect.b;
+                s16 v3 = rect.a;
                 colA[0] = v0;
                 colA[1] = v1;
                 colA[2] = v2;
@@ -256,20 +254,20 @@ void CMenuBattlePlayerState::Init() {
 
             slot.unk25C = 7;
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk20, accessor, tbl + 0x2BB);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk20, &slot.unk24, accessor, tbl + 0x2DE);
 
             slot.unk20->SetAnimationEnable(slot.unk24, true);
             slot.unk24->SetFrame(0.0f);
             slot.unk20->Animate(0);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             buildLayout(&slot.unk28, accessor, tbl + 0x304);
 
-            accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+            accessor = CUICfManager_getArcResourceAccessor();
             bindLayoutAnimTransform(slot.unk28, &slot.unk2C, accessor, tbl + 0x323);
             bindLayoutAnimTransform(slot.unk28, &slot.unk30, accessor, tbl + 0x347);
             bindLayoutAnimTransform(slot.unk28, &slot.unk34, accessor, tbl + 0x36D);
@@ -288,7 +286,7 @@ void CMenuBattlePlayerState::Init() {
                 // assign it over slot+0x74..0x204 (same clear shape as
                 // BpsStateClearSlot: 0x60-stride body then 0xC-stride remainder).
                 MenuBpsSlotInit init;
-                init.unk74 = CUICfManager::CUICfManager_getArcResourceAccessor();
+                init.unk74 = CUICfManager_getArcResourceAccessor();
                 init.unk78 = NULL;
                 init.unk7C = NULL;
                 init.unk80 = 0;
@@ -370,7 +368,7 @@ void CMenuBattlePlayerState::Init() {
 
             {
                 nw4r::lyt::Pane* subRoot = slot.unk78->GetRootPane();
-                u32 fontHandle = CUICfManager_getPackedFont9C();
+                u32 fontHandle = (u32)CUICfManager_getPackedFont9C();
                 ApplyFontToTxtPanes(subRoot, (const nw4r::ut::Font*)fontHandle);
             }
 
@@ -436,7 +434,7 @@ void CMenuBattlePlayerState::Init() {
             unk7F8 = f8b;
         }
 
-        accessor = CUICfManager::CUICfManager_getArcResourceAccessor();
+        accessor = CUICfManager_getArcResourceAccessor();
         unk7E0 = accessor;
 
         handle = mtl::MemManager::getHandleMEM2();
@@ -1467,11 +1465,11 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F38, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F40, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F30, 1);
         }
     }
 
@@ -1591,11 +1589,11 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F38, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F40, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F30, 1);
         }
     }
 

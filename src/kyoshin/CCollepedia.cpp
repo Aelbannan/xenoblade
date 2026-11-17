@@ -12,7 +12,7 @@
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CSysWinImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
@@ -983,9 +983,9 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void clpFreeAllRes(CCollepedia* this_) {
     CBdat::getEntry(2);
-    closeFileHandle__FPP11CFileHandle(&this_->field_24);
-    closeFileHandle__FPP11CFileHandle(&this_->field_28);
-    closeFileHandle__FPP11CFileHandle(&this_->field_2C);
+    closeFileHandle((CFileHandle**)&this_->field_24);
+    closeFileHandle((CFileHandle**)&this_->field_28);
+    closeFileHandle((CFileHandle**)&this_->field_2C);
 
     this_->field_48 = 0;
     clpDelPageLyt(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
@@ -1313,7 +1313,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
             case 7:
             case 8: playUISound(0x52); break;
             }
-            incrementEventCounter__FUl(0x84);
+            incrementEventCounter(0x84);
         } else {
             // Detail page confirm: schedule sound 6 instead.
             playUISound(6);
@@ -1490,8 +1490,8 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
     sysWinApplyKind((CSysWin*)&this_->field_9C, 1);
     sysWinOpenPhase1(&this_->field_9C);
 
-    incrementEventCounter__FUl(0x85);
-    incrementEventCounter__FUl(0x86);
+    incrementEventCounter(0x85);
+    incrementEventCounter(0x86);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     MenuSnd_GetMasterVol_95EC();

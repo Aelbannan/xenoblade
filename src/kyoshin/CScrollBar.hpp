@@ -8,12 +8,12 @@
 #include "monolib/work/IWorkEvent.hpp"
 
 #include <nw4r/lyt.h>
+#include "kyoshin/CQuestWindow_Pane.hpp"
 
 // Cross-TU layout helpers (kyoshin .text). Retail references these by their
 // unmangled C names (US split strips the C++ mangling), so they need C
 // linkage declarations - same convention as CSysWin/CKizunagram/etc.
 extern "C" void TagCopyVec2f(float* dst, float* src); // copy 2 floats (VEC2)
-extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag
 
 /* Vertical/horizontal scroll bar widget; receives the layout archive through
 IWorkEvent::OnFileEvent (retail __RTTI__10CScrollBar, IWorkEvent base list;

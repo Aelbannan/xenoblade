@@ -13,8 +13,9 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
-void playUISound(u32);
 
 // Option-menu helper entry points and imports (retail unmangled names; moved
 // here from the header, which now carries only the class).
@@ -32,8 +33,6 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 extern u32 lbl_eu_80663E28;
 
 // Ready/idle-check and animation helpers for the embedded sub-widgets

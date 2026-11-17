@@ -261,7 +261,7 @@ extern "C" void refreshArtsData__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // even though the retail mangled name is arg-less. Small args delegate to the
 // base CfObjectMove implementation; larger ones forward a sub-object pointer
 // to ObjPc_ForwardVf0C_A42C.
-extern "C" void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(
+extern "C" void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(
     cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 
 void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
@@ -269,7 +269,7 @@ void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u3
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
         // r4-r8 stay live into the base Fv forced-name (retail arity Fv).
         cf::CfObjectMove* subObj = self->pcMove();
-        CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(
+        CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(
             subObj, a, b, c, d, e);
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
@@ -515,7 +515,7 @@ void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
 // implementation (same naming quirk) after touching the battle singleton.
 void CActorParam_UnkVirtualFunc176__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, float value) {
     getInstance__Q22cf14CBattleManagerFv();
-    CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(self, value);
+    CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(self, value);
 }
 
 // Retail symbol CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv (vtable slot

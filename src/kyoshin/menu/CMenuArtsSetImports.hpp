@@ -5,6 +5,9 @@
 #include "kyoshin/menu/CMenuArtsSet.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -25,8 +28,6 @@ extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
@@ -111,15 +112,11 @@ extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u3
 
 // BDAT message-table / texture-name helpers used by ArtsCharList_refreshDisplay (imports).
 extern void* lbl_eu_80664090;
-extern "C" char* MakeTplNameSysFile(u32 id);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Mangled retail symbol declared directly so the third argument stays a
 // full register (retail passes the raw manager value without truncation).
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
 
 extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self);
 extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self);
-extern "C" void setPaneVisible(void* p, u32 v);
 // Scrollbar cursor refresh (defined in CScrollBar.cpp; C-linkage retail name).
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self);
@@ -136,7 +133,6 @@ struct SArtsEntryWord {
     u32 field_0x00;
 };
 // Mode-4/id-8 imports (code_80135FDC.cpp / CItem.cpp; C symbols).
-extern "C" u16 BdatGetItemId(u32 value);
 extern "C" SArtsEntryWord* CItem_kindPtr(u32 kind);
 // Current BDAT text-table handle consumed by BdatGetU8Direct (.sdata word).
 extern u32 lbl_eu_806640F8;
@@ -228,17 +224,10 @@ extern "C" void ArtsLayout_runLayoutIn(SArts3150C* self);
 
 // code_80135FDC helpers (retail C symbols; local decls because
 // code_80135FDC.hpp cannot be co-included - BdatTouchStringCell signature clash).
-extern "C" u8 code80135FDC_getByte_64077();
-extern "C" u8 GetCollectedFlagByte(u32);
-extern "C" void BuildSlotItemLists(u32);
 // File-handle / arc-accessor teardown; retail symbols are the mangled C++
 // names (closeFileHandle__FPP11CFileHandle etc.) so declare C++-linkage.
-void closeFileHandle(CFileHandle** self);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* self);
 // Layout/anim binding helpers (code_80135FDC.cpp). C++ linkage: MWCC mangles
 // buildLayout/bindLayoutAnimTransform to the retail names (buildLayout__FPPQ...).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
 extern "C" void CArtsInfo_Cleanup(CArtsInfo* self);
 // CSysWin teardown (defined in CSysWin.cpp, C symbol).

@@ -79,10 +79,8 @@ CAIAction::CAIAction() {
 // Soft-cap ~96.02941%: MWCC fuses first dest store to stwux; retail is stwx+add
 // (src in r9, 8-then-4). slots[]/dstBytes identical; dual buffer aliases regress.
 // EQUIVALENT blocked by ring-loop bounds / Z3 timeout. No insn_patches/asm void.
-void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* outA,
-                                                              cf::CAIActionExport* outB) {
-    cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
+void cf::CAIAction::CAIAction_UnkVirtualFunc1(cf::CAIActionSlot* outA, cf::CAIActionExport* outB) {
+    cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)this->trailer;
 
     outA->unk00 = trailer->unk00;
     {
@@ -101,11 +99,11 @@ void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
     outB->unk208 = 0;
     outB->unk204 = 0;
 
-    for (u32 i = 0; i < self->unk214; i++) {
-        u32 ringIdx = (self->unk210 + i) % self->unk218;
+    for (u32 i = 0; i < this->unk214; i++) {
+        u32 ringIdx = (this->unk210 + i) % this->unk218;
         int outIdx = (int)(outB->unk204 + outB->unk208) % (int)outB->unk20C;
         cf::CAIActionSlot* src =
-            (cf::CAIActionSlot*)((u8*)self->unk20C + (ringIdx << 5));
+            (cf::CAIActionSlot*)((u8*)this->unk20C + (ringIdx << 5));
 
         cf::CAIActionSlot* dst =
             (cf::CAIActionSlot*)((u8*)outB->buffer + ((u32)outIdx << 5));
@@ -134,15 +132,13 @@ void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
 // volatile-qualified pointer blocks that fold and reproduces retail's
 // stwx+add at the exact size (structural 23 -> 5). Residual is register
 // allocation only.
-void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* inA,
-                                                              cf::CAIActionExport* inB) {
-    cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
+void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIActionExport* inB) {
+    cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)this->trailer;
     u32 i;
 
-    self->unk214 = 0;
+    this->unk214 = 0;
     i = 0;
-    self->unk210 = 0;
+    this->unk210 = 0;
 
     trailer->unk00 = inA->unk00;
     {
@@ -159,12 +155,12 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
     trailer->unk1C = inA->unk1C;
 
     while (i < inB->unk208) {
-        s32 dstIdx = (s32)(self->unk210 + self->unk214) % (s32)self->unk218;
+        s32 dstIdx = (s32)(this->unk210 + this->unk214) % (s32)this->unk218;
         u32 srcIdx = (inB->unk204 + i) % inB->unk20C;
         cf::CAIActionSlot* src =
             (cf::CAIActionSlot*)((u8*)inB->buffer + (srcIdx << 5));
         // See function comment: volatile access path prevents the stwux fold.
-        volatile u8* dstBase = (volatile u8*)self->unk20C;
+        volatile u8* dstBase = (volatile u8*)this->unk20C;
         u32 dstOff = (u32)dstIdx << 5;
         cf::CAIActionSlot* dst = (cf::CAIActionSlot*)((u8*)dstBase + dstOff);
         *(volatile u32*)(dstBase + dstOff) = src->unk00;
@@ -181,7 +177,7 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
         dst->unk18 = src->unk18;
         dst->unk1C = src->unk1C;
 
-        self->unk214 = self->unk214 + 1;
+        this->unk214 = this->unk214 + 1;
         i = i + 1;
     }
 }
@@ -189,8 +185,8 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
 void clearAIActionTable__Fv() {
     lbl_eu_806641B0 = 0;
 }
-void aiActionStoreWordB14(void* obj, unsigned int value) {
-    static_cast<cf::CAIAction*>(obj)->unkB14 = value;
+void cf::CAIAction::CAIAction_setOwner(u32 owner) {
+    unkB14 = owner;
 }
 
 // Appends a slot to the ring buffer, inserting before the current head
@@ -2702,7 +2698,7 @@ extern "C" void aiRebootAction(cf::CAIAction* self) {
     void* src = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)cur + 0x3E9C))->CObjectParam_getSelfObjectId();
     void* obj = MapFx_ResolveOwner(findObjectById((int)(intptr_t)src));
     cur = (CAIPartyObj*)self->unkB14;
-    if (obj == (void*)cur || ((cf::CfObjectActor*)cur)->CfObjectActor_sharesMoveFlags(obj) != 0) {
+    if (obj == (void*)cur || ((cf::CfObjectActor*)cur)->CfObjectActor_sharesMoveFlags((cf::CfObjectActor*)obj) != 0) {
         ((cf::CObjectParam*)((u8*)self->unkB14 + 0x3E9C))->CObjectParam_signalActionEnd(0);
     }
 }

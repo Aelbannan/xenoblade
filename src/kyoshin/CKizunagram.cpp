@@ -11,9 +11,9 @@
 #include "monolib/util/MemManager.hpp"
 #include <revolution/TPL.h>
 #include <new>
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // mtl::MemManagerF::allocate is a member (this, size, kind); the shared header
 // declares the two-arg caller form used elsewhere, so route this call through
@@ -46,8 +46,6 @@ extern u32 lbl_eu_80668838;
 extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
-void playUISound(u32 number);
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 
 // Same-TU display-state helper consumed by lineTickSelIn / lineTickSelOut
 // (declaration moved to CKizunagram.hpp C-linkage imports).
@@ -234,32 +232,32 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     void* lytv = self->layout;
     u8 lang = (u8)lbl_eu_80664184;
     if (lang == 0x19) {
-        PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
         PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
     } else if (lang == 0x1A) {
-        PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
         PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0x8CA0EBFF);
     } else {
         switch (MapValueToRank6(lang)) {
         case 0:
         case 1:
-            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xEEB88AFF);
             break;
         case 2:
-            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE0C072FF);
             break;
         case 3:
-            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE1F8A8FF);
             break;
         case 4:
-            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xB4DEFFFF);
             break;
         case 5:
-            PaneMatSetTevColorsByName(lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xBCBAE6FF);
             break;
         }
@@ -1311,7 +1309,7 @@ extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
-    u32 val = CUICfManager_getPackedFont9C();
+    u32 val = (u32)CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
     setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb79, val);
@@ -1533,7 +1531,7 @@ extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* s
     LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
 
     // Encounter counter, both names, formatted "current/max" heart counts.
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
+    setLayoutTextBoxNumber(
         self->field8, lbl_eu_8050CB20 + 0xb87,
         (u8)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xca9, v));
     LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbfd,
@@ -1679,8 +1677,8 @@ void drawKizLayouts(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo) {
 // release each child object (0x4C / 0x68 / 0xAC / 0xC0) and the two resource
 // accessors, and tear down the two memory regions at +0x08 / +0x18.
 void teardownKizuna(UnkKizunaSelfC6F0* self) {
-    closeFileHandle__FPP11CFileHandle(&self->field28);
-    closeFileHandle__FPP11CFileHandle(&self->field2C);
+    closeFileHandle(&self->field28);
+    closeFileHandle(&self->field2C);
     self->field38 = 0;
     releaseInfoChild(&self->sub4C);
     freeLinePanes((UnkKizunaSelf59B18*)&self->sub68);

@@ -17,6 +17,7 @@
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Shared singleton / string pool (retail names; global-scope plain extern
 // keeps the symbols unmangled).
@@ -56,10 +57,7 @@ extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
-extern "C" u8 DecMenuCounter64080();
-extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" void code80135FDC_postIncByte_64080();
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

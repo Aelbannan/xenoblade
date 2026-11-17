@@ -3,6 +3,8 @@
 #include <types.h>
 #include "kyoshin/QstData.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r { namespace lyt {
     class Layout;
@@ -87,7 +89,6 @@ struct CMenuQstCnt {
 
 extern "C" int isLandTelopIdle();
 extern "C" int getLandTelopE0(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
@@ -104,9 +105,6 @@ extern "C" int MenuTutorialIsCreated();
 extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int SysWinGetSingleton();
 extern "C" int isQuestLogMenuActive();
-extern "C" char* BuildItemNameStr(u16);
-extern "C" u16 GetU16PairEntry(u16);
-extern "C" u32 SearchThresholdIdx(u16);
 extern "C" u32 __ptmf_null[];
 extern "C" u32 lbl_eu_8052D238[];
 extern "C" u32 lbl_eu_80536128[];

@@ -6,6 +6,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include <revolution/gx/GXTypes.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 class CEventFile;    // monolib/work/CEventFile.hpp
@@ -695,7 +698,6 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* self, u16 v);
 
 // Shared timg resource accessor (code_80135FDC singleton) and BDAT progress-
 // table globals used by refreshKizLineDisplay.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // View of the CUICfManager_getArcResourceAccessor shared accessor: vtable slot 3 (+0x0C) fetches a
 // texture name for a 'timg' tag (declared index 1 -> retail slot 3).
@@ -703,7 +705,6 @@ struct UnkKizunaAccBA38 {
     virtual void v0();
     virtual char* getTex(int fourcc, const char* name, u32 flags);
 };
-extern "C" u32 MapSexFlagGroup(u16 id);
 extern void* lbl_eu_806640A8;
 struct UnkKizunaSelf9820;
 void refreshKizEntryPanes(UnkKizunaSelf9820* self);
@@ -714,7 +715,6 @@ void refreshKizEntryPanes(UnkKizunaSelf9820* self);
 extern "C" void* lbl_eu_805375FC[];
 extern "C" void* lbl_eu_805375E4[];
 extern "C" void* lbl_eu_805375F0[];
-extern "C" void setPaneVisible(nw4r::lyt::Pane* pane, u32 a);
 extern "C" void TagCopyVec2f(float* dst, const float* src); // copy 2 floats
 
 // Position constants used by layoutKizLinePanes (sda2 floats).
@@ -906,7 +906,6 @@ extern "C" const wchar_t** getContextStrPtr(u8* self);
 extern "C" void* TagCtxAdvanceHead(const wchar_t** self, u32 arg);
 extern "C" const wchar_t* TagCtxGetNodeHeader(const wchar_t** self);
 extern "C" int TagProcCompareIds(const wchar_t** a, const wchar_t** b);
-extern "C" u32 CUICfManager_getPackedFont9C(void);
 
 // sprintf for resetKizPaneTags's pane-name formatting.
 extern "C" int sprintf(char* str, const char* fmt, ...);
@@ -1054,7 +1053,6 @@ extern "C" void tickKizLine(void* self);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);              // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 idx);               // game-progress getter
 extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
-extern "C" int BdatGetSexFlag(int id);
 extern "C" int strcmp(const char*, const char*);
 // Bdat_GetTable_AA34 is declared by an included header (no-arg bdat manager refresh);
 // retail leaves r3=self live into the call either way.

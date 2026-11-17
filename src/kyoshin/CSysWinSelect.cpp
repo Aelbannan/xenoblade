@@ -4,7 +4,7 @@
 
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 
 extern char lbl_eu_804FEF98[];

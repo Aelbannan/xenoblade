@@ -9,6 +9,7 @@
 
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace cf { class CfObjectActor; }
 
@@ -166,7 +167,6 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" unsigned long long PaneMatGetS16QuadByName(nw4r::lyt::Layout*, const char*, int);
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
 
 // Float/double constant pool labels (retail .sdata2 symbols).
@@ -193,6 +193,4 @@ void BtlDmg_QueueDraw(CMenuBattleDamageQueue* queue);
 
 // Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
 // SetLayoutSelfText / BdatTouchStringCell / MakeTplNameSysFile come from code_80135FDC.hpp.
-extern "C" void PaneMatSetS16Quad(void* pane, const void* colors, int arg);
 // Unmangled retail symbol (the CUICfManager static emits the mangled name).
-extern "C" void* CUICfManager_getArcResourceAccessor();

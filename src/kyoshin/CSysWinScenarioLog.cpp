@@ -23,10 +23,8 @@
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // True when the pause flag is clear (game not frozen by a subwindow).
 static inline bool isSceneActive() {

@@ -3,7 +3,7 @@
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "monolib/util.hpp"
 #include "monolib/vm/yvm2.h"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 using namespace ml;
 
@@ -554,7 +554,6 @@ int kizunaTalkStart() {
 }
 // Retail C callee (code80135FDC split unit), extern "C" at file scope (MWCC
 // rejects extern "C" inside function bodies).
-extern "C" void code80135FDC_clearByte_64059();
 
 int kizunaTalkEnd(){
     extern u32 lbl_eu_80663E28;

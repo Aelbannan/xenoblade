@@ -16,17 +16,14 @@
 
 #include <string.h>
 #include <nw4r/lyt.h>
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Retail symbols: advanceAnimTransform keeps the mangled C++ name, but AnimRewindFrame
 // is the unmangled C name (per retail relocs).
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
-void playUISound(u32);
 
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Layout-anim helpers: retail emits out-of-line `bl` calls to these from the
 // anim-completion callbacks; MWCC -O4,p would otherwise inline them into the
@@ -464,7 +461,6 @@ void CMCCrystalBox::updateCrystalBoxState() {
     sysWinDispatchPhase(&this->sysWin);
 }
 
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Retail 0x80216260: draw the crystal box sub-views.
 // stmw r30 frame + r30-before-r31 copy order are the -O4,s shapes (unit flag).
@@ -493,9 +489,9 @@ void CMCCrystalBox::drawCrystalBox(nw4r::lyt::DrawInfo* di) {
 // resources, then destroys every placed member sub-object.
 void CMCCrystalBox::teardownCrystalBox() {
     CBdat::getEntry(2);
-    closeFileHandle__FPP11CFileHandle((void**)&this->mFileHandle0);
-    closeFileHandle__FPP11CFileHandle((void**)&this->mFileHandle1);
-    closeFileHandle__FPP11CFileHandle((void**)&this->mFileHandle2);
+    closeFileHandle((CFileHandle**)&this->mFileHandle0);
+    closeFileHandle((CFileHandle**)&this->mFileHandle1);
+    closeFileHandle((CFileHandle**)&this->mFileHandle2);
 
     if (this->unk60 != 0) {
         this->unk60 = 0;
@@ -503,8 +499,8 @@ void CMCCrystalBox::teardownCrystalBox() {
             delete this->mLayout;
             this->mLayout = 0;
         }
-        releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(this->mArcAcc0);
-        releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(this->mArcAcc1);
+        releaseArcResourceAccessor(this->mArcAcc0);
+        releaseArcResourceAccessor(this->mArcAcc1);
         deleteRegion__17UnkClass_8045F564Fv(&this->mMemRegion1);
         deleteRegion__17UnkClass_8045F564Fv(&this->mMemRegion2);
         this->sortMenu.Term();
@@ -2578,7 +2574,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
         u8 d5 = (u8)GetCollectedFlagByte(this->unk2D5);
         u16 id = LookupRelateValue(d4, d5);
         // u16-param view: retail emits clrlwi 16 on the id argument here.
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)this->mLayout,
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
                                                 lbl_eu_8050888C + 0x257, id);
         // Rank message thresholds (1000/2000/3000/5000/10001).
         const char* s = 0;
@@ -2770,28 +2766,28 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
         // Row/column count labels from the two shared counters.
-        u32 cnt = getPackedFont();
+        u32 cnt = (u32)getPackedFont();
         if (cnt != 0) {
-            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont(
                 (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x14d, cnt);
-            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont(
                 (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x12e, cnt);
-            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont(
                 (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x365, cnt);
         }
-        u32 cnt2 = CUICfManager_getPackedFont9C();
+        u32 cnt2 = (u32)CUICfManager_getPackedFont9C();
         if (cnt2 != 0) {
             for (u8 i = 1; i <= 30; i++) {
                 sprintf(buf, lbl_eu_8050888C + 0x102, i);
-                setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+                setLayoutTextBoxFont(
                     (nw4r::lyt::Layout*)mLayout, buf, cnt2);
             }
             for (u8 i = 1; i <= 8; i++) {
                 sprintf(buf, lbl_eu_8050888C + 0x11e, i);
-                setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+                setLayoutTextBoxFont(
                     (nw4r::lyt::Layout*)mLayout, buf, cnt2);
             }
-            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont(
                 (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x257, cnt2);
         }
 
@@ -2862,7 +2858,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x23b,
                       lbl_eu_8050888C + 0x22b, 0);
 
-        int v = GetCollectedFlagByte(0);
+        u8 v = GetCollectedFlagByte(0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x509,
                       BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 9), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x516,

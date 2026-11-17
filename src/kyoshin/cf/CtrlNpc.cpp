@@ -647,7 +647,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
 // symbol keeps the Fv suffix, but the virtual is invoked with an int (see
 // object/CObjectState.hpp and CfObjectNpc.cpp callers), so the body is emitted
 // under the literal retail name with the caller's real arg shape.
-extern "C" void CObjectState_applyStateFlags__Q22cf12CObjectStateFv(cf::CObjectState* self, int arg) {
+extern "C" void CObjectState_applyStateFlags__Q22cf12CObjectStateFi(cf::CObjectState* self, int arg) {
     if ((u32)arg < 0x3f)
         self->CObjectState_clearStateFlags8(0x3f);
     self->unk8 |= (u32)arg;

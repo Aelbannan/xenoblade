@@ -8,11 +8,13 @@
 #include "kyoshin/CMapSel.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Scrollbar destroy / layout-read helpers (unmangled retail symbols).
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-void closeFileHandle(CFileHandle**);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);
@@ -25,12 +27,9 @@ extern "C" void Cur_Update(void*);                  // cursor per-frame update
 // the texture resource as PaneSetTexPaletteByName's third argument). Same guard as the legacy
 // AnimRewindFrame pseudo-import so code_802405F4.cpp's define stays a no-op.
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" char* MakeTplNameSysFile(u32);
 #endif
 // Cursor position helper: fill output with the point derived from two panes.
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
-extern "C" void setPaneVisible(void*, u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int sprintf(char*, const char*, ...);
 // Map-select string pool (split1 .rodata): pane-name format at +0x1F, fixed
 // pane name at +0x88.

@@ -14,7 +14,8 @@
 #include <revolution/GX.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
 // Flat view of cf::CfPadData exposing only the flag words handleSaveMenuInput reads:
@@ -46,7 +47,6 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
 // (retail symbols are unmangled / non-namespace, so C linkage is required).
-extern "C" int IsMenuState621F0();
 extern "C" void openSaveMenu(CMenuSave* self);
 extern "C" void advanceSaveMenuPhase(CMenuSave* self);
 extern "C" void handleSaveMenuInput(CMenuSave* self);
@@ -66,7 +66,6 @@ extern "C" void NandAllocBufs();
 // DrawInfo helper - retail emits the mangled nw4r form
 // (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 /*
  * Constructor. The widgets are built by the initialiser list; the trailing

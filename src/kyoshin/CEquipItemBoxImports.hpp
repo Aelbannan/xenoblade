@@ -4,6 +4,11 @@
 // CEquipItemBox / CEquipChange units (kept out of CEquipItemBox.hpp so other
 // includers do not inherit conflicting C-linkage declarations).
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CItemBoxGrid_Color.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 /* CEventFile event object: the +0x4 word is the file handle compared against
    field_24/field_28/field_2C (the three bind files). */
@@ -19,11 +24,6 @@ struct CEquipItemBoxFileHandleView {
     void* field_4;  // 0x4
 };
 
-/* 8-byte colour-vector pair returned in r3:r4 by PaneMatGetS16QuadByName / PaneMatGetS16Quad
-   and copied to the .sbss colour tables by CopyVec4s. */
-struct CEquipItemBoxFourShorts {
-    s16 a, b, c, d;
-};
 
 /* (font-info pane data goes through IDeviceFontInfo::getFont -- vtable
    offset 0x24; see monolib/device/CDeviceFont.hpp.) */
@@ -71,14 +71,7 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Font/line text providers: getPackedFont is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
-char* getPackedFont();
-extern "C" char* CUICfManager_getPackedFont9C();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" CEquipItemBoxFourShorts PaneMatGetS16QuadByName(void*, void*, u32);
-extern "C" CEquipItemBoxFourShorts PaneMatGetS16Quad(void*, u32);
-extern "C" void CopyVec4s(void*, const void*);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
@@ -291,8 +284,6 @@ struct CEquipItemBoxEnumList {
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, int);
 extern "C" u32 CSysWin_isReady(void*);
-extern "C" void BuildSlotItemLists(void*);
-extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void sysWinAdvancePhase3(void*);
 // Same-TU helpers (defined as extern "C" free functions in CEquipItemBox.cpp;
 // the retail symbols are unmangled, so calls must reference the plain names).
@@ -301,13 +292,9 @@ extern "C" CEquipItemData* setEIBItem(CEquipItemData* dst, s16 a0, u8 a2, u8 a3,
 extern "C" void copyEIBItem(CEquipItemData* dst, const CEquipItemData* src);
 // String pool used by getEIBPageHint (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
-extern "C" void closeFileHandle__FPP11CFileHandle(void*);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void sysWinTermLayout(void*);
-extern "C" u16 BdatGetItemId(u32);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
-extern "C" char* MakeTplNameSysFile(u32);
 // Item-object validity/type check used by bindEIBCellIcon's texture pick.
 extern "C" int IsSkillItem(void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
@@ -316,8 +303,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 // Item drop-rate helpers (code_80135FDC TU): name-table float probe and the
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
-extern "C" f32 GetFloatTableEntry(u32 idx);
-extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
 extern "C" void copyVEC3(void*, const void*);
 // Declared with C++ linkage (same as CCol6System.hpp) so the two headers
 // don't create an illegal overload when a TU includes both.
@@ -325,7 +310,6 @@ void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
-extern "C" void setPaneVisible(void*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching eibHandleSubPage's reloc site).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
@@ -355,7 +339,6 @@ struct CEquipItemBoxKind3View {
 // Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
 extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);
 // Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // Same-TU grid helper (retail plain name; defined in this .cpp).
 // Same-TU dispatch helpers used by sortEIBGridByPage (defined in this .cpp).
 // Same-TU grid sort helpers dispatched by sortEIBGridByPage (defined below).
@@ -370,7 +353,6 @@ extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_DrawLayout(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
-extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
@@ -410,7 +392,6 @@ extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // Name-table pointer globals (handleEIBConfirm).
-extern "C" void incrementEventCounter(u32);
 extern u32 lbl_eu_80668B3C;
 extern u16 lbl_eu_80668B40;
 // 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
@@ -424,7 +405,6 @@ extern "C" void sysWinOpenPhase1(void*);
 // Per-slot detail-text builder (handleEIBNamePane's ==3 lookup path).
 extern const float lbl_eu_80668B24;
 // Item-kind -> display-count probe (calcEIBCountKey's default band).
-extern "C" u32 LookupItemTypeTable(u32);
 extern "C" u32 __cvt_fp2unsigned(double);
 
 /* 16-byte record copied off lbl_eu_8050EF68 by calcEIBCountKey and read back
@@ -444,7 +424,6 @@ extern "C" char* getErrMesText15(void);
 extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" void CopyTabSlotVec(nw4r::math::VEC3*, const u16*, u32);
 // Number-of-equip-pages byte (shared .sbss flag; > 1 means multi-page).
-extern "C" u8 code80135FDC_getByte_64077();
 // Sort-page colour table pairs (PaneMatSetTevColorsByName 3rd/4th args, .sbss).
 extern s16 lbl_eu_806649B0[4];
 extern s16 lbl_eu_806649B8[4];
@@ -499,7 +478,6 @@ extern const double lbl_eu_80668B18;
 extern const float lbl_eu_80668B20;
 
 // Item-impl accessor (retail CItemImpl vtable-indexed helper).
-extern "C" u32 BdatGetItemType(u32);
 
 // Sub-object destructors invoked by ~CEquipItemBox (retail C-ABI names; the
 // member-class dtors live in their own TUs as extern "C" free functions).
@@ -513,4 +491,3 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
-extern "C" void ItemBlockSetDefaultFlags();

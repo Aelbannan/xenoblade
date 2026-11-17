@@ -5,6 +5,7 @@
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Forward decls: state-dispatch callees defined later in this TU.
 extern "C" void ModelDispEquip_BuildDisplay(CModelDispEquip*);
@@ -163,7 +164,7 @@ extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquip* self) {
 extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquip* self) {
     waitForDrawDone__9CDeviceVIFv();
     for (u8 i = 0; i < 9; i++) {
-        closeFileHandle__FPP11CFileHandle(&self->fileSlots[i].handle);
+        closeFileHandle(&self->fileSlots[i].handle);
     }
     ModelDispEquip_TeardownHolder(self, &self->actParamHolder);
     for (u8 i = 0; i < 9; i++) {
@@ -176,7 +177,7 @@ extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquip* self) {
             slot->data = 0;
         }
     }
-    closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
+    closeFileHandle(&self->modelFileHandle);
     u8* md = self->modelData;
     if (md != NULL) {
         EffSched_LookupB(lbl_eu_8065FC18, md);
@@ -369,7 +370,7 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
             self->fileSlots[i].data = 0;
         }
     }
-    closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
+    closeFileHandle(&self->modelFileHandle);
     // Nested re-tests: each condition reloads modelData from memory.
     if (self->modelData != 0) {
         EffSched_LookupB(lbl_eu_8065FC18, self->modelData);

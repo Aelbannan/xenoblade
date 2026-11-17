@@ -16,7 +16,7 @@
 #include <revolution/GX.h>
 #include "kyoshin/CKizunaTalkListImports.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // CfGameManager.hpp cannot be included here: it declares lbl_eu_80664090 as
 // void* while CKizunaTalkList.hpp (via our header) declares it u8*. The pad

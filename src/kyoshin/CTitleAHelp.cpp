@@ -16,9 +16,9 @@
 #include <nw4r/lyt.h>
 #include <nw4r/ut.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
 
 // Retail symbol is unmangled (C linkage); extern "C" keeps the reloc name.
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 // Retail keeps these state-machine helpers unmangled (C linkage); declare
 // them extern "C" so the switch in updateHelp emits the retail relocs.
@@ -280,11 +280,11 @@ extern u32 lbl_eu_80664470;
 extern u32 lbl_eu_80664478;
 extern u32 lbl_eu_80664480;
 extern "C" void applyPaneTevColors(CTitleAHelp* self) {
-    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
+    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, (const GXColorS10*)&lbl_eu_80664468, (const GXColorS10*)&lbl_eu_80664470);
 }
 
 extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self) {
-    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
+    PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, (const GXColorS10*)&lbl_eu_80664478, (const GXColorS10*)&lbl_eu_80664480);
 }
 
 extern "C" void __declspec(noinline) stepOpenAnim(CTitleAHelp* self) {

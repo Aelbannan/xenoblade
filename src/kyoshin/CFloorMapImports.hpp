@@ -5,6 +5,8 @@
 #include "kyoshin/CFloorMap.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 
 
@@ -59,7 +61,6 @@ struct CFloorMapCtorView {
 
 // Colour/name query used by the cursor ctor: returns a pointer to four s16
 // colour entries for the named layout group.
-s16* PaneMatGetS16QuadByName(nw4r::lyt::Layout* layout, const char* name, int index);
 extern const char lbl_eu_805370EC[];
 extern const char lbl_eu_805370D4[];
 extern const char lbl_eu_805370BC[];
@@ -71,7 +72,6 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 // Shared UI accessor import.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Same-TU helper definitions used by CFloorMap::OnFileEvent (retail flat
 // names; the extern "C" declaration fixes the definition linkage).
@@ -384,8 +384,6 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDon
 extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall
 // at +0x08 matches retail.)
@@ -394,7 +392,6 @@ extern "C" void Cur_Update(void* cursor);      // CCur18 per-frame update
 extern "C" void sysWinDispatchPhase(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
 // retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // (Player/marker positions dispatch through cf::CfObject: UVF23 at +0xAC,
 // zoom through UVF31 at +0xCC; see kyoshin/cf/object/CfObject.hpp.)
@@ -459,8 +456,6 @@ extern "C" void bdatGetPosXYZ(float*, int = 0);
 // C-linkage UI helper imports. buildLayout/bindLayoutAnimTransform keep their retail
 // mangled names through MWCC's natural C++ mangling; the flat-named helpers
 // need extern "C" so MWCC does not append a parameter suffix.
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // C-linkage name/label helpers from code_80135FDC.cpp. BdatTouchStringCell builds
 // a pane name from a format string, a base string and an index (JP retail
 // symbol BdatTouchStringCell__FPcPcUl = (char*, char*, u32); fixed args so MWCC
@@ -496,7 +491,6 @@ extern void playUISound(u32);
 // C-ABI imports used by the floor-map update functions (retail plain names).
 // (code80135FDC_setVec3 comes from kyoshin/CSysWin.hpp: VEC3* form.)
 extern "C" void copyVEC3(void*, const void*);
-extern "C" char* MakeTplNameSysFile(u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
@@ -505,7 +499,6 @@ extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3*, void*, u8);
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" int atoi(const char*);
 
 // CSysWin sub-object helpers used by the floor-map input handlers (retail
@@ -528,10 +521,10 @@ extern f32 lbl_eu_806687A0;
 extern f32 lbl_eu_80668794;
 
 // .sbss color tables used by PaneMatSetTevColorsByName (init in sinit_80250CB4).
-extern u16 lbl_eu_806647A0[4];
-extern u16 lbl_eu_806647A8[4];
-extern u16 lbl_eu_806647B0[4];
-extern u16 lbl_eu_806647B8[4];
+extern GXColorS10 lbl_eu_806647A0;
+extern GXColorS10 lbl_eu_806647A8;
+extern GXColorS10 lbl_eu_806647B0;
+extern GXColorS10 lbl_eu_806647B8;
 extern u32 lbl_eu_80664184;   // current world/map id (full word)
 
 // Pane flag-byte view (Pane::mFlag is protected; retail reads/writes it
@@ -559,8 +552,6 @@ struct CFloorMapPaneRotate {
 };
 
 // C-ABI helpers used by FloorMap_RefreshFloorRows (defined in code_80135FDC.cpp).
-extern "C" int GetMapItemBitFlag(u8 max, u8 count, u16 off);
-extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_806640A8;
 extern u8 lbl_eu_80664798;
@@ -613,9 +604,6 @@ public:
 // Per-table BDAT entry pointers + flat-name helpers used by FloorMap_PlaceTypedMarkers
 // (retail symbols are unmangled).
 extern void* lbl_eu_80573D18[0x1C];
-int SearchThresholdIdx(int idx);
-extern "C" u32 func_80138574(const char* name, u32 id);
-extern "C" u32 CheckState2CC8Active(u16 id);
 extern "C" CFloorMapVec3* GimFindPosByRow(CFloorMapGimmickGlobal* mgr, u16 id);
 
 // (Font handles dispatch through IDeviceFontInfo::getFont at +0x24;

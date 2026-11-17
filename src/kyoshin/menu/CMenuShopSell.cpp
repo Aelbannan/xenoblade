@@ -13,7 +13,8 @@
 
 #include <revolution/GX.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // isIdle returns raw int so callers use cmpwi (CMenuCollepedia pattern).
 
@@ -75,11 +76,9 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
 
 // SetWideLocAdjust keeps its mangled nw4r form, so it is declared outside
 // extern "C" for MWCC to re-mangle it.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shop-sell render-gate mode bitfield (.sbss; bit 21 = busy).
 extern u32 lbl_eu_80663E28;

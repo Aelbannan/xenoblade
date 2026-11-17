@@ -5,7 +5,6 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 extern "C" {
-    void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
     void func_80138078(int);
     void CtrlRemote_SetSharedBit(u32, u32);
@@ -15,6 +14,10 @@ extern "C" {
 #include "monolib/work/CWorkSystem.hpp"
 #include "monolib/lib/CLibHbm.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 // code_80135FDC.hpp declares several nw4r::db warning strings as u8[] while
 // CfObjectImplMove.hpp (via harness_catalog.hpp) already declared some of them
 // const char[]. This TU never uses those strings, so alias them away for the
@@ -83,12 +86,8 @@ extern "C" void awardQuestFlags(void);
 extern "C" u32 chkAwardFlags99(void);
 extern "C" u32 chkAwardFlags9B(void);
 extern "C" void sysWinAdvancePhase3(void*);
-extern "C" u32 CUICfManager_getPackedFontD8();
-extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void setPaneVisible(void* obj, u32 value);
 extern "C" u8 bdatLookupRes(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
 extern "C" void sysWinApplyKind(void*, int);
@@ -102,16 +101,11 @@ extern "C" void NandQueueLoadCk(int, void*);
 extern "C" void NandQueueSaveCk(int, void*, u8);
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(int, int, int);
-extern "C" void code80135FDC_thunk_BFE8C(u8*);
 extern "C" void SysWinLog_QueueEvent(u32);
 extern "C" u32 SysWinLog_BumpEventValue(u32, u32);
 extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 // External function declarations
-void playUISound(u32);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // AnimRewindFrame declared in code_80135FDC.hpp
 extern const float lbl_eu_80668B68;
 extern const float lbl_eu_80668B6C;
@@ -133,7 +127,6 @@ extern void* lbl_eu_806640A8;
 
 extern CSLData* lbl_eu_806649F0;
 extern CSaveLoad* lbl_eu_806649F4;
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 #pragma push
 #pragma dont_inline on
@@ -461,7 +454,7 @@ void CSaveLoad::reset() {
     CWorkSystem::setSaveLoadInvalidReset(false);
     DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
-    closeFileHandle__FPP11CFileHandle(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     mField120 = 0;
     mData.freeBufs();
     
@@ -1189,7 +1182,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             // Hide all 7 per-slot buttons
             for (u8 btn = 0; btn < 7; btn++) {
                 sprintf(emptyBtnBuf, (const char*)&strBase[0x15c], btn, btn + 1);
-                void* pane =
+                nw4r::lyt::Pane* pane =
                     mLayout->GetRootPane()->FindPaneByName(emptyBtnBuf, 1);
                 if (pane != 0) {
                     setPaneVisible(pane, 0u);
@@ -1209,7 +1202,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
 
             // Hide the main slot button
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
-            void* pane =
+            nw4r::lyt::Pane* pane =
                 mLayout->GetRootPane()->FindPaneByName(slotNameBuf, 1);
             setPaneVisible(pane, 0u);
         } else {
@@ -1267,7 +1260,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             // Set up the 7 award buttons
             for (u8 btn = 0; btn < 7; btn++) {
                 sprintf(dataBtnBuf, (const char*)&strBase[0x15c], btn, btn + 1);
-                void* pane =
+                nw4r::lyt::Pane* pane =
                     mLayout->GetRootPane()->FindPaneByName(dataBtnBuf, 1);
 
                 // Record presence flag lives in the low byte of a word entry
@@ -1330,7 +1323,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
 
             // Show/hide the final button depending on the character's sex flag
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
-            void* pane =
+            nw4r::lyt::Pane* pane =
                 mLayout->GetRootPane()->FindPaneByName(slotNameBuf, 1);
             setPaneVisible(pane, (*(u8*)(slotData + 0x67) != 0) ? 1u : 0u);
         }
@@ -1459,32 +1452,32 @@ bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)CUICfManager_getPackedFontD8();
     if (capJp != nullptr) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x27f], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x288], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x295], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x29e], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2ab], (u32)capJp);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2b4], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x27f], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x288], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x295], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x29e], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2ab], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2b4], (u32)capJp);
     }
 
     // Localized caption strings applied to fifteen fixed pane names
     char* capLoc = (char*)CUICfManager_getPackedFont9C();
     if (capLoc != nullptr) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x30a], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x316], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x322], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x32d], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x33b], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x347], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x353], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x35f], (u32)capLoc);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, (char*)&strBase[0x36a], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x30a], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x316], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x322], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x32d], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x33b], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x347], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x353], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x35f], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x36a], (u32)capLoc);
     }
 
     enAnimA();

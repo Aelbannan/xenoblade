@@ -29,6 +29,8 @@
 // CUIBattleManager.hpp - no guard needed.)
 #include "kyoshin/CUIBattleManager.hpp"
 #include <nw4r/math.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // CVision.hpp's lbl_eu_80663E24 copy is volatile, which clashes with
 // CfObjectMove.hpp's non-volatile extern (recently aligned with
@@ -66,10 +68,6 @@
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
-void playUISound(u32);
 
 // sdata2 conversion-magic doubles (2^52 family) are shared retail .sdata2 labels
 // (lbl_eu_80666F30 / lbl_eu_80666F38, owning TU or extern); declaring them here
@@ -182,23 +180,19 @@ struct ArtsSelModeTbl {
 int ShopSel_GetSingleton();
 int getQuestWindow();
 
-u8 GetSysStateFlag21();
 
 // refreshHelpText / refreshPaneTextures imports (unmangled retail names)
 u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
-u16 BdatGetItemId(u32 value);
 void* CItem_kindPtr(u32 index);
 // CUIBattleManager.hpp only declares this as a friend; re-declare at file scope.
 void* UIBattleFindSysTimg(const char* name);
 
 int UIBattleGetFlagE8();
 void setEffectEnabled__FUl(u32);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int EneSt_CursorGetFlag(void*);
 int BtlDmg_CursorGetFlag(void*);
 // Layout/anim helpers defined in code_80135FDC.cpp with mangled C-linkage
 // names (retail reloc targets); no header declares them, so declare locally.
-void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // CMenuArtsSelect_CreateArtsRef arts-ref allocator: CfGameManager creates the ref object.
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
@@ -251,8 +245,6 @@ extern const u8 lbl_eu_80666F58;   // mode-table extra byte
 extern const ArtsSelEnumIds lbl_eu_804FD128;
 // Unmangled imports used by the batch-14o targets (no header declares these in
 // this TU's include closure; retail symbols are C-linkage names).
-extern "C" FourShorts PaneMatGetS16QuadByName(nw4r::lyt::Layout*, const char*, int);
-extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout*, const char*, s16*, int);
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
 extern "C" int ChainTmr_GateArts_DF38(u8* self, u8* actor, int flag, int index);
 extern "C" int CChain_CheckActivateReady(u8* self, int param);
@@ -278,7 +270,6 @@ void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
 u8* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
-void BuildSlotItemLists(u32);
 u32 func_801392C0();
 extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
@@ -859,7 +850,7 @@ void CMenuArtsSelect::Move() {
     ::updateSlotStates(this);
 
     {
-        u8 flag = GetSysStateFlag21();
+        u32 flag = GetSysStateFlag21();
         u8* b;
         b = &unk26C[0]->unkBB;
         *b = static_cast<u8>((*b & 0xFEu) | flag);
@@ -1244,7 +1235,7 @@ void CMenuArtsSelect::cbRenderBefore() {
         if (unk298 > 1 && !(unk308 & 0x80u)) {
             for (s32 i = 0; i < 9; i++) {
                 if (unk30C & (1u << i)) {
-                    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk1B8[i], &drawInfo, 0, 1);
+                    drawLayout(unk1B8[i], &drawInfo, 0, 1);
                 }
             }
         }
@@ -1254,7 +1245,7 @@ void CMenuArtsSelect::cbRenderBefore() {
             u32 notBit25 = !(flags & 0x40u);
             u32 merged = (flags & 0x30u) | notBit25;
             int visible = merged != 0;
-            drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk80, &drawInfo, 0, visible);
+            drawLayout(unk80, &drawInfo, 0, visible);
         }
 
         unk308 |= 0x40u;
@@ -1266,7 +1257,7 @@ void CMenuArtsSelect::cbRenderBefore() {
                     u32 notBit28 = !(unk308 & 0x8u);
                     u32 merged = bit0 | notBit28;
                     int visible = merged != 0;
-                    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk98, &drawInfo, 0, visible);
+                    drawLayout(unk98, &drawInfo, 0, visible);
                     unk308 |= 0x8u;
                 } else {
                     unk308 &= ~0x8u;
@@ -1284,7 +1275,7 @@ void CMenuArtsSelect::cbRenderBefore() {
                         u32 merged = notBit18 | (v & (1u << (i + 9)));
                         int visible = merged != 0;
                         if (unk340 == 0) {
-                            drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unkA4[i], &drawInfo, 0, visible);
+                            drawLayout(unkA4[i], &drawInfo, 0, visible);
                         }
                         unk318 |= bit18;
                     } else {
@@ -1303,7 +1294,7 @@ void CMenuArtsSelect::cbRenderBefore() {
                             u32 notBit18 = !(v & bit18);
                             u32 merged = notBit18 | (v & (1u << (j + 9)));
                             int visible = merged != 0;
-                            drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk104[j], &drawInfo, 0, visible);
+                            drawLayout(unk104[j], &drawInfo, 0, visible);
                             unk310 |= bit18;
                         } else {
                             bit18 = 1u << (j + 18);
@@ -1316,7 +1307,7 @@ void CMenuArtsSelect::cbRenderBefore() {
                                 u32 notBit18 = !(w & bit18);
                                 u32 merged = notBit18 | (w & (1u << (j + 9)));
                                 int visible = merged != 0;
-                                drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk170[j], &drawInfo, 0, visible);
+                                drawLayout(unk170[j], &drawInfo, 0, visible);
                                 unk314 |= bit18;
                             } else {
                                 unk314 &= ~bit18;
@@ -1332,7 +1323,7 @@ void CMenuArtsSelect::cbRenderBefore() {
             }
         }
 
-        drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(unk8C, &drawInfo, 0, 1);
+        drawLayout(unk8C, &drawInfo, 0, 1);
     }
 done:
     ;
@@ -2551,8 +2542,8 @@ void CMenuArtsSelect::driveArtsGauge() {
         // survives, use the {0x14,0x58,0xc6} highlight rect and unk291 = 1.
         // MWCC lowers the ArtsGaugeBox initializer to a word-pair copy of the
         // FourShorts plus an lha readback for .w (see header note).
-        FourShorts fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
-        s16 rect[6] = {0, 0, 0, fs.c, fs.a, fs.b};
+        GXColorS10 fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
+        s16 rect[6] = {0, 0, 0, fs.b, fs.r, fs.g};
         unk291 = 0;
         if (unk289[0] != 0) flag = 0;
         if (unk289[1] != 0) flag = 0;
@@ -2566,12 +2557,12 @@ void CMenuArtsSelect::driveArtsGauge() {
             rect[0] = 0x14;
             rect[1] = 0x58;
             rect[2] = 0xc6;
-            rect[3] = fs.c;
+            rect[3] = fs.b;
             unk291 = 1;
         }
         char* winNames = lbl_eu_804FD1E0;  // retail hoists the table base
-        PaneMatSetS16QuadByName(unk98, winNames + 0x27a, rect, 1);
-        PaneMatSetS16QuadByName(unk98, winNames + 0x283, rect, 1);
+        PaneMatSetS16QuadByName(unk98, winNames + 0x27a, (const GXColorS10*)rect, 1);
+        PaneMatSetS16QuadByName(unk98, winNames + 0x283, (const GXColorS10*)rect, 1);
         unk308 &= ~0x4;
     }
 }
@@ -2608,15 +2599,15 @@ void CMenuArtsSelect::driveTalentGauge() {
             unk98->SetAnimationEnable(unkA0, false);
             unk98->SetAnimationEnable(unk9C, true);
             unk29C = 0x9;
-            FourShorts fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
+            GXColorS10 fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
             // Aggregate init lowers to a word-pair quad copy plus an lha
             // readback for .w (see header note on ArtsGaugeBox).
-            ArtsGaugeBox box = {0, 0, 0, fs.c, fs};
+            ArtsGaugeBox box = {0, 0, 0, fs.b, fs};
             unk291 = 0;
             PaneMatSetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a,
-                          reinterpret_cast<s16*>(&box), 1);
+                          (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
             PaneMatSetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x283,
-                          reinterpret_cast<s16*>(&box), 1);
+                          (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
         } else {
             s32 flag = 0;
             u8* arts = static_cast<u8*>(
@@ -2638,13 +2629,13 @@ void CMenuArtsSelect::driveTalentGauge() {
             if (unk289[7] != 0) flag = 0;
             if (flag != 0) {
                 unk308 |= 0x3;
-                FourShorts fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
-                ArtsGaugeBox box = {0x14, 0x58, 0xc6, fs.c, fs};
+                GXColorS10 fs = PaneMatGetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a, 1);
+                ArtsGaugeBox box = {0x14, 0x58, 0xc6, fs.b, fs};
                 unk291 = 1;
                 PaneMatSetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x27a,
-                              reinterpret_cast<s16*>(&box), 1);
+                              (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
                 PaneMatSetS16QuadByName(unk98, lbl_eu_804FD1E0 + 0x283,
-                              reinterpret_cast<s16*>(&box), 1);
+                              (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
                 unk98->SetAnimationEnable(unkA0, false);
                 unk98->SetAnimationEnable(unk9C, true);
                 unk9C->SetFrame(lbl_eu_80666F28);
@@ -2759,13 +2750,13 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
     switch (flag) {
     case 0:
         if ((unk318 & (1 << index)) != 0) {
-            FourShorts fs = PaneMatGetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
-            ArtsGaugeBox box = {0, 0, 0, fs.d, fs};
+            GXColorS10 fs = PaneMatGetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+            ArtsGaugeBox box = {0, 0, 0, fs.a, fs};
             unk289[index] = 0;
             PaneMatSetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a,
-                          reinterpret_cast<s16*>(&box), 1);
+                          (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
             PaneMatSetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x283,
-                          reinterpret_cast<s16*>(&box), 1);
+                          (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
         }
         unk318 &= ~((1 << index) | (1 << (index + 9)));
 
@@ -2790,13 +2781,13 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
 
     default:
         unk318 |= (1 << index) | (1 << (index + 9));
-        FourShorts fs2 = PaneMatGetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
-        ArtsGaugeBox box2 = {0x14, 0x58, 0xc6, fs2.d, fs2};
+        GXColorS10 fs2 = PaneMatGetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+        ArtsGaugeBox box2 = {0x14, 0x58, 0xc6, fs2.a, fs2};
         unk289[index] = 1;
         PaneMatSetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x27a,
-                      reinterpret_cast<s16*>(&box2), 1);
+                      (const GXColorS10*)(reinterpret_cast<s16*>(&box2)), 1);
         PaneMatSetS16QuadByName(unkA4[index], lbl_eu_804FD1E0 + 0x283,
-                      reinterpret_cast<s16*>(&box2), 1);
+                      (const GXColorS10*)(reinterpret_cast<s16*>(&box2)), 1);
         unkC4[index]->SetFrame(lbl_eu_80666F28);
         break;
     }

@@ -4,6 +4,8 @@
 // header stays includable next to other headers.
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Full object layout for CSysWin (used by C-linkage accessors)
 struct CSysWinFull {
@@ -24,7 +26,6 @@ extern char lbl_eu_8050A478[];
 // global-scope data, so the data symbol needs no extern "C"; playUISound is
 // declared with C++ linkage so MWCC mangles it to the retail playUISound__FUl.
 extern const f32 lbl_eu_806685F0;  // .sdata2 float (layout animation duration)
-void playUISound(u32);     // UI sound effect (playUISound__FUl)
 
 // C-linkage member-destructor/ctor imports used by the free-function dtor and
 // ctor below (retail emits the unmangled names at the call sites).
@@ -39,8 +40,6 @@ extern "C" void* __ct__CTagProcessor(void*);
 // CLibLayout helpers referenced by their literal retail (pre-mangled) names.
 
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
-extern "C" void setPaneVisible(void*, u32);
-void closeFileHandle(CFileHandle**);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (sysWinSetKindContent /

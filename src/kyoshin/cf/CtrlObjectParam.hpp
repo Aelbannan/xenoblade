@@ -15,7 +15,7 @@ extern "C" void* Bdat_GetTable_AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).
 extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
-extern u32 lbl_eu_8052E9B0[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
+extern u32 __vt__Q22cf12CBattleState[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
 namespace cf { struct CHelpManager; }
 extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, CtrlObjectParam_ClaimArtsSlotRow byte flag at +0x16)
 

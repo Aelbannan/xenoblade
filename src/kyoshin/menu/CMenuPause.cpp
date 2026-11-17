@@ -15,7 +15,8 @@
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 extern u32 lbl_eu_80663E28;
 
@@ -63,7 +64,6 @@ extern "C" {
     void MenuSnd_SetSlotsPause_8890(u32);
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void CfSoundMan_PlayRequest(f32, int, int, int);
-    void MenuStateClear64064();
     void func_800853C8__Q22cf13CfGameManagerFv();
     void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
 
@@ -80,7 +80,6 @@ extern "C" {
     void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
     void validateHeap__17UnkClass_8045F564Fv(void*);
     void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
-    nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 }
 
 CMenuPause::~CMenuPause() {}

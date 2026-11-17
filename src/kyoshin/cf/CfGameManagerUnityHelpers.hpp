@@ -688,7 +688,7 @@ public:
     virtual void resetItemSlot(u32 first, u32 second) = 0;       // +0x40
 };
 
-extern "C" void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv(UnkFlags8Data* data,
+extern "C" void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi(UnkFlags8Data* data,
                                                                      u32 mask) {
     data->flags_0x8 &= ~mask;
 }
@@ -2625,7 +2625,6 @@ extern "C" void updateVisionState__Q22cf13CfGameManagerFv(cf::CfGameManager* man
 extern "C" bool evtIsBusyBitSet();
 extern "C" int CTaskGame_hasLoadScreen();
 extern "C" u8 isFadeActive(void* object);
-extern "C" u8 code80135FDC_getByte_64059();
 extern "C" void CUICfManager_queuePauseMenu();
 extern "C" void* Scn_GetUnk80Handle(CScn* scene);
 extern "C" void* Scn_FindCamItem(void* scene, int index);

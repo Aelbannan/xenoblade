@@ -45,9 +45,9 @@ extern void CObjectState_setStateBitMask__Q22cf12CObjectStateFv();
 extern void CObjectState_checkStateFlags__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv();
 extern void CObjectState_clearStateWord4__Q22cf12CObjectStateFv();
-extern void CObjectState_applyStateFlags__Q22cf12CObjectStateFv();
+extern void CObjectState_applyStateFlags__Q22cf12CObjectStateFi();
 extern void CObjectState_clearStateWord8__Q22cf12CObjectStateFv();
-extern void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv();
+extern void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi();
 extern void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
 extern void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitMask0__Q22cf12CObjectStateFv();
@@ -146,9 +146,9 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
     &CObjectState_clearStateWord4__Q22cf12CObjectStateFv,
-    &CObjectState_applyStateFlags__Q22cf12CObjectStateFv,
+    &CObjectState_applyStateFlags__Q22cf12CObjectStateFi,
     &CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
-    &CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
+    &CObjectState_clearStateFlags8__Q22cf12CObjectStateFi,
     &CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     &CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,

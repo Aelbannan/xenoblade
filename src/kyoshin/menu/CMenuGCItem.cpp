@@ -12,7 +12,8 @@
 
 #include <revolution/GX.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28; // render-gate mode bitfield (.sbss; bit 21 = busy)
@@ -27,7 +28,6 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int IsMenuState621F0();
 
 // CItemBoxGrid is still driven through its C-linkage ctor/dtor (4-arg ctor).
 extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
@@ -35,7 +35,6 @@ extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 
 // DrawInfo helper - retail emits the mangled nw4r form
 // (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is a normal C++ global.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Phase-2 helper defined below (phase-2 input dispatch; advances mState to 3).
 

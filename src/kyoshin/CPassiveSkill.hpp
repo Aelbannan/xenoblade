@@ -6,6 +6,8 @@
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Vtable for UI::CPassiveSkillCur (installed by __ct__UI_CPassiveSkillCur).
 extern "C" void* lbl_eu_80537A14[];
@@ -466,7 +468,6 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r:
 
 // Character/party name-text value pushed into layout panes by setLayoutTextBoxFont
 // (retail symbol unmangled; same convention as CPartyState.hpp).
-extern "C" u32 CUICfManager_getPackedFont9C();
 
 // Texture-dimension record read by CPassiveSkillInfo_init: the 'timg' texture
 // resource's +0x8 chain pointer leads (via +0x0) to a pair of u16 dims.
@@ -489,12 +490,6 @@ struct CPSkillTexRes {
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
 extern "C" void Cur_DrawLayout(void*, void*);
 
-// 8-byte animation-colour vector (4 s16 channels) returned by PaneMatGetS16QuadByName
-// in r3:r4 (same layout as CItemBoxLine.hpp's FourShorts; the .d channel is
-// the alpha used by the skill-grid color ladder).
-struct CPSkillFourShorts {
-    s16 a, b, c, d;
-};
 
 // 8-byte colour record filled by setGXColorS10 (retail GXColorS10 layout);
 // the helper returns the record pointer.
@@ -504,7 +499,6 @@ struct CPSkillColorS10 {
 
 // Pane-animation colour fetch (retail symbol unmangled): reads the 4 s16
 // animation vector of a named pane (index 0 = base, 1 = alternate).
-extern "C" CPSkillFourShorts PaneMatGetS16QuadByName(void*, const char*, u32);
 
 // RGB-colour builder (retail symbol unmangled): fills the record with the
 // four s16 channels and returns the record pointer (CTitle.hpp /
@@ -516,8 +510,6 @@ extern "C" CPSkillColorS10* setGXColorS10(CPSkillColorS10* color, s16 r,
 
 // Pane colour setter (retail symbol unmangled): applies the two colours to
 // the pane (CItemBoxLine.hpp convention; PaneMatSetTevColorsByName is the layout form).
-extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* pane, CPSkillColorS10* c1,
-                               CPSkillColorS10* c2);
 
 // Pane byte at +0xB8 written by CPassiveSkillLine_updateLearnGrid's cell update (opaque state).
 struct CPSkillPaneB8 {
@@ -526,7 +518,7 @@ struct CPSkillPaneB8 {
 };
 
 // Cursor/skill-pane visibility helpers (retail symbols unmangled).
-// setPaneVisible (declared in CSysWin.hpp) sets a pane's visible flag;
+// setPaneVisible (declared in CQuestWindow_Pane.hpp) sets a pane's visible flag;
 // isPaneVisible queries it. C linkage so call relocs are the plain retail
 // name (CTitleAHelp.hpp's C++ declaration would mangle it).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
@@ -540,13 +532,11 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Character index splitter used by CPassiveSkill_learnAllSkills (retail symbol unmangled;
 // 3-arg form also declared in CPcKizunagram.hpp).
-extern "C" void FetchRelatePair(u8*, u8*, int);
 
 // Shared BDAT character table pointer (.sdata; value resolved at link time).
 extern void* lbl_eu_80664090;
 
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Skill grid data tables (.sdata pointers; values resolved at link time).
 // lbl_eu_8066488C is passed as the message table to BdatGetU16Direct by
@@ -617,7 +607,6 @@ struct CPSkillCharData {
 // Equipment lookup helpers for CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // same flat declarations as CItemBoxInfo.hpp / CEquipChange.hpp).
 extern "C" void* CItem_kindPtr(u32 index, s16 value);
-extern "C" u16 BdatGetItemId(u32 value);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);

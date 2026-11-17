@@ -26,6 +26,7 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 #undef writeVec3f
 #undef func_8004B9D4
 #undef Scn_SetupAnimDefault
@@ -365,7 +366,6 @@ extern "C" u32 PartyStateWin_PickAllocHandle(CModelDispFileCtx* ctx, u32 size);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
-extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle** handlePtr);
 extern "C" void EffSched_LookupA(void* mgr, void* data);
 extern "C" void EffSched_LookupB(void* arg, void* data); // (manager, buffer): the
 // buffer rides in r4 from the null-check load - keeps the check color r4.

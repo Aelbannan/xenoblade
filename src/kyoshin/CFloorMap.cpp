@@ -21,6 +21,7 @@
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CFloorMapImports.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Named .sdata2 conversion magics: defining them lets MWCC's constant pool
 // reuse the retail symbols for the (f32) casts on s16/u8 map coordinates
@@ -43,7 +44,6 @@ extern "C" void* createPicture__10CLibLayoutFv();
 extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void sysWinDrawLayout(void* sysWin, void* drawInfo);
 extern "C" void Cur_DrawLayout(void* cursor, void* drawInfo);
 
@@ -338,9 +338,9 @@ void FloorMap_RefreshFloorRows(void* self) {
         }
         sprintf(buf2, &lbl_eu_8050BEA8[0x12A], k);
         if (found)
-            PaneMatSetTevColorsByName(cur->mData, buf2, lbl_eu_806647B0, lbl_eu_806647B8);
+            PaneMatSetTevColorsByName(cur->mData, buf2, &lbl_eu_806647B0, &lbl_eu_806647B8);
         else
-            PaneMatSetTevColorsByName(cur->mData, buf2, lbl_eu_806647A0, lbl_eu_806647A8);
+            PaneMatSetTevColorsByName(cur->mData, buf2, &lbl_eu_806647A0, &lbl_eu_806647A8);
     }
 
     // Show the first `count` row panes; each pane's low flag bit is set when
@@ -3238,7 +3238,7 @@ void FloorMap_UpdateRowPanePos(void* self) {
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
     p->field_32E4 = 1;
-    closeFileHandle__FPP11CFileHandle((CFileHandle**)&p->field_2C);
+    closeFileHandle((CFileHandle**)&p->field_2C);
 
     u8 lang = FM_FLOOR(p)->field_20C;
     if (lang == 0) lang = 1;
@@ -3346,7 +3346,7 @@ void FloorMap_CursorNextFloor(void* self) {
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
     p->field_32E4 = 1;
-    closeFileHandle__FPP11CFileHandle((CFileHandle**)&p->field_2C);
+    closeFileHandle((CFileHandle**)&p->field_2C);
 
     u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_20C;
     if (v26 == 0) v26 = 1;
@@ -4895,25 +4895,17 @@ extern "C" void __ct__8024507C(void* self) {
     // Fill the four .sbss colour tables from two layout group queries: table
     // A0 gets the index-0 colours, A8 the index-1 colours, and both B0/B8
     // share their last entry with A0's.
-    s16* c0 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 0);
-    s16* c1 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 1);
-    lbl_eu_806647A0[0] = c0[0];
-    lbl_eu_806647A0[1] = c0[1];
-    lbl_eu_806647A0[2] = c0[2];
-    lbl_eu_806647A0[3] = c0[3];
-    lbl_eu_806647A8[0] = c1[0];
-    lbl_eu_806647A8[1] = c1[1];
-    lbl_eu_806647A8[2] = c1[2];
-    lbl_eu_806647A8[3] = c1[3];
-    lbl_eu_806647B0[3] = lbl_eu_806647A0[3];
-    lbl_eu_806647B8[3] = lbl_eu_806647A0[3];
+    lbl_eu_806647A0 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 0);
+    lbl_eu_806647A8 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 1);
+    lbl_eu_806647B0.a = lbl_eu_806647A0.a;
+    lbl_eu_806647B8.a = lbl_eu_806647A0.a;
 
     // Reset each embedded layout widget in turn: clear everything but the
     // vtable, install the shared arc resource accessor, then call the
     // widget's virtual init entry with its colour-table / name argument.
     CFloorMapWidgetArg arg;
 
-    arg.nameOrTable = lbl_eu_806647B8;
+    arg.nameOrTable = &lbl_eu_806647B8;
     wv->widgets[0].field_04 = NULL;
     wv->widgets[0].accessor = cv->accessor;
     wv->widgets[0].field_0C = NULL;
@@ -4956,22 +4948,22 @@ extern "C" void __ct__8024507C(void* self) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80250CB4() {
-    lbl_eu_806647A0[3] = 0xFF;
-    lbl_eu_806647A0[2] = 0xFF;
-    lbl_eu_806647A0[1] = 0xFF;
-    lbl_eu_806647A0[0] = 0xFF;
-    lbl_eu_806647A8[3] = 0xFF;
-    lbl_eu_806647A8[2] = 0xFF;
-    lbl_eu_806647A8[1] = 0xFF;
-    lbl_eu_806647A8[0] = 0xFF;
-    lbl_eu_806647B0[3] = 0xFF;
-    lbl_eu_806647B0[2] = 0x23;
-    lbl_eu_806647B0[1] = 0x8C;
-    lbl_eu_806647B0[0] = 0xA0;
-    lbl_eu_806647B8[3] = 0xFF;
-    lbl_eu_806647B8[2] = 0x43;
-    lbl_eu_806647B8[1] = 0xC0;
-    lbl_eu_806647B8[0] = 0xD9;
+    lbl_eu_806647A0.a = 0xFF;
+    lbl_eu_806647A0.b = 0xFF;
+    lbl_eu_806647A0.g = 0xFF;
+    lbl_eu_806647A0.r = 0xFF;
+    lbl_eu_806647A8.a = 0xFF;
+    lbl_eu_806647A8.b = 0xFF;
+    lbl_eu_806647A8.g = 0xFF;
+    lbl_eu_806647A8.r = 0xFF;
+    lbl_eu_806647B0.a = 0xFF;
+    lbl_eu_806647B0.b = 0x23;
+    lbl_eu_806647B0.g = 0x8C;
+    lbl_eu_806647B0.r = 0xA0;
+    lbl_eu_806647B8.a = 0xFF;
+    lbl_eu_806647B8.b = 0x43;
+    lbl_eu_806647B8.g = 0xC0;
+    lbl_eu_806647B8.r = 0xD9;
 }
 
 // Load the floor layout, bind the font to its root pane, then hide the ten

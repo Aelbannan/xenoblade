@@ -3,6 +3,7 @@
 #include <monolib/device/CDeviceVI.hpp>
 
 #include "kyoshin/cf/CArtsParam.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math/math_triangular.h>
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/db/db_assert.h>
@@ -653,7 +654,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
 }
 
 // cf::CActorParam base virtual (retail: li r3,0; blr)
-extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv() { return 0; }
+void* cf::CActorParam::CBattleState_callOwnerObject() { return 0; }
 
 void cf::CArtsParam::vtableFunc3(u8 val) {
     u8* o = (u8*)this->unk88;

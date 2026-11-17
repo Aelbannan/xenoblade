@@ -11,8 +11,6 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
@@ -213,7 +211,7 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
 
     // Slot number text + element image index, coloured with the second pair.
     sprintf(buf, &lbl_eu_80508DF8[0x4c], idx);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
@@ -546,7 +544,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
                 ->vf7()));
 
         // If a character set is loaded, stamp every text pane with it.
-        u32 sh = CUICfManager_getPackedFont9C();
+        u32 sh = (u32)CUICfManager_getPackedFont9C();
         if (sh != 0) {
             setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
             setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);
@@ -582,19 +580,19 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // channel of the shared slot colours.
         nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName(&lbl_eu_80508DF8[0x2b1], true);
-        FourShorts fs1a = PaneMatGetS16Quad(pane1, 0);
-        CopyVec4s(lbl_eu_806646D8, (short*)&fs1a);
-        FourShorts fs1b = PaneMatGetS16Quad(pane1, 1);
-        CopyVec4s(lbl_eu_806646E0, (short*)&fs1b);
+        GXColorS10 fs1a = PaneMatGetS16Quad(pane1, 0);
+        CopyVec4s((GXColorS10*)lbl_eu_806646D8, (const GXColorS10*)((short*)&fs1a));
+        GXColorS10 fs1b = PaneMatGetS16Quad(pane1, 1);
+        CopyVec4s((GXColorS10*)lbl_eu_806646E0, (const GXColorS10*)((short*)&fs1b));
         lbl_eu_806646E8[3] = lbl_eu_806646D8[3];
         lbl_eu_806646F0[3] = lbl_eu_806646E0[3];
 
         nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName(&lbl_eu_80508DF8[0x2c0], true);
-        FourShorts fs2a = PaneMatGetS16Quad(pane2, 0);
-        CopyVec4s(lbl_eu_806646F8, (short*)&fs2a);
-        FourShorts fs2b = PaneMatGetS16Quad(pane2, 1);
-        CopyVec4s(lbl_eu_80664700, (short*)&fs2b);
+        GXColorS10 fs2a = PaneMatGetS16Quad(pane2, 0);
+        CopyVec4s((GXColorS10*)lbl_eu_806646F8, (const GXColorS10*)((short*)&fs2a));
+        GXColorS10 fs2b = PaneMatGetS16Quad(pane2, 1);
+        CopyVec4s((GXColorS10*)lbl_eu_80664700, (const GXColorS10*)((short*)&fs2b));
         lbl_eu_80664708[3] = lbl_eu_806646F8[3];
         lbl_eu_80664710[3] = lbl_eu_80664700[3];
 

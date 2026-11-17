@@ -6,6 +6,8 @@
 
 #include <nw4r/lyt.h>
 #include <types.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r {
 namespace ut {
@@ -54,7 +56,6 @@ extern "C" int CMainMenu_IsOpen();  // matches CTaskGame.hpp
 extern "C" u32 GetItemMulti_IsActiveFlag();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int PTNotice_IsActive_3C10();  // matches CMenuQstCnt.hpp (int)
 extern "C" int MenuTutorialIsCreated();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
-void playUISound(u32);         // mangles to playUISound__FUl
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);      // resource getter (CMiniMap.cpp)
@@ -438,8 +439,6 @@ public:
         return spInstance;
     }
     static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
-    static nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-    static int MenuStateInitFlags();
 
     void Init();
     void Term();
@@ -460,8 +459,8 @@ public:
     void setFieldC8C(u8 value) {
         unkC88[4] = value;
     }
-    void* getPackedFont9C() { return &mPackedFont9C; }
-    void* getPackedFontD8() { return &mPackedFontD8; }
+    nw4r::ut::PackedFont* getPackedFont9C() { return &mPackedFont9C; }
+    nw4r::ut::PackedFont* getPackedFontD8() { return &mPackedFontD8; }
     int prepareMenus() {
         if (mArcResourceAccessor == 0) {
             mFlags |= 0x4;

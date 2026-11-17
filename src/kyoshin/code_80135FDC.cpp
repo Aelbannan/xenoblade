@@ -189,14 +189,6 @@ extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 
 // Real class tree recovered from retail vtables (see header).
 
-struct FourShorts { s16 a, b, c, d; };
-
-// Pane-holder view: several untyped params carry their owner pane at +0x10.
-struct PaneHolder10View {
-    u8 _00[0x10];
-    nw4r::lyt::Pane* pane10;
-};
-
 // Anim-link item view: the link item holds its AnimTransform at +0x8.
 struct AnimLinkItemView {
     u8 _00[8];
@@ -204,7 +196,7 @@ struct AnimLinkItemView {
 };
 
 // ---------- init ----------
-void MenuStateInitFlags() {
+extern "C" void MenuStateInitFlags() {
     lbl_eu_80664058 = 0;
     lbl_eu_80664059 = 0;
     lbl_eu_8066405A = 0;
@@ -216,25 +208,25 @@ void MenuStateInitFlags() {
     lbl_eu_8066407F = 0;
 }
 
-void MenuStateSet64058() {
+extern "C" void MenuStateSet64058() {
     lbl_eu_80664058 = 1;
 }
 
-void MenuStateClear6405A() {
+extern "C" void MenuStateClear6405A() {
     lbl_eu_8066405A = 0;
     lbl_eu_8066405B = 0;
     lbl_eu_8066405C = 0;
     lbl_eu_80664060 = 0;
 }
 
-void MenuStateSet6405A() {
+extern "C" void MenuStateSet6405A() {
     lbl_eu_8066405B = 0;
     lbl_eu_8066405C = 0;
     lbl_eu_80664060 = 0;
     lbl_eu_8066405A = 1;
 }
 
-u8 GetCollectedFlagByte(u32 idx) {
+extern "C" u8 GetCollectedFlagByte(u32 idx) {
     return lbl_eu_80664070[idx];
 }
 
@@ -757,7 +749,7 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo) {
     drawInfo->SetLocationAdjust(adj);
 }
 
-int MapValueToRank6(int value) {
+extern "C" u8 MapValueToRank6(int value) {
     // Range lookup via shared result labels so each value emits exactly one
     // li/blr block, laid out in retail's ascending order.
     if (value < 11) {
@@ -789,8 +781,8 @@ ret0:
     return 0;
 }
 
-extern "C" int BdatGetRankByName(const char* name) {
-    // BDAT lookup: row index from one table keyed by name, then a u8 column
+extern "C" u32 BdatGetRankByName(u32 row) {
+    // BDAT lookup: row index from one table keyed by the caller row, then a u8 column
     // from another table keyed by that index; the byte maps through a range
     // tree identical to MapValueToRank6's (inlined here in retail).
     // col0x22 is computed before the global test (retail hoists it).
@@ -799,14 +791,14 @@ extern "C" int BdatGetRankByName(const char* name) {
     if (lbl_eu_80664098 == 0) {
         rowIdx = 0;
     } else {
-        Bdat_GetTable_AA34(name);
-        void* result = getBdatStringColumnValue(
+        Bdat_GetTable_AA34((const char*)row);
+        void* result = (void*)(getBdatStringColumnValue)(
             reinterpret_cast<void*>(lbl_eu_80664098),
-            col0x22, name);
+            col0x22, row);
         rowIdx = *reinterpret_cast<u16*>(&result);
     }
 
-    // retail validates the raw base name here, then opens base+0x15
+    // retail validates the raw base row here, then opens base+0x15
     Bdat_GetTable_AA34(lbl_eu_80500664);
     void* fp = getFP(&lbl_eu_80500664[0x15]);
     void* result2 = getBdatStringColumnValue(
@@ -1171,7 +1163,7 @@ void playUISound(u32 arg) {
     cf::CfSoundMan::playActorSound(0, arg, 0, 0, lbl_eu_80667300);
 }
 
-void code80135FDC_thunk_BFE8C(u8* arg) {
+extern "C" void code80135FDC_thunk_BFE8C(u8* arg) {
     extern void CfSoundMan_StopSlotByMode(unsigned long, void*, unsigned long);
     CfSoundMan_StopSlotByMode(0, arg, 0);
 }
@@ -1568,33 +1560,33 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     return 1;
 }
 
-extern "C" void* GetBdatNameByNumId(const char* str) {
+extern "C" char* GetBdatNameByNumId(const char* str) {
     int v = atoi(str);
-    if (v <= 0) return (void*)str;
+    if (v <= 0) return (char*)str;
     const char* base = lbl_eu_80500664;
     const char* col = base + 0x17C;
     const char* file = base + 0x181;
     Bdat_GetTable_AA34(base);
     void* fp = getFP(file);
-    return (void*)(getBdatStringColumnValue)(fp, col, v);
+    return (char*)(getBdatStringColumnValue)(fp, col, v);
 }
 
-extern "C" u8 BdatGetSexFlag(const char* key) {
+extern "C" int BdatGetSexFlag(u32 row) {
     const char* col = &lbl_eu_80500664[0x18A];
     u8* src = (u8*)lbl_eu_80664098;
     if (src == 0) {
         return 0;
     }
-    Bdat_GetTable_AA34(key);
-    void* result = getBdatStringColumnValue((void*)src, col, key);
+    Bdat_GetTable_AA34((const char*)row);
+    void* result = (void*)(getBdatStringColumnValue)((void*)src, col, row);
     return *(u8*)&result;
 }
 
-extern "C" u32 MapSexFlagGroup(const char* key) {
+extern "C" u32 MapSexFlagGroup(u32 row) {
     u8 v = 0;
     if (lbl_eu_80664098 != 0) {
-        Bdat_GetTable_AA34(key);
-        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
+        Bdat_GetTable_AA34((const char*)row);
+        void* result = (void*)(getBdatStringColumnValue)((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], row);
         v = *(u8*)&result;
     }
     u32 result = 0;
@@ -1628,9 +1620,9 @@ extern "C" u32 MapSexFlagGroup(const char* key) {
     return result;
 }
 
-extern "C" char* MakeTplNameSysFile(const char* key) {
+extern "C" char* MakeTplNameSysFile(u32 row) {
     if (lbl_eu_80664068 == 0) {
-        Bdat_GetTable_AA34(key);
+        Bdat_GetTable_AA34((const char*)row);
         lbl_eu_80664068 = (u32)getFP(&lbl_eu_80500664[0x192]);
     }
     const char* col = &lbl_eu_80500664[0x19F];
@@ -1642,25 +1634,25 @@ extern "C" char* MakeTplNameSysFile(const char* key) {
         // retail: bl Bdat_GetTable_AA34 with no arg move - r3 already holds
         // &lbl_eu_80500664[0] from the shared base computation with col
         Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
-        result = getBdatStringColumnValue(fp, col, key);
+        result = (void*)(getBdatStringColumnValue)(fp, col, row);
     }
     sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573B30[0];
 }
 
-extern "C" char* MakeIconTplName(const char* key) {
-    // Register mapping in retail: key -> r29, file pointer -> r30, column
+extern "C" char* MakeIconTplName(u32 row) {
+    // Register mapping in retail: row -> r29, file pointer -> r30, column
     // pointer -> r31; the column pointer is hoisted above the fp check.
     if (lbl_eu_8066406C == 0) {
-        Bdat_GetTable_AA34(key);
+        Bdat_GetTable_AA34((const char*)row);
         lbl_eu_8066406C = (u32)getFP(&lbl_eu_80500664[0x1AF]);
     }
     char* result = NULL;
     const char* col = &lbl_eu_80500664[0x1C7];
     void* fp = (void*)lbl_eu_8066406C;
     if (fp != NULL) {
-        Bdat_GetTable_AA34(key);
-        result = (char*)getBdatStringColumnValue(fp, col, key);
+        Bdat_GetTable_AA34((const char*)row);
+        result = (char*)(getBdatStringColumnValue)(fp, col, row);
     }
     sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573BB0[0];
@@ -1707,7 +1699,7 @@ struct ListData {
 // Collect up to 7 u32 entries from the global list; entries > 0 (filtered by
 // the per-item flag when arg is set) are appended to the u8 list, then the 3
 // trailing words are appended to the u16 list.
-void BuildSlotItemLists(void* arg) {
+extern "C" void BuildSlotItemLists(int arg) {
     lbl_eu_80664077 = 0;
     lbl_eu_8066407E = 0;
     ListData* list = (ListData*)(CtrlObjectParam_GetSlotTableBase() + 4);
@@ -1719,7 +1711,7 @@ void BuildSlotItemLists(void* arg) {
             v = list->listB[i - 3];
         }
         if ((s32)v > 0) {
-            if (arg != NULL) {
+            if (arg != 0) {
                 CDataObj* obj = (CDataObj*)CtrlObjectParam_GetCharEntry(v & 0xFFFF);
                 if (obj->field_0x176C != 1) {
                     u8 n = lbl_eu_80664077;
@@ -1769,33 +1761,33 @@ extern "C" u8 GetCollectedFlagWord8(u32 idx) {
 extern u8 lbl_eu_8066407E;
 extern "C" u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
 
-extern "C" u16 BdatGetItemType(const char* name) {
+extern "C" u16 BdatGetItemType(u32 row) {
     const char* col = &lbl_eu_80500664[0x1D2];
     u8* src = (u8*)lbl_eu_806640EC;
     if (src == 0) {
         return 0;
     }
-    Bdat_GetTable_AA34(name);
-    void* result = getBdatStringColumnValue((void*)src, col, name);
+    Bdat_GetTable_AA34((const char*)row);
+    void* result = (void*)(getBdatStringColumnValue)((void*)src, col, row);
     return *(u16*)&result;
 }
 
-extern "C" u16 BdatGetItemId(const char* name) {
+extern "C" u16 BdatGetItemId(u32 row) {
     const char* col = &lbl_eu_80500664[0x1DB];
     u8* src = (u8*)lbl_eu_806640EC;
     if (src == 0) {
         return 0;
     }
-    Bdat_GetTable_AA34(name);
-    void* result = getBdatStringColumnValue((void*)src, col, name);
+    Bdat_GetTable_AA34((const char*)row);
+    void* result = (void*)(getBdatStringColumnValue)((void*)src, col, row);
     return *(u16*)&result;
 }
 
-extern "C" u32 LookupItemTypeTable(const char* name) {
+extern "C" u32 LookupItemTypeTable(u32 row) {
     u32 v = 0;
     if (lbl_eu_806640EC != 0) {
-        Bdat_GetTable_AA34(name);
-        void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+        Bdat_GetTable_AA34((const char*)row);
+        void* result = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], row);
         v = *(u16*)&result;
     }
     switch (v) {
@@ -1818,15 +1810,15 @@ extern "C" u32 LookupItemTypeTable(const char* name) {
     return v;
 }
 
-extern "C" char* BuildItemNameStr(const char* name) {
-    u32 a = LookupItemTypeTable(name);
+extern "C" char* BuildItemNameStr(u32 row) {
+    u32 a = LookupItemTypeTable(row);
     const char* col1DB = &lbl_eu_80500664[0x1DB];
     u16 b;
     if (lbl_eu_806640EC == 0) {
         b = 0;
     } else {
         Bdat_GetTable_AA34((const char*)a);
-        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1DB, name);
+        void* r = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, col1DB, row);
         b = *(u16*)&r;
     }
     u16 c;
@@ -1835,7 +1827,7 @@ extern "C" char* BuildItemNameStr(const char* name) {
         c = 0;
     } else {
         Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
-        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1D2, name);
+        void* r = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, col1D2, row);
         c = *(u16*)&r;
     }
     void* d0 = 0;
@@ -1854,7 +1846,7 @@ extern "C" char* BuildItemNameStr(const char* name) {
             d = 0;
         } else {
             Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
-            rv = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
+            rv = (void*)(getBdatStringColumnValue)((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], row);
             d = *(u8*)&rv;
         }
         Bdat_GetTable_AA34((const char*)rv);
@@ -1866,31 +1858,31 @@ extern "C" char* BuildItemNameStr(const char* name) {
     return &lbl_eu_80573C30[0];
 }
 
-extern "C" FourShorts PaneMatGetS16QuadByName(void* obj, void* arg2, u32 idx) {
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
-    nw4r::lyt::Pane* cur = owner->FindPaneByName((const char*)arg2, true);
+extern "C" GXColorS10 PaneMatGetS16QuadByName(nw4r::lyt::Layout* layout, const char* name, u32 idx) {
+    nw4r::lyt::Pane* owner = layout->GetRootPane();
+    nw4r::lyt::Pane* cur = owner->FindPaneByName(name, true);
     if (cur == 0) {
-        FourShorts r;
-        r.a = 0; r.b = 0; r.c = 0; r.d = 0;
+        GXColorS10 r;
+        r.r = 0; r.g = 0; r.b = 0; r.a = 0;
         return r;
     }
     u8* data = (u8*)cur->GetMaterial();
     if (data == NULL) {
-        FourShorts r;
-        r.a = 0; r.b = 0; r.c = 0; r.d = 0;
+        GXColorS10 r;
+        r.r = 0; r.g = 0; r.b = 0; r.a = 0;
         return r;
     }
     if (idx >= 3) {
         nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
     }
     u8* p = data + ((u8)idx << 3) + 0x10;
-    FourShorts src = *(FourShorts*)p;
-    FourShorts r = { src.a, src.b, src.c, src.d };
+    GXColorS10 src = *(GXColorS10*)p;
+    GXColorS10 r = { src.r, src.g, src.b, src.a };
     return r;
 }
 
-extern "C" FourShorts PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
-    FourShorts r = {0, 0, 0, 0};
+extern "C" GXColorS10 PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
+    GXColorS10 r = {0, 0, 0, 0};
     if (owner == NULL) return r;
     u8* data = (u8*)owner->GetMaterial();
     if (data != NULL) {
@@ -1898,17 +1890,17 @@ extern "C" FourShorts PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
             nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
         }
         u8* p = data + idx * 8 + 0x10;
-        r.a = *(s16*)(p + 0);
-        r.b = *(s16*)(p + 2);
-        r.c = *(s16*)(p + 4);
-        r.d = *(s16*)(p + 6);
+        r.r = *(s16*)(p + 0);
+        r.g = *(s16*)(p + 2);
+        r.b = *(s16*)(p + 4);
+        r.a = *(s16*)(p + 6);
     }
     return r;
 }
 
-extern "C" void PaneMatSetS16QuadByName(void* obj, void* arg2, void* src, u32 idx) {
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
-    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
+extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout* layout, const char* name, const GXColorS10* src, u32 idx) {
+    nw4r::lyt::Pane* owner = layout->GetRootPane();
+    nw4r::lyt::Pane* res = owner->FindPaneByName(name, true);
     if (res == 0) return;
     if (res == 0) return;
     u8* data = (u8*)res->GetMaterial();
@@ -1931,7 +1923,7 @@ extern "C" void PaneMatSetS16QuadByName(void* obj, void* arg2, void* src, u32 id
     d[3] = tb;
 }
 
-extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, void* src, u32 idx) {
+extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, const GXColorS10* src, u32 idx) {
     if (owner == NULL) return;
     u8* data = (u8*)owner->GetMaterial();
     if (data == NULL) return;
@@ -1953,9 +1945,10 @@ extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, void* src, u32 idx) {
     d[3] = tb;
 }
 
-extern "C" void PaneMatSetTevColorsByName(void* obj, void* arg2, void* src1, void* src2) {
-    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
-    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
+extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout* layout, const char* name, const GXColorS10* src1,
+                                          const GXColorS10* src2) {
+    nw4r::lyt::Pane* owner = layout->GetRootPane();
+    nw4r::lyt::Pane* res = owner->FindPaneByName(name, true);
     if (res == NULL) return;
     if (res == NULL) return;
     s16* data = (s16*)res->GetMaterial();
@@ -1972,7 +1965,7 @@ extern "C" void PaneMatSetTevColorsByName(void* obj, void* arg2, void* src1, voi
     data[15] = s2[3];
 }
 
-extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* owner, void* src1, void* src2) {
+extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* owner, const GXColorS10* src1, const GXColorS10* src2) {
     if (owner == NULL) return;
     s16* data = (s16*)owner->GetMaterial();
     if (data == NULL) return;
@@ -1988,9 +1981,9 @@ extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* owner, void* src1, void* sr
     data[15] = s2[3];
 }
 
-extern "C" void PaneSetColorFieldSingle(void* obj, void* arg2, void* src) {
-    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
-    void* result = owner->FindPaneByName((const char*)arg2, true);
+extern "C" void PaneSetColorFieldSingle(nw4r::lyt::Layout* layout, const char* name, u32 src) {
+    nw4r::lyt::Pane* owner = layout->GetRootPane();
+    void* result = owner->FindPaneByName(name, true);
     // Retail emits THREE beq's on the same null test (dead-duplicated-test
     // family); the direct goto-gate with the tripled condition reproduces it.
     if (result == NULL) goto out;
@@ -2012,9 +2005,9 @@ out:
     return;
 }
 
-extern "C" void PaneSetColorFieldPair(void* obj, void* arg2, void* a, void* b) {
-    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
-    void* result = owner->FindPaneByName((const char*)arg2, true);
+extern "C" void PaneSetColorFieldPair(nw4r::lyt::Layout* layout, const char* name, u32 a, u32 b) {
+    nw4r::lyt::Pane* owner = layout->GetRootPane();
+    void* result = owner->FindPaneByName(name, true);
     // Retail emits the null test three times (three beq to the epilogue).
     if (result != NULL) {
         if (result != NULL) {
@@ -2796,7 +2789,7 @@ extern "C" unsigned char code80135FDC_postIncByte_64080() {
     return v;
 }
 
-u8 DecMenuCounter64080() {
+extern "C" u8 DecMenuCounter64080() {
     u8 val = lbl_eu_80664080[0];
     u8 dec = val - 1;
     lbl_eu_80664080[0] = dec;
@@ -2810,16 +2803,16 @@ extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080[0]; }
 // Find the anim item matching arg: returns the first non-NULL result from the
 // direct item list / vt58 slot, recursing into child lists. The retail returns
 // the raw call result (nonzero) rather than a literal 1.
-extern "C" void* FindAnimLink(void* self, void* arg) {
-    nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
+extern "C" nw4r::lyt::AnimationLink* FindAnimLink(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
+    nw4r::lyt::Pane* owner = self;
     void* anchor;
     void* current;
-    void* found = owner->FindAnimationLinkSelf(*(const nw4r::lyt::AnimResource*)arg);
+    nw4r::lyt::AnimationLink* found = owner->FindAnimationLinkSelf(*arg);
     if (found != 0) return found;
     u8 n = owner->GetMaterialNum();
     for (u8 i = 0; i < n; i++) {
         nw4r::lyt::Material* item = owner->GetMaterial(i);
-        void* r = item->FindAnimationLink(*(const nw4r::lyt::AnimResource*)arg);
+        nw4r::lyt::AnimationLink* r = item->FindAnimationLink(*arg);
         if (r != 0) return r;
     }
     anchor = (u8*)self + 0x14;
@@ -2828,27 +2821,27 @@ extern "C" void* FindAnimLink(void* self, void* arg) {
         if (current == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
-        void* child = (u8*)current - 4;
+        nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((u8*)current - 4);
         if (child == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
-        void* r2 = FindAnimLink(child, arg);
+        nw4r::lyt::AnimationLink* r2 = FindAnimLink(child, arg);
         if (r2 != 0) return r2;
         current = *(void**)current;
     }
     return 0;
 }
 
-extern "C" void SetAnimLinkFrame(void* self, void* arg, f32 val) {
-    nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
-    void* r0 = owner->FindAnimationLinkSelf(*(const nw4r::lyt::AnimResource*)arg);
+extern "C" void SetAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg, f32 val) {
+    nw4r::lyt::Pane* owner = self;
+    void* r0 = owner->FindAnimationLinkSelf(*arg);
     if (r0 != 0) {
         *(f32*)(*(u32*)((u8*)r0 + 8) + 0x10) = val;
     }
     u8 n = owner->GetMaterialNum();
     for (u8 i = 0; i < n; i++) {
         nw4r::lyt::Material* item = owner->GetMaterial(i);
-        if (item->FindAnimationLink(*(const nw4r::lyt::AnimResource*)arg) != 0) {
+        if (item->FindAnimationLink(*arg) != 0) {
             *(f32*)(*(u32*)((u8*)item + 8) + 0x10) = val;
         }
     }
@@ -2858,7 +2851,7 @@ extern "C" void SetAnimLinkFrame(void* self, void* arg, f32 val) {
         if (current == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
-        void* child = (char*)current - 4;
+        nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((char*)current - 4);
         if (child == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
@@ -2867,7 +2860,7 @@ extern "C" void SetAnimLinkFrame(void* self, void* arg, f32 val) {
     }
 }
 
-extern "C" int StepAnimLinkFrame(void* self, void* arg) {
+extern "C" int StepAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
@@ -2883,13 +2876,13 @@ extern "C" int StepAnimLinkFrame(void* self, void* arg) {
     return 1;
 }
 
-extern "C" void AnimResetToFirst(void* self, void* arg) {
+extern "C" void AnimResetToFirst(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     if (FindAnimLink(self, arg) != 0) {
         SetAnimLinkFrame(self, arg, lbl_eu_806672F0);
     }
 }
 
-extern "C" void AnimJumpToLast(void* self, void* arg) {
+extern "C" void AnimJumpToLast(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = ((AnimLinkItemView*)t)->anim8;
@@ -2905,7 +2898,7 @@ extern u8 lbl_eu_80664058;
 extern "C" void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
 
 extern u8 lbl_eu_80664058;
-extern "C" u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
+extern "C" int code80135FDC_getByte_64058() { return lbl_eu_80664058; }
 
 // retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b UIWin_ControlWindowLists
 extern "C" void MenuStateSet64059Notify() {
@@ -2918,7 +2911,7 @@ extern u8 lbl_eu_80664059;
 extern "C" void code80135FDC_clearByte_64059() { lbl_eu_80664059 = 0; }
 
 extern u8 lbl_eu_80664059;
-extern "C" u8 code80135FDC_getByte_64059() { return lbl_eu_80664059; }
+extern "C" int code80135FDC_getByte_64059() { return lbl_eu_80664059; }
 
 
 extern u8 lbl_eu_8066405B;
@@ -2951,23 +2944,23 @@ extern "C" u32 code80135FDC_getWord_64060(void) {
 extern u8 lbl_eu_806621F0;
 extern "C" int IsMenuState621F0() { return lbl_eu_806621F0; }
 
-int GetSysStateFlag11(){
+extern "C" int GetSysStateFlag11(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
     return byte != 0 ? 1 : 0;
 }
 
-bool GetSysStateFlag10(){
+extern "C" bool GetSysStateFlag10(){
     void* inst = getInstance__14Class_80296898Fv();
     unsigned char b = ((unsigned char*)inst)[0x10];
     return b != 0;
 }
 
-int GetSysStateFlag21(){
+extern "C" int GetSysStateFlag21(){
     unsigned char* p = (unsigned char*)getInstance__14Class_80296898Fv();
     return p[0x21] != 0 ? 1 : 0;
 }
 
-int GetSysStateFlag20() {
+extern "C" int GetSysStateFlag20() {
     void* inst = getInstance__14Class_80296898Fv();
     u8 b = static_cast<u8*>(inst)[0x20];
     return (b != 0) ? 1 : 0;
@@ -2977,7 +2970,7 @@ extern u8 lbl_eu_80664064;
 extern "C" void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
 
 extern u8 lbl_eu_80664064;
-void MenuStateClear64064() { lbl_eu_80664064 = 0; }
+extern "C" void MenuStateClear64064() { lbl_eu_80664064 = 0; }
 
 extern "C" int MenuStateCheck64064or30() {
     if (lbl_eu_80664064 != 0) return 1;
@@ -2992,7 +2985,7 @@ extern "C" int GetSysStateFlag31() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x31] != 0;
 }
 
-int GetSysStateFlag22(){
+extern "C" int GetSysStateFlag22(){
     void* obj = getInstance__14Class_80296898Fv();
     return (static_cast<unsigned char*>(obj)[0x22] != 0) ? 1 : 0;
 }
@@ -3005,8 +2998,8 @@ extern "C" int GetSysStateFlag25() {
     return ((u8*)getInstance__14Class_80296898Fv())[0x25] != 0;
 }
 
-int CheckState2CC8Active(void* obj) {
-    int v = (int)CtrlRemote_TouchBitByArg((u32)obj + 0x2CC8);
+extern "C" int CheckState2CC8Active(u32 id) {
+    int v = (int)CtrlRemote_TouchBitByArg(id + 0x2CC8);
     return (v == 1) ? 1 : 0;
 }
 

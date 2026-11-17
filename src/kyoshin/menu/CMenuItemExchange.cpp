@@ -11,7 +11,7 @@
 #include "kyoshin/CBgTex.hpp"
 #include <monolib/util/FixStr.hpp>
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
 extern "C" void __dt__9IUIWindowFv(void* self, int flags);

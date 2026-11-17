@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class CScn;
 class CProcess;
@@ -169,7 +171,6 @@ CBattleCommuActor2* MapFx_ResolveOwner(CBattleCommuPlayer* source);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 // Shared ARC resource accessor / message manager.
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // CDeviceFont font handle (retail called with a single argument; the second
 // layout parameter is left unset at this call site).
 CBattleCommuFontObj* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
@@ -191,4 +192,3 @@ extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)
 
 // UI sound effect cue (mangles to playUISound__FUl).
-void playUISound(u32);

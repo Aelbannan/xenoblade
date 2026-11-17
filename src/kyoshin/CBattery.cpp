@@ -7,8 +7,8 @@
 #include "monolib/lib.hpp"
 
 #include <cstdio>
+#include "kyoshin/code_80135FDC_State.hpp"
 
-void closeFileHandle(CFileHandle**);
 
 CBattery::CBattery(u8 batteryLevel) : mMemRegion() {
     mFileHandle = nullptr;

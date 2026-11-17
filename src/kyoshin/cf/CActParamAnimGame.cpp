@@ -12,7 +12,7 @@
 #include "kyoshin/cf/object/CBattleState.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 #include "monolib/scn/code_804BC9EC.hpp"
-// CBattleState +0x10 (lbl_eu_8052E9B0 / JP __vt__Q22cf12CBattleState word 3):
+// CBattleState +0x10 (__vt__Q22cf12CBattleState / JP __vt__Q22cf12CBattleState word 3):
 // retail symbol remains CBattleState_UnkVirtualFunc3. Owner TU is out of scope;
 // no already-real same-slot alias exists (unlike getOwner for +0x08). Call sites
 // below keep the real virtual; this is a placeholder name, not a pad/If.
@@ -838,7 +838,7 @@ mode0:
     }
 next:
     if (self->flags530 & 0x200) {
-        if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() != 0 || isSpeedBelow(self) != 0) {
+        if (((cf::CBattleState*)self->owner)->CObjectParam_getParamPtr() != 0 || isSpeedBelow(self) != 0) {
             self->flags530 &= 0xFDFF;
         } else {
             if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
@@ -1283,7 +1283,7 @@ bool cf::CActParamAnimGame::startMoveGate(u32 type, u32 state) {
     } else if (state == 1) {
         if (refineHitNorm(this)) {
             field_530 = (field_530 | 8) & ~0x100;
-            if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() == 0 && isSpeedBelow(this) == 0) {
+            if (((cf::CBattleState*)self->owner)->CObjectParam_getParamPtr() == 0 && isSpeedBelow(this) == 0) {
                 field_530 |= 0x200;
             }
             ((void (*)(void*, u32))startAnimDual)(this, type);

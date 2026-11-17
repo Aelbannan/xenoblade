@@ -19,6 +19,8 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / isBattleStatusActive)
 #include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // 8-byte element copied by the state-blob copy functions CopyPTSubBlob /
 // CopyPTStateBlob (two u32 words per iteration).
@@ -396,8 +398,6 @@ struct CMenuPTWinCopyView {
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" int IsMenuState621F0();
-extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 
 extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
 extern "C" int UIBattleGetFlagE8();
@@ -412,7 +412,6 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // System-window open query + sound helpers (Move, state 3).
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
-void playUISound(u32 id); // UI sound (C++-mangled retail name)
 
 // CPartyStateWin sub-object drivers used by CMenuPTState::Move (defined in
 // CPartyStateWin.cpp under their retail unmangled names).
@@ -1135,7 +1134,7 @@ void CMenuPTState::cbRenderBefore() {
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
 }
 // Constructor: builds the IUICf base, the IScnRender subobject, and the members.

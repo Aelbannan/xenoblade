@@ -4,6 +4,9 @@
 // stays includable next to other headers.
 #include "kyoshin/CKizunaTalkList.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 
 // ---------------------------------------------------------------------------
@@ -21,22 +24,18 @@ extern "C" int KyoshinHeap_GetField44();
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_SetVisible(void*, u8);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void deleteRegion(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
 // symbol names so the reloc targets line up).
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // Data/build helpers used by buildTalkList.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u16 LookupRelateValue(u8 a, u8 b);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer
 
 // data / rodata labels
@@ -54,4 +53,3 @@ extern "C" f32 lbl_eu_806689D0;
 extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entry show/hide
 
 // Misc helpers used by the row-draw / visibility paths.
-extern "C" void setPaneVisible(void*, u32);

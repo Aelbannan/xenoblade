@@ -14,6 +14,7 @@
 #include <revolution/GX.h>
 #include <revolution/VI.h>
 #include <revolution/WPAD.h>
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 using namespace ml;
 
@@ -26,9 +27,6 @@ extern void setEffectEnabled(u32 value);
 // header's C-linkage import block (getCurrentView/getInstance/func_80462D04/
 // func_80462D5C) conflicts with cf/CTaskREvent.hpp's caller-shape copies, so
 // this TU takes only these three signatures verbatim.
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
 // 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)

@@ -130,7 +130,7 @@ void CMenuBattleEnd::Init() {
     bindLayoutAnimTransform(mLayout, &mAnim8C, accessor, (char*)&lbl_eu_8050E6F8[0x48]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u32 fontResult = getPackedFont();
+    u32 fontResult = (u32)getPackedFont();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     mLayout->UnbindAllAnimation();

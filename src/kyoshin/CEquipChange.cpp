@@ -17,6 +17,7 @@
 #define CItem_slotCnt CItem_slotCnt_citem_dup
 #include "kyoshin/cf/CItem.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 #undef lbl_eu_806640D8
 #undef lbl_eu_806640EC
 #undef lbl_eu_806640F4
@@ -43,13 +44,12 @@
 #include "monolib/util/MemManager.hpp"
 #include <stdio.h>
 #include "kyoshin/CfEnumListHolder.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
 // lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
 extern const float lbl_eu_806682A8;
 
-extern "C" u8 GetCollectedFlagByte(u32);
 
 CEquipChange::~CEquipChange() {}
 
@@ -962,7 +962,7 @@ void CEquipChange::RebuildCursorList() {
         u8 equipped = CItem_initItemImplInstances((CItemData*)weaponItem)->vf30((CItemData*)weaponItem);
         if (equipped != 0) {
             LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText16(), 0);
-            PaneMatSetTevColorsByName(layout, &base[0x55], &lbl_eu_80664678, &lbl_eu_80664680);
+            PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&lbl_eu_80664678, (const GXColorS10*)&lbl_eu_80664680);
         }
 
         for (int i = 0; i < 3; i++) {
@@ -1020,7 +1020,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, &base[0x55], &lbl_eu_80664688, &lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1111,7 +1111,7 @@ void CEquipChange::RebuildCursorList() {
             if (CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item) != 0) {
                 sprintf(rebuildName, &base[0x1d8], i + 1);
                 LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText16(), 0);
-                PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664678, &lbl_eu_80664680);
+                PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664678, (const GXColorS10*)&lbl_eu_80664680);
                 int slot =
                     (s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, 0);
                 if (slot == -1) {
@@ -1155,7 +1155,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1205,7 +1205,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, &lbl_eu_80664688, &lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
                     }
                 }
             } else {
@@ -1264,7 +1264,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
-        char* text = CUICfManager_getPackedFont9C();
+        char* text = (char*)CUICfManager_getPackedFont9C();
         if (text != NULL) {
             setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x55], (u32)text);
             setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x60], (u32)text);
@@ -1285,10 +1285,10 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // Retail materializes the full symbol address here (fresh lis/addi),
         // not the cached base pointer.
         scratch = ((nw4r::lyt::Layout*)field_34)->GetRootPane()->FindPaneByName(lbl_eu_80508168 + 0x60, true);
-        CEquipItemBoxFourShorts color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)0);
-        CopyVec4s(&lbl_eu_80664668, &color);
+        GXColorS10 color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)0);
+        CopyVec4s((GXColorS10*)&lbl_eu_80664668, &color);
         color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)1);
-        CopyVec4s(&lbl_eu_80664670, &color);
+        CopyVec4s((GXColorS10*)&lbl_eu_80664670, &color);
         // Alpha halves propagate to the paired colour entries; retail keeps
         // each table address in its own register (pointer locals).
         char* colA = (char*)&lbl_eu_80664668;
@@ -1637,8 +1637,8 @@ void CEquipChange::DrawLayouts(nw4r::lyt::DrawInfo* drawInfo) {
 // accessors and the 0x04 memory region, reset the three cursors, and close
 // the item info window + box.
 void CEquipChange::CleanupFiles() {
-    closeFileHandle__FPP11CFileHandle(&field_24);
-    closeFileHandle__FPP11CFileHandle(&field_28);
+    closeFileHandle((CFileHandle**)&field_24);
+    closeFileHandle((CFileHandle**)&field_28);
     // Retail hoists the field_34 load above the field_44 store and reuses the
     // loaded pointer across the guarded destroy call - keeping it in a local
     // pins it to a volatile reg instead of forcing a second callee-saved.
@@ -1651,8 +1651,8 @@ void CEquipChange::CleanupFiles() {
         field_34 = 0;
     }
     lbl_eu_80664698 = 0;
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(field_2C);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)field_30);
+    releaseArcResourceAccessor(field_2C);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)field_30);
     mRegion04.deleteRegion();
     mCur14.cleanup();
     mCur15.cleanup();

@@ -8,7 +8,6 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 extern "C" {
-    void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
     void func_80138078(int);
 }
@@ -25,6 +24,7 @@ extern "C" {
 #include "monolib/util/MemManager.hpp"
 
 #include <stdio.h>
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Quest-log list constructor. Members come up in declaration order (the
 // CSortMenu/QstData wrappers run the retail ctor calls); the three re-init
@@ -709,7 +709,7 @@ void CQstLogList::Draw(nw4r::lyt::DrawInfo* drawInfo) {
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
 void CQstLogList::Teardown() {
-    closeFileHandle__FPP11CFileHandle(&mFileHandle);
+    closeFileHandle(&mFileHandle);
     field_0x170 = 0;
     if (mpLayout != 0) {
         delete mpLayout;

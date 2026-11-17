@@ -6,6 +6,7 @@
 #include <nw4r/math/math_types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 class CEventFile;
 class CFileHandle;
@@ -16,8 +17,6 @@ namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcR
 // C++-mangled imports from code_80135FDC.cpp: the unmangled identifiers mangle
 // to the retail symbols closeFileHandle__FPP11CFileHandle and
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor (see CItemBoxLine.hpp).
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 
 // Opaque item sub-record returned by CItemImpl::vf2C: a u32 at +0 and a
@@ -470,12 +469,7 @@ struct CItemBoxVertexColors {
     u32 w[4];
 };
 
-// Unmangled retail imports (plain symbol names in the retail binary).
-// 8-byte GXColorS10 returned by value in r3:r4 from PaneMatGetS16Quad.
-struct CItemBoxGXColor {
-    s16 r, g, b, a;
-};
-// Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
+ // Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
 
 
 // renderers): count byte, string pointer, per-slot text pointers, a 4-byte

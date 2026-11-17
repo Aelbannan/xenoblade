@@ -13,6 +13,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <revolution/gx/GXPixel.h>                 // GXSetZMode
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Globals shared across menu units
 extern u32 lbl_eu_80663E28;
@@ -29,9 +30,7 @@ extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 extern CMenuVision* lbl_eu_80664388;
 
 #include "kyoshin/cf/CBattleManager.hpp"
-void playUISound(u32);
 
-extern u32 getPackedFont();
 
 void tickVisionExpiry(CMenuVision*, CMenuVisionEntry*);
 extern "C" f32 ScMain_GetRatio(void*);
@@ -49,9 +48,6 @@ u32 CfCode_GetOptPtr0C(void*);
 void* CfCode_GetSubObject(void*);
 int ScMain_GetSummedInt(void*);
 struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
-void PaneSetColorFieldSingle(void*, const char*, u32);
-void PaneSetColorFieldPair(void*, const char*, u32, u32);
-char* MakeTplNameSysFile(u32);
 
 extern u32 lbl_eu_80662580;
 extern u32 lbl_eu_80662584;
@@ -878,7 +874,7 @@ extern "C" void driveVisionUpdate(int flags) {
         } else {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
             if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt(battle) > 0) {
-                ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
+                ((MenuVisionSetDamageText)setLayoutTextBoxNumber)(
                     entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt(battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
@@ -945,7 +941,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 break;
             }
             PaneSetColorFieldPair(entry.mLayout, lbl_eu_80504268 + 0x1FB, color1, color2);
-            PaneMatSetTevColorsByName(entry.mLayout, lbl_eu_80504268 + 0x1FB, &first, &second);
+            PaneMatSetTevColorsByName(entry.mLayout, lbl_eu_80504268 + 0x1FB, (const GXColorS10*)&first, (const GXColorS10*)&second);
 
             u32 current = battle->value828;
             u32 previous = battle->value82C;
@@ -1061,7 +1057,7 @@ extern "C" void driveVisionUpdate(int flags) {
         } else if (value < 0) {
             value = 0;
         }
-        ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
+        ((MenuVisionSetDamageText)setLayoutTextBoxNumber)(
             entry.mLayout, (char*)(lbl_eu_80504268 + 0x208), value);
         menuVisionBeginSilent(entry);
 
@@ -1349,10 +1345,10 @@ void CMenuVision::Init() {
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1df, fontVal);
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1ed, fontVal);
         } else if (i == 3) {
-            u32 val = getPackedFont();
+            u32 val = (u32)getPackedFont();
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1fb, val);
         } else if (i == 5) {
-            u32 val = getPackedFont();
+            u32 val = (u32)getPackedFont();
             setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x208, val);
         }
     }

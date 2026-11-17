@@ -30,7 +30,7 @@
 #include <monolib/math/MTRand.hpp>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/CTitleAHelpImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 
 // Entry within an array of map landmark positions (stride 0x188, 8 entries)

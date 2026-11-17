@@ -11992,3 +11992,44 @@ TU is not inlined anywhere.**
   (us/eu/jp). The out-of-line empty dtor is now inlined into `~CMCCrystalBox`
   (same TU, `-ipa file`) and still emitted as a global. All 11 former
   code_80213488 functions still match, and `__dt__13CMCCrystalBoxFv` is 100%.
+
+## cf actor hierarchy: MI vtable layout, key function, thunks (2026-11-18)
+- **MI vtable layout (verified with test compiles).** MWCC emits one
+  `[RTTI, offset-to-top, slots...]` group per base, in base order. Every group's
+  RTTI word points at the most-derived class. A derived class appends the
+  virtuals it declares, in declaration order, to the group of the **last**
+  base. An override gets a new tail slot only when no offset-0 slot already
+  exists for that name. Secondary-base slots point at `@N@name` this-adjust
+  thunks (`subi r3,r3,N; b name`, 8 bytes).
+  `cf::CfObjectActor : CActorParam(+0), CAIAction(+0x3380), CfObjectMove(+0x3E9C)`
+  reproduces the retail 0x5D4 group structure exactly. The Actor tail
+  (0x5A0..0x5D0) is: dtor, hasActorScale, clearStatusPair, flushStatusPair,
+  takeDamageValue, getMoveHeadAngle, getAdjustedFacing, readActionScale,
+  sharesMoveFlags, pushRefreshValue, setTargetC4Arg, getActionSrcId,
+  clearActionSrcId.
+- **Key function.** The vtable is emitted in the TU that defines the first
+  virtual declared in the class that is neither inline nor pure. RTTI is weak in
+  .sdata and the base list is a local `@N` in .data. Making
+  `CBattleState::CBattleState_getOwner` and `CActorParam::CObjectParam_getParamPtr`
+  real out-of-line members moved both vtables back into their own TUs:
+  `__vt__Q22cf12CBattleState` (ex `lbl_eu_8052E9B0`; the split now gives
+  CBattleState .data 0x8052E9B0..EA40) and `__vt__Q22cf11CActorParam` (ex
+  `lbl_eu_80531870`). Both are byte-identical.
+- **Inline virtuals and thunks** are emitted weakly in every TU that emits a
+  vtable needing them, and the linker keeps the first copy. Retail keeps the
+  Actor thunks and the inline Actor/CActorState bodies in CfObjectEne.cpp. The
+  `@16028@` dtor thunk is the exception: it closes CfObjectActor.cpp.
+  `@N@` names cannot be spelled in C, so while hand vtables remain
+  (code_800C17DC Pc/Ene tables, CActorParam/Ene hand thunks), these symbols are
+  named `thunk_8_<mangled>` / `thunk_3E9C_<mangled>`. Hand thunks that call
+  same-TU members need `#pragma dont_inline on`, because MWCC otherwise inlines
+  the target into the thunk.
+- **Override return types follow the base.** `CfObject_pushRefreshValue` is
+  `void*` (it returns `this`). The `mr r3,r31` epilogue in
+  `CfObjectMove::CfObject_pushRefreshValue` disappears if it is declared `void`.
+  `CBattleState_callOwnerObject` is `void*`: the base returns 0 and the Actor
+  override (`blr` only) returns `this`.
+- **Blocker: extern "C" declarations named like compiler symbols.** These cause
+  10322 "illegal name overloading" as soon as the class emits the same symbol.
+  For example, `plugin/pluginEve.cpp` has `extern u32 __RTTI__Q22cf11CActorState[]`,
+  so an inline `CActorState::setObjStateBit3` cannot be emitted there.

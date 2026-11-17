@@ -3,6 +3,8 @@
 #include <types.h>
 
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 // Shield CLoad.hpp's u8 CLoadIsLoadReady: retail callers (here and
 // CMenuKizunagram) test the return with a full-word cmpi, matching an int
 // view (defining TU keeps u8; link-compatible via C linkage). MWCC 10197.
@@ -71,7 +73,6 @@ void func_801C412C(CTitleAHelp* self);
 void beginClose(CTitleAHelp* self);
 void teardown(CTitleAHelp* self);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-int IsMenuState621F0();
 void unregisterEffectScene(CScn* scene);
 void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene);
@@ -92,7 +93,6 @@ extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);
 
 // DrawInfo setup helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80535B70[];   // CMakeCrystalWin vtable data (IScnRender sub-vtable at +0x88)

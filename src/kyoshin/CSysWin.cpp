@@ -15,7 +15,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 
 #include <new>
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 extern "C" u8 CSysWin_isReady(CSysWinFull* self) { return self->field_28; }
 

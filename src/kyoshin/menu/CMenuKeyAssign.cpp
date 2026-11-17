@@ -7,6 +7,8 @@
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 // Shield CSystemWindow.hpp's C++-linkage SysWinGetSingleton decl: this TU
 // uses CfGimmick.hpp's extern "C" flat form (retail symbol is unmangled).
 #define SysWinGetSingleton SysWinGetSingleton_cxx_hidden
@@ -151,13 +153,11 @@ struct CActorTargetView {
 
 // C-ABI import used by cbRenderBefore (retail unmangled name; not declared by
 // any shared header yet, so declared here).
-extern "C" int GetSysStateFlag20();
 
 // C-linkage imports (retail names are unmangled free functions; MWCC mangles
 // plain global-scope free functions with a __F suffix, so the declarations
 // must sit under extern "C" to emit the retail reloc names).
 extern "C" {
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
 int CMenuArtsSelect_IsAvailable();
@@ -178,12 +178,10 @@ void* findObjectById(int id);
 // buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc,
 // so declare it as a normal C++ function to let MWCC mangle it (NOT inside
 // extern "C").
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 
 // Layout draw helper - retail emits the mangled nw4r form
 // drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii, so declare it as
 // a normal C++ function to let MWCC mangle it (NOT inside extern "C").
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Key-assign free helpers (defined in this TU). Retail emits these under the
 // unmangled names, so the declarations/definitions keep C linkage.

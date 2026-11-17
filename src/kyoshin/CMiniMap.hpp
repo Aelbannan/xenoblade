@@ -8,6 +8,8 @@
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/IUICf.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Forward declarations (full definitions live in the monolib/nw4r headers,
 // included by the TU that needs them).
@@ -55,7 +57,6 @@ extern u8 lbl_eu_8052CB4C[];
 extern u8 lbl_eu_8052CC00[];
 extern u8 lbl_eu_8052CBCC[];
 // BDAT row-filter helper defined in code_80135FDC.cpp (extern "C" there too).
-extern "C" u32 func_80138574(const char* name, u32 id);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
@@ -78,28 +79,18 @@ extern char* lbl_eu_8052C7E8[];
 
 // Cross-TU layout/BDAT helpers. Plain C++ declarations so MWCC re-derives the
 // retail mangled names (buildLayout__FPP... / drawLayout__FPP... / ...).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
-void closeFileHandle(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (Bdat_GetTable_AA34 / getFP__FPCc).
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 // Gimmick-row helpers used by MiniMapRebuildGimmickPanes (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
-extern "C" u32 CheckState2CC8Active(u16 id);
 extern "C" unsigned long CtrlObjectParam_GetWorkField50();
-extern "C" int GetSysStateFlag10();
 extern "C" int isVisionAnimating();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
 extern "C" u32 isMapSelectActive();
 extern "C" bool MapSelectSCIsCreated();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
 extern "C" u32 CUICfManager_queueWorldMapMenu();
-extern "C" void RevealMinimapArea();
-extern "C" int GetSysStateFlag11();
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol

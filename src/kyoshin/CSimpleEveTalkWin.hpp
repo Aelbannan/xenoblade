@@ -10,6 +10,8 @@
 #include <nw4r/lyt.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 class CScn;
 
@@ -203,12 +205,10 @@ void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self,
                                                   UnkClass_8045F564* base);
 void __dt__14Class_8045F858Fv(void* self, int flags);
 void CUICfManager_queueFadeMenu(u8 a, int b, float c, float d, float e);
-int IsMenuState621F0();
 bool isInitialized__10CMenuPauseFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32, nw4r::lyt::Layout*);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int TagProcPumpSEMessage(void* tagProc, nw4r::lyt::Pane* pane);
 int TagProcStepSEMessage(void* tagProc, nw4r::lyt::Pane* pane);
 int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);

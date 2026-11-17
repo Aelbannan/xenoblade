@@ -1719,11 +1719,11 @@ void cf::CfGameManager::clearObjectFlagsAll() {
 // Slot +0x1F8/+0x200 base impls: store/load +0x1608. Virtuals are
 // CActorParam_setSecondCurrency / getSecondCurrency; forced-name Unk Fv
 // spellings kept for hand-built CREvtModel vtables.
-extern "C" void CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv(u8* data, u32 value) {
+extern "C" void CActorParam_setSecondCurrency__Q22cf11CActorParamFUl(u8* data, u32 value) {
     *reinterpret_cast<u32*>(data + 0x1608) = value;
 }
 
-extern "C" u32 CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv(const u8* data) {
+extern "C" u32 CActorParam_getSecondCurrency__Q22cf11CActorParamFv(const u8* data) {
     return *reinterpret_cast<const u32*>(data + 0x1608);
 }
 

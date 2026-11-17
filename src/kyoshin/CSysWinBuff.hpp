@@ -6,6 +6,8 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CFileHandle;
 class CScn;
@@ -196,11 +198,7 @@ void __dt__7CSysWinFv(void* syswin, int flags);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Bdat_GetTable_AA34();
-u8 DecMenuCounter64080();
-u8 code80135FDC_getByte_64080();
-void code80135FDC_postIncByte_64080();
 s32 MenuTutorialIsCreated();
-int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols, defined in
@@ -225,5 +223,3 @@ u32 KyoshinHeap_GetField44();
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
-void closeFileHandle(CFileHandle** handle);
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);

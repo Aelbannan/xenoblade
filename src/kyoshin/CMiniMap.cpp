@@ -15,6 +15,8 @@
 #include "monolib/util/FixStr.hpp"
 #include <nw4r/lyt.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Resolve ml::FixStr<128>::format to the explicit specialization defined in
 // CfScript.cpp (retail symbol format__Q22ml10FixStr<128>FPCce).
@@ -144,12 +146,7 @@ void CollObjScaledVecSum(ml::CVec3* out, void* obj);
 void clearFrmHeap__17UnkClass_8045F564Fv(void* self);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* sub);
 void __dt__14Class_8045F858Fv(void* self, int);
-u32 GetU16PairEntry(u16 row);
-u8 SearchThresholdIdx(u32 id);
-void* CheckEntryConditions(void* bdat, u32 row);
-void* MakeIconTplName(int type);
 void bdatGetPosXYZ(ml::CVec3* out, u32 index);
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void MiniMapRebuildGimmickPanes(void* self);
 // (memberized: MiniMapFillMarkerEntry -> CMiniMapGimmickView::FillMarkerEntry; declaration moved into class CMiniMapGimmickView)
 void MiniMapPlaceMarkers(void* self, u32 row);
@@ -1260,7 +1257,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                         if (BdatGetU16Direct(bdat2, &lbl_eu_804FE1FC[702], (u16)k) !=
                             o->m8C)
                             continue;
-                        if (!CheckEntryConditions(bdat2, (u16)k)) continue;
+                        if (!CheckEntryConditions((const char*)bdat2, (u32)(u16)k)) continue;
                         {
                             ml::CVec3* otherPos = o->GetPos();
                             ml::CVec3* selfPos =

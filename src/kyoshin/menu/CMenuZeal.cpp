@@ -15,6 +15,8 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Retail data label: cbRenderBefore gate flag (bit 21 skips the draw).
 extern u32 lbl_eu_80663E28;
@@ -25,14 +27,12 @@ extern char lbl_eu_80503454[];
 // so MWCC emits the literal reloc names -- see CSysWinSave.hpp).
 extern "C" {
 // Shared ARC resource accessor getter (retail unmangled name).
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 // Classic-controller detection; the retail callee ignores the arg, but the
 // call site still materialises `li r3,-1` (the CfGameManager.hpp inline
 // wrapper drops it when inlined, so bind the pre-mangled name directly).
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // UI sound effect (mangles to playUISound__FUl).
-void playUISound(u32 op);
 
 // ---------------------------------------------------------------------------
 // Ctor: retail keeps this as a separate out-of-line function (create() calls
@@ -182,7 +182,7 @@ extern "C" int GetZealResult(CMenuZeal* self) {
     quadP[2] = 0xff;
     quadP[1] = 0xff;
     quadP[0] = 0xff;
-    PaneMatSetTevColorsByName(self->mLayout2, &lbl_eu_80503454[0x25e], quadP, quadQ);
+    PaneMatSetTevColorsByName(self->mLayout2, &lbl_eu_80503454[0x25e], (const GXColorS10*)quadP, (const GXColorS10*)quadQ);
 
     if (self->mField_94 >= 100.0f) {
         // Texture name depends on the detected pad type.

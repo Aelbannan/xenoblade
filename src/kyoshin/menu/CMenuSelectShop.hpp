@@ -6,6 +6,8 @@
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CSelShopWin.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 class CScn;
 
@@ -92,7 +94,6 @@ extern "C" void showShopWin(CSelShopWin*);
 extern u32 lbl_eu_806642E8;
 
 // Menu/gate and cursor helper imports (retail C-ABI symbols; keep un-mangled).
-extern "C" int IsMenuState621F0();
 extern "C" int ShopBuy_HasInstance();
 extern "C" int MenuShopSellIsCreated();
 
@@ -105,7 +106,6 @@ extern "C" void loadShopWinArc(CSelShopWin*);
 extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
-extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__11CSelShopWinFv(void*);

@@ -4,6 +4,8 @@
 // stays includable next to other headers.
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 extern "C" void Init__17CMenuPassiveSkillFv();
 extern "C" void Move__17CMenuPassiveSkillFv();
@@ -197,7 +199,6 @@ extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 value);
 extern "C" int CPassiveSkill_isSyswinOrLearned(u8* self);
 
 // Shared event-file byte + classic-controller query (retail unmangled).
-extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" CMenuPassivePadView* getCfPadData__Q22cf13CfGameManagerFv();
 
@@ -241,11 +242,9 @@ extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
-extern "C" int IsMenuState621F0();
 
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shared mode bitfield (bit 21 / IBM bit 10 gates cbRenderBefore draws).
 extern u32 lbl_eu_80663E28;

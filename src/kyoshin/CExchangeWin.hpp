@@ -10,6 +10,7 @@ extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val);
 class CEventFile;
 
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 /* CExchangeWin - item-exchange confirmation window (retail vtable
    __vt__12CExchangeWin, IWorkEvent base list): receives its layout archive
@@ -81,4 +82,3 @@ struct CExchangeWinFontView {
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail reloc is the UNMANGLED name; the C++ member in CUICfManager.hpp
 // would mangle it, so keep C linkage here.
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();

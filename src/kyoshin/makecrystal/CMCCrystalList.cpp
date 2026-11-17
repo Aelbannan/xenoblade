@@ -15,25 +15,15 @@
 #include <revolution/os/OSError.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Local imports. Linkage/signatures mirror the retail symbols exactly.
 extern u32 lbl_eu_806640D8;
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
-void closeFileHandle(CFileHandle**);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
 extern "C" {
-void setPaneVisible(void*, u32);
-void AnimJumpToLast(void*, void*);
 }
 
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
@@ -154,8 +144,8 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
         delete self->mLayout;
         self->mLayout = nullptr;
     }
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->mArcResAccessor);
-    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->mArcResAccessor2);
+    releaseArcResourceAccessor(self->mArcResAccessor);
+    releaseArcResourceAccessor(self->mArcResAccessor2);
     self->mArcResAccessor = nullptr;
     self->mArcResAccessor2 = nullptr;
     self->mMemRegion1.deleteRegion();
@@ -179,7 +169,6 @@ extern "C" void crystalListEnableAnim1(CMCCrystalList* self);
 extern "C" void crystalListDisableAnims(CMCCrystalList* self);
 extern "C" void crystalListStepSlot(CMCCrystalList* self, u32 idx);
 extern "C" void crystalListEnableAnim2(CMCCrystalList* self);
-extern "C" int StepAnimLinkFrame(void*, void*);
 extern "C" void crystalListEnableAnim3(CMCCrystalList* self);
 extern "C" void crystalListEnableAnim4(CMCCrystalList* self);
 
@@ -639,7 +628,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         bindLayoutAnimTransform(mLayout, &mAnimTrans2, mArcResAccessor, &lbl_eu_805092C0[0x1d3]);
         bindLayoutAnimTransform(mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
         bindLayoutAnimTransform(mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
-        LayoutBindAnimResource(mLayout, &mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
+        LayoutBindAnimResource(mLayout, (void**)&mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -650,7 +639,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
         // If a character set is loaded, stamp every crystal-slot text pane
         // (8 slots, two text panes each) with it.
-        u32 sh = CUICfManager_getPackedFont9C();
+        u32 sh = (u32)CUICfManager_getPackedFont9C();
         if (sh != 0) {
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {

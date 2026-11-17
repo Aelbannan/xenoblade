@@ -23,11 +23,11 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Screen-active check used by cbRenderBefore (unit-private import) (retail unmangled).
-extern "C" int IsMenuState621F0();
 
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 
 extern "C" u32 PartyStateWin_GetSharedWinObj(void) {

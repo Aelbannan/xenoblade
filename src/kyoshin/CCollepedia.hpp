@@ -5,6 +5,9 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r {
 namespace lyt {
@@ -196,7 +199,6 @@ extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void Cur_Update(void*); // CCur per-frame update
-extern "C" u16 BdatGetItemId(u32);
 extern "C" void sysWinDispatchPhase(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
@@ -206,19 +208,16 @@ extern "C" void sysWinApplyKind(CSysWin*, u8);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinTermLayout(void*);
-extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SetStateBitFlag(u16, u32);
 extern "C" u32 CItem_findRecByFamily(u16);
 extern "C" void CItemData_initFromFamily(void*, u16, u32);
-extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" float MenuSnd_GetMasterVol_95EC();
 extern "C" void CTaskGame_openStream(u32, const char*, void*, u32, u32, u32);
-extern "C" void setPaneVisible(void*, u32);
 extern "C" void copyVEC3(void*, const void*);
 
 // Additional imports for the CCollepedia constructor
@@ -228,7 +227,6 @@ extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / clpBuildPages
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count
-extern "C" u32 BdatGetItemType(u16);                       // item kind lookup
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);                       // unlock-flag lookup
 extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id
@@ -237,9 +235,6 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
     nw4r::lyt::Layout*);                                 // CDeviceFont helper
 // Shared tag string; retail symbol is the MANGLED getPackedFont__Fv, so this
 // import must keep C++ linkage (MWCC appends __Fv).
-void* getPackedFont();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor(); // CLibLayout accessor
-extern "C" void* CUICfManager_getPackedFont9C();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 

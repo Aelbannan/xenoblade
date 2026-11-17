@@ -4,6 +4,8 @@
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // code_80135FDC.hpp declares ml::epsilon as u32, conflicting with the
 // const-float ml::math epsilon copy in monolib FloatUtils.hpp (pulled in via
@@ -29,11 +31,8 @@
 #include "revolution/gx/GXPixel.h"
 #include "decomp.h"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
-void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CSysWinImports.hpp"
-void playUISound(u32);
 
 // CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
 // pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
@@ -134,14 +133,6 @@ extern char lbl_eu_805338BC[]; // final composite vtable base
 extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
 void __ct__8CProcessFv(CProcess*);
 
-void code80135FDC_postIncByte_64080();
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-u32 CUICfManager_getPackedFont9C();
-char* MakeTplNameSysFile(u32);
-CMenuGetItemFourShorts PaneMatGetS16Quad(void*, u32);
-u32 BdatGetItemId(u32);
-char* LookupItemTypeTable(u32);
-char* BuildItemNameStr(u16);
 // Match CItem.cpp defs: bare cmpi on r3 in Init special2 (u8 view inserts clrlwi).
 s32 CItemBlock_countEmpty(u32);
 // Slot-sum call sites want a raw mr of r3; u32 return matches the def and
@@ -150,7 +141,6 @@ u32 CItem_sumFamilyByte6(u32);
 // setLayoutTextBoxNumber is declared by the included code_80135FDC.hpp / unit header.
 // Retail passes the raw id to BdatGetItemType without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
-u32 BdatGetItemType(u32);
 char* getErrMesText15();
 char* getErrMesText16();
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
@@ -381,32 +371,32 @@ void CMenuGetItemMulti::Init() {
         getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontObject->getPane());
 
-    u32 font = CUICfManager_getPackedFont9C();
+    u32 font = (u32)CUICfManager_getPackedFont9C();
     if (font != 0) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x63], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x6d], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x77], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x81], font);
 
-        font = CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x8b], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x97], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xa3], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xaf], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xbb], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xc7], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xd3], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xdf], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xeb], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xf7], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x103], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x10f], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x11b], font);
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x127], font);
+        font = (u32)CUICfManager_getPackedFont9C();
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x8b], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x97], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xa3], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xaf], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xbb], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xc7], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xd3], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xdf], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xeb], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x63], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x6d], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x77], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x81], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0xf7], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x103], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x10f], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x11b], font);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x127], font);
 
     CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
         mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x63], true));
@@ -508,22 +498,22 @@ void CMenuGetItemMulti::Init() {
         &lbl_eu_80504A3C[0x63], true);
     lbl_eu_806643E0 = PaneMatGetS16Quad(rectPane, 0);
     lbl_eu_806643E8 = PaneMatGetS16Quad(rectPane, 1);
-    lbl_eu_806643F0.d = lbl_eu_806643E0.d;
-    lbl_eu_806643F8.d = lbl_eu_806643E8.d;
-    lbl_eu_80664400.d = lbl_eu_806643E0.d;
-    lbl_eu_80664408.d = lbl_eu_806643E8.d;
+    lbl_eu_806643F0.a = lbl_eu_806643E0.a;
+    lbl_eu_806643F8.a = lbl_eu_806643E8.a;
+    lbl_eu_80664400.a = lbl_eu_806643E0.a;
+    lbl_eu_80664408.a = lbl_eu_806643E8.a;
 
     rectPane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
     lbl_eu_806643A0 = PaneMatGetS16Quad(rectPane, 0);
     lbl_eu_806643A8 = PaneMatGetS16Quad(rectPane, 1);
-    lbl_eu_806643B0.d = lbl_eu_806643A0.d;
-    lbl_eu_806643B8.d = lbl_eu_806643A8.d;
+    lbl_eu_806643B0.a = lbl_eu_806643A0.a;
+    lbl_eu_806643B8.a = lbl_eu_806643A8.a;
 
     rectPane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x8b], true);
     lbl_eu_806643C0 = PaneMatGetS16Quad(rectPane, 0);
     lbl_eu_806643C8 = PaneMatGetS16Quad(rectPane, 1);
-    lbl_eu_806643D0.d = lbl_eu_806643C0.d;
-    lbl_eu_806643D8.d = lbl_eu_806643C8.d;
+    lbl_eu_806643D0.a = lbl_eu_806643C0.a;
+    lbl_eu_806643D8.a = lbl_eu_806643C8.a;
 
     if (mEntryCount != 0) {
         CMenuGetItemMultiEntry* entry = &mFirstEntry;
@@ -572,7 +562,7 @@ void CMenuGetItemMulti::Init() {
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
                     u32 fontHit = (u8)BdatGetU8Direct(
                         (const void*)fontCheck, &lbl_eu_80504A3C[0x33b],
-                        (u16)BdatGetItemId((u16)(entry->packed >> 20)));
+                        BdatGetItemId((u16)(entry->packed >> 20)));
                     textureName = &lbl_eu_80504A3C[0x355];
                     if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                         textureName = &lbl_eu_80504A3C[0x340];
@@ -739,9 +729,9 @@ void CMenuGetItemMulti::Init() {
         initialItems[3] = mInitialItems[3];
         for (u8 sourceIndex = 0; sourceIndex < 4; ++sourceIndex) {
             u16 itemId = (u16)initialItems[sourceIndex];
-            char* itemTable = LookupItemTypeTable(itemId);
-            u8 category = (u8)BdatGetItemType(itemId);
-            u32 tableId = BdatGetItemId(itemId);
+            char* itemTable = (char*)LookupItemTypeTable(itemId);
+            u16 category = (u8)BdatGetItemType(itemId);
+            u16 tableId = BdatGetItemId(itemId);
             if (itemId != 0) {
                 sprintf(initialTextPaneName, &lbl_eu_80504A3C[0x192],
                         mVisibleItemCount + 1);
@@ -759,7 +749,7 @@ void CMenuGetItemMulti::Init() {
                 // Same special2 goto-chain as the entry-loop path (u32 cat2 +
                 // range subi/cmpli + bottom li0 merge).
                 {
-                    u32 cat2 = (u16)BdatGetItemType(itemId);
+                    u16 cat2 = (u16)BdatGetItemType(itemId);
                     u32 special2;
                     BdatGetItemId(itemId);
                     if ((u32)(cat2 - 2) <= 7) {
@@ -1505,7 +1495,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
 
         for (u8 i = 0; i < self->mVisibleItemCount; ++i) {
             u16 itemId = self->mVisibleItemIds[i];
-            char* itemTable = LookupItemTypeTable(itemId);
+            char* itemTable = (char*)LookupItemTypeTable(itemId);
             u8 category = (u8)BdatGetItemType(itemId);
             u32 tableId = BdatGetItemId(itemId);
             if (itemId == 0) {
@@ -1913,7 +1903,7 @@ __declspec(noinline) void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int
     // only at the use sites).
     u32 font = lbl_eu_806640F4;
     BdatGetItemType(arg2);
-    u32 tableId = BdatGetItemId(arg2);
+    u16 tableId = BdatGetItemId(arg2);
 
     u16 w1 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e1], (u16)tableId);
     u16 w2 = BdatGetU16Direct((const void*)font, &lbl_eu_80504A3C[0x4e9], (u16)tableId);
@@ -2069,7 +2059,7 @@ __declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* s
     // mask happens only when passed as the u8 arg of setLayoutTextBoxNumber).
     u32 itemFont = lbl_eu_806640F8;
     BdatGetItemType(arg2);
-    u32 tableId = BdatGetItemId(arg2);
+    u16 tableId = BdatGetItemId(arg2);
     u8 v1 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
     u8 v2 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
     u8 v3 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
@@ -2083,7 +2073,7 @@ __declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* s
     // suffix switch below re-masks the raw value.
     u32 rankFont = lbl_eu_806640F8;
     u8 rankVal = BdatGetU8Direct((const void*)rankFont, &lbl_eu_80504A3C[0x543],
-                                (u16)BdatGetItemId(arg2));
+                                BdatGetItemId(arg2));
     // Signed local: MWCC rewrites the 4..13 range test as an unsigned
     // subi/cmplwi pair but keeps signed cmpwi for the ==3/2/1 tests.
     s32 rank = rankVal & 0xff;
@@ -2262,7 +2252,7 @@ __declspec(noinline) void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* se
     // Item id -> table id, then fill the rank-name and description panes.
     void* tbl = lbl_eu_80664104;
     BdatGetItemType(arg2);
-    u32 tableId = BdatGetItemId(arg2);
+    u16 tableId = BdatGetItemId(arg2);
     // Separate statement: retail keeps the lookup result live in r0 across
     // the BdatTouchStringCell arg setup (mr r0, r3 / clrlwi r5, r0, 24).
     u8 rankN = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId);
@@ -2365,7 +2355,7 @@ __declspec(noinline) void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int ar
     void* tbl = (void*)lbl_eu_80664110;
     // No-entry path validates the id through the item table (result unused).
     BdatGetItemType(arg2);
-    u32 tableId = BdatGetItemId(arg2);
+    u16 tableId = BdatGetItemId(arg2);
     // Raw results kept unmasked (retail stores each with a plain mr and
     // truncates only at the use sites).
     u8 kindA = BdatGetU8Direct((const void*)tbl, &lbl_eu_80504A3C[0x57e], (u16)tableId);
@@ -2531,8 +2521,8 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
             }
         }
     } else {
-        void* itemTable = LookupItemTypeTable(arg2);
-        u32 tableId = BdatGetItemId(arg2);
+        void* itemTable = (void*)LookupItemTypeTable(arg2);
+        u16 tableId = BdatGetItemId(arg2);
         u8 count =
             (u8)BdatGetU8Direct((const void*)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
         u16 slotId = 0;
@@ -3455,60 +3445,60 @@ void sinit_801B9FC8() {
     // Grouped per symbol in ascending address order - closest shape found
     // to retail's store/register schedule (interleaved orders reschedule
     // worse; chained assignments shift but don't close the residual).
-    lbl_eu_806643D0.c = 0xfa;
-    lbl_eu_806643A0.d = 0;
-    lbl_eu_806643A0.c = 0;
-    lbl_eu_806643A0.b = 0;
+    lbl_eu_806643D0.b = 0xfa;
     lbl_eu_806643A0.a = 0;
-    lbl_eu_806643A8.d = 0;
-    lbl_eu_806643A8.c = 0;
-    lbl_eu_806643A8.b = 0;
+    lbl_eu_806643A0.b = 0;
+    lbl_eu_806643A0.g = 0;
+    lbl_eu_806643A0.r = 0;
     lbl_eu_806643A8.a = 0;
-    lbl_eu_806643B0.d = 0;
-    lbl_eu_806643B0.c = 0x80;
+    lbl_eu_806643A8.b = 0;
+    lbl_eu_806643A8.g = 0;
+    lbl_eu_806643A8.r = 0;
+    lbl_eu_806643B0.a = 0;
     lbl_eu_806643B0.b = 0x80;
-    lbl_eu_806643B0.a = 0x80;
-    lbl_eu_806643B8.d = 0;
-    lbl_eu_806643B8.c = 0x80;
+    lbl_eu_806643B0.g = 0x80;
+    lbl_eu_806643B0.r = 0x80;
+    lbl_eu_806643B8.a = 0;
     lbl_eu_806643B8.b = 0x80;
-    lbl_eu_806643B8.a = 0x80;
-    lbl_eu_806643C0.d = 0;
-    lbl_eu_806643C0.c = 0;
-    lbl_eu_806643C0.b = 0;
+    lbl_eu_806643B8.g = 0x80;
+    lbl_eu_806643B8.r = 0x80;
     lbl_eu_806643C0.a = 0;
-    lbl_eu_806643C8.d = 0;
-    lbl_eu_806643C8.c = 0;
-    lbl_eu_806643C8.b = 0;
+    lbl_eu_806643C0.b = 0;
+    lbl_eu_806643C0.g = 0;
+    lbl_eu_806643C0.r = 0;
     lbl_eu_806643C8.a = 0;
-    lbl_eu_806643D0.d = 0;
-    lbl_eu_806643D0.b = 0xff;
-    lbl_eu_806643D0.a = 0xff;
-    lbl_eu_806643D8.d = 0;
-    lbl_eu_806643D8.c = 0x80;
+    lbl_eu_806643C8.b = 0;
+    lbl_eu_806643C8.g = 0;
+    lbl_eu_806643C8.r = 0;
+    lbl_eu_806643D0.a = 0;
+    lbl_eu_806643D0.g = 0xff;
+    lbl_eu_806643D0.r = 0xff;
+    lbl_eu_806643D8.a = 0;
     lbl_eu_806643D8.b = 0x80;
-    lbl_eu_806643D8.a = 0x80;
-    lbl_eu_806643E0.d = 0;
-    lbl_eu_806643E0.c = 0;
-    lbl_eu_806643E0.b = 0;
+    lbl_eu_806643D8.g = 0x80;
+    lbl_eu_806643D8.r = 0x80;
     lbl_eu_806643E0.a = 0;
-    lbl_eu_806643E8.d = 0;
-    lbl_eu_806643E8.c = 0;
-    lbl_eu_806643E8.b = 0;
+    lbl_eu_806643E0.b = 0;
+    lbl_eu_806643E0.g = 0;
+    lbl_eu_806643E0.r = 0;
     lbl_eu_806643E8.a = 0;
-    lbl_eu_806643F0.d = 0;
-    lbl_eu_806643F0.c = 0xe7;
-    lbl_eu_806643F0.b = 0xa3;
-    lbl_eu_806643F0.a = 0x12;
-    lbl_eu_806643F8.d = 0;
-    lbl_eu_806643F8.c = 0xff;
+    lbl_eu_806643E8.b = 0;
+    lbl_eu_806643E8.g = 0;
+    lbl_eu_806643E8.r = 0;
+    lbl_eu_806643F0.a = 0;
+    lbl_eu_806643F0.b = 0xe7;
+    lbl_eu_806643F0.g = 0xa3;
+    lbl_eu_806643F0.r = 0x12;
+    lbl_eu_806643F8.a = 0;
     lbl_eu_806643F8.b = 0xff;
-    lbl_eu_806643F8.a = 0xff;
-    lbl_eu_80664400.d = 0;
-    lbl_eu_80664400.c = 0xc0;
-    lbl_eu_80664400.b = 0x9;
-    lbl_eu_80664400.a = 0xfa;
-    lbl_eu_80664408.d = 0;
-    lbl_eu_80664408.c = 0xff;
+    lbl_eu_806643F8.g = 0xff;
+    lbl_eu_806643F8.r = 0xff;
+    lbl_eu_80664400.a = 0;
+    lbl_eu_80664400.b = 0xc0;
+    lbl_eu_80664400.g = 0x9;
+    lbl_eu_80664400.r = 0xfa;
+    lbl_eu_80664408.a = 0;
     lbl_eu_80664408.b = 0xff;
-    lbl_eu_80664408.a = 0xff;
+    lbl_eu_80664408.g = 0xff;
+    lbl_eu_80664408.r = 0xff;
 }

@@ -17,7 +17,8 @@
 #include <stdio.h>
 #include "kyoshin/CSysWin.hpp" // ScalePaneWorldPos cursor-position helper
 #include "kyoshin/CSysWinImports.hpp"
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
@@ -83,7 +84,6 @@ body:
     self->mLayout->Animate(0);
 }
 
-extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
@@ -93,8 +93,8 @@ extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo)
     }
     return;
 call:
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-        logo->mLayout, drawInfo, 0, 1);
+    drawLayout(
+        logo->mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 }
 
 // Release the logo layout: delete the +0x08 member, then clear it.
@@ -265,8 +265,8 @@ extern "C" __declspec(noinline) void CTitleMenu_draw(void* self, void* drawInfo)
     }
     return;
 call:
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-        menu->mLayout, drawInfo, 0, 1);
+    drawLayout(
+        menu->mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 }
 
 // Menu-side sibling of CTitleLogo_release. Retail calls vtable slot +0x08 with an
@@ -537,7 +537,6 @@ extern "C" void CTitle_draw(CTitle* self, void* drawInfo) {
 // -O4,s forces the retail stmw r30/r31 block frame.
 #pragma optimize_for_size on
 extern "C" void CTitle_teardown(CTitle* self) {
-    void closeFileHandle(CFileHandle**);
     closeFileHandle(&self->mFileHandle);
     CTitleLogo_release(&self->mLogo);
     CTitleMenu_release(&self->mMenu);

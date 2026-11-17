@@ -12,11 +12,6 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 
-// 8-byte pane-colour vector (same layout as CItemBoxLine::FourShorts);
-// declared here so the C-linkage getter below stays uniform across TUs.
-struct CEquipBoxFourShorts {
-    s16 a, b, c, d;
-};
 
 namespace nw4r {
 namespace math {
@@ -58,14 +53,11 @@ public:
 
 /* Layout draw w/ visible flag. Retail symbol IS the mangled name; declare
    with C++ linkage so MWCC mangles drawLayout to the retail symbol. */
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Bind a named pane to a resource (code_80135FDC unit, 3-arg form). */
 
 /* Layout/anim builders (code_80135FDC unit). C++ linkage so MWCC mangles
    the unmangled identifiers to the retail names. */
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* CEIBPageCur - page cursor (retail vtable lbl_eu_805386EC, base list
    names CEIBCur); overrides initLayout with setupEIBPageCur. */

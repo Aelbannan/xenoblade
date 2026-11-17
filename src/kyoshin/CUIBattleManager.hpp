@@ -5,19 +5,19 @@
 #include "monolib/util/reslist.hpp"
 #include "monolib/work.hpp"
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* MapFx_ResolveOwner(void* r3);
 
 // Accessor teardown helper (code_80135FDC.cpp); retail symbol is the
 // Itanium-mangled name, so declare unmangled.
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports used by the battle-manager constructor.
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr);
 extern "C" void CMenuArtsSelect_clearArtsRef();
 // Layout/BDAT helpers used by the file-event handler.
-extern "C" char* MakeTplNameSysFile(u32 id);
 
 class CProcess;
 class CUIBattleManager;

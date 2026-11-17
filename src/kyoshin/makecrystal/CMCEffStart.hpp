@@ -7,6 +7,8 @@
 #include <nw4r/lyt/lyt_layout.h>
 
 #include <decomp.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 /******************************************************************************
  *
  * CMCEffStart
@@ -257,14 +259,12 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-void playUISound(u32);
 // NOTE: setPaneVisible is intentionally NOT promoted to this header. Parallel
 // TU conversions declare it with conflicting signatures in their own headers
 // (CItemBoxInfo.hpp: `(void*, void*)` vs CMCGetItemBox.hpp: `(nw4r::lyt::Pane*,
 // u32)`), so a shared declaration here would add a third voice to that live
 // conflict in TUs that include both headers (CModelDispMakeCrystal.cpp). It
 // stays local to CMCEffStart.cpp (the defining TU).
-extern "C" u32 getPackedFont__Fv();
 
 // Retail string pool (SDA-data base for pooled string literals).
 extern "C" char lbl_eu_805095EC[];

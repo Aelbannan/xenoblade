@@ -6,6 +6,9 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Minimal view of cf::CfPadData for SysWinSelectHandleInput (offsets match retail).
 struct CSysPadData {
@@ -122,9 +125,6 @@ void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol 
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Cur_DrawLayout(void*, void*);
-void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
-int IsMenuState621F0();
-nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the
@@ -154,7 +154,6 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 
 // C++-linkage helper - retail emits the mangled form
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo (same convention as CSystemWindow.hpp).
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Raw view onto the object header so the constructor can install vtables by
 // hand (the CProcess base's vtable slot lives at +0x10).

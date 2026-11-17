@@ -22,7 +22,7 @@ extern "C" u32 getAnimModelId(u32 arg);
 // CfObjectActor UVF6 - forced-name call avoids including CfObjectActor.hpp
 // (that pulls CCtrlMoveEne.hpp and clashes with this TU's func_8004B9D4 decl).
 namespace cf { class CfObjectActor; }
-extern "C" float CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+extern "C" float CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
     cf::CfObjectActor* self);
 
 // In-TU forward declarations (definitions below).
@@ -1698,7 +1698,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
                 // +0x5B4 = CfObjectActor::UVF6 -> float; +0xC4 = CfObject::UVF29(float).
                 // First call leaves f1 live into UVF29 (retail Fv on both).
                 {
-                    f32 h = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+                    f32 h = CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
                                 reinterpret_cast<cf::CfObjectActor*>(player));
                     reinterpret_cast<cf::CfObject*>(&obj->mSub)
                         ->CfObject_setMoveHeadAngle(h);
@@ -1713,7 +1713,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
                     f31 += obj->field_44D8;
                 }
                 ml::CVec3 tmp20 = *reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
-                f32 f1 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+                f32 f1 = CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
                              reinterpret_cast<cf::CfObjectActor*>(player));
                 f32 sum = obj->field_44D8 + player->field_44D8;
                 cf::CFunc8008E760PartyInfo info;

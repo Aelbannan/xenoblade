@@ -895,6 +895,7 @@ kyoshin/cf/object/CBattleState.cpp:
 	extabindex  start:0x80028504 end:0x800285A0
 	.text       start:0x80146520 end:0x8014A184
 
+	.data        start:0x8052E9B0 end:0x8052EA40
 	.sdata        start:0x80662248 end:0x80662250
 	.sdata2        start:0x80667400 end:0x80667418
 kyoshin/menu/CMenuGetItem.cpp:
@@ -902,7 +903,7 @@ kyoshin/menu/CMenuGetItem.cpp:
 	extabindex  start:0x800285A0 end:0x80028654
 	.text       start:0x8014A184 end:0x8014B270
 
-	.data        start:0x8052e9b0 end:0x8052eb40
+	.data        start:0x8052EA40 end:0x8052eb40
 	.rodata        start:0x805018c0 end:0x80501978
 	.sdata        start:0x80662250 end:0x80662258
 	.sdata2     start:0x80667418 end:0x80667428
@@ -1079,7 +1080,7 @@ kyoshin/cf/object/CActorParam.cpp:
 	extabindex  start:0x80029668 end:0x80029824
 	.text       start:0x80176660 end:0x80180190
 
-	.data        start:0x80531730 end:0x80531870
+	.data        start:0x80531730 end:0x80531BDC
 	.rodata        start:0x80503438 end:0x80503448
 	.sdata2        start:0x806677E0 end:0x80667870
 kyoshin/menu/CMenuZeal.cpp:
@@ -1087,7 +1088,7 @@ kyoshin/menu/CMenuZeal.cpp:
 	extabindex  start:0x80029824 end:0x80029890
 	.text       start:0x80180190 end:0x80181374
 
-	.data        start:0x80531870 end:0x80531ce8
+	.data        start:0x80531BDC end:0x80531ce8
 	.rodata        start:0x80503448 end:0x805036c8
 	.sbss        start:0x80664298 end:0x806642a8
 	.sdata        start:0x80662440 end:0x80662448

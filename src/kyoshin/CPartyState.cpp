@@ -13,6 +13,7 @@
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Sets the vtable, builds the scratch memory region, zeroes the panel state
 // fields, constructs the embedded cursor, and initializes the byte flags.
@@ -585,9 +586,9 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
                 sprintf(buf68, strs + 0x196, i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x10, i);
-                setLayoutTextBoxFont(mLayout, buf68, CUICfManager_getPackedFontD8());
+                setLayoutTextBoxFont(mLayout, buf68, (u32)CUICfManager_getPackedFontD8());
                 sprintf(buf68, strs + 0x1a8, i);
-                setLayoutTextBoxFont(mLayout, buf68, CUICfManager_getPackedFontD8());
+                setLayoutTextBoxFont(mLayout, buf68, (u32)CUICfManager_getPackedFontD8());
                 sprintf(buf68, strs + 0x23, i);
                 setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x36, i);
@@ -673,7 +674,6 @@ extern "C" void advancePartyPanel(CPartyState* self) {
 
 // Layout render (retail mangled name; declared per code_80135FDC.hpp). The
 // cursor draw helper is declared in CEquipItemBox.hpp.
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Render the party list when the visible flag is set: draw the bound layout
 // with the given draw info (projection off, calc mtx on), then draw the

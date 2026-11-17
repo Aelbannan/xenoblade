@@ -11,23 +11,12 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Layout/resource helpers used by this TU (code_80135FDC / CUICfManager).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
-                             nw4r::lyt::ArcResourceAccessor*, char*);
-void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void closeFileHandle(CFileHandle**);
-void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-void playUISound(u32);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
-extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
-extern "C" char* CUICfManager_getPackedFont9C();
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" char* MakeTplNameSysFile(u32);
 // Retail symbol name is a placeholder guess (the call passes -1 in r3).
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 

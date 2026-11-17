@@ -9,9 +9,9 @@
 #include "monolib/work/IWorkEvent.hpp"
 
 #include <nw4r/lyt.h>
+#include "kyoshin/code_80135FDC_State.hpp"
 
 // Local import (retail unmangled); same decl as CExchangeWin.cpp.
-void closeFileHandle(CFileHandle**);
 
 // US retail keeps most callee names unmangled in CBgTex.o relocs; the C++
 // member manglings are only kept for __dt__ and OnFileEvent (see CBgTex.hpp).

@@ -25,12 +25,11 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Retail helper imports (unmangled retail symbol names).
-extern "C" u32 GetU16PairEntry(u16);
 extern "C" u8 CtrlRemote_TouchBitByArg(u32);
-extern "C" u32 SearchThresholdIdx(u16);
-extern "C" int func_80138574(void*, u32);
 // Naturally-mangled retail import (findObjectById__Fi).
 void* findObjectById(int id);
 extern u32 lbl_eu_804FE720[];
@@ -42,12 +41,7 @@ extern "C" void* getReslistB68();
 extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
 // (ScnXformBlock, returned by Scn_FindCamItem).
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void* getPackedFont__Fv();
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
-void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void __ct__8CProcessFv(void* self);
 extern "C" __declspec(noinline) void SymMark_Place(
@@ -98,14 +92,10 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
 }
 
 // Render-gate globals/callees (declared locally to avoid header conflicts).
-extern "C" int IsMenuState621F0();
 #include "kyoshin/code_801F3BE0.hpp"
 extern u32 lbl_eu_80663E28;
 // C++-linkage helpers - retail emits the mangled forms
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / drawLayout__FPQ34nw4r3lyt6Layout...
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
-                   int a, int b);
 extern "C" void __dt__Q34nw4r3lyt6LayoutFv(void* self, int flags);
 
 // Retail singletons used by the menu create helpers.
@@ -216,7 +206,7 @@ void CMenuSymbolMark::Init() {
         // calls (retail reloads the slot from the entry base each time).
         ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
         ApplyFontToTxtPanes(((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane(),
-                      (const nw4r::ut::Font*)((u32)getPackedFont__Fv()));
+                      (const nw4r::ut::Font*)((u32)getPackedFont()));
     }
     mField_274 = 1;
     mScn->addRenderCB(this, 7, 0);
@@ -720,7 +710,7 @@ void CMenuSymbolMark::SymMark_RebuildEntryBuf() {
     const char* names = (const char*)&lbl_eu_804FE720[0];
     void* archive = this->mArchiveFP;
     for (u32 id = 1; id <= this->mSomeValue2; id++) {
-        if (func_80138574(archive, id) == 0) {
+        if (func_80138574((const char*)archive, id) == 0) {
             continue;
         }
         if ((u8)BdatGetU8Direct((const void*)archive, &names[0x96], id) == 0) {
@@ -1093,7 +1083,7 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
             if (id != actor->field8C) {
                 continue;
             }
-            if (CheckEntryConditions((const void*)this->mSomeValue, j) == 0) {
+            if (CheckEntryConditions((const char*)(const void*)this->mSomeValue, j) == 0) {
                 continue;
             }
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
@@ -1151,7 +1141,6 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
 // the player stands within range.
 // Retail imports used only here.
 extern "C" void bdatGetPosXYZ(Vec* out, int id);
-extern "C" u32 CheckState2CC8Active(u16 id);
 
 // Bounds test: build the anchor/extent pair from the scene pose block and
 // query CheckViewAngle60 against the world point.
@@ -1680,7 +1669,6 @@ CTTask<CArrow3D>::~CTTask() {}
 // model matrix, then replays the resource display lists twice (first with
 // color update off for the light pass, then normally).
 // Render-gate imports.
-extern "C" int GetSysStateFlag25();
 extern "C" void updateViewRoot__9CViewRootFv();
 extern "C" void resetGXStateA__8CGXCacheFv(void* cache);
 extern "C" void makePerspProj__8CGXCacheFv(void* cache, void* proj, f32 a,

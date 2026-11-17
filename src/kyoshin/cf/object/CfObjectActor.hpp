@@ -37,15 +37,7 @@ extern const float lbl_eu_80667768;         // CActorParam_applyDamage 0x100 dec
 // CBattleManager+0x28354 by CActorParam_applyDamage.
 extern const u32 lbl_eu_80531090[3];
 
-// cf::CfObjectActor vtable group (hand-built in CfObjectActor.cpp until the
-// class is polymorphic); the constructor copies its four vtable pointers from it.
-extern "C" const void* __vt__Q22cf13CfObjectActor[];
 
-// Battle-side initializers called by the CfObjectActor constructor.
-// NOTE: dispatchItemLoad is declared here in its LOCAL 5-arg form inside
-// CfObjectActor.cpp (the shared headers carry the common 2-arg form;
-// the two extern "C" signatures cannot coexist - error 10197).
-extern "C" void aiActionStoreWordB14(void* obj, unsigned int value);
 
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value helper
@@ -55,10 +47,6 @@ extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value 
 // defined in CActorParam.cpp).
 //
 
-// Retail symbols are Fv; the real ABI passes (self, arg). The CfObjectActor
-// overrides of 179/180 forward to these base entries (defined in CActorParam.cpp).
-extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
-extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
 
 // C-ABI imports (retail symbols unmangled).
 extern "C" void releaseVisionSlot(void* obj, int arg);   // vision slot release
@@ -81,8 +69,6 @@ extern "C" void BtlDmg_SetByte777(u8);
 
 extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
-// RTTI record of cf::CfObjectActor (__dynamic_cast source/target operand).
-extern "C" void* __RTTI__Q22cf13CfObjectActor;
 
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
@@ -97,55 +83,63 @@ extern "C" void CChain_AccumGaugeDelta(void* battleSub, void* actor, float value
 extern "C" int __ptmf_cmpr(void* a, void* b);
 
 namespace cf {
-    //min size: 0x45BC
+    // size: 0x45C0
+    //
+    // Hierarchy (retail __vt__Q22cf13CfObjectActor, four RTTI groups):
+    //   +0x0000 CActorParam  : CActorState (+0x0, 1 slot), CBattleState (+0x8,
+    //                          32 slots, then CActorParam's own 181-slot tail)
+    //   +0x3380 CAIAction    (2 slots, offset-to-top -0x3380)
+    //   +0x3E9C CfObjectMove : CfObjectModel : CfObject : CObjectParam :
+    //                          CObjectState (offset-to-top -0x3E9C)
+    // MWCC appends the virtuals a class declares to the vtable group of its
+    // LAST base (here CfObjectMove's), so the CfObjectActor tail (0x5A0..)
+    // follows the CfObjectMove slots. Overrides of slots that already have an
+    // offset-0 entry (the CActorParam tail) get no new slot; overrides of
+    // CfObjectMove-chain slots get a direct tail slot plus an @16028@ thunk,
+    // and overrides of CBattleState slots get @8@ thunks.
     class CfObjectActor : public CActorParam, public CAIAction, public CfObjectMove {
     public:
         CfObjectActor();
-        //vtable 4 (CfObjectActor)
-        virtual ~CfObjectActor();                  //0x5A0
-        virtual int CfObjectActor_hasActorScale();  //0x5A4: constant 1 (Ene/Actor scale present)
-        // Legacy Unk spelling (non-virtual inline).
-        int CfObjectActor_UnkVirtualFunc2() { return CfObjectActor_hasActorScale(); }
+        // Tail of the CfObjectMove group, in declaration order (0x5A0..0x5D0).
+        virtual ~CfObjectActor() {}                     //0x5A0
+        virtual int CfObjectMove_hasActorScale() { return 1; } //0x5A4 (Move slot 0x200)
         virtual void CfObjectActor_clearStatusPair();  //0x5A8
         virtual void CfObjectActor_flushStatusPair();  //0x5AC
-        virtual void CfObjectActor_takeDamageValue(float a, u32 b);  //0x5B0
-        virtual float CfObjectActor_readFacingAngle();  //0x5B4
-        virtual float CfObjectActor_getAdjustedFacing();  //0x5B8 (retail returns a float in f1)
-        virtual float CfObjectActor_readActionScale();  //0x5BC (retail returns a float in f1)
-        virtual void* CfObjectActor_sharesMoveFlags(void* arg);  //0x5C0
-        virtual void CfObjectActor_pushRefreshValue(float value); //0x5C4
-        virtual void CfObjectActor_storeActionSrcId(void* arg); //0x5C8
-        virtual u32 CfObjectActor_getActionSrcId(); //0x5CC: read +0x45BC action-src id
-        virtual void CfObjectActor_clearActionSrcId(); //0x5D0: clear +0x45BC to -1
-        // Legacy Unk spellings (non-virtual inline): same-arity aliases so
-        // any leftover callers keep compiling (Wave-61).
-        u32 CfObjectActor_UnkVirtualFunc12() { return CfObjectActor_getActionSrcId(); }
-        void CfObjectActor_UnkVirtualFunc13() { CfObjectActor_clearActionSrcId(); }
+        virtual void CfObjectActor_takeDamageValue(float value, int arg);  //0x5B0
+        virtual float CfObject_getMoveHeadAngle();      //0x5B4 (CfObject slot 0xCC)
+        virtual float CfObjectActor_getAdjustedFacing();  //0x5B8
+        virtual float CfObjectActor_readActionScale();  //0x5BC
+        virtual int CfObjectActor_sharesMoveFlags(CfObjectActor* other);  //0x5C0
+        virtual void* CfObject_pushRefreshValue(float value); //0x5C4 (CfObject slot 0x88)
+        virtual void CfObjectMove_setTargetC4Arg(u32 id); //0x5C8 (Move slot 0x1DC)
+        virtual u32 CfObjectActor_getActionSrcId() { return mActionSrcId; } //0x5CC
+        virtual void CfObjectActor_clearActionSrcId() { mActionSrcId = -1; } //0x5D0
 
-        //0x0: vtable 1
-        //0x0-3380: CActorParam
-        //0x3380: vtable 2
-        //0x3380-3e9c: CAIAction
-        //0x3e9c: vtable 3
-        //0x3e9c-45b4: CfObjectMove
-        u8 unk45B4[0x8];
-    const char* CActorParam_getActorName();
-    void CActorParam_addHate(void* arg, float x, float y, float z);
-    void CActorParam_UnkVirtualFunc179(void* arg);
-    void CActorParam_UnkVirtualFunc180(void* arg);
-    void CActorParam_setHp(float val);
-    void CActorParam_applyDamage(float value, int a, int b, int c);
-    void CActorParam_addHp(float val);
-    void CActorParam_addGauge(int delta);
-    void CActorParam_addSecondGauge(int delta);
-    void CActorParam_resetArtsStatus(void* arts);
-    virtual void CActorParam_setScale(float val);
-    virtual float CActorParam_getScale();
-    void destroyActorParam();
-    // Caller aliases kept for existing call sites; both forward to the real
-    // setScale/getScale overrides (former UnkVirtualFunc21/23).
-    void CActorParam_propagateScale(float val) { CActorParam_setScale(val); }
-    float CActorParam_getSubScale() { return CActorParam_getScale(); }
+        // Overrides that reuse an existing offset-0 slot (CActorParam tail).
+        virtual void* CObjectParam_getParamPtr();       //0x98 (also CBattleState 0x10, CObjectParam 0x40)
+        virtual void* CBattleState_getOwner() { return this; } //0x9C
+        virtual void* CBattleState_callOwnerObject() { return this; }  //0xA0
+        virtual void CActorParam_UnkVirtualFunc6(int val);   //0xAC (resetActorState)
+        virtual void CActorParam_setScale(float val);   //0xE8
+        virtual float CActorParam_getScale();           //0xF0
+        virtual void CActorParam_setHp(float val);      //0x118
+        virtual void CActorParam_addHp(float value);    //0x11C
+        virtual void CActorParam_applyDamage(float value, int a, int b, int c);  //0x120
+        virtual void CActorParam_addGauge(int delta);   //0x16C
+        virtual void CActorParam_addSecondGauge(int delta);  //0x184
+        virtual void CActorParam_addHate(void* arg, float x, float y, float z); //0x2C4
+        virtual void CBattleState_notifyEntryUpdated(CBattleStateEntry* entry); //0x360
+        virtual void CBattleState_getLinkedActorId(CBattleStateEntry* entry); //0x364
+
+        // Caller spellings for the CActorParam scale slots.
+        void CActorParam_propagateScale(float val) { CActorParam_setScale(val); }
+        float CActorParam_getSubScale() { return CActorParam_getScale(); }
+
+        //0x0000-0x3380: CActorParam
+        //0x3380-0x3E9C: CAIAction
+        //0x3E9C-0x45B8: CfObjectMove
+        u32 mActionSrcHandle; // 0x45B8 (handle id resolved by findObjectById)
+        u32 mActionSrcId;     // 0x45BC (ctor seeds -1)
     };
 
     // Status-entry view for the findBattleStatusEntry results used by
@@ -200,7 +194,7 @@ namespace cf {
     };
 
     // Same flag word viewed relative to the CfObjectMove subobject pointer
-    // (findObjectById returns one; CfObjectActor_pushRefreshValue reads it).
+    // (findObjectById returns one; CfObject_pushRefreshValue reads it).
     struct CfMoveFlags64 {
         u8 _pad[0x64];
         u32 field_0x64;  // 0x64

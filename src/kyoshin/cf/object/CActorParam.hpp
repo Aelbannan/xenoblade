@@ -532,9 +532,12 @@ namespace cf {
     public:
         CActorParam(UNKTYPE* r4, UNKTYPE* r5);
     #pragma region vtable
-        virtual const char* CActorParam_getActorName();   //0x98
-        virtual void* CActorParam_getActor();   //0x9C (base returns NULL; actors return self)
-        virtual void CActorParam_UnkVirtualFunc3();   //0xA0
+        // 0x98/0x9C/0xA0 and 0x360/0x364 re-declare CBattleState slots
+        // (CBattleState is the secondary base at +0x8, so MWCC appends them to
+        // this tail and points the CBattleState slots at @8@ thunks).
+        virtual void* CObjectParam_getParamPtr();   //0x98 (actor name; also overrides CObjectParam +0x40 in CfObjectActor)
+        virtual void* CBattleState_getOwner();   //0x9C (base returns NULL; actors return self)
+        virtual void* CBattleState_callOwnerObject();   //0xA0
         virtual void CActorParam_resetArtsStatus(void* arts);   //0xA4
         virtual void CActorParam_commitArtsStatus(int flag);   //0xA8
         virtual void CActorParam_UnkVirtualFunc6(int val);   //0xAC
@@ -702,7 +705,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void* CActorParam_getActorModeFlags(); //0x324
         virtual void* CActorParam_getBattleHitFlags(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
-        virtual void CActorParam_UnkVirtualFunc167(); //0x330
+        virtual void CActorParam_UnkVirtualFunc167() {} //0x330
         virtual void CActorParam_setHitRange(float val); //0x334 (was UnkVirtualFunc168)
         virtual void CActorParam_UnkVirtualFunc169(); //0x338
         virtual float CActorParam_UnkVirtualFunc170(); //0x33C
@@ -715,8 +718,8 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_decayArtsMatrix(float f1); //0x354
         virtual void CActorParam_updateStatusEntries(float dt); //0x358
         virtual int CActorParam_UnkVirtualFunc178(); //0x35C
-        virtual void CActorParam_UnkVirtualFunc179(); //0x360
-        virtual void CActorParam_UnkVirtualFunc180(); //0x364
+        virtual void CBattleState_notifyEntryUpdated(CBattleStateEntry* entry); //0x360
+        virtual void CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0); //0x364
         virtual void CActorParam_UnkVirtualFunc181(); //0x368
     #pragma endregion
 
@@ -868,7 +871,8 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         };
         float unk337C;
     CActorParam();
-    void CBattleState_UnkVirtualFunc17();
+    // Name accessor spelled for callers that want the string type.
+    const char* CActorParam_getActorName() { return (const char*)CObjectParam_getParamPtr(); }
     };
 
 inline u32 cf::CActorParam::CActorParam_getActorType() { return unk15EC; }
@@ -881,4 +885,3 @@ inline void* cf::CActorParam::CActorParam_getArtsSet() { return &mArtsSet; }
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();

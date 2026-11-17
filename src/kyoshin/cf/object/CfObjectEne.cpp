@@ -530,11 +530,11 @@ void cf::CfObjectEne::loadEnemyParams() {
 // Wave-62: CActorParam_setEnemyType (+0xE4) / setActorType (+0xDC) base
 // impls. Free-function Fv forms keep the Unk linker names that hand-built
 // tables / CREvtModel reference.
-extern "C" void CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
+extern "C" void CActorParam_setEnemyType__Q22cf11CActorParamFUl(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
+extern "C" void CActorParam_setActorType__Q22cf11CActorParamFUl(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
 
 
 
@@ -544,26 +544,26 @@ extern "C" void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, flo
 
 // Wave-62: CActorParam_setParam161C / setFlag1628 / setGauge1624 / setHitRange
 // base impls. Free-function Fv forms keep the Unk linker names.
-extern "C" void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
+extern "C" void CActorParam_setParam161C__Q22cf11CActorParamFUl(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
+extern "C" void CActorParam_setFlag1628__Q22cf11CActorParamFUc(cf::CActorParam* self, u8 val) {
     // retail: stb r4, 0x1628(r3) - member block is +8 shifted, raw view pins the offset
     ((cf::CfObjectEne1628View*)self)->field_0x1628 = val;
 }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
+extern "C" void CActorParam_setGauge1624__Q22cf11CActorParamFf(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
+extern "C" void CActorParam_setHitRange__Q22cf11CActorParamFf(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFPCv(cf::CActorParam* self, const void* src) {
     *(ParamCopyBlock*)&self->unk17E4 = *(const ParamCopyBlock*)src;
 }
 
@@ -864,15 +864,15 @@ bmCheck:
 
 
 
-extern "C" int CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
+extern "C" int CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
 
 
 
-void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
+void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(void) {}
 
 
 
-void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
+void CBattleState_getOwner__Q22cf13CfObjectActorFv(void) {}
 
 
 
@@ -884,7 +884,7 @@ extern "C" void CActorState_setObjStateBit3__Q22cf11CActorStateFv(cf::CActorStat
 
 
 
-extern "C" u8* CBattleState_getStagingRecord__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
+extern "C" u8* CBattleState_getStagingRecord__Q22cf12CBattleStateFUl(cf::CBattleState* self, unsigned long index) {
     return ((cf::CBattleState*)self)->unk152C + (index << 4);
 }
 
@@ -905,32 +905,32 @@ extern "C" u8* CBattleState_getEntryArray__Q22cf12CBattleStateFv(cf::CBattleStat
 // us-800b0404: retail copies 0x1520 bytes (0x2a4 * 8) from src to this->unk8
 // (offset 0x8) with a counted lwzu/stwu loop - full struct assignment of the
 // 0x1520-byte block at CBattleState+0x8.
-extern "C" void CBattleState_copyStatusEntries__Q22cf12CBattleStateFv(cf::CBattleState* self, const cf::CBattleState* src) {
+extern "C" void CBattleState_copyStatusEntries__Q22cf12CBattleStateFPCQ22cf12CBattleState(cf::CBattleState* self, const cf::CBattleState* src) {
     *(cf::CBattleStateUnk1520Block*)self->unk8 = *(const cf::CBattleStateUnk1520Block*)src;
 }
 
 
 
-extern "C" void CBattleState_getStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+extern "C" void CBattleState_getStatusEntry__Q22cf12CBattleStateFi(cf::CBattleState* self) {
     self->CBattleState_readStatusSlot();
 }
 
 
 
-extern "C" void CBattleState_getEventEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+extern "C" void CBattleState_getEventEntry__Q22cf12CBattleStateFi(cf::CBattleState* self) {
     self->CBattleState_getEventSlot();
 }
 
 
 
-extern "C" void CBattleState_fetchStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+extern "C" void CBattleState_fetchStatusEntry__Q22cf12CBattleStateFi(cf::CBattleState* self) {
     self->CBattleState_fetchStatusSlot();
 }
 
 
 
 // UVF13 is Fi; keep r4 live into the callee (0x10-byte bctr).
-extern "C" void CBattleState_getEntryByIndex__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
+extern "C" void CBattleState_getEntryByIndex__Q22cf12CBattleStateFi(cf::CBattleState* self, int index) {
     self->CBattleState_getStatusSlot(index);
 }
 
@@ -994,7 +994,7 @@ extern "C" void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorP
 // Wave-62: override of CActorParam_resetGaugeEntries (+0x2E4). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CActorParam_UnkVirtualFunc148__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_resetGaugeEntries__Q22cf11CActorParamFv(cf::CActorParam* self) {
     cf::CActorParamUnk1928View* v = (cf::CActorParamUnk1928View*)self;
     v->entries[0].init();
     v->entries[1].init();
@@ -1037,7 +1037,7 @@ extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorPar
 // Wave-62: override of CActorParam_resetStatsSlot (+0x2AC). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CActorParam_UnkVirtualFunc134__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_resetStatsSlot__Q22cf11CActorParamFv(cf::CActorParam* self) {
     *(u8*)((u8*)self + 0x3354) = 0;
 }
 
@@ -1050,7 +1050,7 @@ extern "C" u8 CActorParam_getStatsSlot__Q22cf11CActorParamFv(cf::CActorParam* se
 
 extern "C" void* CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x31dc); }
 
-extern "C" void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv(cf::CActorParam* self, unsigned long index) { return (u8*)self + index * 0xBC + 0x2A84; }
+extern "C" void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFi(cf::CActorParam* self, unsigned long index) { return (u8*)self + index * 0xBC + 0x2A84; }
 
 
 
@@ -1058,7 +1058,7 @@ extern "C" u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorPar
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
+extern "C" void* CActorParam_getAtkSetBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
 
 
 
@@ -1070,7 +1070,7 @@ extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorP
 // the six 0x88-byte CAttackParam records at self+0x2750 stores strlen at
 // +0x20, strcpy's the +0x00 name and copies the +0x24..+0x80 typed fields
 // (the +0x84 vtable word is skipped).
-extern "C" void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
+extern "C" void CActorParam_copyAtkSetBlock__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneAttackData* src) {
     cf::CfEneAttackArea* dst = (cf::CfEneAttackArea*)self;
     const cf::CfEneAttackEntry* s = &src->records[0];
@@ -1137,7 +1137,7 @@ extern "C" void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
+extern "C" void* CActorParam_getArtsSetBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
 
 
 
@@ -1149,7 +1149,7 @@ extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorP
 // each of the 24 0x8C-byte CArtsParam records at self+0x1A20 stores
 // strlen at +0x20, strcpy's the name and copies the +0x24..+0x80 fields
 // plus the +0x88 word (the +0x84 vtable word is skipped).
-extern "C" void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
+extern "C" void CActorParam_copyArtsSetBlock__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneArtsData* src) {
     cf::CfEneArtsArea* dst = (cf::CfEneArtsArea*)self;
     const volatile cf::CfEneArtsEntry* s = &src->records[0];
@@ -1286,17 +1286,17 @@ extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorP
 // Wave-62: override of CActorParam_refreshBattleAction (+0x230). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv(cf::CActorParam* self) {
+extern "C" void CActorParam_refreshBattleAction__Q22cf11CActorParamFv(cf::CActorParam* self) {
     *(f32*)((u8*)self + 0x15FC) = 0.0f;
 }
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
+extern "C" void* CActorParam_getBonusStats__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc101__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x185c); }
+extern "C" void* CActorParam_getBaseStats__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x185c); }
 
 
 
@@ -1321,7 +1321,7 @@ extern "C" void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
+extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFPCv(cf::CActorParam* self, const void* src) {
     *(ParamCopyBlock*)&self->unk1650 = *(const ParamCopyBlock*)src;
 }
 
@@ -1330,7 +1330,7 @@ extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorPar
 // us-800b0be0: retail symbol is Fv; the real ABI passes (self, val, argA, argB).
 // Forwards to Unk82(val) / Unk90(argA), then the +0x15E0 sub-object to
 // Counter_AddClamped when present (flag = argB).
-extern "C" void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val, u32 argA, u32 argB) {
+extern "C" void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFUlUlUl(cf::CActorParam* self, u32 val, u32 argA, u32 argB) {
     self->CActorParam_addSpentCurrency(val);
     self->CActorParam_addSecondCurrency(argA);
     u8* obj = ((cf::CfActorParam15E0View*)self)->field_0x15E0;
@@ -1341,7 +1341,7 @@ extern "C" void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorPar
 
 
 
-extern "C" u32 CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x1600) + *(u32*)((u8*)self + 0x1604); }
+extern "C" u32 CActorParam_getTotalCurrency__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x1600) + *(u32*)((u8*)self + 0x1604); }
 
 
 
@@ -1361,7 +1361,7 @@ extern "C" void CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv(cf::CActorPar
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1828); }
+extern "C" void* CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFi(cf::CActorParam* self) { return (void*)((u8*)self + 0x1828); }
 
 
 
@@ -1385,27 +1385,27 @@ extern "C" float CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" int CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1616); }
+extern "C" int CActorParam_getSecondGaugeMax__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1616); }
 
 
 
-extern "C" int CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1614); }
+extern "C" int CActorParam_getSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x1614); }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x1614) = val; }
+extern "C" void CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFi(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x1614) = val; }
 
 
 
-extern "C" int CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160e); }
+extern "C" int CActorParam_getGaugeMax__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160e); }
 
 
 
-extern "C" int CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160c); }
+extern "C" int CActorParam_getGauge__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(s16*)((u8*)self + 0x160c); }
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x160C) = val; }
+extern "C" void CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFi(cf::CActorParam* self, u16 val) { *(u16*)((u8*)self + 0x160C) = val; }
 
 
 
@@ -1417,11 +1417,11 @@ extern "C" float CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc49__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f0); }
+extern "C" float CActorParam_getArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x17f0); }
 
 
 
-extern "C" void CActorParam_setTensionPoints__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17f0) = val; }
+extern "C" void CActorParam_setTensionPoints__Q22cf11CActorParamFf(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17f0) = val; }
 
 
 
@@ -1442,7 +1442,7 @@ extern "C" float CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv(cf::CActorPa
 // (lfs f2,cur; lfs f0,min; fadds f1,f2,f1; lfs f2,max; stfs f1); the upper
 // compare is against the max local (fcmpo f1,f2; blelr stores max when the
 // value exceeds it or is unordered).
-extern "C" void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFv(cf::CActorParam* self, float amount) {
+extern "C" void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFf(cf::CActorParam* self, float amount) {
     float min = 0.0f;
     float cur = ((cf::CActorParam17ECView*)self)->field_0x17EC;
     float sum = cur + amount;
@@ -1456,7 +1456,7 @@ extern "C" void CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFv(cf::CActorPar
 
 
 
-extern "C" void CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFv(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17ec) = val; }
+extern "C" void CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFf(cf::CActorParam* self, float val) { *(float*)((u8*)self + 0x17ec) = val; }
 
 
 
@@ -1558,19 +1558,19 @@ extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(cf::CActorParam
 
 
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
+extern "C" u32 CfObjectModel_getModelVisible__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
 
 
 
-extern "C" u32 CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(u32*)((u8*)self + 0xB4); }
+extern "C" u32 CfObjectModel_getBindSource__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(u32*)((u8*)self + 0xB4); }
 
 
 
-extern "C" float CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xac); }
+extern "C" float CfObjectModel_getModelRate__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xac); }
 
 
 
-extern "C" float CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xa8); }
+extern "C" float CfObjectModel_getModelFloatA8__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return *(float*)((u8*)self + 0xa8); }
 
 
 
@@ -1582,8 +1582,8 @@ extern "C" u32 CfObjectModel_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObject
 // and forwards hidden r4/f1 (void(void) callees, dtor flag) that no decl can name.
 // Actor-side extern "C" retail wrappers (defined in CfObjectActor.cpp) that
 // these thunks forward to -- must be declared here after W60 renamed them.
-extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg);
-extern "C" void CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value);
+extern "C" void CfObjectMove_setTargetC4Arg__Q22cf13CfObjectActorFUl(cf::CfObjectActor* self, void* arg);
+extern "C" void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value);
 
 extern "C" u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
 
@@ -1599,24 +1599,24 @@ extern "C" u32 CfObjectActor_getActionSrcId__Q22cf13CfObjectActorFv(cf::CfObject
 
 
 
-extern "C" void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+extern "C" void thunk_8_CBattleState_getLinkedActorId__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry(cf::CfObjectActor* self) { CBattleState_getLinkedActorId__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry((char*)self - 0x8); }
 
 
 
-extern "C" void CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+extern "C" void thunk_8_CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry(cf::CfObjectActor* self) { CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry((char*)self - 0x8); }
 
 
 
 
-extern "C" void CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x8); }
+extern "C" void thunk_8_CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CObjectParam_getParamPtr__Q22cf13CfObjectActorFv((char*)self - 0x8); }
 
 
 
-extern "C" void CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+extern "C" void thunk_8_CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CBattleState_getOwner__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
 
 
-extern "C" void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+extern "C" void thunk_8_CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CBattleState_callOwnerObject__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
 
 
@@ -1624,8 +1624,8 @@ extern "C" void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObject
 
 
 
-extern "C" void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
-    reinterpret_cast<cf::CfObjectActor*>((char*)self - 0x3e9c)->cf::CfObjectActor::CfObjectActor_readFacingAngle();
+extern "C" void thunk_3E9C_CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+    reinterpret_cast<cf::CfObjectActor*>((char*)self - 0x3e9c)->cf::CfObjectActor::CfObject_getMoveHeadAngle();
 }
 
 
@@ -1634,19 +1634,19 @@ extern "C" void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* 
 
 
 
-extern "C" void CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+extern "C" void thunk_3E9C_CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
 
 
-extern "C" void CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x3e9c); }
+extern "C" void thunk_3E9C_CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CObjectParam_getParamPtr__Q22cf13CfObjectActorFv((char*)self - 0x3e9c); }
 
 
 
-extern "C" void CfObjectMove_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+extern "C" void thunk_3E9C_CfObjectMove_setTargetC4Arg__Q22cf13CfObjectActorFUl(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectMove_setTargetC4Arg__Q22cf13CfObjectActorFUl)((char*)self - 0x3e9c); }
 
 
 
-extern "C" void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+extern "C" void thunk_3E9C_CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObject_pushRefreshValue__Q22cf13CfObjectActorFf)((char*)self - 0x3e9c); }
 
 
 

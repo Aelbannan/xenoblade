@@ -5,6 +5,8 @@
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
 
 /*
  * System window process (singleton, created by SysWinCreateSingleton).
@@ -76,7 +78,6 @@ struct CSystemWindow {
 extern "C" {
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
@@ -98,8 +99,6 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // C++-linkage helpers - MWCC mangles these to the retail symbols
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / playUISound__FUl.
-void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
-void playUISound(u32 op);
 
 // Singleton factory (typed to __ct__CSystemWindow args).
 extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,

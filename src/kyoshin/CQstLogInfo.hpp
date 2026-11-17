@@ -7,6 +7,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 // const float: MWCC hoists the SDA21 load into the prologue (pos 2) like
@@ -19,19 +22,13 @@ struct CFileHandle;
 struct CEventFile;
 
 // C-linkage imports used by QstLogInfo_LoadCommonArchive (retail names are unmangled).
-extern "C" u32 SearchThresholdIdx(u16);
 extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // Pane helpers (retail unmangled).
-extern "C" void setPaneVisible(void*, u32);
 
 // BDAT text / name helpers (retail unmangled).
-extern "C" u32 BdatGetItemType(u32);
-extern "C" u32 BdatGetItemId(u32);
-extern "C" void* GetBdatNameByNumId(const char*);
-extern "C" char* CUICfManager_getPackedFont9C();
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 // Font-info lookup (retail pre-mangled name).

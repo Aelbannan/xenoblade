@@ -13,6 +13,10 @@
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/CPresentWinClass.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/CItemBoxGrid_Color.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 class CFileHandle;
 class CEventFile;
 namespace nw4r { namespace lyt {
@@ -388,12 +392,10 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 GridSubMenu_GetOptionCount(void*);  // not yet decompiled (CItemBoxGridSubMenu TU stub)
 extern "C" int isPresentSettled(void*);
-extern "C" void* BuildItemNameStr(u32);
 extern "C" int CSysWin_isActive(void*);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void* CItem_kindPtr(u32, s16);
-extern "C" u32 BdatGetItemType(u32);
 // CfGameManager.hpp (included transitively) now declares the unified
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
@@ -403,15 +405,11 @@ extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 isPresentActive(void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" int getLanguage__9CDeviceSCFv();
-extern "C" char* MakeTplNameSysFile(u32);
 extern "C" int* CtrlObjectParam_GetSlotTableBase(void);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(int);
-extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void closeFileHandle__FPP11CFileHandle(void**);
-extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void sysWinTermLayout(void*);
 extern "C" void dispatchCounterStepBack(void*);
@@ -422,7 +420,6 @@ extern "C" u32 getPresentPath(void*);
 extern "C" void advancePresentState(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
@@ -438,13 +435,10 @@ extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
-extern "C" u8 GetCollectedFlagByte(u32);
-extern "C" u32 LookupItemTypeTable(u32);
 extern "C" int Counter_TestBit(void*, u32);
 extern "C" u32 IdTable_SumValues(void*, u32);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
-extern "C" u8 code80135FDC_getByte_64077();
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
@@ -463,7 +457,6 @@ extern "C" u32 MakeCrystalIsCreated();
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void drawPresentWin(void*, nw4r::lyt::DrawInfo*);
@@ -483,8 +476,6 @@ extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void UIWin_BuildFlagBufRec(u32, u32, u32);
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(void*, u8);
-extern "C" u32 GetU16PairEntry(u16);
-extern "C" u32 SearchThresholdIdx(u16);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
@@ -494,25 +485,12 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void* getPackedFont__Fv(void);
-extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-extern "C" void BuildSlotItemLists(u32);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-// Pane-colour vector returned by value from PaneMatGetS16Quad/PaneMatGetS16QuadByName
-// (r3:r4 pair); same layout as CEquipItemBox.hpp's CEquipBoxFourShorts,
-// defined locally because CEquipItemBox.hpp is not in this TU's include closure.
-struct CEquipBoxFourShorts {
-    s16 a, b, c, d;
-};
-extern "C" CEquipBoxFourShorts PaneMatGetS16QuadByName(void*, const char*, u32);  // returns 4x s16 colour by value (r3:r4 pair)
-extern "C" void CopyVec4s(void*, void*);
-extern "C" CBaseCur* __ct__CCur07(void*, void*);
+ extern "C" CBaseCur* __ct__CCur07(void*, void*);
 extern "C" void __ct__12CItemBoxInfoFUcUs(void*, int, int);
 extern "C" void __ct__CNumSelect(void*, int);
 extern "C" void __ct__CPresentWin(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);
-extern "C" void ItemBlockSetDefaultFlags();
 extern "C" CBaseCur* __ct__CCur09(void*, void*);
 extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" CBaseCur* __ct__CCur11(void*, void*);
@@ -529,7 +507,6 @@ extern "C" void Cur_SetTwoPanes09(void*, CibgVec3, CibgVec3);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);
-extern "C" CEquipBoxFourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 
 // ---- UnequipPartyItem imports/helpers ----

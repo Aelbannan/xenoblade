@@ -12,6 +12,9 @@
 #include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/QstData.hpp"
+#include "kyoshin/CQuestWindow_Pane.hpp"
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager_Res.hpp"
 
 namespace nw4r { namespace math { struct VEC3; } }
 
@@ -118,24 +121,19 @@ extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void Cur_Update(void*);                 // CCur18 per-frame update
 extern "C" void Cur_DrawLayout(void*, void*);
 
-extern "C" u32 SearchThresholdIdx(u16);
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the
 // code_80135FDC.hpp set is co-included for BdatGetPtrDirect/LayoutSetTextBoxFmtValue).
-extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // C++ free functions - MWCC mangles these to the retail names
 // (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii,
 // playUISound__FUl).
-void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void playUISound(u32);          // UI sound effect
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 extern char lbl_eu_80509AB4[];  // string pool (split1 .rodata)

@@ -13,7 +13,7 @@
 #include "kyoshin/menu/CMenuPassiveSkillImports.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CSysWinImports.hpp"
-void playUISound(u32);
+#include "kyoshin/code_80135FDC_State.hpp"
 
 CMenuPassiveSkill::CMenuPassiveSkill(CScn* scene)
     : mScnRef(scene), mBgTex(0), mTitleAHelp(nullptr, 0) {

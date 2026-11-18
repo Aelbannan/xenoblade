@@ -28,12 +28,12 @@ debt to repay, not an accepted end state.
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 13,519 / 19,310 (70.0%) |
+| Functions at 100% | 13,601 / 19,310 (70.4%) (+1 `StrmSound::Setup` after the report) |
 | Units complete (linked) | 617 / 1,191 |
-| Matched code / data bytes | 40.4% / 52.2% |
-| Unmatched functions by area | kyoshin 3,712 · monolib 1,096 · CriWare 405 · nw4r 346 · RVL_SDK 230 · MSL 2 |
-| Faithful hard counts | label 48,460 · mangled_c 2,941 · section 1,458 · offset_cast 6,089 · view_struct 3,228 · rule 276 · rtti_off 20 · foreign_data 643 |
-| Faithful soft counts | field_0x 27,891 · unk_name 1,125 · addr_func 1,013 · noinline 1,880 |
+| Matched code / data bytes | 40.8% / 52.4% |
+| Unmatched functions by area | kyoshin 3,719 · monolib 1,095 · CriWare 367 · nw4r 331 · RVL_SDK 195 · MSL 2 |
+| Faithful hard counts | label 48,075 · mangled_c 2,921 · section 1,444 · offset_cast 6,032 · view_struct 3,215 · rule 276 · rtti_off 19 · foreign_data 633 |
+| Faithful soft counts | field_0x 27,884 · unk_name 1,137 · addr_func 1,013 · noinline 1,872 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
 Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 148/253,
@@ -41,8 +41,9 @@ Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 1
 65/73, `action/CActParamData` 64/178, `CFloorMap` 64/75, `cf/CfGameManager` 62/352,
 `action/CActParamAnim` 61/144, `cf/voice/CCharVoiceMan` 57/60, `CUICfManager` 56/89.
 
-Gate state at the checkpoint commit: link OK, extab OK, text-order OK, frozen rules OK, registry
-OK. Faithful ratchet FAILS on three units (see §5 "Immediate debts").
+Checkpoint commit `a50f9b530`. Gate state: link OK (missing 43), extab OK (27), text-order OK,
+frozen rules OK (269), registry OK. Faithful ratchet FAILS on eight units (see §5 item 0); the
+baseline was deliberately not touched.
 
 ## 3. What this session established (do not re-derive)
 
@@ -161,6 +162,33 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0. **Checkpoint `a50f9b530` debts.**
+   - Faithful ratchet rises: `sfd_tim` 106→112, `CCollepedia` 203→205, `CPassiveSkill` 756→758,
+     `CUIErrMesWin` 41→42, `CMCGetItemBox` 151→153, `CMenuMakeCrystal` 13→14, `CMenuGameClear`
+     9→10, `CMenuGetItemMulti` 970→971. Sweep brief ready: `/tmp/xb/briefs/sweep_icc_syswin.md`
+     (one real `cf::CfGameManager::isClassicController(int = -1)` replacing ~17 per-file
+     `extern "C"` stand-ins — all 189 retail call sites pass -1; owners holding `CSysWin` as raw
+     bytes get a typed member; `sfd_tim` inspected separately). Then `faithful --ratchet`.
+   - `CMenuUpdate` 33→28/36: retail keeps the small accessors out of line and calls the base
+     ctors; `-inline off` fixes the ctor/IUIWindow/IWorkEvent ctors but breaks the placement-new
+     inline in `SpawnProcessForMode`/`RebindLayout`. Hypothesis: helpers defined after first use.
+   - CriWare `gcci.c` (agent hit the usage limit mid-rewrite): 10/17, `.data` 0x68 table not
+     emitted, `.rodata` 0x290 vs 0x228. WIP copy `/tmp/xb/libs_cri3/wip/gcci.c.wip`.
+   - `snd_StrmPlayer` 36/45: remaining 9 functions with hypotheses in
+     `/tmp/xb/glm_nw4r/HANDOFF.md`. The GLM work used ogws (Wii Sports decomp) source shapes —
+     needs a legal check against PLAN §2 before anything leaves this fork.
+   - `CLibCri.cpp` hand-defines `__vt__Q34nw4r3g3d8ScnGroup[8]`, which is really CLibCri's RTTI
+     base list (retail `lbl_eu_8056CF28`); data matches, name is wrong. Fix with a real CLibCri class.
+   - g3d `Scn*` type-name strings are scaffolding labels and the US `.rodata` splits are wrong
+     (JP is right: scnobj 0x30, scnroot 0x10, scnmdlsmpl 0x18, …).
+   - `CView` ctor 84.37→84.07 (correctness fix, accepted); `CMenuItemExchange` extabindex noise.
+   - Not yet converted to the real `IUIWindow`: `CMenuKizunaTalk`, `CUIWindowManager`'s local
+     copy, `CQuestWindow`'s own struct, the `CSysWin`/`CSystemWindow`/`CTalkWindow`/`CMiniMap`
+     hand-vtable family; `LODMemMan` (three distinct classes, needs per-function classification).
+   - cf leaf state and the CfObject slot canonicalisation blocker: `/tmp/xb/cfleaf2/NOTES.md`,
+     `BLOCKER.md` (15 base-slot stubs still undefined; `mineUpdateAll` 9.8→9.3; CfResTboxImpl
+     `.data` region holds four classes' data and needs a splits decision).
 
 1. **cf leaf work was interrupted twice** (API timeout, then usage limit) with edits on disk and no
    final report. State: tree builds and links; `CfObjectObj` 22→26 and `CfObjectPoint` 31→34 on

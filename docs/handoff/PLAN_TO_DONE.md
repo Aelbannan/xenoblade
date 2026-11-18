@@ -24,26 +24,26 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-18, HEAD of `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 3 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 13,601 / 19,310 (70.4%) (+1 `StrmSound::Setup` after the report) |
+| Functions at 100% | 13,811 / 19,310 (71.5%) — checkpoint 2 was 13,601 |
 | Units complete (linked) | 617 / 1,191 |
-| Matched code / data bytes | 40.8% / 52.4% |
-| Unmatched functions by area | kyoshin 3,719 · monolib 1,095 · CriWare 367 · nw4r 331 · RVL_SDK 195 · MSL 2 |
-| Faithful hard counts | label 48,075 · mangled_c 2,921 · section 1,444 · offset_cast 6,032 · view_struct 3,215 · rule 276 · rtti_off 19 · foreign_data 633 |
-| Faithful soft counts | field_0x 27,884 · unk_name 1,137 · addr_func 1,013 · noinline 1,872 |
+| Matched code / data bytes | 41.3% / 52.5% |
+| Unmatched functions by area | kyoshin 3,654 · monolib 1,048 · CriWare 343 · nw4r 257 · RVL_SDK 195 · MSL 2 |
+| Faithful hard counts | label 47,357 · mangled_c 2,848 · section 1,425 · offset_cast 5,162 · view_struct 3,195 · rule 276 · rtti_off 19 · foreign_data 605 |
+| Faithful soft counts | field_0x 28,056 · unk_name 1,139 · addr_func 1,013 · noinline 1,870 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
 Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 148/253,
 `cf/CItem` 91/169, `cf/CfRes` 70/224, `cf/CfCam` 69/181, `CArtsInfo` 66/93, `plugin/pluginCfs`
-65/73, `action/CActParamData` 64/178, `CFloorMap` 64/75, `cf/CfGameManager` 62/352,
-`action/CActParamAnim` 61/144, `cf/voice/CCharVoiceMan` 57/60, `CUICfManager` 56/89.
+65/73, `action/CActParamData` 64/178, `CFloorMap` 64/75, `cf/CfGameManager` 63/352,
+`action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109.
 
-Checkpoint commit `a50f9b530`. Gate state: link OK (missing 43), extab OK (27), text-order OK,
-frozen rules OK (269), registry OK. Faithful ratchet FAILS on eight units (see §5 item 0); the
-baseline was deliberately not touched.
+Gate state at checkpoint 3: link OK (missing 43, ratcheted), extab OK (27, ratcheted), text-order OK,
+frozen rules OK (269), registry OK, faithful OK (ratcheted). Report: `/tmp/xb_ckpt/report_c3.json`.
+NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
 
 ## 3. What this session established (do not re-derive)
 
@@ -162,6 +162,29 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0a. **Checkpoint 3 debts.**
+   - `.sdata2` pool ownership: `CGXCache.cpp` still emits a 0x11B6 "dissolved monolibdata2" array
+     (875 constants) that ~80 units reach via `extern lbl_eu_*`; ~95% are really each unit's own
+     literals. Re-homing must be done per unit with ✓-set diffing (pool order drives reloc identity).
+     92 constants in 17 split gaps (auto units) are mostly the preceding unit's string tails.
+     Inventory: `/tmp/xb/pool/inventory.md`. CGXCache's `BiasDouble` helper (7 functions) waits on it.
+   - Weak IUIWindow family: aliases `lbl_eu_8052D238` / `lbl_eu_80661ED0` stay in us/eu symbols.txt
+     until the last 12 TUs are converted; `IUIWINDOW_INLINE_DTOR` / `CTTASK_INLINE_DTOR` opt-in header
+     hooks; `CSysWinBuff`/`CSysWinSave` `.data` regressed MATCH→20-byte diff; `CSystemWindow` vtable
+     collides with `CTagProcessor.cpp`'s hand copy; `@108@OnFileEvent` thunk shape (CQuestWindow,
+     CSysWinBuff); CMenuUpdate `.sdata` needs `__RTTI__Q22cf6CfBdat` odr-use.
+   - `code_804DEDA8` moved to Wii/1.1 (configure.py); ReleaseHandle x3 via s16 entry + inlined s32
+     worker. `SchedAnim_NoOp` is really a 0x238 colour-apply function (stub).
+   - LODMemMan: `teardownG3dObjects` 65.3% (retail does not inline `clearFlagAndResetName`; no
+     source/flag reproduces it); `.data` Panic strings belong to `code_80468434` (splits); RTTI
+     locator/name-string placement costs `.rodata`/`.sdata`.
+   - CColiProc hierarchy (CColiObjCall/CColiResCall) needs three splits changes — agent in flight.
+   - CScnEnvLgtCtrl: hand vtable kept (class model must be split first); data now MATCH.
+   - CCharVoiceMan: flat placeholder names kept as `extern "C"` definitions — revisit as members.
+   - CMenuUpdate: 3 byte-identical functions ✗ on `@stringBase0`; two `__declspec(noinline)`.
+   - lyt_material `.text` +0x6C; gcci_work packing; WUD/WPADHIDParser colour plateau;
+     snd PrepareStrmImpl pool order; hexdiff ADDR16_HA/LO +2 display bug.
 
 0. **Checkpoint `a50f9b530` debts.**
    - Faithful ratchet rises: `sfd_tim` 106→112, `CCollepedia` 203→205, `CPassiveSkill` 756→758,

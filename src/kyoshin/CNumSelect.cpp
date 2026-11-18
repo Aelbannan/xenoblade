@@ -18,7 +18,7 @@
 // Layout/resource helpers used by this TU (code_80135FDC / CUICfManager).
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 // Retail symbol name is a placeholder guess (the call passes -1 in r3).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+#include "kyoshin/cf/CfGameManager.hpp"
 
 /* 'timg' texture record resolved through the shared arc accessor: +0x8 points
  * at a pointer to the {u16 width, u16 height} pair used to size the panes. */
@@ -274,7 +274,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
         LayoutSetTextBoxFmtValue(mpLayout, "txt_close00", closeText, 0);
         LayoutSetTextBoxFmtValue(mpLayout, "txt_close01", closeText, 0);
 
-        const char* key = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? "fileID_2" : "fileID_1";
+        const char* key = (cf::CfGameManager::isClassicController(-1) != 0) ? "fileID_2" : "fileID_1";
         u16 fileId = BdatGetU16ByTableKey("MNU_kyeassign", key, 0x2b);
         char* tplName = MakeTplNameSysFile(fileId);
         CNumSelectTimg* timg =

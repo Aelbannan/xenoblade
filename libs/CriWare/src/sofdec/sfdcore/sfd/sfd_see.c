@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
-s32 SFLIB_CheckHn(void* h);
+s32 SFLIB_CheckHn(SfdHandle* h);
 s32 SFLIB_SetErr(void* h, u32 err_code);
 u32 SFTRN_IsSetup(void* self, u32 idx);
 u32 SFSET_GetCond(void* self, u32 idx);
@@ -11,58 +12,59 @@ s32 SFCON_IsEndcodeSkip(void* self);
 s32 SFHDS_GetMuxVerNum(void* self);
 s32 UTY_MulDiv(s32 a, s32 b, s32 c);
 
-void sfsee_UpdateEByteRate(void* self);
+void sfsee_UpdateEByteRate(SfdHandle* self);
 
-void SFSEE_InitHn(void* self) {
-    *(u32*)((u8*)self + 0x00) = 0;
-    *(u32*)((u8*)self + 0x04) = 0;
-    *(u32*)((u8*)self + 0x08) = -3;
-    *(u32*)((u8*)self + 0x0C) = 1;
+void SFSEE_InitHn(SfdSee* see) {
+    see->avplay = NULL;
+    see->field_0x004 = 0;
+    see->seekTime = -3;
+    see->seekTimeUnit = 1;
 }
 
-s32 SFD_EntrySeek(void* self, s32 seekPos) {
+s32 SFD_EntrySeek(SfdHandle* self, void* seekData) {
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(NULL, 0xFF000151);
     }
-    *(s32*)((u8*)self + 0x2670) = seekPos;
+    self->see.avplay = seekData;
     return 0;
 }
 
-void SFSEE_FixAvPlay(void *arg, int arg2, int arg3) {
-    void *ptr = *(void**)((char*)arg + 0x2670);
-    if (ptr == NULL) return;
-    if (*(int*)((char*)ptr + 0xdb8) < 0) {
-        *(int*)((char*)ptr + 0xdb8) = arg2;
+void SFSEE_FixAvPlay(SfdHandle* self, int arg2, int arg3) {
+    SfdAvp* avplay = self->see.avplay;
+
+    if (avplay == NULL) return;
+    if (avplay->fixTime < 0) {
+        avplay->fixTime = arg2;
     }
-    if (*(int*)((char*)ptr + 0xdbc) < 0) {
-        *(int*)((char*)ptr + 0xdbc) = arg3;
+    if (avplay->fixSize < 0) {
+        avplay->fixSize = arg3;
     }
 }
 
-void sfsee_ExecHeadAnaly(void* self);
-void sfsee_ExecFinAnaly(void* self);
+void sfsee_ExecHeadAnaly(SfdHandle* self);
+void sfsee_ExecFinAnaly(SfdHandle* self);
 
-void SFSEE_ExecServer(void* self) {
-    if (*(u32*)((u8*)self + 0x2670) != 0) {
+void SFSEE_ExecServer(SfdHandle* self) {
+    if (self->see.avplay != NULL) {
         sfsee_ExecHeadAnaly(self);
         sfsee_ExecFinAnaly(self);
     }
 }
 
-void sfsee_ExecHeadAnaly(void* self) {
+void sfsee_ExecHeadAnaly(SfdHandle* self) {
     s32 setup3_flag;
     s32 setup2_flag;
     s32 ok1;
     s32 ok2;
     s32 st;
-    void* avplay = *(void**)((u8*)self + 0x2670);
+    SfdAvp* avplay = self->see.avplay;
     s32 r3, r4;
 
-    if (*(s32*)avplay != 0) return;
+    if (avplay->state != 0) return;
 
     if (SFTRN_IsSetup(self, 3) != 0 && (s32)SFSET_GetCond(self, 6) == 1) {
         setup3_flag = 1;
-        if (*(s32*)((u8*)avplay + 0xD0C) == 0)
+        if (avplay->vidSeek == 0)
             ok1 = 1;
         else
             ok1 = 0;
@@ -74,7 +76,7 @@ void sfsee_ExecHeadAnaly(void* self) {
 
     if (SFTRN_IsSetup(self, 2) != 0 && (s32)SFSET_GetCond(self, 5) == 1) {
         setup2_flag = 1;
-        if (*(s32*)((u8*)avplay + 0xAD0) == 0)
+        if (avplay->audSeek == 0)
             ok2 = 1;
         else
             ok2 = 0;
@@ -86,209 +88,187 @@ void sfsee_ExecHeadAnaly(void* self) {
 
     st = SFTRN_IsSetup(self, 1);
     if ((u32)(-st | st) >> 31) {
-        *(s32*)((u8*)avplay + 0x8A0) = 1;
+        avplay->mpsHd.state = 1;
         {
-            if (*(s32*)((u8*)avplay + 0x0C) != 0 && *(s32*)((u8*)avplay + 0x18) > 0) {
-                s32 fileSize = *(s32*)((u8*)avplay + 0xDC4);
-                s32 totalSize = *(s32*)((u8*)avplay + 0x40);
+            if (avplay->hdrImage != 0 && avplay->hdrByteRate > 0) {
+                s32 fileSize = avplay->fileSize;
+                s32 totalSize = avplay->hdrTotalSize;
                 if (fileSize > 0 && totalSize > 0) {
                     r3 = UTY_MulDiv(fileSize, 1000, totalSize);
                 } else {
-                    r3 = *(s32*)((u8*)avplay + 0x18);
+                    r3 = avplay->hdrByteRate;
                 }
-            } else if (*(s32*)((u8*)avplay + 0x0C) != 0) {
+            } else if (avplay->hdrImage != 0) {
                 s32 muxVer = SFHDS_GetMuxVerNum(self);
                 if (muxVer < 0x6C) {
                     /* fixed-point conversion via reciprocal multiply */
-                    u32 m = *(u32*)((u8*)avplay + 0x8A4) << 11;
+                    u32 m = avplay->mpsHd.picRate << 11;
                     s32 hi = __mulhw((s32)0x81E722C3, (s32)m);
                     s32 x = (hi + (s32)m) >> 10;
                     r3 = x + ((u32)x >> 31);
                 } else {
-                    r3 = *(s32*)((u8*)avplay + 0x8A4);
+                    r3 = avplay->mpsHd.picRate;
                 }
             } else {
-                r3 = *(s32*)((u8*)avplay + 0x8A4);
+                r3 = avplay->mpsHd.picRate;
             }
         }
-        r4 = *(s32*)((u8*)avplay + 0x8A8);
+        r4 = avplay->mpsHd.timeUnit;
     } else if (setup2_flag) {
-        r3 = *(s32*)((u8*)avplay + 0xAD4);
-        r4 = *(s32*)((u8*)avplay + 0xAD8);
+        r3 = avplay->audByteRate;
+        r4 = avplay->audTimeUnit;
     } else if (setup3_flag) {
-        r3 = *(s32*)((u8*)avplay + 0xD10);
-        r4 = *(s32*)((u8*)avplay + 0xD14);
+        r3 = avplay->vidByteRate;
+        r4 = avplay->vidTimeUnit;
     } else {
         return;
     }
 
-    *(s32*)((u8*)avplay + 0x04) = r3;
-    *(s32*)((u8*)avplay + 0x08) = r4;
-    *(s32*)avplay = 1;
+    avplay->byteRate = r3;
+    avplay->timeUnit = r4;
+    avplay->state = 1;
     sfsee_UpdateEByteRate(self);
 }
 
-s32 SFD_SetFileSize(void* self, s32 fileSize) {
-    void* avplay;
+s32 SFD_SetFileSize(SfdHandle* self, s32 fileSize) {
+    SfdAvp* avplay;
+
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(NULL, 0xFF000159);
     }
-    avplay = *(void**)((u8*)self + 0x2670);
+    avplay = self->see.avplay;
     if (avplay == NULL) {
         return 0;
     }
-    *(s32*)((u8*)avplay + 0xDC4) = fileSize;
+    avplay->fileSize = fileSize;
     sfsee_UpdateEByteRate(self);
     return 0;
 }
 
-s32 SFD_SetTotTime(void* self, s32 timeHi, s32 timeLo) {
-    void* avplay;
+s32 SFD_SetTotTime(SfdHandle* self, s32 timeHi, s32 timeLo) {
+    SfdAvp* avplay;
+
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(NULL, 0xFF00015A);
     }
-    avplay = *(void**)((u8*)self + 0x2670);
+    avplay = self->see.avplay;
     if (avplay == NULL) {
         return 0;
     }
-    *(s32*)((u8*)avplay + 0xDC8) = timeHi;
-    *(s32*)((u8*)avplay + 0xDCC) = timeLo;
+    avplay->totalSize = timeHi;
+    avplay->totalTime = timeLo;
     sfsee_UpdateEByteRate(self);
     return 0;
 }
 
-s32 SFD_SetByteRate(void* self, s32 byteRate) {
-    void* avplay;
+s32 SFD_SetByteRate(SfdHandle* self, s32 byteRate) {
+    SfdAvp* avplay;
+
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(NULL, 0xFF00015B);
     }
-    avplay = *(void**)((u8*)self + 0x2670);
+    avplay = self->see.avplay;
     if (avplay == NULL) {
         return 0;
     }
-    *(s32*)((u8*)avplay + 0xDD0) = byteRate;
+    avplay->setByteRate = byteRate;
     sfsee_UpdateEByteRate(self);
     return 0;
 }
 
-s32 SFD_SetSeekPos(void* self, s32 seekPos) {
-    void* avplay;
-    
+s32 SFD_SetSeekPos(SfdHandle* self, s32 seekPos) {
+    SfdAvp* avplay;
+
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(NULL, 0xFF00015C);
     }
-    avplay = *(void**)((u8*)self + 0x2670);
+    avplay = self->see.avplay;
     if (avplay == NULL) {
         return 0;
     }
-    *(s32*)((u8*)avplay + 0xDD4) = seekPos;
+    avplay->seekPos = seekPos;
     return 0;
 }
 
 // Fin analysis: once decoding is finishing up, accumulate the final playback
 // position/time into the avplay handle from the seek target or stream header.
-
-// View of the avplay handle fields used here.
-struct SfdAvp;
-struct SfdAvp {
-    u8 pad0[0xDAC];
-    s32 field_0xDAC;
-    s32 field_0xDB0;
-    s32 field_0xDB4;
-    u8 pad1[0xDD4 - 0xDB8];
-    s32 field_0xDD4;
-};
-
-// Channel status entry indexed by field_0x1FEC * 0x74.
-struct SfdSeeChEnt {
-    u8 pad[0x1408];
-    s32 field_0x1408;
-};
-
-// Per-channel record indexed by field_0x1408 * 0x44 into the table at 0x1FD8.
-struct SfdSeeChRec {
-    u8 pad[0x20];
-    s32 field_0x20;
-};
-
-void sfsee_ExecFinAnaly(void* self) {
-    u8* sub = (u8*)self + 0x2674;
-    struct SfdAvp* p = *(struct SfdAvp**)(sub - 4);
+void sfsee_ExecFinAnaly(SfdHandle* self) {
+    SfdAvp* p = self->see.avplay;
     s32 flag = 0;
 
     if (SFCON_IsEndcodeSkip(self) != 0)
         return;
 
-    if (p->field_0xDAC <= 0) {
+    if (p->finTime <= 0) {
         s32 v6;
 
-        if (*(s32*)(sub + 4) == -3)
+        if (self->see.seekTime == -3)
             v6 = 0;
         else
-            v6 = p->field_0xDD4;
+            v6 = p->seekPos;
         if (v6 >= 0) {
             // Look up the current channel's remaining duration; only apply it
             // when the header carried a valid (non-negative) value.
             s32 r0 = -1;
-            struct SfdSeeChEnt* ent = (struct SfdSeeChEnt*)((u8*)self + *(s32*)((u8*)self + 0x1FEC) * 0x74);
-            struct SfdSeeChRec* rec = (struct SfdSeeChRec*)((u8*)self + 0x1FD8 + ent->field_0x1408 * 0x44);
-            s32 v = rec->field_0x20;
+            SfdBuf* slot = &self->buf[self->trn[0].termIdx];
+            SfdTrn* trn = &self->trn[slot->outTrn];
+            s32 v = trn->field_0x20;
             if (v >= 0)
                 r0 = v;
             if (r0 != -1) {
-                p->field_0xDAC = v6 + r0;
+                p->finTime = v6 + r0;
                 flag = 1;
             }
         }
     }
-    if (p->field_0xDB0 <= 0 && *(s32*)((u8*)self + 0xE50) > 0) {
-        p->field_0xDB0 = *(s32*)((u8*)self + 0xE50);
+    if (p->finSize <= 0 && self->tim.tcB.ttime > 0) {
+        p->finSize = self->tim.tcB.ttime;
         flag = 1;
-        p->field_0xDB4 = *(s32*)((u8*)self + 0xE54);
+        p->finTimeUnit = self->tim.tcB.ftime;
     }
 
     if (flag)
         sfsee_UpdateEByteRate(self);
 }
 
-void sfsee_UpdateEByteRate(void* self) {
-    void* avplay = *(void**)((u8*)self + 0x2670);
-    s32 byteRate = *(s32*)((u8*)avplay + 0xDD0);
-    
+void sfsee_UpdateEByteRate(SfdHandle* self) {
+    SfdAvp* avplay = self->see.avplay;
+    s32 byteRate = avplay->setByteRate;
+
     if (byteRate > 0) {
-        *(s32*)((u8*)avplay + 0xDA8) = byteRate;
+        avplay->eByteRate = byteRate;
         return;
     }
-    
+
     {
-        s32 fileSize = *(s32*)((u8*)avplay + 0xDC4);
-        s32 totalSize = *(s32*)((u8*)avplay + 0xDC8);
-        s32 totalTime = *(s32*)((u8*)avplay + 0xDCC);
-        
+        s32 fileSize = avplay->fileSize;
+        s32 totalSize = avplay->totalSize;
+        s32 totalTime = avplay->totalTime;
+
         if (fileSize > 0 && totalSize > 0) {
-            *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalTime, totalSize);
+            avplay->eByteRate = UTY_MulDiv(fileSize, totalTime, totalSize);
             return;
         }
-        
+
         {
-            s32 headerRate = *(s32*)((u8*)avplay + 0x04);
+            s32 headerRate = avplay->byteRate;
             if (headerRate > 0) {
-                *(s32*)((u8*)avplay + 0xDA8) = headerRate;
+                avplay->eByteRate = headerRate;
                 return;
             }
-            
+
             if (fileSize <= 0) {
-                fileSize = *(s32*)((u8*)avplay + 0xDAC);
+                fileSize = avplay->finTime;
             }
             if (totalSize <= 0) {
-                totalSize = *(s32*)((u8*)avplay + 0xDB0);
-                totalTime = *(s32*)((u8*)avplay + 0xDB4);
+                totalSize = avplay->finSize;
+                totalTime = avplay->finTimeUnit;
             }
-            
+
             if (fileSize > 0 && totalSize > 0) {
-                *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalTime, totalSize);
+                avplay->eByteRate = UTY_MulDiv(fileSize, totalTime, totalSize);
             } else {
-                *(s32*)((u8*)avplay + 0xDA8) = headerRate;
+                avplay->eByteRate = headerRate;
             }
         }
     }

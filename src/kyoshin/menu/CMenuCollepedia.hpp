@@ -88,7 +88,6 @@ extern "C" void clpCursorUp(CCollepedia* self);
 extern "C" void clpCursorDown(CCollepedia* self);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol
 // (the no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Flat pad-data view exposing only the flag words Colle_HandleInput reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at

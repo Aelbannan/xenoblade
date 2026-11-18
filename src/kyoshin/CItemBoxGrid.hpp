@@ -491,7 +491,6 @@ extern "C" void MenuShopSellCopyData(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 
 // ---- UnequipPartyItem imports/helpers ----
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);

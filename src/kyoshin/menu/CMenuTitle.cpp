@@ -100,7 +100,6 @@ CMenuTitle* CMenuTitle::create(CProcess* parent, CScn* scene, CTitleAction* acti
 // CfGameManager one-arg controller-type query, kept as the retail mangled
 // C symbol (extern "C" stops C++ `__Fi` param mangling). The inline header
 // wrapper drops the -1 argument, so it cannot be used here.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int controllerType);
 void CMenuTitle::stateSetReady() { mState = 1; }
 
 void CMenuTitle::stateOnLoadDone() {
@@ -128,7 +127,7 @@ void CMenuTitle::statePollPress() {
 
     // The activation mask differs between controller types: classic controllers
     // add the right-stick trigger bits (0x1fe0060f) to the common button bits.
-    u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? 0x1fe0060fU : 0x1effU;
+    u32 mask = (cf::CfGameManager::isClassicController(-1) != 0) ? 0x1fe0060fU : 0x1effU;
     if (pad->mPadPressedFlags & mask) {
         mState = 5;
         CTitle_beginMenuOutro(&mTitle);
@@ -141,7 +140,7 @@ void CMenuTitle::stateAdvanceProgress() {
     if (CTitle_isAnimDone(&mTitle) == 0) {
         CfPadDataLocal* pad =
             (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
-        u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+        u32 mask = (cf::CfGameManager::isClassicController(-1) != 0)
                        ? 0x1fe0060fU
                        : 0x1effU;
         if (pad->mPadPressedFlags & mask) {
@@ -182,7 +181,7 @@ void CMenuTitle::stateHandleInput() {
         u32 trigger2;
         u32 cancelButton;
         u32 dirButton;
-        s32 controllerType = isClassicController__Q22cf13CfGameManagerFv(-1);
+        s32 controllerType = cf::CfGameManager::isClassicController(-1);
         if (controllerType != 0) {
             // Classic controller: trigger bits 21, 22 from right.
             turbo = pad->mTurboPressButtonFlags;

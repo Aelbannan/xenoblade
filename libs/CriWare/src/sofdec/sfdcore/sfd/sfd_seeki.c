@@ -7,6 +7,7 @@
 // software-filter trace callback (lbl_eu_80606E34, vtable slot 9).
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 extern void *lbl_eu_80606E34;
 
@@ -14,43 +15,19 @@ extern void *lbl_eu_80606E34;
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051CEC0[0x20] = {"before seeki\x00""after seeki\x00""\x00""\x00""\x00""\x00""\x00""\x00"}; // off 0x0
 
 /* ------------------------------------------------------------------ */
-/* Seek-skip control block                                            */
-/* ------------------------------------------------------------------ */
-
-/* Embedded in the player handle at +0x2680; SFSEEKI_InitHn() clears it. */
-typedef struct SfseekiHn {
-    u32 skipCount;          /* 0x00 - frames still to skip */
-    u32 field_0x04;         /* 0x04 */
-    u32 field_0x08;         /* 0x08 - seek target */
-    u32 field_0x0C;         /* 0x0C */
-    u32 field_0x10;         /* 0x10 */
-    u32 field_0x14;         /* 0x14 */
-    u32 field_0x18;         /* 0x18 - seek target */
-} SfseekiHn;                /* 0x1C bytes */
-
-/* Player-handle view covering the fields the seek logic reads. */
-typedef struct SfplyHnSeekiView {
-    u8 pad_0x00[0x960];
-    u32 field_0x960;        /* 0x960 */
-    u32 field_0x964;        /* 0x964 */
-    u8 pad_0x968[0x2680 - 0x968];
-    SfseekiHn seeki;        /* 0x2680 */
-} SfplyHnSeekiView;
-
-/* ------------------------------------------------------------------ */
 /* SFSEEKI_InitHn                                                      */
 /* ------------------------------------------------------------------ */
 
-/* Clear the seek-skip control block (player handle +0x2680).
+/* Clear the seek-skip control block (SfdHandle::seeki).
    Store order mirrors the retail codegen. */
-void SFSEEKI_InitHn(SfseekiHn* hn) {
-    hn->skipCount = 0;      /* 0x00 */
-    hn->field_0x18 = 0;     /* 0x18 */
-    hn->field_0x04 = 0;     /* 0x04 */
-    hn->field_0x08 = 0;     /* 0x08 */
-    hn->field_0x0C = 0;     /* 0x0C */
-    hn->field_0x10 = 0;     /* 0x10 */
-    hn->field_0x14 = 0;     /* 0x14 */
+void SFSEEKI_InitHn(SfdSeeki* sk) {
+    sk->skipCount = 0;      /* 0x00 */
+    sk->targetEnd = 0;      /* 0x18 */
+    sk->field_0x04 = 0;     /* 0x04 */
+    sk->targetTime = 0;     /* 0x08 */
+    sk->field_0x0c = 0;     /* 0x0C */
+    sk->field_0x10 = 0;     /* 0x10 */
+    sk->field_0x14 = 0;     /* 0x14 */
 }
 
 /* ------------------------------------------------------------------ */
@@ -63,7 +40,7 @@ typedef struct SfseekiCbArg {
     u32 field_0x0;          /* 0x00 */
     u32 base;               /* 0x04 - &base is passed as the callback's 2nd arg */
     u32 field_0x8;          /* 0x08 */
-    SfplyHnSeekiView* hn;   /* 0x0C - player handle */
+    SfdHandle* hn;          /* 0x0C - player handle */
     u32 field_0x10;         /* 0x10 */
     u32 field_0x14;         /* 0x14 */
     char* str;              /* 0x18 - trace label */
@@ -110,13 +87,13 @@ extern SfseekiCbArg lbl_eu_80568CF0;
    dropped. While the seek target has not been reached it fills the shared
    trace entry (lbl_eu_80568CF0) and dispatches the software-filter trace
    callback with the "before seeki" / "after seeki" label. */
-int SFSEEKI_IsSkip(SfplyHnSeekiView* hn, u32* outSkipCount) {
+int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
     *outSkipCount = hn->seeki.skipCount;
     if (hn->seeki.skipCount == 0) {
         return 0;
     }
 
-    if (hn->field_0x964 < hn->seeki.field_0x18) {
+    if (hn->field_0x0964 < hn->seeki.targetEnd) {
         /* seek target not reached yet: keep dropping frames */
         if (lbl_eu_80606E34 != NULL) {
             SfseekiCtx* ctx = (SfseekiCtx*)lbl_eu_80606E34;
@@ -128,7 +105,7 @@ int SFSEEKI_IsSkip(SfplyHnSeekiView* hn, u32* outSkipCount) {
         return 1;
     }
 
-    if (hn->field_0x960 >= hn->seeki.field_0x08) {
+    if (hn->field_0x0960 >= hn->seeki.targetTime) {
         /* seek target passed: keep dropping frames */
         if (lbl_eu_80606E34 != NULL) {
             SfseekiCtx* ctx = (SfseekiCtx*)lbl_eu_80606E34;

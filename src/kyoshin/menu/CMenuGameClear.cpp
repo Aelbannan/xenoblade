@@ -25,20 +25,9 @@
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
 #include "kyoshin/CSysWin.hpp"
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+#include "kyoshin/cf/CfGameManager.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
-
-// CfGameManager view for this TU (full header conflicts with CtrlObjectParam.hpp
-// data declarations).
-namespace cf {
-class CfGameManager {
-public:
-    static u32* getCfPadData();                 // getCfPadData__Q22cf13CfGameManagerFv
-    static int isClassicController(int arg);          // isClassicController__Q22cf13CfGameManagerFv
-    static void enablePadFlags(u32 flags, bool enable); // enablePadFlags__..FUlb
-};
-} // namespace cf
 
 // cf pad data view used by the input handlers (fields at +0x04/+0x104).
 struct CfPadDataView {
@@ -61,9 +50,6 @@ void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
 extern u32 lbl_eu_80664C10;              // game-clear state word (.sbss)
 extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
 
-// CSysWin / cursor helper imports (retail-unmangled C symbols; declared here
-// because the defining headers are not includable from this TU).
-extern "C" void* getCfPadData__Q22cf13CfGameManagerFv();
 
 // CMenuGameClear singleton storage.
 CMenuGameClear* CMenuGameClear::sInstance;
@@ -117,7 +103,7 @@ void CMenuGameClear::Term() {
 
     mScene->removeRenderCB(this);
 
-    reinterpret_cast<CSysWin*>(&mSysWin)->termLayout();
+    mSysWin.termLayout();
     ((CBaseCur*)&mCursor)->cleanup();
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion);
 
@@ -154,7 +140,7 @@ body:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
-        reinterpret_cast<CSysWin*>(&mSysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+        mSysWin.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
         mCursor.DrawLayout(&drawInfo);
     }
 }
@@ -168,12 +154,12 @@ extern "C" unsigned long ClearMenu_IsPresent() {
 // bit21/bit27 of +0x04 (port-dependent) is the confirm stroke, 0x8004 moves
 // the cursor up, bits 15/28 move it down.
 extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
-    CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
+    CfPadDataView* pad = (CfPadDataView*)cf::CfGameManager::getCfPadData();
     u32 buttons;
     int dirBit;
     int down;
     int up;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         buttons = pad->field_104;
         dirBit = (pad->field_04 >> 21) & 1;
         down = (buttons & 0x8004) != 0;
@@ -187,7 +173,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 4;
-        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
+        self->mSysWin.advancePhase3();
         self->mCursor.SetVisible(0);
         playUISound(3);
     } else if (down != 0) {
@@ -195,7 +181,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -203,19 +189,19 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
 
 extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
-    CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
+    CfPadDataView* pad = (CfPadDataView*)cf::CfGameManager::getCfPadData();
     u32 buttons;
     int dirBit;
     int down;
     int up;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         buttons = pad->field_104;
         dirBit = (pad->field_04 >> 21) & 1;
         down = (buttons & 0x8004) != 0;
@@ -229,7 +215,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 8;
-        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
+        self->mSysWin.advancePhase3();
         self->mCursor.SetVisible(0);
         playUISound(3);
     } else if (down != 0) {
@@ -237,7 +223,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -245,7 +231,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), &self->mSysWin, self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }

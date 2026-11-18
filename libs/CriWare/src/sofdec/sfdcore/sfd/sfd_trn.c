@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 struct SFTRN;
 struct SFD_TR_CONFIG;
@@ -40,8 +41,8 @@ typedef struct SFTRN {
 
 extern s32 SFLIB_SetErr(void* h, u32 err_code);
 extern u32 SFSET_SetCond(void* self, u32 idx, u32 val);
-static s32 sftrn_BuildAll(void* self, void* config);
-static void sftrn_BuildSystem(void* self, void* config);
+static s32 sftrn_BuildAll(SfdHandle* self, void* config);
+static void sftrn_BuildSystem(SfdHandle* self, void* config);
 
 s32 SFTRN_Init(SFTRN* self, SFD_TR_CONFIG* config) {
     s32 i;
@@ -109,120 +110,120 @@ s32 SFTRN_InitHn(void* self, void* dst, void* config) {
     return 0;
 }
 
-static s32 sftrn_BuildAll(void* self, void* config) {
+static s32 sftrn_BuildAll(SfdHandle* self, void* config) {
     u32* p = (u32*)config;
     if (p[1] != 0) {
-        *(s32*)((u8*)self + 0x1fec) = 0;
-        *(s32*)((u8*)self + 0x1404) = 0;
+        self->trn[0].termIdx = 0;
+        self->buf[0].inTrn = 0;
         sftrn_BuildSystem(self, config);
     } else if (p[2] != 0) {
-        *(s32*)((u8*)self + 0x1fec) = 1;
-        *(s32*)((u8*)self + 0x1478) = 0;
-        *(s32*)((u8*)self + 0x147c) = 2;
-        *(s32*)((u8*)self + 0x2070) = 1;
-        *(s32*)((u8*)self + 0x2074) = 3;
-        *(s32*)((u8*)self + 0x1560) = 2;
+        self->trn[0].termIdx = 1;
+        self->buf[1].inTrn = 0;
+        self->buf[1].outTrn = 2;
+        self->trn[2].bufIdx = 1;
+        self->trn[2].termIdx = 3;
+        self->buf[3].inTrn = 2;
         if (p[4] != 0) {
-            *(s32*)((u8*)self + 0x1564) = 4;
-            *(s32*)((u8*)self + 0x20f8) = 3;
-            *(s32*)((u8*)self + 0x20fc) = 5;
-            *(s32*)((u8*)self + 0x1648) = 4;
-            *(s32*)((u8*)self + 0x164c) = 6;
-            *(s32*)((u8*)self + 0x2180) = 5;
+            self->buf[3].outTrn = 4;
+            self->trn[4].bufIdx = 3;
+            self->trn[4].termIdx = 5;
+            self->buf[5].inTrn = 4;
+            self->buf[5].outTrn = 6;
+            self->trn[6].bufIdx = 5;
         } else {
-            *(s32*)((u8*)self + 0x1564) = 6;
-            *(s32*)((u8*)self + 0x2180) = 3;
+            self->buf[3].outTrn = 6;
+            self->trn[6].bufIdx = 3;
         }
         SFSET_SetCond(self, 6, 0);
-        *(s32*)((u8*)self + 0xbc4) = 0;
+        self->condBak[6] = 0;
     } else if (p[3] != 0) {
-        *(s32*)((u8*)self + 0x1fec) = 2;
-        *(s32*)((u8*)self + 0x14ec) = 0;
-        *(s32*)((u8*)self + 0x14f0) = 3;
-        *(s32*)((u8*)self + 0x20b4) = 2;
-        *(s32*)((u8*)self + 0x20b8) = 4;
-        *(s32*)((u8*)self + 0x15d4) = 3;
+        self->trn[0].termIdx = 2;
+        self->buf[2].inTrn = 0;
+        self->buf[2].outTrn = 3;
+        self->trn[3].bufIdx = 2;
+        self->trn[3].termIdx = 4;
+        self->buf[4].inTrn = 3;
         if (p[5] != 0) {
-            *(s32*)((u8*)self + 0x15d8) = 5;
-            *(s32*)((u8*)self + 0x213c) = 4;
-            *(s32*)((u8*)self + 0x2140) = 6;
-            *(s32*)((u8*)self + 0x16bc) = 5;
-            *(s32*)((u8*)self + 0x16c0) = 7;
-            *(s32*)((u8*)self + 0x21c4) = 6;
+            self->buf[4].outTrn = 5;
+            self->trn[5].bufIdx = 4;
+            self->trn[5].termIdx = 6;
+            self->buf[6].inTrn = 5;
+            self->buf[6].outTrn = 7;
+            self->trn[7].bufIdx = 6;
         } else {
-            *(s32*)((u8*)self + 0x15d8) = 7;
-            *(s32*)((u8*)self + 0x21c4) = 4;
+            self->buf[4].outTrn = 7;
+            self->trn[7].bufIdx = 4;
         }
         SFSET_SetCond(self, 5, 0);
-        *(s32*)((u8*)self + 0xbc0) = 0;
+        self->condBak[5] = 0;
     } else if (p[8] != 0) {
-        *(s32*)((u8*)self + 0x1fec) = 7;
-        *(s32*)((u8*)self + 0x1730) = 0;
-        *(s32*)((u8*)self + 0x1734) = 8;
-        *(s32*)((u8*)self + 0x2208) = 7;
+        self->trn[0].termIdx = 7;
+        self->buf[7].inTrn = 0;
+        self->buf[7].outTrn = 8;
+        self->trn[8].bufIdx = 7;
         SFSET_SetCond(self, 6, 0);
         SFSET_SetCond(self, 5, 0);
-        *(s32*)((u8*)self + 0xbc4) = 0;
-        *(s32*)((u8*)self + 0xbc0) = 0;
+        self->condBak[6] = 0;
+        self->condBak[5] = 0;
     } else {
         return -1;
     }
     return 0;
 }
 
-static void sftrn_BuildSystem(void* self, void* config) {
+static void sftrn_BuildSystem(SfdHandle* self, void* config) {
     u32* p = (u32*)config;
-    *(s32*)((u8*)self + 0x1408) = 1;
-    *(s32*)((u8*)self + 0x202c) = 0;
+    self->buf[0].outTrn = 1;
+    self->trn[1].bufIdx = 0;
     if (p[2] != 0) {
-        *(s32*)((u8*)self + 0x2030) = 1;
-        *(s32*)((u8*)self + 0x1478) = 1;
-        *(s32*)((u8*)self + 0x147c) = 2;
-        *(s32*)((u8*)self + 0x2070) = 1;
-        *(s32*)((u8*)self + 0x2074) = 3;
-        *(s32*)((u8*)self + 0x1560) = 2;
+        self->trn[1].termIdx = 1;
+        self->buf[1].inTrn = 1;
+        self->buf[1].outTrn = 2;
+        self->trn[2].bufIdx = 1;
+        self->trn[2].termIdx = 3;
+        self->buf[3].inTrn = 2;
         if (p[4] != 0) {
-            *(s32*)((u8*)self + 0x1564) = 4;
-            *(s32*)((u8*)self + 0x20f8) = 3;
-            *(s32*)((u8*)self + 0x20fc) = 5;
-            *(s32*)((u8*)self + 0x1648) = 4;
-            *(s32*)((u8*)self + 0x164c) = 6;
-            *(s32*)((u8*)self + 0x2180) = 5;
+            self->buf[3].outTrn = 4;
+            self->trn[4].bufIdx = 3;
+            self->trn[4].termIdx = 5;
+            self->buf[5].inTrn = 4;
+            self->buf[5].outTrn = 6;
+            self->trn[6].bufIdx = 5;
         } else {
-            *(s32*)((u8*)self + 0x1564) = 6;
-            *(s32*)((u8*)self + 0x2180) = 3;
+            self->buf[3].outTrn = 6;
+            self->trn[6].bufIdx = 3;
         }
     } else {
         SFSET_SetCond(self, 5, 0);
-        *(s32*)((u8*)self + 0xbc0) = 0;
+        self->condBak[5] = 0;
     }
     if (p[3] != 0) {
-        *(s32*)((u8*)self + 0x2034) = 2;
-        *(s32*)((u8*)self + 0x14ec) = 1;
-        *(s32*)((u8*)self + 0x14f0) = 3;
-        *(s32*)((u8*)self + 0x20b4) = 2;
-        *(s32*)((u8*)self + 0x20b8) = 4;
-        *(s32*)((u8*)self + 0x15d4) = 3;
+        self->trn[1].vidIdx = 2;
+        self->buf[2].inTrn = 1;
+        self->buf[2].outTrn = 3;
+        self->trn[3].bufIdx = 2;
+        self->trn[3].termIdx = 4;
+        self->buf[4].inTrn = 3;
         if (p[5] != 0) {
-            *(s32*)((u8*)self + 0x15d8) = 5;
-            *(s32*)((u8*)self + 0x213c) = 4;
-            *(s32*)((u8*)self + 0x2140) = 6;
-            *(s32*)((u8*)self + 0x16bc) = 5;
-            *(s32*)((u8*)self + 0x16c0) = 7;
-            *(s32*)((u8*)self + 0x21c4) = 6;
+            self->buf[4].outTrn = 5;
+            self->trn[5].bufIdx = 4;
+            self->trn[5].termIdx = 6;
+            self->buf[6].inTrn = 5;
+            self->buf[6].outTrn = 7;
+            self->trn[7].bufIdx = 6;
         } else {
-            *(s32*)((u8*)self + 0x15d8) = 7;
-            *(s32*)((u8*)self + 0x21c4) = 4;
+            self->buf[4].outTrn = 7;
+            self->trn[7].bufIdx = 4;
         }
     } else {
         SFSET_SetCond(self, 6, 0);
-        *(s32*)((u8*)self + 0xbc4) = 0;
+        self->condBak[6] = 0;
     }
     if (p[8] != 0) {
-        *(s32*)((u8*)self + 0x2038) = 7;
-        *(s32*)((u8*)self + 0x1730) = 1;
-        *(s32*)((u8*)self + 0x1734) = 8;
-        *(s32*)((u8*)self + 0x2208) = 7;
+        self->trn[1].usrIdx = 7;
+        self->buf[7].inTrn = 1;
+        self->buf[7].outTrn = 8;
+        self->trn[8].bufIdx = 7;
     }
 }
 
@@ -248,20 +249,20 @@ int SFTRN_CallTrtTrif(void* self, int idx, int funcIdx, int* arg4, int arg5) {
     return ((CallTrtFunc)table[funcIdx])(self, arg4, arg5, 0);
 }
 
-void SFTRN_SetPrepFlg(void* self, u32 idx, u32 val) {
-    *(u32*)((u8*)self + 0x1fd8 + idx * 0x44) = val;
+void SFTRN_SetPrepFlg(SfdHandle* self, u32 idx, u32 val) {
+    self->trn[idx].prepFlg = val;
 }
 
-u32 SFTRN_GetPrepFlg(void* self, u32 idx) {
-    return *(u32*)((u8*)self + 0x1fd8 + idx * 0x44);
+u32 SFTRN_GetPrepFlg(SfdHandle* self, u32 idx) {
+    return self->trn[idx].prepFlg;
 }
 
-void SFTRN_SetTermFlg(void* self, u32 idx, u32 val) {
-    *(u32*)((u8*)self + 0x1fdc + idx * 0x44) = val;
+void SFTRN_SetTermFlg(SfdHandle* self, u32 idx, u32 val) {
+    self->trn[idx].termFlg = val;
 }
 
-u32 SFTRN_GetTermFlg(void* self, u32 idx) {
-    return *(u32*)((u8*)self + 0x1fdc + idx * 0x44);
+u32 SFTRN_GetTermFlg(SfdHandle* self, u32 idx) {
+    return self->trn[idx].termFlg;
 }
 
 u32 SFTRN_IsSetup(void* self, u32 idx) {

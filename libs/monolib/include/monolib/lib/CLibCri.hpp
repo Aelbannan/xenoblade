@@ -6,20 +6,22 @@
 #include "monolib/util/CErrorWii.hpp"
 
 //size: 0x1d0
-class __declspec(novtable) CLibCri : public CWorkThread, public CDeviceVICb, public IErrorWii {
+// IErrorWii is an interface base, inherited privately: MWCC lists only public
+// bases in the class's RTTI base list, and retail's list has no IErrorWii entry.
+class CLibCri : public CWorkThread, public CDeviceVICb, IErrorWii {
 public:
     CLibCri(const char* pName, CWorkThread* pParent);
-    ~CLibCri();
+    virtual ~CLibCri();
 
     // CWorkThread virtual overrides
     virtual void wkUpdate();
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
 
-    // CDeviceVICb virtual override (thunk adjusts this -0x1C4)
-    virtual void viBeginFrame();
+    // CDeviceVICb virtual override
+    virtual void viBeforeDrawDone();
 
-    // IErrorWii virtual override (thunk adjusts this -0x1C8)
+    // IErrorWii virtual override
     virtual void errorWiiCB();
 
     static CLibCri* spInstance;
@@ -41,14 +43,14 @@ public:
     void isStreamPaused();
     void startMovie();
     void stopMovie();
+    // Defined in CLibCri.cpp as the retail flat symbol (the retail body swaps
+    // its two incoming register args, which a no-arg member cannot express).
     void setMoviePause();
     void clearMoviePause();
     void isMovieGlobalPaused();
     void isMoviePlaying();
     void renderMovie();
     void getMovieWorkSize();
-    void execCriMain();
-    void onErrorCallback();
 
     static inline CLibCri* create(const char* pName, CWorkThread* pParent){
         CLibCri* lib = new (CWorkThreadSystem::getWorkMem()) CLibCri(pName, pParent);
@@ -60,7 +62,7 @@ public:
     //0x0-1c4: CWorkThread
     //0x1c4-1c8: CDeviceVICb
     //0x1c8-1cc: IErrorWii
-    u32 unk1D0;
+    u32 unk1CC; //0x1cc
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

@@ -1077,7 +1077,7 @@ void CMenuPTState::Move() {
                     cf::CfGameManager::getCurrentPad());
                 int accept;
                 // Retail extracts single bits via rotate-left forms.
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     accept = (pad->buttons >> 23) & 1;
                 } else {
                     accept = (pad->buttons >> 10) & 1;

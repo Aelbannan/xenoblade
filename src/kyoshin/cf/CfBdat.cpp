@@ -112,15 +112,11 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80500FA4[0
     "common/jp/bdat_eve.bin\0"
     "MNU_eve_start\0"
     "MNU_eve_table";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80501388[0x0C] = "face_n01";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80501394[0x0C] = "face_m01";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805013A0[0x0C] = "face_n02";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805013AC[0x0C] = "face_m02";
 
 // Typed .sdata (retail 0x8): "pc1" + pad to section size.
 __declspec(section ".sdata") __attribute__((used, aligned(8))) char lbl_eu_80662228[8] = "pc1";
 
-// Typed .sdata2 (retail 0x60): floats, EXwp tags, face pointers, 2^52, 4.0, 1.0.
+// Typed .sdata2 (retail 0x38): float, empty string, EXwp tags.
 // Struct freezes retail declaration order (MWCC reorders loose floats by first-use).
 struct Sdata2_CfBdat {
     float f0;          // +0x00 lbl_eu_80667368 0.0f (lfs pool)
@@ -131,16 +127,9 @@ struct Sdata2_CfBdat {
     char exH[8];        // +0x20 lbl_eu_80667388 "EXwp_H"
     char exHL[8];       // +0x28 lbl_eu_80667390 "EXwp_HL"
     char exHR[8];       // +0x30 lbl_eu_80667398 "EXwp_HR"
-    float zero2[2];     // +0x38 lbl_eu_806673A0 {0.0f, 0.0f}
-    const char* face[4];// +0x40 lbl_eu_806673A8..B4 -> face_n01/m01/n02/m02
-    double d52;         // +0x50 lbl_eu_806673B8 2^52 (int->double magic)
-    float f4;           // +0x58 lbl_eu_806673C0 4.0f
-    float f1;           // +0x5C lbl_eu_806673C4 1.0f
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_CfBdat sdata2_CfBdat = {
-    0.0f, "", "EXwp_L", "EXwp_R", "EXwp_S", "EXwp_H", "EXwp_HL", "EXwp_HR",
-    {0.0f, 0.0f}, {lbl_eu_80501388, lbl_eu_80501394, lbl_eu_805013A0, lbl_eu_805013AC},
-    4503599627370496.0, 4.0f, 1.0f
+    0.0f, "", "EXwp_L", "EXwp_R", "EXwp_S", "EXwp_H", "EXwp_HL", "EXwp_HR"
 };
 #define lbl_eu_80667368 sdata2_CfBdat.f0
 #define lbl_eu_8066736C sdata2_CfBdat.empty
@@ -150,10 +139,6 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_CfB
 #define lbl_eu_80667388 sdata2_CfBdat.exH
 #define lbl_eu_80667390 sdata2_CfBdat.exHL
 #define lbl_eu_80667398 sdata2_CfBdat.exHR
-#define lbl_eu_806673A0 sdata2_CfBdat.zero2
-#define lbl_eu_806673B8 sdata2_CfBdat.d52
-#define lbl_eu_806673C0 sdata2_CfBdat.f4
-#define lbl_eu_806673C4 sdata2_CfBdat.f1
 
 extern "C" u32 lbl_eu_8052E6F0[10] = {
     (u32)&sdata2_CfBdat.empty, (u32)&sdata2_CfBdat.exL, (u32)&sdata2_CfBdat.exR,

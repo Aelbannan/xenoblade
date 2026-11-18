@@ -457,7 +457,7 @@ u32 scn80496IsComplete(CScn80496B0C* self) {
     if (a->field_0x84[1] != 0 || b->field_0x84[1] != 0) return 0;
     if (nb->field_0x18 != na->field_0x18) return 0;
     // Equality compiled by MWCC as subf/cntlzw/srwi.
-    return !(nb->field_0x14 - na->field_0x14);
+    return nb->field_0x14 == na->field_0x14;
 }
 
 extern "C" u32 scn80496HasChild2Node(u8* self) { return ((CScn80496B0C*)self)->field_0xC->field_0x84[0] != 0; }
@@ -1114,56 +1114,6 @@ __declspec(noinline) void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
     }
 }
 
-// Root-object destructor: tears down both embedded children's node bindings
-// (the +0xC0 child first, the +0x10 child second) and frees the object
-// itself when flags > 0.
-CScn80496B0C* __dt__80496BB4(CScn80496B0C* self, int flags) {
-    if (self != 0) {
-        // MWCC keeps the embedded-child address checks (addic.) from the
-        // inlined release helper's defensive null test.
-        if ((&self->field_0xC0) != 0) {
-            for (u32 i = 0; i < 3; i++) {
-                CScnNode80496B0C* node = self->field_0xC0.field_0x84[i];
-                if (node != 0) {
-                    if (node->field_0x10 != 0) {
-                        self->field_0xC0.field_0x98->Detach(
-                            self->field_0xC0.field_0x90 * 3 + node->field_0x0);
-                        self->field_0xC0.field_0x92--;
-                        node->field_0x10->v11();
-                        ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
-                        node->field_0x10 = 0;
-                    }
-                    node->field_0x18 = 0;
-                    self->field_0xC0.field_0x84[i] = 0;
-                    self->field_0xC0.field_0x9C = ml::CVec3::zero;
-                }
-            }
-        }
-        if ((&self->field_0x10) != 0) {
-            for (u32 i = 0; i < 3; i++) {
-                CScnNode80496B0C* node = self->field_0x10.field_0x84[i];
-                if (node != 0) {
-                    if (node->field_0x10 != 0) {
-                        self->field_0x10.field_0x98->Detach(
-                            self->field_0x10.field_0x90 * 3 + node->field_0x0);
-                        self->field_0x10.field_0x92--;
-                        node->field_0x10->v11();
-                        ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
-                        node->field_0x10 = 0;
-                    }
-                    node->field_0x18 = 0;
-                    self->field_0x10.field_0x84[i] = 0;
-                    self->field_0x10.field_0x9C = ml::CVec3::zero;
-                }
-            }
-        }
-        if (flags > 0) {
-            ::operator delete(self);
-        }
-    }
-    return self;
-}
-
 // Inlined node-release sequence shared by the teardown paths: detaches the
 // bound node from the chr-blend, releases its animation object, and zeroes
 // the anim state.
@@ -1180,6 +1130,43 @@ inline void ScnReleaseChild(CScnChild80496B0C* self, CScnChild80496B0C* walk,
     walk->field_0x84[0] = 0;
     self->field_0x9C = ml::CVec3::zero;
 }
+
+// Root-object destructor: tears down both embedded children's node bindings
+// (the +0xC0 child first, the +0x10 child second) and frees the object
+// itself when flags > 0.
+CScn80496B0C* __dt__80496BB4(CScn80496B0C* self, int flags) {
+    // Locals declared so MWCC allocates node/walk/counter like retail.
+    CScnNode80496B0C* node;
+    CScn80496B0C* walk;
+    u32 i;
+    if (self != 0) {
+        // MWCC keeps the embedded-child address checks (addic.) from the
+        // inlined release helper's defensive null test.
+        if ((&self->field_0xC0) != 0) {
+            for (i = 0, walk = self; i < 3;
+                 i++, walk = (CScn80496B0C*)((u8*)walk + 4)) {
+                node = walk->field_0xC0.field_0x84[0];
+                if (node != 0) {
+                    ScnReleaseChild(&self->field_0xC0, &walk->field_0xC0, node);
+                }
+            }
+        }
+        if ((&self->field_0x10) != 0) {
+            for (i = 0, walk = self; i < 3;
+                 i++, walk = (CScn80496B0C*)((u8*)walk + 4)) {
+                node = walk->field_0x10.field_0x84[0];
+                if (node != 0) {
+                    ScnReleaseChild(&self->field_0x10, &walk->field_0x10, node);
+                }
+            }
+        }
+        if (flags > 0) {
+            ::operator delete(self);
+        }
+    }
+    return self;
+}
+
 
 // Tears down both children's node bindings (same release sequence as the child
 // destructor, inlined for the two embedded children) and destroys the shared

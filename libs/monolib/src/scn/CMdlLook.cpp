@@ -67,7 +67,7 @@ extern "C" u32 lbl_eu_805701E0[0x4];
 
 // Stripped retail placeholder symbols need C linkage to emit matching
 // reloc names; noinline keeps MWCC from folding them into syncMdlLookSlots.
-extern void scnImN4AddFrameId(u8* model);
+extern "C" void scnImN4AddFrameId(u8* model);
 extern "C" void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b);
 extern "C" void aimMdlLook(CMdlLook* look, u8* unk, u32 a, u32 b);
 
@@ -110,7 +110,7 @@ void syncMdlLookSlots(CMdlLook* look, u8* unk, u32 idx1, u32 idx2) {
 
 // Stripped retail placeholder symbols need C linkage to emit matching
 // reloc names; noinline keeps MWCC from folding them into syncMdlLookSlots.
-extern void scnImN4AddFrameId(u8* model);
+extern "C" void scnImN4AddFrameId(u8* model);
 
 extern "C" __declspec(noinline) void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b) {
     scnImN4AddFrameId(unk);

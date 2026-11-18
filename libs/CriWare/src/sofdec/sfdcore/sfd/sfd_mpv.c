@@ -1,5 +1,6 @@
 // Decompiled CriWare Sofdec sfd_mpv module.
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 // Absorbed from criware_data (retail bytes) - generated
 __attribute__((aligned(8))) unsigned char __bss_fill_0[0xCD8]; // filler gap at 0x0 for .bss
@@ -133,38 +134,38 @@ void* memcpy(void* dst, const void* src, u32 size);
 int memcmp(const void* s1, const void* s2, u32 size);
 
 // Internal functions
-void sfmpv_ProcessAuxShc(void* self);
-s32 sfmpv_IsVbvEnough(void* self);
+void sfmpv_ProcessAuxShc(SfdHandle* self);
+s32 sfmpv_IsVbvEnough(SfdHandle* self);
 u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out);
 u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out);
 s32 sfmpv_NeedSafeDlmRefresh(void* buf, u32 dlm, u32 dlm_new);
-s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3);
-s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out);
+s32 sfmpv_GetActiveSize(SfdHandle* self, s32* out1, s32* out2, s32* out3);
+s32 sfmpv_DecodeOneUnit(SfdHandle* self, s32 ch, s32 pat, s32 dlm, s32* out);
 s32 sfmpv_ConcatSub(u8* self);
-s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out);
+s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out);
 s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32* out1, s32 rate);
-void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode);
+void sfmpv_CalcRepeatField(SfdHandle* self, void* frm, s32 mode);
 void sfmpv_DoReformTc(void* self, void* frm, s64 pts, s32 rep);
 void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out);
 void sfmpv_NextTc(void* in, void* out);
-s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic);
-void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic);
-s32 sfmpv_ChkBufSiz(void* self, void* para);
-s32 sfmpv_IsSkip(void* self, void* bpic);
-s32 sfmpv_IsEmptyBpic(void* self, s32 type, void* bpic);
-void sfmpv_UpdateDefect(void* self, void* frm, s32 mode);
-s32 sfmpv_IsLate(void* self, s32 type);
-s32 sfmpv_SkipFrm(void* self, void* sj);
-s32 sfmpv_DecodeFrm(void* self, void* sj);
-s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out);
+s32 sfmpv_FirstPicAtr(SfdHandle* self, void* mpv, void* frm, void* pic);
+void sfmpv_SetMpvHd(SfdHandle* self, s32 bitrate, u32* pic);
+s32 sfmpv_ChkBufSiz(SfdHandle* self, void* para);
+s32 sfmpv_IsSkip(SfdHandle* self, void* bpic);
+s32 sfmpv_IsEmptyBpic(SfdHandle* self, s32 type, void* bpic);
+void sfmpv_UpdateDefect(SfdHandle* self, void* frm, s32 mode);
+s32 sfmpv_IsLate(SfdHandle* self, s32 type);
+s32 sfmpv_SkipFrm(SfdHandle* self, void* sj);
+s32 sfmpv_DecodeFrm(SfdHandle* self, void* sj);
+s32 sfmpv_SetFrmPara(SfdHandle* self, void* frm, void* para, void** out);
 void fn_803C9948(void* a, void* b, s32* out1, s32* out2);
 void fn_803C99C8(void* self);
 s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask);
 s32 sfmpv_InitInf(u8* self, u8* shc);
 void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count);
-s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out);
-void sfmpv_SetFrmInf(void* self, void* frm, void* info);
-s32 SFMPV_Seek(void* self);
+s32 sfmpv_ReprocessShc(SfdHandle* self, void* shc, s32* out);
+void sfmpv_SetFrmInf(SfdHandle* self, void* frm, void* info);
+s32 SFMPV_Seek(SfdHandle* self);
 
 void sfmpv_ErrFn(s32 val, u32 err);
 s32 fn_803C34F8(s32 val, u32 err_code);
@@ -188,7 +189,7 @@ extern u32 lbl_eu_80568E34[];
 // ---------------------------------------------------------------------------
 // SFD_SetMpvCond
 // ---------------------------------------------------------------------------
-s32 SFD_SetMpvCond(void* h, s32 cond, s32 val) {
+s32 SFD_SetMpvCond(SfdHandle* h, s32 cond, s32 val) {
     void* mpv;
     if (h == NULL) {
         mpv = NULL;
@@ -196,7 +197,7 @@ s32 SFD_SetMpvCond(void* h, s32 cond, s32 val) {
         if (SFLIB_CheckHn(h) != 0) {
             return SFLIB_SetErr(0, 0xff000181);
         }
-        mpv = **(void***)((u8*)h + 0x2068);
+        mpv = *(void**)h->trn[2].hdr;
     }
     if (cond == 5) {
         val = 0;
@@ -210,12 +211,12 @@ s32 SFD_SetMpvCond(void* h, s32 cond, s32 val) {
 // ---------------------------------------------------------------------------
 // SFMPV_SaveCond
 // ---------------------------------------------------------------------------
-s32 SFMPV_SaveCond(void* h, s32* conds, u32 count) {
+s32 SFMPV_SaveCond(SfdHandle* h, s32* conds, u32 count) {
     void* mpv;
     s32 i;
     s32 max;
     u32 n;
-    mpv = **(void***)((u8*)h + 0x2068);
+    mpv = *(void**)h->trn[2].hdr;
     if (mpv == NULL) {
         return 0;
     }
@@ -233,8 +234,8 @@ s32 SFMPV_SaveCond(void* h, s32* conds, u32 count) {
 // ---------------------------------------------------------------------------
 // SFMPV_RestoreCond
 // ---------------------------------------------------------------------------
-void SFMPV_RestoreCond(void* h, s32* conds, s32 count) {
-    void* mpv = **(void***)((u8*)h + 0x2068);
+void SFMPV_RestoreCond(SfdHandle* h, s32* conds, s32 count) {
+    void* mpv = *(void**)h->trn[2].hdr;
     if (mpv != NULL) {
         s32 i;
         for (i = 0; i < count; i++) {
@@ -247,8 +248,8 @@ void SFMPV_RestoreCond(void* h, s32* conds, s32 count) {
 // SFD_SetMbCb
 // ---------------------------------------------------------------------------
 void MPV_SetMbCb(void* p, u32 a, u32 b, u32 c);
-void SFD_SetMbCb(void* self, u32 a, u32 b, u32 c) {
-    void* arg1 = *(void**)(*(void**)((u8*)self + 0x2068));
+void SFD_SetMbCb(SfdHandle* self, u32 a, u32 b, u32 c) {
+    void* arg1 = *(void**)self->trn[2].hdr;
     ((u32*)self)[0xd8c / 4] = a;
     ((u32*)self)[0xd88 / 4] = c;
     ((u32*)self)[0xd84 / 4] = b;
@@ -283,7 +284,7 @@ int SFMPV_Finish(void) {
 // ---------------------------------------------------------------------------
 // SFMPV_ExecServer
 // ---------------------------------------------------------------------------
-s32 SFMPV_ExecServer(void* self) {
+s32 SFMPV_ExecServer(SfdHandle* self) {
     s32 ret;
     s32 idx;
     s32 ch;
@@ -301,7 +302,7 @@ s32 SFMPV_ExecServer(void* self) {
     if (SFSET_GetCond(self, 5) == 0) {
         return 0;
     }
-    if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2074)) == 1) {
+    if (SFBUF_GetTermFlg(self, self->trn[2].termIdx) == 1) {
         return 0;
     }
     if (SFSET_GetCond(self, 0x1c) != 0 && SFHDS_GetColType(self) != -1) {
@@ -317,13 +318,13 @@ s32 SFMPV_ExecServer(void* self) {
             }
         }
     }
-    if (*(s32*)((u8*)self + 0x54) == 2) {
+    if (self->errorState == 2) {
         sfmpv_ProcessAuxShc(self);
     }
     ret = 0;
     for (;;) {
-        if (*(s32*)((u8*)self + 0x70) != 0) break;
-        if (*(s32*)((u8*)self + 0x74) != 0) break;
+        if (self->field_0x0070 != 0) break;
+        if (self->field_0x0074 != 0) break;
         ret = sfmpv_GetActiveSize(self, &v1, &v2, &v3);
         if (ret != 0) break;
         ret = sfmpv_DecodeOneUnit(self, v1, v2, v3, &out);
@@ -333,18 +334,18 @@ s32 SFMPV_ExecServer(void* self) {
     {
         u32 fcnt[2];
         /* idx doubles as ch2 here, then the prep-frame limit, then numfrm */
-        idx = *(s32*)((u8*)self + 0x2070);
-        ch = *(s32*)((u8*)self + 0x2074);
+        idx = self->trn[2].bufIdx;
+        ch = self->trn[2].termIdx;
         SFBUF_RingGetSj(self, idx, &sj);
         SFBUF_GetFlowCnt(sj, &fcnt[0], &fcnt[1]);
-        *(u64*)((u8*)self + 0x9b0) = SFBUF_UpdateFlowCnt(*(u64*)((u8*)self + 0x9b0), fcnt[0]);
+        self->field_0x09b0 = SFBUF_UpdateFlowCnt(self->field_0x09b0, fcnt[0]);
         if (SFBUF_GetPrepFlg(self, ch) != 1 && SFBUF_GetPrepFlg(self, idx) != 1) {
             s32 r = 0;
             if (SFMPVF_IsTermDec(self) != 0) {
                 r = 1;
             } else {
-                s32 n = *(s32*)((u8*)self + 0x30);
-                idx = *(s32*)((u8*)self + 0xa78);
+                s32 n = self->field_0x0030;
+                idx = self->cond[0x17];
                 if (idx == -1) {
                     idx = n + 2;
                 }
@@ -352,8 +353,8 @@ s32 SFMPV_ExecServer(void* self) {
                     idx = n + 2;
                 }
                 out = SFMPVF_GetNumFrm(self);
-                if (*(s32*)((u8*)self + 0x68) == 2) {
-                    out += *(s32*)((u8*)self + 0x978);
+                if (self->field_0x0068 == 2) {
+                    out += self->field_0x0978;
                 }
                 if (out >= idx && sfmpv_IsVbvEnough(self) != 0) {
                     r = 1;
@@ -373,15 +374,15 @@ s32 SFMPV_ExecServer(void* self) {
         if (SFMPVF_IsTermDec(self) != 0) {
             if (ch == 0) {
                 r = 1;
-            } else if (*(s32*)((u8*)self + 0x68) == 1 && ch == 1) {
-                if (*(s32*)((u8*)self + 0x978) > *(s32*)((u8*)self + 0x97c)) {
+            } else if (self->field_0x0068 == 1 && ch == 1) {
+                if (self->field_0x0978 > self->field_0x097c) {
                     r = 1;
                 }
             }
         }
         if (r != 0) {
-            SFBUF_SetTermFlg(self, *(s32*)((u8*)self + 0x2074), 1);
-            if (*(s32*)((u8*)self + 0x960) == 0) {
+            SFBUF_SetTermFlg(self, self->trn[2].termIdx, 1);
+            if (self->field_0x0960 == 0) {
                 SFSET_SetCond(self, 5, 0);
             }
         }
@@ -398,13 +399,13 @@ s32 SFMPV_ExecServer(void* self) {
 // ---------------------------------------------------------------------------
 // sfmpv_ProcessAuxShc
 // ---------------------------------------------------------------------------
-void sfmpv_ProcessAuxShc(void* self) {
-    void* e = *(void**)((u8*)self + 0x2068);
+void sfmpv_ProcessAuxShc(SfdHandle* self) {
+    void* e = self->trn[2].hdr;
     void* p = *(void**)((u8*)e + 0);
     s32 buf[2];
     s32 c;
-    buf[0] = *(s32*)((u8*)self + 0xd90);
-    buf[1] = *(s32*)((u8*)self + 0xd94);
+    buf[0] = (s32)self->field_0x0d90;
+    buf[1] = (s32)self->field_0x0d94;
     if (buf[0] == 0 || buf[1] == 0)
         return;
     if ((s32)*(u32*)((u8*)e + 8) != 0xc0)
@@ -418,16 +419,16 @@ void sfmpv_ProcessAuxShc(void* self) {
 // ---------------------------------------------------------------------------
 // sfmpv_IsVbvEnough
 // ---------------------------------------------------------------------------
-s32 sfmpv_IsVbvEnough(void* self) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+s32 sfmpv_IsVbvEnough(SfdHandle* self) {
+    void* shc = self->trn[2].hdr;
     void* mpv = *(void**)shc;
     u32 bitrate;
     s32 v;
     s32 i;
-    if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2070)) == 1) {
+    if (SFBUF_GetTermFlg(self, self->trn[2].bufIdx) == 1) {
         return 1;
     }
-    if (*(s32*)((u8*)self + 0x88) != 0 && *(s32*)((u8*)self + 0x104) == 0) {
+    if (self->fhd.info.active != 0 && *(s32*)((u8*)self + 0x104) == 0) {
         return 1;
     }
     MPV_GetBitRate(mpv, &bitrate);
@@ -448,7 +449,7 @@ s32 sfmpv_IsVbvEnough(void* self) {
 // ---------------------------------------------------------------------------
 // sfmpv_GetActiveSize
 // ---------------------------------------------------------------------------
-s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
+s32 sfmpv_GetActiveSize(SfdHandle* self, s32* out1, s32* out2, s32* out3) {
     u32 info[7];  /* sp+0x18: ring read info */
     u32 dlm;      /* sp+0x14 */
     u32 dlm_size; /* sp+0x10 */
@@ -458,7 +459,7 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
     s32 tmp = 0;
     s32 ch;
 
-    ch = *(s32*)((u8*)self + 0x2070);
+    ch = self->trn[2].bufIdx;
     *out1 = 0;
     *out2 = 0;
     *out3 = 0;
@@ -511,10 +512,10 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             }
         }
         if (dlm == 0) {
-            tmp = *(s32*)((u8*)self + 0x2070);
+            tmp = self->trn[2].bufIdx;
             s32 siz = SFBUF_GetRingBufSiz(self, tmp);
             s32 n = siz - SFBUF_RingGetDataSiz(self, tmp);
-            if (n < *(s32*)((u8*)self + 0x2c)) {
+            if (n < self->field_0x002c) {
                 return SFLIB_SetErr(self, 0xff000f1c);
             }
             return 0;
@@ -525,9 +526,9 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             if ((type & 0x40) != 0) {
                 u32 dr = sfmpv_SearchDelim(info, 8, &type);
                 if (dr == 0 || dr == dlm) {
-                    tmp = *(s32*)((u8*)self + 0x2070);
+                    tmp = self->trn[2].bufIdx;
                     s32 n = SFBUF_GetRingBufSiz(self, tmp) - SFBUF_RingGetDataSiz(self, tmp);
-                    if (n < *(s32*)((u8*)self + 0x2c)) {
+                    if (n < self->field_0x002c) {
                         return SFLIB_SetErr(self, 0xff000f1c);
                     }
                     return 0;
@@ -538,9 +539,9 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             if ((type & 0x48) != 0) {
                 u32 dr = sfmpv_SearchDelim(info, 4, &type);
                 if (dr == 0 || dr == dlm) {
-                    tmp = *(s32*)((u8*)self + 0x2070);
+                    tmp = self->trn[2].bufIdx;
                     s32 n = SFBUF_GetRingBufSiz(self, tmp) - SFBUF_RingGetDataSiz(self, tmp);
-                    if (n < *(s32*)((u8*)self + 0x2c)) {
+                    if (n < self->field_0x002c) {
                         return SFLIB_SetErr(self, 0xff000f1c);
                     }
                     return 0;
@@ -729,7 +730,7 @@ u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
 // ---------------------------------------------------------------------------
 // sfmpv_DecodeOneUnit
 // ---------------------------------------------------------------------------
-s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
+s32 sfmpv_DecodeOneUnit(SfdHandle* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     void (*fn)(void*, void*);
     s32 out2;
     void* sj;
@@ -742,12 +743,12 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     s32 c0;
 
     *out = 0;
-    *(s32*)((u8*)self + 0x988) = 0;
-    p = *(void**)((u8*)self + 0x2068);
+    self->field_0x0988 = 0;
+    p = self->trn[2].hdr;
     if (*(s32*)((u8*)p + 8) != 0xcc || *(s32*)((u8*)p + 0xf8) != 0) {
         pat &= 0xcc;
     }
-    ret = SFBUF_RingGetSj(self, *(s32*)((u8*)self + 0x2070), &sj);
+    ret = SFBUF_RingGetSj(self, self->trn[2].bufIdx, &sj);
     if (ret != 0) {
         return 0;
     }
@@ -755,8 +756,8 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         SFMPVF_SetGopStat(self);
     }
     if (pat == 0x80) {
-        if (*(s32*)((u8*)self + 0x2080) < 0) {
-            *(s32*)((u8*)self + 0x2080) = SFBUF_GetRTot(self, *(s32*)((u8*)self + 0x2070)) + 4;
+        if (self->trn[2].field_0x20 < 0) {
+            self->trn[2].field_0x20 = SFBUF_GetRTot(self, self->trn[2].bufIdx) + 4;
         }
         if (*(s32*)((u8*)self + 0xe50) < 0) {
             /* refresh the 11-word tc-save block at +0xe2c from +0xe00 */
@@ -764,16 +765,16 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         }
         if (SFCON_IsEndcodeSkip(self) != 0) {
             /* drain concat stream: pull 4-byte units until a non-GOP delimiter */
-            if (sfmpv_ConcatSub(self) != -1) {
+            if (sfmpv_ConcatSub((u8*)self) != -1) {
                 p = sj;
                 for (;;) {
                     void* v = *(void**)p;
                     ((void (*)(void*, int, int, u32*))((void**)v)[6])(p, 1, 4, d_end);
                     if (d_end[1] == 4 && MPV_CheckDelim((u8*)(u32)d_end[0]) == 0x80) {
                         ((void (*)(void*, int, u32*))((void**)v)[8])(p, 0, d_end);
-                        SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), 4);
-                        *(s64*)((u8*)self + 0x9b8) += 4;
-                        *(s32*)((u8*)self + 0x50) = 1;
+                        SFBUF_AddRtotSj(self, self->trn[2].bufIdx, 4);
+                        self->field_0x09b8 += 4;
+                        self->field_0x0050 = 1;
                     } else {
                         ((void (*)(void*, int, u32*))((void**)v)[7])(p, 1, d_end);
                         break;
@@ -790,9 +791,9 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
                 ((void (*)(void*, int, int, u32*))((void**)v)[6])(p, 1, 4, d_vdo);
                 if (d_vdo[1] == 4 && MPV_CheckDelim((u8*)(u32)d_vdo[0]) == 0x80) {
                     ((void (*)(void*, int, u32*))((void**)v)[8])(p, 0, d_vdo);
-                    SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), 4);
-                    *(s64*)((u8*)self + 0x9b8) += 4;
-                    *(s32*)((u8*)self + 0x50) = 1;
+                    SFBUF_AddRtotSj(self, self->trn[2].bufIdx, 4);
+                    self->field_0x09b8 += 4;
+                    self->field_0x0050 = 1;
                 } else {
                     ((void (*)(void*, int, u32*))((void**)v)[7])(p, 1, d_vdo);
                     break;
@@ -806,7 +807,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         s32 r;
         if (pat == 0x80) {
             r = 1;
-        } else if (ch <= 4 && SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x2070)) == 1) {
+        } else if (ch <= 4 && SFBUF_GetTermFlg(self, self->trn[2].bufIdx) == 1) {
             r = 1;
         } else {
             r = 0;
@@ -815,8 +816,8 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
             /* terminate decode once either playback-limit condition holds */
             c0 = SFSET_GetCond(self, 0x4c);
             s32 c1 = SFSET_GetCond(self, 0x4d);
-            shc2 = *(void**)((u8*)self + 0x2068);
-            if ((c0 != -1 && *(s32*)((u8*)self + 0x960) >= c0) ||
+            shc2 = self->trn[2].hdr;
+            if ((c0 != -1 && self->field_0x0960 >= c0) ||
                 (c1 != -1 && *(s32*)((u8*)shc2 + 0x94) > c1)) {
                 r = 1;
             }
@@ -827,7 +828,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         }
     }
     if (dlm == 0 && ch <= 4) {
-        *(s32*)((u8*)self + 0x988) = 1;
+        self->field_0x0988 = 1;
         if (lbl_eu_80606E34 != NULL) {
             lbl_eu_80568D5C[3] = (u32)self;
             fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
@@ -837,7 +838,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     }
         if ((pat & 0x4c) != 0) {
         u32 info[7];
-        if (SFBUF_RingGetRead(self, *(s32*)((u8*)self + 0x2070), info) != 0) {
+        if (SFBUF_RingGetRead(self, self->trn[2].bufIdx, info) != 0) {
             pic[0] = 0;
             pic[1] = 0;
         } else {
@@ -862,7 +863,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     }
     if ((pat & 2) != 0) {
         u32 info[7];
-        if (SFBUF_RingGetRead(self, *(s32*)((u8*)self + 0x2070), info) != 0) {
+        if (SFBUF_RingGetRead(self, self->trn[2].bufIdx, info) != 0) {
             pic[0] = 0;
             pic[1] = 0;
         } else {
@@ -894,7 +895,7 @@ done:
 s32 sfmpv_ConcatSub(u8* self) {
     u8* shc;
     s32 dlm;
-    shc = *(u8**)(self + 0x2068);
+    shc = *(u8**)((u8*)self + 0x2068);
     if (SFSET_GetCond(self, 6) == 0) {
         u8* e00 = self + 0xe00;
         u8* ttu = self + 0xdd4;
@@ -953,7 +954,7 @@ s32 sfmpv_ConcatSub(u8* self) {
 // ---------------------------------------------------------------------------
 // sfmpv_DecodePicAtr
 // ---------------------------------------------------------------------------
-s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
+s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out) {
     u8* shc;
     void* mpv;
     u8* frm;
@@ -1008,10 +1009,10 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         lbl_eu_80568A70[0x8c / 4] = (u32)&ret;
         (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568A70[0x6c / 4]);
     }
-    SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), t1);
-    *(s64*)((u8*)self + 0x9b8) += t1;
+    SFBUF_AddRtotSj(self, self->trn[2].bufIdx, t1);
+    self->field_0x09b8 += t1;
     if (t1 > 0) {
-        *(s32*)((u8*)self + 0x50) = 1;
+        self->field_0x0050 = 1;
     }
     if (ret != 0) {
         return ret;
@@ -1032,7 +1033,7 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
     }
     if (*(s32*)((u8*)frm + 0x18) == 1) {
         *(s32*)((u8*)shc + 0xfc) = 0;
-    } else if (*(s32*)((u8*)self + 0x40) == 3) {
+    } else if (self->field_0x0040 == 3) {
         void* prev = *(void**)((u8*)shc + 0xec);
         if (prev != 0 && *(s32*)((u8*)frm + 0x18) == 2) {
             if (*(s32*)((u8*)frm + 0x14) < *(s32*)((u8*)prev + 0x7c) && *(s32*)((u8*)prev + 0x7c) < 0x200) {
@@ -1052,8 +1053,8 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         *(s32*)((u8*)shc + 0x98) = 0;
     }
     if ((pat & 0x40) != 0) {
-        void* cb = *(void**)((u8*)self + 0xd64);
-        void* arg = *(void**)((u8*)self + 0xd68);
+        void* cb = self->delimCb;
+        void* arg = self->delimCbArg;
         if (cb != NULL) {
             u32 r = MPV_SearchDelim((u8*)pic[0], pic[1], 1);
             if (r != 0) {
@@ -1069,9 +1070,9 @@ s32 sfmpv_DecodePicAtr(void* self, u32* pic, void* sj, s32 pat, s32* out) {
         pts1 = -1;
         if (r != 0) {
             s32 rate2;
-            SFPTS_ReadPtsQue(self, *(s32*)((u8*)self + 0x2070), r, pque);
+            SFPTS_ReadPtsQue(self, self->trn[2].bufIdx, r, pque);
             rate2 = lbl_eu_8051CBF8[*(s32*)((u8*)frm + 0x10)];
-            if (*(s32*)((u8*)self + 0x88) != 0 && *(s32*)((u8*)self + 0xf4) != -1) {
+            if (self->fhd.info.active != 0 && *(s32*)((u8*)self + 0xf4) != -1) {
                 rate2 = *(s32*)((u8*)self + 0xf4);
             }
             pts = sfmpv_ComplementPts((u8*)self + 0xd98, (u32*)((u8*)shc + 0xa0), frm, pque, f0, &pts0, rate2);
@@ -1261,7 +1262,7 @@ s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32
 // ---------------------------------------------------------------------------
 // sfmpv_CalcRepeatField
 // ---------------------------------------------------------------------------
-void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
+void sfmpv_CalcRepeatField(SfdHandle* self, void* frm, s32 mode) {
     s16* tbl = (s16*)((u8*)self + 0x1268);
     s32 t1;
     s32 t2;
@@ -1274,7 +1275,7 @@ void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
     void* p;
     void* shc;
     *(s32*)((u8*)self + 0xdb4) = *(s32*)((u8*)frm + 0x10);
-    shc = *(void**)((u8*)self + 0x2068);
+    shc = self->trn[2].hdr;
     *(s32*)((u8*)self + 0xdb8) = *(s32*)((u8*)frm + 0x1c);
     *(s32*)((u8*)self + 0xdbc) = *(s32*)((u8*)frm + 0x20);
     *(s32*)((u8*)self + 0xdc0) = *(s32*)((u8*)frm + 0x24);
@@ -1357,9 +1358,9 @@ void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
                 *(s32*)((u8*)p + 0x44) = n;
                 *(s32*)((u8*)p + 0x58) = *(s32*)((u8*)p + 0x3c);
                 *(s32*)((u8*)p + 0x5c) = *(s32*)((u8*)p + 0x3c) + *(s32*)((u8*)self + 0xefc);
-                if (*(s32*)((u8*)self + 0x1020) < n) {
-                    *(s32*)((u8*)self + 0x1020) = n;
-                    *(s32*)((u8*)self + 0x1024) = *(s32*)((u8*)p + 0x48);
+                if (self->tim.maxTime < n) {
+                    self->tim.maxTime = n;
+                    self->tim.maxTimeUnit = *(s32*)((u8*)p + 0x48);
                 }
             }
         }
@@ -1560,9 +1561,9 @@ void sfmpv_NextTc(void* in, void* out) {
 // zero reloc drift; resists declaration/assignment order, C99 mixed decls, temp
 // locals. br/vb temps below are required to reproduce retail's load hoisting
 // (lwz vbv/bitrate + ChkBufSiz arg setup before the 5-word copy loop).
-s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
-    void* shc = *(void**)((u8*)self + 0x2068);
-    u32* dst = (u32*)((u8*)self + 0x91c);
+s32 sfmpv_FirstPicAtr(SfdHandle* self, void* mpv, void* frm, void* pic) {
+    void* shc = self->trn[2].hdr;
+    u32* dst = (u32*)&self->imageWidth;
     s32 bitrate;
     s32 vbv;
     s32 avg;
@@ -1614,12 +1615,10 @@ s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
 // coloring (pic[4] -> r3 vs retail r4) and MEM_Copy arg setup follow the same
 // shift. Not retried here: unit-level flag changes (-O4,s etc.) - other fns
 // in this TU match under Wii/1.1 defaults.
-/* 0x2c-byte picture-header info block copied verbatim into the header slot. */
-typedef struct SfdMpvHdInfo {
-    u32 w[11];
-} SfdMpvHdInfo;
+/* 0x2c-byte picture-header info block (SfdMpvHdInfo, see sfd_types.h) is
+ * copied verbatim into the header slot. */
 
-void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
+void sfmpv_SetMpvHd(SfdHandle* self, s32 bitrate, u32* pic) {
     void* v;
     void* shc;
     void* p;
@@ -1627,8 +1626,8 @@ void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
     s32 sz;
     s32 n;
 
-    v = *(void**)((u8*)self + 0x2670);
-    shc = *(void**)((u8*)self + 0x2068);
+    v = self->see.avplay;
+    shc = self->trn[2].hdr;
     /* header slot: usable only when a decode session exists and the frame
      * count is still 0 */
     if (v == 0) {
@@ -1663,19 +1662,19 @@ void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
 // Macroblock dims come from self+0x2788/0x278c, the new request from para.
 // size1/size2 are per-frame luma/chroma byte budgets; the search loop finds how
 // many frames of the new budget fit into n old budgets (capped at 16).
-s32 sfmpv_ChkBufSiz(void* self, void* para) {
-    s32 a = (*(s32*)((u8*)self + 0x2788) + 15) / 16;
+s32 sfmpv_ChkBufSiz(SfdHandle* self, void* para) {
+    s32 a = (self->para.para[2] + 15) / 16;
     /* frame-object array base, kept live across the whole call */
-    u8* frm = (u8*)self + 0x27f8;
-    s32 b = (*(s32*)((u8*)self + 0x278c) + 15) / 16;
+    u8* frm = (u8*)self->frames;
+    s32 b = (self->para.para[3] + 15) / 16;
     s32 va = a * 16;
     s32 vb = b * 16;
     s32 ta = (a >> 4) & 1;
     s32 tb = (b >> 4) & 1;
     s32 sb = (vb + tb) >> 1;
-    s32 n = *(s32*)((u8*)self + 0x279c);
+    s32 n = self->para.para[7];
     s32 sa = (va + ta) >> 1;
-    void* shc = *(void**)((u8*)self + 0x2068);
+    void* shc = self->trn[2].hdr;
     s32 ca = (sa + 31) / 32;
     s32 cwa = va / 32;
     s32 c = (*(s32*)para + 15) / 16;
@@ -1704,7 +1703,7 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
     if (size2 * 2 > size1 * 2) {
         return SFLIB_SetErr(self, 0xff000f17);
     }
-    base = *(u32*)((u8*)self + 0x27a0);
+    base = self->para.para[8];
     if (base == 0) {
         cnt = n;
     } else {
@@ -1720,10 +1719,10 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
         if (cnt < n) {
             return SFLIB_SetErr(self, 0xff000f17);
         }
-        *(s32*)((u8*)self + 0x27a4) = *(s32*)((u8*)self + 0x2790);
-        *(s32*)((u8*)self + 0x27a8) = *(s32*)((u8*)self + 0x2790) + size2;
+        self->para.stride[0] = self->para.para[4];
+        self->para.stride[1] = self->para.para[4] + size2;
         if (cnt > 0) {
-            u32* q = (u32*)((u8*)self + 0x27ac);
+            u32* q = (u32*)self->para.frameSize;
             for (i = 0; i < cnt; i++) {
                 q[i] = base + i * size2;
             }
@@ -1733,7 +1732,7 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
         s32 ww = (vp + 31) / 32;
         s32 half = vp / 2;
         s32 hh = (half + 31) / 32;
-        v = *(u32*)((u8*)self + 0x27a4);
+        v = self->para.stride[0];
         m1 = vq * (ww * 32);
         m2 = (vq / 2) * (hh * 32);
         *(s16*)((u8*)shc + 0xd6) = ww * 32;
@@ -1743,26 +1742,26 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
         *(u32*)((u8*)shc + 0xcc) = v + m1 + m2;
         *(s16*)((u8*)shc + 0xe6) = ww * 32;
         *(s16*)((u8*)shc + 0xe4) = hh * 32;
-        e0 = *(u32*)((u8*)self + 0x27a8);
+        e0 = self->para.stride[1];
         *(u32*)((u8*)shc + 0xe0) = e0;
         *(u32*)((u8*)shc + 0xd8) = e0 + m1;
         *(u32*)((u8*)shc + 0xdc) = e0 + m1 + m2;
     }
-    if (*(s32*)((u8*)self + 0x40) == 3) {
+    if (self->field_0x0040 == 3) {
         s32 m = 14;
         if (n < 14) {
             m = n;
         }
-        *(s32*)((u8*)self + 0x27ec) = m + 2;
-        sfmpv_InitFrmObj(frm, (u32*)((u8*)self + 0x27a4), 2);
-        sfmpv_InitFrmObj(frm + 0x220, (u32*)((u8*)self + 0x27ac), m);
+        self->frameCount = m + 2;
+        sfmpv_InitFrmObj(frm, (u32*)self->para.stride, 2);
+        sfmpv_InitFrmObj(frm + 0x220, (u32*)self->para.frameSize, m);
     } else {
         s32 m = 16;
         if (n < 16) {
             m = n;
         }
-        *(s32*)((u8*)self + 0x27ec) = m;
-        sfmpv_InitFrmObj(frm, (u32*)((u8*)self + 0x27ac), m);
+        self->frameCount = m;
+        sfmpv_InitFrmObj(frm, (u32*)self->para.frameSize, m);
     }
     return 0;
 }
@@ -1770,10 +1769,10 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
 // ---------------------------------------------------------------------------
 // sfmpv_IsSkip
 // ---------------------------------------------------------------------------
-s32 sfmpv_IsSkip(void* self, void* bpic) {
+s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
     /* Single work slot: holds the shc pointer, then the pic type, then the verdict.
        Retail keeps all three in one register (r29). */
-    void* wk = *(void**)((u8*)self + 0x2068);
+    void* wk = self->trn[2].hdr;
     u8* frm = (u8*)wk + 0x14;
     u32 skip;
     if (SFSET_GetCond(self, 0x2f) == 1) {
@@ -1792,11 +1791,11 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
     }
     /* deadline check: current tc valid, no limiter active, and tc not past deadline */
     {
-        s32 tc = *(s32*)((u8*)self + 0x2678);
+        s32 tc = self->see.seekTime;
         s32 r = 0;
         wk = (void*)(uintptr_t)*(s32*)(frm + 0x18);
         if (tc >= 0 && *(s32*)((u8*)self + 0xeb0) == 0 &&
-            UTY_CmpTime(tc, *(s32*)((u8*)self + 0x267c), *(s32*)((u8*)self + 0xe7c), *(s32*)((u8*)self + 0xe80)) == 0) {
+            UTY_CmpTime(tc, self->see.seekTimeUnit, *(s32*)((u8*)self + 0xe7c), *(s32*)((u8*)self + 0xe80)) == 0) {
             r = 1;
         }
         if (r != 0) {
@@ -1816,13 +1815,13 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
         s32 cond;
         switch ((s32)wk) {
         case 1:
-            cond = (*(s32*)((u8*)self + 0xa24) == 0);
+            cond = (self->cond[2] == 0);
             break;
         case 2:
-            cond = (*(s32*)((u8*)self + 0xa28) == 0);
+            cond = (self->cond[3] == 0);
             break;
         case 3:
-            cond = (*(s32*)((u8*)self + 0xa2c) == 0);
+            cond = (self->cond[4] == 0);
             break;
         default:
             cond = 1;
@@ -1895,8 +1894,8 @@ out:
 // ---------------------------------------------------------------------------
 // sfmpv_UpdateDefect
 // ---------------------------------------------------------------------------
-void sfmpv_UpdateDefect(void* self, void* frm, s32 mode) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+void sfmpv_UpdateDefect(SfdHandle* self, void* frm, s32 mode) {
+    void* shc = self->trn[2].hdr;
     void* mpv = *(void**)shc;
     s32 flg = *(s32*)((u8*)shc + 4);
     if (*(s32*)((u8*)shc + 0x98) != 0) {
@@ -1926,23 +1925,23 @@ void sfmpv_UpdateDefect(void* self, void* frm, s32 mode) {
 // ---------------------------------------------------------------------------
 // sfmpv_IsEmptyBpic
 // ---------------------------------------------------------------------------
-s32 sfmpv_IsEmptyBpic(void* self, s32 type, void* bpic) {
+s32 sfmpv_IsEmptyBpic(SfdHandle* self, s32 type, void* bpic) {
     if (SFSET_GetCond(self, 7) != 0) {
         return 0;
     }
     if (type == 3) {
         s32 r = MPV_IsEmptyBpic(*(u32*)bpic, *(u32*)((u8*)bpic + 4),
-                                *(u32*)((u8*)self + 0x924) * *(u32*)((u8*)self + 0x928));
+                                self->field_0x0924 * self->field_0x0928);
         if (r != 0) {
-            *(u32*)((u8*)self + 0x970) += 1;
+            self->field_0x0970 += 1;
         }
         return r;
     }
     if (type == 2) {
         s32 r = MPV_IsEmptyPpic(*(u32*)bpic, *(u32*)((u8*)bpic + 4),
-                                *(u32*)((u8*)self + 0x924) * *(u32*)((u8*)self + 0x928));
+                                self->field_0x0924 * self->field_0x0928);
         if (r != 0) {
-            *(u32*)((u8*)self + 0x974) += 1;
+            self->field_0x0974 += 1;
         }
         return r;
     }
@@ -1952,11 +1951,11 @@ s32 sfmpv_IsEmptyBpic(void* self, s32 type, void* bpic) {
 // ---------------------------------------------------------------------------
 // sfmpv_IsLate
 // ---------------------------------------------------------------------------
-s32 sfmpv_IsLate(void* self, s32 type) {
+s32 sfmpv_IsLate(SfdHandle* self, s32 type) {
     s32 t;
     s32 e8v;
     void* tc;
-    void* shc = *(void**)((u8*)self + 0x2068);
+    void* shc = self->trn[2].hdr;
     void* fn;
     s32 r;
     s32 c;
@@ -1999,7 +1998,7 @@ s32 sfmpv_IsLate(void* self, s32 type) {
 // ---------------------------------------------------------------------------
 // sfmpv_SkipFrm
 // ---------------------------------------------------------------------------
-s32 sfmpv_SkipFrm(void* self, void* sj) {
+s32 sfmpv_SkipFrm(SfdHandle* self, void* sj) {
     /* e58/e84 hold identical 11-word tc-save blocks */
     SfMpvTcView* v = (SfMpvTcView*)self;
     void* shc;
@@ -2053,10 +2052,10 @@ s32 sfmpv_SkipFrm(void* self, void* sj) {
     } else {
         r = SFLIB_SetErr(self, 0xff000f07);
     }
-    SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), n);
-    *(s64*)((u8*)self + 0x9b8) += n;
+    SFBUF_AddRtotSj(self, self->trn[2].bufIdx, n);
+    self->field_0x09b8 += n;
     if (n > 0) {
-        *(s32*)((u8*)self + 0x50) = 1;
+        self->field_0x0050 = 1;
     }
     if (r != 0) {
         return r;
@@ -2071,9 +2070,9 @@ s32 sfmpv_SkipFrm(void* self, void* sj) {
 // ---------------------------------------------------------------------------
 // sfmpv_DecodeFrm
 // ---------------------------------------------------------------------------
-s32 sfmpv_DecodeFrm(void* self, void* sj) {
+s32 sfmpv_DecodeFrm(SfdHandle* self, void* sj) {
     void (*fn)(void*, void*);
-    void* shc = *(void**)((u8*)self + 0x2068);
+    void* shc = self->trn[2].hdr;
     void* mpv = *(void**)shc;
     void* frm = (u8*)shc + 0x14;
     void* out;
@@ -2115,8 +2114,8 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
     }
     t2 = SFTMR_GetTmr(self);
     SFTMR_AddTsum((u8*)self + 0x26a0 + *(s32*)((u8*)frm + 0x18) * 0x20, t2 - t1);
-    *(s32*)((u8*)self + 0xa14) += fcnt[0];
-    *(s32*)((u8*)self + 0xa18) += fcnt[1];
+    self->field_0x0a14 += fcnt[0];
+    self->field_0x0a18 += fcnt[1];
     if (r == 0) {
         ret = 0;
     } else if (r == -2) {
@@ -2134,10 +2133,10 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
     } else {
         ret = SFLIB_SetErr(self, 0xff000f06);
     }
-    SFBUF_AddRtotSj(self, *(s32*)((u8*)self + 0x2070), n);
-    *(s64*)((u8*)self + 0x9b8) += n;
+    SFBUF_AddRtotSj(self, self->trn[2].bufIdx, n);
+    self->field_0x09b8 += n;
     if (n > 0) {
-        *(s32*)((u8*)self + 0x50) = 1;
+        self->field_0x0050 = 1;
     }
     if (ret != 0) {
         SFMPVF_FreeFrm(out);
@@ -2160,9 +2159,9 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
         *(s32*)((u8*)out + 0x44) = a;
         *(s32*)((u8*)out + 0x58) = *(s32*)((u8*)self + 0xe7c);
         *(s32*)((u8*)out + 0x5c) = *(s32*)((u8*)self + 0xe7c) + *(s32*)((u8*)self + 0xefc);
-        if (*(s32*)((u8*)self + 0x1020) < a) {
-            *(s32*)((u8*)self + 0x1020) = a;
-            *(s32*)((u8*)self + 0x1024) = *(s32*)((u8*)out + 0x48);
+        if (self->tim.maxTime < a) {
+            self->tim.maxTime = a;
+            self->tim.maxTimeUnit = *(s32*)((u8*)out + 0x48);
         }
         *(s32*)((u8*)out + 0x54) = *(s32*)((u8*)shc + 0x10);
         *(s32*)((u8*)out + 0x4c) = a + *(s32*)((u8*)shc + 0xfc) + *(s32*)((u8*)shc + 0x10);
@@ -2179,7 +2178,7 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
         *(s32*)((u8*)shc + 0xf4) = 0;
         *(s32*)((u8*)shc + 0xf8) = 0;
         if (*(s32*)((u8*)shc + 0xf0) == 0) {
-            if (*(s32*)((u8*)self + 0x40) == 3) {
+            if (self->field_0x0040 == 3) {
                 s32 t = *(s32*)((u8*)frm + 0x18);
                 if (t >= 2 && t <= 3) {
                     SFMPVF_RefStbyFrm(out);
@@ -2189,11 +2188,11 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
             } else {
                 SFMPVF_StbyFrm(out);
             }
-            MPV_GetDctCnt(mpv, (u32*)((u8*)self + 0x968), (u32*)((u8*)self + 0x96c));
+            MPV_GetDctCnt(mpv, (u32*)&self->field_0x0968, (u32*)&self->field_0x096c);
             *(s32*)((u8*)shc + 0xc) = 0;
         }
         SFPLY_AddDecPic(self, 1, *(s32*)((u8*)frm + 0x18));
-        *(s32*)((u8*)self + 0x50) = 1;
+        self->field_0x0050 = 1;
     } else {
         if (*(s32*)((u8*)shc + 0xf0) == 0) {
             SFMPVF_FreeFrm(out);
@@ -2205,14 +2204,14 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
 // ---------------------------------------------------------------------------
 // sfmpv_SetFrmPara
 // ---------------------------------------------------------------------------
-s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+s32 sfmpv_SetFrmPara(SfdHandle* self, void* frm, void* para, void** out) {
+    void* shc = self->trn[2].hdr;
     if (*(s32*)((u8*)shc + 0xf0) != 0) {
         *out = *(void**)((u8*)shc + 0xf0);
     } else {
         *out = SFMPVF_AllocFrm(self);
         if (*out == NULL) {
-            *(s32*)((u8*)self + 0x98c) = 1;
+            self->field_0x098c = 1;
             /* notify error callback through its vtable slot 0x24 */
             if (lbl_eu_80606E34 != NULL) {
                 lbl_eu_80568DC8[3] = (u32)self;
@@ -2247,10 +2246,10 @@ s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
     *(u32*)((u8*)*out + 0xf4) = *(u32*)((u8*)frm + 0x30);
     *(u32*)((u8*)*out + 0xf8) = *(u32*)((u8*)frm + 0x68);
     *(u32*)((u8*)*out + 0xfc) = (*(s8*)((u8*)frm + 0x5f) - 1 == 0);
-    if (*(s32*)((u8*)self + 0x88) != 0 && *(s32*)((u8*)self + 0xf8) != 0 && *(s32*)((u8*)self + 0x114) == 1) {
+    if (self->fhd.info.active != 0 && *(s32*)((u8*)self + 0xf8) != 0 && *(s32*)((u8*)self + 0x114) == 1) {
         *(u32*)((u8*)*out + 0xfc) = 1;
     }
-    if (*(s32*)((u8*)self + 0x40) == 3) {
+    if (self->field_0x0040 == 3) {
         if (*(u32*)((u8*)frm + 0x18) >= 2 && *(u32*)((u8*)frm + 0x18) <= 3) {
             if (*(s32*)((u8*)shc + 0xf0) == 0) {
                 if (*(void**)((u8*)shc + 0xe8) != NULL) {
@@ -2329,7 +2328,7 @@ s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
     *(u32*)((u8*)para + 0x38) = 0;
     *(u32*)((u8*)para + 0x3c) = 0;
     *(s16*)((u8*)para + 0x40) = 0;
-    *(s32*)((u8*)self + 0x98c) = 0;
+    self->field_0x098c = 0;
     return 0;
 }
 
@@ -2496,7 +2495,7 @@ s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
 // ---------------------------------------------------------------------------
 // SFMPV_Create
 // ---------------------------------------------------------------------------
-s32 SFMPV_Create(void* self) {
+s32 SFMPV_Create(SfdHandle* self) {
     void* shc;
     void* mpv;
     s32 r;
@@ -2504,8 +2503,8 @@ s32 SFMPV_Create(void* self) {
         return 0;
     }
     shc = (u8*)self + 0x2450;
-    *(void**)((u8*)self + 0x2068) = shc;
-    r = sfmpv_InitInf(self, shc);
+    self->trn[2].hdr = shc;
+    r = sfmpv_InitInf((u8*)self, (u8*)shc);
     if (r != 0) {
         return r;
     }
@@ -2519,7 +2518,7 @@ s32 SFMPV_Create(void* self) {
     }
     MPV_SetCond(mpv, 1, SFSET_GetCond(self, 0));
     MPV_SetCond(mpv, 2, SFSET_GetCond(self, 1));
-    MPV_SetCond(mpv, 6, *(s32*)((u8*)self + 0x40));
+    MPV_SetCond(mpv, 6, self->field_0x0040);
     *(void**)shc = mpv;
     if (SFPLY_GetResetFlg() != 0) {
         SFMPVF_ResetPicUsrBuf(self);
@@ -2627,8 +2626,8 @@ void sfmpv_ErrFn(s32 val, u32 err) {
 // ---------------------------------------------------------------------------
 // SFMPV_Destroy
 // ---------------------------------------------------------------------------
-s32 SFMPV_Destroy(void* self) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+s32 SFMPV_Destroy(SfdHandle* self) {
+    void* shc = self->trn[2].hdr;
     u32 mpv = *(u32*)shc;
     if (mpv == 0) {
         return 0;
@@ -2644,11 +2643,11 @@ s32 SFMPV_Destroy(void* self) {
 // ---------------------------------------------------------------------------
 // SFMPV_RequestStop
 // ---------------------------------------------------------------------------
-int SFMPV_RequestStop(void* self) {
+int SFMPV_RequestStop(SfdHandle* self) {
     void* p;
     int result;
     
-    p = *(void**)(*(void**)((u8*)self + 0x2068));
+    p = *(void**)self->trn[2].hdr;
     if (p == NULL) {
         result = 0;
     } else {
@@ -2680,7 +2679,7 @@ void SFMPV_GetRead(void* self, void* a, void* b) {
 // ---------------------------------------------------------------------------
 // sfmpv_SetFrmInf
 // ---------------------------------------------------------------------------
-void sfmpv_SetFrmInf(void* self, void* frm, void* info) {
+void sfmpv_SetFrmInf(SfdHandle* self, void* frm, void* info) {
     *(u32*)((u8*)info + 0x00) = *(u32*)((u8*)frm + 0x68);
     *(u32*)((u8*)info + 0x04) = *(u32*)((u8*)frm + 0x6c);
     *(u32*)((u8*)info + 0x08) = *(u32*)((u8*)frm + 0x70);
@@ -2688,7 +2687,7 @@ void sfmpv_SetFrmInf(void* self, void* frm, void* info) {
     *(u32*)((u8*)info + 0x10) = *(u32*)((u8*)frm + 0x80);
     *(u32*)((u8*)info + 0x14) = *(u32*)((u8*)frm + 0x44);
     *(u32*)((u8*)info + 0x18) = *(u32*)((u8*)frm + 0x48);
-    *(u32*)((u8*)info + 0x1c) = *(u32*)((u8*)self + 0x40);
+    *(u32*)((u8*)info + 0x1c) = self->field_0x0040;
     *(u32*)((u8*)info + 0x20) = *(u32*)((u8*)frm + 0x08);
     *(u32*)((u8*)info + 0x24) = *(u32*)((u8*)frm + 0x4c);
     *(u32*)((u8*)info + 0x28) = *(u32*)((u8*)frm + 0x50);
@@ -2732,8 +2731,8 @@ void SFMPV_AddRead(void) { SFMPVF_AddRead(); }
 // ---------------------------------------------------------------------------
 // SFMPV_Seek
 // ---------------------------------------------------------------------------
-s32 SFMPV_Seek(void* self) {
-    void* shc = *(void**)((u8*)self + 0x2068);
+s32 SFMPV_Seek(SfdHandle* self) {
+    void* shc = self->trn[2].hdr;
     s32 out;
     s32 r = sfmpv_ReprocessShc(self, shc, &out);
     if (r != 0) {
@@ -2753,7 +2752,7 @@ int fn_803CA368(void) { return 0x0; }
 // ---------------------------------------------------------------------------
 // sfmpv_ReprocessShc
 // ---------------------------------------------------------------------------
-s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
+s32 sfmpv_ReprocessShc(SfdHandle* self, void* shc, s32* out) {
     s32 v;
     u8* p;
     void* hd;
@@ -2762,8 +2761,8 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
     u32 pic[2];
 
     *out = 0;
-    v = *(s32*)((u8*)self + 0x2670);
-    hd = *(void**)((u8*)self + 0x2068);
+    v = (s32)self->see.avplay;
+    hd = self->trn[2].hdr;
     if (v != 0) {
         if (*(s32*)((u8*)hd + 0x10) <= 0) {
             p = (u8*)v + 0xad0;

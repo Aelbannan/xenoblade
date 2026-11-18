@@ -33,7 +33,6 @@ extern HelpRow lbl_eu_80533E60[];
 // Global (retail-unmangled) helper returning the UI layout resource accessor.
 
 // Retail-unmangled CfGameManager static helper (takes a selector mask).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);
 
 // Vector copy helper (defined in CTagProcessor.cpp).
 extern "C" void copyVEC3(void* dst, const void* src);

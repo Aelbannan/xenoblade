@@ -825,7 +825,7 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
 // extern "C" spelling matches its C++ mangled symbol exactly.
 extern "C" {
 extern u32 __RTTI__12CScnItemPool[];  // RTTI locator ti(CScnItemPool) (.sdata)
-extern u32 lbl_eu_80663618[];  // RTTI locator ti(reslist<CScnItem*>) (.sdata)
+extern u32 __RTTI__11CDeviceVICb[];  // RTTI locator ti(CDeviceVICb) (.sdata 0x80663618)
 extern u32 lbl_eu_80663940[];  // RTTI locator (reslist<CScnItem*> base-list head)
 extern u32 lbl_eu_80663948[];  // RTTI locator ti(_reslist_base<CScnItem*>) (.sdata)
 extern void vicbDtorThunk__12CScnItemPoolFv();
@@ -872,9 +872,9 @@ extern "C" u32 lbl_eu_8056E488[41] = {
 };
 
 // [.data] 0x8056E52C-0x8056E540 (0x14): RTTI base-list block
-// ([lbl_eu_80663618, 4], [IWorkEvent, 0], [0]).
+// ([__RTTI__11CDeviceVICb, 4], [IWorkEvent, 0], [0]).
 extern "C" u32 lbl_eu_8056E52C[5] = {
-    (u32)&lbl_eu_80663618, 0x00000004,
+    (u32)&__RTTI__11CDeviceVICb, 0x00000004,
     (u32)&__RTTI__10IWorkEvent, 0x00000000,
     0x00000000,
 };

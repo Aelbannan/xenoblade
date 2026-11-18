@@ -68,7 +68,7 @@ void CMenuSkipTimer::Move() {
     // Keep the extracted skip-button bit as a plain u32 (0/1): retail compares
     // the extrwi result with cmpwi directly (no bool u8 re-mask).
     u32 pressed;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         pressed = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         pressed = (pad->mPressedButtonFlags >> 10) & 1;
@@ -175,7 +175,7 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     bool upM, dnM;
     u32 upBit, dnBit;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 held = pad->mPad.mPressedButtonFlags;
         u32 turbo = pad->mTurboPressButtonFlags;
         upM = (turbo & 0x4002) != 0;

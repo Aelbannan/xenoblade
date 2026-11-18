@@ -5,7 +5,7 @@
 
 extern "C" {
     extern u32 lbl_eu_8056EB60[];   // CScnFilter vtable
-    extern const double lbl_eu_8066ABA8;  // 0x4330000000000000 (int-to-float magic)
+
 }
 
 extern "C" void __ct__CScnFilter(CScnFilter* self) {

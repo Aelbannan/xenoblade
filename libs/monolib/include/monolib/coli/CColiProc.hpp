@@ -5,8 +5,10 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
-// Default target data referenced by the constructor.
-extern "C" u8 lbl_eu_8056F398[0x10];
+// CColiProc vtable: {RTTI__9CColiProc, offset-to-top 0, slot0 = ColiNoop} plus a
+// trailing pad word; defined (and owned) by code_804A6C60.cpp. __ct__CColiProc
+// installs it at this+0x0, so the class has exactly one virtual function.
+extern "C" u32 __vt__9CColiProc[4];
 
 // Authority: CColiProcTarget/CColiProc owned by CColiProc.cpp (defines TU).
 // Single definition shared by CColiProc.cpp and code_804A6C60.cpp (which

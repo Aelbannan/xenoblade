@@ -171,7 +171,7 @@ void CMenuBattleCommu::Init() {
     // Language/party-dependent tag text: the 4CC key 0x74696D67 ("timg")
     // selects the tag resource; when found it is bound to the pane names at
     // 0x158 / 0x182+0x18f.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         char* res = static_cast<char*>(
             CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
         if (res != 0) {

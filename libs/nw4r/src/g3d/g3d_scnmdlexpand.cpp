@@ -289,17 +289,17 @@ void G3dProc__Q34nw4r3g3d12ScnMdlExpandFUlUlPv(ScnMdlExpand* self, u32 task,
     }
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdlExpand")> lbl_eu_8051D7D0 = {sizeof("ScnMdlExpand"), "ScnMdlExpand"};
+NW4R_G3D_RTTI_DEF(ScnMdlExpand);
 
 bool ScnMdlExpand::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D7D0) ? true
-         : other == TypeObj(lbl_eu_8051D788) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    return other == TypeObj(TYPE_NAME) ? true
+         : other == ScnGroup::GetTypeObjStatic() ? true
+         : other == ScnObj::GetTypeObjStatic() ? true
+         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
 }
 
 const G3dObj::TypeObj ScnMdlExpand::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D7D0);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* ScnMdlExpand::GetTypeName() const {

@@ -686,27 +686,27 @@ namespace nw4r {
 namespace g3d {
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnRoot")> lbl_eu_8051D798 = {sizeof("ScnRoot"), "ScnRoot"};
+NW4R_G3D_RTTI_DEF(ScnRoot);
 
 // ScnRoot's base-chain check (ScnGroup, ScnObj, G3dObj) as a static helper,
 // same convention as scnObjBaseIsDerivedFrom / anmObjBaseIsDerivedFrom: the
 // inlined by-value helper boundary makes MWCC reload other at the ScnGroup
 // link and CSE the remaining comparisons, as retail does.
 static bool scnRootBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other == G3dObj::TypeObj(lbl_eu_8051D788) ? true
-         : other == G3dObj::TypeObj(lbl_eu_8051D768) ? true
+    return other == ScnGroup::GetTypeObjStatic() ? true
+         : other == ScnObj::GetTypeObjStatic() ? true
          : (other == G3dObj::TypeObj(lbl_eu_8051D640));
 }
 
 bool ScnRoot::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D798)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return scnRootBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnRoot::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D798);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* ScnRoot::GetTypeName() const {

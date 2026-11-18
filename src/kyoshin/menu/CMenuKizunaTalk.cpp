@@ -301,7 +301,7 @@ void advanceKizunaWindow(CMenuKizunaTalk* self) {
 void driveKizunaTalkPad(CMenuKizunaTalk* self) {
     KizunaTalkPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     u32 cancel, confirm, left, right;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Player 0 (co-op): D-pad bits sit at different positions.
         u32 pressed = pad->mPressedFlags;
         u32 turbo = pad->mTurboFlags;
@@ -540,7 +540,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0x1bd], talkText, 0);
 
         // Character portrait texture: name differs per player in co-op.
-        s32 player = isClassicController__Q22cf13CfGameManagerFv(-1);
+        s32 player = cf::CfGameManager::isClassicController(-1);
         const char* name = &lbl_eu_80505118[0x1d2];
         if (player != 0) name = &lbl_eu_80505118[0x1c9];
         u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80505118[0x1aa], name, 0x2c);

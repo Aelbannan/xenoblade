@@ -15,10 +15,11 @@ struct CColiLinkObj {
     CColiProc* field_0x3C;
 };
 
-// The single global CColiProc instance (retail bss, size 0x50) and the
-// alternate default target table installed into it at static-init time.
+// The single global CColiResCall instance (retail bss, size 0x50) and the
+// CColiResCall vtable installed into it at static-init time (both owned by
+// code_804A6C60.cpp; see the class hierarchy note there).
 extern "C" u8 lbl_eu_8065D0E8[0x50];
-extern "C" u8 lbl_eu_8056F3A8[0xC];
+extern "C" u32 __vt__12CColiResCall[];
 extern "C" const f32 lbl_eu_8066AEA8;
 extern "C" void ColiProc_ProcessSegments();
 extern "C" void __ct__CColiProc(CColiProc* self);
@@ -204,8 +205,117 @@ extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
     return 0;
 }
 extern "C" void ColiProc_ProcessSegments(){}
-extern "C" void ColiProc_CheckEntries(){}
-extern "C" void ColiProc_DispatchSpec(){}
+// --- ColiProc_DispatchSpec dependencies ---
+
+// The collision object a spec dispatch runs against: only the two counters it
+// clears and the dispatch byte ColiDispatchByIndex consumes are touched here.
+struct CColiObjDispatch {
+    u8 _00[0x210];
+    u32 field_0x210;
+    u8 _214[0x2d4 - 0x214];
+    u32 field_0x2d4;
+};
+
+struct CColiSpecHead;       // spec table handed to ColiRegisterSubObjects
+struct CColiDispatchTarget; // object the method-table dispatcher runs on
+
+// Per-type dispatch class (s16 pair table, defined with the other coli tables).
+extern s16 lbl_eu_8056F3E8[];
+
+// Per-type spec record sizes: step (next-entry advance), payload size and
+// dispatch class. Accessors keep the offset tables spelled once.
+static inline s32 colistep(u32 type) { return lbl_eu_8056F3C0[type]; }
+static inline s32 colisize(u32 type) { return lbl_eu_8056F3D4[type]; }
+static inline s32 coliclass(u32 type) { return lbl_eu_8056F3E8[type]; }
+
+// Sibling helpers (defined in the code_804A6C60 unit).
+extern "C" void ColiRegisterSubObjects(void* unused, CColiSpecHead* spec);
+extern "C" u32 ColiSetDispatchIndex(void* unused, u32 val);
+extern "C" int ColiDispatchByIndex(CColiDispatchTarget* self, u32 val);
+
+// Same spec walk as ColiProc_DispatchSpec, but the *matched* entries are the
+// ones the walk passes over: an entry is skipped when its +0x2 bits 2-3
+// intersect the work object's selection state (+0xC bit 0 against entry bit 2,
+// state bit 2 against entry bit 3); every other entry goes to the method table.
+extern "C" int ColiProc_CheckEntries(CColiWork* work, CColiObjDispatch* obj) {
+    obj->field_0x210 = 0;
+    obj->field_0x2d4 = 0;
+    CColiTable* table = work->field_0x0;
+    CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
+    ColiRegisterSubObjects(obj, (CColiSpecHead*)table);
+    u32 offset = 0;
+    for (u32 i = 0; i < table->field_0xC; i++) {
+        u32 extra = 0;
+        if (e->field_0x0 != 8) {
+            if (e->field_0x2 & 0xC) {
+                u32 state = work->field_0xC;
+                bool sel = false;
+                if ((state & 1) && (e->field_0x2 & 4)) {
+                    sel = true;
+                } else if ((state & 4) && (e->field_0x2 & 8)) {
+                    sel = true;
+                }
+                if (sel) {
+                    if (e->field_0x2 & 2) {
+                        extra = (u32)colisize(e->field_0x0) + 0xc0;
+                    }
+                    offset += (u32)colisize(e->field_0x0) + extra;
+                    e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+                    continue;
+                }
+            }
+            ColiSetDispatchIndex(obj, (u32)coliclass(e->field_0x0));
+            if (e->field_0x2 & 2) {
+                extra = (u32)colisize(e->field_0x0) + 0xc0;
+            }
+            if (ColiDispatchByIndex((CColiDispatchTarget*)obj,
+                                    work->field_0x8 + offset) != 0) {
+                return 1;
+            }
+        }
+        offset += (u32)colisize(e->field_0x0) + extra;
+        e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+    }
+    return 0;
+}
+
+// Walk the work object's spec table and hand every entry whose +0x2 flags
+// carry bit 4 to the object's method table: the entry type selects the
+// dispatch class (lbl_eu_8056F3E8) and the running data offset is the
+// dispatch key. Returns 1 as soon as a handler reports a hit.
+extern "C" int ColiProc_DispatchSpec(CColiWork* work,
+                                     CColiObjDispatch* obj) {
+    obj->field_0x210 = 0;
+    obj->field_0x2d4 = 0;
+    CColiTable* table = work->field_0x0;
+    CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
+    ColiRegisterSubObjects(obj, (CColiSpecHead*)table);
+    u32 offset = 0;
+    for (u32 i = 0; i < table->field_0xC; i++) {
+        u32 extra = 0;
+        if (e->field_0x0 != 8) {
+            if (!(e->field_0x2 & 0x10)) {
+                if (e->field_0x2 & 2) {
+                    extra = (u32)colisize(e->field_0x0) + 0xc0;
+                }
+                offset += (u32)colisize(e->field_0x0) + extra;
+                e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+                continue;
+            }
+            ColiSetDispatchIndex(obj, (u32)coliclass(e->field_0x0));
+            if (e->field_0x2 & 2) {
+                extra = (u32)colisize(e->field_0x0) + 0xc0;
+            }
+            if (ColiDispatchByIndex((CColiDispatchTarget*)obj,
+                                    work->field_0x8 + offset) != 0) {
+                return 1;
+            }
+        }
+        offset += (u32)colisize(e->field_0x0) + extra;
+        e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+    }
+    return 0;
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 
@@ -216,12 +326,12 @@ void sinit_804B2FB4() {
     // Called through a cast so MWCC emits an out-of-line call to the retail
     // ctor symbol instead of inlining the same-TU body.
     ((CtorFn)__ct__CColiProc)((CColiProc*)lbl_eu_8065D0E8);
-    ((CColiProc*)lbl_eu_8065D0E8)->field_0x0 = (CColiProcTarget*)lbl_eu_8056F3A8;
+    ((CColiProc*)lbl_eu_8065D0E8)->field_0x0 = (CColiProcTarget*)__vt__12CColiResCall;
 }
 
 // Defined after sinit so the static-init call stays an out-of-line call
 // rather than being inlined by MWCC.
 extern "C" void __ct__CColiProc(CColiProc* self) {
-    self->field_0x0 = (CColiProcTarget*)lbl_eu_8056F398;
+    self->field_0x0 = (CColiProcTarget*)__vt__9CColiProc;
     self->field_0x4 = 0;
 }

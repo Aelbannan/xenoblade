@@ -3,6 +3,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CQstLogList
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -649,7 +650,7 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
 
     // Look up the quest-log message texture ('timg') and size the panes from
     // its row/column counts.
-    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = cf::CfGameManager::isClassicController(-1) != 0
                           ? &s[0x185]
                           : &s[0x18e];
     u32 msgId = BdatGetU16ByTableKey(&s[0x197], sel, 0x61);

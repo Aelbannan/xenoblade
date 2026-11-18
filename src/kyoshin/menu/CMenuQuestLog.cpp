@@ -90,7 +90,7 @@ body:
     // sound and flags the closing state.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -229,7 +229,7 @@ extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
     CQuestLogPadData* pad = (CQuestLogPadData*)cf::CfGameManager::getCfPadData();
     int cancel, trigger3, trigger1, trigger2, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -335,7 +335,7 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
     // Close-button press: classic-controller bits 22-23 vs wii bits 4-5,
     // normalized to bool (retail's rlwinm + subic/subfe shape).
     bool close;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1)) {
+    if (cf::CfGameManager::isClassicController(-1)) {
         close = pad->mPressedButtonFlags & 0x600000;
     } else {
         close = pad->mPressedButtonFlags & 0x30;

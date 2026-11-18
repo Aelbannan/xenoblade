@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -2812,7 +2813,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         // Window title: pick the message by game-manager flag, resolve the
         // timg texture and publish it onto the pane.
-        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = cf::CfGameManager::isClassicController(-1)
                                   ? lbl_eu_8050888C + 0x4dd
                                   : lbl_eu_8050888C + 0x4e6;
         u16 id = (u16)BdatGetU16ByTableKey(lbl_eu_8050888C + 0x4ef, msgName, 0x49);

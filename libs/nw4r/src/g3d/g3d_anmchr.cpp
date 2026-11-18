@@ -32,7 +32,10 @@ f32 AnmObjChrBlend::GetWeight(int idx) const {
     return mpWeightArray[idx];
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChr")> lbl_eu_8051D5C0 = {sizeof("AnmObjChr"), "AnmObjChr"};
+NW4R_G3D_RTTI_DEF(AnmObjChr);
+NW4R_G3D_RTTI_DEF(AnmObjChrNode);
+NW4R_G3D_RTTI_DEF(AnmObjChrBlend);
+NW4R_G3D_RTTI_DEF(AnmObjChrRes);
 
 // AnmObj::IsDerivedFrom body (retail inlines the base chain into every
 // derived class; the 0x650/0x640 checks come from this helper's boundary).
@@ -47,14 +50,14 @@ static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
 }
 
 bool AnmObjChr::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D5C0)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return anmObjBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChr::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D5C0);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjChr::GetTypeName() const {
@@ -62,17 +65,15 @@ const char* AnmObjChr::GetTypeName() const {
 }
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrNode")> lbl_eu_8051D5D0 = {sizeof("AnmObjChrNode"), "AnmObjChrNode"};
-
 bool AnmObjChrNode::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D5D0)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return AnmObjChr::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChrNode::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D5D0);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjChrNode::GetTypeName() const {
@@ -80,10 +81,8 @@ const char* AnmObjChrNode::GetTypeName() const {
 }
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrBlend")> lbl_eu_8051D5E4 = {sizeof("AnmObjChrBlend"), "AnmObjChrBlend"};
-
 const G3dObj::TypeObj AnmObjChrBlend::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D5E4);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjChrBlend::GetTypeName() const {
@@ -91,17 +90,15 @@ const char* AnmObjChrBlend::GetTypeName() const {
 }
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrRes")> lbl_eu_8051D5F8 = {sizeof("AnmObjChrRes"), "AnmObjChrRes"};
-
 bool AnmObjChrRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D5F8)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return AnmObjChr::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChrRes::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D5F8);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjChrRes::GetTypeName() const {
@@ -123,20 +120,24 @@ void AnmObjChr::Release() {
     SetAnmFlag(FLAG_ANM_BOUND, false);
 }
 
+AnmObjChrRes* AnmObjChr::Attach(int idx, AnmObjChrRes* pRes) {
+    return NULL;
+}
+
+AnmObjChrRes* AnmObjChr::Detach(int idx) {
+    return NULL;
+}
+
+void AnmObjChr::SetWeight(int idx, f32 weight) {}
+
+f32 AnmObjChr::GetWeight(int idx) const {
+    return 1.0f;
+}
+
+void AnmObjChr::DetachAll() {}
+
 } // namespace g3d
 } // namespace nw4r
-
-
-
-int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
-
-int Detach__Q34nw4r3g3d9AnmObjChrFi(void) { return 0x0; }
-
-void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
-
-float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
-
-void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
 
 
 namespace nw4r {
@@ -415,11 +416,6 @@ void AnmObjChrNode::Release(const ResMdl mdl, u32 target, BindOption option) {
 } // namespace g3d
 } // namespace nw4r
 
-// Retail-owned construction vtables (nw4r_data.s)
-extern char lbl_eu_80569438[]; // AnmObjChr construction vtable
-extern char lbl_eu_805693E0[]; // AnmObjChrNode vtable
-extern char lbl_eu_80569388[]; // AnmObjChrBlend vtable
-extern char lbl_eu_80569330[]; // AnmObjChrRes vtable
 // Complete const array type sized to the retail .sdata table (2 entries,
 // 8 bytes) keeps it small-data eligible (retail: li r4, tbl@sda21).
 extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2]; // anm play-policy table
@@ -436,7 +432,6 @@ inline AnmObjChr::AnmObjChr(MEMAllocator* pAllocator, u16* pBindingBuf,
                             int numBinding)
     : AnmObj(pAllocator, NULL), mNumBinding(numBinding),
       mpBinding(pBindingBuf) {
-    *(void**)this = (void*)lbl_eu_80569438;
     Release();
 }
 
@@ -446,7 +441,6 @@ inline AnmObjChrNode::AnmObjChrNode(MEMAllocator* pAllocator, u16* pBindingBuf,
                                     int numChildren)
     : AnmObjChr(pAllocator, pBindingBuf, numBinding),
       mChildrenArraySize(numChildren), mpChildrenArray(ppChildrenBuf) {
-    *(void**)this = (void*)lbl_eu_805693E0;
     for (int i = 0; i < mChildrenArraySize; i++) {
         mpChildrenArray[i] = NULL;
     }
@@ -459,8 +453,6 @@ inline AnmObjChrBlend::AnmObjChrBlend(MEMAllocator* pAllocator,
     : AnmObjChrNode(pAllocator, pBindingBuf, numBinding, ppChildrenBuf,
                     numChildren),
       mpWeightArray(pWeightBuf) {
-    *(void**)this = (void*)lbl_eu_80569388;
-
     // All weights start fully bound (1.0f, the shared sdata2 constant).
     for (int i = 0; i < mChildrenArraySize; i++) {
         mpWeightArray[i] = lbl_eu_80669B8C;
@@ -736,9 +728,7 @@ inline AnmObjChrRes::AnmObjChrRes(MEMAllocator* pAllocator, ResAnmChr chr,
     : AnmObjChr(pAllocator, pBindingBuf, numBinding),
       FrameCtrl(0.0f, chr.ref().info.numFrame,
                 lbl_eu_80663458[chr.ref().info.policy]),
-      mRes(chr), mpResultCache(pCacheBuf) {
-    *(void**)this = (void*)lbl_eu_80569330;
-}
+      mRes(chr), mpResultCache(pCacheBuf) {}
 
 // Layout of the allocation: [object][result cache][binding table]. The cache
 // region only exists when `cache` is set, and its entry count comes from the
@@ -903,10 +893,12 @@ void AnmObjChrRes::SetUpdateRate(f32 rate) {
 
 
 
-float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(const nw4r::g3d::AnmObjChrRes* self) { return *(float *)((char *)self + 28); }
-
 namespace nw4r {
 namespace g3d {
+
+f32 AnmObjChrRes::GetUpdateRate() const {
+    return GetRate();
+}
 
 void AnmObjChrRes::UpdateFrame() {
     if (lbl_eu_80669B88 != GetRate()) {
@@ -1121,55 +1113,26 @@ const ChrAnmResult* AnmObjChrRes::GetResult(ChrAnmResult* pResult,
 
 
 
-void IsDerivedFrom__Q34nw4r3g3d12AnmObjChrResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void IsDerivedFrom__Q34nw4r3g3d9AnmObjChrCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv(){}
-
-extern const char lbl_eu_8051D5F8[];
-void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051D5F8; }
-
-void __dt__Q34nw4r3g3d12AnmObjChrResFv(){}
-
-
-void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv(){}
-
-extern const char lbl_eu_8051D5E4[];
-void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
-
-
-void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
-
-extern const char lbl_eu_8051D5D0[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*)lbl_eu_8051D5D0; }
-
-void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}
-
-void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return (void*)lbl_eu_8051D5C0; }
-
 namespace nw4r {
 namespace g3d {
 
 // Retail inlines the full base chain into this function; calling the base
 // member reproduces the staggered register allocation of the inline expansion.
-// The first comparison is written constant-first so MWCC colors `other` into
-// r0 and the type-object address into r3, matching the inline expansion.
 bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (TypeObj(lbl_eu_8051D5E4) == other) {
+    u32 type = other.GetTypeID();
+    u32 self = TypeObj(TYPE_NAME).GetTypeID();
+    if (type == self) {
         return true;
     }
     return AnmObjChrNode::IsDerivedFrom(other);
 }
 
-// AnmObjChrBlend dtor: retail inlines the AnmObjChrNode base-dtor chain
-// (vtable store, DetachAll, G3dObj base dtor) into the out-of-line copy of
-// the header's inline empty dtor. No legal out-of-line redefinition exists
-// while the header declares the body inline, so the mangled stub below
-// keeps the symbol linkable. See the GetResult stub note for the one-line
-// postprocess rule that would unblock byte-identical matching.
+// AnmObjChrBlend dtor: retail emits an out-of-line copy of the header's
+// inline (empty) dtor body with the AnmObjChrNode base-dtor chain inlined
+// (vtable store, DetachAll, G3dObj base dtor). No legal out-of-line
+// redefinition exists while the header declares the body inline, so this
+// stub only keeps the retail symbol linkable; the residual is the missing
+// inlined chain (blocked by the header, not by the body).
 void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(void) {}
 
 

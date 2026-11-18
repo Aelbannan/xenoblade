@@ -129,7 +129,6 @@ extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(u16 objectId,
                                                                     void* obj,
                                                                     u32 selector,
                                                                     float amount);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
                                                         float value);

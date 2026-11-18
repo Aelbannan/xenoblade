@@ -9,7 +9,6 @@
 // takes the selector argument (call sites pass -1). The inline s16 overload
 // in include/kyoshin/cf/CfGameManager.hpp drops it, so callers that need the
 // argument use this declaration instead.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Forward decls only. The full sub-object headers (CTitleAHelp.hpp,
 // CModelDisp.hpp, CPartyState.hpp, CEquipChange.hpp) cannot be included here:

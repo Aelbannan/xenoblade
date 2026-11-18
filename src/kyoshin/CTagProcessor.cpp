@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CTagProcessor
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 
@@ -690,7 +691,7 @@ __declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         TagPadView* pad =
                             (TagPadView*)cf::CfGameManager::getCurrentPad();
                         int pressed;
-                        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+                        if (cf::CfGameManager::isClassicController(-1) != 0)
                             pressed = (pad->field_04 & 0x00600000) != 0;
                         else
                             pressed = (pad->field_04 & 0x00000030) != 0;
@@ -1019,7 +1020,7 @@ __declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                 int btn;
                 bool upDown;
                 bool leftRight;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     btn = (pad->field_04 >> 22) & 1;
                     upDown = (pad->field_104 & 0x8004) != 0;
                     leftRight = (pad->field_104 & 0x8000) != 0 ||
@@ -1808,7 +1809,7 @@ __declspec(noinline) int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
                     (TagPadView*)cf::CfGameManager::getCurrentPad();
                 member = (TagMemberObj*)pad;  // retail reuses r23 here
                 u32 bits;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+                if (cf::CfGameManager::isClassicController(-1) != 0)
                     bits = pad->field_04 & 0x00600000;
                 else
                     bits = pad->field_04 & 0x00000030;

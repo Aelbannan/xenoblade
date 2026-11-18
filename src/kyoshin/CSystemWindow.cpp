@@ -188,7 +188,7 @@ void CSystemWindow::Move() {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         int confirmBtn;
         // In co-op, the player-specific button (Classic A); otherwise Wiimote A.
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+        if (cf::CfGameManager::isClassicController(-1) != 0)
             confirmBtn = (pad->mPressedButtonFlags >> 21) & 1;
         else
             confirmBtn = (pad->mPressedButtonFlags >> 4) & 1;

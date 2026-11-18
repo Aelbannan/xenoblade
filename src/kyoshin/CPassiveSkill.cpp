@@ -14,7 +14,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+#include "kyoshin/cf/CfGameManager.hpp"
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" void TagCopyVec2f(float* dst, float* src);
 class UnkClass_8045F564;
@@ -343,7 +343,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     setPaneVisible(pane, flag);
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 0x87);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x1a9], text, 0);
-    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = cf::CfGameManager::isClassicController(-1) != 0
                           ? &lbl_eu_8050DC20[0x1b4]
                           : &lbl_eu_8050DC20[0x1bd];
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050DC20[0x196], sel, 0x87);
@@ -1062,8 +1062,6 @@ extern "C" __declspec(noinline) void* __ct__UI_CPassiveSkillLine(UI::CPassiveSki
 // `bl __dt__Q22UI17CPassiveSkillLineFv` call, not inline this body.
 __declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 #pragma optimize_for_size off
-
-extern "C" void __dt__Q22UI17CPassiveSkillInfoFv(UI_CPassiveSkillInfo* self, int flag);
 
 // Line-subobject rebuild (retail CPassiveSkillLine_rebuildLayouts): called from OnFileEvent after
 // the skill-data read. Creates the main layout (+0x8) and three anim

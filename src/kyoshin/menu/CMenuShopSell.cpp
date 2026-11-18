@@ -1,6 +1,7 @@
 // Decomp of kyoshin/menu/CMenuShopSell.
 // Shop sell menu screen process (IUICf task + IScnRender MI layout).
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuShopSell.hpp"
 
@@ -226,7 +227,7 @@ void CMenuShopSell::HandlePhase2() {
     if (MenuTutorialIsCreated() != 0) return;
 
     ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Pointer input enabled: materialise the 0/1 flag bools first (retail
         // andi/rlwinm+rlwimi then subic/subfe normalisation, pressed bits via
         // extrwi), then dispatch through cmpwi/beq in this order.

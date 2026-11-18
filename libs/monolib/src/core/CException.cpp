@@ -772,12 +772,14 @@ u32  lbl_eu_80657FC8[4];           // 0x10
 }
 
 // [.sbss] 0x806656C0-0x806656E0 (0x20, align 8): small global state.
+// 0x18 is CLibCri::spInstance (defined below; retail .sbss owner is this TU),
+// 0x1C is CLibCri's AX callback pointer (imported by CLibCri.cpp).
 extern "C" {
 CException* lbl_eu_806656C0;       // 0x0
 u32  lbl_eu_806656C4;              // 0x4
 u32  lbl_eu_806656C8;              // 0x8
 u32  lbl_eu_806656CC;              // 0xC
 u64  lbl_eu_806656D0;              // 0x10 (8B)
-u32  lbl_eu_806656D8;              // 0x18
 u32  lbl_eu_806656DC;              // 0x1C
 }
+CLibCri* CLibCri::spInstance;      // 0x18

@@ -248,7 +248,6 @@ extern "C" void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                               const ml::CVec3* src, int flag);
 extern "C" int moveBaseSeekTo(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                              const ml::CVec3* src, int flag);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Direct (non-inlinable) call to the CtrlPc destructor (retail symbol name).
 extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).

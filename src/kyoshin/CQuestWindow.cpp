@@ -1,6 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/CQuestWindow
 // Replace stubs with high-level C/C++ during decomp.
 
+// Inline-empty ~IWorkEvent: retail ~CQuestWindow destroys only the mCursor /
+// mMemRegion members and the IUIWindow base, i.e. it elides the empty
+// IWorkEvent (+0x6C) and IScnRender (+0x70) base-dtor calls (CScrollBar /
+// CSortMenu / CMCCrystalList shape).
+#define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQuestWindow.hpp"
 #include "kyoshin/code_80135FDC.hpp"              // advanceAnimTransform (anim frame wait)
@@ -112,27 +118,27 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         self->field_0x90 = (CQuestWinRes*)tag;
         self->field_0x94 = CLibLayout::createArcResourceAccessor();
         self->field_0x94->Attach(fileData, &lbl_eu_804FEC84[0xd]);
-        buildLayout(&self->mpLayout, self->field_0x94, &lbl_eu_804FEC84[0x11]);
-        bindLayoutAnimTransform(self->mpLayout, &self->mAnimA, self->field_0x94,
+        buildLayout(&self->mLayout, self->field_0x94, &lbl_eu_804FEC84[0x11]);
+        bindLayoutAnimTransform(self->mLayout, &self->mAnimA, self->field_0x94,
                       &lbl_eu_804FEC84[0x29]);
-        bindLayoutAnimTransform(self->mpLayout, &self->mAnimB, self->field_0x94,
+        bindLayoutAnimTransform(self->mLayout, &self->mAnimB, self->field_0x94,
                       &lbl_eu_804FEC84[0x44]);
 
         // Bind the font handle into the layout's root pane.
-        nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
-        u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mpLayout);
+        nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
+        u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
         char* fontStr = (char*)CUICfManager_getPackedFont9C();
         if (fontStr != 0) {
-            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
-            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);
-            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x77], (u32)fontStr);
+            setLayoutTextBoxFont(self->mLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
+            setLayoutTextBoxFont(self->mLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);
+            setLayoutTextBoxFont(self->mLayout, &lbl_eu_804FEC84[0x77], (u32)fontStr);
         }
         char* s =
             BdatTouchStringCell(&lbl_eu_804FEC84[0x7f], &lbl_eu_804FEC84[0x88], 3);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_804FEC84[0x6c], s, 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_804FEC84[0x6c], s, 0);
 
         // TextBox::mpTagProcessor at +0xF8 (MonolithSoft nw4r extension).
         struct TextBoxLayout {
@@ -141,20 +147,20 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         };
         {
             TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
-                self->mpLayout->GetRootPane()->FindPaneByName(
+                self->mLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_804FEC84[0x8d], true));
             t->mpTagProcessor = self->field_0x90;
         }
         {
             TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
-                self->mpLayout->GetRootPane()->FindPaneByName(
+                self->mLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_804FEC84[0x96], true));
             t->mpTagProcessor = self->field_0x90;
         }
 
         enableAnimA((QuestWinObj*)self);
         self->mAnimA->SetFrame(lbl_eu_8066713C);
-        self->mpLayout->Animate(0);
+        self->mLayout->Animate(0);
 
         self->mCursor = CCur18(CUICfManager_getArcResourceAccessor());
         self->mCursor.initLayout();
@@ -190,87 +196,58 @@ void CQuestWindow::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    drawLayout(mpLayout, &drawInfo, 0, 1);
+    drawLayout(mLayout, &drawInfo, 0, 1);
     if (field_0xC0 >= 0) {
         mCursor.DrawLayout(&drawInfo);
     }
 }
 
 // ---------------------------------------------------------------------------
-// __ct__CQuestWindow (us-80122c40): quest-window constructor. Retail C-ABI
-// symbol (unmangled), so it is written as a global function (CSysWinSave /
-// COption idiom). Constructs the CProcess base, writes the temp vtable then
-// the composite vtable (+0x10) with the +0x24/+0xAC dispatch slots, installs
-// the null Move/Draw ptmfs, initialises the scalar fields, constructs the
-// embedded UnkClass_8045F564 / CCur18, bumps the window counter and finishes
-// with the initial Move hook (lbl_eu_8052D068).
+// CQuestWindow ctor (us-80122c40): the CProcess base constructor runs first
+// (out of line - CProcess.hpp is novtable and its ctor lives in monolib), then
+// the inlined CTTask<IUIWindow> / IUIWindow constructors write the
+// __vt__18CTTask<9IUIWindow> vptr and the window state, and the compiler
+// installs the composite table (with the +0x24 IWorkEvent and +0xAC IScnRender
+// sub-vptrs) once the body starts. The body constructs the embedded
+// UnkClass_8045F564 / CCur18, initialises the scalar fields, bumps the window
+// counter and finishes with the initial Move hook (lbl_eu_8052D068).
 // ---------------------------------------------------------------------------
-extern "C" void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3) {
+CQuestWindow::CQuestWindow(CScn* scn, u32 id, u32 flag)
+    : mpScn(scn), mMemRegion(), field_0x88(NULL), field_0x8C(NULL), field_0x90(NULL),
+      field_0x94(NULL), mAnimA(NULL), mAnimB(NULL), mCursor() {
     u32 padFlags;
     s32 isClassic;
-    __ct__8CProcessFv((CProcess*)self);
-    self->mVtable = (u32)lbl_eu_8052D238;
 
-    // Null ptmf into both callback slots (12-byte struct copies: MWCC emits
-    // the lwzu base-establish + load-both/store-swapped idiom retail shows).
-    const CTTask<IUIWindow>::MoveFunc* nullPtmf =
-        reinterpret_cast<const CTTask<IUIWindow>::MoveFunc*>(__ptmf_null);
-    self->mMoveFunc = *nullPtmf;
-    self->mDrawFunc = *nullPtmf;
-
-    self->mpLayout = 0;
-    self->field_58 = 0;
-    self->field_5C = 0;
-    self->field_60 = -1;
-    self->field_64 = 0;
-    self->field_65 = 0;
-    self->field_66 = 0;
-    self->field_67 = 1;
-    self->field_68 = 0;
-
-    self->mVtable = (u32)lbl_eu_8052D0F0;
-    self->field_6C = (u32)lbl_eu_8052D0F0 + 0x24;
-    self->field_70 = (u32)lbl_eu_8052D0F0 + 0xAC;
-    self->mpScn = (CScn*)arg1;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->field_0x88 = 0;
-    self->field_0x8C = 0;
-    self->field_0x90 = 0;
-    self->field_0x94 = 0;
-    self->mAnimA = 0;
-    self->mAnimB = 0;
-    __ct__CCur18(&self->mCursor, 0);
-    self->field_B8 = arg2;
-    self->field_0xBC = 0;
-    self->field_0xC0 = 0;
-    self->field_0xC4 = 0;
-    self->field_0xC8 = (u8)arg3;
-    self->field_0xCC = 0;
-    self->field_0xD0 = 0;
-    self->field_0xDC = 0;
-    self->field_0xE0 = 0;
-    self->field_0xE4 = 0;
-    self->field_0xE8 = 0;
-    self->field_0xD4 = 0;
-    self->field_0xD6 = 0;
-    self->field_0xD8 = 0;
-    self->field_0xDA = 0;
+    field_B8 = id;
+    field_0xBC = 0;
+    field_0xC0 = 0;
+    field_0xC4 = 0;
+    field_0xC8 = (u8)flag;
+    field_0xCC = 0;
+    field_0xD0 = 0;
+    field_0xDC = 0;
+    field_0xE0 = 0;
+    field_0xE4 = 0;
+    field_0xE8 = 0;
+    field_0xD4 = 0;
+    field_0xD6 = 0;
+    field_0xD8 = 0;
+    field_0xDA = 0;
 
     lbl_eu_80663FD0 = lbl_eu_80663FD0 + 1;
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
-    self->field_0xE8 = getEnabledInputFlags__Q22cf13CfGameManagerFv();
+    field_0xE8 = getEnabledInputFlags__Q22cf13CfGameManagerFv();
 
     // Classic-pad pad-flag mask when the detected pad type is CLASSIC.
-    isClassic = isClassicController__Q22cf13CfGameManagerFv(-1);
+    isClassic = cf::CfGameManager::isClassicController(-1);
     padFlags = isClassic != 0 ? 0x61800C : 0x1803C;
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(padFlags, 1);
 
-    // Install the initial Move hook (12-byte struct copy).
-    self->mMoveFunc = *reinterpret_cast<const CTTask<IUIWindow>::MoveFunc*>(
+    // Install the initial Move hook (12-byte ptmf copy).
+    mMoveFunc = *reinterpret_cast<const CTTask<IUIWindow>::MoveFunc*>(
         lbl_eu_8052D068);
-    return self;
 }
 
 // ---------------------------------------------------------------------------
@@ -284,12 +261,10 @@ CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) 
         return 0;
     }
     mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
-    CQuestWindow* obj = (CQuestWindow*)mtl::MemManager::allocate(0xec, mem);
-    if (obj != 0) {
-        obj = (CQuestWindow*)__ct__CQuestWindow(obj, arg1, arg2, arg3);
-    }
-    lbl_eu_80663FD4 = reinterpret_cast<QuestWindowState*>(obj);
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
+    lbl_eu_80663FD4 = reinterpret_cast<QuestWindowState*>(
+        new (mtl::MemManager::allocate(0xec, mem))
+            CQuestWindow((CScn*)arg1, arg2, arg3));
+    reinterpret_cast<CProcess*>(lbl_eu_80663FD4)->Regist(parent, 0);
     return reinterpret_cast<CQuestWindow*>(lbl_eu_80663FD4);
 }
 
@@ -316,7 +291,7 @@ void completeWindowOpen(QuestWinObj* self) {
 __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
     if (self->field_0xC8 != 0) {
         CPadView* pad = (CPadView*)getCurrentPad__Q22cf13CfGameManagerFv();
-        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = cf::CfGameManager::isClassicController(-1) != 0;
         u32 confirm = (classic != 0) ? ((pad->field_04 >> 21) & 1)
                                      : ((pad->field_04 >> 4) & 1);
         if (confirm != 0) {
@@ -327,7 +302,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
         }
     } else if (self->field_0xC4 != 0) {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
-        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = cf::CfGameManager::isClassicController(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
             u32 turbo = pad->field_104;
@@ -364,7 +339,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
         }
     } else {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
-        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = cf::CfGameManager::isClassicController(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
             u32 turbo = pad->field_104;
@@ -509,15 +484,15 @@ void refreshQuestContent(CQuestWindow* self) {
     self->field_0xE4 = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
     u8 v = BdatGetU8Direct((const void*)questRow, &base[0xa2], questId);
     if (v == 1) {
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
     } else {
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
     }
     char* res = 0;
     switch (v) {
@@ -532,7 +507,7 @@ void refreshQuestContent(CQuestWindow* self) {
         break;
     }
     if (res != 0) {
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x13c], (TPLPalette*)res);
+        PaneSetTexPaletteByName(self->mLayout, &base[0x13c], (TPLPalette*)res);
     }
     if ((questId - 0x100) <= 4) {
         if ((CtrlRemote_TouchBitByArg(questId + 0x220) & 0xFF) == 0) {
@@ -546,15 +521,15 @@ void refreshQuestContent(CQuestWindow* self) {
     } else {
         s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x2e);
     }
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x154], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x154], s, 0);
     s = BdatGetPtrDirect((const void*)questRow, &base[0x15d], questId);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x163], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x163], s, 0);
     u32 v172 = BdatGetU16Direct((const void*)questRow, &base[0x172], questId);
     s = (char*)GetBdatNameByNumId(
         BdatGetPtrDirect((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x179], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x179], s, 0);
     s = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x182], questId);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x96], s, (u32)self->field_0x90);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x96], s, (u32)self->field_0x90);
     char* cur;
     if (self->field_0xC8 != 0) {
         if ((CtrlRemote_TouchBitByArg(questId + 0x220) & 1) != 0) {
@@ -569,10 +544,10 @@ void refreshQuestContent(CQuestWindow* self) {
             cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x34);
         }
     }
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x8d], cur, (u32)self->field_0x90);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], &base[0x1c4], 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1c5], &base[0x1c4], 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1d2], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x8d], cur, (u32)self->field_0x90);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1c5], &base[0x1c4], 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1d2], &base[0x1c4], 0);
     if (self->field_0xC8 != 0) {
         if (CtrlObjectParam_GetWorkField50() == questId) {
             CtrlObjectParam_SetWorkField50(0);
@@ -580,12 +555,12 @@ void refreshQuestContent(CQuestWindow* self) {
         u8 vcd = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
         if (vcd == 1) {
             s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], s, 0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x61], 0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x77], 0);
         } else {
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x77], self->field_0xDC);
             ml::FixStr<32> buf2(false);
             buf2.mString[0] = 0;
             buf2.mLength = 0;
@@ -622,13 +597,13 @@ void refreshQuestContent(CQuestWindow* self) {
                     } else {
                         buf2.format(&base[0x212], cur);
                     }
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf, buf2.mString, 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf, buf2.mString, 0);
                     ((u16*)&self->field_0xD4)[self->field_0xDA] = (u16)v30;
                     self->field_0xDA = self->field_0xDA + 1;
                 }
                 if (i == 0) {
                     cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
-                    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], cur, 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], cur, 0);
                 }
                 i++;
             } while (i < 3);
@@ -637,17 +612,17 @@ void refreshQuestContent(CQuestWindow* self) {
         u8 vcd = BdatGetU8Direct((const void*)questRow, &base[0xcd], questId);
         if (vcd == 3) {
             s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x32);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
+            LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], s, 0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x77], self->field_0xDC);
         } else if (vcd == 1) {
             s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], s, 0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], s, 0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x61], 0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x77], 0);
         } else {
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
-            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mLayout, &base[0x77], self->field_0xDC);
             ml::FixStr<32> buf2(false);
             buf2.mString[0] = 0;
             buf2.mLength = 0;
@@ -677,11 +652,11 @@ void refreshQuestContent(CQuestWindow* self) {
                     } else {
                         buf2.format(&base[0x212], cur);
                     }
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf3, buf2.mString, 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf3, buf2.mString, 0);
                 }
                 if (i == 0) {
                     cur = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x33);
-                    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x1b7], cur, 0);
+                    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x1b7], cur, 0);
                 }
                 i++;
             } while (i < 3);
@@ -689,20 +664,20 @@ void refreshQuestContent(CQuestWindow* self) {
     }
     // Common tail: button labels, classic-pad hint, timg resource panes.
     s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x30);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x215], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x215], s, 0);
     s = BdatTouchStringCell(&base[0x14a], &base[0x88], 0x31);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x21d], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x21d], s, 0);
     s = BdatTouchStringCell(&base[0x14a], &base[0x88], self->field_0xC8 != 0 ? 0x2f : 0x30);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x224], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x224], s, 0);
     s = BdatTouchStringCell(&base[0x22d], &base[0x23b], 0x2b);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x240], s, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x24b], s, 0);
-    const char* cp = isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x240], s, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, &base[0x24b], s, 0);
+    const char* cp = cf::CfGameManager::isClassicController(-1) != 0 ? &base[0x256] : &base[0x25f];
     char* resName = MakeTplNameSysFile(BdatGetU16ByTableKey(&base[0x22d], cp, 0x2b));
     void* res2 = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, resName, 0);
     if (res2 != 0) {
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x268], (TPLPalette*)res2);
-        PaneSetTexPaletteByName(self->mpLayout, &base[0x271], (TPLPalette*)res2);
+        PaneSetTexPaletteByName(self->mLayout, &base[0x268], (TPLPalette*)res2);
+        PaneSetTexPaletteByName(self->mLayout, &base[0x271], (TPLPalette*)res2);
         struct ResData {
             u8 pad[8];
             u16* pData;
@@ -710,14 +685,14 @@ void refreshQuestContent(CQuestWindow* self) {
         u16* data = ((ResData*)res2)->pData;
         u16 a = data[1];
         u16 b = data[0];
-        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(&base[0x268], true);
+        nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(&base[0x268], true);
         if (pane != 0) {
             nw4r::math::VEC2 vec;
             vec.x = (f32)(u32)a;
             vec.y = (f32)(u32)b;
             writePanePos((u8*)pane, (const float*)&vec);
         }
-        pane = self->mpLayout->GetRootPane()->FindPaneByName(&base[0x271], true);
+        pane = self->mLayout->GetRootPane()->FindPaneByName(&base[0x271], true);
         if (pane != 0) {
             nw4r::math::VEC2 vec2;
             vec2.x = (f32)(u32)a;
@@ -776,21 +751,21 @@ void refreshQuestContent(CQuestWindow* self) {
             i++;
         } while (i < 4);
     }
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
-    setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
+    setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
+    setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
+    setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
+    setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
     if (self->field_0xC8 == 0) {
         if (self->field_0xC4 == 0) {
-            setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
         } else {
-            setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+            setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
         }
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
         playUISound(0x19);
     } else {
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+        setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
         playUISound(0x1c);
         self->field_0xC0 = 0;
     }
@@ -866,15 +841,13 @@ __attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
     }
 }
 
-void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
-extern "C" void cbRenderBefore__12CQuestWindowFv(CQuestWindow* self);
-void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))onQuestFileEvent)((char*)self - 0x6c); }
-
-void CQuestWindow_dtorAdj6C(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
-
-void CQuestWindow_renderBeforeAdj70(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
-
-extern "C" void CQuestWindow_dtorAdj70(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
+// The IWorkEvent sub-vtable's OnFileEvent slot (+0x34) and the two
+// this-adjusting destructor thunks are generated by the compiler for this
+// multiple-inheritance class (retail: OnFileEvent__12CQuestWindowFP10CEventFile
+// at the +0x6C sub-vtable, @108@__dt__ / @112@cbRenderBefore / @112@__dt__).
+bool CQuestWindow::OnFileEvent(CEventFile* pEventFile) {
+    return onQuestFileEvent(this, pEventFile);
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
@@ -920,19 +893,11 @@ bool isQuestWindowOpen() {
 // feeding the IWorkEvent subobject at +0x6C to both loaders.
 // ---------------------------------------------------------------------------
 void CQuestWindow::Init() {
-    // IWorkEvent subobject at +0x6C; the retail keeps the conditional
-    // this-adjust (null this -> null IWorkEvent) as mr/beq/addi.
-    IWorkEvent* evt = (IWorkEvent*)this;
-    if (this != 0) {
-        evt = (IWorkEvent*)&this->field_6C;
-    }
+    IWorkEvent* evt = this;
     field_0x8C = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
         lbl_eu_8052CF80[SearchThresholdIdx(field_B8)], evt, 0, 0);
-    IWorkEvent* evt2 = (IWorkEvent*)this;
-    if (this != 0) {
-        evt2 = (IWorkEvent*)&this->field_6C;
-    }
+    IWorkEvent* evt2 = this;
     field_0x88 = (CFileHandle*)CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_80661EB8, evt2, 0, 0);
 }
@@ -945,18 +910,15 @@ void CQuestWindow::Init() {
 // ---------------------------------------------------------------------------
 void CQuestWindow::Term() {
     CDeviceVI::waitForDrawDone();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&field_70);
-    }
+    IScnRender* render = this;
     mpScn->removeRenderCB(render);
     closeFileHandle(&field_0x88);
     closeFileHandle(&field_0x8C);
     CBdat::getEntry(2);
     mCursor.cleanup();
-    if (mpLayout != 0) {
-        delete mpLayout;
-        mpLayout = 0;
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
     }
     if (field_0x90 != 0) {
         delete field_0x90;
@@ -979,26 +941,11 @@ void CQuestWindow::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// ~CQuestWindow (us-80122e8c): complete-object destructor. The retail dtor
-// takes (this, flags) with a conditional operator delete and re-stores the
-// composite vtable plus the +0x24/+0xAC dispatch slots before the teardown
-// calls, so it is written as the C-ABI global __dt__12CQuestWindowFv
-// (COption / CSysWinSave idiom - a non-polymorphic member dtor cannot carry
-// the flags parameter, and a C++ virtual class would emit a local vtable
-// instead of referencing the retail lbl_eu_8052D0F0).
+// ~CQuestWindow (us-80122e8c): the compiler emits the composite vptr re-stores
+// (primary plus the +0x24 IWorkEvent and +0xAC IScnRender sub-vptrs), the
+// member destruction (mCursor, mMemRegion), the ~IUIWindow base call and the
+// conditional operator delete; the body only restores the input-disable time.
 // ---------------------------------------------------------------------------
-void* __dt__12CQuestWindowFv(CQuestWindow* _this, int flags) {
-    if (_this != 0) {
-        _this->mVtable = (u32)lbl_eu_8052D0F0;
-        _this->field_6C = (u32)lbl_eu_8052D0F0 + 0x24;
-        _this->field_70 = (u32)lbl_eu_8052D0F0 + 0xAC;
-        cf::CfPadTask::setInputDisableTime(lbl_eu_80667138);
-        __dt__6CCur18Fv(&_this->mCursor, -1);
-        __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
-        __dt__9IUIWindowFv(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
+CQuestWindow::~CQuestWindow() {
+    cf::CfPadTask::setInputDisableTime(lbl_eu_80667138);
 }

@@ -30,7 +30,7 @@
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
+#include "kyoshin/cf/CfGameManager.hpp"
 extern "C" int KyoshinHeap_GetField44();
 
 // .sdata2 u16 -> f32 conversion goes through MWCC's 0x4330-magic double.
@@ -667,7 +667,7 @@ bool CTutorialList::OnFileEvent(CEventFile* event) {
         LayoutSetTextBoxFmtValue(mLayout, "txt_btntit", title, 0);
 
         // Pick the message archive variant from the game-manager mode.
-        const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+        const char* sel = cf::CfGameManager::isClassicController(-1) != 0
                               ? "fileID_2"
                               : "fileID_1";
         u16 msgId = BdatGetU16ByTableKey("MNU_kyeassign", sel, 0x61);

@@ -242,7 +242,7 @@ void CSimpleEveTalkWin::Init() {
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+    if (cf::CfGameManager::isClassicController(-1) != 0)
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
@@ -503,7 +503,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+    if (cf::CfGameManager::isClassicController(-1) != 0)
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
@@ -576,7 +576,7 @@ extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
     // (bit 4); the pad flag fields are 2-bit counters, so test the extracted
     // pair for non-zero.
     int confirmBtn;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+    if (cf::CfGameManager::isClassicController(-1) != 0)
         confirmBtn = (pad->mPressedButtonFlags & 0x00600000) != 0;
     else
         confirmBtn = (pad->mPressedButtonFlags & 0x00000030) != 0;

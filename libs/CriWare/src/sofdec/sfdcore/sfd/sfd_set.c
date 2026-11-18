@@ -2,18 +2,19 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(s32 val, u32 err_code);
-u32 SFD_GetHnStat(void* self) {
+u32 SFD_GetHnStat(SfdHandle* self) {
     if (SFLIB_CheckHn(self))
         SFLIB_SetErr(0, 0xff000111);
-    return *(u32*)((u8*)self + 0x54);
+    return self->errorState;
 }
 
 extern u32 lbl_eu_80606E38[]; /* SFD work area */
 
-s32 SFD_SetCond(void* self, s32 idx, s32 val) {
+s32 SFD_SetCond(SfdHandle* self, s32 idx, s32 val) {
     if (self == NULL) {
         s32 ok;
         void* h;
@@ -47,7 +48,7 @@ s32 SFD_SetCond(void* self, s32 idx, s32 val) {
             else
                 ok = 1;
             if (ok)
-                *(u32*)((u8*)self + idx * 4 + 0xA1C) = val;
+                self->cond[idx] = val;
         }
         {
             s32 ok;
@@ -58,13 +59,13 @@ s32 SFD_SetCond(void* self, s32 idx, s32 val) {
             else
                 ok = 1;
             if (ok)
-                *(u32*)((u8*)self + idx * 4 + 0xBAC) = val;
+                self->condBak[idx] = val;
         }
     }
     return 0;
 }
 
-void SFSET_SetCond(void* self, s32 idx, s32 val) {
+void SFSET_SetCond(SfdHandle* self, s32 idx, s32 val) {
     s32 ok;
     if (idx == 6 && val == 1 && SFTRN_IsSetup(self, 3) == 0)
         ok = 0;
@@ -73,34 +74,34 @@ void SFSET_SetCond(void* self, s32 idx, s32 val) {
     else
         ok = 1;
     if (ok)
-        *(u32*)((u8*)self + idx * 4 + 0xA1C) = val;
+        self->cond[idx] = val;
 }
 
-s32 SFD_GetCond(void* self, u32 idx, s32* out) {
+s32 SFD_GetCond(SfdHandle* self, u32 idx, s32* out) {
     if (self == NULL) {
         *out = (s32)lbl_eu_80606E38[idx];
     } else {
         if (SFLIB_CheckHn(self) != 0)
             return SFLIB_SetErr(0, 0xFF000113);
-        *out = *(s32*)((u8*)self + idx * 4 + 0xA1C);
+        *out = self->cond[idx];
     }
     return 0;
 }
 
-u32 SFSET_GetCond(void* self, u32 idx) {
-    return *(u32*)((u8*)self + 0xa1c + idx * 4);
+u32 SFSET_GetCond(SfdHandle* self, u32 idx) {
+    return self->cond[idx];
 }
 
-void SFD_SetSfdHeaderFn(void* self, void* fn, void* ctx) {
-    *(void**)((u8*)self + 0xd40) = ctx;
-    *(void**)((u8*)self + 0xd3c) = fn;
+void SFD_SetSfdHeaderFn(SfdHandle* self, void* fn, void* ctx) {
+    self->hdrCbArg = ctx;
+    self->hdrCb = fn;
 }
 
-s32 SFD_GetSofdecHeader(void* self, s32 idx, void** out) {
+s32 SFD_GetSofdecHeader(SfdHandle* self, s32 idx, void** out) {
     if (SFLIB_CheckHn(self) != 0)
         return SFLIB_SetErr(0, 0xFF000117);
     {
-        void* hdr = *(void**)((u8*)self + idx * 0x44 + 0x1FE0);
+        void* hdr = self->trn[idx].hdr;
         if (hdr == NULL) {
             *out = NULL;
         } else {

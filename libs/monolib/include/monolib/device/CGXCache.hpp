@@ -40,7 +40,7 @@ public:
     void setDirectColB(int r4);
     void setBlendState(int r4, int r5);
     void setPerspProj(float f1, float f2, float f3);
-    u32 scaleRingWidth(UNKWORD r3);
+    int scaleRingWidth(int r4);
 
     //0x0: vtable
     //0x0-0x4: IStateCache

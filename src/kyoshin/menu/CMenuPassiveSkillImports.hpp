@@ -199,7 +199,6 @@ extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 value);
 extern "C" int CPassiveSkill_isSyswinOrLearned(u8* self);
 
 // Shared event-file byte + classic-controller query (retail unmangled).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" CMenuPassivePadView* getCfPadData__Q22cf13CfGameManagerFv();
 
 // Timer-tick addend / clamp cap seeded around field_2B0.

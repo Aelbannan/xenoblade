@@ -39,6 +39,20 @@ struct CItemBoxPagePos {
     f32 x, y, z;
 };
 
+/* The page's 0x80-byte text block at +0x0D9, copied as ONE 0x80-byte block by
+ * the implicit page copy (retail __as__12CItemBoxInfoFRC12CItemBoxInfo copies
+ * 0x15C bytes as 24 B / 0x90 / 48 B / byte / 0x80 and stops at +0x159): the
+ * GetItemName output buffer, the twelve s16 values that
+ * CItemBoxLine::RefreshPageList writes at page+0x140, and the trailing flag.
+ * Packed because the s16 array starts at the odd offset +0x67. */
+#pragma pack(push, 1)
+struct CItemBoxPageText {
+    char mName[0x67];   // 0x00 GetItemName output buffer
+    s16 mValues2[12];   // 0x67
+    u8 mFlag;           // 0x7F
+};
+#pragma pack(pop)
+
 /* 0x15C-byte per-page item table embedded in CItemBoxInfo/CItemBoxInfo2
  * (+0xB0), CItemBoxLine (+0x4E0), CEquipItemBox and CMenuGetItemMulti. No
  * user ctor (CItemBoxLine constructs it without a call); the empty inline dtor
@@ -59,9 +73,7 @@ public:
     u8 mBytesB4[12];           // 0x0B4
     s16 mValues[12];           // 0x0C0
     u8 mSelSlot;               // 0x0D8 selected slot (CItemBoxLine page cursor)
-    char mName[0x67];          // 0x0D9 GetItemName output buffer
-    s16 mValues2[12];          // 0x140
-    u8 _158[4];                // 0x158
+    CItemBoxPageText mText;    // 0x0D9 (0x80 bytes; the page ends at +0x159)
 };
 
 // Item detail popup (retail RTTI "CItemBoxInfo", base list IWorkEvent).

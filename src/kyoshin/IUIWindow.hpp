@@ -41,7 +41,18 @@ public:
         : mLayout(NULL), mField58(0), mField5C(0), mField60(-1), mField64(0), mField65(0),
           mField66(0), mField67(1), mField68(0) {}
 
+#ifdef IUIWINDOW_INLINE_DTOR
+    // Some TUs compile the window base dtor inline: their retail derived
+    // destructor calls `__dt__8CProcessFv` directly, with the double null
+    // check MWCC emits when the IUIWindow/CTTask<IUIWindow> dtor bodies are
+    // inlined (CSysWinBuff/CSysWinSave/CSysWinScenarioLog/CSysWinSelect/
+    // CSystemWindow/CTalkWindow/CSimpleEveTalkWin). The TUs that call the
+    // out-of-line copy (CQuestWindow/CMenuUpdate/CMenuItemExchange, where
+    // CQuestWindow.cpp owns the key function) leave this undefined.
+    virtual ~IUIWindow() {}
+#else
     virtual ~IUIWindow();
+#endif
 
     nw4r::lyt::Layout* mLayout; // 0x54
     void* mField58;             // 0x58

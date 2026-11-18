@@ -263,7 +263,6 @@ extern void* lbl_eu_806640D8;
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
 

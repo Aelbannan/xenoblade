@@ -181,7 +181,7 @@ void driveTalkMessage(CTalkWindow* self) {
             cf::CfGameManager::getCurrentPad());
         int confirm;
         // Co-op (Classic) vs single-player (Wiimote) confirm-press bits.
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+        if (cf::CfGameManager::isClassicController(-1) != 0)
             confirm = (pad->field_04 & 0x00600000) != 0;
         else
             confirm = (pad->field_04 & 0x00000030) != 0;

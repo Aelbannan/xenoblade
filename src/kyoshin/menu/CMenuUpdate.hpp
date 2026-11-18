@@ -104,7 +104,7 @@ public:
     CMenuUpdate_8014274C mEntries[8]; // 0x94 - 0x113 (8 * 0x10 = 0x80)
     s32 mState; // 0x114
     s32 mSubState; // 0x118
-    u32 mSubType; // 0x11C
+    s32 mSubType; // 0x11C
     s32 mCounter; // 0x120
     u32 mMode; // 0x124, default 2
     f32 mFloat128; // 0x128

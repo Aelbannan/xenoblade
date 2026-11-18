@@ -5959,3 +5959,144 @@ Wrap ONLY the leaf in `#pragma peephole off` ... `#pragma peephole on`, keep pla
 - Result:    Revert restored WaveSound 15/15, SeqSound 23/23, PlayerHeap 8/8 at 100% with pre-change sizes; no promotion possible (split FAIL persists: 0xD8/0x31C/0xDC over).
 - Confidence: repo_proven (before/after hexdiff --all + nm on 3 units, same session). Same rule as CTaskCulling/IWorkEvent entry above.
 - Applies to/a.k.a.: any hierarchy whose derived dtors match at 100% with an inline-empty base dtor; split-size overage from weak dtor copies.
+
+## Pool/container `Alloc()` already constructs — never hand-mirror the ctor (nw4r InstancePool, GC/3.0a5.2 -O4,p, 2026-11-18)
+- Symptom:   A "create an object from a pool" function is ~50% with a doubled constructor store block (+0x48 size) or, when hand-rolled once, the ctor block is in the wrong member order and the branch prefix (`cmpi; bne; li p,0; b; L: mr p,new; beq`) is missing.
+- Cause:     `nw4r::snd::detail::InstancePool<T>::Alloc()` is *itself* `void* p = AllocImpl(); if (p == NULL) return NULL; return new (p) T;` (libs/nw4r/include/nw4r/snd/snd_InstancePool.h). Inlining it produces exactly retail's null-model prefix + single inlined default ctor. Writing any extra construction (`new (pNew) T()`, a hand-rolled field-zero mirror, a vtable extern) emits the ctor a second time or reorders the stores, and hides the "pTask = NULL" path.
+- Fix:       Just `T* p = pool.Alloc();` — no placement new, no ctor mirror, no vtable label extern. Two smaller shapes that were also needed in the same function: `if (loopFlag) {…} else { finish; return; }` (positive test, not `if (!loopFlag)`), `TaskManager::TaskPriority prio = started ? HIGH : MIDDLE;` (a ternary colors the temp r31 like retail; the init-then-if form pushes it to r26), and `mCount = CalcXxxCount();` (call the member; open-coding its two-return body inline changes the div/rem block).
+- Result:    nw4r/src/snd/snd_StrmPlayer UpdateLoadingBlockIndex 49.6% -> 100.0% FULL_MATCH, size exact; unit 36/45 -> 37/45.
+- Confidence: repo_proven (hexdiff --all before/after; the same pool idiom exists in snd_Channel/MmlSeqTrackAllocator/SoundParam).
+- Applies to/a.k.a.: any `InstancePool<T>::Alloc()` / `MemoryPool<T>::Alloc()` caller; snd task creation (snd_StrmPlayer, snd_SeqSound, snd_SoundPlayer); "why is my inlined ctor emitted twice".
+
+## Tail `return call()` vs `T r = call(); return r;` flips the last guard's false-block placement (Wii/1.1, nw4r snd, FULL_MATCH)
+- Symptom:   Function ends with a chain of `if (!x) return false;` guards plus a final `return reader.ReadWaveInfo(...)`. Everything matches except the LAST guard: retail branches *to* the call (`bne CALL; li r3,0; b END; CALL:`), decomp branches *past* it to a trailing `li r3,0` (`beq FALSE; CALL; b END; FALSE:`). Same instruction count, only block order differs, so hexdiff reports ~8 structural and a reloc-pairing cascade.
+- Cause:     MWCC picks the out-of-line placement for the false block when the true block's last statement is a `return <call>`; storing the call result into a local that is then returned changes the block-terminator shape and restores the inline `li r3,0` block.
+- Fix:       `bool result = reader.ReadWaveInfo(...); return result;` (one extra named local). No other change.
+- Result:    nw4r/src/snd/snd_SoundArchivePlayer::WsdCallback::GetWaveSoundData 87.3% -> 100.0% FULL_MATCH (0xfc exact).
+- Confidence: repo_proven (single-target, byte-verified delta; the two preceding guards were unaffected).
+- Applies to/a.k.a.: tail guard chains ending in `return <call>(...)`; cf. the "shared miss-epilogue" record for the mirror problem (branch polarity of early-outs).
+## Reversed pointer-compare operand order lets the compared pointer keep r3 (Wii/1.1, nw4r snd, FULL_MATCH)
+- Symptom:   `detail::StrmSound* pLowest = ...; if (pLowest == pSound) return ...; pSound->Stop(0);` compiles with the candidate pointer in r0 and an extra `or r3,r27,r27` before the Stop call (+4 bytes, size-exact otherwise impossible).
+- Cause:     Retail compares `cmpl cr0, 0, r27, r3` (pSound first). Because `pSound` is the receiver of the following call, MWCC must keep the compared candidate in r3; the `bne` fallthrough then *knows* r3 == r27 and skips the copy. Writing the comparison the other way round lets the allocator keep the candidate in a scratch register.
+- Fix:       `if (pSound == pLowest) { ... } pLowest->Stop(0);` (compare the parameter first, and call Stop on the candidate — which is also the real nw4r semantics: drop the lowest-priority sound).
+- Result:    nw4r/src/snd/snd_SoundArchivePlayer PrepareStrmImpl 73.6% -> 100.0% (0x1b8 exact). Same trick fixed the retry-loop shape in the same function: `if (result == RETRY) { body } else { return ERR; }` (positive if/else puts the error return out of line like retail; `if (result != RETRY) return ERR;` puts it inline).
+- Confidence: repo_proven (2 byte-verified deltas in one function; the sibling PrepareSeqImpl's register rotation was unaffected).
+## Two-phase buffer carve keeps a live `*ppBuffer` store — do not "optimize" it away (Wii/1.1, nw4r snd, FULL_MATCH)
+- Symptom:   A heap-carving helper is 4 bytes short of retail and the whole body is offset: retail stores the cursor three times (`heapEnd`, aligned `body`, `bodyEnd`), decomp twice.
+- Cause:     The retail source aligns the *body* pointer and writes it back to `*ppBuffer` before the second bound check (`*ppBuffer = pBody; pBodyEnd = RoundUp(pBody + size, 4); if (pBodyEnd > pEnd) return NULL; *ppBuffer = pBodyEnd;`). MWCC keeps that first store (a store to a pointer parameter is not dead-store-eliminated), so omitting it in the source costs one `stw` and shifts everything after.
+- Fix:       Reproduce both phases literally: `RoundUp(p + sizeof(T), 4)` + check (NO payload size in the first check!), construct, then `pBody = RoundUp(*ppBuffer, 32); *ppBuffer = pBody;` + `RoundUp(pBody + bufferSize, 4)` check + `*ppBuffer = pBodyEnd;`.
+- Result:    nw4r/src/snd/snd_SoundArchivePlayer CreatePlayerHeap 9.8% -> 100.0% (0xcc exact).
+- Confidence: repo_proven (single-target, byte-verified; the 0xc8-without-the-store build was measured).
+## Plain int->f32 cast beats the union magic in snd_SeqPlayer (Wii/1.1, no frsp)
+- Symptom:   Tempo math shows `fsub` (double) + `frsp` while retail has a single `fsubs`; grouping also differs (`fdivs` then `fmuls` instead of `fmuls` then `fdivs`).
+- Cause:     `(f32)(conv.d - lbl)` where `conv` is the hand-rolled 0x43300000 union lowers to double subtract + round. MWCC's *builtin* conversion for `(f32)intExpr` emits exactly retail's `xoris / lis 0x4330 / stw / lfd / fsubs` against the shared 2^52 constant, with no `frsp`.
+- Fix:       Write the plain cast (`(f32)(mParserParam.timebase * mParserParam.tempo)`, `(f32)msec`) and group the arithmetic as `ratio * X / 60000.0f` (fmuls then fdivs). Compute `nextMsec` before `restMsec`.
+- Result:    snd_SeqPlayer UpdateTick 24.2% -> 96.1% (0 structural, size 0x264 exact), SkipTick 26.2% -> 88.7% (size 0x2a0 exact). Residual is the MI guard-temp colour wall only.
+- Applies to/a.k.a.: any snd/ut tempo or volume conversion still using a hand union; cf. the ut_TextWriterBase note ("the hand-rolled ConvF32S adds an frsp the retail doesn't have").
+## Reuse the existing static-inline body instead of a hand-rolled copy (nw4r snd)
+- Symptom:   A caller that "inlines FinishPlayer by hand" (copied callback unregister + track close loop) is 24-26% with ~100 structural, while sibling functions with the same body sit at 0 structural.
+- Cause:     The hand copy drifts on the self-rooted track-slot form, the per-track AutoLock scope edges and the NULL store; the original was `FinishPlayer()` inlined at every site.
+- Fix:       Delete the copy and call the existing `FinishPlayerImpl(*this)` (a `static inline` mirror kept in the TU so `-ipa file` re-inlines it in caller context). All region differences disappeared.
+- Result:    snd_SeqPlayer UpdateTick 50.3% -> 96.1% in one step (and SkipTick 4 structural left).
+- Applies to/a.k.a.: any file that keeps a "retail inlined X" copy next to the real helper; grep the TU for the helper before hand-porting an inlined region.
+
+## Per-TU `.sdata2` pools — `const` decides the section, and the owning TU must define them
+- Symptom:   `run.py data diff <unit>` reports `.sdata2: retail 0xB8 != decomp 0x0`
+  while the code matches: every constant is only *referenced* through an
+  `extern const float lbl_eu_8066xxxx;` declaration, so nothing is emitted.
+- Cause:     `.sdata2` membership is `const` + size, not the symbol map. A
+  namespace-scope `float x = 1.0f;` (mutable) goes to `.sdata`, and a
+  zero-initialised one (`= 0.0f`) to `.sbss`; only `const` objects of the
+  `-sdata2` size class land in `.sdata2`. Retail symbol maps carry no
+  constness, so a "mutable" spelling read off `data:4byte` is a bad guess —
+  if the address is inside a `.sdata2` split the object is `const`.
+- Fix:       define the pool in the TU that owns the `.sdata2` split range, in
+  retail address order (MWCC emits `.sdata2` in definition order), with the
+  exact value bits. Doubles get 8-byte alignment automatically, which
+  reproduces the retail inter-object padding. Convert the `extern float`
+  declarations in the shared header to `extern const` (checked: no other TU
+  assigns to them).
+- Result:    CScnEnvLgtCtrl: `.sdata2` 184 bytes identical (6 sections OK,
+  data diff `MATCH`); no function's bytes changed.
+- Confidence: repo_proven
+- Applies to/a.k.a.: "label pool" constants, `lbl_eu_8066*` float pools,
+  `data diff` `.sdata2 size 0x0`, `foreign_data` smells.
+
+## NW4R assert strings in `.data` — the owning TU declares plain `char[]`, not `const char*`
+- Symptom:   a unit's `.data` split begins with two string blobs
+  (`"NW4R:Failed assertion IsValid()"`, `"g3d_fog.h"`) that the decomp never
+  emits; the hand-written data blob has to carry their bytes, and `data diff`
+  reports the section `0x30` short if the blob starts with the vtable instead.
+- Cause:     the strings are the *file/assert message* pair of an inline
+  `nw4r::db::Panic` in this TU. String *literals* go to `.rodata` (or get
+  deduped into another TU's pool), so a literal cannot reproduce them; a
+  non-const `char[]` initialised from a string is a real object and lands in
+  `.data`, ahead of the TU's other `.data` objects.
+- Fix:       `char sAssertMsg[] = "…"; char sAssertFile[] = "…";` in the owning
+  TU, referenced by the `Panic(file, line, msg)` call. Define them before the
+  TU's `.data` blob so the emission order matches.
+- Result:    CScnEnvLgtCtrl `.data` 648 bytes identical; the duplicate
+  definitions had to leave the neighbouring TU whose split ends at the string
+  address (code_804BC9EC `.data` 0xC8 → 0x98, now identical too).
+- Confidence: repo_proven
+- Applies to/a.k.a.: `g3d_fog.h`, `NW4R:Failed assertion`, "string in .data",
+  duplicate label definitions across TUs, split boundary at a string.
+
+### Duplicated compare: the second branch survives at Wii/1.1 only when the two tests differ in WIDTH (repo_proven, code_804DEDA8 ×3)
+- Symptom: retail `cmpi cr0,0,rX,0; blt end; blt end` — one compare, TWO identical branches to the same exit (a
+  duplicated/dead guard). Written as any same-width duplicate (`if (h<0) return; if (h>=0 && ...)`, `!(h<0) && ...`,
+  nested ifs, `h<0 && h<0`, `h<0 || h<0`, `goto` gates, inline bool helper, same-width local copy, same-width inlined
+  callee) Wii/1.1 emits ONE branch — it canonicalises and merges equal conditions (goto chains even become
+  `cmpwi rX,-1; ble`).
+- Cause: MWCC keeps the two IR comparisons distinct when their operand WIDTHS differ (`s16` parameter test vs `s32`
+  index test), while both lower to `cmpi rX,0`; the codegen compare CSE then leaves one compare and both branches live.
+  Equal-width duplicates are folded before codegen. (GC/1.0–2.6 and GC/3.0a3…3.0a5.2 reproduce the same-width
+  double branch, which is why GC pins "fixed" such functions; every Wii family — 0x4201_127, 1.0RC1, 1.0a, 1.0, 1.1,
+  1.3, 1.5, 1.6, 1.7 — does not.)
+- Fix: expression the guard at both widths: the public entry takes the narrow handle (`s16`, `if (handle < 0) return;`)
+  and calls an inlined **s32-index worker** that re-validates its index (`if (index < 0) return; if (count > index) …`).
+  Byte-identical to retail, and it reads as a real two-layer handle→index API rather than a duplicated guard.
+- Result: FULL_MATCH ×3 (code_804DEDA8 SchedItem/SchedFx/SchedNode_ReleaseHandle, 18.5% → 100%).
+- Confidence: repo_proven (compiler × flag matrix probes + retail bytes).
+- Applies to/a.k.a.: supersedes the "unit compiler flip GC/3.0a5.2 reproduces a duplicated-guard dead branch" workaround —
+  never pin a TU to GC for a duplicated guard; check the operand widths first (public s16 handle over an s32 pool index
+  is the common real-code pattern: `handle` vs `index` layers).
+
+### Out-of-tree pattern probes: compile a generated variant file with the unit's exact cflags and grep the object for the retail idiom (repo_proven)
+When a retail instruction idiom refuses every natural source shape, stop guessing one shape per build: generate a
+`.cpp` with N candidate functions (guards/locals/type variants), compile it once with the unit's exact `cflags` from
+`build.ninja` (`build/tools/wibo build/compilers/<ver>/mwcceppc.exe …`, output + `.d` in `/tmp`), disassemble with
+`--section=.text`, and grep for the target instruction sequence. 90 variants cost one compile. Include the *rest of the
+unit's cflags* (`-O4,p -inline auto -ipa file -use_lmw_stmw on -func_align 4 -RTTI on …`) — flags change these
+decisions. The width lever above was found this way after nine if/goto/helper shapes failed one build at a time.
+
+### `|= mask` / `&= ~mask` in an if/else → emit the BITFIELD ASSIGNMENT instead (repo_proven, code_804CC2B8)
+- Symptom: retail has `mfcr` + `rlwinm 3,31,31` + `xori … ,1` + `rlwimi rD,rS,10,21,21` (a single-bit
+  insert into a word); the decomp instead emits two unconditional blocks (`ori r0,r0,0x0400; sth` /
+  `andi.`+`sth`) or an extra branch pair. Fuzzy ~50%, no way to close it with branch tweaks.
+- Cause: `if (cond) w |= M; else w &= ~M;` is written as boolean arithmetic over the whole word; the
+  compiler cannot see a single-bit store. The retail source assigns the *bitfield member*:
+  `bits.b10 = cond;` → one `rlwimi` (mask = the single bit), with the condition materialised in CR
+  (`mfcr`/`rlwinm`/`xori` for `!=` on a float or a second predicate).
+- Fix: declare an MSB-first bitfield view of the flag word and assign it —
+  `((SceneFlagBits*)&self->field_0x06)->b10 = self->field_0x1d8 != 0.0f;`. Same for the pure constant
+  case (`bits.b14 = 0;` instead of `&= (u16)~0x4000`).
+- Result: code_804CC2B8 `func_804CE264` 50.7% → FULL_MATCH (0x11C → 0x114 = retail size); the
+  `b14 = 0` variant is byte-neutral where the flag store is already inside a taken branch.
+- Confidence: repo_proven (retail bytes + the matching TU around it).
+- Applies to/a.k.a.: `EffectScene::field_0x06` flags 0x4000/0x1000/0x0800/0x0400; any u16/u32 flag
+  word with an if/else or/and pair; `rlwimi` insertion idioms.
+
+### MWCC emits virtual slot k at vtable byte offset 4k+8 in this project's build (repo_proven, code_804CC2B8)
+- Symptom: every indirect call in a TU reads `lwz r12, N(r12)` with N exactly 8 higher than the slot the
+  declared class should have; call sites look "off by two virtuals".
+- Cause: with `-RTTI on` MWCC places two non-virtual words at the head of the vtable image, so the
+  emitted slot offset is `4*index + 8` (confirmed by `__dt__804CC2E4`'s first slot = `8(r12)` in a 100%
+  matched function).
+- Fix: when modelling a retail polymorphic class from call-site offsets, declare `(offset-8)/4` leading
+  virtuals, i.e. index = `offset/4 - 2`; keep the offset comments in terms of the emitted bytes.
+- Result: code_804CC2B8 `EffFxApplySceneMatrix` 5.1% → 6.2% (all three vcall offsets corrected; the
+  function still has an unrelated body/stack-frame residual).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: `CFBC8Target` in code_804CC2B8, view-struct polymorphic callbacks, "vtable +0x14"
+  comments in this tree.

@@ -8,6 +8,7 @@
 // Inline-empty ~IWorkEvent: the ctor's cleanup action references the (link-deduped)
 // weak copy, and ~CSelShopWin elides the base call (retail shape).
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CSelShopWin.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -281,7 +282,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         // (retail preloads 0xe2 then overwrites with 0xd9 when nonzero).
         u16 val = static_cast<u16>(BdatGetU16ByTableKey(
             &lbl_eu_8050A62C[0xae],
-            isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
+            cf::CfGameManager::isClassicController(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
                                                            : &lbl_eu_8050A62C[0xe2],
             0x2b));
         char* mssg = MakeTplNameSysFile(val);

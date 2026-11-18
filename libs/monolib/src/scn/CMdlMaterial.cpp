@@ -87,7 +87,7 @@ extern const char lbl_eu_80570180[];
 #define lbl_eu_80663C44 ((const char*)&lbl_sd_05)
 
 // .sdata2 float constant used to scale colours (255.0f).
-extern f32 lbl_eu_8066B304;
+
 
 // CScnItemModelNw4r helper (retail unmangled symbol).
 extern "C" void scnImN4MatFn(void* owner, void* arg, s32 subIdx);
@@ -494,9 +494,9 @@ bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
 
     GXColor color;
     color.a = 0xFF;
-    color.r = (u8)(lbl_eu_8066B304 * rgb[0]);
-    color.g = (u8)(lbl_eu_8066B304 * rgb[1]);
-    color.b = (u8)(lbl_eu_8066B304 * rgb[2]);
+    color.r = (u8)(255.0f * rgb[0]);
+    color.g = (u8)(255.0f * rgb[1]);
+    color.b = (u8)(255.0f * rgb[2]);
 
     for (u32 i = 0;
          i < nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMatNumEntries(); i++) {
@@ -533,9 +533,9 @@ bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
 
     GXColor color;
     color.a = 0xFF;
-    color.r = (u8)(lbl_eu_8066B304 * rgb[0]);
-    color.g = (u8)(lbl_eu_8066B304 * rgb[1]);
-    color.b = (u8)(lbl_eu_8066B304 * rgb[2]);
+    color.r = (u8)(255.0f * rgb[0]);
+    color.g = (u8)(255.0f * rgb[1]);
+    color.b = (u8)(255.0f * rgb[2]);
 
     for (u32 i = 0;
          i < nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMatNumEntries(); i++) {
@@ -629,8 +629,8 @@ void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner)
 // [.data] 0x805700D8-0x805701B0 (0xD8): vtable (3 words) + 8 embedded
 // nw4r assertion strings ("%s::%s: Object not valid." etc., retail bytes).
 extern "C" u32 __RTTI__12CMdlMaterial;          // .sdata RTTI locator (defined below)
-extern "C" u32 lbl_eu_8066B2F8;          // shared .sdata2 constant pair
-extern "C" u32 lbl_eu_8066B300;
+
+
 extern "C" const u32 lbl_eu_80524798[7];  // .rodata name string (defined below)
 extern "C" void __dt__12CMdlMaterialFv();  // member dtor (this TU, retail reloc)
 
@@ -652,7 +652,7 @@ extern "C" const u32 lbl_eu_80524798[7] = {
 };
 
 // [.sdata] 0x80663C30-0x80663C58 (0x28): RTTI pairs + "ref" strings.
-extern "C" u32 lbl_sd_00[2] = { (u32)&lbl_eu_8066B2F8, (u32)&lbl_eu_8066B300 };
+
 extern "C" u32 lbl_sd_02[2] = { (u32)&lbl_eu_80524798, 0x00000000 };
 extern u32 lbl_sd_04 = 0x72656600;
 extern u32 lbl_sd_05 = 0x72656600;

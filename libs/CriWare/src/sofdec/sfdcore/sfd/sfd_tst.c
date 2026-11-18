@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
@@ -23,38 +24,37 @@ const unsigned int lbl_eu_8051CD18[69] = {
 const char lbl_eu_8051CE2C[148] = "%p, %ld, %ld, 0x%08lX%08lX, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld,   %ld, %ld,   %ld, %ld, %ld, %ld, %ld,   %ld, %ld,   %ld \n";
 
 
-void SFTST_Create(void* self) {
-    s32* w = (s32*)self;
+void SFTST_Create(SfdTst* tst) {
     char local[274];
 
-    memset(self, 0, 0x1D0);
-    w[0] = 1;
-    w[1] = 0;
-    w[2] = 0;
-    w[3] = 1;
-    w[4] = 10;
-    memset((u8*)self + 0x18, 0, 0xF0);
-    w[5] = 0;
-    w[67] = 0; w[66] = 0;
-    w[69] = 1; w[68] = 0;
-    w[71] = 0; w[70] = 0;
-    w[73] = 1; w[72] = 0;
-    w[75] = 0; w[74] = 0;
-    w[77] = 1; w[76] = 0;
-    w[79] = 16683; w[78] = 0;
-    w[81] = 1000000; w[80] = 0;
-    w[83] = 200000; w[82] = 0;
-    w[85] = 1000000; w[84] = 0;
-    w[87] = 0; w[86] = 0;
-    w[89] = 1000000; w[88] = 0;
-    w[91] = 0; w[90] = 0;
-    w[93] = 1000000; w[92] = 0;
-    w[95] = -1; w[94] = -1;
-    w[97] = -1; w[96] = -1;
-    w[99] = 0; w[98] = 0;
-    w[101] = 0; w[100] = 0;
-    w[102] = 1; w[103] = 1;
-    memset(w + 104, 0, 0x2C);
+    memset(tst, 0, 0x1D0);
+    tst->tstFlg = 1;
+    tst->pause = 0;
+    tst->field_0x008 = 0;
+    tst->adjFlg = 1;
+    tst->movaveRange = 10;
+    memset(tst->table, 0, 0xF0);
+    tst->field_0x014 = 0;
+    tst->field_0x10c = 0; tst->field_0x108 = 0;
+    tst->field_0x114 = 1; tst->field_0x110 = 0;
+    tst->field_0x11c = 0; tst->field_0x118 = 0;
+    tst->field_0x124 = 1; tst->field_0x120 = 0;
+    tst->position[1] = 0; tst->position[0] = 0;
+    tst->step[1] = 1; tst->step[0] = 0;
+    tst->tolerance[1] = 16683; tst->tolerance[0] = 0;
+    tst->tolerance[3] = 1000000; tst->tolerance[2] = 0;
+    tst->excessErr[1] = 200000; tst->excessErr[0] = 0;
+    tst->excessErr[3] = 1000000; tst->excessErr[2] = 0;
+    tst->adjStart[1] = 0; tst->adjStart[0] = 0;
+    tst->adjStart[3] = 1000000; tst->adjStart[2] = 0;
+    tst->adjPoff[1] = 0; tst->adjPoff[0] = 0;
+    tst->adjPoff[3] = 1000000; tst->adjPoff[2] = 0;
+    tst->prevTime[1] = -1; tst->prevTime[0] = -1;
+    tst->field_0x180[1] = -1; tst->field_0x180[0] = -1;
+    tst->field_0x188[1] = 0; tst->field_0x188[0] = 0;
+    tst->baseTime[1] = 0; tst->baseTime[0] = 0;
+    tst->speedNum = 1; tst->speedDen = 1;
+    memset(tst->field_0x1a0, 0, 0x2C);
     memcpy(local, lbl_eu_8051CD18, 274);
     if (*(void**)(lbl_eu_80619BD0 + 4) != NULL) {
         memset(*(void**)(lbl_eu_80619BD0 + 4), 0, *(u32*)lbl_eu_80619BD0);
@@ -64,87 +64,87 @@ void SFTST_Create(void* self) {
     }
 }
 
-void SFTST_SetTstFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void SFTST_SetTstFlg(SfdTst* tst, u32 val) { tst->tstFlg = val; }
 
-void SFTST_SetTolerance(void* self, s32* param) {
+void SFTST_SetTolerance(SfdTst* tst, s32* param) {
     s32 v0 = param[0];
     s32 v1 = param[1];
-    *(u32*)((u8*)self + 0x13c) = v1;
-    *(u32*)((u8*)self + 0x138) = v0;
+    tst->tolerance[1] = v1;
+    tst->tolerance[0] = v0;
     s32 v2 = param[2];
     s32 v3 = param[3];
-    *(u32*)((u8*)self + 0x144) = v3;
-    *(u32*)((u8*)self + 0x140) = v2;
+    tst->tolerance[3] = v3;
+    tst->tolerance[2] = v2;
 }
 
-void SFTST_SetExcessErr(void* self, s32* param) {
+void SFTST_SetExcessErr(SfdTst* tst, s32* param) {
     s32 v0 = param[0];
     s32 v1 = param[1];
-    *(u32*)((u8*)self + 0x14c) = v1;
-    *(u32*)((u8*)self + 0x148) = v0;
+    tst->excessErr[1] = v1;
+    tst->excessErr[0] = v0;
     s32 v2 = param[2];
     s32 v3 = param[3];
-    *(u32*)((u8*)self + 0x154) = v3;
-    *(u32*)((u8*)self + 0x150) = v2;
+    tst->excessErr[3] = v3;
+    tst->excessErr[2] = v2;
 }
 
-void SFTST_SetAdjStart(void* self, s32* param) {
+void SFTST_SetAdjStart(SfdTst* tst, s32* param) {
     s32 v0 = param[0];
     s32 v1 = param[1];
-    *(u32*)((u8*)self + 0x15c) = v1;
-    *(u32*)((u8*)self + 0x158) = v0;
+    tst->adjStart[1] = v1;
+    tst->adjStart[0] = v0;
     s32 v2 = param[2];
     s32 v3 = param[3];
-    *(u32*)((u8*)self + 0x164) = v3;
-    *(u32*)((u8*)self + 0x160) = v2;
+    tst->adjStart[3] = v3;
+    tst->adjStart[2] = v2;
 }
 
-void SFTST_SetAdjPoff(void* self, s32* param) {
+void SFTST_SetAdjPoff(SfdTst* tst, s32* param) {
     s32 v0 = param[0];
     s32 v1 = param[1];
-    *(u32*)((u8*)self + 0x16c) = v1;
-    *(u32*)((u8*)self + 0x168) = v0;
+    tst->adjPoff[1] = v1;
+    tst->adjPoff[0] = v0;
     s32 v2 = param[2];
     s32 v3 = param[3];
-    *(u32*)((u8*)self + 0x174) = v3;
-    *(u32*)((u8*)self + 0x170) = v2;
+    tst->adjPoff[3] = v3;
+    tst->adjPoff[2] = v2;
 }
 
-void SFTST_SetMovaveRange(void* self, s32 val) {
+void SFTST_SetMovaveRange(SfdTst* tst, s32 val) {
     if (val > 0) {
-        *(u32*)((u8*)self + 0x10) = val;
+        tst->movaveRange = val;
     }
 }
 
-void SFTST_Pause(void* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
+void SFTST_Pause(SfdTst* tst, u32 val) { tst->pause = val; }
 
-void SFTST_SetAdjFlg(void* self, u32 val) { *(u32*)((u8*)self + 0xc) = val; }
+void SFTST_SetAdjFlg(SfdTst* tst, u32 val) { tst->adjFlg = val; }
 
-void SFTST_GoNextFrame(void* self, s32* param) {
-    if (*(u32*)((u8*)self + 0xc) == 0) {
+void SFTST_GoNextFrame(SfdTst* tst, s32* param) {
+    if (tst->adjFlg == 0) {
         /* 64-bit fixed-point accumulate: accum += (control * param) / param_d */
-        s64 val_a = *(s64*)((u8*)self + 0x130);
+        s64 val_a = *(s64*)&tst->step[0];
         s64 val_b = *(s64*)param;
         s64 val_d = *(s64*)(param + 2);
 
-        *(s64*)((u8*)self + 0x128) += val_a * val_b / val_d;
+        *(s64*)&tst->position[0] += val_a * val_b / val_d;
     }
 }
 
-void SFTST_SetSpeed(void* self, u32 a, u32 b) {
-    *(u32*)((u8*)self + 0x198) = a;
-    *(u32*)((u8*)self + 0x19c) = b;
+void SFTST_SetSpeed(SfdTst* tst, u32 a, u32 b) {
+    tst->speedNum = a;
+    tst->speedDen = b;
 }
 
-static void sftst_CalcSub(void* self, s32* param, s32* arg5, s32* out);
+static void sftst_CalcSub(SfdTst* tst, s32* param, s32* arg5, s32* out);
 
-void SFTST_Calc(void* self, s32* param, s32* arg5, s32* out) {
-    s32 speed_a = *(s32*)((u8*)self + 0x198);
-    s32 speed_b = *(s32*)((u8*)self + 0x19c);
+void SFTST_Calc(SfdTst* tst, s32* param, s32* arg5, s32* out) {
+    s32 speed_a = tst->speedNum;
+    s32 speed_b = tst->speedDen;
 
     if (speed_a == speed_b) {
         /* No speed change: pass through directly */
-        sftst_CalcSub(self, param, arg5, out);
+        sftst_CalcSub(tst, param, arg5, out);
     } else {
         /* Rescale the position by the speed ratio before adjusting */
         s32 local_param[4];
@@ -153,31 +153,31 @@ void SFTST_Calc(void* self, s32* param, s32* arg5, s32* out) {
         *(s64*)&local_param[0] = *(s64*)&param[0];
         *(s64*)&local_param[2] = *(s64*)(param + 2) * speed_a / (s64)speed_b;
 
-        sftst_CalcSub(self, local_param, arg5, result);
+        sftst_CalcSub(tst, local_param, arg5, result);
 
         *(s64*)&out[0] = *(s64*)&result[0];
         *(s64*)&out[2] = *(s64*)&param[2];
     }
 }
 
-static void sftst_CalcSub(void* self, s32* param, s32* arg5, s32* out) {
-    if (((arg5[3] ^ 1) | arg5[2]) != 0 && *(s32*)self != 0) {
+static void sftst_CalcSub(SfdTst* tst, s32* param, s32* arg5, s32* out) {
+    if (((arg5[3] ^ 1) | arg5[2]) != 0 && tst->tstFlg != 0) {
         s64 d1;
         s64 p01;
 
-        if (*(s64*)((u8*)self + 0x178) == -1)
-            *(s64*)((u8*)self + 0x178) = *(s64*)arg5;
+        if (*(s64*)&tst->prevTime[0] == -1)
+            *(s64*)&tst->prevTime[0] = *(s64*)arg5;
 
         d1 = (s64)(((s64)arg5[1] << 32) | (u32)arg5[0]) -
-             (s64)(((s64)*(s32*)((u8*)self + 0x17C) << 32) |
-                   (u32)*(s32*)((u8*)self + 0x178));
+             (s64)(((s64)tst->prevTime[1] << 32) |
+                   (u32)tst->prevTime[0]);
         p01 = (s64)(((s64)param[1] << 32) | (u32)param[0]) -
-              (s64)(((s64)*(s32*)((u8*)self + 0x194) << 32) |
-                    (u32)*(s32*)((u8*)self + 0x190));
+              (s64)(((s64)tst->baseTime[1] << 32) |
+                    (u32)tst->baseTime[0]);
 
         if (p01 >= 0) {
-            param[0] = *(s32*)((u8*)self + 0x190);
-            param[1] = *(s32*)((u8*)self + 0x194);
+            param[0] = tst->baseTime[0];
+            param[1] = tst->baseTime[1];
         }
         (void)d1;
     }

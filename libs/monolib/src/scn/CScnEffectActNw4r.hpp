@@ -11,7 +11,7 @@ struct ResMdlData;
 } // namespace nw4r
 
 // .sdata2 float constants (effect-range thresholds), retail linker names.
-extern const f32 lbl_eu_8066AB74;
+
 
 // Tag prefix the effect-act node names are matched against (pointer held in
 // .sdata, retail linker name).

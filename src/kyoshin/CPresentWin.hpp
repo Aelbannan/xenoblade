@@ -56,7 +56,6 @@ extern void* lbl_eu_80664090;
 // Retail symbols that ARE the Itanium-mangled C++ names: declare under C
 // linkage so calls bind to the literal mangled identifier.
 extern "C" {
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 

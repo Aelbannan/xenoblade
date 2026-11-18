@@ -107,7 +107,6 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int MenuTutorialIsCreated();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);

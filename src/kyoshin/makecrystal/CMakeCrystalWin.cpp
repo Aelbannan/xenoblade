@@ -29,7 +29,7 @@ extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 ar
     _this->mScene = 0;
     _this->mThread = 0;
     __ct__11CTitleAHelpFPcUc(&_this->mTitleAHelp, 0, 0);
-    __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(&_this->mModelDispArea[0]), 0);
+    __ct__21CModelDispMakeCrystalFP4CScn(reinterpret_cast<CModelDispMakeCrystal*>(&_this->mModelDispArea[0]), 0);
     __ct__13CMCCrystalBoxFUc(&_this->mCrystalBox, 0);
     __ct__CLoad(&_this->mLoad, 0);
     _this->field_4360 = 0;
@@ -262,7 +262,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
 
             // Rebuild the model display the same way (temp constructed with
             // the owning scene, copied in, destroyed).
-            __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), self->mScene);
+            __ct__21CModelDispMakeCrystalFP4CScn(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), self->mScene);
             MakeCrystalCopyDispArea(&self->mModelDispArea[0], &dispTemp[0]);
             __dt__21CModelDispMakeCrystalFv(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), -1);
             MakeCrystal_InitFiles(reinterpret_cast<CModelDispMakeCrystal*>(self->mModelDispArea));

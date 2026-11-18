@@ -7701,7 +7701,7 @@ char* CItemBoxPage::GetItemName(u8 index) {
     sprintf(buf, base, val);
     u8 fmt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 3, item_id);
     char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, base + 0xC, item_id);
-    char* out = mName;
+    char* out = mText.mName;
     sprintf(out, base + 0x18, name);
     u8 is_jp = 1;
     u8 lang = getLanguage__9CDeviceSCFv();

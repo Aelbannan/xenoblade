@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/CTutorial.hpp"
@@ -72,7 +73,7 @@ void CTutorial::Tutorial_LoadTutorialFiles() {
             mtl::MemManager::getHandleMEM2(), buf,
             reinterpret_cast<IWorkEvent*>(this), 0, 0);
     }
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         sprintf(buf, "menu/jp/tpl/c_ttrl_%03d.arc", field_48);
     } else {
         sprintf(buf, "menu/jp/tpl/r_ttrl_%03d.arc", field_48);
@@ -281,7 +282,7 @@ void CTutorial::Tutorial_RefreshPage() {
     // Sign-extend before increment: retail computes extsb(field_50)+1.
     setLayoutTextBoxNumber(mpLayout, "txt_pg00", field_50 + 1);
     setLayoutTextBoxNumber(mpLayout, "txt_pg01", field_51);
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         sprintf(buf, "cttrl_i%03d_%02d.tpl", field_48, field_50 + 1);
     } else {
         sprintf(buf, "rttrl_i%03d_%02d.tpl", field_48, field_50 + 1);

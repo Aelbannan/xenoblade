@@ -29,16 +29,8 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 
-extern u32 lbl_eu_805013C8[];
 extern u32 lbl_eu_80664198;
 extern u32 lbl_eu_806640E0;
-extern u32 lbl_eu_806673A8[];
-extern u32 lbl_eu_806673AC[];
-extern u32 lbl_eu_806673B0[];
-extern u32 lbl_eu_806673B4[];
-extern f64 lbl_eu_806673B8;
-extern f32 lbl_eu_806673C0;
-extern f32 lbl_eu_806673C4;
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
 extern "C" u32 getField10(u8* self);
 extern "C" void setField67(u8* self, u8 val);
@@ -85,19 +77,19 @@ CMenuUpdate::~CMenuUpdate() {}
 // Init
 void CMenuUpdate::Init() {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    mMemRegion.createRegion(handle, 0x4000, (const char*)lbl_eu_805013C8, 0);
+    mMemRegion.createRegion(handle, 0x4000, "CMenuUpdate", 0);
 
     Class_8045F858 stackObj(&mMemRegion);
 
     nw4r::lyt::ArcResourceAccessor* accessor =
         static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    buildLayout(&mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
+    buildLayout(&mLayout, accessor, "mf70_cf52_sideinfo.brlyt");
 
     accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    bindLayoutAnimTransform(mLayout, &mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
+    bindLayoutAnimTransform(mLayout, &mAnim1, accessor, (char*)"mf70_cf52_sideinfo_in.brlan");
 
     accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    bindLayoutAnimTransform(mLayout, &mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
+    bindLayoutAnimTransform(mLayout, &mAnim2, accessor, (char*)"mf70_cf52_sideinfo_kizuna_in.brlan");
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
@@ -186,7 +178,7 @@ extern "C" __declspec(noinline) u32 getField10(u8* self) { return *(u32*)(self +
 extern "C" __declspec(noinline) void setField67(u8* self, u8 val) { self[0x67] = val; }
 extern "C" u32 func_80142954(u8* self) { return *(u32*)(self + 0x10); }
 extern "C" void func_8014295C(u8* self, u8 val) { self[0x67] = val; }
-extern "C" __declspec(noinline) void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
+extern "C" void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
 extern "C" __declspec(noinline) void setField64(u8* self, u8 val) { self[0x64] = val; }
 extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
 extern "C" __declspec(noinline) int getField64(u8* self) { return self[0x64]; }
@@ -195,7 +187,7 @@ extern "C" __declspec(noinline) int getGlobal0E0() { return lbl_eu_806640E0; }
 extern "C" __declspec(noinline) void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
 extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" __declspec(noinline) void* noop_80142D5C(void* self) { return self; }
-extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
+extern "C" __declspec(noinline) void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
 extern "C" __declspec(noinline) void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
 extern "C" void func_80143AC8(void* self, f32 a, f32 b) { setVec2(self, a, b); }
 extern "C" void func_80143AD4(void* self, f32 val) { setFieldFloat10(self, val); }
@@ -220,7 +212,7 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
     if (mode == 2) { MenuUpdate_MarkByte15Ready(getGlobalA10()); }
     if (mode == 6) {
         int val = getGlobal0E0();
-        u16 result = BdatGetU16Direct((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), arg1);
+        u16 result = BdatGetU16Direct((void*)val, "help", arg1);
         if (!result) return 0;
         if (CtrlRemote_TouchBitByArg(arg1 + 0x3214)) {
             if (GetSysStateFlag22()) {
@@ -245,7 +237,7 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
 // MenuUpdate_FormatNotifyText - format a texture name into a FixStr<32> buffer and bind it
 // into the layout. The FixStr default-init is the out-of-line CfGameManager
 // helper (retail shape).
-extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg) {
+extern "C" __declspec(noinline) void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (!name) return;
     if (!fmtArg) return;
@@ -254,7 +246,7 @@ extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg
     // FixStr<32> default-init resolves to the retail CfGameManager-scope helper
     reinterpret_cast<cf::CfGameManager*>(buf)->clearTempTextBuffer();
     reinterpret_cast<ml::FixStr<32>*>(buf)->format(
-        (const char*)((u32)lbl_eu_805013C8 + 0x69), fmtArg);
+        "%s.tpl", fmtArg);
     void* str = noop_80142D5C(buf);
 
     nw4r::lyt::ResourceAccessor* accessor =
@@ -265,81 +257,79 @@ extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg
 
 // MenuUpdate_RebindLayout - (re)bind the window layout's textures, animations and pane
 // visibility for the current state, then start the active animation.
-// The string-pool base is written as a plain address expression at every use;
-// MWCC's CSE materializes it into a register per region (matching retail's
-// repeated lis/addi pairs) and mLayout is reloaded from the object before
-// every use.
-extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
+// Resource/pane names are string literals (pooled in @stringBase0); mLayout is
+// reloaded from the object before every use.
+extern "C" void MenuUpdate_RebindLayout(void* self) {
+    u32 h;
+    u32 w;
+    nw4r::lyt::Pane* paneA;
+    nw4r::lyt::Pane* paneB;
+    nw4r::lyt::Pane* paneC;
+    nw4r::lyt::Pane* paneD;
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
     obj->mLayout->UnbindAllAnimation();
 
     // Shared icon texture: message id picked by controller type.
     char* icon = MakeTplNameSysFile(
-        BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x82,
-                      cf::CfGameManager::isClassicController(-1) ? (const char*)lbl_eu_805013C8 + 0x70
-                                                           : (const char*)lbl_eu_805013C8 + 0x79,
+        BdatGetU16ByTableKey("MNU_kyeassign",
+                      cf::CfGameManager::isClassicController(-1) ? "fileID_2"
+                                                           : "fileID_1",
                       0x2a));
     void* tex = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                     ->GetResource(0x74696D67 /* 'timg' */, icon, NULL);
     if (tex != NULL) {
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x90, (TPLPalette*)tex);
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x9d, (TPLPalette*)tex);
-        PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xaa, (TPLPalette*)tex);
+        PaneSetTexPaletteByName(obj->mLayout, "pic_button_q", (TPLPalette*)tex);
+        PaneSetTexPaletteByName(obj->mLayout, "pic_button_g", (TPLPalette*)tex);
+        PaneSetTexPaletteByName(obj->mLayout, "pic_button_b", (TPLPalette*)tex);
 
         // Texture object carries pixel dimensions through a two-level chain.
         // u32 locals so the int->float conversion uses the 0x4330 double trick.
-        u32 h = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mH;
-        u32 w = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mW;
+        h = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mH;
+        w = ((CMenuUpdateTexObj*)tex)->mChain->mDims->mW;
 
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                                    ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x90, true);
+                                    ->FindPaneByName("pic_button_q", true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, h, w);
-            writePanePos(pane, v);
+            writePanePos(pane, setVec2(v, h, w));
         }
         pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                   ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x9d, true);
+                   ->FindPaneByName("pic_button_g", true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, h, w);
-            writePanePos(pane, v);
+            writePanePos(pane, setVec2(v, h, w));
         }
         pane = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                   ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xaa, true);
+                   ->FindPaneByName("pic_button_b", true);
         if (pane != NULL) {
             float v[2];
-            setVec2(v, h, w);
-            writePanePos(pane, v);
+            writePanePos(pane, setVec2(v, h, w));
         }
     }
 
     // Bind the three state animations and hide all four state panes.
     char* animName =
-        BdatTouchStringCell((const char*)lbl_eu_805013C8 + 0x82, (const char*)lbl_eu_805013C8 + 0x64,
+        BdatTouchStringCell("MNU_kyeassign", "help",
                       0x2a);
-    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xb7, animName, 0);
-    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xc5, animName, 0);
-    LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0xd3, animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, "txt_kakunin_q", animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, "txt_kakunin_g", animName, 0);
+    LayoutSetTextBoxFmtValue(obj->mLayout, "txt_kakunin_b", animName, 0);
 
-    nw4r::lyt::Pane* paneA = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xe1, true);
-    nw4r::lyt::Pane* paneB = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xec, true);
-    nw4r::lyt::Pane* paneC = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xf6, true);
-    nw4r::lyt::Pane* paneD = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                                 ->FindPaneByName((const char*)lbl_eu_805013C8 + 0xff, true);
+    paneA = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName("nul_kizuna", true);
+    paneB = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName("nul_quest", true);
+    paneC = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName("nul_gram", true);
+    paneD = ((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
+                                 ->FindPaneByName("nul_buf", true);
     setPaneVisible(paneA, 0);
     setPaneVisible(paneB, 0);
     setPaneVisible(paneC, 0);
     setPaneVisible(paneD, 0);
 
-    // Shared temporaries: one slot each across all switch arms keeps MWCC's
-    // stack frame at the retail size.
     void* res;
-    const char* name;
 
     switch (obj->mState) {
     case 1:
@@ -350,103 +340,99 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     case 2: {
         setPaneVisible(paneC, 1);
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x107, NULL);
+                  ->GetResource(0x74696D67, "mf70_cf52_sideinfo03.tpl", NULL);
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, (TPLPalette*)res);
+            PaneSetTexPaletteByName(obj->mLayout, "pic_icon_g", (TPLPalette*)res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
     }
 
     case 4: {
-        char* s = BdatTouchStringCell((const char*)lbl_eu_805013C8 + 0x140,
-                                (const char*)lbl_eu_805013C8 + 0x14d, obj->mSubState + 0x6f);
-        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s);
-        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s);
+        const char* faceArea = "mf00_com12_face_area";
+        char* s = BdatTouchStringCell("SYS_filelist", "filename", obj->mSubState + 0x6f);
+        MenuUpdate_FormatNotifyText(obj, (void*)"pic_face00", (void*)faceArea);
+        MenuUpdate_FormatNotifyText(obj, (void*)"pic_face01", s);
 
         // Sub-type specific texture over the first text slot.
         res = NULL;
         switch (obj->mSubType) {
         case 1:
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x16c, NULL);
+                      ->GetResource(0x74696D67, "mf00_com12_face_area01.tpl", NULL);
             break;
         case 2:
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x187, NULL);
+                      ->GetResource(0x74696D67, "mf00_com12_face_area02.tpl", NULL);
             break;
         case 3:
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1a2, NULL);
+                      ->GetResource(0x74696D67, "mf00_com12_face_area03.tpl", NULL);
             break;
         case 4:
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1bd, NULL);
+                      ->GetResource(0x74696D67, "mf00_com12_face_area04.tpl", NULL);
             break;
         case 5:
             res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x1d8, NULL);
+                      ->GetResource(0x74696D67, "mf00_com12_face_area05.tpl", NULL);
             break;
         }
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, (TPLPalette*)res);
+            PaneSetTexPaletteByName(obj->mLayout, "pic_face00", (TPLPalette*)res);
         }
 
         // Counter sign selects the countdown vs count-up gauge group; the
         // magnitude picks the number-strip texture bound to the gauge pane.
         if (obj->mCounter < 0) {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                              ->FindPaneByName("nul_anim_b", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                              ->FindPaneByName("nul_anim_g", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
+                              ->FindPaneByName("pic_kiz_b", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
+                              ->FindPaneByName("pic_rp_b", true),
                           1);
             if (obj->mCounter <= -200) {
-                name = (const char*)lbl_eu_805013C8 + 0x21c;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp03.tpl", NULL);
             } else if (obj->mCounter <= -100) {
-                name = (const char*)lbl_eu_805013C8 + 0x230;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp02.tpl", NULL);
             } else {
-                name = (const char*)lbl_eu_805013C8 + 0x244;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp01.tpl", NULL);
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x213, (TPLPalette*)res);
+                PaneSetTexPaletteByName(obj->mLayout, "pic_rp_b", (TPLPalette*)res);
             }
         } else {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                              ->FindPaneByName("nul_anim_b", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                              ->FindPaneByName("nul_anim_g", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
+                              ->FindPaneByName("pic_kiz_g", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
+                              ->FindPaneByName("pic_rp_g", true),
                           1);
             if (obj->mCounter >= 500) {
-                name = (const char*)lbl_eu_805013C8 + 0x26b;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp00.tpl", NULL);
             } else if (obj->mCounter >= 300) {
-                name = (const char*)lbl_eu_805013C8 + 0x27f;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp04.tpl", NULL);
             } else if (obj->mCounter >= 200) {
-                name = (const char*)lbl_eu_805013C8 + 0x21c;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp03.tpl", NULL);
             } else if (obj->mCounter >= 100) {
-                name = (const char*)lbl_eu_805013C8 + 0x230;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp02.tpl", NULL);
             } else {
-                name = (const char*)lbl_eu_805013C8 + 0x244;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_rp01.tpl", NULL);
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x262, (TPLPalette*)res);
+                PaneSetTexPaletteByName(obj->mLayout, "pic_rp_g", (TPLPalette*)res);
             }
         }
         setPaneVisible(paneA, 1);
@@ -458,84 +444,72 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
         // Wide-vs-narrow number strip chosen by whether 32 digits fit.
         // wideFlag initializes before the len call (retail hoists li r26,0).
         u32 wideFlag = 0;
-        u32 len = BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x293,
-                                (const char*)lbl_eu_805013C8 + 0x2a4, 5);
+        u32 len = BdatGetU16ByTableKey("JNL_PCrelatelist",
+                                "flg_s1", 5);
         if ((u32)CtrlRemote_TouchBitByArg(0x20) >= (u32)(u16)len) {
             wideFlag = 1;
         }
 
-        u32 pairA[2];
-        u32 pairB[2];
-        pairB[0] = lbl_eu_806673A8[wideFlag];
-        pairB[1] = lbl_eu_806673AC[wideFlag];
-        pairA[0] = lbl_eu_806673B0[wideFlag];
-        pairA[1] = lbl_eu_806673B4[wideFlag];
-
-        char* s1 = BdatTouchStringCell(
-            (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
-            BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
-                          pairB[wideFlag]));
-        char* s2 = BdatTouchStringCell(
-            (const char*)lbl_eu_805013C8 + 0x140, (const char*)lbl_eu_805013C8 + 0x14d,
-            BdatGetU16ByTableKey((const char*)lbl_eu_805013C8 + 0x2ab, (const char*)obj->mSubType,
-                          pairA[wideFlag]));
-        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
-        MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
-        PaneSetVtxColorByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, -1);
+        // Face-texture columns of JNL_PClinelist, narrow/wide variant per slot.
+        const char* face1Cols[2] = {"face_n01", "face_m01"};
+        const char* face2Cols[2] = {"face_n02", "face_m02"};
+        u16 face1 = BdatGetU16ByTableKey("JNL_PClinelist", face1Cols[wideFlag], obj->mSubType);
+        u16 face2 = BdatGetU16ByTableKey("JNL_PClinelist", face2Cols[wideFlag], obj->mSubType);
+        char* s1 = BdatTouchStringCell("SYS_filelist", "filename", face1);
+        char* s2 = BdatTouchStringCell("SYS_filelist", "filename", face2);
+        MenuUpdate_FormatNotifyText(obj, (void*)"pic_face00", s1);
+        MenuUpdate_FormatNotifyText(obj, (void*)"pic_face01", s2);
+        PaneSetVtxColorByName(obj->mLayout, "pic_face00", -1);
 
         if (obj->mCounter < 0) {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                              ->FindPaneByName("nul_anim_b", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                              ->FindPaneByName("nul_anim_g", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x209, true),
+                              ->FindPaneByName("pic_kiz_b", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x213, true),
+                              ->FindPaneByName("pic_rp_b", true),
                           0);
             if (obj->mCounter <= -50) {
-                name = (const char*)lbl_eu_805013C8 + 0x2ba;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp04.tpl", NULL);
             } else if (obj->mCounter <= -16) {
-                name = (const char*)lbl_eu_805013C8 + 0x2d0;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp02.tpl", NULL);
             } else {
-                name = (const char*)lbl_eu_805013C8 + 0x2e6;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp01.tpl", NULL);
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x209, (TPLPalette*)res);
+                PaneSetTexPaletteByName(obj->mLayout, "pic_kiz_b", (TPLPalette*)res);
             }
         } else {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1f3, true),
+                              ->FindPaneByName("nul_anim_b", true),
                           0);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x1fe, true),
+                              ->FindPaneByName("nul_anim_g", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x258, true),
+                              ->FindPaneByName("pic_kiz_g", true),
                           1);
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))
-                              ->FindPaneByName((const char*)lbl_eu_805013C8 + 0x262, true),
+                              ->FindPaneByName("pic_rp_g", true),
                           0);
             if (obj->mCounter >= 300) {
-                name = (const char*)lbl_eu_805013C8 + 0x2fc;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp00.tpl", NULL);
             } else if (obj->mCounter >= 50) {
-                name = (const char*)lbl_eu_805013C8 + 0x2ba;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp04.tpl", NULL);
             } else if (obj->mCounter >= 21) {
-                name = (const char*)lbl_eu_805013C8 + 0x312;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp03.tpl", NULL);
             } else if (obj->mCounter >= 16) {
-                name = (const char*)lbl_eu_805013C8 + 0x2d0;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp02.tpl", NULL);
             } else {
-                name = (const char*)lbl_eu_805013C8 + 0x2e6;
+                res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())->GetResource(0x74696D67, "mf00_com00_kizp01.tpl", NULL);
             }
-            res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                      ->GetResource(0x74696D67, name, NULL);
             if (res != NULL) {
-                PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x258, (TPLPalette*)res);
+                PaneSetTexPaletteByName(obj->mLayout, "pic_kiz_g", (TPLPalette*)res);
             }
         }
         setPaneVisible(paneA, 1);
@@ -544,9 +518,9 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     }
 
     case 6:
-        LayoutSetTextBoxFmtValue(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x328,
+        LayoutSetTextBoxFmtValue(obj->mLayout, "txt_buf",
                       BdatGetPtrDirect((const void*)getGlobal0E0(),
-                                    (const char*)lbl_eu_805013C8 + 0x330, obj->mSubState),
+                                    "name", obj->mSubState),
                       0);
         setPaneVisible(paneD, 1);
         obj->mActiveAnim = obj->mAnim1;
@@ -555,9 +529,9 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     case 3: {
         setPaneVisible(paneC, 1);
         res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, (const char*)lbl_eu_805013C8 + 0x335, NULL);
+                  ->GetResource(0x74696D67, "mf00_reg00_tut.tpl", NULL);
         if (res != NULL) {
-            PaneSetTexPaletteByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x120, (TPLPalette*)res);
+            PaneSetTexPaletteByName(obj->mLayout, "pic_icon_g", (TPLPalette*)res);
         }
         obj->mActiveAnim = obj->mAnim1;
         break;
@@ -706,7 +680,7 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
         isGlobalCamFlagSet__Fi((int)0xBFE40000)) {
         return 1;
     }
-    if (MenuTutorialIsCreated()) obj->mFloat12C = lbl_eu_806673C0;
+    if (MenuTutorialIsCreated()) obj->mFloat12C = 4.0f;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return 1;
     if (isSceneActive__Q22cf13CfGameManagerFv()) return 1;
     if (!isSceneReadyForInput__Q22cf13CfGameManagerFv()) return 1;
@@ -715,7 +689,7 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
     // Clamp: subtract the fade step into the field, then clamp.
     // 0.0f is const-qualified so the load may hoist above the
     // member store, reproducing retail's sub/store/cmp/store order.
-    obj->mFloat12C = obj->mFloat12C - lbl_eu_806673C4;
+    obj->mFloat12C = obj->mFloat12C - 1.0f;
     if (obj->mFloat12C < 0.0f) {
         obj->mFloat12C = 0.0f;
     }
@@ -730,7 +704,7 @@ extern "C" __declspec(noinline) void MenuUpdate_EnterMode1Chime(void* self) {
 }
 
 // MenuUpdate_MaintainActive
-extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
+extern "C" void MenuUpdate_MaintainActive(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
     if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mState != 4 && obj->mState != 5) {
@@ -805,7 +779,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
                 // Retail tests each failure condition with a cror merge
                 // ((v >= C4), (mFloat12C <= 0)) and exits to the common tail
                 // when either negated test holds.
-                if (!(v >= lbl_eu_806673C4) || !(obj->mFloat12C <= 0.0f)) {
+                if (!(v >= 1.0f) || !(obj->mFloat12C <= 0.0f)) {
                 } else {
                     switch (obj->mState) {
                     case 1: CUICfManager_queueQuestLogMenu(obj->mSubState & 0xFFFF); break;
@@ -816,7 +790,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
                 }
             }
         }
-        if (advanceAnimTransform(obj->mActiveAnim, lbl_eu_806673C4))
+        if (advanceAnimTransform(obj->mActiveAnim, 1.0f))
             obj->mMode = 2;
     }
 }
@@ -825,13 +799,13 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
 extern "C" __declspec(noinline) f32 MenuUpdate_QueryUnk80Float() {
     Unk_8049603C* mgr = (Unk_8049603C*)Scn_QueryUnk80State();
     f32 val = mgr->field_C;
-    return lbl_eu_806673C4 - val;
+    return 1.0f - val;
 }
 
 // MenuUpdate_GuardFirstEntry
 // MenuUpdate_GuardFirstEntry - idle-state handler (mode 2): closes the front window and
 // compacts the remaining non-empty entries toward the front.
-extern "C" __declspec(noinline) void MenuUpdate_GuardFirstEntry(void* self) {
+extern "C" void MenuUpdate_GuardFirstEntry(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
         obj->mEntries[0].field_0 != 5)

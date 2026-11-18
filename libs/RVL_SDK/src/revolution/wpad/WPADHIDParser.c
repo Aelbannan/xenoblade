@@ -625,12 +625,9 @@ void __parse_vs_data(s32 chan, WPADStatusEx** status, s32 dataFormat, u8* data, 
 //
 
 void __a1_30_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    u16 rptBtn;
-    WPADCB* cb;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
 
-    rptBtn = (u16)((data[2] << 8) | data[1]);
-    cb = __rvl_p_wpadcb[chan];
-    status->button = (u16)(rptBtn & HID_WPAD_BUTTON_MASK);
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
     status->dev = cb->devType;
 
     if (cb->dataFormat == WPAD_FMT_CORE_BTN) {
@@ -1040,9 +1037,8 @@ void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
     memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex], RX_BUFFER_SIZE);
 
     // Button word: report bytes merged over the preserved bits of the old value
-    status->button =
-        (u16)(((u16)((data[2] << 8) & 0xFF00) | (u16)(data[1] & 0xFF)) & HID_WPAD_BUTTON_MASK) |
-        (u16)(status->button & 0x6000);
+    status->button = (u16)(((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK) |
+                     (u16)(status->button & 0x6000);
 
     if (status->dev != cb->devType) {
         status->dev = cb->devType;
@@ -1469,10 +1465,8 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
 
 void __a1_36_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
-    u16 rptBtn;
 
-    rptBtn = (u16)((data[2] << 8) | data[1]);
-    status->button = (u16)(rptBtn & HID_WPAD_BUTTON_MASK);
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
     status->err = WPAD_ERR_INVALID;
     status->dev = cb->devType;
 
@@ -1894,8 +1888,8 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    WPADCB* cb = __rvl_p_wpadcb[chan];
     WPADStatusEx* st = status;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
 
     if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {

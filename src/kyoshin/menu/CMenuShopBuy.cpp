@@ -1,6 +1,7 @@
 // Decomp of kyoshin/menu/CMenuShopBuy.
 // Shop buy menu screen process (CProcess-header + IScnRender MI layout).
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -186,7 +187,7 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
     if (self->mFloat6FC > lbl_eu_80667A28) self->mFloat6FC = lbl_eu_80667A28;
 
     ShopBuyPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Pointer input enabled: turbo flags move the cursor, pressed flags
         // run the confirm/cancel flow. The item-box pointer is recomputed per
         // call (addi r3,r31,0xbc) exactly like retail - no cached local.

@@ -1,7 +1,7 @@
 // CriWare ADX GCI (GameCube/Wii DVD) device driver for cvFs.
 //
 // gcCiGetInterface() hands cvFs a table of device entry points (the GCI I/F);
-// every open file gets a GciHndl out of the gcci_hndl[] pool and all transfers
+// every open file gets a GciHndl out of the gcci_work.hndl[] pool and all transfers
 // are driven through the DVD library.
 
 #include <harness_catalog.h>
@@ -70,13 +70,20 @@ typedef struct {
     void *unk64;                                           // +0x64
 } GCCI_IF;
 
-static u32 gcci_unk0;                      // +0x000
-static GCCI_ERRFN gcci_errfn;              // +0x004
-static void *gcci_errarg;                  // +0x008
-static GciStatus gcci_status;              // +0x00C
-static GciHndl gcci_hndl[GCI_MAX_HNDL];    // +0x018
-static u32 gcci_rdMode;                    // +0xFB8
-static char gcci_prefix[GCI_NAME_MAX];     // +0xFC0
+static u32 gcci_unk0;         // +0x000
+static GCCI_ERRFN gcci_errfn; // +0x004
+static void *gcci_errarg;     // +0x008
+static GciStatus gcci_status; // +0x00C
+
+// Open file pool and the path work area.
+typedef struct {
+    GciHndl hndl[GCI_MAX_HNDL]; // +0x000
+    u32 rdMode;                 // +0xFA0
+    u32 unkFA4;                 // +0xFA4
+    char prefix[GCI_NAME_MAX];  // +0xFA8
+} GCCI_WORK;
+
+static GCCI_WORK gcci_work;
 
 // Error message pool of the GCI driver (one C string per failure).
 static const char gcci_errmsg[] =
@@ -97,7 +104,7 @@ static const char gcci_errmsg[] =
     "E0040303:invalidate size.\0";
 
 // Build report string of the library.
-static const char gcci_version[] =
+static const char gcci_version[] __attribute__((aligned(8))) =
     "\nLSC/WII Ver.2.30 Build:Oct 28 2009 21:11:24\n";
 
 #define GCCI_ERR(off)                                                        \
@@ -133,7 +140,7 @@ s32 gcCiIsExistFile(const char *fname);
 void gcCiExecHndl(GciHndl *hndl);
 void gcci_rd_cbfn(s32 result, DVDFileInfo *info);
 
-static const GCCI_IF gcci_iface = {
+static GCCI_IF gcci_iface = {
     gcCiExecServer,
     gcCiEntryErrFunc,
     gcCiGetFileSize,
@@ -160,7 +167,7 @@ static inline void gcci_makePath(char *buf, const char *fname) {
     u32 i;
     u32 len;
 
-    strcpy(buf, gcci_prefix);
+    strcpy(buf, gcci_work.prefix);
     strcat(buf, fname);
     len = strlen(buf);
     for (i = 0; i < len; i++) {
@@ -171,23 +178,17 @@ static inline void gcci_makePath(char *buf, const char *fname) {
 void *gcCiGetInterface(void) {
     volatile u32 t;
 
-    memset(gcci_prefix, 0, GCI_NAME_MAX);
     t = gcci_unk0;
     gcci_unk0 = t;
     gcci_errfn = NULL;
     gcci_errarg = NULL;
     memset(&gcci_status, 0, sizeof(GciStatus));
+    memset(gcci_work.prefix, 0, GCI_NAME_MAX);
     return (void *)&gcci_iface;
 }
 
 void gcCiExecHndl(GciHndl *hndl) {
     s32 status;
-    s32 tr;
-    s32 np;
-    s32 nt;
-    s32 ts;
-    s32 nsct;
-    u8 *dst;
 
     if (hndl->state != 2) return;
 
@@ -201,25 +202,33 @@ void gcCiExecHndl(GciHndl *hndl) {
         gcci_status.flag = 3;
         break;
 
-    case 0:
-        tr = hndl->length * hndl->sctLen;
+    case 0: {
+        s32 tr = hndl->length * hndl->sctLen;
+
         DCInvalidateRange(hndl->buf, tr);
-        np = hndl->pos + hndl->length;
-        nt = np * hndl->sctLen;
-        hndl->transferred = tr;
-        hndl->pos = np;
-        if (nt > hndl->fileSize) {
-            s32 over = nt - hndl->fileSize;
-            dst = hndl->buf + tr - over;
-            memset(dst, 0, over);
-            DCStoreRange(dst, over);
+        {
+            s32 np = hndl->pos + hndl->length;
+            s32 nt = np * hndl->sctLen;
+
+            hndl->transferred = tr;
+            hndl->pos = np;
+            if (nt > hndl->fileSize) {
+                s32 over = nt - hndl->fileSize;
+                u8 *dst = hndl->buf + tr - over;
+
+                memset(dst, 0, over);
+                DCStoreRange(dst, over);
+            }
         }
         hndl->state = 1;
         gcci_status.flag = 1;
         break;
+    }
 
-    case 10:
-        ts = DVDGetTransferredSize(&hndl->fi);
+    case 10: {
+        s32 ts = DVDGetTransferredSize(&hndl->fi);
+        s32 nsct;
+
         DCInvalidateRange(hndl->buf, ts);
         nsct = ts / hndl->sctLen;
         hndl->state = 0;
@@ -227,6 +236,7 @@ void gcCiExecHndl(GciHndl *hndl) {
         hndl->pos += nsct;
         gcci_status.flag = 0;
         break;
+    }
 
     default:
         break;
@@ -237,7 +247,7 @@ void gcCiExecServer(void) {
     s32 i;
 
     for (i = 0; i < GCI_MAX_HNDL; i++) {
-        if (gcci_hndl[i].use == 1) gcCiExecHndl(&gcci_hndl[i]);
+        if (gcci_work.hndl[i].use == 1) gcCiExecHndl(&gcci_work.hndl[i]);
     }
 }
 
@@ -284,8 +294,8 @@ void *gcCiOpen(const char *fname, s32 size, s32 mode) {
     }
     hndl = NULL;
     for (i = 0; i < GCI_MAX_HNDL; i++) {
-        if (gcci_hndl[i].use == 0) {
-            hndl = &gcci_hndl[i];
+        if (gcci_work.hndl[i].use == 0) {
+            hndl = &gcci_work.hndl[i];
             break;
         }
     }
@@ -375,7 +385,7 @@ s32 gcCiReqRd(GciHndl *hndl, s32 size, u8 *buf) {
     if (!(hndl->dvdStatus == 0 || hndl->dvdStatus == 10)) return 0;
     busy = 0;
     for (i = 0; i < GCI_MAX_HNDL; i++) {
-        if (gcci_hndl[i].use == 1 && gcci_hndl[i].state == 2) {
+        if (gcci_work.hndl[i].use == 1 && gcci_work.hndl[i].state == 2) {
             busy = 1;
             break;
         }
@@ -390,7 +400,7 @@ s32 gcCiReqRd(GciHndl *hndl, s32 size, u8 *buf) {
     hndl->buf = buf;
     hndl->length = size;
     for (i = 0; i < GCI_MAX_HNDL; i++) {
-        if (gcci_hndl[i].use == 1) gcCiExecHndl(&gcci_hndl[i]);
+        if (gcci_work.hndl[i].use == 1) gcCiExecHndl(&gcci_work.hndl[i]);
     }
     offset = hndl->pos * hndl->sctLen;
     length = hndl->length * hndl->sctLen;
@@ -404,7 +414,7 @@ s32 gcCiReqRd(GciHndl *hndl, s32 size, u8 *buf) {
     }
     nsct = (length + 0x1f) & ~0x1f;
     DCInvalidateRange(buf, nsct);
-    if (gcci_rdMode == 0) {
+    if (gcci_work.rdMode == 0) {
         if (!DVDReadAsyncPrio(&hndl->fi, buf, nsct, offset, gcci_rd_cbfn, 2)) {
             return 0;
         }
@@ -419,7 +429,8 @@ s32 gcCiReqRd(GciHndl *hndl, s32 size, u8 *buf) {
 void gcCiStopTr(GciHndl *hndl) {
     u32 start;
     u32 now;
-    s32 elapsed;
+    u32 elapsed;
+    s32 rc;
 
     if (hndl == NULL) {
         GCCI_ERR(0x118);
@@ -429,18 +440,22 @@ void gcCiStopTr(GciHndl *hndl) {
     DVDGetCommandBlockStatus(&hndl->fi.block);
     DVDGetDriveStatus();
     gcci_status.busy = 1;
-    if (DVDCancel(&hndl->fi.block) < 0) {
-        gcci_status.busy = 0;
+    rc = DVDCancel(&hndl->fi.block);
+    gcci_status.busy = 0;
+    if (rc < 0) {
         GCCI_ERR_H(0x16f, hndl);
         return;
     }
-    gcci_status.busy = 0;
     start = GCCI_TICKS_TO_MS(OSGetTick());
     while (hndl->dvdStatus != 0 && hndl->dvdStatus != 10) {
         hndl->dvdStatus = DVDGetCommandBlockStatus(&hndl->fi.block);
         gcci_status.status = hndl->dvdStatus;
         now = GCCI_TICKS_TO_MS(OSGetTick());
-        elapsed = (now >= start) ? (s32)(now - start) : (s32)(now - start - 1);
+        if (now >= start) {
+            elapsed = now - start;
+        } else {
+            elapsed = now - start - 1;
+        }
         if (elapsed > GCI_TIMEOUT_MS) {
             GCCI_ERR_H(0x18a, hndl);
             break;

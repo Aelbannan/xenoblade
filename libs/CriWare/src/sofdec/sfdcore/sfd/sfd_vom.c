@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 int SFVOM_Init(void) { return 0x0; }
 
@@ -9,19 +10,19 @@ int SFVOM_Finish(void) { return 0x0; }
 
 extern s32 SFSET_GetCond(void* self, s32 a);
 extern s32 SFTRN_GetTermFlg(void* self, s32 a);
-extern s32 SFBUF_GetTermFlg(void* self, void* a);
+extern s32 SFBUF_GetTermFlg(void* self, int idx);
 extern void SFTRN_SetTermFlg(void* self, s32 a, s32 b);
 extern s32 SFTIM_IsVideoTerm(void* self);
 extern s32 SFTRN_GetPrepFlg(void* self, s32 a);
-extern s32 SFBUF_GetPrepFlg(void* self, void* a);
+extern s32 SFBUF_GetPrepFlg(void* self, int idx);
 extern void SFTRN_SetPrepFlg(void* self, s32 a, s32 b);
 
-s32 SFVOM_ExecServer(void* self) {
+s32 SFVOM_ExecServer(SfdHandle* self) {
     s32 flag;
     if (SFSET_GetCond(self, 5) == 0)
         return 0;
     if (SFTRN_GetTermFlg(self, 6) != 1) {
-        if (SFBUF_GetTermFlg(self, *(void**)((u8*)self + 0x2180)) == 1) {
+        if (SFBUF_GetTermFlg(self, self->trn[6].bufIdx) == 1) {
             if (SFSET_GetCond(self, 0xf) == 0) {
                 flag = 1;
             } else {
@@ -33,7 +34,7 @@ s32 SFVOM_ExecServer(void* self) {
         }
     }
     if (SFTRN_GetPrepFlg(self, 6) != 1) {
-        if (SFBUF_GetPrepFlg(self, *(void**)((u8*)self + 0x2180)) == 1) {
+        if (SFBUF_GetPrepFlg(self, self->trn[6].bufIdx) == 1) {
             SFTRN_SetPrepFlg(self, 6, 1);
         }
     }
@@ -64,16 +65,15 @@ s32 SFVOM_AddWrite(void* h) {
 
 extern s32 SFBUF_VfrmGetRead(void* self, s32 idx, s32* out, s32 size);
 
-s32 SFVOM_GetRead(void* self, s32* out, s32 arg3) {
-    s32 type = *(s32*)((u8*)self + 0x54);
+s32 SFVOM_GetRead(SfdHandle* self, s32* out, s32 arg3) {
+    s32 type = self->errorState;
     if (type == 3 || type == 4)
         goto call;
     *out = 0;
     return 0;
 call:
     {
-        s32 r = SFBUF_VfrmGetRead(
-            self, *(s32*)((u8*)self + 0x2180), out, arg3);
+        s32 r = SFBUF_VfrmGetRead(self, self->trn[6].bufIdx, out, arg3);
         if (r != 0)
             return r;
         return 0;
@@ -81,8 +81,8 @@ call:
 }
 
 void SFBUF_VfrmAddRead(void* self, u32 a, u32 b, u32 c);
-void SFVOM_AddRead(void* self, u32 a, u32 b) {
-    SFBUF_VfrmAddRead(self, *(u32*)((u8*)self + 0x2180), a, b);
+void SFVOM_AddRead(SfdHandle* self, u32 a, u32 b) {
+    SFBUF_VfrmAddRead(self, self->trn[6].bufIdx, a, b);
 }
 
 int SFVOM_Seek(void) { return 0x0; }

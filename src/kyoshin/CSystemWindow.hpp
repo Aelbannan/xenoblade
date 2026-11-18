@@ -86,7 +86,6 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 // CSysWin / system-window helper imports (C-linkage retail symbols).
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
 // would change call-site codegen (see MWCC_CASES); keep C linkage.
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 
 // C++-linkage helpers - MWCC mangles these to the retail symbols

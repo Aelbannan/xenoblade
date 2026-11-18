@@ -126,7 +126,6 @@ extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Save/skip system busy queries (retail unmangled).
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();

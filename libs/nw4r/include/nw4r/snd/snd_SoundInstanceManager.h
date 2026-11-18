@@ -103,8 +103,12 @@ public:
     }
 
     void SortPriorityList() {
-        TPrioList listsByPrio[T::PRIORITY_MAX + 1];
+        if (mPriorityList.GetSize() < 2) {
+            return;
+        }
+
         ut::detail::AutoLock<OSMutex> lock(mMutex);
+        TPrioList listsByPrio[T::PRIORITY_MAX + 1];
 
         while (!mPriorityList.IsEmpty()) {
             T& rSound = mPriorityList.GetFront();

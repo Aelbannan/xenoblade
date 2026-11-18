@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuMapSelectSC
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
 #include "kyoshin/CSysWin.hpp"

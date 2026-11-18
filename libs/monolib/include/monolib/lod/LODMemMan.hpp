@@ -4,7 +4,7 @@
 struct CEventFile;
 namespace LOD {
 // Retail RTTI identifies this 0x78-byte callback object at owner +0xA44.
-class __declspec(novtable) LODMemMan : public IWorkEvent {
+class LODMemMan : public IWorkEvent {
 public:
     LODMemMan() {}
     virtual ~LODMemMan();

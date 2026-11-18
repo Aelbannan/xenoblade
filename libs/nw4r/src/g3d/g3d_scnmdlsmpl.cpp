@@ -800,29 +800,17 @@ ScnMdlSimple::~ScnMdlSimple() {
     }
 }
 
-} // namespace g3d
-} // namespace nw4r
-
-void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d12ScnMdlSimpleCFv(){}
-
-extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void) { return (void*)&lbl_eu_8051D7A8; }
-
-namespace nw4r {
-namespace g3d {
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdlSimple")> lbl_eu_8051D7A8 = {sizeof("ScnMdlSimple"), "ScnMdlSimple"};
+NW4R_G3D_RTTI_DEF(ScnMdlSimple);
 
 bool ScnMdlSimple::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D7A8) ? true
-         : other == TypeObj(lbl_eu_8051D778) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    return other == TypeObj(TYPE_NAME) ? true
+         : other == ScnLeaf::GetTypeObjStatic() ? true
+         : other == ScnObj::GetTypeObjStatic() ? true
+         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
 }
 
 const G3dObj::TypeObj ScnMdlSimple::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D7A8);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* ScnMdlSimple::GetTypeName() const {

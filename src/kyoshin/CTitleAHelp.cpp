@@ -164,7 +164,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
             setPaneVisible(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
 
             const char* fileID = lbl_eu_805054BC + 0x37;
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 fileID = lbl_eu_805054BC + 0x40;
             }
 

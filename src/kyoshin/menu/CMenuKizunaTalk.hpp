@@ -208,7 +208,6 @@ extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 //@@KIZUNA_DECLS@@

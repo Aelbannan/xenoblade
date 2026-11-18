@@ -2,19 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-
-typedef struct {
-    u8 _pad00[0x164];
-    s32 time;
-    s32 idx;
-    s32 timeQueue[32];
-    s32 value;
-    s32 totalSmpl;
-    s32 _pad1f4;
-    s32 wr;
-    s32 rd;
-    s32 smplQueue[32];
-} SfdConcatContext;
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(s32 val, u32 code);
@@ -58,39 +46,39 @@ ret0:
 
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
-void SFCON_UpdateConcatTime(void* h, s32 delta) {
+void SFCON_UpdateConcatTime(SfdHandle* h, s32 delta) {
     u32 cs;
-    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    SfdTim* tim = &h->tim;
     SFLIB_LockCs(&cs);
-    s32 idx = ctx->idx;
-    s32 time = ctx->time;
+    s32 idx = tim->concat.idx;
+    s32 time = tim->concat.time;
     idx++;
     s32 new_time = time + delta;
-    ctx->time = new_time;
-    ctx->timeQueue[idx % 32] = new_time;
-    ctx->idx = idx;
+    tim->concat.time = new_time;
+    tim->concat.timeQueue[idx % 32] = new_time;
+    tim->concat.idx = idx;
     SFLIB_UnlockCs(&cs);
 }
 
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
-s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
+s32 SFCON_WriteTotSmplQue(SfdHandle* h, s32 lastSmpl, s32 value) {
     u32 cs;
-    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    SfdTim* tim = &h->tim;
     s32 rd;
     s32 wr;
     s32 r;
     SFLIB_LockCs(&cs);
-    wr = ctx->wr;
-    rd = ctx->rd;
+    wr = tim->concat.wr;
+    rd = tim->concat.rd;
     /* ring full check: writer has lapped the reader by 32 entries */
-    if (ctx->wr - ctx->rd >= 32) {
+    if (tim->concat.wr - tim->concat.rd >= 32) {
         r = 0;
     } else {
-        ctx->value = value;
-        ctx->smplQueue[ctx->wr % 32] = lastSmpl;
-        ctx->wr += 1;
-        ctx->totalSmpl += lastSmpl;
+        tim->concat.value = value;
+        tim->concat.smplQueue[tim->concat.wr % 32] = lastSmpl;
+        tim->concat.wr += 1;
+        tim->concat.totalSmpl += lastSmpl;
         r = 1;
     }
     SFLIB_UnlockCs(&cs);
@@ -99,22 +87,22 @@ s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
 
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
-s32 SFCON_ReadTotSmplQue(void* h, s32* lastSmpl, s32* value) {
+s32 SFCON_ReadTotSmplQue(SfdHandle* h, s32* lastSmpl, s32* value) {
     u32 cs;
-    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    SfdTim* tim = &h->tim;
     s32 rd;
     s32 wr;
     s32 r;
     SFLIB_LockCs(&cs);
-    rd = ctx->rd;
-    wr = ctx->wr;
+    rd = tim->concat.rd;
+    wr = tim->concat.wr;
     if (wr - rd <= 0) {
         *lastSmpl = -1;
         r = 0;
     } else {
-        *value = ctx->value;
-        *lastSmpl = ctx->smplQueue[ctx->rd % 32];
-        ctx->rd += 1;
+        *value = tim->concat.value;
+        *lastSmpl = tim->concat.smplQueue[tim->concat.rd % 32];
+        tim->concat.rd += 1;
         r = 1;
     }
     SFLIB_UnlockCs(&cs);

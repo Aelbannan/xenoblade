@@ -313,7 +313,6 @@ extern "C" {
 void UIWin_CreateSysWin0(char* msg, int a, int b);                         // CUICfManager.cpp
 void CtrlRemote_SetSharedBit(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
-int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
 s32 CItemBlock_getPtr20E8();                                                 // CItemBoxInfo.cpp
 void CItemBlock_setCount(s32);                                             // CItemBoxInfo.cpp

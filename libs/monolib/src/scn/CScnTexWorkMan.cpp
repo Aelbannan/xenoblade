@@ -869,7 +869,7 @@ extern "C" void __dt__16CScnVirtualLightFv();
 extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 }
-extern "C" u32 __RTTI__14CScnTexWorkMan; extern "C" u32 lbl_eu_80663618;
+extern "C" u32 __RTTI__14CScnTexWorkMan; extern "C" u32 __RTTI__11CDeviceVICb;
 extern "C" u32 __RTTI__16CScnVirtualLight;
 
 // lbl_eu_8056E7D0 (24B) vtable/ptrs
@@ -878,7 +878,7 @@ extern "C" u32 lbl_eu_8056E7D0[6] = {
 };
 // lbl_eu_8056E7E8 (16B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7E8[4] = {
-    (u32)&lbl_eu_80663618, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&__RTTI__11CDeviceVICb, 0x00000000, 0x00000000, 0x00000000,
 };
 // lbl_eu_8056E7F8 (38B) string/bytes
 extern "C" char lbl_eu_8056E7F8[40] = { 0x4E, 0x57, 0x34, 0x52, 0x3A, 0x46, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x20, 0x61, 0x73, 0x73, 0x65, 0x72, 0x74, 0x69, 0x6F, 0x6E, 0x20, 0x21, 0x28, 0x28, 0x75, 0x33, 0x32, 0x29, 0x70, 0x20, 0x26, 0x20, 0x30, 0x78, 0x33, 0x29, 0x00, 0x00, 0x00, };

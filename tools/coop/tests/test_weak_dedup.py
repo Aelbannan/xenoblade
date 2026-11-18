@@ -210,6 +210,12 @@ class WeakDedupTest(unittest.TestCase):
                             {"g": 0x80001010, "lbl_80601004": 0x80601004})
         self.assertEqual(v.excluded, [])
 
+    def test_retail_switch_table_placeholder_does_not_block_the_drop(self):
+        # A jumptable_<region>_<addr> retail name stands for a compiler-anonymous @N local.
+        v = self.class_view(self.orphan_vtable_object("__vt__4Base"),
+                            {"g": 0x80001010, "jumptable_eu_80601004": 0x80601004})
+        self.assertEqual(v.removed.get(".sdata"), 4)
+
     def test_unreferenced_plain_data_with_no_retail_copy_is_kept(self):
         v = self.class_view(self.orphan_vtable_object("table"), {"g": 0x80001010})
         self.assertEqual(v.excluded, [])

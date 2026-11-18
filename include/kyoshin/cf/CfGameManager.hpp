@@ -147,8 +147,8 @@ namespace cf{
         static UnkClass_80083298* getGameSubManager();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool isClassicController();
-        static bool isClassicController(s16) { return isClassicController(); }
+        // Retail callers pass -1 in r3 at every call site; the body ignores it.
+        static bool isClassicController(s16 selector);
         static void setCurrentPadPtr(const CPad* pad, u32 channel);
         static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);

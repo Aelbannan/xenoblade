@@ -6,6 +6,8 @@
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -13,92 +15,83 @@
 class CFileHandle;
 class CScn;
 class CEventFile;
+class CSysWinBuff;
 
-// View of the CProcess base vptr slot (+0x10): the create() factory writes the
-// temp IUIWindow vtable (lbl_eu_8052D238) then the CSysWinBuff composite
-// vtable (lbl_eu_80537DC0) at +0x10, mirroring the CSystemWindow ctor.
-struct CSysWinBuffVtSlot {
-    u8 _0[0x10];
-    u32 mpVtable;  // +0x10
-};
+// Global data imports (MWCC does not mangle global-scope data names).
+// (singleton/word moved to CSysWinBuff.cpp as single global defs to dodge
+// a MWCC-1.1 decl-merging fault (10322) on these two.)
+extern u32 lbl_eu_806640E0;           // message-table word read by Move's label lookup
 
-// Byte-range shim over the CProcess base + owned fields so the create()
-// factory can write the vtable (+0x10), the __ptmf_null callback slots
-// (+0x3C..0x53) and the trailing scalars without raw pointer arithmetic.
-// Matches CSysWinBuff's layout exactly (CProcess.hpp: CProcess :
-// CChildListNode, size 0x3C).
-struct CSysWinBuffCtorShim {
-    u8 _00[0x10];
-    void* vtable;        // 0x10 - CProcess vtable, overwritten by the factory
-    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
-    u32 field54;         // 0x54
-    u32 field58;         // 0x58
-    u32 field5C;         // 0x5C
-    s32 index;           // 0x60 - init -1
-    u8 flag64;           // 0x64
-    u8 flag65;           // 0x65
-    u8 flag66;           // 0x66
-    u8 active;           // 0x67 - init 1
-    u32 field68;         // 0x68
-    u32 field6C;         // 0x6C - composite vtable + 0x24
-    u32 field70;         // 0x70 - composite vtable + 0xac
-    CFileHandle* fileHandle;  // 0x74
-    CScn* scene;              // 0x78
-    u8 mSysWin[0x3C];         // 0x7C - CSysWin storage
-    u8 flagB8;                // 0xB8
-    u16 argBA;                // 0xBA
-};
+// C-ABI helper imports with retail verbatim (unmangled) names; the defining
+// TUs (CSysWin.cpp / monolib / code_80135FDC.cpp) emit these flat symbols.
+extern "C" {
+void __ct__8CProcessFv(CProcess* self);
+void __dt__8CProcessFv(CProcess* self, int flags);
+void __ct__7CSysWinFUc(void* syswin, int arg);
+void __dt__7CSysWinFv(void* syswin, int flags);
+void Bdat_GetTable_AA34();
+s32 MenuTutorialIsCreated();
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+
+// CDeviceFile common-archive loader + work-memory handle query (unmangled
+// retail C symbols; declared with C linkage so the call reloc keeps the
+// verbatim names, per the repo-wide convention).
+void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
+    u32 handle, const char* path, void* workEvent, int a, int b);
+u32 KyoshinHeap_GetField44();
+}
+
+// CSysWinBuff::OnFileEvent's body lives in the .cpp (retail keeps it out of
+// line at 0x80276F08: the IWorkEvent sub-vtable slot holds the compiler's
+// +0x6C adjusting thunk, which tail-jumps straight into it).
+//
 
 /*
  * System window "buff" process (singleton, created by create__11CSysWinBuffFv).
  *
- * A CProcess subclass whose layout mirrors CSysWinSave / CSystemWindow's
- * Move/UI region, plus a loaded-arc file handle, the owning scene, an embedded
- * CSysWin and two trailing scalars:
- *   0x00  CProcess primary base (destroyed via ~CProcess)
- *   0x3C  IUIWindow/Move region (48 bytes)
- *   0x6C  IWorkEvent vtable slot
- *   0x70  IScnRender vtable slot (long-lived render callback subobject)
- *   0x74  CFileHandle* loaded System.arc handle
- *   0x78  CScn* owning scene
- *   0x7C  CSysWin storage (0x3C bytes)
- *   0xB8  state flag byte
- *   0xBA  window-kind argument (u16)
+ * Real MI class: IUIWindow at +0x00 (0x6C, brings the CTTask<IUIWindow> Move/
+ * Draw ptmf hooks at +0x3C/+0x48 plus the layout/state members from +0x54),
+ * IWorkEvent at +0x6C and IScnRender at +0x70 - so retail's
+ * __vt__11CSysWinBuff (lbl_eu_80537DC0) carries the +0x24 (IWorkEvent) and
+ * +0xAC (IScnRender) sub-vtables and the base list (lbl_eu_80537E84) names
+ * IScnRender@0x70 / IWorkEvent@0x6C exactly as the compiler emits them.
  *
- * The ctor/dtor are emitted as global functions carrying the retail symbol
- * names (create__11CSysWinBuffFv / __dt__11CSysWinBuffFv), so the member dtor
- * declared here is satisfied at link time by that global definition (same
- * idiom as CSysWinSave / CSysWinScenarioLog).
+ * Layout (0xBC bytes, the size the factory allocates):
+ *   0x00  IUIWindow base
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (long-lived render callback subobject)
+ *   0x74  mFileHandle - loaded System.arc handle
+ *   0x78  mScene      - owning scene
+ *   0x7C  mSysWin     - embedded CSysWin widget (0x3C)
+ *   0xB8  mFlagB8     - state flag byte
+ *   0xBA  mArgBA      - window-kind argument
  */
-class CSysWinBuff : public CProcess {
+class CSysWinBuff : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
+    // Single-use ctor: retail has no out-of-line __ct__11CSysWinBuff symbol, the
+    // whole body (CProcess ctor, CTTask<IUIWindow> vptr + null ptmf hooks,
+    // IUIWindow state, composite + sub-vptrs, embedded CSysWin) is inlined into
+    // the create() factory, so the body lives here.
+    CSysWinBuff(CScn* scene, u16 arg)
+        : mFileHandle(NULL), mScene(scene), mSysWin(0), mFlagB8(0), mArgBA(arg) {
+        setPresentationFlag__Q22cf13CfGameManagerFv(true);
+        code80135FDC_postIncByte_64080();
+    }
     virtual ~CSysWinBuff();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+
     static CSysWinBuff* getInstance();
 
-    // 0x3C IUIWindow/Move region (48 bytes, same as CSysWinSave / CSystemWindow).
-    u32 ptmf0[3];                 // 0x3C null pointer-to-member-function
-    u32 ptmf1[3];                 // 0x48 null pointer-to-member-function
-    u32 field_54;                 // 0x54
-    u32 field_58;                 // 0x58
-    u32 field_5C;                 // 0x5C
-    s32 field_60;                 // 0x60 (-1)
-    u8  field_64;                 // 0x64
-    u8  field_65;                 // 0x65
-    u8  field_66;                 // 0x66
-    u8  field_67;                 // 0x67 (1)
-    u32 field_68;                 // 0x68
-    u32 mWorkEvent;               // 0x6C IWorkEvent vtable slot
-    u32 mScnRender;               // 0x70 IScnRender vtable slot
-    CFileHandle* mFileHandle;     // 0x74 loaded System.arc handle
-    CScn* mScene;                 // 0x78 owning scene
-    u8  mSysWin[0x3C];            // 0x7C CSysWin storage
-    u8  mFlagB8;                  // 0xB8
-    u16 mArgBA;                   // 0xBA
+    CFileHandle* mFileHandle;  // 0x74 loaded System.arc handle
+    CScn* mScene;              // 0x78 owning scene
+    CSysWin mSysWin;           // 0x7C CSysWin storage (0x3C)
+    u8 mFlagB8;                // 0xB8 state flag byte
+    u16 mArgBA;                // 0xBA window-kind argument (u16)
 };
 
 // Abstract view into the embedded CSysWin vtable: MWCC adds 2 implicit entries
@@ -169,50 +162,6 @@ struct CSysWinDataBuff {
     u8  f_38;      // 0x38
     u8  f_39;      // 0x39
 };
-
-// Global data imports (MWCC does not mangle global-scope data names).
-// (singleton/word moved to CSysWinBuff.cpp as single global defs to dodge
-// a MWCC-1.1 decl-merging fault (10322) on these two.)
-extern u32 lbl_eu_806640E0;           // message-table word read by Move's label lookup
-extern char lbl_eu_8052D238[];        // temp IUIWindow vtable (.data)
-extern char lbl_eu_80537DC0[];        // CSysWinBuff composite vtable (.data)
-extern char lbl_eu_8050EBC4[];        // shared string pool (.rodata)
-extern u32 __ptmf_null[3];            // null pointer-to-member-function constant
-
-// Struct view of the null pointer-to-member-function constant. Reading through
-// named members keeps MWCC from folding the +0 access into a `lwz @l(rBase)`
-// (retail materializes __ptmf_null once and uses plain base+disp loads).
-struct PtmfNullWords {
-    u32 w0;
-    u32 w1;
-    u32 w2;
-};
-extern PtmfNullWords __ptmf_null_words;
-
-// C-ABI helper imports with retail verbatim (unmangled) names; the defining
-// TUs (CSysWin.cpp / monolib / code_80135FDC.cpp) emit these flat symbols.
-extern "C" {
-void __ct__8CProcessFv(CProcess* self);
-void __dt__8CProcessFv(CProcess* self, int flags);
-void __ct__7CSysWinFUc(void* syswin, int arg);
-void __dt__7CSysWinFv(void* syswin, int flags);
-void Bdat_GetTable_AA34();
-s32 MenuTutorialIsCreated();
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-
-// CSysWin / system-window helper imports (C-linkage retail symbols, defined in
-// CSysWin.cpp). sysWinApplyKind lives in CSysWin.hpp with a CSysWin* first arg.
-
-// CDeviceFile common-archive loader + work-memory handle query (unmangled
-// retail C symbols; declared with C linkage so the call reloc keeps the
-// verbatim names, per the repo-wide convention).
-void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-    u32 handle, const char* path, void* workEvent, int a, int b);
-u32 KyoshinHeap_GetField44();
-
-// BDAT message lookup helpers (unmangled retail C symbols): BdatGetU16Direct
-// resolves a row id, BdatGetPtrDirect resolves the message string for the id.
-}
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).

@@ -355,16 +355,20 @@ public:
     void cacheScissor(void* a, void* b, void* c);
     bool bindTextureGX(GXTexObj* texObj, u16 w, u16 h);
     void getClearColor();
+    void* getSubRectPtr();
+    u8 getAdjustFlag();
+    void clearStubFunc(u32 cmd);
     void updateOrthoGX();
     void setOrthoProj();
     void setPerspProj(f32 fovy, f32 znear, f32 zfar);
     void makePerspProj();
-    s32 scaleRingWidth(s32 param);
+    int scaleRingWidth(int param);
     void getViewRectGX();
     void* getWhiteColor();
     void disableTexGen();
     void resetMtxState();
     void resetTevState();
+    void resetGXStateA();
     void resetGXFull();
 
     //0x0: vtable (IStateCache)
@@ -881,16 +885,14 @@ extern "C" void updateCmd2Color__8CGXCacheFv(CGXCache* self, ml::CCol4* color, i
     }
 update:
     {
-        u32 c0;
-        u32 c1;
         u32 idx = self->unk4.mFront + i;
         u32 slot = idx % self->unk4.mCapacity;
         self->unk4.mArrayPtr[slot].unk23 = 0xb;
         u32 idx2 = self->unk4.mFront + i;
         u32 slot2 = idx2 % self->unk4.mCapacity;
         CMsgParamEntry* e = &self->unk4.mArrayPtr[slot2];
-        c1 = *(u32*)&color->g;
-        c0 = *(u32*)&color->r;
+        u32 c1 = *(u32*)&color->g;
+        u32 c0 = *(u32*)&color->r;
         e->wid = c0;
         e->unk8 = c1;
         u32 c3 = *(u32*)&color->a;
@@ -927,9 +929,8 @@ update:
         u32 slot2 = idx2 % self->unk4.mCapacity;
         CMsgParamEntry* e = &self->unk4.mArrayPtr[slot2];
         u32* dst = &e->wid;
-        for (int j = 0; j < 4; j++) {
-            dst[j] = payload[j];
-        }
+        *(u64*)&dst[0] = *(u64*)&payload[0];
+        *(u64*)&dst[2] = *(u64*)&payload[2];
         dispatchCmdGX__8CGXCacheFv(&self->unk4, 0x1);
     }
 end:
@@ -1015,7 +1016,7 @@ end:
     }
 }
 
-void clearStubFunc__8CGXCacheFUl(void) {}
+void CGXCache::clearStubFunc(u32 cmd) {}
 
 extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
@@ -1052,89 +1053,54 @@ struct C1FCCacheLayout {
     u32 unk50C;
 };
 
-// Optional ring pair pointers in r4-r6 update cached scissor rects, then enqueue
-// GX commands for tags 0xB / 0xC via dispatchCmdGX (this+4).
-void CGXCache::cacheScissor(void* a, void* b, void* c) {
-    C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
-    u32* insetPair;
+// Optional inset/pair pointers in r4-r6 update the cached scissor rects, then
+// the deltas + rect are enqueued as ring commands 0xB / 0xC.
+void CGXCache::cacheScissor(void* rectA, void* insetPair, void* rectC) {
     s16 stack[4];
-    u32 i;
-    u32 idx;
-    u32 slot;
-    C1FCMsgEntry* entry;
 
-    // Retail null-tests a, c and b in that order around the rect copies;
-    // b (r31) falls back to &rect4A8 when null.
-    if (a != NULL) {
-        u32* a32 = (u32*)a;
-        u32 w0 = a32[0];
-        u32 w1 = a32[1];
-        *(u32*)&cache->rect4A8[2] = w1;
-        *(u32*)&cache->rect4A8[0] = w0;
+    if (rectA != NULL) {
+        u32* a = (u32*)rectA;
+        u32 w0 = a[0];
+        u32 w1 = a[1];
+        *(u32*)&rect4A8[2] = w1;
+        *(u32*)&rect4A8[0] = w0;
     }
-    insetPair = (u32*)b;
-    if (c != NULL) {
-        u32* c32 = (u32*)c;
-        u32 w0 = c32[0];
-        u32 w1 = c32[1];
-        *(u32*)&cache->rect4B0[2] = w1;
-        *(u32*)&cache->rect4B0[0] = w0;
+    if (rectC != NULL) {
+        u32* c = (u32*)rectC;
+        u32 w0 = c[0];
+        u32 w1 = c[1];
+        *(u32*)&rect4B0[2] = w1;
+        *(u32*)&rect4B0[0] = w0;
     }
     if (insetPair == NULL) {
-        insetPair = reinterpret_cast<u32*>(cache->rect4A8);
+        insetPair = rect4A8;
     }
 
-    stack[0] = (s16)(cache->rect4A8[0] - cache->rect4B0[0]);
-    stack[1] = (s16)(cache->rect4A8[1] - cache->rect4B0[1]);
-    stack[2] = cache->rect4B0[2];
-    stack[3] = cache->rect4B0[3];
-    cache->mScissorDeltaX = stack[2];
-    cache->mScissorDeltaY = stack[3];
+    mScissorDeltaX = rect4B0[2];
+    mScissorDeltaY = rect4B0[3];
+    stack[0] = (s16)(rect4A8[0] - rect4B0[0]);
+    stack[1] = (s16)(rect4A8[1] - rect4B0[1]);
+    stack[2] = mScissorDeltaX;
+    stack[3] = mScissorDeltaY;
 
-    u32 count = cache->mSize;
-    for (i = 0; i < count; i++) {
-        idx = cache->mFront + i;
-        slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-        if (cache->mArrayPtr[slot].command == 0xb) {
-            goto found_b;
-        }
-    }
-    i = (u32)-1;
-found_b:
-    idx = cache->mFront + i;
-    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-    cache->mArrayPtr[slot].unk23 = 0xd;
-    idx = cache->mFront + i;
-    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-    entry = &cache->mArrayPtr[slot];
+    u32 i = ringFindIndex<0xb>(this);
+    u32 slot = (unk4.mFront + i) % unk4.mCapacity;
+    unk4.mArrayPtr[slot].unk23 = 0xd;
+    slot = (unk4.mFront + i) % unk4.mCapacity;
+    CMsgParamEntry* entry = &unk4.mArrayPtr[slot];
     entry->wid = *(u32*)&stack[0];
     entry->unk8 = *(u32*)&stack[2];
-    // Retail recomputes this+4 at each call site (addi before bl).
     dispatchCmdGX__8CGXCacheFv(&unk4, 0xb);
 
-    count = cache->mSize;
-    for (i = 0; i < count; i++) {
-        idx = cache->mFront + i;
-        slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-        if (cache->mArrayPtr[slot].command == 0xc) {
-            goto found_c;
-        }
-    }
-    i = (u32)-1;
-found_c:
-    idx = cache->mFront + i;
-    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-    cache->mArrayPtr[slot].unk23 = 0xd;
-    idx = cache->mFront + i;
-    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-    entry = &cache->mArrayPtr[slot];
-    entry->wid = insetPair[0];
-    entry->unk8 = insetPair[1];
-    {
-        // volatile blocks CSE of (this+4) into a third saved GPR (+4B over).
-        void* volatile vself = this;
-        dispatchCmdGX__8CGXCacheFv(&static_cast<CGXCache*>(vself)->unk4, 0xc);
-    }
+    i = ringFindIndex<0xc>(this);
+    slot = (unk4.mFront + i) % unk4.mCapacity;
+    unk4.mArrayPtr[slot].unk23 = 0xd;
+    slot = (unk4.mFront + i) % unk4.mCapacity;
+    entry = &unk4.mArrayPtr[slot];
+    u32* pair = (u32*)insetPair;
+    entry->wid = pair[0];
+    entry->unk8 = pair[1];
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0xc);
 }
 
 // Ring command-9 cache update (texture slot 0x6364C). Searches the ring for
@@ -1357,7 +1323,7 @@ extern "C" void makePerspProj__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f3
 
 // Ring entry 3's payload word is the scissor width; scale it by z depth:
 // (s16)unk500 * param / wid (int->float math, truncated back to int).
-s32 CGXCache::scaleRingWidth(s32 param) {
+int CGXCache::scaleRingWidth(int param) {
     // Retail shape: ring lookup first; the s16 field at 0x500 converts via the
     // signed 2^52+2^31 magic, the width payload word is loaded only after the
     // conversion stores, and both param/width convert via the unsigned 2^52
@@ -1369,19 +1335,17 @@ s32 CGXCache::scaleRingWidth(s32 param) {
 
 void CGXCache::getViewRectGX() { findRingEntry__8CGXCacheFv(&unk4, 11); }
 
-// retail: addi r3,r3,0x510 (returns &unk510)
-void* getSubRectPtr__8CGXCacheFv(void* self) { return (u8*)self + 0x510; }
+// The 0x510 sub-rect (x, y, w, h) and the "refit the projection" flag at
+// 0x518 are the two accessors CScnRoot/CViewRoot use to letterbox a view.
+void* CGXCache::getSubRectPtr() { return &mRectLeft; }
 
-// retail: lbz r3,0x518(r3) (unk510[8])
-u8 getAdjustFlag__8CGXCacheFv(void* self) { return *(u8*)((u8*)self + 0x518); }
+u8 CGXCache::getAdjustFlag() { return mAdjustProj; }
 
 void* CGXCache::getWhiteColor(void) { return (void*)0xFFFFFF; }
 
-// Retail is a pure tail to resetGXFull. Keep callee undefined here so MWCC
-// cannot inline an empty same-TU stub into a lone blr.
-void resetGXFull__8CGXCacheFv(void* self);
-void resetGXStateA__8CGXCacheFv(void* self) {
-    resetGXFull__8CGXCacheFv(self);
+// Retail is a pure tail call to resetGXFull (same-section `b`, no reloc).
+void CGXCache::resetGXStateA() {
+    resetGXFull();
 }
 
 void CGXCache::disableTexGen() {
@@ -2061,8 +2025,7 @@ stamp:
 }
 
 // Ring command-0x9 cache update carrying a 16-byte payload (four words from
-// r5). Same find/append/stamp shape as storeMsg2W. Retail symbol is
-// Fv-mangled although the body reads msg (r4) and payload (r5).
+// r5). Identical shape to storeMsg4WB (same helper, different command id).
 template <> void CMsgParam<32>::storeMsg4W9(unsigned long msg, u32* payload) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
@@ -2070,28 +2033,20 @@ template <> void CMsgParam<32>::storeMsg4W9(unsigned long msg, u32* payload) {
     goto stamp;
 append:
     {
-        // Volatile keeps the uninitialized-entry reads alive and pins their
-        // relative order; arr is volatile-loaded before them so the scheduler
-        // cannot sink it past the modulo chain.
         u32 front = *(volatile u32*)&this->mFront;
         u32 curSize = *(volatile u32*)&this->mSize;
-        u32 capV = *(volatile u32*)&this->mCapacity;
-        CMsgParamEntry* arr = *(CMsgParamEntry* volatile*)&this->mArrayPtr;
-        u32 sum = front + curSize;
-        s32 q = (s32)sum / (s32)capV;
+        u32 cap = *(volatile u32*)&this->mCapacity;
+        CMsgParamEntry* e = &this->mArrayPtr[(int)(front + curSize) % (int)cap];
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
         u32 value8 = entry.unk8;
         u32 valueC = entry.unkC;
         u32 value10 = entry.unk10;
         u32 value14 = entry.unk14;
-        q *= (s32)capV;
         u32 value18 = entry.unk18;
         u32 value1C = entry.unk1C;
         u16 value20 = entry.unk20;
         u8 value22 = entry.unk22;
-        q = (s32)sum - q;
-        CMsgParamEntry* e = &arr[q];
         e->command = (u32)msg;
         e->wid = wid;
         e->unk8 = value8;
@@ -2108,18 +2063,26 @@ append:
     }
 stamp:
     {
-        // Each store recomputes the slot from freshly reloaded members.
-        u32 w0 = payload[0];
-        u32 w1 = payload[1];
-        u32 w2 = payload[2];
-        u32 w3 = payload[3];
-        u32 slot = (mFront + field6) % mCapacity;
-        mArrayPtr[slot].unk23 = 0x9;
-        u32 slot2 = (mFront + field6) % mCapacity;
-        mArrayPtr[slot2].wid = w0;
-        mArrayPtr[slot2].unk8 = w1;
-        mArrayPtr[slot2].unkC = w2;
-        mArrayPtr[slot2].unk10 = w3;
+        u32 f = *(volatile u32*)&this->mFront;
+        u32 last = *(volatile u32*)&this->field6;
+        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 p0 = payload[0];
+        u32 idx = f + last;
+        u32 q = idx / cap;
+        u32 p1 = payload[1];
+        u32 p2 = payload[2];
+        u32 p3 = payload[3];
+        this->mArrayPtr[idx - q * cap].unk23 = 0x9;
+
+        u32 f2 = *(volatile u32*)&this->mFront;
+        u32 last2 = *(volatile u32*)&this->field6;
+        u32 cap2 = *(volatile u32*)&this->mCapacity;
+        u32 idx2 = f2 + last2;
+        CMsgParamEntry* e = &this->mArrayPtr[idx2 - (idx2 / cap2) * cap2];
+        e->wid = p0;
+        e->unk8 = p1;
+        e->unkC = p2;
+        e->unk10 = p3;
     }
 }
 

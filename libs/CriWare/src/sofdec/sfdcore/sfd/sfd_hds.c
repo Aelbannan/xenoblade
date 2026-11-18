@@ -3,6 +3,7 @@
 
 #include <harness_catalog.h>
 #include <string.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 /* SFH runtime context - 0x18 bytes (created over a header image) */
 typedef struct SFHContext {
@@ -13,52 +14,6 @@ typedef struct SFHContext {
     u32 field_0x10;   /* 0x10 */
     u32 field_0x14;   /* 0x14 */
 } SFHContext;
-
-/* Parsed SFHD header information block (also used as the in-object
- * header work area at handle+0x88). Video sub-results live at 0x5C. */
-typedef struct SfhdsInfo {
-    s32 active;        /* 0x00 */
-    s32 toolVerMajor;  /* 0x04 */
-    s32 toolVerMinor;  /* 0x08 */
-    s32 byteRate;      /* 0x0C */
-    s32 hdrSize;       /* 0x10 */
-    s32 packType;      /* 0x14 */
-    s32 pketSizLen;    /* 0x18 */
-    s32 packSiz;       /* 0x1C */
-    s32 numElemTot;    /* 0x20 */
-    s32 numElemAud;    /* 0x24 */
-    s32 numElemVid;    /* 0x28 */
-    s32 numElemPrv;    /* 0x2C */
-    s32 maxPlyLenAud;  /* 0x30 */
-    s32 maxPlyLenVid;  /* 0x34 */
-    s32 maxFrmNum;     /* 0x38 */
-    s32 audStmId;      /* 0x3C */
-    s32 vidStmId;      /* 0x40 */
-    s32 audElemId;     /* 0x44 */
-    s32 vidElemId;     /* 0x48 */
-    s32 elemCodecAud;  /* 0x4C */
-    s32 elemLayer;     /* 0x50 */
-    s32 elemChNum;     /* 0x54 */
-    s32 elemSmpHz;     /* 0x58 */
-    s32 video[13];     /* 0x5C..0x8F: sfhds_AnlyVideo results */
-} SfhdsInfo;
-
-/* SofDec player handle (fields touched by the header module) */
-typedef struct SfdHdsHandle {
-    u8 pad00[0x88];
-    SfhdsInfo info;                /* 0x88: header work/analysis area */
-    s32 hdrSize;                   /* 0x118 */
-    u8 hdrBuf[0x800];              /* 0x11C */
-    u8 pad91C[0x940 - 0x91C];
-    s32 field_0x940;               /* cached info.numElemVid */
-    s32 field_0x944;               /* cached info.numElemPrv */
-    s32 field_0x948;               /* cached info.maxPlyLenAud */
-    u8 pad94C[0xD3C - 0x94C];
-    s32 cbCount;                   /* 0xD3C */
-    void (*cbFunc)(void*, void*);  /* 0xD40 */
-    u8 padD44[0x2670 - 0xD44];
-    u8* concatHdr;                 /* 0x2670 */
-} SfdHdsHandle;
 
 extern SFHContext* SFH_Create(u32 base, s32 size, SFHContext* ctx);
 extern s32 SFH_Destroy(SFHContext* ctx);
@@ -83,32 +38,32 @@ extern s32 SFH_AnlyElemChNum(SFHContext* hdr, u8 id, s32* out);
 extern s32 SFH_AnlyElemSmpHz(SFHContext* hdr, u8 id, s32* out);
 extern void MEM_Copy(void* dst, void* src, u32 size);
 extern void SFH_Init(void);
-extern u32 SFMPS_GetConcatCnt(SfdHdsHandle* self);
+extern s32 SFMPS_GetConcatCnt(SfdHandle* self);
 extern s32 SFLIB_SetErr(s32 val, u32 err_code);
 
-void sfhds_DoProcessHdr(SFHContext* hdr, SfhdsInfo* out);
+void sfhds_DoProcessHdr(SFHContext* hdr, SfdHdrInfo* out);
 void sfhds_AnlyVideo(void* self, u32 a, s32* out);
 
 void SFHDS_Init(void) { SFH_Init(); }
 
 
-void SFHDS_InitFhd(void* self) {
-    *(u32*)((u8*)self) = 0;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = 0;
-    *(u32*)((u8*)self + 0xc) = 0;
-    *(u32*)((u8*)self + 0x90) = 0;
+void SFHDS_InitFhd(SfdFhd* fhd) {
+    fhd->info.active = 0;
+    fhd->info.toolVerMajor = 0;
+    fhd->info.toolVerMinor = 0;
+    fhd->info.byteRate = 0;
+    fhd->hdrSize = 0;
 }
 
-void SFHDS_FinishFhd(void* self) {
-    *(u32*)((u8*)self + 0x00) = 0;
-    *(u32*)((u8*)self + 0x0c) = 0;
-    *(u32*)((u8*)self + 0x90) = 0;
+void SFHDS_FinishFhd(SfdFhd* fhd) {
+    fhd->info.active = 0;
+    fhd->info.byteRate = 0;
+    fhd->hdrSize = 0;
 }
 
 /* Re-parse the concatenated-file header: copy 0x898 bytes of header image
  * from concatHdr+0xC into the in-object work area, then run the analyzer. */
-s32 SFHDS_ReprocessHdr(SfdHdsHandle* self) {
+s32 SFHDS_ReprocessHdr(SfdHandle* self) {
     SFHContext ctx;
     SFHContext* sfh;
     u32* d;
@@ -116,15 +71,15 @@ s32 SFHDS_ReprocessHdr(SfdHdsHandle* self) {
     s32 n;
     s32 ret;
 
-    if (self->concatHdr == NULL)
+    if (self->see.avplay == NULL)
         return 0;
     if ((s32)SFMPS_GetConcatCnt(self) > 0)
         return 0;
-    s = (u32*)(self->concatHdr + 0xC);
+    s = (u32 *)&self->see.avplay->hdrImage;
     if (s == NULL)
         return 0;
 
-    d = (u32*)&self->info;
+    d = (u32*)&self->fhd.info;
     n = 274;
     do {
         *d++ = *s++;
@@ -132,17 +87,17 @@ s32 SFHDS_ReprocessHdr(SfdHdsHandle* self) {
     } while (--n != 0);
     *d = *s;
 
-    sfh = SFH_Create((u32)self->hdrBuf, self->hdrSize, &ctx);
+    sfh = SFH_Create((u32)self->fhd.hdrBuf, self->fhd.hdrSize, &ctx);
     if (sfh == NULL) {
         ret = SFLIB_SetErr(0, 0xFF000232);
     } else {
-        sfhds_DoProcessHdr(sfh, &self->info);
+        sfhds_DoProcessHdr(sfh, &self->fhd.info);
         ret = SFH_Destroy(sfh);
     }
 
-    self->field_0x940 = self->info.numElemVid;
-    self->field_0x944 = self->info.numElemPrv;
-    self->field_0x948 = self->info.maxPlyLenAud;
+    self->field_0x0940 = self->fhd.info.numElemVid;
+    self->field_0x0944 = self->fhd.info.numElemPrv;
+    self->field_0x0948 = self->fhd.info.maxPlyLenAud;
     return ret;
 }
 
@@ -150,7 +105,7 @@ s32 SFHDS_ReprocessHdr(SfdHdsHandle* self) {
  * marker (at buf-6 or buf-8), validates it via a throwaway SFHContext,
  * notifies the registered callback, copies up to 0x800 bytes into the
  * in-object header buffer and runs the analyzer over it. */
-s32 SFHDS_SetHdr(SfdHdsHandle* self, s32 type, u8* buf, u8* end, s32* outFlag) {
+s32 SFHDS_SetHdr(SfdHandle* self, s32 type, u8* buf, u8* end, s32* outFlag) {
     SFHContext probeCtx;
     SFHContext ctx;
     SFHContext* sfh;
@@ -199,10 +154,12 @@ s32 SFHDS_SetHdr(SfdHdsHandle* self, s32 type, u8* buf, u8* end, s32* outFlag) {
     if (valid == 0)
         return 0;
 
-    if (self->cbCount != 0)
-        self->cbFunc(start - 0xC, stop + 0xC);
+    /* Retail dispatches through the context slot of the pair that
+     * SFD_SetSfdHeaderFn() stores at 0xd3c/0xd40. */
+    if (self->hdrCb != 0)
+        ((void (*)(u8*, u8*))self->hdrCbArg)(start - 0xC, stop + 0xC);
 
-    if (self->info.active != 0) {
+    if (self->fhd.info.active != 0) {
         *outFlag = 0;
         return 1;
     }
@@ -210,25 +167,25 @@ s32 SFHDS_SetHdr(SfdHdsHandle* self, s32 type, u8* buf, u8* end, s32* outFlag) {
     copySize = 0x800;
     if ((s32)(stop + 0xC) < 0x800)
         copySize = (s32)(stop + 0xC);
-    MEM_Copy(self->hdrBuf, start - 0xC, copySize);
-    self->hdrSize = copySize;
+    MEM_Copy(self->fhd.hdrBuf, start - 0xC, copySize);
+    self->fhd.hdrSize = copySize;
 
-    sfh = SFH_Create((u32)self->hdrBuf, self->hdrSize, &ctx);
+    sfh = SFH_Create((u32)self->fhd.hdrBuf, self->fhd.hdrSize, &ctx);
     if (sfh == NULL) {
         SFLIB_SetErr(0, 0xFF000232);
     } else {
-        sfhds_DoProcessHdr(sfh, &self->info);
+        sfhds_DoProcessHdr(sfh, &self->fhd.info);
         SFH_Destroy(sfh);
     }
 
-    self->field_0x940 = self->info.numElemVid;
-    self->field_0x944 = self->info.numElemPrv;
-    self->field_0x948 = self->info.maxPlyLenAud;
+    self->field_0x0940 = self->fhd.info.numElemVid;
+    self->field_0x0944 = self->fhd.info.numElemPrv;
+    self->field_0x0948 = self->fhd.info.maxPlyLenAud;
 
-    if (self->concatHdr != NULL && (s32)SFMPS_GetConcatCnt(self) <= 0) {
-        s = (u32*)(self->concatHdr + 0xC);
+    if (self->see.avplay != NULL && (s32)SFMPS_GetConcatCnt(self) <= 0) {
+        s = (u32 *)&self->see.avplay->hdrImage;
         if (s != NULL) {
-            d = (u32*)&self->info;
+            d = (u32*)&self->fhd.info;
             n = 274;
             do {
                 *d++ = *s++;
@@ -243,7 +200,7 @@ s32 SFHDS_SetHdr(SfdHdsHandle* self, s32 type, u8* buf, u8* end, s32* outFlag) {
 }
 
 /* Run the full header analysis over an SFHContext, filling out. */
-void sfhds_DoProcessHdr(SFHContext* hdr, SfhdsInfo* out) {
+void sfhds_DoProcessHdr(SFHContext* hdr, SfdHdrInfo* out) {
     s32 toolMaj;
     s32 toolMin;
     s32 byteRate;

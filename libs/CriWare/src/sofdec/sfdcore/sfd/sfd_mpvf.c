@@ -1,55 +1,49 @@
-// Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf
-// Replace stubs with high-level C/C++ during decomp.
-
+// Decompiled CriWare Sofdec SFMPVF (MPV video frame hand-off).
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 u32 SFSET_GetCond(void* self, u32 idx);
 s32 SFTIM_IsGetFrmTime(void* self, void* frm);
 s32 SFTIM_ExecCyclicFrameOutput(void* self);
 
-// Global MPV parameter block layout (shared with InitPool/SetMpvParaTbl below).
-typedef struct SfdMpvPara {
-    u64 head[4];     /* 0x00 */
-    u32 field_0x20;
-    u32 stride[2];   /* 0x28 */
-    u32 buf[16];     /* 0x30 */
-    u32 field_0x70[3];
-} SfdMpvPara;
-
-extern u32 lbl_eu_80619B20[];
+extern SfdMpvParaGlobal lbl_eu_80619B20;
 void* memset(void* dst, int val, size_t n);
 void* memcpy(void* dst, const void* src, size_t n);
 
 void SFMPVF_InitPool(void) {
-    u8* p = (u8*)lbl_eu_80619B20;
-    memset(p + 0, 0, 0x24);
-    memset(p + 0x28, 0, 8);
-    memset(p + 0x30, 0, 0x40);
+    SfdMpvParaGlobal* tbl = &lbl_eu_80619B20;
+    u8* pool = (u8*)tbl;
+
+    /* clear the 9 parameter words, the two strides and the frame sizes */
+    memset(pool + 0, 0, 0x24);
+    memset(pool + 0x28, 0, 8);
+    memset(pool + 0x30, 0, 0x40);
 }
 
 void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
-    u32* g = lbl_eu_80619B20;
-    u32* p = g;
-    u32* q = g + 0xA;
-    u32* r = g + 0xC;
+    SfdMpvParaGlobal* g = &lbl_eu_80619B20;
+    u32* p = (u32*)g->para;
+    u32* stride = (u32*)g->stride;
+    u32* sizes = (u32*)g->frameSize;
     s32 i = 0;
     s32 j, k;
 
+    /* the parameter words are copied as four doublewords */
     *(u64*)&p[0] = *(u64*)&src[0];
     *(u64*)&p[2] = *(u64*)&src[2];
     *(u64*)&p[4] = *(u64*)&src[4];
     *(u64*)&p[6] = *(u64*)&src[6];
     p[4] = 0;
     p[8] = 0;
-    q[0] = (strides[0] + 0x1F) & ~0x1F;
-    q[1] = (strides[1] + 0x1F) & ~0x1F;
+    stride[0] = (strides[0] + 0x1F) & ~0x1F;
+    stride[1] = (strides[1] + 0x1F) & ~0x1F;
 
     for (j = 0; j < 4; j++) {
         for (k = 0; k < 4; k++) {
             if (i < src[7]) {
-                r[j * 4 + k] = (tbl[k] + 0x1F) & ~0x1F;
+                sizes[j * 4 + k] = (tbl[k] + 0x1F) & ~0x1F;
             } else {
-                r[j * 4 + k] = 0;
+                sizes[j * 4 + k] = 0;
             }
             i++;
         }
@@ -58,84 +52,75 @@ void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
 }
 
 s32 sfmpvf_CheckMpvPara(void* self) {
-    SfdMpvPara* tbl = (SfdMpvPara*)lbl_eu_80619B20;
-    SfdMpvPara* p = tbl;
-    u32* st;
-    u32* b;
-    /* head[2].lo = width @0x10, head[3].hi = frm_cnt @0x1c */
-    s32 cnt = (s32)(p->head[3] >> 32);
+    s32* para = lbl_eu_80619B20.para;
+    s32* sizes;
+    s32 cnt = para[7];
     s32 i;
 
     if ((u32)(cnt - 1) > 0xF) {
         return -1;
     }
-    if ((u32)p->head[2] == 0 || p->field_0x20 == 0) {
-        st = tbl->stride;
-        if (*st == 0) {
+    if (para[4] == 0 || para[8] == 0) {
+        if (lbl_eu_80619B20.stride[0] == 0) {
             return -1;
         }
-        if (st[1] == 0) {
+        if (lbl_eu_80619B20.stride[1] == 0) {
             return -1;
         }
-        b = tbl->buf;
+        sizes = lbl_eu_80619B20.frameSize;
         for (i = 0; i < cnt; i++) {
-            if (*b == 0) {
+            if (*sizes == 0) {
                 return -1;
             }
-            b++;
+            sizes++;
         }
     }
     return 0;
 }
 
 s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFLIB_CheckHn(void* h);
 extern void SFLIB_LockCs(void* cs);
 extern void SFLIB_UnlockCs(void* cs);
-extern void* SFMPVF_HoldFrm(void* self);
+extern SfdFrame* SFMPVF_HoldFrm(SfdHandle* self);
 
-// Shared layout of the global MPV parameter block and its in-handle copy
-// (handle copy lives at self+0x2780).
-typedef struct SfdMpvParaView {
-    u64 head[4];     /* 0x00 */
-    u32 field_0x20;
-    u32 stride[2];   /* 0x28 */
-    u32 buf[16];     /* 0x30 */
-    u32 field_0x70[3];
-} SfdMpvParaView;
-
-s32 SFMPVF_ReadGlobalMpvPara(void* self) {
-    SfdMpvParaView* tbl = (SfdMpvParaView*)lbl_eu_80619B20;
-    SfdMpvParaView* dst = (SfdMpvParaView*)((u8*)self + 0x2780);
+s32 SFMPVF_ReadGlobalMpvPara(SfdHandle* self) {
+    SfdMpvParaGlobal* tbl = &lbl_eu_80619B20;
+    SfdMpvParaWork* dst = &self->para;
+    u64* dstWords = (u64*)dst->para;
+    u64* srcWords = (u64*)tbl->para;
 
     if (sfmpvf_CheckMpvPara(self) != 0) {
         return SFLIB_SetErr(0, 0xff000f15);
     }
-    dst->head[0] = tbl->head[0];
-    dst->head[1] = tbl->head[1];
-    dst->head[2] = tbl->head[2];
-    dst->head[3] = tbl->head[3];
-    dst->field_0x20 = tbl->field_0x20;
-    memcpy(dst->stride, tbl->stride, sizeof(tbl->stride));
-    memcpy(dst->buf, tbl->buf, sizeof(tbl->buf));
+    /* the parameter words are copied as four doublewords */
+    dstWords[0] = srcWords[0];
+    dstWords[1] = srcWords[1];
+    dstWords[2] = srcWords[2];
+    dstWords[3] = srcWords[3];
+    dst->para[8] = tbl->para[8];
+    memcpy(dst->stride, tbl->stride, sizeof(dst->stride));
+    memcpy(dst->frameSize, tbl->frameSize, sizeof(dst->frameSize));
     return 0;
 }
 
-void SFMPVF_WriteGlobalMpvPara(void* self) {
-    u8* s = (u8*)self;
-    SfdMpvParaView* pv = (SfdMpvParaView*)lbl_eu_80619B20;
-    u64* d = pv->head;
+void SFMPVF_WriteGlobalMpvPara(SfdHandle* self) {
+    SfdMpvParaGlobal* tbl = &lbl_eu_80619B20;
+    SfdMpvParaWork* src = &self->para;
+    u64* dstWords = (u64*)tbl->para;
+    u64* srcWords = (u64*)src->para;
 
-    /* walking stores resist CSE so the table stays in two base registers */
-    *d++ = *(u64*)(s + 0x2780);
-    *d++ = *(u64*)(s + 0x2788);
-    *d++ = *(u64*)(s + 0x2790);
-    *d++ = *(u64*)(s + 0x2798);
-    pv->field_0x20 = *(u32*)(s + 0x27a0);
-    memcpy(pv->stride, s + 0x27a4, 8);
-    memcpy(pv->buf, s + 0x27ac, 0x40);
-    pv->field_0x70[0] = *(u32*)(s + 0x38f8);
-    pv->field_0x70[1] = *(u32*)(s + 0x38fc);
-    pv->field_0x70[2] = *(u32*)(s + 0x3900);
+    /* the parameter words are copied as four doublewords */
+    dstWords[0] = srcWords[0];
+    dstWords[1] = srcWords[1];
+    dstWords[2] = srcWords[2];
+    dstWords[3] = srcWords[3];
+    tbl->para[8] = src->para[8];
+    memcpy(tbl->stride, src->stride, sizeof(src->stride));
+    memcpy(tbl->frameSize, src->frameSize, sizeof(src->frameSize));
+    tbl->usrWidth = self->picUsr.width;
+    tbl->usrHeight = self->picUsr.height;
+    tbl->usrStride = self->picUsr.stride;
 }
 
 void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {
@@ -154,167 +139,176 @@ void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {
     *(s32*)((u8*)out + 4) = base + h16 * (w32 * 32) + u * (t * 32);
 }
 
-s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {
-    u32* p = (u32*)((u8*)self + 0x38f8);
+s32 sfmpvf_SetPicUsrBuf(SfdHandle* self, u32 w, u32 h, u32 stride) {
+    SfdPicUsrBuf* usr = &self->picUsr;
     s32 i;
     s32 hm1;
 
     if (w == 0 || h == 0 || stride == 0) {
-        for (i = 0; i < 37; i++)
-            p[i] = 0;
+        for (i = 0; i < 37; i++) {
+            ((u32*)usr)[i] = 0;
+        }
         return 0;
     }
-    if ((s32)h < *(s32*)((u8*)self + 0x30) + 3)
+    if ((s32)h < self->field_0x0030 + 3) {
         return SFLIB_SetErr(self, 0xff000f1d);
+    }
     {
         u32 cur = w + stride;
         hm1 = (s32)h - 1;
-        p[0] = w;
-        p[1] = h;
-        p[2] = stride;
-        p[3] = w;
-        p[4] = 0;
+        usr->width = w;
+        usr->height = h;
+        usr->stride = stride;
+        usr->curWidth = w;
+        usr->field_0x10 = 0;
         for (i = 0; i < (hm1 >= 16 ? 16 : hm1); i++) {
-            p[5 + 2 * i] = cur;
-            p[6 + 2 * i] = 0;
+            usr->band[i].top = cur;
+            usr->band[i].bottom = 0;
             cur += stride;
         }
     }
     return 0;
 }
-void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 
-u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
+void SFMPVF_TermDec(SfdHandle* self) { self->termFlag = 1; }
 
-void SFMPVF_SetGopStat(void* self) {
-    s32* p = (s32*)((u8*)self + 0x27f8);
-    s32 cnt = *(s32*)((u8*)self + 0x27ec);
+u32 SFMPVF_IsTermDec(SfdHandle* self) { return self->termFlag; }
+
+void SFMPVF_SetGopStat(SfdHandle* self) {
+    SfdFrame* frm = self->frames;
+    s32 cnt = self->frameCount;
+
     while (cnt-- > 0) {
-        if (*p == 2 || *p == 4)
-            *(p + 0x3F) = 1;
-        p += 0x44;
+        if (frm->state == 2 || frm->state == 4) {
+            frm->field_0xFC = 1;
+        }
+        frm++;
     }
 }
 
-s32 SFMPVF_GetNumFrm(void* self) {
+s32 SFMPVF_GetNumFrm(SfdHandle* self) {
     void* cs;
     s32 n;
-    s32* p;
+    SfdFrame* frm;
     s32 cnt;
+
     SFLIB_LockCs(&cs);
-    n = *(s32*)((u8*)self + 0x27ec);
-    p = (s32*)((u8*)self + 0x27f8);
+    n = self->frameCount;
+    frm = self->frames;
     cnt = 0;
     while (n-- > 0) {
-        if ((*p == 2 || *p == 4) && *(p + 0x19) == -1) {
+        if ((frm->state == 2 || frm->state == 4) && frm->dispId == -1) {
             cnt++;
         }
-        p += 0x44;
+        frm++;
     }
-    if (*(s32*)((u8*)self + 0x27f0) == 1 && cnt == 0) {
+    if (self->termFlag == 1 && cnt == 0) {
         cnt = -1;
     }
     SFLIB_UnlockCs(&cs);
     return cnt;
 }
 
-void* SFMPVF_AllocFrm(void* self) {
+SfdFrame* SFMPVF_AllocFrm(SfdHandle* self) {
     void* cs;
-    s32* p;
+    SfdFrame* frm;
     s32 i;
     s32 n;
+
     SFLIB_LockCs(&cs);
-    n = *(s32*)((u8*)self + 0x27ec);
-    p = (s32*)((u8*)self + 0x27f8);
-    for (i = 0; i < n; i++, p += 0x44) {
-        if (p[0] == 0 && p[1] == 0) {
-            p[0] = 1;
+    n = self->frameCount;
+    frm = self->frames;
+    for (i = 0; i < n; i++, frm++) {
+        if (frm->state == 0 && frm->field_0x04 == 0) {
+            frm->state = 1;
             break;
         }
     }
     if (i == n) {
-        p = NULL;
+        frm = NULL;
     }
     SFLIB_UnlockCs(&cs);
-    return p;
+    return frm;
 }
 
-void SFMPVF_FreeFrm(void* self) {
-    if (self != NULL) {
-        *(u32*)((u8*)self + 0x00) = 0;
+void SFMPVF_FreeFrm(SfdFrame* frm) {
+    if (frm != NULL) {
+        frm->state = 0;
     }
 }
 
-void SFMPVF_StbyFrm(void* self) {
-    if (self != NULL) {
-        *(u32*)((u8*)self + 0x00) = 2;
+void SFMPVF_StbyFrm(SfdFrame* frm) {
+    if (frm != NULL) {
+        frm->state = 2;
     }
 }
 
-void SFMPVF_RefStbyFrm(void* self) {
-    if (self != NULL) {
-        *(u32*)((u8*)self + 0x00) = 4;
+void SFMPVF_RefStbyFrm(SfdFrame* frm) {
+    if (frm != NULL) {
+        frm->state = 4;
     }
 }
 
-void SFMPVF_EndRefFrm(void* self) {
-    if (self == NULL) return;
-    if (*(s32*)self == 4) {
-        *(s32*)self = 2;
+void SFMPVF_EndRefFrm(SfdFrame* frm) {
+    if (frm == NULL) return;
+    if (frm->state == 4) {
+        frm->state = 2;
         return;
     }
-    *(s32*)self = 0;
+    frm->state = 0;
 }
 
-s32 sfmpvf_IsChkFirst(void* a, void* b);
+s32 sfmpvf_IsChkFirst(SfdFrame* a, SfdFrame* b);
 
-void* SFMPVF_HoldFrm(void* self) {
+SfdFrame* SFMPVF_HoldFrm(SfdHandle* self) {
     void* cs;
     s32 i;
     s32 cnt;
-    u8* p;
-    void* best;
+    SfdFrame* frm;
+    SfdFrame* best;
     s32 count;
+
     SFLIB_LockCs(&cs);
-    count = *(s32*)((u8*)self + 0x27ec);
-    p = (u8*)self + 0x27f8;
+    count = self->frameCount;
+    frm = self->frames;
     best = NULL;
     cnt = 0;
-    for (i = 0; i < count; i++, p += 0x110) {
-        s32 st = *(s32*)p;
-        if ((st == 2 || st == 4) && *(s32*)(p + 0x64) == -1) {
+    for (i = 0; i < count; i++, frm++) {
+        s32 st = frm->state;
+        if ((st == 2 || st == 4) && frm->dispId == -1) {
             cnt++;
-            if (sfmpvf_IsChkFirst(best, p)) {
-                best = p;
+            if (sfmpvf_IsChkFirst(best, frm)) {
+                best = frm;
             }
         }
     }
-    if (cnt == 1 && *(s32*)((u8*)self + 0x27f0) == 0 && *(s32*)((u8*)best + 0xfc) == 0) {
+    if (cnt == 1 && self->termFlag == 0 && best->field_0xFC == 0) {
         best = NULL;
     }
     SFLIB_UnlockCs(&cs);
     return best;
 }
 
-void sfmpvf_SearchStbyFrm(void* h, void** outA, void** outB);
+void sfmpvf_SearchStbyFrm(SfdHandle* h, SfdFrame** outA, SfdFrame** outB);
 u32 SFSET_GetCond(void* self, u32 idx);
 s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB);
 
-s32 SFD_IsNextFrmReady(void* h) {
+s32 SFD_IsNextFrmReady(SfdHandle* h) {
     void* cs;
-    void* frm;
-    void* dummy;
+    SfdFrame* frm;
+    SfdFrame* dummy;
+
     if (SFLIB_CheckHn(h) != 0) {
         SFLIB_SetErr(0, 0xff000183);
         return 0;
     }
     SFLIB_LockCs(&cs);
-    if (*(s32*)((u8*)h + 0x54) != 4) {
+    if (h->errorState != 4) {
         frm = NULL;
     } else {
         sfmpvf_SearchStbyFrm(h, &dummy, &frm);
         if (frm != NULL && SFSET_GetCond(h, 0xf) != 0 &&
-            SFTIM_IsGetFrmTimeTunit(h, *(u32*)((u8*)frm + 0x44), *(u32*)((u8*)frm + 0x48)) == 0) {
+            SFTIM_IsGetFrmTimeTunit(h, frm->time, frm->timeUnit) == 0) {
             frm = NULL;
         }
     }
@@ -322,29 +316,30 @@ s32 SFD_IsNextFrmReady(void* h) {
     return frm != NULL;
 }
 
-void sfmpvf_SearchStbyFrm(void* h, void** outA, void** outB) {
-    u8* p;
+void sfmpvf_SearchStbyFrm(SfdHandle* h, SfdFrame** outA, SfdFrame** outB) {
+    SfdFrame* frm;
     s32 count;
     s32 cnt;
     s32 i;
-    count = *(s32*)((u8*)h + 0x27ec);
+
+    count = h->frameCount;
     *outA = NULL;
     *outB = NULL;
-    p = (u8*)h + 0x27f8;
+    frm = h->frames;
     cnt = 0;
-    for (i = 0; i < count; i++, p += 0x110) {
-        s32 st = *(s32*)p;
-        if ((st == 2 || st == 4) && *(s32*)(p + 0x64) == -1) {
+    for (i = 0; i < count; i++, frm++) {
+        s32 st = frm->state;
+        if ((st == 2 || st == 4) && frm->dispId == -1) {
             cnt++;
-            if (sfmpvf_IsChkFirst(*outA, p)) {
+            if (sfmpvf_IsChkFirst(*outA, frm)) {
                 *outB = *outA;
-                *outA = p;
-            } else if (sfmpvf_IsChkFirst(*outB, p)) {
-                *outB = p;
+                *outA = frm;
+            } else if (sfmpvf_IsChkFirst(*outB, frm)) {
+                *outB = frm;
             }
         }
     }
-    if (*(s32*)((u8*)h + 0x27f0) == 0) {
+    if (h->termFlag == 0) {
         cnt--;
     }
     if (cnt <= 0) {
@@ -355,48 +350,45 @@ void sfmpvf_SearchStbyFrm(void* h, void** outA, void** outB) {
     }
 }
 
-s32 sfmpvf_IsChkFirst(void* a, void* b) {
+s32 sfmpvf_IsChkFirst(SfdFrame* a, SfdFrame* b) {
     if (a == NULL) {
         return 1;
     }
-    if (*(s32*)((u8*)b + 0x54) < *(s32*)((u8*)a + 0x54)) {
+    if (b->order < a->order) {
         return 1;
     }
-    if (*(s32*)((u8*)b + 0x54) > *(s32*)((u8*)a + 0x54)) {
+    if (b->order > a->order) {
         return 0;
     }
-    if (*(s32*)((u8*)b + 0xF0) < *(s32*)((u8*)a + 0xF0)) {
+    if (b->field_0xF0 < a->field_0xF0) {
         return 1;
     }
-    if (*(s32*)((u8*)b + 0xF0) > *(s32*)((u8*)a + 0xF0)) {
+    if (b->field_0xF0 > a->field_0xF0) {
         return 0;
     }
-    if (*(s32*)((u8*)b + 0xF4) < *(s32*)((u8*)a + 0xF4)) {
+    if (b->field_0xF4 < a->field_0xF4) {
         return 1;
     }
-    if (*(s32*)((u8*)b + 0xF4) > *(s32*)((u8*)a + 0xF4)) {
+    if (b->field_0xF4 > a->field_0xF4) {
         return 0;
     }
     {
-        s32 x = *(s32*)((u8*)a + 0xF8) ^ *(s32*)((u8*)b + 0xF8);
-        return ((x >> 1) - (x & *(s32*)((u8*)a + 0xF8))) < 0;
+        s32 x = a->field_0xF8 ^ b->field_0xF8;
+        return ((x >> 1) - (x & a->field_0xF8)) < 0;
     }
 }
 
-// Frame-slot table layout: cnt/self+0x27f8 array of 0x110-byte frames,
-// plus a parallel 0x88-stride "release" slot array rooted at self+0x1758.
-typedef void (*SFMPVF_ReadCb)(void*, void*);
+typedef void (*SFMPVF_ReadCb)(SfdHandle*, SfdFrame*);
 
-s32 SFMPVF_GetRead(void* self, void** out, u32* outVal, SFMPVF_ReadCb cb) {
-    void* cs;
-    void* frm;
-    u8* slot;
-    u8* p;
+s32 SFMPVF_GetRead(SfdHandle* self, SfdFrmInfo** out, u32* outVal, SFMPVF_ReadCb cb) {
+    SfdFrame* frm;
+    SfdVfrm* vfrm;
+    SfdFrame* p;
     s32 cnt;
     s32 i;
     s32 v;
 
-    if (SFSET_GetCond(self, 0xf) == 0 && *(u32*)((u8*)self + 0x5c) != 1) {
+    if (SFSET_GetCond(self, 0xf) == 0 && self->field_0x005c != 1) {
         *out = NULL;
         return 0;
     }
@@ -407,24 +399,24 @@ s32 SFMPVF_GetRead(void* self, void** out, u32* outVal, SFMPVF_ReadCb cb) {
         return 0;
     }
 
-    // Find the held frame's index and its release slot.
-    cnt = *(s32*)((u8*)self + 0x27ec);
-    p = (u8*)self + 0x27f8;
-    slot = NULL;
-    for (i = 0; i < cnt; i++, p += 0x110) {
-        if (p == (u8*)frm) {
-            slot = (u8*)self + i * 0x88 + 0x1758;
+    /* Find the held frame's record index and its video frame slot. */
+    cnt = self->frameCount;
+    p = self->frames;
+    vfrm = NULL;
+    for (i = 0; i < cnt; i++, p++) {
+        if (p == frm) {
+            vfrm = &self->vfrm[i];
             break;
         }
     }
 
-    *(u32*)slot = 1;
-    *(void**)((u8*)self + 0x27f4) = frm;
-    *out = slot + 8;
+    vfrm->state = 1;
+    self->curFrame = frm;
+    *out = &vfrm->info;
     cb(self, frm);
 
-    *(u32*)((u8*)self + 0x1018) = *(u32*)((u8*)frm + 0x14);
-    *(u32*)((u8*)self + 0x101c) = *(u32*)((u8*)frm + 0x18);
+    self->tim.curTime = (*out)->time;
+    self->tim.curTimeUnit = (*out)->timeUnit;
 
     if (!SFTIM_IsGetFrmTime(self, *out)) {
         *out = NULL;
@@ -435,103 +427,97 @@ s32 SFMPVF_GetRead(void* self, void** out, u32* outVal, SFMPVF_ReadCb cb) {
         return 0;
     }
 
-    if (*(s32*)((u8*)self + 0x68) == 2) {
-        v = *(s32*)((u8*)self + 0x6c);
-        *(s32*)((u8*)self + 0x6c) = v + 1;
+    if (self->field_0x0068 == 2) {
+        v = self->displayCount;
+        self->displayCount = v + 1;
         if (v + 1 < 0) {
-            *(s32*)((u8*)self + 0x6c) = 0;
+            self->displayCount = 0;
         }
-        *(s32*)((u8*)frm + 0x64) = v;
+        frm->dispId = v;
         *outVal = v;
     }
     return 0;
 }
 
-s32 SFMPVF_AddRead(void* self, void* handle, void** out) {
+s32 SFMPVF_AddRead(SfdHandle* self, SfdFrmInfo* info, s32* rd) {
     void* cs;
-    u8* frm;
-    u8* rel;
-    u8* p;
-    u8* q;
-    s32 cnt;
+    SfdFrame* frm;
+    SfdVfrm* rel;
+    SfdVfrm* vfrm;
+    SfdFrame* p;
+    s32 n;
     s32 i;
     s32 ret;
 
     SFLIB_LockCs(&cs);
     frm = NULL;
     rel = NULL;
-    cnt = *(s32*)((u8*)self + 0x27ec);
-
-    if (*(s32*)((u8*)self + 0x68) == 2) {
-        // Playing: locate the frame whose display slot matches the requested
-        // frame id in *out, then map it to its release slot.
-        p = (u8*)self + 0x27f8;
-        for (i = 0; i < cnt; i++, p += 0x110) {
-            if (*(s32*)(p + 0x64) == *(s32*)out) {
+    if (self->field_0x0068 == 2) {
+        /* Playing: locate the frame whose display slot matches *rd. */
+        p = self->frames;
+        for (i = 0; i < 16; i++, p++) {
+            if (p->dispId == *rd) {
                 frm = p;
                 break;
             }
         }
         if (frm == NULL) {
             ret = SFLIB_SetErr(self, 0xff000f1f);
-            if (ret != 0) {
-                SFLIB_UnlockCs(&cs);
-                return ret;
-            }
-        }
-        p = (u8*)self + 0x27f8;
-        for (i = 0; i < cnt; i++, p += 0x110) {
-            if (p == frm) {
-                rel = (u8*)self + i * 0x88 + 0x1758;
-                break;
-            }
-        }
-    } else {
-        // Not playing: handle points just past a header word that must be 1.
-        rel = (u8*)handle - 8;
-        if (*(s32*)(u8*)rel != 1) {
-            ret = SFLIB_SetErr(self, 0xff000f0e);
-            SFLIB_UnlockCs(&cs);
-            return ret;
         } else {
-            // Find which frame owns this handle.
-            p = (u8*)self + 0x1758;
-            q = (u8*)self + 0x27f8;
-            for (i = 0; i < 16; i++, p += 0x88, q += 0x110) {
-                if (*(void**)(p + 8) == handle) {
-                    frm = q;
+            n = self->frameCount;
+            p = self->frames;
+            for (i = 0; i < n; i++, p++) {
+                if (p == frm) {
+                    rel = &self->vfrm[i];
                     break;
                 }
             }
-            if (*(void**)((u8*)self + 0x27f4) != frm) {
+            ret = 0;
+        }
+    } else {
+        /* Not playing: the info block sits just past the slot state word. */
+        rel = (SfdVfrm*)((u8*)info - 8);
+        if (rel->state != 1) {
+            ret = SFLIB_SetErr(self, 0xff000f0e);
+        } else {
+            vfrm = self->vfrm;
+            for (i = 0; i < 16; i++, vfrm++) {
+                if (&vfrm->info == info) {
+                    frm = &self->frames[i];
+                    break;
+                }
+            }
+            if (self->curFrame != frm) {
                 ret = SFLIB_SetErr(self, 0xff000f0f);
-                SFLIB_UnlockCs(&cs);
-                return ret;
+            } else {
+                ret = 0;
             }
         }
     }
-
-    *(u32*)rel = 0;
-    if (frm != NULL) {
-        if (*(s32*)frm == 4) {
-            *(s32*)frm = 3;
-        } else {
-            *(s32*)frm = 0;
+    if (ret == 0) {
+        rel->state = 0;
+        if (frm != NULL) {
+            if (frm->state == 4) {
+                frm->state = 3;
+            } else {
+                frm->state = 0;
+            }
+            frm->dispId = -1;
         }
-        *(s32*)(frm + 0x64) = -1;
+        ret = 0;
     }
     SFLIB_UnlockCs(&cs);
-    return 0;
+    return ret;
 }
 
-s32 SFMPVF_ChkImageSize(void* self, u32 w, u32 h) {
-    s32 cw = *(s32*)((u8*)self + 0x91c);
-    if (cw > 0 && (cw != (s32)w || *(s32*)((u8*)self + 0x920) != (s32)h)) {
+s32 SFMPVF_ChkImageSize(SfdHandle* self, u32 w, u32 h) {
+    if (self->imageWidth > 0 &&
+        (self->imageWidth != (s32)w || self->imageHeight != (s32)h)) {
         return -1;
     }
     {
-        s32 (*cb)(void*) = *(s32(**)(void*))((u8*)self + 0xd7c);
-        void* arg = *(void**)((u8*)self + 0xd80);
+        s32 (*cb)(void*) = self->chkImageSize;
+        void* arg = self->chkImageSizeArg;
         if (cb != NULL && cb(arg) != 0) {
             return -1;
         }
@@ -539,11 +525,22 @@ s32 SFMPVF_ChkImageSize(void* self, u32 w, u32 h) {
     return 0;
 }
 
-// --- restored from git history (base:gone); do not expand beyond these functions ---
-// Keep only symbols not already defined above.
-
-void SFD_SetPicUsrBuf(void *sfd, void *buf, s32 height, s32 count) {
-    (void)sfd; (void)buf; (void)height; (void)count;
+// ppf: user picture buffer setup entry points.
+s32 SFD_SetPicUsrBuf(SfdHandle* self, u32 w, u32 h, u32 stride) {
+    if (SFLIB_CheckHn(self) != 0) {
+        return SFLIB_SetErr(0, 0xff000185);
+    }
+    return sfmpvf_SetPicUsrBuf(self, w, h, stride);
 }
-void SFMPVF_ResetPicUsrBuf(void *self) { (void)self; }
-void SFMPVF_InitPicUsr(void *self) { (void)self; }
+
+s32 SFMPVF_ResetPicUsrBuf(SfdHandle* self) {
+    SfdMpvParaGlobal* tbl = &lbl_eu_80619B20;
+
+    return sfmpvf_SetPicUsrBuf(self, tbl->usrWidth, tbl->usrHeight, tbl->usrStride);
+}
+
+void SFMPVF_InitPicUsr(SfdPicUsrBuf* usr) {
+    s32 i;
+
+    for (i = 0; i < 37; i++) ((u32*)usr)[i] = 0;
+}

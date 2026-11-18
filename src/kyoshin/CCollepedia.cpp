@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCollepedia
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 class UnkClass_8045F564;
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
@@ -216,7 +217,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
 
     // Sample-texture msg id: lookup table picked by controller type; result is
     // arg2 of the id lookup (retail keeps it in r4 across the branch merge).
-    const char* texTable = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* texTable = cf::CfGameManager::isClassicController(-1) != 0
         ? &lbl_eu_8050C6E8[0x10f] : &lbl_eu_8050C6E8[0x118];
 
     u16 id = BdatGetU16ByTableKey(&lbl_eu_8050C6E8[0xf0], texTable, 0x2b);
@@ -807,8 +808,8 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
         __dt__7CSysWinFv((u8*)self + 0x9C, -1);
         __dt__6CCur18Fv((CCur18*)((u8*)self + 0x84), -1);
         __dt__6CCur07Fv((u8*)self + 0x54, -1);
-        __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x14), -1);
-        __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x04), -1);
+        reinterpret_cast<UnkClass_8045F564*>(&self->_14[0])->~UnkClass_8045F564();
+        reinterpret_cast<UnkClass_8045F564*>(&self->field_4)->~UnkClass_8045F564();
         if (flag > 0) {
             operator delete((u8*)self);
         }

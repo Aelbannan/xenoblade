@@ -7,11 +7,9 @@
 #include <cstring>
 #include <monolib/coli/code_804A6C60.hpp>
 #include <monolib/coli/coli_types.hpp>
-// lbl_eu_8056F398: header has u8[0x10] decl (CColiProc.cpp authority); this TU
-// defines u32[0x4] view (same 16 bytes, retail sdata). Shield header copy.
-#define lbl_eu_8056F398 lbl_eu_8056F398_proc_hidden
+// CColiProc.hpp declares __vt__9CColiProc with exactly the u32[4] type this TU
+// defines, so the old `lbl_eu_8056F398` name shield is no longer needed.
 #include <monolib/coli/CColiProc.hpp> // CColiProc/CColiProcTarget authority (single def)
-#undef lbl_eu_8056F398
 #include <monolib/lod/CLODCacheManagerS.hpp>
 #include <monolib/math/CVec3.hpp>
 #include <monolib/util/MemManager.hpp>
@@ -84,22 +82,44 @@ extern "C" int ColiClipCentreRadius(CColiObject* self);
 u32 lbl_eu_80663A90[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
 extern "C" u32 __RTTI__12CColiObjCall[2];
 extern "C" u32 __RTTI__12CColiResCall[2];
-extern "C" u32 lbl_eu_8056F38C[3];
-extern "C" u32 lbl_eu_8056F3B4[3];
+extern "C" u32 __RTTIBaseList__12CColiObjCall[3];
+extern "C" u32 __RTTIBaseList__12CColiResCall[3];
 extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
 extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
-extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&__RTTI__12CColiObjCall, 0x00000000, (u32)&ColiAccumScaledVec };
-extern "C" u32 lbl_eu_8056F38C[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056F398[0x4] = { (u32)&__RTTI__9CColiProc, 0x00000000, (u32)&ColiNoop, 0x00000000 };
-extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&__RTTI__12CColiResCall, 0x00000000, (u32)&ColiMoverUpdate };
-extern "C" u32 lbl_eu_8056F3B4[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
+// ---- Class identity of this unit ----------------------------------------
+// .rodata 0x80524408/0x80524418 hold the type-name strings "CColiObjCall" and
+// "CColiResCall" (13 bytes each, read straight out of main.dol), and the .sdata
+// RTTI locators below pair them with a base list. Both base lists are
+// { __RTTI__9CColiProc, 0, 0 } - one base class at offset 0 plus the 2-word
+// terminator - so the hierarchy this TU belongs to is
+//
+//     class CColiProc;                     // base, 1 virtual slot
+//     class CColiObjCall : public CColiProc;
+//     class CColiResCall : public CColiProc;
+//
+// Each class has exactly one virtual function (see the 3-word vtables below:
+// {RTTI, offset-to-top, slot0}); CColiObjCall's slot 0 is ColiAccumScaledVec
+// (the last function in this TU, which reads only members inside the 0x48-byte
+// static instance), CColiResCall's is ColiMoverUpdate (defined in CColiProc.cpp).
+// CColiProc's own table is the 4-word {RTTI, 0, ColiNoop} + 4-byte pad that
+// __ct__CColiProc installs at this+0x0.
+//
+// The two static instances that the .ctors entries initialise are
+// lbl_eu_8065D0A0 (CColiObjCall, .bss 0x48) and lbl_eu_8065D0E8 (CColiResCall,
+// .bss 0x50); both run __ct__CColiProc and then overwrite this+0x0 with their
+// own vtable.
+extern "C" u32 __vt__12CColiObjCall[0x3] = { (u32)&__RTTI__12CColiObjCall, 0x00000000, (u32)&ColiAccumScaledVec };
+extern "C" u32 __RTTIBaseList__12CColiObjCall[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
+extern "C" u32 __vt__9CColiProc[0x4] = { (u32)&__RTTI__9CColiProc, 0x00000000, (u32)&ColiNoop, 0x00000000 };
+extern "C" u32 __vt__12CColiResCall[0x3] = { (u32)&__RTTI__12CColiResCall, 0x00000000, (u32)&ColiMoverUpdate };
+extern "C" u32 __RTTIBaseList__12CColiResCall[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056F3C0[0x5] = { 0x00040010, 0x000C0018, 0x00300008, 0x003C0014, 0x00180000 };
 extern "C" u32 lbl_eu_8056F3D4[0x5] = { 0x00140014, 0x001C001C, 0x00340034, 0x00740068, 0x00000000 };
 extern "C" u32 lbl_eu_8056F3E8[0x5] = { 0x00000000, 0x00010001, 0x00020002, 0x00030004, 0x00000000 };
 
 
-extern "C" u32 __RTTI__12CColiObjCall[2] = { (u32)&lbl_eu_80524408, (u32)&lbl_eu_8056F38C };
-extern "C" u32 __RTTI__12CColiResCall[2] = { (u32)&lbl_eu_80524418, (u32)&lbl_eu_8056F3B4 };
+extern "C" u32 __RTTI__12CColiObjCall[2] = { (u32)&lbl_eu_80524408, (u32)&__RTTIBaseList__12CColiObjCall };
+extern "C" u32 __RTTI__12CColiResCall[2] = { (u32)&lbl_eu_80524418, (u32)&__RTTIBaseList__12CColiResCall };
 
 
 // 3-word sub-spec copied raw into the +0x44 point; full definition appears
@@ -2611,8 +2631,13 @@ struct CColiSphere804ABCA4 {
 extern "C" bool ColiTestSphereOverlap(CColiObject* self) {
     CColiSphere804ABCA4* o = (CColiSphere804ABCA4*)self->field_0x00_obj;
     VEC3 diff;
+    // `f32 r = o->field_0x10 + self->field_0x5c;` makes MWCC coalesce the load
+    // with r and colour r into f1 (retail keeps the sum in f4 and the load in
+    // f2); computing the sum in two statements moves it to f4 like retail and
+    // leaves only the paired-single work registers rotated (12/32 insns).
+    f32 r = o->field_0x10;
+    r += self->field_0x5c;
     VEC3Sub(&diff, &self->field_0x44, &o->field_0x04);
-    f32 r = o->field_0x10 + self->field_0x5c;
     return r * r >= VEC3LenSq(&diff);
 }
 
@@ -4838,8 +4863,16 @@ void ColiNodeResortKeyed(CColiNode804B09C8* self) {
     CColiNode804B09C8* n = self->field_0xa0;
     f32 key = self->field_0x0c[0];
     self->field_0xa4 = key;
-    if (n != 0 && key < n->field_0xa4) {
-        self->field_0xa4 = n->field_0xa4;
+    // The clamp reads the successor's key into its own named local and keeps the
+    // compare nested: with the one-line `if (n && key < n->field_0xa4) ...` form
+    // MWCC 1.1 colours the two FPRs the other way round (key in f1, successor
+    // key in f0) and the function sticks at 88.4%; the split form puts key in
+    // f0 / successor key in f1 and matches retail byte-for-byte.
+    if (n != 0) {
+        f32 nKey = n->field_0xa4;
+        if (key < nKey) {
+            self->field_0xa4 = nKey;
+        }
     }
 }
 
@@ -6184,9 +6217,9 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
 // the +0x38/+0x3C/+0x40 state.
 extern const f32 lbl_eu_8066AE88;
 extern "C" void sinit_804B2524(void) {
-    extern u32 lbl_eu_8056F380[];
+    extern u32 __vt__12CColiObjCall[];
     __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D0A0);
-    *(void**)&lbl_eu_8065D0A0 = lbl_eu_8056F380;
+    *(void**)&lbl_eu_8065D0A0 = __vt__12CColiObjCall;
     lbl_eu_8065D0A0.field_0x38 = 0;
     lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AE88;
     lbl_eu_8065D0A0.field_0x40 = 0;

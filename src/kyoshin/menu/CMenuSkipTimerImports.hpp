@@ -65,4 +65,3 @@ extern char lbl_eu_80510540[];
 // `li r3, -1` materialisation that retail emits; cf::CfGameManager's inline s16
 // overload discards it). Declared extern "C" so the call binds the verbatim
 // retail symbol.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

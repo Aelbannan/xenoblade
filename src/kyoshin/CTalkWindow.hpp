@@ -253,7 +253,6 @@ void updateTalkWindow(CTalkWindow* self);
 void driveTalkIntro(CTalkWindow* self);
 void driveTalkMessage(CTalkWindow* self);
 void layoutTalkPanes(CTalkWindow* self);
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 CTalkWinTalkSrc* func_800BBC0C();
 int getAnimModelId(CTalkWinTalkC4* talkC4);
 void func_8004B9D4(CTalkWinTalkC4* talkC4, int a, int b, int c, int d);

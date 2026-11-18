@@ -65,6 +65,7 @@ public:
     NW4R_UT_RTTI_DECL(TextBox);
 
 public:
+    TextBox(u16 len);
     TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet);
     virtual ~TextBox(); // at 0x8
 
@@ -76,12 +77,14 @@ public:
     virtual u8 GetVtxColorElement(u32 idx) const;       // at 0x34
     virtual void SetVtxColorElement(u32 idx, u8 value); // at 0x38
 
-    virtual void AllocStringBuffer(u16 len); // at 0x64
-    virtual void FreeStringBuffer();         // at 0x68
+    virtual void LoadMtx(const DrawInfo& rInfo); // at 0x70
+
+    virtual void AllocStringBuffer(u16 len); // at 0x74
+    virtual void FreeStringBuffer();         // at 0x78
     u16 GetStringBufferLength() const;
 
-    virtual u16 SetString(const wchar_t* pStr, u16 pos = 0);      // at 0x6C
-    virtual u16 SetString(const wchar_t* pStr, u16 pos, u16 len); // at 0x70
+    virtual u16 SetString(const wchar_t* pStr, u16 pos = 0);      // at 0x7C
+    virtual u16 SetString(const wchar_t* pStr, u16 pos, u16 len); // at 0x80
 
     ut::Rect GetTextDrawRect(const DrawInfo& rInfo) const;
     ut::Rect GetTextDrawRect(ut::WideTextWriter* pWriter) const;
@@ -96,8 +99,12 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const;
-    void SetTextColor(u32 idx, ut::Color color);
+    ut::Color GetTextColor(u32 idx) const {
+        return mTextColors[idx];
+    }
+    void SetTextColor(u32 idx, ut::Color color) {
+        mTextColors[idx] = color;
+    }
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -158,11 +165,14 @@ protected:
     ut::WideTagProcessor* mpTagProcessor; // at 0xF8
     u16 mTextBufBytes;                    // at 0xFC
     u16 mTextLen;                         // at 0xFE
-    u8 mTextPosition;                     // at 0xFF
+    u8 mTextPosition;                     // at 0x100
 
+    // MWCC packs bitfields from the most-significant bit down.
     struct {
         u8 bAllocFont : 1;
-    } mBits; // at 0x100
+        u8 textAlignment : 2; // at 0x101 bits 5-6 (1-based LEFT/CENTER/RIGHT)
+        u8 PADDING_0x1 : 5;
+    } mBits; // at 0x101
 
 private:
     void Init(u16 len);

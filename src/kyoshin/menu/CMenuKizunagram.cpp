@@ -189,7 +189,6 @@ struct KizunaPadData {
     u32 mTurboPressButtonFlags; // 0x104
 };
 extern "C" KizunaPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_806647E0;    // CMenuKizunagram singleton pointer (sbss)
@@ -273,7 +272,7 @@ body:
     if (field_0x21C != 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         int bit;
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
             bit = (pad->mPressedButtonFlags >> 23) & 1;
         } else {
             bit = (pad->mPressedButtonFlags >> 10) & 1;
@@ -432,7 +431,7 @@ void KizunagramDriveChart(CMenuKizunagram* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 f1, f2, f3, f4;
     u32 openWin, dismiss, toggle, cursorA, cursorB;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) {
+    if (cf::CfGameManager::isClassicController(-1) == 0) {
         goto wiimote;
     }
     // Classic controller layout (fall-through).
@@ -572,7 +571,7 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
     // Declaration order drives MWCC's register colors (a before b);
     // assignment order below drives the load schedule.
     u32 a, b, f1, f2, f3, f4;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         f1 = !!(turbo & 0x8004);

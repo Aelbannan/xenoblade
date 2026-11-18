@@ -47,7 +47,6 @@ extern "C" {
     void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
     // CfGameManager controller-type query: retail loads r3=-1 into the symbol
     // (the no-arg member wrapper drops it), so call through the C name directly.
-    int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
     // This-unit phase handlers (retail-unmangled func_ names). extern "C" keeps
     // the call relocs bare (retail keeps the unmangled names at these call sites).
@@ -94,7 +93,7 @@ CMenuTutorial::CMenuTutorial(CProcess* parent, u32 arg2)
     // Re-enable the input-flag set the player had before the tutorial:
     // classic controller (0x00600000) or core pad (0x30).
     u32 padFlags =
-        isClassicController__Q22cf13CfGameManagerFv(-1) ? 0x00600000 : 0x30;
+        cf::CfGameManager::isClassicController(-1) ? 0x00600000 : 0x30;
     cf::CfGameManager::enablePadFlags((u32)-1, false);
     cf::CfGameManager::enablePadFlags(padFlags, true);
 }
@@ -274,7 +273,7 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
             first = (pad->mPressedButtonFlags >> 21) & 1;
             second = (pad->mPressedButtonFlags >> 22) & 1;
         } else {

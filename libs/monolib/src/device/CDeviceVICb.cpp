@@ -17,11 +17,11 @@ extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viAfterDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 }
-extern "C" u32 lbl_eu_80663618[2]; // this unit's sdata
+extern "C" u32 __RTTI__11CDeviceVICb[2]; // this unit's sdata (retail .sdata 0x80663618)
 
 // [.data] 0x8056BF68-0x8056BF80 (24B): CDeviceVICb vtable
 extern "C" void* lbl_eu_8056BF68[6] = {
-    (void*)&lbl_eu_80663618, (void*)0,
+    (void*)&__RTTI__11CDeviceVICb, (void*)0,
     (void*)&VCBlob::__dt__11CDeviceVICbFv,
     (void*)&VCBlob::viBeforeDrawDone__11CDeviceVICbFv,
     (void*)&VCBlob::viAfterDrawDone__11CDeviceVICbFv,
@@ -34,4 +34,4 @@ extern "C" __declspec(align(4)) const char lbl_eu_80522A50[0x10] = {
 };
 
 // [.sdata] 0x80663618-0x80663620 (8B)
-extern "C" u32 lbl_eu_80663618[2] = { (u32)&lbl_eu_80522A50, 0x00000000 };
+extern "C" u32 __RTTI__11CDeviceVICb[2] = { (u32)&lbl_eu_80522A50, 0x00000000 };

@@ -53,7 +53,7 @@ namespace cf{
 
     struct CVoiceActorState {
         void* vtable;
-        u8 unk4[0x3E9C - 4];
+        u8 mArena[0x3E9C - 4];
         u8 moveBasePlaceholder[4];
         u8 unk3EA0[0x3F00 - 0x3EA0];
         u32 field_3F00;
@@ -90,40 +90,37 @@ namespace cf{
         void* field_4;
     };
 
-    class __declspec(novtable) CCharVoiceMan {
+    // Character-voice manager singleton: registers itself with the factory
+    // manager (IFactoryEvent) and owns the per-frame voice-event list plus the
+    // ring arena its nodes are allocated from.
+    class CCharVoiceMan : public IFactoryEvent {
     public:
         CCharVoiceMan();
         virtual ~CCharVoiceMan();
-        virtual void FactoryEvent1();
-        virtual void FactoryEvent2(int eventId);
-        virtual void FactoryEvent3();
-        virtual void FactoryEvent4();
-        u8 unk4[0x200];
-        u32 allocHead;
-        u32 headOffset;
-        CSoundNode* nodeHead;
-        CSoundNode* nodeTail;
-        u8 unk214;
-        u8 unk215;
+        virtual void FactoryEvent2(CfObject* obj);
+        u8 mArena[0x200];
+        u32 mAllocOffset;
+        u32 mHeadOffset;
+        CSoundNode* mNodeHead;
+        CSoundNode* mNodeTail;
+        u8 mActive;
+        u8 mPaused;
         u8 unk216[2];
-        float unk218;
-        u32 unk21C;
-        u8 unk220;
-        u8 unk221;
-        u8 fieldFlag;
-        u8 autoTalkPending;
-        u32 unk224;
-        u8 unk228;
-        u8 unk229;
-        u8 unk22A;
+        float mVoiceTimer;
+        u32 mPrevBattleCount;
+        u8 mGaugeState;
+        u8 mInteractState;
+        u8 mFieldFlag;
+        u8 mAutoTalkPending;
+        u32 mPcVoiceCount;
+        u8 mBattleVoiceLatched;
+        u8 mPendingVoice;
+        u8 mBattleActive;
         u8 unk22B;
-        u32 unk22C;
-        u32 unk230;
+        u32 mPendingActorId;
+        u32 mPendingActionId;
     };
 }
-extern "C" cf::CCharVoiceMan* __ct__Q22cf13CCharVoiceManFv(cf::CCharVoiceMan* self);
-extern "C" const float lbl_eu_80668C68;
-extern "C" u8 lbl_eu_805398CC[28];
 class CScn;
 extern "C" u32 lbl_eu_80664A5C;
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
@@ -184,13 +181,7 @@ extern "C" void RunVoiceNodeHandler(void* node);
 extern "C" void releaseThreadVoice(void* node);
 extern "C" u8  lbl_eu_80663DA0;
 extern "C" u16 lbl_eu_80663E42;
-extern "C" float lbl_eu_80668C6C;
-extern "C" float lbl_eu_80668C70;
-extern "C" float lbl_eu_80668C74;
-extern "C" float lbl_eu_80668C78;
-extern "C" float lbl_eu_80668C7C;
 extern "C" cf::CSoundNode* playFaintVoice();
-extern "C" float lbl_eu_80668C80;
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 #include "kyoshin/cf/CBattleManagerApi.hpp"

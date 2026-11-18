@@ -2,10 +2,9 @@
 
 #include <cstring>
 
-// Force MWCC to emit standalone ConvertOffsToPtr template instantiations.
-// MWCC with -inline auto treats templates as inline; we temporarily disable
-// auto-inlining so the explicit template instantiations below produce bodies.
-// Explicit instantiation for the retail LinkList<AnimationLink,0> ctor symbol.
+// Explicit instantiations: retail keeps these template bodies out of line in
+// this object, so emit them here instead of letting -inline auto expand them
+// at every call site.
 namespace nw4r { namespace ut {
 template nw4r::ut::LinkList<nw4r::lyt::AnimationLink, 0>::LinkList();
 }}
@@ -25,21 +24,12 @@ namespace nw4r { namespace lyt { namespace detail {
     template const char* ConvertOffsToPtr<char>(const void*, unsigned int);
 }}}
 
-// Force emission of nw4r::ut::Min<unsigned char> (retail scope
-// nw4r::ut::@unnamed@lyt_material_cpp@). The TU's anonymous namespace below
-// supplies the anon-scope mangling; the extern reference keeps MWCC's -ipa
-// file from dead-code-eliminating the unused inline template instantiation.
-typedef unsigned char (*LLMH_ForceFn_us_80408554)(unsigned char, unsigned char);
-LLMH_ForceFn_us_80408554 LLMH_force_us_80408554 =
-    &nw4r::ut::Min<unsigned char>;
-
 /******************************************************************************
  *
  * Utility functions
  *
  ******************************************************************************/
 static const GXColorS10 DefaultBlackColor = {0, 0, 0, 0};
-static const GXColorS10 DefaultWhiteColor = {255, 255, 255, 255};
 
 namespace nw4r {
 namespace lyt {
@@ -107,6 +97,14 @@ inline u32 GetTexMtxIdx(u32 mtx) {
 }
 inline u32 GetTexMtx(u32 idx) {
     return GX_TEXMTX0 + idx * 3;
+}
+
+/******************************************************************************
+ * Default colors
+ ******************************************************************************/
+bool IsDefaultWhiteColor(const GXColorS10& rColor) {
+    return rColor.r == 255 && rColor.g == 255 && rColor.b == 255 &&
+           rColor.a == 255;
 }
 
 /******************************************************************************
@@ -290,28 +288,24 @@ u32 CalcOffsetTevStageAry(const detail::BitGXNums& rNums) {
  ******************************************************************************/
 void Material::Init() {
     mTevCols[TEVCOLOR_REG0] = DefaultBlackColor;
-    mTevCols[TEVCOLOR_REG1] = DefaultWhiteColor;
-    mTevCols[TEVCOLOR_REG2] = DefaultWhiteColor;
+
+    // Default white TEV colors; retail materializes these as immediates
+    // (li 255) rather than as a shared .sdata2 constant.
+    mTevCols[TEVCOLOR_REG1].r = 255;
+    mTevCols[TEVCOLOR_REG1].g = 255;
+    mTevCols[TEVCOLOR_REG1].b = 255;
+    mTevCols[TEVCOLOR_REG1].a = 255;
+
+    mTevCols[TEVCOLOR_REG2].r = 255;
+    mTevCols[TEVCOLOR_REG2].g = 255;
+    mTevCols[TEVCOLOR_REG2].b = 255;
+    mTevCols[TEVCOLOR_REG2].a = 255;
 
     InitBitGXNums(&mGXMemCap);
     InitBitGXNums(&mGXMemNum);
 
     mbUserAllocated = false;
     mpGXMem = NULL;
-}
-
-void Material::InitBitGXNums(detail::BitGXNums* pNums) {
-    pNums->texMap = 0;
-    pNums->texSRT = 0;
-    pNums->texCoordGen = 0;
-    pNums->indSRT = 0;
-    pNums->indStage = 0;
-    pNums->tevSwap = FALSE;
-    pNums->tevStage = 0;
-    pNums->chanCtrl = FALSE;
-    pNums->matCol = FALSE;
-    pNums->alpComp = FALSE;
-    pNums->blendMode = 0;
 }
 
 Material::Material() {
@@ -373,20 +367,21 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
             TexMap* const pTexMap = GetTexMapAry();
 
             u8 num = 0;
-            for (u8 i = 0; i < mGXMemNum.texMap; num++, i++) {
+            for (u8 i = 0; i < texMapNum; num++, i++) {
                 const char* const pName = detail::ConvertOffsToPtr<char>(
                     pTexture, pTexture[pResTexMap[i].texIdx].nameStrOffset);
 
                 TPLPalette* const pTexPalette = static_cast<TPLPalette*>(rBlockSet.pResAccessor->GetResource(
                     ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL));
 
-                TexMap texMap(pTexPalette, 0);
-                SetTextureNoWrap(num, texMap);
-
-                pTexMap[num].SetWrapMode(
-                    static_cast<GXTexWrapMode>(pResTexMap[i].wrapS),
-                    static_cast<GXTexWrapMode>(pResTexMap[i].wrapT));
+                pTexMap[num].ReplaceImage(pTexPalette, 0);
+                pTexMap[num].SetWrapMode(pResTexMap[i].GetWarpModeS(),
+                                         pResTexMap[i].GetWarpModeT());
+                pTexMap[num].SetFilter(pResTexMap[i].GetMinFilter(),
+                                       pResTexMap[i].GetMagFilter());
             }
+
+            SetTextureNum(num);
         }
 
         TexSRT* pTexSrt = GetTexSRTAry();
@@ -1097,7 +1092,7 @@ bool Material::SetupGX(bool modulate, u8 alpha) {
                 }
 
                 if (mTevCols[TEVCOLOR_REG0] != DefaultBlackColor ||
-                    mTevCols[TEVCOLOR_REG1] != DefaultWhiteColor) {
+                    !IsDefaultWhiteColor(mTevCols[TEVCOLOR_REG1])) {
 
                     GXTevStageID tevStage =
                         static_cast<GXTevStageID>(tevStageID);
@@ -1224,6 +1219,10 @@ void Material::AddAnimationLink(AnimationLink* pAnimLink) {
     mAnimList.PushBack(pAnimLink);
 }
 
+AnimationLink* Material::FindAnimationLink(AnimTransform* pAnimTrans) {
+    return detail::FindAnimationLink(&mAnimList, pAnimTrans);
+}
+
 AnimationLink* Material::FindAnimationLink(const AnimResource& rAnimRes) {
     return detail::FindAnimationLink(&mAnimList, rAnimRes);
 }
@@ -1264,14 +1263,202 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 } // namespace lyt
 } // namespace nw4r
 
+/******************************************************************************
+ *
+ * Material sub-structs
+ *
+ ******************************************************************************/
+namespace nw4r {
+namespace lyt {
+
+/******************************************************************************
+ * res::MaterialResourceNum
+ ******************************************************************************/
+namespace res {
+
+u8 MaterialResourceNum::GetTexMapNum() const {
+    return detail::GetBits(bits, 0, 4);
+}
+
+u8 MaterialResourceNum::GetTexSRTNum() const {
+    return detail::GetBits(bits, 4, 4);
+}
+
+u8 MaterialResourceNum::GetTexCoordGenNum() const {
+    return detail::GetBits(bits, 8, 4);
+}
+
+bool MaterialResourceNum::HasTevSwapTable() const {
+    return detail::TestBit(bits, 12);
+}
+
+u8 MaterialResourceNum::GetIndTexSRTNum() const {
+    return detail::GetBits(bits, 13, 2);
+}
+
+u8 MaterialResourceNum::GetIndTexStageNum() const {
+    return detail::GetBits(bits, 15, 3);
+}
+
+u8 MaterialResourceNum::GetTevStageNum() const {
+    return detail::GetBits(bits, 18, 5);
+}
+
+bool MaterialResourceNum::HasAlphaCompare() const {
+    return detail::TestBit(bits, 23);
+}
+
+bool MaterialResourceNum::HasBlendMode() const {
+    return detail::TestBit(bits, 24);
+}
+
+u8 MaterialResourceNum::GetChanCtrlNum() const {
+    return detail::GetBits(bits, 25, 1);
+}
+
+u8 MaterialResourceNum::GetMatColNum() const {
+    return detail::GetBits(bits, 27, 1);
+}
+
+/******************************************************************************
+ * res::TexMap
+ ******************************************************************************/
+// The binary wrap/filter modes are packed into the two flag bytes: wrapS
+// (2 bits) and minFilter (3 bits) share byte 0x2, wrapT (2 bits) and
+// magFilter (1 bit) share byte 0x3. The filters are stored biased by one.
+GXTexWrapMode TexMap::GetWarpModeS() const {
+    return static_cast<GXTexWrapMode>(wrapS & 0x3);
+}
+
+GXTexWrapMode TexMap::GetWarpModeT() const {
+    return static_cast<GXTexWrapMode>(wrapT & 0x3);
+}
+
+GXTexFilter TexMap::GetMinFilter() const {
+    return static_cast<GXTexFilter>(((wrapS >> 2 & 0x7) + 1) & 0x7);
+}
+
+GXTexFilter TexMap::GetMagFilter() const {
+    return static_cast<GXTexFilter>(((wrapT >> 2 & 0x1) + 1) & 0x1);
+}
+
+} // namespace res
+
+/******************************************************************************
+ * AlphaCompare
+ ******************************************************************************/
+AlphaCompare& AlphaCompare::operator=(const AlphaCompare& rOther) {
+    comp = rOther.comp;
+    op = rOther.op;
+    ref0 = rOther.ref0;
+    ref1 = rOther.ref1;
+
+    return *this;
+}
+
+/******************************************************************************
+ * BlendMode
+ ******************************************************************************/
+BlendMode& BlendMode::operator=(const BlendMode& rOther) {
+    type = rOther.type;
+    srcFactor = rOther.srcFactor;
+    dstFactor = rOther.dstFactor;
+    op = rOther.op;
+
+    return *this;
+}
+
+/******************************************************************************
+ * ChanCtrl
+ ******************************************************************************/
+ChanCtrl& ChanCtrl::operator=(const ChanCtrl& rOther) {
+    matSrcCol = rOther.matSrcCol;
+    matSrcAlp = rOther.matSrcAlp;
+    reserve1 = rOther.reserve1;
+    reserve2 = rOther.reserve2;
+
+    return *this;
+}
+
+/******************************************************************************
+ * IndirectStage
+ ******************************************************************************/
+IndirectStage& IndirectStage::operator=(const IndirectStage& rOther) {
+    texCoordGen = rOther.texCoordGen;
+    texMap = rOther.texMap;
+    scaleS = rOther.scaleS;
+    scaleT = rOther.scaleT;
+
+    return *this;
+}
+
+/******************************************************************************
+ * TevSwapMode
+ ******************************************************************************/
+TevSwapMode& TevSwapMode::operator=(const TevSwapMode& rOther) {
+    swap = rOther.swap;
+
+    return *this;
+}
+
+/******************************************************************************
+ * TevStage
+ ******************************************************************************/
+TevStage& TevStage::operator=(const TevStage& rOther) {
+    texCoordGen = rOther.texCoordGen;
+    colChan = rOther.colChan;
+    texMap = rOther.texMap;
+    swapSel = rOther.swapSel;
+    colIn = rOther.colIn;
+    alpIn = rOther.alpIn;
+    indStage = rOther.indStage;
+    indBiMt = rOther.indBiMt;
+    indWrap = rOther.indWrap;
+    indFoAdUtAl = rOther.indFoAdUtAl;
+
+    return *this;
+}
+
+/******************************************************************************
+ * TexSRT
+ ******************************************************************************/
+// The vector members are copied as raw 32-bit pairs and the bare rotate
+// as a float, matching retail's copy schedule.
+TexSRT& TexSRT::operator=(const TexSRT& rOther) {
+    *(u32*)&translate.x = *(const u32*)&rOther.translate.x;
+    *(u32*)&translate.y = *(const u32*)&rOther.translate.y;
+    rotate = rOther.rotate;
+    *(u32*)&scale.x = *(const u32*)&rOther.scale.x;
+    *(u32*)&scale.y = *(const u32*)&rOther.scale.y;
+
+    return *this;
+}
+
+} // namespace lyt
+} // namespace nw4r
+
+/******************************************************************************
+ *
+ * Out-of-line copies
+ *
+ * These three operators are inline in their owning headers (math/ut), and
+ * MWCC inlines them at every call site under this unit's flags, so the
+ * out-of-line bodies retail keeps in this object are provided here. The
+ * lyt material sub-structs above use the compiler-generated member
+ * operators instead.
+ *
+ ******************************************************************************/
 nw4r::math::VEC2* __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2(nw4r::math::VEC2* self, const nw4r::math::VEC2* other) {
     self->x = other->x;
     self->y = other->y;
     return self;
 }
 
-// The 4-byte lyt material sub-structs are copied byte-wise by MWCC when the
-// fields are accessed individually (retail lbz/stb pairs, descending regs).
+nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
+    *(u32*)self = *(const u32*)other;
+    return self;
+}
+
 nw4r::lyt::TexCoordGen* __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(
     nw4r::lyt::TexCoordGen* self, const nw4r::lyt::TexCoordGen* other) {
     self->texGenType = other->texGenType;
@@ -1281,169 +1468,22 @@ nw4r::lyt::TexCoordGen* __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGe
     return self;
 }
 
-nw4r::lyt::ChanCtrl* __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(
-    nw4r::lyt::ChanCtrl* self, const nw4r::lyt::ChanCtrl* other) {
-    self->matSrcCol = other->matSrcCol;
-    self->matSrcAlp = other->matSrcAlp;
-    self->reserve1 = other->reserve1;
-    self->reserve2 = other->reserve2;
-    return self;
-}
-
-nw4r::lyt::AlphaCompare* __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare(
-    nw4r::lyt::AlphaCompare* self, const nw4r::lyt::AlphaCompare* other) {
-    self->comp = other->comp;
-    self->op = other->op;
-    self->ref0 = other->ref0;
-    self->ref1 = other->ref1;
-    return self;
-}
-
-nw4r::lyt::BlendMode* __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode(
-    nw4r::lyt::BlendMode* self, const nw4r::lyt::BlendMode* other) {
-    self->type = other->type;
-    self->srcFactor = other->srcFactor;
-    self->dstFactor = other->dstFactor;
-    self->op = other->op;
-    return self;
-}
-nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
-    *(u32*)self = *(const u32*)other;
-    return self;
-}
-unsigned int GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* p) {
-    return *(const unsigned int*)p & 0xF;
-}
-u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
-    return ((*(const u32*)_this) >> 4) & 0xF;
-}
-int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const unsigned int*)self >> 8) & 0x0F;
-}
-int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const u32*)self >> 25) & 1;
-}
-u32 GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
-    return (*(const u32*)_this >> 27) & 1;
-}
-bool HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const u32*)self & 0x1000) != 0;
-}
-int HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
-    return (*(const unsigned int*)_this >> 23) & 1;
-}
-bool HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const u32*)self >> 24) & 1;
-}
-int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
-    return (*(const u32*)_this >> 13) & 3;
-}
-unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const unsigned int*)self >> 15) & 7;
-}
-unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
-    return (*(const unsigned int*)self >> 18) & 0x1F;
-}
-namespace {
-struct TexMapBits {
-    u32 textureFormat : 4;
-    u32 mipmap : 1;
-    u32 wrapS : 2;
-    u32 wrapT : 2;
-    u32 minFilter : 3;
-    u32 magFilter : 1;
-    u32 biasClampEnable : 1;
-    u32 edgeLODEnable : 1;
-    u32 anisotropy : 2;
-    u32 paletteFormat : 2;
-};
-} // namespace
-
+/******************************************************************************
+ *
+ * lyt::TexMap element setters
+ *
+ * SetWrapMode/SetFilter are inline in lyt_texMap.h (lyt_texMap.cpp and
+ * lyt_picture.cpp inline them at their call sites), so retail's copies in
+ * this object are the compiler-emitted out-of-line bodies. They forward to
+ * the class members so the bit writes stay typed.
+ *
+ ******************************************************************************/
 void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode(
     nw4r::lyt::TexMap* self, GXTexWrapMode wrapS, GXTexWrapMode wrapT) {
-    TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
-    bits->wrapS = wrapS;
-    bits->wrapT = wrapT;
+    self->SetWrapMode(wrapS, wrapT);
 }
-int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
-    return (*(const unsigned char*)((const unsigned char*)this_ + 2)) & 3;
-}
-unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* p_this) {
-    return ((const unsigned char*)p_this)[3] & 3;
-}
+
 void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter(
     nw4r::lyt::TexMap* self, GXTexFilter minFilt, GXTexFilter magFilt) {
-    TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
-    bits->minFilter = minFilt;
-    bits->magFilter = magFilt;
+    self->SetFilter(minFilt, magFilt);
 }
-int GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
-    return (((((const unsigned char*)this_)[2] >> 2) & 7) + 1) & 7;
-}
-int GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
-    return (((((const unsigned char*)this_)[3] >> 2) & 1) + 1) & 1;
-}
-void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(nw4r::lyt::TevSwapMode* self, const nw4r::lyt::TevSwapMode* other) {
-    *(unsigned char*)self = *(const unsigned char*)other;
-    return self;
-}
-nw4r::lyt::TexSRT* __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(
-    nw4r::lyt::TexSRT* self, const nw4r::lyt::TexSRT* other) {
-    *(u32*)&self->translate.x = *(const u32*)&other->translate.x;
-    *(u32*)&self->translate.y = *(const u32*)&other->translate.y;
-    self->rotate = other->rotate;
-    *(u32*)&self->scale.x = *(const u32*)&other->scale.x;
-    *(u32*)&self->scale.y = *(const u32*)&other->scale.y;
-    return self;
-}
-void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(nw4r::lyt::IndirectStage* dst, const nw4r::lyt::IndirectStage* src) {
-    ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
-    ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
-    ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];
-    ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
-}
-// TevStage copy: retail copies all 16 bytes individually (lbz/stb pairs),
-// keeping every byte live across a _savegpr_25 spill - so read all fields
-// before writing any.
-nw4r::lyt::TevStage* __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(
-    nw4r::lyt::TevStage* self, const nw4r::lyt::TevStage* other) {
-    u8 t0 = other->texCoordGen;
-    u8 t1 = other->colChan;
-    u8 t2 = other->texMap;
-    u8 t3 = other->swapSel;
-    u8 t4 = other->colIn.ab;
-    u8 t5 = other->colIn.cd;
-    u8 t6 = other->colIn.op;
-    u8 t7 = other->colIn.cl;
-    u8 t8 = other->alpIn.ab;
-    u8 t9 = other->alpIn.cd;
-    u8 t10 = other->alpIn.op;
-    u8 t11 = other->alpIn.cl;
-    u8 t12 = other->indStage;
-    u8 t13 = other->indBiMt;
-    u8 t14 = other->indWrap;
-    u8 t15 = other->indFoAdUtAl;
-
-    self->texCoordGen = t0;
-    self->colChan = t1;
-    self->texMap = t2;
-    self->swapSel = t3;
-    self->colIn.ab = t4;
-    self->colIn.cd = t5;
-    self->colIn.op = t6;
-    self->colIn.cl = t7;
-    self->alpIn.ab = t8;
-    self->alpIn.cd = t9;
-    self->alpIn.op = t10;
-    self->alpIn.cl = t11;
-    self->indStage = t12;
-    self->indBiMt = t13;
-    self->indWrap = t14;
-    self->indFoAdUtAl = t15;
-    return self;
-}
-
-
-
-
-

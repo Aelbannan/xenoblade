@@ -78,45 +78,6 @@ extern "C" const void* __RTTI__14CMCCrystalList[2];
 // the compiler-generated run trails them exactly as in retail.
 // ---------------------------------------------------------------------------
 extern "C" {
-// .data prefix: CMCCrystalList vtable (0x88 = 34 words). First table carries
-// aligned(8) for the section alignment.
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
-const void* lbl_eu_80535F80[34] = {
-    (const void*)__RTTI__14CMCCrystalList,
-    (const void*)0,
-    (const void*)__dt__14CMCCrystalListFv,
-    (const void*)WorkEvent1__10IWorkEventFPvPCc,
-    (const void*)OnFileEvent__14CMCCrystalListFP10CEventFile,
-    (const void*)WorkEvent3__10IWorkEventFPv,
-    (const void*)WorkEvent4__10IWorkEventFv,
-    (const void*)OnPauseTrigger__10IWorkEventFb,
-    (const void*)WorkEvent6__10IWorkEventFv,
-    (const void*)WorkEvent7__10IWorkEventFv,
-    (const void*)WorkEvent8__10IWorkEventFv,
-    (const void*)WorkEvent9__10IWorkEventFv,
-    (const void*)WorkEvent10__10IWorkEventFv,
-    (const void*)WorkEvent11__10IWorkEventFv,
-    (const void*)WorkEvent12__10IWorkEventFv,
-    (const void*)WorkEvent13__10IWorkEventFv,
-    (const void*)WorkEvent14__10IWorkEventFv,
-    (const void*)WorkEvent15__10IWorkEventFv,
-    (const void*)WorkEvent16__10IWorkEventFv,
-    (const void*)WorkEvent17__10IWorkEventFv,
-    (const void*)WorkEvent18__10IWorkEventFv,
-    (const void*)WorkEvent19__10IWorkEventFv,
-    (const void*)WorkEvent20__10IWorkEventFv,
-    (const void*)WorkEvent21__10IWorkEventFv,
-    (const void*)WorkEvent22__10IWorkEventFv,
-    (const void*)WorkEvent23__10IWorkEventFv,
-    (const void*)WorkEvent24__10IWorkEventFv,
-    (const void*)WorkEvent25__10IWorkEventFv,
-    (const void*)WorkEvent26__10IWorkEventFv,
-    (const void*)WorkEvent27__10IWorkEventFv,
-    (const void*)WorkEvent28__10IWorkEventFv,
-    (const void*)WorkEvent29__10IWorkEventFv,
-    (const void*)WorkEvent30__10IWorkEventFv,
-    (const void*)WorkEvent31__10IWorkEventFv
-};
 // .data prefix: IWorkEvent RTTI base table (0x10).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80536008[4] = {
@@ -213,27 +174,17 @@ struct CFontPanel {
     virtual u32 sf9() = 0;
 };
 
-// Retail ships unmangled ctor symbols (__ct__CMCEffStart / __ct__CMCEffUpRed /
-// ...). Free-function form so derived ctors bl the bare base name and external
-// callers (CModelDispMakeCrystal) bind the same reloc. Install the retail
-// vtable label first (lis/addi/stw) -- a pure member-field init omits it.
-extern "C" void* lbl_eu_80536114[];
-extern "C" void* lbl_eu_805360F4[];
-extern "C" void* lbl_eu_805360D4[];
-extern "C" void* lbl_eu_805360B4[];
-extern "C" void* lbl_eu_80536078[];
-extern "C" void* lbl_eu_80536048[];
-extern "C" void* lbl_eu_80536028[];
+// The effect classes are real classes: their constructors are the member
+// constructors below and MWCC installs the class vtable (the retail labels
+// __vt__11CMCEffStart / __vt__11CMCEffUpRed / ... own that store).
 
-extern "C" void __ct__CMCEffStart(CMCEffStart* ths, nw4r::lyt::ArcResourceAccessor* arcResourceAccessor) {
-    *(void**)ths = lbl_eu_80536114;
-    ths->unk4 = 0;
-    ths->unk5 = 1;
-    ths->mArcResourceAccessor = arcResourceAccessor;
-    ths->mLayout = nullptr;
-    ths->mAnimTrans = nullptr;
-    ths->unk14 = 0;
-}
+CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
+    : unk4(0),
+      unk5(1),
+      mArcResourceAccessor(arcResourceAccessor),
+      mLayout(nullptr),
+      mAnimTrans(nullptr),
+      unk14(0) {}
 
 CMCEffStart::~CMCEffStart() {}
 
@@ -288,11 +239,8 @@ void __declspec(noinline) CMCEffStart::updateInAnim() {
  * CMCEffUpRed
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpRed(CMCEffUpRed* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_805360F4;
-    return ths;
-}
+CMCEffUpRed::CMCEffUpRed(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffUpRed::~CMCEffUpRed() {}
 
@@ -313,11 +261,8 @@ void CMCEffUpRed::play() {
  * CMCEffUpBlue
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpBlue(CMCEffUpBlue* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_805360D4;
-    return ths;
-}
+CMCEffUpBlue::CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffUpBlue::~CMCEffUpBlue() {}
 
@@ -338,11 +283,8 @@ void CMCEffUpBlue::play() {
  * CMCEffUpGreen
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpGreen(CMCEffUpGreen* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_805360B4;
-    return ths;
-}
+CMCEffUpGreen::CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffUpGreen::~CMCEffUpGreen() {}
 
@@ -561,11 +503,8 @@ void __declspec(noinline) CMCEffSuccess::bindOutAnim() {
  * CMCEffFailure
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffFailure(CMCEffFailure* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_80536078;
-    return ths;
-}
+CMCEffFailure::CMCEffFailure(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffFailure::~CMCEffFailure() {}
 
@@ -871,11 +810,8 @@ void __declspec(noinline) CMCEffCrystal::bindLoopAnim() {
  * CMCEffUpRank
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpRank(CMCEffUpRank* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_80536048;
-    return ths;
-}
+CMCEffUpRank::CMCEffUpRank(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffUpRank::~CMCEffUpRank() {}
 
@@ -896,11 +832,8 @@ void CMCEffUpRank::play() {
  * CMCEffDivide
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffDivide(CMCEffDivide* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    __ct__CMCEffStart(ths, pArcResourceAccessor);
-    *(void**)ths = lbl_eu_80536028;
-    return ths;
-}
+CMCEffDivide::CMCEffDivide(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
+    : CMCEffStart(pArcResourceAccessor) {}
 
 CMCEffDivide::~CMCEffDivide() {}
 

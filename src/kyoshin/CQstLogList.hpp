@@ -121,7 +121,6 @@ extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const 
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the

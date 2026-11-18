@@ -624,7 +624,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePartyInput(CPartyStateWi
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     bool up, down, left, right;
     u32 a, b, y;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         up = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
         down = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
         left = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
@@ -757,7 +757,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
         return;
     }
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // -- classic-controller chain --
         reinterpret_cast<CEquipChange*>(&self->_pad4150)->ShowSubPanes(0);
         if ((cfPad->mTurboPressButtonFlags & 0x02000000) != 0 &&
@@ -1185,7 +1185,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyState
 extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyStateWin* self) {
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cond;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         cond = (pad->mPressedButtonFlags & 0x00600000) != 0;
     } else {
         cond = (pad->mPressedButtonFlags & 0x00000030) != 0;
@@ -1215,7 +1215,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipDisplay(CPartyState
     // shape: each branch reloads both flag words and re-decodes).
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     int up, down, left, right, y, aCond;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 pressed = pad->mPressedButtonFlags;
         u32 held = pad->mHeldButtonFlags;
         aCond = (pressed & 0x00400400) != 0;

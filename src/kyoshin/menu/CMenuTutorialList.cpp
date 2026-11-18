@@ -60,7 +60,6 @@ extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // UI sound playback (retail unmangled C symbol; id + param).
 extern "C" void CtrlRemote_SetSharedBit(u32 soundId, u32 arg);
 // Save/skip system busy queries (retail unmangled).
@@ -136,7 +135,7 @@ body:
     // plays the close sound and flags the closing state at 0x54.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -266,7 +265,7 @@ void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     bool left, right, up, down;
     u32 sortToggle, select, cancel;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPad.mPressedButtonFlags;
         left = (turbo & 0x8004) != 0;
@@ -380,7 +379,7 @@ void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
             first = (pad->mPressedButtonFlags >> 21) & 1;
             second = (pad->mPressedButtonFlags >> 22) & 1;
         } else {

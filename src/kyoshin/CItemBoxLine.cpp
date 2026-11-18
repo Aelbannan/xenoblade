@@ -1808,7 +1808,7 @@ void CItemBoxLine::RefreshPageList() {
                 if ((u8)i < 12) {
                     s5A0 = mPage.mValues[(u8)i];
                 }
-                page->mValues2[(u8)i] = s5A0;
+                page->mText.mValues2[(u8)i] = s5A0;
                 CIBLVec3 vec;
                 CopyTabSlotVec(&vec, mPage.mItemIds, (u8)i);
                 copyVEC3(&page->mPos[(u8)i], &vec);

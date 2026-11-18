@@ -59,29 +59,32 @@ struct CPadView {
 
 // ---------------------------------------------------------------------------
 // Quest window (retail sizeof 0xEC; the factory allocates 0xEC on the work
-// heap). Plain non-polymorphic struct (CTalkWindow / CSimpleEveTalkWin idiom):
-// the retail US/EU vtable lives in the split1 .data unit (lbl_eu_8052D0F0),
-// so the vptr at +0x10 is a plain field written by the ctor/dtor at source
-// level - a C++ virtual class would emit a local __vt__12CQuestWindow and
-// drift the dtor's vptr-store reloc.
+// heap).
+//
+// Real MI class: IUIWindow at +0x00 (0x6C, brings the CTTask<IUIWindow> Move/
+// Draw ptmf hooks at +0x3C/+0x48 and the layout/state members from +0x54),
+// IWorkEvent at +0x6C, IScnRender at +0x70 - so the window fields start at
+// +0x74, and retail's __vt__12CQuestWindow carries the +0x24 (IWorkEvent) and
+// +0xAC (IScnRender) sub-vtables.
+//
+// Deriving for real is what makes this TU the owner of the whole window base
+// chain: it already defines ~IUIWindow (the class's key function), so the
+// compiler emits __vt__9IUIWindow, __vt__18CTTask<9IUIWindow> (the inlined
+// CTTask<>/IUIWindow constructors store that vptr before the derived ctor body
+// writes the composite table - the retail ctor's two vptr stores), the
+// composite __vt__12CQuestWindow and all their RTTI records here, exactly as
+// retail's CQuestWindow.o carries them.
 // ---------------------------------------------------------------------------
-struct CQuestWindow {
-    u8  pad0[0x10];                        // 0x00 CProcess head
-    u32 mVtable;                           // 0x10 window composite vtable slot
-    u8  pad14[0x3C - 0x14];                // 0x14 CProcess tail
-    CTTask<IUIWindow>::MoveFunc mMoveFunc;  // 0x3C Move ptmf hook (12B)
-    CTTask<IUIWindow>::DrawFunc mDrawFunc;  // 0x48 Draw ptmf hook (12B)
-    nw4r::lyt::Layout* mpLayout;           // 0x54 layout (cbRenderBefore)
-    u32 field_58;                          // 0x58
-    u32 field_5C;                          // 0x5C
-    s32 field_60;                          // 0x60 (ctor init -1)
-    u8  field_64;                          // 0x64
-    u8  field_65;                          // 0x65
-    u8  field_66;                          // 0x66
-    u8  field_67;                          // 0x67 (ctor init 1)
-    u32 field_68;                          // 0x68
-    u32 field_6C;                          // 0x6C IWorkEvent dispatch slot
-    u32 field_70;                          // 0x70 IScnRender dispatch slot
+class CQuestWindow : public IUIWindow, public IWorkEvent, public IScnRender {
+public:
+    CQuestWindow(CScn* scn, u32 id, u32 flag);
+    virtual ~CQuestWindow();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void cbRenderBefore();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+
     CScn* mpScn;                           // 0x74 owning scene (removeRenderCB receiver)
     UnkClass_8045F564 mMemRegion;          // 0x78 embedded scratch region
     CFileHandle* field_0x88;               // 0x88 file handle (readFile)
@@ -107,11 +110,6 @@ struct CQuestWindow {
     u32 field_0xE0;                        // 0xE0
     u8  field_0xE4;                        // 0xE4
     u32 field_0xE8;                        // 0xE8 enabled pad flags (Term/ctor)
-
-    void Init();
-    void Term();
-    void cbRenderBefore();
-    void OnFileEvent();
 };
 
 // Quest-window object layout as seen by the CQuestWindow-unit free functions
@@ -162,11 +160,7 @@ extern u32 lbl_eu_8052D068[3];
 // Null pointer-to-member-function constant copied into the Move/Draw hooks.
 extern u32 __ptmf_null[3];
 
-// IUIWindow base vtable (written at +0x10 first, then overwritten by the
-// CQuestWindow composite vtable lbl_eu_8052D0F0).
-extern char lbl_eu_8052D238[];
 
-// Window-count .sbss counter (incremented by the ctor, decremented by Term).
 extern u32 lbl_eu_80663FD0;
 
 // Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to
@@ -209,11 +203,7 @@ extern const u8 lbl_eu_80667148;
 // `const` hoists the sdata2 load above the frame stores (CArtsInfo pattern).
 extern const f32 lbl_eu_80667140;
 
-// Quest-window vtable (.data, split1 unit) - written to +0x10 by the ctor and
-// re-written by the dtor (with the +0x24/+0xAC IWorkEvent/IScnRender slots).
-extern char lbl_eu_8052D0F0[];
 
-// Quest-name table indexed by SearchThresholdIdx(field_B8) (Init).
 extern const char* lbl_eu_8052CF80[];
 
 // Window arc path pointer (.sdata) fed to CDeviceFile::readFile (Init).
@@ -238,8 +228,6 @@ u32 menuPTStateIsActive();                       // party-state screen active?
 // cursor draw
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
-void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
-void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
 void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 
@@ -260,7 +248,6 @@ void* __ct__CTagProcessor(void*);
 // CfGameManager C-ABI imports (pre-mangled retail names; some retail symbols
 // are Fv-mangled but receive a vestigial register arg - keep the arg for the
 // call sites that set it, e.g. isClassicController(-1)).
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 u32 getEnabledInputFlags__Q22cf13CfGameManagerFv();
 void enablePadFlags__Q22cf13CfGameManagerFUlb(u32 enableFlags, bool enable);
 void* getCurrentPad__Q22cf13CfGameManagerFv();

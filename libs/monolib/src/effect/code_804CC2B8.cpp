@@ -1181,10 +1181,7 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
     EffFxSetupAxisRotation(self, &stackA, type, p3);
     EffFxComputeInheritDir(self, &stackB, type);
     EffFxUpdateLightColor(self, &self->field_0x1cc, p1);
-    if (self->field_0x1d8 != lbl_eu_8066B0DC)
-        self->field_0x06 |= 0x400;
-    else
-        self->field_0x06 &= (u16)~0x400;
+    ((SceneFlagBits*)&self->field_0x06)->b10 = self->field_0x1d8 != lbl_eu_8066B0DC;
     EffFxSetupMatrixPair(self, &self->field_0x19c, &self->field_0x1dc, type, p1,
                   &stackA, &stackB);
     if (self->field_0x32c) {
@@ -1550,8 +1547,8 @@ extern "C" void __attribute__((never_inline)) EffFxUpdateLightColor(EffectScene*
 // from the retail indirect calls (offsets 0x18/0x1c/0x20/0x24/0x28/0x5c).
 class CFBC8Target {
 public:
-    virtual void unk00();
-    virtual void unk04();
+    // MWCC emits slot index k at vtable byte offset 4k+8 (see __dt__804CC2E4's
+    // +8 release slot), so the retail offsets below are index-2.
     virtual void unk08();
     virtual void unk0C();
     virtual void unk10();
@@ -2374,7 +2371,7 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
 
     if (type == 0xe) {
         // class 0xe never fades: clear flag bit 14
-        out->field_0x06 &= (u16)~0x4000;
+        ((SceneFlagBits*)&out->field_0x06)->b14 = 0;
     }
     if ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 10) & 1) {
         MatFlags* obj = (MatFlags*)out->field_0x08;

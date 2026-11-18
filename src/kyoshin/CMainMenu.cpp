@@ -106,7 +106,7 @@ extern "C" void CUICfManager_queueMapSelectMenu();
 extern "C" void CUICfManager_queuePTStateMenu();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // cf::CPad view: only the three flag words this unit reads.
 struct CMainMenuPad {
@@ -667,7 +667,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
     }
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
     // Held-button early-outs per input style.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
             return;
         }
@@ -680,7 +680,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
     // Join colors: r8=aPressed, r6=down, r7=up, r4=bPressed, r0=confirm.
     // Join-scope t,p with decl order bPressed,t,p,down,up,aPressed,confirm.
     u32 bPressed, t, p, down, up, aPressed, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         p = pad->mPressedButtonFlags;
         t = pad->mTurboPressButtonFlags;
         u32 cHi = p & 0x400000;
@@ -1016,7 +1016,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
 
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
     // First mode query: held-button early-outs per input style.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
             return;
         }
@@ -1027,7 +1027,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
     }
     u32 down, up, aPressed, bPressed, confirm;
     // Second mode query picks the button extraction.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
         int c = ((p >> 22) & 1) | ((p >> 10) & 1);

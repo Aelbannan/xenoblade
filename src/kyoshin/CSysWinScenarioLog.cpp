@@ -1,5 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
 
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -84,92 +87,25 @@ void SysWinLog_ResetState() {
 
 // ---------------------------------------------------------------------------
 // CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38)
-// D1-inlined-into-D2 virtual dtor (same shape as CMainMenu). Subobjects are
-// destroyed in reverse order: mMemRegion@0x7c, then CProcess base, then
-// conditional operator delete. The nested double null-check is the MWCC
-// D2-inlined-into-D1 artifact.
+// D1-inlined-into-D2 virtual dtor: the compiler destroys mMemRegion@0x7c, then
+// the CProcess base (through the inlined CTTask<IUIWindow>/IUIWindow dtors) and
+// the conditional operator delete.
 // ---------------------------------------------------------------------------
-extern "C" void* __dt__18CSysWinScenarioLogFv(CSysWinScenarioLog* _this, int flags) {
-    if (_this) {
-        __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
-        if (_this) {
-            if (_this) {
-                __dt__8CProcessFv(_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+CSysWinScenarioLog::~CSysWinScenarioLog() {}
 
 // ---------------------------------------------------------------------------
 // CSysWinScenarioLog::CSysWinScenarioLog (us-80280934)
-// C-linkage ctor (retail symbol __ct__CSysWinScenarioLog carries no class-length
-// mangling, so it stays a plain global function - same idiom as CSystemWindow).
-// Runs CProcess's ctor, fills the IUIWindow base region by hand (temp vtable at
-// +0x10, the two __ptmf_null callback slots, control words), then the composite
-// vtable + work-event/render slots, the embedded UnkClass_8045F564 region, and
-// the window fields; finally bumps the open-window bookkeeping counters.
-// NOTE: the parameters are used directly (no local copies) - MWCC colors the
-// two spilled params in declaration order (this=r29, scene=r30) only when
-// neither is aliased into a local.
+// Runs CProcess's ctor, lets the inlined CTTask<IUIWindow>/IUIWindow ctors write
+// the temp vptr + the two null ptmf hooks + the window control words, then the
+// composite table with its +0x24 / +0xAC sub-vptrs, the embedded
+// UnkClass_8045F564 region and the window fields; finally bumps the open-window
+// bookkeeping counters.
 // ---------------------------------------------------------------------------
-extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
-                                                        void* param) {
-    __ct__8CProcessFv((CProcess*)s);
-
-    ((CSysWinProcessVtable*)s)->mpVtable = (u32)lbl_eu_8052D238;
-    // ptmf-triplet copies: walking-pointer reads with the store order [1],[0],[2]
-    // reproduce retail's lwzu-fused load schedule (CREvtModelMap MapModel_ProbeSlot
-    // pattern).
-    u32 w1, w2, w0;
-    u32 n1, n2, n0;
-    u32* src = __ptmf_null;
-    w0 = *src++;
-    w1 = *src++;
-    s->ptmf0[1] = w1;
-    s->ptmf0[0] = w0;
-    w2 = *src++;
-    s->ptmf0[2] = w2;
-
-    u32* src2 = __ptmf_null;
-    n0 = *src2++;
-    n1 = *src2++;
-    s->ptmf1[1] = n1;
-    s->ptmf1[0] = n0;
-    n2 = *src2++;
-    s->ptmf1[2] = n2;
-
-    s->field_54 = 0;
-    s->field_58 = 0;
-    s->field_5C = 0;
-    s->field_60 = -1;
-    s->mFlag64 = 0;
-    s->_65[0] = 0;
-    s->_65[1] = 0;
-    s->mFlag67 = 1;
-    s->field_68 = 0;
-
-    ((CSysWinProcessVtable*)s)->mpVtable = (u32)lbl_eu_80538358;
-    s->mWorkEvent = (u32)lbl_eu_80538358 + 0x24;
-    s->mScnRender = (u32)lbl_eu_80538358 + 0xac;
-    s->mFileHandle74 = 0;
-    s->mFileHandle78 = 0;
-
-    __ct__17UnkClass_8045F564Fv(&s->mMemRegion);
-
-    s->mScene = (CScn*)param;
-    s->mState = 0;
-    s->mField94 = 0;
-    s->mpAccessor = 0;
-    s->mpLayout = 0;
-    s->mpAnim = 0;
-
+CSysWinScenarioLog::CSysWinScenarioLog(CScn* scene)
+    : mFileHandle74(NULL), mFileHandle78(NULL), mMemRegion(), mScene(scene), mState(0),
+      mField94(NULL), mpAccessor(NULL), mpLayout(NULL), mpAnim(NULL) {
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
-    return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,13 +118,8 @@ CSysWinScenarioLog* SysWinLog_Create(CProcess* parent, u8* param) {
     if (lbl_eu_80664908 != 0) {
         return nullptr;
     }
-    CSysWinScenarioLog* obj =
-        (CSysWinScenarioLog*)mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem());
-    if (obj != nullptr) {
-        // The ctor returns `this` in r3, so obj stays live in r3 across the
-        // call and no extra callee-saved spill is needed (matches retail).
-        obj = (CSysWinScenarioLog*)__ct__CSysWinScenarioLog(obj, param);
-    }
+    CSysWinScenarioLog* obj = new (mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem()))
+        CSysWinScenarioLog((CScn*)param);
     lbl_eu_80664908 = (u32)obj;
     obj->Regist(parent, false);
     return (CSysWinScenarioLog*)lbl_eu_80664908;
@@ -269,9 +200,8 @@ void SysWinLog_TickCounter0B(CScenarioFlagObj* self) {
 // ---------------------------------------------------------------------------
 // Remaining unmatched func_8027* stubs in this unit (non-target).
 // ---------------------------------------------------------------------------
-void SysWinLog_DtorThunk6C(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x6c); }
-void SysWinLog_RenderThunk70(void* self) { ((CSysWinScenarioLog*)((char*)self - 0x70))->cbRenderBefore(); }
-void SysWinLog_DtorThunk70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
+// (the +0x6C/+0x70 offset thunks are compiler-emitted for the IWorkEvent and
+// IScnRender sub-vtables)
 
 void SysWinLog_PollBattleEnd() {
     if (lbl_eu_80664910 != 0) {
@@ -389,7 +319,7 @@ void CSysWinScenarioLog::Move() {
         case 2: {
             CSysWinPadView* pad = (CSysWinPadView*)cf::CfGameManager::getCurrentPad();
             bool pressed;
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 pressed = (pad->mButtons & 0x4600000) != 0;
             } else {
                 pressed = (pad->mButtons & 0x1030) != 0;
@@ -403,8 +333,8 @@ void CSysWinScenarioLog::Move() {
         }
         case 3:
             if (AnimRewindFrame(mpAnim, lbl_eu_80668AD0) != 0) {
-                mFlag67 = 0;
-                mFlag64 = 1;
+                mField67 = 0;
+                mField64 = 1;
             }
             break;
         }
@@ -451,7 +381,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x5b], t, (u32)self->mField94);
     char* u = BdatTouchStringCell(&lbl_eu_8050EE24[0x68], &lbl_eu_8050EE24[0x56], 0x2c);
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050EE24[0x76], u, 0);
-    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = cf::CfGameManager::isClassicController(-1) != 0
                           ? &lbl_eu_8050EE24[0x82]
                           : &lbl_eu_8050EE24[0x8b];
     u16 msgId = (u16)BdatGetU16ByTableKey(&lbl_eu_8050EE24[0x68], sel, 0x2c);
@@ -1521,6 +1451,17 @@ extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg) 
     return sum;
 }
 
+extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh);
+
+// ---------------------------------------------------------------------------
+// CSysWinScenarioLog::OnFileEvent: the IWorkEvent slot (+0x34 of the sub-vtable)
+// forwards straight to the file-event handler, so the compiler folds the body
+// into the +0x6C adjusting thunk and emits nothing else.
+// ---------------------------------------------------------------------------
+bool CSysWinScenarioLog::OnFileEvent(CEventFile* pEventFile) {
+    return SysWinLog_BuildLayout(this, (CFileHandle*)pEventFile);
+}
+
 // ---------------------------------------------------------------------------
 // SysWinLog_BuildLayout (us-80281104)
 // File-event handler for the scenario-log window. When the exchanged file
@@ -1530,7 +1471,7 @@ extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg) 
 // mFileHandle78 instead: release the BDAT archive and store the loaded FP in
 // lbl_eu_8066490C, return 1. Otherwise return 0.
 // ---------------------------------------------------------------------------
-extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) {
+extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) {
     void* data = fh->mData;
     if (self->mFileHandle74 == data) {
         self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x8000,
@@ -1583,23 +1524,14 @@ void CSysWinScenarioLog::Init() {
     // then overwrite with the embedded interface offset when this is live.
     // A fresh selection per call site matches retail, which re-materializes
     // the +0x6c IWorkEvent offset before each file request.
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != nullptr) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
-    }
+    IScnRender* render = this;
     mScene->addRenderCB(render, 0xD, 0);
 
-    IWorkEvent* ev74 = reinterpret_cast<IWorkEvent*>(this);
-    if (this != nullptr) {
-        ev74 = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
-    }
+    IWorkEvent* ev74 = this;
     mFileHandle74 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev74, 0, 0);
 
-    IWorkEvent* ev78 = reinterpret_cast<IWorkEvent*>(this);
-    if (this != nullptr) {
-        ev78 = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
-    }
+    IWorkEvent* ev78 = this;
     mFileHandle78 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
 }
@@ -1638,10 +1570,7 @@ void CSysWinScenarioLog::Term() {
     mMemRegion.deleteRegion();
     lbl_eu_80664908 = 0;
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
-    }
+    IScnRender* render = this;
     mScene->removeRenderCB(render);
 
     DecMenuCounter64080();

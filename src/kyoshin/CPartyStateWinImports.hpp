@@ -81,7 +81,6 @@ extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
 // pre-mangled Fv symbol; the inline s16 wrapper in CfGameManager.hpp would
 // discard the arg when inlined, so bind the verbatim retail name with the
 // int arg (same scheme as CSysWin.hpp / CMenuSkipTimer.hpp).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // UI sound effect (playUISound__FUl). C++ linkage so MWCC emits the mangled
 // retail name.

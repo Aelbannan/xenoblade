@@ -258,7 +258,20 @@ protected:
 
 private:
     void Init();
-    void InitBitGXNums(detail::BitGXNums* pNums);
+
+    static void InitBitGXNums(detail::BitGXNums* pNums) {
+        pNums->texMap = 0;
+        pNums->texSRT = 0;
+        pNums->texCoordGen = 0;
+        pNums->indSRT = 0;
+        pNums->indStage = 0;
+        pNums->tevSwap = false;
+        pNums->tevStage = 0;
+        pNums->chanCtrl = false;
+        pNums->matCol = false;
+        pNums->alpComp = false;
+        pNums->blendMode = 0;
+    }
 };
 
 /******************************************************************************

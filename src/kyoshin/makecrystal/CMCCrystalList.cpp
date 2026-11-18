@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/makecrystal/CMCCrystalList
 // Replace stubs with high-level C/C++ during decomp.
 
+#define IWORK_EVENT_INLINE_DTOR // ~CMCCrystalList elides the empty base dtor (retail)
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
 
 #include <cstdio>
@@ -34,47 +35,35 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // both mem-region members, zeroes every pointer/flag field, then clears the
 // 8 slot states with a rolled u8-counter loop (-O4,s shape).
 #pragma optimize_for_size on
-extern "C" CMCCrystalList* __ct__CMCCrystalList(CMCCrystalList* self)
+CMCCrystalList::CMCCrystalList()
 {
-    *(void**)self = (void*)lbl_eu_80535F80;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion1);
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion2);
-    self->mFileHandle1 = nullptr;
-    self->mFileHandle2 = nullptr;
-    self->mArcResAccessor = nullptr;
-    self->mArcResAccessor2 = nullptr;
-    self->mLayout = nullptr;
-    self->mAnimTrans1 = nullptr;
-    self->mAnimTrans2 = nullptr;
-    self->mAnimTrans3 = nullptr;
-    self->mAnimTrans4 = nullptr;
-    self->mAnimRes5 = nullptr;
-    self->mState = 0;
-    self->mStateIdx = 0;
-    self->mDataFlag = 0;
-    self->mIsActive = 1;
+    mFileHandle1 = nullptr;
+    mFileHandle2 = nullptr;
+    mArcResAccessor = nullptr;
+    mArcResAccessor2 = nullptr;
+    mLayout = nullptr;
+    mAnimTrans1 = nullptr;
+    mAnimTrans2 = nullptr;
+    mAnimTrans3 = nullptr;
+    mAnimTrans4 = nullptr;
+    mAnimRes5 = nullptr;
+    mState = 0;
+    mStateIdx = 0;
+    mDataFlag = 0;
+    mIsActive = 1;
     for (u8 i = 0; i < 8; i++) {
-        self->mSlotStates[i] = 0;
+        mSlotStates[i] = 0;
     }
-    return self;
 }
 #pragma optimize_for_size off
 
 // UnkClass_8045F564 member dtor and operator delete (retail names).
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 
-// Retail dtor is a plain free function: destroys the two embedded region
-// members and frees the object when the delete flag is positive.
+// Real destructor: the two embedded region members are typed members, so MWCC
+// destroys them (+0x14 then +0x04) and runs the retail delete-flag epilogue.
 #pragma optimize_for_size on
-extern "C" void* __dt__14CMCCrystalListFv(void* self, int flags) {
-    if (self != 0) {
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x14, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
-        if (flags > 0)
-            operator delete(self);
-    }
-    return self;
-}
+CMCCrystalList::~CMCCrystalList() {}
 #pragma optimize_for_size off
 
 // Retail 0x80222848: start async loads of the crystal-list layout archive

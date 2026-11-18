@@ -16,26 +16,41 @@ f32 AnmObjTexSrtRes::GetFrame() const {
     return GetFrm();
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexSrt")> lbl_eu_8051D590 = {sizeof("AnmObjTexSrt"), "AnmObjTexSrt"};
-
-bool AnmObjTexSrt::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D590) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+f32 AnmObjTexSrtRes::GetUpdateRate() const {
+    return GetRate();
 }
 
+NW4R_G3D_RTTI_DEF(AnmObjTexSrt);
+NW4R_G3D_RTTI_DEF(AnmObjTexSrtRes);
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexSrtRes")> lbl_eu_8051D5A8 = {sizeof("AnmObjTexSrtRes"), "AnmObjTexSrtRes"};
+// AnmObj::IsDerivedFrom body (retail inlines the base chain into every
+// derived class; the 0x650/0x640 checks come from this helper's boundary).
+static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+        return true;
+    }
+    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+        return true;
+    }
+    return false;
+}
+
+bool AnmObjTexSrt::IsDerivedFrom(G3dObj::TypeObj other) const {
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return anmObjBaseIsDerivedFrom(other);
+}
 
 bool AnmObjTexSrtRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D5A8) ? true
-         : other == TypeObj(lbl_eu_8051D590) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return AnmObjTexSrt::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjTexSrtRes::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D5A8);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjTexSrtRes::GetTypeName() const {
@@ -61,32 +76,36 @@ void AnmObjTexSrt::Release() {
     SetAnmFlag(FLAG_ANM_BOUND, false);
 }
 
+AnmObjTexSrtRes* AnmObjTexSrt::Attach(int idx, AnmObjTexSrtRes* pRes) {
+    return NULL;
+}
+
+AnmObjTexSrtRes* AnmObjTexSrt::Detach(int idx) {
+    return NULL;
+}
+
+void AnmObjTexSrt::DetachAll() {}
+
 } // namespace g3d
 } // namespace nw4r
 
 
 
-int Attach__Q34nw4r3g3d12AnmObjTexSrtFiPQ34nw4r3g3d15AnmObjTexSrtRes(void) { return 0x0; }
-
-int Detach__Q34nw4r3g3d12AnmObjTexSrtFi(void) { return 0x0; }
-
-void DetachAll__Q34nw4r3g3d12AnmObjTexSrtFv(void) {}
-
-
-
-// Retail-owned vtables / data (nw4r_data.s)
-extern char lbl_eu_805692E8[];       // AnmObjTexSrt construction vtable
-extern char lbl_eu_805692A0[];      // AnmObjTexSrtRes vtable
 extern nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[]; // anm play-policy table
 
 namespace nw4r {
 namespace g3d {
 
+// u16 -> f32 through a signed int, matching retail's biased-magic
+// signed-int->double sequence (0x4330000080000000).
+static inline f32 AnmTexSrtConvU16ToF(u16 v) {
+    return static_cast<f32>(static_cast<int>(v));
+}
+
 inline AnmObjTexSrt::AnmObjTexSrt(MEMAllocator* pAllocator, u16* pBindingBuf,
                                   int numBinding)
     : AnmObj(pAllocator, NULL), mNumBinding(numBinding),
       mpBinding(pBindingBuf) {
-    *(void**)this = (void*)lbl_eu_805692E8;
     Release();
 }
 
@@ -95,11 +114,9 @@ inline AnmObjTexSrtRes::AnmObjTexSrtRes(MEMAllocator* pAllocator,
                                         int numBinding,
                                         TexSrtAnmResult* pCacheBuf)
     : AnmObjTexSrt(pAllocator, pBindingBuf, numBinding),
-      FrameCtrl(0.0f, srt.ref().info.numFrame,
+      FrameCtrl(0.0f, AnmTexSrtConvU16ToF(srt.ref().info.numFrame),
                 lbl_eu_80663458[srt.ref().info.policy]),
-      mRes(srt), mpResultCache(pCacheBuf) {
-    *(void**)this = (void*)lbl_eu_805692A0;
-}
+      mRes(srt), mpResultCache(pCacheBuf) {}
 
 } // namespace g3d
 } // namespace nw4r
@@ -114,58 +131,67 @@ AnmObjTexSrtRes* AnmObjTexSrtRes::Construct(MEMAllocator* pAllocator,
         return NULL;
     }
 
-    u16 numMaterial = srt.ref().info.numMaterial;
-    u32 numMatEntries = mdl.GetResMatNumEntries();
+    u16 numMat = srt.ref().info.numMaterial;
+    int numBinding = mdl.GetResMatNumEntries();
 
-    // Layout: [object][result cache (optional)][binding buffer]
-    u32 cacheSize = cache ? numMaterial * sizeof(TexSrtAnmResult) : 0;
-    u32 totalSize =
-        cacheSize + numMatEntries * sizeof(u16) + sizeof(AnmObjTexSrtRes);
+    // Pointer locals declared first (MWCC birth-order register coloring).
+    void* pBuffer;
+    char* pBase;
+    TexSrtAnmResult* pCacheBuf;
+    u16* pBindingBuf;
+    AnmObjTexSrtRes* pAnm;
+
+    // Branchless "cache ? numMat : 0" select, matching retail's neg/or/srawi/and
+    // nonzero-test idiom.
+    u32 numCache = numMat & ((-cache | cache) >> 31);
+
+    u32 resultOfs = numCache * sizeof(TexSrtAnmResult);
+    u32 size =
+        resultOfs + (u32)numBinding * sizeof(u16) + sizeof(AnmObjTexSrtRes);
 
     if (pSize != NULL) {
-        *pSize = totalSize;
+        *pSize = size;
     }
 
     if (pAllocator == NULL) {
         return NULL;
     }
 
-    void* pMem = MEMAllocFromAllocator(pAllocator, totalSize);
+    pBuffer = MEMAllocFromAllocator(pAllocator, size);
 
-    if (pMem == NULL) {
+    if (pBuffer == NULL) {
         return NULL;
     }
 
-    TexSrtAnmResult* pCacheBuf = NULL;
+    pBase = static_cast<char*>(pBuffer);
 
-    if (cache) {
-        pCacheBuf = reinterpret_cast<TexSrtAnmResult*>(static_cast<char*>(pMem) +
-                                                       sizeof(AnmObjTexSrtRes));
-    }
+    pCacheBuf =
+        cache ? reinterpret_cast<TexSrtAnmResult*>(pBase +
+                                                   sizeof(AnmObjTexSrtRes))
+              : NULL;
 
-    u16* pBindingBuf = reinterpret_cast<u16*>(static_cast<char*>(pMem) +
-                                              sizeof(AnmObjTexSrtRes) +
-                                              cacheSize);
+    pBindingBuf = reinterpret_cast<u16*>(pBase + resultOfs +
+                                         sizeof(AnmObjTexSrtRes));
 
-    AnmObjTexSrtRes* pThis = new (
-        pMem) AnmObjTexSrtRes(pAllocator, srt, pBindingBuf, numMatEntries,
-                              pCacheBuf);
+    pAnm = new (pBase) AnmObjTexSrtRes(pAllocator, srt, pBindingBuf, numBinding,
+                                       pCacheBuf);
 
-    // Prime the result cache at the initial frame
+    // Fill the freshly allocated cache: every defined binding gets its
+    // TexSrtAnmResult evaluated once at the start frame.
     if (pCacheBuf != NULL) {
-        f32 frame = pThis->GetFrm();
-
-        for (u32 i = 0; i < numMatEntries; i++) {
-            u16 binding = pThis->mpBinding[i];
-
+        f32 f = pAnm->GetFrm();
+        for (u32 i = 0, ofs = 0; i < (u32)pAnm->mNumBinding;
+             ofs += (u32)sizeof(u16), i++) {
+            u16 binding =
+                *(const u16*)(reinterpret_cast<const u8*>(pAnm->mpBinding) + ofs);
             if (!(binding & BINDING_UNDEFINED)) {
                 u32 id = binding & BINDING_ID_MASK;
-                pThis->mRes.GetAnmResult(&pThis->mpResultCache[id], id, frame);
+                pAnm->mRes.GetAnmResult(&pAnm->mpResultCache[id], id, f);
             }
         }
     }
 
-    return pThis;
+    return pAnm;
 }
 
 } // namespace g3d
@@ -174,9 +200,7 @@ AnmObjTexSrtRes* AnmObjTexSrtRes::Construct(MEMAllocator* pAllocator,
 namespace nw4r {
 namespace g3d {
 
-void AnmObjTexSrtRes::SetFrame(f32 frame) {
-    SetFrm(frame);
-
+void AnmObjTexSrtRes::UpdateCache() {
     if (mpResultCache != NULL) {
         f32 f = GetFrm();
         for (u32 i = 0; i < (u32)mNumBinding; i++) {
@@ -189,38 +213,23 @@ void AnmObjTexSrtRes::SetFrame(f32 frame) {
     }
 }
 
+void AnmObjTexSrtRes::SetFrame(f32 frame) {
+    SetFrm(frame);
+    UpdateCache();
+}
+
 void AnmObjTexSrtRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (rate == 1.0f) {
-        if (mpResultCache != NULL) {
-            u32 i;
-            f32 f = GetFrm();
-            for (i = 0; i < (u32)mNumBinding; i++) {
-                u16 binding = mpBinding[i];
-                if (!(binding & BINDING_UNDEFINED)) {
-                    u32 id = binding & BINDING_ID_MASK;
-                    mRes.GetAnmResult(&mpResultCache[id], id, f);
-                }
-            }
-        }
+    if (0.0f == rate) {
+        UpdateCache();
     }
 }
 
 void AnmObjTexSrtRes::UpdateFrame() {
-    if (GetRate() != 1.0f) {
+    if (0.0f != GetRate()) {
         UpdateFrm();
-
-        if (mpResultCache != NULL) {
-            f32 f = GetFrm();
-            for (u32 i = 0; i < (u32)mNumBinding; i++) {
-                u16 binding = mpBinding[i];
-                if (!(binding & BINDING_UNDEFINED)) {
-                    u32 id = binding & BINDING_ID_MASK;
-                    mRes.GetAnmResult(&mpResultCache[id], id, f);
-                }
-            }
-        }
+        UpdateCache();
     }
 }
 
@@ -231,15 +240,16 @@ namespace nw4r {
 namespace g3d {
 
 bool AnmObjTexSrtRes::Bind(ResMdl mdl) {
-    u16 numMat = mRes.ref().info.numMaterial;
+    int numMat = mRes.ref().info.numMaterial;
     bool bound = false;
 
     for (u16 i = 0; i < numMat; i++) {
-        ResDic dic = ResDic(mRes.ofs_to_ptr<ResDicData>(mRes.ref().toTexSrtDataDic));
-        const ResAnmTexSrtMatData* pData =
-            reinterpret_cast<const ResAnmTexSrtMatData*>(dic[i]);
-        const char* pName =
-            reinterpret_cast<const char*>(pData) + pData->name;
+        // Inlined GetMatAnm(): dictionary lookup may fail at every offset
+        // level, hence the nested null checks in retail.
+        const ResAnmTexSrtMatData* pData = mRes.GetMatAnm(i);
+        const char* pName = reinterpret_cast<const char*>(
+            static_cast<ptrdiff_t>(pData->name) +
+            reinterpret_cast<ptrdiff_t>(pData));
 
         ResMat mat = mdl.GetResMat(ResName(
             reinterpret_cast<const ResNameData*>(
@@ -346,9 +356,8 @@ void ApplyTexSrtAnmResult(ResTexSrt texSrt, ResMatIndMtxAndScale indMtxAndScale,
                           const TexSrtAnmResult* pResult) {
     ApplyTexSrtAnmResult(texSrt, pResult);
 
-    u32 flags = *reinterpret_cast<u32*>(
-        reinterpret_cast<u8*>(indMtxAndScale.ptr()) + 4);
-    const TexSrt* pSrt = texSrt.ref().texSrt;
+    u32 flags = pResult->indFlags;
+    const TexSrt* pSrt = &pResult->srt[TexSrtAnmResult::NUM_OF_MAT_TEX_MTX];
     u32 i = 8;
 
     while (flags != 0) {
@@ -402,15 +411,14 @@ void ApplyTexSrtAnmResult(ResTexSrt texSrt, ResMatIndMtxAndScale indMtxAndScale,
 
 
 
-void IsDerivedFrom__Q34nw4r3g3d15AnmObjTexSrtResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+namespace nw4r {
+namespace g3d {
 
-void IsDerivedFrom__Q34nw4r3g3d12AnmObjTexSrtCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+const G3dObj::TypeObj AnmObjTexSrtOverride::GetTypeObj() const {
+    // The overrider is never instantiated by the game, so retail carries no
+    // type-name block for it; it reports the base class's type object.
+    return AnmObjTexSrt::GetTypeObjStatic();
+}
 
-void GetTypeName__Q34nw4r3g3d15AnmObjTexSrtResCFv(){}
-
-extern const char lbl_eu_8051D5A8[];
-void* GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv(void) { return (void*)lbl_eu_8051D5A8; }
-
-void __dt__Q34nw4r3g3d15AnmObjTexSrtResFv(){}
-
-extern "C" void* GetTypeObj__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv(void) { return (void*)lbl_eu_8051D590; }
+} // namespace g3d
+} // namespace nw4r

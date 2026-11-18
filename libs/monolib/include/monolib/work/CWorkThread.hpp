@@ -115,7 +115,7 @@ public:
     virtual void wkRenderAfter();                      //0x90
     virtual bool wkStandbyLogin();                     //0x94
     virtual bool wkStandbyLogout();                    //0x98
-    virtual bool handleExceptionRetry(WORK_ID wid); //0x9C
+    virtual bool wkStandbyExceptionRetry(WORK_ID wid); //0x9C
 
     void wkReplaceHasChild(int capacity);
     void wkEntryChild(CWorkThread* pChild, bool prepend);
@@ -130,6 +130,9 @@ public:
 
     void wkTimeoutInit();
     void wkStandby();
+
+    // Not a vtable slot: the exception-subscriber callback.
+    bool handleExceptionRetry(WORK_ID wid);
 
     static CWorkThread* getWorkThread(WORK_ID wid);
     CWorkThread* getWorkThread(const char* name);

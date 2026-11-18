@@ -219,9 +219,4 @@ private:
 } // namespace g3d
 } // namespace nw4r
 
-// ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// ---------------------------------------------------------------------------
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdlSimple")> lbl_eu_8051D7A8;
-
 #endif

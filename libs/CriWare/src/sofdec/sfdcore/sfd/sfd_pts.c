@@ -3,56 +3,31 @@
 
 #include <harness_catalog.h>
 #include <string.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(void* h, u32 err_code);
 
-// PTS queue entry / input-output record (16 bytes).
-typedef struct SfdPtsEntry {
-    union {
-        s64 pts;   // 0x00 64-bit PTS
-        u32 hw[2]; // 0x00 raw halves
-    } u;
-    u32 pos;  // 0x08 byte position
-    u32 size; // 0x0C byte size
-} SfdPtsEntry; // 0x10 bytes
-
-// PTS queue descriptor located at offset 0x13F0 of the stream handle.
-typedef struct SfdPtsQue {
-    SfdPtsEntry* entries; // 0x00
-    s32 maxIdx;           // 0x04 ring capacity (entries)
-    s32 count;            // 0x08 number of valid entries
-    s32 unk0C;            // 0x0C write index
-    s32 start;            // 0x10 read position
-} SfdPtsQue;
-
-// PTS input record passed by the demuxer.
-typedef struct SfdPtsData {
-    union {
-        s64 pts;   // 0x00 64-bit PTS
-        u32 hw[2]; // 0x00 raw halves (hw[0] = high)
-    } u;
-    u32 pos;   // 0x08 byte position
-    u32 size;  // 0x0C byte size
-} SfdPtsData;
+// PTS queue descriptor lives in SfdBuf::pts (handle+0x13f0 + idx*0x74); the
+// queue record the demuxer hands in is the same shape as SfdPtsEntry.
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len);
 
-void SFPTS_InitPtsQue(void* self) {
-    *(u32*)((u8*)self) = 0;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = 0;
-    *(u32*)((u8*)self + 0xc) = 0;
-    *(u32*)((u8*)self + 0x10) = 0;
+void SFPTS_InitPtsQue(SfdPtsQue* q) {
+    q->entries = NULL;
+    q->maxIdx = 0;
+    q->count = 0;
+    q->wr = 0;
+    q->rd = 0;
 }
 
-void SFPTS_ResetPtsQue(void* self) {
-    *(u32*)((u8*)self + 0x08) = 0;
-    *(u32*)((u8*)self + 0x0c) = 0;
-    *(u32*)((u8*)self + 0x10) = 0;
+void SFPTS_ResetPtsQue(SfdPtsQue* q) {
+    q->count = 0;
+    q->wr = 0;
+    q->rd = 0;
 }
 
-s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
+s32 SFD_SetVideoPts(SfdHandle* self, void* pts, s32 size) {
     if (pts == 0 || size <= 0)
         return 0;
     if (SFLIB_CheckHn(self)) {
@@ -63,20 +38,20 @@ s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
     aligned = (u8*)(((u32)pts + 7) & ~7);
     count = size - (s32)(aligned - (u8*)pts);
     memset(aligned, 0, count);
-    *(u32*)((u8*)self + 0x1464) = (u32)aligned;
-    *(s32*)((u8*)self + 0x1468) = count / 16;
-    *(u32*)((u8*)self + 0x146c) = 0;
-    *(u32*)((u8*)self + 0x1470) = 0;
-    *(u32*)((u8*)self + 0x1474) = 0;
+    self->buf[1].pts.entries = (SfdPtsEntry*)aligned;
+    self->buf[1].pts.maxIdx = count / 16;
+    self->buf[1].pts.count = 0;
+    self->buf[1].pts.wr = 0;
+    self->buf[1].pts.rd = 0;
     return 0;
 }
 
-s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, u32* o) {
+s32 SFPTS_WritePtsQue(SfdHandle* self, s32 idx, void* data, u32* o) {
     u32* d = (u32*)data;
     SfdPtsQue* q;
     s32 r;
     o[0] = 0;
-    if (((SfdPtsData*)data)->u.pts < 0)
+    if (((SfdPtsEntry*)data)->u.pts < 0)
         return 0;
     q = (SfdPtsQue*)((u8*)self + idx * 0x74 + 0x13f0);
     if (q->entries == 0)
@@ -89,7 +64,7 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, u32* o) {
            hi-first halves let the first store use indexed stwx (base+index
            stay live when e takes a fresh reg); pre-loading lo avoids an
            alias-kill reload of d[1] after the hi store. */
-        s32 uc = q->unk0C;
+        s32 uc = q->wr;
         SfdPtsEntry* e = &q->entries[uc];
         s32 next = uc + 1;
         u32 lo = d[1];
@@ -105,7 +80,7 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, u32* o) {
         s32 nn = (next < q->maxIdx) ? next : next - q->maxIdx;
         s32 c2 = q->count + 1;
         q->count = c2;
-        q->unk0C = nn;
+        q->wr = nn;
         if (c2 >= q->maxIdx)
             o[0] = 1;
         else
@@ -126,7 +101,7 @@ typedef struct SfdPtsCtrl {
     SfdPtsQue que; // 0x13F0
 } SfdPtsCtrl;
 
-s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
+s32 SFPTS_ReadPtsQue(SfdHandle* self, s32 idx, u32 arg, void* out) {
     u32* o = (u32*)out;
     SfdPtsQue* q;
     u32 win_start;
@@ -141,11 +116,11 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
 
     if (arg == 0) {
         if (q->count != 0) {
-            SfdPtsEntry* e = &q->entries[q->start];
+            SfdPtsEntry* e = &q->entries[q->rd];
             *(SfdPtsEntry*)out = *e;
             /* advance read index with ring wraparound */
-            s32 next = q->start + 1;
-            q->start = (next < q->maxIdx) ? next : next - q->maxIdx;
+            s32 next = q->rd + 1;
+            q->rd = (next < q->maxIdx) ? next : next - q->maxIdx;
             q->count--;
         }
     } else {
@@ -155,10 +130,10 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
         if (q->count != 0) {
             s32 found = sfpts_SearchPtsQue(q, arg, win_start, win_len);
             if (found != -1) {
-                s32 ns = q->start + found;
+                s32 ns = q->rd + found;
                 ns = (ns < q->maxIdx) ? ns : ns - q->maxIdx;
                 q->count -= found;
-                q->start = ns;
+                q->rd = ns;
                 SfdPtsEntry* e = &q->entries[ns];
                 *(SfdPtsEntry*)out = *e;
             }
@@ -176,7 +151,7 @@ s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
     win_end = win_start + win_len;
     count = (s32)q->count;
     maxIdx = (s32)q->maxIdx;
-    start = (s32)q->start;
+    start = q->rd;
     i = 0;
 
     for (; i < count; i++) {
@@ -201,10 +176,9 @@ s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
     return -1;
 }
 
-int SFPTS_IsPtsQueFull(void* self, int idx) {
-    u8* p = (u8*)self + idx * 0x74;
-    if (*(u32*)(p + 0x13f0) == 0) return 0;
-    s32 a = *(s32*)(p + 0x13f8);
-    s32 b = *(s32*)(p + 0x13f4);
+int SFPTS_IsPtsQueFull(SfdHandle* self, int idx) {
+    if (self->buf[idx].pts.entries == 0) return 0;
+    s32 a = self->buf[idx].pts.count;
+    s32 b = self->buf[idx].pts.maxIdx;
     return ((s64)a - (s64)b) >> 32;
 }

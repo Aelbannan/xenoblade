@@ -33,7 +33,7 @@ extern void* simGetLeafActData(void* model);
 extern void simSetFlag2OnTree(void* model, int flag);
 extern void simMarkTree100000(void* model, int flag);
 extern void simBindChrAnim(void* model, u32 resId, void* animIdx, u32 frame, u32 gateBit, u32 flag, u32 half);
-extern void simSetValue7E8(void* model, int value);
+extern "C" void simSetValue7E8(void* model, int value);
 extern void simMarkTree80000(void* model, int flag);
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);

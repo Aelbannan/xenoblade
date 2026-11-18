@@ -1,55 +1,39 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CSysWinSave.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 // sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
 // (forward decl for kChainGaugeTwo, defined below after the pooling functions).
 extern const volatile f64 kChainGaugeTwo;
-extern void* lbl_eu_80538A60[16];
+// cf::CChainCombo materialised here in retail (the TU constructs one somewhere
+// not yet recovered): the compiler emitted its 0xC-byte vtable (first words of
+// this unit's .data) plus the weak RTTI record and the type-name string. Kept as
+// explicit data until that use site is found.
 extern void* __RTTI__Q22cf11CChainCombo[2];
-extern void* __RTTI__11CSysWinSave[2];
-struct SaveDataA;
-extern struct SaveDataA lbl_eu_80538994;
-// (389A0 vtable lives at +12 inside the packed SaveDataA below.)
-#define lbl_eu_805389A0 ((void*)((char*)&lbl_eu_80538994 + 12))
-extern char __RTTI__10IScnRender[];
-extern char __RTTI__8CProcess[];
-extern char __RTTI__14CChildListNode[];
-extern char __RTTI__15CDoubleListNode[];
-extern char __RTTI__9IUIWindow[];
-extern char lbl_eu_80661ED0[];
-extern char lbl_eu_8050FD6C[];
-extern char lbl_eu_8050FD60[];
 extern char lbl_eu_8050FD50[];
+extern "C" void* __dt__Q22cf11CChainComboFv(void* self, int flags);
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <new>
 #include <revolution/gx/GXPixel.h>
 
-// Global-view declaration so the catalog thunks can address the member render
-// callback by its retail symbol name (the definition below emits that symbol).
-void cbRenderBefore__11CSysWinSaveFv(void* self);
-
-// ---------------------------------------------------------------------------
-// VTable-compatible thunks adjacent to the CSysWinSave subobjects (retail
-// emits these as offset-adjusted dispatch stubs: only r3 is re-based, then a
-// tail jump into the right subobject trampoline). Preserved from the scaffold.
-// ---------------------------------------------------------------------------
-void SysWinSaveDtorThunk6C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-
-void SysWinSaveRenderThunk70(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
-
-void SysWinSaveDtorThunk70(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
-
-extern "C" void func_80294824__FPv(float* self) {
+// C++ linkage: retail's symbols are the C++ mangled initChainGauge__FPv /
+// resetChainGauge__FPv (both take the gauge as void*).
+void initChainGauge(void* p) {
+    float* self = (float*)p;
     float v = 0.0f;
     self[0] = v;
     self[1] = v;
 }
 
-extern "C" void func_80294834__FPv(float* self) {
+void resetChainGauge(void* p) {
+    float* self = (float*)p;
     float v = 0.0f;
     self[0] = v;
     self[1] = v;
@@ -114,7 +98,7 @@ void CSysWinSave::HandleInput() {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         in1     = (pad->field_04 >> 21) & 1;
         in2     = (pad->field_04 >> 22) & 1;
         sels    = (pad->field_104 & 0x8004) != 0;
@@ -133,13 +117,13 @@ void CSysWinSave::HandleInput() {
     if (in1) {
         // Close the dialog without advancing the save slot.
         this->mFlagDC = 3;
-        reinterpret_cast<CSysWin*>(&this->mSysWin[0])->advancePhase3();
+        this->mSysWin.advancePhase3();
         this->mCur18.SetVisible(0);
         playUISound(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         this->mFlagDC = 3;
-        reinterpret_cast<CSysWin*>(&this->mSysWin[0])->advancePhase3();
+        this->mSysWin.advancePhase3();
         this->mCur18.SetVisible(0);
         this->mFlagDD = 1;
         playUISound(6);
@@ -148,7 +132,7 @@ void CSysWinSave::HandleInput() {
         this->mFlagDD = this->mFlagDD - 1;
         if (this->mFlagDD < 0) this->mFlagDD = 1;
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&this->mSysWin[0]), this->mFlagDD);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), &this->mSysWin, this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound(1);
     } else if (confirm) {
@@ -156,7 +140,7 @@ void CSysWinSave::HandleInput() {
         this->mFlagDD = this->mFlagDD + 1;
         if (this->mFlagDD > 1) this->mFlagDD = 0;
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&this->mSysWin[0]), this->mFlagDD);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), &this->mSysWin, this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound(1);
     }
@@ -171,12 +155,11 @@ void CSysWinSave::HandleInput() {
 void CSysWinSave::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    IScnRender* render = this;
     mScene->addRenderCB(render, 0xd, 0);
 
     mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x4000,
-                            lbl_eu_8050FD6C, 0);
+                            "CSysWinSave\0MNU_sysmes\0name", 0);
 
     // RAII scratch-region guard, released at the end of this scope.
     Class_8045F858 guard(&mMemRegion);
@@ -186,7 +169,7 @@ void CSysWinSave::Init() {
     // destroy the temp and dispatch the layout-build virtual at vtable+0x88.
     {
     CSysWin tempW(2);
-    CSysWinData* sw = reinterpret_cast<CSysWinData*>(&mSysWin[0]);
+    CSysWinData* sw = reinterpret_cast<CSysWinData*>(&mSysWin);
     CSysWinData* tw = reinterpret_cast<CSysWinData*>(&tempW);
     sw->f_04 = tw->f_04;
     sw->f_08 = tw->f_08;
@@ -207,7 +190,7 @@ void CSysWinSave::Init() {
     sw->f_38 = tw->f_38;
     sw->f_39 = tw->f_39;
     }
-    reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
+    reinterpret_cast<CSysWinView*>(&mSysWin)->v20();
 
     // Rebuild the embedded CCur18 cursor the same way (shared arc accessor).
     mCur18 = CCur18(CUICfManager_getArcResourceAccessor());
@@ -232,9 +215,9 @@ void CSysWinSave::Move() {
     case 0: {
         // Window just became ready: load the three save-panel messages and
         // start the open animation.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isReady()) {
+        if (mSysWin.isReady()) {
             mFlagDC = 1;
-            const char* base = lbl_eu_8050FD6C;
+            const char* base = "CSysWinSave\0MNU_sysmes\0name";
             // s2 declared before s1 (assignments stay in retail's call order)
             // so MWCC's saved-register coloring lands s1 in r29 / s2 in r30.
             const char* s2;
@@ -242,20 +225,20 @@ void CSysWinSave::Move() {
             s1 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4e);
             s2 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4f);
             const char* s3 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x50);
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->setKindContent(reinterpret_cast<char*>((void*)s1), 0);
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->setTwoTextValues(reinterpret_cast<char*>((void*)s2), reinterpret_cast<char*>((void*)s3));
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->applyKind(0);
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->openPhase1();
+            mSysWin.setKindContent(reinterpret_cast<char*>((void*)s1), 0);
+            mSysWin.setTwoTextValues(reinterpret_cast<char*>((void*)s2), reinterpret_cast<char*>((void*)s3));
+            mSysWin.applyKind(0);
+            mSysWin.openPhase1();
         }
         break;
     }
     case 1:
         // Window active: update the cursor from the stored slot flag.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
+        if (mSysWin.isActive()) {
             mFlagDC = 2;
             mCur18.SetVisible(1);
             u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin[0]), mFlagDD);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), &mSysWin, mFlagDD);
             mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         }
         break;
@@ -265,16 +248,16 @@ void CSysWinSave::Move() {
         break;
     case 3:
         // Closing transition finished - hand control back to the UI.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
+        if (mSysWin.isActive()) {
             if (mFlagDD == 0)
                 CUICfManager_queueSaveMenu(1, 1);
-            field_67 = 0;
-            field_64 = 1;
+            mField67 = 0;
+            mField64 = 1;
         }
         break;
     }
 
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->dispatchPhase();
+    mSysWin.dispatchPhase();
     mCur18.Update();
 }
 
@@ -286,13 +269,12 @@ void CSysWinSave::Move() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Term() {
     CDeviceVI::waitForDrawDone();
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
+    mSysWin.termLayout();
     mCur18.cleanup();
     mMemRegion.deleteRegion();
     lbl_eu_80664A08 = 0;
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    IScnRender* render = this;
     mScene->removeRenderCB(render);
 
     if (mFlagDD != 0)
@@ -301,27 +283,12 @@ void CSysWinSave::Term() {
 
 // ---------------------------------------------------------------------------
 // Target 3: CSysWinSave::~CSysWinSave (us-802965b4)
-// Complete-object destructor. Subobjects destroyed in reverse construction
-// order: CCur18@0xC4, CSysWin@0x88, UnkClass_8045F564@0x78, then the CProcess
-// base (guarded by the nested double null-check, an MWCC D2-inlined-into-D1
-// artifact), then conditional operator delete when flags > 0.
+// Complete-object destructor: the compiler emits the subobject destruction in
+// reverse construction order (CCur18@0xC4, CSysWin@0x88,
+// UnkClass_8045F564@0x78), the CProcess base call (through the inlined
+// CTTask<IUIWindow>/IUIWindow dtors) and the conditional operator delete.
 // ---------------------------------------------------------------------------
-extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
-    if (_this != 0) {
-        __dt__6CCur18Fv(&_this->mCur18, -1);
-        reinterpret_cast<CSysWin*>(&_this->mSysWin[0])->CSysWin::~CSysWin();
-        __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
-        if (_this != 0) {
-            if (_this != 0) {
-                __dt__8CProcessFv(_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+CSysWinSave::~CSysWinSave() {}
 
 // ---------------------------------------------------------------------------
 // Target 4: CSysWinSave::cbRenderBefore (us-80296a3c)
@@ -348,7 +315,7 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+    mSysWin.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
     mCur18.DrawLayout(&drawInfo);
 }
 
@@ -364,72 +331,23 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
     if (lbl_eu_80664A08 != 0)
         return 0;
 
-    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
-    CSysWinSave* obj = (CSysWinSave*)mtl::MemManager::allocate(0xe0, workMem);
-    if (obj != 0) {
-        CSysWinSaveVtShim* shim = reinterpret_cast<CSysWinSaveVtShim*>(obj);
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // IUIWindow vtable at +0x10 is written twice (temp vtable, then the
-        // CSysWinSave composite vtable).
-        shim->vtable = (void*)lbl_eu_8052D238;
-
-        // Copy the null member-function pointer into both callback slots.
-        // Retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
-        // intermediate locals to force the retail ordering. The uintptr_t
-        // round-trip keeps MWCC from constant-propagating the array address
-        // into the loads (which would fold @l into the [0] accesses).
-        u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
-        u32 ptmfWord0 = ptmf[0];
-        obj->ptmf0[0] = ptmfWord0;
-        obj->ptmf0[1] = ptmfWord1;
-        u32 ptmfWord2 = ptmf[2];
-        obj->ptmf0[2] = ptmfWord2;
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        obj->ptmf1[0] = ptmfWord0;
-        obj->ptmf1[1] = ptmfWord1;
-        ptmfWord2 = ptmf[2];
-        obj->ptmf1[2] = ptmfWord2;
-
-        obj->field_54 = 0;
-        obj->field_58 = 0;
-        obj->field_5C = 0;
-        obj->field_60 = -1;
-        obj->field_64 = 0;
-        obj->field_65 = 0;
-        obj->field_66 = 0;
-        obj->field_67 = 1;
-        obj->field_68 = 0;
-
-        shim->vtable = (void*)lbl_eu_805389A0;
-        obj->mWorkEvent = (u32)lbl_eu_805389A0 + 0x24;
-        obj->mScnRender = (u32)lbl_eu_805389A0 + 0xac;
-        obj->mScene = scene;
-
-        __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
-        __ct__7CSysWinFUc(&obj->mSysWin[0], 0);
-        __ct__CCur18(&obj->mCur18, 0);
-
-        obj->mFlagDC = 0;
-        obj->mFlagDD = 0;
-    }
+    CSysWinSave* obj = new (mtl::MemManager::allocate(0xe0, CWorkThreadSystem::getWorkMem()))
+        CSysWinSave(scene);
     lbl_eu_80664A08 = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(registerParent, 0);
     return lbl_eu_80664A08;
 }
 
-// absorb: retail data (generated)
+// Retail data. The first 0xC bytes of this unit's .data are the tail of
+// cf::CChainCombo's vtable (the split boundary cuts the table the linker placed
+// between CChainCombo.cpp's and this unit's contribution); the class's own
+// __vt__11CSysWinSave / base list / RTTI record and the "CSysWinSave" type-name
+// string are compiler-emitted.
 __declspec(section ".rodata") char lbl_eu_8050FD50[0x10] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x43, 0x6f, 0x6d, 0x62, 0x6f, 0x00};
-__declspec(section ".rodata") char lbl_eu_8050FD60[0xc] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00};
-__declspec(section ".rodata") char lbl_eu_8050FD6C[0x1c] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x73, 0x79, 0x73, 0x6d, 0x65, 0x73, 0x00, 0x6e, 0x61, 0x6d, 0x65, 0x00};
-struct SaveDataA { void* h[3]; void* v[48]; void* t[16]; };
+struct ChainComboVtPrefix { void* h[3]; };
 __declspec(section ".data") __attribute__((used))
-struct SaveDataA lbl_eu_80538994 = { { (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__11CSysWinSave }, { (void*)__RTTI__Q22cf11CChainCombo, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)0xFFFFFF94, (void*)SysWinSaveDtorThunk6C, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)__RTTI__11CSysWinSave, (void*)0xFFFFFF90, (void*)SysWinSaveDtorThunk70, (void*)SysWinSaveRenderThunk70, (void*)__RTTI__11CSysWinSave }, { (void*)__RTTI__10IScnRender, (void*)0x70, (void*)__RTTI__11CSysWinSave, (void*)0x6c, (void*)__RTTI__15CDoubleListNode, 0, (void*)__RTTI__14CChildListNode, 0, (void*)__RTTI__8CProcess, 0, (void*)lbl_eu_80661ED0, 0, (void*)__RTTI__9IUIWindow, 0, 0, 0 } };
+struct ChainComboVtPrefix lbl_eu_80538994 = { { (void*)__RTTI__Q22cf11CChainCombo, 0, (void*)__dt__Q22cf11CChainComboFv } };
 __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* __RTTI__Q22cf11CChainCombo[2] = { (void*)lbl_eu_8050FD50, (void*)lbl_eu_8050FD50 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* __RTTI__11CSysWinSave[2] = { (void*)lbl_eu_8050FD60, (void*)lbl_eu_80538A60 };
+void* __RTTI__Q22cf11CChainCombo[2] = { (void*)lbl_eu_8050FD50, 0 };
 CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)

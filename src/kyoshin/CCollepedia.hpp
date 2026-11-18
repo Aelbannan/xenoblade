@@ -224,7 +224,6 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
 // Shared tag string; retail symbol is the MANGLED getPackedFont__Fv, so this
 // import must keep C++ linkage (MWCC appends __Fv).
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to
 // member-wise copy a stack-constructed CSysWin into the embedded window at

@@ -1098,7 +1098,6 @@ extern "C" bool wkStandbyLogin__16CLibCriMoviePlayFv();
 extern "C" void updateMovieTextures__16CLibCriMoviePlayFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 extern "C" void viBeginFrame__11CDeviceVICbFv();
-extern "C" u32 lbl_eu_80663618[];   // type_info vtable (foreign)
 
 // [.data] 0x8056CF48-0x8056D008 (0xC0): __vt__16CLibCriMoviePlay (40-slot
 // CWorkThread chain) followed by the CDeviceVICb sub-vtable (-0x1C4). Both
@@ -1141,22 +1140,18 @@ extern "C" u32 lbl_eu_8056CF48[48] = {
 
 // [.data] 0x8056D008-0x8056D028 (0x20): typeinfo / base-list block
 // ([type_info vtbl, 0x1C4], [__RTTI__10IWorkEvent, 0], [__RTTI__11CWorkThread, 0], [0, 0]).
-// The two typeinfo words reference the foreign lbl_eu_80663618 placeholder
-// (UNDEF here, so the file bytes stay 0 like retail); UNIT_RULES
-// retarget_relocs repoints them at the __RTTI__ names - declaring
-// "extern __RTTI__" directly collides with MWCC's implicit RTTI-on
-// declaration (10322).
-// Each placeholder must be a DISTINCT UNDEF symbol never referenced
-// elsewhere in the TU: MWCC shares one symtab entry per target (deduping
-// relocs), and retarget_relocs renames the whole entry - a shared name
-// would corrupt every other reference to it (e.g. the dtor's __dl__FPv
-// call). These two dummies exist only as reloc anchors.
+// The typeinfo word is the class's own RTTI record; the rest are the public
+// base list. The __RTTI__ records themselves are defined by the TUs that own
+// them, so this TU only references them - declared inside RTTIExterns because
+// a namespace-scope extern "C" decl avoids MWCC's implicit RTTI-on
+// declaration of the same name (10322).
 namespace RTTIExterns {
 extern "C" u32 __RTTI__10IWorkEvent[];
 extern "C" u32 __RTTI__11CWorkThread[];
+extern "C" u32 __RTTI__11CDeviceVICb[];
 }
 extern "C" u32 lbl_eu_8056D008[8] = {
-    (u32)&lbl_eu_80663618, 0x000001C4,
+    (u32)&RTTIExterns::__RTTI__11CDeviceVICb, 0x000001C4,
     (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0x00000000,
     (u32)&RTTIExterns::__RTTI__11CWorkThread, 0x00000000,
     0x00000000, 0x00000000,

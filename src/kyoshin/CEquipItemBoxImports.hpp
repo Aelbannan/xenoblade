@@ -72,7 +72,6 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Font/line text providers: getPackedFont is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.

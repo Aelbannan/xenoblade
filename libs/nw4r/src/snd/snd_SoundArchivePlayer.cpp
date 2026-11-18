@@ -651,19 +651,29 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
 #pragma auto_inline off
 detail::PlayerHeap* SoundArchivePlayer::CreatePlayerHeap(
     void** ppBuffer, void* pEnd, u32 bufferSize) {
+    void* pHeapBuffer = *ppBuffer;
+
     void* pHeapEnd = ut::RoundUp(
-        ut::AddOffsetToPtr(*ppBuffer, sizeof(detail::PlayerHeap) + bufferSize),
-        4);
+        ut::AddOffsetToPtr(pHeapBuffer, sizeof(detail::PlayerHeap)), 4);
 
     if (ut::ComparePtr(pHeapEnd, pEnd) > 0) {
         return NULL;
     }
 
-    void* pHeapBuffer = *ppBuffer;
     *ppBuffer = pHeapEnd;
 
     detail::PlayerHeap* pHeap = new (pHeapBuffer) detail::PlayerHeap();
-    void* pBody = ut::AddOffsetToPtr(pHeapBuffer, sizeof(detail::PlayerHeap));
+
+    void* pBody = ut::RoundUp(*ppBuffer, 32);
+    *ppBuffer = pBody;
+
+    void* pBodyEnd = ut::RoundUp(ut::AddOffsetToPtr(pBody, bufferSize), 4);
+
+    if (ut::ComparePtr(pBodyEnd, pEnd) > 0) {
+        return NULL;
+    }
+
+    *ppBuffer = pBodyEnd;
 
     if (!pHeap->Create(pBody, bufferSize)) {
         return NULL;
@@ -796,13 +806,21 @@ bool SoundArchivePlayer::SetupStrmBuffer(const SoundArchive* pArchive,
 }
 
 void SoundArchivePlayer::Update() {
-    for (u32 i = 0; i < mSoundPlayerCount; i++) {
-        GetSoundPlayer(i).Update();
+    SapShutdownLayout* pSelf = reinterpret_cast<SapShutdownLayout*>(this);
+
+    for (u32 i = 0; i < pSelf->mSoundPlayerCount; i++) {
+        pSelf->mSoundPlayers[i].Update();
     }
 
-    mSeqSoundInstanceManager.SortPriorityList();
-    mStrmSoundInstanceManager.SortPriorityList();
-    mWaveSoundInstanceManager.SortPriorityList();
+    reinterpret_cast<detail::SoundInstanceManager<detail::SeqSound>*>(
+        &pSelf->mSeqSoundMgr)
+        ->SortPriorityList();
+    reinterpret_cast<detail::SoundInstanceManager<detail::StrmSound>*>(
+        &pSelf->mStrmSoundMgr)
+        ->SortPriorityList();
+    reinterpret_cast<detail::SoundInstanceManager<detail::WaveSound>*>(
+        &pSelf->mWaveSoundMgr)
+        ->SortPriorityList();
 }
 
 const SoundArchive& SoundArchivePlayer::GetSoundArchive() const {
@@ -859,8 +877,11 @@ inline const void* SapLookupTableWaveDataAddress(
 } // namespace
 
 const void* SoundArchivePlayer::detail_GetFileAddress(u32 id) const {
-    if (SAP_LAYOUT(this)->mFileManager != NULL) {
-        const void* pAddr = SAP_LAYOUT(this)->mFileManager->GetFileAddress(id);
+    SoundArchivePlayer_FileManager* pFileManager =
+        SAP_LAYOUT(this)->mFileManager;
+
+    if (pFileManager != NULL) {
+        const void* pAddr = pFileManager->GetFileAddress(id);
         if (pAddr != NULL) {
             return pAddr;
         }
@@ -1753,55 +1774,54 @@ PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPC
         reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)->field_0x6);
 
     while (setupResult != 0) {
-        if (setupResult != 1) {
+        if (setupResult == 1) {
+            // All instances busy: stop the lowest-priority sound and retry.
+            u32 mgrState = rMgr.field_0x70;
+            if (mgrState == 1) {
+                return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
+            }
+
+            // front node link sits 0xEC bytes into its owning StrmSound
+            detail::StrmSound* pLowest;
+            if (mgrState == 0) {
+                pLowest = NULL;
+            } else {
+                pLowest = reinterpret_cast<detail::StrmSound*>(
+                    rMgr.field_0x74 - 0xEC);
+            }
+            if (pSound == pLowest) {
+                return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
+            }
+
+            pLowest->Stop(0);
+
+            setupResult = pSound->Setup(
+                &self->mStrmBufferPool,
+                reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
+                    ->field_0x4,
+                reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
+                    ->field_0x6);
+        } else {
             return SoundStartable::START_ERR_UNKNOWN;
         }
-
-        // All instances busy: consider stopping the lowest-priority sound
-        // and retrying.
-        u32 mgrState = rMgr.field_0x70;
-        if (mgrState == 1) {
-            return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
-        }
-
-        // front node link sits 0xEC bytes into its owning StrmSound
-        detail::StrmSound* pLowest;
-        if (mgrState == 0) {
-            pLowest = NULL;
-        } else {
-            pLowest = reinterpret_cast<detail::StrmSound*>(
-                rMgr.field_0x74 - 0xEC);
-        }
-        if (pLowest == pSound) {
-            return SoundStartable::START_ERR_NOT_ENOUGH_INSTANCE;
-        }
-
-        pSound->Stop(0);
-
-        setupResult = pSound->Setup(
-            &self->mStrmBufferPool,
-            reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
-                ->field_0x4,
-            reinterpret_cast<const StrmSoundInfoLayout*>(pStrmInfo)
-                ->field_0x6);
     }
 
     detail::StrmPlayer::StartOffsetType strmOffsetType;
 
     switch (startType) {
     case SoundStartable::StartInfo::START_OFFSET_TYPE_MILLISEC: {
-        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_SAMPLE;
+        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_MILLISEC;
         break;
     }
 
     case SoundStartable::StartInfo::START_OFFSET_TYPE_TICK: {
-        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_MILLISEC;
+        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_SAMPLE;
         startOffset = 0;
         break;
     }
 
     case SoundStartable::StartInfo::START_OFFSET_TYPE_SAMPLE: {
-        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_MILLISEC;
+        strmOffsetType = detail::StrmPlayer::START_OFFSET_TYPE_SAMPLE;
         break;
     }
 
@@ -2089,9 +2109,10 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
 
     // This build reads the wave entry through ReadWaveInfo rather than
     // ReadWaveParam; the wave data buffer rides along as its output pointer.
-    return reader.ReadWaveInfo(pNoteInfo->waveIndex,
-                               reinterpret_cast<detail::WaveInfo*>(pWaveData),
-                               pWaveAddr);
+    bool result = reader.ReadWaveInfo(
+        pNoteInfo->waveIndex, reinterpret_cast<detail::WaveInfo*>(pWaveData),
+        pWaveAddr);
+    return result;
 }
 
 } // namespace snd

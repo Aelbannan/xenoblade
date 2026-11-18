@@ -175,7 +175,6 @@ void* __dynamic_cast(void* src, long offset, const void* src_type,
 // layout parameter is left unset at this call site).
 CBattleCommuFontObj* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
 // Battle/party presence check (retail passes -1).
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 
 // Global data imports (MWCC does not mangle global-scope data names).

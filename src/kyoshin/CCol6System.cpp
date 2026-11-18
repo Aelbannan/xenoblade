@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -770,7 +771,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
 extern "C" void col6HintInput(CCol6Hint* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int sels, confirm, up2, down2, up, down;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         up      = (pad->mField04 >> 21) & 1;
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x2001) != 0;
@@ -1556,7 +1557,7 @@ body:
             if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1585,7 +1586,7 @@ body:
             if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1612,7 +1613,7 @@ body:
             if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1697,7 +1698,7 @@ body:
             if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1721,7 +1722,7 @@ body:
             if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (cf::CfGameManager::isClassicController(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -2199,7 +2200,7 @@ extern "C" int Col6_ValidateBox_1024(CCol6System* self) {
 void col6PadHandle(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2326,7 +2327,7 @@ void col6PadHandle(CCol6System* self) {
 void col6SwitchBox(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2470,7 +2471,7 @@ void col6SwitchBox(CCol6System* self) {
 void col6WinScroll(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2928,7 +2929,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
         if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -3106,7 +3107,7 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
         if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -3158,7 +3159,7 @@ void Col6_Win2Interact_378C(CCol6System* self) {
         if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;

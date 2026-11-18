@@ -35,4 +35,3 @@ extern "C" void* Bdat_GetTable_AA34();
 
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

@@ -97,7 +97,6 @@ extern "C" u32 CUICfManager_queueWorldMapMenu();
 // is the pre-mangled name, so it must stay C linkage (inside extern "C") or
 // MWCC appends a __Fi suffix (see CQuestWindow.hpp:280 block). The s16 inline
 // wrapper in CfGameManager.hpp would DCE the `li r3,-1` arg setup.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // CProcess base ctor is out-of-line in retail (CProcess is abstract, so the
 // factory calls it as a plain function).
 void __ct__8CProcessFv(CProcess* self);

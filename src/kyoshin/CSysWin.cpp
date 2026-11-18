@@ -40,7 +40,7 @@ extern "C" void* __ct__CTagProcessor(void*);
 // cf::CfGameManager helper. Retail's symbol carries the no-arg Fv suffix but
 // the call site passes an argument (the active window kind), so declare the
 // retail symbol verbatim under C linkage.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // Five-entry window-label index table (bdat row key per window kind). Retail
 // keeps it as a function-local static and copies it by value, reading a word
@@ -367,7 +367,7 @@ void CSysWin::applyKind(u8 kind) {
     char* str = BdatTouchStringCell("MNU_kyeassign", "help", idx);
     LayoutSetTextBoxFmtValue(mLayout, "txt_close00", str, 0);
     LayoutSetTextBoxFmtValue(mLayout, "txt_close01", str, 0);
-    u32 gm = isClassicController__Q22cf13CfGameManagerFv(-1);
+    u32 gm = cf::CfGameManager::isClassicController(-1);
     field_39 = (u8)gm;
     u16 keyVal = BdatGetU16ByTableKey(
         "MNU_kyeassign",
@@ -427,7 +427,7 @@ void CSysWin::phase1To2Advance() {
 // kind differs from the window's current kind (window kind must be < 5).
 void CSysWin::syncKindAdvance() {
     if (field_38 >= 5) return;
-    if (field_39 == (u32)isClassicController__Q22cf13CfGameManagerFv(-1)) return;
+    if (field_39 == (u32)cf::CfGameManager::isClassicController(-1)) return;
     applyKind(field_38);
 }
 

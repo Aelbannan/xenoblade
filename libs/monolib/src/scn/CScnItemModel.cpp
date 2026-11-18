@@ -226,7 +226,7 @@ extern "C" void simMarkTree100000(CScnItemModel* self, u32 param) {
 
 // simRemoveFromPool: remove `self` from every item in the pool owned by the
 // scene object at self->field_04. Tail-calls the pool iterator.
-void simRemoveFromPool(CScnItemModel* self) {
+extern "C" void simRemoveFromPool(CScnItemModel* self) {
     CScnItemPool_forEachClearNodeRefs(self->field_04->pool, self);
 }
 
@@ -1273,7 +1273,7 @@ extern "C" u32 simGetLeafFlagBit9(CScnItemModel* node) {
 // loop condition re-reads the buffer base/count every iteration (retail
 // shape - MWCC cannot hoist them past the store through the loaded
 // pointer).
-int simSyncBuf824Flags(CScnItemModel* self, u32 param) {
+extern "C" int simSyncBuf824Flags(CScnItemModel* self, u32 param) {
     if (!(self->flags7A4 & 0x2)) {
         return 0;
     }
@@ -1307,7 +1307,7 @@ int simSyncBuf824Flags(CScnItemModel* self, u32 param) {
 // 1-arg float virtual (vtable 0x48) to every live model in the 4-slot
 // reference list (0x7B4), the linked model at 0x7C4, then the second
 // 4-slot list (0x834).
-void simSetAndPropRate(CScnItemModel* self, float param) {
+extern "C" void simSetAndPropRate(CScnItemModel* self, float param) {
     self->value858 = param;
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
@@ -1326,9 +1326,9 @@ void simSetAndPropRate(CScnItemModel* self, float param) {
     }
 }
 
-float simGetRate858(u8* self) { return ((CScnItemModel*)self)->value858; }
+extern "C" float simGetRate858(u8* self) { return ((CScnItemModel*)self)->value858; }
 
-void simNotifyVfuncB4(CScnItemModel* self, u32 param) {
+extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -1348,7 +1348,7 @@ void simNotifyVfuncB4(CScnItemModel* self, u32 param) {
 
 // simNotifyVfunc8C: same triple-list traversal as simNotifyVfuncB4, calling the
 // 1-arg virtual at vtable 0x8C.
-void simNotifyVfunc8C(CScnItemModel* self, u32 param) {
+extern "C" void simNotifyVfunc8C(CScnItemModel* self, u32 param) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -1371,7 +1371,7 @@ void simNotifyVfunc8C(CScnItemModel* self, u32 param) {
 // then the second 4-slot list (0x834). Returns whether ANY call reported
 // handled - the accumulator is re-bool-ized after each call (retail shape:
 // `or` first, then the neg/or/srwi setnz).
-int simProbeModelVec(CScnItemModel* self, u32 a, u32 b) {
+extern "C" int simProbeModelVec(CScnItemModel* self, u32 a, u32 b) {
     int result = 0;
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
@@ -1393,7 +1393,7 @@ int simProbeModelVec(CScnItemModel* self, u32 a, u32 b) {
 
 // simNotifyVfunc94: same triple-list traversal as simNotifyVfuncB4, calling the
 // 1-arg virtual at vtable 0x94.
-void simNotifyVfunc94(CScnItemModel* self, u32 param) {
+extern "C" void simNotifyVfunc94(CScnItemModel* self, u32 param) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -1414,7 +1414,7 @@ void simNotifyVfunc94(CScnItemModel* self, u32 param) {
 // simNotifyReadyTree: invoke the no-arg virtual (vtable 0x98) on every live model
 // in the 4-slot reference list (0x7B4), on the linked model at 0x7C4, then
 // on every live model in the second 4-slot list (0x834).
-void simNotifyReadyTree(CScnItemModel* self) {
+extern "C" void simNotifyReadyTree(CScnItemModel* self) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -1476,7 +1476,7 @@ CScnItemModel* __dt__13CScnItemModelFv(CScnItemModel* self, int deleting) {
 // simNotifyVfunc9C: call the 2-arg virtual (vtable 0x9C) on every live model in
 // the 4-slot reference list (0x7B4), on the linked model at 0x7C4, then on
 // every live model in the second 4-slot list (0x834).
-void simNotifyVfunc9C(CScnItemModel* self, u32 a, u32 b) {
+extern "C" void simNotifyVfunc9C(CScnItemModel* self, u32 a, u32 b) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -1494,9 +1494,9 @@ void simNotifyVfunc9C(CScnItemModel* self, u32 a, u32 b) {
     }
 }
 
-void simSetValue7E8(u8* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
+extern "C" void simSetValue7E8(u8* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
 
-void simNopVfuncSlot(CScnItemModel* self, u32 param) { (void)self; (void)param; }
+extern "C" void simNopVfuncSlot(CScnItemModel* self, u32 param) { (void)self; (void)param; }
 
 extern "C" void simSetFlags7A8_12(u8* self, u32 a, u32 b) {
     volatile u32* f = (volatile u32*)&((CScnItemModel*)self)->flags7A8;
@@ -2075,7 +2075,7 @@ extern "C" void simPropagateEnvLgt(CScnItemModel* self, CScnEnvLgtData* param) {
 // the last two (same unroll shape as simClearNodeRefs), and strength-reduces
 // the fill loop into a walked self+0x7B4 pointer while keeping the store
 // address as self + i*4.
-int simLinkSlot7B4(CScnItemModel* self, CScnItemModel* node) {
+extern "C" int simLinkSlot7B4(CScnItemModel* self, CScnItemModel* node) {
     for (u32 i = 0; i < 4; i++) {
         if (self->slots7B4[i] == node) return 0;
     }
@@ -2092,7 +2092,7 @@ int simLinkSlot7B4(CScnItemModel* self, CScnItemModel* node) {
 // simLinkModel7C4: link `node` into self's field_0x7C4 slot (rejecting an
 // already-linked node), mark node's 0x800 flag, then notify via the vtable
 // method at 0xD8.
-int simLinkModel7C4(CScnItemModel* self, CScnItemModel* node) {
+extern "C" int simLinkModel7C4(CScnItemModel* self, CScnItemModel* node) {
     if (self->field_0x7C4 == node) {
         return 0;
     }
@@ -2105,7 +2105,7 @@ int simLinkModel7C4(CScnItemModel* self, CScnItemModel* node) {
 // simClearNodeRefs: clear every reference slot equal to `node`. The slots live
 // in the self+8 view; retail unrolls the 4-slot loop, folding the first slot
 // to direct offsets and walking the rest via a base register.
-void simClearNodeRefs(CScnItemModel* self, CScnItemModel* node) {
+extern "C" void simClearNodeRefs(CScnItemModel* self, CScnItemModel* node) {
     // Constant-trip loop: MWCC fully unrolls it, hoisting the zero constant
     // into one register and folding the last two slots onto a self+8 base.
     // The final 0x7C8 check uses a not-equal early return (retail bnelr).
@@ -2118,7 +2118,7 @@ void simClearNodeRefs(CScnItemModel* self, CScnItemModel* node) {
 
 // simNotifyVfunc28: call the 2-arg virtual (vtable 0x28) on every live model in
 // the 4-slot reference list (0x7B4), then on the linked model at 0x7C4.
-void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b) {
+extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -2133,7 +2133,7 @@ void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b) {
 // simProbeVfunc2C: call the 1-arg virtual (vtable 0x2C) on every live model in
 // the 4-slot reference list (0x7B4), then on the linked model at 0x7C4,
 // returning 1 as soon as any call reports handled (non-zero).
-int simProbeVfunc2C(CScnItemModel* self, u32 param) {
+extern "C" int simProbeVfunc2C(CScnItemModel* self, u32 param) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -2152,7 +2152,7 @@ int simProbeVfunc2C(CScnItemModel* self, u32 param) {
 
 // simNotifyVfunc30: call the 2-arg virtual (vtable 0x30) on every live model in
 // the 4-slot reference list (0x7B4), then on the linked model at 0x7C4.
-void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b) {
+extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -2167,7 +2167,7 @@ void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b) {
 // simProbeVfunc34: call the 1-arg virtual (vtable 0x34) on every live model in
 // the 4-slot reference list (0x7B4), then on the linked model at 0x7C4,
 // returning 1 as soon as any call reports handled (non-zero).
-int simProbeVfunc34(CScnItemModel* self, u32 param) {
+extern "C" int simProbeVfunc34(CScnItemModel* self, u32 param) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
@@ -2344,7 +2344,7 @@ extern "C" void scnImN4CreateModel(void* self);
 extern "C" void simFwdAnimReset(void* self) { scnImN4CreateModel(self); }
 
 // simGetTvFadeConst: return the TV-format dependent float constant.
-float simGetTvFadeConst() {
+extern "C" float simGetTvFadeConst() {
     return CDeviceVI::isTvFormatPal() ? lbl_eu_8066A8CC : lbl_eu_8066A8C4;
 }
 
@@ -2447,22 +2447,21 @@ static inline void SetItemEnableBits(u32* word, u32 mask, u32 enable) {
         *word &= ~mask;
     }
 }
-extern "C" void simSetFlag1Tree(CScnItemModelNw4r* overlay, u32 enable) {
-    CScnItemModel* self = (CScnItemModel*)overlay;
+extern "C" void simSetFlag1Tree(CScnItemModel* self, u32 enable) {
     SetItemEnableBits(&self->flags7A4, 1, enable);
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
-            simSetFlag1Tree((CScnItemModelNw4r*)item, enable);
+            simSetFlag1Tree(item, enable);
         }
     }
     if (self->field_0x7C4 != 0) {
-        simSetFlag1Tree((CScnItemModelNw4r*)self->field_0x7C4, enable);
+        simSetFlag1Tree(self->field_0x7C4, enable);
     }
     for (int j = 0; j < 4; j++) {
         CScnItemModel* item = self->slots834[j];
         if (item != 0) {
-            simSetFlag1Tree((CScnItemModelNw4r*)item, enable);
+            simSetFlag1Tree(item, enable);
         }
     }
 }
@@ -2493,7 +2492,7 @@ extern "C" void simSetFlag1MTree(CScnItemModel* self, u32 enable) {
 // simRemoveWordFromBuf: remove the first field_0x7F0 element equal to `value` by
 // shifting the tail down one slot and decrementing count820. count820 is
 // read fresh inside the shift loop (retail reloads it each iteration).
-void simRemoveWordFromBuf(CScnItemModel* self, u32 value) {
+extern "C" void simRemoveWordFromBuf(CScnItemModel* self, u32 value) {
     int count = self->count820;
     for (int i = 0; i < count; i++) {
         u32 item = self->field_0x7F0[i];
@@ -2614,19 +2613,19 @@ namespace SIMBlob {
 extern "C" void __dt__13CScnItemModelFv();
 extern "C" void simRefreshActDist(); extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void scnItemIdNoopA(); extern "C" void simGetValue7E4();
-extern "C" void simNotifyVfunc28(); extern "C" void simProbeVfunc2C();
-extern "C" void simNotifyVfunc30(); extern "C" void simProbeVfunc34();
-extern "C" void simSetAndPropRate(); extern "C" void simGetRate858();
+extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b); extern "C" int simProbeVfunc2C(CScnItemModel* self, u32 param);
+extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b); extern "C" int simProbeVfunc34(CScnItemModel* self, u32 param);
+extern "C" void simSetAndPropRate(CScnItemModel* self, float param); extern "C" void simGetRate858();
 extern "C" void simNopVfuncSlot(); extern "C" void simVtableFalse2();
 extern "C" void func_80183264(); extern "C" void simVtableNopVoid();
 extern "C" void simSetFlag7A8_100(); extern "C" void simSetFlag200000();
-extern "C" void simSetFlag8000000(); extern "C" void simNotifyVfunc8C();
-extern "C" void simProbeModelVec(); extern "C" void simNotifyVfunc94();
-extern "C" void simNotifyReadyTree(); extern "C" void simNotifyVfunc9C();
-extern "C" void simLinkSlot7B4(); extern "C" void simLinkModel7C4();
-extern "C" void simNotifyVfuncB4(); extern "C" void simVtableTrue();
+extern "C" void simSetFlag8000000(); extern "C" void simNotifyVfunc8C(CScnItemModel* self, u32 param);
+extern "C" int simProbeModelVec(CScnItemModel* self, u32 a, u32 b); extern "C" void simNotifyVfunc94(CScnItemModel* self, u32 param);
+extern "C" void simNotifyReadyTree(CScnItemModel* self); extern "C" void simNotifyVfunc9C(CScnItemModel* self, u32 a, u32 b);
+extern "C" int simLinkSlot7B4(CScnItemModel* self, CScnItemModel* node); extern "C" int simLinkModel7C4(CScnItemModel* self, CScnItemModel* node);
+extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param); extern "C" void simVtableTrue();
 extern "C" void simVtableFalse(); extern "C" void simVtableFalse3();
-extern "C" void simVtableFalse4(); extern "C" void simRemoveFromPool();
+extern "C" void simVtableFalse4(); extern "C" void simRemoveFromPool(CScnItemModel* self);
 extern "C" void simRefreshFadeChain(); extern "C" void simSetFlag20Link();
 extern "C" void simSetFlag100Link();
 }

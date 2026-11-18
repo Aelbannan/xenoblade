@@ -1,6 +1,7 @@
 // Catalog TU for kyoshin/menu/CMenuPTChangeNotice
 // Party-member change notice screen task reconstruction.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "monolib/util/MemManager.hpp"
@@ -130,7 +131,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     // Party-member icon texture: pick the message name by pad type, load the
     // "timg" texture, bind it and set its pixel size on the pane.
     {
-        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = cf::CfGameManager::isClassicController(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
@@ -173,7 +174,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                       BdatTouchStringCell(&lbl_eu_8050FC20[0x76],
                                     &lbl_eu_8050FC20[0x84], 0x2e),
                       0);
-        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = cf::CfGameManager::isClassicController(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2e);

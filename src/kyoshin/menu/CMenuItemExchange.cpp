@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuItemExchange
 // High-level C/C++ reconstruction from retail PPC.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -272,7 +273,7 @@ void CMenuItemExchange::Phase6Input() {
     int cancel = (pad->mTurboFlags & 0x2001) != 0;
     int decide = (pad->mTurboFlags & 0x4002) != 0;
     int up, down, leftTrigger, yHeld;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         up = (pad->mPressedFlags & 0x00400000) != 0;
         down = (pad->mPressedFlags & 0x00800000) != 0;
         leftTrigger = (pad->mPressedFlags & 0x01000000) != 0;

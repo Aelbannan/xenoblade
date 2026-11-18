@@ -35,7 +35,6 @@ extern "C" {
 void writePanePos(nw4r::lyt::Pane*, float*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 void* getPlayer__Q22cf13CfGameManagerFi(int);
-int isClassicController__Q22cf13CfGameManagerFv(int);
 }
 // C++-mangled retail helper (actor id -> action source).
 void* findObjectById(int id);

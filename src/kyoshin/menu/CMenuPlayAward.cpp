@@ -89,7 +89,7 @@ body:
     // help-display byte (0x1160) leaves the phase dispatch.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -200,7 +200,7 @@ void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
     // words inside each branch). Same shape as CMenuOption's input handler.
     bool up, down, pageUp, pageDown;
     bool left, right, pageLeft;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;   // +0x104
         u32 pressed = pad->mPadPressedFlags;       // +0x04
         up = (turbo & 0x8004) != 0;
@@ -761,7 +761,7 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     char* s5;
     char* s4 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
     s5 = BdatTouchStringCell(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
-    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = cf::CfGameManager::isClassicController(-1) != 0
                           ? &lbl_eu_8050E7C0[0xd7]
                           : &lbl_eu_8050E7C0[0xe0];
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);

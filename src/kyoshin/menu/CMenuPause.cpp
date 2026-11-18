@@ -62,7 +62,6 @@ struct CMenuPauseTexObj {
 
 extern "C" {
     void MenuSnd_SetSlotsPause_8890(u32);
-    int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void CfSoundMan_PlayRequest(f32, int, int, int);
     void func_800853C8__Q22cf13CfGameManagerFv();
     void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
@@ -122,7 +121,7 @@ void CMenuPause::Init() {
     {
         u16 msg = BdatGetU16ByTableKey(
             "MNU_kyeassign",
-            isClassicController__Q22cf13CfGameManagerFv(-1) ? "fileID_2"
+            cf::CfGameManager::isClassicController(-1) ? "fileID_2"
                                                       : "fileID_1",
             0x6b);
         char* handle = MakeTplNameSysFile(msg);
@@ -150,7 +149,7 @@ void CMenuPause::Init() {
     {
         u16 msg = BdatGetU16ByTableKey(
             "MNU_kyeassign",
-            isClassicController__Q22cf13CfGameManagerFv(-1) ? "fileID_2"
+            cf::CfGameManager::isClassicController(-1) ? "fileID_2"
                                                       : "fileID_1",
             0x6c);
         char* handle = MakeTplNameSysFile(msg);
@@ -299,7 +298,7 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
     u32 first;
     u32 second;
     // Call the raw mangled import so the -1 channel argument reaches r3.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         first = (pad->mPressedButtonFlags >> 21) & 1;
         second = (pad->mPressedButtonFlags >> 22) & 1;
     } else {

@@ -517,13 +517,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A6E0"),
         ),
-        # The IWorkEvent vtable references symbols MWCC will not let us
-        # declare under -ipa (the member/RTTI asm names __dt__Q23LOD...,
-        # OnFileEvent__Q23LOD..., __RTTI__10IWorkEvent collide with the
-        # compiler-generated objects; lbl_eu_80663848 lives in another TU).
-        # The source emits a lodmm_vt_placeholder UND at each slot; retarget
-        # those relocs (.data offsets relative to the vtable base at 0x10)
-        # onto the retail names here.
+        # MWCC now emits the IWorkEvent-derived LOD::LODMemMan vtable itself
+        # (key function = the out-of-line virtual dtor).  Retail's vtable
+        # slot 0 and its base list reference objects owned by other TUs
+        # (lbl_eu_80663848 / __RTTI__10IWorkEvent), so retarget those relocs
+        # (.data offsets relative to the vtable base at 0x10) onto the retail
+        # names; the dtor and OnFileEvent slots already carry the right names.
         retarget_relocs=(
             (".data", 0x10, "lbl_eu_80663848"),
             (".data", 0x18, "__dt__Q23LOD9LODMemManFv"),
@@ -700,15 +699,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         # kept vtable base-list references (CDeviceGX/CDeviceVICb/CDeviceBase/
         # CWorkThread/IWorkEvent). Retail defines none of them here - the
         # base-list words are extern refs resolved by the owning TUs. Drop all
-        # five; exact_renames below retarget VICb/Base onto the retail pool
-        # labels, the rest keep their mangled names.
+        # five; exact_renames below retarget GX/Base onto the retail pool
+        # labels, CDeviceVICb keeps its real __RTTI__ name (retail's .sdata
+        # record at 0x80663618 is defined by CDeviceVICb.cpp since the
+        # lbl_eu_80663618 -> __RTTI__11CDeviceVICb rename).
         drop_data_range=((".data", 0xE8, 0x1A8), (".sdata", 0x10, 0x38),),
         drop_data_tail=((".rodata", 0x10),),
         drop_text_symbols_as_undef=("__dt__11CDeviceBaseFv", "viBeforeDrawDone__11CDeviceVICbFv"),
         exact_renames=(
             ("__RTTI__9CDeviceGX", "lbl_eu_80663758"),
-            # compiler-generated base-list entries -> retail pool names
-            ("__RTTI__11CDeviceVICb", "lbl_eu_80663618"),
+            # compiler-generated base-list entry -> retail pool name
             ("__RTTI__11CDeviceBase", "lbl_eu_806635F0"),
         ),
     ),

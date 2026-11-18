@@ -52,7 +52,6 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
@@ -219,7 +218,7 @@ void handleOptionInput(CMenuOption* self) {
     int right;
     int pageLeft;
     int pageRight;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         up = (turbo & 0x8004) != 0;

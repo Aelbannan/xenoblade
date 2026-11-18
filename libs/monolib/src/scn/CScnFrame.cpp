@@ -5,7 +5,7 @@
 
 extern "C" {
     extern u32 getRetraceCount__9CDeviceVIFv();
-    extern const double lbl_eu_8066ABE8; // 0x4330000000000000
+
 }
 
 // Foreign data label (RTTI base-list) referenced by the CScnFrame vtable.

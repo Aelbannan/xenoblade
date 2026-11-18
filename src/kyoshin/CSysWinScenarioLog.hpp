@@ -5,6 +5,8 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
@@ -25,34 +27,16 @@ namespace nw4r { namespace lyt {
 // pulled in by CTaskGame.hpp at the cpp use site) - only a forward decl is
 // needed here for the mScene pointer member.
 
-// Null pointer-to-member-function constant (12 bytes; copied word-by-word into
-// the two callback slots).
-extern u32 __ptmf_null[3];
-
-class CSysWinScenarioLog : public CProcess {
+class CSysWinScenarioLog : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
-    CSysWinScenarioLog();
+    CSysWinScenarioLog(CScn* scene);
     virtual ~CSysWinScenarioLog();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-    void OnFileEvent();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    /* 0x3c-0x63: region owned by layout / IWorkEvent sub-object (same
-       IUIWindow base region as CSystemWindow: two null ptmfs then controls) */
-    u32 ptmf0[3];              // 0x3C null pointer-to-member-function
-    u32 ptmf1[3];              // 0x48 null pointer-to-member-function
-    u32 field_54;              // 0x54
-    u32 field_58;              // 0x58
-    u32 field_5C;              // 0x5C
-    u32 field_60;              // 0x60 (init to -1)
-    /* 0x64 */ u8 mFlag64;
-    /* 0x65-0x66 */ u8 _65[2];
-    /* 0x67 */ u8 mFlag67;
-    u32 field_68;              // 0x68
-    u32 mWorkEvent;            // 0x6C IWorkEvent vtable slot
-    u32 mScnRender;            // 0x70 IScnRender vtable slot
     CFileHandle* mFileHandle74;  // 0x74 (released by closeFileHandle in Term)
     CFileHandle* mFileHandle78;  // 0x78 (released by closeFileHandle in Term)
     /* 0x7c: UnkClass_8045F564 embedded region (dtor calls ~UnkClass_8045F564) */
@@ -64,14 +48,6 @@ public:
     nw4r::lyt::ArcResourceAccessor* mpAccessor;  // 0x98
     /* 0x9c */ nw4r::lyt::Layout* mpLayout;
     /* 0xa0 */ nw4r::lyt::AnimTransform* mpAnim;
-};
-
-// View of the CProcess base vptr slot: the C-linkage ctor writes the IUIWindow
-// temp vtable (lbl_eu_8052D238) then the composite vtable (lbl_eu_80538358) at
-// +0x10, mirroring the CSystemWindow ctor.
-struct CSysWinProcessVtable {
-    u8 _0[0x10];
-    u32 mpVtable;              // +0x10
 };
 
 // Term() helper view: a layout object's vtable-slot-2 method (retail vtable
@@ -869,12 +845,6 @@ extern "C" u32  lbl_eu_80664914;
 extern "C" u8   lbl_eu_80664918;
 extern u32 lbl_eu_8066490C;              // Term clears this (.sbss)
 
-// IUIWindow base vtable + null pmf constant used by the C-linkage ctor (same
-// symbols as CSystemWindow's ctor; the composite vtable differs).
-extern u32 __ptmf_null[3];
-extern char lbl_eu_8052D238[];
-extern char lbl_eu_80538358[];
-
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void __dt__8CProcessFv(void*, int);
@@ -914,7 +884,6 @@ extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
 extern "C" s32  MenuTutorialIsCreated();
-extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;
 extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);

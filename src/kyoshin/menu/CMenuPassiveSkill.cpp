@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuPassiveSkill
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
@@ -371,7 +372,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
     }
 
     CMenuPassivePadView* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    int isClassic = isClassicController__Q22cf13CfGameManagerFv(-1);
+    int isClassic = cf::CfGameManager::isClassicController(-1);
 
     if (isClassic != 0) {
         // -- classic-controller chain --

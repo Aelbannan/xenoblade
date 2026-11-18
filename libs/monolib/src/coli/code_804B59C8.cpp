@@ -289,22 +289,21 @@ struct CColiVolEntry {
     f32 field_0x7C;        // 0x7C - scale
 };
 
-// 48-byte dual-view matrix: float view for math, u64 view for the retail
-// 8-byte word-copy schedule.
-union MtxView {
-    Mtx m;   // f32[3][4]
-    u64 w[6];
-    u32 u[12];
+// 48-byte 3x4 collision matrix.  A struct (not a bare Mtx array) so that a
+// whole-matrix copy assignment compiles to the retail 8-byte lwz/stw pair
+// schedule.
+struct CColiMtx {
+    f32 m[3][4];   // 0x00 - row-major 3x4
 };
 
 // 0xE0-byte mover-state entry (indexed from CColiMoverState::field_0x60).
 struct CColiOutEntry {
     u32 field_0x00;        // 0x00 - flags (0 / 2)
     f32 field_0x04;        // 0x04 - 0.0
-    MtxView mtx;           // 0x08 - current matrix
-    MtxView inv;           // 0x38 - current inverse
-    MtxView savedMtx;      // 0x68 - previous matrix
-    MtxView savedInv;      // 0x98 - previous inverse
+    CColiMtx mtx;          // 0x08 - current matrix
+    CColiMtx inv;          // 0x38 - current inverse
+    CColiMtx savedMtx;     // 0x68 - previous matrix
+    CColiMtx savedInv;     // 0x98 - previous inverse
     f32 field_0xC8;        // 0xC8 - aabb (max + radius)
     f32 field_0xCC;        // 0xCC
     f32 field_0xD0;        // 0xD0
@@ -963,10 +962,7 @@ void xformNrmVecCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     ml::CVec3 out2;
     PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, in1, out1);
     PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in2, out2);
-    // Sequential y/x/z accumulation mirrors the retail load schedule
-    // (y first, then x*x + y*y, then z*z + ...).
-    f32 yy = out2.y * out2.y;
-    f32 len2 = out2.x * out2.x + yy;
+    f32 len2 = out2.x * out2.x + out2.y * out2.y;
     len2 = out2.z * out2.z + len2;
     if (lbl_eu_8066AED0 == len2) {
         out2 = ml::CVec3::zero;
@@ -1271,45 +1267,23 @@ void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, int count) 
         (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), count * 0xE0, 0x20);
     for (int i = 0; i < count; i++) {
         const CColiInEntry* in = &input[i];
-        f32 v = in->m[0];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][0] = v;
-        v = in->m[1];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][1] = v;
-        v = in->m[2];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][2] = v;
-        v = in->m[3];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][3] = v;
-        v = in->m[4];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][0] = v;
-        v = in->m[5];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][1] = v;
-        v = in->m[6];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][2] = v;
-        v = in->m[7];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][3] = v;
-        v = in->m[8];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][0] = v;
-        v = in->m[9];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][1] = v;
-        v = in->m[10];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][2] = v;
-        v = in->m[11];
-        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][3] = v;
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][0] = in->m[0];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][1] = in->m[1];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][2] = in->m[2];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[0][3] = in->m[3];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][0] = in->m[4];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][1] = in->m[5];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][2] = in->m[6];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[1][3] = in->m[7];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][0] = in->m[8];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][1] = in->m[9];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][2] = in->m[10];
+        ((CColiOutEntry*)(self->field_0x60 + i * 0xE0))->mtx.m[2][3] = in->m[11];
         CColiOutEntry* out = (CColiOutEntry*)(self->field_0x60 + i * 0xE0);
         PSMTXInverse(out->mtx.m, out->inv.m);
         out = (CColiOutEntry*)(self->field_0x60 + i * 0xE0);
-        out->savedMtx.w[0] = out->mtx.w[0];
-        out->savedMtx.w[1] = out->mtx.w[1];
-        out->savedMtx.w[2] = out->mtx.w[2];
-        out->savedMtx.w[3] = out->mtx.w[3];
-        out->savedMtx.w[4] = out->mtx.w[4];
-        out->savedMtx.w[5] = out->mtx.w[5];
-        out->savedInv.w[0] = out->inv.w[0];
-        out->savedInv.w[1] = out->inv.w[1];
-        out->savedInv.w[2] = out->inv.w[2];
-        out->savedInv.w[3] = out->inv.w[3];
-        out->savedInv.w[4] = out->inv.w[4];
-        out->savedInv.w[5] = out->inv.w[5];
+        out->savedMtx = out->mtx;
+        out->savedInv = out->inv;
         out->field_0x04 = lbl_eu_8066AED0;
         out->field_0xC8 = in->m[3] + in->field_0x38;
         out->field_0xCC = in->m[7] + in->field_0x38;
@@ -1532,74 +1506,14 @@ bool setSeenBitTbl(u32* self, int idx) {
 // inverse into the previous slots, install the new 48-byte matrix block,
 // recompute the inverse, then expand the AABB to cover the movement between
 // the previous and new translations plus/minus the entry half-extent.
-void updateMoverSt(CColiMoverState* self, int idx, const u32* data) {
+void updateMoverSt(CColiMoverState* self, int idx, const CColiMtx* data) {
     if (self->field_0x78 == 0) return;
     CColiOutEntry* out = (CColiOutEntry*)(self->field_0x60 + idx * 0xE0);
     const CColiInEntry* in = &self->field_0x44[idx];
     out->field_0x00 |= 2;
-    {
-        u32 lo, hi;
-        lo = out->mtx.u[1];
-        hi = out->mtx.u[0];
-        out->savedMtx.u[0] = hi;
-        out->savedMtx.u[1] = lo;
-        lo = out->mtx.u[3];
-        hi = out->mtx.u[2];
-        out->savedMtx.u[2] = hi;
-        out->savedMtx.u[3] = lo;
-        lo = out->mtx.u[5];
-        hi = out->mtx.u[4];
-        out->savedMtx.u[4] = hi;
-        out->savedMtx.u[5] = lo;
-        lo = out->mtx.u[7];
-        hi = out->mtx.u[6];
-        out->savedMtx.u[6] = hi;
-        out->savedMtx.u[7] = lo;
-        lo = out->mtx.u[9];
-        hi = out->mtx.u[8];
-        out->savedMtx.u[8] = hi;
-        out->savedMtx.u[9] = lo;
-        lo = out->mtx.u[11];
-        hi = out->mtx.u[10];
-        out->savedMtx.u[10] = hi;
-        out->savedMtx.u[11] = lo;
-        lo = out->inv.u[1];
-        hi = out->inv.u[0];
-        out->savedInv.u[0] = hi;
-        out->savedInv.u[1] = lo;
-        lo = out->inv.u[3];
-        hi = out->inv.u[2];
-        out->savedInv.u[2] = hi;
-        out->savedInv.u[3] = lo;
-        lo = out->inv.u[5];
-        hi = out->inv.u[4];
-        out->savedInv.u[4] = hi;
-        out->savedInv.u[5] = lo;
-        lo = out->inv.u[7];
-        hi = out->inv.u[6];
-        out->savedInv.u[6] = hi;
-        out->savedInv.u[7] = lo;
-        lo = out->inv.u[9];
-        hi = out->inv.u[8];
-        out->savedInv.u[8] = hi;
-        out->savedInv.u[9] = lo;
-        lo = out->inv.u[11];
-        hi = out->inv.u[10];
-        out->savedInv.u[10] = hi;
-        out->savedInv.u[11] = lo;
-    }
-    out->mtx.u[0] = data[0];
-    out->mtx.u[1] = data[1];
-    out->mtx.u[2] = data[2];
-    out->mtx.u[3] = data[3];
-    out->mtx.u[4] = data[4];
-    out->mtx.u[5] = data[5];
-    out->mtx.u[6] = data[6];
-    out->mtx.u[7] = data[7];
-    out->mtx.u[8] = data[8];
-    out->mtx.u[9] = data[9];
-    out->mtx.u[10] = data[10];
-    out->mtx.u[11] = data[11];
+    out->savedMtx = out->mtx;
+    out->savedInv = out->inv;
+    out->mtx = *data;
     PSMTXInverse(out->mtx.m, out->inv.m);
     if (out->savedMtx.m[0][3] > out->mtx.m[0][3]) {
         out->field_0xC8 = out->savedMtx.m[0][3] + in->field_0x38;
@@ -1647,11 +1561,12 @@ void* Coli_GetOutMatrix_80A4(CColiMoverState* self, int idx) {
 // getMoverEntry - find the mover-state input entry whose id word (+0x02)
 // equals idx; returns its index or 0 when none/count is zero.
 int getMoverEntry(CColiMoverState* self, int idx) {
-    int n = self->field_0x78;
-    if (n == 0) return 0;
-    const u16* e = (const u16*)self->field_0x44;
-    for (int i = 0; i < n; i++, e += 30) {
-        if (e[1] == idx) return i;
+    if (self->field_0x78 != 0) {
+        int n = self->field_0x78;
+        const u16* e = (const u16*)self->field_0x44;
+        for (int i = 0; i < n; i++, e += 30) {
+            if (e[1] == idx) return i;
+        }
     }
     return 0;
 }

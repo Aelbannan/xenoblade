@@ -7,6 +7,7 @@
 
 #include "kyoshin/CTaskGameApi.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+#include "kyoshin/makecrystal/CMCGetItemBox.hpp"
 #include "kyoshin/makecrystal/CMCCrystalParamTable.hpp"
 
 
@@ -133,8 +134,6 @@ extern "C" void MakeCrystal_SetupDispBuffers(CModelDispMakeCrystal*);
 // crystal-slot array element ctor/dtor (defined later in this TU; the ctor
 // passes their addresses to __construct_array). C linkage keeps the
 // __construct_array relocs bound to the bare retail names.
-extern "C" CModelDispMakeCrystal* MakeCrystal_InitSlotArray(CModelDispMakeCrystal* self);
-extern "C" void* __dt__8021C540(void* obj, int flag);
 
 // --- external C-linkage helpers and global data for this TU ---
 extern "C" {
@@ -156,7 +155,6 @@ void confirmMCGetItemBox(void*);
 int crystalListIsActive(void*);
 void tickAnimFrame(void*);
 void MakeCrystal_DispatchState(void*);
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void releaseAnimObj(void*, void*);
 void Scn_IsAnimActiveOrNull(void*);
 void* Scn_SetupAnim(void*, int, int, ...);
@@ -227,17 +225,17 @@ void crystalListResetAnim4Play(void*);
 // OnFileEvent constructor/helper imports (retail reloc names)
 void __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__17CMCCrystalSupportFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffStart(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffUpRed(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffUpBlue(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffUpGreen(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffUpPrm(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffSuccess(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffFailure(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffCrystal(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffUpRank(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffDivide(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CMCEffCylinder(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__11CMCEffStartFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__11CMCEffUpRedFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__12CMCEffUpBlueFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__13CMCEffUpGreenFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__11CMCEffUpPrmFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__13CMCEffSuccessFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__13CMCEffFailureFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__13CMCEffCrystalFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__12CMCEffUpRankFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__12CMCEffDivideFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
+void __ct__14CMCEffCylinderFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
 void createRegion__17UnkClass_8045F564FiiPCci(void*, u32, int, const char*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 void setMemInitFlag__Q23mtl10MemManagerFb(bool);
@@ -445,74 +443,66 @@ struct CMCStep {
 // word 54 is CActParamAnim::initAnimState (cf. CModelDispEquip.hpp); call
 // sites now use the owning class directly.)
 
-void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
-{
-    u8* base = reinterpret_cast<u8*>(self);
+// Real constructor: every member up to +0x13BF is a typed member, so MWCC
+// emits the member ctors from this init list in declaration (= retail store)
+// order, and the exception table records them like retail does.
+CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
+    : mVtbl((u32*)lbl_eu_80535E70),
+      mVtblRender((u32*)((u8*)lbl_eu_80535E70 + 0x88)),
+      mVtblAnim((u32*)((u8*)lbl_eu_80535E70 + 0xb4)),
+      mScene(scene),
+      mField10(0),
+      mField14(0),
+      mFileHandle18(0),
+      mField1C(0),
+      mField20(0),
+      mFileHandle24(0),
+      mField28(0),
+      mFileHandle3C(0),
+      mField40(0),
+      field_BDC(0),
+      field_BDD(0),
+      field_BE0(lbl_eu_806684A0),
+      field_BE4(lbl_eu_806684A4),
+      field_BE8(1),
+      field_BE9(1),
+      mGauge(0),
+      mCrystalList(),
+      mSupport(0),
+      mEffStart(0),
+      mEffUpRed(0),
+      mEffUpBlue(0),
+      mEffUpGreen(0),
+      mEffUpPrm(0),
+      mEffSuccess(0),
+      mEffFailure(0),
+      mEffCrystal(0),
+      mEffUpRank(0),
+      mEffDivide(0),
+      mEffCylinder(0),
+      field_E1C(0),
+      mCurE20(0),
+      mScrollBar(0),
+      mSysWin(0),
+      mCurEB4(0),
+      mItemBox(),
+      mCrystalNum(0) {
+    u8* base = reinterpret_cast<u8*>(this);
 
-    // Stack buffers (declaration order fixes the retail stack layout:
-    // sub@0x8, group2@0x18, group1@0x30, swTmp@0x48, sbTmp@0x88,
-    // listTmp@0xc8, boxTmp@0x120).
+    // Stack scratch (declaration order fixes the retail stack layout:
+    // sub@0x8, group2@0x18, group1@0x30); the widget re-inits below use
+    // compiler-managed temporaries.
     u8 sub[0xc];       // initCrystalSubStruct scratch
-    CMCryVec3 group2[2];
     CMCryVec3 group1[2];
-    u8 swTmp[0x40];    // temp CSysWin
-    u8 sbTmp[0x40];    // temp CScrollBar
-    u8 listTmp[0x58];  // temp CMCCrystalList
-    u8 boxTmp[0x4ec];  // temp CMCGetItemBox
-
-    // --- vtable pointers, scene, zeroed scalar head ---
-    *reinterpret_cast<void**>(base + 0x00) = (void*)lbl_eu_80535E70;
-    *reinterpret_cast<void**>(base + 0x04) = (u8*)lbl_eu_80535E70 + 0x88;
-    *reinterpret_cast<void**>(base + 0x08) = (u8*)lbl_eu_80535E70 + 0xb4;
-    *reinterpret_cast<void**>(base + 0x0c) = scene;
-    *reinterpret_cast<u32*>(base + 0x10) = 0;
-    *reinterpret_cast<u32*>(base + 0x14) = 0;
-    *reinterpret_cast<u32*>(base + 0x18) = 0;
-    *reinterpret_cast<u32*>(base + 0x1c) = 0;
-    *reinterpret_cast<u32*>(base + 0x20) = 0;
-    *reinterpret_cast<u32*>(base + 0x24) = 0;
-    *reinterpret_cast<u32*>(base + 0x28) = 0;
-    __ct__17UnkClass_8045F564Fv(base + 0x2c);
-    *reinterpret_cast<u32*>(base + 0x3c) = 0;
-    *reinterpret_cast<u32*>(base + 0x40) = 0;
-    __construct_array(base + 0x44, (void*)MakeCrystal_InitSlotArray, (void*)__dt__8021C540, 0x5cc, 2);
-
-    // --- gauge fields + embedded member construction ---
-    base[0xbdc] = 0;
-    base[0xbdd] = 0;
-    *reinterpret_cast<f32*>(base + 0xbe0) = lbl_eu_806684A0;
-    *reinterpret_cast<f32*>(base + 0xbe4) = lbl_eu_806684A4;
-    base[0xbe8] = 1;
-    base[0xbe9] = 1;
-    __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(base + 0xbec, 0);
-    __ct__CMCCrystalList(base + 0xc18);
-    __ct__17CMCCrystalSupportFPQ34nw4r3lyt19ArcResourceAccessor(base + 0xc70, 0);
-    __ct__CMCEffStart(base + 0xc8c, 0);
-    __ct__CMCEffUpRed(base + 0xca4, 0);
-    __ct__CMCEffUpBlue(base + 0xcbc, 0);
-    __ct__CMCEffUpGreen(base + 0xcd4, 0);
-    __ct__CMCEffUpPrm(base + 0xcec, 0);
-    __ct__CMCEffSuccess(base + 0xd5c, 0);
-    __ct__CMCEffFailure(base + 0xd78, 0);
-    __ct__CMCEffCrystal(base + 0xd90, 0);
-    __ct__CMCEffUpRank(base + 0xdcc, 0);
-    __ct__CMCEffDivide(base + 0xde4, 0);
-    __ct__CMCEffCylinder(base + 0xdfc, 0);
-    *reinterpret_cast<u32*>(base + 0xe1c) = 0;
-    __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xe20), 0);
-    __ct__10CScrollBarFUc(base + 0xe38, 0);
-    __ct__7CSysWinFUc(base + 0xe78, 0);
-    __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xeb4), 0);
-    __ct__CMCGetItemBox(base + 0xecc);
-    base[0x13bf] = 0;
+    CMCryVec3 group2[2];
 
     // --- zero the 128 step slots (stride 0x34 at +0x13c0) ---
     // Pointer-walk do-while with the increment inside the condition: MWCC
     // keeps this rolled (cmplw/blt) instead of unrolling it.
     u8* p = base + 0x13c0;
     do {
-        *(u32*)p = 0;
         *(u16*)(p + 4) = 0;
+        *(u32*)p = 0;
     } while ((p += 0x34) < base + 0x2dc0);
 
     // --- cursor-state fields (second zero constant: retail r30) ---
@@ -563,7 +553,7 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
             *reinterpret_cast<u32*>(sb + 0x544 + ((u32)(u8)i << 2)) = zero2;
         }
         for (u8 j = 0; j < 6; j++) {
-            initCrystalSubStruct(sub);
+            ::initCrystalSubStruct(sub);
             u8* d = sb + 0x564 + (u32)(u8)j * 0xc;
             *reinterpret_cast<u32*>(d + 0) = *reinterpret_cast<u32*>(sub + 0);
             *reinterpret_cast<u32*>(d + 4) = *reinterpret_cast<u32*>(sub + 4);
@@ -579,234 +569,17 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
         sb[0x5c8] = builtFlag;
     }
 
-    // --- re-init the embedded crystal list from a default temp ---
-    __ct__CMCCrystalList(listTmp);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xc1c, listTmp + 0x4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xc2c, listTmp + 0x14);
-    *reinterpret_cast<void**>(base + 0xc3c) = *reinterpret_cast<void**>(listTmp + 0x24);
-    *reinterpret_cast<void**>(base + 0xc40) = *reinterpret_cast<void**>(listTmp + 0x28);
-    *reinterpret_cast<void**>(base + 0xc44) = *reinterpret_cast<void**>(listTmp + 0x2c);
-    *reinterpret_cast<void**>(base + 0xc48) = *reinterpret_cast<void**>(listTmp + 0x30);
-    *reinterpret_cast<void**>(base + 0xc4c) = *reinterpret_cast<void**>(listTmp + 0x34);
-    *reinterpret_cast<void**>(base + 0xc50) = *reinterpret_cast<void**>(listTmp + 0x38);
-    *reinterpret_cast<void**>(base + 0xc54) = *reinterpret_cast<void**>(listTmp + 0x3c);
-    *reinterpret_cast<void**>(base + 0xc58) = *reinterpret_cast<void**>(listTmp + 0x40);
-    *reinterpret_cast<void**>(base + 0xc5c) = *reinterpret_cast<void**>(listTmp + 0x44);
-    *reinterpret_cast<void**>(base + 0xc60) = *reinterpret_cast<void**>(listTmp + 0x48);
-    base[0xc64] = listTmp[0x4c];
-    base[0xc65] = listTmp[0x4d];
-    // Load both words, store high word first (retail schedule).
-    {
-        u32 lo = *reinterpret_cast<u32*>(listTmp + 0x4e);
-        u32 hi = *reinterpret_cast<u32*>(listTmp + 0x52);
-        *reinterpret_cast<u32*>(base + 0xc6a) = hi;
-        *reinterpret_cast<u32*>(base + 0xc66) = lo;
-    }
-    base[0xc6e] = listTmp[0x56];
-    base[0xc6f] = listTmp[0x57];
-    __dt__14CMCCrystalListFv(listTmp, -1);
+    // --- re-init the embedded crystal list from a default temporary ---
+    mCrystalList = CMCCrystalList();
 
-    // --- re-init the embedded scroll bar from a default temp ---
-    __ct__10CScrollBarFUc(sbTmp, 0);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xe3c, sbTmp + 0x4);
-    *reinterpret_cast<void**>(base + 0xe4c) = *reinterpret_cast<void**>(sbTmp + 0x14);
-    *reinterpret_cast<void**>(base + 0xe50) = *reinterpret_cast<void**>(sbTmp + 0x18);
-    *reinterpret_cast<void**>(base + 0xe54) = *reinterpret_cast<void**>(sbTmp + 0x1c);
-    *reinterpret_cast<void**>(base + 0xe58) = *reinterpret_cast<void**>(sbTmp + 0x20);
-    base[0xe5c] = sbTmp[0x24];
-    base[0xe5d] = sbTmp[0x25];
-    base[0xe5e] = sbTmp[0x26];
-    base[0xe5f] = sbTmp[0x27];
-    *reinterpret_cast<f32*>(base + 0xe60) = *reinterpret_cast<f32*>(sbTmp + 0x28);
-    *reinterpret_cast<f32*>(base + 0xe64) = *reinterpret_cast<f32*>(sbTmp + 0x2c);
-    *reinterpret_cast<f32*>(base + 0xe68) = *reinterpret_cast<f32*>(sbTmp + 0x30);
-    *reinterpret_cast<f32*>(base + 0xe6c) = *reinterpret_cast<f32*>(sbTmp + 0x34);
-    *reinterpret_cast<f32*>(base + 0xe70) = *reinterpret_cast<f32*>(sbTmp + 0x38);
-    base[0xe74] = sbTmp[0x3c];
-    __dt__10CScrollBarFv(sbTmp, -1);
+    // --- re-init the embedded scroll bar from a direction-0 temporary ---
+    mScrollBar = CScrollBar(0);
 
-    // --- re-init the embedded system window from an arg-2 temp ---
-    __ct__7CSysWinFUc(swTmp, 2);
-    *reinterpret_cast<CSysWin*>(base + 0xe78) = *reinterpret_cast<const CSysWin*>(swTmp);
-    __dt__7CSysWinFv(swTmp, -1);
+    // --- re-init the embedded system window from a kind-2 temporary ---
+    mSysWin = CSysWin(2);
 
-    // --- re-init the embedded item box from a default temp ---
-    __ct__CMCGetItemBox(boxTmp);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xed0, boxTmp + 0x4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xee0, boxTmp + 0x14);
-    *reinterpret_cast<void**>(base + 0xef0) = *reinterpret_cast<void**>(boxTmp + 0x24);
-    *reinterpret_cast<void**>(base + 0xef4) = *reinterpret_cast<void**>(boxTmp + 0x28);
-    *reinterpret_cast<void**>(base + 0xef8) = *reinterpret_cast<void**>(boxTmp + 0x2c);
-    *reinterpret_cast<void**>(base + 0xefc) = *reinterpret_cast<void**>(boxTmp + 0x30);
-    *reinterpret_cast<void**>(base + 0xf00) = *reinterpret_cast<void**>(boxTmp + 0x34);
-    *reinterpret_cast<void**>(base + 0xf04) = *reinterpret_cast<void**>(boxTmp + 0x38);
-    *reinterpret_cast<void**>(base + 0xf08) = *reinterpret_cast<void**>(boxTmp + 0x3c);
-    *reinterpret_cast<void**>(base + 0xf0c) = *reinterpret_cast<void**>(boxTmp + 0x40);
-    *reinterpret_cast<void**>(base + 0xf10) = *reinterpret_cast<void**>(boxTmp + 0x44);
-    *reinterpret_cast<void**>(base + 0xf14) = *reinterpret_cast<void**>(boxTmp + 0x48);
-    base[0xf18] = boxTmp[0x4c];
-    base[0xf19] = boxTmp[0x4d];
-    *reinterpret_cast<void**>(base + 0xf1c) = *reinterpret_cast<void**>(boxTmp + 0x50);
-    base[0xf20] = boxTmp[0x54];
-    base[0xf21] = boxTmp[0x55];
-    *reinterpret_cast<CBaseCur*>(base + 0xf24) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x58);
-    *reinterpret_cast<CBaseCur*>(base + 0xf3c) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x70);
-    *reinterpret_cast<CBaseCur*>(base + 0xf54) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0x88);
-    *reinterpret_cast<CBaseCur*>(base + 0xf6c) = *reinterpret_cast<const CBaseCur*>(boxTmp + 0xa0);
-    *reinterpret_cast<CSysWin*>(base + 0xf84) = *reinterpret_cast<const CSysWin*>(boxTmp + 0xb8);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfc4, boxTmp + 0xf8);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(base + 0xfd4, boxTmp + 0x108);
-    // itemBox tail members (memberwise words/bytes).
-    *reinterpret_cast<u32*>(base + 0xfe4) = *reinterpret_cast<u32*>(boxTmp + 0x118);
-    *reinterpret_cast<u32*>(base + 0xfe8) = *reinterpret_cast<u32*>(boxTmp + 0x11c);
-    *reinterpret_cast<u32*>(base + 0xfec) = *reinterpret_cast<u32*>(boxTmp + 0x120);
-    *reinterpret_cast<u32*>(base + 0xff0) = *reinterpret_cast<u32*>(boxTmp + 0x124);
-    *reinterpret_cast<u32*>(base + 0xff4) = *reinterpret_cast<u32*>(boxTmp + 0x128);
-    *reinterpret_cast<u32*>(base + 0xff8) = *reinterpret_cast<u32*>(boxTmp + 0x12c);
-    *reinterpret_cast<u32*>(base + 0xffc) = *reinterpret_cast<u32*>(boxTmp + 0x130);
-    *reinterpret_cast<u32*>(base + 0x1000) = *reinterpret_cast<u32*>(boxTmp + 0x134);
-    *reinterpret_cast<u32*>(base + 0x1004) = *reinterpret_cast<u32*>(boxTmp + 0x138);
-    *reinterpret_cast<u32*>(base + 0x1008) = *reinterpret_cast<u32*>(boxTmp + 0x13c);
-    *reinterpret_cast<u32*>(base + 0x100c) = *reinterpret_cast<u32*>(boxTmp + 0x140);
-    *reinterpret_cast<u32*>(base + 0x1010) = *reinterpret_cast<u32*>(boxTmp + 0x144);
-    *reinterpret_cast<u32*>(base + 0x1014) = *reinterpret_cast<u32*>(boxTmp + 0x148);
-    *reinterpret_cast<u32*>(base + 0x1018) = *reinterpret_cast<u32*>(boxTmp + 0x14c);
-    *reinterpret_cast<u32*>(base + 0x101c) = *reinterpret_cast<u32*>(boxTmp + 0x150);
-    *reinterpret_cast<u32*>(base + 0x1020) = *reinterpret_cast<u32*>(boxTmp + 0x154);
-    *reinterpret_cast<u32*>(base + 0x1024) = *reinterpret_cast<u32*>(boxTmp + 0x158);
-    *reinterpret_cast<u32*>(base + 0x1028) = *reinterpret_cast<u32*>(boxTmp + 0x15c);
-    *reinterpret_cast<u32*>(base + 0x102c) = *reinterpret_cast<u32*>(boxTmp + 0x160);
-    *reinterpret_cast<u32*>(base + 0x1030) = *reinterpret_cast<u32*>(boxTmp + 0x164);
-    *reinterpret_cast<u32*>(base + 0x1034) = *reinterpret_cast<u32*>(boxTmp + 0x168);
-    *reinterpret_cast<u32*>(base + 0x1038) = *reinterpret_cast<u32*>(boxTmp + 0x16c);
-    *reinterpret_cast<u32*>(base + 0x103c) = *reinterpret_cast<u32*>(boxTmp + 0x170);
-    *reinterpret_cast<u32*>(base + 0x1040) = *reinterpret_cast<u32*>(boxTmp + 0x174);
-    *reinterpret_cast<u32*>(base + 0x1044) = *reinterpret_cast<u32*>(boxTmp + 0x178);
-    *reinterpret_cast<u32*>(base + 0x1048) = *reinterpret_cast<u32*>(boxTmp + 0x17c);
-    *reinterpret_cast<u32*>(base + 0x104c) = *reinterpret_cast<u32*>(boxTmp + 0x180);
-    base[0x1050] = boxTmp[0x184];
-    *reinterpret_cast<u32*>(base + 0x1054) = *reinterpret_cast<u32*>(boxTmp + 0x188);
-    base[0x1058] = boxTmp[0x18c];
-    base[0x1059] = boxTmp[0x18d];
-    base[0x105a] = boxTmp[0x18e];
-    {
-        u32 lo = *reinterpret_cast<u32*>(boxTmp + 0x190);
-        u32 hi = *reinterpret_cast<u32*>(boxTmp + 0x194);
-        *reinterpret_cast<u32*>(base + 0x1060) = hi;
-        *reinterpret_cast<u32*>(base + 0x105c) = lo;
-        u32 lo2 = *reinterpret_cast<u32*>(boxTmp + 0x198);
-        u32 hi2 = *reinterpret_cast<u32*>(boxTmp + 0x19c);
-        *reinterpret_cast<u32*>(base + 0x1068) = hi2;
-        *reinterpret_cast<u32*>(base + 0x1064) = lo2;
-    }
-    *reinterpret_cast<u16*>(base + 0x106c) = *reinterpret_cast<u16*>(boxTmp + 0x1a0);
-    base[0x106e] = boxTmp[0x1a2];
-    // cursor table/flags/marker copy - pair-copy loops with -1-biased word
-    // pointers reproduce retail's `lwz 4(r4); lwzu 8(r4); stw 4(r5);
-    // stwu 8(r5); bdnz` counted loops (CBattleState pair-copy shape).
-    // table part 1: 0xc u16s (24B = 3 pairs)
-    {
-        u32 n = 3;
-        u32* s = reinterpret_cast<u32*>(boxTmp + 0x1a4) - 1;
-        u32* d = reinterpret_cast<u32*>(base + 0x1070) - 1;
-        do {
-            u32 a = *(s + 1);
-            u32 b = *(s += 2);
-            *(d + 1) = a;
-            *(d += 2) = b;
-        } while (--n);
-    }
-    // table part 2: 0x48 u16s (144B = 18 pairs)
-    {
-        u32 n = 0x12;
-        u32* s = reinterpret_cast<u32*>(boxTmp + 0x1bc) - 1;
-        u32* d = reinterpret_cast<u32*>(base + 0x1088) - 1;
-        do {
-            u32 a = *(s + 1);
-            u32 b = *(s += 2);
-            *(d + 1) = a;
-            *(d += 2) = b;
-        } while (--n);
-    }
-    // flags part 1: 6 u32s (24B); retail interleaves the loads/stores.
-    {
-        u32 w0 = *reinterpret_cast<u32*>(boxTmp + 0x24c);
-        u32 w1 = *reinterpret_cast<u32*>(boxTmp + 0x250);
-        *reinterpret_cast<u32*>(base + 0x111c) = w1;
-        *reinterpret_cast<u32*>(base + 0x1118) = w0;
-        *reinterpret_cast<u32*>(base + 0x1120) = *reinterpret_cast<u32*>(boxTmp + 0x254);
-        u32 w3 = *reinterpret_cast<u32*>(boxTmp + 0x258);
-        u32 w4 = *reinterpret_cast<u32*>(boxTmp + 0x25c);
-        *reinterpret_cast<u32*>(base + 0x1128) = w4;
-        *reinterpret_cast<u32*>(base + 0x1124) = w3;
-        *reinterpret_cast<u32*>(base + 0x112c) = *reinterpret_cast<u32*>(boxTmp + 0x260);
-    }
-    // flags part 2: 0x18 u8s (24B = 3 pairs)
-    {
-        u32 n = 3;
-        u32* s = reinterpret_cast<u32*>(boxTmp + 0x264) - 1;
-        u32* d = reinterpret_cast<u32*>(base + 0x1130) - 1;
-        do {
-            u32 a = *(s + 1);
-            u32 b = *(s += 2);
-            *(d + 1) = a;
-            *(d += 2) = b;
-        } while (--n);
-    }
-    *(u8*)(base + 0x1148) = *(u8*)(boxTmp + 0x27c);   // selection marker
-    // pad: 0x80 u8s (128B = 16 pairs)
-    {
-        u32 n = 0x10;
-        u32* s = reinterpret_cast<u32*>(boxTmp + 0x27d) - 1;
-        u32* d = reinterpret_cast<u32*>(base + 0x1149) - 1;
-        do {
-            u32 a = *(s + 1);
-            u32 b = *(s += 2);
-            *(d + 1) = a;
-            *(d += 2) = b;
-        } while (--n);
-    }
-    // Selection-flag bytes + word pair (reversed store order), then the
-    // trailing 256-byte table (retail n=0x20 counted pair loop).
-    base[0x11cc] = boxTmp[0x300];
-    base[0x11cd] = boxTmp[0x301];
-    base[0x11ce] = boxTmp[0x302];
-    base[0x11cf] = boxTmp[0x303];
-    base[0x11d0] = boxTmp[0x304];
-    base[0x11d1] = boxTmp[0x305];
-    {
-        u32 lo = *reinterpret_cast<u32*>(boxTmp + 0x308);
-        u32 hi = *reinterpret_cast<u32*>(boxTmp + 0x30c);
-        *reinterpret_cast<u32*>(base + 0x11d8) = hi;
-        *reinterpret_cast<u32*>(base + 0x11d4) = lo;
-    }
-    {
-        u32 n = 0x20;
-        u32* s = reinterpret_cast<u32*>(boxTmp + 0x310) - 1;
-        u32* d = reinterpret_cast<u32*>(base + 0x11dc) - 1;
-        do {
-            u32 a = *(s + 1);
-            u32 b = *(s += 2);
-            *(d + 1) = a;
-            *(d += 2) = b;
-        } while (--n);
-    }
-    // string-name fields.
-    *reinterpret_cast<u16*>(base + 0x12e0) = *reinterpret_cast<u16*>(boxTmp + 0x414);
-    base[0x12e2] = boxTmp[0x416];
-    base[0x12e3] = boxTmp[0x417];
-    base[0x12e4] = boxTmp[0x418];
-    *reinterpret_cast<u32*>(base + 0x1328) =
-        (u32)strlen(reinterpret_cast<const char*>(boxTmp + 0x41c));
-    strcpy(reinterpret_cast<char*>(base + 0x12e8),
-           reinterpret_cast<const char*>(boxTmp + 0x41c));
-    *reinterpret_cast<u32*>(base + 0x13ac) =
-        (u32)strlen(reinterpret_cast<const char*>(boxTmp + 0x460));
-    strcpy(reinterpret_cast<char*>(base + 0x132c),
-           reinterpret_cast<const char*>(boxTmp + 0x460));
-    *reinterpret_cast<u32*>(base + 0x13b0) = *reinterpret_cast<u32*>(boxTmp + 0x4e4);
-    base[0x13b4] = boxTmp[0x4e8];
-    __dt__13CMCGetItemBoxFv(boxTmp, -1);
+    // --- re-init the embedded item box from a default temporary ---
+    mItemBox = CMCGetItemBox();
 }
 
 // (was CMCVt48: virtual dispatch at vtable offset +0x48 taking one float
@@ -820,64 +593,37 @@ void CModelDispMakeCrystal::initCrystalSubStruct() {
     ((CMCrySubBuf*)this)->field_08 = 0;
 }
 
-// Retail 0x8021E348: constructor - builds the inline CActParamAnimGame at
+// Retail 0x8021E348: element constructor of the two 0x5CC-stride crystal
+// display slots (the owner's `CMCrystalDispSub mSlots[2]` member makes MWCC
+// emit __construct_array over these). Builds the inline CActParamAnimGame at
 // +0x8, then zeroes the six 0xC-byte crystal sub-buffers at +0x564..+0x5ac.
 // NOTE: -O4,p static cap - retail's `stmw r29` (3-reg save) needs -O4,s
 // (MWCC_CASES §16); body/loop otherwise byte-identical.
-CModelDispMakeCrystal* MakeCrystal_InitSlotArray(CModelDispMakeCrystal* self)
+CMCrystalDispSub::CMCrystalDispSub()
 {
-    u8* base = reinterpret_cast<u8*>(self);
+    u8* base = reinterpret_cast<u8*>(this);
     __ct__Q22cf17CActParamAnimGameFv(base + 0x8);
     u8* p = base + 0x564;
     do {
-        initCrystalSubStruct(p);
+        ::initCrystalSubStruct(p);
         p += 0xc;
     } while (p < base + 0x5ac);
-    return self;
 }
 
-// Retail 0x8021E398: sub-object destructor (array-element dtor for the
-// 0x5cc-stride crystal display sub-structs) - destroys the inline
-// CActParamAnimGame at +0x8 and frees the object when the flag is positive.
-// Returns the object. Retail frame is stmw/lmw r30+r31 (-O4,s shape).
-void* __dt__8021C540(void* obj, int flag)
+// Retail 0x8021E398: element destructor of the two crystal display slots
+// (row of __destroy_arr) - destroys the inline CActParamAnimGame at +0x8 and
+// frees the object when the flag is positive. Retail frame is stmw/lmw
+// r30+r31 (-O4,s shape).
+CMCrystalDispSub::~CMCrystalDispSub()
 {
-    if (obj != nullptr) {
-        u8* sub = reinterpret_cast<u8*>(obj);
-        __dt__Q22cf17CActParamAnimGameFv(sub + 8, -1);
-        if (flag > 0) {
-            operator delete(obj);
-        }
-    }
-    return obj;
+    __dt__Q22cf17CActParamAnimGameFv(reinterpret_cast<u8*>(this) + 8, -1);
 }
 
 // Retail frame is stmw r30 (-O4,s shape); body otherwise identical.
-CModelDispMakeCrystal::~CModelDispMakeCrystal()
-{
-    u8* base = reinterpret_cast<u8*>(this);
-    __dt__13CMCGetItemBoxFv(base + 0xecc, -1);
-    __dt__6CCur18Fv(reinterpret_cast<CCur18*>(base + 0xeb4), -1);
-    __dt__7CSysWinFv(base + 0xe78, -1);
-    __dt__10CScrollBarFv(base + 0xe38, -1);
-    __dt__6CCur18Fv(reinterpret_cast<CCur18*>(base + 0xe20), -1);
-    __dt__14CMCEffCylinderFv(base + 0xdfc, -1);
-    __dt__12CMCEffDivideFv(base + 0xde4, -1);
-    __dt__12CMCEffUpRankFv(base + 0xdcc, -1);
-    __dt__13CMCEffCrystalFv(base + 0xd90, -1);
-    __dt__13CMCEffFailureFv(base + 0xd78, -1);
-    __dt__13CMCEffSuccessFv(base + 0xd5c, -1);
-    __dt__11CMCEffUpPrmFv(base + 0xcec, -1);
-    __dt__13CMCEffUpGreenFv(base + 0xcd4, -1);
-    __dt__12CMCEffUpBlueFv(base + 0xcbc, -1);
-    __dt__11CMCEffUpRedFv(base + 0xca4, -1);
-    __dt__11CMCEffStartFv(base + 0xc8c, -1);
-    __dt__17CMCCrystalSupportFv(base + 0xc70, -1);
-    __dt__14CMCCrystalListFv(base + 0xc18, -1);
-    __dt__16CMCCylinderGaugeFv(base + 0xbec, -1);
-    __destroy_arr(base + 0x44, (void*)__dt__8021C540, 0x5cc, 2);
-    __dt__17UnkClass_8045F564Fv(base + 0x2c, -1);
-}
+// Every member is a real typed member, so MWCC emits the member destructors
+// (reverse declaration order == retail's destruction order) and the
+// __destroy_arr row for the two crystal display slots.
+CModelDispMakeCrystal::~CModelDispMakeCrystal() {}
 
 void MakeCrystal_InitFiles(CModelDispMakeCrystal* self)
 {
@@ -1099,7 +845,7 @@ void MakeCrystal_StateChargeWait(CModelDispMakeCrystal* self)
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 bit;
     // Classic-controller vs Wiimote/Nunchuk trigger bit.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+    if (cf::CfGameManager::isClassicController(-1) != 0)
         bit = (pad->mTurboPressButtonFlags >> 21) & 1;
     else
         bit = (pad->mTurboPressButtonFlags >> 4) & 1;
@@ -1746,7 +1492,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
     // after decode; trigger bits are extracted as 0/1 ints (retail extrwi).
     u32 cancel, dir, confirm, menu;
     int trigger1, trigger2, trigger3;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 0x104);
         u32 p = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 4);
         cancel = f & 0x8004;
@@ -2169,7 +1915,7 @@ void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote/Nunchuk.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2278,7 +2024,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
     // Cursor step / cancel booleans derived from turbo and pressed button flags.
     // Bit positions differ between Classic controller and Wiimote/Nunchuk.
     u32 trigger1, trigger2, cancel, dir;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2365,7 +2111,7 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     int trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote/Nunchuk.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 c = f & 0x8004;
@@ -2455,7 +2201,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, cancel, dir;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2564,7 +2310,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, cancel, dir;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2803,7 +2549,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         ml::MTRand::getInstance();
         int rv8 = rand31__Q22ml6MTRandFv();
         int d = (s8)(rv8 - (rv8 / 8) * 8) + 3;
-        u8 c = GetCollectedFlagByte(self->field_5F0);
+        u8 c = GetCollectedFlagByte(self->mSlots[0].field_5ac);
         if (c == 2) {
             ml::MTRand::getInstance();
             d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
@@ -2833,7 +2579,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
             }
             ml::MTRand::getInstance();
             int d = (s8)(rand31__Q22ml6MTRandFv() % 5) + 1;
-            u8 c = GetCollectedFlagByte(self->field_5F0);
+            u8 c = GetCollectedFlagByte(self->mSlots[0].field_5ac);
             if (c == 7) {
                 ml::MTRand::getInstance();
                 d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
@@ -2855,7 +2601,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
     case 2: {
         // Gauge-tune: refresh the cylinder gauge fill with a char-dependent
         // constant, then flush the effect list.
-        u8 c = GetCollectedFlagByte(self->field_5F0);
+        u8 c = GetCollectedFlagByte(self->mSlots[0].field_5ac);
         if (c == 5) {
             reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
                 lbl_eu_80668500);
@@ -3543,25 +3289,25 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__17CMCCrystalSupportFv(crySupport, -1);
         CrySupBuildLayout(base + 0xc70);
         // Effect objects: build on stack, install via MakeCrystalCopyParamBlock, destroy.
-        __ct__CMCEffStart(
+        __ct__11CMCEffStartFPQ34nw4r3lyt19ArcResourceAccessor(
             effStart,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xc8c, effStart);
         __dt__11CMCEffStartFv(effStart, -1);
         reinterpret_cast<CMCEffStart*>(base + 0xc8c)->init();
-        __ct__CMCEffUpRed(
+        __ct__11CMCEffUpRedFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpRed,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xca4, effUpRed);
         __dt__11CMCEffUpRedFv(effUpRed, -1);
         reinterpret_cast<CMCEffUpRed*>(base + 0xca4)->init();
-        __ct__CMCEffUpBlue(
+        __ct__12CMCEffUpBlueFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpBlue,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xcbc, effUpBlue);
         __dt__12CMCEffUpBlueFv(effUpBlue, -1);
         reinterpret_cast<CMCEffUpBlue*>(base + 0xcbc)->init();
-        __ct__CMCEffUpGreen(
+        __ct__13CMCEffUpGreenFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpGreen,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xcd4, effUpGreen);
@@ -3569,7 +3315,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         reinterpret_cast<CMCEffUpGreen*>(base + 0xcd4)->init();
         // UpPrm: larger copy with an 8-byte-per-iteration counted loop
         // (same lwz/lwzu + stw/stwu pair idiom as the item-box tables).
-        __ct__CMCEffUpPrm(
+        __ct__11CMCEffUpPrmFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpPrm,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xcf0] = effUpPrm[4];
@@ -3590,7 +3336,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xd58] = effUpPrm[0x6c];
         __dt__11CMCEffUpPrmFv(effUpPrm, -1);
         init__11CMCEffUpPrmFv(base + 0xcec);
-        __ct__CMCEffSuccess(
+        __ct__13CMCEffSuccessFPQ34nw4r3lyt19ArcResourceAccessor(
             effSuccess,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xd60] = effSuccess[4];
@@ -3602,13 +3348,13 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xd74] = effSuccess[0x18];
         __dt__13CMCEffSuccessFv(effSuccess, -1);
         reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->init();
-        __ct__CMCEffFailure(
+        __ct__13CMCEffFailureFPQ34nw4r3lyt19ArcResourceAccessor(
             effFailure,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xd78, effFailure);
         __dt__13CMCEffFailureFv(effFailure, -1);
         reinterpret_cast<CMCEffFailure*>(base + 0xd78)->init();
-        __ct__CMCEffCrystal(
+        __ct__13CMCEffCrystalFPQ34nw4r3lyt19ArcResourceAccessor(
             effCrystal,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xd94] = effCrystal[4];
@@ -3629,19 +3375,19 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xdc8] = effCrystal[0x38];
         __dt__13CMCEffCrystalFv(effCrystal, -1);
         reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->MCCrystal_BuildLayouts();
-        __ct__CMCEffUpRank(
+        __ct__12CMCEffUpRankFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpRank,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xdcc, effUpRank);
         __dt__12CMCEffUpRankFv(effUpRank, -1);
         reinterpret_cast<CMCEffUpRank*>(base + 0xdcc)->init();
-        __ct__CMCEffDivide(
+        __ct__12CMCEffDivideFPQ34nw4r3lyt19ArcResourceAccessor(
             effDivide,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         MakeCrystalCopyParamBlock(base + 0xde4, effDivide);
         __dt__12CMCEffDivideFv(effDivide, -1);
         reinterpret_cast<CMCEffDivide*>(base + 0xde4)->init();
-        __ct__CMCEffCylinder(
+        __ct__14CMCEffCylinderFPQ34nw4r3lyt19ArcResourceAccessor(
             effCylinder,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xe00] = effCylinder[4];

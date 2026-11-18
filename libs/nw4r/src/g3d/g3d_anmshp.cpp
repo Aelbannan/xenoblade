@@ -3,6 +3,8 @@
 namespace nw4r {
 namespace g3d {
 
+NW4R_G3D_RTTI_DEF(AnmObjShp);
+
 bool AnmObjShp::TestExistence(u32 idx) const {
     return (mpBinding[idx] & (BINDING_UNDEFINED | BINDING_INVALID)) == 0;
 }

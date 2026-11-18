@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
+
 // Large section arrays for data diff - generated
 __declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_sfd_[0x40] = {0x80, 0x3C, 0x12, 0x38, 0x80, 0x3C, 0x12, 0x40, 0x80, 0x3C, 0x12, 0x48, 0x80, 0x3C, 0x12, 0xFC, 0x80, 0x3C, 0x13, 0x48, 0x80, 0x3C, 0x13, 0x50, 0x80, 0x3C, 0x13, 0x78, 0x80, 0x3C, 0x13, 0xE4, 0x80, 0x3C, 0x14, 0x50, 0x80, 0x3C, 0x14, 0xC8, 0x80, 0x3C, 0x14, 0xD4, 0x80, 0x3C, 0x14, 0xE0, 0x80, 0x3C, 0x14, 0xEC, 0x80, 0x3C, 0x14, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // .rodata 0x40 at 0x8051C550
 
@@ -18,20 +20,20 @@ int SFBUF_GetPrepFlg(void* self, int idx);
 int SFBUF_GetTermFlg(void* self, int idx);
 
 /* Set the audio-out volume of the AOAP player. */
-void SFD_SetOutVol(void* self, s32 vol) {
+void SFD_SetOutVol(SfdHandle* self, s32 vol) {
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(NULL, 0xFF0001A3);
         return;
     }
     if (SFSET_GetCond(self, 6)) {
-        void* t = *(void**)((u8*)self + 0x21BC);
-        void (*fn)(void*, s32) = *(void(**)(void*, s32))((u8*)t + 0x0C);
+        SfdAoapIf* t = self->trn[7].hdr;
+        void (*fn)(void*, s32) = t->setOutVol;
         fn(self, vol);
     }
 }
 
 /* Return the audio-out volume of the AOAP player. */
-s32 SFD_GetOutVol(void* self) {
+s32 SFD_GetOutVol(SfdHandle* self) {
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(NULL, 0xFF0001A4);
         return 0;
@@ -40,17 +42,17 @@ s32 SFD_GetOutVol(void* self) {
         return 0;
     }
     {
-        void* t = *(void**)((u8*)self + 0x21BC);
-        s32 (*fn)(void*) = *(s32(**)(void*))((u8*)t + 0x10);
+        SfdAoapIf* t = self->trn[7].hdr;
+        s32 (*fn)(void*) = t->getOutVol;
         return fn(self);
     }
 }
 
 /* Set the playback speed of the AOAP player. */
-void SFAOAP_SetSpeed(void* self, s32 a, s32 b) {
+void SFAOAP_SetSpeed(SfdHandle* self, s32 a, s32 b) {
     if (SFSET_GetCond(self, 6)) {
-        void* t = *(void**)((u8*)self + 0x21BC);
-        void (*fn)(void*, s32, s32) = *(void(**)(void*, s32, s32))((u8*)t + 0x14);
+        SfdAoapIf* t = self->trn[7].hdr;
+        void (*fn)(void*, s32, s32) = t->setSpeed;
         if (fn != NULL) {
             fn(self, a, b);
         }
@@ -62,33 +64,25 @@ int SFAOAP_Init(void) { return 0x0; }
 int SFAOAP_Finish(void) { return 0x0; }
 
 /* AOAP server: mirror BUF prep/term flags into the TRN flags. */
-int SFAOAP_ExecServer(void* self) {
+int SFAOAP_ExecServer(SfdHandle* self) {
     if (SFSET_GetCond(self, 6) == 0) {
         return 0;
     }
-    if (SFTRN_GetPrepFlg(self, 7) != 1 && SFBUF_GetPrepFlg(self, *(u32*)((u8*)self + 0x21C4)) == 1) {
+    if (SFTRN_GetPrepFlg(self, 7) != 1 && SFBUF_GetPrepFlg(self, self->trn[7].bufIdx) == 1) {
         SFTRN_SetPrepFlg(self, 7, 1);
     }
-    if (SFTRN_GetTermFlg(self, 7) != 1 && SFBUF_GetTermFlg(self, *(u32*)((u8*)self + 0x21C4)) == 1) {
+    if (SFTRN_GetTermFlg(self, 7) != 1 && SFBUF_GetTermFlg(self, self->trn[7].bufIdx) == 1) {
         SFTRN_SetTermFlg(self, 7, 1);
     }
     return 0;
 }
 
-struct SFAOAPImpl {
-    u8 pad0[0x21BC];
-    void* field_0x21BC;
-    u8 pad1[0x261C - 0x21C0];
-    u8 field_0x261C;
-};
-
-/* Create the AOAP player and hook its implementation vtable. */
-int SFAOAP_Create(void* self) {
+/* Create the AOAP player and hook its implementation object. */
+int SFAOAP_Create(SfdHandle* self) {
     if (SFSET_GetCond(self, 6) == 0) {
         return 0;
     }
-    struct SFAOAPImpl* impl = (struct SFAOAPImpl*)self;
-    impl->field_0x21BC = &impl->field_0x261C;
+    self->trn[7].hdr = &self->aoapIf;
     return 0;
 }
 int SFAOAP_Destroy(void) { return 0x0; }

@@ -46,7 +46,6 @@ void BgTex_Release_3D9C(void*);
 void mkCrystalTeardown(void*);
 void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Unmangled local helper (bound literally).
 extern "C" void MakeCrystalInitWin(void* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
@@ -300,7 +299,7 @@ void CMenuMakeCrystal::Move() {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
             btn = (pad->mPressedButtonFlags >> 23) & 1;
         } else {
             btn = (pad->mPressedButtonFlags >> 10) & 1;

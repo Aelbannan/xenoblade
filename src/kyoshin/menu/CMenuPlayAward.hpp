@@ -299,7 +299,6 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // CfGameManager controller-type query + save/skip busy queries (retail
 // pre-mangled / unmangled C symbols; same scheme as CMenuTutorialList.hpp).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 

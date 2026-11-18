@@ -201,7 +201,7 @@ void CMenuCollepedia::Colle_HandleInput() {
 
     MenuCollepediaPadData* pad =
         (MenuCollepediaPadData*)cf::CfGameManager::getCfPadData();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic-controller (co-op) layout.
         if (clpCanClaim(&this->mCollepedia) != 0) {
             func_801C41E8(&this->mTitleAHelp, 0x50);

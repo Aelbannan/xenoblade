@@ -453,12 +453,11 @@ extern "C" void* CItem_initItemImplInstances(void*);
 #define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" u16 CItemBlock_getFlag120EC(int);
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
-// linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
-// plain C++ forms that re-derive the retail mangled names.
+// linkage; getPackedFont uses the plain C++ form that re-derives the retail
+// mangled name (cf::CfGameManager::isClassicController comes from its header).
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
 extern "C" float lbl_eu_80668488;
 extern "C" float lbl_eu_8066848C;
 extern "C" float lbl_eu_80668490;

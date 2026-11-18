@@ -79,6 +79,5 @@ struct CExchangeWinFontView {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail symbol is the pre-mangled Fv name but the call passes -1 in r3.
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail reloc is the UNMANGLED name; the C++ member in CUICfManager.hpp
 // would mangle it, so keep C linkage here.

@@ -66,7 +66,6 @@ struct CfMenuPadData {
 
 // Input-handler callees (retail unmangled names).
 extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
@@ -157,7 +156,7 @@ void CMenuItem::Move() {
     // co-op vs single-player mode.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 pressed;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         pressed = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         pressed = (pad->mPressedButtonFlags >> 10) & 1;
@@ -256,7 +255,7 @@ void CMenuItem::HandleInput() {
     bool up, down;
     int turboCancel, cancel, pageTurn, decide;
     bool leftTrigger, xHeld, yHeld;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller bit layout.
         turboCancel = (pad->mTurboFlags & 0x8004) != 0;
         pageTurn = (pad->mTurboFlags & 0x10008) != 0;

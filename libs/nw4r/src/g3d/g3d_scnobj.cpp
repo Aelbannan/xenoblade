@@ -4,9 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 
-// Absorbed rodata for scnobj: TypeName "ScnObj" (retail .rodata 0x8051D768, 0x10).
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const ::nw4r::g3d::G3dObj::ResNameDataT<7> lbl_eu_8051D768 = {7, "ScnObj"};
-
 namespace nw4r {
 namespace g3d {
 
@@ -23,6 +20,8 @@ namespace g3d {
  * ScnObj
  *
  ******************************************************************************/
+NW4R_G3D_RTTI_DEF(ScnObj);
+
 void ScnObj::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
     if (pParam != nullptr && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
         *pParam &= ~SCNOBJFLAG_DISABLE_CALC_WORLD;
@@ -304,6 +303,8 @@ bool ScnObj::GetBoundingVolume(ScnObjBoundingVolumeType type,
  * ScnLeaf
  *
  ******************************************************************************/
+NW4R_G3D_RTTI_DEF(ScnLeaf);
+
 ScnObj::ForEachResult ScnLeaf::ForEach(ForEachFunc pFunc, void* pInfo,
                                        bool postOrder) {
 #pragma unused(postOrder)
@@ -438,6 +439,7 @@ void ScnLeaf::DefG3dProcScnLeaf(u32 task, u32 param, void* pInfo) {
  * ScnGroup
  *
  ******************************************************************************/
+NW4R_G3D_RTTI_DEF(ScnGroup);
 
 ScnGroup* ScnGroup::Construct(MEMAllocator* pHeap, u32* pSize, u32 maxNumChildren) {
     ScnGroup* pObj = nullptr;
@@ -732,15 +734,14 @@ static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
 // second-link reload was unobtainable: the by-value helper parameter is the
 // CSE barrier that costs nothing.)
 static bool scnGroupBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    return other.GetTypeID() ==
-                   G3dObj::TypeObj(lbl_eu_8051D768).GetTypeID()
+    return other.GetTypeID() == ScnObj::GetTypeObjStatic().GetTypeID()
                ? true
                : (other.GetTypeID() ==
                   G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
 }
 
 bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other.GetTypeID() == TypeObj(lbl_eu_8051D788).GetTypeID()) {
+    if (other.GetTypeID() == TypeObj(TYPE_NAME).GetTypeID()) {
         return true;
     }
 
@@ -750,7 +751,7 @@ bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
 
 
 bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other.GetTypeID() == TypeObj(lbl_eu_8051D768).GetTypeID()) {
+    if (other.GetTypeID() == TypeObj(TYPE_NAME).GetTypeID()) {
         return true;
     }
 
@@ -766,7 +767,7 @@ const char* ScnGroup::GetTypeName() const {
 
 
 const G3dObj::TypeObj ScnGroup::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D788);
+    return TypeObj(TYPE_NAME);
 }
 
 
@@ -778,7 +779,7 @@ const char* ScnObj::GetTypeName() const {
 
 
 const G3dObj::TypeObj ScnObj::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D768);
+    return TypeObj(TYPE_NAME);
 }
 
 } // namespace g3d

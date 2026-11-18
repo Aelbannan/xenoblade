@@ -239,8 +239,9 @@ extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx) {
     s32 isGroup = 0;
     if (obj != NULL) {
         // Separate TypeObj statement: retail materializes the ScnGroup type
-        // label (lis/addi) before loading `this` into r3.
-        nw4r::g3d::G3dObj::TypeObj type(lbl_eu_8051D788);
+        // object (lis/addi) before loading `this` into r3.
+        nw4r::g3d::G3dObj::TypeObj type =
+            nw4r::g3d::ScnGroup::GetTypeObjStatic();
         if (obj->IsDerivedFrom(type)) {
             isGroup = 1;
         }

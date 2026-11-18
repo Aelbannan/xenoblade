@@ -2,13 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 int SFMEM_Init(void) { return 0x0; }
 
 int SFMEM_Finish(void) { return 0x0; }
 
-int SFMEM_ExecServer(void* p) {
-    unsigned int val = *(unsigned int*)((char*)p + 0x1fec);
+int SFMEM_ExecServer(SfdHandle* p) {
+    unsigned int val = p->trn[0].termIdx;
     SFBUF_SetPrepFlg(p, val, 1);
     return 0;
 }
@@ -26,13 +27,13 @@ int SFMEM_Stop(void) { return 0x0; }
 int SFMEM_Pause(void) { return 0x0; }
 
 void* SFBUF_RingGetWrite(void* self, u32 field, u32 param);
-void* SFMEM_GetWrite(void* self, u32 param) {
-    return SFBUF_RingGetWrite(self, *(u32*)((u8*)self + 0x1fec), param);
+void* SFMEM_GetWrite(SfdHandle* self, u32 param) {
+    return SFBUF_RingGetWrite(self, self->trn[0].termIdx, param);
 }
 
 void SFBUF_RingAddWrite(void* self, u32 a, u32 b, u32 c);
-void SFMEM_AddWrite(void* self, u32* a, u32* b) {
-    SFBUF_RingAddWrite(self, *(u32*)((u8*)self + 0x1fec), *a, *b);
+void SFMEM_AddWrite(SfdHandle* self, u32* a, u32* b) {
+    SFBUF_RingAddWrite(self, self->trn[0].termIdx, *a, *b);
 }
 
 s32 SFLIB_SetErr(void* h, u32 err_code);

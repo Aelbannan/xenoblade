@@ -466,10 +466,10 @@ extern "C" int applyAmbientAll(CScnItemModelNw4rSub16C8* sub);
 // scnImN4CheckMat / scnImN4LinkGrpA cross-TU imports (defined in CMdlMaterial.cpp
 // / CScnItemModel.cpp). extern "C" keeps the retail func_* names verbatim
 // (MWCC mangles class-typed params). scnImN4SyncMatCol passes a zero-color vec
-// and a mode flag as the trailing args (defaulted so the 1-arg call site in
-// scnImN4CheckMat keeps its bytes).
-extern "C" int applyAmbientByLight(CScnItemModelNw4rSub16C8* sub, ml::CVec3* vec = 0,
-                             u32 param = 0);
+// and a mode flag as the trailing args; scnImN4CheckMat forwards its own
+// (vec, flags) pair unchanged (retail emits no argument setup at that call).
+extern "C" int applyAmbientByLight(CScnItemModelNw4rSub16C8* sub, ml::CVec3* vec,
+                             u32 param);
 extern "C" int simProbeModelVec(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" int simLinkSlot7B4(CScnItemModelNw4r* self, CScnItemModelNw4r* node);
 // Model-link registration (defined in CScnItemModel.cpp; rejects an
@@ -478,7 +478,7 @@ extern "C" int simLinkModel7C4(CScnItemModelNw4r* self, CScnItemModelNw4r* node)
 // Chain-wide 1-arg query (defined in CScnItemModel.cpp; vtable-0x34 on the
 // reference-list models).
 extern "C" int simProbeVfunc34(CScnItemModelNw4r* self, u32 param);
-extern "C" void simSetFlag1Tree(CScnItemModelNw4r* self, u32 param);
+extern "C" void simSetFlag1Tree(CScnItemModel* self, u32 param);
 // CMdlLook handle feed (defined in CMdlLook.cpp): (handle, model, frame,
 // param).
 extern "C" void syncMdlLookSlots(s32 handle, CScnItemModelNw4r* self, u32 frame,
@@ -535,7 +535,7 @@ extern "C" void MdlDyn_FreeAll(u8* self);
 // scnImN4SyncShadow after the shadow-matrix copy pass.
 extern "C" void MdlDyn_Update(void* self, nw4r::math::MTX34* mtxs);
 // Shadow-matrix propagation tail of scnImN4SyncShadow (defined later in this TU).
-void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
+extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
 extern "C" void* getScnRootSlot10(void* self);
 extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);

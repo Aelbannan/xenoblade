@@ -102,11 +102,11 @@ struct SceneCullElem {
 };
 
 // Float constants from SDA2
-// extern const f32 lbl_eu_8066AF10;
+// extern const f32 0.33333334f;
 extern const f32 lbl_eu_80663AD0;  // 50.0f (pass-A cull margin)
 extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin) // 1/3
-// extern const f32 lbl_eu_8066AF14; // 0.0f
-// extern const f32 lbl_eu_8066AF18; // 255.0f
+// extern const f32 0.0f; // 0.0f
+// extern const f32 255.0f; // 255.0f
 
 // nw4r math functions
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
@@ -120,12 +120,12 @@ extern u8 lbl_eu_8065F418[0x10];
 
 // Shared float pools referenced by the render path (retail loads them via
 // lfs @sda21; local literals would grow .sdata2 past its 0-byte slice):
-// lbl_eu_8066AF10 = 1/3, lbl_eu_8066AF14 = 0.0f, lbl_eu_8066AF18 = 255.0f.
-extern const f32 lbl_eu_8066AF10;
+// 0.33333334f = 1/3, 0.0f = 0.0f, 255.0f = 255.0f.
+
 extern const f32 lbl_eu_80663AD0;  // 50.0f (pass-A cull margin)
 extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin)
-extern const f32 lbl_eu_8066AF14;
-extern const f32 lbl_eu_8066AF18;
+
+
 
 // Dissolved monolibdata2 .data tail owned by this TU (0x8056F940-0x8056F9B2).
 extern "C" u32 lbl_eu_80663AE0[2];
@@ -339,9 +339,9 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
             f32 vcx = vc->x, vcy = vc->y, vcz = vc->z;
 
             Vec cen;
-            cen.x = (vax + vbx + vcx) * lbl_eu_8066AF10;
-            cen.y = (vay + vby + vcy) * lbl_eu_8066AF10;
-            cen.z = (vaz + vbz + vcz) * lbl_eu_8066AF10;
+            cen.x = (vax + vbx + vcx) * 0.33333334f;
+            cen.y = (vay + vby + vcy) * 0.33333334f;
+            cen.z = (vaz + vbz + vcz) * 0.33333334f;
 
             f32 dx0 = cen.x - vax, dy0 = cen.y - vay, dz0 = cen.z - vaz;
             f32 radiusSq = dx0 * dx0 + dy0 * dy0 + dz0 * dz0;
@@ -354,12 +354,12 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
             t2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
             if (t2 > radiusSq) radiusSq = t2;
 
-            if (!(radiusSq > lbl_eu_8066AF14 || radiusSq == lbl_eu_8066AF14)) {
+            if (!(radiusSq > 0.0f || radiusSq == 0.0f)) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 radius;
-            if (radiusSq == lbl_eu_8066AF14 || radiusSq < lbl_eu_8066AF14) {
-                radius = lbl_eu_8066AF14;
+            if (radiusSq == 0.0f || radiusSq < 0.0f) {
+                radius = 0.0f;
             } else {
                 radius = radiusSq * nw4r::math::FrSqrt(radiusSq);
             }
@@ -387,7 +387,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXColor3u8(0, 0, 0xFF);
                 } else if (colorData != NULL) {
                     f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                    GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
+                    GXColor3u8((u8)(colors[0] * 255.0f), (u8)(colors[1] * 255.0f), (u8)(colors[2] * 255.0f));
                 }
             }
         }
@@ -468,7 +468,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXColor3u8(0, 0, 0xFF);
                 } else if (colorData != NULL) {
                     f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                    GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
+                    GXColor3u8((u8)(colors[0] * 255.0f), (u8)(colors[1] * 255.0f), (u8)(colors[2] * 255.0f));
                 }
             }
         }
@@ -534,7 +534,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXPosition3f32(v->x, v->y, v->z);
                     if (colorData != NULL) {
                         f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                        GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
+                        GXColor3u8((u8)(colors[0] * 255.0f), (u8)(colors[1] * 255.0f), (u8)(colors[2] * 255.0f));
                     }
                 }
             }
@@ -596,9 +596,6 @@ void* lbl_eu_8056F978[4] = {
     (void*)&__dt___reslist_base_IScnEnvCtl,
     NULL,
 };
-char lbl_eu_8056F988[0x20] = "NW4R:Failed assertion IsValid()";
-// The 6-byte zero tail after "g3d_fog.h" is folded into the array (NW4R
-// assert filename idiom: cf. CfObjectModel's g3d_resnode_ac.h string, whose
-// 7-byte pad is folded the same way so the tail stays in .data).
-char lbl_eu_8056F9A8[0x10] = "g3d_fog.h";
+// (The "NW4R:Failed assertion IsValid()" / "g3d_fog.h" assert strings at
+//  0x8056F988/0x8056F9A8 belong to the CScnEnvLgtCtrl.cpp .data split.)
 // data: retail sections verified via run.py data diff (no bypass)

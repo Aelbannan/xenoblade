@@ -1,10 +1,9 @@
 #pragma once
 
 #include <types.h>
-// KEEP (blockers-A 2026-10-23): 32-bit view of BdatGetU16Direct (canonical u16 in
-// kyoshin/code_80135FDC_Bdat.hpp); the u16 form adds clrlwi and moves the
-// callers here further from retail.
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include <cstring>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -16,7 +15,6 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 class CFileHandle;
-struct CItemBoxInfo;
 
 namespace nw4r { namespace math { struct VEC3; } }
 namespace nw4r { namespace lyt {
@@ -33,116 +31,41 @@ struct CMCItemBoxEntry {
     u8 bytes[0x34 - 0x04];          // 0x04-0x33
 };
 
-/* Echo/placeholder for the CSysWin sub-object range. */
-struct CMCGetItemBoxSysWin {
-    u8 bytes[0x3C];                 // 0x00-0x3B
-};
-
-/* Cursor index table at +0x1A4 of CMCGetItemBox (0x15C bytes).
-   A u16 entry table (ArrayGet12 source), a byte flag array at +0xA8 and a
-   selection-marker byte at +0xD8 (set to the found row index or 8). */
-struct CMCItemBoxCursor {
-    u16 table[0x54];                // 0x00-0xA7
-    u8  flags[0x30];                // 0xA8-0xD7
-    u8  field_D8;                   // 0xD8
-    u8  pad_D9[0x15C - 0xD9];       // 0xD9-0x15B
-};
-
-/* Trivial FixStr-shaped buffers: unlike ml::FixStr these have no default
-   constructor, so embedding them does not generate implicit member-constructor
-   calls in CMCGetItemBox's constructor (retail has none). */
-struct CMCSubFixStr64 { char mString[64]; int mLength; };
-struct CMCSubFixStr128 { char mString[128]; int mLength; };
-
-// Copy-shape helpers for __ct__CMCGetItemBox (same idiom as CItemBoxGrid.hpp:
-extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);   // 4-word mem-region copy ctor
-// whole-member struct assignments reproduce retail's scheduling, with word
-// arrays lowering to the paired lwzu/stwu bdnz loops).
-struct CMCW6 { u32 w[6]; };
-struct CMCW36 { u32 w[36]; };
-struct CMCW32 { u32 w[32]; };
-struct CMCSubTableCopy { u32 w[0x40]; };
-
-class CMCUnk16 {
-public:
-    u8 d[0x10];
-    CMCUnk16& operator=(const CMCUnk16& o) {
-        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((void*)d, (void*)o.d);
-        return *this;
+/* FixStr-shaped name buffers of CMCItemBoxSub (same layout and same
+   strlen/strcpy copy as ml::FixStr, but no constructor: the index table is
+   initialised by initMCItemSub, and retail's default temporary is not
+   constructed, so a constructor here would add calls retail does not have). */
+struct CMCSubFixStr64 {
+    char mString[64];
+    int mLength;
+    void operator=(const CMCSubFixStr64& str) {
+        mLength = std::strlen(str.mString);
+        std::strcpy(mString, str.mString);
     }
 };
-
-// Word runs whose retail schedule loads both words of a pair and stores the
-// high word first (inlined operator= forces that order inside the enclosing
-// struct assignment).
-struct CMCPairRun2 {
-    u32 w[4];
-    CMCPairRun2& operator=(const CMCPairRun2& o) {
-        u32 l0 = o.w[0]; u32 h0 = o.w[1];
-        w[1] = h0; w[0] = l0;
-        u32 l1 = o.w[2]; u32 h1 = o.w[3];
-        w[3] = h1; w[2] = l1;
-        return *this;
+struct CMCSubFixStr128 {
+    char mString[128];
+    int mLength;
+    void operator=(const CMCSubFixStr128& str) {
+        mLength = std::strlen(str.mString);
+        std::strcpy(mString, str.mString);
     }
-};
-struct CMCRun6 {          // pair-reversed, single, pair-reversed, single
-    u32 w[6];
-    CMCRun6& operator=(const CMCRun6& o) {
-        u32 a = o.w[0]; u32 b = o.w[1];
-        w[1] = b; w[0] = a;
-        w[2] = o.w[2];
-        u32 c = o.w[3]; u32 d = o.w[4];
-        w[4] = d; w[3] = c;
-        w[5] = o.w[5];
-        return *this;
-    }
-};
-
-/* itemBox+4 region <- default CItemBoxInfo temp +4 (dest = src + 0xf4). */
-struct CMCBoxMember {
-    CMCUnk16 unk1;
-    CMCUnk16 unk2;
-    u32 w01, w02, w03, w04, w05, w06, w07, w08, w09, w0a;
-    u32 w0b, w0c, w0d, w0e, w0f, w10, w11, w12, w13, w14;
-    u32 w15, w16, w17, w18, w19, w1a, w1b;
-    u8 b90;
-    u32 b94;
-    u8 b98, b99, b9a;
-    CMCPairRun2 crun;
-    u16 hac;
-    u8 hae;
-    CMCW6 p1;
-    CMCW36 p2;
-    CMCRun6 drun;
-    CMCW6 p3;
-    u8 g188;
-};
-
-/* sysWin_B8+4 region <- default CSysWin temp +4 (dest = src + 0xb8). */
-struct CMCSysWinMember {
-    CMCUnk16 unk;
-    u32 a, b, c, dd, e;
-    u8 g28;
-    u32 f2c, f30;
-    u8 t34, t35, t36, t37, t38, t39;
 };
 
 /* Item-box index structure at +0x314 of CMCGetItemBox.
    An s16 offset table, count, counter and backing entry array.
-   Note: region +0x108..+0x14C of this object also doubles as a FixStr<64>
-   name buffer in retail (accessed via object offset 0x41C). */
+   The FixStr<64> at +0x108 and FixStr<128> at +0x14C are the short/long
+   item-name buffers (mLength at +0x148 / +0x1CC). */
 struct CMCItemBoxSub {
     s16 table[0x80];                // 0x000-0x0FF: offset table
     u16 count;                      // 0x100: number of entries
     u8  pad_102;                    // 0x102 (also read as an index source)
     u8  limit;                      // 0x103
     u8  counter;                    // 0x104
-    u8  pad_105[0x108 - 0x105];     // 0x105-0x107
     CMCSubFixStr64 shortName;       // 0x108-0x14B: short item-name buffer (mLength at 0x148)
     CMCSubFixStr128 name;           // 0x14C-0x1CF: item-text buffer (mLength at 0x1CC)
     CMCItemBoxEntry* listBase;      // 0x1D0: 52-byte Entry array base
     u8  field_1D4;                  // 0x1D4
-    u8  pad_1D5[0x1D8 - 0x1D5];     // 0x1D5-0x1D7
 };
 
 /* Dispatch-only shim for the CItem impl-instance vtable returned by
@@ -173,20 +96,14 @@ public:
     virtual u32 getCount(void* entry) = 0;           // vtable offset 0x80
 };
 
-// Retail vtable lbl_eu_80539128: RTTI lbl_eu_80662C40, dtor @+0x08, then the
-// full IWorkEvent tree (OnFileEvent overridden @+0x10, rest base) -- so
-// CMCGetItemBox derives IWorkEvent. novtable + explicit label write in the
-// ctor, same shape as CMCCrystalList / CMCCrystalSupport / CSysWin.
-extern "C" void* lbl_eu_80539128[];   // CMCGetItemBox retail vtable
-
-class __declspec(novtable) CMCGetItemBox : public IWorkEvent {
+/* Item-box widget of the crystal-crafting menu (RTTI "CMCGetItemBox", base
+   list IWorkEvent: retail vtable __vt__13CMCGetItemBox, dtor @+0x08,
+   OnFileEvent @+0x10, the rest of the IWorkEvent tree from the base). */
+class CMCGetItemBox : public IWorkEvent {
 public:
+    CMCGetItemBox();
     virtual ~CMCGetItemBox();
     virtual bool OnFileEvent(CEventFile* pEventFile);
-
-    // Overlay on the implicit vptr at +0x00 so the free-function ctor can
-    // store the retail table label (same idiom as CSysWin / CBaseCur).
-    void*& vtbl() { return *reinterpret_cast<void**>(this); }
 
     u8 isMCGetItemBoxReady();
     u8 isMCGetItemBoxGridMode();
@@ -198,43 +115,33 @@ public:
     CFileHandle* fileHandle3;               // 0x2C
     CFileHandle* fileHandle4;               // 0x30
     u8* memManagerPtr;             // 0x34 (deallocated via mtl::MemManager)
-    nw4r::lyt::ArcResourceAccessor* arcAcc1;                   // 0x38 (nw4r::lyt::ArcResourceAccessor)
+    nw4r::lyt::ArcResourceAccessor* arcAcc1;                   // 0x38
     nw4r::lyt::ArcResourceAccessor* arcAcc2;                   // 0x3C
     nw4r::lyt::Layout* layout40;     // 0x40 (root pane at +0x10)
-    nw4r::lyt::AnimTransform* animTrans1;                // 0x44 (nw4r::lyt::AnimTransform)
+    nw4r::lyt::AnimTransform* animTrans1;                // 0x44
     nw4r::lyt::AnimTransform* animTrans2;                // 0x48
     u8 field_4C;                     // 0x4C
-    u8 field_4D;                     // 0x4D
-    u8 _pad_4E[0x50 - 0x4E];         // 0x4E-0x4F
+    u8 field_4D;                     // 0x4D (0x4E-0x4F is natural padding)
     u8* objAt50;                   // 0x50 (deallocated; has vtable)
     u8 field_54;                     // 0x54
-    u8 mField55;                     // 0x55
-    u8 _pad_56[0x58 - 0x56];         // 0x56-0x57
+    u8 mField55;                     // 0x55 (0x56-0x57 is natural padding)
     CCur07 subObj_58;                // 0x58-0x6F
     CCur09 subObj_70;                // 0x70-0x87
     CCur16 subObj_88;                // 0x88-0x9F
     CCur18 subObj_A0;                // 0xA0-0xB7
-    CMCGetItemBoxSysWin sysWin_B8;   // 0xB8-0xF3
-    u8 itemBox[0x1A4 - 0xF4];        // 0xF4-0x1A3 (a CItemBoxInfo, 0xB0 bytes)
-    CMCItemBoxCursor arr_1A4;        // 0x1A4-0x2FF (cursor index table)
+    CSysWin sysWin_B8;               // 0xB8-0xF3
+    CItemBoxInfo itemBox;            // 0xF4-0x2FF (includes its CItemBoxPage at 0x1A4)
     u8 field_300;                    // 0x300
     u8 field_301;                    // 0x301 (also sort/index)
     u8 field_302;                    // 0x302
     u8 mField303;                    // 0x303
     u8 field_304;                    // 0x304 (row)
-    u8 field_305;                    // 0x305 (column)
-    u8 _pad_306[0x308 - 0x306];      // 0x306-0x307
+    u8 field_305;                    // 0x305 (column; 0x306-0x307 is natural padding)
     u32 field_308;                   // 0x308
     u32 field_30C;                   // 0x30C
     u32 field_310;                   // 0x310
     CMCItemBoxSub sub_314;           // 0x314
 };
-
-// C-ABI ctor (retail symbol __ct__CMCGetItemBox, no class-length mangling,
-// same as __ct__7CSysWinFUc / __ct__CEIBCur). Free-function form: no implicit
-// base-vptr store is emitted, the label is written explicitly via vtbl().
-extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self);
-
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -246,7 +153,6 @@ extern "C" void CItemData_lookupOrAlloc(CMCItemBoxEntry*, int);
 extern "C" u32 CItemBlock_countEmpty(u8);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
-// ScalePaneWorldPos lives in kyoshin/CSysWin.hpp (typed VEC3/Pane form).
 extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
 extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
@@ -279,24 +185,12 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox*, u32, CMCItemBoxEntry*
 extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub*, u32);
 
 // ---------------------------------------------------------------------------
-// Constructor imports (retail symbol names verbatim)
-// ---------------------------------------------------------------------------
-// __ct__17UnkClass_8045F564Fv lives in kyoshin/CSysWin.hpp (typed form).
-extern "C" void __ct__7CSysWinFUc(void* syswin, int arg);
-extern "C" void __ct__12CItemBoxInfoFUcUs(void* info, int arg2, int arg3);
-extern "C" void __dt__7CSysWinFv(void* syswin, int flags);
-
-// ---------------------------------------------------------------------------
 // OnFileEvent / getMCItemSubText imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void* __ct__CCur07(void*, void*);
-extern "C" void* __ct__CCur09(void*, void*);
-extern "C" void* __ct__CCur16(void*, void*);
 extern "C" void copyVEC3(void*, void*);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void*);
-// C++-linkage (Itanium-mangled retail symbol getPackedFont__Fv).
 
 /* 28-byte message-format helper table read by getMCItemSubText's '%2' handler
    (indexed by the item's kind byte). */

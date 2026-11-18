@@ -320,30 +320,22 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 rot = rSrt.R;
-    f32 su = rSrt.Su;
-    f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
-    f32 fidx = lbl_eu_80669CB8 * rot;
+    f32 fidx = lbl_eu_80669CB8 * rSrt.R;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
     // Statement order mirrors the retail schedule: each load/multiply sits
     // where retail emits it, so the scheduler has nothing to reorder.
-    f32 c = cosR;
-    f32 s = sinR;
-
-    f32 svCos = sv * c;
-    f32 svSin = sv * s;
+    f32 svCos = rSrt.Sv * cosR;
+    f32 svSin = rSrt.Sv * sinR;
 
     f32 m03 = pMtx->m[0][3];
-    f32 suCos = su * c;
+    f32 suCos = rSrt.Su * cosR;
     f32 m13 = pMtx->m[1][3];
-    f32 d03 = m03 - tu;
-    f32 suSin = su * s;
+    f32 d03 = m03 - rSrt.Tu;
+    f32 suSin = rSrt.Su * sinR;
     f32 m00 = pMtx->m[0][0];
-    f32 t13 = m13 + tv;
+    f32 t13 = m13 + rSrt.Tv;
     f32 m01 = pMtx->m[0][1];
     f32 m10 = pMtx->m[1][0];
     f32 m11 = pMtx->m[1][1];

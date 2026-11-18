@@ -169,14 +169,14 @@ struct CSchedMemGlob {
 };
 extern CSchedMemGlob lbl_eu_8065FC18;
 
-// .sdata2 float/double pool shared with the schedule anim helpers:
-// 1.0f, the u32->double conversion constant (2^52), the s32->double
-// conversion constant (2^52 + 2^31), and the frame-rate clamp upper bound.
-// const routes these into the readonly sdata2 pool so MWCC hoists the lfs
-// above the frame stores (docs/MWCC_CASES.md lfs-hoist scheduling fix).
-extern f64 lbl_eu_8066B298;
+// .sdata2 float/double pool shared with the schedule anim helpers.
+// The u8->float conversion magic (2^52) used by SchedTexLoadCached is emitted
+// by MWCC's own `(f32)u8` cast, so it is NOT declared here: doing so removed
+// the pool entry and shifted 0.0f to offset 0, which broke the reloc-target
+// resolution of SchedAnim_LerpVec24 / SchedAnim_AdvanceCursor (both FULL).
+// 1.0f stays an extern so the 0.0f/f32 pool ordering retail has at
+// 0x8066B290 (0.0f) / 0x8066B2A8 (1.0f) is preserved.
 extern f64 lbl_eu_8066B2A0;
-extern const f64 lbl_eu_8066B288; // u8->float conversion magic (2^52)
 extern f32 lbl_eu_8066B2A8;
 
 // s32 -> f32 through the shared signed magic double lbl_eu_8066B2A0 (retail
@@ -310,20 +310,11 @@ struct TexCacheEntryView {
 // Load texture `index` of `mgr` into tex map slot `texMap` with wrap mode
 // `wrapMode`, unless that exact combination is already the cached last load
 // (the cache is indexed by tex map slot).
-// 0x4330 magic-double builder for u8 -> float conversion (retail shape).
-union LodConv {
-    struct {
-        u32 mHi;
-        u32 mLo;
-    };
-    f64 mD;
-};
-
 void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
                    GXTexWrapMode wrapMode) {
-    TexCacheEntryView* entry =
-        (TexCacheEntryView*)(lbl_eu_806616B8 + texMap * sizeof(TexCacheEntryView));
-    if (!(entry->mMgr == mgr && index == entry->mKey && wrapMode == entry->mWrap)) {
+    TexCacheEntryView* cache = (TexCacheEntryView*)lbl_eu_806616B8;
+    if (!(cache[texMap].mMgr == mgr && index == cache[texMap].mKey &&
+          wrapMode == cache[texMap].mWrap)) {
         TexResObjView* resObj = (TexResObjView*)mgr->mResObj;
         TexOfsEntryView* offsets =
             (TexOfsEntryView*)((u8*)resObj + resObj->mOffsetTable);
@@ -334,20 +325,16 @@ void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
                      info->mHeight, (GXTexFmt)info->mFmt, wrapMode, wrapMode,
                      mipmapped);
         if (mipmapped) {
-            LodConv conv;
-            conv.mHi = 0x43300000;
-            conv.mLo = info->mMinLod;
-            f32 minLod = (f32)(conv.mD - lbl_eu_8066B288);
-            conv.mLo = info->mMaxLod;
-            f32 maxLod = (f32)(conv.mD - lbl_eu_8066B288);
+            f32 minLod = (f32)info->mMinLod;
+            f32 maxLod = (f32)info->mMaxLod;
             GXInitTexObjLOD(&obj, (GXTexFilter)info->mMinFilt,
                             (GXTexFilter)info->mMagFilt, minLod, maxLod,
                             info->mLodBias, false, info->mEdgeLod, GX_ANISO_1);
         }
         GXLoadTexObj(&obj, texMap);
-        entry->mMgr = mgr;
-        entry->mKey = index;
-        entry->mWrap = wrapMode;
+        cache[texMap].mMgr = mgr;
+        cache[texMap].mKey = index;
+        cache[texMap].mWrap = wrapMode;
     }
 }
 
@@ -921,9 +908,9 @@ void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
 // record base/count, then run the item initializer over each 0x58-byte item.
 void* SchedItem_AllocPool(u32 size, s32 count) {
     s32 i;
-    lbl_eu_80661718.count = count;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661718.base = (CScheduleItem*)aligned;
+    lbl_eu_80661718.count = count;
     lbl_eu_80661718.freeCount = 0;
     lbl_eu_80661718.lastHandle = 0;
     i = 0;
@@ -973,20 +960,31 @@ s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
     return -1;
 }
 
-// Release a schedule item by handle (idempotent for invalid handles).
-// NOTE: retail keeps a duplicated `handle < 0` test (two blt from one cmpwi);
-// the `!(handle < 0)` conjunct preserves it (same shape as SchedFx_ReleaseHandle).
-extern "C" void SchedItem_ReleaseHandle(s16 handle) {
-    if (handle < 0) {
+// Release-by-index worker: pool indices are s32, so this layer re-validates
+// the index it received. Retail keeps BOTH guards (s16 `handle < 0` in the
+// handle-taking entry point and the s32 `index < 0` re-check here) as two
+// branches off one compare - at Wii/1.1 a duplicated `x < 0` test on the SAME
+// width folds to one branch, but the s16-vs-s32 pair does not (MWCC_CASES
+// "duplicated handle guard").
+static void SchedItem_ReleaseIndex(s32 index) {
+    if (index < 0) {
         return;
     }
-    if (!(handle < 0) && lbl_eu_80661718.count > handle) {
-        lbl_eu_80661718.lastHandle = handle;
-        (&lbl_eu_80661718.base[handle])->ReleaseSlots();
+    if (lbl_eu_80661718.count > index) {
+        lbl_eu_80661718.lastHandle = index;
+        (&lbl_eu_80661718.base[index])->ReleaseSlots();
         if (lbl_eu_80661718.freeCount > 0) {
             lbl_eu_80661718.freeCount--;
         }
     }
+}
+
+// Release a schedule item by handle (idempotent for invalid handles).
+extern "C" void SchedItem_ReleaseHandle(s16 handle) {
+    if (handle < 0) {
+        return;
+    }
+    SchedItem_ReleaseIndex(handle);
 }
 
 // Look up a schedule item by handle; returns NULL for invalid handles.
@@ -1010,9 +1008,9 @@ extern "C" void EffSys_InitRoot(CEffectObj* obj);
 // object.
 void* SchedFx_AllocPool(u32 size, s32 count) {
     s32 i;
-    lbl_eu_80661728.mCount = count;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661728.mBase = (CEffectObject*)aligned;
+    lbl_eu_80661728.mCount = count;
     lbl_eu_80661728.mActiveCount = 0;
     lbl_eu_80661728.mLastHandle = 0;
     i = 0;
@@ -1071,19 +1069,28 @@ s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
     return -1;
 }
 
+// Release-by-index worker (s32 pool index; see SchedItem_ReleaseIndex for the
+// duplicated-guard rule this reproduces in the retail bytes).
+static void SchedFx_ReleaseIndex(s32 index) {
+    if (index < 0) {
+        return;
+    }
+    if (lbl_eu_80661728.mCount > index) {
+        lbl_eu_80661728.mLastHandle = index;
+        EffRoot_InitDefaults((CEffectObj*)&lbl_eu_80661728.mBase[index]);
+        if (lbl_eu_80661728.mActiveCount > 0) {
+            lbl_eu_80661728.mActiveCount--;
+        }
+    }
+}
+
 // Release an effect object handle: remember it, run the effect-manager
 // release, and drop the active-object count.
 void SchedFx_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
-    if (!(handle < 0) && lbl_eu_80661728.mCount > handle) {
-        lbl_eu_80661728.mLastHandle = handle;
-        EffRoot_InitDefaults((CEffectObj*)&lbl_eu_80661728.mBase[handle]);
-        if (lbl_eu_80661728.mActiveCount > 0) {
-            lbl_eu_80661728.mActiveCount--;
-        }
-    }
+    SchedFx_ReleaseIndex(handle);
 }
 
 u32 SchedFx_CountActive() { return lbl_eu_80661728.mActiveCount; }
@@ -1170,22 +1177,26 @@ s32 SchedNode_ClaimActivate(CScheduleItem* item) {
 // decompiled yet; the element is passed as its opaque 0x338-byte view.
 extern "C" void __dt__804CC2E4(CEffectNode* node);
 
-// Release an effect node by handle (idempotent for invalid handles).
-// NOTE: retail has `cmpwi r3,0; blt; blt` (two branches from one compare)
-// before the pool-count test; MWCC merges the duplicated `handle < 0`
-// disjuncts to `handle <= -1` under the unit's -O4,p, so this shape keeps
-// the byte count but the branch test remains `cmpwi r3,-1; ble` (open item).
-void SchedNode_ReleaseHandle(s16 handle) {
-    if (handle < 0) {
+// Release-by-index worker (s32 pool index; see SchedItem_ReleaseIndex).
+static void SchedNode_ReleaseIndex(s32 index) {
+    if (index < 0) {
         return;
     }
-    if (!(handle < 0) && lbl_eu_80661738.mCount > handle) {
-        lbl_eu_80661738.mLastHandle = handle;
-        __dt__804CC2E4((CEffectNode*)&lbl_eu_80661738.mBase[handle]);
+    if (lbl_eu_80661738.mCount > index) {
+        lbl_eu_80661738.mLastHandle = index;
+        __dt__804CC2E4((CEffectNode*)&lbl_eu_80661738.mBase[index]);
         if (lbl_eu_80661738.mField08 > 0) {
             lbl_eu_80661738.mField08--;
         }
     }
+}
+
+// Release an effect node by handle (idempotent for invalid handles).
+void SchedNode_ReleaseHandle(s16 handle) {
+    if (handle < 0) {
+        return;
+    }
+    SchedNode_ReleaseIndex(handle);
 }
 
 u32 SchedNode_CountTotal() { return lbl_eu_80661738.mCount; }
@@ -1235,8 +1246,9 @@ extern "C" u8* SchedEntry_PickRandom(u8* base, u32 stride, s32 start, u8* out1, 
         }
         if (count > 1) {
             s32 r = ml::math::mtRand(count);
-            *out1 = (u8)(start + r);
-            result = base + stride * (start + r);
+            s32 idx = start + r;
+            *out1 = (u8)idx;
+            result = base + stride * idx;
             *out2 = (u8)(count - r);
         } else {
             *out1 = (u8)start;

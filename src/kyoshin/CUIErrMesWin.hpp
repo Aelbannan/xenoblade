@@ -293,11 +293,9 @@ public:
     /* 0x54 */ u8 field_0x54[0x04];  // +0x54..+0x58 - unknown region
     /* 0x58 */ u32 mScnRender;       // +0x58 - IScnRender vtable slot (render-callback subobject)
     /* 0x5C */ CScn* mScene;         // +0x5C - owning scene
-    /* 0x60 */ u8 mSysWin[0x3C];     // +0x60 - CSysWin storage. Raw buffer (CSystemWindow
-                                    //          idiom): retail drives the ctor/dtor via the
-                                    //          C-linkage __ct__7CSysWinFUc / __dt__7CSysWinFv,
-                                    //          so a CSysWin member would add an implicit
-                                    //          member-destruction chain to the dtor.
+    /* 0x60 */ CSysWin mSysWin;      // +0x60 - embedded system window (the ctor below is a
+                                    //          free function, so it still constructs the
+                                    //          member explicitly; the dtor is compiler-built)
     /* 0x9C */ u8 field_0x9C;        // window state byte (2=ready, 4=active)
     /* 0x9D */ u8 _9D;
     /* 0x9E */ u16 field_0x9E;       // message id (string-pool index)

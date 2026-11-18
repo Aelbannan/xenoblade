@@ -854,7 +854,7 @@ void aiRingCompact(void* buf);   // move-state buffer init (actor +0x3380)
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void setTargetObj_(void* obj, void* target);
 void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
-void simRemoveWordFromBuf(void* handler, void* source);
+extern "C" void simRemoveWordFromBuf(void* handler, void* source);
 void CharEffDetachAllSlots(void* effect);
 extern "C" void stopVoiceA(void* self);
 void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (MoveImplTriggerCamShake)

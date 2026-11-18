@@ -281,7 +281,7 @@ void CMenuKeyAssign::Move() {
     CMenuKeyAssignActor* arts = (CMenuKeyAssignActor*)MapFx_ResolveOwner(player);
     CPad* pad = cf::CfGameManager::getCurrentPad();
 
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // ---- in battle ----
         int battleMode = 0;
         void* bm = getInstance__Q22cf14CBattleManagerFv();        s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
@@ -763,7 +763,7 @@ void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         name = &base[0x32];
     }
 
@@ -887,7 +887,7 @@ void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         name = &base[0x32];
     }
 
@@ -1013,7 +1013,7 @@ void CMenuKeyAssign::openKeyAssignPlayer() {
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         name = &base[0x32];
     }
 

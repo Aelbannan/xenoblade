@@ -204,7 +204,6 @@ extern u32 lbl_eu_805255C8[3];
 // cf::CfGameManager controller-type query (flat retail name): the call site
 // must load r3=-1 before the bl, so bind the caller's shape directly (the
 // CfGameManager.hpp inline wrapper drops the argument).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern u32 lbl_eu_80525760[3];
 extern u32 lbl_eu_8052576C[3];
 extern u32 lbl_eu_8052582C[3];

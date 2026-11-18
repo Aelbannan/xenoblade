@@ -30,7 +30,6 @@ extern "C" {
 // Classic-controller detection; the retail callee ignores the arg, but the
 // call site still materialises `li r3,-1` (the CfGameManager.hpp inline
 // wrapper drops it when inlined, so bind the pre-mangled name directly).
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // UI sound effect (mangles to playUISound__FUl).
 
@@ -186,7 +185,7 @@ extern "C" int GetZealResult(CMenuZeal* self) {
 
     if (self->mField_94 >= 100.0f) {
         // Texture name depends on the detected pad type.
-        const char* texName = isClassicController__Q22cf13CfGameManagerFv(-1)
+        const char* texName = cf::CfGameManager::isClassicController(-1)
                                   ? &lbl_eu_80503454[0x1c7]
                                   : &lbl_eu_80503454[0x1e2];
         void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);

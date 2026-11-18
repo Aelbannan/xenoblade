@@ -13,7 +13,10 @@
 #undef CLoadIsLoadReady
 extern "C" int CLoadIsLoadReady(CLoad* self);
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
-#include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+// CModelDispMakeCrystal is only used through pointers here (the embedded area
+// is raw bytes), so a forward declaration keeps CModelDispMakeCrystal.hpp's
+// member-type include graph (CMCGetItemBox.hpp et al.) out of this TU.
+class CModelDispMakeCrystal;
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/core/CProc.hpp"
@@ -75,7 +78,7 @@ void teardown(CTitleAHelp* self);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 void unregisterEffectScene(CScn* scene);
 void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
-void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene);
+void __ct__21CModelDispMakeCrystalFP4CScn(CModelDispMakeCrystal* self, CScn* scene);
 // CMakeCrystalWin is still a hand-built object: its ctor/dtor construct the
 // embedded CMCCrystalBox through the real member symbols.
 CMCCrystalBox* __ct__13CMCCrystalBoxFUc(CMCCrystalBox* self, u8 parentType);

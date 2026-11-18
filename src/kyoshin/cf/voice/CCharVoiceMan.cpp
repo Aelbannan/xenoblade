@@ -26,11 +26,11 @@ public:
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// typed .sdata2 pool (replaces the old sdata2 byte blob): retail
-// 0x38 pool is 10 floats incl. two (x,0) pairs + trailing int->double magic
-// 4503601774854144 (0x43340000_00000000, signed). Single struct freezes
-// MWCC declaration order (bare individuals reorder by first-use) and keeps
-// the leading/trailing 0.0f slots live (else they migrate to .sbss).
+// Character-voice constant pool (retail .sdata2: 0x80668C68..0x80668C88).
+// The 0x20-byte slice holds the six manager floats plus the (30.0, 0.0) pair;
+// the pool continues in the neighbour units (0x80668C88+), so those constants
+// are extern there, not defined here. A single struct freezes MWCC's
+// declaration order (bare individuals reorder by first use).
 struct Sdata2_CCharVoiceMan {
     float f0;      // 80668C68 0.0
     float f1;      // 80668C6C 150.0
@@ -38,28 +38,28 @@ struct Sdata2_CCharVoiceMan {
     float f3;      // 80668C74 1800.0
     float f4;      // 80668C78 3.0
     float f5;      // 80668C7C 1.0
-    float f6[2];   // 80668C80 30.0, 0.0
-    float f7[2];   // 80668C88 1.0, 0.0
-    float f8;      // 80668C90 0.0
-    float f9;      // 80668C94 0.3
-    double d;      // 80668C98 magic
+};
+// The trailing (30.0, 0.0) pair lives in its own object so 30.0 sits at
+// offset 0 and every use is a plain sda21 load: a nonzero member offset makes
+// MWCC materialise the section base (`li r3, 0` + `lfs 0x18(r3)`), four bytes
+// more than retail's single `lfs`.
+struct Sdata2_CCharVoiceManTail {
+    float c30;     // 80668C80 30.0
+    float c0;      // 80668C84 0.0
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 const Sdata2_CCharVoiceMan sdata2_CCharVoiceMan = {
-    0.0f, 150.0f, 0.5f, 1800.0f, 3.0f, 1.0f,
-    {30.0f, 0.0f}, {1.0f, 0.0f}, 0.0f, 0.3f, 4503601774854144.0
+    0.0f, 150.0f, 0.5f, 1800.0f, 3.0f, 1.0f
 };
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_CCharVoiceManTail sdata2_CCharVoiceManTail = { 30.0f, 0.0f };
 #define lbl_eu_80668C68 sdata2_CCharVoiceMan.f0
 #define lbl_eu_80668C6C sdata2_CCharVoiceMan.f1
 #define lbl_eu_80668C70 sdata2_CCharVoiceMan.f2
 #define lbl_eu_80668C74 sdata2_CCharVoiceMan.f3
 #define lbl_eu_80668C78 sdata2_CCharVoiceMan.f4
 #define lbl_eu_80668C7C sdata2_CCharVoiceMan.f5
-#define lbl_eu_80668C80 sdata2_CCharVoiceMan.f6[0]
-#define lbl_eu_80668C88 sdata2_CCharVoiceMan.f7[0]
-#define lbl_eu_80668C90 sdata2_CCharVoiceMan.f8
-#define lbl_eu_80668C94 sdata2_CCharVoiceMan.f9
-#define lbl_eu_80668C98 sdata2_CCharVoiceMan.d
+#define lbl_eu_80668C80 sdata2_CCharVoiceManTail.c30
 
 // Global-scope free functions matching the retail C names: MWCC mangles a
 // global no-arg getInstance() to getInstance__Fv and a global
@@ -85,31 +85,29 @@ bool isGlobalCamFlagSet(int mask);                // isGlobalCamFlagSet__Fi
 
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
-        *(void**)this = (void*)lbl_eu_805398CC;  // shared-pool retail vtable
         const float resetFloat = lbl_eu_80668C68;
-        allocHead = 0;
-        headOffset = 0;
-        nodeHead = 0;
-        nodeTail = 0;
-        unk214 = 1;
-        unk215 = 0;
-        unk218 = resetFloat;
-        unk21C = 0;
-        unk220 = 0;
-        unk221 = 0;
-        fieldFlag = 0;
-        autoTalkPending = 0;
-        unk224 = 0;
-        unk229 = 0;
-        unk22A = 0;
-        unk22C = 0;
-        unk230 = 0;
+        mAllocOffset = 0;
+        mHeadOffset = 0;
+        mNodeHead = 0;
+        mNodeTail = 0;
+        mActive = 1;
+        mPaused = 0;
+        mVoiceTimer = resetFloat;
+        mPrevBattleCount = 0;
+        mGaugeState = 0;
+        mInteractState = 0;
+        mFieldFlag = 0;
+        mAutoTalkPending = 0;
+        mPcVoiceCount = 0;
+        mPendingVoice = 0;
+        mBattleActive = 0;
+        mPendingActorId = 0;
+        mPendingActionId = 0;
         UnkClass_805764CC* classPtr = (UnkClass_805764CC*)getInstance();
         registerFactoryEvent(classPtr, (cf::IFactoryEvent*)this);
     }
 
     CCharVoiceMan::~CCharVoiceMan(){
-        *(void**)this = (void*)lbl_eu_805398CC;  // vtable re-store (deleting dtor)
         UnkClass_805764CC* classPtr = (UnkClass_805764CC*)getInstance();
         unlinkFactoryById(classPtr, (cf::IFactoryEvent*)this);
     }
@@ -122,87 +120,86 @@ extern "C" { u32 lbl_eu_80664A5C; } // global character-voice counter
 // C++-mangled findObjectById__Fi (actor-id -> action source).
 extern void* findObjectById(BOOL id);
 
-bool CCharVoiceMan_AlwaysTrue() { return true; }
+extern "C" bool CCharVoiceMan_AlwaysTrue() { return true; }
 
-void CCharVoiceMan_ClearFieldFlag() {
+extern "C" void CCharVoiceMan_ClearFieldFlag() {
     cf::CCharVoiceMan* voice_man = lbl_eu_80664A58;
     if (voice_man != 0)
-        voice_man->fieldFlag = 0;
+        voice_man->mFieldFlag = 0;
 }
 // If the character-voice-disable flag is clear, flag the manager's byte 0x229.
-void CCharVoiceMan_FlagPendingVoice() {
+extern "C" void CCharVoiceMan_FlagPendingVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    lbl_eu_80664A58->unk229 = 1;
+    lbl_eu_80664A58->mPendingVoice = 1;
 }
 // Ring-buffer allocate `size` bytes from CCharVoiceMan's 0x200-byte arena
-// [head allocHead / tail headOffset]; returns 0 if full or the flag/cooldown
+// [head mAllocOffset / tail mHeadOffset]; returns 0 if full or the flag/cooldown
 // gates are active.
-u8* CCharVoiceMan_AllocVoiceArena(int size) {
+extern "C" u8* CCharVoiceMan_AllocVoiceArena(int size) {
     if (lbl_eu_80663E24 & 0x10000000)
         return 0;
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    if (m->unk215 != 0)
+    if (m->mPaused != 0)
         return 0;
-    if ((int)m->allocHead < (int)m->headOffset) {
+    if ((int)m->mAllocOffset < (int)m->mHeadOffset) {
         // Linear region still free before the tail.
-        if ((int)m->headOffset - (int)m->allocHead < size)
+        if ((int)m->mHeadOffset - (int)m->mAllocOffset < size)
             return 0;
-        m->allocHead = (int)m->allocHead + size;
-        return lbl_eu_80664A58->unk4 + lbl_eu_80664A58->allocHead - size;
+        m->mAllocOffset = (int)m->mAllocOffset + size;
+        return lbl_eu_80664A58->mArena + lbl_eu_80664A58->mAllocOffset - size;
     }
     // Wrapped: space up to the 0x200 limit, else restart at the buffer base.
-    if (0x200 - (int)m->allocHead < size) {
-        if ((int)m->headOffset < size)
+    if (0x200 - (int)m->mAllocOffset < size) {
+        if ((int)m->mHeadOffset < size)
             return 0;
-        m->allocHead = size;
-        return lbl_eu_80664A58->unk4;
+        m->mAllocOffset = size;
+        return lbl_eu_80664A58->mArena;
     }
-    m->allocHead = (int)m->allocHead + size;
-    return lbl_eu_80664A58->unk4 + lbl_eu_80664A58->allocHead - size;
+    m->mAllocOffset = (int)m->mAllocOffset + size;
+    return lbl_eu_80664A58->mArena + lbl_eu_80664A58->mAllocOffset - size;
 }
-unsigned int CCharVoiceMan_MakeVoiceEventId(unsigned int value) { unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
-int CCharVoiceMan_NullVoiceDispatch(void* self) { return 0; }
+extern "C" unsigned int CCharVoiceMan_MakeVoiceEventId(unsigned int value) { unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self) { return 0; }
 
 // Allocate the 0x234-byte CCharVoiceMan and store it as the singleton.
-void CCharVoiceMan_CreateSingleton() {
+extern "C" void CCharVoiceMan_CreateSingleton() {
     mtl::ALLOC_HANDLE handle = Scn_CallUnk8C_V10(lbl_eu_80663E14);
-    cf::CCharVoiceMan* man =
-        (cf::CCharVoiceMan*)mtl::MemManager::allocate(0x234, handle);
-    if (man != 0)
-        man = __ct__Q22cf13CCharVoiceManFv(man);
+    cf::CCharVoiceMan* man = new (handle) cf::CCharVoiceMan();
     lbl_eu_80664A58 = man;
     lbl_eu_80664A5C = 0;
 }
 // Reset the voice-event list: run each node's level-thread handler (+0x08),
 // then clear the list and all resetable manager fields.
-void CCharVoiceMan_FlushAll() {
+extern "C" void CCharVoiceMan_FlushAll() {
+    bool match;
+    cf::CSoundNode* node;
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    m->unk215 = 0;
-    cf::CSoundNode* node = m->nodeHead;
+    m->mPaused = 0;
+    node = m->mNodeHead;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
             ((VoiceNode*)node)->PlayThreadVoice();
         node = node->next;
     }
-    m->nodeHead = 0;
+    m->mNodeHead = 0;
     float reset = lbl_eu_80668C68;
-    m->nodeTail = 0;
-    m->allocHead = 0;
-    m->headOffset = 0;
-    lbl_eu_80664A58->unk218 = lbl_eu_80668C68;
-    lbl_eu_80664A58->unk21C = 0;
-    lbl_eu_80664A58->unk220 = 0;
-    lbl_eu_80664A58->unk221 = 0;
-    lbl_eu_80664A58->autoTalkPending = 0;
-    lbl_eu_80664A58->unk224 = 0;
-    lbl_eu_80664A58->unk229 = 0;
-    lbl_eu_80664A58->unk22A = 0;
-    lbl_eu_80664A58->unk22C = 0;
-    lbl_eu_80664A58->unk230 = 0;
+    m->mNodeTail = 0;
+    m->mAllocOffset = 0;
+    m->mHeadOffset = 0;
+    lbl_eu_80664A58->mVoiceTimer = lbl_eu_80668C68;
+    lbl_eu_80664A58->mPrevBattleCount = 0;
+    lbl_eu_80664A58->mGaugeState = 0;
+    lbl_eu_80664A58->mInteractState = 0;
+    lbl_eu_80664A58->mAutoTalkPending = 0;
+    lbl_eu_80664A58->mPcVoiceCount = 0;
+    lbl_eu_80664A58->mPendingVoice = 0;
+    lbl_eu_80664A58->mBattleActive = 0;
+    lbl_eu_80664A58->mPendingActorId = 0;
+    lbl_eu_80664A58->mPendingActionId = 0;
 }
 // Battle-gauge gate check (defined below); forward-declared for CCharVoiceMan_Tick.
 // Retail references this helper by its bare unmangled symbol (C linkage).
@@ -211,12 +208,12 @@ extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self);
 // Main per-frame character-voice tick. Flush the level-thread list on a
 // presentation pause, then run every gate (battle count, party gauge, field
 // id, per-player flags and random gauges) that can enqueue a voice node.
-void CCharVoiceMan_Tick(){
+extern "C" void CCharVoiceMan_Tick(){
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    if (m->nodeHead != 0 && (lbl_eu_80663E24 & 0x10000000)) {
+    if (m->mNodeHead != 0 && (lbl_eu_80663E24 & 0x10000000)) {
         // Presentation pause: run every node's level-thread handler then flush.
-        m->unk215 = 0;
-        cf::CSoundNode* node = m->nodeHead;
+        m->mPaused = 0;
+        cf::CSoundNode* node = m->mNodeHead;
         while (node != 0) {
             bool match = false;
             if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
@@ -225,86 +222,86 @@ void CCharVoiceMan_Tick(){
                 ((VoiceNode*)node)->PlayThreadVoice();
             node = node->next;
         }
-        m->nodeHead = 0;
-        m->nodeTail = 0;
-        m->allocHead = 0;
-        m->headOffset = 0;
+        m->mNodeHead = 0;
+        m->mNodeTail = 0;
+        m->mAllocOffset = 0;
+        m->mHeadOffset = 0;
     }
-    m->unk229 = 0;
-    if (m->unk215 == 0) {
+    m->mPendingVoice = 0;
+    if (m->mPaused == 0) {
         // Battle-participant count changed: gate a frequency voice node.
-        int oldCount = m->unk21C;
+        int oldCount = m->mPrevBattleCount;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
         int count = 0;
         cf::CVoiceBattleNode* cur;
         cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
         for (cur = sentinel->next; cur != sentinel; cur = cur->next)
             count++;
-        m->unk21C = count;
-        if (count != oldCount && !(m->unk218 < lbl_eu_80668C6C) &&
+        m->mPrevBattleCount = count;
+        if (count != oldCount && !(m->mVoiceTimer < lbl_eu_80668C6C) &&
             !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = selectEhpVoicePair(count, oldCount);
             if (node != 0) {
-                cf::CSoundNode* tail = m->nodeTail;
+                cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->nodeHead == 0) {
-                    m->nodeHead = node;
-                    m->headOffset = (u32)node - (u32)&m->unk4[0];
+                if (m->mNodeHead == 0) {
+                    m->mNodeHead = node;
+                    m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                 }
-                m->nodeTail = node;
+                m->mNodeTail = node;
             }
         }
 
         // Battle-participant play-gate: resolve the current player to a
         // battle object and, if its browse gate passes, voice the pending
-        // action source (unk230) as a node.
+        // action source (mPendingActionId) as a node.
         if (!(lbl_eu_80663E24 & 0x00400000)) {
             cf::CVoiceBFC68* br =
                 (cf::CVoiceBFC68*)getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
             if (br != 0) {
                 cf::CfObjectImplPcED4* edge = (cf::CfObjectImplPcED4*)br->field_3ED4;
                 if (edge != 0 && edge->vf40(0x800) == 0) {
-                    if (m->unk230 != 0) {
-                        void* src = MapFx_ResolveOwner(findObjectById((BOOL)m->unk230));
+                    if (m->mPendingActionId != 0) {
+                        void* src = MapFx_ResolveOwner(findObjectById((BOOL)m->mPendingActionId));
                         if (src != 0) {
                             cf::CSoundNode* node = BtlBeg_PlayLine_0344(src);
                             if (node != 0) {
-                                cf::CSoundNode* tail = m->nodeTail;
+                                cf::CSoundNode* tail = m->mNodeTail;
                                 if (tail != 0)
                                     tail->next = node;
-                                if (m->nodeHead == 0) {
-                                    m->nodeHead = node;
-                                    m->headOffset = (u32)node - (u32)&m->unk4[0];
+                                if (m->mNodeHead == 0) {
+                                    m->mNodeHead = node;
+                                    m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                                 }
-                                m->nodeTail = node;
+                                m->mNodeTail = node;
                             }
                         }
                     }
-                    m->unk230 = 0;
+                    m->mPendingActionId = 0;
                 }
             }
         }
 
         // Party-gauge rising edge: enqueue a levelled voice node.
-        u8 oldGauge = m->unk220;
-        m->unk220 = (u8)CCharVoiceMan_CheckBattleGauge(m);
-        if (oldGauge == 0 && m->unk220 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+        u8 oldGauge = m->mGaugeState;
+        m->mGaugeState = (u8)CCharVoiceMan_CheckBattleGauge(m);
+        if (oldGauge == 0 && m->mGaugeState != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(1);
             if (node != 0) {
-                cf::CSoundNode* tail = m->nodeTail;
+                cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->nodeHead == 0) {
-                    m->nodeHead = node;
-                    m->headOffset = (u32)node - (u32)&m->unk4[0];
+                if (m->mNodeHead == 0) {
+                    m->mNodeHead = node;
+                    m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                 }
-                m->nodeTail = node;
+                m->mNodeTail = node;
             }
         }
 
         // Interact/battle voice: probe the top gauges and enqueue on rising edge.
-        u8 oldInteract = m->unk221;
+        u8 oldInteract = m->mInteractState;
         void* bm2 = getInstance__Q22cf14CBattleManagerFv();
         cf::CVoiceBattleNode* cur2;
         int icount = 0;
@@ -336,18 +333,18 @@ void CCharVoiceMan_Tick(){
             }
         }
 interactStore:
-        m->unk221 = (u8)iresult;
-        if (oldInteract == 0 && m->unk221 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+        m->mInteractState = (u8)iresult;
+        if (oldInteract == 0 && m->mInteractState != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(0);
             if (node != 0) {
-                cf::CSoundNode* tail = m->nodeTail;
+                cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->nodeHead == 0) {
-                    m->nodeHead = node;
-                    m->headOffset = (u32)node - (u32)&m->unk4[0];
+                if (m->mNodeHead == 0) {
+                    m->mNodeHead = node;
+                    m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                 }
-                m->nodeTail = node;
+                m->mNodeTail = node;
             }
         }
 
@@ -363,11 +360,11 @@ interactStore:
             goto noFieldFlag;
         if (!(gaugeBit & 0xFE00))
             goto noFieldFlag;
-        m->fieldFlag = 1;
+        m->mFieldFlag = 1;
 noFieldFlag:;
 
         // Battle voice auto-talk: resolve the current player and fire.
-        if (m->autoTalkPending != 0) {
+        if (m->mAutoTalkPending != 0) {
             cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)HpVoice_FindBySubState(1);
             cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0)
@@ -382,12 +379,12 @@ noFieldFlag:;
                 if (!(lbl_eu_80663E24 & 0x00400000))
                     BmVoice_PlayGated(player, 0xbb9, 0x14);
             }
-            m->autoTalkPending = 0;
+            m->mAutoTalkPending = 0;
         }
 noAutoTalkClear:;
 
         // No battle participants and the flag is clear: rolling gauge node.
-        if (m->unk22A != 0) {
+        if (m->mBattleActive != 0) {
             void* bm3 = getInstance__Q22cf14CBattleManagerFv();
             cf::CVoiceBattleNode* cur3;
             int acount = 0;
@@ -395,54 +392,54 @@ noAutoTalkClear:;
             for (cur3 = sentinel3->next; cur3 != sentinel3; cur3 = cur3->next)
                 acount++;
             if (acount <= 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-                float g = m->unk218;
+                float g = m->mVoiceTimer;
                 float f1 = g / lbl_eu_80668C74;
                 bool ge = (lbl_eu_80668C78 <= f1);
-                m->unk218 = lbl_eu_80668C68;
+                m->mVoiceTimer = lbl_eu_80668C68;
                 bool appended = false;
                 if (ml::math::mtRand(0x64) < 5) {
                     cf::CSoundNode* node = __ct__802AB5F0();
                     if (node != 0) {
-                        cf::CSoundNode* tail = m->nodeTail;
+                        cf::CSoundNode* tail = m->mNodeTail;
                         if (tail != 0)
                             tail->next = node;
-                        if (m->nodeHead == 0) {
-                            m->nodeHead = node;
-                            m->headOffset = (u32)node - (u32)&m->unk4[0];
+                        if (m->mNodeHead == 0) {
+                            m->mNodeHead = node;
+                            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                         }
-                        m->nodeTail = node;
+                        m->mNodeTail = node;
                         appended = true;
                     }
                 }
                 if (!appended) {
                     cf::CSoundNode* node = __ct__802A4870((int)ge);
                     if (node != 0) {
-                        cf::CSoundNode* tail = m->nodeTail;
+                        cf::CSoundNode* tail = m->mNodeTail;
                         if (tail != 0)
                             tail->next = node;
-                        if (m->nodeHead == 0) {
-                            m->nodeHead = node;
-                            m->headOffset = (u32)node - (u32)&m->unk4[0];
+                        if (m->mNodeHead == 0) {
+                            m->mNodeHead = node;
+                            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                         }
-                        m->nodeTail = node;
+                        m->mNodeTail = node;
                     }
                 }
             }
         }
-        m->unk22A = 0;
+        m->mBattleActive = 0;
 
         // Non-presentation: sweep level-thread handlers then pop leading
         // non-matching nodes off the list.
-        if (m->nodeHead != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-            cf::CSoundNode* cur = m->nodeHead;
+        if (m->mNodeHead != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+            cf::CSoundNode* cur = m->mNodeHead;
             while (cur != 0) {
                 RunVoiceNodeHandler(cur);
                 cur = cur->next;
             }
             cf::CSoundNode* head;
             // Reload the head from the manager every iteration like retail:
-            // the loop condition dereferences m->nodeHead fresh each pass.
-            while ((head = m->nodeHead) != 0) {
+            // the loop condition dereferences m->mNodeHead fresh each pass.
+            while ((head = m->mNodeHead) != 0) {
                 bool match = false;
                 if (__ptmf_cmpr(head, &lbl_eu_805398C0) != 0 && __ptmf_test(head) != 0)
                     match = true;
@@ -450,16 +447,16 @@ noAutoTalkClear:;
                     break;
                 // Retail keeps an explicit re-read + null-guard here instead
                 // of reusing the loop-condition head pointer.
-                if (m->nodeHead != 0) {
-                    cf::CSoundNode* nxt = m->nodeHead->next;
+                if (m->mNodeHead != 0) {
+                    cf::CSoundNode* nxt = m->mNodeHead->next;
                     if (nxt != 0) {
-                        m->nodeHead = nxt;
-                        m->headOffset = (u32)nxt - (u32)&m->unk4[0];
+                        m->mNodeHead = nxt;
+                        m->mHeadOffset = (u32)nxt - (u32)&m->mArena[0];
                     } else {
-                        m->nodeHead = 0;
-                        m->nodeTail = 0;
-                        m->allocHead = 0;
-                        m->headOffset = 0;
+                        m->mNodeHead = 0;
+                        m->mNodeTail = 0;
+                        m->mAllocOffset = 0;
+                        m->mHeadOffset = 0;
                     }
                 }
             }
@@ -467,14 +464,14 @@ noAutoTalkClear:;
 
         // Passive cell count: accumulate every tick unless the flag blocks it.
         if (!(lbl_eu_80663DA0 & 1) && !(lbl_eu_80663E24 & 0x00400000))
-            m->unk218 += lbl_eu_80668C7C;
+            m->mVoiceTimer += lbl_eu_80668C7C;
     }
 }
 // Battle-voice state probe: only for an interact/battle-flagged actor in
 // state id 1 whose +0x3F60 chain selects a voice id in [0x10, 0x17]. When the
 // source is dead (or luck holds on a 15/100 roll) flag byte 0x223, then always
 // poke the sub-id handler with (voicePtr + 0x3508, 1).
-void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
+extern "C" void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (!(self->field_3F00 & 0x2))
         return;
@@ -488,13 +485,13 @@ void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
     {
         u8* t = (u8*)(v + 0x3508);
         if (CtrlRemote_TouchBitByArg((int)t) == 0 || ml::math::mtRand(0x64) < 0xF)
-            m->autoTalkPending = 1;
+            m->mAutoTalkPending = 1;
         CtrlRemote_SetSharedBit((u32)t, 1);
     }
 }
 // Battle-slot voice hook: if the battle slot manager reports a slot whose id
-// matches b's voice id, copy a's pending id into unk22C.
-void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
+// matches b's voice id, copy a's pending id into mPendingActorId.
+extern "C" void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
     if (bs != 0) {
@@ -504,12 +501,12 @@ void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorIn
                 u32 af = a->field_3F10;
                 u32 bf = b->field_3F10;
                 if (bf == bs->id0 || bf == bs->id1)
-                    m->unk22C = af;
+                    m->mPendingActorId = af;
             }
         }
     }
 }
-void CCharVoiceMan_DestroySingleton() {
+extern "C" void CCharVoiceMan_DestroySingleton() {
     // Virtual-delete the singleton manager (vtable+8 dtor slot, deleting
     // flag r4=1); delete's own null-check reuses the outer compare, giving
     // retail's double beq. The manager field store is inside the guard.
@@ -520,11 +517,12 @@ void CCharVoiceMan_DestroySingleton() {
 }
 // Set the manager's voice-enable byte, then run every matching node's +0x14
 // voice probe; nodes whose probe returns nonzero are handed to releaseThreadVoice.
-void CCharVoiceMan_ReleaseVoices(u8 flag) {
-    lbl_eu_80664A58->unk215 = flag;
-    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
+extern "C" void CCharVoiceMan_ReleaseVoices(u8 flag) {
+    lbl_eu_80664A58->mPaused = flag;
+    bool match;
+    cf::CSoundNode* node = lbl_eu_80664A58->mNodeHead;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match && ((VoiceNode*)node)->func_802A1EA0() != 0)
@@ -545,7 +543,7 @@ int cf::CVoiceActorState::CharVoiceMan_TryPlayCharVoice() {
     if (this->field_3F28 != 1)
         return 0;
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
-    if (isBattleStatusActive(&this->unk4[4], 0xcf) == 0 && isBattleStatusActive(&this->unk4[4], 0xd0) == 0)
+    if (isBattleStatusActive(&this->mArena[4], 0xcf) == 0 && isBattleStatusActive(&this->mArena[4], 0xd0) == 0)
         return 0;
     cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)this)->mSub;
     u32 moveRes = move->sf4C();
@@ -558,41 +556,41 @@ int cf::CVoiceActorState::CharVoiceMan_TryPlayCharVoice() {
     return 1;
 }
 // Register a freshly-created sound node, then clear byte 0x22C.
-void CCharVoiceMan_PushFreshSoundNode() {
+extern "C" void CCharVoiceMan_PushFreshSoundNode() {
     cf::CSoundNode* node = VisBreak_AllocVoiceHandle();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
-    lbl_eu_80664A58->unk22C = 0;
+    lbl_eu_80664A58->mPendingActorId = 0;
 }
 // Append a freshly-created sound node to the manager's voice-event list.
-void CCharVoiceMan_PushChainVoiceNode() {
+extern "C" void CCharVoiceMan_PushChainVoiceNode() {
     cf::CSoundNode* node = __ct__802A96C0();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
 // Resolve a pending voice-action id (from the manager's 0x22C holder) and
 // enqueue an action node plus a clear node, if the arguments are non-null.
-void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* c) {
+extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* c) {
     if (b == 0) {
-        u32 pending = lbl_eu_80664A58->unk22C;
+        u32 pending = lbl_eu_80664A58->mPendingActorId;
         if (pending != 0)
             b = (void*)MapFx_ResolveOwner((void*)findObjectById((BOOL)pending));
     }
@@ -600,34 +598,34 @@ void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* c) {
         cf::CSoundNode* node = __ct__802A92D8(b, a);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     }
     if (c != 0) {
         cf::CSoundNode* node = BmVoice_Play32(c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     }
 }
 // Player-voice enqueue: if the actor's battle move-base resolves to a live
 // battle actor, construct a battle-begin node and append it to the list.
-void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self) {
+extern "C" void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)self)->mSub;
@@ -640,56 +638,56 @@ void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self) {
     cf::CSoundNode* node = __ct__802AFA80(self, actor);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-// If the passed actor is active, teed a u32 from +0x3F10 into unk230.
-void CCharVoiceMan_LatchPendingVoiceId(cf::CVoiceActorInfo* self) {
+// If the passed actor is active, teed a u32 from +0x3F10 into mPendingActionId.
+extern "C" void CCharVoiceMan_LatchPendingVoiceId(cf::CVoiceActorInfo* self) {
     if (BtlBeg_IsVoiceBit_03A4(self) != 0) {
-        lbl_eu_80664A58->unk230 = self->field_3F10;
+        lbl_eu_80664A58->mPendingActionId = self->field_3F10;
     }
 }
 // Enqueue a break-freq node [chainVoiceLifetimeHandler(a,c)] and a party-gauge node
 // [BmVoice_Play12C(a,b,c)] onto the listener list (unless paused).
-void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void* a, void* b, void* c) {
+extern "C" void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void* a, void* b, void* c) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = chainVoiceLifetimeHandler(a, c);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
     node = BmVoice_Play12C(a, b, c);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m2->nodeTail;
+        cf::CSoundNode* tail = m2->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m2->nodeHead == 0) {
-            m2->nodeHead = node;
-            m2->headOffset = (u32)node - (u32)&m2->unk4[0];
+        if (m2->mNodeHead == 0) {
+            m2->mNodeHead = node;
+            m2->mHeadOffset = (u32)node - (u32)&m2->mArena[0];
         }
-        m2->nodeTail = node;
+        m2->mNodeTail = node;
     }
 }
 // Battle/interact voice trigger. If the actor's battle flag is set, resolve a
 // battle-voice node (gated on battle count + actor flag); otherwise enqueue a
 // plain voice node.
-void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* self) {
+extern "C" void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* self) {
     if (self->field_3F00 & 0x2) {
         if (lbl_eu_80663E24 & 0x00400000)
             return;
@@ -700,32 +698,32 @@ void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* self) {
         cf::CSoundNode* node = chainVoiceActorTrigger(self, useBattle);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     } else {
         cf::CSoundNode* node = BmVoice_Play0A(self);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     }
 }
 // Construct a FAINT voice node and enqueue it; return its event id (or -1).
-int CCharVoiceMan_EnqueueFaintVoice(void) {
+extern "C" int CCharVoiceMan_EnqueueFaintVoice(void) {
     if (lbl_eu_80663E24 & 0x00400000)
         return -1;
     cf::CSoundNode* node = playFaintVoice();
@@ -734,14 +732,14 @@ int CCharVoiceMan_EnqueueFaintVoice(void) {
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
         appended = true;
     }
     if (appended)
@@ -751,32 +749,32 @@ int CCharVoiceMan_EnqueueFaintVoice(void) {
 // Battle/interact pending-voice hook: on the first pass run the state probe
 // (CCharVoiceMan_TryPlayCharVoice); if it fires, latch byte 0x228 so later passes fall through
 // to the plain battle-voice node enqueue instead.
-void CCharVoiceMan_HookPendingBattleVoice(cf::CVoiceActorState* self) {
+extern "C" void CCharVoiceMan_HookPendingBattleVoice(cf::CVoiceActorState* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    if (lbl_eu_80664A58->unk228 == 0) {
+    if (lbl_eu_80664A58->mBattleVoiceLatched == 0) {
         if (self->CharVoiceMan_TryPlayCharVoice() != 0) {
-            lbl_eu_80664A58->unk228 = 1;
+            lbl_eu_80664A58->mBattleVoiceLatched = 1;
             return;
         }
     }
     cf::CSoundNode* node = PartyGage_InitVoiceId_8628(self);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
 // If the passed actor's move-base is the current player, raise the manager's
 // voice count; on the 3rd+ tick roll a 25% chance to play the 0x89c battle
 // voice with a 0x118 flavour.
-void CCharVoiceMan_TickPlayerVoiceCount(cf::CVoiceActorBase* actor) {
+extern "C" void CCharVoiceMan_TickPlayerVoiceCount(cf::CVoiceActorBase* actor) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     const u8* movePc = (const u8*)actor;
@@ -784,26 +782,26 @@ void CCharVoiceMan_TickPlayerVoiceCount(cf::CVoiceActorBase* actor) {
         movePc = (const u8*)&actor->moveBase;
     if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
-        m->unk224++;
-        if ((int)m->unk224 >= 3) {
+        m->mPcVoiceCount++;
+        if ((int)m->mPcVoiceCount >= 3) {
             if (ml::math::mtRand(0x64) < 0x19)
                 BmVoice_PlayGated(actor, 0x89c, 0x118);
         }
     }
 }
 // If the passed actor's move-base is the current player, clear voice count 0x224.
-void CCharVoiceMan_ClearPlayerVoiceCount(cf::CVoiceActorBase* actor) {
+extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(cf::CVoiceActorBase* actor) {
     if (!(lbl_eu_80663E24 & 0x00400000)) {
         const u8* movePc = (const u8*)actor;
         if (actor != 0)
             movePc = (const u8*)&actor->moveBase;
         if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
-            lbl_eu_80664A58->unk224 = 0;
+            lbl_eu_80664A58->mPcVoiceCount = 0;
         }
     }
 }
 // If both actors are flagged and luck holds, enqueue a battle-voice event.
-void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
+extern "C" void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if ((self->field_3F00 & 0x2) == 0)
@@ -811,7 +809,7 @@ void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoiceActorStat
     if ((other->field_3F00 & 0x4) == 0)
         return;
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    float f = m->unk218 / lbl_eu_80668C80;
+    float f = m->mVoiceTimer / lbl_eu_80668C80;
     if (lbl_eu_80668C80 < f)
         return;
     if (ml::math::mtRand(0x64) >= 0x32)
@@ -822,288 +820,289 @@ void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoiceActorStat
     if (player != 0)
         BmVoice_PlayGated(player, 0x899, 0x118);
 }
-void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int unused, void* c) {
+extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int unused, void* c) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (self->field_3F00 & 0x2) {
         cf::CSoundNode* node = __ct__802A7254(self, c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     } else {
         cf::CSoundNode* node = __ct__802A5ED4();
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
         cf::CSoundNode* node2 = BmVoice_PlayReqB4(self, c);
         cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
         if (node2 != 0) {
-            cf::CSoundNode* tail = m2->nodeTail;
+            cf::CSoundNode* tail = m2->mNodeTail;
             if (tail != 0)
                 tail->next = node2;
-            if (m2->nodeHead == 0) {
-                m2->nodeHead = node2;
-                m2->headOffset = (u32)node2 - (u32)&m2->unk4[0];
+            if (m2->mNodeHead == 0) {
+                m2->mNodeHead = node2;
+                m2->mHeadOffset = (u32)node2 - (u32)&m2->mArena[0];
             }
-            m2->nodeTail = node2;
+            m2->mNodeTail = node2;
         }
     }
-}void CCharVoiceMan_EnqueueHurtVoice() {
+}
+extern "C" void CCharVoiceMan_EnqueueHurtVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A4E48();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueBattleEventVoice() {
+extern "C" void CCharVoiceMan_EnqueueBattleEventVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A4E48();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c) {
+extern "C" void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (b != c && c < b) {
         cf::CSoundNode* node = __ct__802A8DE8();
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
-            cf::CSoundNode* tail = m->nodeTail;
+            cf::CSoundNode* tail = m->mNodeTail;
             if (tail != 0)
                 tail->next = node;
-            if (m->nodeHead == 0) {
-                m->nodeHead = node;
-                m->headOffset = (u32)node - (u32)&m->unk4[0];
+            if (m->mNodeHead == 0) {
+                m->mNodeHead = node;
+                m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
             }
-            m->nodeTail = node;
+            m->mNodeTail = node;
         }
     }
 }
 // Append a freshly constructed sound node to the voice-event list.
-void CCharVoiceMan_EnqueuePartyGageVoice() {
+extern "C" void CCharVoiceMan_EnqueuePartyGageVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__CVS_THREAD_PARTY_GAGE();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueCtrlActVoiceA() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A6AA8();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueCtrlActVoiceB() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A5B88();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueGaugeResultVoice() {
+extern "C" void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A86CC();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueCtrlActVoiceC() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__802A6E84();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueOrderVoice0() {
+extern "C" void CCharVoiceMan_EnqueueOrderVoice0() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(0);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueOrderVoice1() {
+extern "C" void CCharVoiceMan_EnqueueOrderVoice1() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(1);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueOrderVoice2() {
+extern "C" void CCharVoiceMan_EnqueueOrderVoice2() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(2);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueGaugePairVoice() {
+extern "C" void CCharVoiceMan_EnqueueGaugePairVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = BattleGaugeTierVoiceGate();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
 // Retail takes an actor argument that flows straight into playEhpStartVoice;
 // keeping r3 live across the singleton load makes MWCC color the manager r4.
-void CCharVoiceMan_FlushPendingActorVoice(void* actor) {
+extern "C" void CCharVoiceMan_FlushPendingActorVoice(void* actor) {
     cf::CCharVoiceMan* m;
     if (!(lbl_eu_80663E24 & 0x00400000)) {
         m = lbl_eu_80664A58;
-        if (m->unk229 != 0) {
+        if (m->mPendingVoice != 0) {
             cf::CSoundNode* node = playEhpStartVoice(actor);
             m = lbl_eu_80664A58;
             if (node != 0) {
-                cf::CSoundNode* tail = m->nodeTail;
+                cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
                     tail->next = node;
-                if (m->nodeHead == 0) {
-                    m->nodeHead = node;
-                    m->headOffset = (u32)node - (u32)&m->unk4[0];
+                if (m->mNodeHead == 0) {
+                    m->mNodeHead = node;
+                    m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
                 }
-                m->nodeTail = node;
+                m->mNodeTail = node;
             }
         }
     }
 }
-void CCharVoiceMan_ResetAndAppend() {
+extern "C" void CCharVoiceMan_ResetAndAppend() {
     const float reset = lbl_eu_80668C68;
     cf::CCharVoiceMan* m0 = lbl_eu_80664A58;
-    m0->unk218 = reset;
-    lbl_eu_80664A58->unk224 = 0;
-    lbl_eu_80664A58->unk228 = 0;
-    lbl_eu_80664A58->unk22A = 0;
+    m0->mVoiceTimer = reset;
+    lbl_eu_80664A58->mPcVoiceCount = 0;
+    lbl_eu_80664A58->mBattleVoiceLatched = 0;
+    lbl_eu_80664A58->mBattleActive = 0;
     cf::CSoundNode* node = requestOrderConfigVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
 // If the battle-manager actor ring has any entries and the flag is clear,
 // flag the manager's byte 0x22A.
-void CCharVoiceMan_FlagBattleActiveVoice() {
+extern "C" void CCharVoiceMan_FlagBattleActiveVoice() {
     void* bm = getInstance__Q22cf14CBattleManagerFv();
     cf::CVoiceBattleNode* cur = 0;
     int count = 0;
@@ -1111,7 +1110,7 @@ void CCharVoiceMan_FlagBattleActiveVoice() {
     for (cur = sent->next; cur != sent; cur = cur->next)
         count++;
     if (count > 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-        lbl_eu_80664A58->unk22A = 1;
+        lbl_eu_80664A58->mBattleActive = 1;
     }
 }
 // C++-mangled findObjectById__Fi (declared not extern "C" so MWCC mangles it).
@@ -1119,7 +1118,7 @@ extern void* findObjectById(BOOL id);
 
 // Play a level-up-style character voice: resolve the actor id -> voice action,
 // and enqueue a fresh HP-thread node (re-checking the presentation flag).
-void CCharVoiceMan_PlayLevelUpVoice(int id) {
+extern "C" void CCharVoiceMan_PlayLevelUpVoice(int id) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (MapFx_ResolveOwner(findObjectById(id)) == 0)
@@ -1129,199 +1128,200 @@ void CCharVoiceMan_PlayLevelUpVoice(int id) {
     cf::CSoundNode* node = HpVoice_InitVoiceId();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueDownedActorVoice() {
+extern "C" void CCharVoiceMan_EnqueueDownedActorVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = PlayRandomVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
 // Enqueue a frequency-voice node [FindThreadVoiceNode] and a level-up node
 // [BmVoice_PlayA0(self)] onto the manager's event list (unless paused).
-void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
+extern "C" void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = FindThreadVoiceNode();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
     node = BmVoice_PlayA0(self);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m2->nodeTail;
+        cf::CSoundNode* tail = m2->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m2->nodeHead == 0) {
-            m2->nodeHead = node;
-            m2->headOffset = (u32)node - (u32)&m2->unk4[0];
+        if (m2->mNodeHead == 0) {
+            m2->mNodeHead = node;
+            m2->mHeadOffset = (u32)node - (u32)&m2->mArena[0];
         }
-        m2->nodeTail = node;
+        m2->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueuePcStateVoice() {
+extern "C" void CCharVoiceMan_EnqueuePcStateVoice(void* obj) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = TutorialList_PlayTutorialVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueuePcActionVoice() {
+extern "C" void CCharVoiceMan_EnqueuePcActionVoice(void* obj) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = HpVoice_InitPlayerVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueArtsVoice() {
+extern "C" void CCharVoiceMan_EnqueueArtsVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = ReviveVxInitVoice6E();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueItemVoice() {
+extern "C" void CCharVoiceMan_EnqueueItemVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = ReviveVxInitVoice3C();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-void CCharVoiceMan_EnqueueRebindVoice() {
+extern "C" void CCharVoiceMan_EnqueueRebindVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     cf::CSoundNode* node = ErrWin_PlayBattleVoice_5970();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
     }
 }
-int CCharVoiceMan_AllocChainVoiceId() {
+extern "C" int CCharVoiceMan_AllocChainVoiceId() {
     cf::CSoundNode* node = __ct__802A5830();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     bool appended;
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
         appended = true;
     }
     if (appended)
         return (int)node->field_18;
     return -1;
 }
-int CCharVoiceMan_AllocCommuVoiceId() {
+extern "C" int CCharVoiceMan_AllocCommuVoiceId() {
     cf::CSoundNode* node = __ct__802A8C04();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     bool appended;
     if (node == 0) {
         appended = false;
     } else {
-        cf::CSoundNode* tail = m->nodeTail;
+        cf::CSoundNode* tail = m->mNodeTail;
         if (tail != 0)
             tail->next = node;
-        if (m->nodeHead == 0) {
-            m->nodeHead = node;
-            m->headOffset = (u32)node - (u32)&m->unk4[0];
+        if (m->mNodeHead == 0) {
+            m->mNodeHead = node;
+            m->mHeadOffset = (u32)node - (u32)&m->mArena[0];
         }
-        m->nodeTail = node;
+        m->mNodeTail = node;
         appended = true;
     }
     if (appended)
         return (int)node->field_18;
     return -1;
 }
-// Battle/manual voice-hook: if the voice-enabled byte (unk214) is clear, bail
+// Battle/manual voice-hook: if the voice-enabled byte (mActive) is clear, bail
 // with 0. Otherwise scan the voice-event list three times, each loop probing
 // the +0x10 level slot of matching nodes: loop 1 bails if any probe is below
 // `a`; loop 2 resets the pending hook when a probe equals `a` (b==1 bails;
 // b==0 runs the +0x08 level-thread handler); loop 3 runs +0x08 on nodes whose
 // probe exceeds `a`. Returns 1 on success.
-int CCharVoiceMan_DispatchById(int a, int b) {
-    if (lbl_eu_80664A58->unk214 == 0)
+extern "C" int CCharVoiceMan_DispatchById(int a, int b) {
+    if (lbl_eu_80664A58->mActive == 0)
         return 0;
 
-    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
+    bool match;
+    cf::CSoundNode* node = lbl_eu_80664A58->mNodeHead;
     if (node == 0)
         goto success;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
@@ -1331,9 +1331,9 @@ int CCharVoiceMan_DispatchById(int a, int b) {
         node = node->next;
     }
 
-    node = lbl_eu_80664A58->nodeHead;
+    node = lbl_eu_80664A58->mNodeHead;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
@@ -1347,9 +1347,9 @@ int CCharVoiceMan_DispatchById(int a, int b) {
         node = node->next;
     }
 
-    node = lbl_eu_80664A58->nodeHead;
+    node = lbl_eu_80664A58->mNodeHead;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
@@ -1366,10 +1366,11 @@ success:
 // but a helper with `return node' inside the loop keeps retail's
 // branch-over-branch split after inlining.
 static __inline cf::CSoundNode* FindVoiceNodeById(u32 id) {
-    for (cf::CSoundNode* node = lbl_eu_80664A58->nodeHead; node != 0;
-         node = node->next) {
-        int match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 &&
-                    __ptmf_test(node) != 0;
+    bool match;
+    cf::CSoundNode* node;
+    for (node = lbl_eu_80664A58->mNodeHead; node != 0; node = node->next) {
+        match = __ptmf_cmpr(node, &lbl_eu_805398C0) != 0 &&
+                __ptmf_test(node) != 0;
         if (match == 0)
             continue;
         if (id == node->field_18)
@@ -1383,7 +1384,7 @@ static __inline cf::CSoundNode* FindVoiceNodeById(u32 id) {
 // AND whose +0x18 id matches `arg`, then run its level-thread handler (+0x08).
 // Uses the inline search helper so the id-compare keeps retail's
 // branch-over-branch split (`cmplw; bne latch; b found`).
-void CCharVoiceMan_PlayNodeById(u32 arg) {
+extern "C" void CCharVoiceMan_PlayNodeById(u32 arg) {
     cf::CSoundNode* node;
     if (lbl_eu_80664A58 == 0)
         return;
@@ -1391,7 +1392,7 @@ void CCharVoiceMan_PlayNodeById(u32 arg) {
     if (node != 0)
         ((VoiceNode*)node)->PlayThreadVoice();
 }
-void* CCharVoiceMan_ForwardNodeCall(void* a, void* b, void* c) {
+extern "C" void* CCharVoiceMan_ForwardNodeCall(void* a, void* b, void* c) {
     cf::CSoundNode* node = FindVoiceNodeById((u32)a);
     if (node == 0)
         return 0;
@@ -1403,7 +1404,7 @@ void* CCharVoiceMan_ForwardNodeCall(void* a, void* b, void* c) {
 // `lis r31, lbl@ha` before the loop and emits `addi @l` per iteration.
 // Uses the inline search helper so the id-compare keeps retail's
 // branch-over-branch split (`cmplw; bne latch; b found`).
-int CCharVoiceMan_IsNodeActive(u32 arg) {
+extern "C" int CCharVoiceMan_IsNodeActive(u32 arg) {
     cf::CSoundNode* node = FindVoiceNodeById(arg);
     if (node == 0)
         return 0;
@@ -1411,13 +1412,15 @@ int CCharVoiceMan_IsNodeActive(u32 arg) {
 }
 // Factory tick: if the incoming actor is in an interact/battle state (any of
 // bits 0x2/0x4/0x8 at +0x64), broadcast to every matching type of voice node.
-void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
+void cf::CCharVoiceMan::FactoryEvent2(cf::CfObject* actor) {
+    cf::CCharVoiceMan* self = this;
     u32 flags = ((cf::CVoiceFactoryActor*)actor)->field_64;
     if (!(flags & 0x2) && !(flags & 0x8) && !(flags & 0x4))
         return;
-    cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
+    bool match;
+    cf::CSoundNode* node = lbl_eu_80664A58->mNodeHead;
     while (node != 0) {
-        bool match = false;
+        match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
@@ -1501,7 +1504,11 @@ void voiceNoop();
 }
 extern char __RTTI__Q22cf12CChainEffect[];
 extern char __RTTI__Q22cf11IObjectInfo[];
-extern char __RTTI__Q22cf10CCharVoice[];
+// cf::CCharVoice's RTTI record lives in this unit's .sdata (retail 0x80662CA0
+// = {&"cf::CCharVoice", 0}); the class belongs to the CCharVoice.cpp neighbour,
+// so only its RTTI object is emitted here.
+extern const char lbl_eu_805106C4[];
+extern "C" const void* __RTTI__Q22cf10CCharVoice[2] = { lbl_eu_805106C4, 0 };
 struct VoiceVtableRow {
     const void* typeinfo; // +0x0 sdata locator
     u32 reserved;         // +0x4 zero

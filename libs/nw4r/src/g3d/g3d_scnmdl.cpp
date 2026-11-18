@@ -127,29 +127,22 @@ public:
 // (stored inverted in the DrawResMdlReplacement flag at 0x144).
 static const u32 BUFFER_RESTORE_VTX = (1 << 24);
 
-void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d6ScnMdlCFv(){}
-
-extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return (void*)lbl_eu_8051D7C0; }
-
 namespace nw4r {
 namespace g3d {
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdl")> lbl_eu_8051D7C0 = {sizeof("ScnMdl"), "ScnMdl"};
+NW4R_G3D_RTTI_DEF(ScnMdl);
 
 bool ScnMdl::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D7C0) ? true
-         : other == TypeObj(lbl_eu_8051D7A8) ? true
-         : other == TypeObj(lbl_eu_8051D778) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    return other == TypeObj(TYPE_NAME) ? true
+         : other == ScnMdlSimple::GetTypeObjStatic() ? true
+         : other == ScnLeaf::GetTypeObjStatic() ? true
+         : other == ScnObj::GetTypeObjStatic() ? true
+         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
 }
 
 const G3dObj::TypeObj ScnMdl::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D7C0);
+    return TypeObj(TYPE_NAME);
 }
-
 const char* ScnMdl::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
@@ -274,10 +267,9 @@ ScnMdl::CopiedVisAccess::CopiedVisAccess(ScnMdl* pScnMdl, u32 id) {
     }
 }
 
-// AnmObjShp TypeName data (referenced by ScnMdl::SetAnmObj for the SHP
-// attach check). Emitted here until the g3d_anmshp unit owns it.
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjShp")>
-    lbl_eu_8051D610 = {sizeof("AnmObjShp"), "AnmObjShp"};
+// AnmObjShp TypeName data lives in the g3d_anmshp unit (US .rodata 0x8051D610,
+// JP splits: g3d_anmshp .rodata 0x10); AnmObjShp::GetTypeObjStatic() below
+// resolves it through symbols.txt.
 
 bool ScnMdl::CopiedVisAccess::SetVisibilityEx(bool visible) {
     if (mpScnMdl != NULL) {
@@ -311,7 +303,7 @@ bool ScnMdl::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         if ((u32)type - ANMOBJTYPE_SHP <= 1) {
             AnmObj* pAnmObj =
                 (pObj != NULL &&
-                 pObj->IsDerivedFrom(TypeObj(lbl_eu_8051D610)))
+                 pObj->IsDerivedFrom(AnmObjShp::GetTypeObjStatic()))
                     ? pObj
                     : NULL;
 

@@ -79,23 +79,17 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
 // ScnObj::~ScnObj (retail's double `this`-null-check + `li r4,0; bl` shape).
 ScnProc::~ScnProc() {}
 
-// Retail RTTI name record for ScnProc ("ScnProc", 8 bytes including NUL)
-// lives in the shared nw4r_data.s unit, outside this split slice; the
-// GetTypeObj / IsDerivedFrom relocations reference it by name only, so keep
-// it as an extern declaration (no local .rodata). `extern "C"` is required:
-// the declaration sits inside namespace nw4r::g3d, where C++ linkage would
-// mangle the global variable name.
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnProc")> lbl_eu_8051D7E8;
+NW4R_G3D_RTTI_DEF(ScnProc);
 
 // Base-chain check mirroring ScnLeaf/ScnObj/G3dObj::IsDerivedFrom. Kept as a
 // static helper (not a virtual-call chain) so MWCC inlines it into
 // ScnProc::IsDerivedFrom and emits the retail parameter-reload pattern
 // (a fresh lwz for the first two comparisons, then register reuse).
 static bool scnLeafIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D778)) {
+    if (other == ScnLeaf::GetTypeObjStatic()) {
         return true;
     }
-    if (other == G3dObj::TypeObj(lbl_eu_8051D768)) {
+    if (other == ScnObj::GetTypeObjStatic()) {
         return true;
     }
     return other == G3dObj::TypeObj(lbl_eu_8051D640);
@@ -104,14 +98,14 @@ static bool scnLeafIsDerivedFrom(G3dObj::TypeObj other) {
 // ScnProc is derived from ScnLeaf -> ScnObj -> G3dObj; the RTTI chain is
 // flattened here so MWCC emits the retail straight-line comparison sequence.
 bool ScnProc::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D7E8)) {
+    if (other == TypeObj(TYPE_NAME)) {
         return true;
     }
     return scnLeafIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnProc::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D7E8);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* ScnProc::GetTypeName() const {

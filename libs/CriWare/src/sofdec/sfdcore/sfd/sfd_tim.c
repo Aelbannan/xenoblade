@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
 /* External functions */
 extern s32 SFLIB_CheckHn(void* h);
@@ -63,286 +64,274 @@ void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7);
 
 typedef void (*Tc2TimeFn)(s32 a, void* tcdata, s32* out1, s32* out2, s32 rate);
 
-typedef struct SFTIM {
-    int field_0;
-    int field_4;
-    int field_8;
-    int field_C;
-    int field_10;
-} SFTIM;
-
-void SFTIM_Init(SFTIM *sftim, int val) {
-    sftim->field_0 = 0;
-    sftim->field_4 = 0;
-    sftim->field_8 = val;
+void SFTIM_Init(SfdTimCtx *sftim, int val) {
+    sftim->field_0x00 = 0;
+    sftim->field_0x04 = 0;
+    sftim->field_0x08 = val;
     if (val % 10 == 0) {
-        sftim->field_C = val / 10;
-        sftim->field_10 = 100;
+        sftim->field_0x0c = val / 10;
+        sftim->field_0x10 = 100;
     } else {
-        sftim->field_C = val;
-        sftim->field_10 = 1000;
+        sftim->field_0x0c = val;
+        sftim->field_0x10 = 1000;
     }
 }
 
-void SFTIM_InitHn(void* ctx, void* h) {
-    u8* c = (u8*)ctx;
-    u8* p = (u8*)h;
-
+void SFTIM_InitHn(SfdHandle* ctx, SfdTim* tim) {
     /* Function pointer table */
-    *(void**)(c + 0xD98) = (void*)sftim_GetTimeNone;
-    *(void**)(c + 0xD9C) = (void*)sftim_GetTimeVsync;
-    *(void**)(c + 0xDA0) = NULL;
-    *(void**)(c + 0xDA4) = (void*)sftim_GetTimeUfrm;
-    *(void**)(c + 0xDA8) = (void*)sftim_GetTimeUtim;
-    *(void**)(c + 0xDAC) = (void*)sftim_GetTimeExtClock;
+    ctx->tim.getTimeFn[0] = (void*)sftim_GetTimeNone;
+    ctx->tim.getTimeFn[1] = (void*)sftim_GetTimeVsync;
+    ctx->tim.getTimeFn[2] = NULL;
+    ctx->tim.getTimeFn[3] = (void*)sftim_GetTimeUfrm;
+    ctx->tim.getTimeFn[4] = (void*)sftim_GetTimeUtim;
+    ctx->tim.getTimeFn[5] = (void*)sftim_GetTimeExtClock;
 
     /* Handle initialization - block 1 */
-    *(u32*)(p + 0x18) = 0;
-    *(u32*)(p + 0x1C) = 0;
-    *(u32*)(p + 0x20) = 0;
-    *(u32*)(p + 0x24) = 0;
-    *(u32*)(p + 0x28) = 0;
-    *(u32*)(p + 0x2C) = 0;
-    *(u32*)(p + 0x30) = 0;
-    *(u32*)(p + 0x34) = 0;
-    *(u16*)(p + 0x38) = 0;
-    *(u16*)(p + 0x3A) = 0;
+    tim->field_0x018 = 0;
+    tim->tc[0] = 0;
+    tim->tc[1] = 0;
+    tim->tc[2] = 0;
+    tim->tc[3] = 0;
+    tim->tc[4] = 0;
+    tim->tc[5] = 0;
+    tim->tc[6] = 0;
+    *(u16 *)&tim->tc[7] = 0;
+    *((u16 *)&tim->tc[7] + 1) = 0;
 
     /* Block 2 */
-    *(u32*)(p + 0xC0) = 0;
-    *(u32*)(p + 0xC4) = 0;
-    *(u32*)(p + 0xC8) = 0;
-    *(u32*)(p + 0xCC) = 0;
-    *(u32*)(p + 0xD0) = 0;
-    *(u32*)(p + 0xD4) = 0;
-    *(u32*)(p + 0xD8) = 0;
-    *(u32*)(p + 0xDC) = 0;
-    *(u16*)(p + 0xE0) = 0;
-    *(u16*)(p + 0xE2) = 0;
-    *(u32*)(p + 0xE4) = 0;
-    *(u32*)(p + 0xE8) = 1;
+    tim->tcC.flag = 0;
+    tim->tcC.field_0x04 = 0;
+    tim->tcC.hour = 0;
+    tim->tcC.minute = 0;
+    tim->tcC.second = 0;
+    tim->tcC.frame = 0;
+    tim->tcC.frame2 = 0;
+    *(u32 *)&tim->tcC.field_0x1c = 0;
+    *(u16 *)&tim->tcC.field_0x20 = 0;
+    *((u16 *)&tim->tcC.field_0x20 + 1) = 0;
+    tim->tcC.ttime = 0;
+    tim->tcC.ftime = 1;
 
     /* Block 3 */
-    *(u32*)(p + 0x3C) = 0;
-    *(u32*)(p + 0x40) = 0;
-    *(u32*)(p + 0x44) = 0;
-    *(u32*)(p + 0x48) = 0;
-    *(u32*)(p + 0x4C) = 0;
-    *(u32*)(p + 0x50) = 0;
-    *(u32*)(p + 0x54) = 0;
-    *(u32*)(p + 0x58) = 0;
-    *(u16*)(p + 0x5C) = 0;
-    *(u16*)(p + 0x5E) = 0;
-    *(u32*)(p + 0x60) = 0x7FFFFFFF;
-    *(u32*)(p + 0x64) = 1;
+    tim->hdInfo.w[0] = 0;
+    tim->hdInfo.w[1] = 0;
+    tim->hdInfo.w[2] = 0;
+    tim->hdInfo.w[3] = 0;
+    tim->hdInfo.w[4] = 0;
+    tim->hdInfo.w[5] = 0;
+    tim->hdInfo.w[6] = 0;
+    tim->hdInfo.w[7] = 0;
+    *(u16 *)&tim->hdInfo.w[8] = 0;
+    *((u16 *)&tim->hdInfo.w[8] + 1) = 0;
+    tim->hdInfo.w[9] = 0x7FFFFFFF;
+    tim->hdInfo.w[10] = 1;
 
     /* Block 4 */
-    *(u32*)(p + 0x68) = 0;
-    *(u32*)(p + 0x6C) = 0;
-    *(u32*)(p + 0x70) = 0;
-    *(u32*)(p + 0x74) = 0;
-    *(u32*)(p + 0x78) = 0;
-    *(u32*)(p + 0x7C) = 0;
-    *(u32*)(p + 0x80) = 0;
-    *(s32*)(p + 0x8C) = -1;
-    *(u32*)(p + 0x90) = 1;
-    *(s32*)(p + 0xB8) = -1;
-    *(u32*)(p + 0xBC) = 1;
-    *(s32*)(p + 0x110) = -1;
-    *(u32*)(p + 0x114) = 1;
-    *(u32*)(p + 0x13C) = 0x7FFFFFFF;
-    *(u32*)(p + 0x140) = 1;
-    *(s32*)(p + 0x154) = -1;
-    *(s32*)(p + 0x150) = -1;
-    *(s32*)(p + 0x15C) = -1;
-    *(s32*)(p + 0x158) = -1;
+    tim->tcA.flag = 0;
+    tim->tcA.field_0x04 = 0;
+    tim->tcA.hour = 0;
+    tim->tcA.minute = 0;
+    tim->tcA.second = 0;
+    tim->tcA.frame = 0;
+    tim->tcA.frame2 = 0;
+    tim->tcA.ttime = -1;
+    tim->tcA.ftime = 1;
+    tim->tcB.ttime = -1;
+    tim->tcB.ftime = 1;
+    tim->tcD.ttime = -1;
+    tim->tcD.ftime = 1;
+    tim->limit = 0x7FFFFFFF;
+    tim->limitUnit = 1;
+    tim->streamPosLo = -1;
+    tim->streamPosHi = -1;
+    tim->posDeltaLo = -1;
+    tim->posDeltaHi = -1;
 
     /* Block 5 */
-    *(u32*)(p + 0x84) = 0;
-    *(u16*)(p + 0x88) = 0;
-    *(u16*)(p + 0x8A) = 0;
-    *(u32*)(p + 0x94) = 0;
-    *(u32*)(p + 0x98) = 0;
-    *(u32*)(p + 0x9C) = 0;
-    *(u32*)(p + 0xA0) = 0;
-    *(u32*)(p + 0xA4) = 0;
-    *(u32*)(p + 0xA8) = 0;
-    *(u32*)(p + 0xAC) = 0;
-    *(u32*)(p + 0xB0) = 0;
-    *(u16*)(p + 0xB4) = 0;
-    *(u16*)(p + 0xB6) = 0;
+    *(u32 *)&tim->tcA.field_0x1c = 0;
+    *(u16 *)&tim->tcA.field_0x20 = 0;
+    *((u16 *)&tim->tcA.field_0x20 + 1) = 0;
+    tim->tcB.flag = 0;
+    tim->tcB.field_0x04 = 0;
+    tim->tcB.hour = 0;
+    tim->tcB.minute = 0;
+    tim->tcB.second = 0;
+    tim->tcB.frame = 0;
+    tim->tcB.frame2 = 0;
+    *(u32 *)&tim->tcB.field_0x1c = 0;
+    *(u16 *)&tim->tcB.field_0x20 = 0;
+    *((u16 *)&tim->tcB.field_0x20 + 1) = 0;
 
     /* Block 6 */
-    *(u32*)(p + 0xEC) = 0;
-    *(u32*)(p + 0xF0) = 0;
-    *(u32*)(p + 0xF4) = 0;
-    *(u32*)(p + 0xF8) = 0;
-    *(u32*)(p + 0xFC) = 0;
-    *(u32*)(p + 0x100) = 0;
-    *(u32*)(p + 0x104) = 0;
-    *(u32*)(p + 0x108) = 0;
-    *(u16*)(p + 0x10C) = 0;
-    *(u16*)(p + 0x10E) = 0;
+    tim->tcD.flag = 0;
+    tim->tcD.field_0x04 = 0;
+    tim->tcD.hour = 0;
+    tim->tcD.minute = 0;
+    tim->tcD.second = 0;
+    tim->tcD.frame = 0;
+    tim->tcD.frame2 = 0;
+    *(u32 *)&tim->tcD.field_0x1c = 0;
+    *(u16 *)&tim->tcD.field_0x20 = 0;
+    *((u16 *)&tim->tcD.field_0x20 + 1) = 0;
 
     /* Block 7 */
-    *(u32*)(p + 0x118) = 0;
-    *(u32*)(p + 0x11C) = 0;
-    *(u32*)(p + 0x120) = 0;
-    *(u32*)(p + 0x124) = 0;
-    *(u32*)(p + 0x128) = 0;
-    *(u32*)(p + 0x12C) = 0;
-    *(u32*)(p + 0x130) = 0;
-    *(u32*)(p + 0x134) = 0;
-    *(u16*)(p + 0x138) = 0;
-    *(u16*)(p + 0x13A) = 0;
+    tim->field_0x118[0] = 0;
+    tim->field_0x118[1] = 0;
+    tim->field_0x118[2] = 0;
+    tim->field_0x118[3] = 0;
+    tim->field_0x118[4] = 0;
+    tim->field_0x118[5] = 0;
+    tim->field_0x118[6] = 0;
+    tim->field_0x118[7] = 0;
+    *(u16 *)&tim->field_0x118[8] = 0;
+    *((u16 *)&tim->field_0x118[8] + 1) = 0;
 
     /* Block 8 */
-    *(u32*)(p + 0x144) = 0;
-    *(u32*)(p + 0x148) = 0;
+    tim->startTimeHi = 0;
+    tim->startTimeLo = 0;
 
     /* Block 9 - large zero region */
-    *(u32*)(p + 0x160) = 0;
-    *(u32*)(p + 0x164) = 0;
-    *(u32*)(p + 0x168) = 0;
-    *(u32*)(p + 0x16C) = 0;
-    *(u32*)(p + 0x170) = 0;
-    *(u32*)(p + 0x174) = 0;
-    *(u32*)(p + 0x178) = 0;
-    *(u32*)(p + 0x17C) = 0;
-    *(u32*)(p + 0x180) = 0;
-    *(u32*)(p + 0x184) = 0;
-    *(u32*)(p + 0x188) = 0;
-    *(u32*)(p + 0x18C) = 0;
-    *(u32*)(p + 0x190) = 0;
-    *(u32*)(p + 0x194) = 0;
-    *(u32*)(p + 0x198) = 0;
-    *(u32*)(p + 0x19C) = 0;
-    *(u32*)(p + 0x1A0) = 0;
-    *(u32*)(p + 0x1A4) = 0;
-    *(u32*)(p + 0x1A8) = 0;
-    *(u32*)(p + 0x1AC) = 0;
-    *(u32*)(p + 0x1B0) = 0;
-    *(u32*)(p + 0x1B4) = 0;
-    *(u32*)(p + 0x1B8) = 0;
-    *(u32*)(p + 0x1BC) = 0;
-    *(u32*)(p + 0x1C0) = 0;
-    *(u32*)(p + 0x1C4) = 0;
-    *(u32*)(p + 0x1C8) = 0;
-    *(u32*)(p + 0x1CC) = 0;
-    *(u32*)(p + 0x1D0) = 0;
-    *(u32*)(p + 0x1D4) = 0;
-    *(u32*)(p + 0x1D8) = 0;
-    *(u32*)(p + 0x1DC) = 0;
-    *(u32*)(p + 0x1E0) = 0;
-    *(u32*)(p + 0x1E4) = 0;
-    *(u32*)(p + 0x1E8) = 0;
-    *(u32*)(p + 0x1EC) = 1;
+    tim->field_0x160 = 0;
+    tim->concat.time = 0;
+    tim->concat.idx = 0;
+    tim->concat.timeQueue[0] = 0;
+    tim->concat.timeQueue[1] = 0;
+    tim->concat.timeQueue[2] = 0;
+    tim->concat.timeQueue[3] = 0;
+    tim->concat.timeQueue[4] = 0;
+    tim->concat.timeQueue[5] = 0;
+    tim->concat.timeQueue[6] = 0;
+    tim->concat.timeQueue[7] = 0;
+    tim->concat.timeQueue[8] = 0;
+    tim->concat.timeQueue[9] = 0;
+    tim->concat.timeQueue[10] = 0;
+    tim->concat.timeQueue[11] = 0;
+    tim->concat.timeQueue[12] = 0;
+    tim->concat.timeQueue[13] = 0;
+    tim->concat.timeQueue[14] = 0;
+    tim->concat.timeQueue[15] = 0;
+    tim->concat.timeQueue[16] = 0;
+    tim->concat.timeQueue[17] = 0;
+    tim->concat.timeQueue[18] = 0;
+    tim->concat.timeQueue[19] = 0;
+    tim->concat.timeQueue[20] = 0;
+    tim->concat.timeQueue[21] = 0;
+    tim->concat.timeQueue[22] = 0;
+    tim->concat.timeQueue[23] = 0;
+    tim->concat.timeQueue[24] = 0;
+    tim->concat.timeQueue[25] = 0;
+    tim->concat.timeQueue[26] = 0;
+    tim->concat.timeQueue[27] = 0;
+    tim->concat.timeQueue[28] = 0;
+    tim->concat.timeQueue[29] = 0;
+    tim->concat.timeQueue[30] = 0;
+    tim->concat.timeQueue[31] = 0;
+    tim->concat.value = 1;
 
     /* Block 10 */
-    *(u32*)(p + 0x1F0) = 0;
-    *(u32*)(p + 0x1F4) = 0;
-    *(u32*)(p + 0x1F8) = 0;
-    *(u32*)(p + 0x1FC) = 0;
-    *(u32*)(p + 0x200) = 0;
-    *(u32*)(p + 0x204) = 0;
-    *(u32*)(p + 0x208) = 0;
-    *(u32*)(p + 0x20C) = 0;
-    *(u32*)(p + 0x210) = 0;
-    *(u32*)(p + 0x214) = 0;
-    *(u32*)(p + 0x218) = 0;
-    *(u32*)(p + 0x21C) = 0;
-    *(u32*)(p + 0x220) = 0;
-    *(u32*)(p + 0x224) = 0;
-    *(u32*)(p + 0x228) = 0;
-    *(u32*)(p + 0x22C) = 0;
-    *(u32*)(p + 0x230) = 0;
-    *(u32*)(p + 0x234) = 0;
-    *(u32*)(p + 0x238) = 0;
-    *(u32*)(p + 0x23C) = 0;
-    *(u32*)(p + 0x240) = 0;
-    *(u32*)(p + 0x244) = 0;
-    *(u32*)(p + 0x248) = 0;
-    *(u32*)(p + 0x24C) = 0;
-    *(u32*)(p + 0x250) = 0;
-    *(u32*)(p + 0x254) = 0;
-    *(u32*)(p + 0x258) = 0;
-    *(u32*)(p + 0x25C) = 0;
-    *(u32*)(p + 0x260) = 0;
-    *(u32*)(p + 0x264) = 0;
-    *(u32*)(p + 0x268) = 0;
-    *(u32*)(p + 0x26C) = 0;
-    *(u32*)(p + 0x270) = 0;
-    *(u32*)(p + 0x274) = 0;
-    *(u32*)(p + 0x278) = 0;
-    *(u32*)(p + 0x27C) = 0;
+    tim->concat.totalSmpl = 0;
+    tim->concat.field_0x90 = 0;
+    tim->concat.wr = 0;
+    tim->concat.rd = 0;
+    tim->concat.smplQueue[0] = 0;
+    tim->concat.smplQueue[1] = 0;
+    tim->concat.smplQueue[2] = 0;
+    tim->concat.smplQueue[3] = 0;
+    tim->concat.smplQueue[4] = 0;
+    tim->concat.smplQueue[5] = 0;
+    tim->concat.smplQueue[6] = 0;
+    tim->concat.smplQueue[7] = 0;
+    tim->concat.smplQueue[8] = 0;
+    tim->concat.smplQueue[9] = 0;
+    tim->concat.smplQueue[10] = 0;
+    tim->concat.smplQueue[11] = 0;
+    tim->concat.smplQueue[12] = 0;
+    tim->concat.smplQueue[13] = 0;
+    tim->concat.smplQueue[14] = 0;
+    tim->concat.smplQueue[15] = 0;
+    tim->concat.smplQueue[16] = 0;
+    tim->concat.smplQueue[17] = 0;
+    tim->concat.smplQueue[18] = 0;
+    tim->concat.smplQueue[19] = 0;
+    tim->concat.smplQueue[20] = 0;
+    tim->concat.smplQueue[21] = 0;
+    tim->concat.smplQueue[22] = 0;
+    tim->concat.smplQueue[23] = 0;
+    tim->concat.smplQueue[24] = 0;
+    tim->concat.smplQueue[25] = 0;
+    tim->concat.smplQueue[26] = 0;
+    tim->concat.smplQueue[27] = 0;
+    tim->concat.smplQueue[28] = 0;
+    tim->concat.smplQueue[29] = 0;
+    tim->concat.smplQueue[30] = 0;
+    tim->concat.smplQueue[31] = 0;
 
     /* Block 11 - timing state */
-    *(u32*)(p + 0x2AC) = 0;
-    *(s32*)(p + 0x2D4) = -1;
+    tim->vsyncTime = 0;
+    tim->field_0x2d4 = -1;
     {
-        u32 tmp = *(volatile u32*)(p + 0x2AC); /* forced reload, as in retail */
-        *(s32*)(p + 0x2E8) = -5;
-        *(u32*)(p + 0x2EC) = 0;
-        *(u32*)(p + 0x2F0) = 1;
-        *(s32*)(p + 0x280) = -5;
-        *(u32*)(p + 0x284) = 1;
-        *(s32*)(p + 0x288) = -5;
-        *(u32*)(p + 0x28C) = 1;
-        *(s32*)(p + 0x290) = -1;
-        *(u32*)(p + 0x294) = 1;
-        *(s32*)(p + 0x298) = -5;
-        *(u32*)(p + 0x29C) = 0x7FFFFFFF;
-        *(u32*)(p + 0x2A0) = 0;
-        *(u32*)(p + 0x2A4) = 0x7FFFFFFF;
-        *(u32*)(p + 0x2A8) = 0;
-        *(u32*)(p + 0x2B0) = 1;
-        *(u32*)(p + 0x2B4) = 1;
-        *(u32*)(p + 0x2B8) = 0;
-        *(u32*)(p + 0x2BC) = 0;
-        *(u32*)(p + 0x2C0) = 1;
-        *(u32*)(p + 0x2C4) = 100;
-        *(s32*)(p + 0x2C8) = -1;
-        *(u32*)(p + 0x2CC) = 0;
-        *(s32*)(p + 0x2D0) = -1;
-        *(u32*)(p + 0x2D8) = tmp;
-        *(u32*)(p + 0x2E4) = 0;
-        *(s32*)(p + 0x2F4) = -1;
-        *(u32*)(p + 0x2F8) = 0;
+        u32 tmp = tim->vsyncTime; /* forced reload, as in retail */
+        tim->field_0x2e8 = -5;
+        tim->field_0x2ec = 0;
+        tim->field_0x2f0 = 1;
+        tim->curTime = -5;
+        tim->curTimeUnit = 1;
+        tim->maxTime = -5;
+        tim->maxTimeUnit = 1;
+        tim->time = -1;
+        tim->timeUnit = 1;
+        tim->lastItime = -5;
+        tim->nextItime = 0x7FFFFFFF;
+        tim->maxDelta = 0;
+        tim->minDelta = 0x7FFFFFFF;
+        tim->field_0x2a8 = 0;
+        tim->speedNum = 1;
+        tim->speedDen = 1;
+        tim->field_0x2b8 = 0;
+        tim->field_0x2bc = 0;
+        tim->field_0x2c0 = 1;
+        tim->field_0x2c4 = 100;
+        tim->field_0x2c8 = -1;
+        tim->field_0x2cc = 0;
+        tim->field_0x2d0 = -1;
+        tim->field_0x2d8 = tmp;
+        tim->extClockFn = 0;
+        tim->extClockWrap = -1;
+        tim->extClockArg = 0;
     }
 
     /* Block 12 - tail */
-    *(u32*)(p + 0x5D0) = 0;
-    *(u32*)(p + 0x5D4) = 0;
-    *(u32*)(p + 0x5D8) = 0;
-    *(u32*)(p + 0x5DC) = 0;
-    *(u32*)(p + 0x5E0) = 0;
-    *(u32*)(p + 0x5E4) = 0;
-    *(u32*)(p + 0x5E8) = 0;
-    *(u32*)(p + 0x5EC) = 0;
-    *(u32*)(p + 0x5F0) = 0;
-    *(u32*)(p + 0x5F4) = 0;
-    *(s32*)(p + 0x5F8) = -1;
+    *(s32 *)&tim->ptsBlk0[0] = 0;
+    *(s32 *)&tim->ptsBlk0[4] = 0;
+    *(s32 *)&tim->ptsBlk0[8] = 0;
+    *(s32 *)&tim->ptsBlk1[0] = 0;
+    *(s32 *)&tim->ptsBlk1[4] = 0;
+    *(s32 *)&tim->ptsBlk1[8] = 0;
+    tim->field_0x5e8 = 0;
+    tim->field_0x5ec = 0;
+    tim->field_0x5f0 = 0;
+    tim->field_0x5f4 = 0;
+    tim->limitTime = -1;
 }
 
-void SFTIM_InitTtu(void* self, int val) {
+void SFTIM_InitTtu(SfdTimTtu* ttu, int val) {
     int zero = 0;
     int one = 1;
-    *(int*)((u8*)self + 0x00) = zero;
-    *(int*)((u8*)self + 0x04) = zero;
-    *(int*)((u8*)self + 0x08) = zero;
-    *(int*)((u8*)self + 0x0C) = zero;
-    *(int*)((u8*)self + 0x10) = zero;
-    *(int*)((u8*)self + 0x14) = zero;
-    *(int*)((u8*)self + 0x18) = zero;
-    *(int*)((u8*)self + 0x1C) = zero;
-    *(u16*)((u8*)self + 0x20) = 0;
-    *(u16*)((u8*)self + 0x22) = 0;
-    *(int*)((u8*)self + 0x24) = val;
-    *(int*)((u8*)self + 0x28) = one;
+    ttu->field_0x00 = zero;
+    ttu->field_0x04 = zero;
+    ttu->field_0x08 = zero;
+    ttu->field_0x0c = zero;
+    ttu->field_0x10 = zero;
+    ttu->field_0x14 = zero;
+    ttu->field_0x18 = zero;
+    ttu->field_0x1c = zero;
+    ttu->field_0x20 = 0;
+    ttu->field_0x22 = 0;
+    ttu->field_0x24 = val;
+    ttu->field_0x28 = one;
 }
 
-void SFTIM_UpdateItime(void* self, s32 itime) {
-    u8* p = (u8*)self;
+void SFTIM_UpdateItime(SfdTim* tim, s32 itime) {
     s32 delta;
     s32 target;
     s32 newMin;
@@ -352,49 +341,49 @@ void SFTIM_UpdateItime(void* self, s32 itime) {
     s32 diff;
     s32 lastItime;
 
-    lastItime = *(s32*)(p + 0x298);
+    lastItime = tim->lastItime;
     if (lastItime == -5) {
-        *(s32*)(p + 0x298) = itime;
+        tim->lastItime = itime;
         return;
     }
     diff = itime - lastItime;
     if (diff == 0) {
         return;
     }
-    prevMax = *(s32*)(p + 0x2A0);
+    prevMax = tim->maxDelta;
     newMax = diff;
-    *(s32*)(p + 0x298) = itime;
+    tim->lastItime = itime;
     if (prevMax > diff) {
         newMax = prevMax;
     }
-    prevMin = *(s32*)(p + 0x2A4);
+    prevMin = tim->minDelta;
     newMin = diff;
-    *(s32*)(p + 0x2A0) = newMax;
+    tim->maxDelta = newMax;
     if (prevMin < diff) {
         newMin = prevMin;
     }
-    target = *(s32*)(p + 0x29C);
-    *(s32*)(p + 0x2A4) = newMin;
+    target = tim->nextItime;
+    tim->minDelta = newMin;
     if (target == 0x7FFFFFFF) {
-        *(s32*)(p + 0x29C) = diff;
+        tim->nextItime = diff;
         return;
     }
     if (target <= diff) {
-        *(s32*)(p + 0x29C) = diff;
+        tim->nextItime = diff;
         return;
     }
     delta = (target - diff) / 8;
     if (delta != 0) {
-        *(s32*)(p + 0x29C) = target - delta;
+        tim->nextItime = target - delta;
     } else {
-        *(s32*)(p + 0x29C) = diff;
+        tim->nextItime = diff;
     }
 }
 
-int SFTIM_GetNextItime(void* self, int time) {
-    int a = *(int*)((u8*)self + 0x298);
-    int b = *(int*)((u8*)self + 0x29c);
-    int c = *(int*)((u8*)self + 0x2a0);
+int SFTIM_GetNextItime(SfdTim* tim, int time) {
+    int a = tim->lastItime;
+    int b = tim->nextItime;
+    int c = tim->maxDelta;
     int sum1 = a + b;
     int sum2 = a + c;
     if (time < sum1) return sum1;
@@ -524,7 +513,7 @@ s32 SFTIM_IsStagnant(void* self) {
             if (SFSET_GetCond(self, 0x47) == 1) {
                 s32 base = *(s32*)(p + 0x1070);
                 num = *(s32*)(p + 0x1044) - base;
-                den = *(s32*)(lbl_eu_80606E38 + 0x1A8);
+                den = ((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c;
             } else {
                 num = *(s32*)(p + 0x1084) - *(s32*)(p + 0x1070);
                 den = *(s32*)(p + 0x1088);
@@ -543,8 +532,8 @@ s32 SFTIM_IsStagnant(void* self) {
     return 0;
 }
 
-s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate) {
-    s64 startTime = *(s64*)((u8*)self + 0x158);
+s32 SFTIM_GetAudioStartSample(SfdTim* tim, s32 sampleRate) {
+    s64 startTime = *(s64 *)&tim->posDeltaHi;
 
     if (startTime < 0) {
         return -1;
@@ -559,21 +548,20 @@ s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate) {
     }
 }
 
-s32 SFTIM_GetVideoStartSample(void* self, s32 mul, s32* out2) {
-    u8* p = (u8*)self;
-    s32 val = *(s32*)(p + 0x118);
+s32 SFTIM_GetVideoStartSample(SfdTim* tim, s32 mul, s32* out2) {
+    s32 val = tim->field_0x118[0];
     s32 num;
     s32 den;
     s32 r;
 
     *out2 = val;
     if (val != 0) {
-        num = *(s32*)(p + 0x13C);
-        den = *(s32*)(p + 0x140);
+        num = tim->limit;
+        den = tim->limitUnit;
     } else {
-        num = *(s32*)(p + 0x110);
+        num = tim->tcD.ttime;
         if (num >= 0) {
-            den = *(s32*)(p + 0x114);
+            den = tim->tcD.ftime;
         } else {
             return -1;
         }
@@ -585,7 +573,7 @@ s32 SFTIM_GetVideoStartSample(void* self, s32 mul, s32* out2) {
     return r;
 }
 
-void SFTIM_SetStartTime(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x144) = a; *(u32*)((u8*)self + 0x148) = b; }
+void SFTIM_SetStartTime(SfdTim* tim, u32 a, u32 b) { tim->startTimeHi = a; tim->startTimeLo = b; }
 
 s32 SFD_GetTime(void* self, s32* out1, s32* out2) {
     u8* p = (u8*)self;
@@ -644,14 +632,14 @@ s32 SFTIM_GetTimeSub(void* self, s32* out1, s32* out2) {
     return 0;
 }
 
-u32 SFTIM_GetTime(void* self, u32* out1, u32* out2) {
-    *out1 = *(u32*)((u8*)self + 0x1028);
-    *out2 = *(u32*)((u8*)self + 0x102c);
+u32 SFTIM_GetTime(SfdHandle* h, u32* out1, u32* out2) {
+    *out1 = h->tim.time;
+    *out2 = h->tim.timeUnit;
     return 0;
 }
 
 s32 sftim_GetTimeNone(void *self, s32 *out1, s32 *out2) {
-    int val = *(int*)((char*)self + 0x54);
+    int val = ((SfdHandle*)self)->errorState;
     int tmp;
     if (val == 4) goto good;
     if (val == -4) goto good;
@@ -675,7 +663,7 @@ check:
 }
 
 s32 sftim_GetTimeVsync(void* self, s32* out1, s32* out2) {
-    s32 val = *(s32*)((u8*)self + 0x54);
+    s32 val = ((SfdHandle*)self)->errorState;
     s32 ok;
 
     if (val == 4) goto good;
@@ -692,13 +680,13 @@ check:
     if (!ok) {
         return 0;
     }
-    *out1 = *(s32*)((u8*)self + 0x1044);
-    *out2 = *(s32*)(lbl_eu_80606E38 + 0x1A8);
+    *out1 = ((SfdHandle*)self)->tim.vsyncTime;
+    *out2 = ((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c;
     return 0;
 }
 
 s32 sftim_GetTimeUfrm(void* self, s32* out1, s32* out2) {
-    s32 val = *(s32*)((u8*)self + 0x54);
+    s32 val = ((SfdHandle*)self)->errorState;
     if (!(val == 4 || val == -4 || val == 6 || val == -6)) {
         *out1 = -1;
         *out2 = 1;
@@ -707,7 +695,7 @@ s32 sftim_GetTimeUfrm(void* self, s32* out1, s32* out2) {
 }
 
 s32 sftim_GetTimeUtim(void* self, s32* out1, s32* out2) {
-    s32 val = *(s32*)((u8*)self + 0x54);
+    s32 val = ((SfdHandle*)self)->errorState;
     s32 ok;
 
     if (val != 4 && val != -4 && val != 6 && val != -6) {
@@ -723,13 +711,13 @@ s32 sftim_GetTimeUtim(void* self, s32* out1, s32* out2) {
     }
 
     {
-        s32 (*fn)(void*, s32*, s32*) = *(s32(**)(void*, s32*, s32*))((u8*)self + 0x1074);
+        s32 (*fn)(void*, s32*, s32*) = (s32 (*)(void*, s32*, s32*))((SfdHandle*)self)->tim.usrTimeFn;
         if (fn == NULL) {
             *out1 = -2;
             *out2 = 1;
             return 0;
         }
-        return fn(*(void**)((u8*)self + 0x1078), out1, out2);
+        return fn(((SfdHandle*)self)->tim.usrTimeFnArg, out1, out2);
     }
 }
 
@@ -792,7 +780,7 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
 }
 
 int SFTIM_ChkRegularTime(const void *tim, int *a2, int *a3) {
-    int val = *(const int *)((const char *)tim + 0x54);
+    int val = ((SfdHandle *)tim)->errorState;
     if (val != 4 && val != -4 && val != 6 && val != -6) {
         *a2 = -1;
         *a3 = 1;
@@ -805,7 +793,7 @@ s32 SFD_SetUsrIsSkipFn(void* self, void* fn) {
     if (SFLIB_CheckHn(self) != 0) {
         return SFLIB_SetErr(0, 0xFF000124);
     }
-    *(void**)((u8*)self + 0xDB0) = fn;
+    ((SfdHandle*)self)->tim.field_0x018 = fn;
     return 0;
 }
 
@@ -813,8 +801,8 @@ s32 SFD_SetUsrTimeFn(void* self, void* fn, void* arg) {
     if (SFLIB_CheckHn(self) != 0) {
         return SFLIB_SetErr(0, 0xFF000123);
     }
-    *(void**)((u8*)self + 0x1074) = fn;
-    *(void**)((u8*)self + 0x1078) = arg;
+    ((SfdHandle*)self)->tim.usrTimeFn = fn;
+    ((SfdHandle*)self)->tim.usrTimeFnArg = arg;
     return 0;
 }
 
@@ -823,19 +811,19 @@ s32 SFD_SetExtClockFn(void* self, void* fn, s32 wrap, void* arg) {
         return SFLIB_SetErr(0, 0xFF000129);
     }
     if (fn != NULL) {
-        *(void**)((u8*)self + 0x107C) = fn;
-        *(s32*)((u8*)self + 0x108C) = wrap;
-        *(void**)((u8*)self + 0x1090) = arg;
+        ((SfdHandle*)self)->tim.extClockFn = fn;
+        ((SfdHandle*)self)->tim.extClockWrap = wrap;
+        ((SfdHandle*)self)->tim.extClockArg = arg;
     } else {
-        *(void**)((u8*)self + 0x1090) = arg;
-        *(s32*)((u8*)self + 0x108C) = wrap;
-        *(void**)((u8*)self + 0x107C) = NULL;
+        ((SfdHandle*)self)->tim.extClockArg = arg;
+        ((SfdHandle*)self)->tim.extClockWrap = wrap;
+        ((SfdHandle*)self)->tim.extClockFn = NULL;
     }
     return 0;
 }
 
-void SFTIM_SetTimeFn(void* self, void* fn, u32 idx) {
-    *(void**)((u8*)self + 0xd98 + idx * 4) = fn;
+void SFTIM_SetTimeFn(SfdHandle* h, void* fn, u32 idx) {
+    h->tim.getTimeFn[idx] = fn;
 }
 
 void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
@@ -857,10 +845,26 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
     fn(lbl_eu_8051CBF8[format], tcdata, out1, out2, rate);
 }
 
+/* Timecode block read by the Tc2Time converters: hours/minutes/seconds and the
+ * frame counts are s32 words, the field counter is an s16 at the end. */
+typedef struct SFTIM_TIMECODE {
+    s32 unk00;    /* 0x00 */
+    s32 unk04;    /* 0x04 */
+    s32 hour;     /* 0x08 */
+    s32 min;      /* 0x0C */
+    s32 sec;      /* 0x10 */
+    s32 frame;    /* 0x14 */
+    s32 frame2;   /* 0x18 */
+    u8 unk1C[2];  /* 0x1C */
+    s16 field;    /* 0x1E */
+} SFTIM_TIMECODE;
+
 /* Timecode conversion helpers. Drop-frame variants add (min/10)*2 dropped
  * frames and use seconds-to-frames constants that account for the drop. */
 void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SfdTc* tcd = (SfdTc*)tcdata;
     register s32 unit = 1000;
+    SFTIM_TIMECODE* td = (SFTIM_TIMECODE*)tcdata;
     s32 fps;
     s32 min;
     s32 hour;
@@ -871,24 +875,25 @@ void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 
     unit /= rate;
     fps = tc / rate;
-    min = *(s32*)((u8*)tcdata + 0xC);
-    hour = *(s32*)((u8*)tcdata + 0x8);
-    sec = *(s32*)((u8*)tcdata + 0x10);
-    frame = *(s32*)((u8*)tcdata + 0x14);
-    frame2 = *(s32*)((u8*)tcdata + 0x18);
+    min = td->min;
+    hour = td->hour;
+    sec = td->sec;
+    frame = td->frame;
+    frame2 = td->frame2;
 
     /* Division kept ahead of the frame sum so every field stays live at the
      * divw, matching retail's callee-saved allocation of the quotient. */
     s32 val;
     s32 frameSum;
     val = fps * (sec + min * 60 + hour * 3600);
-    field = *(s16*)((u8*)tcdata + 0x1E);
+    field = td->field;
     frameSum = frame + frame2;
     *out1 = val + frameSum * unit + field * (unit / 2);
     *out2 = fps;
 }
 
 void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SfdTc* tcd = (SfdTc*)tcdata;
     register s32 unit60 = 24000;
     register s32 unit = 1000;
     s32 fps;
@@ -904,30 +909,30 @@ void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     unit60 /= rate;
     unit /= rate;
     fps = tc / rate;
-    min = *(s32*)((u8*)tcdata + 0xC);
-    hour = *(s32*)((u8*)tcdata + 0x8);
-    sec = *(s32*)((u8*)tcdata + 0x10);
-    frame = *(s32*)((u8*)tcdata + 0x14);
-    frame2 = *(s32*)((u8*)tcdata + 0x18);
+    min = tcd->minute;
+    hour = tcd->hour;
+    sec = tcd->second;
+    frame = tcd->frame;
+    frame2 = tcd->frame2;
     val = (sec + min * 60 + hour * 3600) * unit60;
-    field = *(s16*)((u8*)tcdata + 0x1E);
+    field = tcd->field;
     frameSum = frame + frame2;
     *out1 = val + frameSum * unit + field * (unit / 2);
     *out2 = fps;
 }
 
 void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
+    SfdTc* tcd = (SfdTc*)tcdata;
     s32 unit60 = 30000;
     unit60 /= rate;
     s32 unit = 1000;
     unit /= rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 field = *(s16*)(td + 0x1E);
+    s32 min = tcd->minute;
+    s32 hour = tcd->hour;
+    s32 sec = tcd->second;
+    s32 frame = tcd->frame;
+    s32 frame2 = tcd->frame2;
+    s32 field = tcd->field;
     s32 totalFrame = frame + frame2;
     s32 totalSec = sec + min * 60 + hour * 3600;
     s32 time = totalSec * unit60;
@@ -938,21 +943,22 @@ void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 }
 
 void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
+    SfdTc* tcd = (SfdTc*)tcdata;
     s32 unit60 = 60000;
     unit60 /= rate;
     s32 unit = 1000;
     unit /= rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    *out1 = (sec + min * 60 + hour * 3600) * unit60 + (frame + frame2) * unit + *(s16*)(td + 0x1E) * (unit / 2);
+    s32 min = tcd->minute;
+    s32 hour = tcd->hour;
+    s32 sec = tcd->second;
+    s32 frame = tcd->frame;
+    s32 frame2 = tcd->frame2;
+    *out1 = (sec + min * 60 + hour * 3600) * unit60 + (frame + frame2) * unit + tcd->field * (unit / 2);
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SfdTc* tcd = (SfdTc*)tcdata;
     s32 unit;
     s32 min;
     s32 drop;
@@ -965,14 +971,14 @@ void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 
     unit = 1000;
     unit /= rate;
-    min = *(s32*)((u8*)tcdata + 0xC);
+    min = tcd->minute;
     drop = min / 10;
-    frame = *(s32*)((u8*)tcdata + 0x14);
-    frame2 = *(s32*)((u8*)tcdata + 0x18);
+    frame = tcd->frame;
+    frame2 = tcd->frame2;
     totalFrame = frame + frame2;
-    hour = *(s32*)((u8*)tcdata + 0x8);
-    sec = *(s32*)((u8*)tcdata + 0x10);
-    field = *(s16*)((u8*)tcdata + 0x1E);
+    hour = tcd->hour;
+    sec = tcd->second;
+    field = tcd->field;
     /* 23.976fps drop-frame: each minute drops 2 ticks, compensating
      * the 1000/1001 ratio; per-unit constants absorb the same skew. */
     *out1 = (drop * 2 + hour * 86292 + (sec * 24 + min * 1438) + totalFrame) * unit
@@ -993,6 +999,7 @@ typedef struct SftimTimecode {
 } SftimTimecode;
 
 void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SfdTc* tcd = (SfdTc*)tcdata;
     SftimTimecode* td = (SftimTimecode*)tcdata;
     register s32 unit = 1000;
     s32 min;
@@ -1024,6 +1031,7 @@ void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 }
 
 void sftim_Tc2Time59D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
+    SfdTc* tcd = (SfdTc*)tcdata;
     register s32 unit = 1000;
     SftimTimecode* td = (SftimTimecode*)tcdata;
     s32 fps;
@@ -1051,7 +1059,7 @@ void SFTIM_Pause(void* self, s32 mode) {
 
     if (mode == 2) {
         s32 num, den;
-        s32 fps = *(s32*)(p + 0x930);
+        s32 fps = ((SfdHandle*)p)->field_0x0930;
         u32 cs1;
         u32 cs2;
 
@@ -1064,28 +1072,28 @@ void SFTIM_Pause(void* self, s32 mode) {
         }
 
         {
-            s32 delta = UTY_MulDiv(*(s32*)(lbl_eu_80606E38 + 0x1A8), num, den);
+            s32 delta = UTY_MulDiv(((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c, num, den);
             s32 t;
             SFLIB_LockCs(&cs1);
-            *(volatile s32*)(p + 0x1044) += delta;
-            *(volatile s32*)(p + 0x106C) += delta;
+            *(volatile s32 *)&((SfdHandle*)p)->tim.vsyncTime += delta;
+            *(volatile s32 *)&((SfdHandle*)p)->tim.field_0x2d4 += delta;
             SFLIB_UnlockCs(&cs1);
         }
 
         {
-            s32 delta2 = UTY_MulDiv(*(s32*)(p + 0x1088), num, den);
+            s32 delta2 = UTY_MulDiv(((SfdHandle*)p)->tim.field_0x2f0, num, den);
             s32 t2;
             SFLIB_LockCs(&cs2);
-            t2 = *(s32*)(p + 0x1084);
+            t2 = ((SfdHandle*)p)->tim.field_0x2ec;
             t2 += delta2;
-            *(s32*)(p + 0x1084) = t2;
+            ((SfdHandle*)p)->tim.field_0x2ec = t2;
             SFLIB_UnlockCs(&cs2);
         }
     }
 }
 
 void SFTIM_GetTimeOneFrmVideo(void* self, int* out1, int* out2) {
-    int fps = *(int*)((u8*)self + 0x930);
+    int fps = ((SfdHandle*)self)->field_0x0930;
     if (fps == 0) {
         *out1 = 0;
         *out2 = 0x7512;
@@ -1096,7 +1104,7 @@ void SFTIM_GetTimeOneFrmVideo(void* self, int* out1, int* out2) {
 }
 
 s32 SFD_GetFps(void* self, s32* out) {
-    u8* p = (u8*)self;
+    SfdHandle* h = (SfdHandle*)self;
 
     *out = -1;
     if (SFLIB_CheckHn(self) != 0) {
@@ -1104,13 +1112,13 @@ s32 SFD_GetFps(void* self, s32* out) {
     }
 
     {
-        s32 fps = *(s32*)(p + 0x930);
+        s32 fps = h->field_0x0930;
         if (fps == 0) {
             return 0;
         }
         *out = lbl_eu_8051CBF8[fps];
-        if (*(s32*)(p + 0x88) != 0) {
-            s32 ovrFps = *(s32*)(p + 0xF4);
+        if (h->fhd.info.active != 0) {
+            s32 ovrFps = h->fhd.info.video[4];
             if (ovrFps != -1) {
                 *out = ovrFps;
             }
@@ -1128,24 +1136,24 @@ s32 SFTIM_IsGetFrmTime(void* self, void* frm) {
         return 0;
     }
 
-    cmpB = *(s32*)((u8*)frm + 0x18);
-    cmpA = *(s32*)((u8*)frm + 0x14);
+    cmpB = ((SfdFrame*)frm)->ttu.field_0x00;
+    cmpA = ((SfdFrame*)frm)->field_0x14;
 
-    if (*(s32*)((u8*)self + 0xA54) != 0) {
+    if (((SfdHandle*)self)->cond[14] != 0) {
         return 1;
     }
 
-    SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
+    SFTIM_IsExecTime(self, cmpA, cmpB, &result, ((SfdHandle*)self)->cond[44]);
     return result;
 }
 
 s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
-    if (*(s32*)((u8*)self + 0xA54) != 0) {
+    if (((SfdHandle*)self)->cond[14] != 0) {
         return 1;
     }
     {
         s32 result;
-        SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
+        SFTIM_IsExecTime(self, cmpA, cmpB, &result, ((SfdHandle*)self)->cond[44]);
         return result;
     }
 }
@@ -1153,7 +1161,7 @@ s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
 void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
     u8* p = (u8*)self;
     u8* wk = (u8*)lbl_eu_80606E38;
-    s32 mode = *(s32*)(p + 0xA58);
+    s32 mode = ((SfdHandle*)p)->cond[15];
 
     if (mode == 0) {
         *out = 1;
@@ -1161,18 +1169,18 @@ void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
     }
 
     {
-        s32 timeVal = *(s32*)(p + 0x1028);
-        s32 timeUnit = *(s32*)(p + 0x102C);
+        s32 timeVal = ((SfdHandle*)p)->tim.time;
+        s32 timeUnit = ((SfdHandle*)p)->tim.timeUnit;
 
         if (timeUnit == 1) {
-            if (*(s32*)(p + 0x106C) < 0) {
-                *(s32*)(p + 0x106C) = 0;
+            if (((SfdHandle*)p)->tim.field_0x2d4 < 0) {
+                ((SfdHandle*)p)->tim.field_0x2d4 = 0;
                 *out = 1;
                 return;
             }
             {
-                s32 audioTime = *(volatile s32*)(p + 0x106C);
-                if (UTY_CmpTime(cmpA, cmpB, audioTime, *(s32*)(wk + 0x1A8)) != 0) {
+                s32 audioTime = *(volatile s32 *)&((SfdHandle*)p)->tim.field_0x2d4;
+                if (UTY_CmpTime(cmpA, cmpB, audioTime, ((SfdSys *)wk)->tim.field_0x0c) != 0) {
                     *out = 1;
                 } else {
                     *out = 0;
@@ -1279,11 +1287,11 @@ s32 SFTIM_IsVideoTerm(void* self) {
                         *(s32*)(p + 0x102C)) != 0);
 }
 
-void SFTIM_SetSpeed(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x1048) = a; *(u32*)((u8*)self + 0x104C) = b; }
+void SFTIM_SetSpeed(SfdHandle* h, u32 a, u32 b) { h->tim.speedNum = a; h->tim.speedDen = b; }
 
 void SFTIM_GetSpeed(void* self, u32* out1, u32* out2) {
-    *out1 = *(u32*)((u8*)self + 0x1048);
-    *out2 = *(u32*)((u8*)self + 0x104c);
+    *out1 = ((SfdHandle*)self)->tim.speedNum;
+    *out2 = ((SfdHandle*)self)->tim.speedDen;
 }
 
 s32 SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
@@ -1293,10 +1301,10 @@ s32 SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
     {
         char cs[8];
         SFLIB_LockCs(cs);
-        *(s32*)((u8*)self + 0x1380) = num;
-        *(s32*)((u8*)self + 0x1384) = den;
+        ((SfdHandle*)self)->tim.field_0x5e8 = num;
+        ((SfdHandle*)self)->tim.field_0x5ec = den;
         if (den != 0) {
-            *(s32*)((u8*)self + 0x138C) = -1;
+            ((SfdHandle*)self)->tim.field_0x5f4 = -1;
         }
         SFLIB_UnlockCs(cs);
     }
@@ -1369,11 +1377,11 @@ void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
     }
 }
 
-void SFD_SetLimitTime(void* self, u32 val) { *(u32*)((u8*)self + 0x1390) = val; }
+void SFD_SetLimitTime(SfdHandle* h, u32 val) { h->tim.limitTime = val; }
 
 void SFD_GetLimitTime(void* self, s32* out) {
     s32 cond = SFSET_GetCond(self, 0x36);
-    s32 limitTime = *(s32*)((u8*)self + 0x1390);
+    s32 limitTime = ((SfdHandle*)self)->tim.limitTime;
 
     if (limitTime == -1) {
         *out = cond;

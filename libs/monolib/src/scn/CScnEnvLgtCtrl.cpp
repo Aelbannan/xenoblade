@@ -43,7 +43,7 @@ extern "C" void ScnEnvLgt_noopF940(CScnEnvLgtData* self);
 #include "monolib/util/reslist.hpp"       // reslist<T> (embedded light-item list)
 
 // shared float constant in .sdata2 (referenced via @sda21 by this TU)
-extern float lbl_eu_8066B010;
+extern const float kLgtZeroShared;
 
 // Float -> u32 bit-pattern helper: forces the retail stfs-to-stack/lwz
 // roundtrip per element (scnLgtWriteSlotScale / scnLgtPushSlotBlend).
@@ -78,9 +78,9 @@ static inline f32 u32tof32b(u32 u) { return *(f32*)&u; }
 static inline u32 f32bits_ref(const f32& f) { return *(u32*)&f; }
 
 // Curve-window int->double: retail builds a 0x43300000 double temp and
-// subtracts the shared 2^52 constant lbl_eu_8066B018, keeping the value as
+// subtracts the shared 2^52 constant kCurveIntToF64Magic, keeping the value as
 // a raw double (no frsp).
-extern const f64 lbl_eu_8066B018;
+extern const f64 kCurveIntToF64Magic;
 static inline f64 negIntToF64(int v) {
     union { u32 w[2]; f64 d; } c;
     c.w[0] = 0x43300000u;
@@ -91,21 +91,23 @@ static inline f32 curveToF(s32 v) {
     union { u32 w[2]; double d; } c;
     c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B018);
+    return (f32)(c.d - kCurveIntToF64Magic);
 }
 
 extern const f64 lbl_eu_8066B0E8;  // 2^52 (u32->f32 magic, shared pool)
+// Signed u32 -> f32 through the .sdata2 2^52 magic this TU owns
+// (scnLgtPushSlotBlend's slot-blend bounds are the only users).
 static inline f32 u32ToF_b0e8(u32 v) {
     union { u32 w[2]; double d; } c;
     c.w[0] = 0x43300000u;
-    c.w[1] = v;
-    return (f32)(c.d - lbl_eu_8066B0E8);
+    c.w[1] = v ^ 0x80000000u;
+    return (f32)(c.d - kSignedIntToF64Magic);
 }
 static inline f32 s32ToF_2(s32 v) {
     union { u32 w[2]; double d; } c;
     c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B0E8);
+    return (f32)(c.d - kSignedIntToF64Magic);
 }
 
 
@@ -203,7 +205,7 @@ void scnLgtRefreshLightMan(CScnEnvLgtCtrl* self) {
         // GXColor struct copy from the shared pool word; MWCC keeps the
         // loaded word live across the calls and member-copies the bytes
         // into FogData::color through a stack spill.
-        GXColor col = lbl_eu_8066AFE0;
+        GXColor col = sLgtFogColorWhite;
         nw4r::g3d::Fog fog =
             ((nw4r::g3d::ScnRoot*)getScnRootSlot10(self->field_0x04_ptr))
                 ->GetFog(0x1e);
@@ -223,15 +225,15 @@ void scnLgtRefreshLightMan(CScnEnvLgtCtrl* self) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
         }
         if (fog.ptr() != NULL) {
-            fog.ptr()->startz = lbl_eu_8066AFE4;
-            fog.ptr()->endz = lbl_eu_8066AFE8;
+            fog.ptr()->startz = kLgtFogNearDefault;
+            fog.ptr()->endz = kLgtFogFarDefault;
         }
         if (fog.ptr() == NULL) {
-            nw4r::db::Panic(lbl_eu_8056F9A8, 0x57, lbl_eu_8056F988);
+            nw4r::db::Panic(sLgtAssertFile, 0x57, sLgtAssertMsg);
         }
         if (fog.ptr() != NULL) {
-            fog.ptr()->nearz = lbl_eu_8066AFE4;
-            fog.ptr()->farz = lbl_eu_8066AFE8;
+            fog.ptr()->nearz = kLgtFogNearDefault;
+            fog.ptr()->farz = kLgtFogFarDefault;
         }
     }
 }
@@ -478,25 +480,25 @@ void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
     int v = (int)self->alt6.field_0x3C;
     f32 f1;
     if (lbl_eu_80663AE8 >= v || lbl_eu_80663AF4 <= v || flag != 0) {
-        f1 = lbl_eu_8066AFF0;
+        f1 = kLgtBlendWeightHi;
     } else if (v > lbl_eu_80663AE8 && v < lbl_eu_80663AEC) {
         f32 vf = s32ToF_2((s32)v);
         f32 t = (vf - u32ToF_b0e8(lbl_eu_80663AE8)) / (u32ToF_b0e8(lbl_eu_80663AEC) - u32ToF_b0e8(lbl_eu_80663AE8));
-        f1 = lbl_eu_8066AFD0 * t + lbl_eu_8066AFF0 * (lbl_eu_8066AFDC - t);
+        f1 = kLgtBlendWeightLo * t + kLgtBlendWeightHi * (kLgtBlendOne - t);
     } else if (v > lbl_eu_80663AF0 && v < lbl_eu_80663AF4) {
         f32 vf = s32ToF_2((s32)v);
         f32 t = (vf - u32ToF_b0e8(lbl_eu_80663AF0)) / (u32ToF_b0e8(lbl_eu_80663AF4) - u32ToF_b0e8(lbl_eu_80663AF0));
-        f1 = lbl_eu_8066AFD0 * (lbl_eu_8066AFDC - t) + lbl_eu_8066AFF0 * t;
+        f1 = kLgtBlendWeightLo * (kLgtBlendOne - t) + kLgtBlendWeightHi * t;
     } else {
-        f1 = lbl_eu_8066AFD0;
+        f1 = kLgtBlendWeightLo;
     }
-    f32 n38 = lbl_eu_8066AFEC * (lbl_eu_8066AFD4 - self->field_0x38[0]) +
+    f32 n38 = kLgtSmoothStep * (kLgtBlendHalf - self->field_0x38[0]) +
               self->field_0x38[0];
-    f32 n34 = lbl_eu_8066AFEC * (f1 - self->field_0x34_f) + self->field_0x34_f;
+    f32 n34 = kLgtSmoothStep * (f1 - self->field_0x34_f) + self->field_0x34_f;
     self->field_0x38[0] = n38;
     self->field_0x34_f = n34;
     f32 f2;
-    if (n38 < lbl_eu_8066AFD8) {
+    if (n38 < kLgtBlendZero) {
         ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x5C = 3;
         f2 = -self->field_0x38[0];
     } else {
@@ -504,9 +506,9 @@ void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
         f2 = self->field_0x38[0];
     }
     ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x38 =
-        f32tou32(lbl_eu_8066AFDC);
+        f32tou32(kLgtBlendOne);
     ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x3C =
-        f32tou32(lbl_eu_8066AFDC);
+        f32tou32(kLgtBlendOne);
     ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x40 = f32tou32(f2);
     ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x44 = f32tou32(f2);
     ((CScnEnvLgtCtrlLgtSink*)self->field_0x28)->field_0x48 =
@@ -544,9 +546,9 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
         if (mgr->field_0xD0 != 0) {
             ml::CVec3 v;
             ml::CVec3 base;
-            base.x = lbl_eu_8066AFD8;
-            base.y = lbl_eu_8066AFDC;
-            base.z = lbl_eu_8066AFD8;
+            base.x = kLgtBlendZero;
+            base.y = kLgtBlendOne;
+            base.z = kLgtBlendZero;
             v.x = mgr->field_0x10C[0] + base.x;
             v.y = mgr->field_0x10C[1] + base.y;
             v.z = mgr->field_0x10C[2] + base.z;
@@ -554,7 +556,7 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
             req.x = v.x;
             req.y = v.y;
             req.z = v.z;
-            if (ScnRes_VertRayForward_E398(&req, 0x6a01, 0, 0, lbl_eu_8066B000)) {
+            if (ScnRes_VertRayForward_E398(&req, 0x6a01, 0, 0, kLgtRayBias)) {
                 if (ScnRes_HasHighFlagEntry_E5AC()) {
                     flag = 1;
                     if (self->flags & 4) {
@@ -670,30 +672,30 @@ extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self)
 
     // Wave A: reset the +0x30 control blob (float-bit quads, then scalars).
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x00[0] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x00[1] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x00[2] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x00[3] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x68[0] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x68[1] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x68[2] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x68[3] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x78[0] =
-        f32tou32b(lbl_eu_8066AFD4);
+        f32tou32b(kLgtBlendHalf);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x78[1] =
-        f32tou32b(lbl_eu_8066AFD4);
+        f32tou32b(kLgtBlendHalf);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x78[2] =
-        f32tou32b(lbl_eu_8066AFD4);
+        f32tou32b(kLgtBlendHalf);
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x64 &= ~4;
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x20 = one;
-    ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x24 = lbl_eu_8066B004;
+    ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x24 = kLgtTwo;
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x21 = 3;
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x10 = maskF;
     ((CScnEnvLgtCtrlParamInit*)self->field_0x30)->field_0x11 = valEB;
@@ -715,19 +717,19 @@ extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self)
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x58 = four;
     Blend_SetFlag2((u8*)((CScnEnvLgtCtrlBits28*)self->field_0x28), 1);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[0] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[1] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[2] =
-        f32tou32b(lbl_eu_8066AFDC);
+        f32tou32b(kLgtBlendOne);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[3] =
-        f32tou32b(lbl_eu_8066AFD4);
+        f32tou32b(kLgtBlendHalf);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[4] =
-        f32tou32b(lbl_eu_8066AFD0);
+        f32tou32b(kLgtBlendWeightLo);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[5] =
-        f32tou32b(lbl_eu_8066AFD0);
+        f32tou32b(kLgtBlendWeightLo);
     ((CScnEnvLgtCtrlBits28*)self->field_0x28)->field_0x38[6] =
-        f32tou32b(lbl_eu_8066AFD0);
+        f32tou32b(kLgtBlendWeightLo);
 
     CScnEnvLgtCtrlBits2C* obj2 = (CScnEnvLgtCtrlBits2C*)self->field_0x2C;
     obj2->field_0x34 = one;
@@ -739,11 +741,11 @@ extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self)
     obj2->field_0x44 = 8;
     obj2->field_0x20 = zero;
     obj2->field_0x21 = 2;
-    obj2->field_0x24 = lbl_eu_8066B008;
-    obj2->field_0x00[0] = f32tou32b(lbl_eu_8066AFDC);
-    obj2->field_0x00[1] = f32tou32b(lbl_eu_8066AFDC);
-    obj2->field_0x00[2] = f32tou32b(lbl_eu_8066AFDC);
-    obj2->field_0x00[3] = f32tou32b(lbl_eu_8066AFDC);
+    obj2->field_0x24 = kLgtOneAndHalf[0];
+    obj2->field_0x00[0] = f32tou32b(kLgtBlendOne);
+    obj2->field_0x00[1] = f32tou32b(kLgtBlendOne);
+    obj2->field_0x00[2] = f32tou32b(kLgtBlendOne);
+    obj2->field_0x00[3] = f32tou32b(kLgtBlendOne);
     obj2->field_0x10 = maskF;
     obj2->field_0x11 = valEB;
 }
@@ -773,10 +775,10 @@ extern "C" __declspec(noinline) CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
     s->field_0xA8 = 0;
     s->field_0x2C = (u8*)data;
     s->field_0xBE = 0;
-    s->field_0xC0 = lbl_eu_8066B010;
-    s->field_0xC4 = lbl_eu_8066B014;
-    s->field_0xC8 = lbl_eu_8066B010;
-    s->field_0xCC = lbl_eu_8066B014;
+    s->field_0xC0 = kLgtZeroShared;
+    s->field_0xC4 = kLgtOneShared;
+    s->field_0xC8 = kLgtZeroShared;
+    s->field_0xCC = kLgtOneShared;
     s->field_0xBC = -1;
     s->ctor90.field_0x90 = lbl_eu_80656C58[0];
     s->ctor90.field_0x94 = lbl_eu_80656C58[1];
@@ -986,7 +988,7 @@ extern "C" __declspec(noinline) CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
         }
     }
     s->field_0x04 |= 0x80000000;
-    f32 f0 = lbl_eu_8066B014;
+    f32 f0 = kLgtOneShared;
     s->field_0x74[0] = f0;
     s->field_0x74[1] = f0;
     s->field_0x74[2] = f0;
@@ -1099,7 +1101,7 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
                 int v1 = (int)slot->field_0x2C * 60;
                 int v2 = (int)slot->field_0x2E * 60;
                 int changed = 0;
-                f32 f = lbl_eu_8066B014;
+                f32 f = kLgtOneShared;
                 if (v0 > v1) {
                     // The bound is re-read inside each branch (retail
                     // keeps it off the pre-branch path).
@@ -1108,9 +1110,9 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
                         if (v2 != 0 && v0 + v2 > bound) {
                             tDen.w[1] = (u32)v2 ^ 0x80000000u;
                             tNum.w[1] = (u32)(v0 + v2 - bound) ^ 0x80000000u;
-                            f = lbl_eu_8066B014 -
-                                (f32)(tNum.d - lbl_eu_8066B018) /
-                                    (f32)(tDen.d - lbl_eu_8066B018);
+                            f = kLgtOneShared -
+                                (f32)(tNum.d - kCurveIntToF64Magic) /
+                                    (f32)(tDen.d - kCurveIntToF64Magic);
                         }
                         changed = 1;
                     } else {
@@ -1118,8 +1120,8 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
                             if (v2 != 0 && v1 - v2 < bound) {
                                 tDen.w[1] = (u32)v2 ^ 0x80000000u;
                                 tNum.w[1] = (u32)(v1 - bound) ^ 0x80000000u;
-                                f = (f32)(tNum.d - lbl_eu_8066B018) /
-                                    (f32)(tDen.d - lbl_eu_8066B018);
+                                f = (f32)(tNum.d - kCurveIntToF64Magic) /
+                                    (f32)(tDen.d - kCurveIntToF64Magic);
                             }
                             changed = 1;
                         }
@@ -1131,14 +1133,14 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
                             if (v0 + v2 > bound) {
                                 tDen.w[1] = (u32)v2 ^ 0x80000000u;
                                 tNum.w[1] = (u32)(v0 + v2 - bound) ^ 0x80000000u;
-                                f = lbl_eu_8066B014 -
-                                    (f32)(tNum.d - lbl_eu_8066B018) /
-                                        (f32)(tDen.d - lbl_eu_8066B018);
+                                f = kLgtOneShared -
+                                    (f32)(tNum.d - kCurveIntToF64Magic) /
+                                        (f32)(tDen.d - kCurveIntToF64Magic);
                             } else if (v1 - v2 < bound) {
                                 tDen.w[1] = (u32)v2 ^ 0x80000000u;
                                 tNum.w[1] = (u32)(v1 - bound) ^ 0x80000000u;
-                                f = (f32)(tNum.d - lbl_eu_8066B018) /
-                                    (f32)(tDen.d - lbl_eu_8066B018);
+                                f = (f32)(tNum.d - kCurveIntToF64Magic) /
+                                    (f32)(tDen.d - kCurveIntToF64Magic);
                             }
                         }
                         changed = 1;
@@ -1167,7 +1169,7 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
 // entries flagged 0x8000/0x4000 pull precomputed rows instead.
 extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
                                                    CLightEnv* env) {
-    const f32 zeroF = lbl_eu_8066B010;
+    const f32 zeroF = kLgtZeroShared;
     // Clear both slot-color quads unconditionally (before the count gate).
     ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[0] = zeroF;
     ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[1] = zeroF;
@@ -1178,7 +1180,7 @@ extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* sel
     ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[2] = zeroF;
     ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[3] = zeroF;
     if (((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountA == 0) return;
-    const f32 oneF = lbl_eu_8066B014;
+    const f32 oneF = kLgtOneShared;
     for (u32 layer = 0; layer < 4; layer++) {
         u32 bit = 1 << layer;
         CScnEnvLgtCtrlLgtItem30* items =
@@ -1251,7 +1253,7 @@ extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* sel
 
 // scnLgtApplyAmbColor (us-804c7560): push the default light value to +0xEC (the
 // +0x30 pointer is only null-checked; the value itself is the .sdata2
-// constant lbl_eu_8066B010) and the 3-word color triple to +0xD0, then
+// constant kLgtZeroShared) and the 3-word color triple to +0xD0, then
 // refresh the four CLightEnv slot fields: each slot field is copied to +0xE4
 // and recomputed by scnLgtRecomputeSlotField. The loop walks a byte offset (off)
 // against the env base (p); both inductions stay independent so MWCC keeps
@@ -1259,7 +1261,7 @@ extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* sel
 extern "C" void scnLgtApplyAmbColor(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLightEnvView* env,
                    const u32* data) {
     if (self->field_0x30 == 0) return;
-    self->field_0xEC = lbl_eu_8066B010;
+    self->field_0xEC = kLgtZeroShared;
     self->field_0xD0 = data[0];
     self->field_0xD4 = data[1];
     self->field_0xD8 = data[2];
@@ -1311,14 +1313,14 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
             out.x = tmp.x;
             out.y = tmp.y;
             out.z = tmp.z;
-            out.w = lbl_eu_8066B014;
+            out.w = kLgtOneShared;
             LightCtlSetColor(view, &out);
         } else {
             CScnEnvLgtCtrlLgtVec4 out;
             out.x = entry->field_0x18;
             out.y = entry->field_0x1C;
             out.z = entry->field_0x20;
-            out.w = lbl_eu_8066B014;
+            out.w = kLgtOneShared;
             LightCtlSetColor(view, &out);
         }
         LightCtlSetDir(view, (const u8*)entry + 0xC);
@@ -1330,10 +1332,10 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     if (ctl->field_0x00 == self->lgt2.field_0xBC) {
         scale = self->lgt2.field_0xB8;
     } else {
-        scale = lbl_eu_8066B014;
+        scale = kLgtOneShared;
     }
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
-        out.w = lbl_eu_8066B014;
+        out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 1);
         LightCtlSetColor(view, &out);
         LightCtlSetDir(view, (const u8*)ctl + 0x30);
@@ -1371,7 +1373,7 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         out.x = tmp.x;
         out.y = tmp.y;
         out.z = tmp.z;
-        out.w = lbl_eu_8066B014;
+        out.w = kLgtOneShared;
         LightCtlSetColor(view, &out);
         LightCtlSetPos(view, (const u8*)entry);
         LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
@@ -1381,7 +1383,7 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     }
     CScnEnvLgtCtrlLgtVec4 out;
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
-        out.w = lbl_eu_8066B014;
+        out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 3);
         LightCtlSetColor(view, &out);
         LightCtlSetPos(view, (const u8*)ctl + 0x30);
@@ -1419,7 +1421,7 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         out.x = tmp.x;
         out.y = tmp.y;
         out.z = tmp.z;
-        out.w = lbl_eu_8066B014;
+        out.w = kLgtOneShared;
         LightCtlSetColor(view, &out);
         LightCtlSetPos(view, (const u8*)entry);
         LightCtlSetDir(view, (const u8*)entry + 0xC);
@@ -1431,7 +1433,7 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     }
     CScnEnvLgtCtrlLgtVec4 out;
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
-        out.w = lbl_eu_8066B014;
+        out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 4);
         LightCtlSetColor(view, &out);
         LightCtlSetPos(view, (const u8*)ctl + 0x30);
@@ -1450,9 +1452,9 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
 // position; accepted lights record a zero priority and bump the count.
 extern "C" __declspec(noinline) void scnLgtPushSlotLights(
     CScnEnvLgtCtrl* self, CLight* lights, int flag) {
-    f32 one = lbl_eu_8066B014;
-    f32 zero = lbl_eu_8066B010;
-    f32 kAtten = lbl_eu_8066B028;
+    f32 one = kLgtOneShared;
+    f32 zero = kLgtZeroShared;
+    f32 kAtten = kLgtRankWeight;
     CScnEnvLgtCtrlLgtSlot* slot = &self->field_0x24[(flag != 0) * 2];
     // Address-taken by VEC3Sub below; MWCC keeps the address in a reserved
     // NV register hoisted above the loop.
@@ -1472,7 +1474,7 @@ extern "C" __declspec(noinline) void scnLgtPushSlotLights(
             if (radius * radius >= d2) continue;
             LightCtlSetAttnMode(view, 3);
             LightCtlSetPos(view, (const u8*)&slot->field_0x18);
-            LightCtlInitDistAttn(view, 0, lbl_eu_8066B020, lbl_eu_8066B024);
+            LightCtlInitDistAttn(view, 0, kLgtFogTypeScale, kLgtSpotFalloff);
             f32 inner = kAtten * radius;
             if (inner * inner < d2) {
                 // Project onto the inner sphere.
@@ -1537,7 +1539,7 @@ extern "C" int scnLgtFillLightVec4(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* 
             tmp.z = self->alt4.field_0x98 * scale;
             tmp.x = self->alt4.field_0x90 * scale;
             tmp.y = self->alt4.field_0x94 * scale;
-            out->w = lbl_eu_8066B014;
+            out->w = kLgtOneShared;
             out->z = tmp.z;
             out->x = tmp.x;
             out->y = tmp.y;
@@ -1548,7 +1550,7 @@ extern "C" int scnLgtFillLightVec4(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* 
             tmp.z = item->z * scale;
             tmp.x = item->x * scale;
             tmp.y = item->y * scale;
-            out->w = lbl_eu_8066B014;
+            out->w = kLgtOneShared;
             out->x = tmp.x;
             out->y = tmp.y;
             out->z = tmp.z;
@@ -1655,7 +1657,7 @@ extern "C" __declspec(noinline) void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* s
         }
     }
     // Advance the fog blend accumulator
-    f32 lim = lbl_eu_8066B014;
+    f32 lim = kLgtOneShared;
     f32 c0;
     f32 c4;
     c4 = self->lgt2.field_0xC4;
@@ -1693,7 +1695,7 @@ void CScnEnvLgtCtrl::StepWorkBlob(float f) {
         if (flags & 0x100) {
             this->field_0xC8 = limit;
         } else {
-            this->field_0xC8 = lbl_eu_8066B010;
+            this->field_0xC8 = kLgtZeroShared;
         }
     }
     CScnEnvLgtCtrlWorkBlob blob;
@@ -1746,7 +1748,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
         (CScnEnvLgtCtrlLgtItem20*)((u8*)self->field_0x0C + item->sel20 * 0x14);
     dst->field_0x10 &= ~6u;
 
-    f32 ratio = lbl_eu_8066B010;   // fraction toward the previous candidate
+    f32 ratio = kLgtZeroShared;   // fraction toward the previous candidate
     f32 fadeT = ratio;             // blend weight toward the winning row
     f32 outW;
     // volatile keeps both triples memory-resident like retail (frame spills).
@@ -1759,16 +1761,16 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
         outPos.y = item->color[1];
         outPos.z = item->color[2];
         outW = item->wPrev;
-        if (item->wPrev == lbl_eu_8066B010) {
+        if (item->wPrev == kLgtZeroShared) {
             dst->field_0x10 |= 1;
         }
     } else if ((int)((best->weight + best->tail) * 60) > self->alt7.field_0xA8) {
         // Overshoot: scale by the fraction of the tail window inside the bound.
         int diff = self->alt7.field_0xA8 - (int)((best->weight + best->tail) * 60);
         int den = (int)best->tail * 60;
-        ratio = (f32)((negIntToF64(-diff) - lbl_eu_8066B018) /
-                      (negIntToF64(-den) - lbl_eu_8066B018));
-        fadeT = lbl_eu_8066B014 - ratio;
+        ratio = (f32)((negIntToF64(-diff) - kCurveIntToF64Magic) /
+                      (negIntToF64(-den) - kCurveIntToF64Magic));
+        fadeT = kLgtOneShared - ratio;
         outPos.x = best->x * fadeT;
         outPos.y = best->y * fadeT;
         outPos.z = best->z * fadeT;
@@ -1777,7 +1779,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
             // Flash-center fold: average the scaled triple, then pull the
             // previous candidate (or the entry's fallback triple) toward it.
             dst->field_0x10 |= 4;
-            f32 val = lbl_eu_8066B02C * ((outPos.x + outPos.y) + outPos.z);
+            f32 val = kLgtCurveThird * ((outPos.x + outPos.y) + outPos.z);
             center.z = val;
             center.y = val;
             center.x = val;
@@ -1809,7 +1811,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
         outW = best->f;
         if ((dst->field_0x10 & 2) && acc == 1) {
             dst->field_0x10 |= 4;
-            f32 val = lbl_eu_8066B02C * ((outPos.x + outPos.y) + outPos.z);
+            f32 val = kLgtCurveThird * ((outPos.x + outPos.y) + outPos.z);
             center.z = val;
             center.y = val;
             center.x = val;
@@ -1839,7 +1841,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
             outPos.y = rowK[1];
             outPos.z = rowK[2];
             outW = rowK[3];
-            if (ratio != lbl_eu_8066B010) {
+            if (ratio != kLgtZeroShared) {
                 // Blend all four components toward the preceding table row.
                 f32* prevRow = (f32*)((u8*)tbl + (acc - 1) * 0x10);
                 outPos.x = tbl[(acc - 1) * 4] * ratio + outPos.x * fadeT;
@@ -1854,8 +1856,8 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
 
     // Fade fold: apply the +0xC0 progress against the sel22 row.
     f32 prog = self->lgt2.field_0xC0;
-    if (prog < lbl_eu_8066B014) {
-        f32 inv = lbl_eu_8066B014 - prog;
+    if (prog < kLgtOneShared) {
+        f32 inv = kLgtOneShared - prog;
         outW *= prog;
         outPos.x *= prog;
         outPos.y *= prog;
@@ -1908,7 +1910,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
 // scaled by f1 (fmadds).
 void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32* out6,
                    f32 f1, f32 f2, u32 col, u32 rowIdx) {
-    f32 v = lbl_eu_8066B010;
+    f32 v = kLgtZeroShared;
     f32* row = self->alt2.field_0x50 + col + rowIdx * 5;
     f32 x = row[0];
     f32 y;
@@ -1962,8 +1964,8 @@ void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
     self->field_0x28 = 0;
     self->field_0x2C = 0;
     self->field_0x30 = 0;
-    self->field_0x34 = lbl_eu_8066AFD0;
-    self->field_0x38 = lbl_eu_8066AFD4;
+    self->field_0x34 = kLgtBlendWeightLo;
+    self->field_0x38 = kLgtBlendHalf;
     self->field_0x3C = 0;
     self->field_0x40 = 0;
     self->base.mList = (CScnEnvLgtCtrlIScnResNode*)mtl::MemManager::allocate_array(
@@ -2313,12 +2315,12 @@ extern "C" void scnLgtPushFogView1(CScnEnvLgtCtrl* self, nw4r::g3d::ScnRoot* roo
 }
 
 // Byte -> float through the 0x43300000 double temp (retail subtracts the
-// shared 2^52 constant lbl_eu_8066B040).
+// shared 2^52 constant kFogByteToF64Magic).
 static inline f32 byteToF_b040(u8 v) {
     union { u32 w[2]; double d; } c;
     c.w[0] = 0x43300000u;
     c.w[1] = (u32)v;
-    return (f32)(c.d - lbl_eu_8066B040);
+    return (f32)(c.d - kFogByteToF64Magic);
 }
 
 // scnLgtPushFogSlot0 (us-804c9784): push this controller's fog state into the
@@ -2344,7 +2346,7 @@ extern "C" void scnLgtPushFogSlot0(CScnEnvLgtCtrl* self, nw4r::g3d::ScnRoot* roo
         // View select: explicit lt||eq comes closest to retail's single
         // fcmpo + cror eq,lt,eq shape.
         u32 type;
-        if (f < lbl_eu_8066B010 || f == lbl_eu_8066B010) {
+        if (f < kLgtZeroShared || f == kLgtZeroShared) {
             type = self->mFog.mType[1];
         } else {
             type = self->mFog.mType[0];
@@ -2355,29 +2357,29 @@ extern "C" void scnLgtPushFogSlot0(CScnEnvLgtCtrl* self, nw4r::g3d::ScnRoot* roo
         if (fog.ptr() != NULL) {
             fog.ptr()->type = (GXFogType)type;
         }
-        f32 t = lbl_eu_8066B014 - f;
+        f32 t = kLgtOneShared - f;
         // Color bytes: each channel blends the two views' bytes (view-0
         // weighted by f, view-1 by t), then clamps to the shared ceiling.
         u8* cb = (u8*)self->mFog.mColor;
         tb.w[1] = cb[4];
         ta.w[1] = cb[0];
-        f32 r = (f32)(tb.d - lbl_eu_8066B040) * t +
-                (f32)(ta.d - lbl_eu_8066B040) * f;
+        f32 r = (f32)(tb.d - kFogByteToF64Magic) * t +
+                (f32)(ta.d - kFogByteToF64Magic) * f;
         tb.w[1] = cb[5];
         ta.w[1] = cb[1];
-        f32 g = (f32)(tb.d - lbl_eu_8066B040) * t +
-                (f32)(ta.d - lbl_eu_8066B040) * f;
+        f32 g = (f32)(tb.d - kFogByteToF64Magic) * t +
+                (f32)(ta.d - kFogByteToF64Magic) * f;
         tb.w[1] = cb[6];
         ta.w[1] = cb[2];
-        f32 b = (f32)(tb.d - lbl_eu_8066B040) * t +
-                (f32)(ta.d - lbl_eu_8066B040) * f;
-        if (r > lbl_eu_8066B030) r = lbl_eu_8066B030;
-        if (g > lbl_eu_8066B030) g = lbl_eu_8066B030;
-        if (b > lbl_eu_8066B030) b = lbl_eu_8066B030;
+        f32 b = (f32)(tb.d - kFogByteToF64Magic) * t +
+                (f32)(ta.d - kFogByteToF64Magic) * f;
+        if (r > kLgtByteScale) r = kLgtByteScale;
+        if (g > kLgtByteScale) g = kLgtByteScale;
+        if (b > kLgtByteScale) b = kLgtByteScale;
         // Retail builds the full GXColor on the stack from a seeded template
         // word (alpha comes along in the struct copy).
         union { u32 u; GXColor c; } cv;
-        cv.u = lbl_eu_8066B048;
+        cv.u = kLgtColorAlphaSeed;
         cv.c.r = (u8)r;
         cv.c.g = (u8)g;
         cv.c.b = (u8)b;
@@ -2503,7 +2505,7 @@ extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int enable, int slot, f
                 scnLgtRefreshLightRows(self);
             }
         } else {
-            self->lgt2.field_0xC0 = lbl_eu_8066B014;
+            self->lgt2.field_0xC0 = kLgtOneShared;
         }
         self->lgt2.field_0xBE = slot;
         self->field_0x04 |= 0x8;
@@ -2514,14 +2516,14 @@ extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int enable, int slot, f
                 scnLgtRefreshLightRows(self);
             }
         } else {
-            self->lgt2.field_0xC0 = lbl_eu_8066B014;
+            self->lgt2.field_0xC0 = kLgtOneShared;
         }
         self->field_0x04 &= ~0x8;
     }
-    if (f1 != lbl_eu_8066B010) {
-        self->lgt2.field_0xC4 = lbl_eu_8066B014 / f1;
+    if (f1 != kLgtZeroShared) {
+        self->lgt2.field_0xC4 = kLgtOneShared / f1;
     } else {
-        f32 v = lbl_eu_8066B014;
+        f32 v = kLgtOneShared;
         self->lgt2.field_0xC0 = v;
         self->lgt2.field_0xC4 = v;
     }
@@ -2552,7 +2554,7 @@ extern "C" void scnLgtStartFlash(CScnEnvLgtCtrl* self, int slot, int dir, float 
     if (self->field_0x04 & 0x4000) {
         ((CScnEnvLgtCtrlVt*)self)->v26(self->field_0xBC, 0);
     }
-    f32 v = lbl_eu_8066B010;
+    f32 v = kLgtZeroShared;
     self->field_0x04 &= ~0x6000;
     if (f1 <= v) {
         ((CScnEnvLgtCtrlVt*)self)->v26(slot, dir);
@@ -2560,7 +2562,7 @@ extern "C" void scnLgtStartFlash(CScnEnvLgtCtrl* self, int slot, int dir, float 
     } else {
         self->field_0xBC = slot;
         ((CScnEnvLgtCtrlVt*)self)->v26((s16)slot, 1);
-        f32 w = lbl_eu_8066B010;
+        f32 w = kLgtZeroShared;
         self->alt3.field_0xB0 = w;
         self->alt3.field_0xB4 = f1;
         self->field_0xB8 = w;
@@ -2635,7 +2637,7 @@ extern "C" void scnLgtWriteSlotScale(CScnEnvLgtCtrl* self, int unit, int sub,
                    const CScnEnvLgtCtrlLgtVec3* base, float f1) {
     if (self->field_0x24 == 0) return;
     if (sub > 1) sub = 0;
-    f32 v = lbl_eu_8066B010;
+    f32 v = kLgtZeroShared;
     sub += ((-unit | unit) >> 31) & 2;
     // explicit base refetch per member block: the stores through the slot
     // alias field_0x24, so retail reloads and re-adds the stride each time
@@ -2870,7 +2872,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self
             scnLgtCopyPrevRows((CScnEnvLgtCtrl*)(LGT_VIEW->rows14 + i));
         }
     }
-    LGT_VIEW->field_0xC0 = lbl_eu_8066B010;
+    LGT_VIEW->field_0xC0 = kLgtZeroShared;
 #undef LGT_VIEW
 }
 
@@ -2946,10 +2948,10 @@ extern "C" __declspec(noinline) void scnLgtRankGateLights(CScnEnvLgtCtrl* self,
             }
             // Weight: constant inside the shared bound, else the distance.
             f32 weight;
-            if (row->field_0x3C < lbl_eu_8066B050) {
+            if (row->field_0x3C < kLgtRankGateValue[0]) {
                 weight = distSq;
             } else {
-                weight = lbl_eu_8066B04C;
+                weight = kLgtRankThreshold;
             }
             u32 cap = self->alt5.field_0xAC;
             u32 cnt = self->field_0xE4;
@@ -3152,7 +3154,7 @@ extern "C" float scnLgtGetLimit(void* self) {
     CScnEnvLgtCtrlLgtLimit* obj = ((ScnLgtLimitHolder*)self)->limit;
     if (obj != 0)
         return obj->field_0x08;
-    return lbl_eu_8066B010;
+    return kLgtZeroShared;
 }
 
 extern "C" float scnLgtGetTime(void* self) { return ((CScnEnvLgtCtrl*)self)->field_0xC8; }
@@ -3225,7 +3227,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* out,
                                                     int row) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
-    f32 s, d;
+    // Blend temps are declared at their first use below.
     f32 v0, v1, v2, v3;
     if (e->field_0x14 & 1) return 0;
     switch (e->field_0x04w) {
@@ -3259,7 +3261,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
     f32* dst = e->field_0xB8_row;
     if (e->field_0x14 & 0x6) {
         f32* src;
-        f32 f1 = lbl_eu_8066B058;
+        f32 f1 = kLgtFadeWeight;
         src = (f32*)((u8*)e + row * 0x20);
         int i = 0;
         while (i < e->field_0x12w) {
@@ -3271,7 +3273,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
             dst[i] = d + f1 * (s - d);
             i++;
         }
-        if (dst[3] <= lbl_eu_8066B05C) {
+        if (dst[3] <= kLgtFadeZero) {
             return 0;
         }
     }
@@ -3347,7 +3349,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetFront(u8* entry,
     out->field_0x20 = (u8)e->field_0x0Ew;
     if (e->field_0x14 & 0x6) {
         f32* src;
-        f32 f1 = lbl_eu_8066B058;
+        f32 f1 = kLgtFadeWeight;
         src = (f32*)((u8*)e + row * 0x20);
         int i = 0;
         while (i < e->field_0x12w) {
@@ -3359,7 +3361,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetFront(u8* entry,
             dst[i] = d + f1 * (s - d);
             i++;
         }
-        if (dst[3] <= lbl_eu_8066B05C) {
+        if (dst[3] <= kLgtFadeZero) {
             return 0;
         }
     }
@@ -3423,13 +3425,13 @@ extern "C" __declspec(noinline) void scnLgtEvalSlotFade(u8* entryPtr, u32 time,
         u16 flg = e->mFlags;
         if (flg & 0x8000) {
             // Fade finished: the global value reached this slot's target.
-            if (lbl_eu_8066B060[0] == val) {
+            if (kLgtFadeOne == val) {
                 e->mFlags = flg & ~0x8000;
             }
         }
     }
-    f32 scale = lbl_eu_8066B060[0];
-    f64 bias = lbl_eu_8066B068;
+    f32 scale = kLgtFadeOne;
+    f64 bias = kFadeIntToF64Magic;
     c6 = (u8*)e;
     c7 = (u8*)e;
     c8 = (u8*)e + idx * 4;
@@ -3658,7 +3660,7 @@ extern "C" float scnLgtSampleGradHermite(CScnEnvLgtCtrl* self, const CScnEnvLgtC
     // byte-offset form: keeps the array-base register distinct from the
     // walking cursor register (retail r5 vs r4)
     CScnEnvLgtCtrlGrad16Entry* p = (CScnEnvLgtCtrlGrad16Entry*)((u8*)arr + 0x10);
-    for (int i = 1; i < grad->field_0x0A; i++) {
+    for (int i = 1, n = grad->field_0x0A; i < n; i++) {
         // sample compared against the current entry's time (retail loads the
         // sample into f2 first)
         if (self->field_0x1C < p[0].time) {
@@ -3668,16 +3670,16 @@ extern "C" float scnLgtSampleGradHermite(CScnEnvLgtCtrl* self, const CScnEnvLgtC
             f32 t = (self->field_0x1C - p[-1].time) / denom;
             f32 t2 = t * t;
             f32 t3 = t2 * t;
-            f32 k = lbl_eu_8066B074 * t2;
-            f32 h10 = t + (t3 - lbl_eu_8066B070 * t2);
-            f32 h00 = lbl_eu_8066B060[0] + (lbl_eu_8066B070 * t3 - k);
-            f32 h01 = lbl_eu_8066B078 * t3 + k;
+            f32 k = kHermiteThree * t2;
+            f32 h00 = kLgtFadeOne + (kHermiteTwo * t3 - k);
+            f32 h10 = t + (t3 - kHermiteTwo * t2);
+            f32 h01 = kHermiteNegTwo * t3 + k;
             f32 h11 = t3 - t2;
             return p[-1].b * h10 + p[-1].a * h00 + p[0].a * h01 + p[0].c * h11;
         }
         p += 1;
     }
-    return lbl_eu_8066B05C;
+    return kLgtFadeZero;
 }
 
 // scnLgtSampleGradColor (us-804cb9dc): sample self->field_0x1C against the gradient
@@ -3697,13 +3699,13 @@ extern "C" float scnLgtSampleGradColor(CScnEnvLgtCtrl* self, const CScnEnvLgtCtr
         return arr[grad->field_0x0A - 1].color;
     }
     const CScnEnvLgtCtrlGradEntry* p = &arr[1];
-    int i = 1;
-    for (; i < grad->field_0x0A; i++, p++) {
+    int n = grad->field_0x0A;
+    for (int i = 1; i < n; i++, p++) {
         if (self->field_0x1C < p->time) {
             return p[-1].color;
         }
     }
-    return lbl_eu_8066B05C;
+    return kLgtFadeZero;
 }
 // scnLgtPushControlRows (us-804cba6c): push the four light-control sub-arrays
 // (strides 0x30/0x3C/0x50/0x64, counts/bases in `data`) into the 0x40-byte
@@ -3723,7 +3725,7 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
         if (pA->field_0x04 & 0x8000) {
             scnLgtSolveRowDirection(blob, (CScnEnvLgtCtrlWorkDst40*)(dst + pA->field_0x1E * 0x40),
                           (const CScnEnvLgtCtrlWorkItemHead*)pA,
-                          lbl_eu_8066B060[0]);
+                          kLgtFadeOne);
         }
     }
     CScnEnvLgtCtrlWorkItem3C* pB =
@@ -3744,7 +3746,7 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
             d->field_0x0C = f32bits_ref(wf->field_0x0C);
             d->field_0x14 = f32bits_ref(wf->field_0x14);
             scnLgtSolveRowDirection(blob, d, (const CScnEnvLgtCtrlWorkItemHead*)pB,
-                          lbl_eu_8066B060[0]);
+                          kLgtFadeOne);
         }
     }
     CScnEnvLgtCtrlWorkItem50* pC =
@@ -3762,7 +3764,7 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
             d->field_0x2C = pC->field_0x4C;
             d->field_0x34 = pC->field_0x44;
             scnLgtSolveRowDirection(blob, d, (const CScnEnvLgtCtrlWorkItemHead*)pC,
-                          lbl_eu_8066B060[0]);
+                          kLgtFadeOne);
         }
     }
     // Loop 4 declares its cursor before the counter: retail allocates the
@@ -3792,7 +3794,7 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
             d->field_0x34 = pD->field_0x50;
             d->field_0x38 = pD->field_0x5C;
             scnLgtSolveRowDirection(blob, d, (const CScnEnvLgtCtrlWorkItemHead*)pD,
-                          lbl_eu_8066B07C);
+                          kLgtNegOne);
         }
         pD++;
         j++;
@@ -3813,8 +3815,8 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
 // weight (clamped to 1.0 when item bit 0x8 is set).
 // Direct .sdata2 references (MWCC reloads these around the Sin/Cos calls
 // like retail instead of caching them in nonvolatile FPRs).
-#define kZero lbl_eu_8066B05C
-#define kOne lbl_eu_8066B060[0]
+#define kZero kLgtFadeZero
+#define kOne kLgtFadeOne
 extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
     CScnEnvLgtCtrlWorkBlob* blob, CScnEnvLgtCtrlWorkDst40* dst,
     const CScnEnvLgtCtrlWorkItemHead* item, float f) {
@@ -3844,8 +3846,8 @@ extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
     // X-axis rotation from dst+0x0C.
     f32 ang = u32tof32b(dst->field_0x0C);
     if (ang != kZero) {
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066B080 * ang);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066B080 * ang);
+        f32 s = nw4r::math::SinFIdx(kRadToSinFIdx[0] * ang);
+        f32 c = nw4r::math::CosFIdx(kRadToSinFIdx[0] * ang);
         mtx._00 = kOne;
         mtx._01 = kZero;
         mtx._02 = kZero;
@@ -3863,8 +3865,8 @@ extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
     // Y-axis rotation from dst+0x10; concatenates onto any earlier rotation.
     ang = u32tof32b(dst->field_0x10);
     if (ang != kZero) {
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066B080 * ang);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066B080 * ang);
+        f32 s = nw4r::math::SinFIdx(kRadToSinFIdx[0] * ang);
+        f32 c = nw4r::math::CosFIdx(kRadToSinFIdx[0] * ang);
         if (applied != 0) {
             rot._00 = c;
             rot._01 = kZero;
@@ -3898,8 +3900,8 @@ extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
     // Z-axis rotation from dst+0x14.
     ang = u32tof32b(dst->field_0x14);
     if (ang != kZero) {
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066B080 * ang);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066B080 * ang);
+        f32 s = nw4r::math::SinFIdx(kRadToSinFIdx[0] * ang);
+        f32 c = nw4r::math::CosFIdx(kRadToSinFIdx[0] * ang);
         if (applied != 0) {
             rot._00 = c;
             rot._01 = -s;
@@ -4017,7 +4019,7 @@ extern "C" __declspec(noinline) void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWor
             (blob->*lbl_eu_8065FAF8[item->field_0x08])(entry);
             item++;
         }
-        f32 v = lbl_eu_8066B05C;
+        f32 v = kLgtFadeZero;
         if ((e->field_0xB8 <= v && e->field_0xBC <= v && e->field_0xC0 <= v) ||
             e->field_0xC4 <= v) {
             e->field_0x14 |= 1;
@@ -4338,10 +4340,10 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
     ml::CVec4 v8;    // sp+0x8 slot color
     for (u32 i = 0; i < 4; i++) {
         selectLightSlot(env, i);
-        v8.x = lbl_eu_8066AFD8;
-        v8.y = lbl_eu_8066AFD8;
-        v8.z = lbl_eu_8066AFD8;
-        v8.w = lbl_eu_8066AFDC;
+        v8.x = kLgtBlendZero;
+        v8.y = kLgtBlendZero;
+        v8.z = kLgtBlendZero;
+        v8.w = kLgtBlendOne;
         blendSlotAmbient(env, (const ml::CVec3*)&v8);
         resetLightSlotIndex(env);
     }
@@ -4352,12 +4354,12 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
             if (node->mItem->v12(&v18)) {
                 scnVlApplyDir4C(((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)
                                   ->field_0x5C,
-                              &v18, lbl_eu_8066AFDC);
+                              &v18, kLgtBlendOne);
             }
             if (node->mItem->v13(&v18)) {
                 scnVlApplyDir6C(((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)
                                   ->field_0x5C,
-                              &v18, lbl_eu_8066AFDC);
+                              &v18, kLgtBlendOne);
             }
         }
         node = node->mNext;
@@ -4370,6 +4372,12 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
         node = node->mPrev;
     }
 }
+// Assert strings of this TU's own scnLgtRefreshLightMan getter check. They are
+// plain (non-const) char arrays, so MWCC emits them into .data ahead of the
+// dispatch table below - exactly the retail split order (0x8056F988/0x8056F9A8).
+char sLgtAssertMsg[] = "NW4R:Failed assertion IsValid()";
+char sLgtAssertFile[] = "g3d_fog.h";
+
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056F9B8-0x8056FC10 (0x258): vtable + tail callback table.
 // In-TU functions (extern "C" above) carry the retail reloc names.
@@ -4392,7 +4400,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         return;
     }
     u8* entries = view->base2C + gate->mOffset;
-    f32 scale = *(const f32*)((const u8*)&lbl_eu_8066B030 + gate->mOffset);
+    f32 scale = *(const f32*)((const u8*)&kLgtByteScale + gate->mOffset);
     for (u32 i = 0; i < gate->mCount; i++, entries += 0x3c) {
         nw4r::g3d::Fog fog = root->GetFog((int) * (u16*)(entries + 0x38));
         CScnEnvLgtCtrlRow1C* row = &view->rows10[*(u16*)(entries + 0x10)];
@@ -4455,13 +4463,13 @@ extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         union { u32 w[2]; double d; } t1, t0, t2;                              \
         t1.w[0] = 0x43300000u;                                                 \
         t1.w[1] = (u32)c[1];                                                   \
-        double acc = lbl_eu_8066B03C * (t1.d - lbl_eu_8066B040);               \
+        double acc = kLgtLumaB * (t1.d - kFogByteToF64Magic);               \
         t0.w[0] = 0x43300000u;                                                 \
         t0.w[1] = (u32)c[0];                                                   \
-        acc = lbl_eu_8066B038 * (t0.d - lbl_eu_8066B040) + acc;                \
+        acc = kLgtLumaG * (t0.d - kFogByteToF64Magic) + acc;                \
         t2.w[0] = 0x43300000u;                                                 \
         t2.w[1] = (u32)c[2];                                                   \
-        acc = lbl_eu_8066B034 * (t2.d - lbl_eu_8066B040) + acc;                \
+        acc = kLgtLumaR * (t2.d - kFogByteToF64Magic) + acc;                \
         int v = (int)acc;                                                      \
         if (v > 255) {                                                         \
             v = 255;                                                           \
@@ -4526,3 +4534,46 @@ CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[0xD8 / 12];
 CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[0x18 / 12];
 // (retired DECOMP_FORCEACTIVE keep-alives: both dispatch tables are
 // live-referenced by the blob-dispatch code above.)
+
+// ===== .sdata2 constant pool owned by this TU =====
+// The retail split assigns .sdata2 0x8066AFD0..0x8066B088 to this unit, so the
+// constants it reads are defined here (values transcribed from the retail
+// section; AFE4/AFE8/B010/B014/B058/B05C/B070/B074/B078 are non-const in the
+// retail symbol table, hence the mixed constness).
+const float kLgtBlendWeightLo = 0.4000000059604645f;
+const float kLgtBlendHalf = 0.5f;
+const float kLgtBlendZero = 0.0f;
+const float kLgtBlendOne = 1.0f;
+const GXColor sLgtFogColorWhite = {0xFF, 0xFF, 0xFF, 0xFF};
+const float kLgtFogNearDefault = 1000000.0f;
+const float kLgtFogFarDefault = 1000001.0f;
+const float kLgtSmoothStep = 0.05999999865889549f;
+const float kLgtBlendWeightHi = 0.15000000596046448f;
+const f64 kSignedIntToF64Magic = 4503601774854144.0;
+const float kLgtRayBias = -20.0f;
+const float kLgtTwo = 2.0f;
+const f32 kLgtOneAndHalf[2] = {1.5f, 0.0f};
+const float kLgtZeroShared = 0.0f;
+const float kLgtOneShared = 1.0f;
+const f64 kCurveIntToF64Magic = 4503601774854144.0;
+const float kLgtFogTypeScale = 14.0f;
+const float kLgtSpotFalloff = 0.4000000059604645f;
+const float kLgtRankWeight = 0.8999999761581421f;
+const float kLgtCurveThird = 0.3333333432674408f;
+const float kLgtByteScale = 255.0f;
+const float kLgtLumaR = 0.1144770011305809f;
+const float kLgtLumaG = 0.298911988735199f;
+const float kLgtLumaB = 0.5866109728813171f;
+const f64 kFogByteToF64Magic = 4503599627370496.0;
+const u32 kLgtColorAlphaSeed = 0xffu;
+const float kLgtRankThreshold = 4.0f;
+const f32 kLgtRankGateValue[2] = {100.0f, 0.0f};
+const float kLgtFadeWeight = 0.10000000149011612f;
+const float kLgtFadeZero = 0.0f;
+const float kLgtFadeOne = 1.0f;
+const f64 kFadeIntToF64Magic = 4503601774854144.0;
+const float kHermiteTwo = 2.0f;   // t^2 coef in h10
+const float kHermiteThree = 3.0f;   // t^3 coef in h00
+const float kHermiteNegTwo = -2.0f;   // t^3 coef in h01
+const float kLgtNegOne = -1.0f;
+const f32 kRadToSinFIdx[2] = {40.7436637878418f, 0.0f};

@@ -85,7 +85,7 @@ void CtrlRemote_FrameUpdate(CtrlPcVf44* self)
         return;
     }
 
-    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask = cf::CfGameManager::isClassicController(-1)
                    ? lbl_eu_80527F10[21]
                    : lbl_eu_80527E98[21];
     CtrlPcSub37Ae80* sub = self->vf37();
@@ -265,7 +265,7 @@ void func_80098EF8(CtrlPcVf38* self)
                 if ((s8)abs(b5b) > 0xa) {
                     self->mField4 |= 0x200;
                 } else {
-                    u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                    u32 mask2 = cf::CfGameManager::isClassicController(-1)
                                     ? lbl_eu_80527F10[2]
                                     : lbl_eu_80527E98[2];
                     u32 hit = self->vf37()->mField4 & mask2;
@@ -565,16 +565,16 @@ void CtrlRemote_PollPadLatchBit(cf::CtrlPc* self)
         flag = false;
     }
     if (flag) {
-        u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+        u32 mask = cf::CfGameManager::isClassicController(-1)
                        ? lbl_eu_80527F10[2]
                        : lbl_eu_80527E98[2];
         u32 mf4 = self->vf37()->mField4;
         if ((mf4 & mask) != 0) {
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0 &&
+            if (cf::CfGameManager::isClassicController(-1) != 0 &&
                 (self->vf37()->mField0 & 0x2000000)) {
                 return;
             }
-            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+            u32 mask2 = cf::CfGameManager::isClassicController(-1)
                             ? lbl_eu_80527F10[2]
                             : lbl_eu_80527E98[2];
             u32 mf4b = self->vf37()->mField4;
@@ -611,15 +611,15 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
     int flagA = 0;
     int flagB = 0;
 
-    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask = cf::CfGameManager::isClassicController(-1)
                    ? lbl_eu_80527F10[16]
                    : lbl_eu_80527E98[16];
     CtrlRemoteSubA0* sub = (CtrlRemoteSubA0*)self->vf38();
     self->mField5C->mSub3ED4->vf10(0x400, (sub->mField0 & mask) != 0);
 
     if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 0x803) != 0) {
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
-            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
+            u32 mask2 = cf::CfGameManager::isClassicController(-1)
                             ? lbl_eu_80527F10[18]
                             : lbl_eu_80527E98[18];
             CtrlRemoteSubA0* s2 = (CtrlRemoteSubA0*)self->vf38();
@@ -639,7 +639,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                     }
                 }
             } else {
-                u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                u32 mask3 = cf::CfGameManager::isClassicController(-1)
                                 ? lbl_eu_80527F10[18]
                                 : lbl_eu_80527E98[18];
                 CtrlRemoteSubA0* s3 = (CtrlRemoteSubA0*)self->vf38();
@@ -659,13 +659,13 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                         }
                     }
                 } else {
-                    u32 mask4 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                    u32 mask4 = cf::CfGameManager::isClassicController(-1)
                                     ? lbl_eu_80527F10[29]
                                     : lbl_eu_80527E98[29];
                     CtrlRemoteSubA0* s4 = (CtrlRemoteSubA0*)self->vf38();
                     if ((s4->mFieldC & mask4) != 0) {
                         cfCam_setClear04(gm8, 0x100, 1);
-                        u32 mask5 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                        u32 mask5 = cf::CfGameManager::isClassicController(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s5 = (CtrlRemoteSubA0*)self->vf38();
@@ -673,12 +673,12 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                             self->mField5C->mSub3ED4->vf11(0x2000);
                         }
                     } else {
-                        u32 mask6 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                        u32 mask6 = cf::CfGameManager::isClassicController(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s6 = (CtrlRemoteSubA0*)self->vf38();
                         if ((s6->mField0 & mask6) != 0 ||
-                            ((isClassicController__Q22cf13CfGameManagerFv(-1)
+                            ((cf::CfGameManager::isClassicController(-1)
                                   ? lbl_eu_80527F10[29]
                                   : lbl_eu_80527E98[29]) &
                              self->vf38()->mField0) != 0) {
@@ -704,7 +704,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                 }
             }
         } else {
-            u32 mask7 = isClassicController__Q22cf13CfGameManagerFv(-1)
+            u32 mask7 = cf::CfGameManager::isClassicController(-1)
                             ? lbl_eu_80527F10[18]
                             : lbl_eu_80527E98[18];
             CtrlRemoteSubA0* s7 = (CtrlRemoteSubA0*)self->vf38();
@@ -721,7 +721,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                 }
                 cfCam_andcUnk04(gm8, 0x8000);
             } else {
-                u32 mask8 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                u32 mask8 = cf::CfGameManager::isClassicController(-1)
                                 ? lbl_eu_80527F10[18]
                                 : lbl_eu_80527E98[18];
                 CtrlRemoteSubA0* s8 = (CtrlRemoteSubA0*)self->vf38();
@@ -734,7 +734,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                 } else {
                     u32 mf4 = gm8->mField4;
                     if ((mf4 & 0x10) != 0) {
-                        u32 mask9 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                        u32 mask9 = cf::CfGameManager::isClassicController(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s9 = (CtrlRemoteSubA0*)self->vf38();
@@ -744,7 +744,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                                 self->mField5C->mSub3ED4->vf10(0x2000, 1);
                             } else {
                                 u32 maskA =
-                                    isClassicController__Q22cf13CfGameManagerFv(-1)
+                                    cf::CfGameManager::isClassicController(-1)
                                         ? lbl_eu_80527F10[28]
                                         : lbl_eu_80527E98[28];
                                 CtrlRemoteSubA0* sA =
@@ -764,7 +764,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
                         } else {
                             flagA = 1;
                         }
-                        u32 maskB = isClassicController__Q22cf13CfGameManagerFv(-1)
+                        u32 maskB = cf::CfGameManager::isClassicController(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* sB = (CtrlRemoteSubA0*)self->vf38();
@@ -813,7 +813,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
     // 0x802 gate: clear the 0x20 flag range when the mask-19 word is set
     // and neither 0x200 nor 0x20 is already active.
     if (probePlayerCtrl((cf::CtrlPc*)self, &v4, 0x802) != 0) {
-        u32 maskC = isClassicController__Q22cf13CfGameManagerFv(-1)
+        u32 maskC = cf::CfGameManager::isClassicController(-1)
                         ? lbl_eu_80527F10[19]
                         : lbl_eu_80527E98[19];
         CtrlRemoteSubA0* sC = (CtrlRemoteSubA0*)self->vf38();
@@ -865,7 +865,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
     // loaded menu-state word in r0, which only falls out of this expression
     // shape.
     #define PAD_MASK(idx) \
-        (isClassicController__Q22cf13CfGameManagerFv(-1) ? lbl_eu_80527F10[(idx)] \
+        (cf::CfGameManager::isClassicController(-1) ? lbl_eu_80527F10[(idx)] \
                                                    : lbl_eu_80527E98[(idx)])
     if (actionSrc == NULL) {
         // No action source: gate the 0x4000 range purely on the vf37 words.
@@ -876,7 +876,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
                     keep = 0;
                 }
             }
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0 && keep == 0) {
+            if (cf::CfGameManager::isClassicController(-1) == 0 && keep == 0) {
                 keep = 1;
                 if ((self->vf37()->mField14 & PAD_MASK(7)) == 0) {
                     keep = 0;
@@ -895,7 +895,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
     } else {
         // Action source present: the 0x10 menu word arms both flags.
         if ((self->vf37()->mField10 & PAD_MASK(7)) != 0) {
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) {
+            if (cf::CfGameManager::isClassicController(-1) == 0) {
                 flag30 = 1;
                 flag31 = 1;
             } else if ((self->vf37()->mField0 & 0x10000000) != 0) {
@@ -975,7 +975,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
     if (testFlagBit10(Selector_GetInstance()) != 0) {
         return;
     }
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0 &&
+    if (cf::CfGameManager::isClassicController(-1) != 0 &&
         (self->vf37()->mField0 & 0x10000000) != 0) {
         return;
     }
@@ -1149,7 +1149,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
     if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
-    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask = cf::CfGameManager::isClassicController(-1)
                    ? lbl_eu_80527F10[24]
                    : lbl_eu_80527E98[24];
     u32 mf0 = self->vf38()->mField0;
@@ -1179,7 +1179,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
         if (GetZealObjPtr() != 0) {
             return;
         }
-        u32 mask1 = isClassicController__Q22cf13CfGameManagerFv(-1)
+        u32 mask1 = cf::CfGameManager::isClassicController(-1)
                         ? lbl_eu_80527F10[26]
                         : lbl_eu_80527E98[26];
         u32 mf1 = self->vf38()->mField4;
@@ -1210,7 +1210,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                 CCharVoiceMan_EnqueueOrderVoice1();
             }
         } else {
-            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+            u32 mask2 = cf::CfGameManager::isClassicController(-1)
                             ? lbl_eu_80527F10[25]
                             : lbl_eu_80527E98[25];
             u32 mf2 = self->vf38()->mField4;
@@ -1251,7 +1251,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                     bindIndexedEffect(0xBC, arg);
                 }
             } else {
-                u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                u32 mask3 = cf::CfGameManager::isClassicController(-1)
                                 ? lbl_eu_80527F10[27]
                                 : lbl_eu_80527E98[27];
                 u32 mf3 = self->vf38()->mField4;
@@ -1321,7 +1321,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         return;
     }
 
-    mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+    mask = cf::CfGameManager::isClassicController(-1)
                    ? lbl_eu_80527F10[22]
                    : lbl_eu_80527E98[22];
     u32 menuState = self->vf38()->mField4;
@@ -1498,7 +1498,7 @@ void CtrlRemote_MirrorMenuVoiceBits(CtrlPcVf38State* self)
     if (CMainMenu_GetInstancePtr() != 0) {
         return;
     }
-    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask = cf::CfGameManager::isClassicController(-1)
                    ? lbl_eu_80527F10[16]
                    : lbl_eu_80527E98[16];
     CtrlRemoteSubA0* sub = (CtrlRemoteSubA0*)self->vf38();
@@ -1512,7 +1512,7 @@ void CtrlRemote_MirrorMenuVoiceBits(CtrlPcVf38State* self)
     if (self->mField5C->mSub3ED4->vf14(0x40000) == 0) {
         return;
     }
-    u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask2 = cf::CfGameManager::isClassicController(-1)
                     ? lbl_eu_80527F10[4]
                     : lbl_eu_80527E98[4];
     u32 mf4 = self->vf37()->mField4;
@@ -1520,7 +1520,7 @@ void CtrlRemote_MirrorMenuVoiceBits(CtrlPcVf38State* self)
         self->mField2C |= 0xA00000;
         return;
     }
-    u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
+    u32 mask3 = cf::CfGameManager::isClassicController(-1)
                     ? lbl_eu_80527F10[23]
                     : lbl_eu_80527E98[23];
     u32 mf4b = self->vf37()->mField4;

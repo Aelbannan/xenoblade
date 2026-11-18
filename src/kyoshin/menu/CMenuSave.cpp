@@ -60,7 +60,6 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void NandAllocBufs();
 
 // DrawInfo helper - retail emits the mangled nw4r form
@@ -251,7 +250,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
     }
 
     MenuSavePadData* pad = (MenuSavePadData*)cf::CfGameManager::getCfPadData();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Co-op layout: Classic-controller style bits.
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;

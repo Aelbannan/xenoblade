@@ -2,6 +2,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CEquipItemBox
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -3663,7 +3664,7 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         char* s4 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 4);
         LayoutSetTextBoxFmtValue(field_38, base + 0x74c, s4, 0);
         LayoutSetTextBoxFmtValue(field_38, base + 0x2d4, base + 0x228, 0);
-        const char* name = (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) ? base + 0x761 : base + 0x758;
+        const char* name = (cf::CfGameManager::isClassicController(-1) == 0) ? base + 0x761 : base + 0x758;
         u16 key = BdatGetU16ByTableKey(base + 0x76a, name, 0x49);
         char* texName = MakeTplNameSysFile(key);
         nw4r::lyt::ArcResourceAccessor* acc2 = CUICfManager_getArcResourceAccessor();

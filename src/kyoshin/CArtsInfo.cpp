@@ -1,6 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/CArtsInfo
 // Replace stubs with high-level C/C++ during decomp.
 
+// CItem.hpp declares the typed CItem_initItemImplInstances while
+// CfGameManager.hpp's import block repeats it with a void* shape; MWCC forbids
+// overloading an extern "C" function (10197), so hide the import-block copy.
+#define CItem_initItemImplInstances cfImport_CItem_initItemImplInstances
+#include "kyoshin/cf/CfGameManager.hpp"
+#undef CItem_initItemImplInstances
 #include "kyoshin/CArtsInfo.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -2524,7 +2530,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Message-detail textbox: pane name depends on the CFGameManager
         // query result.
-        const char* detailPane = (isClassicController__Q22cf13CfGameManagerFv(-1) == 0)
+        const char* detailPane = (cf::CfGameManager::isClassicController(-1) == 0)
                                      ? &lbl_eu_8050B00C[970]
                                      : &lbl_eu_8050B00C[961];
         // Retail masks the lookup result to its low half and feeds it through

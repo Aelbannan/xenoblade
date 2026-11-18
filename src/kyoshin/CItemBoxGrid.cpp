@@ -7,6 +7,7 @@
 // real CItemImpl*(CItemData*) form, so it is renamed away for this TU (same
 // workaround as CEquipChange.cpp).
 #define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
@@ -5509,7 +5510,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     LayoutSetTextBoxFmtValue(layout, (char*)&lbl_eu_8050566C[0x642], (char*)&lbl_eu_8050566C[0x3af], 0);
     // Mode-dependent help texture.
     const char* modeStr = &lbl_eu_8050566C[0x6e6];
-    if (isClassicController__Q22cf13CfGameManagerFv(-1)) modeStr = &lbl_eu_8050566C[0x6dd];
+    if (cf::CfGameManager::isClassicController(-1)) modeStr = &lbl_eu_8050566C[0x6dd];
     u16 msgKey = BdatGetU16ByTableKey(&lbl_eu_8050566C[0x6ef], modeStr, 0x49);
     u32 msgId = (u32)MakeTplNameSysFile(msgKey);
     void* sysWin = CUICfManager_getArcResourceAccessor();

@@ -121,7 +121,6 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
 // Layout/message/input helpers used by the file-load completion handler.
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void writePanePos(nw4r::lyt::Pane*, float*);
 u32 CtrlRemote_TouchBitByArg(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);

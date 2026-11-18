@@ -28,7 +28,14 @@ public:
 public:
     CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
 
+#ifdef CTTASK_INLINE_DTOR
+    // Inline-empty base dtor for the TUs whose retail derived destructor calls
+    // CProcess's dtor directly (see IUIWINDOW_INLINE_DTOR in IUIWindow.hpp);
+    // the owning TUs (CQuestWindow.cpp) keep the out-of-line specialisations.
+    virtual ~CTTask() {}
+#else
     virtual ~CTTask();
+#endif
     virtual void Move();
     virtual void Draw();
 

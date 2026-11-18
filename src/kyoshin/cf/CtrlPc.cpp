@@ -6,6 +6,7 @@
 // original drafts must be re-derived; their bodies may regress prior
 // non-target matches.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlPc.hpp"
@@ -694,7 +695,7 @@ u32 getPadConfigEntry(int index) {
     // keeps it in r31); each arm returns straight off its own table base
     // (retail beq-first: non-classic reads lbl_eu_80527E98).
     u32 idx = (u32)index;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         return lbl_eu_80527F10[idx];
     }
     return lbl_eu_80527E98[idx];

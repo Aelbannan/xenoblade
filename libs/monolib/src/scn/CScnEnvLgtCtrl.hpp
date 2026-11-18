@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include <revolution/gx/GXTypes.h>  // GXColor (lbl_eu_8066AFE0 fog color word)
+#include <revolution/gx/GXTypes.h>  // GXColor (sLgtFogColorWhite fog color word)
 #include "monolib/scn/CLight.hpp"
 #include "libs/monolib/src/scn/CScnLightMan.hpp"  // CScnLightMan (scnLgtRefreshLightMan light-manager slot)
 
@@ -220,8 +220,8 @@ struct CScnEnvLgtCtrlResList {
 };
 
 // Default light slot values written by the reslist ctor at +0x34/+0x38.
-extern const float lbl_eu_8066AFD0;
-extern const float lbl_eu_8066AFD4;
+extern const float kLgtBlendWeightLo;
+extern const float kLgtBlendHalf;
 
 // Fog-enable gate at CScnEnvLgtCtrl+0x40 (scnLgtPushFogView0 / scnLgtPushFogView1):
 // a u16 flags word whose bit 0 permits the fog push. scnLgtDispatchFadeEntries also
@@ -900,7 +900,7 @@ extern "C" void scnLgtSolveRowDirection(CScnEnvLgtCtrlWorkBlob* blob,
 extern "C" void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlFadeEntry* item);
 
 // Center-color coefficient used by scnLgtRefreshEntryFade's flash-center fold.
-extern const float lbl_eu_8066B02C;
+extern const float kLgtCurveThird;
 extern "C" void scnLgtWalkFogGateEntry(CScnEnvLgtCtrl* self, void* entry);
 extern "C" void scnLgtEvalSlotFade(u8* entry, u32 a, int idx, float val);
 
@@ -910,7 +910,7 @@ extern "C" void func_80498D98(void* obj);
 // .sdata2 fade constants used by scnLgtEvalSlotFade: B060 anchors the per-slot
 // fade-scale pool (the 1.0 scalar shared with the keyframe helpers) and
 // B068 is the int->double conversion bias (0x4330000000000000).
-extern const f64 lbl_eu_8066B068;
+extern const f64 kFadeIntToF64Magic;
 
 // 0x30-byte fade-curve entry scanned by scnLgtEvalSlotFade: start/end frame
 // times (u16, scaled by 60) followed by the float row blended out of it.
@@ -953,17 +953,18 @@ struct CScnEnvLgtCtrlFadeView {
 
 // .sdata2 constants used by scnLgtBlendCurveSlots / scnLgtResetLightState / scnLgtPushFogSlot0 /
 // scnLgtPushControlRows (int->float magics, clamps and blend weights).
-extern const f64 lbl_eu_8066B018;   // 2^52 (curve-window conversion)
-extern const f64 lbl_eu_8066B040;   // 2^52 (fog-byte conversion)
-extern const u32 lbl_eu_8066B048;   // color-template word (alpha seed, scnLgtPushFogSlot0)
-extern const float lbl_eu_8066B030; // fog color clamp ceiling
-extern const float lbl_eu_8066B004;
-extern const float lbl_eu_8066B008;
-extern const float lbl_eu_8066B07C; // scnLgtSolveRowDirection weight (loop 4)
-extern const float lbl_eu_8066B080; // degrees -> SinFIdx units scale
-extern const float lbl_eu_8066B034; // fog color blend weight (scnLgtRefreshFogList)
-extern const float lbl_eu_8066B038; // fog color blend weight (scnLgtRefreshFogList)
-extern const float lbl_eu_8066B03C; // fog color blend weight (scnLgtRefreshFogList)
+extern const f64 kSignedIntToF64Magic;   // 2^52+2^31 (slot-blend signed magic, scnLgtPushSlotBlend)
+extern const f64 kCurveIntToF64Magic;   // 2^52 (curve-window conversion)
+extern const f64 kFogByteToF64Magic;   // 2^52 (fog-byte conversion)
+extern const u32 kLgtColorAlphaSeed;   // color-template word (alpha seed, scnLgtPushFogSlot0)
+extern const float kLgtByteScale; // fog color clamp ceiling
+extern const float kLgtTwo;
+extern const f32 kLgtOneAndHalf[2];
+extern const float kLgtNegOne; // scnLgtSolveRowDirection weight (loop 4)
+extern const f32 kRadToSinFIdx[2]; // degrees -> SinFIdx units scale
+extern const float kLgtLumaR; // fog color blend weight (scnLgtRefreshFogList)
+extern const float kLgtLumaG; // fog color blend weight (scnLgtRefreshFogList)
+extern const float kLgtLumaB; // fog color blend weight (scnLgtRefreshFogList)
 
 // Member-function pointer tables dispatched by scnLgtDispatchEntryEvents's item loop
 // (12-byte ptmf stride; each entry is called with the work blob as `this`
@@ -1255,12 +1256,12 @@ extern "C" int ScnRes_HasFlaggedEntry_E5A0(int flag);
 
 // Shared .sdata2 constants and .data assert strings for the light-refresh
 // helpers (scnLgtPushSlotLights / scnLgtRecomputeSlotField / scnLgtRankGateLights).
-extern const float lbl_eu_8066B000;
-extern const float lbl_eu_8066B020;
-extern const float lbl_eu_8066B024;
-extern const float lbl_eu_8066B028;
-extern const float lbl_eu_8066B04C;
-extern const float lbl_eu_8066B050;
+extern const float kLgtRayBias;
+extern const float kLgtFogTypeScale;
+extern const float kLgtSpotFalloff;
+extern const float kLgtRankWeight;
+extern const float kLgtRankThreshold;
+extern const f32 kLgtRankGateValue[2];
 extern char lbl_eu_80526324[];
 extern char lbl_eu_80526300[];
 
@@ -1319,9 +1320,9 @@ extern const u32 lbl_eu_805244D0[4];
 // (stored byte-wise into FogData::color) and the startz/endz/nearz/farz
 // float pair at AFE4/AFE8. The color is typed GXColor so the source can copy
 // it as a struct (single word load, member-wise byte stores) like retail.
-extern GXColor lbl_eu_8066AFE0;
-extern float lbl_eu_8066AFE4;
-extern float lbl_eu_8066AFE8;
+extern const GXColor sLgtFogColorWhite;
+extern const float kLgtFogNearDefault;
+extern const float kLgtFogFarDefault;
 
 // Light-target flag byte toggle (defined in CScnBlend.cpp as a flat C-name
 // function; toggles bit 1 of the target's +0x54 flags word).
@@ -1360,23 +1361,23 @@ struct CScnEnvLgtCtrlGrad {
 };
 
 // Shared .sdata2 float constant returned when no gradient entry matches.
-extern float lbl_eu_8066B05C;
+extern const float kLgtFadeZero;
 
 // .sdata2 row-interpolation blend factor used by the scnLgtFillTargetBack /
-// scnLgtFillTargetFront entry walkers (retail `lfs f1, lbl_eu_8066B058@sda21`).
-extern float lbl_eu_8066B058;
+// scnLgtFillTargetFront entry walkers (retail `lfs f1, kLgtFadeWeight@sda21`).
+extern const float kLgtFadeWeight;
 
 // Shared .sdata2 float constants used by scnLgtSetFlashSlot / scnLgtFillLightVec4
 // (the 1.0 color value stored to the +0xC0/+0xC4 pair and the output's
 // +0x0C word).
-extern float lbl_eu_8066B014;
+extern const float kLgtOneShared;
 
 // .sdata2 light-blend constants used by scnLgtPushSlotBlend (ambient/diffuse
 // coefficients and blend bounds) and scnLgtDispatchEnv (slot color defaults).
-extern const float lbl_eu_8066AFD8;
-extern const float lbl_eu_8066AFDC;
-extern const float lbl_eu_8066AFEC;
-extern const float lbl_eu_8066AFF0;
+extern const float kLgtBlendZero;
+extern const float kLgtBlendOne;
+extern const float kLgtSmoothStep;
+extern const float kLgtBlendWeightHi;
 
 // .sdata interpolation bounds consulted by scnLgtPushSlotBlend against the +0x3C
 // word (signed compares in retail).
@@ -1387,10 +1388,10 @@ extern "C" u32 lbl_eu_80663AF4;
 
 // Cubic-Hermite basis coefficients used by scnLgtSampleGradHermite's keyframe
 // interpolation (2, 3, 1, -2 in retail .sdata2).
-extern float lbl_eu_8066B074;   // 2.0  (t^2 coeff)
-extern float lbl_eu_8066B070;   // 3.0  (t^3/t^2 coeff)
-extern const f32 lbl_eu_8066B060[2];   // [0] = 1.0 (per-slot fade scales)
-extern float lbl_eu_8066B078;   // -2.0 (t^3 coeff)
+extern const float kHermiteThree;   // 3.0  (t^3 coef in h00)
+extern const float kHermiteTwo;   // 2.0  (t^2 coef in h10)
+extern const float kLgtFadeOne;   // 1.0 (per-slot fade scales)
+extern const float kHermiteNegTwo;   // -2.0 (t^3 coef in h01)
 
 // 16-byte keyframe entry walked by scnLgtSampleGradHermite: time plus three sampled
 // values; the interpolator blends prev.a/prev.b (offsets 4/8) with
@@ -1413,8 +1414,8 @@ extern char lbl_eu_8056EC30[];
 extern char lbl_eu_8056EC10[];
 
 // Panic strings referenced by scnLgtRefreshLightMan's fog block (retail .data).
-extern char lbl_eu_8056F9A8[];
-extern char lbl_eu_8056F988[];
+extern char sLgtAssertFile[];
+extern char sLgtAssertMsg[];
 
 // CScnEnvLgtCtrl constructor (retail symbol is the unmangled short form).
 // Builds the controller from an 'STGL' resource header plus an opaque arg.

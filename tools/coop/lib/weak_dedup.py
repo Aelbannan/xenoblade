@@ -284,6 +284,11 @@ def _all_retail_symbols_defined(elf: _Elf, unit_ranges, symbol_addrs: dict[str, 
             pos = name.find("__", pos + 1)
     for name, addr in symbol_addrs.items():
         if _in(text, addr) and name not in defined and name not in flat:
+            # A switch table's retail placeholder (``jumptable_<region>_<addr>``) names a
+            # compiler-anonymous local (``@N``) the object can never spell the same way;
+            # it cannot be a global object of this unit under another name.
+            if section != ".text" and name.startswith("jumptable_"):
+                continue
             return False
     return True
 

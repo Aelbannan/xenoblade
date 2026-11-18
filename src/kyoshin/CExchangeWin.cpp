@@ -208,7 +208,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     // Choose the message texture name by the game-manager mode flag (ternary
     // keeps the selection after the call so MWCC loads it straight into r4).
-    const char* fileID = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
+    const char* fileID = cf::CfGameManager::isClassicController(-1) != 0
                              ? &lbl_eu_8050A740[0xe4]
                              : &lbl_eu_8050A740[0xed];
 

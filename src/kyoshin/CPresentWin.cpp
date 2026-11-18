@@ -2,6 +2,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CPresentWin
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPresentWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -370,7 +371,7 @@ void openPresentWin(CPresentWin* self) {
     char* s2 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x9b);
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050A84C[0x100], s2, 0);
 
-    const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
+    const char* msgName = cf::CfGameManager::isClassicController(-1)
                               ? &lbl_eu_8050A84C[0xe4]
                               : &lbl_eu_8050A84C[0xed];
     char* handle = MakeTplNameSysFile(BdatGetU16ByTableKey(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
@@ -455,7 +456,7 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     char* s1 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x2b);
     LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xd8, s1, 0);
 
-    const char* msgName1 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
+    const char* msgName1 = cf::CfGameManager::isClassicController(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle1 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName1, 0x2b));
     nw4r::lyt::ArcResourceAccessor* mgr1 = CUICfManager_getArcResourceAccessor();
     void* tex1 = mgr1->GetResource(0x74696D67, handle1, NULL);
@@ -480,7 +481,7 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     char* s2 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x9b);
     LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0x100, s2, 0);
 
-    const char* msgName2 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
+    const char* msgName2 = cf::CfGameManager::isClassicController(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle2 = MakeTplNameSysFile(BdatGetU16ByTableKey(pool + 0xc5, msgName2, 0x9b));
     nw4r::lyt::ArcResourceAccessor* mgr2 = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr2->GetResource(0x74696D67, handle2, NULL);

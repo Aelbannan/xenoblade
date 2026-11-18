@@ -2273,7 +2273,7 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self);
 // attribute only affects call sites; the body itself is untouched).
 extern "C" __declspec(noinline) int CTaskGame_padConfirm(CTaskGame*) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 pressed = pad->mPressedButtonFlags;
         u32 v = (pressed & 0x1FE00000) | (pressed & 0xF);
         return v != 0;

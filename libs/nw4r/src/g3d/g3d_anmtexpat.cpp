@@ -5,21 +5,9 @@
 #include <nw4r/g3d.h>
 #include <nw4r/g3d/g3d_anmtexpat.h>
 
-// Float constants in the retail .sdata2 pool (named so the sda21 relocs
-// reference the retail symbols instead of TU-local pool labels).
-extern const f32 lbl_eu_80669B5C; // 1.0f (FrameCtrl::mUpdateRate init)
-extern const f64 lbl_eu_80669B60; // 0x4330000000000000 (u16->double bias)
-extern const f32 lbl_eu_80669B5C; // 1.0f (FrameCtrl::mUpdateRate init)
-extern const f64 lbl_eu_80669B60; // 0x4330000080000000 (signed int->double bias)
-extern const f32 lbl_eu_80663460; // 1.0f (FrameCtrl::smBaseUpdateRate)
-
-extern char lbl_eu_80569258[]; // AnmObjTexPat vtable (construction stage)
-extern char lbl_eu_80569210[]; // AnmObjTexPatRes final vtable
 // TexPat play-policy table (shared with the other anm units, small-data).
 extern const nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[2];
 
-// Retail ships FrameCtrl's static smBaseUpdateRate as the named .sdata object
-// lbl_eu_80663460; redirect the inline UpdateFrm() body to that name.
 namespace nw4r {
 namespace g3d {
 
@@ -31,34 +19,45 @@ f32 AnmObjTexPatRes::GetFrame() const {
     return GetFrm();
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexPat")> lbl_eu_8051D560 = {sizeof("AnmObjTexPat"), "AnmObjTexPat"};
+NW4R_G3D_RTTI_DEF(AnmObjTexPat);
+NW4R_G3D_RTTI_DEF(AnmObjTexPatRes);
+
+// AnmObj::IsDerivedFrom body (retail inlines the base chain into every
+// derived class; the 0x650/0x640 checks come from this helper's boundary).
+static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+        return true;
+    }
+    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+        return true;
+    }
+    return false;
+}
 
 bool AnmObjTexPat::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D560) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return anmObjBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjTexPat::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D560);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjTexPat::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
 
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexPatRes")> lbl_eu_8051D578 = {sizeof("AnmObjTexPatRes"), "AnmObjTexPatRes"};
-
 bool AnmObjTexPatRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D578) ? true
-         : other == TypeObj(lbl_eu_8051D560) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(TYPE_NAME)) {
+        return true;
+    }
+    return AnmObjTexPat::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjTexPatRes::GetTypeObj() const {
-    return TypeObj(lbl_eu_8051D578);
+    return TypeObj(TYPE_NAME);
 }
 
 const char* AnmObjTexPatRes::GetTypeName() const {
@@ -80,32 +79,26 @@ void AnmObjTexPat::Release() {
     SetAnmFlag(FLAG_ANM_BOUND, false);
 }
 
+AnmObjTexPatRes* AnmObjTexPat::Attach(int idx, AnmObjTexPatRes* pRes) {
+    return NULL;
+}
+
+AnmObjTexPatRes* AnmObjTexPat::Detach(int idx) {
+    return NULL;
+}
+
+void AnmObjTexPat::DetachAll() {}
+
 } // namespace g3d
 } // namespace nw4r
 
 
 
-int Attach__Q34nw4r3g3d12AnmObjTexPatFiPQ34nw4r3g3d15AnmObjTexPatRes(void) { return 0x0; }
-
-int Detach__Q34nw4r3g3d12AnmObjTexPatFi(void) { return 0x0; }
-
-void DetachAll__Q34nw4r3g3d12AnmObjTexPatFv(void) {}
-
-
-
-
-// u16 -> f32 widening matching retail's biased-magic signed-int->double
-// sequence: flip the sign bit, scaffold 0x43300000xxxxxxxx on the stack (the
-// value word is stored FIRST), and subtract the shared sdata2 bias
-// lbl_eu_80669B60 (= 0x4330000080000000).
+// The resource's u16 frame count is promoted through `int` before the float
+// conversion: MWCC then emits retail's signed-int magic (value ^ 0x8000 in the
+// low word, `lfd` 0x4330000080000000, `fsubs`) and pools that double.
 static inline f32 TexPatConvU16ToF(u16 v) {
-    union {
-        u32 w[2];
-        f64 d;
-    } t;
-    t.w[1] = (u32)v ^ 0x80000000u;
-    t.w[0] = 0x43300000u;
-    return static_cast<f32>(t.d - lbl_eu_80669B60);
+    return static_cast<f32>(static_cast<int>(v));
 }
 
 namespace nw4r {
@@ -119,7 +112,6 @@ inline AnmObjTexPat::AnmObjTexPat(MEMAllocator* pAllocator, u16* pBindingBuf,
                                   int numBinding)
     : AnmObj(pAllocator, NULL), mNumBinding(numBinding),
       mpBinding(pBindingBuf) {
-    *(void**)this = (void*)lbl_eu_80569258;
     Release();
 }
 
@@ -131,9 +123,7 @@ inline AnmObjTexPatRes::AnmObjTexPatRes(MEMAllocator* pAllocator,
       FrameCtrl(0.0f,
                 TexPatConvU16ToF(pat.ref().info.numFrame),
                 lbl_eu_80663458[pat.ref().info.policy]),
-      mRes(pat), mpResultCache(pCacheBuf) {
-    *(void**)this = (void*)lbl_eu_80569210;
-}
+      mRes(pat), mpResultCache(pCacheBuf) {}
 
 // Layout of the allocation: [object][result cache][binding table]. The cache
 // region only exists when `cache` is set, sized by the texpat material count.
@@ -389,11 +379,10 @@ void ApplyTexPatAnmResult(ResTexObj texObj, ResTlutObj tlutObj,
                             biasClamp, edgeLod, aniso);
         }
 
-        i++;
         pTex++;
+        i++;
     }
 
-    plttMask = p->bPlttExist;
     int j = 0;
     for (plttMask = p->bPlttExist; plttMask != 0; plttMask >>= 1) {
         if (plttMask & 1) {
@@ -415,17 +404,3 @@ void ApplyTexPatAnmResult(ResTexObj texObj, ResTlutObj tlutObj,
 } // namespace g3d
 } // namespace nw4r
 
-void IsDerivedFrom__Q34nw4r3g3d15AnmObjTexPatResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void IsDerivedFrom__Q34nw4r3g3d12AnmObjTexPatCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d15AnmObjTexPatResCFv(){}
-
-extern const char lbl_eu_8051D578[];
-void* GetTypeObj__Q34nw4r3g3d15AnmObjTexPatResCFv(void) { return (void*)lbl_eu_8051D578; }
-
-void __dt__Q34nw4r3g3d15AnmObjTexPatResFv(){}
-
-void GetTypeName__Q34nw4r3g3d12AnmObjTexPatCFv(){}
-
-extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjTexPatCFv(void) { return (void*)lbl_eu_8051D560; }

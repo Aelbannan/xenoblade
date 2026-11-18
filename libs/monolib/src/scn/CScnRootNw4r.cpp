@@ -47,7 +47,7 @@ CScnRootNw4r::~CScnRootNw4r() {
         // pooled ScnGroup type-name data).
         bool isGroup =
             obj != NULL &&
-            obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
+            obj->IsDerivedFrom(nw4r::g3d::ScnGroup::GetTypeObjStatic());
         nw4r::g3d::ScnGroup* group =
             isGroup ? static_cast<nw4r::g3d::ScnGroup*>(obj) : NULL;
         group->Destroy();
@@ -130,7 +130,7 @@ void RootNw4r_FreeBuf(CScnRootNw4r* self, u8* p) {
 extern "C" void RootNw4r_DispatchFrame(CScnRootNw4r* self, u32 frame,
                               nw4r::g3d::G3dObj* obj) {
     if (obj != NULL) {
-        obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
+        obj->IsDerivedFrom(nw4r::g3d::ScnGroup::GetTypeObjStatic());
     }
 
     for (u32 i = 0; i < self->mPairCount; i++) {
@@ -287,7 +287,7 @@ s32 RootNw4r_AttachCamOne(CScnRootNw4r* self, CScnCamLayout* cam) {
     // pooled ScnGroup type-name data).
     bool isGroup =
         obj != NULL &&
-        obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
+        obj->IsDerivedFrom(nw4r::g3d::ScnGroup::GetTypeObjStatic());
     nw4r::g3d::ScnGroup* group =
         isGroup ? static_cast<nw4r::g3d::ScnGroup*>(obj) : NULL;
 
@@ -320,7 +320,7 @@ s32 RootNw4r_DetachCamChild(CScnRootNw4r* self, CScnCamLayout* cam) {
     // pooled ScnGroup type-name data).
     bool isGroup =
         obj != NULL &&
-        obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
+        obj->IsDerivedFrom(nw4r::g3d::ScnGroup::GetTypeObjStatic());
     nw4r::g3d::ScnGroup* group =
         isGroup ? static_cast<nw4r::g3d::ScnGroup*>(obj) : NULL;
 
@@ -500,7 +500,7 @@ void RootNw4r_AttachQueued(CScnRootNw4r* self) {
         // pooled ScnGroup type-name data).
         bool isGroup =
             obj != NULL &&
-            obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
+            obj->IsDerivedFrom(nw4r::g3d::ScnGroup::GetTypeObjStatic());
         nw4r::g3d::ScnGroup* group =
             isGroup ? static_cast<nw4r::g3d::ScnGroup*>(obj) : NULL;
 

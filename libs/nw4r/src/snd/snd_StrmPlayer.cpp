@@ -24,10 +24,6 @@ extern const f32 lbl_eu_8066A080; // 64.0f
 // runtime type-info chain against it (see ut_RuntimeTypeInfo.h).
 extern const nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665550;
 
-// StrmPlayer::StrmDataLoadTask vtable (.data; plain linker label in retail,
-// referenced by UpdateLoadingBlockIndex's inlined constructor).
-extern u8 lbl_eu_8056ACC0[]; // StrmDataLoadTask vtable (.data)
-
 u8 lbl_eu_80665518; // StrmPlayer load-buffer static-init flag (.sdata)
 
 namespace nw4r {
@@ -66,10 +62,10 @@ namespace {
 // numChannels, ... - the stale header's StrmInfo has a different packed
 // layout, so StrmPlayer stream state is read through this mirror.
 struct StrmInfoRetailLayout {
-    u32 format;                  // at 0x0
+    s32 format;                  // at 0x0
     u8 loopFlag;                 // at 0x4
     u8 _pad0x5[3];               // at 0x5
-    u32 numChannels;             // at 0x8
+    s32 numChannels;             // at 0x8
     s32 sampleRate;              // at 0xC
     u16 blockHeaderOffset;       // at 0x10
     u16 _pad0x12;                // at 0x12
@@ -78,7 +74,7 @@ struct StrmInfoRetailLayout {
     u32 dataOffset;              // at 0x1C
     u32 numBlocks;               // at 0x20
     u32 blockSize;               // at 0x24
-    u32 blockSamples;            // at 0x28
+    s32 blockSamples;            // at 0x28
     u32 lastBlockSize;           // at 0x2C
     u32 lastBlockSamples;        // at 0x30
     u32 lastBlockPaddedSize;     // at 0x34
@@ -573,15 +569,10 @@ bool StrmPlayer::Start() {
         u32 bytes = self->mDataBlockSize * self->mPlayingBufferBlockCount;
 
         loopEndSamples = 0;
-        // Signed cast: retail switches on an int-typed format (cmpwi tree).
-        switch ((int)self->mStrmInfo.format) {
-        case 1:
-            loopEndSamples = bytes >> 1;
-            break;
-        case 2:
-            loopEndSamples = bytes;
-            break;
+        switch (self->mStrmInfo.format) {
         case 3:
+            // DSP ADPCM: 8 bytes hold 14 samples; a partial frame decodes
+            // two samples per byte after the first header byte.
             loopEndSamples = (bytes >> 3) * 14;
             {
                 u32 rem = bytes & 7;
@@ -589,6 +580,14 @@ bool StrmPlayer::Start() {
                     loopEndSamples += (rem - 1) * 2;
                 }
             }
+            break;
+
+        case 2:
+            loopEndSamples = bytes;
+            break;
+
+        case 1:
+            loopEndSamples = bytes >> 1;
             break;
         }
 
@@ -616,7 +615,7 @@ bool StrmPlayer::Start() {
                 if (ch >= 2) {
                     pChannel = NULL;
                 } else {
-                    u8 channelIndex = pTrack->fileInfo.channelIndex[ch];
+                    s32 channelIndex = pTrack->fileInfo.channelIndex[ch];
                     if (channelIndex >= 16) {
                         pChannel = NULL;
                     } else {
@@ -628,7 +627,8 @@ bool StrmPlayer::Start() {
                     WaveChannelParamRetail& rParam =
                         waveInfo.channelParam[ch];
                     rParam.dataAddr = pChannel->bufferAddress;
-                    rParam.adpcm = pChannel->adpcm;
+                    rParam.adpcm.param = pChannel->adpcm.param;
+                    rParam.adpcm.loopParam = pChannel->adpcm.loopParam;
                     // Only the first byte of the buffer holds the ADPCM
                     // pred/scale; store it in the pred_scale slot.
                     rParam.adpcm.param.pred_scale =
@@ -870,18 +870,18 @@ bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
         }
 
         if (startOffset != 0) {
-            // SAMPLE keeps the offset as-is; MILLISEC converts through the
-            // sample rate (MWCC strength-reduces the /1000 to a mulhw).
-            // The offset parameter itself is reassigned, as in retail.
-            if (offsetType == START_OFFSET_TYPE_MILLISEC) {
+            // The start offset is already a sample index for SAMPLE streams;
+            // MILLISEC streams convert it through the sample rate.
+            if (offsetType == START_OFFSET_TYPE_SAMPLE) {
+                startOffset = offset;
+            } else if (offsetType == START_OFFSET_TYPE_MILLISEC) {
                 startOffset = startOffset * self->mStrmInfo.sampleRate / 1000;
             }
 
             s32 block = startOffset / self->mStrmInfo.blockSamples;
-            // Declared yn2-first: retail places the yn1 array at the higher
-            // stack slot (sp+0x38 above sp+0x18).
-            u16 yn2[16];
+
             u16 yn1[16];
+            u16 yn2[16];
 
             if (!loader.ReadAdpcBlockData(yn1, yn2, block,
                                           self->mStrmInfo.numChannels)) {
@@ -1442,25 +1442,6 @@ void StrmPlayer::SetLoopEndToZeroBuffer(int endBlock) {
     self->mPlayFinishFlag = true;
 }
 
-// Layout-compatible shell for StrmDataLoadTask, used by
-// UpdateLoadingBlockIndex to hand-construct tasks: retail's inlined default
-// constructor references the linker-label vtable (lbl_eu_8056ACC0) rather
-// than the C++ vtable symbol, so the constructor is expressed explicitly.
-struct StrmDataLoadTaskRetail {
-    void* vtable;               // at 0x00
-    u32 field_0x04;             // at 0x04 (task internals zeroed by ctor)
-    u32 field_0x08;             // at 0x08
-    u32 field_0x0C;             // at 0x0C
-    StrmPlayer* strmPlayer;     // at 0x10
-    ut::FileStream* fileStream; // at 0x14
-    u32 size;                   // at 0x18
-    s32 offset;                 // at 0x1C
-    s32 blockSize;              // at 0x20
-    s32 bufferBlockIndex;       // at 0x24
-    bool needUpdateAdpcmLoop;   // at 0x28
-    ut::LinkListNode node;      // at 0x2C
-};
-
 void StrmPlayer::UpdateLoadingBlockIndex() {
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
@@ -1471,7 +1452,7 @@ void StrmPlayer::UpdateLoadingBlockIndex() {
         return;
     }
 
-    // Last data block loads the padded final block size.
+    // The last data block loads the padded final block size.
     s32 blockSize;
     if (self->mLoadingDataBlockIndex <
         static_cast<s32>(self->mStrmInfo.numBlocks) - 1) {
@@ -1480,115 +1461,57 @@ void StrmPlayer::UpdateLoadingBlockIndex() {
         blockSize = self->mStrmInfo.lastBlockPaddedSize;
     }
 
-    // ADPCM streams refresh their loop context once per buffer rotation.
-    // Declared before the address arithmetic so the flag register is colored
-    // before the offset/size results (retail order).
-    bool needUpdateAdpcmLoop = false;
-
-    // Per-block stream stride uses the RAW block size (not the selected one).
+    // The per-block stream stride always uses the raw block size.
     u32 stride = self->mStrmInfo.blockHeaderOffset +
                  self->mStrmInfo.blockSize * self->mStrmInfo.numChannels;
-
-    u32 loadSize =
-        self->mStrmInfo.blockHeaderOffset + blockSize * self->mChannelCount;
-
-    s32 loadOffset =
+    u32 size = self->mStrmInfo.blockHeaderOffset +
+               blockSize * self->mChannelCount;
+    s32 offset =
         self->mStrmInfo.dataOffset + self->mLoadingDataBlockIndex * stride;
 
+    bool needUpdateAdpcmLoop = false;
     if (self->mLoadingBufferBlockIndex == 0 &&
-        static_cast<s32>(self->mStrmInfo.format) ==
-            3 /* SAMPLE_FORMAT_DSP_ADPCM */) {
+        self->mStrmInfo.format == 3) {
         needUpdateAdpcmLoop = true;
     }
 
-    StrmDataLoadTask* pNew = reinterpret_cast<StrmDataLoadTask*>(
-        reinterpret_cast<MemoryPool<StrmDataLoadTask>&>(
-            self->mStrmDataLoadTaskPool)
-            .Alloc());
+    StrmDataLoadTask* pTask = self->mStrmDataLoadTaskPool.Alloc();
 
-    // Retail shape: the raw allocation stays in the caller-saved register
-    // while both branches merge into a second pointer variable (the failed
-    // allocation normalizes through the else-branch, leaving a dead re-test
-    // after the copy).
-    StrmDataLoadTaskRetail* pTask;
-    if (pNew != NULL) {
-        pTask = reinterpret_cast<StrmDataLoadTaskRetail*>(pNew);
-
-        // Hand-rolled default construction: retail's inlined constructor
-        // references the linker-label vtable instead of the C++ vtable.
-        // Zero stores precede the vtable store, matching retail order.
-        if (pTask != NULL) {
-            pTask->field_0x04 = 0;
-            pTask->field_0x08 = 0;
-            pTask->field_0x0C = 0;
-            pTask->vtable = &lbl_eu_8056ACC0;
-            pTask->strmPlayer = NULL;
-            pTask->fileStream = NULL;
-            pTask->size = 0;
-            pTask->offset = 0;
-            pTask->blockSize = 0;
-            pTask->bufferBlockIndex = -1;
-            pTask->needUpdateAdpcmLoop = false;
-            pTask->node.Init();
-        }
-    } else {
-        pTask = NULL;
-    }
-
-    // Retail performs the field setup unconditionally.
-    pTask->strmPlayer = reinterpret_cast<StrmPlayer*>(self);
+    pTask->strmPlayer = this;
     pTask->fileStream = self->mFileStream;
-    pTask->size = loadSize;
-    pTask->offset = loadOffset;
+    pTask->size = size;
+    pTask->offset = offset;
     pTask->blockSize = blockSize;
     pTask->bufferBlockIndex = self->mLoadingBufferBlockIndex;
     pTask->needUpdateAdpcmLoop = needUpdateAdpcmLoop;
 
     u32 level = OSDisableInterrupts();
 
-    self->mStrmDataLoadTaskList.PushBack(
-        reinterpret_cast<StrmDataLoadTask*>(pTask));
-    // Priority computed between the insert and the TaskManager lookup.
-    s32 priority = 1; // TaskManager::PRIORITY_MIDDLE
-    if (self->mStartedFlag) {
-        priority = 2; // TaskManager::PRIORITY_HIGH
-    }
+    self->mStrmDataLoadTaskList.PushBack(pTask);
 
-    TaskManager::GetInstance().AppendTask(
-        reinterpret_cast<Task*>(pTask),
-        static_cast<TaskManager::TaskPriority>(priority));
+    TaskManager::TaskPriority priority =
+        self->mStartedFlag ? TaskManager::PRIORITY_HIGH
+                           : TaskManager::PRIORITY_MIDDLE;
+
+    TaskManager::GetInstance().AppendTask(pTask, priority);
 
     self->mLoadingDataBlockIndex++;
 
     if (self->mLoadingDataBlockIndex > self->mLastBlockIndex) {
-        if (!self->mStrmInfo.loopFlag) {
+        if (self->mStrmInfo.loopFlag) {
+            self->mLoadingDataBlockIndex = self->mLoopStartBlockIndex;
+        } else {
             self->mLoadFinishFlag = true;
             OSRestoreInterrupts(level);
             return;
         }
-
-        self->mLoadingDataBlockIndex = self->mLoopStartBlockIndex;
     }
 
     self->mLoadingBufferBlockIndex++;
 
     if (self->mLoadingBufferBlockIndex >= self->mLoadingBufferBlockCount) {
-        // Inlined CalcLoadingBufferBlockCount(): the next buffer holds
-        // base+1 blocks iff (base+1 - remainingBlocks) divides evenly by
-        // the loop length.
-        int restBlocks =
-            (self->mLastBlockIndex - self->mLoadingDataBlockIndex) + 1;
-        int loopBlocks =
-            (self->mLastBlockIndex - self->mLoopStartBlockIndex) + 1;
-        int nextCount = self->mBufferBlockCountBase + 1;
-
         self->mLoadingBufferBlockIndex = 0;
-
-        if ((nextCount - restBlocks) % loopBlocks == 0) {
-            self->mLoadingBufferBlockCount = nextCount;
-        } else {
-            self->mLoadingBufferBlockCount = self->mBufferBlockCountBase;
-        }
+        self->mLoadingBufferBlockCount = CalcLoadingBufferBlockCount();
     }
 
     OSRestoreInterrupts(level);

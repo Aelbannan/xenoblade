@@ -879,7 +879,7 @@ kyoshin/cf/CfBdat.cpp:
 	.ctors      start:0x804FA01C end:0x804FA020
 
 	.data        start:0x8052e6f0 end:0x8052e7b0
-	.rodata        start:0x80500f98 end:0x805013b8
+	.rodata        start:0x80500f98 end:0x80501388
 	.sbss        start:0x80664090 end:0x80664128
 	.sdata        start:0x80662228 end:0x80662230
 	.sdata2     start:0x80667368 end:0x806673a0
@@ -889,7 +889,7 @@ kyoshin/menu/CMenuUpdate.cpp:
 	.text       start:0x80142F60 end:0x80144FAC
 
 	.data        start:0x8052e7b0 end:0x8052e8b0
-	.rodata        start:0x805013b8 end:0x80501710
+	.rodata        start:0x80501388 end:0x80501710
 	.sdata        start:0x80662230 end:0x80662240
 	.sdata2     start:0x806673a0 end:0x806673c8
 kyoshin/menu/CMenuLandTelop.cpp:
@@ -2288,9 +2288,9 @@ kyoshin/cf/CHelpManager.cpp:
 	.ctors      start:0x804FA08C end:0x804FA090
 
 	.bss        start:0x80576d08 end:0x805772c8
-	.data        start:0x80538d28 end:0x80538f98
+	.data        start:0x80538d28 end:0x80539128
 	.rodata        start:0x8050fe00 end:0x8050ff18
-	.sdata        start:0x80662B40 end:0x80662C48
+	.sdata        start:0x80662B40 end:0x80662C40
 	.sdata2        start:0x80668bc8 end:0x80668bd0
 kyoshin/code_80296898.cpp:
 	extab       start:0x80019CB0 end:0x80019CC8
@@ -2304,7 +2304,9 @@ kyoshin/makecrystal/CMCGetItemBox.cpp:
 	extabindex  start:0x80032158 end:0x80032320
 	.text       start:0x8029917C end:0x8029C780
 
+	.data        start:0x80539128 end:0x805391B0
 	.rodata        start:0x8050ff18 end:0x80510250
+	.sdata        start:0x80662C40 end:0x80662C48
 	.sbss        start:0x80664a10 end:0x80664a28
 	.sdata2        start:0x80668bd0 end:0x80668c08
 kyoshin/menu/CMenuTutorial.cpp:
@@ -2312,7 +2314,7 @@ kyoshin/menu/CMenuTutorial.cpp:
 	extabindex  start:0x80032320 end:0x800323A4
 	.text       start:0x8029C780 end:0x8029CFFC
 
-	.data        start:0x80538f98 end:0x80539230
+	.data        start:0x805391B0 end:0x80539230
 	.rodata        start:0x80510250 end:0x80510280
 	.sbss        start:0x80664a28 end:0x80664a38
 	.sdata        start:0x80662C48 end:0x80662C50
@@ -5122,9 +5124,10 @@ nw4r/src/g3d/g3d_anmchr.cpp:
 	.sdata2     start:0x80669b88 end:0x80669ba0
 
 	.data        start:0x80569330 end:0x80569490
-	.rodata        start:0x8051d5c0 end:0x8051d620
+	.rodata        start:0x8051d5c0 end:0x8051d610
 nw4r/src/g3d/g3d_anmshp.cpp:
 	.text       start:0x803E8070 end:0x803E808C
+	.rodata        start:0x8051d610 end:0x8051d620
 
 nw4r/src/g3d/g3d_anmscn.cpp:
 	.text       start:0x803E808C end:0x803E95F8
@@ -5215,11 +5218,12 @@ nw4r/src/g3d/g3d_scnobj.cpp:
 	.sdata2     start:0x80669cd8 end:0x80669ce0
 
 	.data        start:0x805695F8 end:0x805696C0
-	.rodata        start:0x8051d768 end:0x8051d778
+	.rodata        start:0x8051d768 end:0x8051d798
 nw4r/src/g3d/g3d_scnroot.cpp:
 	.text       start:0x803F7FA4 end:0x803F99B8
 	.sdata2     start:0x80669ce0 end:0x80669ce8
 	.data       start:0x805696C0 end:0x80569730
+	.rodata        start:0x8051d798 end:0x8051d7a8
 
 	.sbss        start:0x80665468 end:0x80665470
 	.sdata        start:0x80663480 end:0x80663490
@@ -5228,17 +5232,20 @@ nw4r/src/g3d/g3d_scnmdlsmpl.cpp:
 	.sdata2     start:0x80669ce8 end:0x80669cf0
 
 	.data        start:0x80569730 end:0x805697a0
+	.rodata        start:0x8051d7a8 end:0x8051d7c0
 	.sdata        start:0x80663490 end:0x806634a8
 nw4r/src/g3d/g3d_scnmdl.cpp:
 	.text       start:0x803FB86C end:0x803FE2E0
 
 	.data        start:0x805697a0 end:0x805697e8
-	.rodata        start:0x8051d778 end:0x8051d7f8
+	.rodata        start:0x8051d7c0 end:0x8051d7d0
 nw4r/src/g3d/g3d_scnmdlexpand.cpp:
 	.text       start:0x803FE2E0 end:0x803FEC90
 
 	.data        start:0x805697e8 end:0x80569828
+	.rodata        start:0x8051d7d0 end:0x8051d7e8
 	.sdata        start:0x806634a8 end:0x806634b0
+
 nw4r/src/g3d/g3d_calcmaterial.cpp:
 	.text       start:0x803FEC90 end:0x803FF0A0
 
@@ -5249,6 +5256,7 @@ nw4r/src/g3d/g3d_init.cpp:
 	.sdata        start:0x806634b0 end:0x806634b8
 nw4r/src/g3d/g3d_scnproc.cpp:
 	.text       start:0x803FF19C end:0x803FF48C
+	.rodata        start:0x8051d7e8 end:0x8051d7f8
 	.sdata2     start:0x80669cf0 end:0x80669cf8
 
 nw4r/src/g3d/g3d_fog.cpp:
@@ -6193,6 +6201,7 @@ monolib/src/lib/CLibCri.cpp:
 	.rodata	start:0x80522FD8 end:0x80523008
 	.sdata	start:0x80663790 end:0x80663798
 	.text	start:0x8045D840 end:0x8045DCB0
+	.sdata2	start:0x8066A4D0 end:0x8066A4D8
 monolib/src/lib/CLibCriMoviePlay.cpp:
 	.data	start:0x8056CF48 end:0x8056D028
 	.rodata	start:0x80523008 end:0x80523050

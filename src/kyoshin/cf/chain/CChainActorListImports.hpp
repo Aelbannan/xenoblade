@@ -31,7 +31,6 @@ extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 seco
 extern "C" int IdTable_SumValues(void* data, u32 flag);
 extern "C" int GetZealObjPtr(void);
 extern "C" int GetZealResult(int);
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void SysWinLog_QueueEvent(int);

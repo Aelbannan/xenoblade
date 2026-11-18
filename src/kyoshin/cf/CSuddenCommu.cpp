@@ -927,7 +927,7 @@ int SuddenCommuTickActive(CSuddenCommu* self) {
         int winState = GetZealObjPtr();
         if (winState != 0) {
             CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
-            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
                 padBit = (pad->field_00 >> 9) & 1;
             } else {
                 padBit = (pad->field_00 >> 26) & 1;

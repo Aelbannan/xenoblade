@@ -3,6 +3,8 @@
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -22,12 +24,12 @@ struct CSysPadData {
 /*
  * System window "select" process (singleton, created by SysWinSelectCreate).
  *
- * A CProcess subclass whose layout mirrors CSystemWindow's Move/UI region,
- * with an embedded CSysWin and a CCur18 cursor:
- *   0x00  CProcess primary base (real C++ base - destroyed via ~CProcess)
- *   0x3C  IUIWindow/Move region (48 bytes, same as CSystemWindow)
- *   0x6C  IWorkEvent vtable slot
- *   0x70  IScnRender vtable slot (long-lived render callback subobject)
+ * Real MI class: IUIWindow at +0x00 (0x6C), IWorkEvent at +0x6C and
+ * IScnRender at +0x70 (long-lived render callback subobject), with an embedded
+ * CSysWin and a CCur18 cursor:
+ *   0x00  IUIWindow base (destructor chain ends at CProcess)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base
  *   0x74  CScn* owning scene
  *   0x78  CSysWin storage (0x3C bytes)
  *   0xB4  CCur18 cursor storage (0x18 bytes)
@@ -37,32 +39,20 @@ struct CSysPadData {
  * member dtor declared here is satisfied at link time by that global
  * definition (CMapSel idiom).
  */
-class CSysWinSelect : public CProcess {
+class CSysWinSelect : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
     CSysWinSelect(void* a2, void* a3, void* a4, void* a5);
     virtual ~CSysWinSelect();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    // Bodies not recovered yet; the vtable slots still have to carry the
+    // class's own symbols, so keep them as empty definitions.
+    virtual void Init() {}
+    virtual void Term() {}
+    virtual void Move() {}
+    virtual void cbRenderBefore() {}
 
-    // 0x3C IUIWindow/Move region (48 bytes, same as CSystemWindow).
-    u32 ptmf0[3];      // 0x3C null pointer-to-member-function
-    u32 ptmf1[3];      // 0x48 null pointer-to-member-function
-    u32 field_54;      // 0x54
-    u32 field_58;      // 0x58
-    u32 field_5C;      // 0x5C
-    s32 field_60;      // 0x60 (-1)
-    u8  field_64;      // 0x64
-    u8  field_65;      // 0x65
-    u8  field_66;      // 0x66
-    u8  field_67;      // 0x67 (1)
-    u32 field_68;      // 0x68
-    u32 mWorkEvent;    // 0x6C IWorkEvent vtable slot
-    u32 mScnRender;    // 0x70 IScnRender vtable slot
     CScn* mScene;      // 0x74 owning scene
-    u8  mSysWin[0x3C]; // 0x78 CSysWin storage
-    CCur18 mCur18;  // 0xB4
+    CSysWin mSysWin;   // 0x78 CSysWin storage (0x3C)
+    CCur18 mCur18;     // 0xB4 cursor
     u8  mState;        // 0xCC selection state (0..3)
     u8  mCursorSel;    // 0xCD cursor selection index (1 = default)
     char mStrA[0x80];  // 0xCE first string (a3)
@@ -119,19 +109,12 @@ public:
 // (unmangled), so they are declared `extern "C"`: C++ linkage would make MWCC
 // append the __F<argtypes> suffix and publish a different reloc name.
 extern "C" {
-CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2, void* a3,
-                                   void* a4, void* a5);
-extern "C" CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
 void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
 void* getCfPadData__Q22cf13CfGameManagerFv();
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the
 // vtable-compatible thunks at the end of the TU (retail mangled members).
 void __dt__13CSystemWindowFv(u8* win);
 void cbRenderBefore__13CSystemWindowFv(u8* win);
-// Global-view alias of CSysWinSelect::cbRenderBefore so the thunks can take
-// its address under the retail mangled-member symbol name.
-void cbRenderBefore__13CSysWinSelectFv(u8* win);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __ct__8CProcessFv(CProcess* self);
 void __dt__7CSysWinFv(void* syswin, int flags);
@@ -141,19 +124,7 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 // C++-linkage helper - retail emits the mangled form
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo (same convention as CSystemWindow.hpp).
 
-// Raw view onto the object header so the constructor can install vtables by
-// hand (the CProcess base's vtable slot lives at +0x10).
-struct CSysWinSelectHeaderView {
-    u8  _00[0x10];
-    u32 vtable;      // +0x10
-};
-
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSelect* lbl_eu_80663FDC;  // singleton instance pointer (.sbss)
 extern u32 lbl_eu_80663E28;             // cbRenderBefore flag (.sbss)
 
-extern u32 __ptmf_null[3];   // null pointer-to-member-function constant
-// IUIWindow base vtable (written at +0x10 before the __ptmf_null copy, then
-// overwritten by lbl_eu_8052D278). Plain byte arrays so we can take &arr+off.
-extern char lbl_eu_8052D238[];
-extern char lbl_eu_8052D278[];

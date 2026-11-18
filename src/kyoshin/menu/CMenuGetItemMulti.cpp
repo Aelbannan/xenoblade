@@ -167,7 +167,6 @@ void __dt__8CProcessFv(CProcess*, int);
 u8* __ct__801B2794(u8*, u32, u32);
 }
 
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
@@ -415,7 +414,7 @@ void CMenuGetItemMulti::Init() {
                    BdatTouchStringCell(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 43), 0);
 
     char* fileName;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         fileName = &lbl_eu_80504A3C[0x14f];
     } else {
         fileName = &lbl_eu_80504A3C[0x158];
@@ -2647,7 +2646,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
     }
 
     u32 up, down, curHeld, maskHeld, aPressed;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         curHeld = (pad->mTurboPressButtonFlags & 0x10000) |
                   (pad->mTurboPressButtonFlags & 0x8);
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
@@ -3266,7 +3265,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         maskHeld = (pad->mTurboPressButtonFlags & 0x8004) != 0;
         curHeld = ((pad->mTurboPressButtonFlags & 0x10000) |
                    (pad->mTurboPressButtonFlags & 0x8)) != 0;
@@ -3349,7 +3348,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         maskHeld = (pad->mTurboPressButtonFlags & 0x8004) != 0;
         curHeld = ((pad->mTurboPressButtonFlags & 0x10000) |
                    (pad->mTurboPressButtonFlags & 0x8)) != 0;

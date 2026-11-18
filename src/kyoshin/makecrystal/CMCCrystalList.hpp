@@ -16,8 +16,6 @@ class AnimResource;
 class ArcResourceAccessor;
 } }
 
-// vtable at lbl_eu_80535F80
-extern "C" void* lbl_eu_80535F80[];
 
 // Anim-completion sentinel float passed to advanceAnimTransform/AnimRewindFrame
 // (retail .sdata2 constants at 0x80668544 / 0x80668548).
@@ -54,7 +52,7 @@ public:
 /* Crystal list for the makecrystal UI. Manages available crystals and their
    display state. Inherits from IWorkEvent for file-load callbacks.
    novtable: the ctor stores the retail vtable label explicitly. */
-class __declspec(novtable) CMCCrystalList : public IWorkEvent {
+class CMCCrystalList : public IWorkEvent {
 public:
     CMCCrystalList();
     virtual ~CMCCrystalList();

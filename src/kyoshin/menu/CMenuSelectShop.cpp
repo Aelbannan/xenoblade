@@ -300,7 +300,7 @@ extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) 
     // Direct C-ABI call: the retail symbol is the no-arg Fv form but the call
     // site still loads r3=-1 (the s16 overload's arg). Calling the C-ABI decl
     // (which takes an int) reproduces the li.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // p declared first so the register allocator gives it r0 (retail
         // lwz r0, 4(r30)); f lands in r5.
         u32 p = pad->mPad.mPressedButtonFlags;

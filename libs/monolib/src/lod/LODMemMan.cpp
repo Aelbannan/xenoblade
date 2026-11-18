@@ -1,6 +1,11 @@
 // Auto-scaffolded catalog TU for monolib/src/lod/LODMemMan
 // Replace stubs with high-level C/C++ during decomp.
 
+// Retail elides the empty IWorkEvent base-dtor call in LODMemMan's out-of-line
+// destructor (0x40 bytes, no base call); the inline-empty base dtor is the
+// sanctioned shape for that (cf. CMCCrystalSupport in MONOLIB).  Must precede
+// every include: harness_catalog.h already pulls in IWorkEvent.hpp.
+#define IWORK_EVENT_INLINE_DTOR
 #include <harness_catalog.h>
 #include "monolib/lod/UnkClass_8046D144.hpp"
 #include "monolib/core/CView.hpp"           // CView::getCurrentView
@@ -29,81 +34,18 @@ class CScn;  // scene wrapper (forward decl; CScnMem.hpp is not included here)
 // ---------------------------------------------------------------------------
 // Dissolved retail data (this TU owns these objects).  Bytes/relocs dumped
 // from build/us/obj/monolib/src/lod/LODMemMan.o:
-//   .rodata 0x18, .data 0xA8, .sdata 0x20, .sbss 0x38.
-// Vtable slots use retail-named externs so each (u32)&target word emits the
-// exact retail reloc name (monolibdata dissolve recipe, cf. CDevice.cpp).
-// Slots whose retail target cannot be declared here (MWCC reserves member/
-// RTTI asm names under -ipa) use the vt_placeholder UND symbol; the
-// LODMemMan.o UNIT_RULES retarget those relocs onto the retail names.
+//   .rodata 0x18, .data 0x1E0, .sdata 0x20, .sbss 0x38.
+// The IWorkEvent-derived LOD::LODMemMan vtable + RTTI records are emitted by
+// MWCC in this TU (the out-of-line virtual dtor makes it the key function).
 // ---------------------------------------------------------------------------
-extern "C" {
-// IWorkEvent vtable slot functions (weak defaults live in kyoshin/CGame.cpp).
-extern int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern int WorkEvent3__10IWorkEventFPv(void*);
-extern int WorkEvent4__10IWorkEventFv();
-extern void OnPauseTrigger__10IWorkEventFb(int);
-extern int WorkEvent6__10IWorkEventFv();
-extern int WorkEvent7__10IWorkEventFv();
-extern int WorkEvent8__10IWorkEventFv();
-extern int WorkEvent9__10IWorkEventFv();
-extern int WorkEvent10__10IWorkEventFv();
-extern int WorkEvent11__10IWorkEventFv();
-extern int WorkEvent12__10IWorkEventFv();
-extern int WorkEvent13__10IWorkEventFv();
-extern int WorkEvent14__10IWorkEventFv();
-extern int WorkEvent15__10IWorkEventFv();
-extern int WorkEvent16__10IWorkEventFv();
-extern int WorkEvent17__10IWorkEventFv();
-extern int WorkEvent18__10IWorkEventFv();
-extern int WorkEvent19__10IWorkEventFv();
-extern int WorkEvent20__10IWorkEventFv();
-extern int WorkEvent21__10IWorkEventFv();
-extern int WorkEvent22__10IWorkEventFv();
-extern int WorkEvent23__10IWorkEventFv();
-extern int WorkEvent24__10IWorkEventFv();
-extern int WorkEvent25__10IWorkEventFv();
-extern int WorkEvent26__10IWorkEventFv();
-extern int WorkEvent27__10IWorkEventFv();
-extern int WorkEvent28__10IWorkEventFv();
-extern int WorkEvent29__10IWorkEventFv();
-extern int WorkEvent30__10IWorkEventFv();
-extern int WorkEvent31__10IWorkEventFv();
-extern void lodmm_vt_rtti();     // UND; retargeted to lbl_eu_80663848
-extern void lodmm_vt_dt();       // UND; retargeted to __dt__Q23LOD9LODMemManFv
-extern void lodmm_vt_ofe();      // UND; retargeted to OnFileEvent__Q23LOD...
-extern void lodmm_vt_werti();    // UND; retargeted to __RTTI__10IWorkEvent
-}
-
-// .rodata: class-name string (+1 pad byte) and zeroed reset-name slot.
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80523D80[16] = "LOD::LODMemMan";
-extern "C" __declspec(section ".rodata") const char lbl_eu_80523D90[8] = {0};
-
-// .data: Panic source-path string, the IWorkEvent vtable (RTTI header +
-// dtor + 31 WorkEvent slots, OnFileEvent overriding slot 2), and the
-// { IWorkEvent-RTTI, 0, 0, 0 } base-record group.
+// .data: Panic file-name string.
 extern "C" char lbl_eu_8056DAF8[16] __attribute__((aligned(8))) = "g3d_resmat_ac.h";
-extern "C" __declspec(section ".data") u32 lbl_eu_8056DB08[34] = {
-    (u32)&lodmm_vt_rtti, 0x00000000, (u32)&lodmm_vt_dt,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&lodmm_vt_ofe,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-};
-extern "C" __declspec(section ".data") u32 lbl_eu_8056DB90[4] = {
-    (u32)&lodmm_vt_werti, 0x00000000, 0x00000000, 0x00000000
-};
+
+// .rodata zeroed reset-name slot ("" seeded into the name buffer by the
+// reset/init paths).  Defined at the end of the TU; open item: MWCC emits
+// explicit-section zero data first, so the compiler-emitted RTTI class-name
+// string lands at +0x8 instead of retail's +0x0.
+extern "C" const char lbl_eu_80523D90[8];
 
 // .sdata: sentinel pair {0xFFFF, 0}, 90.0f divisor, three "ref" strings,
 // flag word and trailing pad.
@@ -701,7 +643,7 @@ struct LODSubMgrView {
 // ---------------------------------------------------------------------------
 extern "C" void updateElementLod__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODElem20* elem);
 extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u8* p, f32 f1);
-extern "C" void updateSubViewFrame__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u8* p, int a);
+extern "C" void updateSubViewFrame__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self, u8* p, int a);
 
 // TU-internal callees with extra args (retail symbol names).  MWCC appends
 // `__F<params>` to plain C++ declarations at call sites, so C linkage keeps
@@ -751,8 +693,8 @@ extern "C" void driveArchiveLoadState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144
 extern "C" void updateLodFrame__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
 extern "C" void notifyG3dManager__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CScn* scene);
 extern "C" void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
-extern "C" void resetChildMasks__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
-extern "C" void resetLightColor__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" void resetChildMasks__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
+extern "C" void resetLightColor__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
 extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 target);
 
 // Reset-tail view: the per-frame scratch words at +0x3C..+0x50 and the
@@ -824,9 +766,9 @@ void LOD::UnkClass_8046D144::updateSubObject() {
 // teardownSubEntries slot array (+0x194, 16 slots): slot[0] of the +0xC8 region
 // keeps its first word, slots[1..16] get words 0/4 cleared (the word-0 walk
 // is a pointer loop that MWCC keeps as a real loop; the word-4 and +0x194
-// walks unroll), then the +0xa44 sub-manager is initialised (vtable, first
-// fields, name string) and the embedded UnkClass_8046A530 / resetFrameFields
-// are run.
+// walks unroll), then the +0xa44 sub-manager's first fields / name string are
+// seeded (MWCC stores its vtable from the inlined LODMemMan ctor) and the
+// embedded UnkClass_8046A530 / resetFrameFields are run.
 // ---------------------------------------------------------------------------
 LOD::UnkClass_8046D144::UnkClass_8046D144() {
     LODCtorView* cv = (LODCtorView*)this;
@@ -847,8 +789,8 @@ LOD::UnkClass_8046D144::UnkClass_8046D144() {
     for (int i = 1; i < 17; i++) cv->mSlotsA[i].field_0x4 = 0;
     for (int i = 0; i < 16; i++) cv->mSlotsB[i].field_0x0 = 0;
 
-    // +0xa44 sub-manager: vtable, first fields, and the name string.
-    cv->mSub.field_0x0 = (u8*)lbl_eu_8056DB08;
+    // +0xa44 sub-manager: first fields and the name string (the vtable is
+    // stored by the compiler from the LODMemMan ctor).
     cv->mSub.mStr_34[0] = 0;
     cv->mSub.field_0x74 = 0;
     cv->mSub.field_0x4 = 0;
@@ -1212,8 +1154,8 @@ extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self,
         ((LOD::LODMemMan*)((u8*)self + 0xA44))->cancelFileAndRelease();
         l->mView_1C = 0;
         l->field_0x5C = 0;
-        // Keep only bit 0x8000 of the flag word, then set bit 0x8000.
-        l->field_0x6C = (l->field_0x6C & ~0x3087u) | 0x8000u;
+        // Clear flag bits 1,2,7,12,13 (retail mask 0xCF79), then set 0x8000.
+        l->field_0x6C = (l->field_0x6C & ~0x3086u) | 0x8000u;
     }
     u32 flags = l->field_0x6C | 1;
     LODResetView* rv = (LODResetView*)self;
@@ -3079,8 +3021,8 @@ extern "C" void bindLodChildren__Q23LOD9LODMemManFv(
     Mtx mtx;
     *(nw4r::math::MTX34*)mtx = *(const nw4r::math::MTX34*)matrixBlock;
     PSMTXInverse(mtx, mtx);
-    resetChildMasks__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
-    resetLightColor__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
+    resetChildMasks__Q23LOD17UnkClass_8046D144Fv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
+    resetLightColor__Q23LOD17UnkClass_8046D144Fv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC));
 
     // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
     int* flagA = lbl_eu_80658368;
@@ -3127,7 +3069,7 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int ta
         if (((LODScnGate*)getScnRootPtr(Scn_GetCurrentScene()))->field_0x19 == 0) {
             updateLodLayersForView__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
         }
-        updateSubViewFrame__Q23LOD9LODMemManFv(sub, frame->field_0x9C, task);
+        updateSubViewFrame__Q23LOD17UnkClass_8046D144Fv(sub, frame->field_0x9C, task);
     }
 }
 
@@ -3147,7 +3089,7 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* sel
         CScn* scn3 = Scn_GetCurrentScene();
         LODViewFrame* vf = Scn_HasCamItem(scn3, view);
     LOD::UnkClass_8046D144* sub = ((LODMemManSubView*)self)->ptr_F0;
-        updateSubViewFrame__Q23LOD9LODMemManFv(sub, vf->field_0x9C, param);
+        updateSubViewFrame__Q23LOD17UnkClass_8046D144Fv(sub, vf->field_0x9C, param);
     }
 }
 
@@ -3589,9 +3531,11 @@ void setLightScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, s16 value) 
 // initLightScales: initialise the high offset scale pair (+0x96C/+0x970) and
 // the +0x974 index to -1 (retail store order: 0x970, 0x96C, 0x974).
 // ---------------------------------------------------------------------------
+extern const f32 lbl_eu_8066A718;   // 1.0f pool slot (retail reads it once)
 void LOD::UnkClass_8046D144::initLightScales() {
-    ((LODLightMgr*)this)->field_0x970 = 1.0f;
-    ((LODLightMgr*)this)->field_0x96C = 1.0f;
+    f32 one = lbl_eu_8066A718;
+    ((LODLightMgr*)this)->field_0x970 = one;
+    ((LODLightMgr*)this)->field_0x96C = one;
     ((LODLightMgr*)this)->field_0x974 = -1;
 }
 
@@ -4136,3 +4080,5 @@ bool LOD::LODMemMan::OnFileEvent(CEventFile* evt) {
     }
     return true;
 }
+
+extern "C" __declspec(section ".rodata") const char lbl_eu_80523D90[8] = {0};

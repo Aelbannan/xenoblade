@@ -20,11 +20,11 @@ extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
 extern "C" const double lbl_eu_806682F8;
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
-// isClassicController__Q22cf13CfGameManagerFv, CUICfManager_getArcResourceAccessor,
+// getPackedFont__Fv, CUICfManager_getArcResourceAccessor,
 // drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
 // "C-linkage imports" section above.
 
@@ -79,7 +79,7 @@ void CItemBoxGridSubMenu::GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor*
     char* str = (char*)BdatTouchStringCell(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805084BC[0x8b], str, 0);
 
-    int gmVal = isClassicController__Q22cf13CfGameManagerFv(-1);
+    int gmVal = cf::CfGameManager::isClassicController(-1);
     const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
 
     u16 msgId = BdatGetU16ByTableKey(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);

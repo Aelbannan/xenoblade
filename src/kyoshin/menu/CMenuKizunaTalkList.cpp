@@ -156,7 +156,7 @@ void CMenuKizunaTalkList::Move() {
 
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cancel;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         cancel = (pad->mPressedButtonFlags & 0x800000) != 0;
     } else {
         cancel = (pad->mPressedButtonFlags & 0x400) != 0;
@@ -266,7 +266,7 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
     // Classic controllers shift the menu-trigger bit to bit 9 of the pressed
     // flags; Wiimote/Nunchuk use bit 26. The four directional buttons
     // (up/down/page-up/page-down) are read from the turbo flags.
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         up = (turbo & 0x8004) != 0;

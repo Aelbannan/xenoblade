@@ -2324,7 +2324,7 @@ void CMenuMiniMap2::Move() {
         int btn;
         // Pre-mangled form with an int arg: retail emits `li r3,-1` before the
         // call, which the cf::CfGameManager s16 inline wrapper would drop.
-        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (cf::CfGameManager::isClassicController(-1) != 0) {
             btn = (pad->mPressedButtonFlags >> 10) & 1;
         } else {
             btn = (pad->mPressedButtonFlags >> 6) & 1;

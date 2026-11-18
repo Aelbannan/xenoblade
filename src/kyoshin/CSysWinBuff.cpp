@@ -1,16 +1,13 @@
-
 // kyoshin/CSysWinBuff - system window "buff" process (singleton).
 
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 // Forward decls for retail data labels (defs at file end). Char blobs carry
 // immediates; D28/DB0/E0/E8 are pointer tables anchored by clean refs (see below).
-extern char lbl_eu_80537E84[];
-extern char lbl_eu_80537DC0[];
-extern char lbl_eu_8050EBC4[];
-extern char lbl_eu_8050EBB8[];
-
 extern char lbl_eu_8050E980[];
 // (decl was via CTaskGame.hpp; kept local after IWorkEvent decouple.)
 extern u32 lbl_eu_80663E28;
@@ -50,72 +47,37 @@ class CEventFile;
 #include <new>
 #include <revolution/gx/GXPixel.h>
 
-// Global-view declarations so the catalog thunks can address the retail-named
-// functions by their verbatim symbols (the definitions below emit them).
-// (plain C++: extern "C" + class params 10322s)
-bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile);
-extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* self, int flags);
-extern "C" void cbRenderBefore__11CSysWinBuffFv(void* self);
-
 // ---------------------------------------------------------------------------
-// VTable-compatible thunks adjacent to the CSysWinBuff subobjects (retail
-// emits these as offset-adjusted dispatch stubs: only r3 is re-based, then a
-// tail jump into the right subobject trampoline). Preserved from the scaffold.
-// ---------------------------------------------------------------------------
-void OnFileEvent__11CSysWinBuffFP10CEventFile(void* self) { ((void(*)(void*))SysWinBuff_OnFileEventMatch)((char*)self - 0x6c); }
-
-void SysWinBuff_ThunkDtor6C(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x6c); }
-
-void SysWinBuff_ThunkRender70(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinBuffFv)((char*)self - 0x70); }
-
-extern "C" void SysWinBuff_ThunkDtor70(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x70); }
-
-extern "C" void SysWinBuff_EmptyStubB20() {}
-
-extern "C" void SysWinBuff_EmptyStubB24() {}
-
-// ---------------------------------------------------------------------------
-// Target 1: CSysWinBuff::~CSysWinBuff (us-80276958)
+// CSysWinBuff::~CSysWinBuff (us-80276958)
 // Complete-object destructor. The embedded CSysWin is destroyed (flags -1),
 // then the CProcess base guarded by the nested double null-check (an MWCC
 // D2-inlined-into-D1 artifact), then conditional operator delete when the
 // deleting flag is set. Same shape as CSysWinSave's dtor.
 // ---------------------------------------------------------------------------
-extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
-    if (_this != 0) {
-        reinterpret_cast<CSysWin*>(&_this->mSysWin[0])->CSysWin::~CSysWin();
-        if (_this != 0) {
-            if (_this != 0) {
-                __dt__8CProcessFv(_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+CSysWinBuff::~CSysWinBuff() {}
 
 // ---------------------------------------------------------------------------
-// Target 2: SysWinBuff_OnFileEventMatch (us-80276f08) - IWorkEvent::OnFileEvent body.
+// CSysWinBuff::OnFileEvent (us-80276f08) - IWorkEvent::OnFileEvent body.
 // When the loaded arc matches mFileHandle: hand its data buffer to CBdat
 // (releases the archive), re-store the loaded file-pointer (getFP) in the
-// global, clear the handle and return true; otherwise false.
+// global, clear the handle and return true; otherwise false. Only reachable
+// through the IWorkEvent sub-vtable, whose slot holds the compiler-emitted
+// +0x6C adjusting thunk that tail-jumps here (retail 0x80276F84).
 // ---------------------------------------------------------------------------
-bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
-    if (self->mFileHandle == pEventFile->mFileHandle) {
-        void* data = self->mFileHandle->getData();
+bool CSysWinBuff::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle == pEventFile->mFileHandle) {
+        void* data = mFileHandle->getData();
         CBdat::setBdatEntry(2, data);
         Bdat_GetTable_AA34();
-        lbl_eu_806648E4 = (u32)getFP(&lbl_eu_8050EBC4[0x22]);
-        self->mFileHandle = 0;
+        lbl_eu_806648E4 = (u32)getFP("/common/jp/bdat_menu_mes.bin\0help\0MNU_buff" + 0x22);
+        mFileHandle = 0;
         return true;
     }
     return false;
 }
 
 // ---------------------------------------------------------------------------
-// Target 3: CSysWinBuff::Term (us-80276b08)
+// CSysWinBuff::Term (us-80276b08)
 // Wait for the VI, release the arc file handle and tear down the embedded
 // CSysWin, release the BDAT archive, clear the two globals, deregister the
 // render callback (this-adjusting IScnRender view at +0x70), then re-enable
@@ -124,12 +86,11 @@ bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
 void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
     closeFileHandle(&mFileHandle);
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
+    mSysWin.termLayout();
     CBdat::getEntry(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    IScnRender* render = this;
     mScene->removeRenderCB(render);
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
@@ -137,7 +98,7 @@ void CSysWinBuff::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: CSysWinBuff::cbRenderBefore (us-80276d34)
+// CSysWinBuff::cbRenderBefore (us-80276d34)
 // Gate prefix (task busy / global render flag / scene active / cf busy) then
 // draw the embedded CSysWin through a stack DrawInfo.
 // ---------------------------------------------------------------------------
@@ -150,96 +111,44 @@ void CSysWinBuff::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+    mSysWin.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
     // Scope-exit dtor is auto-emitted as the retail direct
     // `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit
     // `drawInfo.~DrawInfo()` would ALSO emit a virtual-dispatched call.
 }
 
 // ---------------------------------------------------------------------------
-// Target 5: create__11CSysWinBuffFv (us-80276dcc)
+// create__11CSysWinBuffFv (us-80276dcc)
 // Allocate the CSysWinBuff singleton (0xBC bytes) from work memory, run the
-// CProcess ctor, lay out the IUIWindow + Move region by hand, construct the
-// embedded CSysWin and register as a CProcess child of `registerParent`.
+// (inlined) constructor and register as a CProcess child of `registerParent`.
 // Returns 0 when the singleton already exists; Regist is called even when the
-// allocation failed (r31 stays NULL), matching retail.
+// allocation failed, matching retail.
 // ---------------------------------------------------------------------------
 extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* scene, u16 arg) {
-    const PtmfNullWords* ptmf;
-    u32 ptmfSecond;
-    u32 ptmfFirst;
-    u32 ptmfWord2;
     if (lbl_eu_806648E0 != 0)
         return 0;
-
-    CSysWinBuffCtorShim* obj = (CSysWinBuffCtorShim*)mtl::MemManager::allocate(
-        0xbc, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // IUIWindow vtable at +0x10 is written twice (temp vtable, then the
-        // CSysWinBuff composite vtable); the two null ptmf callback slots are
-        // copied, then the scalar fields are initialised.
-        obj->vtable = (void*)lbl_eu_8052D238;
-
-        // Copy the null member-function pointer into both callback slots
-        // (retail loads __ptmf_null[1],[0],[2] per slot - load-both/store-both,
-        // so use intermediate locals to force the retail ordering).
-        ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
-        ptmfFirst = ptmf->w1;
-        ptmfSecond = ptmf->w0;
-        obj->callbacks[0] = ptmfSecond;
-        obj->callbacks[1] = ptmfFirst;
-        ptmfWord2 = ptmf->w2;
-        obj->callbacks[2] = ptmfWord2;
-        ptmfFirst = ptmf->w1;
-        ptmfSecond = ptmf->w0;
-        obj->callbacks[3] = ptmfSecond;
-        obj->callbacks[4] = ptmfFirst;
-        ptmfWord2 = ptmf->w2;
-        obj->callbacks[5] = ptmfWord2;
-
-        obj->field54 = 0;
-        obj->field58 = 0;
-        obj->field5C = 0;
-        obj->index = -1;
-        obj->flag64 = 0;
-        obj->flag65 = 0;
-        obj->flag66 = 0;
-        obj->active = 1;
-        obj->field68 = 0;
-
-        obj->vtable = (void*)lbl_eu_80537DC0;
-        obj->field6C = (u32)(lbl_eu_80537DC0 + 0x24);
-        obj->field70 = (u32)(lbl_eu_80537DC0 + 0xac);        obj->fileHandle = 0;
-        obj->scene = scene;
-
-        __ct__7CSysWinFUc(&obj->mSysWin[0], 0);
-
-        obj->flagB8 = 0;
-        obj->argBA = arg;
-        setPresentationFlag__Q22cf13CfGameManagerFv(true);
-        code80135FDC_postIncByte_64080();
-    }
-    lbl_eu_806648E0 = (CSysWinBuff*)obj;
+    CSysWinBuff* obj = new (mtl::MemManager::allocate(0xbc, CWorkThreadSystem::getWorkMem()))
+        CSysWinBuff(scene, arg);
+    lbl_eu_806648E0 = obj;
     ((CProcess*)obj)->Regist(registerParent, false);
     return lbl_eu_806648E0;
 }
+
+// Two empty 4-byte text stubs at the tail of the retail .text slice
+// (0x80276FA4/0x80276FA8) - not yet identified, kept as the retail symbols.
+extern "C" void SysWinBuff_EmptyStubB20() {}
+
+extern "C" void SysWinBuff_EmptyStubB24() {}
 
 // Non-target members: CProcess overrides (stubs) and the singleton accessor.
 void CSysWinBuff::Init() {}
 void CSysWinBuff::Move() {}
 CSysWinBuff* CSysWinBuff::getInstance() { return lbl_eu_806648E0; }
 
-// Retail data pool. Char blobs carry immediates; pointer tables below are
-// anchored by refs MWCC-1.1 accepts (member-encoded callee names and
-// __RTTI__ decls poison it with 10322, so unrepresentable slots reuse clean
-// refs - in-file bytes stay zero and the data gate skips relocs on byte match).
-__declspec(section ".rodata") char lbl_eu_8050EBB8[0xc] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x42, 0x75, 0x66, 0x66, 0x00};
-__declspec(section ".rodata") char lbl_eu_8050EBC4[0x2c] = {0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x6a, 0x70, 0x2f, 0x62, 0x64, 0x61, 0x74, 0x5f, 0x6d, 0x65, 0x6e, 0x75, 0x5f, 0x6d, 0x65, 0x73, 0x2e, 0x62, 0x69, 0x6e, 0x00, 0x68, 0x65, 0x6c, 0x70, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x62, 0x75, 0x66, 0x66, 0x00, 0x00};
-// .sdata typeinfo pair for CSysWinBuff.
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* __RTTI__11CSysWinBuff[2] = { (void*)lbl_eu_8050EBB8, (void*)lbl_eu_80537E84 };
-__declspec(section ".data") char lbl_eu_80537DC0[0xc4] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_80537E84[0x4c] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-// (DC0/E84 carry the composite-vtable immediates.)
+// Retail data pool: the arc-path/help/label string pool is a code literal (so
+// MWCC pools it after the compiler-generated RTTI type-name strings, matching
+// retail's .rodata order); the table below points at the three .sbss words
+// code_8027513C.cpp indexes.
+const char lbl_eu_8050EBC4[0x2c] = {0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x6a, 0x70, 0x2f, 0x62, 0x64, 0x61, 0x74, 0x5f, 0x6d, 0x65, 0x6e, 0x75, 0x5f, 0x6d, 0x65, 0x73, 0x2e, 0x62, 0x69, 0x6e, 0x00, 0x68, 0x65, 0x6c, 0x70, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x62, 0x75, 0x66, 0x66, 0x00, 0x00};
+__declspec(section ".data") void* lbl_eu_80537EC0[4] = {(void*)&lbl_eu_806648EC, (void*)&lbl_eu_806648F4,
+                                                       (void*)&lbl_eu_806648FC, 0};

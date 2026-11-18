@@ -475,3 +475,33 @@ Watch the `reg_swap` and `structural` counts:
   **reference** vocabulary for non-Wii TUs only. Do not treat them as Wii facts;
   re-check against `mwcc-wii-1.1` before citing an address or field offset for
   retail Wii/1.1 matching.
+
+### Rule A refinement — a materialised loop temp is declared *above* the induction variable
+
+`cf/voice/CCharVoiceMan` (Wii/1.1, `-O4,p`): three node-walk helpers
+(`CCharVoiceMan_FlushAll`, `CCharVoiceMan_ReleaseVoices`,
+`CCharVoiceMan::FactoryEvent2`) were pure `reg_swap` (75-85%) with the
+materialised `&&` result (`li rX,0` / `li rX,1` / `cmpwi`) in the *wrong* saved
+register:
+
+```c
+cf::CSoundNode* node = m->mNodeHead;      /* retail: node -> r29, match -> r30 */
+while (node) { bool match = false; ... }  /* decomp: node -> r30, match -> r29 */
+```
+
+Declaring the temp **before** the induction pointer, with the assignments left
+inside the loop, flips the pair and gives 100% (68 instructions identical for
+FlushAll):
+
+```c
+bool match;                                /* declared first -> higher color */
+cf::CSoundNode* node = m->mNodeHead;
+while (node) { match = false; ... }
+```
+
+A declaration without an initializer births its web at the first *assignment*,
+so hoisting the declaration alone does not move the `li` — it changes the
+virtual-register order MWCC colours from. Same fix applies to the
+`DispatchById` triple loop (66.9% → 91.5%; residual `match` ↔ loop-invariant
+`&pmf` constant swap). Not a lever for the inlined `FindVoiceNodeById` helper
+form, where the swap persists (74%).

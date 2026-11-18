@@ -71,7 +71,10 @@ CGame::~CGame() {
 
 void CWorkThread::wkRender() {}
 void CWorkThread::wkRenderAfter() {}
-// bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) { return true; } // removed
+// Weak base-slot body: retail keeps the CWorkThread vtable slot 0x9C
+// implementation in this TU (weak .text 0x8003A1DC, `li r3, 1; blr`), next to
+// the empty wkRender/wkRenderAfter base bodies.
+bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) { return true; }
 
 CGame* CGame::getInstance() {
     return spInstance;

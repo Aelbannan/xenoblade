@@ -162,7 +162,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
 
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // -- classic-controller chain --
         int special = 0;
         if (CMenuArtsSet_isBusy((SArts33888*)&self->mList) == 0 &&

@@ -206,7 +206,6 @@ void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self,
 void __dt__14Class_8045F858Fv(void* self, int flags);
 void CUICfManager_queueFadeMenu(u8 a, int b, float c, float d, float e);
 bool isInitialized__10CMenuPauseFv();
-int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32, nw4r::lyt::Layout*);
 int TagProcPumpSEMessage(void* tagProc, nw4r::lyt::Pane* pane);

@@ -4,21 +4,6 @@
 #include <cstring>
 #include <cwchar>
 
-// Shared nw4r data symbols referenced by retail.
-
-extern const f64 lbl_eu_80669D70;    // 0x4330000080000000 (signed int->f32 magic)
-extern "C" wchar_t lbl_eu_806634C0[2] = { 0x000A, 0 }; // L"\n" literal pool (.sdata)
-
-// int -> f32 conversion matching retail: build the 2^52+x double on the stack
-// (high word = 0x43300000, low word = x ^ 0x80000000) and subtract the shared
-// signed magic constant.
-inline f32 ConvF32S(s32 v) {
-    union { f64 d; u32 w[2]; } u;
-    u.w[1] = (u32)v ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (f32)(u.d - lbl_eu_80669D70);
-}
-
 /******************************************************************************
  *
  * Utility functions
@@ -61,8 +46,7 @@ int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 
     f32 lineWidth = 0.0f;
     bool charSpace = false;
-    // Initial stream position (NULL until reader.Set below).
-    const T* pPrevStream = static_cast<const T*>(reader.GetCurrentPos());
+    const T* pPrevStream = NULL;
 
     pRect->top = ut::Min(0.0f, pWriter->GetLineHeight());
     pRect->bottom = ut::Max(0.0f, pWriter->GetLineHeight());
@@ -74,8 +58,7 @@ int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 
     while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
         if (ch < ' ') {
-            ut::Rect r(lineWidth, 0.0f, 0.0f,
-                       0.0f);
+            ut::Rect r(lineWidth, 0.0f, 0.0f, 0.0f);
 
             context.str = static_cast<const T*>(reader.GetCurrentPos());
             context.flags = charSpace ? 0 : ut::PrintContext<T>::FLAGS_CHARSPACE;
@@ -189,8 +172,7 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 
         // Line overflowed: measure the linebreak itself as a one-char string.
         if (hasNextLine) {
-            CalcLineRectImpl(&r, pWriter, lbl_eu_806634C0, 1, width,
-                             &hasNextLine);
+            CalcLineRectImpl(&r, pWriter, L"\n", 1, width, &hasNextLine);
 
             {
                 f32 newLeft = r.left;
@@ -213,19 +195,7 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
     } while (len > 0);
 }
 
-typedef void (*LLMH_ForceFn_us_80404fa4)(nw4r::ut::Rect*,
-                                         nw4r::ut::TextWriterBase<wchar_t>*,
-                                         const wchar_t*, int, float);
-typedef int (*LLMH_ForceFn_us_80404368)(nw4r::ut::Rect*,
-                                        nw4r::ut::TextWriterBase<wchar_t>*,
-                                        const wchar_t*, int, float, bool*);
-
 } // namespace
-
-extern LLMH_ForceFn_us_80404fa4 LLMH_force_us_80404fa4 =
-    &CalcStringRectImpl<wchar_t>;
-extern LLMH_ForceFn_us_80404368 LLMH_force_us_80404368 =
-    &CalcLineRectImpl<wchar_t>;
 
 
 /******************************************************************************
@@ -233,126 +203,51 @@ extern LLMH_ForceFn_us_80404368 LLMH_force_us_80404368 =
  * TextBox
  *
  ******************************************************************************/
-namespace {
+// Inlined by both constructors (retail has no out-of-line Init symbol).
+inline void TextBox::Init(u16 len) {
+    mTextBuf = NULL;
+    mTextBufBytes = 0;
+    mTextLen = 0;
 
-// Layout overlay matching retail TextBox storage. The locked header places
-// mTextPosition/mBits one byte lower than retail (0x100/0x101 there) and its
-// members are private, so the retail-mangled constructor below operates
-// through this struct instead.
-struct TextBoxInitLayout {
-    u8 paneHead[0x28];       // Pane fields up to mpMaterial
-    void* mpMaterial;        // 0x28
-    u8 paneTail[0xD8 - 0x2C];
-    wchar_t* mTextBuf;       // 0xD8
-    u32 mTextColorsRaw[2];   // 0xDC
-    const void* mpFont;      // 0xE4
-    f32 fontSizeWidth;       // 0xE8
-    f32 fontSizeHeight;      // 0xEC
-    f32 mLineSpace;          // 0xF0
-    f32 mCharSpace;          // 0xF4
-    void* mpTagProcessor;    // 0xF8
-    u16 mTextBufBytes;       // 0xFC
-    u16 mTextLen;            // 0xFE (occupies 0xFE-0xFF)
-    u8 textPosition;         // 0x100
-    u8 bits;                 // 0x101
-};
+    mpFont = NULL;
+    mFontSize = Size(0.0f, 0.0f);
 
-// By-reference helper so the Size temporary lives on the stack, matching
-// retail's SetFontSize(const Size&) inlining shape.
-void StoreFontSize(TextBoxInitLayout& rFields, const nw4r::lyt::Size& rSize) {
-    rFields.fontSizeWidth = rSize.width;
-    rFields.fontSizeHeight = rSize.height;
-}
+    SetTextPositionH(HORIZONTALPOSITION_CENTER);
+    SetTextPositionV(VERTICALPOSITION_CENTER);
 
-} // namespace
+    mLineSpace = 0.0f;
+    mCharSpace = 0.0f;
 
-// MWCC array-construction helper (retail calls this for the color pair).
-// The Color ctor/dtor symbols are compiler-generated, so they can only be
-// referenced under their mangled names.
-extern "C" void __construct_array(void* elements,
-                                  void* (*ctor)(void*), void (*dtor)(void*),
-                                  u32 elemSize, u32 count);
-extern "C" void* __ct__Q34nw4r2ut5ColorFv(void*);
-extern "C" void __dt__Q34nw4r2ut5ColorFv(void*);
+    mpTagProcessor = NULL;
 
-// Compiler-generated TextBox vtable (retail label lbl_eu_80569A30).
-extern "C" void* __vt__Q34nw4r3lyt7TextBox[];
-
-// Base/member constructors referenced by the retail constructor.
-extern "C" void __ct__Q34nw4r3lyt4PaneFv(void*);
-extern "C" void __ct__Q34nw4r3lyt8MaterialFv(void*);
-
-// Retail TextBox(u16) constructor. The locked header declares only the
-// resource constructor, so the retail symbol is provided here under its
-// mangled name (same approach as the snd wrappers).
-extern "C" nw4r::lyt::TextBox* __ct__Q34nw4r3lyt7TextBoxFUs(
-    nw4r::lyt::TextBox* self, unsigned short len) {
-    TextBoxInitLayout& rFields = *reinterpret_cast<TextBoxInitLayout*>(self);
-
-    // Base construction.
-    __ct__Q34nw4r3lyt4PaneFv(self);
-
-    // Derived vptr install (retail stores the TextBox vtable right after
-    // base construction).
-    *reinterpret_cast<void**>(rFields.paneHead) =
-        static_cast<void*>(__vt__Q34nw4r3lyt7TextBox);
-
-    // Default-construct the vertex color pair.
-    __construct_array(&rFields.mTextColorsRaw,
-                      reinterpret_cast<void* (*)(void*)>(
-                          __ct__Q34nw4r2ut5ColorFv),
-                      reinterpret_cast<void (*)(void*)>(
-                          __dt__Q34nw4r2ut5ColorFv),
-                      sizeof(nw4r::ut::Color), 2);
-
-    // Retail clears the font size directly here, then writes it again
-    // through a stack temporary further down.
-    rFields.fontSizeWidth = 0.0f;
-    rFields.fontSizeHeight = 0.0f;
-
-    rFields.mTextBuf = NULL;
-    rFields.mTextBufBytes = 0;
-    rFields.mTextLen = 0;
-
-    rFields.mpFont = NULL;
-
-    detail::SetHorizontalPosition(&rFields.textPosition,
-                                  HORIZONTALPOSITION_CENTER);
-    detail::SetVerticalPosition(&rFields.textPosition,
-                                VERTICALPOSITION_CENTER);
-
-    StoreFontSize(rFields, nw4r::lyt::Size(0.0f, 0.0f));
-
-    rFields.mLineSpace = 0.0f;
-    rFields.mCharSpace = 0.0f;
-
-    rFields.mpTagProcessor = NULL;
-
-    std::memset(&rFields.bits, 0, sizeof(rFields.bits));
+    std::memset(&mBits, 0, sizeof(mBits));
 
     if (len > 0) {
-        self->AllocStringBuffer(len);
+        AllocStringBuffer(len);
     }
+}
 
-    nw4r::lyt::Material* pMaterialBuf = static_cast<nw4r::lyt::Material*>(
-        // Retail references the layout allocator by its retail label here.
-        Layout::AllocMemory(sizeof(nw4r::lyt::Material)));
+// Default constructor - Pane is set up by the implicit base construction and
+// mTextColors/mFontSize are default-initialised by the member constructors.
+TextBox::TextBox(u16 len) {
+    Init(len);
 
-    nw4r::lyt::Material* pMaterial;
+    Material* pMaterialBuf =
+        static_cast<Material*>(Layout::AllocMemory(sizeof(Material)));
+
+    Material* pMaterial;
     if (pMaterialBuf != NULL) {
-        pMaterial = new (pMaterialBuf) nw4r::lyt::Material();
+        pMaterial = new (pMaterialBuf) Material();
     } else {
         pMaterial = NULL;
     }
 
-    rFields.mpMaterial = pMaterial;
+    mpMaterial = pMaterial;
 
     if (pMaterial != NULL) {
         pMaterial->ReserveGXMem(0, 0, 0, 0, false, 0, 0, false, false, false,
                                 false);
     }
-
-    return self;
 }
 
 TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
@@ -379,6 +274,7 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
 
     mFontSize = pRes->fontSize;
     mTextPosition = pRes->textPosition;
+    mBits.textAlignment = pRes->textAlignment;
     mCharSpace = pRes->charSpace;
     mLineSpace = pRes->lineSpace;
 
@@ -397,12 +293,18 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
             ArcResourceAccessor::RES_TYPE_FONT, pFontName, NULL);
 
         if (pFontBinary != NULL) {
-            ut::ResFont* pFontBuf = static_cast<ut::ResFont*>(Layout::AllocMemory(sizeof(ut::ResFont)));
+            ut::ResFont* pFontBuf = static_cast<ut::ResFont*>(
+                Layout::AllocMemory(sizeof(ut::ResFont)));
 
+            ut::ResFont* pResFont;
             if (pFontBuf != NULL) {
-                ut::ResFont* pResFont = new (pFontBuf) ut::ResFont();
-                pResFont->SetResource(pFontBinary);
+                pResFont = new (pFontBuf) ut::ResFont();
+            } else {
+                pResFont = NULL;
+            }
 
+            if (pResFont != NULL) {
+                pResFont->SetResource(pFontBinary);
                 mpFont = pResFont;
                 mBits.bAllocFont = true;
             }
@@ -426,29 +328,6 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
     }
 }
 
-void TextBox::Init(u16 len) {
-    mTextBuf = NULL;
-    mTextBufBytes = 0;
-    mTextLen = 0;
-
-    mpFont = NULL;
-    mFontSize = Size(0.0f, 0.0f);
-
-    SetTextPositionH(HORIZONTALPOSITION_CENTER);
-    SetTextPositionV(VERTICALPOSITION_CENTER);
-
-    mLineSpace = 0.0f;
-    mCharSpace = 0.0f;
-
-    mpTagProcessor = NULL;
-
-    std::memset(&mBits, 0, sizeof(mBits));
-
-    if (len > 0) {
-        AllocStringBuffer(len);
-    }
-}
-
 const ut::Font* TextBox::GetFont() const {
     return mpFont;
 }
@@ -468,55 +347,25 @@ void TextBox::SetFont(const ut::Font* pFont) {
 
     mpFont = pFont;
 
-    if (pFont != NULL) {
-        // Implicit int->f32 conversions; MWCC evaluates args right-to-left:
-        // pFont->GetHeight() runs first, then GetWidth via a fresh mpFont load.
-        SetFontSize(Size(mpFont->GetWidth(), pFont->GetHeight()));
+    if (mpFont != NULL) {
+        SetFontSize(Size(mpFont->GetWidth(), mpFont->GetHeight()));
     } else {
         SetFontSize(Size(0.0f, 0.0f));
     }
 }
 
 TextBox::~TextBox() {
-    // Retail inlines the SetFont(NULL) body here. Note the metric branch
-    // re-tests the mpFont member after the null store (as in the hbm twin),
-    // so MWCC emits both arms.
-    if (mBits.bAllocFont) {
-        ut::Font* pOldFont = const_cast<ut::Font*>(mpFont);
+    SetFont(NULL);
 
-        if (pOldFont != NULL) {
-            pOldFont->~Font();
-            Layout::FreeMemory(pOldFont);
+    Material* pMaterial = mpMaterial;
+    if (pMaterial != NULL && !pMaterial->IsUserAllocated()) {
+        if (mpMaterial != NULL) { // retail keeps the redundant re-check
+            mpMaterial->~Material();
         }
-
-        mBits.bAllocFont = false;
-    }
-
-    mpFont = NULL;
-
-    if (mpFont != NULL) {
-        Size size(0.0f, 0.0f);
-
-        // Right-to-left argument evaluation: height first, then width via a
-        // fresh mpFont load. Each conversion lands in the temp before the
-        // next virtual call, so no value lives across a call.
-        size.height = ConvF32S(mpFont->GetHeight());
-        size.width = ConvF32S(mpFont->GetWidth());
-
-        mFontSize = size;
-    } else {
-        mFontSize = Size(0.0f, 0.0f);
-    }
-
-    if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
-        mpMaterial->~Material();
-        // Retail references the layout allocator by its label here.
-        Layout::FreeMemory(mpMaterial);
+        Layout::FreeMemory(pMaterial);
         mpMaterial = NULL;
     }
 
-    // Retail dispatches this virtually (vtable slot 0x78) even inside the
-    // dtor.
     FreeStringBuffer();
 }
 
@@ -581,31 +430,22 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
 
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
 
-    // Horizontal alignment factor. Retail keeps two flag bytes at the class
-    // tail (after mTextLen): a packed text-position byte at 0x100 whose low
-    // modulo-3 value gives the H position, and an alignment byte at 0x101
-    // whose bits 5-6 (1-based L/C/R) override that fallback when nonzero.
-    struct TailFlags {
-        u8 position; // at 0x100
-        u8 align;    // at 0x101
-    };
-    const TailFlags& rFlags = reinterpret_cast<const TailFlags&>(mTextPosition);
-
+    // The 1-based text alignment overrides the packed text position when set.
     f32 magH;
-    switch (rFlags.align >> 5) {
+    switch (mBits.textAlignment) {
     default: {
-        switch (rFlags.position % 3) {
+        switch (GetTextPositionH()) {
         default: {
             magH = 0.0f;
             break;
         }
 
-        case 1: {
+        case HORIZONTALPOSITION_CENTER: {
             magH = 0.5f;
             break;
         }
 
-        case 2: {
+        case HORIZONTALPOSITION_RIGHT: {
             magH = 1.0f;
             break;
         }
@@ -613,17 +453,17 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
         break;
     }
 
-    case 1: {
+    case HORIZONTALPOSITION_LEFT + 1: {
         magH = 0.0f;
         break;
     }
 
-    case 2: {
+    case HORIZONTALPOSITION_CENTER + 1: {
         magH = 0.5f;
         break;
     }
 
-    case 3: {
+    case HORIZONTALPOSITION_RIGHT + 1: {
         magH = 1.0f;
         break;
     }
@@ -662,7 +502,7 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
         writer.PrintMutable(pStr, length);
 
         if (hasNextLine) {
-            writer.PrintMutable(lbl_eu_806634C0, 1);
+            writer.PrintMutable(L"\n", 1);
         }
 
         pStr += length;
@@ -683,22 +523,19 @@ void TextBox::AllocStringBuffer(u16 len) {
         return;
     }
 
-    if ((len + 1) * sizeof(wchar_t) > mTextBufBytes) {
+    if (static_cast<u32>(len + 1) * sizeof(wchar_t) > mTextBufBytes) {
         FreeStringBuffer();
 
-        u16 chars = len + 1;
+        wchar_t* pBuf = static_cast<wchar_t*>(
+            Layout::AllocMemory((len + 1) * sizeof(wchar_t)));
 
-        wchar_t* pBuf = static_cast<wchar_t*>(Layout::AllocMemory(
-            chars * sizeof(wchar_t)));
-
-        // Zero-fill; retail re-tests the cursor inside the loop.
         if (pBuf != NULL) {
             wchar_t* pStr = pBuf;
-            for (int i = chars; i > 0; i--) {
+            for (u32 i = 0; i <= len; i++) {
                 if (pStr != NULL) {
                     *pStr = L'\0';
-                    pStr++;
                 }
+                pStr++;
             }
         }
 
@@ -788,12 +625,9 @@ ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
     rect.right = 0.0f;
     rect.bottom = 0.0f;
 
-    // Writer configuration (mostly inlined stores in retail).
     pWriter->SetCursor(0.0f, 0.0f);
-
     pWriter->SetFont(*mpFont);
     pWriter->SetFontSize(mFontSize.width, mFontSize.height);
-
     pWriter->SetLineSpace(mLineSpace);
     pWriter->SetCharSpace(mCharSpace);
 
@@ -801,66 +635,15 @@ ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
         pWriter->SetTagProcessor(mpTagProcessor);
     }
 
-    // Measure the string with a stack copy of the configured writer.
+    // Measure with a stack copy of the configured writer.
     {
         ut::WideTextWriter writer = *pWriter;
         CalcStringRectImpl(&rect, &writer, mTextBuf, mTextLen, mSize.width);
     }
 
-    // Retail computes the measured extents before calling GetVtxPos().
-    f32 textHeight = rect.bottom - rect.top;
-    f32 textWidth = rect.right - rect.left;
-
     math::VEC2 base = GetVtxPos();
-
-    // Retail inlines the horizontal-position switch twice here.
-    f32 magH;
-    switch (GetTextPositionH()) {
-    case HORIZONTALPOSITION_CENTER: {
-        magH = 0.5f;
-        break;
-    }
-
-    case HORIZONTALPOSITION_RIGHT: {
-        magH = 1.0f;
-        break;
-    }
-
-    default: {
-        magH = 0.0f;
-        break;
-    }
-    }
-
-    f32 offsetX = base.x + (mSize.width - textWidth) * magH;
-
-    rect.left = offsetX;
-    rect.right = offsetX + textWidth;
-
-    f32 magV;
-    switch (GetTextPositionH()) {
-    case HORIZONTALPOSITION_CENTER: {
-        magV = 0.5f;
-        break;
-    }
-
-    case HORIZONTALPOSITION_RIGHT: {
-        magV = 1.0f;
-        break;
-    }
-
-    default: {
-        magV = 0.0f;
-        break;
-    }
-    }
-
-    // NOTE: retail negates here - the text origin is Y-down within the pane,
-    // so top/bottom are laid out downward from base.y.
-    f32 offsetY = base.y - (mSize.height - textHeight) * magV;
-
-    rect.top = offsetY;
-    rect.bottom = rect.top - textHeight;
+    rect.MoveTo(base.x + (mSize.width - rect.GetWidth()) * GetTextMagH(),
+                base.y + (mSize.height - rect.GetHeight()) * GetTextMagV());
 
     return rect;
 }
@@ -935,42 +718,16 @@ u32 TextBox::MakeDrawFlag() const {
     return flag;
 }
 
-ut::Color TextBox::GetTextColor(u32 idx) const {
-    return mTextColors[idx / TEXTCOLOR_MAX];
-}
-
-void TextBox::SetTextColor(u32 idx, ut::Color color) {
-    mTextColors[idx] = color;
-}
-
-} // namespace lyt
-} // namespace nw4r
-
-void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
-namespace nw4r {
-namespace ut {
-
-// Out-of-line copy of Font::GetCharStrmReader - taking the address forces MWCC
-// to emit the inline header body as a standalone function in this TU (retail
-// emits GetCharStrmReader__Q34nw4r2ut4FontCFv here).
-typedef CharStrmReader (Font::*LLMH_FontGetReaderFn)() const;
-extern LLMH_FontGetReaderFn LLMH_force_us_80404748 = &Font::GetCharStrmReader;
-
-} // namespace ut
-} // namespace nw4r
-// TextBox overrides Pane::LoadMtx in retail (vtable slot 0x70). The override is
-// not declared in lyt_textBox.h, so it is defined here under its mangled name.
-void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(
-    nw4r::lyt::TextBox* self, const nw4r::lyt::DrawInfo& rInfo) {
-    nw4r::math::MTX34 mtx;
+void TextBox::LoadMtx(const DrawInfo& rInfo) {
+    math::MTX34 mtx;
 
     if (rInfo.IsMultipleViewMtxOnDraw()) {
-        PSMTXConcat(rInfo.GetViewMtx(), self->GetGlobalMtx(), mtx);
+        PSMTXConcat(rInfo.GetViewMtx(), GetGlobalMtx(), mtx);
     } else {
-        PSMTXCopy(self->GetGlobalMtx(), mtx);
+        PSMTXCopy(GetGlobalMtx(), mtx);
     }
 
-    // Flip the Y axis (second column) - text is drawn with a Y-down origin.
+    // Flip the Y axis - text is drawn from a Y-down origin.
     mtx._01 = -mtx._01;
     mtx._11 = -mtx._11;
     mtx._21 = -mtx._21;
@@ -978,8 +735,6 @@ void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(
     GXLoadPosMtxImm(mtx, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
-namespace nw4r {
-namespace lyt {
 
 NW4R_UT_RTTI_DEF_DERIVED(TextBox, Pane);
 
@@ -989,9 +744,6 @@ const nw4r::ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {
 
 } // namespace lyt
 } // namespace nw4r
-
-
-
 
 
 

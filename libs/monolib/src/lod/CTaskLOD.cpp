@@ -94,12 +94,12 @@ extern "C" void setPauseFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, i
 extern "C" void attachSceneObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void* isElementFlagClear__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void configureFadeMode__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int a, int b);
-extern "C" void updateSubObject__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+extern "C" void updateSubObject__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void setElementLodLevel__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void setElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void refreshElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" float getElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" float getBaseScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
+extern "C" float getBaseScale__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
 extern "C" void* getElementState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
@@ -286,7 +286,7 @@ void CTaskLOD::restorePrimaryLOD() {
 // entry at 0x8066A5B8 after the call).
 float CTaskLOD::getLODScale() {
     if (lbl_eu_80665730[0]) {
-        getBaseScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD);
+        getBaseScale__Q23LOD17UnkClass_8046D144Fv(lbl_eu_80665730[0]->mpActiveLOD);
     }
     return 1.0f;
 }
@@ -318,7 +318,7 @@ void CTaskLOD::updateLODRange() {
 
 void CTaskLOD::syncLODTask() {
     if (lbl_eu_80665730[0]) {
-        updateSubObject__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        updateSubObject__Q23LOD17UnkClass_8046D144Fv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
 }
 

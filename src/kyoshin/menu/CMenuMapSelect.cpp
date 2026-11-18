@@ -200,8 +200,7 @@ struct CfPadDataView {
 extern "C" {
 
 // Callee helpers (retail-unmangled names).
-// Use the C++ member -- a local extern "C" Fv(s16) overload conflicts with
-// CfGameManager.hpp's bool isClassicController().
+// Use the C++ member (CfGameManager.hpp); no local pre-mangled copy.
 int CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);

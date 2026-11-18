@@ -167,6 +167,8 @@ struct AlphaCompare {
         Set(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     }
 
+    AlphaCompare& operator=(const AlphaCompare& rOther);
+
     void Set(GXCompare comp0, u8 _ref0, GXAlphaOp _op, GXCompare comp1,
              u8 _ref1) {
 
@@ -210,6 +212,8 @@ struct BlendMode {
         Set(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_SET);
     }
 
+    BlendMode& operator=(const BlendMode& rOther);
+
     void Set(GXBlendMode _type, GXBlendFactor src, GXBlendFactor dst,
              GXLogicOp _op) {
 
@@ -250,6 +254,8 @@ struct ChanCtrl {
         Set(GX_SRC_VTX, GX_SRC_VTX);
     }
 
+    ChanCtrl& operator=(const ChanCtrl& rOther);
+
     void Set(GXColorSrc color, GXColorSrc alpha) {
         matSrcCol = color;
         matSrcAlp = alpha;
@@ -277,6 +283,8 @@ struct IndirectStage {
     IndirectStage() {
         Set(GX_TEXCOORD0, GX_TEXMAP0, GX_ITS_1, GX_ITS_1);
     }
+
+    IndirectStage& operator=(const IndirectStage& rOther);
 
     void Set(GXTexCoordID gen, GXTexMapID map, GXIndTexScale _scaleS,
              GXIndTexScale _scaleT) {
@@ -391,6 +399,8 @@ struct TevStage {
         SetIndirect(GX_INDTEXSTAGE0, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF,
                     GX_ITW_OFF, GX_ITW_OFF, false, false, GX_ITBA_OFF);
     }
+
+    TevStage& operator=(const TevStage& rOther);
 
     void SetOrder(GXTexCoordID gen, GXTexMapID map, GXChannelID chan,
                   GXTevSwapSel ras, GXTevSwapSel tex) {
@@ -561,6 +571,8 @@ struct TevStage {
 struct TevSwapMode {
     u8 swap; // at 0x0
 
+    TevSwapMode& operator=(const TevSwapMode& rOther);
+
     void Set(GXTevColorChan r, GXTevColorChan g, GXTevColorChan b,
              GXTevColorChan a) {
 
@@ -624,6 +636,8 @@ struct TexSRT {
     math::VEC2 translate; // at 0x0
     f32 rotate;           // at 0x8
     math::VEC2 scale;     // at 0xC
+
+    TexSRT& operator=(const TexSRT& rOther);
 };
 
 } // namespace lyt

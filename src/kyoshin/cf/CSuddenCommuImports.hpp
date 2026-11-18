@@ -223,7 +223,6 @@ extern "C" {
     bool isGlobalCamFlagSet__Fi(int mask);
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
     // does not reflect the actual argument counts - see addTableValueWithClamp).
-    int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
     int GetZealResult(int);

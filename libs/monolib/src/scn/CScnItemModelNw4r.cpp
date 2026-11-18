@@ -60,7 +60,7 @@ struct ScnImN4Word4ACView {
 };
 
 // Multiple targets map to the same function - single definition
-u32 scnImN4GetWord4AC(u8* self) { return ((ScnImN4Word4ACView*)self)->word; }
+extern "C" u32 scnImN4GetWord4AC(u8* self) { return ((ScnImN4Word4ACView*)self)->word; }
 
 extern "C" u32  scnImN4GetEffAct(u8* self) { return ((CScnItemModelNw4r*)self)->field_0x14C0; }
 
@@ -70,10 +70,10 @@ extern "C" void scnImN4SetShadFlg(u8* self) {
     m->shadowNodes[1].field_0x1E |= 1;
 }
 
-void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic(((CScnItemModelNw4r*)self)->field_0x17A0); }
+extern "C" void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic(((CScnItemModelNw4r*)self)->field_0x17A0); }
 
 void MdlDyn_AddVecAll(u8* self);
-void scnImN4DynStop(u8* self) { ((void(*)(void*))MdlDyn_AddVecAll)(((CScnItemModelNw4r*)self)->field_0x17A0); }
+extern "C" void scnImN4DynStop(u8* self) { ((void(*)(void*))MdlDyn_AddVecAll)(((CScnItemModelNw4r*)self)->field_0x17A0); }
 
 // scnImN4RefreshVis: refresh per-node visibility for this model's node table.
 // The +0x7A4 bit-30 (with bit-16 clear) enables the pass, further gated on
@@ -430,7 +430,7 @@ extern "C" void  scnImN4SyncScale(CScnItemModelNw4r* self) {
 // scnImN4PushXform: model transform refresh - update the act-data transform,
 // push the +0x240 matrix into the g3d scene object (SetMtx), then copy the
 // +0x304 scale triple into its ScnLeaf scale slot.
-void scnImN4PushXform(CScnItemModelNw4r* self) {
+extern "C" void scnImN4PushXform(CScnItemModelNw4r* self) {
     ((ml::CAttrTransform*)simGetLeafActData(self))->update();
     self->field_0x147C->SetMtx(nw4r::g3d::ScnObj::MTX_LOCAL, self->field_0x240);
     CScnItemModelNw4rScnScale* scn = (CScnItemModelNw4rScnScale*)self->field_0x147C;
@@ -543,7 +543,7 @@ extern "C" void  scnImN4UpdateXform(CScnItemModelNw4r* self) {
     }
 }
 
-extern "C" void scnImN4NotifyMat();
+extern "C" void scnImN4NotifyMat(CScnItemModelNw4r* self, u32 param, CScnItemModelNw4r* other);
 
 // scnImN4LinkGrpA: after linking `other` into this model's reference list
 // (simLinkSlot7B4), append other's scene object to the +0x1474 ScnGroup
@@ -564,7 +564,7 @@ extern "C" u32  scnImN4LinkGrpA(CScnItemModelNw4r* self, CScnItemModelNw4r* othe
 // `amount` more bytes fit in the 0xC00-byte region starting at +0x864.
 // Unsigned `>` selects MWCC's branchless cntlzw compare idiom (xor/cntlzw/
 // slw/srwi 31 - the high differing bit of (free ^ amount) is tested in free).
-u32 scnImN4PoolHasSpc(CScnItemModelNw4r* self, u32 amount) {
+extern "C" u32 scnImN4PoolHasSpc(CScnItemModelNw4r* self, u32 amount) {
     u32 free = 0xC00 - self->field_0x860;
     return free > amount;
 }
@@ -803,7 +803,7 @@ extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
 // in the +0x7B4 reference list and the +0x7C4 link (skipping `other`), then
 // notify this model and `other` themselves. notifyGroupChain propagates the
 // (param, model) pair to each sub-object.
-void scnImN4NotifyMat(CScnItemModelNw4r* self, u32 param, CScnItemModelNw4r* other) {
+extern "C" void scnImN4NotifyMat(CScnItemModelNw4r* self, u32 param, CScnItemModelNw4r* other) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModelNw4r* m = self->slots7B4[i];
         if (m != 0 && other != m) {
@@ -834,7 +834,7 @@ extern "C" void  scnImN4OnMatArg(CScnItemModelNw4r* self, u32 param) {
 // status with the chain-wide 2-arg query and return whether either is
 // non-zero (bool-ized via retail's neg/or/srwi setnz).
 extern "C" int  scnImN4CheckMat(CScnItemModelNw4r* self, u32 a, u32 b) {
-    int v = applyAmbientByLight(&self->field_0x16C8);
+    int v = applyAmbientByLight(&self->field_0x16C8, (ml::CVec3*)a, b);
     if (v != 0) {
         v = (v | simProbeModelVec(self, a, b)) != 0;
     }
@@ -883,7 +883,7 @@ extern "C" void  scnImN4SyncMatCol(CScnItemModelNw4r* self, u32 arg2, u32 arg3) 
     vec.z = lbl_eu_8066A8FC;
     if (applyAmbientByLight(&self->field_0x16C8, &vec, 0) != 0) {
         if (arg3 == 0) {
-            simSetFlag1Tree(self, 1);
+            simSetFlag1Tree((CScnItemModel*)self, 1);
             simSetFlag1MTree(self, 1);
             self->field_0x7A0 |= 8;
         }
@@ -925,7 +925,7 @@ extern "C" void  scnImN4SyncMatCol(CScnItemModelNw4r* self, u32 arg2, u32 arg3) 
 // scnImN4ResetAnims: reset both material/anim helpers to 0, then invoke the
 // no-arg vtable-0x98 notify (CScnItemModel::vfunc98) on the model.
 extern "C" void  scnImN4ResetAnims(CScnItemModelNw4r* self) {
-    simSetFlag1Tree(self, 0);
+    simSetFlag1Tree((CScnItemModel*)self, 0);
     simSetFlag1MTree(self, 0);
     ((CScnItemModel*)self)->vfunc98();
 }
@@ -933,7 +933,7 @@ extern "C" void  scnImN4ResetAnims(CScnItemModelNw4r* self) {
 // scnImN4AddFrameId: add `value` to the +0x17CC u32 frame table when absent
 // (linear scan), then bubble-sort the table ascending (adjacent swaps,
 // repeat while a pass changed anything).
-void scnImN4AddFrameId(CScnItemModelNw4r* self, u32 value) {
+extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* self, u32 value) {
     u32* p = *(u32* volatile*)&self->field_0x17CC;
     u32* const end = p + *(volatile u32*)&self->field_0x17D0;
     while (p != end && *p != value) {
@@ -1393,7 +1393,7 @@ extern "C" void  scnImN4LgtModeSw(CScnItemModelNw4r* self, s32 mode) {
 // (align 0x20). The +0x7A4 0x800000 flag mirrors the ResFile bind result.
 // Returns the new model, or 0 when busy / out of pool space / the file is
 // invalid.
-CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
+extern "C" CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
                                  nw4r::g3d::ResFileData* resFileData,
                                  u32 param, u32 enable, int index, u32 flags) {
     bool bound;
@@ -1465,7 +1465,7 @@ CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
 // scene-item pool. The +0x7A4 0x800000 flag mirrors the ResFile bind result;
 // +0x7A8 bit 9 is raised on the new model. Returns the new model, or 0 when
 // busy / out of pool space / the file is invalid.
-CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
+extern "C" CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
                                  nw4r::g3d::ResFileData* resFileData,
                                  u32 param) {
     CScnItemModelNw4r* model;
@@ -1730,7 +1730,7 @@ static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
 // the global lbl_eu_806638D0 target raises the entry's +2 flag bit 1; when its
 // data slot (item+dataOffset) holds a non-zero first word, the +0x7A4 bit-2
 // flag is raised on the model.
-void scnImN4ScanUserData(CScnItemModelNw4r* self) {
+extern "C" void scnImN4ScanUserData(CScnItemModelNw4r* self) {
     for (CScnItemModel824Entry* entry =
              (CScnItemModel824Entry*)self->member824.field_0;
          entry != (CScnItemModel824Entry*)((u8*)self->member824.field_0 +
@@ -1994,7 +1994,7 @@ extern "C" void  scnImN4SetMaruPtr(u8* self, u32 mode) {
 // rotate the world matrix around the up axis toward the offset direction
 // (quaternion path via PSMTXQuat, identity fallback), and write the
 // concatenated matrix back keeping the original translation column.
-void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
+extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase) {
     if (!(self->field_0x7A4 & 0x10000000)) {
         return;
     }
@@ -2400,7 +2400,7 @@ extern char lbl_eu_80663908;     // panic vararg string (.sdata, @sda21)
 // by averaging the two copied vec3s, adds the transform's mPrevPos, scans 8
 // mixed-component candidates tracking the max squared distance, and stores
 // the distance/sqrt pair to +0x2E8 / +0x7AC.
-void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
+extern "C" void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
     if (self->member824.field_4 == 0) {
         return;
     }
@@ -2413,18 +2413,8 @@ void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
     if ((u32)vv & 3) {
         nw4r::db::Panic(lbl_eu_8056E168, 0x39, lbl_eu_8056E140);
     }
-    f32 az = vv[0].z;
-    f32 ay = vv[0].y;
-    f32 ax = vv[0].x;
-    f32 bz = vv[1].z;
-    f32 by = vv[1].y;
-    f32 bx = vv[1].x;
-    self->field_0x2EC[0] = ax;
-    self->field_0x2EC[1] = ay;
-    self->field_0x2EC[2] = az;
-    self->field_0x2EC[3] = bx;
-    self->field_0x2EC[4] = by;
-    self->field_0x2EC[5] = bz;
+    *(nw4r::math::VEC3*)&self->field_0x2EC[0] = vv[0];
+    *(nw4r::math::VEC3*)&self->field_0x2EC[3] = vv[1];
     if (self->field_0x14AC != 0) {
         nw4r::g3d::ResNode node =
             nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(self->field_0x14A0);
@@ -2646,7 +2636,7 @@ extern "C" void  scnImN4SetBit27(CScnItemModelNw4r* self, u32 enable) {
     simSetFlag8000000(self, enable);
 }
 
-void* scnImN4AllocFromBuf(u8* self, unsigned int size) {
+extern "C" void* scnImN4AllocFromBuf(u8* self, unsigned int size) {
     void* buffer = *(void**)((char*)self + 8);
     volatile unsigned int* used = (volatile unsigned int*)((char*)buffer + 0x860);
     if (size >= 0xC00 - *used) return 0;
@@ -2656,7 +2646,7 @@ void* scnImN4AllocFromBuf(u8* self, unsigned int size) {
     return result;
 }
 
-void scnImN4AllocFree(void) {}
+extern "C" void scnImN4AllocFree(void) {}
 
 // ===========================================================================
 // __ct__CScnItemModelNw4r: CScnItemModelNw4r constructor (0x8048A0DC).
@@ -3230,7 +3220,7 @@ extern "C" void  scnImN4BindParent(CScnItemModelNw4r* self, CScnItemModelNw4r* o
 // pair; clearing resets the matching entry's id. The +0x7A4 0x10000000 flag
 // reflects whether any entry is active (the set path re-checks `enable`,
 // matching retail's kept redundant test).
-void scnImN4SetShadowNd(CScnItemModelNw4r* self, const char* name, u32 enable) {
+extern "C" void scnImN4SetShadowNd(CScnItemModelNw4r* self, const char* name, u32 enable) {
     nw4r::g3d::ResNode node =
         nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(name);
     if (node.ptr() == 0) {

@@ -934,7 +934,7 @@ u32 cf::CfGameManager::getEnabledInputFlags() {
     }
     return lbl_eu_80663DF8;
 }
-bool cf::CfGameManager::isClassicController() {
+bool cf::CfGameManager::isClassicController(s16 selector) {
     return CfPadTask::getDetectedPadType() == PAD_TYPE_CLASSIC;
 }
 CPad* cf::CfGameManager::getPad(int channel) {

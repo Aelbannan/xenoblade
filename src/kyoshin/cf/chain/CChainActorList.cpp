@@ -710,7 +710,7 @@ extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
     }
     CPad* pad = cf::CfGameManager::getCurrentPad();
     // The chain-trigger pad bit depends on controller type (classic vs wii).
-    u32 bit = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
+    u32 bit = (cf::CfGameManager::isClassicController(-1) != 0)
                   ? (pad->mPressedButtonFlags >> 22) & 1
                   : (pad->mPressedButtonFlags >> 5) & 1;
     if (bit != 0) {

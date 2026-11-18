@@ -1,11 +1,11 @@
 // Auto-scaffolded catalog TU for RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act
 // Replace stubs with high-level C/C++ during decomp.
 //
-// !!! RECOVERY NOTICE (session pi-batch-match) !!!
-// This file was accidentally truncated by an agent session. The regions below
-// marked "LOST" must be restored via `git restore libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c`
-// (or from the last good commit / another agent's checkout).
-// Recovered-verbatim regions from the session transcript are kept intact.
+// NOTE: an earlier session truncated this TU. Every body below was rebuilt
+// from the retail binary (hexdiff --asm/--relocs) with Broadcom's
+// bta_dm_act.c as the shape reference; no "LOST" regions remain.
+// Retail reloc names win over the SDK headers (btm_read_trusted_mask is
+// lowercase in the retail build).  Residues are annotated per function.
 
 #include <harness_catalog.h>
 
@@ -58,7 +58,7 @@ struct bta_dm_timer_t {
 
 struct bta_dm_search_cb_t {
     bta_dm_search_cback_t p_search_cback;   /* offset 0x00 */
-    void *p_cur;                            /* offset 0x04 */
+    struct btm_inq_info_t *p_cur;           /* offset 0x04 */
     unsigned int services;                  /* offset 0x08 (tBTA_SERVICE_MASK) */
     unsigned int services_cached;           /* offset 0x0c */
     unsigned int services_found;            /* offset 0x10 */
@@ -87,14 +87,56 @@ struct bta_btm_inq_cmpl_t {
     /* ... remainder of this struct was in the LOST region ... */
 };
 
-/* Minimal discovery-result payload for the app search callback (fields used
-   by the recovered functions below). Full tBTA_DM_DISC_RES lived in the
-   LOST region; do not invent the unused members. */
-struct bta_dm_disc_res_local_t {
-    bd_addr_t bd_addr;
-    unsigned int services;
-    unsigned char result;
+/* tBTA_DM_DISC_RES as compiled in the retail Wii-era stack: BD_NAME_LEN is
+   0xfa here, so services lands at +0x100 (retail zeroes bd_name[0] and the
+   whole services word). */
+struct bta_dm_disc_res_t {
+    bd_addr_t bd_addr;              /* 0x000 */
+    unsigned char bd_name[0xf8];    /* 0x006 */
+    unsigned int services;          /* 0x100 (4-aligned after the name) */
+    unsigned char result;           /* 0x104 */
 };
+
+/* tBTA_DM_INQ_CMPL */
+struct bta_dm_inq_cmpl_res_t {
+    unsigned char num_resps;
+};
+
+/* tBTA_DM_INQ_RES (Wii-era layout: bd_addr@0, dev_class@6, rssi@9,
+   device_type@0x0a) */
+struct bta_dm_inq_res_t {
+    bd_addr_t bd_addr;              /* 0x00 */
+    unsigned char dev_class[3];     /* 0x06 */
+    signed char rssi;               /* 0x09 */
+    unsigned char device_type;      /* 0x0a */
+};
+
+/* tBTA_DM_SEARCH: union of the search callback payloads (retail size 0x110) */
+union bta_dm_search_t {
+    struct bta_dm_inq_res_t inq_res;
+    struct bta_dm_inq_cmpl_res_t inq_cmpl;
+    struct bta_dm_disc_res_t disc_res;
+    unsigned char _pad[0x110];
+};
+
+/* tBTM_REMOTE_DEV_NAME */
+struct btm_remote_dev_name_t {
+    unsigned short status;          /* 0x00 */
+    unsigned short length;          /* 0x02 */
+    unsigned char remote_bd_name[0xfa]; /* 0x04 */
+};
+
+/* tSDP_UUID (tBT_UUID): len word followed by a 4-byte-aligned uuid union */
+struct bta_dm_uuid_t {
+    unsigned short len;             /* 0x0 */
+    union {
+        unsigned short uuid16;
+        unsigned int uuid32;
+        unsigned char uuid128[16];
+    } uu;                           /* 0x4 */
+};
+
+/* tBTA_DM_API_DISCOVER (tBTA_DM_API_DISCOVER is declared in bta_dm_int.h) */
 
 /* BT_HDR + trailing data view used when only event / raw data[] are touched. */
 struct bta_dm_buf_t {
@@ -108,8 +150,13 @@ struct bta_dm_buf_t {
 #ifndef BTA_DM_DISC_RES_EVT
 #define BTA_DM_DISC_RES_EVT            2
 #endif
+/* App search callback events (tBTA_DM_SEARCH_EVT) */
+#define BTA_DM_INQ_RES_EVT             0
+#define BTA_DM_INQ_CMPL_EVT            1
+#define BTA_DM_DISC_CMPL_EVT           3
+#define BTA_DM_SEARCH_CANCEL_CMPL_EVT  4
 #ifndef BTA_DM_REMT_NAME_EVT
-#define BTA_DM_REMT_NAME_EVT           0x205
+#define BTA_DM_REMT_NAME_EVT           0x204
 #endif
 #ifndef BTA_DM_SEARCH_DISC_RES_EVT
 #define BTA_DM_SEARCH_DISC_RES_EVT     0x207
@@ -122,22 +169,28 @@ struct bta_dm_buf_t {
    currently present functions need so the TU can compile. Bodies for the
    LOST functions themselves are NOT invented here. */
 extern struct bta_dm_search_cb_t bta_dm_search_cb;
-/* tBTM_CB is 0x27C4 bytes in retail (.bss, not small data); only the leading
-   page timeout is used here and the rest of the layout is not recovered yet. */
-extern struct { unsigned short page_timeout; unsigned char unk_0x2[0x27C2]; } btm_cb;
+/* tBTM_CB is 0x27C4 bytes in retail (.bss, not small data).  Only the page
+   timeout is used here; retail addresses it at +0x64c. */
+struct btm_cb_t {
+    unsigned char unk_0x0[0x64c];
+    unsigned short page_timeout;        /* 0x64c */
+    unsigned char unk_0x64e[0x27C4 - 0x64e];
+};
+extern struct btm_cb_t btm_cb;
 extern const unsigned short bta_service_id_to_uuid_lkup_tbl[];
-extern void bta_dm_remname_cback(unsigned char *, unsigned char *, unsigned char *);
+extern void bta_dm_remname_cback(struct btm_remote_dev_name_t *);
 extern void bta_dm_service_search_remname_cback(unsigned char *, unsigned char *, unsigned char *);
 extern void bta_dm_search_timer_cback(struct bta_dm_timer_t *);
 extern void bta_dm_find_services(unsigned char *bd_addr);
 extern void bta_dm_discover_next_device(void);
 
 /* DM control block (instance in bta_dm_main.c; layout matches bta_dm_api.c). */
+/* tBTA_DM_PEER_DEVICE: retail strides the array by 11 bytes */
 struct bta_dm_peer_dev_t {
-    unsigned char bd_addr[6];
-    unsigned char in_use;
-    unsigned char policy;
-    unsigned char _pad[3];
+    unsigned char bd_addr[6];       /* 0x0 */
+    unsigned char in_use;           /* 0x6 */
+    unsigned char policy;           /* 0x7 */
+    unsigned char _pad[3];          /* 0x8-0xa */
 };
 
 struct bta_dm_cb_t {
@@ -162,25 +215,33 @@ struct bta_dm_cb_t {
 extern struct bta_dm_cb_t bta_dm_cb;
 
 /* Minimal event payload / helper types used by recovered bodies below. */
+/* BD_NAME_LEN is 0xf8 in the retail Wii-era stack (see tBTA_DM_PIN_REQ: the
+   device class follows the name at 0xfe). */
+#define BTA_DM_BD_NAME_LEN 0xf8
+
+/* tBTA_DM_AUTH_CMPL */
 struct bta_dm_auth_cmpl_t {
-    unsigned char bd_addr[6];
-    unsigned char bd_name[0x20];
-    unsigned char key_type;
-    unsigned char key_present;
-    unsigned char key[0x10];
+    unsigned char bd_addr[6];               /* 0x000 */
+    unsigned char bd_name[BTA_DM_BD_NAME_LEN]; /* 0x006 */
+    unsigned char key_present;              /* 0x0fe */
+    unsigned char key[0x10];                /* 0x0ff */
+    unsigned char key_type;                 /* 0x10f */
 };
 
+/* tBTA_DM_AUTHORIZE */
 struct bta_dm_authorize_t {
-    unsigned char bd_addr[6];
-    unsigned char bd_name[0x20];
-    unsigned char service;
+    unsigned char bd_addr[6];               /* 0x000 */
+    unsigned char bd_name[BTA_DM_BD_NAME_LEN]; /* 0x006 */
+    unsigned char service;                  /* 0x0fe */
 };
 
+/* tBTA_DM_PIN_REQ */
 struct bta_dm_pin_req_t {
-    unsigned char bd_addr[6];
-    unsigned char dev_class[3];
-    unsigned char bd_name[0x21];
-    unsigned char min_16_digit;
+    unsigned char bd_addr[6];               /* 0x000 */
+    unsigned char bd_name[0x20];            /* 0x006 (0xf8 in the union) */
+    unsigned char _pad26[0xd8];             /* 0x026-0x0fd */
+    unsigned char dev_class[3];             /* 0x0fe */
+    unsigned char min_16_digit;             /* 0x101 */
 };
 
 struct bta_dm_sig_strength_t {
@@ -190,16 +251,20 @@ struct bta_dm_sig_strength_t {
     unsigned char link_quality_value;
 };
 
+/* tBTM_RSSI_RESULTS / tBTM_LINK_QUALITY_RESULTS (btm_api.h: status,
+   hci_status, value, rem_bda) */
 struct btm_rssi_results_t {
-    unsigned char status;
-    unsigned char rem_bda[6];
-    signed char rssi;
+    unsigned char status;           /* 0x00 */
+    unsigned char hci_status;       /* 0x01 */
+    signed char rssi;               /* 0x02 */
+    unsigned char rem_bda[6];       /* 0x03 */
 };
 
 struct btm_link_quality_results_t {
-    unsigned char status;
-    unsigned char rem_bda[6];
-    unsigned char link_quality;
+    unsigned char status;           /* 0x00 */
+    unsigned char hci_status;       /* 0x01 */
+    unsigned char link_quality;     /* 0x02 */
+    unsigned char rem_bda[6];       /* 0x03 */
 };
 
 struct bta_dm_compress_srvc_t {
@@ -211,27 +276,31 @@ struct bta_dm_compress_srvc_t {
     unsigned char unk8;
 };
 
+/* tBTA_DM_SEC: union of the security callback payloads (retail size 0x110) */
 union bta_dm_sec_t {
     struct {
         unsigned char bd_addr[6];
         unsigned char reason;
     } acl_change;
     struct bta_dm_pin_req_t pin_req;
-    unsigned char raw[0x40];
+    struct bta_dm_auth_cmpl_t auth_cmpl;
+    unsigned char _pad[0x110];
 };
 
+/* tBTA_DM_CFG (retail field order: policy settings, page timeout, link
+   supervision timeout) */
 struct bta_dm_cfg_t {
-    unsigned char dev_class[3];
-    unsigned short link_timeout;
-    unsigned short page_timeout;
-    unsigned short policy_settings;
+    unsigned char dev_class[3];     /* 0x00 */
+    unsigned short policy_settings; /* 0x04 */
+    unsigned short page_timeout;    /* 0x06 */
+    unsigned short link_timeout;    /* 0x08 */
 };
 
 extern struct bta_dm_cfg_t bta_dm_cfg;
 extern unsigned char bta_dm_conn_srvcs[];
 extern struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
 extern unsigned char bta_security[];
-extern const unsigned char bta_service_id_to_btm_srv_id_lkup_tbl[];
+extern const unsigned int bta_service_id_to_btm_srv_id_lkup_tbl[];
 extern unsigned char *p_bta_dm_rm_cfg;
 extern unsigned char appl_trace_level;
 extern unsigned char bta_sys_cb[];
@@ -241,8 +310,7 @@ extern void LogMsg_1(unsigned short, char *, int);
 extern void *GKI_getpoolbuf(int);
 extern void btsnd_hcic_write_scan_enable(void *, int);
 extern void BTM_SendHciReset(void *);
-extern int BTM_GetNumAclLinks(void);
-extern unsigned char BTM_CancelRemoteDeviceName(void);
+extern unsigned short BTM_GetNumAclLinks(void);
 extern void btm_remove_acl(unsigned char *);
 extern int btm_get_acl_disc_reason_code(void);
 extern unsigned char bta_dm_co_get_compress_memory(unsigned char, unsigned char **, unsigned int *);
@@ -260,17 +328,44 @@ extern void bta_sys_compress_register(void *);
 extern void bta_dm_init_pm(void);
 extern void bta_dm_disable_pm(void);
 extern void L2CA_RegisterCompression(void *, int);
-extern void L2CA_SetIdleTimeoutByBdAddr(unsigned char *, int);
+extern void L2CA_SetIdleTimeoutByBdAddr(const unsigned char *, unsigned short);
 extern void bta_sys_disable(void);
 extern void BTM_SetDiscoverability(int, int, int);
 extern void BTM_SetConnectability(int, int, int);
 extern void WBT_ExtCreateRecord(void);
-extern unsigned char *BT_BD_ANY;
+extern const unsigned char BT_BD_ANY[6];
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
+extern void BTM_SetLocalDeviceName(char *);
+extern unsigned int *btm_read_trusted_mask(unsigned char *);
+extern void BTM_SecBond(unsigned char *, unsigned char, unsigned char *, unsigned int *);
+extern void BTM_PINCodeReply(unsigned char *, unsigned char, unsigned char,
+                             unsigned char *, unsigned int *);
+extern void BTM_DeviceAuthorized(unsigned char *, unsigned char, unsigned int *);
+extern void L2CA_SetIdleTimeout(int, unsigned short, int);
+extern void BTM_ClearInqDb(unsigned char *);
+extern unsigned short BTM_IsInquiryActive(void);
+extern void BTM_CancelInquiry(void);
+extern unsigned char BTM_CancelRemoteDeviceName(void);
+extern void BTM_StartInquiry(void *, void *, void *);
+extern void *BTM_InqDbFirst(void);
+extern void *BTM_InqDbNext(void *);
+extern void *BTM_InqDbRead(unsigned char *);
+extern unsigned char BTM_IsAclConnectionUp(unsigned char *);
+extern unsigned char BTM_SecAddRmtNameNotifyCallback(void *);
+extern int BTM_SecDeleteRmtNameNotifyCallback(void *);
+extern void SDP_InitDiscoveryDb(void *, unsigned int, unsigned short, void *,
+                                unsigned short, unsigned short *);
+extern unsigned char SDP_ServiceSearchAttributeRequest(unsigned char *, void *,
+                                                      void *);
+
+/* Retail (Wii-era) BTM_SEC_MAX_SERVICES is 33..64, so the trusted-mask array
+   is 2 words (the memcpy/memset in the bond/pin/auth paths move 8 bytes). */
+#define BTM_SEC_SERVICE_ARRAY_SIZE 2
+#define BTA_MAX_SERVICE_ID 23
 
 #ifndef BTA_DM_ACL_CHANGE_EVT
-#define BTA_DM_ACL_CHANGE_EVT 0x108
+#define BTA_DM_ACL_CHANGE_EVT 0x105
 #endif
 #ifndef BTA_DM_ACL_CHANGED_EVT
 #define BTA_DM_ACL_CHANGED_EVT 5
@@ -281,11 +376,12 @@ extern void *memcpy(void *, const void *, unsigned long);
 #ifndef BTA_DM_SEARCH_INQ_CMPL_EVT
 #define BTA_DM_SEARCH_INQ_CMPL_EVT 0x203
 #endif
+#define BTA_DM_SEARCH_RESULT_EVT 0x208
 #ifndef BTA_DM_SEARCH_SDP_RES_EVT
 #define BTA_DM_SEARCH_SDP_RES_EVT 0x206
 #endif
 
-void bta_dm_pinname_cback(void *p_data);
+void bta_dm_pinname_cback(struct btm_remote_dev_name_t *p_remote_name);
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle);
 void bta_dm_compress_cback(void);
 void bta_dm_rssi_cback(struct btm_rssi_results_t *p_rssi);
@@ -301,7 +397,6 @@ void *SDP_FindServiceInDb(void *, unsigned short, void *);
 void *SDP_FindAttributeInRec(void *, unsigned short);
 void *BTM_SecReadDevName(unsigned char *);
 int BTM_ReadRemoteDeviceName(unsigned char *, void *);
-int BTM_SecDeleteRmtNameNotifyCallback(void *);
 void bdcpy(unsigned char *, unsigned char *);
 void bta_sys_start_timer(struct bta_dm_timer_t *, unsigned short, int);
 void bta_sys_stop_timer(struct bta_dm_timer_t *);
@@ -311,15 +406,15 @@ int strncpy(char *, const char *, unsigned long);
 void bta_dm_enable(struct bta_dm_msg *p_data);
 void bta_dm_disable(struct bta_dm_msg *p_data);
 void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle);
-int bta_dm_set_dev_name(void);
-void bta_dm_set_visibility(void);
-void bta_dm_bond(void);
-void bta_dm_pin_reply(void);
-void bta_dm_auth_reply(void);
-void bta_dm_search_start(void);
-void bta_dm_search_cancel(void);
-void bta_dm_discover(void);
-void bta_dm_inq_cmpl(void);
+void bta_dm_set_dev_name(struct bta_dm_msg *p_data);
+void bta_dm_set_visibility(struct bta_dm_msg *p_data);
+void bta_dm_bond(struct bta_dm_msg *p_data);
+void bta_dm_pin_reply(struct bta_dm_msg *p_data);
+void bta_dm_auth_reply(struct bta_dm_msg *p_data);
+void bta_dm_search_start(struct bta_dm_msg *p_data);
+void bta_dm_search_cancel(struct bta_dm_msg *p_data);
+void bta_dm_discover(struct bta_dm_msg *p_data);
+void bta_dm_inq_cmpl(struct bta_dm_msg *p_data);
 void bta_dm_rmt_name(struct bta_dm_msg *p_data);
 void bta_dm_disc_rmt_name(struct bta_dm_msg *p_data);
 void bta_dm_sdp_result(struct bta_dm_msg *p_data);
@@ -328,25 +423,26 @@ void bta_dm_disc_result(struct bta_dm_msg *p_data);
 void bta_dm_search_result(struct bta_dm_msg *p_data);
 void bta_dm_search_timer_cback(struct bta_dm_timer_t *t);
 void bta_dm_free_sdp_db();
-void bta_dm_queue_search(void);
-void bta_dm_queue_disc(void);
-void bta_dm_search_clear_queue(void);
-void bta_dm_search_cancel_cmpl(void);
-void bta_dm_search_cancel_transac_cmpl(void);
-void bta_dm_search_cancel_notify(void);
+void bta_dm_queue_search(struct bta_dm_msg *p_data);
+void bta_dm_queue_disc(struct bta_dm_msg *p_data);
+void bta_dm_search_clear_queue(struct bta_dm_msg *p_data);
+void bta_dm_search_cancel_cmpl(struct bta_dm_msg *p_data);
+void bta_dm_search_cancel_transac_cmpl(struct bta_dm_msg *p_data);
+void bta_dm_search_cancel_notify(struct bta_dm_msg *p_data);
 void bta_dm_find_services(unsigned char *bd_addr);
 void bta_dm_discover_next_device(void);
 void bta_dm_sdp_callback(unsigned short status);
-void bta_dm_inq_results_cb(void);
+void bta_dm_inq_results_cb(struct btm_inq_results_t *p_results,
+                           unsigned char *p_eir);
 void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results);
 void bta_dm_service_search_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c);
-void bta_dm_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c);
-void bta_dm_disc_remname_cback(void *p_data);
+void bta_dm_remname_cback(struct btm_remote_dev_name_t *p_remote_name);
+void bta_dm_disc_remname_cback(struct btm_remote_dev_name_t *p_remote_name);
 void bta_dm_cancel_rmt_name(struct bta_dm_msg *p_data);
 int bta_dm_authorize_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                            unsigned char *bd_name, unsigned char *p_service_name,
                            unsigned char service_id, unsigned char is_authorized);
-void bta_dm_pinname_cback(void *p_data);
+void bta_dm_pinname_cback(struct btm_remote_dev_name_t *p_remote_name);
 unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                                unsigned char *bd_name);
 int bta_dm_link_key_request_cback(void);
@@ -372,8 +468,8 @@ unsigned char bta_dm_l2cap_server_compress_cback(
 void bta_dm_compress_cback(void);
 void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
                      bd_addr_t peer_addr);
-void bta_dm_keep_acl(void);
-void bta_dm_immediate_disable(void);
+void bta_dm_keep_acl(struct bta_dm_msg *p_data);
+void bta_dm_immediate_disable(struct bta_dm_msg *p_data);
 void bta_dm_reset_complete(void);
 void bta_dm_send_hci_reset(struct bta_dm_msg *p_data);
 
@@ -444,33 +540,240 @@ void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
     }
 }
 
-int bta_dm_set_dev_name(void) { return 0; }
+void bta_dm_set_dev_name(struct bta_dm_msg *p_data) {
+    BTM_SetLocalDeviceName(p_data->set_name.name);
+}
 
-void bta_dm_set_visibility(void) {}
+void bta_dm_set_visibility(struct bta_dm_msg *p_data) {
+    BTM_SetDiscoverability(p_data->set_visibility.disc_mode, 0, 0);
+    BTM_SetConnectability(p_data->set_visibility.conn_mode, 0, 0);
+}
 
-void bta_dm_bond(void) {}
+void bta_dm_bond(struct bta_dm_msg *p_data) {
+    unsigned int trusted_mask[BTM_SEC_SERVICE_ARRAY_SIZE];
+    unsigned int *current_trusted_mask;
 
-void bta_dm_pin_reply(void) {}
+    current_trusted_mask = btm_read_trusted_mask(p_data->bond.bd_addr);
 
-/* Unique empty stubs for symbols not recovered above. */
-void bta_dm_auth_reply(void) {}
+    if (current_trusted_mask)
+        memcpy(trusted_mask, current_trusted_mask, sizeof(trusted_mask));
+    else
+        memset(trusted_mask, 0, sizeof(trusted_mask));
 
-void bta_dm_search_start(void) {}
+    BTM_SecBond(p_data->bond.bd_addr, p_data->bond.pin_len, p_data->bond.p_pin,
+                trusted_mask);
+}
 
-void bta_dm_search_cancel(void) {}
+void bta_dm_pin_reply(struct bta_dm_msg *p_data) {
+    unsigned int trusted_mask[BTM_SEC_SERVICE_ARRAY_SIZE];
+    unsigned int *current_trusted_mask;
 
-void bta_dm_discover(void) {}
+    current_trusted_mask = btm_read_trusted_mask(p_data->pin_reply.bd_addr);
 
-void bta_dm_inq_cmpl(void) {}
+    if (current_trusted_mask)
+        memcpy(trusted_mask, current_trusted_mask, sizeof(trusted_mask));
+    else
+        memset(trusted_mask, 0, sizeof(trusted_mask));
 
-/* === LOST REGION: original lines ~85-699 ===
-   Contents (per session reads of surrounding context): remainder of the local
-   type definitions block and all functions up to bta_dm_rmt_name. Restore from
-   git. Functions known to live here include (non-exhaustive): bta_dm_enable,
-   bta_dm_disable, bta_dm_set_dev_class, bta_dm_set_name, bta_dm_search,
-   bta_dm_search_cancel, bta_dm_discover, bta_dm_inq_cmpl (partial tail seen),
-   bta_dm_service_search, bta_dm_search_timer_cback region comments, etc.
-   === END LOST REGION === */
+    if (p_data->pin_reply.accept) {
+        BTM_PINCodeReply(p_data->pin_reply.bd_addr, 0, p_data->pin_reply.pin_len,
+                         p_data->pin_reply.p_pin, trusted_mask);
+    } else {
+        BTM_PINCodeReply(p_data->pin_reply.bd_addr, 0xb, 0, NULL, trusted_mask);
+    }
+}
+
+void bta_dm_auth_reply(struct bta_dm_msg *p_data) {
+    unsigned int trusted_mask[BTM_SEC_SERVICE_ARRAY_SIZE];
+    unsigned char btm_mask_index = 0;
+    unsigned int *current_trusted_mask;
+
+    current_trusted_mask = btm_read_trusted_mask(p_data->auth_reply.bd_addr);
+
+    if (current_trusted_mask)
+        memcpy(trusted_mask, current_trusted_mask, sizeof(trusted_mask));
+    else
+        memset(trusted_mask, 0, sizeof(trusted_mask));
+
+    if (p_data->auth_reply.response != 2 /* BTA_DM_NOT_AUTH */) {
+        if (p_data->auth_reply.response == 0 /* BTA_DM_AUTH_PERM */) {
+            if (p_data->auth_reply.service <= BTA_MAX_SERVICE_ID) {
+                /* convert BTA service id to BTM mask */
+                btm_mask_index =
+                    (unsigned char)(bta_service_id_to_btm_srv_id_lkup_tbl
+                                        [p_data->auth_reply.service] /
+                                    32);
+                trusted_mask[btm_mask_index] |= (unsigned int)(
+                    1 << (bta_service_id_to_btm_srv_id_lkup_tbl
+                              [p_data->auth_reply.service] -
+                          (unsigned int)(btm_mask_index * 32)));
+            }
+        }
+        BTM_DeviceAuthorized(p_data->auth_reply.bd_addr, 0, trusted_mask);
+    } else {
+        BTM_DeviceAuthorized(p_data->auth_reply.bd_addr, 0xb, trusted_mask);
+    }
+}
+
+void bta_dm_search_start(struct bta_dm_msg *p_data) {
+    BTM_ClearInqDb(NULL);
+    /* save search params */
+    bta_dm_search_cb.p_search_cback = p_data->search.p_cback;
+    bta_dm_search_cb.services = p_data->search.services;
+
+    BTM_StartInquiry(&p_data->search.inq_params, bta_dm_inq_results_cb,
+                     bta_dm_inq_cmpl_cb);
+}
+
+void bta_dm_search_cancel(struct bta_dm_msg *p_data) {
+    struct bta_dm_buf_t *p_msg;
+
+    BTM_ClearInqDb(NULL);
+
+    if (BTM_IsInquiryActive() != 0) {
+        BTM_CancelInquiry();
+        bta_dm_search_cancel_notify(p_data);
+
+        p_msg = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+        if (p_msg != NULL) {
+            p_msg->event = BTA_DM_SEARCH_DISC_RES_EVT;
+            bta_sys_sendmsg(p_msg);
+        }
+    } else if (bta_dm_search_cb.services == 0) {
+        /* no service search going on: cancel the pending remote name request */
+        BTM_CancelRemoteDeviceName();
+    }
+}
+
+void bta_dm_discover(struct bta_dm_msg *p_data) {
+    struct bta_dm_buf_t *p_buf;
+
+    /* save the search condition */
+    bta_dm_search_cb.p_search_cback = p_data->discover.p_cback;
+    bta_dm_search_cb.services = p_data->discover.services;
+    bta_dm_search_cb.services_cached = bta_dm_search_cb.services;
+    bta_dm_search_cb.services_index = 0;
+    bta_dm_search_cb.services_found = 0;
+    bta_dm_search_cb.peer_name[0] = 0;
+    BTM_SecAddRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
+    bdcpy(bta_dm_search_cb.disc_bd_addr, p_data->discover.bd_addr);
+
+    if (bta_dm_search_cb.services != 0) {
+        bta_dm_find_services(bta_dm_search_cb.disc_bd_addr);
+    } else {
+        if (btm_cb.page_timeout < 0x7530) {
+            bta_sys_start_timer(&bta_dm_search_cb.svc_timer, 0x205,
+                                btm_cb.page_timeout + 0x64);
+        }
+
+        if ((unsigned char)BTM_ReadRemoteDeviceName(
+                bta_dm_search_cb.disc_bd_addr,
+                (void *)bta_dm_disc_remname_cback) == 1) {
+            return;
+        }
+
+        bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
+        p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+        if (p_buf != NULL) {
+            bdcpy(p_buf->data, bta_dm_search_cb.disc_bd_addr);
+            p_buf->data[6] = 0;
+            p_buf->event = BTA_DM_REMT_NAME_EVT;
+            bta_sys_sendmsg(p_buf);
+        }
+    }
+}
+
+void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
+    struct bta_dm_disc_res_t disc_res;
+    struct bta_dm_inq_cmpl_res_t inq_cmpl;
+    struct bta_dm_buf_t *p_msg;
+    unsigned char found = 1;
+
+    if ((bta_dm_search_cb.p_cur = (struct btm_inq_info_t *)BTM_InqDbFirst()) != NULL) {
+        found = 0;
+
+        if (bta_dm_search_cb.services != 0) {
+            if (BTM_IsAclConnectionUp(bta_dm_search_cb.p_cur->results.remote_bd_addr) != 0) {
+                bta_dm_search_cb.search_disc_active = 0;
+            } else {
+                bta_dm_search_cb.search_disc_active = 1;
+            }
+            bta_dm_search_cb.search_timer_active = 0;
+            BTM_SecAddRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
+            bta_dm_search_cb.services_index = 0;
+            bta_dm_search_cb.services_found = 0;
+            bta_dm_search_cb.services_cached = bta_dm_search_cb.services;
+            bta_dm_search_cb.peer_name[0] = 0;
+            bdcpy(bta_dm_search_cb.disc_bd_addr,
+                  bta_dm_search_cb.p_cur->results.remote_bd_addr);
+            bta_dm_find_services(
+                bta_dm_search_cb.p_cur->results.remote_bd_addr);
+        } else {
+            found = 1;
+
+            while (bta_dm_search_cb.p_cur != NULL) {
+                if (bta_dm_search_cb.p_cur->appl_knows_rem_name != 0) {
+                    bdcpy(disc_res.bd_addr,
+                          bta_dm_search_cb.p_cur->results.remote_bd_addr);
+                    disc_res.bd_name[0] = 0;
+                    disc_res.services = 0;
+                    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, &disc_res);
+                    bta_dm_search_cb.p_cur =
+                        (struct btm_inq_info_t *)BTM_InqDbNext(bta_dm_search_cb.p_cur);
+                } else {
+                    if (btm_cb.page_timeout < 0x7530) {
+                        bta_sys_start_timer(&bta_dm_search_cb.svc_timer, 0x205,
+                                            btm_cb.page_timeout + 0x64);
+                    }
+                    if ((unsigned char)BTM_ReadRemoteDeviceName(
+                            bta_dm_search_cb.p_cur->results.remote_bd_addr,
+                            (void *)bta_dm_remname_cback) != 1) {
+                        unsigned char *p_rem_addr;
+
+                        bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
+                        p_rem_addr =
+                            bta_dm_search_cb.p_cur->results.remote_bd_addr;
+                        p_msg = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+                        if (p_msg != NULL) {
+                            bdcpy(p_msg->data, p_rem_addr);
+                            p_msg->data[6] = 0;
+                            p_msg->event = BTA_DM_REMT_NAME_EVT;
+                            bta_sys_sendmsg(p_msg);
+                        }
+                    }
+                    found = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (found != 0) {
+        /* no more devices to discover: report search complete */
+        bta_dm_search_cb.services = 0;
+
+        p_msg = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+        if (p_msg != NULL) {
+            p_msg->event = BTA_DM_SEARCH_DISC_RES_EVT;
+            bta_sys_sendmsg(p_msg);
+        }
+    }
+
+    /* NOTE(residual): retail's frame reserves ~0x100 bytes more stack than
+       any local we can identify, so its disc-result local sits at sp+8 while
+       ours lands at sp+0x10; every field offset matches. */
+    inq_cmpl.num_resps = p_data->inq_cmpl.num;
+    bta_dm_search_cb.p_search_cback(BTA_DM_INQ_CMPL_EVT, &inq_cmpl);
+}
+
+/* Search-machine and API handlers below: enable/disable, the name and
+   visibility setters, bond/pin/auth replies, search start/cancel, discover,
+   the inquiry-complete walk and the search timer.  Message payload layouts
+   come from bta_dm_int.h; the callback payloads (tBTA_DM_SEARCH /
+   tBTA_DM_SEC) are laid out locally because the Wii-era BD_NAME_LEN (0xf8)
+   differs from the AOSP header, and the disc result's service mask is
+   4-aligned to 0x100 after the name.
+   The .sdata2 attribute pair used by find_services is not reproduced yet. */
 
 /* --- Verbatim-recovered functions (session transcript) --- */
 
@@ -480,14 +783,14 @@ void bta_dm_inq_cmpl(void) {}
    this message's device to the app. */
 void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
     unsigned char found = 1;
-    struct bta_dm_disc_res_local_t disc_res;
-    unsigned char *p_rem_addr;
+    struct bta_dm_disc_res_t disc_res;
     struct bta_dm_buf_t *p_buf;
 
-    while ((bta_dm_search_cb.p_cur = (void *)BTM_InqDbNext(bta_dm_search_cb.p_cur)) != NULL) {
-        if (((unsigned char *)bta_dm_search_cb.p_cur)[0x10] != 0) {
-            bdcpy(disc_res.bd_addr, (unsigned char *)bta_dm_search_cb.p_cur + 2);
-            disc_res.result = 0;
+    while ((bta_dm_search_cb.p_cur =
+                (struct btm_inq_info_t *)BTM_InqDbNext(bta_dm_search_cb.p_cur)) != NULL) {
+        if (bta_dm_search_cb.p_cur->appl_knows_rem_name != 0) {
+            bdcpy(disc_res.bd_addr, bta_dm_search_cb.p_cur->results.remote_bd_addr);
+            disc_res.bd_name[0] = 0;
             disc_res.services = 0;
             bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, &disc_res);
         } else {
@@ -495,20 +798,19 @@ void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
                 bta_sys_start_timer(&bta_dm_search_cb.svc_timer, 0x205,
                                     btm_cb.page_timeout + 0x64);
             }
-            if (BTM_ReadRemoteDeviceName((unsigned char *)bta_dm_search_cb.p_cur + 2,
-                                         (void *)bta_dm_remname_cback) != 1) {
-                bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
-                {
-                    p_rem_addr = (unsigned char *)bta_dm_search_cb.p_cur + 2;
+            if ((unsigned char)BTM_ReadRemoteDeviceName(
+                    bta_dm_search_cb.p_cur->results.remote_bd_addr,
+                    (void *)bta_dm_remname_cback) != 1) {
+                unsigned char *p_rem_addr;
 
-                    p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
-                    if (p_buf != NULL) {
-                        /* remote BD_ADDR copied into the message payload */
-                        bdcpy(p_buf->data + 4, p_rem_addr);
-                        p_buf->data[0xa] = 0;
-                        p_buf->event = BTA_DM_REMT_NAME_EVT;
-                        bta_sys_sendmsg(p_buf);
-                    }
+                bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
+                p_rem_addr = bta_dm_search_cb.p_cur->results.remote_bd_addr;
+                p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+                if (p_buf != NULL) {
+                    bdcpy(p_buf->data, p_rem_addr);
+                    p_buf->data[6] = 0;
+                    p_buf->event = BTA_DM_REMT_NAME_EVT;
+                    bta_sys_sendmsg(p_buf);
                 }
             }
             found = 0;
@@ -588,7 +890,7 @@ void bta_dm_sdp_result(struct bta_dm_msg *p_data) {
         BTM_SecDeleteRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
         p_msg = (struct bta_dm_disc_msg_t *)GKI_getbuf(0x110);
         if (p_msg != NULL) {
-            ((struct bta_dm_buf_t *)p_msg)->event = BTA_DM_SEARCH_CMPL_EVT;
+            ((struct bta_dm_buf_t *)p_msg)->event = BTA_DM_SEARCH_RESULT_EVT;
             p_msg->result = 0;
             p_msg->services = bta_dm_search_cb.services_found;
             bdcpy(p_msg->bd_addr, bta_dm_search_cb.disc_bd_addr);
@@ -613,7 +915,7 @@ void bta_dm_sdp_result(struct bta_dm_msg *p_data) {
         BTM_SecDeleteRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
         p_msg = (struct bta_dm_disc_msg_t *)GKI_getbuf(0x110);
         if (p_msg != NULL) {
-            ((struct bta_dm_buf_t *)p_msg)->event = BTA_DM_SEARCH_CMPL_EVT;
+            ((struct bta_dm_buf_t *)p_msg)->event = BTA_DM_SEARCH_RESULT_EVT;
             p_msg->result = 1;
             p_msg->services = bta_dm_search_cb.services_found;
             bdcpy(p_msg->bd_addr, bta_dm_search_cb.disc_bd_addr);
@@ -655,6 +957,7 @@ void bta_dm_search_result(struct bta_dm_msg *p_data) {
                                         p_data->disc.bd_addr);
     }
     if (bta_dm_search_cb.search_disc_active == 0) {
+        bta_dm_search_cb.search_disc_active = 0;
         bta_dm_discover_next_device();
     } else {
         bta_dm_search_cb.search_timer_active = 1;
@@ -663,7 +966,12 @@ void bta_dm_search_result(struct bta_dm_msg *p_data) {
     }
 }
 
-void bta_dm_search_timer_cback(struct bta_dm_timer_t *t) { (void)t; }
+void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_search_timer_cback  ");
+    bta_dm_search_cb.search_disc_active = 0;
+    bta_dm_discover_next_device();
+}
 
 /* Free the SDP database buffer if it exists */
 void bta_dm_free_sdp_db() {
@@ -673,21 +981,148 @@ void bta_dm_free_sdp_db() {
     }
 }
 
-void bta_dm_queue_search(void) {}
+void bta_dm_queue_search(struct bta_dm_msg *p_data) {
+    bta_dm_search_cb.p_search_queue = GKI_getbuf(0x1c);
+    memcpy(bta_dm_search_cb.p_search_queue, p_data, 0x1c);
+}
 
-void bta_dm_queue_disc(void) {}
+void bta_dm_queue_disc(struct bta_dm_msg *p_data) {
+    bta_dm_search_cb.p_search_queue = GKI_getbuf(0x18);
+    memcpy(bta_dm_search_cb.p_search_queue, p_data, 0x18);
+}
 
-void bta_dm_search_clear_queue(void) {}
+void bta_dm_search_clear_queue(struct bta_dm_msg *p_data) {
+    if (bta_dm_search_cb.p_search_queue != NULL) {
+        GKI_freebuf(bta_dm_search_cb.p_search_queue);
+        bta_dm_search_cb.p_search_queue = NULL;
+    }
+}
 
-void bta_dm_search_cancel_cmpl(void) {}
+void bta_dm_search_cancel_cmpl(struct bta_dm_msg *p_data) {
+    if (bta_dm_search_cb.p_search_queue != NULL) {
+        bta_sys_sendmsg(bta_dm_search_cb.p_search_queue);
+        bta_dm_search_cb.p_search_queue = NULL;
+    }
+}
 
-void bta_dm_search_cancel_transac_cmpl(void) {}
+void bta_dm_search_cancel_transac_cmpl(struct bta_dm_msg *p_data) {
+    if (bta_dm_search_cb.p_sdp_db != NULL) {
+        GKI_freebuf(bta_dm_search_cb.p_sdp_db);
+        bta_dm_search_cb.p_sdp_db = NULL;
+    }
+    bta_dm_search_cb.p_search_cback(4, NULL);
+}
 
-void bta_dm_search_cancel_notify(void) {}
+void bta_dm_search_cancel_notify(struct bta_dm_msg *p_data) {
+    bta_dm_search_cb.p_search_cback(4, NULL);
+}
 
-void bta_dm_find_services(unsigned char *bd_addr) { (void)bd_addr; }
+/* SDP attribute IDs requested for every service (retail .sdata2 pair) */
+const unsigned short bta_dm_sdp_attr_protocol_desc_list = 0x0001;
+const unsigned short bta_dm_sdp_attr_unknown_8001 = 0x8001;
 
-void bta_dm_discover_next_device(void) {}
+void bta_dm_find_services(unsigned char *bd_addr) {
+    struct bta_dm_disc_msg_t *p_msg;
+    struct bta_dm_uuid_t uuid;
+    unsigned short attr_list[2];
+    unsigned short num_attr;
+    unsigned char *p_name;
+
+    attr_list[0] = bta_dm_sdp_attr_protocol_desc_list;
+    attr_list[1] = bta_dm_sdp_attr_unknown_8001;
+    num_attr = 1;
+
+    while (bta_dm_search_cb.services_index < 23) {
+        if ((bta_dm_search_cb.services_cached &
+             (1 << bta_dm_search_cb.services_index)) == 0) {
+            bta_dm_search_cb.services_index++;
+            continue;
+        }
+
+        bta_dm_search_cb.p_sdp_db = GKI_getbuf(250);
+        if (bta_dm_search_cb.p_sdp_db == NULL) {
+            bta_dm_search_cb.services_index++;
+            continue;
+        }
+
+        uuid.uu.uuid16 =
+            bta_service_id_to_uuid_lkup_tbl[bta_dm_search_cb.services_index];
+        bta_dm_search_cb.services_cached &=
+            ~(1 << bta_dm_search_cb.services_index);
+
+        if (uuid.uu.uuid16 == 0x1200) {
+            num_attr = 2;
+        }
+        uuid.len = 2;
+
+        SDP_InitDiscoveryDb(bta_dm_search_cb.p_sdp_db, 250, 1, &uuid, num_attr,
+                            attr_list);
+
+        if (SDP_ServiceSearchAttributeRequest(bd_addr,
+                                              bta_dm_search_cb.p_sdp_db,
+                                              bta_dm_sdp_callback) == 0) {
+            /* request failed: drop the db and give up on this search */
+            GKI_freebuf(bta_dm_search_cb.p_sdp_db);
+            bta_dm_search_cb.p_sdp_db = NULL;
+            bta_dm_search_cb.services_index = 23;
+            bta_dm_search_cb.services_index++;
+            continue;
+        }
+
+        bta_dm_search_cb.services_index++;
+        return;
+    }
+
+    p_msg = (struct bta_dm_disc_msg_t *)GKI_getbuf(0x110);
+    if (p_msg != NULL) {
+        p_msg->hdr.event = BTA_DM_SEARCH_RESULT_EVT;
+        p_msg->services = bta_dm_search_cb.services_found;
+        bdcpy(p_msg->bd_addr, bta_dm_search_cb.disc_bd_addr);
+
+        p_name = (unsigned char *)bta_dm_search_cb.peer_name;
+        if (bta_dm_search_cb.peer_name[0] == 0) {
+            unsigned char *p_sec_name;
+
+            p_sec_name = (unsigned char *)BTM_SecReadDevName(
+                bta_dm_search_cb.disc_bd_addr);
+            if (p_sec_name != NULL) {
+                p_name = p_sec_name;
+            }
+        }
+        strncpy((char *)p_msg->bd_name, (const char *)p_name, 0x20);
+        bta_sys_sendmsg(p_msg);
+    }
+}
+
+void bta_dm_discover_next_device(void) {
+    struct bta_dm_buf_t *p_msg;
+
+    if ((bta_dm_search_cb.p_cur = (struct btm_inq_info_t *)BTM_InqDbNext(
+             bta_dm_search_cb.p_cur)) != NULL) {
+        if (BTM_IsAclConnectionUp(bta_dm_search_cb.p_cur->results.remote_bd_addr) != 0) {
+            bta_dm_search_cb.search_disc_active = 0;
+        } else {
+            bta_dm_search_cb.search_disc_active = 1;
+        }
+        bta_dm_search_cb.search_timer_active = 0;
+        BTM_SecAddRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
+        bta_dm_search_cb.services_index = 0;
+        bta_dm_search_cb.services_found = 0;
+        bta_dm_search_cb.peer_name[0] = 0;
+        bta_dm_search_cb.services_cached = bta_dm_search_cb.services;
+        bdcpy(bta_dm_search_cb.disc_bd_addr,
+              bta_dm_search_cb.p_cur->results.remote_bd_addr);
+        bta_dm_find_services(bta_dm_search_cb.p_cur->results.remote_bd_addr);
+    } else {
+        bta_dm_search_cb.services = 0;
+
+        p_msg = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+        if (p_msg != NULL) {
+            p_msg->event = BTA_DM_SEARCH_DISC_RES_EVT;
+            bta_sys_sendmsg(p_msg);
+        }
+    }
+}
 
 // from commit 0183f60318bf needle=bta_dm_sdp_callback
 /* SDP discovery complete callback: forwards the status to the search state
@@ -703,7 +1138,26 @@ void bta_dm_sdp_callback(unsigned short status) {
     }
 }
 
-void bta_dm_inq_results_cb(void) {}
+void bta_dm_inq_results_cb(struct btm_inq_results_t *p_results,
+                           unsigned char *p_eir) {
+    union bta_dm_search_t data;
+    struct btm_inq_info_t *p_info;
+
+    bdcpy(data.inq_res.bd_addr, p_results->remote_bd_addr);
+    memcpy(data.inq_res.dev_class, p_results->dev_class, 3);
+    data.inq_res.rssi = p_results->rssi;
+
+    p_info = (struct btm_inq_info_t *)BTM_InqDbRead(p_results->remote_bd_addr);
+    if (p_info != NULL) {
+        data.inq_res.device_type = 0;
+    }
+
+    bta_dm_search_cb.p_search_cback(BTA_DM_INQ_RES_EVT, &data);
+
+    if (p_info != NULL) {
+        p_info->appl_knows_rem_name = data.inq_res.device_type;
+    }
+}
 
 // from commit 702909a6fbbd needle=bta_dm_inq_cmpl_cb
 /* Inquiry complete callback: forwards the number of responses to the search
@@ -719,24 +1173,39 @@ void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results) {
     }
 }
 
-void bta_dm_service_search_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c) {
-    (void)a; (void)b; (void)c;
+void bta_dm_service_search_remname_cback(bd_addr_t bd_addr,
+                                         unsigned char *dev_class,
+                                         unsigned char *bd_name) {
+    strncpy(bta_dm_search_cb.peer_name, (const char *)bd_name, 0x1f);
+    BTM_SecDeleteRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
 }
 
-void bta_dm_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c) {
-    (void)a; (void)b; (void)c;
+void bta_dm_remname_cback(struct btm_remote_dev_name_t *p_remote_name) {
+    struct bta_dm_buf_t *p_msg;
+
+    bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
+
+    p_msg = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+    if (p_msg != NULL) {
+        bdcpy(p_msg->data, bta_dm_search_cb.p_cur->results.remote_bd_addr);
+        strncpy((char *)p_msg->data + 6,
+                (const char *)p_remote_name->remote_bd_name, 0x20);
+        p_msg->event = BTA_DM_REMT_NAME_EVT;
+        bta_sys_sendmsg(p_msg);
+    }
 }
 // from commit 95ad18ac12e1 needle=bta_dm_disc_remname_cback
 /* Remote name request complete during a discovery: same as above but the
    address comes from the discovery control block. */
-void bta_dm_disc_remname_cback(void *p_data) {
+void bta_dm_disc_remname_cback(struct btm_remote_dev_name_t *p_remote_name) {
     struct bta_dm_buf_t *p_buf;
 
     bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
     p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
     if (p_buf != NULL) {
-        bdcpy(p_buf->data + 4, bta_dm_search_cb.disc_bd_addr);
-        strncpy((char *)p_buf->data + 0xa, (const char *)p_data + 4, 0x20);
+        bdcpy(p_buf->data, bta_dm_search_cb.disc_bd_addr);
+        strncpy((char *)p_buf->data + 6,
+                (const char *)p_remote_name->remote_bd_name, 0x20);
         p_buf->event = BTA_DM_REMT_NAME_EVT;
         bta_sys_sendmsg(p_buf);
     }
@@ -772,17 +1241,17 @@ int bta_dm_authorize_cback(bd_addr_t bd_addr, unsigned char *dev_class,
 // from commit 95ad18ac12e1 needle=bta_dm_pinname_cback
 /* Target: us-802e2ce4 (0xc0): PIN request remote-name callback. Builds a
    tBTA_DM_PIN_REQ from the stored pin bd addr/class and the name buffer. */
-void bta_dm_pinname_cback(void *p_data) {
+void bta_dm_pinname_cback(struct btm_remote_dev_name_t *p_remote_name) {
     struct bta_dm_pin_req_t pin_req;
-    struct bta_dm_buf_t *p_buf = (struct bta_dm_buf_t *)p_data;
 
     bdcpy(pin_req.bd_addr, bta_dm_cb.pin_bd_addr);
     pin_req.dev_class[0] = bta_dm_cb.pin_dev_class[0];
     pin_req.dev_class[1] = bta_dm_cb.pin_dev_class[1];
     pin_req.dev_class[2] = bta_dm_cb.pin_dev_class[2];
 
-    if (p_buf != NULL && p_buf->event == 0) {
-        memcpy(pin_req.bd_name, p_buf->data, (p_buf->len < 0x20) ? p_buf->len : 0x20);
+    if (p_remote_name != NULL && p_remote_name->status == 0) {
+        memcpy(pin_req.bd_name, p_remote_name->remote_bd_name,
+               (p_remote_name->length < 0x20) ? p_remote_name->length : 0x20);
         pin_req.bd_name[0x20] = 0;
     } else {
         pin_req.bd_name[0] = 0;
@@ -804,7 +1273,8 @@ unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
         bta_dm_cb.pin_dev_class[0] = dev_class[0];
         bta_dm_cb.pin_dev_class[1] = dev_class[1];
         bta_dm_cb.pin_dev_class[2] = dev_class[2];
-        if (BTM_ReadRemoteDeviceName(bd_addr, (void *)bta_dm_pinname_cback) == 1) {
+        if ((unsigned char)BTM_ReadRemoteDeviceName(
+                bd_addr, (void *)bta_dm_pinname_cback) == 1) {
             return 1;
         }
         if (appl_trace_level >= 2)
@@ -906,14 +1376,14 @@ void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle) {
    with the changed address and add/remove flag. */
 void bta_dm_acl_change_cback(bd_addr_t bd_addr, unsigned char *p_dc, unsigned char *p_bdn,
                              unsigned char *p_features, unsigned char is_new) {
-    struct bta_dm_buf_t *p_buf;
+    struct bta_dm_acl_change_msg_t *p_msg;
 
-    p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x12);
-    if (p_buf != NULL) {
-        bdcpy(p_buf->data + 7, bd_addr);
-        p_buf->data[6] = is_new;
-        p_buf->event = BTA_DM_ACL_CHANGE_EVT;
-        bta_sys_sendmsg(p_buf);
+    p_msg = (struct bta_dm_acl_change_msg_t *)GKI_getbuf(0x12);
+    if (p_msg != NULL) {
+        bdcpy(p_msg->bd_addr, bd_addr);
+        p_msg->is_new = is_new;
+        p_msg->hdr.event = BTA_DM_ACL_CHANGE_EVT;
+        bta_sys_sendmsg(p_msg);
     }
 }
 // --- restored from git history (base:gone repo-search) ---
@@ -975,12 +1445,12 @@ void bta_dm_acl_change(struct bta_dm_msg *p_data) {
         bta_dm_cb.cback(BTA_DM_ACL_DOWN_EVT, &sec_event);
     }
 }
-/* === LOST REGION: original lines ~900-1608 ===
-   All remaining functions of the unit (queue helpers, API handlers,
-   bta_dm_find_services, bta_dm_inq_cmpl, bta_dm_acl_change,
-   bta_dm_compress_cback, bta_dm_check_cback, timers, etc.). Restore from git.
-   Note: bta_dm_find_services (us-802e2720) and bta_dm_acl_change
-   (us-802e31c4) were FULL_MATCH; their exact source text is critical.
+/* The remainder of the unit: BTM callback adapters (pin/name/key/auth),
+   ACL change, RSSI and link quality, the SDP walk (find_services) and the
+   role-management / compression hooks.  bta_dm_compress_cback is still a
+   stub: its BTA compression state machine was never recovered.  The rest
+   match the retail instruction stream, with any residual register-colour
+   differences recorded per function.
    === END LOST REGION === */
 
 // --- restored from git history (base:gone); do not expand beyond these functions ---
@@ -1041,6 +1511,10 @@ unsigned char bta_dm_l2cap_server_compress_cback(
     }
     return result;
 }
+/* NOTE(unrecovered): retail's 0x238-byte BTA compression state machine (open/
+   close of the L2CAP compression channel per app id) is not reconstructed yet;
+   this stub also accounts for the .data (0x79 bytes of trace strings) and the
+   .sdata2 attribute pair still missing from the unit's data sections. */
 void bta_dm_compress_cback(void) {}
 // from commit 95ad18ac12e1 needle=bta_dm_rm_cback
 /* Role-management callback: update peer policy from the RM config table. */
@@ -1074,8 +1548,20 @@ void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
         }
     }
 }
-void bta_dm_keep_acl(void) {}
-void bta_dm_immediate_disable(void) {}
+void bta_dm_keep_acl(struct bta_dm_msg *p_data) {
+    bta_dm_cb.keep_acl = (unsigned char)p_data->hdr.layer_specific;
+
+    if (bta_dm_cb.keep_acl != 0) {
+        L2CA_SetIdleTimeoutByBdAddr(BT_BD_ANY, 0xffff);
+        L2CA_SetIdleTimeout(0, 0xffff, 1);
+    } else {
+        L2CA_SetIdleTimeoutByBdAddr(BT_BD_ANY, 2);
+        L2CA_SetIdleTimeout(0, 2, 1);
+    }
+}
+void bta_dm_immediate_disable(struct bta_dm_msg *p_data) {
+    bta_dm_cb.cback(1, NULL);
+}
 // from commit 702909a6fbbd needle=bta_dm_reset_complete
 
 void bta_dm_reset_complete(void) {}
@@ -1100,13 +1586,31 @@ const unsigned short bta_service_id_to_uuid_lkup_tbl[24] = {
     0x1106, 0x1109, 0x1110, 0x1104, 0x1118, 0x111b, 0x1115, 0x1116,
     0x1117, 0x112d, 0x110b, 0x110e, 0x1124, 0x1304, 0x112f, 0x0000,
 };
-const unsigned char bta_service_id_to_btm_srv_id_lkup_tbl[96] = {
-    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 11,
-    0, 0, 0, 2, 0, 0, 0, 12, 0, 0, 0, 29, 0, 0, 0, 6,
-    0, 0, 0, 7, 0, 0, 0, 9, 0, 0, 0, 10, 0, 0, 0, 4,
-    0, 0, 0, 22, 0, 0, 0, 35, 0, 0, 0, 25, 0, 0, 0, 27,
-    0, 0, 0, 26, 0, 0, 0, 40, 0, 0, 0, 37, 0, 0, 0, 39,
-    0, 0, 0, 32, 0, 0, 0, 37, 0, 0, 0, 44, 0, 0, 0, 0,
+const unsigned int bta_service_id_to_btm_srv_id_lkup_tbl[24] = {
+    0x00000000,
+    0x00000001,
+    0x00000003,
+    0x0000000b,
+    0x00000002,
+    0x0000000c,
+    0x0000001d,
+    0x00000006,
+    0x00000007,
+    0x00000009,
+    0x0000000a,
+    0x00000004,
+    0x00000016,
+    0x00000023,
+    0x00000019,
+    0x0000001b,
+    0x0000001a,
+    0x00000028,
+    0x00000025,
+    0x00000027,
+    0x00000020,
+    0x00000025,
+    0x0000002c,
+    0x00000000,
 };
 // All-zero const aggregates migrate to .sbss2; the non-const zero array
 // honours declspec and stays in .rodata (CCharVoice lbl_eu_805106D4 recipe).

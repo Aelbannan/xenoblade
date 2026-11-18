@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+class UnkClass_8045F564;
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CCollepedia.hpp"
 #include <revolution/tpl/TPL.h>
@@ -11,7 +14,6 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
@@ -922,7 +924,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
         clpEnterDetail(this_);
         break;
     case 9:
-        if (CSysWin_isActive(&this_->field_9C)) {
+        if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) {
             this_->field_49 = 0xA;
         }
         break;
@@ -935,7 +937,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
         clpOpenComplete(this_);
         break;
     case 13:
-        if (CSysWin_isActive(&this_->field_9C)) {
+        if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) {
             this_->field_49 = 0xE;
         }
         break;
@@ -952,12 +954,12 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     }
 
     this_->field_38->Animate(0);
-    Cur_Update(&this_->field_54);
+    ((CBaseCur*)&this_->field_54[0])->Update();
     clpCurAnimate(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18])); // +0x6c
-    sysWinDispatchPhase(&this_->field_9C);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->dispatchPhase();
     // Retail calls the second page's state machine with the +0x28EC sub-object
     clpUpdPgState(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-    Cur_Update(&this_->field_54[0x30]); // +0x84
+    ((CBaseCur*)&this_->field_54[0x30])->Update(); // +0x84
 }
 
 // us-80256da0
@@ -974,9 +976,9 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
         drawLayout(this_->field_28F0, drawInfo, 0, 1);
     }
     
-    Cur_DrawLayout((CBaseCur*)&this_->field_54[0], drawInfo);
-    sysWinDrawLayout(&this_->field_9C, drawInfo);
-    Cur_DrawLayout((CBaseCur*)&this_->field_54[0x30], drawInfo);
+    ((CBaseCur*)(&this_->field_54[0]))->DrawLayout(drawInfo);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    ((CBaseCur*)(&this_->field_54[0x30]))->DrawLayout(drawInfo);
 }
 
 // us-80256e40
@@ -1015,13 +1017,13 @@ void clpFreeAllRes(CCollepedia* this_) {
     ((CBaseCur*)&this_->field_54[0])->cleanup();
 
     clpCurCleanup(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18]));
-    sysWinTermLayout(&this_->field_9C);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->termLayout();
 
     ((CBaseCur*)&this_->field_54[0x30])->cleanup();
 }
 
 extern "C" u8 clpWinIsReady(CCollepedia* self) {
-    if (CSysWin_isReady(&self->field_9C)) {
+    if (reinterpret_cast<CSysWin*>(&self->field_9C)->isReady()) {
         return self->field_50;
     }
     return 0;
@@ -1052,13 +1054,13 @@ extern "C" void clpBeginOpenS(u8* p) {
 // Close the collepedia detail view: set state, reset sub-object, disable animations, enable outro, play sound
 void clpReqCloseVw(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
-    if (!CSysWin_isActive(&this_->field_9C)) return;
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (!reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
     if (this_->field_49 != 3) return;
 
     this_->field_49 = 4;
     this_->field_51 = 0;
-    Cur_SetVisible(&this_->field_54, 0);
+    ((CBaseCur*)&this_->field_54[0])->SetVisible(0);
 
     this_->field_38->SetAnimationEnable(this_->field_44, false);
     this_->field_38->SetAnimationEnable(this_->field_3C, false);
@@ -1072,7 +1074,7 @@ void clpReqCloseVw(CCollepedia* this_) {
 // us-802570a0
 // Decrement timer counters (field_DA or field_D9) with wrapping, update display, schedule event
 void clpCursorLeft(CCollepedia* this_) {
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     if (this_->field_28FA != 0) {
         if (this_->field_28F9 == 0) return;
@@ -1104,7 +1106,7 @@ void clpCursorLeft(CCollepedia* this_) {
 // us-80257168
 // Increment timer-based navigation: increment field_DA with wrap, or advance field_D9 and update display
 void clpCursorRght(CCollepedia* this_) {
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     if (this_->field_28FA != 0) {
         if (this_->field_28F9 == 0) return;
@@ -1133,7 +1135,7 @@ void clpCursorRght(CCollepedia* this_) {
 void clpCursorUp(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
     if (this_->field_28FA != 0) return;
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     u8 d8 = this_->field_D8;
     if ((s8)d8 == 0) {
@@ -1159,7 +1161,7 @@ void clpCursorUp(CCollepedia* this_) {
 void clpCursorDown(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
     if (this_->field_28FA != 0) return;
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     if ((s8)this_->field_D8 == 4) {
         clpNextCatPg(this_);
@@ -1186,7 +1188,7 @@ void clpCursorDown(CCollepedia* this_) {
 extern "C" void clpNextCatPg(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
     if (this_->field_28FA != 0) return;
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     clpNextPageIx(&this_->field_E8);
     u32 count = func_80254144(&this_->field_E8) & 0xFF;
@@ -1210,7 +1212,7 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
 extern "C" void clpPrevCatPg(CCollepedia* this_) {
     if (this_->field_49 != 3) return;
     if (this_->field_28FA != 0) return;
-    if (CSysWin_getUnk34(&this_->field_9C)) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
     clpPrevPageIx(&this_->field_E8);
     int count = (int)func_80254144(&this_->field_E8) & 0xFF;
@@ -1237,8 +1239,8 @@ void clpOnCancel(CCollepedia* this_) {
     if (state == 0xF) return;
     if (state == 0x10) return;
 
-    if (CSysWin_getUnk34(&this_->field_9C) != 0) {
-        if (CSysWin_isActive(&this_->field_9C) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive() == 0) return;
         s32 cur = this_->field_49;
         switch (cur) {
         case 0xA:
@@ -1248,7 +1250,7 @@ void clpOnCancel(CCollepedia* this_) {
             this_->field_49 = 0xF;
             break;
         }
-        sysWinAdvancePhase3(&this_->field_9C);
+        reinterpret_cast<CSysWin*>(&this_->field_9C)->advancePhase3();
         return;
     }
 
@@ -1257,7 +1259,7 @@ void clpOnCancel(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
 
     clpCloseDetPg(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-    Cur_SetVisible(&this_->field_54[0x30], 0);
+    ((CBaseCur*)&this_->field_54[0x30])->SetVisible(0);
     this_->field_49 = 8;
     this_->field_51 = 0;
     playUISound(6);
@@ -1275,8 +1277,8 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     if (state == 0xF) return;
     if (state == 0x10) return;
 
-    if (CSysWin_getUnk34(&this_->field_9C)) {
-        if (CSysWin_isActive(&this_->field_9C) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive() == 0) return;
         // Two-case switch: MWCC branches forward to the grouped case bodies
         switch (this_->field_49) {
         case 0xA:
@@ -1286,7 +1288,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
             this_->field_49 = 0xF;
             break;
         }
-        sysWinAdvancePhase3(&this_->field_9C);
+        reinterpret_cast<CSysWin*>(&this_->field_9C)->advancePhase3();
         return;
     }
 
@@ -1320,7 +1322,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
         }
 
         clpCloseDetPg(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-        Cur_SetVisible(&this_->field_54[0x30], 0);
+        ((CBaseCur*)&this_->field_54[0x30])->SetVisible(0);
         this_->field_49 = 8;
         this_->field_51 = 0;
         return;
@@ -1345,7 +1347,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     clpOpenDetail(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
 
     this_->field_DA = 0;
-    Cur_SetVisible(&this_->field_54, 0);
+    ((CBaseCur*)&this_->field_54[0])->SetVisible(0);
     this_->field_49 = 6;
     this_->field_51 = 0;
     playUISound(3);
@@ -1356,7 +1358,7 @@ void clpCanClaim(CCollepediaFull* self) {
 }
 
 extern "C" u8 clpIsOverlay(CCollepedia* self) {
-    if (CSysWin_getUnk34(&self->field_9C)) {
+    if (reinterpret_cast<CSysWin*>(&self->field_9C)->isOpened()) {
         return 1;
     }
     return self->field_28FA;
@@ -1367,7 +1369,7 @@ extern "C" u32 clpIsBusy(CCollepedia* this_) {
     if (this_->field_49 != 3) {
         return 1;
     }
-    if (CSysWin_getUnk34(&this_->field_9C)) {
+    if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) {
         return 1;
     }
     if (this_->field_28FA != 0) {
@@ -1383,7 +1385,7 @@ void clpEnterBrows(CCollepedia* this_) {
     if (advanceAnimTransform(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_49 = 3;
         this_->field_51 = 1;
-        Cur_SetVisible(&this_->field_54, 1);
+        ((CBaseCur*)&this_->field_54[0])->SetVisible(1);
 
         this_->field_38->SetAnimationEnable(this_->field_3C, false);
         this_->field_38->SetAnimationEnable(this_->field_40, false);
@@ -1409,7 +1411,7 @@ extern "C" __declspec(noinline) void clpEnterIdle(CCollepedia* this_) {
     if (AnimRewindFrame(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_51 = 1;
         this_->field_49 = 0;
-        Cur_SetVisible(this_->field_54, 0);
+        ((CBaseCur*)(this_->field_54))->SetVisible(0);
     }
 }
 
@@ -1417,7 +1419,7 @@ extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
     this_->field_49 = 7;
     this_->field_51 = 1;
-    Cur_SetVisible(&this_->field_54[0x30], 1);
+    ((CBaseCur*)&this_->field_54[0x30])->SetVisible(1);
     clpRefreshCur(this_);
 }
 
@@ -1430,7 +1432,7 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
 
     this_->field_49 = 3;
     this_->field_51 = 1;
-    Cur_SetVisible(&this_->field_54, 1);
+    ((CBaseCur*)&this_->field_54[0])->SetVisible(1);
 
     clpRefreshCur(this_);
 
@@ -1439,9 +1441,9 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
     this_->field_49 = 9;
 
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x12);
-    sysWinSetKindContent(&this_->field_9C, str, 0);
-    sysWinApplyKind((CSysWin*)&this_->field_9C, 1);
-    sysWinOpenPhase1(&this_->field_9C);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->setKindContent(reinterpret_cast<char*>(str), 0);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->applyKind(1);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->openPhase1();
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     MenuSnd_GetMasterVol_95EC();
@@ -1454,7 +1456,7 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
 // us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call UIWin_CreateItemMulti
 extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this_) {
-    if (!CSysWin_isActive(&this_->field_9C)) return;
+    if (!reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) return;
 
     this_->field_49 = 12;
 
@@ -1486,9 +1488,9 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
     this_->field_49 = 0xD;
 
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13);
-    sysWinSetKindContent(&this_->field_9C, str, 0);
-    sysWinApplyKind((CSysWin*)&this_->field_9C, 1);
-    sysWinOpenPhase1(&this_->field_9C);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->setKindContent(reinterpret_cast<char*>(str), 0);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->applyKind(1);
+    reinterpret_cast<CSysWin*>(&this_->field_9C)->openPhase1();
 
     incrementEventCounter(0x85);
     incrementEventCounter(0x86);
@@ -1502,7 +1504,7 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
 // us-80257e64
 // If CSysWin is active, do a table lookup and format a sound/effect call
 __declspec(noinline) void clpPlayTblSe(CCollepedia* this_) {
-    if (!CSysWin_isActive(&this_->field_9C)) return;
+    if (!reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) return;
 
     this_->field_49 = 0x10;
 

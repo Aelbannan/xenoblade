@@ -335,9 +335,9 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
     void* st2;
     void* st3;
     cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)this + 4);
-    int chk1 = testActorStatus(this, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
+    int chk1 = testActorStatus(this, (int*)&(st1 = *(void**)s4a->getStateData()), 0xE);
     cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)this + 4);
-    int chk2 = testActorStatus(this, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
+    int chk2 = testActorStatus(this, (int*)&(st2 = *(void**)s4b->getStateData()), 0x803);
 
     int any = (chk1 | chk2) != 0;
     int dd = CfObjectPc_refreshGauge(this, any);
@@ -381,7 +381,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
     CActorParam_updateTick(this, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)this + 4);
-    int chkFlag = testActorStatus(this, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
+    int chkFlag = testActorStatus(this, (int*)&(st3 = *(void**)s4c->getStateData()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
@@ -396,7 +396,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
         if (isGlobalCamFlagSet__Fi(0x100000)) {
             // Distinct fake types per +0x3E9C dispatch so MWCC re-materializes
             // addi r3, r31, 0x3E9C like retail instead of caching one temp.
-            if (chkFlag == 0 && this->CObjectState_checkStateFlags(1) == 0) {
+            if (chkFlag == 0 && this->checkStateFlags(1) == 0) {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
@@ -425,21 +425,21 @@ void cf::CfObjectPc::CActorParam_resetArtsStatus(void* arts) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     // Direct (non-virtual) call to the CActorParam base implementation.
     ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_resetArtsStatus(nullptr);
-    Lit10 buf = lbl_eu_804FC5E0;
+    s16 scale[5] = {20, 10, 0, 10, 20};
     int n = this->CActorParam_getStatusCount();
     if (n <= 1) {
         int idx = this->CActorParam_getStatusCount();
         // (float)(s32) builtin cast: MWCC emits the 0x43300000 biased-magic
         // conversion (single-rounded fsubs) whose pooled constant is the
         // retail lbl_eu_80666B30 literal.
-        float v = (float)((s16*)buf.d)[idx];
+        float v = (float)scale[idx];
         f->field_0x1824 =
             f->field_0x1824 * (lbl_eu_80666B24 + v / lbl_eu_80666B28);
     } else {
         int n2 = this->CActorParam_getStatusCount();
         if (n2 >= 3) {
             int idx = this->CActorParam_getStatusCount();
-            float v = (float)((s16*)buf.d)[idx];
+            float v = (float)scale[idx];
             f->field_0x1824 =
                 f->field_0x1824 / (lbl_eu_80666B24 + v / lbl_eu_80666B28);
         }
@@ -508,9 +508,9 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc88(u32 arg1, u32 arg2, u32 arg3) 
         void* state2;
         if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->isInRange()) goto actedDone;
         if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->field_0x20C8 != 0) goto actedDone;
-        state = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->CObjectState_getStateData();
+        state = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->getStateData();
         if (testActorStatus(this, (int*)&state, 6) ||
-            ((state2 = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->CObjectState_getStateData()),
+            ((state2 = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->getStateData()),
                 testActorStatus(this, (int*)&state2, 9))) {
             CfObjectMove_setAnimModeArgs((u8*)this + 0x3E9C, 0x1B, 0, 6, 1);
         }
@@ -681,7 +681,7 @@ void cf::CfObjectPc::triggerActionRefreshA() { this->dispatchPlayerBranch(); }
 
 void cf::CfObjectPc::triggerActionRefreshB() { this->dispatchPlayerBranch(); }
 
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
 const char lbl_eu_804FC5EC[0x5C] = "tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0wpn_type\0JUhead\0level_exp\0mat_no\0map\0interval\0dmg";
 
 // .sdata2 pool (retail 0x40) as typed consts in retail declaration order.

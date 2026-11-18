@@ -869,8 +869,8 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
             cf::CfObjectMove* container = reinterpret_cast<cf::CfObjectMove*>(
                 reinterpret_cast<u8*>(rawObj) + 0x3E9C);
             CfObjectMove_setAnimModeArgs(reinterpret_cast<u8*>(container), 1, 0, -1, 1);
-            container->CObjectState_setStateBitFlag(4);
-            container->CObjectState_clearStateFlags8(0x1000);
+            container->setStateBitFlag(4);
+            container->clearStateFlags8(0x1000);
         }
     }
     for (int i = 0; i < 5; ++i) {
@@ -889,8 +889,8 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
         cf::CfObjectMove* container = reinterpret_cast<cf::CfObjectMove*>(
             reinterpret_cast<u8*>(rawObj) + 0x3E9C);
         CfObjectMove_setAnimModeArgs(reinterpret_cast<u8*>(container), 1, 0, -1, 1);
-        container->CObjectState_setStateBitFlag(4);
-        container->CObjectState_clearStateFlags8(0x1000);
+        container->setStateBitFlag(4);
+        container->clearStateFlags8(0x1000);
     }
     lbl_eu_80663E28 &= ~0x00800000;
     // 8 pump frames when arg1 divides evenly by 3, else 16.
@@ -1297,7 +1297,7 @@ void cf::CfObject::CfObject_applyMoveYaw(float amount) {
 
 // Retail Fv linker name kept for hand-built vtables (CfCollSphereImpl /
 // CfObjectModel). Member emits CfObject_applyMoveYaw__...Ff.
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv(
+extern "C" void CfObject_applyMoveYaw__Q22cf8CfObjectFf(
     cf::CfObject* object, float amount) {
     object->CfObject_syncMoveHead(amount);
 }
@@ -1343,7 +1343,7 @@ void cf::CfObject::CfObject_setMoveTargetPtr(void*) {}
 // CfCollSphere/CfObjectEff hand vtables); this forced-name extern "C"
 // form emits the retail Fv linker name (referenced by the CfObjectModel
 // hand vtables). Empty body: retail is a single blr.
-extern "C" void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv(
+extern "C" void CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv(
     cf::CfObject*) {}
 void cf::CfObject::CfObject_createMoveTarget(int) {}
 

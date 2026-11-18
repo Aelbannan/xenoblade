@@ -3,6 +3,7 @@
 // Unit-private import declarations and helper views split out of
 // CMenuArtsSet.hpp; included only by CMenuArtsSet.cpp.
 #include "kyoshin/menu/CMenuArtsSet.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
@@ -28,7 +29,6 @@ extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" u32 CSysWin_isReady(void*);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
@@ -169,16 +169,12 @@ extern "C" void CArtsInfo_OpenDetail6(CArtsInfo* self);
 // Locked-entry refresh driven by artsDriveMenu when the 0x168 mode is 4.
 extern "C" void CMenuArtsSet_confirmLockedArt(CArtsList* self);
 // CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
-extern "C" int CSysWin_isActive(void* self);
-extern "C" void sysWinAdvancePhase3(void* self);
 // CArtsInfo draw (defined in CArtsInfo.cpp; C-linkage retail name).
 extern "C" void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
 // CSysWin draw (defined in CSysWin.cpp; C-linkage retail name).
-extern "C" void sysWinDrawLayout(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo);
 // Pane-visible check (defined in CTitleAHelp.cpp; C-linkage retail name).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
 // C-linkage CSysWin state query (defined in CSysWin.cpp).
-extern "C" u32 CSysWin_getUnk34(void* self);
 // Drive/refresh helper (same TU, defined below; C-name for reloc parity).
 extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self);
 
@@ -188,7 +184,6 @@ extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self);
 // CMenuPlayAward.hpp (same signature-clash reason as that header documents).
 // Scroll-bar teardown (CMenuArtsSet_teardown).
 extern "C" void CArtsInfo_UpdateAnims(CArtsInfo* self);
-extern "C" void sysWinDispatchPhase(CSysWin* self);
 extern "C" void ArtsLayoutPair_advancePhases(SArts306F0* obj148);
 extern "C" void ArtsLayout_runTwinLayoutIn(SArts31648* self);
 extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self);
@@ -231,7 +226,6 @@ extern "C" void ArtsLayout_runLayoutIn(SArts3150C* self);
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
 extern "C" void CArtsInfo_Cleanup(CArtsInfo* self);
 // CSysWin teardown (defined in CSysWin.cpp, C symbol).
-extern "C" void sysWinTermLayout(CSysWin* self);
 
 // .sdata2 floats for the layout-animation drivers (ArtsLayout_runLayoutOut etc.).
 // const is load-bearing: it lets MWCC treat the pool load as a constant and
@@ -282,13 +276,11 @@ extern const SArts320C0Block lbl_eu_8050ABFC;
 // (artsAvailFlag); C-linkage retail symbols.
 extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
 // Accumulated pane translate (AccumPaneWorldPos, defined in code_80135FDC.cpp)
-// and pane translate setter (Cur_SetPaneTranslate, defined in CSysWin.cpp).
+// and pane translate setter (CBaseCur::SetPaneTranslate, defined in CCur.cpp).
 
 // Window-arm chain used by CMenuArtsSet_armSysWin: build a label string pair then
 // drive the CSysWin sub-object. sysWinApplyKind is already declared in
 // CSysWin.hpp as (CSysWin*, u8).
-extern "C" void sysWinSetKindContent(CSysWin* self, char* str, u32 flag);
-extern "C" void sysWinOpenPhase1(CSysWin* self);
 
 // AnimRewindFrame is a flat C symbol (anim-frame check helper).
 

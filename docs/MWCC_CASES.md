@@ -12097,3 +12097,275 @@ classes (compiler vtable, RTTI and `@16028@` thunks).
   copy of the byte) folds to `addi -1; clrlwi; cmplwi 0x17`; only two separate
   `if (...) goto` tests written directly in the caller keep both compares.
   `CfObjectPc::CActorParam_UnkVirtualFunc88` stays at 95% on this.
+
+## Parameter-type conversions at call sites: u8/u32 are passed raw, bool/int are converted (2026-11-18)
+
+Verified with stand-alone test TUs compiled with the project flags (`Wii/1.1`,
+`-O4,s -inline auto -ipa file`). Writing `c->m8(v)` / `c->mb(v)` / `c->mu(v)` /
+`c->mi(v)` for the same argument expression shows which argument types cost
+instructions at the *caller*:
+
+- `u8 -> u8` and `u8 -> u32`/`int`: **no instruction** (the value is passed in
+  the register as-is; MWCC does not zero-extend for a wider parameter).
+- `u8 -> bool` or `int -> bool`: `addic rX,rA,-1; subfe rX,rX,rA` (two
+  instructions, normalising to 0/1).
+- `bool -> u8`: `clrlwi rX,rX,24`. `bool -> u32`/`int`: no instruction.
+
+Consequences for "flag" helpers (`setPaneVisible`, `CBaseCur::SetVisible`,
+`CCur11::ShowTwoPanes`, `CSubCur::ShowTwoSubPanes`, `CEquipChange::ShowSubPanes`):
+
+- A forwarding chain only stays conversion-free when every hop has the *same*
+  declared type. `CEquipChange::ShowSubPanes` is 8 bytes in retail (`addi r3,
+  r3,0x80; b ShowTwoSubPanes`), i.e. it forwards r4 untouched, so its parameter
+  and the callee's must both be `bool` (the split annotation said `FUc`; the
+  emitted body proves `Fb`). With `u8` the caller gains the 2-instruction
+  `addic/subfe` pair.
+- A local passed to a bool parameter must be declared `bool` (`int flag;
+  ... ShowTwoPanes(flag)` adds `addic/subfe`; `bool flag` does not).
+- `setPaneVisible(Pane*, bool)`'s body (`pane->SetVisible(visible)`, nw4r's
+  `mFlag = visible` on a `u8` member) contains `rlwinm r0,r4,0,24,31` — that is
+  the bool->u8 store conversion, so the helper's own parameter really is
+  `bool`; do not "fix" it to `u8`/`u32` to silence a caller-side `addic`.
+- A return value consumed by `!= 0`/`if (f())` must not be declared `u8` unless
+  the caller really masks: with `u8 BothSubPanesOn()` every caller gained
+  `rlwinm r0,r3,0,24,31` before its `cmpi`; declaring it `int` reproduces the
+  retail `cmpi cr0,0,r3,0` (the callee returns 0/1 in r3 either way).
+
+Also: a split symbol's `...Fv` annotation can be wrong. `CItemBoxLine::
+ResetCursorB8` was annotated `Fv` but retail's 8-byte body is `addi r3,r3,0xB8;
+b ShowTwoSubPanes`, which forwards r4 — a no-parameter body would need `li r4,
+<const>` first (0xC bytes). Changing the parameter to `bool` and renaming the
+symbol to `...Fb` turned it into a 100% match.
+
+## RVL_SDK bte bta_dm_act / WUD — Wii-era BTE struct layouts and event ids (bta_dm_act 14→48 of 56 FULL_MATCH)
+- Symptom: BTE callbacks matched instruction-for-instruction except for struct
+  field offsets/immediates (e.g. `addi r4,r31,3` vs `,1`, `li r0,516` vs `,517`),
+  or sized 8-0x100 bytes off.
+- Cause: the SDK headers in the tree are AOSP-flavoured; the retail Wii-era
+  BTE stack differs in a handful of layouts. All of these are *retail-proven*
+  (reloc + offset evidence), so fix the local view, not the body:
+  - `BD_NAME_LEN` is 0xf8: `tBTA_DM_AUTH_CMPL` = bd_addr@0, bd_name@6 (0xf8),
+    key_present@0xfe, key@0xff, key_type@0x10f (0x110 total, the frame says so).
+    `tBTA_DM_PIN_REQ`/`tBTA_DM_AUTHORIZE` put dev_class/service at 0xfe.
+  - `tBTA_DM_DISC_RES`: bd_addr@0, bd_name@6 (0xf8), services@0x100 (4-aligned
+    after the name => 2 pad bytes), result@0x104.
+  - `tBTA_DM_CFG` field order is dev_class, **policy_settings@4,
+    page_timeout@6, link_timeout@8** (the caller's three `lhz` offsets prove it).
+  - `tBTA_DM_PEER_DEVICE` strides 11 bytes (`mulli r28,r0,11`): bd_addr@0,
+    in_use@6, policy@7 (+3 unknown).
+  - `tBTM_RSSI_RESULTS` / `tBTM_LINK_QUALITY_RESULTS` are status, hci_status,
+    value@2, rem_bda@3 (i.e. the value comes *before* the address).
+  - `tBTM_REMOTE_DEV_NAME` is status@0, length@2, remote_bd_name@4 — every
+    remote-name callback takes that pointer (not `(bd_addr, dc, name)`).
+  - `tBTM_CB.page_timeout` sits at +0x64c (declare the extern with 0x64c of
+    leading padding, or the load loses its displacement).
+  - `tBTA_DM_SEARCH` = union{inq_res(0x0c), inq_cmpl(1), disc_res(0x108)}; a
+    function that keeps one costs a 0x108-byte frame slot.
+- Signatures that change codegen (all retail-proven):
+  - `BTM_ReadRemoteDeviceName` returns `int`; call sites compare
+    `(UINT8)BTM_ReadRemoteDeviceName(...) == BTM_CMD_STARTED` (the `rlwinm
+    r0,r3,0,24,31` before `cmpli 1` disappears if you declare it `u8`).
+  - `BTM_GetNumAclLinks` returns `UINT16` (`rlwinm r0,r3,0,16,31`).
+  - `L2CA_SetIdleTimeoutByBdAddr`/`L2CA_SetIdleTimeout` timeout params are
+    `UINT16` (`0xFFFF` is materialised as `subi/rlwinm`, not `li -1`).
+  - `BT_BD_ANY` is `const BD_ADDR` (an array): `extern const unsigned char
+    BT_BD_ANY[6]`, so `L2CA_SetIdleTimeoutByBdAddr(BT_BD_ANY, ...)` is an
+    SDA21 `addi` (address), not a pointer load.
+  - `bta_service_id_to_btm_srv_id_lkup_tbl` is a `const UINT32[24]`
+    (`lwzx r0,r3,idx*4`), not a byte table.
+  - Retail reloc spelling: `btm_read_trusted_mask` is lowercase (defined that
+    way in btm_sec.c); `BTM_ReadTrustedMask` only matches after the rename.
+- Event/constant drift in this unit (from the state tables + call sites):
+  ACL change = 0x105; remote-name message = 0x204; SDP result = 0x206;
+  "search done / disc result" = 0x207; the "search result" message that
+  `bta_dm_find_services`/`bta_dm_sdp_result` send = 0x208; `BTA_MAX_SERVICE_ID`
+  is 23 and `bta_dm_auth_reply` guards with `service <= 23`.
+- `search_disc_active` is *not* `(BTM_IsAclConnectionUp(...) != 0)`: retail
+  branches and stores 1 when the ACL is **down** (`beq` -> `li r0,1`). Writing
+  `(x != 0)` makes MWCC emit the arithmetic `neg/or/rlwinm` normalisation
+  instead of the branchy pair; an explicit `if (up) =0; else =1;` reproduces it.
+- `bta_dm_search_cancel_cmpl` re-sends the queued search message
+  (`bta_sys_sendmsg(p_search_queue)`), it does not free it.
+- Result: bta_dm_act 14/56 -> 48/56 FULL_MATCH, .text 0x1494 -> 0x2110
+  (budget 0x233C), .sdata2 0x0 -> 0x4 (matches), extab MATCH.
+- Confidence: repo_proven (offsets/immediates read from the retail objects).
+- Applies to/a.k.a.: all `libs/RVL_SDK/src/revolution/bte/**` TUs that include
+  bta_dm_int.h / btm_api.h; still-<100% in this unit: bta_dm_find_services
+  (9.3%, needs the .sdata2 attribute loads not to constant-fold),
+  bta_dm_compress_cback (stub), bta_dm_l2cap_server_compress_cback (5.3%),
+  bta_dm_inq_cmpl (57.7%, unexplained +0x100 frame slot), bta_dm_rmt_name /
+  bta_dm_sdp_result / bta_dm_rm_cback / bta_dm_authorize_cback (reg colour).
+
+## .bss emission order + alignment: first-reference order, size-derived alignment, 2-symbol fold floor (CriWare svm/adx_fs, Wii/1.1 -O4,p)
+- Symptom:   a unit's `.bss` symbols land at offsets that do not match the retail object even though the
+  declarations are in the retail address order; multi-symbol functions then differ *structurally*
+  (`lis/addi` base materialisations vs retail's per-symbol bases) because MWCC's address folder merged
+  them into `...bss.0 + delta`.
+- Cause:     (1) MWCC **emits `.bss` objects in first-reference order**, walking the TU's functions in
+  `.text` order — declaration order is irrelevant (verified: swapping two declarations is a no-op;
+  reversing a seed function's references reverses the layout). Unreferenced objects go last, in reverse
+  declaration order. Same result on Wii/1.0, Wii/1.1, Wii/1.3, GC/3.0a5. (2) An object's `.bss`
+  alignment is the largest power of two dividing its declared size, capped at 8 — so a `char[0x340]`
+  still needs 8-byte alignment and can force 4 bytes of padding in front of it. (3) The address folder
+  folds a symbol group onto one base when the group has **3+ distinct objects**; a 2-object group is
+  never folded (SVM_Lock/SVM_Unlock/ExecSvr explicitly keep per-symbol bases in retail but fold inside
+  bigger functions that reference 3+ objects).
+- Fix:       (a) put the *structurally required* reference first in the first function to steer offset 0;
+  (b) declare granularity finer than the retail reloc-target labels (each semantic global its own
+  object, e.g. bdr[8]/flags[8]/count[8]/testandset separate) so 3+ groups fold exactly like retail and
+  single-symbol functions keep their named base; (c) accept that a 2-object function cannot be made to
+  fold, and that `.bss` order/size only converges once the whole TU's reference order matches retail.
+- Result:    adx_fs 10 -> 17/25 and svm 0 -> 7/25 matched by re-declaring the retail `.bss` symbols
+  instead of one big `adx_fs_bss[]` blob / one struct (the blob made every reloc name the blob and put
+  the wrong addend in the immediate: `wrong-address relocation` + a folded base).
+- Confidence: repo_proven (hexdiff/nm on both units, 5-compiler-version probe in /tmp probes)
+- Applies to/a.k.a.: any CriWare/CW unit whose retail object has several small `.bss` labels; `.bss`
+  "size 0xN+4" data-diff failures with zero-filled sections; units with a 2-object address-fold residual.
+
+## cf::CfObject slots whose retail callers and callee disagree (kyoshin cf/object, Wii/1.1 -O4,p)
+
+Session cfleaf2. While making `cf::CfObjectPoint` a real class whose vtable is compiler-emitted
+(`__vt__Q22cf13CfObjectPoint`, 0x178 bytes at 0x8052A3B0, byte-identical incl. relocs), four
+`cf::CfObject`/`cf::CObjectState` slots turned out to be *inconsistent inside retail itself*: the
+callee body and the call sites disagree on the argument list, so no single C++ declaration can
+reproduce both. Evidence is disassembly of the retail split objects under `build/us/obj/`
+(addresses are linked addresses).
+
+- **0xA0 `CfObject_setPosXZ`** — the callee at 0x800C2164 (`CfObjectPoint` TU) begins with
+  `lfs f0,0(0) [lbl_eu_80666B4C] / stfs f1,32(r1) / stfs f0,36(r1)`, i.e. it consumes x in f1 and
+  z in f2. **Every** dispatch of slot 0xA0 in the whole kyoshin tree (scanned: all
+  `lz r12,160(r12)` + `bctrl` sites) sets no FP register at all — the three child-link sites
+  (`CfObjectPoint::setChildPoint` @0x800C20A0..0x800C213C, `CfObjectModel::CfObject_notifyEventDone`,
+  `CfObjectEff::setSubObject`) are literally `lwz r3,56(r30) / lwz r12,0(r3) / lwz r12,160(r12) /
+  bctrl`. So retail's call sites used a one-declaration view while the definition/vtable entry
+  was `(float, float)` — an ODR-style per-TU mismatch in the original source.
+  Resolution used here: keep the *virtual* declaration argument-free and carry the (x, z) ABI in
+  forced-name C bodies (`setPointPosition__Q22cf13CfObjectPointFv`,
+  `CfObject_setPosXZ__Q22cf8CfObjectFv(self, float, float)`): every call site stays
+  instruction-exact and the bodies keep their real signature. CfObjectPoint's `.text` budget is
+  exactly 0x568 with all 10 functions at 100%, so 2 extra argument-setup instructions at that one
+  call site would break the split gate.
+
+- **0x2C `CObjectState_setStateBitMask0`** — body @0x8003DE3C reads r5 (`cmpwi r5,0`), and the
+  ordinary callers pass two arguments (`CtrlNpcUpdateTalk`, ocUnit `onEvent`,
+  `CArtsInfo_OpenDetail6` does `li r5,0/1` + `lwz r4,...` before the dispatch). The child-link
+  sites (`setChildPoint`, `CfObjectModel::CfObject_notifyEventDone`, `CfObjectEff::setSubObject`)
+  dispatch with **only** `mr r4,r30` and r5 clobbered by the preceding
+  `old->setStateBitMask(1)` call. Resolution: `CfObject*`-family declaration takes one parameter
+  (matching the call sites), the out-of-line body keeps the hidden flag
+  (`...setStateBitMask0__Q22cf12CObjectStateFii(self, mask, flag)`).
+
+- **0x70 `CfObject_notifyEventDone`** — callee evidence says one pointer argument: `CfObjectModel`'s
+  body @0x800BB4DC does `mr r31,r4` and keeps it live; `CfObjectPoint`'s body @0x800C20A0 stores
+  it as the child point. ~20 call sites set r4 (`CBattleManager` ×5 `lwz r4,16144(r23)`, `CfCam`,
+  `CtrlAct`, `CAIAction`, `CfGameManager` ×5 `mr r4,r3`, `CfObjectImplMove/Pc/Walker`), but
+  **three** retail sites dispatch with no r4 at all (`CfObjectEff::initEffState_` @0x800AD098,
+  `CfObjectModel::CfObject_UnkVirtualFunc2`, `CfObjectColl`'s 0x58 override). Declaring the
+  parameter is correct for the majority; measured cost when done: `CfObjectEff` 45/53 -> 44/53
+  (the single `initEffState_` function grows `li r4,0`, +4 bytes), `CBattleManager` unaffected
+  (its sites are inside unmatched functions).
+
+- **0x9C `CfObject_setMoveTargetVec` / `CfObjectPoint_CopyPosWords`** — the slot target is the flat
+  helper `CfObjectPoint_CopyPosWords` (0x80047DFC, defined in `pluginCfs.cpp`, body copies 3 words
+  from r4 to this+0x3C). A vtable slot needs a member, but MWCC rejects `&Class::virtualMember`,
+  so the hand tables in `CfCollSphereImpl.cpp`/`CfResTboxImpl.cpp` cannot name a member: they keep
+  the C-linkage symbol.
+
+**Rule of thumb for the tail**: these slots keep their current arrangement (argument-free virtual
++ forced-name C body) instead of chasing the callee signature; everything else in the class tree is
+canonicalised on the callee evidence. The same "call sites never set the register" test is worth
+running before declaring any of the remaining `CfObject_UnkVirtualFuncNN` stubs
+(`CfObject_setMoveValue` 0x134, `CfObject_setMoveScale` 0x13C, `CfObject_syncMoveHead` 0xD0,
+`CfObject_setAnimSlotEntry` 0x144, `CfObject_createMoveTarget` 0x10C, `CfObject_forwardNpcAction`
+0x114, `CfObject_getIndexedNodeMatrix` 0x124, `CfObject_readKindFlagWord` 0x14C,
+`CfObject_getSlotBits` 0x148, `CfObject_getHeightDiff` 0x130, `CfObject_findNodeMatrix` 0x120,
+`CObjectParam_getParamPtr` 0x40, `CObjectParam_setObjectName` 0x3C) — those still have no
+definition in the tree and are the residual link-gate delta.
+
+**Resolution (cfleaf2 final)**: the child-link sites are not a declaration mismatch of the same
+class — they are calls through a *different static type*, which is why the original linked with
+different argument counts (a virtual call references a vtable slot, not a mangled name). The
+object at `CfObject::mSubObj38` (+0x38) is dispatched in `CfObjectModel.cpp` through
+`reinterpret_cast<CScnItemModel*>(...)`, whose `vfunc2C(u32)` takes one argument and
+`vfuncA0()` takes none (`attachModelParent` / `notifyModelAttached` aliases). `CfObjectPoint.cpp`
+now uses the same scene-item view for its two child-link dispatches, so:
+  - `CObjectState::setStateBitMask0` stays the canonical two-argument virtual (retail body reads
+    r5; pluginEve `onTalk`/`onTalkEnd` `li r4,1 / li r5,1`, CtrlNpc, ocUnit and CArtsInfo all pass
+    two arguments) and its out-of-line body is a normal real member definition again;
+  - slot 0xA0 stays argument-free in the `CfObject*` classes while its bodies carry the (x, z) ABI
+    as forced-name C functions;
+  - no interface/forwarder was added: `CScnItemModel` already existed for this exact field
+    (CfObjectModel.cpp precedent) and emits no data of its own here.
+Verified after the change: `link-gate` missing=45 (baseline), `extab-gate` 27 mismatches (baseline),
+CfObjectPoint 10/10 with split PASS 0x568 and data MATCH, pluginEve back to 16/20 (onTalk 95.7% =
+2 reg swaps, pre-existing), and every cf/object unit at or above its previous count.
+
+## IUIWindow recovered as a real class; IScnRender is a two-virtual interface (2026-11-18)
+
+**The class.** `src/kyoshin/IUIWindow.hpp` is the one canonical declaration:
+`class IUIWindow : public CTTask<IUIWindow>` with `nw4r::lyt::Layout* mLayout` at 0x54,
+`mField58`/`mField5C`, `s32 mField60` (-1), the four bytes 0x64..0x67 (0x67 = 1) and `u32 mField68`;
+sizeof 0x6C. Retail evidence:
+- `label lbl_eu_8052D1F0` (0x24 bytes, in CQuestWindow.o's `.data`) is `__vt__9IUIWindow`:
+  `[RTTI, 0, ~IUIWindow, Reset, <Init null>, <Term null>, Move<CTTask>, Draw<CTTask>, Tail]` — the
+  CProcess 9-word shape with the two pure slots left null, i.e. IUIWindow declares no virtuals of
+  its own. `label lbl_eu_8052D238` next to it is `__vt__18CTTask<9IUIWindow>`.
+- `__dt__9IUIWindowFv`, `__dt__18CTTask<9IUIWindow>Fv`, `Move__18CTTask<9IUIWindow>Fv` and
+  `Draw__18CTTask<9IUIWindow>Fv` all live in CQuestWindow.o ⇒ that TU defines the key function,
+  so it owns the vtables/RTTI; the `template<>` specialisations belong there too.
+- `__ct__IUIWindow` (0x6C) and the CTTask<IUIWindow> ctor (0x70) live in CMenuUpdate.o ⇒ the
+  constructor is an inline definition that this TU failed to inline (see below). Do not put the
+  ctor out of line: CMenuItemExchange/CMenuItem/CQuestWindow all inline it (their ctors contain
+  the nine 0x54..0x68 stores).
+- The base list of a window is `[IScnRender@+0x70, IWorkEvent@+0x6C, CDoubleListNode,
+  CChildListNode, CProcess, CTTask<IUIWindow>, IUIWindow]`, and the composite vtable is
+  `[own 0x24][IWorkEvent 0x88][IScnRender 0x14]`; the two interface sub-vtable stores are
+  `vtable+0x24` / `vtable+0xAC` off one base register.
+
+**IScnRender has exactly two virtuals.** Retail `__vt__10IScnRender` is 0x10 bytes:
+`[RTTI, 0, ~IScnRender, cbRenderBefore]`, and slot 1's body is the 4-byte `blr` at 0x800444C0 that
+symbols.txt called `handleEmptyRender__10IScnRenderFv`. `handleEmptyRender` is a phantom name — no
+other object references it, and the header's non-virtual `handleEmptyRender()` made that slot the
+wrong symbol. It is now `cbRenderBefore__10IScnRenderFv` (renamed) and the only declarations are
+`virtual ~IScnRender()` + `virtual void cbRenderBefore()`. Every interface group of a derived class
+therefore ends `[.., dtorThunk, cbRenderBeforeThunk, cbRenderBefore(raw)]` (5 words, e.g.
+CMenuUpdate +0xAC, CMenuItem +0x24, CMenuItemExchange +0x24).
+The destructor has three legit spellings and all three are in use:
+- default `virtual ~IScnRender() {}` — derived destructors ELIDE the empty base call (every retail
+  window dtor). MWCC also emits the usual link-deduped weak `__dt__10IScnRenderFv` copy.
+- `ISCN_RENDER_NO_DTOR` — no destructor declared at all: TUs that fill the IScnRender dtor slot of a
+  hand-built sub-vtable (`CTaskGameEff`, `CMenuFade`, `CMiniMap`).
+- `ISCN_RENDER_OUT_OF_LINE_DTOR` — declaration only, so the derived dtor emits
+  `bl __dt__10IScnRenderFv` (retail `~CMenuUpdate`); the strong body lives in CTaskGame.cpp next to
+  `__vt__10IScnRender`.
+
+**The IWorkEvent weak-copy question (measured, keep the macro).** Making the header declaration-only
+(no `IWORK_EVENT_INLINE_DTOR`) removes the weak `__dt__10IWorkEventFv` copy but makes every derived
+destructor call the base dtor: `__dt__7CSysWinFv` drops 100% → 41.7% (0x54 → 0x60, +extab action)
+and the unit ends 0x84 over budget. The copies retail's objects "do not contain" are exactly what
+the linker's weak dedup removed (retail keeps one in CGame/CTaskGame); the per-unit comparison sees
+this through `hexdiff`'s linked-view exclusions. Inline-empty in the header is the retail source
+shape, so the macro stays.
+
+**CMenuUpdate's constructor is a `dont_inline` region in the original (verified).** Retail's
+`__ct__11CMenuUpdateFP4CScnUlUlUlUl` is 0x104 bytes and CALLS out-of-line weak copies of
+`IUIWindow::IUIWindow` (0x6C), `CTTask<IUIWindow>::CTTask` (0x70), `IWorkEvent::IWorkEvent` (0x10),
+`IScnRender::IScnRender` (0x10) and `__ct__8014274C`, in that emission order; the dtor likewise calls
+all three base dtors out of line. Compiling the converted TU with `#pragma dont_inline on` around the
+constructor reproduces the retail bytes exactly (ctor 0x104 at 100%, the two 0x10 ctors 100%). With
+the allowed flags MWCC always inlines those bodies into this caller instead (0x160), at `-O4,p`,
+at `-O4,s`, and with a per-function `#pragma optimize_for_size on` region — only `dont_inline`
+suppresses it, and that pragma is forbidden. So the faithful class (real bases, compiler
+vtables/RTTI, `.sdata`/`.data` match) is kept and the constructor stays 0x5C too long: it is the
+one place where this fork cannot express the original TU's optimisation setting. Same TU, for
+reference: `UpsertEntry` is a real member (`UpsertEntry__11CMenuUpdateFiUlUlUl`) and the two
+this-adjusting thunks are the compiler's `@108@`/`@112@` ones.
+
+**Converting a window to the real bases pays in the DATA sections even when functions are hard.**
+CMenuItemExchange: replacing the byte-pad `class IUIWindow` view with the canonical base plus
+`public IScnRender`, constructing the four widgets in the constructor's init list
+(`mBgTex(0), mTitleAHelp(NULL, 0), mItemBoxLine(0, 0), mItemBoxGrid(0, 0, 0, 1)`) and dropping the
+hand-written vptr/PMF stores made the constructor 71.8% → 99.9% and emitted the composite vtable,
+the base list, the `.sdata` RTTI pair and the RTTI name string: `.data` 0 → 36.8%,
+`.rodata` 0 → 42.1%, `.sdata` 0 → 100%, extab 14.8% → 46.1%, `.text` 81.2% → 82.4%, with no function
+regression.

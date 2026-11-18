@@ -12,7 +12,6 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -44,8 +43,6 @@ extern "C" void* createPicture__10CLibLayoutFv();
 extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
-extern "C" void sysWinDrawLayout(void* sysWin, void* drawInfo);
-extern "C" void Cur_DrawLayout(void* cursor, void* drawInfo);
 
 extern float lbl_eu_80668764;
 extern float lbl_eu_80668794;
@@ -2925,9 +2922,9 @@ void FloorMap_UpdateFrame(void* self) {
     }
 
     reinterpret_cast<CScrollBar*>(&p->mScrollBar)->UpdateDispatch();
-    Cur_Update(&p->mCursor);
-    sysWinDispatchPhase(&p->mSysWinB8);
-    sysWinDispatchPhase(&p->mSysWinF4);
+    ((CBaseCur*)&p->mCursor)->Update();
+    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->dispatchPhase();
+    reinterpret_cast<CSysWin*>(&p->mSysWinF4)->dispatchPhase();
 
     if (p->mLayout130 != 0) ((nw4r::lyt::Layout*)p->mLayout130)->Animate(0);
     if (p->mLayout138 != 0) ((nw4r::lyt::Layout*)p->mLayout138)->Animate(0);
@@ -3089,10 +3086,10 @@ void FloorMap_Draw(void* self, void* drawInfo) {
         reinterpret_cast<CScrollBar*>(&p->mScrollBar)->draw(static_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     if (p->field_333C && p->mLayout3334)
         drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    sysWinDrawLayout((void*)&p->mSysWinB8, drawInfo);
-    sysWinDrawLayout((void*)&p->mSysWinF4, drawInfo);
+    reinterpret_cast<CSysWin*>((void*)&p->mSysWinB8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    reinterpret_cast<CSysWin*>((void*)&p->mSysWinF4)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     if ((s8)p->field_5C >= 0)
-        Cur_DrawLayout((void*)&p->mCursor, drawInfo);
+        ((CBaseCur*)(&p->mCursor))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
 }
 
 // Teardown of the floor-map screen (paired with the ctor-time resource
@@ -3128,8 +3125,8 @@ void FloorMap_Teardown(CFloorMapFull* p) {
 
         reinterpret_cast<CScrollBar*>((void*)p->mScrollBar)->Teardown();
         ((CBaseCur*)&p->mCursor)->cleanup();
-        sysWinTermLayout((void*)&p->mSysWinB8);
-        sysWinTermLayout((void*)&p->mSysWinF4);
+        reinterpret_cast<CSysWin*>((void*)&p->mSysWinB8)->termLayout();
+        reinterpret_cast<CSysWin*>((void*)&p->mSysWinF4)->termLayout();
 
         // Destroy each owned layout (double null check is the retail D2-
         // inlined deleting-dtor shape) and clear the slot.
@@ -3202,8 +3199,8 @@ void FloorMap_UpdateRowPanePos(void* self) {
     char fname[0x20];
     if (!p->field_208) return;
     if (p->field_58) return;
-    if (CSysWin_getUnk34(&p->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
 
     u8 nf = (u8)(p->field_205 - 1);
     p->field_205 = nf;
@@ -3289,8 +3286,8 @@ void FloorMap_CursorNextFloor(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_208) return;
     if (p->field_58) return;
-    if (CSysWin_getUnk34(&p->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
 
     // Advance the floor index, wrapping back to the first floor.
     u8 nf = (u8)(p->field_205 + 1);
@@ -3409,10 +3406,10 @@ void FloorMap_UpdateCursorMove(void* self) {
     nw4r::lyt::Pane* ggp;
     if (p->field_2C) return;
     if (!p->field_208) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
 
     if (p->field_58) {
-        if (!CSysWin_isActive(&p->mSysWinB8)) return;
+        if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
 
         // Step down, clamping at 1 (never below).
         u8 nc = (u8)(p->field_5C - 1);
@@ -3420,7 +3417,7 @@ void FloorMap_UpdateCursorMove(void* self) {
         if ((s8)nc < 0) p->field_5C = 1;
 
         nw4r::math::VEC3 curOut;
-        sysWinGetPaneScreenPos(&curOut, &p->mSysWinB8, p->field_5C);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&curOut), reinterpret_cast<CSysWin*>(&p->mSysWinB8), p->field_5C);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&curOut);
         playUISound(1);
         return;
@@ -3536,17 +3533,17 @@ void FloorMap_UpdateWorldMap(void* self) {
     nw4r::math::VEC3 cursorOut;
     if (p->field_2C) return;
     if (!p->field_208) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
 
     if (p->field_58) {
-        if (!CSysWin_isActive(&p->mSysWinB8)) return;
+        if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
 
         // Wrap the cursor index 0 -> 1 -> 0 (syswin cursor mode); the wrap
         // test reads the freshly stored byte back.
         p->field_5C = p->field_5C + 1;
         if ((s8)p->field_5C >= 2) p->field_5C = 0;
 
-        sysWinGetPaneScreenPos(&cursorOut, &p->mSysWinB8, p->field_5C);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&cursorOut), reinterpret_cast<CSysWin*>(&p->mSysWinB8), p->field_5C);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&cursorOut);
         playUISound(1);
         return;
@@ -3665,7 +3662,7 @@ void FloorMap_HandleMapDown(CFloorMapFull* p) {
 
     if (p->field_2C) return;
     if (!p->field_208) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
     if (p->field_58) return;
 
     s8 fi = (s8)p->field_205;
@@ -3806,7 +3803,7 @@ void FloorMap_NormalizeMapPos(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (p->field_2C != 0) return;
     if (p->field_208 == 0) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
     if (p->field_58 != 0) return;
 
     if (*(u8*)((u8*)p + (s8)p->field_205 * 0x30C + 0x514) == 0) return;
@@ -3913,8 +3910,8 @@ void FloorMap_NormalizeMapPos(void* self) {
 void FloorMap_ScrollDown(void* self) {
     CFloorMapFull* fm = (CFloorMapFull*)self;
     if (fm->field_58) return;
-    if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
     f32 min = lbl_eu_806687A4;
     f32 y = fm->pos_y_48 - lbl_eu_806687A8;
     fm->pos_y_48 = y;
@@ -3940,8 +3937,8 @@ void FloorMap_ScrollDown(void* self) {
 void FloorMap_ScrollUp(void* self) {
     CFloorMapFull* fm = (CFloorMapFull*)self;
     if (fm->field_58) return;
-    if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
 
     // Scroll up: step y toward the upper bound.
     f32 max = lbl_eu_806687AC;
@@ -3968,8 +3965,8 @@ void FloorMap_ScrollUp(void* self) {
 // of the map and push the new position into every map layout's target pane.
 void FloorMap_ScrollRight(CFloorMapFull* fm) {
     if (fm->field_58) return;
-    if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
 
     // The map pane's scale factor sets the right-edge bound for the step.
     // Retail uses an explicit if/else here (not a ?: ), which MWCC compiles
@@ -4017,8 +4014,8 @@ void FloorMap_ScrollRight(CFloorMapFull* fm) {
 // Mirrors FloorMap_ScrollRight with negated step and an extra B8 scale on the bound.
 void FloorMap_ScrollLeft(CFloorMapFull* fm) {
     if (fm->field_58) return;
-    if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&fm->mSysWinF4)->isOpened()) return;
 
     // The map pane's scale factor sets the left-edge bound for the step.
     nw4r::lyt::Pane* mapPane =
@@ -4060,12 +4057,12 @@ void FloorMap_OpenRowWindow(void* self) {
     // instead of caching it in a register across the UI calls.
 #define FLOORBLK ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))
     if (!FLOORBLK->field_514) return;
-    if (!CSysWin_isActive(&p->mSysWinB8)) return;
+    if (!reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isActive()) return;
 
-    if (CSysWin_getUnk34(&p->mSysWinF4)) {
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) {
         // Detail window is up: close it once its own animation finished.
-        if (!CSysWin_isActive(&p->mSysWinF4)) return;
-        sysWinAdvancePhase3(&p->mSysWinF4);
+        if (!reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isActive()) return;
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->advancePhase3();
         return;
     }
 
@@ -4084,8 +4081,8 @@ void FloorMap_OpenRowWindow(void* self) {
         } else {
             playUISound(6);
         }
-        Cur_SetVisible(&p->mCursor, 0);
-        sysWinAdvancePhase3(&p->mSysWinB8);
+        ((CBaseCur*)&p->mCursor)->SetVisible(0);
+        reinterpret_cast<CSysWin*>(&p->mSysWinB8)->advancePhase3();
         p->field_58 = 0;
         return;
     }
@@ -4123,9 +4120,9 @@ void FloorMap_OpenRowWindow(void* self) {
 
 
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
-        sysWinSetKindContent(&p->mSysWinF4, name, 0);
-        sysWinApplyKind((CSysWin*)&p->mSysWinF4, 1);
-        sysWinOpenPhase1(&p->mSysWinF4);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->setKindContent(reinterpret_cast<char*>(name), 0);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->openPhase1();
         playUISound(5);
         return;
     }
@@ -4133,9 +4130,9 @@ void FloorMap_OpenRowWindow(void* self) {
     if (CtrlRemote_TouchBitByArg(0x3212)) {
         // Unvisited but already-seen marker id: show the "no data" text.
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
-        sysWinSetKindContent(&p->mSysWinF4, name, 0);
-        sysWinApplyKind((CSysWin*)&p->mSysWinF4, 1);
-        sysWinOpenPhase1(&p->mSysWinF4);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->setKindContent(reinterpret_cast<char*>(name), 0);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&p->mSysWinF4)->openPhase1();
         playUISound(5);
         return;
     }
@@ -4146,15 +4143,15 @@ void FloorMap_OpenRowWindow(void* self) {
     char* nCap1 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 7);
     char* nCap2 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 8);
     char* nCap3 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
-    sysWinSetKindContent(&p->mSysWinB8, nCap1, nRow);
-    sysWinSetTwoTextValues(&p->mSysWinB8, nCap2, nCap3);
-    sysWinApplyKind((CSysWin*)&p->mSysWinB8, 0);
-    sysWinOpenPhase1(&p->mSysWinB8);
+    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->setKindContent(reinterpret_cast<char*>(nCap1), reinterpret_cast<char*>(nRow));
+    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->setTwoTextValues(reinterpret_cast<char*>(nCap2), reinterpret_cast<char*>(nCap3));
+    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->applyKind(0);
+    reinterpret_cast<CSysWin*>(&p->mSysWinB8)->openPhase1();
     p->field_5C = 0;
     nw4r::math::VEC3 pos;
-    sysWinGetPaneScreenPos(&pos, &p->mSysWinB8, 0);
+    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&p->mSysWinB8), 0);
         ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&pos);
-    Cur_SetVisible(&p->mCursor, 1);
+    ((CBaseCur*)&p->mCursor)->SetVisible(1);
     p->field_58 = 1;
     p->field_208 = 1;
     playUISound(3);
@@ -4218,22 +4215,17 @@ extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)-
 u8 CFloorMap::GetActiveFlag58() { return cursor_active_58; }
 
 void FloorMap_ConfirmSelect(void* self) {
-    extern int CSysWin_isActive(void*);
-    extern void Cur_SetVisible(void*, int);
-    extern void sysWinAdvancePhase3(void*);
     extern void playUISound(unsigned long);
     u8* p = (u8*)self;
-    if (p[0x58] && CSysWin_isActive(p + 0xB8)) {
-        Cur_SetVisible(p + 0xA0, 0);
-        sysWinAdvancePhase3(p + 0xB8);
+    if (p[0x58] && reinterpret_cast<CSysWin*>(p + 0xB8)->isActive()) {
+        ((CBaseCur*)(p + 0xA0))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(p + 0xB8)->advancePhase3();
         p[0x58] = 0;
         playUISound(6);
     }
 }
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
-extern "C" void Cur_SetVisible(void*, int);
-extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
@@ -4299,8 +4291,8 @@ extern "C" unsigned char FloorMap_GetBdatMaxRow(void) {
 void FloorMap_Log2Field208(void* self) {
     u8* p = (u8*)self;
     if (p[0x58]) return;
-    if (CSysWin_getUnk34(p + 0xB8)) return;
-    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened()) return;
     u8 val = p[0x208];
     p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
 }
@@ -4328,15 +4320,15 @@ u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
 
 void FloorMap_Log2Field333C(void* self) {
     u8* p = (u8*)self;
-    if (CSysWin_getUnk34(p + 0xB8)) return;
-    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened()) return;
     p[0x333C] = (u32)__cntlzw(p[0x333C]) >> 5;
 }
 
 u32 FloorMap_IsSysWinBusy(void* self) {
     u8* p = (u8*)self;
-    if (CSysWin_getUnk34(p + 0xB8)) return 1;
-    return CSysWin_getUnk34(p + 0xF4);
+    if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return 1;
+    return reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened();
 }
 
 // Move the map cursor to the current row position: rebuild the pane name for
@@ -4351,8 +4343,8 @@ void FloorMap_MoveToCursorRow(void* self) {
     if (p->field_2C) return;
     if (p->field_41 != 1) return;
     if (!p->field_208) return;
-    if (CSysWin_getUnk34(&p->mSysWinB8)) return;
-    if (CSysWin_getUnk34(&p->mSysWinF4)) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(&p->mSysWinF4)->isOpened()) return;
     if (p->field_58) return;
 
     s8 fi = (s8)p->field_205;

@@ -95,7 +95,7 @@ public:
     void ResolveEntry();
     void RefreshTabPanes();
     int GetArmedFlag();
-    void ResetCursorB8(u32 show);
+    void ResetCursorB8(bool show);
     void Info2SelectPrev();
     void Info2SelectNext();
     void ShowDetailWin();

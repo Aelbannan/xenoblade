@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/work/CProcess.hpp"
@@ -122,9 +123,6 @@ CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2, void* a3,
                                    void* a4, void* a5);
 extern "C" CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
 void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
-void sysWinTermLayout(void* syswin);
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void Cur_DrawLayout(void*, void*);
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the
@@ -134,18 +132,6 @@ void cbRenderBefore__13CSystemWindowFv(u8* win);
 // Global-view alias of CSysWinSelect::cbRenderBefore so the thunks can take
 // its address under the retail mangled-member symbol name.
 void cbRenderBefore__13CSysWinSelectFv(u8* win);
-u32 CSysWin_isReady(void* syswin);
-int CSysWin_isActive(void* syswin);
-void sysWinSwitchKindPane(void* syswin, int arg);
-void sysWinSetKindContent(u8* syswin, char* str1, char* str2);
-void sysWinSetTwoTextValues(u8* syswin, char* a, char* b);
-void sysWinApplyKind(void* syswin, int kind);
-void sysWinOpenPhase1(void* syswin);
-void sysWinAdvancePhase3(void* syswin);
-void sysWinDispatchPhase(void* syswin);
-void sysWinGetPaneScreenPos(void* out, u8* syswin, u8 sel);
-void Cur_SetVisible(void* cur, int val);
-void Cur_Update(void* cur);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __ct__8CProcessFv(CProcess* self);
 void __dt__7CSysWinFv(void* syswin, int flags);

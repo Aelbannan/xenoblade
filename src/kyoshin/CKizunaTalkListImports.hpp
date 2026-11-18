@@ -21,9 +21,6 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void Cur_Update(void*);
-extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void deleteRegion(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail

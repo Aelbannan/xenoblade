@@ -144,9 +144,9 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
         int skipMark = 0;
         if (f60 != 0) {
             int actorStateOk = 1;
-            u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+            u32 w = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
             if (testActorStatus(obj, &w, 0xA) == 0) {
-                u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+                u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
                 if (testActorStatus(obj, &w2, 0x9) == 0) {
                     actorStateOk = 0;
                 }
@@ -156,7 +156,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             if ((f180 & 0x1C000000u) != 0) {
                 if ((f180 & 0x8u) != 0) {
                     view->field_0x17C &= ~0x8000u;
-                    u32 w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+                    u32 w3 = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
                     if (testActorStatus(obj, &w3, 0x1C) != 0) {
                         setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                         reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
@@ -665,7 +665,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             }
             CtrlMoveEne_ResetMoveState(self, (cf::CFunc8008D444Obj*)obj, 1);
             if (f60 != 0) {
-                u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+                u32 w = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
                 if (testActorStatus(obj, &w, 0x10) != 0 ||
                     testActorStatus(obj, &w, 0xA) != 0 ||
                     testActorStatus(obj, &w, 0x9) != 0) {
@@ -686,7 +686,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                 : 0);
         // +0x0C on Move = CObjectState::UVF2(mask).
         if (reinterpret_cast<cf::CObjectState*>(&obj2->mSub2)
-                ->CObjectState_checkStateFlags(0x200) == 0) {
+                ->checkStateFlags(0x200) == 0) {
             obj2->field_3374 &= 0xFBFFFFFF;
             view->field_0x17C &= 0xEFFFFFFF;
         }
@@ -743,15 +743,15 @@ void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
             // fresh state word); on a hit kill the enemy via the flag object
             // and the sub-object's +0x150 slot.
             self->field_0x17C &= ~0x10000u;
-            u32 w1 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+            u32 w1 = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
             if (testActorStatus(obj, &w1, 0x1C) != 0) {
                 setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
             } else {
-                u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
+                u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0;
                 u32 w3;
                 if (testActorStatus(obj, &w2, 0x805) != 0 ||
-                    (w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0,
+                    (w3 = ((cf::CFunc8008B580Word*)obj->field_04->getStateData())->field_0,
                      testActorStatus(obj, &w3, 0x18)) != 0) {
                     setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                     ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
@@ -1134,7 +1134,7 @@ void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* ob
     self->field_0x196 = 0;
     maskMoveChildFlags(self);
     if (flag != 0) {
-        reinterpret_cast<cf::CObjectState*>(&obj->mSub)->CObjectState_setStateBitMask(0x200);
+        reinterpret_cast<cf::CObjectState*>(&obj->mSub)->setStateBitMask(0x200);
     } else {
         self->field_0x17C |= 0x2000;
     }
@@ -1855,7 +1855,7 @@ void CtrlMoveEne_UpdateMoveHeading(cf::CCtrlMoveEne* self) {
             if (sub->field_C4 != 0) {
                 func_8004B9D4(sub->field_C4, 1, 0, -1, 0);
             }
-        } else if (sub->field_C4 != 0 && ((cf::CfObject*)sub)->CObjectState_checkStateFlags(4) != 0) {
+        } else if (sub->field_C4 != 0 && ((cf::CfObject*)sub)->checkStateFlags(4) != 0) {
             ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
                 lbl_eu_806665C0;
             done = 1;
@@ -1890,7 +1890,7 @@ check:
             if (sub->field_C4 != 0 && p98 != 0 &&
                 (p98->field_7A4 & 0x10000u) == 0) {
                 CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-                ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
+                ((cf::CfObject*)sub)->setStateBitFlag(4);
                 self->field_0x17C |= 1;
             }
         } else {
@@ -2152,7 +2152,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
+                    reinterpret_cast<cf::CObjectState*>(sub)->setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
             } else if ((view->field_0x70 & 0x100u) != 0) {
@@ -2183,7 +2183,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
+                    reinterpret_cast<cf::CObjectState*>(sub)->setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
             }
@@ -2211,7 +2211,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
              0x10000u) == 0) {
             CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
+            reinterpret_cast<cf::CObjectState*>(sub)->setStateBitFlag(4);
             view->field_0x17C |= 1;
         }
         *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2235,7 +2235,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
             }
         } else {
             if (sub->field_C4 != 0 &&
-                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_checkStateFlags(4) != 0) {
+                reinterpret_cast<cf::CObjectState*>(sub)->checkStateFlags(4) != 0) {
                 ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
                     lbl_eu_806665C0;
                 r0 = 1;
@@ -2538,7 +2538,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)(sub2), 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
+                    reinterpret_cast<cf::CObjectState*>(sub2)->setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
                 *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2569,7 +2569,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                  0x10000u) == 0) {
                 CfObjectMove_setAnimModeArgs((u8*)(sub2), 3, 0, -1, 1);
-                reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
+                reinterpret_cast<cf::CObjectState*>(sub2)->setStateBitFlag(4);
                 view->field_0x17C |= 1;
             }
             *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2595,7 +2595,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
             }
         } else {
             if (sub->field_C4 != 0 &&
-                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_checkStateFlags(4) != 0) {
+                reinterpret_cast<cf::CObjectState*>(sub)->checkStateFlags(4) != 0) {
                 ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
                     lbl_eu_806665C0;
                 done = 1;
@@ -2801,7 +2801,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                 func_8004B9D4(movesub->field_C4, 1, 0, -1, 0);
             }
         } else if (movesub->field_C4 != 0 &&
-                   ((cf::CfObject*)movesub)->CObjectState_checkStateFlags(4) !=
+                   ((cf::CfObject*)movesub)->checkStateFlags(4) !=
                        0) {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
@@ -3039,12 +3039,12 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                             ->CfObject_getCurrentTarget());
                     if (tgt != 0 && tgt->field_14 != lbl_eu_806665C0) {
                         u32 w = ((cf::CFunc8008B580Word*)player->field_04
-                                     ->CObjectState_getStateData())
+                                     ->getStateData())
                                     ->field_0;
                         if (testActorStatus(player, &w, 0x19) == 0) {
                             u32 w2 =
                                 ((cf::CFunc8008B580Word*)player->field_04
-                                     ->CObjectState_getStateData())
+                                     ->getStateData())
                                     ->field_0;
                             if (testActorStatus(player, &w2, 3) != 0) {
                                 tgt = (cf::CFunc80091864Target*)(
@@ -3156,7 +3156,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 & 0x10000) ==
                 0) {
             CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-            ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
+            ((cf::CfObject*)sub)->setStateBitFlag(4);
             self->field_0x17C |= 1;
         }
         f32 ps = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
@@ -3324,7 +3324,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
-                    ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
+                    ((cf::CfObject*)sub)->setStateBitFlag(4);
                     self->field_0x17C |= 1;
                 }
                 self->field_0x58 = (u16)(self->field_0x58 & ~0x80u);

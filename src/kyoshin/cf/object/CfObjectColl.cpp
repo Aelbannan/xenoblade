@@ -85,8 +85,8 @@ extern "C" cf::CfCollImpl* CfObjectColl_initCollImplInstances(cf::CfObjectColl* 
     }
     return &lbl_eu_80663EAC;
 }
-void cf::CfObjectColl::refreshCollLink() {
-    notifyChildUpdate();
+void cf::CfObjectColl::refreshCollLink(const ml::CVec3* pos) {
+    notifyChildUpdate(pos);
 }
 
 // Null-guarded bit-13 flag test on +0x68: reject when the object is marked
@@ -585,49 +585,49 @@ extern "C" bool CollObjTestResIdReady(void* self) {
 extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { ((cf::CfObjectColl*)self)->field_0x9C = val; }
 
 extern const float lbl_eu_80666914;
-extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
+extern "C" float CfObject_getProgressHigh__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
 
 extern "C" void CfObject_setProgressHigh__Q22cf8CfObjectFf() {}
 
 extern const float lbl_eu_80666910;
-extern "C" float CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+extern "C" float CfObject_getProgressLow__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_syncModelRate__Q22cf8CfObjectFf() {}
 
-extern "C" int CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_isVisibleFlag__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
 // Retail symbol is Fv even though the body reads r4; defined at global scope
 // under the retail-mangled identifier with an explicit (self, flag) pair.
 // Set/clear bit 22 of the shared flag word at +0x68.
-void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi(cf::CfObject* self, int flag) {
+void cf::CfObject::CfObject_setVisibleFlag(int flag) {
     if (flag != 0) {
-        self->field_0x68 |= 0x00400000;
+        field_0x68 |= 0x00400000;
     } else {
-        self->field_0x68 &= ~0x00400000;
+        field_0x68 &= ~0x00400000;
     }
 }
 
 // Set/clear bit 25 of the shared flag word at +0x68.
-void CfObject_setMoveReadyFlag__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
+void cf::CfObject::CfObject_setMoveReadyFlag(int flag) {
     if (flag != 0) {
-        self->field_0x68 |= 0x02000000;
+        field_0x68 |= 0x02000000;
     } else {
-        self->field_0x68 &= ~0x02000000;
+        field_0x68 &= ~0x02000000;
     }
 }
 
-extern "C" int CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_getSlotBits__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
 
-extern "C" void CfObject_setAnimSlotEntry__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_setAnimSlotEntry__Q22cf8CfObjectFUlUl() {}
 
 extern const float lbl_eu_80666910;
-extern "C" float CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+extern "C" float CfObject_getMoveFactor__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv(float /*value*/) {}
+extern "C" void CfObject_setMoveScale__Q22cf8CfObjectFf(float /*value*/) {}
 
-extern "C" void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_setMoveValue__Q22cf8CfObjectFf() {}
 
-extern "C" int CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv(cf::CfObject* self) { return -1; }
+extern "C" int CfObject_getNpcTargetAction__Q22cf8CfObjectFv(cf::CfObject* self) { return -1; }
 
 extern "C" void CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl() {}
 
@@ -643,19 +643,19 @@ extern "C" int CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl(cf::CfObject* self) {
 
 extern "C" int CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_clearAnimEntry__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_resetAnimSlots__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
 
-extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(cf::CfObject* self) { return ((CfObjectDataView*)self)->f60; }
+extern "C" float CfObject_getObjScale__Q22cf8CfObjectFv(cf::CfObject* self) { return ((CfObjectDataView*)self)->f60; }
 
-extern "C" void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv(cf::CfObject* self, float val) { ((CfObjectDataView*)self)->f60 = val; }
+extern "C" void CfObject_setObjScale__Q22cf8CfObjectFf(cf::CfObject* self, float val) { ((CfObjectDataView*)self)->f60 = val; }
 
-extern "C" void* CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x44]; }
+extern "C" void* CfObject_getField48__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x44]; }
 
-extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x38]; }
+extern "C" void* CfObject_getPosTriple__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x38]; }
 
-extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
+extern "C" void CfObject_setPosXYZ__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
     *(float*)((char*)self + 0x3c) = a;
     *(float*)((char*)self + 0x40) = b;
     *(float*)((char*)self + 0x44) = c;
@@ -666,7 +666,7 @@ extern "C" int CfObject_checkTargetState__Q22cf8CfObjectFv(cf::CfObject* self) {
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_readRefreshValue__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void* CfObject_pushRefreshExtra__Q22cf8CfObjectFv(cf::CfObject* self) { return self; }
+extern "C" void* CfObject_pushRefreshExtra__Q22cf8CfObjectFf(cf::CfObject* self) { return self; }
 
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_getMoveSpeedRate__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
@@ -675,9 +675,9 @@ void* cf::CfObject::CfObject_pushRefreshValue(float value) { return this; }
 
 extern "C" int CfObject_queryTargetState__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 
-extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_refreshSubB0__Q22cf8CfObjectFv() {}
 
-int cf::CfObject::CfObject_UnkVirtualFunc11() {
+int cf::CfObject::CfObject_notifyMemberRemoved() {
     return ((CfObjectDataView*)this)->w6C & 1;
 }
 
@@ -685,7 +685,7 @@ void cf::CfObject::CfObject_forwardSubObject() {
     this->CfObject_isMoveActiveNow();
 }
 
-extern "C" void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_updateMoveRate__Q22cf8CfObjectFv() {}
 
 int cf::CfObjectPoint::isCollEnabled() {
     return (field_0x68 >> 20) & 1;

@@ -15,7 +15,6 @@
 #include <revolution/MTX.h>
 
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/code_80296898.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
@@ -1465,6 +1464,14 @@ void IdTable_DeepCopy(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
         }
     }
 }
+
+// CTagProcessor ctor (retail symbol is unmangled; C linkage keeps the reloc name).
+class CTagProcessor;
+extern "C" void* __ct__CTagProcessor(void*);
+
+// CTagProcessor ctor (retail symbol is unmangled; C linkage keeps the reloc name).
+class CTagProcessor;
+extern "C" void* __ct__CTagProcessor(void*);
 
 // us-80263b68 - init the shared text globals and allocate the tag
 // processor + text buffer on the lib-layout alloc handle. The ctor is called

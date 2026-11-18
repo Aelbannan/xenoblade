@@ -191,9 +191,6 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
 // (CItem_kindPtr is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
-extern "C" void Cur_Update(void*);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void Cur_SetVisible(void*, int);
 extern "C" int sprintf(char*, const char*, ...);
 
 // Item-implementation object for an entry (real owner: CItemImpl in

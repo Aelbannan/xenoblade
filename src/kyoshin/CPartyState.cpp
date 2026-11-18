@@ -204,11 +204,11 @@ extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
     nw4r::math::VEC3 tmp;
     AccumPaneWorldPos(&tmp, pane);
     if ((s8)self->field_0x4C < 3) {
-        Cur_PlacePaneByIndex(&self->mCur22, &tmp, 2);
-        Cur_HighlightPane(&self->mCur22, 2);
+        self->mCur22.PlacePaneByIndex(&tmp, 2);
+        self->mCur22.HighlightPane(2);
     } else {
-        Cur_PlacePaneByIndex(&self->mCur22, &tmp, 3);
-        Cur_HighlightPane(&self->mCur22, 3);
+        self->mCur22.PlacePaneByIndex(&tmp, 3);
+        self->mCur22.HighlightPane(3);
     }
     if ((s8)self->field_0x4D >= 0) {
         sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4D]);
@@ -217,11 +217,11 @@ extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
         AccumPaneWorldPos(&tmp2, pane2);
         tmp = tmp2;
         if ((s8)self->field_0x4D < 3) {
-            Cur_PlacePaneByIndex(&self->mCur22, &tmp, 0);
-            Cur_ShowPane(&self->mCur22, 0, 1);
+            self->mCur22.PlacePaneByIndex(&tmp, 0);
+            self->mCur22.ShowPane(0, 1);
         } else {
-            Cur_PlacePaneByIndex(&self->mCur22, &tmp, 1);
-            Cur_ShowPane(&self->mCur22, 1, 1);
+            self->mCur22.PlacePaneByIndex(&tmp, 1);
+            self->mCur22.ShowPane(1, 1);
         }
     }
 }
@@ -268,7 +268,7 @@ extern "C" __declspec(noinline) void finishPartyIntroAnim(CPartyState* self) {
     if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
-        Cur_SetVisible(&self->mCur22, 1);
+        self->mCur22.SetVisible(1);
         refreshPartyCursor((CPartyState*)self);
     }
 }
@@ -289,7 +289,7 @@ extern "C" void startPartyPanelClose(CPartyState* self) {
     if (self->field_0x2C == 3) {
         self->field_0x2C = 4;
         self->field_0x31 = 0;
-        Cur_HighlightPane(&self->mCur22, 0xff);
+        self->mCur22.HighlightPane(0xff);
         if (self->field_0x4E == 0) {
             playUISound(6);
         }
@@ -668,7 +668,7 @@ extern "C" void advancePartyPanel(CPartyState* self) {
             break;
         }
         self->mLayout->Animate(0);
-        Cur_Update(&self->mCur22);
+        self->mCur22.Update();
     }
 }
 
@@ -682,7 +682,7 @@ extern "C" void advancePartyPanel(CPartyState* self) {
 extern "C" void drawPartyState(CPartyState* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
-        Cur_DrawLayout(&self->mCur22, drawInfo);
+        self->mCur22.DrawLayout(drawInfo);
     }
 }
 #pragma optimize_for_size off

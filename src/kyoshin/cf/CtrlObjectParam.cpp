@@ -2614,19 +2614,19 @@ extern "C" u32 CtrlObjectParam_FindCharByItemInst(void* arg) {
     return 0;
 }
 
-void cf::CObjectState::CObjectState_setStateBitMask3() {
+void cf::CObjectState::setStateBitMask3() {
     unkC = unk8;
 }
 
-void* cf::CObjectState::CObjectState_setStateBitMask2() {
+void* cf::CObjectState::setStateBitMask2() {
     return &unkC;
 }
 
-void cf::CObjectState::CObjectState_clearStateWord8() {
+void cf::CObjectState::clearStateWord8() {
     unk8 = 0;
 }
 
-void cf::CObjectState::CObjectState_clearStateWord4() {
+void cf::CObjectState::clearStateWord4() {
     unk4 = 0;
 }
 

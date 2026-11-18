@@ -134,7 +134,7 @@ struct ArtsActionSource {
 };
 
 // Fake vtables folded onto real owners (Wave 31):
-// +0x30 -> cf::CObjectState::CObjectState_getStateData (party status)
+// +0x30 -> cf::CObjectState::getStateData (party status)
 // +0x4C -> cf::CObjectParam::CObjectParam_getSelfObjectId (move id)
 // +0xAC -> cf::CfObject::CfObject_getPosVector (position)
 // +0x54 -> cf::CBattleState::CBattleState_getEntryByIndex (arts slot)
@@ -878,7 +878,7 @@ void CMenuArtsSelect::Move() {
         if (actor != NULL) {
             typedef void* (*GetPtrFn)(void*);
             void* sub = actor->mSecondaryVtable;
-            u32* pVal = reinterpret_cast<u32*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+            u32* pVal = reinterpret_cast<u32*>(reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
             int localVal = pVal[0];
             if (testActorStatus(actor, &localVal, 0x803) != 0) {
                 if (unk348 == 0) {
@@ -1526,7 +1526,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
 
     if (self->unk320 != 0) {
         void* sub = actor->mSecondaryVtable;
-        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
         if (testActorStatus(actor, &v, 31) == 0) self->unk320 = 0;
     }
 
@@ -1535,7 +1535,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     if (pl1 != NULL) a2 = (BattleActor*)((char*)pl1 - 0x3e9c);
     if (a2 != NULL && self->unk320 == 0) {
         void* sub = a2->mSecondaryVtable;
-        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
         if (testActorStatus(a2, &v, 0x803) != 0) {
             if (self->unk324 == 4 && self->unk328 == 0) {
                 self->unk328 = 4;
@@ -1616,13 +1616,13 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle2) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
                 int v18;
                 // Retail funnels both guard failures into one shared
                 // playUISound(5) tail (no early sound calls here).
                 if (testActorStatus(actor, &v11, 11) != 0 &&
                     (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
-                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
+                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
                     self->unk328 = 4;
@@ -1639,7 +1639,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 2;
                     void* sub4 = actor->mSecondaryVtable;
-                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
+                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->getStateData());
                     if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                         testActorStatus(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 3;
@@ -1739,12 +1739,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle3) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
                 int v18;
                 // Same shared-tail funnel as the b1 block.
                 if (testActorStatus(actor, &v11, 11) != 0 &&
                     (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
-                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
+                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
                     self->unk328 = 2;
@@ -1761,7 +1761,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 0;
                     void* sub4 = actor->mSecondaryVtable;
-                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
+                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->getStateData());
                     if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                         testActorStatus(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 1;
@@ -2075,7 +2075,7 @@ void CMenuArtsSelect::updatePageMode() {
     }
     if (actor != NULL) {
         u32* pVal = reinterpret_cast<u32*>(
-            reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
+            reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData());
         int localVal = pVal[0];
         if (testActorStatus(actor, &localVal, 0x803) != 0) {
             if (unk324 == 4) {
@@ -2445,7 +2445,7 @@ void CMenuArtsSelect::advanceConfirmState() {
     if (actor != NULL) {
         void* sub = actor->mSecondaryVtable;
         u32* pVal = reinterpret_cast<u32*>(
-            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+            reinterpret_cast<cf::CObjectState*>(sub)->getStateData());
         int localVal = pVal[0];
         if (testActorStatus(actor, &localVal, 0x803) != 0) {
             if (unk324 != 4) {
@@ -3026,7 +3026,7 @@ extern "C" int CMenuArtsSelect_ShouldStayOpen(CMenuArtsSelect* self) {
     if (move != NULL) actor = (BattleActor*)((char*)move - 0x3e9c);
     if (actor != NULL) {
         void* sub = actor->mSecondaryVtable;
-        void* pv = reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
+        void* pv = reinterpret_cast<cf::CObjectState*>(sub)->getStateData();
         u32* pVal = reinterpret_cast<u32*>(pv);
         int localVal = pVal[0];
         if (testActorStatus(actor, &localVal, 0x803) == 0) {
@@ -3072,7 +3072,7 @@ int CMenuArtsSelect::isSlotAvailable(s32 index) {
         if (mv == NULL) {
             // Party-status probe through the secondary MI vtable.
             u32* pVal = reinterpret_cast<u32*>(
-                reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
+                reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData());
             int localVal = pVal[0];
             return testActorStatus(actor, &localVal, 0x803);
         }
@@ -3232,7 +3232,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
             } else if (unk328 == 3) {
                 if (CtrlRemote_TouchBitByArg(0x3357) == 0) return 1;
                 u32* pVal = reinterpret_cast<u32*>(
-                    reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
+                    reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData());
                 int localVal = pVal[0];
                 if (testActorStatus(actor, &localVal, 0xb) != 0) return 1;
             }

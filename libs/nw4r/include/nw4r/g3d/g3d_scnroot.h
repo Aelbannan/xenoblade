@@ -46,6 +46,9 @@ public:
     Camera GetCurrentCamera();
     void SetCurrentCamera(int idx);
 
+    bool SetAnmScn(AnmScn* pAnmScn);
+    AnmScn* RemoveAnmScn();
+
     Fog GetFog(int idx);
     LightSet GetLightSet(int idx);
 
@@ -122,6 +125,8 @@ public:
 
     virtual void DrawOpa(ResMdlDrawMode* pForceMode); // at 0x20
     virtual void DrawXlu(ResMdlDrawMode* pForceMode); // at 0x24
+
+    virtual u32 CheckScnObj(ScnObj* pObj); // at 0x28
 
 protected:
     ScnObj** mpArrayOpa; // at 0x4

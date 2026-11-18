@@ -58,7 +58,7 @@ public:
     int MapCursorToSlot();
     int RunMainFlow();
     int GetBoxCount();
-    void ShowSubPanes(u8 visible);
+    void ShowSubPanes(bool visible);
     void HandleEIBName();
     void TryCloseEIBRow();
     int GetLockedState();
@@ -200,21 +200,17 @@ extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
-// linkage. Cur_BothSubPanesOn/CEquipItemBox gates take the object and return status.
+// linkage. The subcursor gates are CSubCur members (BothSubPanesOn returns status).
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
-extern "C" void Cur_Update(void* cur);
 
 // Free-function form (retail: advanceItemBoxState__FP12CItemBoxInfo).
 
-// 2-arg subcur visibility setter (retail unmangled symbol; see CCur.cpp).
-extern "C" void Cur_ShowTwoSubPanes(void*, u32);
-extern "C" int Cur_BothSubPanesOn(CBaseCur*);
+// subcur visibility setter (CSubCur::ShowTwoSubPanes; see CCur.cpp).
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void* CItem_kindPtr(u32 index, s16 value);
-extern "C" void Cur_DrawLayout(void*, void*);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
 
@@ -246,7 +242,6 @@ extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 
 // Sub-cursor activate (defined in CCur.cpp).
-extern "C" void Cur_SetActive(CBaseCur* cur);
 
 // Accumulate a pane's translate into output (CPartyState.hpp also declares
 // this C-ABI helper).

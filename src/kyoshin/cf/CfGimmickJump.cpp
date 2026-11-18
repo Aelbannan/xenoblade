@@ -107,7 +107,7 @@ extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
  *   CObjectState .. CObjectParam .. CfObject .. CfObjectModel ..
  *   CfObjectMove). Slots dispatched here: +0x9C CfObject_setMoveTargetVec
  *   (hidden r4 = position vector), +0xAC CfObject_getPosVector (returns
- *   the position vector), +0xC8 CfObject_UnkVirtualFunc30 (direction
+ *   the position vector), +0xC8 CfObject_setMoveYaw (direction
  *   update). The +0xAC/+0xC8 calls go through the real cf::CfObject
  *   declarations; +0x9C still needs the minimal view below because the hot
  *   shared header declares that slot no-arg.

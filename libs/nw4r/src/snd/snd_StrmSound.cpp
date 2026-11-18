@@ -111,7 +111,7 @@ void StrmSound::InitParam() {
     }
 }
 
-bool StrmSound::Setup(StrmBufferPool* pPool, int voices, u16 unk) {
+int StrmSound::Setup(StrmBufferPool* pPool, int voices, u16 unk) {
     InitParam();
     return mStrmPlayer.Setup(pPool, voices, unk, GetVoiceOutCount());
 }

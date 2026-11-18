@@ -130,7 +130,7 @@ public:
     // 0x20:      Layout* render target (drawn by PlayAward_DrawList)
     // 0x24:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimB/80271480)
     // 0x28:      AnimTransform* reverse-advance target (PlayAward_FinishCloseAnimA)
-    // 0x30-0x47: cursor region (drawn via Cur_DrawLayout)
+    // 0x30-0x47: cursor region (drawn via CBaseCur::DrawLayout)
     // 0x48-0x87: CScrollBar region (0x40, opaque)
     // 0x88:      render gate (nonzero enables PlayAward_DrawList) | 0x89: state byte
     // 0x8A/0x8B: flag bytes
@@ -311,10 +311,8 @@ extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // Cursor draw import (retail-unmangled name).
-extern "C" void Cur_DrawLayout(void*, void*);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
-extern "C" void Cur_SetVisible(void*, u8);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
 
@@ -323,7 +321,6 @@ extern "C" void Cur_SetVisible(void*, u8);
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; see above).
-extern "C" void Cur_Update(void*);
 
 // Class_8045F858 scratch-region RAII guard used by OnFileEvent around the
 // layout build (retail C-linkage names; the class itself is declared in

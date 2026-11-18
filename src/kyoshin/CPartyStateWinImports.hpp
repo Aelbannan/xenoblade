@@ -5,6 +5,7 @@
 // does not pull these flat declarations into unrelated units).
 
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 namespace cf { class CfObjectMove; }
 #include "kyoshin/CPartyStateWin.hpp"
@@ -70,8 +71,6 @@ extern char lbl_eu_80507C94[];
 
 // C-linkage CSysWin helper imports (retail unmangled names, defined in
 // CSysWin.cpp / CEquipChange-adjacent units).
-extern "C" int CSysWin_getUnk34(CSysWin*);
-extern "C" void sysWinAdvancePhase3(CSysWin*);
 
 // cf::CfGameManager helper (retail pre-mangled Fv name with a vestigial arg;
 // same convention as CfGameManagerUnityHelpers.hpp).
@@ -156,7 +155,6 @@ class CTaskGame;
 
 // Sub-object render helpers taking a DrawInfo (retail unmangled).
 extern "C" void drawPartyState(CPartyState*, nw4r::lyt::DrawInfo*);
-extern "C" void sysWinDrawLayout(CSysWin*, nw4r::lyt::DrawInfo*);
 
 // Embedded sub-object destructors (retail C++-mangled names, defined in the
 // owning TUs: CSysWin.cpp / CEquipChange.cpp / CModelDispEquip.cpp /
@@ -217,7 +215,6 @@ struct CPartyStateWinRectSrc {
 extern "C" void teardown(CTitleAHelp*);
 extern "C" void ModelDispTeardownAll(CModelDisp*);
 extern "C" void termPartyState(CPartyState*);
-extern "C" void sysWinTermLayout(CSysWin*);
 
 // Effect-task scene unregister helper (retail unmangled; defined in
 // CTaskGameEff.cpp). PartyStateWin_TeardownWindow calls it unconditionally with the owning
@@ -226,7 +223,6 @@ extern "C" void unregisterEffectScene(CScn*);
 
 // Equip-change / sys-win settle checks used by PartyStateWin_StateRefresh's gate (retail
 // unmangled; int returns so the retail cmpwi compares r3 directly).
-extern "C" int CSysWin_isReady(CSysWin*);
 
 // Per-frame sub-object update helpers used by PartyStateWin_FrameStep's tail (retail
 // unmangled; the embedded sub-object headers cannot be included here).
@@ -234,17 +230,12 @@ extern "C" void updateHelp(CTitleAHelp*);
 extern "C" void ModelDispTickState(CModelDisp*);
 extern "C" void advancePartyPanel(CPartyState*);
 extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquipView*);
-extern "C" void sysWinDispatchPhase(CSysWin*);
-extern "C" int CSysWin_isActive(CSysWin*);
 
 // C-linkage imports for the embedded CEquipChange / CSysWin / CModelDispEquip
 // sub-object handlers used by PartyStateWin_StateEquipInput's pad-dispatch chains (retail
 // unmangled; the embedded sub-object headers cannot be included here).
 // u8/u16 returns where the retail masks the call result (clrlwi) before
 // comparing; int returns where the retail cmpwi's the call result directly.
-extern "C" void sysWinSetKindContent(CSysWin*, char*, u32);
-extern "C" void sysWinApplyKind(CSysWin*, u32);
-extern "C" void sysWinOpenPhase1(CSysWin*);
 extern "C" int ModelDispEquip_GetState21(CModelDispEquipView*);
 extern "C" void ModelDispEquip_StartFadeIn(CModelDispEquipView*);
 

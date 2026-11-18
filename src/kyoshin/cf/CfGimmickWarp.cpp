@@ -321,11 +321,11 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
             cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
+                u32 value = *static_cast<u32*>(sub->getStateData());
                 if (testActorStatus(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->CObjectState_checkStateFlags(0x200)) {
-                        tail->CObjectState_setStateBitMask(0x200);
+                    if (!tail->checkStateFlags(0x200)) {
+                        tail->setStateBitMask(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -401,11 +401,11 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
             cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
+                u32 value = *static_cast<u32*>(sub->getStateData());
                 if (testActorStatus(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->CObjectState_checkStateFlags(0x200)) {
-                        tail->CObjectState_setStateBitMask(0x200);
+                    if (!tail->checkStateFlags(0x200)) {
+                        tail->setStateBitMask(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -514,11 +514,11 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
     cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-        u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
+        u32 value = *static_cast<u32*>(sub->getStateData());
         if (testActorStatus(player, &value, 0x803) != 0) {
             cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-            if (!tail->CObjectState_checkStateFlags(0x200)) {
-                tail->CObjectState_setStateBitMask(0x200);
+            if (!tail->checkStateFlags(0x200)) {
+                tail->setStateBitMask(0x200);
             }
             self->state = 4;
             self->timer = lbl_eu_806683C8;
@@ -623,9 +623,9 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
         }
         cf::CfObject* ctl = reinterpret_cast<cf::CfObject*>(reinterpret_cast<char*>(player) - 0x3E9C);
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(ctl) + 4);
-        u32 stateA = *static_cast<u32*>(sub->CObjectState_getStateData());
+        u32 stateA = *static_cast<u32*>(sub->getStateData());
         if (testActorStatus(ctl, &stateA, 8) == 0) {
-            u32 stateB = *static_cast<u32*>(sub->CObjectState_getStateData());
+            u32 stateB = *static_cast<u32*>(sub->getStateData());
             if (testActorStatus(ctl, &stateB, 7) == 0) {
                 continue;
             }
@@ -766,7 +766,7 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
 
         cf::CObjectState* manager = reinterpret_cast<cf::CObjectState*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
         if (manager != 0) {
-            manager->CObjectState_checkStateFlags(0);
+            manager->checkStateFlags(0);
         }
         self->state = 7;
         self->timer = lbl_eu_806683D0;

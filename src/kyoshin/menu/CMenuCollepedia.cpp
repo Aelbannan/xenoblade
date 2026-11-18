@@ -7,7 +7,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // This-unit phase handlers (retail-unmangled func_ names), referenced by

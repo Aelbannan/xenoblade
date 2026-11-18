@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -32,7 +33,6 @@
 #include "decomp.h"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 
 // CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
 // pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
@@ -993,7 +993,7 @@ void CMenuGetItemMulti::Term() {
         field_208 = 0;
     }
     mCursor.cleanup();
-    sysWinTermLayout(&mSystemWindow[0]);
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->termLayout();
     if (mLayout != 0) {
         delete mLayout;
         mLayout = 0;
@@ -1042,14 +1042,14 @@ body:
     // out to the common per-frame update tail below.
     switch (field_1F8) {
     case 0:  // window ready: show the item-select cursor
-        if (CSysWin_isReady(&mSystemWindow[0]) == 0) break;
+        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isReady() == 0) break;
         if (lbl_eu_80664418 == 0) break;
         field_1F8 = 1;
         playUISound(0x2d);
         break;
     case 1:  // opening animation: position the cursor on the active item
         if (advanceAnimTransform(mAnim, lbl_eu_80667E10) == 0) break;
-        Cur_SetVisible(&mCursor, 1);
+        mCursor.SetVisible(1);
         {
             char buf[32];
             s8 n = (s8)mMaxVisibleItems;
@@ -1080,11 +1080,11 @@ body:
         GetItemMulti_PruneEntries(this);
         break;
     case 5:  // window active: cursor follows the slot selection
-        if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
-        Cur_SetVisible(&mCursor, 1);
+        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        mCursor.SetVisible(1);
         {
             nw4r::math::VEC3 pos;
-            sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&mSystemWindow[0]), field_1F4);
             mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 6;
@@ -1093,7 +1093,7 @@ body:
         GetItemMulti_HandleWindowPadOnce(this);
         break;
     case 7:  // confirm selection: open the item menu for the active item
-        if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
+        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
         if (field_1F5 != 0) {
             u32 cat;
             if (mEntryCount != 0) {
@@ -1105,16 +1105,16 @@ body:
             field_1F8 = 0xb;
             field_1F5 = 0;
         } else {
-            Cur_SetVisible(&mCursor, 1);
+            mCursor.SetVisible(1);
             field_1F8 = 2;
         }
         break;
     case 8:  // window active (alt): cursor follows the slot selection
-        if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
-        Cur_SetVisible(&mCursor, 1);
+        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
+        mCursor.SetVisible(1);
         {
             nw4r::math::VEC3 pos;
-            sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&mSystemWindow[0]), field_1F4);
             mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 9;
@@ -1123,18 +1123,18 @@ body:
         GetItemMulti_HandleWindowPadAuto(this);
         break;
     case 10: // confirm from slot state: reopen or confirm
-        if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
+        if (reinterpret_cast<CSysWin*>(&mSystemWindow[0])->isActive() == 0) break;
         if ((s8)field_1F4 == 0) {
             field_1F8 = 3;
             playUISound(0x89);
         } else {
-            Cur_SetVisible(&mCursor, 1);
+            mCursor.SetVisible(1);
             field_1F8 = 2;
         }
         break;
     case 11: // menu closing: reposition the cursor on the active item
         if (ItemMenu_IsPresent() != 0) break;
-        Cur_SetVisible(&mCursor, 1);
+        mCursor.SetVisible(1);
         GetItemMulti_RefreshList(this);
         {
             char buf[32];
@@ -1159,8 +1159,8 @@ body:
 
     // Per-frame update tail (all states fall through to here).
     mLayout->Animate(0);
-    Cur_Update(&mCursor);
-    sysWinDispatchPhase(&mSystemWindow[0]);
+    mCursor.Update();
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->dispatchPhase();
 }
 
 // Adjust the item-multi pane layout for the visible-item count: each hidden
@@ -1252,8 +1252,8 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
-        sysWinDrawLayout(&mSystemWindow[0], &drawInfo);
-        Cur_DrawLayout(&mCursor, &drawInfo);
+        reinterpret_cast<CSysWin*>(&mSystemWindow[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+        mCursor.DrawLayout(&drawInfo);
     }
 }
 
@@ -2671,12 +2671,12 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         // Up over the close pane: a live system window wins; otherwise open
         // the rank-up window for the selected rank item (or refuse with a
         // buzz when the pane list is not in the rank state).
-        if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
-            if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
                 return;
             }
-            sysWinAdvancePhase3(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 1);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+            self->mCursor.SetVisible(1);
             return;
         }
         if (self->field_20C != 0) {
@@ -2694,12 +2694,12 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char* n1 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1c);
             char* n2 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1d);
             char* n3 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1e);
-            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            sysWinSetKindContent(&self->mSystemWindow[0], n1, 0);
-            sysWinSetTwoTextValues(&self->mSystemWindow[0], n2, n3);
-            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            sysWinOpenPhase1(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n1), 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n2), reinterpret_cast<char*>(n3));
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
             return;
         }
@@ -2714,12 +2714,12 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         if (self->field_20C == 0) {
             return;
         }
-        if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
-            if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
                 return;
             }
-            sysWinAdvancePhase3(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 1);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+            self->mCursor.SetVisible(1);
             return;
         }
         u8 mv = self->mMaxVisibleItems;
@@ -2749,7 +2749,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         // Left/right held in the slot window: scan the slot group backwards
         // for the previous filled slot; on the pane list, wrap the selection
         // backwards and re-centre the cursor.
-        if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
             return;
         }
         if (self->field_20C != 0) {
@@ -2823,7 +2823,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
     if (curHeld) {
         // Right held: scan the slot group forwards; on the pane list, wrap
         // the selection forwards.
-        if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
             return;
         }
         if (self->field_20C != 0) {
@@ -2903,12 +2903,12 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x404], true);
         if ((reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 1) != 0) {
             if (self->field_20C != 0) {
-                if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
-                    if (CSysWin_isActive(&self->mSystemWindow[0]) == 0) {
+                if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
+                    if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {
                         return;
                     }
-                    sysWinAdvancePhase3(&self->mSystemWindow[0]);
-                    Cur_SetVisible(&self->mCursor, 1);
+                    reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+                    self->mCursor.SetVisible(1);
                     return;
                 }
                 u8 idx = (u8)((s8)self->field_20D * 4 + self->field_20E);
@@ -2924,16 +2924,16 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                     text = BdatGetPtrDirect(reinterpret_cast<const void*>(lbl_eu_80664418),
                                          &lbl_eu_80504A3C[0x141], slotId);
                 }
-                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                sysWinSetKindContent(&self->mSystemWindow[0], text, 0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-                sysWinOpenPhase1(&self->mSystemWindow[0]);
-                Cur_SetVisible(&self->mCursor, 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(text), 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mCursor.SetVisible(0);
                 return;
             }
 
             // No slot window open: pick the first filled rank slot.
-            if (CSysWin_getUnk34(&self->mSystemWindow[0]) != 0) {
+            if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
                 return;
             }
             u8 sel = 0;
@@ -2969,7 +2969,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             playUISound(2);
             return;
         }
-        if (CSysWin_getUnk34(&self->mSystemWindow[0]) == 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() == 0) {
             playUISound(5);
         }
     }
@@ -3079,7 +3079,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             self->mCursor.setRootPaneTranslate(&pos);
         }
         if (self->mVisibleItemCount == 0) {
-            Cur_SetVisible(&self->mCursor, 0);
+            self->mCursor.SetVisible(0);
             self->field_1F8 = 3;
             playUISound(0x89);
         } else {
@@ -3119,7 +3119,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 self->mCursor.setRootPaneTranslate(&pos);
             }
             if (self->mVisibleItemCount == 0) {
-                Cur_SetVisible(&self->mCursor, 0);
+                self->mCursor.SetVisible(0);
                 self->field_1F8 = 3;
                 playUISound(0x89);
             } else {
@@ -3138,11 +3138,11 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 self->field_1F8 = 2;
                 char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                            &lbl_eu_80504A3C[0x182], 3);
-                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                sysWinSetKindContent(&self->mSystemWindow[0], name, 0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-                sysWinOpenPhase1(&self->mSystemWindow[0]);
-                Cur_SetVisible(&self->mCursor, 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(name), 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mCursor.SetVisible(0);
             } else {
                 self->field_1F8 = 5;
                 char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
@@ -3151,12 +3151,12 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                          &lbl_eu_80504A3C[0x182], 4);
                 char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 5);
-                sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-                sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
-                sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                sysWinOpenPhase1(&self->mSystemWindow[0]);
-                Cur_SetVisible(&self->mCursor, 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
+                reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+                self->mCursor.SetVisible(0);
                 self->field_1F4 = 1;
             }
         } else {
@@ -3167,12 +3167,12 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                      &lbl_eu_80504A3C[0x182], 4);
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
-            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
-            sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            sysWinOpenPhase1(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
         }
         return;
@@ -3205,7 +3205,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             self->mCursor.setRootPaneTranslate(&pos);
         }
         if (self->mVisibleItemCount == 0) {
-            Cur_SetVisible(&self->mCursor, 0);
+            self->mCursor.SetVisible(0);
             self->field_1F8 = 3;
             playUISound(0x89);
         } else {
@@ -3219,11 +3219,11 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             self->field_1F8 = 2;
             char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                        &lbl_eu_80504A3C[0x182], 3);
-            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            sysWinSetKindContent(&self->mSystemWindow[0], name, 0);
-            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
-            sysWinOpenPhase1(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(name), 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(1);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mCursor.SetVisible(0);
         } else {
             self->field_1F8 = 5;
             char* n2 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
@@ -3232,12 +3232,12 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                      &lbl_eu_80504A3C[0x182], 4);
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
-            sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
-            sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            sysWinOpenPhase1(&self->mSystemWindow[0]);
-            Cur_SetVisible(&self->mCursor, 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
+            reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+            self->mCursor.SetVisible(0);
             self->field_1F4 = 1;
         }
     } else {
@@ -3248,12 +3248,12 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                                  &lbl_eu_80504A3C[0x182], 4);
         char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 5);
-        sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-        sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
-        sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-        sysWinOpenPhase1(&self->mSystemWindow[0]);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->switchKindPane(2);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setKindContent(reinterpret_cast<char*>(n2), 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->setTwoTextValues(reinterpret_cast<char*>(n4), reinterpret_cast<char*>(n5));
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->applyKind(0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->openPhase1();
+        self->mCursor.SetVisible(0);
         self->field_1F4 = 1;
     }
 }
@@ -3282,8 +3282,8 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
 
     if (up) {
         self->field_1F8 = 0xa;
-        sysWinAdvancePhase3(&self->mSystemWindow[0]);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3302,8 +3302,8 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         playUISound(3);
     } else if (down) {
         self->field_1F8 = 0xa;
-        sysWinAdvancePhase3(&self->mSystemWindow[0]);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3327,7 +3327,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     } else if (curHeld) {
@@ -3336,7 +3336,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     }
@@ -3368,8 +3368,8 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F5 = 1;
         }
         self->field_1F8 = 0x7;
-        sysWinAdvancePhase3(&self->mSystemWindow[0]);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3388,8 +3388,8 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         playUISound(3);
     } else if (down) {
         self->field_1F8 = 0x7;
-        sysWinAdvancePhase3(&self->mSystemWindow[0]);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->advancePhase3();
+        self->mCursor.SetVisible(0);
         char buf[32];
         s8 n = (s8)self->mMaxVisibleItems;
         if (n == 5) {
@@ -3412,7 +3412,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F4 = 1;
         }
         nw4r::math::VEC3 out;
-        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     } else if (curHeld) {
@@ -3421,7 +3421,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             self->field_1F4 = 0;
         }
         nw4r::math::VEC3 out;
-        sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&out), reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
         playUISound(1);
     }

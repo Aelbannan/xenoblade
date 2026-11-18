@@ -242,7 +242,7 @@ void CMenuSelectShop::Move() {
     }
 
     driveShopWinAnim(&mSelShop);
-    Cur_Update(&mCursor);
+    mCursor.Update();
 }
 
 // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
 #pragma auto_inline off
 extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
     if (isShopWinAnimActive(&self->mSelShop) != 0) {
-        Cur_SetVisible(&self->mCursor, 1);
+        self->mCursor.SetVisible(1);
         nw4r::math::VEC3 out;
         getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
         self->mCursor.setRootPaneTranslate(&out);
@@ -350,14 +350,14 @@ extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) 
         case 2:
             self->mState = 3;
             hideShopWin(&self->mSelShop);
-            Cur_SetVisible(&self->mCursor, 0);
+            self->mCursor.SetVisible(0);
             break;
         }
     } else if (closeButton != 0) {
         // Other dpad direction: close the shop window and leave this state.
         self->mState = 3;
         hideShopWin(&self->mSelShop);
-        Cur_SetVisible(&self->mCursor, 0);
+        self->mCursor.SetVisible(0);
     }
 }
 #pragma pop
@@ -395,7 +395,7 @@ void CMenuSelectShop::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     drawShopWin(&mSelShop, &drawInfo);
     if ((s32)mSelIndex >= 0)
-        Cur_DrawLayout(&mCursor, &drawInfo);
+        mCursor.DrawLayout(&drawInfo);
 }
 
 extern "C" u32 ShopSel_GetSingleton() { return (u32)lbl_eu_806642E8; }

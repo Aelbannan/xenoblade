@@ -3,6 +3,7 @@
 // IWorkEvent + IScnRender bases, an embedded CCur18 cursor and CSysWin panel.
 
 #include "kyoshin/menu/CMenuKizunaTalk.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
 #include "functions.hpp"
@@ -60,8 +61,8 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
     // Subobject vtable slots (composite vtable + 0x24 / + 0xAC).
     u32 workVt = (u32)lbl_eu_80533A98 + 0x24;
     u32 renderVt = (u32)lbl_eu_80533A98 + 0xAC;
-    static_cast<IWorkEvent*>(obj)->mVtable = workVt;
-    static_cast<IScnRender*>(obj)->mVtable = renderVt;
+    static_cast<KizunaWorkEvent*>(obj)->mVtable = workVt;
+    static_cast<KizunaScnRender*>(obj)->mVtable = renderVt;
     obj->mScene = scene;
 
     new (&obj->mMemRegion) UnkClass_8045F564;
@@ -96,7 +97,7 @@ CMenuKizunaTalk::~CMenuKizunaTalk() {
 #pragma optimize_for_size on
 void CMenuKizunaTalk::Init() {
     mFile2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        KyoshinHeap_GetField44(), lbl_eu_80505118, static_cast<IWorkEvent*>(this), 0, 0);
+        KyoshinHeap_GetField44(), lbl_eu_80505118, static_cast<KizunaWorkEvent*>(this), 0, 0);
     CtrlRemote_SetSharedBit(mCharId + 0x3440, 1);
 }
 #pragma optimize_for_size off
@@ -111,7 +112,7 @@ void CMenuKizunaTalk::Term() {
     closeFileHandle((CFileHandle**)&mFile1);
     closeFileHandle((CFileHandle**)&mFile2);
 
-    mScene->removeRenderCB(this);
+    mScene->removeRenderCB(reinterpret_cast<IScnRender*>(static_cast<KizunaScnRender*>(this)));
 
     if (mLayout != 0) {
         // Layout virtual slot 2 (vtable + 0x8): release/unbind with flag 1.
@@ -125,7 +126,7 @@ void CMenuKizunaTalk::Term() {
 
     releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
-    sysWinTermLayout(&mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
 
     // CCur18 cursor virtual slot 3 (vtable + 0xC): per-frame update.
     mCur.cleanup();
@@ -194,9 +195,9 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         break;
     case 1: {
         // Null-safe IWorkEvent subobject address (retail beq/addi shape).
-        IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(self);
+        KizunaWorkEvent* evt = reinterpret_cast<KizunaWorkEvent*>(self);
         if (self != 0) {
-            evt = &static_cast<IWorkEvent&>(*self);
+            evt = &static_cast<KizunaWorkEvent&>(*self);
         }
         self->mFile1 =
             (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
@@ -228,13 +229,12 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
 extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
-        if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isReady() == 0) {
             return;
         }
-        sysWinSetKindContent(&self->mSysWin[0],
-                      (u32)BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24), 0);
-        sysWinApplyKind(&self->mSysWin[0], 1);
-        sysWinOpenPhase1(&self->mSysWin[0]);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->setKindContent(reinterpret_cast<char*>((u32)BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24)), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->applyKind(1);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->openPhase1();
         break;
     case 1:
         if (self->mLayout == 0) {
@@ -243,21 +243,21 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
         playUISound(0xd);
         break;
     case 2:
-        if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isReady() == 0) {
             return;
         }
         char* s1 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2a);
         char* s2 = BdatGetPtrDirect(lbl_eu_80664424, &lbl_eu_80505118[0x43], self->mCharId);
         char* s3 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
         char* s4 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
-        sysWinSetKindContent(&self->mSysWin[0], (u32)s1, (int)s2);
-        sysWinSetTwoTextValues(&self->mSysWin[0], (u32)s3, (u32)s4);
-        sysWinApplyKind(&self->mSysWin[0], 0);
-        sysWinOpenPhase1(&self->mSysWin[0]);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->setKindContent(reinterpret_cast<char*>((u32)s1), reinterpret_cast<char*>((int)s2));
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->setTwoTextValues(reinterpret_cast<char*>((u32)s3), reinterpret_cast<char*>((u32)s4));
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->applyKind(0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->openPhase1();
         break;
     }
     self->mFieldA0 = 2;
-    self->mScene->addRenderCB(self, 0xd, 0);
+    self->mScene->addRenderCB(reinterpret_cast<IScnRender*>(static_cast<KizunaScnRender*>(self)), 0xd, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
 void advanceKizunaWindow(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
-        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isActive() != 0) {
             self->mFieldA0 = 3;
         }
         break;
@@ -279,11 +279,11 @@ void advanceKizunaWindow(CMenuKizunaTalk* self) {
         }
         break;
     case 2:
-        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isActive() != 0) {
             self->mFieldA0 = 3;
-            Cur_SetVisible(&self->mCur, 1);
+            self->mCur.SetVisible(1);
             u8 tmp[0x10];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin[0]), (u8)self->mField9C);
             self->mCur.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         }
         break;
@@ -325,12 +325,12 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             self->mField60 = 2;
             playUISound(3);
             self->mFieldA0 = 4;
-            sysWinAdvancePhase3(&self->mSysWin[0]);
+            reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
             playUISound(6);
-            sysWinAdvancePhase3(&self->mSysWin[0]);
+            reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
         }
         break;
     case 1:
@@ -351,7 +351,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             if (self->mField9C < 0) self->mField9C = 1;
             playUISound(1);
             nw4r::math::VEC3 tmp;
-            sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), reinterpret_cast<CSysWin*>(&self->mSysWin[0]), (u8)self->mField9C);
             self->mCur.setRootPaneTranslate(&tmp);
         } else if (confirm != 0) {
             // Confirm: move the cursor page down (wrap over 1 to 0).
@@ -359,7 +359,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             if (self->mField9C > 1) self->mField9C = 0;
             playUISound(1);
             nw4r::math::VEC3 tmp;
-            sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), reinterpret_cast<CSysWin*>(&self->mSysWin[0]), (u8)self->mField9C);
             self->mCur.setRootPaneTranslate(&tmp);
         } else if (left != 0) {
             // Left: confirm the current page and advance the window.
@@ -371,14 +371,14 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
                 playUISound(3);
             }
             self->mFieldA0 = 4;
-            sysWinAdvancePhase3(&self->mSysWin[0]);
-            Cur_SetVisible(&self->mCur, 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
+            self->mCur.SetVisible(0);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
             playUISound(6);
-            sysWinAdvancePhase3(&self->mSysWin[0]);
-            Cur_SetVisible(&self->mCur, 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
+            self->mCur.SetVisible(0);
         }
         break;
     }
@@ -393,7 +393,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
 extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
-        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isActive() != 0) {
             self->mField64 = 1;
         }
         break;
@@ -403,7 +403,7 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
         }
         break;
     case 2:
-        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin[0])->isActive() != 0) {
             self->mField64 = 1;
         }
         break;

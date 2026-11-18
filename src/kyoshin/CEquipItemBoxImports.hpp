@@ -4,6 +4,7 @@
 // CEquipItemBox / CEquipChange units (kept out of CEquipItemBox.hpp so other
 // includers do not inherit conflicting C-linkage declarations).
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CItemBoxGrid_Color.hpp"
@@ -281,10 +282,6 @@ struct CEquipItemBoxEnumList {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" int CSysWin_isActive(void*);
-extern "C" void Cur_SetVisible(void*, int);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" void sysWinAdvancePhase3(void*);
 // Same-TU helpers (defined as extern "C" free functions in CEquipItemBox.cpp;
 // the retail symbols are unmangled, so calls must reference the plain names).
 // Forward decls for the grid/array helpers (defined in CEquipItemBox.cpp).
@@ -293,7 +290,6 @@ extern "C" void copyEIBItem(CEquipItemData* dst, const CEquipItemData* src);
 // String pool used by getEIBPageHint (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void sysWinTermLayout(void*);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
 // Item-object validity/type check used by bindEIBCellIcon's texture pick.
 extern "C" int IsSkillItem(void*);
@@ -309,7 +305,6 @@ extern "C" void copyVEC3(void*, const void*);
 void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
-extern "C" int CSysWin_getUnk34(void*);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching eibHandleSubPage's reloc site).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
@@ -346,11 +341,7 @@ extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" int KyoshinHeap_GetField44(void);
-extern "C" void Cur_Update(void*);
-extern "C" void sysWinDispatchPhase(void*);
 // Sub-window / cursor / sort-menu draw helpers (retail plain names).
-extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
-extern "C" void Cur_DrawLayout(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
@@ -397,11 +388,6 @@ extern u16 lbl_eu_80668B40;
 // 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
 extern u8 lbl_eu_8050EF84;
 // SysWin sub-window text setters used by handleEIBNamePane's name-pane confirm.
-extern "C" void sysWinSwitchKindPane(void*, u32);
-extern "C" void sysWinSetKindContent(void*, void*, u32);
-extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
-extern "C" void sysWinApplyKind(void*, u32);
-extern "C" void sysWinOpenPhase1(void*);
 // Per-slot detail-text builder (handleEIBNamePane's ==3 lookup path).
 extern const float lbl_eu_80668B24;
 // Item-kind -> display-count probe (calcEIBCountKey's default band).

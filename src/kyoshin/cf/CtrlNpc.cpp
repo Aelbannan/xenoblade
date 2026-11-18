@@ -225,9 +225,9 @@ void CtrlNpcUpdateAction(cf::CtrlNpc* self) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet(0x1000000))
         goto gateFail;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(1) != 0)
         goto gateFail;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x4000) == 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x4000) == 0)
         goto bodyStart;
 gateFail:
     self->field_14 = lbl_eu_80666698;
@@ -235,8 +235,8 @@ gateFail:
 bodyStart:
     {
             if ((NpcCharView(self->field_28)->field_68 & 0x00100000) == 0 &&
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(1) != 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(1);
             reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(nullptr, lbl_eu_804FBB0C);
         }
 
@@ -377,14 +377,14 @@ bodyStart:
         goto tail;
 
     tail:
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(4) == 0)
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(4) == 0)
             return;
         if (NpcCharView(self->field_28)->field_C4 == 0)
             return;
         self->field_14 = lbl_eu_80666698;
         reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
         CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
-        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(4);
+        reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(4);
             return;
     }
 }
@@ -416,22 +416,22 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
         msg.text[0] = 0;
         msg.len = 0;
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(8) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_applyStateFlags(0x2000);
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(8) != 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->applyStateFlags(0x2000);
         } else {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_clearStateFlags8(0x2000);
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->clearStateFlags8(0x2000);
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(1) != 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(1);
         } else if (self->field_172 != 0) {
             f32 d = self->field_178 - reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveHeadAngle();
             if (ml::math::abs(d) <= lbl_eu_806666A8)
                 self->field_172 = 0;
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0 &&
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(1) != 0 &&
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0) {
             cf::CfObject* target =
                 (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getSelfObjectId());
             if (target != 0 && NpcCharView(self->field_28)->field_C4 != 0) {
@@ -482,26 +482,26 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                     self->field_174 = 0;
                 }
             }
-            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_applyStateFlags(1);
+            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0) {
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(1);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->applyStateFlags(1);
                 if (target != 0)
                     self->field_172 = 1;
             }
         }
 
         // Not in the talk state: run the page cleanup/advance logic.
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) == 0) {
-            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(1, 0) != 0 && self->field_174 != 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(1) == 0) {
+            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitMask0(1, 0) != 0 && self->field_174 != 0) {
                 reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_178);
                 CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
-                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
+                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_174, 0, -1, 1);
                     self->field_174 = 0;
                 }
             }
-            if (self->field_174 != 0 && reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0 &&
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) == 0) {
+            if (self->field_174 != 0 && reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0 &&
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(1) == 0) {
                 CfObjectMove_setAnimModeArgs((u8*)self->field_28, self->field_174, 0, -1, 1);
                 self->field_174 = 0;
             }
@@ -518,7 +518,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
         Bdat_GetTable_AA34();
         void* fp2 = getFP(sbuf);
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 1) != 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitMask0(0x2000, 1) != 0) {
             self->field_17C = 0;
             // Scan the 6 NPC-kind rows; each column gate must pass before the
             // message column is copied into strbuf and handed to the text
@@ -626,30 +626,30 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                 self->field_17C = count;
                 break;
             }
-        } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x2000) != 0 &&
+        } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x2000) != 0 &&
                    self->field_17C != 0) {
             const char* col3 =
                 lbl_eu_80527A80[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
                                 3];
             v08.w = getBdatStringColumnValue(fp2, col3, self->field_17C);
             if (v08.b == 0) {
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_clearStateFlags8(0x2000);
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(8);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->clearStateFlags8(0x2000);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(8);
             }
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 0) != 0)
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitMask0(0x2000, 1) != 0)
             UIWin_ShowTalkWindow(NpcCharView(self->field_28)->field_74);
     }
 }
 
-// 0x80095274: cf::CObjectState::CObjectState_applyStateFlags. The retail
+// 0x80095274: cf::CObjectState::applyStateFlags. The retail
 // symbol keeps the Fv suffix, but the virtual is invoked with an int (see
 // object/CObjectState.hpp and CfObjectNpc.cpp callers), so the body is emitted
 // under the literal retail name with the caller's real arg shape.
 extern "C" void CObjectState_applyStateFlags__Q22cf12CObjectStateFi(cf::CObjectState* self, int arg) {
     if ((u32)arg < 0x3f)
-        self->CObjectState_clearStateFlags8(0x3f);
+        self->clearStateFlags8(0x3f);
     self->unk8 |= (u32)arg;
 }
 
@@ -765,7 +765,7 @@ int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self) {
                 result = 1;
         } else {
             if (self->field_BE == 2) {
-                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0)
+                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(1) != 0)
                     result = 0;
                 else
                     result = 1;
@@ -856,7 +856,7 @@ void CtrlNpcSetFlagActivate(cf::CtrlNpc* self, u8 val) {
 }
 
 // TU-local view of the CfObjectModel float at +0xA4 read by
-// CfObject_UnkVirtualFunc73 (exact layout; no named member exists yet).
+// CfObject_getProgressHigh (exact layout; no named member exists yet).
 struct CtrlNpcModelA4View {
     u8 _pad[0xA4];   // 0x00-0xA3
     float field_A4;  // 0xA4-0xA7
@@ -930,7 +930,7 @@ void CtrlNpcSyncTargetFromPos(cf::CtrlNpc* self) {
 // the previous turn while the wander timer field_BC is still running).
 void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_checkStateFlags8(0x1000) != 0)
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->checkStateFlags8(0x1000) != 0)
         return;
     const ml::CVec3* posf =
         reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
@@ -989,7 +989,7 @@ void CtrlNpcUpdateMovement(cf::CtrlNpc* self) {
             self->field_B8 = 0;
     }
     if (NpcCharView(self->field_28)->field_C4 != 0 &&
-        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) != 0) {
+        reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         return;
     }
@@ -1280,7 +1280,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
     f32 distSq = diff.x * diff.x + diff.z * diff.z;
 
     cf::CfObjectMove* obj = self->field_28;
-    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_checkStateFlags8(0x1000) != 0) {
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->checkStateFlags8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         self->field_C6 = (u16)((self->field_C6 & 0xFF00) | 1);
         return;
@@ -1486,7 +1486,7 @@ void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self) {
         }
     } else if (self->field_BE == 2) {
         if (NpcCharView(self->field_28)->field_C4 == 0 ||
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0) {
             self->field_D4 = lbl_eu_80666700;
             self->field_BE = 3;
         }
@@ -1510,7 +1510,7 @@ void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self) {
 int CtrlNpcIsActive(cf::CtrlNpc* self) {
     if (self->field_174 != 0)
         goto ret1;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x1000) == 0)
         goto ret0;
 ret1:
     return 1;

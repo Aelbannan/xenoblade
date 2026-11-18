@@ -79,7 +79,6 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-extern "C" void Cur_SetVisible(void*, int);
 extern "C" void getShopWinPanePos(nw4r::math::VEC3*, CSelShopWin*, int);
 
 // Shop-window widget hooks. Retail keeps these unmangled (C linkage); they take
@@ -104,8 +103,6 @@ extern "C" int MenuShopSellIsCreated();
 extern "C" void driveShopWinAnim(CSelShopWin*);
 extern "C" void loadShopWinArc(CSelShopWin*);
 extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
-extern "C" void Cur_Update(void*);
-extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__11CSelShopWinFv(void*);

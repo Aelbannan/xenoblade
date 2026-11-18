@@ -41,10 +41,9 @@ LLMH_ForceFn_us_80408554 LLMH_force_us_80408554 =
 static const GXColorS10 DefaultBlackColor = {0, 0, 0, 0};
 static const GXColorS10 DefaultWhiteColor = {255, 255, 255, 255};
 
+namespace nw4r {
+namespace lyt {
 namespace {
-
-using namespace nw4r;
-using namespace nw4r::lyt;
 
 /******************************************************************************
  * GXColorS10
@@ -282,16 +281,44 @@ u32 CalcOffsetTevStageAry(const detail::BitGXNums& rNums) {
            CalcOffsetIndTexSRTAry(rNums);
 }
 
-} // namespace
-
-namespace nw4r {
-namespace lyt {
+} // namespace (anonymous)
 
 /******************************************************************************
  *
  * Material
  *
  ******************************************************************************/
+void Material::Init() {
+    mTevCols[TEVCOLOR_REG0] = DefaultBlackColor;
+    mTevCols[TEVCOLOR_REG1] = DefaultWhiteColor;
+    mTevCols[TEVCOLOR_REG2] = DefaultWhiteColor;
+
+    InitBitGXNums(&mGXMemCap);
+    InitBitGXNums(&mGXMemNum);
+
+    mbUserAllocated = false;
+    mpGXMem = NULL;
+}
+
+void Material::InitBitGXNums(detail::BitGXNums* pNums) {
+    pNums->texMap = 0;
+    pNums->texSRT = 0;
+    pNums->texCoordGen = 0;
+    pNums->indSRT = 0;
+    pNums->indStage = 0;
+    pNums->tevSwap = FALSE;
+    pNums->tevStage = 0;
+    pNums->chanCtrl = FALSE;
+    pNums->matCol = FALSE;
+    pNums->alpComp = FALSE;
+    pNums->blendMode = 0;
+}
+
+Material::Material() {
+    Init();
+    std::memset(mName, 0, sizeof(mName));
+}
+
 Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
     Init();
     SetName(pRes->name);
@@ -458,18 +485,6 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
     }
 }
 
-void Material::Init() {
-    mTevCols[TEVCOLOR_REG0] = DefaultBlackColor;
-    mTevCols[TEVCOLOR_REG1] = DefaultWhiteColor;
-    mTevCols[TEVCOLOR_REG2] = DefaultWhiteColor;
-
-    InitBitGXNums(&mGXMemCap);
-    InitBitGXNums(&mGXMemNum);
-
-    mbUserAllocated = false;
-    mpGXMem = NULL;
-}
-
 Material::~Material() {
     UnbindAllAnimation();
 
@@ -477,20 +492,6 @@ Material::~Material() {
         Layout::FreeMemory(mpGXMem);
         mpGXMem = NULL;
     }
-}
-
-void Material::InitBitGXNums(detail::BitGXNums* pNums) {
-    pNums->texMap = 0;
-    pNums->texSRT = 0;
-    pNums->texCoordGen = 0;
-    pNums->indSRT = 0;
-    pNums->indStage = 0;
-    pNums->tevSwap = FALSE;
-    pNums->tevStage = 0;
-    pNums->chanCtrl = FALSE;
-    pNums->matCol = FALSE;
-    pNums->alpComp = FALSE;
-    pNums->blendMode = 0;
 }
 
 void Material::ReserveGXMem(u8 texMapNum, u8 texSrtNum, u8 texCoordGenNum,

@@ -467,19 +467,19 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     int condC = 1;   // r31
     {
         u32 q;
-        q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
+        q = *(u32*)((cf::CObjectState*)objW->mField04)->getStateData();
         int hit10a = testActorStatus(objW, (int*)&q, 0xa);
         if (hit10a == 0) {
-            q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
+            q = *(u32*)((cf::CObjectState*)objW->mField04)->getStateData();
             if (testActorStatus(objW, (int*)&q, 0x9) != 0) {
                 condC = 0;
             }
         }
-        q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
+        q = *(u32*)((cf::CObjectState*)objW->mField04)->getStateData();
         if (testActorStatus(objW, (int*)&q, 0x1a) != 0) {
             condA = 0;
         } else {
-            q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
+            q = *(u32*)((cf::CObjectState*)objW->mField04)->getStateData();
             if (testActorStatus(objW, (int*)&q, 0x19) == 0 && condC != 0) {
                 condB = 1;
             }
@@ -1516,17 +1516,17 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
     u32 x;
     void* sub = obj->mField04;
-    void* r = ((cf::CObjectState*)sub)->CObjectState_getStateData();
+    void* r = ((cf::CObjectState*)sub)->getStateData();
     x = *(u32*)r;
     if (testActorStatus(obj, (int*)&x, 4) != 0) {
         self->mFlags4C |= 0x40000u;
     }
     cf::CfObjWrap* pObj = (cf::CfObjWrap*)self->mPlayer;
     void* sub2 = pObj->mField04;
-    void* r2 = ((cf::CObjectState*)sub2)->CObjectState_getStateData();
+    void* r2 = ((cf::CObjectState*)sub2)->getStateData();
     u32 x2;
     void* subP = pObj->mField04;
-    void* rP = ((cf::CObjectState*)subP)->CObjectState_getStateData();
+    void* rP = ((cf::CObjectState*)subP)->getStateData();
     x2 = *(u32*)rP;
     if (testActorStatus(pObj, (int*)&x2, 4) != 0) {
         s16 v = self->mArr124[11];
@@ -1577,7 +1577,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
 
     if ((self->mFlags4C & 0x8u) == 0) {
         if (own->mField530 & 1) {
-            if (((cf::CObjectState*)((char*)self->mPlayer + 0x3e9c))->CObjectState_checkStateFlags(0x100) != 0) {
+            if (((cf::CObjectState*)((char*)self->mPlayer + 0x3e9c))->checkStateFlags(0x100) != 0) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                     const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x3c);
@@ -1718,7 +1718,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         cf::CfObjWrap* obj2 = (cf::CfObjWrap*)self->mObject;
         u32 y;
         void* sub3 = obj2->mField04;
-        void* stateData = ((cf::CObjectState*)sub3)->CObjectState_getStateData();
+        void* stateData = ((cf::CObjectState*)sub3)->getStateData();
         y = *(u32*)stateData;
         if (testActorStatus(obj2, (int*)&y, 8) != 0) {
             ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;

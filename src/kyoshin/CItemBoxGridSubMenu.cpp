@@ -3,6 +3,7 @@
 // Submenu overlay widget for the item grid screen.
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
+#include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -30,7 +31,6 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 // Forward declarations for functions not in included headers
 void TagCopyVec2f(char*, const char*);
 void writePanePos(char*, char*);
-void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 
 CItemBoxGridSubMenu::CItemBoxGridSubMenu() {
     mAccessor = NULL;
@@ -216,7 +216,7 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668308;
         v.z = lbl_eu_80668304;
-        Cur_SetPaneTranslate(pane2, &v);
+        CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }
     case 2: {
@@ -228,7 +228,7 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668310;
         v.z = lbl_eu_80668304;
-        Cur_SetPaneTranslate(pane2, &v);
+        CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }
     case 3: {
@@ -240,7 +240,7 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
         v.x = lbl_eu_80668304;
         v.y = lbl_eu_80668318;
         v.z = lbl_eu_80668304;
-        Cur_SetPaneTranslate(pane2, &v);
+        CBaseCur::SetPaneTranslate(pane2, &v);
         break;
     }
     }

@@ -16,18 +16,13 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
-// Window base class: quest/menu windows are CRTP task objects whose Move/Draw
+// Window base class (kyoshin/IUIWindow.hpp): CRTP task object whose Move/Draw
 // behavior is dispatched through the +0x3C/+0x48 pointer-to-member-function
-// hooks by the out-of-line CTTask<IUIWindow> specializations (CQuestWindow.cpp).
-// __declspec(novtable): the retail ~IUIWindow stores no vptr (the retail
-// vtable is a .data object in the split1 unit), so the implicit vptr store
-// must be suppressed to match the dtor byte-for-byte.
-class __declspec(novtable) IUIWindow : public CTTask<IUIWindow> {
-public:
-    virtual ~IUIWindow();
-
-    // TODO: add fields
-};
+// hooks. This TU owns its key function (the out-of-line ~IUIWindow below) plus
+// the CTTask<IUIWindow> destructor / Move / Draw specialisations, which is why
+// the retail __vt__9IUIWindow and __vt__18CTTask<9IUIWindow> live in
+// CQuestWindow.o.
+#include "kyoshin/IUIWindow.hpp"
 
 #include "monolib/scn/CScn.hpp"
 
@@ -236,11 +231,11 @@ extern u32 lbl_eu_80663E28;
 // unmangled, so they must stay C linkage to stop MWCC appending a
 // __F<argtypes> suffix to the call reloc names.
 extern "C" {
-extern "C" void Cur_SetVisible(void*, int); // cursor visibility setter (CCur)
+// cursor visibility setter (CCur)
 u32 PTNotice_IsActive_3C10();                       // party-change notice screen active?
 u32 menuPTStateIsActive();                       // party-state screen active?
-void Cur_Update(void* cur);             // cursor per-frame update (CCur)
-void Cur_DrawLayout(void*, void*); // cursor draw
+// cursor per-frame update (CCur)
+// cursor draw
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);

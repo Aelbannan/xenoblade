@@ -263,7 +263,7 @@ void CKizunaTalkList::updateTalkList() {
         }
 
         this->mpLayout20->Animate(0);
-        Cur_Update(&this->mCursor);
+        this->mCursor.Update();
         this->mScrollBar.UpdateDispatch();
     }
 }
@@ -274,7 +274,7 @@ void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
     if (this->mState84 != 0) {
         drawLayout(this->mpLayout20, pDrawInfo, 0, 1);
         this->mScrollBar.draw(pDrawInfo);
-        Cur_DrawLayout(&this->mCursor, (void*)pDrawInfo);
+        this->mCursor.DrawLayout(pDrawInfo);
     }
 }
 
@@ -339,7 +339,7 @@ void CKizunaTalkList::hideTalkList() {
         this->mState85 = 4;
         this->mNeedsRebuild = 0;
         bindScrollInAnims();
-        Cur_SetVisible(&this->mCursor, 0);
+        this->mCursor.SetVisible(0);
         this->mScrollBar.requestScrollOut();
         playUISound(6);
     }
@@ -602,7 +602,7 @@ void CKizunaTalkList::moveTalkCursor() {
     char name[0x28];
     char* lbl = lbl_eu_8050E990;
     sprintf(name, lbl + 0xcb, (int)this->mUnknown88 + 1);
-    Cur_SetVisible(&this->mCursor, 1);
+    this->mCursor.SetVisible(1);
 
     // Layout object re-read for every access so nothing extra gets
     // enregistered across the virtual calls.

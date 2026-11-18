@@ -84,55 +84,12 @@ struct CMenuUpdatePadData {
     u32 mPressedButtonFlags; // +0x04
 };
 
-class IUIWindow;
-
-class CTTask_IUIWindow {
-public:
-    // vtable at +0x00, +0x10
-    u8 _00[0x10];
-    u32 _10; // vtable
-    u8 _14[0x3C - 0x14];
-    void (CTTask_IUIWindow::*mFunc1)(); // 0x3C ptmf (func/self/delta)
-    void (CTTask_IUIWindow::*mFunc2)(); // 0x48 ptmf (func/self/delta)
-    u8 _4C[0x54 - 0x4C];
-};
-
-class IUIWindow {
-public:
-    u8 _00[0x10];
-    u32 _10; // vtable
-    u8 _14[0x54 - 0x14];
-    nw4r::lyt::Layout* mLayout; // 0x54
-    void* mField58; // 0x58
-    void* mField5C; // 0x5C
-    s32 mField60; // 0x60, default -1
-    u8 mField64; // 0x64, bool
-    u8 mField65; // 0x65
-    u8 mField66; // 0x66
-    u8 mField67; // 0x67, bool, default 1
-    u32 _68;
-
-    IUIWindow();
-};
-
-// KEEP (header-consolidation round 2, 2026-10-23): this TU models the
-// IWorkEvent/IScnRender subobjects as raw vptr words with the retail
-// out-of-line ctors __ct__IWorkEvent/__ct__IScnRender (defined in
-// CMenuUpdate.cpp) and calls the base dtors by hand, so it cannot use the
-// polymorphic monolib IWorkEvent.hpp / IScnRender.hpp definitions.
-class IWorkEvent {
-public:
-    u32 mVtable; // 0x00
-
-    IWorkEvent();
-};
-
-class IScnRender {
-public:
-    u32 mVtable; // 0x00
-
-    IScnRender();
-};
+// Window bases: the real monolib interfaces plus the canonical IUIWindow
+// (kyoshin/IUIWindow.hpp). This TU derives from all three; MWCC emits the
+// IWorkEvent (+0x6C) and IScnRender (+0x70) sub-vtables itself.
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
 class CMenuUpdate : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
@@ -153,12 +110,13 @@ public:
     f32 mFloat128; // 0x128
     f32 mFloat12C; // 0x12C
 
-    CMenuUpdate(u32 r4, u32 r5, u32 r6, u32 r7, u32 r8);
+    CMenuUpdate(CScn* scene, u32 type, u32 arg1, u32 arg2, u32 arg3);
     virtual ~CMenuUpdate();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+    void UpsertEntry(int type, u32 arg1, u32 arg2, u32 arg3);
 
     // Accessors
     u32 getField10() { return *(u32*)((u8*)this + 0x10); }
@@ -170,14 +128,10 @@ public:
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void __dt__10IScnRenderFv(void*, int);
-extern "C" void __dt__10IWorkEventFv(void*, int);
 // One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
 // bindLayoutAnimTransform call left in r4.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
-extern "C" void __dt__9IUIWindowFv(void*, int);
-extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
@@ -228,7 +182,6 @@ extern "C" void MenuUpdate_SignalGlobalField64();
 extern "C" void MenuUpdate_FormatNotifyText(void* self, void* r4, void* r5);
 extern "C" void* noop_80142D5C(void* self);
 extern "C" void MenuUpdate_RebindLayout(void* self);
-extern "C" void MenuUpdate_UpsertEntry(CMenuUpdate* self, int r4, u32 r5, u32 r6, u32 r7);
 extern "C" int MenuUpdate_CheckBootGates(void* self);
 extern "C" void MenuUpdate_EnterMode1Chime(void* self);
 extern "C" void MenuUpdate_MaintainActive(void* self);

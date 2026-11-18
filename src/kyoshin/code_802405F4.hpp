@@ -12,13 +12,9 @@
 
 // CFloorMap.hpp and CMapSel.hpp declare overlapping helpers with different
 // signatures; rename CFloorMap's versions while its header is processed.
-#define Cur_Update Cur_UpdateFloorMap
-#define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
 #define Bdat_GetMaxRow_B1EC Bdat_GetMaxRow_B1ECFloorMap
 #define lbl_eu_806640A8 lbl_eu_806640A8FloorMap
 #include "kyoshin/CFloorMap.hpp"
-#undef Cur_Update
-#undef sysWinDispatchPhase
 #undef Bdat_GetMaxRow_B1EC
 #undef lbl_eu_806640A8
 

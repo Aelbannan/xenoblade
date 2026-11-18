@@ -16,17 +16,11 @@ extern "C" void cbRenderBefore__12CUIErrMesWinFv();
 extern "C" void __dt__12CUIErrMesWinFv();
 
 // CSysWin helper imports (retail C-linkage; same declarations as CSaveLoad.hpp).
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" int CSysWin_isActive(void*);
 
 // CSysWin advance helper (retail C-linkage; same declaration as CSystemWindow.hpp).
-extern "C" void sysWinDispatchPhase(void*);
 
 // CSysWin content setters / advance-close helpers (retail unmangled names,
 // defined in CSysWin.cpp). sysWinApplyKind is declared by CSysWin.hpp.
-extern "C" void sysWinSetKindContent(void* syswin, const char* msg, int flag);
-extern "C" void sysWinOpenPhase1(void* syswin);
-extern "C" void sysWinAdvancePhase3(void* syswin);
 
 // Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
 
@@ -43,7 +37,6 @@ struct CErrMesPad {
 };
 
 
-extern "C" void sysWinTermLayout(void*);
 
 // cf::CfGameManager helper. Retail names it with the no-arg Fv suffix, but the
 // call site passes three zero args; declare the retail symbol verbatim under

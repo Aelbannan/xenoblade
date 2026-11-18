@@ -4,11 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 
-// Retail owns the scene-culling frustum pointer in nw4r_data.s (.sbss,
-// 0x80665468). Global-scope extern (unmangled) so the GATHER function's
-// sda21 relocs carry the retail symbol name.
-extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
-
 // Absorbed rodata for scnobj: TypeName "ScnObj" (retail .rodata 0x8051D768, 0x10).
 extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const ::nw4r::g3d::G3dObj::ResNameDataT<7> lbl_eu_8051D768 = {7, "ScnObj"};
 
@@ -17,11 +12,11 @@ namespace g3d {
 
 
 // This TU owns its .data since the nw4r_data.s absorb (splits 2026-08-29:
-// .data 0x805695F8-0x80569730). MWCC emits the switch jumptables and the
+// .data 0x805695F8-0x805696C0). MWCC emits the switch jumptables and the
 // ScnGroup/ScnLeaf/ScnObj vtables here with retail-identical bytes; the
 // .text uses resolve TU-locally, so no lbl_eu_80569648/88 definitions are
-// needed here. lbl_eu_805696C0/F0 (ScnObjGather/ScnRoot vtables) cannot be
-// emitted by this TU (their key functions live in g3d_scnroot.cpp).
+// needed here. The ScnObjGather/ScnRoot vtables (0x805696C0/F0) belong to
+// g3d_scnroot.cpp, where their key functions live (JP split agrees).
 
 /******************************************************************************
  *
@@ -524,15 +519,15 @@ void ScnGroup::ScnGroup_G3DPROC_GATHER_SCNOBJ(u32 param,
                                       pCollection);
         }
     } else if (status == IScnObjGather::CULLINGSTATUS_INSIDE) {
-        const math::FRUSTUM* pTemp = lbl_eu_80665468;
-        lbl_eu_80665468 = nullptr;
+        const math::FRUSTUM* pTemp = gpCullingFrustum;
+        gpCullingFrustum = nullptr;
         {
             for (u32 i = 0; i < mNumScnObj; i++) {
                 mpScnObjArray[i]->G3dProc(G3DPROC_GATHER_SCNOBJ, param,
                                           pCollection);
             }
         }
-        lbl_eu_80665468 = pTemp;
+        gpCullingFrustum = pTemp;
     }
 }
 
@@ -730,24 +725,26 @@ static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
 }
 
 
-// ScnGroup's derived-from chain (ScnGroup, ScnObj, then G3dObj) as one
-// flat ternary over explicit GetTypeID values. operator== against a
-// TU-visible rodata definition (or any static-helper boundary) makes MWCC
-// lower the whole chain to subf/cntlzw bool materialization; the explicit
-// branches with bool materialization only for the trailing return. Known
-// residual is MWCC's load CSE (one shared other.mName load where retail
-// reloads per link) - cf. AnmObjMatClr::IsDerivedFrom in g3d_anmclr.cpp
-// and the TU-context V1/V3 probes in .scratch/ctx_probe.cpp: a redundant
-// lwz r0, 0(r4) at the second link is the only remaining delta, provably
-// unobtainable from high-level C++ under the pinned toolchain (any CSE
-// barrier costs an instruction or a call retail does not have).
-//
-//
-//
+// ScnGroup's base-chain check (ScnObj, then G3dObj) as a static helper, same
+// convention as scnObjBaseIsDerivedFrom: the inlined by-value helper boundary
+// makes MWCC reload other at the ScnObj link and CSE the trailing G3dObj
+// comparison, as retail does. (This disproves the earlier note that the
+// second-link reload was unobtainable: the by-value helper parameter is the
+// CSE barrier that costs nothing.)
+static bool scnGroupBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other.GetTypeID() ==
+                   G3dObj::TypeObj(lbl_eu_8051D768).GetTypeID()
+               ? true
+               : (other.GetTypeID() ==
+                  G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
+}
+
 bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other.GetTypeID() == TypeObj(lbl_eu_8051D788).GetTypeID() ? true
-         : other.GetTypeID() == G3dObj::TypeObj(lbl_eu_8051D768).GetTypeID() ? true
-         : (other.GetTypeID() == G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
+    if (other.GetTypeID() == TypeObj(lbl_eu_8051D788).GetTypeID()) {
+        return true;
+    }
+
+    return scnGroupBaseIsDerivedFrom(other);
 }
 
 

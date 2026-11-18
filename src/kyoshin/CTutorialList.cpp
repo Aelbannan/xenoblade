@@ -33,12 +33,6 @@ extern "C" void* Bdat_GetTable_AA34();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" int KyoshinHeap_GetField44();
 
-
-
-extern "C" void Cur_Update(void*);
-extern "C" void Cur_SetVisible(void*, int);
-extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
-
 // .sdata2 u16 -> f32 conversion goes through MWCC's 0x4330-magic double.
 // Global term/active flag: the loaded common BDAT table (.sbss word, sda21).
 u32 lbl_eu_80664BF0;  // loaded MNU_ttrl BDAT table (.sbss, owned by this unit)
@@ -194,7 +188,7 @@ void CTutorialList::TutorialList_UpdatePerFrame() {
         break;
     }
     mLayout->Animate(0);
-    Cur_Update(&mCursor);
+    mCursor.Update();
     mScrollBar.UpdateDispatch();
     mSortMenu.Move();
 }
@@ -208,7 +202,7 @@ void CTutorialList::TutorialList_DrawVisible(nw4r::lyt::DrawInfo* drawInfo) {
         drawLayout(mLayout, drawInfo, 0, 1);
         mScrollBar.draw(drawInfo);
         mSortMenu.Draw(drawInfo);
-        Cur_DrawLayout(&mCursor, drawInfo);
+        mCursor.DrawLayout(drawInfo);
     }
 }
 #pragma pop
@@ -272,7 +266,7 @@ void CTutorialList::TutorialList_BeginClose() {
         mState175 = 4;
         mInitialized = 0;
         TutorialList_EnableCloseAnims();
-        Cur_SetVisible(&mCursor, 0);
+        mCursor.SetVisible(0);
         mScrollBar.requestScrollOut();
         playUISound(6);
     }
@@ -443,7 +437,7 @@ void CTutorialList::TutorialList_ConfirmOpenMenu() {
     if (mSortMenu.IsOpen() != 0) {
         if (mSortMenu.IsIdle() == 0)
             return;
-        Cur_SetVisible(&mCursor, 1);
+        mCursor.SetVisible(1);
         mSortMenu.Close();
         TutorialList_UpdateTitleText();
         TutorialList_MoveCursorToRow();
@@ -460,7 +454,7 @@ void CTutorialList::TutorialList_ConfirmOpenMenu() {
                   root);
     mSortMenu.SetPos(&pos);
     TutorialList_RebuildSortEntries();
-    Cur_SetVisible(&mCursor, 1);
+    mCursor.SetVisible(1);
     mSortMenu.Open();
     nw4r::math::VEC3 curPos = mSortMenu.GetCursorPos();
     mCursor.setRootPaneTranslate(&curPos);
@@ -476,7 +470,7 @@ int CTutorialList::TutorialList_IsSortMenuActive() { return mSortMenu.IsOpen(); 
 __declspec(noinline) void CTutorialList::TutorialList_AdvanceSelection(int arg) {
     if (mSortMenu.IsOpen() == 0) return;
     if (mSortMenu.IsIdle() == 0) return;
-    Cur_SetVisible(&mCursor, 1);
+    mCursor.SetVisible(1);
     mSortMenu.Close();
     TutorialList_UpdateTitleText();
     TutorialList_MoveCursorToRow();
@@ -594,7 +588,7 @@ __declspec(noinline) void CTutorialList::TutorialList_MoveCursorToRow() {
     char name[0x28];
     f32 pos[4];
     sprintf(name, "nul_tit%02d", (int)mField178 + 1);
-    Cur_SetVisible(&mCursor, 1);
+    mCursor.SetVisible(1);
     nw4r::lyt::Pane* pagePane =
         mLayout->GetRootPane()->FindPaneByName(name, true);
     nw4r::lyt::Pane* barPane =

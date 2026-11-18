@@ -2,7 +2,6 @@
 
 #include <types.h>
 #include <nw4r/lyt.h>
-#include "kyoshin/CQuestWindow_Pane.hpp"
 
 class CBaseCur;
 
@@ -10,27 +9,9 @@ class CBaseCur;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Pane-visibility helpers (retail C-linkage names; same convention as
+// Pane-visibility helper (retail C-linkage name; same convention as
 // CSysWin.hpp / CKizunagram.hpp / CEquipItemBox.hpp).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
-// Pane translate setter (defined in CCur.cpp; retail keeps C linkage).
-// never_inline on the declaration so call sites keep the out-of-line bl.
-extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*)
-    __attribute__((never_inline));
 
-// (lbl_eu_80667FA4 lives in CCur.cpp as the Sdata2_CCur struct object;
-// no header declaration -- the TU is its sole user.)
-
-extern "C" void* lbl_eu_80534978[];  // CCur07
-extern "C" void* lbl_eu_80534950[];  // CCur09
-extern "C" void* lbl_eu_80534928[];  // CCur11
-extern "C" void* lbl_eu_80534900[];  // CCur14
-extern "C" void* lbl_eu_805348D8[];  // CCur15
-extern "C" void* lbl_eu_805348B0[];  // CCur16
-extern "C" void* lbl_eu_80534884[];  // CCur18
-extern "C" void* lbl_eu_8053485C[];  // CCur22
-extern "C" void* lbl_eu_80534838[];  // CSubCur
-extern "C" const char* lbl_eu_80534828[];
-extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val);
-extern "C" void Cur_DeactivateTail(CBaseCur* cur);
-extern "C" void Cur_ActivateTail(CBaseCur* cur);
+// Pane-name table (retail .data quad) used by CCur22's pane helpers.
+extern const char* lbl_eu_80534828[];

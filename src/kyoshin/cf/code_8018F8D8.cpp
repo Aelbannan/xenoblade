@@ -612,7 +612,7 @@ float CfCmd_GetThreshold() { return lbl_eu_80667A90; }
 // testActorStatus. Inlined by MWCC at every retail call site.
 static int probeGate90940(FuncActorRef* actor, u32 gate) {
     void* ret = reinterpret_cast<cf::CObjectState*>(actor->field_0004)
-                      ->CObjectState_getStateData();
+                      ->getStateData();
     u32 val = *(u32*)ret;
     return testActorStatus(actor, &val, gate);
 }

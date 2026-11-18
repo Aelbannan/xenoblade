@@ -421,9 +421,7 @@ public:
 // Previously declared inline in each TU as pseudo-imports; kept here as real
 // imports. The names ARE the retail symbol names - keep verbatim.
 // Returns the destination pointer (retail reuses it as a call argument).
-extern "C" void Cur_SetVisible(void*, u8);  // retail symbol is unmangled
 extern "C" int func_8021A8EC(void*);
-extern "C" u32 CSysWin_isReady(void*);
 extern "C" void MCCrystal_PlayAnim3B(void*);
 extern "C" void MCCrystal_PlayOutro(void*);
 extern "C" void MCCrystal_PlayAnim3A(void*);
@@ -442,8 +440,6 @@ extern "C" void MCCrystal_PlayAnim4(void*);
 extern "C" void MCCrystal_OpenFromClosed(void*);
 extern "C" void MCCrystal_DrawLayout(void*, void*);
 extern "C" void MCCrystal_ShowItem(void*, unsigned short, void*);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void MCCrystal_ClearSlots(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
 extern "C" void MCCrystal_FillSlot(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
 // Item-impl singleton import: CfGameManager.hpp (pulled in via
@@ -462,7 +458,6 @@ extern "C" u16 CItemBlock_getFlag120EC(int);
 // C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
 extern "C" float lbl_eu_80668488;
 extern "C" float lbl_eu_8066848C;
@@ -471,23 +466,12 @@ extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void MCCrystal_Teardown(void*);
-extern "C" void sysWinTermLayout(void*);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" int CSysWin_isActive(void*);
-extern "C" void sysWinAdvancePhase3(void*);
-extern "C" void sysWinSwitchKindPane(void*, int);
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinApplyKind(void*, int);
-extern "C" void sysWinOpenPhase1(void*);
 extern "C" void MCCrystal_StepState(void*);
-extern "C" void Cur_Update(void*);
-extern "C" void sysWinDispatchPhase(void*);
 extern "C" u32  IsSkillItem(void*);
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
 // unmangled like retail; noinline keeps the bodies out-of-line.
 extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
-extern "C" void Cur_ShowTwoPanes(void*, unsigned char);
 // Wide-param view of the pane-number setter used by the window-kind refresh:
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same

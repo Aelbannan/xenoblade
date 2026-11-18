@@ -668,9 +668,9 @@ CBattleManager* CBattleManager::getInstance() {
                 void* player = getPlayer__Q22cf13CfGameManagerFi(i);
                 void* action = MapFx_ResolveOwner(player);
                 if(action != nullptr){
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x400000);
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x800000);
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80000000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x400000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x800000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x80000000);
                     dispatchItemLoad(action, 0x8000000);
                     dispatchItemLoad(action, 0x10000000);
                 }
@@ -1407,7 +1407,7 @@ extern "C" s32 func_800EC918(
             if (isBattleStatusKind1(evt->eventType)) {
                 void* entryCE = findTopBattleStatusEntry((&acc->subObject), 0xCE);
                 if (entryCE != nullptr && artsData != nullptr) {
-                    s32 artsVal = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
+                    s32 artsVal = ((cf::CObjectState*)artsData)->checkStateFlags(0);
                     s32 entryVal = *(s32*)((u8*)entryCE + 0x10);
                     if (entryVal >= artsVal) {
                         tgt->field_74 |= 0x80002000;
@@ -1729,7 +1729,7 @@ extern "C" s32 func_800EC918(
             int val;
             {
                 void* obj4 = *(void**)((u8*)acc + 4);
-                val = *(u32*)((cf::CObjectState*)obj4)->CObjectState_getStateData();
+                val = *(u32*)((cf::CObjectState*)obj4)->getStateData();
             }
             if (testActorStatus((void*)acc, &val, 0x802) == 0 &&   // bl testActorStatus; cmpwi; bne skip
                 !isBattleStatusActive((&acc->subObject), 0x32)) {      // has 0x32 -> skip gate
@@ -1750,7 +1750,7 @@ extern "C" s32 func_800EC918(
                 // pcStat->+0x50 artsData: f28 += 2.5 * (f32)artsLevel
                 void* pcArts = *(void**)((u8*)pcStat + 0x50);   // lwz r3, 0x50(r15)
                 if (pcArts != nullptr) {
-                    f28 += k2_5f * (f32)((cf::CObjectState*)pcArts)->CObjectState_checkStateFlags(0);   // fmadds f28, f0(2.5), f1, f28
+                    f28 += k2_5f * (f32)((cf::CObjectState*)pcArts)->checkStateFlags(0);   // fmadds f28, f0(2.5), f1, f28
                 }
                 s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1791,7 +1791,7 @@ extern "C" s32 func_800EC918(
         int val;
         {
             void* obj4 = *(void**)((u8*)acc + 4);
-            val = *(u32*)((cf::CObjectState*)obj4)->CObjectState_getStateData();
+            val = *(u32*)((cf::CObjectState*)obj4)->getStateData();
         }
         if (testActorStatus((void*)acc, &val, 0xA)) {       // beq .L_800EE84C
             void* accStat = ((cf::CActorParam*)acc)->CActorParam_getBattleStats();   // acc->CActorParam_getBattleStats()
@@ -1915,7 +1915,7 @@ extern "C" s32 func_800EC918(
         int val;
         {
             void* obj4 = *(void**)((u8*)acc + 4);
-            val = *(u32*)((cf::CObjectState*)obj4)->CObjectState_getStateData();
+            val = *(u32*)((cf::CObjectState*)obj4)->getStateData();
         }
         if (testActorStatus((void*)acc, &val, 0xA)) {       // beq .L_800EEC94
             void* accStat = ((cf::CActorParam*)acc)->CActorParam_getBattleStats();
@@ -2199,8 +2199,8 @@ extern "C" s32 func_800EC918(
 
     case 51: {
         if (artsData != nullptr) {                    // cmpwi r16,0; beq .L_800EF880
-            // (chunk 0) s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
-            s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
+            // (chunk 0) s32 artsLevel = ((cf::CObjectState*)artsData)->checkStateFlags(0);
+            s32 artsLevel = ((cf::CObjectState*)artsData)->checkStateFlags(0);
 
             // 0x800EF860..0x800EF87C (chunk 1):
             //   lbz r4, 0x6f(r16); subi r3, r3, 1; lha r0, 0x4a(r16)
@@ -2221,7 +2221,7 @@ extern "C" s32 func_800EC918(
     case 206: {
         if (evt->field_10 != 0) break;               // bne .L_800F4000
         if (artsData != nullptr) {                  // beq .L_800F4000
-            evt->field_10 = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);          // stw r3, 0x10(r25)
+            evt->field_10 = ((cf::CObjectState*)artsData)->checkStateFlags(0);          // stw r3, 0x10(r25)
         }
         break;                                      // b .L_800F4000
     }
@@ -2229,7 +2229,7 @@ extern "C" s32 func_800EC918(
     case 54: {
         if (artsData != nullptr) {                  // beq .L_800F4000
             // subi r3, r3, 1; lha r0, 0x14(r25); extsh; add; sth
-            evt->field_14 = (s16)((s32)evt->field_14 + (((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0) - 1));
+            evt->field_14 = (s16)((s32)evt->field_14 + (((cf::CObjectState*)artsData)->checkStateFlags(0) - 1));
         }
         break;                                      // b .L_800F4000
     }
@@ -4231,7 +4231,7 @@ extern "C" void updateBattleManager(cf::CBattleManager* self) {
                     break;
                 }
                 if (obj != nullptr) {
-                    int state = *(u32*)((cf::CObjectState*)((cf::CfActorField04*)obj)->field_0x04)->CObjectState_getStateData();
+                    int state = *(u32*)((cf::CObjectState*)((cf::CfActorField04*)obj)->field_0x04)->getStateData();
                     if (testActorStatus(obj, &state, 0x802)) {
                         unregisterBattleActor(self, (BattleRemoveObjAccessor*)obj);
                         break;
@@ -4378,9 +4378,9 @@ void unregisterBattleActor(void* mgrV, void* targetV){
         void* player = getPlayer__Q22cf13CfGameManagerFi(i);
         void* action = MapFx_ResolveOwner(player);
         if(action != nullptr){
-            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x400000);
-            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x800000);
-            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80000000);
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x400000);
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x800000);
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->clearStateFlags8(0x80000000);
             dispatchItemLoad(action, 0x8000000);
             dispatchItemLoad(action, 0x10000000);
         }
@@ -5083,15 +5083,15 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
         // Status gate chain: any check firing blocks the action outright.
         int sv;
         bool blocked;
-        sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData();
+        sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData();
         blocked = testActorStatus(tgt, &sv, 0x805) != 0;
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0x9) != 0;
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xb) != 0;
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf) != 0;
-        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x4) != 0; }
-        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x19) != 0; }
-        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x1a) != 0; }
-        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x1b) != 0; }
+        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked = testActorStatus(tgt, &sv, 0x4) != 0; }
+        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked = testActorStatus(tgt, &sv, 0x19) != 0; }
+        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked = testActorStatus(tgt, &sv, 0x1a) != 0; }
+        if (!blocked) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked = testActorStatus(tgt, &sv, 0x1b) != 0; }
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0x32) != 0;
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf8) != 0;
         if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xeb) != 0;
@@ -5258,12 +5258,12 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
     s32 res2 = 0;
     int sv;
     bool blocked2;
-    sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData();
+    sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData();
     blocked2 = testActorStatus(tgt, &sv, 0x805) != 0;
-    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x4) != 0; }
-    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x19) != 0; }
-    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1a) != 0; }
-    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1b) != 0; }
+    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x4) != 0; }
+    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x19) != 0; }
+    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1a) != 0; }
+    if (!blocked2) { sv = *(s32*)((cf::CObjectState*)tgt->CActorState::unk4)->getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1b) != 0; }
     if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0x9) != 0;
     if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xb) != 0;
     if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf) != 0;
@@ -5583,7 +5583,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
             if (*(u32*)((u8*)p + 0x78) & 0x400) {
                 void* f4 = *(void**)(tgtB + 0x4);
-                outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+                outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
                 // Retail: cmpi r3,0 (no bool-normalize neg/or).
                 if (testActorStatus(target, &outVal, 0x806) == 0 &&
                     !(*(u16*)(tgtB + 0x3E6C) & 0x20))
@@ -6045,7 +6045,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
                 if (*(u32*)((u8*)p + 0x78) & 0x400) {
                     void* f4 = *(void**)(tgtB + 0x4);
-                    outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+                    outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
                     if (testActorStatus(target, &outVal, 0x806) == 0 &&
                         !(*(u16*)(tgtB + 0x3E6C) & 0x20))
                         goto alt_combo_skip;
@@ -6342,7 +6342,7 @@ post_dispatch:;
     // ================================================================
     if (move->field_74 & 0x2000000) {
         void* f4 = *(void**)(atkB + 0x4);
-        outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+        outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
         // Retail: lis r5,2048 -> 0x08000000; plain cmpi (no bool ok).
         if (testActorStatus(attacker, &outVal, 0x08000000) != 0) {
             // walk self->mActorList1 sentinel (self+8) looking for target
@@ -6370,7 +6370,7 @@ post_dispatch:;
     // ================================================================
     {
         void* f4 = *(void**)(atkB + 0x4);
-        outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+        outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
         if (testActorStatus(attacker, &outVal, 0x08000000) != 0) {
             if (isBattleStatusActive(atkB + 8, 0xB1)) {
                 void* entry = findBattleStatusEntry(atkB + 8, 0xB1);
@@ -6709,7 +6709,7 @@ post_dispatch:;
     if (isBattleStatusActive(tgtB + 8, 0x10)) {
         if (!(*(u32*)(tgtB + 0x3374) & 0x40000)) return;  // bit13
         void* f4 = *(void**)(tgtB + 0x4);
-        outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+        outVal = *(s32*)(((cf::CObjectState*)(f4))->getStateData());
         if (testActorStatus(target, &outVal, 0x17) == 0) return;
     }
     if (isBattleStatusActive(tgtB + 8, 0x117)) return;
@@ -8372,10 +8372,10 @@ skipScan:
     // Status-id gate: run testActorStatus against the actor's live status id.
     {
         void* stHolder = *(void**)((u8*)actor + 4);
-        void* stPtr = ((cf::CObjectState*)(stHolder))->CObjectState_getStateData();
+        void* stPtr = ((cf::CObjectState*)(stHolder))->getStateData();
         u32 stVal = *(u32*)stPtr;
         if (testActorStatus(actor, (int*)&stVal, 0x800)) {
-            ((cf::CObjectState*)(stHolder))->CObjectState_clearStateFlags8(0x800);
+            ((cf::CObjectState*)(stHolder))->clearStateFlags8(0x800);
         }
     }
 
@@ -8441,7 +8441,7 @@ static inline f32 artsSubGetF14(void* sub) {
 // on the move sub-object reached through CActorState::unk4.
 static inline u32 getStatusId(void* o) {
     void* holder = (void*)((cf::CActorState*)o)->unk4;
-    void* p = ((cf::CObjectState*)holder)->CObjectState_getStateData();
+    void* p = ((cf::CObjectState*)holder)->getStateData();
     return *(u32*)p;
 }
 static inline bool hasStatus(void* o, int id) {
@@ -9384,7 +9384,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
     }
 
     if (hasStatus(target, 0x1000)) {
-        ((cf::CObjectState*)(*(void**)((u8*)target + 4)))->CObjectState_clearStateFlags8((int)(0x1000));
+        ((cf::CObjectState*)(*(void**)((u8*)target + 4)))->clearStateFlags8((int)(0x1000));
     }
 }
 
@@ -9733,7 +9733,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
         if (!(*(u32*)((u8*)target + 0x3374) & 0x40000)) goto postLoop;   // 0x7550-0x7558
         {
             void* sub4 = *(void**)((u8*)target + 0x04);
-            int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();   // 0x755C-0x7570
+            int v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();   // 0x755C-0x7570
             if (testActorStatus(target, &v, 0x17) == 0) goto postLoop;        // 0x7574-0x758C
         }
     }
@@ -10108,19 +10108,19 @@ postLoop:
             // gates: 7x testActorStatus(target, &v, mask); v re-fetched each time
             {
                 void* sub4 = *(void**)((u8*)target + 0x04);
-                int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                int v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x0A)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x0B)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x16)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x18)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x19)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x1A)) goto afterType3;
-                v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                 if (testActorStatus(target, &v, 0x1B)) goto afterType3;
             }
 
@@ -10135,11 +10135,11 @@ postLoop:
             } else {
                 {
                     void* sub4 = *(void**)((u8*)target + 0x04);
-                    int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    int v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x1000)) goto afterType3;
-                    v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x07)) goto afterType3;
-                    v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x08)) goto afterType3;
                 }
 
@@ -10205,11 +10205,11 @@ postLoop:
                     CfObjectMove_setAnimModeArgs((u8*)target + 0x3E9C, 0x1E, 0, -1, 1);   // 0x8F3C
                 } else {
                     void* sub4 = *(void**)((u8*)target + 0x04);
-                    int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    int v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x800)) goto afterType3;
-                    v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x1D)) goto afterType3;
-                    v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+                    v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
                     if (testActorStatus(target, &v, 0x801)) goto afterType3;
                 }
             }
@@ -10221,9 +10221,9 @@ afterType3:
             ((cf::CfObjectActor*)(target))->CActorParam_addHate(actor, lbl_eu_80666DD4, lbl_eu_80666DD4, lbl_eu_80666DD4);   // (1,1,1) 0x900C-0x9030
         } else {
             void* sub4 = *(void**)((u8*)target + 0x04);
-            int v = *(u32*)((cf::CObjectState*)(sub4))->CObjectState_getStateData();
+            int v = *(u32*)((cf::CObjectState*)(sub4))->getStateData();
             if (testActorStatus(target, &v, 0x1000)) {   // 0x9034-0x9060
-                ((cf::CObjectState*)(sub4))->CObjectState_clearStateFlags8((int)(0x1000));   // 0x9068-0x907C
+                ((cf::CObjectState*)(sub4))->clearStateFlags8((int)(0x1000));   // 0x9068-0x907C
             }
         }
     }
@@ -10510,7 +10510,7 @@ extern "C" void spreadChainArtsHits(void* self, void* target, void* attacker, vo
     // 0x800EA68C: status-id via the +4 holder, then the 0x2000000 gate
     {
         void* holder4 = *(void**)((u8*)target + 0x04);
-        sid = *(u32*)((cf::CObjectState*)holder4)->CObjectState_getStateData();
+        sid = *(u32*)((cf::CObjectState*)holder4)->getStateData();
         if (testActorStatus(target, (int*)&sid, 0x02000000)) return;
     }
 
@@ -11281,7 +11281,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             void* tgt = stat != nullptr ? (void*)stat : (void*)((cf::CActorParam*)(actorA))->CActorParam_getBattleStats();   // r31
             if (*(u32*)((u8*)tgt + 0x74) & 4) return 0;
             if (*(u32*)((u8*)tgt + 0x74) & 2) return 0;
-            int val2 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
+            int val2 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->getStateData();
             if (testActorStatus(actorB, &val2, 0x802) != 0) return 0;
             if (!(evt->field_30 & 0x80)) {
                 if (!(evt->field_10 & 4)) {
@@ -11320,7 +11320,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 }
             }
         } else {
-            int val3 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
+            int val3 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->getStateData();
             if (testActorStatus(actorB, &val3, 0x802) != 0) return 0;
             if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) return 0;
             if (!(evt->field_30 & 0x80)) {
@@ -11368,7 +11368,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             void* tgt = stat != nullptr ? (void*)stat : (void*)((cf::CActorParam*)(actorA))->CActorParam_getBattleStats();   // r31
             if (*(u32*)((u8*)tgt + 0x74) & 4) return 0;
             if (*(u32*)((u8*)tgt + 0x74) & 2) return 0;
-            int val2 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
+            int val2 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->getStateData();
             if (testActorStatus(actorB, &val2, 0x802) != 0) return 0;
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;                                   // r29
@@ -11396,7 +11396,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 }
             }
         } else {
-            int val3 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
+            int val3 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->getStateData();
             if (testActorStatus(actorB, &val3, 0x802) != 0) return 0;
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;
@@ -11684,7 +11684,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (d > 10) brk = 1;
 
         if (brk == 0) {
-            int val = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
+            int val = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->getStateData();
             if (testActorStatus(actorB, &val, 0x802) != 0) brk = 1;
             else if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) brk = 1;
             else {

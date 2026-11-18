@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -308,13 +309,7 @@ class CCol6Fade;
 
 // C-linkage imports (retail symbols are unmangled - keep linkage verbatim)
 extern "C" {
-u32 CSysWin_isReady(void* syswin);                                   // CSysWin.cpp
-int CSysWin_isActive(void* syswin);                                   // CSysWin.cpp
-int CSysWin_getUnk34(void* syswin);                                   // CSysWin.cpp
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.cpp
-void sysWinTermLayout(void* syswin);                                    // CSysWin.cpp
-void sysWinAdvancePhase3(void* syswin);                                    // CSysWin.cpp
-void Cur_DrawLayout(void*, void*);     // CCur.cpp
+// CCur.cpp
 void UIWin_CreateSysWin0(char* msg, int a, int b);                         // CUICfManager.cpp
 void CtrlRemote_SetSharedBit(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
@@ -341,18 +336,11 @@ void* CfSoundMan_TouchSlotById(u16 handle);                                     
 void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
 UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
 extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
-void sysWinSetKindContent(void* syswin, const char* msg, int flag);          // CSysWin.cpp
-void sysWinApplyKind(void* syswin, int flag);                           // CSysWin.cpp
-void sysWinOpenPhase1(void* syswin);                                     // CSysWin.cpp
-void sysWinDispatchPhase(void* syswin);                                     // CSysWin.cpp (per-frame update)
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
-void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
-void Cur_Update(void* cursor);                                     // CCur.cpp
+// CCur.cpp
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
 void* Bdat_GetTable_AA34();                                               // bdat manager
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
-void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
-void sysWinSetTwoTextValues(void* syswin, void* a, void* b);                  // CSysWin.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
 void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
 void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp

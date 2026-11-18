@@ -17,10 +17,8 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);
 // Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
-extern "C" void Cur_SetVisible(void*, int);
-extern "C" void Cur_Update(void*);                  // cursor per-frame update
+// cursor per-frame update
 // Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
 // defines CODE_80135FDC_CPP before including that header, so those exports are
 // skipped there and the declarations below apply (retail CMapSel callers pass

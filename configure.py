@@ -501,10 +501,10 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectMove.cpp"),
-            Object(NonMatching, "kyoshin/cf/object/CfObjectNpc.cpp", extra_cflags=["-RTTI off"]),
+            Object(NonMatching, "kyoshin/cf/object/CfObjectNpc.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectObj.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectPc.cpp"),
-            Object(Matching, "kyoshin/cf/object/CfObjectPoint.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI .rodata; -RTTI off drops the typeinfo strings so the unit carries no data sections
+            Object(Matching, "kyoshin/cf/object/CfObjectPoint.cpp", extra_cflags=["-RTTI off"]),  # -RTTI off: the compiler still emits the class vtable (retail .data 0x178 = __vt__Q22cf13CfObjectPoint, byte-identical) but no type-name string, matching retail (CfObjectPoint .rodata is only the 0x10 "name/icon_type" table; the cf::CfObjectPoint typeinfo record + name string ship from CfObjectColl.cpp's ranges, where the weak copy landed)
             Object(Matching, "kyoshin/cf/code_800C17DC.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplWalker.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplPc.cpp"),

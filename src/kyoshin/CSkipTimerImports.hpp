@@ -3,6 +3,7 @@
 // Unit-private import declarations split out of CSkipTimer.hpp so the class header
 // stays includable next to other headers.
 #include "kyoshin/CSkipTimer.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 
 
@@ -28,19 +29,13 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" u32 CSysWin_isReady(void*);
 
 // .sdata2 float constants used by the sinit_802A07D8 static initializer.
 extern "C" float lbl_eu_80664A50;
 extern "C" const float lbl_eu_80668C4C;
 extern "C" const float lbl_eu_80662C78;
 extern "C" const float lbl_eu_80668C48;
-extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" void sysWinTermLayout(void*);
 // C-exported retail symbol: unmangled reloc name must be emitted at call sites.
-extern "C" int CSysWin_isActive(void*);
-extern "C" void sysWinAdvancePhase3(void*);
 extern "C" u32 CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 
@@ -81,12 +76,9 @@ extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
 
 class CSysWin;
 // CSysWin per-frame update (retail symbol is unmangled; defined extern "C" in CSysWin.cpp).
-extern "C" void sysWinDispatchPhase(CSysWin* sysWin);
 
 // cf::CfGameManager static (retail symbol keeps the Fv suffix from the
 // decompiler guess; the real signature is 3 u32s, see CREvtCamera.cpp).
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
 
 // Window content setters from CSysWin.cpp (retail-unmangled names).
-extern "C" void sysWinSetKindContent(void* syswin, void* str1, void* str2);
-extern "C" void sysWinOpenPhase1(void* syswin);

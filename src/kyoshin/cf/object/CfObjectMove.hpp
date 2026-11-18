@@ -81,7 +81,7 @@ extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the Scn_GetFram
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
 // position (MWCC_CASES pair-copy / CArtsInfo store-order fix).
 extern const float lbl_eu_80666A88;
-// Shared camera-time constant (sdata2): CfObject_UnkVirtualFunc70 calls the
+// Shared camera-time constant (sdata2): CfObject_syncModelRate calls the
 // EU helper with (lbl_eu_80666A94 - value). Const so MWCC keeps the SDA
 // load at retail's position.
 extern const float lbl_eu_80666A94;
@@ -93,7 +93,7 @@ extern const float lbl_eu_80666AA8;
 extern const float lbl_eu_80666AAC;
 extern const float lbl_eu_80666AB0;
 extern const float lbl_eu_80666AD0;
-extern const float lbl_eu_80666AB4;   // CfObject_UnkVirtualFunc5 movement-rate constant
+extern const float lbl_eu_80666AB4;   // CfObject_updateMoveRate movement-rate constant
 // CfObject_UnkVirtualFunc26 constants: lbl_eu_80666AD4 is the amount clamp
 // threshold, lbl_eu_80666AD8 the sum-vector Y offset.
 extern const float lbl_eu_80666AD4;
@@ -153,7 +153,7 @@ extern "C" void setTurnAngle(void* target, f32 value);
 // CfObject member; the retail symbol is Fv but the body reads r4 as a
 // position vector). extern "C" keeps the call-site reloc at the unmangled
 // retail name (CfObject_UnkVirtualFunc26 forwards its hidden r4 through).
-extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self, const ml::CVec3* vec);
+extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(cf::CfObject* self, const ml::CVec3* vec);
 // Base +0x178 forced-name implementation (defined in CfObjectModel.cpp as the
 // CfObjectModel member; the retail symbol is Fv). CfObjectModel_UnkVirtualFunc1
 // (CfObjectMove) calls it before tearing down its own state.
@@ -169,7 +169,7 @@ extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObje
 extern "C" void ColiNodeReleaseBuffer(u8* region);
 extern "C" void CfModel_SyncVisFlag(cf::CfObjectModel* self, u32 flag);
 // Movement-position update (defined in this TU below; forward-declared here
-// because CfObject_UnkVirtualFunc5 calls it). extern "C" keeps the call-site
+// because CfObject_updateMoveRate calls it). extern "C" keeps the call-site
 // reloc at the unmangled retail name.
 extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self);
 // Movement-speed helper (defined in this TU below) and the status query used
@@ -268,7 +268,7 @@ extern "C" bool setAnimLastPos(cf::CfObjectMoveTargetC4* self);
 // CfObject_UnkVirtualFunc22 calls it with the +0x98 sub-object in r3, so the
 // arg-carrying form reproduces the null-check load landing in r3.
 extern "C" void scnImN4DynStart(cf::CfObjectModelSub98* sub);
-// EU-named camera-time helper (retail CfObject_UnkVirtualFunc70 calls it
+// EU-named camera-time helper (retail CfObject_syncModelRate calls it
 // with the +0x38 sub-object's vtable +0xE4 query result in r3 and a float
 // in f1); the US build keeps the EU name for this reloc.
 extern "C" void CharEffSetSlotFloat(void* self, float value);
@@ -361,7 +361,7 @@ extern "C" void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(cf::CfObjectMo
 extern "C" void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 // Base +0xA0 forced-name implementation (defined in CfObjectModel.cpp as a
 // plain global taking the hidden float arg).
-extern "C" void CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value);
+extern "C" void CfObject_syncModelRate__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value);
 
 // Call-site aliases onto already-real virtual names: the Model/Object base
 // impls keep their UnkVirtual Fv linker symbols (hand-built vtables), but
@@ -370,13 +370,13 @@ inline void CfObjectModel_syncMoveTarget(cf::CfObjectModel* self, const ml::CVec
     CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(self, vec);
 }
 inline void CfObject_snapMoveTargetBase(cf::CfObject* self, const ml::CVec3* vec) {
-    CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(self, vec);
+    CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(self, vec);
 }
 inline void CfObjectModel_setPointEnabled(cf::CfObjectModel* self, int flag) {
     CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(self, flag);
 }
 inline void CfObjectModel_syncModelRate(cf::CfObjectModel* self, float value) {
-    CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(self, value);
+    CfObject_syncModelRate__Q22cf13CfObjectModelFv(self, value);
 }
 
 namespace cf {
@@ -460,7 +460,7 @@ namespace cf {
         void* mField6D8;         // 0x6D8-0x6DB (CfObjectMove_detachModelList model list)
         void* mField6DC;         // 0x6DC-0x6DF (CfObjectMove_loadResourceById)
         void* mField6E0;         // 0x6E0-0x6E3 (CfObjectMove_loadResourceById)
-        float mField6E4;          // 0x6E4-0x6E7 (CfObject_UnkVirtualFunc57 stores f1)
+        float mField6E4;          // 0x6E4-0x6E7 (CfObject_setMoveValue stores f1)
         float mField6E8;          // 0x6E8-0x6EB (CfObjectMove_recordMoveValue)
         float mField6EC;          // 0x6EC-0x6EF (ctor stores lbl_eu_80666A88)
         float mMoveSpeed;         // 0x6F0-0x6F3
@@ -493,7 +493,6 @@ namespace cf {
     // Unk* below are non-colliding aliases onto base behavior names (base
     // still owns the Unk virtual / Fv linker symbol for these slots).
     int CfObject_queryTargetState();
-    void CfObject_UnkVirtualFunc57(float value) { CfObject_setMoveValue(value); }
     void* CfObject_pushRefreshValue(float value);
     float CfObject_getMoveSpeedRate();
     bool CfObject_isMoveActiveNow();
@@ -511,8 +510,8 @@ namespace cf {
     void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount); //0xB8
     void CfObject_syncMoveHead(float deg);                  //0xD0
     void CfObject_applyMoveYaw(float deg);                  //0xD4
-    int CfObject_UnkVirtualFunc37(u32 arg);                 //0xE4
-    int CfObject_UnkVirtualFunc38(u32 arg);                 //0xE8
+    int CfObject_resetAnimSlots(u32 arg);                 //0xE4
+    int CfObject_clearAnimEntry(u32 arg);                 //0xE8
     int CfObject_armAnimSlot0(u32 id, u32 tag);             //0xEC
     int CfObject_armAnimSlot0N(u32 id, u32 nameIdx);        //0xF0
     int CfObject_armAnimSlot1(u32 id, u32 tag);             //0xF8
@@ -524,9 +523,9 @@ namespace cf {
     int CfObject_getNpcActionState();                       //0x118
     int CfObject_getNpcTargetAction();                      //0x11C
     u32* CfObject_getMoveRateScale();                       //0x138
-    void CfObject_UnkVirtualFunc59(float value);            //0x13C
-    float CfObject_UnkVirtualFunc60();                      //0x140
-    u32 CfObject_UnkVirtualFunc62(u32 idx);                 //0x148
+    void CfObject_setMoveScale(float value);            //0x13C
+    float CfObject_getMoveFactor();                      //0x140
+    u32 CfObject_getSlotBits(u32 idx);                 //0x148
     void CfObject_setMoveReadyFlag(int flag);               //0x154
     void CfObject_syncModelRate(float value);               //0x168
     void CfObjectModel_releaseModelSub();                   //0x178
@@ -560,7 +559,7 @@ namespace cf {
     cf::CfObjectMove* testFlag8();
     };
     // vtable proxy for calling cf-chain vtable slot +0xC8 as a float-taking
-    // virtual (retail CfObject_UnkVirtualFunc33 tail-calls it with a scaled
+    // virtual (retail CfObject_applyMoveYaw tail-calls it with a scaled
     // value; the base header declares the slot void). Extends the +0xB4
     // proxy; dummy slots pin the offset.
     // Layout of the object behind CfObjectMove::mTargetC4 (fields written by
@@ -574,10 +573,10 @@ namespace cf {
         float field_3AC;        // 0x3AC (CfObjectMove_refreshPosition position copy)
         float field_3B0;        // 0x3B0 (CfObjectMove_refreshPosition position copy)
         u8 _pad3B4[0x430 - 0x3B4];  // 0x3B4-0x42F
-        float field_430;        // 0x430 (CfObject_UnkVirtualFunc57)
+        float field_430;        // 0x430 (CfObject_setMoveValue)
         float field_434;        // 0x434 (CfObject_UnkVirtualFunc4)
-        float field_438;        // 0x438 (CfObject_UnkVirtualFunc57)
-        float field_43C;        // 0x43C (CfObject_UnkVirtualFunc57)
+        float field_438;        // 0x438 (CfObject_setMoveValue)
+        float field_43C;        // 0x43C (CfObject_setMoveValue)
         u8 _pad440[0x444 - 0x440];  // 0x440-0x443
         float field_444;        // 0x444 (CfObjectMove_refreshPosition writes to mField4C)
     };
@@ -613,7 +612,7 @@ namespace cf {
     // no-arg). Extends the cf-chain sub-object proxy (CObjectParam root,
     // last slot +0xA8); dummy slots pin +0xAC..+0x140.
     // View of the CfObjectModel field_0x90 area: retail
-    // CfObject_UnkVirtualFunc38 clears the +0x94 word. Cast on `self` with
+    // CfObject_clearAnimEntry clears the +0x94 word. Cast on `self` with
     // the full offset pad, so field_94 lands at 0x94 (same scheme as
     // CfObjectMoveC4Flags).
     struct CfObjectMove90View {
@@ -630,7 +629,7 @@ namespace cf {
     // View of the CfObjectMove +0xA4/+0xA8/+0xAC floats (inside
     // CfObjectModel's opaque 0xA4-0xAF pad): CfObjectMove_updateSpeedA8 reads/writes
     // field_A8 as a movement speed; CfObjectMove_tickSpeed and
-    // CfObject_UnkVirtualFunc5 use all three as approach-rate terms.
+    // CfObject_updateMoveRate use all three as approach-rate terms.
     struct CfObjectMoveA8View {
         u8 _pad[0xA4];
         float field_A4;  // 0xA4
@@ -666,14 +665,14 @@ namespace cf {
     // the vtable via lwz r12, 0x10(r3); same scheme as the file-scope
     // ObjReal view in CfObjectMove.cpp).
     // vtable proxy for the +0xB0 sub-object's slot +0x4C with an explicit
-    // arg (retail CfObject_UnkVirtualFunc38 forwards its hidden r4; the
+    // arg (retail CfObject_clearAnimEntry forwards its hidden r4; the
     // file-scope ObjReal view declares the slot no-arg, so this typed slot
     // is a separate class). Dummy slots pin the offset.
     // vtable proxy for the +0xB0 sub-object's slot +0x3C with two explicit
     // args (retail CfObject_UnkVirtualFunc39/42 forward the bdat result and
     // a 0/1 flag; the file-scope ObjReal view declares the slot no-arg).
     // Dummy slots pin the offset (same scheme as CfObjectMoveSubB0Real4C).
-    // View of the CfObjectMove flags word at +0x68 (CfObject_UnkVirtualFunc5
+    // View of the CfObjectMove flags word at +0x68 (CfObject_updateMoveRate
     // clears bits through this separate view type so MWCC's alias analysis
     // treats the clamp-path clear as a fresh read - retail reloads mFlags68
     // (lwz r0,0x68) at each clamp-path clear).

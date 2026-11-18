@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "kyoshin/CUIErrMesWin.hpp"
@@ -11,7 +12,6 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
-#include "kyoshin/CSysWinImports.hpp"
 
 // Forward declarations (retail functions defined later in this TU).
 // func_802B5148 is declared extern "C" + noinline in CUIErrMesWin.hpp so its
@@ -48,7 +48,7 @@ void ErrWin_DtorThunkA_5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinF
 // byte), then advance the embedded system window.
 void CUIErrMesWin::Move() {
     (this->*lbl_eu_8053AEB0[field_0x9C])();
-    sysWinDispatchPhase(&mSysWin);
+    reinterpret_cast<CSysWin*>(&mSysWin)->dispatchPhase();
 }
 
 // CUIErrMesWin::Init (us-802b770c) - attach the render callback, then build
@@ -66,19 +66,18 @@ void CUIErrMesWin::Term() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->removeRenderCB(render);
-    sysWinTermLayout(&mSysWin);
+    reinterpret_cast<CSysWin*>(&mSysWin)->termLayout();
     lbl_eu_80664C28 = 0;
 }
 
 // CUIErrMesWin::cbRenderBefore (us-802b7804) - disable Z testing and draw
 // the embedded system window with a layout DrawInfo.
-extern "C" void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 
 void CUIErrMesWin::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    sysWinDrawLayout(mSysWin, &drawInfo);
+    reinterpret_cast<CSysWin*>(mSysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
 }
 
 // CUIErrMesWin factory ctor (us-802b7864, retail stripped name
@@ -139,7 +138,7 @@ extern "C" void ErrWin_SetState1_4EF4(CUIErrMesWin* self) { self->field_0x9C = 1
 // ErrWin_MarkReady_4F00 (us-802b7970) - once the embedded CSysWin is ready, mark the
 // window state byte as "ready" (2).
 void ErrWin_MarkReady_4F00(CUIErrMesWin* self) {
-    if (CSysWin_isReady(&self->mSysWin)) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isReady()) {
         self->field_0x9C = 2;
     }
 }
@@ -149,16 +148,16 @@ void ErrWin_MarkReady_4F00(CUIErrMesWin* self) {
 // from field_0xA0, open it and advance the state byte to 3.
 void ErrWin_LoadText_4F40(CUIErrMesWin* self) {
     char* msg = BdatTouchStringCell(lbl_eu_805135E0, lbl_eu_805135E0 + 0xb, self->field_0x9E);
-    sysWinSetKindContent(&self->mSysWin[0], msg, 0);
-    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->field_0xA0);
-    sysWinOpenPhase1(&self->mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&self->mSysWin[0])->setKindContent(reinterpret_cast<char*>(msg), 0);
+    reinterpret_cast<CSysWin*>(&self->mSysWin[0])->applyKind(self->field_0xA0);
+    reinterpret_cast<CSysWin*>(&self->mSysWin[0])->openPhase1();
     self->field_0x9C = 3;
 }
 
 // ErrWin_MarkActive4_4FA8 (us-802b7a18) - once the embedded CSysWin is active, mark the
 // window state byte as "active" (4).
 void ErrWin_MarkActive4_4FA8(CUIErrMesWin* self) {
-    if (CSysWin_isActive(&self->mSysWin)) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isActive()) {
         self->field_0x9C = 4;
     }
 }
@@ -174,13 +173,13 @@ void ErrWin_OnConfirm_4FE8(CUIErrMesWin* self) {
         mask = 0x20000000;
     }
     if (pad->field_0x4 & mask) {
-        sysWinAdvancePhase3(&self->mSysWin[0]);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
         self->field_0x9C = 5;
     }
 }
 
 void ErrWin_MarkActive6_5054(CUIErrMesWin* self) {
-    if (CSysWin_isActive(&self->mSysWin)) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isActive()) {
         self->field_0x9C = 6;
     }
 }

@@ -62,7 +62,7 @@ void updateWindow(QuestWinObj* self) {
     case 0:
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
         self->field_0xBC = 1;
-        Cur_SetVisible(&self->mCursor, 0);
+        self->mCursor.SetVisible(0);
         placeQuestCursor(self);
         break;
     case 1:
@@ -76,7 +76,7 @@ void updateWindow(QuestWinObj* self) {
         break;
     }
     self->mpLayout->Animate(0);
-    Cur_Update(&self->mCursor);
+    self->mCursor.Update();
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +192,7 @@ void CQuestWindow::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     drawLayout(mpLayout, &drawInfo, 0, 1);
     if (field_0xC0 >= 0) {
-        Cur_DrawLayout(&mCursor, &drawInfo);
+        mCursor.DrawLayout(&drawInfo);
     }
 }
 
@@ -299,7 +299,7 @@ CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) 
 void completeWindowOpen(QuestWinObj* self) {
     if (advanceAnimTransform(self->mAnimA, lbl_eu_80667140) != 0) {
         self->enableAnimB();
-        Cur_SetVisible(&self->mCursor, 1);
+        self->mCursor.SetVisible(1);
         self->field_0xBC = 2;
     }
 }
@@ -323,7 +323,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
             enableAnimA(self);
             playUISound(3);
             self->field_0xBC = 3;
-            Cur_SetVisible(&self->mCursor, 0);
+            self->mCursor.SetVisible(0);
         }
     } else if (self->field_0xC4 != 0) {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
@@ -348,7 +348,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
                 self->field_0x60 = 1;
                 playUISound(3);
                 self->field_0xBC = 3;
-                Cur_SetVisible(&self->mCursor, 0);
+                self->mCursor.SetVisible(0);
                 enableAnimA(self);
             }
         } else if (dLeft != 0) {
@@ -387,7 +387,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
                 }
                 playUISound(3);
                 self->field_0xBC = 3;
-                Cur_SetVisible(&self->mCursor, 0);
+                self->mCursor.SetVisible(0);
                 enableAnimA(self);
             }
         } else if (dLeft != 0) {
@@ -884,11 +884,13 @@ extern "C" void CQuestWindow_dtorAdj70(void* self) { ((void(*)(void*))__dt__12CQ
 // base-dtor call and conditional operator delete).
 template<> CTTask<IUIWindow>::~CTTask() {}
 
-// Retail ~IUIWindow: the empty CTTask<IUIWindow> base dtor (same TU) is
-// inlined, so the only call is the direct ~CProcess; the double null-guard
-// around it is the D2-inlined-into-D1 MWCC artifact (CSimpleEveTalkWin
-// pattern) plus the deleting-wrapper check. novtable (header) suppresses the
-// implicit vptr store.
+// Retail ~IUIWindow: this TU owns the class's key function (retail
+// __dt__9IUIWindowFv sits at 0x80122E38, inside this split), which is also why
+// __vt__9IUIWindow, __vt__18CTTask<9IUIWindow> and their RTTI data are emitted
+// here. The empty CTTask<IUIWindow> base dtor (same TU) is inlined, so the only
+// call is the direct ~CProcess; the double null-guard around it is the
+// D2-inlined-into-D1 MWCC artifact (CSimpleEveTalkWin pattern) plus the
+// deleting-wrapper check.
 IUIWindow::~IUIWindow() {}
 
 template<> void CTTask<IUIWindow>::Move() {

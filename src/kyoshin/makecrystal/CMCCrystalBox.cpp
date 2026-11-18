@@ -4,6 +4,7 @@
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
@@ -452,14 +453,14 @@ void CMCCrystalBox::updateCrystalBoxState() {
     reinterpret_cast<CLytVf38*>(this->mLayout)->vf_30(0);
     this->sortMenu.Move();
     MCCrystal_StepState(&this->crystalInfo);
-    Cur_Update(&this->mCur07);
-    Cur_Update(&this->mCur09);
-    Cur_Update(&this->mCur18A);
-    Cur_Update(&this->mCur11);
-    Cur_Update(&this->mCur16);
-    Cur_Update(&this->mCur18B);
+    this->mCur07.Update();
+    this->mCur09.Update();
+    this->mCur18A.Update();
+    this->mCur11.Update();
+    this->mCur16.Update();
+    this->mCur18B.Update();
     this->mScrollBar.UpdateDispatch();
-    sysWinDispatchPhase(&this->sysWin);
+    reinterpret_cast<CSysWin*>(&this->sysWin)->dispatchPhase();
 }
 
 
@@ -474,15 +475,15 @@ void CMCCrystalBox::drawCrystalBox(nw4r::lyt::DrawInfo* di) {
     u8 lim = this->data.limit;
     u8 active = lim != 0 ? lim : 1;
     if (active > 1) {
-        Cur_DrawLayout(&this->mCur09, di);   // CCur09
+        this->mCur09.DrawLayout(di);   // CCur09
     }
-    Cur_DrawLayout(&this->mCur07, di);       // CCur07
-    Cur_DrawLayout(&this->mCur18A, di);
-    Cur_DrawLayout(&this->mCur11, di);
-    Cur_DrawLayout(&this->mCur16, di);
-    Cur_DrawLayout(&this->mCur18B, di);
+    this->mCur07.DrawLayout(di);       // CCur07
+    this->mCur18A.DrawLayout(di);
+    this->mCur11.DrawLayout(di);
+    this->mCur16.DrawLayout(di);
+    this->mCur18B.DrawLayout(di);
     this->mScrollBar.draw(di);      // scrollbar
-    sysWinDrawLayout(&this->sysWin, di);      // syswin
+    reinterpret_cast<CSysWin*>(&this->sysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(di));      // syswin
 }
 
 // Retail 0x8021634c: teardown of the whole crystal box. Closes the file
@@ -514,7 +515,7 @@ void CMCCrystalBox::teardownCrystalBox() {
         this->mCur16.cleanup();
         this->mCur18B.cleanup();
         this->mScrollBar.Teardown();
-        sysWinTermLayout(&this->sysWin);
+        reinterpret_cast<CSysWin*>(&this->sysWin)->termLayout();
     }
 }
 
@@ -522,7 +523,7 @@ int CMCCrystalBox::isCrystalBoxReady() {
     if (this->sortMenu.IsReady() == 0) return 0;
     if (func_8021A8EC(&this->crystalInfo) == 0) return 0;
     if (this->mScrollBar.isVisible() == 0) return 0;
-    if (CSysWin_isReady(&this->sysWin) != 0) return this->unk68;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isReady() != 0) return this->unk68;
     return 0;
 }
 
@@ -534,7 +535,7 @@ u8 CMCCrystalBox::isCrystalBoxBusy() {
     return this->unk2CE;
 }
 
-int CMCCrystalBox::getCrystalBoxSysWin() { return CSysWin_getUnk34(&this->sysWin); }
+int CMCCrystalBox::getCrystalBoxSysWin() { return reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened(); }
 
 // Retail 0x80216558: initialise the crystal box into state 1, mirror the
 // current item, and point the scrollbar at the selected vec.
@@ -572,10 +573,10 @@ void CMCCrystalBox::enterCrystalBoxState4() {
     if (this->unk2CE != 0) return;
     this->unk64 = 4;
     this->unk69 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
-    Cur_SetVisible(&this->mCur09, 0);
-    Cur_SetVisible(&this->mCur16, 0);
-    Cur_SetVisible(&this->mCur11, 0);
+    this->mCur07.SetVisible(0);
+    this->mCur09.SetVisible(0);
+    this->mCur16.SetVisible(0);
+    this->mCur11.SetVisible(0);
     MCCrystal_PlayOutro(&this->crystalInfo);
     this->mScrollBar.requestScrollOut();
     playCrystalAnim7();
@@ -587,10 +588,10 @@ void CMCCrystalBox::enterCrystalBoxState6() {
     if (this->unk2CE != 0) return;
     this->unk64 = 6;
     this->unk69 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
-    Cur_SetVisible(&this->mCur09, 0);
-    Cur_SetVisible(&this->mCur16, 0);
-    Cur_SetVisible(&this->mCur11, 0);
+    this->mCur07.SetVisible(0);
+    this->mCur09.SetVisible(0);
+    this->mCur16.SetVisible(0);
+    this->mCur11.SetVisible(0);
     this->mScrollBar.requestScrollOut();
     MCCrystal_PlayAnim4(&this->crystalInfo);
     playCrystalAnim10();
@@ -602,10 +603,10 @@ void CMCCrystalBox::enterCrystalBoxState8() {
     if (this->unk2CE != 0) return;
     this->unk64 = 8;
     this->unk69 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
-    Cur_SetVisible(&this->mCur09, 0);
-    Cur_SetVisible(&this->mCur16, 0);
-    Cur_SetVisible(&this->mCur11, 0);
+    this->mCur07.SetVisible(0);
+    this->mCur09.SetVisible(0);
+    this->mCur16.SetVisible(0);
+    this->mCur11.SetVisible(0);
     MCCrystal_PlayAnim3A(&this->crystalInfo);
     playCrystalAnim9();
     playUISound(0x6d);
@@ -616,10 +617,10 @@ void CMCCrystalBox::enterCrystalBoxState13() {
     if (this->unk2CE != 0) return;
     this->unk64 = 0xd;
     this->unk69 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
-    Cur_SetVisible(&this->mCur09, 0);
-    Cur_SetVisible(&this->mCur16, 0);
-    Cur_SetVisible(&this->mCur11, 0);
+    this->mCur07.SetVisible(0);
+    this->mCur09.SetVisible(0);
+    this->mCur16.SetVisible(0);
+    this->mCur11.SetVisible(0);
     MCCrystal_PlayAnim3B(&this->crystalInfo);
     playCrystalAnim10();
 }
@@ -629,7 +630,7 @@ void CMCCrystalBox::enterCrystalBoxState13() {
 // the sort sub-menu is open scroll it up one entry; otherwise step the item
 // cursor (unk2CD) down with per-window-kind wrap rules and refresh.
 void CMCCrystalBox::stepCrystalBoxCursorPrev() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) {
         u8 v = this->unk1501 - 1;
         this->unk1501 = v;
@@ -702,7 +703,7 @@ void CMCCrystalBox::stepCrystalBoxCursorPrev() {
 // through its slot-0x10 virtual; otherwise step the item cursor (unk2CD),
 // resolving the new row from the crystal table, and refresh.
 void CMCCrystalBox::stepCrystalBoxCursorNext() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) {
         s8 limit = (s8)this->unk1503;
         if (limit >= 8) {
@@ -769,7 +770,7 @@ void CMCCrystalBox::stepCrystalBoxCursorNext() {
 // decrement paths and drives the +0x64 state / anim; otherwise the item
 // cursor is stepped back (unk2CD) with the -0x2CC countdown.
 void CMCCrystalBox::stepCrystalBoxPageBack() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) {
         if ((s8)this->unk1503 >= 8) {
             u8 w = (u8)(this->unk1502 - 8);
@@ -869,7 +870,7 @@ void CMCCrystalBox::stepCrystalBoxPageBack() {
 // (wrapping at the byte from code80135FDC_getByte_64077) before entering
 // state 11; the item-cursor path counts -0x2CC up to 9 then wraps to 0.
 void CMCCrystalBox::pageCrystalBoxCursorFwd() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) {
         s8 lim = (s8)this->unk1503;
         if (lim >= 8) {
@@ -967,7 +968,7 @@ void CMCCrystalBox::pageCrystalBoxCursorFwd() {
 }
 
 __declspec(noinline) void CMCCrystalBox::confirmCrystalSelect() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
     if ((s8)this->unk2CD == -2) return;
@@ -980,7 +981,7 @@ __declspec(noinline) void CMCCrystalBox::confirmCrystalSelect() {
 }
 
 __declspec(noinline) void CMCCrystalBox::confirmCrystalUnselect() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
     if ((s8)this->unk2CD == -2) return;
@@ -997,15 +998,15 @@ __declspec(noinline) void CMCCrystalBox::confirmCrystalUnselect() {
 // the +0x9C cursor is driven through its slot-0x10 virtual. stmw r28 frame is
 // the -O4,s shape (unit flag).
 void CMCCrystalBox::toggleCrystalSortMenu() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) return;
     if (this->unk2D1 != 0) return;
     if ((s8)this->unk2CD == -2) return;
     if (this->unk2CE != 0) {
         if (this->sortMenu.IsIdle() == 0) return;
         refreshCrystalBoxCursors();
-        Cur_SetVisible(&this->mCur07, 1);
-        Cur_SetVisible(&this->mCur18A, 0);
+        this->mCur07.SetVisible(1);
+        this->mCur18A.SetVisible(0);
         this->sortMenu.Close();
         this->unk2CE = 0;
         playUISound(6);
@@ -1022,8 +1023,8 @@ void CMCCrystalBox::toggleCrystalSortMenu() {
         this->sortMenu.SetSelect((u8)(this->field_1506 + this->field_1507));
         nw4r::math::VEC3 pos = this->sortMenu.GetCursorPos();
         this->mCur18A.setRootPaneTranslate(&pos);
-        Cur_SetVisible(&this->mCur18A, 1);
-        Cur_SetVisible(&this->mCur07, 0);
+        this->mCur18A.SetVisible(1);
+        this->mCur07.SetVisible(0);
         this->sortMenu.Open();
         this->unk2CE = 1;
         this->unk2CF = 0;
@@ -1040,13 +1041,13 @@ void CMCCrystalBox::toggleCrystalSortMenu() {
 // stmw r22 frame is the -O4,s shape (unit flag).
 void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
     if (this->sortMenu.IsIdle() == 0) return;
-    if (CSysWin_getUnk34(&this->sysWin) != 0) {
-        if (CSysWin_isActive(&this->sysWin) == 0) {
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&this->sysWin)->isActive() == 0) {
             return;
         }
-        sysWinAdvancePhase3(&this->sysWin);
+        reinterpret_cast<CSysWin*>(&this->sysWin)->advancePhase3();
         if (this->unk1500 != 0) {
-            Cur_SetVisible(&this->mCur18B, 1);
+            this->mCur18B.SetVisible(1);
         }
     } else if (this->unk1500 != 0) {
         this->unk1500 = 0;
@@ -1056,8 +1057,8 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
         rebuildCrystalGridTable();
     } else if (this->unk2CE != 0) {
         refreshCrystalBoxCursors();
-        Cur_SetVisible(&this->mCur07, 1);
-        Cur_SetVisible(&this->mCur18A, 0);
+        this->mCur07.SetVisible(1);
+        this->mCur18A.SetVisible(0);
         this->sortMenu.Close();
         this->unk2CE = 0;
     } else if (this->unk2D1 != 0) {
@@ -1508,13 +1509,13 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
     if ((s8)this->unk2CD == -1) return;
 
     if (this->mSelTable.mCount == 0) {
-        if (CSysWin_getUnk34(&this->sysWin) != 0) {
+        if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) {
             // Window already open: keep it alive while the crystal animates.
             if (this->unk1500 == 0) return;
-            if (CSysWin_isActive(&this->sysWin) == 0) return;
-            sysWinAdvancePhase3(&this->sysWin);
+            if (reinterpret_cast<CSysWin*>(&this->sysWin)->isActive() == 0) return;
+            reinterpret_cast<CSysWin*>(&this->sysWin)->advancePhase3();
             if (this->unk1500 == 0) return;
-            Cur_SetVisible(&this->mCur18B, 1);
+            this->mCur18B.SetVisible(1);
             return;
         }
         // No window: only open it when a crystal exists at the current slot.
@@ -1526,12 +1527,12 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
     }
 
     if (this->unk1500 != 0) {
-        if (CSysWin_getUnk34(&this->sysWin) != 0) {
+        if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) {
             // Window already open: keep it alive while the crystal animates.
-            if (CSysWin_isActive(&this->sysWin) == 0) return;
-            sysWinAdvancePhase3(&this->sysWin);
+            if (reinterpret_cast<CSysWin*>(&this->sysWin)->isActive() == 0) return;
+            reinterpret_cast<CSysWin*>(&this->sysWin)->advancePhase3();
             if (this->unk1500 == 0) return;
-            Cur_SetVisible(&this->mCur18B, 1);
+            this->mCur18B.SetVisible(1);
             return;
         }
         if (this->unk1504 != 0) {
@@ -1540,11 +1541,11 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
             // branch that also tests it).
             char* msg = BdatGetPtrDirect((const void*)lbl_eu_806646D0,
                                       lbl_eu_8050888C + 0xa4, this->unk1504);
-            sysWinSwitchKindPane(&this->sysWin, 0);
-            sysWinSetKindContent(&this->sysWin, (u32)msg, 0);
-            sysWinApplyKind(&this->sysWin, 1);
-            sysWinOpenPhase1(&this->sysWin);
-            Cur_SetVisible(&this->mCur18B, 0);
+            reinterpret_cast<CSysWin*>(&this->sysWin)->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(&this->sysWin)->setKindContent(reinterpret_cast<char*>((u32)msg), 0);
+            reinterpret_cast<CSysWin*>(&this->sysWin)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&this->sysWin)->openPhase1();
+            this->mCur18B.SetVisible(0);
             return;
         }
         playUISound(5);
@@ -1552,7 +1553,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
     }
 
     // First open: mark active and refresh the list.
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     this->unk1500 = 1;
     this->unk1501 = 0;
     this->unk1502 = 0;
@@ -1566,7 +1567,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
 // The trailing `0x30 + (field_14A0 != 0)` is the -O4,s setnz idiom
 // (subic/subfe); the unit -O4,s flag selects that codegen.
 int CMCCrystalBox::getCrystalBoxAction() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return 0x0;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return 0x0;
     if (this->sortMenu.IsOpen() != 0) return 0x32;
     if (this->unk1500 != 0) return 0x36;
     if ((s8)this->unk2CD == -1) return 0x35;
@@ -1577,7 +1578,7 @@ int CMCCrystalBox::getCrystalBoxAction() {
 }
 
 void CMCCrystalBox::deselectCrystalBoxItem() {
-    if (CSysWin_getUnk34(&this->sysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk1500 != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
@@ -1603,8 +1604,8 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnimToState3() {
     this->unk64 = 3;
     playCrystalAnim8();
     this->unk69 = 1;
-    Cur_SetVisible(&this->mCur07, 1);
-    Cur_SetVisible(&this->mCur09, 1);
+    this->mCur07.SetVisible(1);
+    this->mCur09.SetVisible(1);
     refreshCrystalBoxCursors();
 }
 
@@ -1621,14 +1622,14 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnimToIdle() {
     if (AnimRewindFrame(this->mAnim0, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
+    this->mCur07.SetVisible(0);
 }
 
 __declspec(noinline) void CMCCrystalBox::onCrystalAnim14Idle() {
     if (advanceAnimTransform(this->mAnim8, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
-    Cur_SetVisible(&this->mCur07, 0);
+    this->mCur07.SetVisible(0);
 }
 
 // Retail 0x80218B90: when sub-object 9's animation finishes, enter state 9
@@ -1681,7 +1682,7 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnimResetState3() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
     playCrystalAnim8();
     refreshCrystalBoxCursors();
-    Cur_SetVisible(&this->mCur09, 1);
+    this->mCur09.SetVisible(1);
     this->unk64 = 3;
 }
 
@@ -2233,17 +2234,17 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
     char buf20[0xC];    // sort-menu quad
     char buf14[0xC];    // countdown quad
     char buf8[0xC];     // normal quad
-    int flag;           // window-kind <2 guard (retail keeps it in r30)
+    bool flag;          // window-kind <2 guard (retail keeps it in r30; bool: no int->bool convert)
     struct PaneW44 { u8 pad[0x44]; f32 w44; };  // +0x44 scale float (per-statement view)
     if (this->unk1500 != 0) {
         MCCrystal_AlignPane(buf2C, &this->crystalInfo, this->unk1501);
         this->mCur18B.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf2C));
-        Cur_SetVisible(&this->mCur18B, 1);
-        Cur_SetVisible(&this->mCur07, 0);
-        Cur_SetVisible(&this->mCur16, 0);
-        Cur_SetVisible(&this->mCur11, 0);
+        this->mCur18B.SetVisible(1);
+        this->mCur07.SetVisible(0);
+        this->mCur16.SetVisible(0);
+        this->mCur11.SetVisible(0);
     } else {
-        Cur_SetVisible(&this->mCur18B, 0);
+        this->mCur18B.SetVisible(0);
         if (this->unk2D1 == 0) {
             if ((s8)this->unk2CD == -2) {
                 // sort-menu path: page label + the two panes into +0xCC.
@@ -2254,8 +2255,8 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf20, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf20));
-                Cur_SetVisible(&this->mCur16, 1);
-                Cur_SetVisible(&this->mCur07, 0);
+                this->mCur16.SetVisible(1);
+                this->mCur07.SetVisible(0);
             } else if ((s8)this->unk2CD == -1) {
                 // countdown path: ticker + 1 into +0x6C.
                 sprintf(bufB0, lbl_eu_8050888C + 0x1a2, (s8)this->field_14F2 + 1);
@@ -2265,8 +2266,8 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf14, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf14));
-                Cur_SetVisible(&this->mCur07, 1);
-                Cur_SetVisible(&this->mCur16, 0);
+                this->mCur07.SetVisible(1);
+                this->mCur16.SetVisible(0);
             } else {
                 // normal path: the current crystal index + 1 into +0x6C.
                 sprintf(buf90, lbl_eu_8050888C + 0xe7,
@@ -2277,8 +2278,8 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf8, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf8));
-                Cur_SetVisible(&this->mCur07, 1);
-                Cur_SetVisible(&this->mCur16, 0);
+                this->mCur07.SetVisible(1);
+                this->mCur16.SetVisible(0);
             }
         } else {
             if ((s8)this->unk2D3 < 2) {
@@ -2291,13 +2292,13 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 buf44[0] *= ((PaneW44*)paneB)->w44;
                 this->mCur11.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf44));
-                Cur_SetVisible(&this->mCur11, 1);
-                Cur_SetVisible(&this->mCur16, 0);
+                this->mCur11.SetVisible(1);
+                this->mCur16.SetVisible(0);
                 flag = 0;
                 if (code80135FDC_getByte_64077() > 2 || (s8)this->unk2D3 != 1) {
                     flag = 1;
                 }
-                Cur_ShowTwoPanes(&this->mCur11, flag);
+                this->mCur11.ShowTwoPanes(flag);
             } else {
                 // window-kind done path: +0xCC cursor.
                 sprintf(buf50, lbl_eu_8050888C + 0x1bd);
@@ -2308,8 +2309,8 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
                                              ->vf_3C(lbl_eu_8050888C + 0x63, 1);
                 buf38[0] *= ((PaneW44*)paneB)->w44;
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf38));
-                Cur_SetVisible(&this->mCur16, 1);
-                Cur_SetVisible(&this->mCur11, 0);
+                this->mCur16.SetVisible(1);
+                this->mCur11.SetVisible(0);
             }
         }
     }
@@ -2902,7 +2903,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2 = *reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
             (nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668490, lbl_eu_8066848C, lbl_eu_8066845C));
-        Cur_SetTwoPanes09(&this->mCur09, &v2, &v1);
+        this->mCur09.SetTwoPanes(&v2, &v1);
 
         mCur18A = CCur18(CUICfManager_getArcResourceAccessor());
         mCur18A.initLayout();

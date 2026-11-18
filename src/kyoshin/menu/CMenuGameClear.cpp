@@ -25,7 +25,7 @@
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
 
@@ -54,9 +54,6 @@ struct CfPadDataView {
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(void* region);
 void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
-void sysWinTermLayout(void* syswin);
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void Cur_DrawLayout(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
 }
 
@@ -67,9 +64,6 @@ extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
 // CSysWin / cursor helper imports (retail-unmangled C symbols; declared here
 // because the defining headers are not includable from this TU).
 extern "C" void* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void sysWinAdvancePhase3(CSysWinFull* syswin);
-extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, void* syswin, u8 sel);
-extern "C" void Cur_SetVisible(void* cursor, int val);
 
 // CMenuGameClear singleton storage.
 CMenuGameClear* CMenuGameClear::sInstance;
@@ -123,7 +117,7 @@ void CMenuGameClear::Term() {
 
     mScene->removeRenderCB(this);
 
-    sysWinTermLayout(&mSysWin);
+    reinterpret_cast<CSysWin*>(&mSysWin)->termLayout();
     ((CBaseCur*)&mCursor)->cleanup();
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion);
 
@@ -160,8 +154,8 @@ body:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
-        sysWinDrawLayout(&mSysWin, &drawInfo);
-        Cur_DrawLayout(&mCursor, &drawInfo);
+        reinterpret_cast<CSysWin*>(&mSysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+        mCursor.DrawLayout(&drawInfo);
     }
 }
 
@@ -193,15 +187,15 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 4;
-        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
+        self->mCursor.SetVisible(0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -209,7 +203,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
@@ -235,15 +229,15 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
 
     if (dirBit != 0) {
         self->mField70 = 8;
-        sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin);
-        Cur_SetVisible(&self->mCursor, 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
+        self->mCursor.SetVisible(0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
@@ -251,7 +245,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
             self->mField71 = 0;
         }
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, &self->mSysWin, self->mField71);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(&self->mSysWin), self->mField71);
         ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }

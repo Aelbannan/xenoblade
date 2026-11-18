@@ -14,7 +14,11 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
+extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
+extern "C" void TagCopyVec2f(float* dst, float* src);
+class UnkClass_8045F564;
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 #include "kyoshin/code_80135FDC_State.hpp"
 // Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
 // Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
@@ -809,7 +813,7 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_setNameMsg136(UI::CPassive
 // otherwise inline this body and grow the caller's frame).
 extern "C" __declspec(noinline) void CPassiveSkillCur_setRootPos(UI::CPassiveSkillCur* self, nw4r::math::VEC3 pos) {
     nw4r::math::VEC3 local = pos;
-    Cur_SetPaneTranslate(self->field_24->GetRootPane(), &local);
+    CBaseCur::SetPaneTranslate(self->field_24->GetRootPane(), &local);
 }
 
 // Cursor step (state 2): when the first anim transform's frame check
@@ -1204,9 +1208,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_update(u8* selfRaw) {
     CPassiveSkillCur_dispatch(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo));
     CPassiveSkillCur_stepAnim(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo.field_3C));
     if (self->mInfo.field_54 != 0) {
-        sysWinDispatchPhase(self->mInfo.field_54);
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->dispatchPhase();
     }
-    Cur_Update(&self->mCur);
+    self->mCur.Update();
 done:;
 }
 
@@ -1235,15 +1239,15 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_draw(UI::CPassiveSkillLin
     }
     CPassiveSkillInfo_draw(&self->mInfo, drawInfo);
     if (self->mInfo.field_38 == 0 && self->mInfo.field_54 != 0 &&
-        CSysWin_getUnk34(self->mInfo.field_54) == 0 &&
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() == 0 &&
         self->mInfo.field_3C.field_8 != 0) {
         drawLayout(self->mInfo.field_3C.field_8, drawInfo, 0, 1);
     }
     if (self->mInfo.field_54 != 0) {
-        sysWinDrawLayout(self->mInfo.field_54, drawInfo);
-        if (CSysWin_getUnk34(self->mInfo.field_54) != 0 &&
-            CSysWin_isActive(self->mInfo.field_54) != 0) {
-            Cur_DrawLayout(&self->mCur, drawInfo);
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+        if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0 &&
+            reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
+            self->mCur.DrawLayout(drawInfo);
         }
     }
 }
@@ -1468,15 +1472,15 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_decCharIdx(UI::CPassiveSk
 // decrement the state machine's grid/row counters for states 5/0xC/0xF and
 // play the UI SFX 1.
 void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self) {
-    if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
-        if (CSysWin_isActive(self->mInfo.field_54) != 0) {
+    if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
             u8 v = (u8)(self->field_11D - 1);
             self->field_11D = v;
             if ((s8)v < 0) {
                 self->field_11D = 1;
             }
             nw4r::math::VEC3 pos;
-            sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, self->field_11D);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(self->mInfo.field_54), self->field_11D);
             self->mCur.setRootPaneTranslate(&pos);
             playUISound(1);
         }
@@ -1512,15 +1516,15 @@ void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self) {
 // state-5 counter past 5, and the 0xC/0xF counters past 4.
 extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self) {
     UI::CPassiveSkillLine* line = reinterpret_cast<UI::CPassiveSkillLine*>(self);
-    if (line->mInfo.field_54 != 0 && CSysWin_getUnk34(line->mInfo.field_54) != 0) {
-        if (CSysWin_isActive(line->mInfo.field_54) != 0) {
+    if (line->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(line->mInfo.field_54)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(line->mInfo.field_54)->isActive() != 0) {
             u8 v = (u8)(line->field_11D + 1);
             line->field_11D = v;
             if ((s8)v >= 2) {
                 line->field_11D = 0;
             }
             nw4r::math::VEC3 pos;
-            sysWinGetPaneScreenPos(&pos, line->mInfo.field_54, line->field_11D);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(line->mInfo.field_54), line->field_11D);
             line->mCur.setRootPaneTranslate(&pos);
             playUISound(1);
         }
@@ -1560,7 +1564,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self) {
 // menu-tab movement of CPassiveSkillLine_cursorLeft.
 void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
-    if (syswin != 0 && CSysWin_getUnk34(syswin) != 0) {
+    if (syswin != 0 && reinterpret_cast<CSysWin*>(syswin)->isOpened() != 0) {
         return;
     }
     if (self->field_E8 == 5) {
@@ -1670,7 +1674,7 @@ void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self) {
 // plays on every path except the syswin-armed early return.
 __declspec(noinline) void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
-    if (syswin != 0 && CSysWin_getUnk34(syswin) != 0) {
+    if (syswin != 0 && reinterpret_cast<CSysWin*>(syswin)->isOpened() != 0) {
         return;
     }
     if (self->field_E8 == 5) {
@@ -1778,7 +1782,7 @@ __declspec(noinline) void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* se
 // (CPassiveSkillLine_enterState3) close path and play the shared UI SFX 109 on either.
 __declspec(noinline) void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
-    if (syswin != 0 && CSysWin_getUnk34(syswin) != 0) {
+    if (syswin != 0 && reinterpret_cast<CSysWin*>(syswin)->isOpened() != 0) {
         return;
     }
     if (self->field_E8 == 5) {
@@ -1809,9 +1813,6 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
 // (memberized: KizunagramClearChartEntry -> CPcKizunaChart::KizunagramClearChartEntry; declaration moved into class CPcKizunaChart)
 // (memberized: KizunagramStoreWorkEntry -> CPcKizunaChart::KizunagramStoreWorkEntry; declaration moved into class CPcKizunaChart)
 extern "C" void SysWinLog_ScanSegmentSlots(u8* self);
-extern "C" void sysWinSetKindContent(void*, const char*, int);
-extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
-extern "C" void sysWinOpenPhase1(void*);
 
 // Main input/update handler for the +0x28 skill-line sub-object (retail
 // CPassiveSkillLine_handleInput). When the lazily-attached syswin is armed and active it
@@ -1824,8 +1825,8 @@ extern "C" void sysWinOpenPhase1(void*);
 //        (item-category 0x85/0x84 variants) or mark the skill learned.
 extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
-    if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
-        if (CSysWin_isActive(self->mInfo.field_54) != 0) {
+    if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
             if ((s8)self->field_11D == 0) {
                 CPassiveSkillLine_syncEquipState(self);
                 if (self->field_11E == 0) {
@@ -1888,8 +1889,8 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
             } else {
                 playUISound(6);
             }
-            Cur_SetVisible(&self->mCur, 0);
-            sysWinAdvancePhase3(self->mInfo.field_54);
+            self->mCur.SetVisible(0);
+            reinterpret_cast<CSysWin*>(self->mInfo.field_54)->advancePhase3();
         }
         return;
     }
@@ -1953,11 +1954,11 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                                            &lbl_eu_8050DC20[0x207], 0x1c);
                 char* msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
                                            &lbl_eu_8050DC20[0x207], 0x1d);
-                sysWinSetKindContent(self->mInfo.field_54, msgA, 0);
-                sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
-                sysWinApplyKind(static_cast<CSysWin*>(self->mInfo.field_54), 0);
-                sysWinOpenPhase1(self->mInfo.field_54);
-                Cur_SetVisible(&self->mCur, 0);
+                reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setKindContent(reinterpret_cast<char*>(msgA), 0);
+                reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setTwoTextValues(reinterpret_cast<char*>(msgB), reinterpret_cast<char*>(msgC));
+                reinterpret_cast<CSysWin*>(static_cast<CSysWin*>(self->mInfo.field_54))->applyKind(0);
+                reinterpret_cast<CSysWin*>(self->mInfo.field_54)->openPhase1();
+                self->mCur.SetVisible(0);
                 playUISound(3);
                 return;
             }
@@ -1989,11 +1990,11 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
 // symbol; noinline keeps the retail `bl` from CPassiveSkill_confirm.
 extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
-    if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
-        if (CSysWin_isActive(self->mInfo.field_54) != 0) {
+    if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
             playUISound(6);
-            Cur_SetVisible(&self->mCur, 0);
-            sysWinAdvancePhase3(self->mInfo.field_54);
+            self->mCur.SetVisible(0);
+            reinterpret_cast<CSysWin*>(self->mInfo.field_54)->advancePhase3();
         }
     } else {
         if (self->field_E8 == 15) {
@@ -2005,9 +2006,6 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw)
 
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
-extern "C" void sysWinSetKindContent(void*, const char*, int);
-extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
-extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 
 // Skill-acquisition confirm handler (retail CPassiveSkillLine_confirmAcquire): with the syswin
@@ -2021,9 +2019,6 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 // flag, run the state-15 helper, play the sounds and run the update tail.
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
-extern "C" void sysWinSetKindContent(void*, const char*, int);
-extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
-extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 
 // Skill-acquisition confirm handler (retail CPassiveSkillLine_confirmAcquire): with the syswin
@@ -2038,7 +2033,7 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
     UI::CPassiveSkillLine* self = static_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->mInfo.field_54 != 0) {
-        if (CSysWin_getUnk34(self->mInfo.field_54) != 0) {
+        if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
             return;
         }
     }
@@ -2101,11 +2096,11 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* self
             self->field_11F = 0;
             break;
         }
-        sysWinSetKindContent(self->mInfo.field_54, msgA, 0);
-        sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
-        sysWinApplyKind(static_cast<CSysWin*>(self->mInfo.field_54), 0);
-        sysWinOpenPhase1(self->mInfo.field_54);
-        Cur_SetVisible(&self->mCur, 0);
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setKindContent(reinterpret_cast<char*>(msgA), 0);
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->setTwoTextValues(reinterpret_cast<char*>(msgB), reinterpret_cast<char*>(msgC));
+        reinterpret_cast<CSysWin*>(static_cast<CSysWin*>(self->mInfo.field_54))->applyKind(0);
+        reinterpret_cast<CSysWin*>(self->mInfo.field_54)->openPhase1();
+        self->mCur.SetVisible(0);
         break;
     }
 }
@@ -2118,15 +2113,15 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_syswinAdvance(UI::CPassiv
     if (self->mInfo.field_54 == 0) {
         return;
     }
-    if (CSysWin_getUnk34(self->mInfo.field_54) == 0) {
+    if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() == 0) {
         return;
     }
-    if (CSysWin_isActive(self->mInfo.field_54) == 0) {
+    if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() == 0) {
         return;
     }
     playUISound(6);
-    Cur_SetVisible(&self->mCur, 0);
-    sysWinAdvancePhase3(self->mInfo.field_54);
+    self->mCur.SetVisible(0);
+    reinterpret_cast<CSysWin*>(self->mInfo.field_54)->advancePhase3();
 }
 
 extern "C" __declspec(noinline) void CPassiveSkillLine_maybeEnterState2(void* self){
@@ -2360,7 +2355,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepStateC(UI::CPassiveSk
 // byte, mark +0x11D, build the cursor target position from the syswin and
 // move the embedded CCur18 cursor there, then quiet the cursor.
 extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassiveSkillLine* self) {
-    if (self->mInfo.field_54 != 0 && CSysWin_isActive(self->mInfo.field_54) != 0) {
+    if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
         if (self->field_11E == 1) {
             self->field_E8 = 0xC;
         } else {
@@ -2368,9 +2363,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassive
         }
         self->field_11D = 1;
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, 1);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&pos), reinterpret_cast<CSysWin*>(self->mInfo.field_54), 1);
         self->mCur.setRootPaneTranslate(&pos);
-        Cur_SetVisible(&self->mCur, 1);
+        self->mCur.SetVisible(1);
     }
 }
 
@@ -3161,7 +3156,7 @@ __declspec(noinline) void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLi
         &lbl_eu_8050DC20[0x4a5], true);
     nw4r::math::VEC3 pos;
     ScalePaneWorldPos(&pos, paneE, paneF, self->field_8->GetRootPane());
-    Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
+    CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
     if ((s8)self->field_F6 != 0) {
         u8 chId = GetCollectedFlagByte((s8)self->field_F3);
         CPassiveSkillLine_refreshSkillCell(self, 1, chId, (u8)(chId - 1), (s8)self->field_F5,
@@ -3235,7 +3230,7 @@ nw4r::lyt::Pane* paneD = self->field_8->GetRootPane()->FindPaneByName(
 &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos;
 ScalePaneWorldPos(&pos, paneC, paneD, self->field_8->GetRootPane());
-Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
+CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
 u8 ch = GetCollectedFlagByte((s8)self->field_F3);
 CtrlObjectParam_GetCharEntry(ch);
 const u8* rowTab = &lbl_eu_8050DB60[(u8)(ch - 1) * 8];
@@ -3273,7 +3268,7 @@ nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
     &lbl_eu_8050DC20[0x4a5], true);
 nw4r::math::VEC3 pos;
 ScalePaneWorldPos(&pos, paneA, paneB, self->field_8->GetRootPane());
-    Cur_SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
+    CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
 CPassiveSkillLine_refreshSkillCell(self, 2, 0, GetCollectedFlagByte((s8)self->field_F3),
               (s8)self->field_F7, (s8)self->field_F8);
         return;
@@ -3467,23 +3462,23 @@ __declspec(noinline) void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSki
                 self->field_8->GetRootPane()->FindPaneByName(buf, true);
             nw4r::math::VEC3 pos;
             AccumPaneWorldPosB(&pos, pane);
-            Cur_SetPaneTranslate(
+            CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x446], true),
                 &pos);
-            Cur_SetPaneTranslate(
+            CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x451], true),
                 &pos);
-            Cur_SetPaneTranslate(
+            CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x45c], true),
                 &pos);
-            Cur_SetPaneTranslate(
+            CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x467], true),
                 &pos);
-            Cur_SetPaneTranslate(
+            CBaseCur::SetPaneTranslate(
                 cell->mpLayout->GetRootPane()->FindPaneByName(
                     &lbl_eu_8050DC20[0x472], true),
                 &pos);
@@ -3769,7 +3764,6 @@ extern "C" void CPassiveSkill_draw(UI_CPassiveSkill* self, u8* arg2) {
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
-extern "C" void sysWinTermLayout(void*);
 #pragma optimize_for_size on
 // UI::CPassiveSkill teardown (retail CPassiveSkill_teardown): close the shared bdat
 // reader, release the two file handles and the arc resource accessor, tear
@@ -3781,7 +3775,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     closeFileHandle((CFileHandle**)&self->field_1C);
     self->field_24 = 0;
     CPassiveSkillLine_teardown(&self->mLine);
-    sysWinTermLayout(&self->mSysWin);
+    reinterpret_cast<CSysWin*>(&self->mSysWin)->termLayout();
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_20);
     self->field_20 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
@@ -3792,7 +3786,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
 #pragma optimize_for_size off
 // Return the +0x26 visibility byte once the +0x1B8 system window is ready.
 u8 CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self) {
-    if (CSysWin_isReady(self->field_1B8) != 0) {
+    if (reinterpret_cast<CSysWin*>(self->field_1B8)->isReady() != 0) {
         return self->field_26;
     }
     return 0;
@@ -3845,7 +3839,7 @@ void CPassiveSkill_confirm(UI_CPassiveSkill* self) {
     // the two update paths.
     if (self->field_104[12] == 15) {
         CPassiveSkillLine_learnedClose(self->_pad28);
-    } else if (CSysWin_getUnk34(self->field_1B8) != 0) {
+    } else if (reinterpret_cast<CSysWin*>(self->field_1B8)->isOpened() != 0) {
         CPassiveSkillLine_syswinAdvance(reinterpret_cast<UI::CPassiveSkillLine*>(self->_pad28));
     } else {
         CPassiveSkillLine_closeDispatch(reinterpret_cast<UI::CPassiveSkillLine*>(self->_pad28));
@@ -3877,7 +3871,7 @@ void UI_CPassiveSkill_thunk28_68518(u8* self) { CPassiveSkillLine_closeDispatch(
 // -O4,p only emits under optimize_for_size.
 #pragma optimize_for_size on
 s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
-    if (CSysWin_getUnk34(&self->field_1B8) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->field_1B8)->isOpened() != 0) {
         return 0;
     }
     if (self->field_180 != 0) {
@@ -3927,7 +3921,7 @@ s32 CPassiveSkill_isSyswinOrLearned(UI_CPassiveSkill* self) {
     return (self->field_104[12] == 15) ? 1 : 0;
 }
 
-extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { return CSysWin_getUnk34(self->field_1B8); }
+extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { return reinterpret_cast<CSysWin*>(self->field_1B8)->isOpened(); }
 
 // noinline: retail keeps the `bl` from CPassiveSkill_update.
 extern "C" __declspec(noinline) void CPassiveSkill_markClosing(UI_CPassiveSkill* self) {

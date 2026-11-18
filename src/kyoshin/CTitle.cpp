@@ -16,7 +16,6 @@
 #include <nw4r/math.h>
 #include <stdio.h>
 #include "kyoshin/CSysWin.hpp" // ScalePaneWorldPos cursor-position helper
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
@@ -83,9 +82,6 @@ body:
     (self->*lbl_eu_8053B1F0[self->field_0x1A])();
     self->mLayout->Animate(0);
 }
-
-
-extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleLogo* logo = (CTitleLogo*)self;
     if (logo->mLayout != 0 && logo->field_0x18 != 0) {
@@ -519,7 +515,7 @@ extern "C" void CTitle_update(CTitle* self) {
     (self->*lbl_eu_8053B274[self->field_0x24])();
     CTitleLogo_update(&self->mLogo);
     CTitleMenu_update(&self->mMenu);
-    Cur_Update(&self->mCur);
+    self->mCur.Update();
 }
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
@@ -527,7 +523,7 @@ extern "C" void CTitle_update(CTitle* self) {
 extern "C" void CTitle_draw(CTitle* self, void* drawInfo) {
     CTitleLogo_draw(&self->mLogo, drawInfo);
     CTitleMenu_draw(&self->mMenu, drawInfo);
-    Cur_DrawLayout(&self->mCur, drawInfo);
+    self->mCur.DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -574,13 +570,12 @@ extern "C" void CTitle_showMenu(CTitle* self) {
 // and the +0x70 layout with a zero flag.
 extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo*);
 extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu*);
-extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void CTitle_beginLogoOutro(CTitle* self) {
     if (self->field_0x24 == 5) {
         self->field_0x24 = 6;
         CTitleLogo_beginOutro(&self->mLogo);
         CTitleMenu_beginFinal(&self->mMenu);
-        Cur_SetVisible(&self->mCur, 0);
+        self->mCur.SetVisible(0);
     }
 }
 
@@ -672,7 +667,7 @@ extern "C" void CTitle_showTitle(CTitle* self) {
 extern "C" void CTitle_enterSelection(CTitle* self) {
     if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
         self->field_0x24 = 5;
-        Cur_SetVisible(&self->mCur, 1);
+        self->mCur.SetVisible(1);
         nw4r::math::VEC3 pos;
         CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
         self->mCur.setRootPaneTranslate(&pos);

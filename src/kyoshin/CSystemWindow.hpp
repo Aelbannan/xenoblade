@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
@@ -76,8 +77,6 @@ struct CSystemWindow {
 // (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
 extern "C" {
-void sysWinTermLayout(void* syswin);
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
@@ -85,13 +84,6 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols).
-u32 CSysWin_isReady(void* syswin);
-int CSysWin_isActive(void* syswin);
-void sysWinSetKindContent(void* syswin, void* str1, void* str2);
-void sysWinApplyKind(void* syswin, int kind);
-void sysWinOpenPhase1(void* syswin);
-void sysWinAdvancePhase3(void* syswin);
-void sysWinDispatchPhase(void* syswin);
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
 // would change call-site codegen (see MWCC_CASES); keep C linkage.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);

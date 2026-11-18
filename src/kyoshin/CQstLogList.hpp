@@ -116,10 +116,7 @@ public:
 };
 
 extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
-
-extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void Cur_Update(void*);                 // CCur18 per-frame update
-extern "C" void Cur_DrawLayout(void*, void*);
+// CCur18 per-frame update
 
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include <revolution/GX.h>
 #include "monolib/util/MemManager.hpp"
@@ -425,7 +426,7 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
     termPartyState(reinterpret_cast<CPartyState*>(&self->_pad3038));
     ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
     reinterpret_cast<CEquipChange*>(&self->_pad4150)->CleanupFiles();
-    sysWinTermLayout(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->termLayout();
     CScn* scene2 = self->mScene;
     if (scene2 != 0) {
         // Retail re-reads mScene for the second store (no CSE across the
@@ -511,13 +512,13 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     case 0xB: PartyStateWin_StateEquipPrev(self); break;
     case 0xC: PartyStateWin_StateEquipRefresh(self); break;
     case 0xD:
-        if (CSysWin_isActive(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isActive() != 0) {
             self->field_6BE4 = 0xE;
         }
         break;
     case 0xE: PartyStateWin_StateShortcutOpen(self); break;
     case 0xF:
-        if (CSysWin_isActive(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isActive() != 0) {
             self->field_6BE4 = 0x7;
         }
         break;
@@ -538,7 +539,7 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     if (self->field_6BE4 != 0x12) {
         reinterpret_cast<CEquipChange*>(&self->_pad4150)->AdvanceScreen();
     }
-    sysWinDispatchPhase(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->dispatchPhase();
     if (self->mWork14 != 0) {
         // The shared window object's stored pair is the rect size; the origin
         // is {0,0}. The quad is fed into setRect through PartyStateWin_BuildS16Quad's call
@@ -576,7 +577,7 @@ int PartyStateWin_QueryMenuClose(CPartyStateWin* self) {
     if (isPlayerReadyForEvent__Q22cf13CfGameManagerFv(0, 1) == 0) {
         return 1;
     }
-    if (CSysWin_getUnk34(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isOpened() != 0) {
         return 1;
     }
     return reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsSubcurBusy();
@@ -713,7 +714,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50)) &&
         reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetSelWhenReady() &&
-        CSysWin_isReady(reinterpret_cast<CSysWin*>(&self->_pad6BA8))) {
+        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isReady()) {
         ModelDispTeardownAll(reinterpret_cast<CModelDisp*>(&self->_pad50));
         char* name =
             BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x6b);
@@ -765,11 +766,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
             if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
                 (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
-                sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
-                              0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85)), 0);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
@@ -784,11 +783,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsWeaponRow() == 0) {
             if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
                 (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
-                sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
-                              0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85)), 0);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
@@ -806,22 +803,18 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             }
             if ((u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetLockedState() == 2) {
                 playUISound(0x5);
-                sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
-                              0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84)), 0);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
             if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxTailByte() != 0) {
                 u16 v = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(1);
                 if (v == 0x296 || v == 0x2A0) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -874,11 +867,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                     goto tail;
                 }
                 if (v == 2) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -886,11 +877,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                     playUISound(0x5);
                     u16 w = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(0);
                     if (w == 0x296 || w == 0x2A0) {
-                        sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                      BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
-                                      0);
-                        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                        sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A)), 0);
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                         self->field_6BE4 = 0xD;
                         goto tail;
                     }
@@ -936,11 +925,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
                 if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
                     (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -952,11 +939,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
                 if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->CheckBoxOpen() != 0 &&
                     (u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->MapCursorToCat() == 3) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -976,22 +961,18 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             }
             if ((u8)reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetLockedState() == 2) {
                 playUISound(0x5);
-                sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                              BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
-                              0);
-                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84)), 0);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                 self->field_6BE4 = 0xD;
                 goto tail;
             }
             if (reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetBoxTailByte() != 0) {
                 u16 v = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(1);
                 if (v == 0x296 || v == 0x2A0) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -1044,11 +1025,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                     goto tail;
                 }
                 if (v == 2) {
-                    sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                  BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
-                                  0);
-                    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                    sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84)), 0);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                     self->field_6BE4 = 0xD;
                     goto tail;
                 }
@@ -1056,11 +1035,9 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                     playUISound(0x5);
                     u16 w = reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetEquippedResId(0);
                     if (w == 0x296 || w == 0x2A0) {
-                        sysWinSetKindContent(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
-                                      BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
-                                      0);
-                        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
-                        sysWinOpenPhase1(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->setKindContent(reinterpret_cast<char*>(BdatTouchStringCell(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A)), 0);
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->applyKind(1);
+                        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->openPhase1();
                         self->field_6BE4 = 0xD;
                         goto tail;
                     }
@@ -1091,7 +1068,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
         }
     }
 tail:
-    if (CSysWin_getUnk34(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isOpened() != 0) {
         func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0);
     } else {
         // The equip-change result goes through a u32 local so the mask lands after
@@ -1215,7 +1192,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyState
     }
     if (cond != 0) {
         self->field_6BE4 = 0xF;
-        sysWinAdvancePhase3(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+        reinterpret_cast<CSysWin*>(&self->_pad6BA8)->advancePhase3();
     }
 }
 #pragma optimize_for_size off
@@ -1417,8 +1394,7 @@ body:
     if (field_6BE4 < 0x10) {
         reinterpret_cast<CEquipChange*>(&_pad4150)->DrawLayouts(&drawInfo);
     }
-    sysWinDrawLayout(reinterpret_cast<CSysWin*>(&_pad6BA8),
-                  &drawInfo);
+    reinterpret_cast<CSysWin*>(&_pad6BA8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
     drawHelp(reinterpret_cast<CTitleAHelp*>(&_pad18),
                   &drawInfo);
 }

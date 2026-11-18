@@ -1,5 +1,6 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfMapMineManager.hpp"
+#include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -92,7 +93,7 @@ struct CfMapMineManager {
 };
 
 // MineSceneObjectIf was a fake vtable pad. Retail tables at
-// lbl_eu_80528600 (CfObjectColl) and lbl_eu_805294E0 (CfObject base)
+// lbl_eu_80528600 (CfObjectColl) and __vt__Q22cf8CfObject (CfObject base)
 // show setPosition at 0x9C = CfObject_setMoveTargetVec,
 // unk0AC at 0xAC = CfObject_getPosVector, and unk158 at 0x158 =
 // CfObject_UnkVirtualFunc66.  Use the real cf::CfObject hierarchy.
@@ -714,7 +715,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
             if (v != 0) {
                 // Retail reuses the ArtsSelect_GetEntry result register as the
                 // id argument (r3 flows straight through).
-                ObjObj_SetMoveId_FBF4((u16)(u32)v, 1);
+                ((cf::CfObjectObj*)v)->setMoveId(1);
             }
         }
     }
@@ -909,8 +910,9 @@ void CfMapMineManager::ScanPoints() {
                         found->mItem.mPointId1C, 1,
                         (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                 } else {
-                    if (ArtsSelect_GetEntry(found->mItem.mPointId1C) != 0) {
-                        ObjObj_SetMoveId_FBF4(found->mItem.mPointId1C, 1);
+                    cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
+                    if (obj != 0) {
+                        obj->setMoveId(1);
                     }
                 }
             } else if (found->mItem.mArea1E == (u8)area &&
@@ -924,8 +926,9 @@ void CfMapMineManager::ScanPoints() {
                             found->mItem.mPointId1C, 0,
                             (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                     } else {
-                        if (ArtsSelect_GetEntry(found->mItem.mPointId1C) != 0) {
-                            ObjObj_SetMoveId_FBF4(found->mItem.mPointId1C, 2);
+                        cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
+                        if (obj != 0) {
+                            obj->setMoveId(2);
                         }
                     }
                 }
@@ -1220,7 +1223,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
                 } else {
                     void* v = ArtsSelect_GetEntry(nearest->mItem.mPointId1C);
                     if (v != 0) {
-                        ObjObj_SetMoveId_FBF4((u16)(u32)v, 2);
+                        ((cf::CfObjectObj*)v)->setMoveId(2);
                     }
                 }
             }

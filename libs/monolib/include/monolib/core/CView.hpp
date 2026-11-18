@@ -59,13 +59,16 @@ public:
     virtual void CView_UnkVirtualFunc1();
     virtual void detachRenderWork(CWorkThread* pThread);
     virtual void wkUpdate();
-    virtual void CView_UnkVirtualFunc3();
-    virtual void CView_UnkVirtualFunc4();
-    virtual void CView_UnkVirtualFunc5();
-    virtual void CView_UnkVirtualFunc6();
+    virtual bool CView_UnkVirtualFunc3(IWorkEvent* event);
+    virtual bool CView_UnkVirtualFunc4(IWorkEvent* event);
+    virtual bool CView_UnkVirtualFunc5();
+    virtual bool CView_UnkVirtualFunc6();
     virtual void CView_UnkVirtualFunc7();
     virtual void CView_UnkVirtualFunc8();
     virtual void CView_UnkVirtualFunc9();
+
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     static void setDefaultFrameColor(const ml::CCol4& color);
     static CView* getCurrentView();
@@ -78,6 +81,13 @@ public:
     bool hasCurrent() const;
     void updateMsg();
     void renderView();
+    void updateViewRect(ml::CRect16* rect);
+    bool enqueueContextMsg(u32 param);
+    void sortChildViews();
+    u8 getSplitFrameFlag();
+    s32 checkSplitActive();
+    s32 hasSplitViews();
+    CView* updateViewState();
 
     static ml::CCol4 sFrameColor;
 
@@ -105,8 +115,14 @@ public:
         rect.mSize.y = mRectData.mViewSize.y;
     }
 
-    // us-80441420: build a rect from this CView's insets (x/y zeroed, w/h = view size minus insets)
-    void fitRectToView(ml::CRect& rect, CView* other);
+    // Rect helpers: retail passes the target rect in r3 and the source view in
+    // r4, so they are class-scope statics (no `this`).
+    static void fitRectToView(ml::CRect& rect, CView* other);
+    static void accumRectToView(ml::CRect& rect, CView* other);
+    static void clipRectToView(ml::CRect& rect, CView* other);
+    static void adjustRectForView(ml::CRect& rect, CView* other);
+    static void applyRectToView(ml::CRect& rect, CView* other);
+    static void insetRectToView(ml::CRect& rect, CView* other);
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread

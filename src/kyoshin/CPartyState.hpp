@@ -157,8 +157,8 @@ public:
 // CEquipItemBox.hpp's BdatTouchStringCell in this TU).
 
 // C-linkage helpers from other units (retail symbols are unmangled).
-// Cur_SetVisible / BuildSlotItemLists are declared in CEquipItemBox.hpp.
-extern "C" void Cur_HighlightPane(CBaseCur*, u8);
+// The cursor visibility/placement helpers are CBaseCur/CCur22 members
+// (CBaseCur.hpp); BuildSlotItemLists is declared in CEquipItemBox.hpp.
 
 // Party-select helpers (unmangled retail symbols).
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
@@ -206,7 +206,6 @@ extern "C" void swapPartyMembers(CPartyState*);
 extern "C" void scalePartySlotPane(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
-extern "C" void Cur_Update(void*);
 
 // Embedded cursor dtor (defined in the CCur unit).
 extern "C" CBaseCur* __dt__6CCur22Fv(CBaseCur*, int);
@@ -232,8 +231,6 @@ extern "C" u32 CfT_FrameTimerGet();
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 
 // Cursor pane-position/show helpers (CCur unit, retail unmangled).
-extern "C" void Cur_PlacePaneByIndex(CBaseCur*, const nw4r::math::VEC3*, u8);
-extern "C" void Cur_ShowPane(CBaseCur*, u8, u8);
 
 // Pane translate accumulation (code_80135FDC.cpp, retail unmangled).
 

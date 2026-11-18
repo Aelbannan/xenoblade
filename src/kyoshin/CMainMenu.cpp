@@ -86,7 +86,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 // declared via kyoshin/CArtsInfo.hpp, which this TU cannot include).
 
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
-extern "C" void Cur_SetVisible(void* cur, u8 flag);
 
 // Cursor constructors (defined in kyoshin/CCur.cpp)
 // Font binding imports (CDeviceFont / CLibLayout)
@@ -118,13 +117,10 @@ struct CMainMenuPad {
 extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 
 // Cursor activate helper (defined in CCur.cpp).
-extern "C" void Cur_SetActive(CBaseCur* cur);
 // Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
-extern "C" void Cur_DrawLayout(void* cur, nw4r::lyt::DrawInfo* drawInfo);
 
 #include "kyoshin/CTaskGame.hpp"
 // Cursor per-frame update helper (defined in CCur.cpp).
-extern "C" void Cur_Update(void* cur);
 // Pane-config finish gate (defined in CUICfManager.cpp).
 extern "C" void UIWin_CreateExtraWin();
 
@@ -262,7 +258,6 @@ public:
 // C-linkage import (retail unmangled symbol).
 
 // CBaseCur shared helpers (defined in CCur.cpp)
-extern "C" void Cur_DeactivateTail(CBaseCur* cur);
 
 CMainCur::~CMainCur() {}
 
@@ -271,7 +266,7 @@ void CMainCur::initLayout() {
     bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, "mf01_main21_cursor_roop.brlan");
     bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, "mf01_main21_cursor_on.brlan");
     mpLayout->UnbindAllAnimation();
-    Cur_DeactivateTail(this);
+    ((CBaseCur*)(this))->DeactivateTail();
 }
 
 // Moves the "Param" pane to the cursor position.
@@ -405,7 +400,7 @@ void CMainMenu::moveMain() {
                 LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess",
                               "", 0);
             }
-            Cur_SetVisible(&self->mMainCur, 1);
+            self->mMainCur.SetVisible(1);
             self->field_0xE0 = 2;
         }
         break;
@@ -472,8 +467,8 @@ void CMainMenu::moveMain() {
 
     // Epilogue: animate the layout and advance both cursors.
     self->field_0x7C->Animate(0);
-    Cur_Update(&self->mMainCur);
-    Cur_Update(&self->mSubCur);
+    self->mMainCur.Update();
+    self->mSubCur.Update();
 }
 
 // File-event handler: fires when the menu
@@ -566,8 +561,8 @@ void CMainMenu::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     drawLayout(field_0x7C, &drawInfo, 0, 1);
-    Cur_DrawLayout(&mMainCur, &drawInfo);
-    Cur_DrawLayout(&mSubCur, &drawInfo);
+    mMainCur.DrawLayout(&drawInfo);
+    mSubCur.DrawLayout(&drawInfo);
 }
 
 CMainMenu* CMainMenu::sInstance;
@@ -662,7 +657,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
-        Cur_SetVisible(&self->mMainCur, 0);
+        self->mMainCur.SetVisible(0);
         playUISound(9);
         self->field_0xE0 = 3;
         return;
@@ -777,7 +772,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         case 0:
         case 3:
             // Header entries: activate the main cursor and enter screen-open state.
-            Cur_SetActive(&self->mMainCur);
+            self->mMainCur.SetActive();
             self->field_0xE0 = 4;
             playUISound(0x6b);
             return;
@@ -918,7 +913,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x84, true);
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
-        Cur_SetVisible(&self->mMainCur, 0);
+        self->mMainCur.SetVisible(0);
         playUISound(9);
         self->field_0xE0 = 3;
         return;
@@ -993,8 +988,8 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_suject", "", 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, "txt_helpmess", "", 0);
     }
-    Cur_SetVisible(&self->mMainCur, 0);
-    Cur_SetVisible(&self->mSubCur, 1);
+    self->mMainCur.SetVisible(0);
+    self->mSubCur.SetVisible(1);
     self->field_0xE0 = 6;
 }
 
@@ -1009,8 +1004,8 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
         self->field_0x8C->SetFrame(0.0f);
-        Cur_SetVisible(&self->mMainCur, 1);
-        Cur_SetVisible(&self->mSubCur, 0);
+        self->mMainCur.SetVisible(1);
+        self->mSubCur.SetVisible(0);
         playUISound(6);
         self->field_0xE0 = 7;
         return;
@@ -1152,7 +1147,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         }
         playUISound(0x6b);
         self->field_0xE0 = 8;
-        Cur_SetActive(&self->mSubCur);
+        self->mSubCur.SetActive();
         goto tail;
     }
     if (confirm != 0) {
@@ -1162,8 +1157,8 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, true);
         self->field_0x8C->SetFrame(0.0f);
-        Cur_SetVisible(&self->mMainCur, 1);
-        Cur_SetVisible(&self->mSubCur, 0);
+        self->mMainCur.SetVisible(1);
+        self->mSubCur.SetVisible(0);
         playUISound(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {

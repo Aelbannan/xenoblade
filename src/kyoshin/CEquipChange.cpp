@@ -111,7 +111,7 @@ int CEquipChange::IsWeaponRow() {
 
 // Target us-8020417c: subcur visible, else rely on the item box.
 int CEquipChange::IsSubcurBusy() {
-    if (Cur_BothSubPanesOn(&mSubCur) != 0)
+    if (mSubCur.BothSubPanesOn() != 0)
         return 1;
     return mEquipItemBox.eibSysWinBusy();
 }
@@ -141,9 +141,9 @@ void CEquipChange::CloseScreen() {
     if ((s32)field_48 == 3) {
         field_48 = 4;
         field_4D = 0;
-        Cur_SetVisible(&mCur14, 0);
-        Cur_SetVisible(&mCur15, 0);
-        Cur_SetVisible(&mSubCur, 0);
+        mCur14.SetVisible(0);
+        mCur15.SetVisible(0);
+        mSubCur.SetVisible(0);
         mItemBoxInfo.Close();
         ((nw4r::lyt::Layout*)field_34)->SetAnimationEnable(field_3C, 0);
         ((nw4r::lyt::Layout*)field_34)->SetAnimationEnable(field_40, 0);
@@ -396,8 +396,8 @@ void CEquipChange::ConfirmSelect() {
     ((nw4r::lyt::Layout*)field_34)->SetAnimationEnable(field_40, 1);
     field_48 = 6;
     field_4D = 0;
-    Cur_SetVisible(&mCur14, 0);
-    Cur_SetVisible(&mCur15, 0);
+    mCur14.SetVisible(0);
+    mCur15.SetVisible(0);
     playUISound(3);
 }
 
@@ -619,7 +619,7 @@ int CEquipChange::GetBoxCount() {
     return result;
 }
 
-void CEquipChange::ShowSubPanes(u8 visible) { Cur_ShowTwoSubPanes(&mSubCur, visible); }
+void CEquipChange::ShowSubPanes(bool visible) { mSubCur.ShowTwoSubPanes(visible); }
 
 void CEquipChange::HandleEIBName() { mEquipItemBox.handleEIBNamePane(); }
 
@@ -641,7 +641,7 @@ int CEquipChange::GetLockedState() {
 // to eibHudPrompt, gate closed picks a menu id from the cursor state.
 // Retail saves 2 regs via stmw/lmw (opt-space prologue).
 int CEquipChange::GetMenuId() {
-    if (Cur_BothSubPanesOn(&mSubCur) != 0)
+    if (mSubCur.BothSubPanesOn() != 0)
         return 0x2E;
     u8 b = code80135FDC_getByte_64077();
     int flag = (int)((u32)(1 - b) >> 31);
@@ -731,7 +731,7 @@ __declspec(noinline) void CEquipChange::OnAnim3CToSt3() {
     field_4D = 1;
     nw4r::math::VEC3 buf = mItemBoxInfo.GetSlotPos(field_99);
     mSubCur.setRootPaneTranslate(&buf);
-    Cur_SetVisible(&mSubCur, 1);
+    mSubCur.SetVisible(1);
     RefreshCursorPos();
 }
 
@@ -866,12 +866,12 @@ __declspec(noinline) void CEquipChange::RefreshCursorPos() {
     if (field_98 == 0 || field_98 == 4 || field_98 == 6 ||
         field_98 == 8 || field_98 == 10 || field_98 == 12) {
         mCur14.setRootPaneTranslate(&pos);
-        Cur_SetVisible(&mCur14, 1);
-        Cur_SetVisible(&mCur15, 0);
+        mCur14.SetVisible(1);
+        mCur15.SetVisible(0);
     } else {
         mCur15.setRootPaneTranslate(&pos);
-        Cur_SetVisible(&mCur15, 1);
-        Cur_SetVisible(&mCur14, 0);
+        mCur15.SetVisible(1);
+        mCur14.SetVisible(0);
     }
 }
 
@@ -1316,7 +1316,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         mSubCur = CSubCur(field_2C);
         mSubCur.initLayout();
 
-        Cur_ShowTwoSubPanes(&mSubCur, 0);
+        mSubCur.ShowTwoSubPanes(0);
         MaybeRebuild();
         field_24 = 0;
         mRegion04.validateHeap();
@@ -1375,7 +1375,7 @@ __declspec(noinline) void CEquipChange::RefreshCategory(u8 cat) {
     s16 ids[5];
     nw4r::math::VEC3 buf = mItemBoxInfo.GetSlotPos(cat);
     mSubCur.setRootPaneTranslate(&buf);
-    Cur_SetActive(&mSubCur);
+    mSubCur.SetActive();
     RebuildCursorList();
     mItemBoxInfo.HidePanes((u8)MapCursorToCat());
     u8 f99 = field_99;
@@ -1606,9 +1606,9 @@ void CEquipChange::AdvanceScreen() {
     }
 tail:
     ((nw4r::lyt::Layout*)field_34)->Animate(0);
-    Cur_Update(&mCur14);
-    Cur_Update(&mCur15);
-    Cur_Update(&mSubCur);
+    mCur14.Update();
+    mCur15.Update();
+    mSubCur.Update();
     mItemBoxInfo.UpdateAnims();
     mEquipItemBox.updateEIBBox();
 }
@@ -1620,15 +1620,15 @@ void CEquipChange::DrawLayouts(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_44 == 0)
         return;
     drawLayout((nw4r::lyt::Layout*)field_34, drawInfo, 0, 1);
-    if (Cur_BothSubPanesOn(&mSubCur) == 0) {
-        Cur_DrawLayout(&mCur14, drawInfo);
-        Cur_DrawLayout(&mCur15, drawInfo);
+    if (mSubCur.BothSubPanesOn() == 0) {
+        mCur14.DrawLayout(drawInfo);
+        mCur15.DrawLayout(drawInfo);
         mEquipItemBox.unk_37b = 1;
     } else {
         mEquipItemBox.unk_37b = 0;
     }
     mItemBoxInfo.DrawLayout(drawInfo);
-    Cur_DrawLayout(&mSubCur, drawInfo);
+    mSubCur.DrawLayout(drawInfo);
     mEquipItemBox.drawEIBBox(drawInfo);
 }
 // Target us-80203f84: teardown of the equip-change screen. Release the two

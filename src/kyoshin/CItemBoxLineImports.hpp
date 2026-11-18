@@ -20,8 +20,6 @@ struct CScrollBar;  // full layout in kyoshin/CScrollBar.hpp (not included, see 
 class CFileHandle;
 
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
-extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
-extern "C" void sysWinApplyKind(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
 
 
@@ -205,14 +203,8 @@ extern "C" void __dt__7CSubCurFv(CBaseCur*, int);
 extern "C" void* Bdat_GetTable_AA34();                           // bdat manager reset (no args)
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-// Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
-// ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
-extern "C" void Cur_ShowTwoSubPanes(void*, u32);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" int CSysWin_isActive(void*);
-extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
+// Subcur pane visibility is a CSubCur member (CBaseCur.hpp):
+// CItemBoxLine::ResetCursorB8 forwards its flag to CSubCur::ShowTwoSubPanes.
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(s32);
@@ -221,8 +213,6 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, con
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44(void);
 // per-frame update helpers (external retail symbols, same merged unit)
-extern "C" void Cur_Update(void*);            // cursor per-frame update (CCur)
-extern "C" void sysWinDispatchPhase(void*);            // syswin per-frame update
 extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
 extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
 extern "C" int ItemBoxLine_ProbeNameSlot(void*, unsigned int);   // name-dispatch lookup (external overload)
@@ -231,9 +221,6 @@ extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
 extern "C" void* lbl_eu_806640D8;
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 
 // Forward declarations for sibling functions resolved at link via the symbol map
 // (retail treats these as external relocs, not same-TU symbols). The C++
@@ -245,7 +232,6 @@ extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 // (buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc /
 // bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc).
 // Cursor deactivation tail handler (CCur unit) - genuine C-ABI helper.
-extern "C" void Cur_DeactivateTail(void*);
 
 extern "C" char lbl_eu_805071B0[]; // rodata string pool
 extern const float lbl_eu_80668114; // .sdata2 animation-completion threshold (lfs-hoist: const routes it to readonly sdata2)
@@ -290,8 +276,6 @@ extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
 // Syswin content-setter helpers (defined in CSysWin.cpp) + item-name provider
 // (defined in CItemBoxInfo.cpp): C-linkage so calls bind to the retail names.
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinOpenPhase1(void*);
 
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
@@ -300,12 +284,10 @@ extern "C" void sysWinOpenPhase1(void*);
 // Item-box-line refresh helpers (external retail symbols).
 extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
 
-extern "C" void sysWinAdvancePhase3(void*);
 
 // --- teardown helpers called by ItemBoxLine_UnloadFiles (retail plain names) ---
 // C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
-extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 // Tab-page helpers used by ItemBoxLine_RefreshPageList (retail plain names).
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
@@ -366,5 +348,4 @@ extern u8 lbl_eu_80664640[8];
 // (CItemBoxInfo.hpp's forms are renamed at its include above).
 extern "C" int Counter_TestBit(u32, u32);
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
-extern "C" void sysWinTermLayout(CSysWin*);             // syswin destroy
 

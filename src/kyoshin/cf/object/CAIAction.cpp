@@ -628,7 +628,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 7: {
             // State-tag probe must be accepted by the handler.
             u32 v;
-            u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
+            u32* p = (u32*)((cf::CObjectState*)party->unk04)->getStateData();
             v = *p;
             if (testActorStatus(p, &v, 0x800) == 0)
                 return 0;
@@ -849,7 +849,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
                 if (obj == 0)
                     continue;
                 u32 v;
-                u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
+                u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->getStateData();
                 v = *p;
                 if (testActorStatus(p, &v, 0x1F) != 0) {
                     return 0;
@@ -908,7 +908,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d == 5) {
         // State probe + arts-slot-2 parameter fetch.
         u32 v;
-        u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
+        u32* p = (u32*)((cf::CObjectState*)party->unk04)->getStateData();
         v = *p;
         if (testActorStatus(p, &v, 6) == 0)
             return 0;
@@ -1006,7 +1006,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         void* obj = MapFx_ResolveOwner(findObjectById((int)out->unk00));
         if (obj != 0) {
             u32 v;
-            u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
+            u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->getStateData();
             v = *p;
             if (testActorStatus(p, &v, 0x1A) != 0)
                 return 0;
@@ -2676,13 +2676,13 @@ extern "C" void aiRebootAction(cf::CAIAction* self) {
     u32 tagC;
     {
         CAIPartyObj* pr1 = (CAIPartyObj*)self->unkB14;
-        tagA = *(u32*)((cf::CObjectState*)pr1->unk04)->CObjectState_getStateData();
+        tagA = *(u32*)((cf::CObjectState*)pr1->unk04)->getStateData();
         if (testActorStatus(pr1, &tagA, 3) == 0) {
             CAIPartyObj* pr2 = (CAIPartyObj*)self->unkB14;
-            tagB = *(u32*)((cf::CObjectState*)pr2->unk04)->CObjectState_getStateData();
+            tagB = *(u32*)((cf::CObjectState*)pr2->unk04)->getStateData();
             if (testActorStatus(pr2, &tagB, 0x1c) == 0) {
                 CAIPartyObj* pr3 = (CAIPartyObj*)self->unkB14;
-                tagC = *(u32*)((cf::CObjectState*)pr3->unk04)->CObjectState_getStateData();
+                tagC = *(u32*)((cf::CObjectState*)pr3->unk04)->getStateData();
                 if (testActorStatus(pr3, &tagC, 0x805) == 0) {
                     CfObjectMove_setAnimModeArgs(
                         (u8*)(CAIPartyObj*)self->unkB14 + 0x3E9C, 0x31, 0, -1, 1);

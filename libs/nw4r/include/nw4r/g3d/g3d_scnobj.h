@@ -12,6 +12,8 @@ extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D6
 namespace nw4r {
 namespace g3d {
 
+extern const math::FRUSTUM* gpCullingFrustum;
+
 enum ResMdlDrawMode {
     RESMDL_DRAWMODE_SORT_OPA_NONE = 0,
     RESMDL_DRAWMODE_SORT_OPA_Z = (1 << 0),

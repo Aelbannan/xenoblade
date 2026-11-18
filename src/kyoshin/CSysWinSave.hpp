@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/work/CProcess.hpp"
@@ -160,9 +161,6 @@ struct CSysWinSaveVtShim {
 // is declared below as a normal C++ function to let MWCC mangle it.)
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
-void sysWinTermLayout(void* syswin);
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void Cur_DrawLayout(void*, void*);
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__7CSysWinFUc(void* syswin, int arg);
@@ -176,17 +174,6 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 // are unmangled / non-namespace, so C linkage is required).
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-u32 CSysWin_isReady(void* syswin);
-int CSysWin_isActive(void* syswin);
-void sysWinSetKindContent(void* syswin, void* str1, void* str2);
-void sysWinSetTwoTextValues(void* syswin, void* a, void* b);
-void sysWinApplyKind(void* syswin, int kind);
-void sysWinOpenPhase1(void* syswin);
-void sysWinAdvancePhase3(void* syswin);
-void sysWinDispatchPhase(void* syswin);
-void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
-void Cur_SetVisible(void* cur, int val);
-void Cur_Update(void* cur);
 void CUICfManager_queueSaveMenu(int a, int b);
 }
 

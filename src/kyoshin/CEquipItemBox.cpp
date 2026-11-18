@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 #include "kyoshin/CEquipItemBoxImports.hpp"
@@ -45,7 +46,6 @@ extern const float lbl_eu_80668B04;
 // varargs name formatter (MWCC keeps the unmangled library name).
 int sprintf(char*, const char*, ...);
 // SysWin name probe + pane-position reader (updateEIBCursorPos tail).
-extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 
 __declspec(noinline) int CEquipItemBox::getEIBOpenFlag() { return unk_40; }
 
@@ -1418,7 +1418,7 @@ void CEquipItemBox::updateEIBBox() {
             eibSysWin1Done();
             break;
         case 5:
-            if (CSysWin_isActive(&mSysWin1) != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() != 0) {
                 unk_41 = 2;
             }
             break;
@@ -1426,10 +1426,10 @@ void CEquipItemBox::updateEIBBox() {
         field_38->Animate(0);
         mCur44.Update();
         mPageCur.Update();
-        Cur_Update(&ccur18);
+        ccur18.Update();
         mSortMenu.Move();
-        sysWinDispatchPhase(&mSysWin1);
-        sysWinDispatchPhase(&mSysWin2);
+        reinterpret_cast<CSysWin*>(&mSysWin1)->dispatchPhase();
+        reinterpret_cast<CSysWin*>(&mSysWin2)->dispatchPhase();
     }
 }
 
@@ -1446,18 +1446,18 @@ void CEquipItemBox::drawEIBBox(nw4r::lyt::DrawInfo* drawInfo) {
     if (x > 1) {
         mPageCur.Draw(drawInfo);
     }
-    sysWinDrawLayout(&mSysWin1, drawInfo);
-    if (unk_37b != 0 && CSysWin_getUnk34(&mSysWin2) == 0) {
+    reinterpret_cast<CSysWin*>(&mSysWin1)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    if (unk_37b != 0 && reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() == 0) {
         mCur44.Draw(drawInfo);
     }
-    if (CSysWin_getUnk34(&mSysWin2) == 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() == 0) {
         if (mSortMenu.IsOpen() != 0 ||
-            CSysWin_getUnk34(&mSysWin1) != 0 ||
+            reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0 ||
             unk_375 != 0) {
-            Cur_DrawLayout(&ccur18, drawInfo);
+            ccur18.DrawLayout(drawInfo);
         }
     }
-    sysWinDrawLayout(&mSysWin2, drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin2)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
 }
 
 
@@ -1482,17 +1482,17 @@ void CEquipItemBox::closeEIBBox() {
     mPageCur.Reset();
     ccur18.cleanup();
     mSortMenu.Term();
-    sysWinTermLayout(&mSysWin1);
-    sysWinTermLayout(&mSysWin2);
+    reinterpret_cast<CSysWin*>(&mSysWin1)->termLayout();
+    reinterpret_cast<CSysWin*>(&mSysWin2)->termLayout();
 }
 
 // Check the sort menu and both system windows are ready; return unk_42.
 int CEquipItemBox::eibWindowsReady() {
     if (mSortMenu.IsReady() == 0) return 0;
-    if (CSysWin_isReady(&mSysWin1) == 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isReady() == 0) return 0;
     // Inverted form: retail's last check falls through to the unk_42 return
     // and branches to the li 0 block (beq -> li0; fall -> lbz).
-    if (CSysWin_isReady(&mSysWin2) != 0) return unk_42;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isReady() != 0) return unk_42;
     return 0;
 }
 
@@ -1502,7 +1502,7 @@ __declspec(noinline) int CEquipItemBox::getEIBActiveMark() { return unk_43; }
 // Return whether the equip box may be interacted with: a busy system window,
 // an open cursor animation, or an active name pane all block further input.
 __declspec(noinline) int CEquipItemBox::eibInputBlocked() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return 1;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return 1;
     if (unk_375 != 0) return 1;
     nw4r::lyt::Pane* pane =
         field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
@@ -1511,7 +1511,7 @@ __declspec(noinline) int CEquipItemBox::eibInputBlocked() {
 }
 
 __declspec(noinline) int CEquipItemBox::eibMenuBusy() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         return 1;
     }
     return mSortMenu.IsOpen();
@@ -1522,10 +1522,10 @@ __declspec(noinline) int CEquipItemBox::getEIBNamePane() { return unk_375; }
 // Returns 1 when the first system window is active, otherwise queries the
 // sort menu window's state.
 __declspec(noinline) int CEquipItemBox::eibSysWinBusy() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         return 1;
     }
-    return CSysWin_getUnk34(&mSysWin2);
+    return reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened();
 }
 
 // Initialise the equip item box state (idempotent via unk_41 guard).
@@ -1558,11 +1558,11 @@ __declspec(noinline) void CEquipItemBox::finishEIBEntry() {
 }
 
 void CEquipItemBox::eibNavLeft() {
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
 
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         // Syswin1 active: decrement page, wrap, rebuild cursor
-        if (CSysWin_isActive(&mSysWin1) == 0) return;
+        if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() == 0) return;
         u8 val = unk_374 - 1;
         unk_374 = val;
         if ((s8)(u8)val < 0) unk_374 = 1;
@@ -1618,9 +1618,9 @@ void CEquipItemBox::eibNavLeft() {
 // menu scroll, advance the name-pane column selection, or move the row
 // cursor down (wrapping at 5 with a grid-page step when it wraps).
 __declspec(noinline) void CEquipItemBox::eibNavDown() {
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
-        if (CSysWin_isActive(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() != 0) {
             u8 v = unk_374 + 1;
             unk_374 = v;
             if ((s8)v > 1) unk_374 = 0;
@@ -1673,8 +1673,8 @@ __declspec(noinline) void CEquipItemBox::eibNavDown() {
 // Up/back handler: mirror of eibNavDown - pages backward through the
 // syswin window / sort menu scroll / name-pane columns / row cursor.
 __declspec(noinline) void CEquipItemBox::eibNavUp() {
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) {
         if (mSortMenu.IsIdle() != 0) {
             mSortMenu.PageUp();
@@ -1733,8 +1733,8 @@ __declspec(noinline) void CEquipItemBox::eibNavUp() {
 // list when the name pane is up, step the sort-menu page when unk_1f5 is -1,
 // or advance the row/column selection and refresh the list.
 void CEquipItemBox::eibNavRight() {
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) {
         if (mSortMenu.IsIdle() == 0) return;
         mSortMenu.PageDown();
@@ -1787,7 +1787,7 @@ void CEquipItemBox::eibNavRight() {
 // index at the grid extent and play the page-change sound for multi-page
 // lists.
 __declspec(noinline) void CEquipItemBox::eibPageNext() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) return;
     CEquipItemGrid* grid = &mGrid;
     grid->eibGridNext();
@@ -1807,7 +1807,7 @@ __declspec(noinline) void CEquipItemBox::eibPageNext() {
 // page index at the grid extent and play the page-change sound for multi-page
 // lists (backward mirror of eibPageNext).
 __declspec(noinline) void CEquipItemBox::eibPagePrev() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) return;
     CEquipItemGrid* grid = &mGrid;
     grid->eibGridPrev();
@@ -1827,13 +1827,13 @@ __declspec(noinline) void CEquipItemBox::eibPagePrev() {
 // re-open; otherwise move the sort menu to the cursor position and start its
 // scroll (page 2 sound when the call came from the sub-page).
 void CEquipItemBox::eibConfirmSort() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (unk_375 != 0) return;
     if (mSortMenu.IsOpen() != 0) {
         if (mSortMenu.IsIdle() == 0) return;
         updateEIBCursorPos();
         mCur44.mActive = 1;
-        Cur_SetVisible(&ccur18, 0);
+        ccur18.SetVisible(0);
         mSortMenu.Close();
         playUISound(6);
         return;
@@ -1852,7 +1852,7 @@ void CEquipItemBox::eibConfirmSort() {
     mCur44.mActive = 0;
     nw4r::math::VEC3 pos = mSortMenu.GetCursorPos();
     ccur18.setRootPaneTranslate(&pos);
-    Cur_SetVisible(&ccur18, 1);
+    ccur18.SetVisible(1);
     mSortMenu.Open();
     unk_1f6 = 0;
     playUISound(2);
@@ -1864,19 +1864,19 @@ void CEquipItemBox::eibConfirmSort() {
 // play the confirm sound when the call had no explicit sound flag.
 void CEquipItemBox::eibHandleSubPage(int param) {
     if (unk_41 != 2) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
-        if (CSysWin_isActive(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() != 0) {
             unk_41 = 5;
-            sysWinAdvancePhase3(&mSysWin1);
-            Cur_SetVisible(&ccur18, 0);
+            reinterpret_cast<CSysWin*>(&mSysWin1)->advancePhase3();
+            ccur18.SetVisible(0);
             mCur44.mActive = 1;
             unk_374 = 0;
         }
         return;
     }
-    if (CSysWin_getUnk34(&mSysWin2) != 0) {
-        if (CSysWin_isActive(&mSysWin2) != 0) {
-            sysWinAdvancePhase3(&mSysWin2);
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
+            reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
         }
         return;
     }
@@ -1886,12 +1886,12 @@ void CEquipItemBox::eibHandleSubPage(int param) {
         if (mSortMenu.IsIdle() == 0) return;
         updateEIBCursorPos();
         mCur44.mActive = 1;
-        Cur_SetVisible(&ccur18, 0);
+        ccur18.SetVisible(0);
         mSortMenu.Close();
     } else if (unk_375 != 0) {
         unk_375 = 0;
         mCur44.mActive = 1;
-        Cur_SetVisible(&ccur18, 0);
+        ccur18.SetVisible(0);
     } else if (isPaneVisible(pane) != 0) {
         setPaneVisible(pane, 0);
         unk_378 = 0;
@@ -1910,9 +1910,9 @@ void CEquipItemBox::handleEIBConfirm() {}
 
 // Advance page-2 system-window state while it is visible and active.
 __declspec(noinline) void CEquipItemBox::stepEIBSysWin2() {
-    if (unk_375 != 0 && CSysWin_getUnk34(&mSysWin2) != 0
-        && CSysWin_isActive(&mSysWin2) != 0) {
-        sysWinAdvancePhase3(&mSysWin2);
+    if (unk_375 != 0 && reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0
+        && reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
+        reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
     }
 }
 
@@ -1994,7 +1994,7 @@ void CEquipItemBox::eibApplySelect(u32 param, void* item) {
 // first non-empty list column (column 8 preferred when populated).
 __declspec(noinline) void CEquipItemBox::handleEIBNamePane() {
     if (unk_41 != 2 && unk_41 != 4) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) return;
     nw4r::lyt::Pane* pane =
         field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
@@ -2004,9 +2004,9 @@ __declspec(noinline) void CEquipItemBox::handleEIBNamePane() {
     if (isPaneVisible(pane) != 0) {
         if (unk_375 != 0) {
             // Name pane up: close the sub-window or commit its selection.
-            if (CSysWin_getUnk34(&mSysWin2) != 0) {
-                if (CSysWin_isActive(&mSysWin2) != 0) {
-                    sysWinAdvancePhase3(&mSysWin2);
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+                if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
+                    reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
                 }
                 return;
             }
@@ -2022,17 +2022,17 @@ __declspec(noinline) void CEquipItemBox::handleEIBNamePane() {
                 text = BdatGetPtrDirect((const void*)lbl_eu_806649E0,
                                      &lbl_eu_8050EFDC[0x1a2], v);
             }
-            sysWinSwitchKindPane(&mSysWin2, 0);
-            sysWinSetKindContent(&mSysWin2, text, 0);
-            sysWinApplyKind(&mSysWin2, 1);
-            sysWinOpenPhase1(&mSysWin2);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(text), 0);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->openPhase1();
             mCur44.mActive = 0;
             return;
         }
         // List-selection refresh: pick the first non-empty column (column 8
         // wins whenever it holds any item), scale the row into a page/column
         // pair via the 0x4330 magic, move the cursor, mark state.
-        if (CSysWin_getUnk34(&mSysWin2) != 0) return;
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
         CEquipItemBoxItemListView* list =
             (CEquipItemBoxItemListView*)(unk_20c + 0xb0);
         int found = 0;
@@ -2056,7 +2056,7 @@ __declspec(noinline) void CEquipItemBox::handleEIBNamePane() {
         unk_375 = 1;
         unk_376 = (u8)pos;
         unk_377 = (u8)(sel - (s8)pos * 4);
-        Cur_SetVisible(&ccur18, 1);
+        ccur18.SetVisible(1);
         nw4r::math::VEC3 tmp;
         CopyTabSlotVec(&tmp, &list->field_00[0], sel);
         ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
@@ -2065,7 +2065,7 @@ __declspec(noinline) void CEquipItemBox::handleEIBNamePane() {
         return;
     }
     // Invisible pane: show it (unless syswin2 is busy), then sound state 2.
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
     setPaneVisible(pane, 1);
     playUISound(2);
 }
@@ -2184,8 +2184,8 @@ void CEquipItemBox::eibTryCloseRow() {
     if ((s8)unk_1f5 == -1) return;
     if (unk_375 != 0) return;
     if (mSortMenu.IsOpen() != 0) return;
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return;
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     unk_1f5 = -1;
     updateEIBCursorPos();
     refreshEIBItemList();
@@ -2196,8 +2196,8 @@ void CEquipItemBox::eibTryCloseRow() {
 // the equip box is currently showing (idle/menu/name-pane combinations plus
 // the pane visibility of the confirm label and the getByte gate).
 __declspec(noinline) int CEquipItemBox::eibHudPrompt() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) return 0;
-    if (CSysWin_getUnk34(&mSysWin2) != 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return 0;
     // MWCC lowers both flags via the subfic/srwi / bool-move idioms.
     bool manyParty = code80135FDC_getByte_64077() > 1;
     nw4r::lyt::Pane* pane =
@@ -2291,9 +2291,9 @@ __declspec(noinline) void CEquipItemBox::eibCloseAnim() {
 
 // When the first system window is active, switch page-cursor state and refresh.
 __declspec(noinline) void CEquipItemBox::eibSysWin1Done() {
-    if (CSysWin_isActive(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() != 0) {
         unk_41 = 2;
-        Cur_SetVisible(&ccur18, 1);
+        ccur18.SetVisible(1);
         updateEIBCursorPos();
     }
 }
@@ -2711,8 +2711,8 @@ __declspec(noinline) void CEquipItemBox::updateEIBCursorPos() {
     // itemName sp+48, and two distinct 'pos' slots) because none of them
     // live across the branch join. Keep declarations branch-local.
     // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
-        sysWinGetPaneScreenPos(winName, &mSysWin1, unk_374);
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(winName), reinterpret_cast<CSysWin*>(&mSysWin1), unk_374);
         ccur18.setRootPaneTranslate((nw4r::math::VEC3*)winName);
     } else {
         s8 sel = unk_1f5;

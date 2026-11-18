@@ -24,7 +24,7 @@ void setSplitLine__5CViewFs(CView* view, s16 line);
 bool hasCurrent__5CViewCFv(const CView* view);
 CView* updateViewState__5CViewFv(CView* view);
 void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
-void updateViewRect__5CViewFv(CView* view, ml::CRect16* rect);
+void updateViewRect__5CViewFPQ22ml7CRect16(CView* view, ml::CRect16* rect);
 CView* checkSplitActive__5CViewFv(CView* view);
 void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void popScissorRects__9CViewRootFv();
@@ -927,7 +927,7 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
         }
     }
 
-    updateViewRect__5CViewFv(self->mOwner, &rect2);
+    updateViewRect__5CViewFPQ22ml7CRect16(self->mOwner, &rect2);
     if (hasSplitViews__5CViewFv(self->mOwner) != 0) {
         adjustRectForView__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
         parentRect.mSize.x = pos->mPos.x - parentRect.mPos.x;

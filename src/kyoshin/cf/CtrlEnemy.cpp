@@ -241,7 +241,7 @@ end:
     return;
 }
 
-float cf::CfObjectMove::CfObject_UnkVirtualFunc60() {
+float cf::CfObjectMove::CfObject_getMoveFactor() {
     // Retail: lfs f1, 0x6ec(r3); blr - the getter returns the field (f1 is
     // the FP return register). The view class in CtrlEnemy.hpp declares the
     // float return so the definition compiles.

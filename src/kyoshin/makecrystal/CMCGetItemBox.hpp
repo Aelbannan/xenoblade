@@ -243,7 +243,6 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self);
 extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" int   IsSkillItem(void*);
 extern "C" void CItemData_lookupOrAlloc(CMCItemBoxEntry*, int);
-extern "C" u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
 extern "C" u32 CItemBlock_countEmpty(u8);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void CopyTabSlotVec(u32*, void*, u32);
@@ -252,7 +251,6 @@ extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
 extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
-extern "C" void sysWinTermLayout(void*);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" char lbl_eu_8050FF8C[];
 extern "C" void* lbl_eu_806640EC;  // declared u32 in CCollepedia.hpp, void* in CItemBoxLine.hpp -> kept void*
@@ -295,7 +293,6 @@ extern "C" void* __ct__CCur07(void*, void*);
 extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);
 extern "C" void copyVEC3(void*, void*);
-extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void*);

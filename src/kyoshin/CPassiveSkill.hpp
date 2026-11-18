@@ -30,7 +30,7 @@ public:
      * call), so the vptr is a plain member here. The step functions
      * (CPassiveSkillCur_stepToState2/CPassiveSkillCur_stepToState3/CPassiveSkillCur_stepToState5) write the state byte at
      * +0x18; CPassiveSkillCur_setRootPos uses the second layout at +0x24 (its root pane is
-     * the Cur_SetPaneTranslate target). */
+     * the CBaseCur::SetPaneTranslate target). */
     void* mVtbl;                                // +0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
     nw4r::lyt::Layout* mpLayout;                // +0x08
@@ -400,33 +400,24 @@ public:
 // function; retail symbol __ct__7CSysWinFUc). Called by __ct__UI_CPassiveSkill.
 extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);
 
-extern "C" u32 CSysWin_isReady(void* syswin);
 
 // CSysWin window-state helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" int CSysWin_getUnk34(void* syswin);
 
 // CSysWin window-active helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" int CSysWin_isActive(CSysWin* syswin);
 
 // Cursor-position builder for the syswin (CSysWin.cpp, retail symbol
 // unmangled); writes a VEC3 that the CCur18 "Move" virtual consumes.
-extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* syswin, int idx);
 
 // Cursor quiet helper (CCur.cpp, takes the embedded CCur18 cursor). Retail
 // symbol unmangled.
-extern "C" void Cur_SetVisible(CCur18* cursor, u8 flag);
 
 // Cursor per-frame update (CCur.cpp; retail symbol unmangled).
-extern "C" void Cur_Update(void* cursor);
 
 // CSysWin window advance/close helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" void sysWinAdvancePhase3(CSysWin* syswin);
 
 // CSysWin draw helper (CSysWin.cpp). Retail symbol unmangled.
-extern "C" void sysWinDrawLayout(CSysWin* syswin, nw4r::lyt::DrawInfo* drawInfo);
 
 // CSysWin advance helper (CSysWin.cpp; retail symbol unmangled).
-extern "C" void sysWinDispatchPhase(void* syswin);
 
 // +0x1B8 sub-object state query (retail UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34).
 // Defined as an extern "C" global so call sites emit the plain retail reloc
@@ -488,7 +479,6 @@ struct CPSkillTexRes {
 };
 
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
-extern "C" void Cur_DrawLayout(void*, void*);
 
 
 // 8-byte colour record filled by setGXColorS10 (retail GXColorS10 layout);

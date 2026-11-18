@@ -1,4 +1,7 @@
 // High-level C++ reconstruction for kyoshin/menu/CMenuUpdate
+// ~IScnRender stays out of line here: retail's ~CMenuUpdate calls
+// __dt__10IScnRenderFv (the inline-empty header form would elide it).
+#define ISCN_RENDER_OUT_OF_LINE_DTOR
 #include <string.h>
 #include <types.h>
 #include "kyoshin/menu/CMenuUpdate.hpp"
@@ -26,11 +29,6 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 
-extern u32 lbl_eu_80525A10[];
-extern u32 __vt__10IScnRender[];
-extern u32 lbl_eu_8052D1F0[];
-extern u32 lbl_eu_8052D238[];
-extern u32 lbl_eu_8052E7B0[];
 extern u32 lbl_eu_805013C8[];
 extern u32 lbl_eu_80664198;
 extern u32 lbl_eu_806640E0;
@@ -41,160 +39,86 @@ extern u32 lbl_eu_806673B4[];
 extern f64 lbl_eu_806673B8;
 extern f32 lbl_eu_806673C0;
 extern f32 lbl_eu_806673C4;
-extern u32 __ptmf_null[];
-
-// Null pointers-to-member-function triple copied into CTTask slots.
-struct NullPtmfTriple {
-    u32 func; // +0
-    u32 self; // +4
-    u32 delta; // +8
-};
-
 // Out-of-line accessor helpers (defined further down; retail calls them via bl)
 extern "C" u32 getField10(u8* self);
 extern "C" void setField67(u8* self, u8 val);
 extern "C" void setField64(u8* self, u8 val);
 extern "C" int getField64(u8* self);
 
-// IWorkEvent
-extern "C" __declspec(noinline) void __ct__IWorkEvent(void* self) {
-    *(u32*)self = (u32)lbl_eu_80525A10;
-}
-
-// IScnRender
-extern "C" __declspec(noinline) void __ct__IScnRender(void* self) {
-    *(u32*)self = (u32)__vt__10IScnRender;
-}
-
-// CMenuUpdate_8014274C ctor
-// Returns self so callers can nest it as the src argument of MenuUpdate_CopyQuadWord
-// (retail emits 'bl __ct__; mr r4,r3' shapes).
+// CMenuUpdate_8014274C ctor (retail keeps it out of line: the entry ctor has
+// nine call sites in CMenuUpdate's constructor).
 extern "C" __declspec(noinline) CMenuUpdate_8014274C* __ct__8014274C(CMenuUpdate_8014274C* self) {
     self->field_0 = 0; self->field_4 = 0; self->field_8 = 0; self->field_C = 0;
     return self;
 }
 
-// CTTask_IUIWindow ctor: base CProcess ctor imported; stores second-base
-// vtable, then fills the two null pointers-to-member-function slots (0x3C,
-// 0x48) by copying the 12-byte null ptmf triple twice. Returns 'this'.
-extern "C" __declspec(noinline) void* __ct__CTTask_IUIWindow(void* self) {
-    u8* p = (u8*)self;
-    __ct__8CProcessFv(self);
-    *(u32*)(p + 0x10) = (u32)lbl_eu_8052D238;
-    // Null ptmf slots: MWCC zero-initializes pointer-to-member-function
-    // objects by copying the 12-byte __ptmf_null template.
-    ((CTTask_IUIWindow*)p)->mFunc1 = 0;
-    ((CTTask_IUIWindow*)p)->mFunc2 = 0;
-    return self;
-}
-
-// IUIWindow ctor: retail keeps the CTTask init as a separate callee; like all
-// MWCC ctors it returns 'this' in r3, materialized right after the vtable store.
-extern "C" __declspec(noinline) void* __ct__IUIWindow(IUIWindow* self) {
-    __ct__CTTask_IUIWindow(self);
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D1F0;
-    *(u32*)((u8*)self + 0x54) = 0;
-    *(u32*)((u8*)self + 0x58) = 0;
-    *(u32*)((u8*)self + 0x5C) = 0;
-    *(s32*)((u8*)self + 0x60) = -1;
-    *(u8*)((u8*)self + 0x64) = 0;
-    *(u8*)((u8*)self + 0x65) = 0;
-    *(u8*)((u8*)self + 0x66) = 0;
-    *(u8*)((u8*)self + 0x67) = 1;
-    *(u32*)((u8*)self + 0x68) = 0;
-    return self;
-}
-
-// CMenuUpdate ctor - MWCC ctors return 'this' in r3
-extern "C" void* __ct__CMenuUpdate(void* self, u32 pScene, u32 type, u32 arg1, u32 arg2, u32 arg3) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
-    __ct__IUIWindow((IUIWindow*)self);
-    __ct__IWorkEvent((u8*)self + 0x6C);
-    __ct__IScnRender((u8*)self + 0x70);
-
-    u32* vtable = lbl_eu_8052E7B0;
-    obj->mScene = (CScn*)pScene;
-    *(u32*)((u8*)obj + 0x10) = (u32)vtable;
-    *(u32*)((u8*)obj + 0x6C) = (u32)(vtable + 9);
-    *(u32*)((u8*)obj + 0x70) = (u32)(vtable + 43);
-
-    __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
-    obj->mAnim1 = NULL;
-    obj->mAnim2 = NULL;
-    obj->mActiveAnim = NULL;
-
+// CMenuUpdate ctor. Member init list reproduces the retail store order (scene
+// store before the compiler's vptr stores, mMemRegion's out-of-line ctor after
+// them, then the hook pointers).
+CMenuUpdate::CMenuUpdate(CScn* scene, u32 type, u32 arg1, u32 arg2, u32 arg3)
+    : mScene(scene), mAnim1(NULL), mAnim2(NULL), mActiveAnim(NULL) {
     // 8 entry slots plus one more header-sized slot over the state block
     CMenuUpdate_8014274C* entryEnd;
-    CMenuUpdate_8014274C* entry = &obj->mEntries[0];
-    entryEnd = (CMenuUpdate_8014274C*)&obj->mState;
+    CMenuUpdate_8014274C* entry = &mEntries[0];
+    entryEnd = (CMenuUpdate_8014274C*)&mState;
     do {
         __ct__8014274C(entry);
         entry++;
     } while (entry < entryEnd);
     __ct__8014274C(entryEnd);
 
-    obj->mMode = 2;
+    mMode = 2;
     f32 zero = 0.0f;
-    obj->mFloat128 = zero;
-    obj->mFloat12C = zero;
-    memset(obj->mEntries, 0, 0x80);
-    memset(&obj->mEntries[8], 0, 0x10);
+    mFloat128 = zero;
+    mFloat12C = zero;
+    memset(mEntries, 0, 0x80);
+    memset(&mEntries[8], 0, 0x10);
 
-    MenuUpdate_UpsertEntry(obj, type, arg1, arg2, arg3);
-    return obj;
+    UpsertEntry(type, arg1, arg2, arg3);
 }
 
-// CMenuUpdate dtor
-// Destructors return 'this' in MWCC
-extern "C" void* __dt__11CMenuUpdateFv(void* self, int flags) {
-    if (self) {
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x78, -1);
-        __dt__10IScnRenderFv((u8*)self + 0x70, 0);
-        __dt__10IWorkEventFv((u8*)self + 0x6C, 0);
-        __dt__9IUIWindowFv(self, 0);
-        if (flags > 0) operator delete(self);
-    }
-    return self;
-}
+// CMenuUpdate dtor: member/base destruction in retail order (mMemRegion, then
+// the IScnRender / IWorkEvent / IUIWindow bases; the deleting path is the
+// compiler's own).
+CMenuUpdate::~CMenuUpdate() {}
 
 // Init
-extern "C" void Init__11CMenuUpdateFv(void* self) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
+void CMenuUpdate::Init() {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    obj->mMemRegion.createRegion(handle, 0x4000, (const char*)lbl_eu_805013C8, 0);
+    mMemRegion.createRegion(handle, 0x4000, (const char*)lbl_eu_805013C8, 0);
 
-    Class_8045F858 stackObj(&obj->mMemRegion);
+    Class_8045F858 stackObj(&mMemRegion);
 
     nw4r::lyt::ArcResourceAccessor* accessor =
         static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    buildLayout(&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
+    buildLayout(&mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
 
     accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    bindLayoutAnimTransform(obj->mLayout, &obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
+    bindLayoutAnimTransform(mLayout, &mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
 
     accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
-    bindLayoutAnimTransform(obj->mLayout, &obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
+    bindLayoutAnimTransform(mLayout, &mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
     u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
-    ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)getField10((u8*)obj->mLayout)), (const nw4r::ut::Font*)((void*)result2));
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)((void*)::getField10((u8*)mLayout)), (const nw4r::ut::Font*)((void*)result2));
 
     // Disable the alt animation, enable the main one, then tick the layout.
-    obj->mLayout->SetAnimationEnable(obj->mAnim2, false);
-    obj->mLayout->SetAnimationEnable(obj->mAnim1, true);
-    obj->mLayout->Animate(0);
+    mLayout->SetAnimationEnable(mAnim2, false);
+    mLayout->SetAnimationEnable(mAnim1, true);
+    mLayout->Animate(0);
 
-    ::setField67((u8*)obj, 0);
+    ::setField67((u8*)this, 0);
     // Render callback sits at the IScnRender subobject (+0x70); keep the
     // init-then-adjust form so the null test runs on the raw this pointer.
-    u8* renderPtr = (u8*)obj;
+    u8* renderPtr = (u8*)this;
     if (renderPtr != NULL) {
         renderPtr += 0x70;
     }
-    addRenderCB__4CScnFP10IScnRenderUlUl(obj->mScene, renderPtr, 7, 0);
-    obj->mMemRegion.validateHeap();
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, renderPtr, 7, 0);
+    mMemRegion.validateHeap();
     // stackObj destructor called automatically
 }
 
@@ -220,41 +144,39 @@ void CMenuUpdate::Term() {
 }
 
 // Move
-extern "C" void Move__11CMenuUpdateFv(void* self) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
+void CMenuUpdate::Move() {
     void* taskGame = getInstance__9CTaskGameFv();
     // Short-circuit OR gate: first test -> bne exit, res flag -> beq continue /
     // b exit (CMenuShopBuy::Move shape).
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
-    if (MenuUpdate_CheckBootGates(self)) return;
+    if (MenuUpdate_CheckBootGates(this)) return;
 
-    switch ((int)obj->mMode) {
-    case 0: MenuUpdate_EnterMode1Chime(self); break;
-    case 1: MenuUpdate_MaintainActive(self); break;
-    case 2: MenuUpdate_GuardFirstEntry(self); break;
+    switch ((int)mMode) {
+    case 0: MenuUpdate_EnterMode1Chime(this); break;
+    case 1: MenuUpdate_MaintainActive(this); break;
+    case 2: MenuUpdate_GuardFirstEntry(this); break;
     }
 
     // Layout::Animate(0) - virtual slot 0x38
-    obj->mLayout->Animate(0);
+    mLayout->Animate(0);
 }
 
 // cbRenderBefore
-extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
-    CMenuUpdate* obj = (CMenuUpdate*)self;
+void CMenuUpdate::cbRenderBefore() {
     void* taskGame = getInstance__9CTaskGameFv();
     // Short-circuit OR gate (CMenuShopBuy::cbRenderBefore shape).
     if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
-    if (MenuUpdate_CheckBootGates(self)) return;
+    if (MenuUpdate_CheckBootGates(this)) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    drawLayout(obj->mLayout, &drawInfo, 0, 1);
+    drawLayout(mLayout, &drawInfo, 0, 1);
     // No explicit dtor: the implicit member destruction emits the retail's
     // single __dt__ call (an explicit call would double it).
 }
@@ -309,14 +231,12 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
         }
     }
     if (lbl_eu_80664198 != 0) {
-        MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, mode, arg1, arg2, arg3);
+        ((CMenuUpdate*)(void*)(u32)lbl_eu_80664198)->UpsertEntry(mode, arg1, arg2, arg3);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
-    void* obj = allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem);
-    if (obj != 0) {
-        obj = __ct__CMenuUpdate(obj, pScene, mode, arg1, arg2, arg3);
-    }
+    CMenuUpdate* obj = new (allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem))
+        CMenuUpdate((CScn*)pScene, mode, arg1, arg2, arg3);
     lbl_eu_80664198 = (u32)obj;
     Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);
     return (void*)(u32)lbl_eu_80664198;
@@ -655,11 +575,10 @@ extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
 // r4 = entry type, r5..r7 = payload words. Selects an existing matching entry
 // or appends into the first free slot; the general path preserves leading
 // entries, clears the table, and re-appends around the new entry.
-extern "C" __declspec(noinline) void MenuUpdate_UpsertEntry(CMenuUpdate* obj, int type, u32 arg1, u32 arg2,
-                                                    u32 arg3) {
+void CMenuUpdate::UpsertEntry(int type, u32 arg1, u32 arg2, u32 arg3) {
     // Local re-declarations in this order pin MWCC's parameter-save order.
     u32 sArg2 = arg2;
-    CMenuUpdate* self = obj;
+    CMenuUpdate* self = this;
     int sType = type;
     u32 sArg1 = arg1;
     u32 sArg3 = arg3;
@@ -685,8 +604,8 @@ extern "C" __declspec(noinline) void MenuUpdate_UpsertEntry(CMenuUpdate* obj, in
             if (e->field_0 == 0) {
                 CMenuUpdate_8014274C t;
                 MenuUpdate_CopyQuadWord((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
-                if (!getField64((u8*)self)) return;
-                setField64((u8*)self, 0);
+                if (!::getField64((u8*)self)) return;
+                ::setField64((u8*)self, 0);
                 return;
             }
         }
@@ -706,8 +625,8 @@ extern "C" __declspec(noinline) void MenuUpdate_UpsertEntry(CMenuUpdate* obj, in
             if (e->field_0 == 0) {
                 CMenuUpdate_8014274C t;
                 MenuUpdate_CopyQuadWord((u32*)e, (u32*)init_8014274C(&t, sType, sArg1, sArg2, sArg3));
-                if (!getField64((u8*)self)) return;
-                setField64((u8*)self, 0);
+                if (!::getField64((u8*)self)) return;
+                ::setField64((u8*)self, 0);
                 return;
             }
         }
@@ -961,7 +880,5 @@ extern "C" __declspec(noinline) void MenuUpdate_GuardFirstEntry(void* self) {
     }
 }
 
-// Thunks
-extern "C" void dtorThunk_6c(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x6C); }
-extern "C" void renderThunk_70(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuUpdateFv)((char*)self - 0x70); }
-extern "C" void dtorThunk_70(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x70); }
+// This-adjusting thunks for the IWorkEvent (+0x6C) / IScnRender (+0x70)
+// sub-vtables are compiler-emitted now that the bases are real classes.

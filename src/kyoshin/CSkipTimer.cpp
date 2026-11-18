@@ -5,7 +5,6 @@
 #include "kyoshin/CSkipTimer.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -455,7 +454,7 @@ void CSkipTimerTick(CSkipTimer* self) {
     }
     self->mLayout2->Animate(0);
     CSkipTimer2DriveState(&self->mSkipTimer2);
-    sysWinDispatchPhase(&self->mSysWin);
+    reinterpret_cast<CSysWin*>(&self->mSysWin)->dispatchPhase();
 }
 
 // CSkipTimerDraw (CSkipTimer): draw helper - render both layouts + syswin.
@@ -473,7 +472,7 @@ void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
                 self->mSkipTimer2.mField18),
             drawInfo, 0, 1);
     }
-    sysWinDrawLayout(&self->mSysWin, drawInfo);
+    reinterpret_cast<CSysWin*>(&self->mSysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
 }
 #pragma pop
 
@@ -489,13 +488,13 @@ void CSkipTimerTeardown(CSkipTimer* self) {
     CSkipTimer2Reset(&self->mSkipTimer2);
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
     self->mLayout = 0;
-    sysWinTermLayout(&self->mSysWin);
+    reinterpret_cast<CSysWin*>(&self->mSysWin)->termLayout();
     self->mMemRegion.deleteRegion();
 }
 
 // CSkipTimerIsReady: return the syswin panel's ready flag when ready, else 0.
 u8 CSkipTimerIsReady(CSkipTimer* self) {
-    if (CSysWin_isReady(&self->mSysWin) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isReady() != 0) {
         return self->mField2A;
     }
     return 0;
@@ -514,7 +513,7 @@ u8 CSkipTimerGetSkipButton(CSkipTimer* self) {
 // CSkipTimerNextKey (CSkipTimer): advance the switch key (wrap up) + cue sound.
 void CSkipTimerNextKey(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isOpened() != 0) return;
     s16 t = self->mField2C + 1;
     self->mField2C = t;
     if (t > 0x17) self->mField2C = 0;
@@ -525,7 +524,7 @@ void CSkipTimerNextKey(CSkipTimer* self) {
 // CSkipTimerPrevKey (CSkipTimer): retreat the switch key (wrap down) + cue sound.
 void CSkipTimerPrevKey(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isOpened() != 0) return;
     s16 t = self->mField2C - 1;
     self->mField2C = t;
     if (t < 0) self->mField2C = 0x17;
@@ -558,11 +557,11 @@ void CSkipTimerLeaveSkip(CSkipTimer* self) {
 // text built by BdatTouchStringCell and advance the window kind, then sfx 3.
 extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
-        if (CSysWin_isActive(&self->mSysWin) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isActive() == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        sysWinAdvancePhase3(&self->mSysWin);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
         if (CMainMenu_GetInstancePtr() != 0) {
@@ -573,9 +572,9 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         self->mField29 = 6;
         self->mField2B = 0;
         char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
-        sysWinSetKindContent(&self->mSysWin, msg, 0);
-        sysWinApplyKind(&self->mSysWin, 1);
-        sysWinOpenPhase1(&self->mSysWin);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->setKindContent(reinterpret_cast<char*>(msg), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->openPhase1();
         playUISound(3);
     }
 }
@@ -585,11 +584,11 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
 // active and cue sfx 6.
 void CSkipTimerEngageSkip(CSkipTimer* self) {
     if (self->mField29 != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
-        if (CSysWin_isActive(&self->mSysWin) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isActive() == 0) return;
         self->mField29 = 7;
         self->mField2B = 0;
-        sysWinAdvancePhase3(&self->mSysWin);
+        reinterpret_cast<CSysWin*>(&self->mSysWin)->advancePhase3();
         func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)self->mField2C,
                                               (u32)(u16)self->mField2E, 1);
         if (CMainMenu_GetInstancePtr() != 0) {
@@ -605,7 +604,7 @@ void CSkipTimerEngageSkip(CSkipTimer* self) {
 // CSkipTimerIsEngaged: report 1 while the syswin panel is engaged (getUnk34 != 0),
 // otherwise the plain active flag at +0x30.
 u8 CSkipTimerIsEngaged(CSkipTimer* self) {
-    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin)->isOpened() != 0) {
         return 1;
     }
     return self->mActive;
@@ -638,7 +637,7 @@ void CSkipTimer::EndSkip() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::ActivateSkipUI() {
-    if (CSysWin_isActive(&this->mSysWin) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->mSysWin)->isActive() == 0) return;
     this->mField29 = 3;
     this->mField2B = 1;
 }
@@ -648,7 +647,7 @@ void CSkipTimer::ActivateSkipUI() {
 #pragma push
 #pragma auto_inline off
 void CSkipTimer::LockSkipButton() {
-    if (CSysWin_isActive(&this->mSysWin) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&this->mSysWin)->isActive() == 0) return;
     this->mField2B = 1;
     this->mActive = 1;
 }

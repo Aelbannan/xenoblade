@@ -25,29 +25,11 @@ struct CMenuItemExchangeOC {
 };
 
 // IUIWindow region (0x6C): CProcess base (0x00-0x3B) + vtable + Move/Draw
-// ptmf hooks + window fields. Same layout view as CMenuKizunaTalk's: the dtor
-// is declared (retail __dt__9IUIWindowFv, called with flags 0 after the member
-// dtors) and deliberately NON-virtual so the vtable pointer stays a plain
-// field at +0x10. A real polymorphic IUIWindow (CQuestWindow.hpp, no fields)
-// cannot be used yet.
-class IUIWindow {
-public:
-    ~IUIWindow();
-    u8  mPad0[0x10];                 // 0x00 link-list nodes
-    u32 mVtab;                       // 0x10 vtable ptr
-    u8  mPad14[0x3C - 0x14];         // 0x14 rest of the CProcess header
-    u32 mPtMf3C[3];                  // 0x3C Move hook ptmf (__ptmf_null)
-    u32 mPtMf48[3];                  // 0x48 Draw hook ptmf (__ptmf_null)
-    u8  mPad54[0x58 - 0x54];         // 0x54
-    u32 mScnRenderVt;                // 0x58
-    u32 field_5C;                    // 0x5C
-    s32 field_60;                    // 0x60 (ctor init -1)
-    u8  field_64;                    // 0x64
-    u8  field_65;                    // 0x65
-    u8  field_66;                    // 0x66
-    u8  field_67;                    // 0x67 (ctor init 1)
-    u32 field_68;                    // 0x68
-};
+// Window bases: the canonical IUIWindow (kyoshin/IUIWindow.hpp) plus the
+// monolib IScnRender interface at +0x6C. Both sub-vtables are compiler-emitted
+// here (this TU owns the key function ~CMenuItemExchange).
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
 /**
  * Menu item exchange / equipment screen controller.
@@ -59,13 +41,14 @@ public:
  *   0x78 CBgTex, 0x98 CTitleAHelp, 0xD0 CItemBoxLine, 0x70C CItemBoxGrid
  *   0x5118 u8 phase, 0x511C/0x5120 timers
  */
-class CMenuItemExchange : public IUIWindow {
+class CMenuItemExchange : public IUIWindow, public IScnRender {
 public:
-    ~CMenuItemExchange();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    CMenuItemExchange(CScn* scene, u32 arg);
+    virtual ~CMenuItemExchange();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
 
     void Phase0Load();
     void GateFrom1();
@@ -77,7 +60,6 @@ public:
     void Phase7Entry();
     void GateFrom8();
 
-    u32 mOCVt;                       // 0x6C IScnRender sub-object vtable
     CScn* mScene;                    // 0x70 owning scene
     u32 mField74;                    // 0x74 (u16 arg passed to item-box ctors)
     CBgTex mBgTex;                   // 0x78
@@ -105,7 +87,7 @@ struct CMIExPadData {
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
 
-// Widget ctors still called by the C-ABI factory ctor (__ct__CMenuItemExchange).
+// Widget ctors used by this TU (the widget classes' ctors are still C-ABI).
 extern "C" void __ct__6CBgTexFUc(CBgTex* self, u8 arg);
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
@@ -122,15 +104,10 @@ extern "C" int isInitialized(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
-extern "C" void __ct__8CProcessFv(CMenuItemExchange* _this);
-extern u32 lbl_eu_8052D238;   // temp (CProcess) vtable (.data)
-extern u32 lbl_eu_80533BC0;   // composite vtable (.data)
-extern u32 __ptmf_null[3];    // null pointer-to-member-function triple
 class CProcess;
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
 namespace nw4r { namespace lyt { class DrawInfo; } }

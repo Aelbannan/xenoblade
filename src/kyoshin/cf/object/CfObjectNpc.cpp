@@ -13,16 +13,22 @@
 #include <string.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 
-// sdata2 float pool -- single table to avoid leading 0.0 sbss migration (see task recipe a)
-__declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdata2_tbl_CfObjectNpc[8] = {0.0f, 0.6f, 1.8f, 0.1f, 30.0f, 25.0f, 12.5f, 100.0f};
-#define lbl_eu_80666AE0 sdata2_tbl_CfObjectNpc[0]
-#define lbl_eu_80666AE4 sdata2_tbl_CfObjectNpc[1]
-#define lbl_eu_80666AE8 sdata2_tbl_CfObjectNpc[2]
-#define lbl_eu_80666AEC sdata2_tbl_CfObjectNpc[3]
-#define lbl_eu_80666AF0 sdata2_tbl_CfObjectNpc[4]
-#define lbl_eu_80666AF4 sdata2_tbl_CfObjectNpc[5]
-#define lbl_eu_80666AF8 sdata2_tbl_CfObjectNpc[6]
-#define lbl_eu_80666AFC sdata2_tbl_CfObjectNpc[7]
+
+// .sdata2 constants (retail lbl_eu_80666AE0..lbl_eu_80666AFC). Declared before
+// the code because MWCC lays .sdata2 out in declaration/first-use order: the
+// builtin u8/u16->float conversions in loadNpcParams append their 2^52 pool
+// double (retail lbl_eu_80666B00) after these eight floats, as in retail.
+// Every use goes through *(const float*)&lbl... - a plain reference to a const
+// scalar whose initializer is already visible is constant-folded into a second
+// anonymous @N pool copy (duplicate .sdata2 objects and an unnamed reloc).
+__attribute__((used)) const float lbl_eu_80666AE0 = 0.0f;
+__attribute__((used)) const float lbl_eu_80666AE4 = 0.6f;
+__attribute__((used)) const float lbl_eu_80666AE8 = 1.8f;
+__attribute__((used)) const float lbl_eu_80666AEC = 0.1f;
+__attribute__((used)) const float lbl_eu_80666AF0 = 30.0f;
+__attribute__((used)) const float lbl_eu_80666AF4 = 25.0f;
+__attribute__((used)) const float lbl_eu_80666AF8 = 12.5f;
+__attribute__((used)) const float lbl_eu_80666AFC = 100.0f;
 
 namespace cf {
 
@@ -48,7 +54,7 @@ CfObjectNpc::CfObjectNpc(int heapFlag) {
     // The 0x34 word is an unnamed CObjectParam gap word (cf. CfObjectModel
     // ctor Gap34); the header's unk34 lands at +0x24, so it cannot be used here.
     struct Gap34 { u8 _p00[0x34]; u32 w34; };   // 0x34 (unnamed gap word)
-    f32 timerInit = lbl_eu_80666AE0;
+    f32 timerInit = *(const float*)&lbl_eu_80666AE0;
     int zero = 0;
     s16 invalid = -1;
     reinterpret_cast<Gap34*>(this)->w34 = (u32)zero;
@@ -69,7 +75,7 @@ int CfObjectNpc::CfObject_UnkVirtualFunc2() {
     mFlags68 |= 0x100000;
     CfObjectMove_setModelDisplayFlag(this, 1);
     CfObjectMove_setRegionAttached(this, 1);
-    ColiSetMoveVec2(_60C_region, 0, lbl_eu_80666AE4, lbl_eu_80666AE8);
+    ColiSetMoveVec2(_60C_region, 0, *(const float*)&lbl_eu_80666AE4, *(const float*)&lbl_eu_80666AE8);
     *(u16*)&_60C_region[0xB2] = 0x15E;
     return 1;
 }
@@ -78,21 +84,21 @@ int CfObjectNpc::CfObject_UnkVirtualFunc2() {
 // Per-frame NPC update: decides whether to show the NPC's dialogue bubble
 // and advances the trigger timer.
 void CfObjectNpc::CfObject_UnkVirtualFunc4() {
-    this->CObjectState_setStateBitMask3();
+    this->setStateBitMask3();
 
     bool resetTimer = true;
 
     // Nothing pending if the global mask is clear AND the NPC is not already
     // in its "meet" state: skip straight to the timer reset below.
     if ((lbl_eu_80663E24 & 0x9840000) == 0 &&
-        this->CObjectState_checkStateFlags8(1) == 0) {
+        this->checkStateFlags8(1) == 0) {
         // fall through to timer reset (resetTimer stays true)
     } else {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet__Fi(0x40000) == 0 &&
-            this->CObjectState_checkStateFlags8(1) == 0 &&
-            this->CObjectState_checkStateFlags(1) == 0 &&
-            this->CObjectState_checkStateFlags(0x10) == 0) {
+            this->checkStateFlags8(1) == 0 &&
+            this->checkStateFlags(1) == 0 &&
+            this->checkStateFlags(0x10) == 0) {
             // Fast path: flag the model and reset the trigger timer.
             CfObjectModelSub98* model = this->mSubObj98;
             if (model != nullptr) {
@@ -100,33 +106,33 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
             }
             this->CfObject_refreshSubB0();
             this->CfObject_updateMoveRate();
-            this->mTimer = lbl_eu_80666AE0;
+            this->mTimer = *(const float*)&lbl_eu_80666AE0;
             return;   // retail b .L_800C014C (skips the vfunc4 hook)
         }
 
         // Dialogue-decided path.
-        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666AE0 &&
-            this->CObjectState_checkStateFlags8(1) != 0 &&
-            this->CObjectState_checkStateFlags(1) == 0 &&
-            this->CObjectState_checkStateFlags(0x10) == 0 &&
+        if (Scn_GetFrameDelta(lbl_eu_80663E14) > *(const float*)&lbl_eu_80666AE0 &&
+            this->checkStateFlags8(1) != 0 &&
+            this->checkStateFlags(1) == 0 &&
+            this->checkStateFlags(0x10) == 0 &&
             UIWin_HasPendingUpdate(1) == 0) {
-            if (this->mTimer > lbl_eu_80666AEC) {
-                this->CObjectState_applyStateFlags(3);
+            if (this->mTimer > *(const float*)&lbl_eu_80666AEC) {
+                this->applyStateFlags(3);
                 static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);
                 static_cast<cf::CfObjectModel*>(this)->CfObjectModel_bindModelTo(nullptr, "JUhead");
-                this->mTimer = lbl_eu_80666AE0;
+                this->mTimer = *(const float*)&lbl_eu_80666AE0;
             } else {
                 // Local forces the scene-pointer load before the slot call,
                 // matching retail's r31 hoist.
                 CScn* scene = lbl_eu_80663E14;
                 this->mTimer += Scn_GetFrameDelta(scene) *
-                                static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / lbl_eu_80666AF0;            }
+                                static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / *(const float*)&lbl_eu_80666AF0;            }
             resetTimer = false;
         }
     }
 
     if (resetTimer) {
-        this->mTimer = lbl_eu_80666AE0;
+        this->mTimer = *(const float*)&lbl_eu_80666AE0;
     }
     // Direct (non-virtual) base call, matching retail's bl.
     this->CfObjectMove::CfObject_UnkVirtualFunc4();
@@ -150,30 +156,39 @@ void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
         static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)getBdatStringColumnValue(fp, "name", unk8C_3));
     }
 
-    static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(lbl_eu_80666AF4);
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_recordMoveValue(lbl_eu_80666AF8);
+    static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(*(const float*)&lbl_eu_80666AF4);
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_recordMoveValue(*(const float*)&lbl_eu_80666AF8);
 
     // Speed column (+0x11): byte payload scaled by the model's current scale.
-    // The plain (f32)(u32)(u8) casts emit MWCC's builtin 0x43300000 stack-slot
-    // conversion (TU-local @N pool constant - see MWCC_PATTERNS "magic
-    // constant" note); retail's schedule keeps the raw result in a register.
+    // The (f32)(u32)(u8) casts are MWCC's builtin u8->float conversion: it
+    // builds the 0x4330000000000000 stack pair and subtracts the TU's 2^52
+    // pool double (retail lbl_eu_80666B00), which is emitted after the named
+    // .sdata2 floats below.
     u32 col11 = getBdatStringColumnValue(
         fp, "move_speed", unk8C_3);
-    f32 val1 = (f32)(u32)(u8)col11 /
-        *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale();
-    static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(val1);
+    static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(
+        (f32)(u32)(u8)col11 /
+        *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale());
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
     u32 col1c = getBdatStringColumnValue(
         fp, "scale", unk8C_3);
-    f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
-    static_cast<cf::CfObject*>(this)->CfObject_setObjScale(val2);
+    static_cast<cf::CfObject*>(this)->CfObject_setObjScale(
+        (f32)(u32)(u16)col1c / *(const float*)&lbl_eu_80666AFC);
 
     // Retail leaves a stale word in r4 here (leftover column-key pointer);
     // the slot ignores it when mField6DC/mField6E0 are NULL. Pass 0: any
     // explicit arg costs one li vs retail, so this stays a known +1-insn
     // residual on this non-matching function (see hexdiff loadNpcParams).
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_loadResourceById(0);
+    {
+        // Manual slot-0x220 dispatch: retail passes the stale column-key word
+        // in r4 (the slot ignores it when mField6DC/mField6E0 are NULL), so an
+        // explicit C argument would cost one `li` this exact-size unit cannot
+        // afford.
+        typedef void (*LoadResFn)(cf::CfObjectMove*);
+        void** vtbl = *(void***)this;
+        ((LoadResFn)vtbl[0x220 / 4])(this);
+    }
 }
 
 // 0x800C0314
@@ -211,6 +226,3 @@ u8 CfObjectNpc::getIconType() {
 }
 
 } // namespace cf
-
-// typed data sections -- source shape for retail bytes (replaces absorb blobs)
-__declspec(section ".sdata2") __attribute__((used)) const double lbl_eu_80666B00 = 4503599627370496.0;

@@ -94,7 +94,7 @@ extern "C" int ChainEne_ValidateCand_1384(cf::CChainActorEne* self, int arg) {
     void* obj = MapFx_ResolveOwner(handle);
     if (obj == 0) return 0;
     void* sub = ((EneOwnerObj*)obj)->sub;
-    int v = *(int*)static_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
+    int v = *(int*)static_cast<cf::CObjectState*>(sub)->getStateData();
     if (testActorStatus(obj, &v, 0x803) != 0) {
         return CChainActor_CheckReady((void*)self, (void*)arg);
     }

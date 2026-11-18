@@ -4749,7 +4749,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         if (obj == 0) {
             break;
         }
-        ObjObj_ReleaseModels_FAB0(obj, w04, w00);
+        ((cf::CfObjectObj*)obj)->setup(w04, w00);
         B20B4_BUMP(obj);
         break;
     }
@@ -4765,7 +4765,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         if (obj == 0) {
             break;
         }
-        ObjObj_ReleaseModels_FAB0(obj, w04, w00);
+        ((cf::CfObjectObj*)obj)->setup(w04, w00);
         B20B4_BUMP(obj);
         break;
     }
@@ -4823,7 +4823,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             p->b10 = 0;
             p->field30 = zero;
             p->field34 = zero;
-            p->vtbl = (void*)lbl_eu_805294E0;
+            p->vtbl = (void*)__vt__Q22cf8CfObject;
             p->field38 = zero;
             p->f3C = fD8;
             p->f40 = fD8;
@@ -4845,7 +4845,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             p->field88 = zero;
             p->h8C = 0;
             p->h8E = 0;
-            ((void (*)(void*))((void**)lbl_eu_805294E0)[0x5c / 4])(mem);
+            ((void (*)(void*))((void**)__vt__Q22cf8CfObject)[0x5c / 4])(mem);
             p->b90 = 0;
             p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
             p->field94 = zero;
@@ -4894,7 +4894,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             p->b10 = 0;
             p->field30 = zero;
             p->field34 = zero;
-            p->vtbl = (void*)lbl_eu_805294E0;
+            p->vtbl = (void*)__vt__Q22cf8CfObject;
             p->field38 = zero;
             p->f3C = fD8;
             p->f40 = fD8;
@@ -4916,7 +4916,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             p->field88 = zero;
             p->h8C = 0;
             p->h8E = 0;
-            ((void (*)(void*))((void**)lbl_eu_805294E0)[0x5c / 4])(mem);
+            ((void (*)(void*))((void**)__vt__Q22cf8CfObject)[0x5c / 4])(mem);
             p->vtbl = (void*)lbl_eu_8052A3B0;
             p->b90 = 0;
             p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;

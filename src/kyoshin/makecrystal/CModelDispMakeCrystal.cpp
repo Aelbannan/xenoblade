@@ -47,8 +47,6 @@
 #define func_8004B9D4 func_8004B9D4_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
-#define sysWinSwitchKindPane sysWinSwitchKindPane_typed_hidden
-#define sysWinApplyKind sysWinApplyKind_typed_hidden
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
 #define Tok_FormatStr Tok_FormatStr_fixstr_hidden
@@ -58,14 +56,11 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #undef writeVec3f
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
-#undef sysWinSwitchKindPane
-#undef sysWinApplyKind
 #undef __ct__17UnkClass_8045F564Fv
 #undef __dt__17UnkClass_8045F564Fv
 #undef Tok_FormatStr
@@ -146,8 +141,6 @@ extern "C" {
 void* writeVec3f(void*, f32, f32, f32);
 float scaleByGlobal(float val);
 void initCrystalData(unsigned char* p);
-int CSysWin_isActive(void* self);
-int CSysWin_isReady(void* self);
 int isMCGetItemBoxActive(void* self);
 int crystalListGetDataFlag(void* self);
 void crystalListState3To4(void* self);
@@ -156,17 +149,10 @@ void crystalListDispatch(void* self);
 void CrySupTickAnim(void* self);
 void CrySupUnloadLayout(void* self);
 void CrySupDrawLayout(void*, void*);
-void Cur_DrawLayout(void*, void*);
 void drawMCGetItemBox(void*, void*);
-void sysWinDrawLayout(void*, void*);
 void updateMCGetItemBox(void* self);
-void Cur_Update(void* self);
-void sysWinDispatchPhase(void* self);
-void Cur_SetVisible(void*, u8);
-void sysWinGetPaneScreenPos(void* out, void* csyswin, u8);
 void teardownMCGetItemBox(void*);
 void confirmMCGetItemBox(void*);
-void sysWinTermLayout(void*);
 int crystalListIsActive(void*);
 void tickAnimFrame(void*);
 void MakeCrystal_DispatchState(void*);
@@ -199,7 +185,6 @@ void CUICfManager_queuePauseItemMenu(u32, u32, u32);
 void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void schedDetachChildSlot(void*, void*);
-int CSysWin_getUnk34(void*);
 int getMCGetItemBoxKeyCode(void*);
 void func_8004B9D4(void*, int, int, int, int);
 void MakeCrystal_SpawnCrystalItem(void*, int, u8);
@@ -207,12 +192,6 @@ void openMCGetItemBox(void*, int, void*, u8);
 void crystalListAlignSlot(void*, void*, u8);
 void crystalListResetAnim3(void*);
 void crystalListLoadFiles(void*);
-void sysWinSwitchKindPane(void*, int);
-void sysWinSetKindContent(void*, void*, int);
-void sysWinSetTwoTextValues(void*, void*, void*);
-void sysWinApplyKind(void*, int);
-void sysWinOpenPhase1(void*);
-void sysWinAdvancePhase3(void*);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 int isFinished__FPv(void*);
@@ -955,10 +934,10 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     reinterpret_cast<CMCEffStart*>(base + 0xdcc)->update();
     reinterpret_cast<CMCEffStart*>(base + 0xde4)->update();
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->update();
-    Cur_Update(base + 0xe20);
+    ((CBaseCur*)(base + 0xe20))->Update();
     reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateDispatch();
-    sysWinDispatchPhase(base + 0xe78);
-    Cur_Update(base + 0xeb4);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->dispatchPhase();
+    ((CBaseCur*)(base + 0xeb4))->Update();
     updateMCGetItemBox(base + 0xecc);
 }
 
@@ -966,7 +945,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     CDeviceVI::waitForDrawDone();
     MakeCrystal_TeardownUI(self);
-    sysWinTermLayout(base + 0xe78);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->termLayout();
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->cleanup();
     teardownMCGetItemBox(base + 0xecc);
     closeFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
@@ -995,11 +974,11 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     draw(reinterpret_cast<CMCEffStart*>(base + 0xdcc), drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xde4), drawInfo);
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->draw(drawInfo);
-    Cur_DrawLayout(base + 0xe20, drawInfo);
+    ((CBaseCur*)(base + 0xe20))->DrawLayout(drawInfo);
     reinterpret_cast<CScrollBar*>(base + 0xe38)->draw(drawInfo);
     drawMCGetItemBox(base + 0xecc, drawInfo);
-    sysWinDrawLayout(base + 0xe78, drawInfo);
-    Cur_DrawLayout(base + 0xeb4, drawInfo);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    ((CBaseCur*)(base + 0xeb4))->DrawLayout(drawInfo);
 }
 
 u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
@@ -1018,7 +997,7 @@ int MakeCrystal_CheckReady(CModelDispMakeCrystal* self)
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
     if (crystalListGetDataFlag(base + 0xc18) == 0) return 0;
     if (reinterpret_cast<CScrollBar*>(base + 0xe38)->isVisible() == 0) return 0;
-    if (CSysWin_isReady(base + 0xe78) == 0) return 0;
+    if (reinterpret_cast<CSysWin*>(base + 0xe78)->isReady() == 0) return 0;
     return isMCGetItemBoxActive(base + 0xecc);
 }
 
@@ -1742,7 +1721,7 @@ void __declspec(noinline) MakeCrystal_NopDF84(CModelDispMakeCrystal* self)
     // bne when the gauge is ready and skips it with b otherwise.
     if (reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->isReady() != 0) {
         base[0xbdd] = 0x12;
-        Cur_SetVisible(base + 0xe20, 1);
+        ((CBaseCur*)(base + 0xe20))->SetVisible(1);
         u8 buf[16];
         crystalListAlignSlot(buf, base + 0xc18, base[0x2dc1]);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
@@ -1794,10 +1773,10 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
     bool bMenu = menu != 0;
 
     if (trigger1) {
-        if (CSysWin_getUnk34(base + 0xe78) != 0) {
-            if (CSysWin_isActive(base + 0xe78)) {
-                sysWinAdvancePhase3(base + 0xe78);
-                Cur_SetVisible(base + 0xe20, 1);
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
+                reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
+                ((CBaseCur*)(base + 0xe20))->SetVisible(1);
             }
         } else {
             base[0xbdd] = 0x13;
@@ -1805,15 +1784,15 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             playUISound(3);
         }
     } else if (trigger2) {
-        if (CSysWin_getUnk34(base + 0xe78) != 0) {
-            if (CSysWin_isActive(base + 0xe78)) {
-                sysWinAdvancePhase3(base + 0xe78);
-                Cur_SetVisible(base + 0xe20, 1);
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
+                reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
+                ((CBaseCur*)(base + 0xe20))->SetVisible(1);
             }
         }
     } else if (bCancel) {
         // Cursor back: decrement the row cursor with page wrap-around.
-        if (CSysWin_getUnk34(base + 0xe78) == 0) {
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
             u8 c1 = (u8)(base[0x2dc1] - 1);
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u8 entryCount = entries[0];
@@ -1843,7 +1822,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
         }
     } else if (bDir) {
         // Cursor forward: increment the row cursor with page wrap-around.
-        if (CSysWin_getUnk34(base + 0xe78) == 0) {
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
@@ -1875,7 +1854,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
         }
     } else if (bConfirm) {
         // Page back by 8 rows.
-        if (CSysWin_getUnk34(base + 0xe78) == 0) {
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
@@ -1900,7 +1879,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
         }
     } else if (bMenu) {
         // Page forward by 8 rows.
-        if (CSysWin_getUnk34(base + 0xe78) == 0) {
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u8 entryCount = entries[0];
             if (entryCount >= 8) {
@@ -1926,10 +1905,10 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             playUISound(1);
         }
     } else if (trigger3) {
-        if (CSysWin_getUnk34(base + 0xe78) != 0) {
-            if (CSysWin_isActive(base + 0xe78)) {
-                sysWinAdvancePhase3(base + 0xe78);
-                Cur_SetVisible(base + 0xe20, 1);
+        if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
+                reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
+                ((CBaseCur*)(base + 0xe20))->SetVisible(1);
             }
         } else {
             // Selection key: resolve the cursor-sum index to an entry's
@@ -1938,11 +1917,11 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             u16 ev = *(u16*)(entries + ((u32)((u16)idx << 3)) + 2);
             char* s = BdatTouchStringCell(&lbl_eu_805090FC[0x38], &lbl_eu_805090FC[0x42], ev);
-            sysWinSwitchKindPane(base + 0xe78, 0);
-            sysWinSetKindContent(base + 0xe78, s, 0);
-            sysWinApplyKind(base + 0xe78, 1);
-            sysWinOpenPhase1(base + 0xe78);
-            Cur_SetVisible(base + 0xe20, 0);
+            reinterpret_cast<CSysWin*>(base + 0xe78)->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(base + 0xe78)->setKindContent(reinterpret_cast<char*>(s), 0);
+            reinterpret_cast<CSysWin*>(base + 0xe78)->applyKind(1);
+            reinterpret_cast<CSysWin*>(base + 0xe78)->openPhase1();
+            ((CBaseCur*)(base + 0xe20))->SetVisible(0);
         }
     }
 }
@@ -2152,7 +2131,7 @@ void __declspec(noinline) MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* se
             base[0xbdd] = 0x16;
             crystalListState3To4(base + 0xc18);
             reinterpret_cast<CScrollBar*>(base + 0xe38)->requestScrollOut();
-            Cur_SetVisible(base + 0xe20, 0);
+            ((CBaseCur*)(base + 0xe20))->SetVisible(0);
         }
     }
 }
@@ -2229,11 +2208,11 @@ void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self
                 char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
                 char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
                 char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
-                sysWinSwitchKindPane(base + 0xe78, 2);
-                sysWinSetKindContent(base + 0xe78, a, 0);
-                sysWinSetTwoTextValues(base + 0xe78, b, c);
-                sysWinApplyKind(base + 0xe78, 0);
-                sysWinOpenPhase1(base + 0xe78);
+                reinterpret_cast<CSysWin*>(base + 0xe78)->switchKindPane(2);
+                reinterpret_cast<CSysWin*>(base + 0xe78)->setKindContent(reinterpret_cast<char*>(a), 0);
+                reinterpret_cast<CSysWin*>(base + 0xe78)->setTwoTextValues(reinterpret_cast<char*>(b), reinterpret_cast<char*>(c));
+                reinterpret_cast<CSysWin*>(base + 0xe78)->applyKind(0);
+                reinterpret_cast<CSysWin*>(base + 0xe78)->openPhase1();
                 forwardMCSubObj88(base + 0xecc, 0);
                 playUISound(5);
             }
@@ -2281,12 +2260,12 @@ void __declspec(noinline) func_8021EF30(CModelDispMakeCrystal* self)
 
 void __declspec(noinline) MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!CSysWin_isActive(base + 0xe78)) return;
+    if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x1b;
-    Cur_SetVisible(base + 0xeb4, 1);
+    ((CBaseCur*)(base + 0xeb4))->SetVisible(1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2318,15 +2297,15 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
     if (trigger1) {
         // Fast cursor advance button.
         base[0xbdd] = 0x1c;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(3);
     } else if (trigger2) {
         // Forward cursor button: reset step and play forward sound.
         base[0xbdd] = 0x1c;
         base[0x2dd1] = 1;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(6);
     } else if (cancel) {
         // Cursor back: decrement step (wrapping to 1).
@@ -2335,7 +2314,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     } else if (dir) {
@@ -2345,7 +2324,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     }
@@ -2356,7 +2335,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
 void __declspec(noinline) MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (CSysWin_isActive(base + 0xe78)) {
+    if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
         if ((s8)base[0x2dd1] == 0) {
             base[0xbdd] = 0x1d;
             CCharVoiceMan_FlushAll();
@@ -2435,11 +2414,11 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 char* a = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
                 char* b = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
                 char* c = BdatTouchStringCell(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
-                sysWinSwitchKindPane((u8*)self + 0xe78, 2);
-                sysWinSetKindContent((u8*)self + 0xe78, a, 0);
-                sysWinSetTwoTextValues((u8*)self + 0xe78, b, c);
-                sysWinApplyKind((u8*)self + 0xe78, 0);
-                sysWinOpenPhase1((u8*)self + 0xe78);
+                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->switchKindPane(2);
+                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->setKindContent(reinterpret_cast<char*>(a), 0);
+                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->setTwoTextValues(reinterpret_cast<char*>(b), reinterpret_cast<char*>(c));
+                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->applyKind(0);
+                reinterpret_cast<CSysWin*>((u8*)self + 0xe78)->openPhase1();
                 forwardMCSubObj88((u8*)self + 0xecc, 0);
                 playUISound(5);
             }
@@ -2461,12 +2440,12 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
 
 void __declspec(noinline) MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!CSysWin_isActive(base + 0xe78)) return;
+    if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x22;
-    Cur_SetVisible(base + 0xeb4, 1);
+    ((CBaseCur*)(base + 0xeb4))->SetVisible(1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2494,14 +2473,14 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
 
     if (trigger1) {
         base[0xbdd] = 0x23;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(3);
     } else if (trigger2) {
         base[0xbdd] = 0x23;
         base[0x2dd1] = 1;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
@@ -2509,7 +2488,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     } else if (dir) {
@@ -2518,7 +2497,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[12];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     }
@@ -2529,7 +2508,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
 void __declspec(noinline) MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (CSysWin_isActive(base + 0xe78)) {
+    if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
         if ((s8)base[0x2dd1] == 0) {
             base[0xbdd] = 0x24;
             CCharVoiceMan_FlushAll();
@@ -2561,21 +2540,21 @@ void __declspec(noinline) MakeCrystal_OpenResultDialog(CModelDispMakeCrystal* se
     char* a = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
     char* b = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
     char* c = (char*)BdatTouchStringCell(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
-    sysWinSwitchKindPane(base + 0xe78, 2);
-    sysWinSetKindContent(base + 0xe78, a, 0);
-    sysWinSetTwoTextValues(base + 0xe78, b, c);
-    sysWinApplyKind(base + 0xe78, 0);
-    sysWinOpenPhase1(base + 0xe78);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->switchKindPane(2);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->setKindContent(reinterpret_cast<char*>(a), 0);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->setTwoTextValues(reinterpret_cast<char*>(b), reinterpret_cast<char*>(c));
+    reinterpret_cast<CSysWin*>(base + 0xe78)->applyKind(0);
+    reinterpret_cast<CSysWin*>(base + 0xe78)->openPhase1();
 }
 
 void __declspec(noinline) MakeCrystal_StateResultPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!CSysWin_isActive(base + 0xe78)) return;
+    if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x27;
-    Cur_SetVisible(base + 0xeb4, 1);
+    ((CBaseCur*)(base + 0xeb4))->SetVisible(1);
     u8 param = base[0x2dd1];
     u8 buf[16];
-    sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+    CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
@@ -2603,14 +2582,14 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
 
     if (trigger1) {
         base[0xbdd] = 0x28;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(3);
     } else if (trigger2) {
         base[0xbdd] = 0x28;
         base[0x2dd1] = 1;
-        Cur_SetVisible(base + 0xeb4, 0);
-        sysWinAdvancePhase3(base + 0xe78);
+        ((CBaseCur*)(base + 0xeb4))->SetVisible(0);
+        reinterpret_cast<CSysWin*>(base + 0xe78)->advancePhase3();
         playUISound(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
@@ -2618,7 +2597,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
         u8 buf[16];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     } else if (dir) {
@@ -2627,7 +2606,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
         u8 buf[16];
-        sysWinGetPaneScreenPos(buf, base + 0xe78, param);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(buf), reinterpret_cast<CSysWin*>(base + 0xe78), param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound(1);
     }
@@ -2638,7 +2617,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
 void __declspec(noinline) MakeCrystal_StateConfirmDone(CModelDispMakeCrystal* self)
 {
     CModelDispMakeCrystalFull* full = reinterpret_cast<CModelDispMakeCrystalFull*>(self);
-    if (CSysWin_isActive(reinterpret_cast<u8*>(self) + 0xe78)) {
+    if (reinterpret_cast<CSysWin*>(reinterpret_cast<u8*>(self) + 0xe78)->isActive()) {
         full->field_BDC = 3;
         if (full->field_2DD1 == 0) {
             full->field_2DD2 = 1;
@@ -3754,7 +3733,7 @@ void CModelDispMakeCrystal::setCrystalCursor(u32 val) { ((MCCursorView*)this)->c
 int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (CSysWin_getUnk34(base + 0xe78)) return 0;
+    if (reinterpret_cast<CSysWin*>(base + 0xe78)->isOpened()) return 0;
     u8 state = base[0xbdd];
     if ((u8)(state + 0xee) <= 1) return 0x38;
     if (state == 0x18 || state == 0x1f)

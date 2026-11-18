@@ -2,6 +2,7 @@
 // kyoshin/CSysWinBuff - system window "buff" process (singleton).
 
 #include "kyoshin/CSysWinBuff.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 // Forward decls for retail data labels (defs at file end). Char blobs carry
 // immediates; D28/DB0/E0/E8 are pointer tables anchored by clean refs (see below).
@@ -82,7 +83,7 @@ extern "C" void SysWinBuff_EmptyStubB24() {}
 // ---------------------------------------------------------------------------
 extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
     if (_this != 0) {
-        __dt__7CSysWinFv(&_this->mSysWin[0], -1);
+        reinterpret_cast<CSysWin*>(&_this->mSysWin[0])->CSysWin::~CSysWin();
         if (_this != 0) {
             if (_this != 0) {
                 __dt__8CProcessFv(_this, 0);
@@ -123,7 +124,7 @@ bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
 void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
     closeFileHandle(&mFileHandle);
-    sysWinTermLayout(&mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
     CBdat::getEntry(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
@@ -149,7 +150,7 @@ void CSysWinBuff::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    sysWinDrawLayout(&mSysWin[0], &drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
     // Scope-exit dtor is auto-emitted as the retail direct
     // `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit
     // `drawInfo.~DrawInfo()` would ALSO emit a virtual-dispatched call.

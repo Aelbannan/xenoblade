@@ -1,6 +1,5 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/COption.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 
 __declspec(noinline) CCur19::CCur19(nw4r::lyt::ArcResourceAccessor* accessor) : CBaseCur(accessor) {}
 

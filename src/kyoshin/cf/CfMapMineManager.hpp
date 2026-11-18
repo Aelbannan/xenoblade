@@ -63,7 +63,6 @@ extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
 extern "C" void* lookupWorkAtAddr(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* ArtsSelect_GetEntry(int id);
-extern "C" void ObjObj_SetMoveId_FBF4(u16 id, int mode);
 extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
 extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void CItemData_enableFamFlag(void* item);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/work/CProcess.hpp"
@@ -195,20 +196,12 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void sysWinTermLayout(void* syswin);
-void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Bdat_GetTable_AA34();
 s32 MenuTutorialIsCreated();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols, defined in
 // CSysWin.cpp). sysWinApplyKind lives in CSysWin.hpp with a CSysWin* first arg.
-u32 CSysWin_isReady(void* syswin);
-int CSysWin_isActive(void* syswin);
-void sysWinSetKindContent(void* syswin, void* str1, void* str2);
-void sysWinOpenPhase1(void* syswin);
-void sysWinAdvancePhase3(void* syswin);
-void sysWinDispatchPhase(void* syswin);
 
 // CDeviceFile common-archive loader + work-memory handle query (unmangled
 // retail C symbols; declared with C linkage so the call reloc keeps the

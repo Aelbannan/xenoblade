@@ -144,7 +144,7 @@ struct CCollepedia {
     /* 0x50 */ u8 field_50;
     /* 0x51 */ u8 field_51;
     /* 0x52 */ u8 _52[0x54 - 0x52];
-    /* 0x54 */ u8 field_54[0x9C - 0x54]; // sub-object at 0x54 (used by Cur_SetVisible)
+    /* 0x54 */ u8 field_54[0x9C - 0x54]; // sub-object at 0x54 (two embedded cursors at +0x54/+0x84)
     /* 0x9C */ u8 field_9C; // CSysWin sub-object starts here
     /* 0x9D */ u8 _9D[0xD8 - 0x9D];
     /* 0xD8 */ u8 field_D8;
@@ -173,9 +173,6 @@ struct CCollepedia {
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" u32 CSysWin_isReady(u8*);
-extern "C" u32 CSysWin_getUnk34(u8*);
-extern "C" int CSysWin_isActive(u8*);
 extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" u32 CItem_sumFamilyByte6(u16);
 extern "C" char lbl_eu_8050C6E8[];
@@ -190,24 +187,15 @@ extern "C" const float lbl_eu_80668810;
 extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
 extern "C" void* lbl_eu_80537474[];
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
-extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void Cur_Update(void*); // CCur per-frame update
-extern "C" void sysWinDispatchPhase(void*); // CSysWin per-frame update
+// CCur per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
-extern "C" void sysWinSetKindContent(void*, void*, int);
-extern "C" void sysWinApplyKind(CSysWin*, u8);
-extern "C" void sysWinOpenPhase1(void*);
-extern "C" void sysWinAdvancePhase3(void*);
-extern "C" void sysWinTermLayout(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SetStateBitFlag(u16, u32);
 extern "C" u32 CItem_findRecByFamily(u16);

@@ -554,14 +554,15 @@ kyoshin/cf/object/CfObjectObj.cpp:
 	extabindex  start:0x80025C6C end:0x80025CB4
 	.text       start:0x800C03D4 end:0x800C06D8
 
-	.rodata        start:0x804fc5b8 end:0x804fc5ec
+	.rodata        start:0x804fc5b8 end:0x804fc5e0
 	.data       start:0x80529B18 end:0x80529DA0
+	.sdata      start:0x80661D18 end:0x80661D28
 kyoshin/cf/object/CfObjectPc.cpp:
 	extab       start:0x80009FD8 end:0x8000A0C0
 	extabindex  start:0x80025CB4 end:0x80025DD4
 	.text       start:0x800C06D8 end:0x800C1CBC
 
-	.rodata        start:0x804fc5ec end:0x804fc648
+	.rodata        start:0x804fc5e0 end:0x804fc648
 	.sdata2        start:0x80666b08 end:0x80666b48
 	.data       start:0x80529DA0 end:0x8052A3B0
 kyoshin/cf/object/CfObjectPoint.cpp:
@@ -569,9 +570,10 @@ kyoshin/cf/object/CfObjectPoint.cpp:
 	extabindex  start:0x80025DD4 end:0x80025E34
 	.text       start:0x800C1CBC end:0x800C2224
 
+	.data        start:0x8052A3B0 end:0x8052A528
+
 	.rodata        start:0x804fc648 end:0x804fc658
 	.sdata2        start:0x80666b48 end:0x80666b58
-	.data       start:0x8052A3B0 end:0x8052A528
 kyoshin/cf/code_800C17DC.cpp:
 	extab       start:0x8000A114 end:0x8000A14C
 	extabindex  start:0x80025E34 end:0x80025E88
@@ -622,7 +624,7 @@ kyoshin/cfsys/CfObjectImplEne.cpp:
 	extabindex  start:0x800261E8 end:0x80026254
 	.text       start:0x800D0AB4 end:0x800D1BC4
 
-	.sdata        start:0x80661D18 end:0x80661d50
+	.sdata        start:0x80661D28 end:0x80661d50
 	.sdata2        start:0x80666cd8 end:0x80666cf8
 kyoshin/cf/CtrlAct.cpp:
 	extab       start:0x8000A564 end:0x8000A664
@@ -5212,11 +5214,12 @@ nw4r/src/g3d/g3d_scnobj.cpp:
 	.text       start:0x803F6770 end:0x803F7FA4
 	.sdata2     start:0x80669cd8 end:0x80669ce0
 
-	.data        start:0x805695F8 end:0x80569730
+	.data        start:0x805695F8 end:0x805696C0
 	.rodata        start:0x8051d768 end:0x8051d778
 nw4r/src/g3d/g3d_scnroot.cpp:
 	.text       start:0x803F7FA4 end:0x803F99B8
 	.sdata2     start:0x80669ce0 end:0x80669ce8
+	.data       start:0x805696C0 end:0x80569730
 
 	.sbss        start:0x80665468 end:0x80665470
 	.sdata        start:0x80663480 end:0x80663490

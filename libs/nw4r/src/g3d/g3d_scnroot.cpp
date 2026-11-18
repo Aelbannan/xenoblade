@@ -3,194 +3,196 @@
 
 #include <nw4r/g3d.h>
 #include <harness_catalog.h>
+
+#include <algorithm>
+
+#include <revolution/GX.h>
 using nw4r::g3d::ScnRoot;
 using nw4r::g3d::ScnObjGather;
 using nw4r::g3d::Camera;
 using nw4r::g3d::Fog;
 
-// gpCullingFrustum (declared in g3d_scnobj.h) is defined in g3d_scnobj.cpp;
-// the retail linker name is lbl_eu_80665468 (sbss). Reference the retail name
-// directly so the SDA21 relocs match retail.
-
-
+// The scene-culling frustum pointer (nw4r::g3d::gpCullingFrustum) is defined
+// in this TU (retail sbss 0x80665468); g3d_scnobj.h declares it extern, and
+// g3d_scnobj.cpp reads it during child gathering.
+//
 // MWCC's <algorithm> doesn't declare std::sort (same pattern as g3d_draw.cpp);
 // the retail nw4r build instantiated the full MSL implementation in this TU.
-// Reconstructed from the retail object:
-//   - small ranges (<= 20 elements) are sorted by selection sort,
-//   - larger ranges are quicksorted with a pivot picked from two pseudo-random
-//     positions near the 1/4 and 3/4 marks (a static `shuffle` counter rotates
-//     the offset so repeated sorts of similar data don't hit the same pivot),
-//   - after partitioning, the smaller side is recursed into and the larger
-//     side is looped on, keeping the recursion depth bounded.
-// Pivot rotation counter shared by the ScnObj sort instantiations in this TU
-// (retail linker name lbl_eu_8066348C).
-extern "C" {
-__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663480 = 0x20;
-__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_80663484 = 0x20;
-__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663488 = -4;
-__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_8066348C = -4;
-}
-extern "C" __attribute__((aligned(8))) unsigned char lbl_eu_80665468[8] = {0};
+// The per-instantiation `static int shuffle` pivot-rotation counter is emitted
+// by MWCC into .sdata after the CalcAnmScn std::min odr-use statics
+// (G3DState::NUM_FOG / G3DState::NUM_CAMERA, the retail sdata slots
+// 0x80663480 / 0x80663484), giving the two -4 counters at the retail slots
+// 0x80663488 / 0x8066348C.
 
 namespace std {
 
-template <typename T>
-inline void swap(T& a, T& b) {
-    T tmp = a;
-    a = b;
-    b = tmp;
+template <typename TIt, typename TCompare>
+inline TIt min_element(TIt first, TIt last, TCompare compare) {
+    TIt it = first;
+
+    if (first != last) {
+        for (++first; first != last; ++first) {
+            if (compare(*first, *it)) {
+                it = first;
+            }
+        }
+    }
+
+    return it;
 }
 
-// Order the three candidate pivot elements over *_F, *_L, *_P.
-template <typename _Pr, typename _RI>
-void __sort132(_RI _F, _RI _L, _RI _P, _Pr _C) {
-    int i1 = _C(*_P, *_F);
+template <typename TCompare, typename TIt>
+inline void __selection_sort(TIt first, TIt last, TCompare compare) {
+    if (first == last) {
+        return;
+    }
+
+    TIt j = last;
+    for (--j; first != j; ++first) {
+        TIt i = min_element<TIt, TCompare&>(first, last, compare);
+
+        if (i != first) {
+            swap(*i, *first);
+        }
+    }
+}
+
+// Order the three candidate pivot elements (a1, a2, a3): written with the
+// if/else shape (not the early-return shape) so MWCC's auto-inliner keeps the
+// call out-of-line, as in retail.
+template <typename TCompare, typename TIt>
+void __sort132(TIt a1, TIt a2, TIt a3, TCompare compare) {
+    int i1 = compare(*a3, *a1);
     bool n1 = !i1;
-    int i2 = _C(*_L, *_P);
+    int i2 = compare(*a2, *a3);
     bool n2 = !i2;
 
     if (n1 && n2) {
         // both comparisons returned false: ordering already fine
     } else if (!n1 && !n2) {
-        swap(*_F, *_L);
+        swap(*a1, *a2);
     } else {
         // exactly one comparison held: reorder around the third candidate
-        if (_C(*_L, *_F)) {
-            swap(*_F, *_L);
+        if (compare(*a2, *a1)) {
+            swap(*a1, *a2);
         }
         if (n1) {
-            swap(*_L, *_P);
+            swap(*a2, *a3);
         } else {
-            swap(*_F, *_P);
+            swap(*a1, *a3);
         }
     }
 }
 
-template <typename _RI, typename _Pr>
-void sort(_RI _F, _RI _L, _Pr _P) {
+static const int SHUFFLE_MIN = -4;
+static const int SHUFFLE_MAX = 5;
+static const int SELECTION_SORT_MIN = 20;
 
-    for (;;) {
-        int count = _L - _F;
-        if (count <= 1) {
+template <typename TIt, typename TCompare>
+void sort(TIt first, TIt last, TCompare compare) {
+    while (true) {
+        long len = static_cast<long>(last - first);
+        if (len <= 1) {
             return;
         }
 
-        if (count <= 20) {
-            if (_F != _L) {
-                // Selection sort: for each position, find the smallest
-                // remaining element and swap it into place.
-                for (_RI i = _F; i != _L - 1; ++i) {
-                    _RI min = i;
-                    if (i != _L) {
-                        for (_RI j = i + 1; j != _L; ++j) {
-                            if (_P(*j, *min)) {
-                                min = j;
-                            }
-                        }
-                    }
-                    if (min != i) {
-                        swap(*min, *i);
-                    }
-                }
-            }
+        if (len <= SELECTION_SORT_MIN) {
+            __selection_sort<TCompare&, TIt>(first, last, compare);
             return;
         }
 
-        // count > 20: quicksort path
-        {
-            int c = lbl_eu_8066348C;
-            _RI p1 = _F + (count / 4 + c % 5);
-            int c1 = c + 1;
-            if (c1 >= 5) {
-                c1 = -4;
-            }
-            int s = c1 + 1;
-            lbl_eu_8066348C = s;
-            _RI p2 = _F + (((count << 2) - count) / 4 + c1 % 5);
-            if (s >= 5) {
-                // Only reachable when c == 4 (s == 5), so this stores -4.
-                lbl_eu_8066348C = s - 9;
-            }
-            // Force the reference comparator instantiation (as retail does).
-            _RI pivot = _L - 1;
-            __sort132<_Pr&, _RI>(p1, p2, pivot, _P);
+        static int shuffle = -4;
+        TIt m = first + (len / 4 + shuffle % SHUFFLE_MAX);
 
-            // Partition [_F, _L) around the pivot kept at _L - 1: advance i
-            // past elements below the pivot and j down past elements above it.
-            _RI i = _F;
-            _RI j = pivot;
-            while (_P(*i, *pivot)) {
-                ++i;
-            }
-            do {
-                --j;
-                if (i == j) {
-                    goto partition_end;
-                }
-            } while (!_P(*j, *pivot));
-            if (i < j) {
-                // Rotated loop: the first swap is peeled before the scan loop
-                // (matches retail layout).
-                swap(*i, *j);
-                ++i;
-                for (;;) {
-                    while (_P(*i, *pivot)) {
-                        ++i;
-                    }
-                    do {
-                        --j;
-                    } while (!_P(*j, *pivot));
-                    if (i >= j) {
-                        break;
-                    }
-                    swap(*i, *j);
-                    ++i;
-                }
-            }
-        partition_end:;
+        if (++shuffle >= SHUFFLE_MAX) {
+            shuffle = SHUFFLE_MIN;
+        }
 
-            if (i == _F) {
-                // The pivot is the smallest element: move it to the front and
-                // partition the remainder around it with the comparisons
-                // reversed.
-                swap(*i, *pivot);
-                ++i;
-                j = _L - 1;
-                if (!_P(*_F, *(_L - 1))) {
-                    while (i != _L && !_P(*_F, *i)) {
-                        ++i;
-                    }
-                    if (i < j) {
-                        swap(*i, *j);
-                    }
+        TIt i1 = first + (len * 3 / 4 + shuffle % SHUFFLE_MAX);
+        if (++shuffle >= SHUFFLE_MAX) {
+            shuffle = SHUFFLE_MIN;
+        }
+
+        TIt j = last - 1;
+        __sort132<TCompare&, TIt>(m, i1, j, compare);
+
+        m = first;
+        i1 = j;
+        while (compare(*m, *j)) {
+            m++;
+        }
+
+        do {
+            i1--;
+
+            if (m == i1) {
+                break;
+            }
+        } while (!compare(*i1, *j));
+
+        if (m < i1) {
+            swap(*m, *i1);
+            m++;
+
+            while (true) {
+                while (compare(*m, *j)) {
+                    m++;
                 }
-                while (i < j) {
-                    while (!_P(*_F, *i)) {
-                        ++i;
-                    }
-                    do {
-                        --j;
-                    } while (_P(*_F, *j));
-                    if (i >= j) {
-                        break;
-                    }
-                    swap(*i, *j);
-                    ++i;
+
+                while (!compare(*--i1, *j)) {
+                    ;
                 }
-                _F = i;
-            } else {
-                // Recurse on the smaller side and loop on the larger side.
-                // The recursion always uses the reference comparator form.
-                int left = i - _F;
-                int right = _L - i;
-                if (left < right) {
-                    sort<_RI, _Pr&>(_F, i, _P);
-                    _F = i;
+
+                if (m < i1) {
+                    swap(*m, *i1);
+                    m++;
                 } else {
-                    sort<_RI, _Pr&>(i, _L, _P);
-                    _L = i;
+                    break;
                 }
             }
+        }
+
+        if (m == first) {
+            swap(*m, *j);
+            m++;
+
+            i1 = last;
+            if (!compare(*first, *--i1)) {
+                while (m != last && !compare(*first, *m)) {
+                    m++;
+                }
+
+                if (m < i1) {
+                    swap(*m, *i1);
+                }
+            }
+
+            if (m < i1) {
+                while (true) {
+                    while (!compare(*first, *m)) {
+                        m++;
+                    }
+
+                    while (compare(*first, *--i1)) {
+                        ;
+                    }
+
+                    if (m < i1) {
+                        swap(*m, *i1);
+                        m++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            first = m;
+        } else if (m - first < last - m) {
+            sort<TIt, TCompare&>(first, m, compare);
+            first = m;
+        } else {
+            sort<TIt, TCompare&>(m, last, compare);
+            last = m;
         }
     }
 }
@@ -209,6 +211,9 @@ template void __sort132<bool (*&)(const nw4r::g3d::ScnObj*,
 
 namespace nw4r {
 namespace g3d {
+
+const math::FRUSTUM* gpCullingFrustum = NULL;
+
 namespace {
 
 // Z-priority sort comparators for the scene-object arrays. When priorities
@@ -272,48 +277,55 @@ ScnRoot* ScnRoot::Construct(MEMAllocator* pAllocator, u32* pSize,
                             u32 maxChildren, u32 maxScnObj, u32 numLightObj,
                             u32 numLightSet) {
     ScnRoot* pObj = NULL;
+    u32 scnRootSize = sizeof(ScnRoot);
+    u32 scnObjGatherSize = sizeof(ScnObjGather);
 
-    // Lay out the single backing allocation: root object, gather, child
-    // pointer array, opaque/xlu object arrays, light objects, ambient light
-    // objects and light set data - each segment 4-byte aligned.
-    u32 ofsOpa = ut::RoundUp<u32>(sizeof(ScnRoot) + sizeof(ScnObjGather) +
-                                      maxChildren * sizeof(ScnObj*),
-                                  4);
-    u32 ofsLightObj =
-        ut::RoundUp<u32>(ofsOpa + maxScnObj * sizeof(ScnObj*) * 2, 4);
-    u32 ofsAmb =
-        ut::RoundUp<u32>(ofsLightObj + numLightObj * sizeof(LightObj), 4);
-    u32 ofsLightSet =
-        ut::RoundUp<u32>(ofsAmb + numLightObj * sizeof(AmbLightObj), 4);
-    u32 ofsXlu = maxScnObj * sizeof(ScnObj*);
-    u32 size =
-        ut::RoundUp<u32>(ofsLightSet + numLightSet * sizeof(LightSetData), 4);
+    u32 childrenSize = maxChildren * sizeof(ScnObj*);
+    u32 scnObjBufSize =
+        maxScnObj * sizeof(ScnObj*) + maxScnObj * sizeof(ScnObj*);
 
+    u32 lightObjSize = numLightObj * sizeof(LightObj);
+    u32 ambLightObjSize = numLightObj * sizeof(AmbLightObj);
+    u32 lightSetDataSize = numLightSet * sizeof(LightSetData);
+
+    u32 scnObjGatherOfs = ut::RoundUp<u32>(scnRootSize, 4);
+    u32 childrenOfs =
+        ut::RoundUp<u32>(scnObjGatherOfs + scnObjGatherSize, 4);
+    u32 scnObjBufOfs = ut::RoundUp<u32>(childrenOfs + childrenSize, 4);
+    u32 lightObjOfs = ut::RoundUp<u32>(scnObjBufOfs + scnObjBufSize, 4);
+    u32 ambLightOfs = ut::RoundUp<u32>(lightObjOfs + lightObjSize, 4);
+    u32 lightSetDataOfs = ut::RoundUp<u32>(ambLightOfs + ambLightObjSize, 4);
+
+    u32 size = ut::RoundUp<u32>(lightSetDataOfs + lightSetDataSize, 4);
     if (pSize != NULL) {
         *pSize = size;
     }
 
     if (pAllocator != NULL) {
         u8* buf = static_cast<u8*>(MEMAllocFromAllocator(pAllocator, size));
-
         if (buf == NULL) {
             return NULL;
         }
 
-        ScnObjGather* pGather = new (buf + sizeof(ScnRoot)) ScnObjGather(
-            reinterpret_cast<ScnObj**>(buf + ofsOpa),
-            reinterpret_cast<ScnObj**>(reinterpret_cast<u8*>(buf + ofsOpa) +
-                                       ofsXlu),
-            maxScnObj);
+        ScnObj** ppScnObjBuf =
+            reinterpret_cast<ScnObj**>(buf + scnObjBufOfs);
+
+        IScnObjGather* pGather = new (buf + scnObjGatherOfs)
+            ScnObjGather(ppScnObjBuf, ppScnObjBuf + maxScnObj, maxScnObj);
+
+        LightObj* pLightObjBuf =
+            reinterpret_cast<LightObj*>(buf + lightObjOfs);
+
+        AmbLightObj* pAmbObjBuf =
+            reinterpret_cast<AmbLightObj*>(buf + ambLightOfs);
+
+        LightSetData* pLightSetBuf =
+            reinterpret_cast<LightSetData*>(buf + lightSetDataOfs);
 
         pObj = new (buf) ScnRoot(
             pAllocator, pGather,
-            reinterpret_cast<ScnObj**>(buf + sizeof(ScnRoot) +
-                                       sizeof(ScnObjGather)),
-            maxChildren, numLightObj, numLightSet,
-            reinterpret_cast<LightObj*>(buf + ofsLightObj),
-            reinterpret_cast<AmbLightObj*>(buf + ofsAmb),
-            reinterpret_cast<LightSetData*>(buf + ofsLightSet));
+            reinterpret_cast<ScnObj**>(buf + childrenOfs), maxChildren,
+            numLightObj, numLightSet, pLightObjBuf, pAmbObjBuf, pLightSetBuf);
     }
 
     return pObj;
@@ -352,8 +364,8 @@ Camera ScnRoot::GetCurrentCamera() {
     return Camera(&mCamera[mCurrentCameraID]);
 }
 
-void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(ScnRoot* self, int idx) {
-    self->mCurrentCameraID = static_cast<u8>(idx);
+void ScnRoot::SetCurrentCamera(int idx) {
+    mCurrentCameraID = static_cast<u8>(idx);
 }
 
 Fog ScnRoot::GetFog(int idx) {
@@ -366,28 +378,28 @@ Fog ScnRoot::GetFog(int idx) {
 
 // Attach a scene animation to the root: detach any previous animation first,
 // then attach the new one (returns true, as retail always does).
-bool SetAnmScn__Q34nw4r3g3d7ScnRootFPQ34nw4r3g3d6AnmScn(ScnRoot* self, nw4r::g3d::AnmScn* pAnmScn) {
-    if (self->mpAnmScn != NULL) {
-        if (self->mpAnmScn != NULL) {
-            self->mpAnmScn->G3dProc(
-                nw4r::g3d::G3dObj::G3DPROC_DETACH_PARENT, 0, self);
-            self->mpAnmScn = NULL;
+bool ScnRoot::SetAnmScn(nw4r::g3d::AnmScn* pAnmScn) {
+    if (mpAnmScn != NULL) {
+        if (mpAnmScn != NULL) {
+            mpAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DETACH_PARENT, 0,
+                               this);
+            mpAnmScn = NULL;
         }
     }
 
-    self->mpAnmScn = pAnmScn;
-    pAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_ATTACH_PARENT, 0, self);
+    mpAnmScn = pAnmScn;
+    pAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_ATTACH_PARENT, 0, this);
     return true;
 }
 
-// NOTE: ScnRoot::RemoveAnmScn is not declared in g3d_scnroot.h; the retail
-// symbol returns the detached AnmScn* (see `mr r3, r31` epilogue).
-nw4r::g3d::AnmScn* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(ScnRoot* self) {
-    nw4r::g3d::AnmScn* pAnmScn = self->mpAnmScn;
+// NOTE: the retail ScnRoot::RemoveAnmScn returns the detached AnmScn*
+// (see `mr r3, r31` epilogue).
+nw4r::g3d::AnmScn* ScnRoot::RemoveAnmScn() {
+    nw4r::g3d::AnmScn* pAnmScn = mpAnmScn;
 
     if (pAnmScn != NULL) {
-        pAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DETACH_PARENT, 0, self);
-        self->mpAnmScn = NULL;
+        pAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmScn = NULL;
     }
 
     return pAnmScn;
@@ -401,13 +413,98 @@ void ScnRoot::UpdateFrame() {
     G3dProc(G3DPROC_UPDATEFRAME, 0, NULL);
 }
 
-void SetGlbSettings__Q34nw4r3g3d7ScnRootFv(){}
+void ScnRoot::SetGlbSettings() {
+    int i;
 
-void CalcAnmScn__Q34nw4r3g3d7ScnRootFv(){}
+    Camera cam = GetCurrentCamera();
+    cam.GXSetViewport();
+    cam.GXSetProjection();
+    cam.GXSetScissor();
+    cam.GXSetScissorBoxOffset();
 
-void CalcWorld__Q34nw4r3g3d7ScnRootFv(ScnRoot* self) {
-    self->CalcAnmScn();
-    self->G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_WORLD, 0, 0);
+    for (i = 0; i < G3DState::NUM_CAMERA; i++) {
+        G3DState::SetCameraProjMtx(Camera(&mCamera[i]), i,
+                                   i == mCurrentCameraID);
+    }
+
+    bool persp = cam.GetProjectionType() != GX_ORTHOGRAPHIC;
+    u32 projOrthoBit = persp ? 0 : GX_ORTHOGRAPHIC << 3;
+
+    f32 near = cam.ref().projNear;
+    f32 far = cam.ref().projFar;
+
+    u16 width = 0;
+    u16 center = 0;
+
+    math::MTX44 proj;
+    bool fogRangeAdj = false;
+
+    for (i = 0; i < G3DState::NUM_FOG; i++) {
+        Fog fog(&mFog[i]);
+        fog.SetNearFar(near, far);
+
+        if (fog.ref().type != GX_FOG_NONE) {
+            fog.ref().type = static_cast<GXFogType>(
+                (fog.ref().type & ~(GX_ORTHOGRAPHIC << 3)) | projOrthoBit);
+        }
+
+        if (fog.IsFogRangeAdjEnable()) {
+            if (!fogRangeAdj) {
+                cam.GetProjectionMtx(&proj);
+
+                f32 f_width, x;
+                cam.GetViewport(&x, NULL, &f_width, NULL, NULL, NULL);
+
+                width = math::F32ToU16(f_width);
+                center = math::F32ToU16(x + f_width * 0.5f);
+                fogRangeAdj = true;
+            }
+
+            fog.SetFogRangeAdjParam(width, center, proj);
+        }
+
+        G3DState::SetFog(fog, i);
+    }
+
+    G3DState::SetLightSetting(mLightSetting);
+}
+
+void ScnRoot::CalcAnmScn() {
+    if (mpAnmScn == NULL) {
+        return;
+    }
+
+    const u32 numLightSet = mpAnmScn->GetLightSetMaxRefNumber();
+    const u32 numFog = mpAnmScn->GetFogMaxRefNumber();
+    const u32 numCamera = mpAnmScn->GetCameraMaxRefNumber();
+
+    if (numLightSet > 0) {
+        mpAnmScn->GetLightSetting(&mLightSetting);
+    }
+
+    if (numFog > 0) {
+        const u32 numLoadableFog = std::min<u32>(G3DState::NUM_FOG, numFog);
+
+        for (u32 i = 0; i < numLoadableFog; i++) {
+            Fog fog(&mFog[i]);
+            mpAnmScn->GetFog(fog, i);
+        }
+    }
+
+    if (numCamera > 0) {
+        const u32 numLoadableCamera =
+            std::min<u32>(G3DState::NUM_CAMERA, numCamera);
+
+        for (u32 i = 0; i < numLoadableCamera; i++) {
+            Camera cam(&mCamera[i]);
+            mpAnmScn->GetCamera(cam, i);
+        }
+    }
+}
+
+void ScnRoot::CalcWorld() {
+    CalcAnmScn();
+    G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_WORLD, 0, 0);
 }
 
 namespace {
@@ -428,25 +525,25 @@ void ScnRoot::CalcView() {
 void ScnRoot::GatherDrawScnObj() {
     mpCollection->Clear();
 
-    Camera camera = GetCurrentCamera();
+    math::FRUSTUM frustum;
+
+    Camera cam = GetCurrentCamera();
 
     math::MTX34 mtx;
-    camera.GetCameraMtx(&mtx);
+    cam.GetCameraMtx(&mtx);
 
-    // Set up the culling frustum from the current camera's projection.
-    math::FRUSTUM fr;
-    if (camera.ref().flags & CameraData::FLAG_PROJ_PERSP) {
-        fr.Set(camera.ref().projFovy, camera.ref().projAspect,
-               camera.ref().projNear, camera.ref().projFar, mtx);
+    if (cam.ref().flags & CameraData::FLAG_PROJ_PERSP) {
+        frustum.Set(cam.ref().projFovy, cam.ref().projAspect,
+                    cam.ref().projNear, cam.ref().projFar, mtx);
     } else {
-        fr.Set(camera.ref().projTop, camera.ref().projBottom,
-               camera.ref().projLeft, camera.ref().projRight,
-               camera.ref().projNear, camera.ref().projFar, mtx);
+        frustum.Set(cam.ref().projTop, cam.ref().projBottom,
+                    cam.ref().projLeft, cam.ref().projRight,
+                    cam.ref().projNear, cam.ref().projFar, mtx);
     }
 
-    *(::nw4r::math::FRUSTUM**)lbl_eu_80665468 = &fr;
+    gpCullingFrustum = &frustum;
     G3dProc(G3DPROC_GATHER_SCNOBJ, 0, mpCollection);
-    *(::nw4r::math::FRUSTUM**)lbl_eu_80665468 = NULL;
+    gpCullingFrustum = NULL;
 }
 
 void ScnRoot::DrawOpa() {
@@ -509,7 +606,7 @@ nw4r::g3d::IScnObjGather::CullingStatus ScnObjGather::Add(ScnObj* pObj, bool opa
     // If culling is active, cull against the global frustum; an object that
     // is fully outside is rejected outright, fully inside is recorded so the
     // caller can skip per-object tests later.
-    if (*(::nw4r::math::FRUSTUM**)lbl_eu_80665468 != NULL) {
+    if (gpCullingFrustum != NULL) {
         u32 option;
         pObj->GetScnObjOption(ScnObj::OPTID_ENABLE_CULLING, &option);
         if (option != 0) {
@@ -517,7 +614,7 @@ nw4r::g3d::IScnObjGather::CullingStatus ScnObjGather::Add(ScnObj* pObj, bool opa
             pObj->GetBoundingVolume(ScnObj::BOUNDINGVOLUME_AABB_WORLD, &aabb);
 
             math::IntersectionResult result =
-                (*(::nw4r::math::FRUSTUM**)lbl_eu_80665468)->IntersectAABB_Ex(&aabb);
+                gpCullingFrustum->IntersectAABB_Ex(&aabb);
             if (result == math::INTERSECTION_OUTSIDE) {
                 return CULLINGSTATUS_OUTSIDE;
             }
@@ -581,15 +678,7 @@ void ScnObjGather::DrawXlu(ResMdlDrawMode* pForceMode) {
     }
 }
 
-int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
-
-void __dt__Q34nw4r3g3d12ScnObjGatherFv(){}
-
-void IsDerivedFrom__Q34nw4r3g3d7ScnRootCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-
-void GetTypeName__Q34nw4r3g3d7ScnRootCFv(){}
-
-extern "C" void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void) { return (void*)lbl_eu_8051D798; }
+u32 ScnObjGather::CheckScnObj(ScnObj* pObj) { return 0; }
 
 namespace nw4r { namespace g3d { class ScnObj; }}
 
@@ -599,11 +688,21 @@ namespace g3d {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnRoot")> lbl_eu_8051D798 = {sizeof("ScnRoot"), "ScnRoot"};
 
+// ScnRoot's base-chain check (ScnGroup, ScnObj, G3dObj) as a static helper,
+// same convention as scnObjBaseIsDerivedFrom / anmObjBaseIsDerivedFrom: the
+// inlined by-value helper boundary makes MWCC reload other at the ScnGroup
+// link and CSE the remaining comparisons, as retail does.
+static bool scnRootBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == G3dObj::TypeObj(lbl_eu_8051D788) ? true
+         : other == G3dObj::TypeObj(lbl_eu_8051D768) ? true
+         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
+}
+
 bool ScnRoot::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D798) ? true
-         : other == TypeObj(lbl_eu_8051D788) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D798)) {
+        return true;
+    }
+    return scnRootBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnRoot::GetTypeObj() const {

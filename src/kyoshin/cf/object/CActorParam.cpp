@@ -569,7 +569,7 @@ void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src) {
 
 
 // CActorState::unk4 is the owning actor's CObjectState subobject; slots
-// +0x30/+0x38 are CObjectState_getStateData / CObjectState_setStateBitMask3
+// +0x30/+0x38 are getStateData / setStateBitMask3
 // (CObjectState.hpp), called directly without a local helper.
 
 // The embedded move subobject (actor+0x3E9C) slots +0x4C/+0xAC are
@@ -662,14 +662,14 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
         self->unk2A80 =
             (u32)reinterpret_cast<cf::CObjectParam*>(self->unk15DC)->CObjectParam_getSelfObjectId();
     }
-    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F;
+    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
     switch (t) {
     case 3:
     case 4:
     case 8:
     case 0xE:
     case 5:
-        if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) != 8) {
+        if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) != 8) {
             advanceItemTimer((u8*)self + 0x3358, f30);
         }
         break;
@@ -678,11 +678,11 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
     }
     self->CActorParam_updateStatusEntries(f31);
     if (arg != 0) {
-        reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_setStateBitMask3();
+        reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->setStateBitMask3();
     }
     self->CActorParam_resetArtsStatus(0);
-    if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 1 ||
-        (*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 2) {
+    if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 1 ||
+        (*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 2) {
         return;
     }
     self->CActorParam_updateHateEntries(f30);
@@ -709,11 +709,11 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
         self->CActorParam_getGaugeRateB() != lbl_eu_806677E4 &&
         !isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xF)) {
         u32 t3;
-        if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 6 ||
-            (*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 0x12) {
+        if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 6 ||
+            (*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 0x12) {
             goto secondBlock;
         }
-        t3 = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F;
+        t3 = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
         if (t3 == 9 || t3 == 0xA || t3 == 0xB) {
         secondBlock:
             if (self->CActorParam_getSecondGaugeMax() == self->CActorParam_getSecondGauge()) {
@@ -761,7 +761,7 @@ extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActor
             if (!flag) {
                 if (e->unk20 > 0.0f) {
                     if (e->unk0C == 0x10) {
-                        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
+                        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
                         if ((t & 0x3F) == 0x16) goto unk20_done;
                         if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) goto unk20_done;
                     }
@@ -773,7 +773,7 @@ extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActor
 unk20_done:
         if (e->unk28 > 0.0f) {
             if (e->unk0C == 0x10) {
-                u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
+                u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
                 if ((t & 0x3F) == 0x16) goto unk28_done;
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) goto unk28_done;
             }
@@ -1171,7 +1171,7 @@ unk28_done:
                 void* p = self->CBattleState_getOwner();
                 if (!p) break;
                 if (self->unk3374 & 0x40000) {
-                    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
+                    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
                     if ((t & 0x3F) == 0x16) break;
                 }
                 {
@@ -1451,7 +1451,7 @@ void cf::CActorParam::CActorParam_resetArtsStatus(void* arts) {
         float f26 = lbl_eu_806677E4;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
         int bLT = ratio <= lbl_eu_8066782C;
-        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(CActorState::unk4)->CObjectState_getStateData());
+        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(CActorState::unk4)->getStateData());
         int combat = ((t & 0x3F) == 6);
         if (combat == 0) combat = ((t & 0x3F) == 7);
         if (combat == 0) combat = ((t & 0x7C0) == 448);
@@ -2630,11 +2630,11 @@ void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, fl
             if (!getArtsSlotRC(arts, artsRow, artsCol)) continue;
             void* arts2 = self->CActorParam_getArtsSet();
             cf::CAttackParam* p = (cf::CAttackParam*)getArtsParamRC2(arts2, artsRow, artsCol);
-            u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F;
+            u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
             if (t == 0x16 || t == 0x17 || t == 0xF) {
                 // no unk7C decay for these actor states
             } else {
-                u32 t2 = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F;
+                u32 t2 = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
                 if (t2 != 0x18 && !isBattleStatusActive((u8*)self + 8, 0xF)) {
                     switch (p->unk48) {
                     case 0xD5: case 0x11E: case 0x107: case 0xFA:
@@ -3141,8 +3141,8 @@ bool CActorParam_isBattleLocked__Q22cf11CActorParamFv(cf::CActorParam* self) {
     // shared true-return (retail beq/beq/cmpli-bne layout); as a bare return
     // the final operand becomes a cntlzw bool idiom instead.
     if ((self->CActorParam_getHp() <= lbl_eu_806677E4)
-        || ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 0x1C)
-        || ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) == 0x1E)) {
+        || ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 0x1C)
+        || ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F) == 0x1E)) {
         return true;
     }
     return false;

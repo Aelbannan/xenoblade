@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
@@ -51,7 +52,6 @@ extern const double lbl_eu_80668670;    // int->double conversion bias (.sdata2)
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 
 // Struct view of the null pointer-to-member-function constant. Reading
 // through named members keeps MWCC from emitting duplicate @l references.
@@ -421,7 +421,7 @@ extern "C" __declspec(noinline) void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
     nw4r::math::VEC3 tmp;
     ScalePaneWorldPos(&tmp, anchor, rootPane, (nw4r::lyt::Pane*)self->field_0x00->field_0x10);
     nw4r::math::VEC3 pos = tmp;
-    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
+    CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
 
     // Single-player builds also refresh the two help captions.
     if (code80135FDC_getByte_64077() <= 1) {
@@ -1300,7 +1300,7 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* se
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    Cur_SetPaneTranslate((nw4r::lyt::Pane*)((SArts3150CDriver*)self->field_0x08)->field_0x10, &pos);
+    CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)((SArts3150CDriver*)self->field_0x08)->field_0x10, &pos);
     CMenuArtsSet_setPaneScale((SArtsPaneScaleObj*)((SArts3150CDriver*)self->field_0x08)->field_0x10,
                   &vecs[self->field_0x20]);
 }
@@ -1395,7 +1395,7 @@ extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
+    CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
     CMenuArtsSet_setPaneScale((SArtsPaneScaleObj*)self->field_0x14->field_0x10, &vecs[self->field_0x21]);
 }
 #pragma optimize_for_size off
@@ -2005,8 +2005,8 @@ extern "C" __declspec(noinline) void ArtsTableCursor_refresh(SArts327B0* self) {
     pane = (nw4r::lyt::Pane*)((SArts3CObj*)self->field_0x00->field_0x10)
                ->v13((void*)(lbl_eu_8050AC70 + 0xA6), 1);
     pos.x *= pane->GetScale().x;
-    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
-    Cur_SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
+    CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
+    CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
 }
 #pragma optimize_for_size off
 
@@ -2293,7 +2293,7 @@ __declspec(noinline) void artsStepState(CArtsList* self) {
         self->field_0x1C->v14(0);
         self->mScrollBar.UpdateDispatch();
         CArtsInfo_UpdateAnims(&self->mSubObj74);
-        sysWinDispatchPhase(&self->mSysWinE8);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->dispatchPhase();
         ArtsLayoutPair_advance((SArts2FDF4*)&self->mSubObj124);
         ArtsLayoutPair_advancePhases((SArts306F0*)&self->mSubObj148);
         ArtsTableLayout_advancePhases((SArts306F0*)((u8*)&self->mSubObj148 + 0x2C));
@@ -2313,7 +2313,7 @@ __declspec(noinline) void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo
     drawLayout((nw4r::lyt::Layout*)self->field_0x1C, info, 0, 1);
     self->mScrollBar.draw(info);
     u8 v = 0;
-    if (CSysWin_getUnk34(&self->mSysWinE8) == 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() == 0) {
         if (self->mSubObj124.field_0x15 == 0) {
             if (CArtsInfo_IsStateGE6(&self->mSubObj74) == 0) {
                 v = 1;
@@ -2328,7 +2328,7 @@ __declspec(noinline) void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo
     ArtsDrawBox_draw((SArtsDrawBox*)&self->mSubObj148, info);
     ArtsTableDrawBox_draw((SArtsDrawBox*)((u8*)&self->mSubObj148 + 0x2C), info);
     CArtsInfo_Draw(&self->mSubObj74, info);
-    sysWinDrawLayout(&self->mSysWinE8, info);
+    reinterpret_cast<CSysWin*>(&self->mSysWinE8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(info));
 }
 #pragma optimize_for_size off
 
@@ -2354,13 +2354,13 @@ __declspec(noinline) void CMenuArtsSet_teardown(CArtsList* self) {
     self->mMemRegion.deleteRegion();
     self->mScrollBar.Teardown();
     CArtsInfo_Cleanup(&self->mSubObj74);
-    sysWinTermLayout(&self->mSysWinE8);
+    reinterpret_cast<CSysWin*>(&self->mSysWinE8)->termLayout();
 }
 
 __declspec(noinline) u8 CArtsList_isReady(CArtsList* self) {
     if (self->mScrollBar.isVisible() == 0) return 0;
     if (CArtsInfo_GetFlag48(&self->mSubObj74) == 0) return 0;
-    if (CSysWin_isReady(&self->mSysWinE8) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isReady() != 0) {
         return self->field_0x30;
     }
     return 0;
@@ -2374,13 +2374,13 @@ __declspec(noinline) u8 CMenuArtsSet_isBusy(SArts33888* self) {
     if (self->field_0x2A1 != 0) return 1;
     if (self->field_0x16F != 0) return 1;
     if (CArtsInfo_IsStateGE6(&self->field_0x74) != 0) return 1;
-    if (CSysWin_getUnk34(&self->field_0xE8) != 0) return 1;
+    if (reinterpret_cast<CSysWin*>(&self->field_0xE8)->isOpened() != 0) return 1;
     return self->field_0x2A6;
 }
 
 __declspec(noinline) u8 CMenuArtsSet_isWindowBusy(CArtsList* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 1;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return 1;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return 1;
     return self->field_0x2A6;
 }
 
@@ -2389,7 +2389,7 @@ __declspec(noinline) u32 CArtsList::CMenuArtsSet_isArtsInfoActive() { return CAr
 
 __declspec(noinline) void CMenuArtsSet_beginOpen(CArtsList* self) {
     if (self->field_0x2C != 0) return;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     self->field_0x2C = 1;
     self->field_0x31 = 0;
     CArtsInfo_ReqState1(&self->mSubObj74);
@@ -2399,7 +2399,7 @@ __declspec(noinline) void CMenuArtsSet_beginOpen(CArtsList* self) {
 #pragma optimize_for_size on
 __declspec(noinline) void CMenuArtsSet_beginClose(CArtsList* self) {
     if (self->field_0x2C != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     self->field_0x2C = 4;
     self->field_0x31 = 0;
     ArtsSubCursor_setVisible((SArtsSub8022FA58*)&self->mSubObj148, 0);
@@ -2420,7 +2420,7 @@ __declspec(noinline) void CMenuArtsSet_beginClose(CArtsList* self) {
 // flag picks the same three-way step on the list cursor. Each step ends
 // with the cursor sound (1).
 __declspec(noinline) void CMenuArtsSet_cursorUp(CArtsList* self) {
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (self->mSubObj174.field_0x12D != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) {
         if (CArtsInfo_GetFlag49(&self->mSubObj74) != 0) {
@@ -2473,7 +2473,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CArtsList* self) {
 // re-clamped with ArtsTable_resetCursor, checked against the page end with
 // ArtsTable_isAtBottom, and paged with ArtsTable_scrollDown.
 __declspec(noinline) void CMenuArtsSet_cursorDown(CArtsList* self) {
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (self->mSubObj174.field_0x12D != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) {
         if (CArtsInfo_GetFlag49(&self->mSubObj74) != 0) {
@@ -2529,7 +2529,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CArtsList* self) {
 __declspec(noinline) void CMenuArtsSet_slotCursorUp(CArtsList* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     if (self->mSubObj148.field_0x23 == 0) return;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
         if (isPaneVisible((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
             ArtsSlotCursor_moveUp((SArtsSub8022FA58*)&self->mSubObj148, self->mSubObj148.field_0x27);
@@ -2556,7 +2556,7 @@ L_Sound:
 __declspec(noinline) void CMenuArtsSet_slotCursorDown(CArtsList* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     if (self->mSubObj148.field_0x23 == 0) return;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (self->mSubObj148.field_0x27 != 0) {
         if (isPaneVisible((nw4r::lyt::Pane*)((SArts080C*)self->mSubObj148.field_0x08)->field_0x10) != 0) {
             ArtsSlotCursor_moveDown((SArtsSub8022FA58*)&self->mSubObj148, self->mSubObj148.field_0x27);
@@ -2585,9 +2585,9 @@ L_Sound:
 // step. The sound is shared by the 0x16B body and the 0x2A6-clear path;
 // the 0x16B-clear path exits without it (retail L_80235FA0 block).
 __declspec(noinline) void CMenuArtsSet_advanceIdle(CArtsList* self) {
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) {
-        if (CSysWin_isActive(&self->mSysWinE8) != 0) {
-            sysWinAdvancePhase3(&self->mSysWinE8);
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isActive() != 0) {
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->advancePhase3();
             self->field_0x2A6 = 0;
         }
         return;
@@ -2639,9 +2639,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
     // NOTE: no persistent SArts34D14* local - retail keeps r29/r30 free for
     // the per-block cursor/matched locals instead of a cached cast pointer.
     if (self->field_0x2C != 3) return;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) {
-        if (CSysWin_isActive(&self->mSysWinE8) != 0) {
-            sysWinAdvancePhase3(&self->mSysWinE8);
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isActive() != 0) {
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->advancePhase3();
             self->field_0x2A6 = 0;
             playUISound(3);
         }
@@ -2742,9 +2742,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
         if (ArtsTable_getRowValue((SArts322BC*)(SArts322BC*)&self->mSubObj174, key) >= 10) {
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, 0x35);
-            sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-            sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-            sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
         } else if (ArtsTable_isRowSelectable((SArts322BC*)(SArts322BC*)&self->mSubObj174, key) != 0) {
             // Selectable entry: pick the help id from the learn-state table.
             u16 id;
@@ -2759,9 +2759,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
             }
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, id);
-            sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-            sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-            sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
         } else {
             u16 pct = artsGetRowPct((SArts322BC*)(SArts322BC*)&self->mSubObj174, key);
             // Retail computes the advance arm as the fall-through (>=).
@@ -2771,9 +2771,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
             } else {
                 char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                            lbl_eu_8050AC70 + 0x5b, 0x34);
-                sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-                sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-                sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+                reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+                reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
             }
         }
         playUISound(3);
@@ -2783,9 +2783,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
     if (ArtsTable_getRowValue((SArts322BC*)(SArts322BC*)&self->mSubObj174, -1) >= 10) {
         char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                    lbl_eu_8050AC70 + 0x5b, 0x35);
-        sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-        sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-        sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
     } else if (ArtsTable_isRowSelectable((SArts322BC*)(SArts322BC*)&self->mSubObj174, -1) != 0) {
         u16 id;
         if (lbl_eu_806628A8[0] == 0 &&
@@ -2799,9 +2799,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
         }
         char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                    lbl_eu_8050AC70 + 0x5b, id);
-        sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-        sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-        sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
     } else {
         u16 pct = artsGetRowPct((SArts322BC*)(SArts322BC*)&self->mSubObj174, -1);
         if ((u32)ArtsCharList_getProgress((SArtsSub8022FA58*)&self->mSubObj124) >= pct) {
@@ -2809,9 +2809,9 @@ __declspec(noinline) void artsDriveMenu(CArtsList* self) {
         } else {
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, 0x34);
-            sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-            sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-            sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
         }
     }
     playUISound(3);
@@ -2920,13 +2920,13 @@ __declspec(noinline) u32 CArtsList::CMenuArtsSet_isSlotWindowEmpty() { return ((
 // shared arts archive path base (lbl_eu_8050AC70).
 // C-linkage + noinline: retail keeps a real bl from CMenuArtsSet_confirmLockedArt.
 extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CArtsList* self) {
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     char* base = lbl_eu_8050AC70;
     char* name = BdatTouchStringCell(base + 0x50, base + 0x5b, 0x3c);
-    sysWinSetKindContent((CSysWin*)&self->mSysWinE8, name, 0);
-    sysWinApplyKind((CSysWin*)&self->mSysWinE8, 1);
-    sysWinOpenPhase1((CSysWin*)&self->mSysWinE8);
+    reinterpret_cast<CSysWin*>(&self->mSysWinE8)->setKindContent(reinterpret_cast<char*>(name), 0);
+    reinterpret_cast<CSysWin*>(&self->mSysWinE8)->applyKind(1);
+    reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
     self->field_0x2A6 = 1;
 }
 
@@ -2942,7 +2942,7 @@ extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CArtsList* self) {
 __declspec(noinline) void CMenuArtsSet_confirmSelect(CArtsList* self) {
     u32 cur;
     int matched;
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     if (self->mSubObj148.field_0x22 != 0 && self->mSubObj174.field_0x12D == 0) {
         if (self->mSubObj148.field_0x20 == 4) return;
@@ -3036,7 +3036,7 @@ int CMenuArtsSet_isDemoLockedArt(SArts34D14* self) {
 // 0x148 sub-object / 0x168 mode / 0x16A flag state.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) u32 CMenuArtsSet_getHelpMode(CArtsList* self) {
-    if (CSysWin_getUnk34(&self->mSysWinE8) != 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return 0;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 0;
     if (self->mSubObj124.field_0x15 != 0) return 0x42;
     if (CMenuArtsSet_isListBusy((SArts34C84*)self) != 0) return 0x40;

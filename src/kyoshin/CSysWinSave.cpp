@@ -1,6 +1,7 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
 #include "kyoshin/CSysWinSave.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 // sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
 // (forward decl for kChainGaugeTwo, defined below after the pooling functions).
@@ -132,14 +133,14 @@ void CSysWinSave::HandleInput() {
     if (in1) {
         // Close the dialog without advancing the save slot.
         this->mFlagDC = 3;
-        sysWinAdvancePhase3(&this->mSysWin[0]);
-        Cur_SetVisible(&this->mCur18, 0);
+        reinterpret_cast<CSysWin*>(&this->mSysWin[0])->advancePhase3();
+        this->mCur18.SetVisible(0);
         playUISound(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         this->mFlagDC = 3;
-        sysWinAdvancePhase3(&this->mSysWin[0]);
-        Cur_SetVisible(&this->mCur18, 0);
+        reinterpret_cast<CSysWin*>(&this->mSysWin[0])->advancePhase3();
+        this->mCur18.SetVisible(0);
         this->mFlagDD = 1;
         playUISound(6);
     } else if (sels) {
@@ -147,7 +148,7 @@ void CSysWinSave::HandleInput() {
         this->mFlagDD = this->mFlagDD - 1;
         if (this->mFlagDD < 0) this->mFlagDD = 1;
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-        sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&this->mSysWin[0]), this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound(1);
     } else if (confirm) {
@@ -155,7 +156,7 @@ void CSysWinSave::HandleInput() {
         this->mFlagDD = this->mFlagDD + 1;
         if (this->mFlagDD > 1) this->mFlagDD = 0;
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-        sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&this->mSysWin[0]), this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound(1);
     }
@@ -183,10 +184,10 @@ void CSysWinSave::Init() {
     // Rebuild the embedded CSysWin: construct a temp (+2), copy its body
     // (non-vtable fields, matching retail's memberwise lwz/stw+lbz/stb), then
     // destroy the temp and dispatch the layout-build virtual at vtable+0x88.
-    u8 tempW[0x3C];
-    __ct__7CSysWinFUc(tempW, 2);
+    {
+    CSysWin tempW(2);
     CSysWinData* sw = reinterpret_cast<CSysWinData*>(&mSysWin[0]);
-    CSysWinData* tw = reinterpret_cast<CSysWinData*>(tempW);
+    CSysWinData* tw = reinterpret_cast<CSysWinData*>(&tempW);
     sw->f_04 = tw->f_04;
     sw->f_08 = tw->f_08;
     sw->f_0c = tw->f_0c;
@@ -205,7 +206,7 @@ void CSysWinSave::Init() {
     sw->f_37 = tw->f_37;
     sw->f_38 = tw->f_38;
     sw->f_39 = tw->f_39;
-    __dt__7CSysWinFv(tempW, -1);
+    }
     reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
 
     // Rebuild the embedded CCur18 cursor the same way (shared arc accessor).
@@ -231,7 +232,7 @@ void CSysWinSave::Move() {
     case 0: {
         // Window just became ready: load the three save-panel messages and
         // start the open animation.
-        if (CSysWin_isReady(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isReady()) {
             mFlagDC = 1;
             const char* base = lbl_eu_8050FD6C;
             // s2 declared before s1 (assignments stay in retail's call order)
@@ -241,20 +242,20 @@ void CSysWinSave::Move() {
             s1 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4e);
             s2 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x4f);
             const char* s3 = BdatTouchStringCell(base + 0xc, base + 0x17, 0x50);
-            sysWinSetKindContent(&mSysWin[0], (void*)s1, 0);
-            sysWinSetTwoTextValues(&mSysWin[0], (void*)s2, (void*)s3);
-            sysWinApplyKind(&mSysWin[0], 0);
-            sysWinOpenPhase1(&mSysWin[0]);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->setKindContent(reinterpret_cast<char*>((void*)s1), 0);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->setTwoTextValues(reinterpret_cast<char*>((void*)s2), reinterpret_cast<char*>((void*)s3));
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->applyKind(0);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->openPhase1();
         }
         break;
     }
     case 1:
         // Window active: update the cursor from the stored slot flag.
-        if (CSysWin_isActive(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
             mFlagDC = 2;
-            Cur_SetVisible(&mCur18, 1);
+            mCur18.SetVisible(1);
             u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
-            sysWinGetPaneScreenPos(tmp, &mSysWin[0], mFlagDD);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin[0]), mFlagDD);
             mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         }
         break;
@@ -264,7 +265,7 @@ void CSysWinSave::Move() {
         break;
     case 3:
         // Closing transition finished - hand control back to the UI.
-        if (CSysWin_isActive(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
             if (mFlagDD == 0)
                 CUICfManager_queueSaveMenu(1, 1);
             field_67 = 0;
@@ -273,8 +274,8 @@ void CSysWinSave::Move() {
         break;
     }
 
-    sysWinDispatchPhase(&mSysWin[0]);
-    Cur_Update(&mCur18);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->dispatchPhase();
+    mCur18.Update();
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +286,7 @@ void CSysWinSave::Move() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Term() {
     CDeviceVI::waitForDrawDone();
-    sysWinTermLayout(&mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
     mCur18.cleanup();
     mMemRegion.deleteRegion();
     lbl_eu_80664A08 = 0;
@@ -308,7 +309,7 @@ void CSysWinSave::Term() {
 extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
     if (_this != 0) {
         __dt__6CCur18Fv(&_this->mCur18, -1);
-        __dt__7CSysWinFv(&_this->mSysWin[0], -1);
+        reinterpret_cast<CSysWin*>(&_this->mSysWin[0])->CSysWin::~CSysWin();
         __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
         if (_this != 0) {
             if (_this != 0) {
@@ -347,8 +348,8 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    sysWinDrawLayout(&mSysWin[0], &drawInfo);
-    Cur_DrawLayout(&mCur18, &drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+    mCur18.DrawLayout(&drawInfo);
 }
 
 // ---------------------------------------------------------------------------

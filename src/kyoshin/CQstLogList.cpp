@@ -191,7 +191,7 @@ void CQstLogList::ToggleSort() {
         return;
     }
     if (mSortDescending != 0) {
-        Cur_SetVisible(&mCur18, 1);
+        mCur18.SetVisible(1);
         mSortMenu.Close();
         mSortDescending = 0;
         RefreshHeader();
@@ -210,7 +210,7 @@ void CQstLogList::ToggleSort() {
                       root->FindPaneByName(&s[0x33], true), root);
         mSortMenu.SetPos(&pos);
         FillSortMenu();
-        Cur_SetVisible(&mCur18, 1);
+        mCur18.SetVisible(1);
         mSortMenu.Open();
         mSortDescending = 1;
         MoveCursor();
@@ -223,7 +223,7 @@ void CQstLogList::ToggleSort() {
 // noinline: retail keeps this an out-of-line call from QstLogList_ApplySortSelection.
 __declspec(noinline) void CQstLogList::ConfirmSort(int flag) {
     if (mSortMenu.IsIdle() != 0) {
-        Cur_SetVisible(&mCur18, 1);
+        mCur18.SetVisible(1);
         mSortMenu.Close();
         mSortDescending = 0;
         RefreshHeader();
@@ -251,7 +251,7 @@ __declspec(noinline) void CQstLogList::StepSortAnim() {
     nw4r::lyt::AnimTransform* anim = mpAnim1;
     if (advanceAnimTransform(anim, frame) != 0) {
         field_0x174 = 3;
-        Cur_SetVisible(&mCur18, 1);
+        mCur18.SetVisible(1);
         MoveCursor();
         mSortEnabled = 1;
     }
@@ -702,7 +702,7 @@ void CQstLogList::Draw(nw4r::lyt::DrawInfo* drawInfo) {
         drawLayout(mpLayout, drawInfo, 0, 1);
         mScrollBar.draw(drawInfo);
         mSortMenu.Draw(drawInfo);
-        Cur_DrawLayout(&mCur18, drawInfo);
+        mCur18.DrawLayout(drawInfo);
     }
 }
 
@@ -781,7 +781,7 @@ void CQstLogList::FrameUpdate() {
             break;
         }
         mpLayout->Animate(0);
-        Cur_Update(&mCur18);
+        mCur18.Update();
         mScrollBar.UpdateDispatch();
         mSortMenu.Move();
     }
@@ -794,7 +794,7 @@ void CQstLogList::EndSortMode(int flag) {
         field_0x174 = 4;
         mSortEnabled = 0;
         ShowSortAnim();
-        Cur_SetVisible(&mCur18, 0);
+        mCur18.SetVisible(0);
         mScrollBar.requestScrollOut();
         if (flag != 0) {
             playUISound(6);

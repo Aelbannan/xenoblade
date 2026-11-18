@@ -200,14 +200,14 @@ int onPcArtsAttack(VMThread* pThread) {
         *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
     // Try selector 0xa against the sub-object's vtable slot +0x34 value.
-    u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
+    u32 val = *static_cast<u32*>(subObj->setStateBitMask2());
 
     bool matched = false;
     if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
-        val = *static_cast<u32*>(subObj->CObjectState_getStateData());
+        val = *static_cast<u32*>(subObj->getStateData());
         if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
@@ -320,14 +320,14 @@ int onEneArtsAttack(VMThread* pThread) {
         *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
     // Try selector 0xa against the sub-object's vtable slot +0x34 value.
-    u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
+    u32 val = *static_cast<u32*>(subObj->setStateBitMask2());
 
     bool matched = false;
     if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
-        val = *static_cast<u32*>(subObj->CObjectState_getStateData());
+        val = *static_cast<u32*>(subObj->getStateData());
         if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }

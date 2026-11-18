@@ -1,6 +1,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -55,7 +56,6 @@ extern "C" {
 // do not rename.) Forward decls for structs whose full definitions live in
 // the TU.
 
-extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
 extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
@@ -65,8 +65,6 @@ extern "C" u8 lbl_eu_8050F7CC[];
 extern "C" u32 lbl_eu_80662AD0;
 extern "C" s32 lbl_eu_80662AC8;
 extern "C" u32 lbl_eu_80662ACC;
-extern "C" int CSysWin_isActive(void*);
-extern "C" u32 CSysWin_isReady(void*);
 extern "C" void requestLandTelop();
 extern "C" void MenuUpdate_SignalGlobalField64();
 extern "C" void CMenuGetItem_SetField54();
@@ -75,27 +73,16 @@ extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
-extern "C" void Cur_Update(void*);   // CCur per-frame update
-extern "C" void sysWinDrawLayout(void*, void*);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
+// CCur per-frame update
 extern "C" void awardCollectCount(int val);
 extern "C" void awardQuestFlags(void);
 extern "C" u32 chkAwardFlags99(void);
 extern "C" u32 chkAwardFlags9B(void);
-extern "C" void sysWinAdvancePhase3(void*);
 extern "C" u8 bdatLookupRes(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
-extern "C" void sysWinApplyKind(void*, int);
-extern "C" void sysWinOpenPhase1(void*);
 extern "C" int isCollepediaId(int v);
 extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));
 extern "C" void DevFile_SetByteA9(int);
-extern "C" void sysWinTermLayout(void*);
 extern "C" void NandQueueChk860(int, void*);
 extern "C" void NandQueueLoadCk(int, void*);
 extern "C" void NandQueueSaveCk(int, void*, u8);
@@ -398,7 +385,7 @@ void CSaveLoad::update() {
         break;
     case 6:
         // Second window finished: drop back to the selection state
-        if (CSysWin_isActive(&mSysWinD4) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isActive() != 0) {
             mField121 = 3;
         }
         break;
@@ -421,9 +408,9 @@ void CSaveLoad::update() {
     mLayout->Animate(0);
     mCur.update();
     mScrollBar.UpdateDispatch();
-    sysWinDispatchPhase(&mSysWin98);
-    Cur_Update(&mCur40);
-    sysWinDispatchPhase(&mSysWinD4);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->dispatchPhase();
+    mCur40.Update();
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->dispatchPhase();
     mSub.update();
 }
 
@@ -435,14 +422,14 @@ void CSaveLoad::draw(nw4r::lyt::DrawInfo* drawInfo) {
     mScrollBar.draw(drawInfo);
 
     // Cursor pane is only drawn while both windows are idle
-    if (CSysWin_getUnk34(&mSysWin98) == 0 && CSysWin_getUnk34(&mSysWinD4) == 0 &&
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() == 0 && reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() == 0 &&
         mSub.mShown == 0 && mField121 <= 5) {
         mCur.draw(drawInfo);
     }
 
-    sysWinDrawLayout(&mSysWin98, drawInfo);
-    Cur_DrawLayout(&mCur40, drawInfo);
-    sysWinDrawLayout(&mSysWinD4, drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    mCur40.DrawLayout(drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
 
     if (mSub.mLayout != nullptr) {
         drawLayout(mSub.mLayout, drawInfo, 0, 1);
@@ -480,9 +467,9 @@ void CSaveLoad::reset() {
     
     mCur.destroy();
     mScrollBar.Teardown();
-    sysWinTermLayout(&mSysWin98);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->termLayout();
     mCur40.cleanup();
-    sysWinTermLayout(&mSysWinD4);
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->termLayout();
     mSub.destroy();
     mMemRegion.deleteRegion();
     lbl_eu_806649F4 = nullptr;
@@ -490,8 +477,8 @@ void CSaveLoad::reset() {
 
 int CSaveLoad::isReady() {
     if (!mScrollBar.isVisible()) return 0;
-    if (!CSysWin_isReady(&mSysWin98)) return 0;
-    if (!CSysWin_isReady(&mSysWinD4)) return 0;
+    if (!reinterpret_cast<CSysWin*>(&mSysWin98)->isReady()) return 0;
+    if (!reinterpret_cast<CSysWin*>(&mSysWinD4)->isReady()) return 0;
     if (!mData.isReady()) return 0;
     if (mSub.mShown != 0) return 0;
     return mField122;
@@ -503,8 +490,8 @@ int CSaveLoad::getIdle() { return mField123; }
 // or mSub.mShown if both windows are idle
 int CSaveLoad::isBusy() {
     if (mField121 != 3) return 1;
-    if (CSysWin_getUnk34(&mSysWin98) != 0) return 1;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return 1;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return 1;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return 1;
     return mSub.mShown;
 }
 
@@ -544,11 +531,11 @@ void CSaveLoad::close() {
 // Decrements cursor position with wrap-around logic for both rows and columns.
 void CSaveLoad::curUp() {
     if (mField121 != 3) return;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
     
-    if (CSysWin_getUnk34(&mSysWin98) != 0) {
-        if (CSysWin_isActive(&mSysWin98) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() == 0) return;
         
         // Decrement mField128 with wrap from 0 to 1
         u8 val = mField128 - 1;
@@ -600,11 +587,11 @@ normalPath:
 // Increments cursor position with wrap-around logic.
 void CSaveLoad::curDown() {
     if (mField121 != 3) return;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
     
-    if (CSysWin_getUnk34(&mSysWin98) != 0) {
-        if (CSysWin_isActive(&mSysWin98) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() == 0) return;
         
         u8 val = mField128 + 1;
         mField128 = val;
@@ -653,8 +640,8 @@ updatePath:
 // with underflow handling. Otherwise reset cursor to 0.
 void CSaveLoad::pageUp() {
     if (mField121 != 3) return;
-    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
 
     if ((s32)lbl_eu_80662AC8 >= 3) {
@@ -682,8 +669,8 @@ void CSaveLoad::pageUp() {
 // Page-down / advance the save-slot cursor by one entry (wraps every 3 rows).
 void CSaveLoad::pageDown() {
     if (mField121 != 3) return;
-    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
 
     if ((s32)lbl_eu_80662AC8 >= 3) {
@@ -722,24 +709,24 @@ void CSaveLoad::confirm() {
     char* s2;
     char* s3;
 
-    if (CSysWin_getUnk34(&mSysWin98) != 0) {
-        if (CSysWin_isActive(&mSysWin98) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() != 0) {
             if ((s8)mField128 == 0) {
                 playUISound(3);
             } else {
                 playUISound(6);
                 mField12C = 0;
             }
-            sysWinAdvancePhase3(&mSysWin98);
-            Cur_SetVisible(&mCur40, 0);
+            reinterpret_cast<CSysWin*>(&mSysWin98)->advancePhase3();
+            mCur40.SetVisible(0);
             mField121 = 7;
         }
         return;
     }
 
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) {
-        if (CSysWin_isActive(&mSysWinD4) != 0) {
-            sysWinAdvancePhase3(&mSysWinD4);
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isActive() != 0) {
+            reinterpret_cast<CSysWin*>(&mSysWinD4)->advancePhase3();
             mField121 = 9;
             if (mField12C != 0) {
                 mField12C = 0;
@@ -772,10 +759,10 @@ noCursor:
     s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
 
 common:
-    sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
-    sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
-    sysWinApplyKind(&mSysWin98, 0);
-    sysWinOpenPhase1(&mSysWin98);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->setTwoTextValues(reinterpret_cast<char*>((u32)s2), reinterpret_cast<char*>((u32)s3));
+    reinterpret_cast<CSysWin*>(&mSysWin98)->applyKind(0);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->openPhase1();
     mField128 = 1;
     mField121 = 6;
     playUISound(3);
@@ -784,11 +771,11 @@ common:
 // Handle window close event: if the first syswin is active and ready,
 // close it, reset the sub-object state, and update status fields
 void CSaveLoad::cancel() {
-    if (CSysWin_getUnk34(&mSysWin98) == 0) return;
-    if (CSysWin_isActive(&mSysWin98) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() == 0) return;
 
-    sysWinAdvancePhase3(&mSysWin98);
-    Cur_SetVisible(&mCur40, 0);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->advancePhase3();
+    mCur40.SetVisible(0);
 
     mField121 = 7;
     mField128 = 1;
@@ -800,18 +787,18 @@ int CSaveLoad::getDone() { return mField12A; }
 // Open the delete-confirm window for the selected slot.
 void CSaveLoad::openDel() {
     if (mField121 != 3) return;
-    if (CSysWin_getUnk34(&mSysWin98) != 0) return;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
     if (mData.getSlot(mField124) == 0) return;
 
     char* s1 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3b);
     char* s2 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3c);
     char* s3 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3d);
-    sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
-    sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
-    sysWinApplyKind(&mSysWin98, 0);
-    sysWinOpenPhase1(&mSysWin98);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->setTwoTextValues(reinterpret_cast<char*>((u32)s2), reinterpret_cast<char*>((u32)s3));
+    reinterpret_cast<CSysWin*>(&mSysWin98)->applyKind(0);
+    reinterpret_cast<CSysWin*>(&mSysWin98)->openPhase1();
     mField128 = 1;
     mField12C = 1;
     mField121 = 6;
@@ -825,8 +812,8 @@ void CSaveLoad::openDel() {
 // 0x6B = ready (has cursor, mField129 != 0) - CSLCur_getSlot returns > 0
 u8 CSaveLoad::getHelpKind() {
     if (mField121 != 3) return 0;
-    if (CSysWin_getUnk34(&mSysWin98) != 0) return 0;
-    if (CSysWin_getUnk34(&mSysWinD4) != 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) return 0;
+    if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return 0;
     if (mSub.mShown != 0) return 0;
 
     if (mField129 != 0) {
@@ -871,9 +858,9 @@ __declspec(noinline) void CSaveLoad::tickCloseA() {
 }
 
 __declspec(noinline) void CSaveLoad::tickConf() {
-    if (CSysWin_isActive(&mSysWin98) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() != 0) {
         mField121 = 3;
-        Cur_SetVisible(&mCur40, 1);
+        mCur40.SetVisible(1);
         refresh();
     }
 }
@@ -881,7 +868,7 @@ __declspec(noinline) void CSaveLoad::tickConf() {
 // Handle save/load operation execution (state 5).
 // Checks window state, cursor status, and dispatches to delete/load/save logic.
 __declspec(noinline) void CSaveLoad::execOp() {
-    if (CSysWin_isActive(&mSysWin98) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() == 0) return;
 
     mField121 = 3;
     if ((s8)mField128 != 0) return;
@@ -943,7 +930,7 @@ __declspec(noinline) void CSaveLoad::execOp() {
 }
 
 __declspec(noinline) void CSaveLoad::finish() {
-    if (!CSysWin_isActive(&mSysWinD4)) return;
+    if (!reinterpret_cast<CSysWin*>(&mSysWinD4)->isActive()) return;
 
     if (mField129 == 0) goto setError3;
     if (mField12D == 0) goto setError3;
@@ -998,15 +985,15 @@ __declspec(noinline) void CSaveLoad::tickWindow() {
         goto clear12E;
 win54:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
-        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&mSysWinD4, 1);
-        sysWinOpenPhase1(&mSysWinD4);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
         goto clear12E;
 win55:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
-        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&mSysWinD4, 1);
-        sysWinOpenPhase1(&mSysWinD4);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
         goto clear12E;
 threeString:
         // 3-string path: update syswin 0x98 with strings
@@ -1021,10 +1008,10 @@ threeString:
         // Single call site
         s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2],
                                   msgIdx);
-        sysWinSetKindContent(&mSysWin98, (u32)s1, 0);
-        sysWinSetTwoTextValues(&mSysWin98, (u32)s2, (u32)s3);
-        sysWinApplyKind(&mSysWin98, 0);
-        sysWinOpenPhase1(&mSysWin98);
+        reinterpret_cast<CSysWin*>(&mSysWin98)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+        reinterpret_cast<CSysWin*>(&mSysWin98)->setTwoTextValues(reinterpret_cast<char*>((u32)s2), reinterpret_cast<char*>((u32)s3));
+        reinterpret_cast<CSysWin*>(&mSysWin98)->applyKind(0);
+        reinterpret_cast<CSysWin*>(&mSysWin98)->openPhase1();
         mField128 = 1;
         mField12C = 1;
         mField121 = 6;
@@ -1038,18 +1025,18 @@ clear12E:
         DevFile_SetByteA9(1);
         CLibHbm::setHbmStopFlag(false);
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
-        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&mSysWinD4, 1);
-        sysWinOpenPhase1(&mSysWinD4);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
         playUISound(0x7A);
         return;
     }
 
     if (mField129 != 0) {
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
-        sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
-        sysWinApplyKind(&mSysWinD4, 1);
-        sysWinOpenPhase1(&mSysWinD4);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
         lbl_eu_80662ACC = (u32)(s8)mField124;
         mField12D = 1;
         playUISound(0x28);
@@ -1064,9 +1051,9 @@ clear12E:
     DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
     s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
-    sysWinSetKindContent(&mSysWinD4, (u32)s1, 0);
-    sysWinApplyKind(&mSysWinD4, 1);
-    sysWinOpenPhase1(&mSysWinD4);
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
+    reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
     lbl_eu_80662ACC = (u32)(s8)mField124;
     playUISound(0x28);
 }
@@ -1094,10 +1081,10 @@ __declspec(noinline) void CSaveLoad::enAnimB() {
 
 // Refresh cursor/button display state for the save/load screen.
 __declspec(noinline) void CSaveLoad::refresh() {
-    if (CSysWin_getUnk34(&mSysWin98) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
-        sysWinGetPaneScreenPos(btnBuf, &mSysWin98, mField128);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(btnBuf), reinterpret_cast<CSysWin*>(&mSysWin98), mField128);
         mCur40.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(btnBuf));
     } else {
         char* strBase = (char*)&lbl_eu_8050F7CC;

@@ -42,7 +42,7 @@ void sftim_Tc2Time29N(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time29D(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time59N(s32, void*, s32*, s32*, s32);
 void sftim_Tc2Time59D(s32, void*, s32*, s32*, s32);
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl_eu_8051CC20[30] = {
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl_eu_8051CC20[18] = {
     0, 0,
     (unsigned int)sftim_Tc2Time23N, (unsigned int)sftim_Tc2Time23D,
     (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
@@ -50,7 +50,6 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl
     (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
     (unsigned int)sftim_Tc2Time59N, (unsigned int)sftim_Tc2Time59D,
     (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
-    0x3ECCCCCD, 0x3F000000, 0x3F800000, 0x3F400000, 0x3F8CCCCD, 0x3FC00000, 0x400CCCCD, 0x401CCCCD, 0x40300000, 0x40600000, 0x43300000, 0x80000000
 };
 
 /* Forward declarations for function pointers */
@@ -344,52 +343,51 @@ void SFTIM_InitTtu(void* self, int val) {
 
 void SFTIM_UpdateItime(void* self, s32 itime) {
     u8* p = (u8*)self;
-    s32 lastItime = *(s32*)(p + 0x298);
+    s32 delta;
+    s32 target;
+    s32 newMin;
+    s32 prevMin;
+    s32 newMax;
+    s32 prevMax;
+    s32 diff;
+    s32 lastItime;
 
+    lastItime = *(s32*)(p + 0x298);
     if (lastItime == -5) {
         *(s32*)(p + 0x298) = itime;
         return;
     }
-
-    s32 diff = itime - lastItime;
+    diff = itime - lastItime;
     if (diff == 0) {
         return;
     }
-
-    s32 prevMax = *(s32*)(p + 0x2A0);
-    s32 newMax = diff;
+    prevMax = *(s32*)(p + 0x2A0);
+    newMax = diff;
     *(s32*)(p + 0x298) = itime;
     if (prevMax > diff) {
         newMax = prevMax;
     }
-
-    s32 prevMin = *(s32*)(p + 0x2A4);
-    s32 newMin = diff;
+    prevMin = *(s32*)(p + 0x2A4);
+    newMin = diff;
     *(s32*)(p + 0x2A0) = newMax;
     if (prevMin < diff) {
         newMin = prevMin;
     }
-
-    s32 target = *(s32*)(p + 0x29C);
+    target = *(s32*)(p + 0x29C);
     *(s32*)(p + 0x2A4) = newMin;
-
     if (target == 0x7FFFFFFF) {
         *(s32*)(p + 0x29C) = diff;
         return;
     }
-
     if (target <= diff) {
         *(s32*)(p + 0x29C) = diff;
         return;
     }
-
-    {
-        s32 delta = (target - diff) / 8;
-        if (delta != 0) {
-            *(s32*)(p + 0x29C) = target - delta;
-        } else {
-            *(s32*)(p + 0x29C) = diff;
-        }
+    delta = (target - diff) / 8;
+    if (delta != 0) {
+        *(s32*)(p + 0x29C) = target - delta;
+    } else {
+        *(s32*)(p + 0x29C) = diff;
     }
 }
 
@@ -410,11 +408,11 @@ void SFTIM_VbIn(void) {
     u32** ppHn;
     s32 i;
     void* h;
+    u8* cb;
     s32 timeVal;
     s32 timeUnit;
     u32 csB;
     u32 csA;
-    u8* cb;
 
     wk = (u8*)lbl_eu_80606E38;
     ppHn = (u32**)(wk + 0x1FC);
@@ -502,11 +500,7 @@ void SFTIM_VbIn(void) {
                     *(void**)(cb + 0x0C) = h;
                     *(void**)(cb + 0x18) = &timeVal;
                     *(void**)(cb + 0x24) = &timeUnit;
-                    {
-                        /* Virtual dispatch: obj->vtable[9](obj, &cb.args) */
-                        u32* vtbl = *(u32**)lbl_eu_80606E34;
-                        ((void (*)(void*, void*))vtbl[9])(lbl_eu_80606E34, cb + 4);
-                    }
+                    ((void (*)(void*, void*))(*(u32**)lbl_eu_80606E34)[9])(lbl_eu_80606E34, cb + 4);
                 }
             }
             *(s32*)(hp + 0x50) = 1;
@@ -532,9 +526,7 @@ s32 SFTIM_IsStagnant(void* self) {
                 num = *(s32*)(p + 0x1044) - base;
                 den = *(s32*)(lbl_eu_80606E38 + 0x1A8);
             } else {
-                s32 cur = *(s32*)(p + 0x1084);
-                s32 base = *(s32*)(p + 0x1070);
-                num = cur - base;
+                num = *(s32*)(p + 0x1084) - *(s32*)(p + 0x1070);
                 den = *(s32*)(p + 0x1088);
             }
             {
@@ -621,9 +613,18 @@ s32 SFD_GetTime(void* self, s32* out1, s32* out2) {
     return 0;
 }
 
+/* Sample-rate conversion block (used when the requester unit is not the
+ * native one): mode/numerator/denominator triple. */
+typedef struct SftimConv {
+    s32 mode;    /* 0x00 */
+    u8 pad_0x04[0x20];
+    s32 num;     /* 0x24 */
+    s32 den;     /* 0x28 */
+} SftimConv;
+
 s32 SFTIM_GetTimeSub(void* self, s32* out1, s32* out2) {
     u8* p = (u8*)self;
-    u8* conv = p + 0xEB0;
+    SftimConv* conv = (SftimConv*)(p + 0xEB0);
 
     *out1 = *(s32*)(p + 0x1028);
     {
@@ -635,8 +636,8 @@ s32 SFTIM_GetTimeSub(void* self, s32* out1, s32* out2) {
         if (unit == *(s32*)(p + 0xEE0)) {
             *out1 += *(s32*)(p + 0xEDC);
         } else {
-            if (*(s32*)conv != 0) {
-                *out1 += UTY_MulDiv(*(s32*)(conv + 0x24), unit, *(s32*)(conv + 0x28));
+            if (conv->mode != 0) {
+                *out1 += UTY_MulDiv(conv->num, unit, conv->den);
             }
         }
     }
@@ -792,12 +793,12 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
 
 int SFTIM_ChkRegularTime(const void *tim, int *a2, int *a3) {
     int val = *(const int *)((const char *)tim + 0x54);
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        return 1;
+    if (val != 4 && val != -4 && val != 6 && val != -6) {
+        *a2 = -1;
+        *a3 = 1;
+        return 0;
     }
-    *a2 = -1;
-    *a3 = 1;
-    return 0;
+    return 1;
 }
 
 s32 SFD_SetUsrIsSkipFn(void* self, void* fn) {
@@ -839,8 +840,8 @@ void SFTIM_SetTimeFn(void* self, void* fn, u32 idx) {
 
 void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
     s32 format = *(s32*)tcdata;
-    s32 sub = *(s32*)((u8*)tcdata + 4);
-    Tc2TimeFn fn = *(Tc2TimeFn*)((u8*)lbl_eu_8051CC20 + format * 8 + sub * 4);
+    Tc2TimeFn fn = *(Tc2TimeFn*)((u8*)lbl_eu_8051CC20 + format * 8 + *(s32*)((u8*)tcdata + 4) * 4);
+    s32 rate;
 
     if (fn == NULL) {
         SFLIB_SetErr(0, 0xFF000221);
@@ -848,8 +849,12 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
         *out2 = 1;
         return;
     }
-
-    fn(lbl_eu_8051CBF8[format], tcdata, out1, out2, (format == 1) ? 4 : 10);
+    /* 23.976/29.97 timecode counts 4 fields per frame, the integer rates 10 */
+    rate = 10;
+    if (format == 1) {
+        rate = 4;
+    }
+    fn(lbl_eu_8051CBF8[format], tcdata, out1, out2, rate);
 }
 
 /* Timecode conversion helpers. Drop-frame variants add (min/10)*2 dropped
@@ -875,31 +880,40 @@ void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     /* Division kept ahead of the frame sum so every field stays live at the
      * divw, matching retail's callee-saved allocation of the quotient. */
     s32 val;
+    s32 frameSum;
     val = fps * (sec + min * 60 + hour * 3600);
     field = *(s16*)((u8*)tcdata + 0x1E);
-    *out1 = val + unit * (frame + frame2) + field * (unit / 2);
+    frameSum = frame + frame2;
+    *out1 = val + frameSum * unit + field * (unit / 2);
     *out2 = fps;
 }
 
 void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
-    u8* td = (u8*)tcdata;
-    s32 unit60 = 24000;
+    register s32 unit60 = 24000;
+    register s32 unit = 1000;
+    s32 fps;
+    s32 min;
+    s32 hour;
+    s32 sec;
+    s32 frame;
+    s32 frame2;
+    s16 field;
+    s32 val;
+    s32 frameSum;
+
     unit60 /= rate;
-    s32 unit = 1000;
     unit /= rate;
-    s32 min = *(s32*)(td + 0xC);
-    s32 hour = *(s32*)(td + 0x8);
-    s32 sec = *(s32*)(td + 0x10);
-    s32 frame = *(s32*)(td + 0x14);
-    s32 frame2 = *(s32*)(td + 0x18);
-    s32 totalSec = sec + min * 60 + hour * 3600;
-    s32 half = unit / 2;
-    s32 totalFrame = frame + frame2;
-    s32 time = totalSec * unit60;
-    time += totalFrame * unit;
-    time += *(s16*)(td + 0x1E) * half;
-    *out1 = time;
-    *out2 = tc / rate;
+    fps = tc / rate;
+    min = *(s32*)((u8*)tcdata + 0xC);
+    hour = *(s32*)((u8*)tcdata + 0x8);
+    sec = *(s32*)((u8*)tcdata + 0x10);
+    frame = *(s32*)((u8*)tcdata + 0x14);
+    frame2 = *(s32*)((u8*)tcdata + 0x18);
+    val = (sec + min * 60 + hour * 3600) * unit60;
+    field = *(s16*)((u8*)tcdata + 0x1E);
+    frameSum = frame + frame2;
+    *out1 = val + frameSum * unit + field * (unit / 2);
+    *out2 = fps;
 }
 
 void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
@@ -1073,7 +1087,7 @@ void SFTIM_Pause(void* self, s32 mode) {
 void SFTIM_GetTimeOneFrmVideo(void* self, int* out1, int* out2) {
     int fps = *(int*)((u8*)self + 0x930);
     if (fps == 0) {
-        *out1 = fps;
+        *out1 = 0;
         *out2 = 0x7512;
     } else {
         *out1 = 1000;
@@ -1320,15 +1334,10 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
 }
 
 void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
-    /* Ratio of frame duration to vsync interval picks the playback cycle.
-     * NOTE: retail loads every constant (thresholds 0.4/0.75/../3.5, the
-     * 0.5 rounding bias, and the 0x4330000080000000 s32->f32 conversion
-     * magic) from the shared rodata blob lbl_eu_8051CBF8+0x70..0x98;
-     * MWCC (GC/3.0a5.2) pools them TU-locally and the manual-bias reshape
-     * (MWCC_PATTERNS 7i) schedules worse under this toolchain, so the
-     * literal form below is the closest reachable shape. */
-    f32 vsyncFreq = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4);
-    f32 ratio = vsyncFreq / (f32)fps;
+    /* The playback cycle is picked from the ratio of the vsync interval to the
+     * frame duration; MWCC pools the ten thresholds and the 0x4330000080000000
+     * s32->f32 magic double right after the tc2time jump table in .rodata. */
+    f32 ratio = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4) / (f32)fps;
 
     if (ratio < 0.4f) {
         *out1 = (s32)(0.5f + 1.0f / ratio);

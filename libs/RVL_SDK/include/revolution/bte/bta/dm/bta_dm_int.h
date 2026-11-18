@@ -71,8 +71,8 @@ struct bta_dm_pin_reply_msg_t {
 struct bta_dm_auth_reply_msg_t {
     struct bta_dm_hdr_t hdr;        /* 0x00 */
     unsigned char bd_addr[6];       /* 0x08-0x0d */
-    unsigned char srv_id;           /* 0x0e */
-    unsigned char accept;           /* 0x0f */
+    unsigned char service;          /* 0x0e (BTA service id) */
+    unsigned char response;         /* 0x0f (BTA_DM_AUTH_PERM / BTA_DM_NOT_AUTH) */
 };
 
 /* tBTA_DM_API_SEARCH */
@@ -90,6 +90,15 @@ struct bta_dm_search_msg_t {
     unsigned char _pad[2];          /* 0x12-0x13 */
     unsigned int services;          /* 0x14 */
     void *p_cback;                  /* 0x18 */
+};
+
+/* tBTA_DM_API_DISCOVER: BT_HDR + bd_addr, 32-bit service mask, app callback */
+struct bta_dm_discover_msg_t {
+    struct bta_dm_hdr_t hdr;        /* 0x00 */
+    unsigned char bd_addr[6];       /* 0x08-0x0d */
+    unsigned short _pad;            /* 0x0e-0x0f */
+    unsigned int services;          /* 0x10 */
+    void *p_cback;                  /* 0x14 */
 };
 
 /* tBTA_DM_API_SIG_STRENGTH */
@@ -168,6 +177,7 @@ struct bta_dm_msg {
         struct bta_dm_pin_reply_msg_t pin_reply;        /* tBTA_DM_API_PIN_REPLY */
         struct bta_dm_auth_reply_msg_t auth_reply;      /* tBTA_DM_API_AUTH_REPLY */
         struct bta_dm_search_msg_t search;              /* tBTA_DM_API_SEARCH */
+        struct bta_dm_discover_msg_t discover;          /* tBTA_DM_API_DISCOVER */
         struct bta_dm_sig_strength_msg_t sig_strength;  /* tBTA_DM_API_SIG_STRENGTH */
         struct bta_dm_inq_cmpl_msg_t inq_cmpl;          /* BTA_DM_INQUIRY_CMPL_EVT */
         struct bta_dm_sdp_result_msg_t sdp_result;      /* BTA_DM_SDP_RESULT_EVT */

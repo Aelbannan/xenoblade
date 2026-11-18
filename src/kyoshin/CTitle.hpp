@@ -107,8 +107,6 @@ extern CTitleMenuStateFn lbl_eu_8053B220[];
 extern "C" __declspec(noinline) CTitleLogo* __ct__CTitleLogo(CTitleLogo* self);
 extern "C" __declspec(noinline) CTitleMenu* __ct__CTitleMenu(CTitleMenu* self);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-extern "C" void Cur_SetVisible(void* pCur, u8 val);
-extern "C" void Cur_Update(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).

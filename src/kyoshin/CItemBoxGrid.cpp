@@ -45,14 +45,9 @@
 // TU decls keep the retail names (identical decls need no guard).
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
-#define sysWinApplyKind sysWinApplyKind_csys_dup
-#define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
 #include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
-#undef sysWinApplyKind
-#undef sysWinSwitchKindPane
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <stdio.h>
@@ -81,7 +76,6 @@ void CopyTabSlotVec(u32*, void*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
-void sysWinTermLayout(void*);
 // .sdata2 conversion magics referenced by ((CItemBoxGridFull*)(retail pool
 // constants; F48 = signed-int magic 0x4330000080000000))->GetItemValueFloat(F40 = plain 2^52).
 extern const double lbl_eu_80667F40;
@@ -2791,7 +2785,7 @@ void CItemBoxGrid::UpdateItemBox() {
             HandleSysWinOK();
             break;
         case 24:
-            if (CSysWin_isActive(p + 0x4e8)) {
+            if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) {
                 ((CItemBoxGridHeadView*)p)->field_58 = 0x13;
             }
             break;
@@ -2805,19 +2799,19 @@ void CItemBoxGrid::UpdateItemBox() {
     nw4r::lyt::Layout* layout = ((CItemBoxGridHeadView*)p)->field_44;
     layout->Animate(0);
 
-    Cur_Update(p + 0x70);
-    Cur_Update(p + 0x88);
-    Cur_Update(p + 0xa0);
-    Cur_Update(p + 0xb8);
-    Cur_Update(p + 0xd0);
+    ((CBaseCur*)(p + 0x70))->Update();
+    ((CBaseCur*)(p + 0x88))->Update();
+    ((CBaseCur*)(p + 0xa0))->Update();
+    ((CBaseCur*)(p + 0xb8))->Update();
+    ((CBaseCur*)(p + 0xd0))->Update();
     ((CSortMenu*)(p + 0xe8))->Move();
     ((CItemBoxInfo*)(p + 0x1d8))->UpdateAnims();
     reinterpret_cast<CNumSelect*>(p + 0x3e4)->UpdateStates();
     ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_Move();
     ((CExchangeWin*)(p + 0x440))->ExWin_TickUpdate();
     updatePresentWin(p + 0x468);
-    sysWinDispatchPhase(p + 0x4ac);
-    sysWinDispatchPhase(p + 0x4e8);
+    reinterpret_cast<CSysWin*>(p + 0x4ac)->dispatchPhase();
+    reinterpret_cast<CSysWin*>(p + 0x4e8)->dispatchPhase();
 }
 
 // Draw callback: update the exchange/num-select widgets, then draw the
@@ -2834,19 +2828,19 @@ void CItemBoxGrid::DrawItemBoxGrid(nw4r::lyt::DrawInfo* drawInfo) {
     u8 r = p[0x2d4f];
     u8 v = (r != 0) ? r : 1;
     if ((u32)v > 1) {
-        Cur_DrawLayout(p + 0x88, (void*)drawInfo);
+        ((CBaseCur*)(p + 0x88))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     }
 
     ((CSortMenu*)(p + 0xe8))->Draw((nw4r::lyt::DrawInfo*)drawInfo);
     ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_DrawLayoutGated(drawInfo);
     ((CExchangeWin*)(p + 0x440))->ExWin_DrawLayout(drawInfo);
-    sysWinDrawLayout(p + 0x4ac, (void*)drawInfo);
-    sysWinDrawLayout(p + 0x4e8, (void*)drawInfo);
+    reinterpret_cast<CSysWin*>(p + 0x4ac)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>((void*)drawInfo));
+    reinterpret_cast<CSysWin*>(p + 0x4e8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>((void*)drawInfo));
     drawPresentWin(p + 0x468, drawInfo);
-    Cur_DrawLayout(p + 0xd0, (void*)drawInfo);
-    Cur_DrawLayout(p + 0x70, (void*)drawInfo);
-    Cur_DrawLayout(p + 0xa0, (void*)drawInfo);
-    Cur_DrawLayout(p + 0xb8, (void*)drawInfo);
+    ((CBaseCur*)(p + 0xd0))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
+    ((CBaseCur*)(p + 0x70))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
+    ((CBaseCur*)(p + 0xa0))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
+    ((CBaseCur*)(p + 0xb8))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     reinterpret_cast<CNumSelect*>(p + 0x3e4)->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
 }
 
@@ -2909,8 +2903,8 @@ void CItemBoxGrid::UnloadItemBox() {
     ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_TermLayout();
     ((CExchangeWin*)(p + 0x440))->ExWin_Teardown();
     termPresentWin(p + 0x468);
-    sysWinTermLayout(p + 0x4ac);
-    sysWinTermLayout(p + 0x4e8);
+    reinterpret_cast<CSysWin*>(p + 0x4ac)->termLayout();
+    reinterpret_cast<CSysWin*>(p + 0x4e8)->termLayout();
 }
 
 // Check if item grid is fully ready.
@@ -2920,8 +2914,8 @@ u32 CItemBoxGrid::IsItemBoxReady() {
     if (!((CItemBoxInfo*)(p + 0x1d8))->GetState()) return 0;
     if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsLoaded()) return 0;
     if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
-    if (!CSysWin_isReady(p + 0x4ac)) return 0;
-    if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
+    if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isReady()) return 0;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isReady()) return p[0x60];
     return 0;
 }
 
@@ -2930,15 +2924,15 @@ u32 CItemBoxGrid::IsItemBoxReady() {
 u32 CItemBoxGrid::IsItemBoxActive() {
     u8* p = (u8*)this;
     if (p[0x528]) return 1;
-    if (CSysWin_getUnk34(p + 0x4ac)) return 1;
-    if (CSysWin_getUnk34(p + 0x4e8)) return 1;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return 1;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return 1;
     if (p[0x544]) return 1;
     return ((CSortMenu*)(p + 0xe8))->IsOpen();
 }
 
 // Get field depending on window state.
 int CItemBoxGrid::GetIdleFlag542() {
-    if (CSysWin_getUnk34(((CibgOuterSlots*)this)->m4E8)) return 0;
+    if (reinterpret_cast<CSysWin*>(((CibgOuterSlots*)this)->m4E8)->isOpened()) return 0;
     s32 state = (s32)((CItemBoxGridHeadView*)this)->field_58;
     if (state != 3) return 0;
     return ((CItemBoxGridHeadView*)this)->field_542;
@@ -2953,8 +2947,8 @@ u32 CItemBoxGrid::IsSubWinActive() {
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return 1;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
     if (isPresentActive(p + 0x468)) return 1;
-    if (CSysWin_getUnk34(p + 0x4ac)) return 1;
-    return CSysWin_getUnk34(p + 0x4e8);
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return 1;
+    return reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened();
 }
 
 // Initialize item display state. `item` (GetCellItemPtr result) is declared
@@ -2978,7 +2972,7 @@ void CItemBoxGrid::InitItemDisplay() {
     ((CItemBoxInfo*)(p + 0x1D8))->SetItem(r2 & 0xFFFF, (void*)item, 1);
     u32 v = ((CItemBoxGridFull*)(sub))->FormatCellName(entry_idx);
     ((CItemBoxInfo*)((void*)(p + 0x1D8)))->SetNamedText(1, (char*)v);
-    Cur_SetVisible(p + 0xB8, 0);
+    ((CBaseCur*)(p + 0xB8))->SetVisible(0);
     p[0x549] = 0;
     if (p[0x527] == 4) ((CItemBoxInfo*)(p + 0x1D8))->SetResultPane(1);
 }
@@ -2993,10 +2987,10 @@ void CItemBoxGrid::AdvanceBoxState() {
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 1);
     ((CItemBoxGridHeadView*)p)->field_61 = 0;
-    Cur_SetVisible(p + 0x70, 0);
-    Cur_SetVisible(p + 0x88, 0);
-    Cur_SetVisible(p + 0xd0, 0);
-    Cur_SetVisible(p + 0xb8, 0);
+    ((CBaseCur*)(p + 0x70))->SetVisible(0);
+    ((CBaseCur*)(p + 0x88))->SetVisible(0);
+    ((CBaseCur*)(p + 0xd0))->SetVisible(0);
+    ((CBaseCur*)(p + 0xb8))->SetVisible(0);
     ((CItemBoxInfo*)(p + 0x1d8))->Close();
     if (!((CItemBoxGridHeadView*)p)->field_52C) playUISound(6);
 }
@@ -3056,8 +3050,8 @@ __declspec(noinline) void CItemBoxGrid::DecListIndex() {
 void CItemBoxGrid::GridMoveCursorLeft() {
     u8* p = (u8*)this;
     if (p[0x542]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) {
-        if (CSysWin_isActive(p + 0x4ac)) {
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) {
             p[0x540] -= 1;
             if ((s8)p[0x540] < 0) p[0x540] = 1;
             UpdateCursors();
@@ -3065,7 +3059,7 @@ void CItemBoxGrid::GridMoveCursorLeft() {
         }
         return;
     }
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) {
         if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) {
             ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_MoveSelectionPrev();
@@ -3202,8 +3196,8 @@ void CItemBoxGrid::GridMoveCursorRight() {
     u32 entry;
     u8* p = (u8*)this;
     if (p[0x542]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) {
-        if (!CSysWin_isActive(p + 0x4ac)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) {
+        if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) return;
         // blink counter wraps to 0 after reaching 1
         u8 val = p[0x540] + 1;
         p[0x540] = val;
@@ -3212,7 +3206,7 @@ void CItemBoxGrid::GridMoveCursorRight() {
         playUISound(1);
         return;
     }
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) {
         if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) {
             ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_MoveSelectionNext();
@@ -3315,8 +3309,8 @@ void CItemBoxGrid::GridMoveCursorDown() {
     u8* sub;
     u8* p = (u8*)this;
     if (p[0x542]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) {
         if (!isPresentSettled(p + 0x468)) return;
@@ -3400,8 +3394,8 @@ void CItemBoxGrid::GridMoveCursorUp() {
     u8* sub;
     u8* p = (u8*)this;
     if (p[0x542]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) {
         if (!isPresentSettled(p + 0x468)) return;
@@ -3484,8 +3478,8 @@ __declspec(noinline) void CItemBoxGrid::NextGridPage() {
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) return;
     sub = p + 0x54c;
@@ -3508,8 +3502,8 @@ __declspec(noinline) void CItemBoxGrid::PrevGridPage() {
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) return;
     sub = p + 0x54c;
@@ -3528,13 +3522,13 @@ __declspec(noinline) void CItemBoxGrid::PrevGridPage() {
 // the epilogue), so express the checks as one && chain.
 void CItemBoxGrid::OpenSortMenu() {
     u8* p = (u8*)this;
-    if (!((CItemBoxGridHeadView*)p)->field_542 && !((CItemBoxGridHeadView*)p)->field_528 && !CSysWin_getUnk34(p + 0x4ac) &&
-        !CSysWin_getUnk34(p + 0x4e8) && !((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag() &&
+    if (!((CItemBoxGridHeadView*)p)->field_542 && !((CItemBoxGridHeadView*)p)->field_528 && !reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened() &&
+        !reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened() && !((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag() &&
         !isPresentActive(p + 0x468) && !((CItemBoxGridHeadView*)p)->field_544) {
         if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
             if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
             UpdateCursors();
-            Cur_SetVisible(p + 0xa0, 0);
+            ((CBaseCur*)(p + 0xa0))->SetVisible(0);
             ((CSortMenu*)(p + 0xe8))->Close();
             playUISound(6);
             return;
@@ -3556,9 +3550,9 @@ void CItemBoxGrid::OpenSortMenu() {
         ((CSortMenu*)(p + 0xe8))->SetSelect((u8)(((CItemBoxGridHeadView*)p)->field_547 + ((CItemBoxGridHeadView*)p)->field_548));
         nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
-        Cur_SetVisible(p + 0xa0, 1);
-        Cur_SetVisible(p + 0x70, 0);
-        Cur_SetVisible(p + 0xb8, 0);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
+        ((CBaseCur*)(p + 0xb8))->SetVisible(0);
         ((CSortMenu*)(p + 0xe8))->Open();
         ((CItemBoxGridHeadView*)p)->field_526 = 0;
         playUISound(2);
@@ -3571,26 +3565,26 @@ void CItemBoxGrid::OpenSortMenu() {
 // duplicating the tail per return path).
 void CItemBoxGrid::HandleCancelBtn(int confirmed) {
     u8* p = (u8*)this;
-    if (CSysWin_getUnk34(p + 0x4ac)) {
-        if (!CSysWin_isActive(p + 0x4ac)) goto exit;
-        sysWinAdvancePhase3(p + 0x4ac);
-        Cur_SetVisible(p + 0xa0, 0);
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) {
+        if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) goto exit;
+        reinterpret_cast<CSysWin*>(p + 0x4ac)->advancePhase3();
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CItemBoxGridHeadView*)p)->field_540 = 1;
         ((CItemBoxGridHeadView*)p)->field_58 = 0x17;
         goto exit;
     }
-    if (CSysWin_getUnk34(p + 0x4e8)) {
-        if (!CSysWin_isActive(p + 0x4e8)) goto exit;
-        sysWinAdvancePhase3(p + 0x4e8);
-        Cur_SetVisible(p + 0x70, 0);
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) {
+        if (!reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) goto exit;
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->advancePhase3();
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
         ((CItemBoxGridHeadView*)p)->field_58 = 0x14;
         goto exit;
     }
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) {
         if (!((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) goto exit;
         UpdateCursors();
-        Cur_SetVisible(p + 0x70, 1);
-        Cur_SetVisible(p + 0xa0, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_ClearSelection();
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_AdvanceState2To3();
         ((CItemBoxGridHeadView*)p)->field_58 = 8;
@@ -3605,8 +3599,8 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
             advancePresentState(p + 0x468);
             ((CItemBoxGridHeadView*)p)->field_58 = 0x11;
             UpdateCursors();
-            Cur_SetVisible(p + 0x70, 1);
-            Cur_SetVisible(p + 0xd0, 0);
+            ((CBaseCur*)(p + 0x70))->SetVisible(1);
+            ((CBaseCur*)(p + 0xd0))->SetVisible(0);
         } else if (getPresentPath(p + 0x468)) {
             togglePresentPath(p + 0x468);
             u32 buf[4];
@@ -3616,8 +3610,8 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
             advancePresentState(p + 0x468);
             ((CItemBoxGridHeadView*)p)->field_58 = 0x11;
             UpdateCursors();
-            Cur_SetVisible(p + 0x70, 1);
-            Cur_SetVisible(p + 0xd0, 0);
+            ((CBaseCur*)(p + 0x70))->SetVisible(1);
+            ((CBaseCur*)(p + 0xd0))->SetVisible(0);
         }
         // tail copy 2
         if (!confirmed) playUISound(6);
@@ -3633,22 +3627,22 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
             if (!((CExchangeWin*)(p + 0x440))->getField27()) goto exit;
             ((CExchangeWin*)(p + 0x440))->ExWin_RequestClose();
             ((CItemBoxGridHeadView*)p)->field_58 = 0x0e;
-            Cur_SetVisible(p + 0x70, 1);
-            Cur_SetVisible(p + 0xa0, 0);
+            ((CBaseCur*)(p + 0x70))->SetVisible(1);
+            ((CBaseCur*)(p + 0xa0))->SetVisible(0);
             UpdateCursors();
         }
         goto check_tail;
     }
     if (((CItemBoxGridHeadView*)p)->field_544) {
         ((CItemBoxGridHeadView*)p)->field_544 = 0;
-        Cur_SetVisible(p + 0x70, 1);
-        Cur_SetVisible(p + 0xa0, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         goto check_tail;
     }
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
         if (!((CSortMenu*)(p + 0xe8))->IsIdle()) goto exit;
         UpdateCursors();
-        Cur_SetVisible(p + 0xa0, 0);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CSortMenu*)(p + 0xe8))->Close();
     } else if (((CItemBoxGridHeadView*)p)->field_527 == 4) {
         ((CItemBoxGridHeadView*)p)->field_525 = -2;
@@ -3669,18 +3663,18 @@ void CItemBoxGrid::func_801CCAF0() {
     CItemBoxGridFull* sub;
     u8 entry;
     u8* p = (u8*)this;
-    if (CSysWin_getUnk34(p + 0x4ac)) {
-        if (CSysWin_isActive(p + 0x4ac)) {
-            sysWinAdvancePhase3(p + 0x4ac);
-            Cur_SetVisible(p + 0xa0, 0);
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) {
+            reinterpret_cast<CSysWin*>(p + 0x4ac)->advancePhase3();
+            ((CBaseCur*)(p + 0xa0))->SetVisible(0);
             *(u32*)(p + 0x58) = 0x17;
         }
         return;
     }
-    if (CSysWin_getUnk34(p + 0x4e8)) {
-        if (CSysWin_isActive(p + 0x4e8)) {
-            sysWinAdvancePhase3(p + 0x4e8);
-            Cur_SetVisible(p + 0x70, 0);
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) {
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->advancePhase3();
+            ((CBaseCur*)(p + 0x70))->SetVisible(0);
             *(u32*)(p + 0x58) = 0x14;
         }
         return;
@@ -3732,7 +3726,7 @@ void CItemBoxGrid::func_801CCAF0() {
             }
             playUISound(3);
         }
-        Cur_SetVisible(p + 0xa0, 0);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_AdvanceState2To3();
         *(u32*)(p + 0x58) = 8;
         return;
@@ -3744,8 +3738,8 @@ void CItemBoxGrid::func_801CCAF0() {
                 advancePresentState(p + 0x468);
                 *(u32*)(p + 0x58) = 0x11;
                 UpdateCursors();
-                Cur_SetVisible(p + 0x70, 1);
-                Cur_SetVisible(p + 0xd0, 0);
+                ((CBaseCur*)(p + 0x70))->SetVisible(1);
+                ((CBaseCur*)(p + 0xd0))->SetVisible(0);
             } else {
                 sub = (CItemBoxGridFull*)(p + 0x54c);
                 entry = (u8)(p[0x524] + p[0x525] * 10);
@@ -3753,7 +3747,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 u32 kind = ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->GetCellKind((u16)entry);
                 s32 count = ((CItemBoxGridFull*)(sub))->CheckCellState(entry);
                 showPresentRank(p + 0x468);
-                Cur_SetVisible(p + 0xd0, 0);
+                ((CBaseCur*)(p + 0xd0))->SetVisible(0);
                 u32 teachType = getPresentRankA(p + 0x468);
                 u32 teachState = getPresentRankB(p + 0x468);
                 if ((u8)teachState == 1) {
@@ -3839,11 +3833,11 @@ void CItemBoxGrid::func_801CCAF0() {
             if (!(((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->GetCellKind((u16)entry) & 0xFFFF)) return;
             *(u32*)(p + 0x58) = 0x12;
             u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
-            sysWinSwitchKindPane(p + 0x4e8, 0);
-            sysWinSetKindContent(p + 0x4e8, msg, 0);
-            sysWinApplyKind(p + 0x4e8, 1);
-            sysWinOpenPhase1(p + 0x4e8);
-            Cur_SetVisible(p + 0x70, 0);
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>(msg), 0);
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
+            ((CBaseCur*)(p + 0x70))->SetVisible(0);
             playUISound(5);
             return;
         }
@@ -3906,31 +3900,31 @@ void CItemBoxGrid::func_801CCAF0() {
             if (sub->GetCellFlag1(entry)) {
                 *(u32*)(p + 0x58) = 0x12;
                 u32 msg2 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
-                sysWinSwitchKindPane(p + 0x4e8, 0);
-                sysWinSetKindContent(p + 0x4e8, msg2, 0);
-                sysWinApplyKind(p + 0x4e8, 1);
-                sysWinOpenPhase1(p + 0x4e8);
-                Cur_SetVisible(p + 0x70, 0);
+                reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(0);
+                reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>(msg2), 0);
+                reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+                reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
+                ((CBaseCur*)(p + 0x70))->SetVisible(0);
             } else if ((u8)((CItemBoxGridFull*)(sub))->GetCellFlag0(entry)) {
                 void* item2 = ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->GetCellItemPtr((u16)entry);
                 if (((*(u32*)item2 >> 16) & 0xF) == 2) {
                     *(u32*)(p + 0x58) = 0x12;
                     u32 msg3 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
-                    sysWinSwitchKindPane(p + 0x4e8, 0);
-                    sysWinSetKindContent(p + 0x4e8, msg3, 0);
-                    sysWinApplyKind(p + 0x4e8, 1);
-                    sysWinOpenPhase1(p + 0x4e8);
-                    Cur_SetVisible(p + 0x70, 0);
+                    reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(0);
+                    reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>(msg3), 0);
+                    reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+                    reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
+                    ((CBaseCur*)(p + 0x70))->SetVisible(0);
                 } else {
                     *(u32*)(p + 0x58) = 0x15;
                     u32 msg4 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
                     u32 msg5 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                     u32 msg6 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                    sysWinSetKindContent(p + 0x4ac, msg4, 0);
-                    sysWinSetTwoTextValues(p + 0x4ac, msg5, msg6);
-                    sysWinApplyKind(p + 0x4ac, 0);
-                    sysWinOpenPhase1(p + 0x4ac);
-                    Cur_SetVisible(p + 0x70, 0);
+                    reinterpret_cast<CSysWin*>(p + 0x4ac)->setKindContent(reinterpret_cast<char*>(msg4), 0);
+                    reinterpret_cast<CSysWin*>(p + 0x4ac)->setTwoTextValues(reinterpret_cast<char*>(msg5), reinterpret_cast<char*>(msg6));
+                    reinterpret_cast<CSysWin*>(p + 0x4ac)->applyKind(0);
+                    reinterpret_cast<CSysWin*>(p + 0x4ac)->openPhase1();
+                    ((CBaseCur*)(p + 0x70))->SetVisible(0);
                     p[0x540] = 1;
                 }
             } else {
@@ -3942,11 +3936,11 @@ void CItemBoxGrid::func_801CCAF0() {
                         u32 msg7 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
                         u32 msg8 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                         u32 msg9 = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                        sysWinSetKindContent(p + 0x4ac, msg7, 0);
-                        sysWinSetTwoTextValues(p + 0x4ac, msg8, msg9);
-                        sysWinApplyKind(p + 0x4ac, 0);
-                        sysWinOpenPhase1(p + 0x4ac);
-                        Cur_SetVisible(p + 0x70, 0);
+                        reinterpret_cast<CSysWin*>(p + 0x4ac)->setKindContent(reinterpret_cast<char*>(msg7), 0);
+                        reinterpret_cast<CSysWin*>(p + 0x4ac)->setTwoTextValues(reinterpret_cast<char*>(msg8), reinterpret_cast<char*>(msg9));
+                        reinterpret_cast<CSysWin*>(p + 0x4ac)->applyKind(0);
+                        reinterpret_cast<CSysWin*>(p + 0x4ac)->openPhase1();
+                        ((CBaseCur*)(p + 0x70))->SetVisible(0);
                         p[0x540] = 1;
                     } else {
                         goto sell_qty;
@@ -3962,7 +3956,7 @@ void CItemBoxGrid::func_801CCAF0() {
                     reinterpret_cast<CNumSelect*>(p + 0x3e4)->Open();
                     *(u32*)(p + 0x58) = 0x18;
                     p[0x528] = 1;
-                    Cur_SetVisible(p + 0x70, 0);
+                    ((CBaseCur*)(p + 0x70))->SetVisible(0);
                     playUISound(3);
                     return;
                 }
@@ -4005,8 +3999,8 @@ void CItemBoxGrid::func_801CCAF0() {
             }
             ((CExchangeWin*)(p + 0x440))->ExWin_RequestClose();
             *(u32*)(p + 0x58) = 0xe;
-            Cur_SetVisible(p + 0x70, 1);
-            Cur_SetVisible(p + 0xa0, 0);
+            ((CBaseCur*)(p + 0x70))->SetVisible(1);
+            ((CBaseCur*)(p + 0xa0))->SetVisible(0);
             UpdateCursors();
             if ((s8)p[0x529] == 0) playUISound(0x31);
             else playUISound(3);
@@ -4025,7 +4019,7 @@ void CItemBoxGrid::func_801CCAF0() {
             p[0x528] = 1;
             *(u32*)(p + 0x58) = 0xc;
             p[0x529] = 1;
-            Cur_SetVisible(p + 0x70, 0);
+            ((CBaseCur*)(p + 0x70))->SetVisible(0);
             playUISound(3);
             return;
         }
@@ -4056,7 +4050,7 @@ void CItemBoxGrid::func_801CCAF0() {
         u32 sendVal = 0xFF;
         if (p[0x527] != 3) sendVal = listVal3;
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_SetupOptions(sendVal & 0xFF);
-        Cur_SetVisible(p + 0x70, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_BeginOpenAnim();
         *(u32*)(p + 0x58) = 6;
         p[0x528] = 1;
@@ -4089,15 +4083,15 @@ int CItemBoxGrid::GetField52D() { return field_52D; }
 void CItemBoxGrid::TickItemBoxGrid() {
     u8* p = (u8*)this;
     if (p[0x528]) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x544]) {
-        if (CSysWin_getUnk34(p + 0x4e8)) {
-            if (!CSysWin_isActive(p + 0x4e8)) return;
-            sysWinAdvancePhase3(p + 0x4e8);
-            Cur_SetVisible(p + 0x70, 0);
+        if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) {
+            if (!reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) return;
+            reinterpret_cast<CSysWin*>(p + 0x4e8)->advancePhase3();
+            ((CBaseCur*)(p + 0x70))->SetVisible(0);
             *(u32*)(p + 0x58) = 0x14;
             return;
         }
@@ -4113,15 +4107,15 @@ void CItemBoxGrid::TickItemBoxGrid() {
         } else {
             obj = (void*)BdatGetPtrDirect((const void*)*(u32*)(lbl_eu_80664510), &lbl_eu_8050566C[0x321], val & 0xFFFF);
         }
-        sysWinSwitchKindPane(p + 0x4e8, 0);
-        sysWinSetKindContent(p + 0x4e8, (u32)obj, 0);
-        sysWinApplyKind(p + 0x4e8, 1);
-        sysWinOpenPhase1(p + 0x4e8);
-        Cur_SetVisible(p + 0xa0, 0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>((u32)obj), 0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
+        ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         return;
     }
     if (*(u32*)(p + 0x58) != 3) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     u16* list = (u16*)(p + 0x288);
     int i;
     u8 found = 0;
@@ -4141,8 +4135,8 @@ void CItemBoxGrid::TickItemBoxGrid() {
         int n = (int)(lbl_eu_80667F74 * (float)v);
         p[0x545] = (u8)n;
         p[0x546] = (u8)(v - (s8)(u8)n * 4);
-        Cur_SetVisible(p + 0x70, 0);
-        Cur_SetVisible(p + 0xa0, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(1);
         u32 buf[3];
         CopyTabSlotVec(buf, list, (u32)v);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
@@ -4158,8 +4152,8 @@ void CItemBoxGrid::SelectCatRow() {
     if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
     if (((CItemBoxGridHeadView*)p)->field_528) return;
     if (((CItemBoxGridHeadView*)p)->field_525 == -1) return;
-    if (CSysWin_getUnk34(p + 0x4ac)) return;
-    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
@@ -4181,8 +4175,8 @@ u8 CItemBoxGrid::GetPromptState() {
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return 0;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
     if (isPresentActive(p + 0x468)) return 0;
-    if (CSysWin_getUnk34(p + 0x4ac)) return 0;
-    if (CSysWin_getUnk34(p + 0x4e8)) return 0;
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return 0;
+    if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return 0;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return 2;
     if (p[0x544]) return 5;
     u32 cat = p[0x527];
@@ -4216,18 +4210,18 @@ __declspec(noinline) void CItemBoxGrid::FinishOpenAnim() {
         ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 1);
         p[0x61] = 1;
         RefreshSelectedCellText();
-        Cur_SetVisible((void*)(p + 0x70), 1);
-        Cur_SetVisible((void*)(p + 0x88), 1);
+        ((CBaseCur*)((p + 0x70)))->SetVisible(1);
+        ((CBaseCur*)((p + 0x88)))->SetVisible(1);
         UpdateCursors();
         if (p[0x542]) {
             ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
-                sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
-                sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
-                sysWinApplyKind((void*)(p + 0x4e8), 1);
-                sysWinOpenPhase1((void*)(p + 0x4e8));
-                Cur_SetVisible((void*)(p + 0x70), 0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->switchKindPane(0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->setKindContent(reinterpret_cast<char*>(msg), 0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->applyKind(1);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->openPhase1();
+                ((CBaseCur*)((p + 0x70)))->SetVisible(0);
             }
         }
     }
@@ -4263,7 +4257,7 @@ __declspec(noinline) void CItemBoxGrid::FinishCloseAnim() {
     if (AnimRewindFrame(obj, f)) {
         p[0x61] = 1;
         ((CItemBoxGridHeadView*)p)->field_58 = 0;
-        Cur_SetVisible(p + 0x70, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
     }
 }
 __declspec(noinline) void CItemBoxGrid::FinishNumSelect() {
@@ -4271,18 +4265,18 @@ __declspec(noinline) void CItemBoxGrid::FinishNumSelect() {
     if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
         ((CItemBoxGridHeadView*)p)->field_58 = 3;
         p[0x528] = 0;
-        Cur_SetVisible((void*)(p + 0x70), 1);
+        ((CBaseCur*)((p + 0x70)))->SetVisible(1);
         UpdateCursors();
         if (p[0x541]) {
             p[0x541] = 0;
             ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
-                sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
-                sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
-                sysWinApplyKind((void*)(p + 0x4e8), 1);
-                sysWinOpenPhase1((void*)(p + 0x4e8));
-                Cur_SetVisible((void*)(p + 0x70), 0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->switchKindPane(0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->setKindContent(reinterpret_cast<char*>(msg), 0);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->applyKind(1);
+                reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->openPhase1();
+                ((CBaseCur*)((p + 0x70)))->SetVisible(0);
             }
         }
     }
@@ -4295,7 +4289,7 @@ __declspec(noinline) void CItemBoxGrid::ShowSubMenuCur() {
     u8 temp[16];
     GridSubMenu_GetCursorPos(temp, p + 0x418);
     ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
-    Cur_SetVisible(p + 0xa0, 1);
+    ((CBaseCur*)(p + 0xa0))->SetVisible(1);
 }
 
 
@@ -4397,16 +4391,16 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
             msg = (char*)BdatTouchStringCell(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x42);
         }
 
-        sysWinSwitchKindPane(p + 0x4e8, showDetail);
-        sysWinSetKindContent(p + 0x4e8, (u32)msg, (u32)subMsg);
-        sysWinApplyKind(p + 0x4e8, 1);
-        sysWinOpenPhase1(p + 0x4e8);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(showDetail);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>((u32)msg), reinterpret_cast<char*>((u32)subMsg));
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
         *(u32*)(p + 0x58) = 0x12;
         p[0x528] = 0;
         return;
         }
         // Other categories: nothing to confirm.
-        Cur_SetVisible(p + 0x70, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
         p[0x528] = 0;
         return;
     }
@@ -4415,13 +4409,13 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
         p[0x541] = 0;
         *(u32*)(p + 0x58) = 0x12;
         void* msg = BdatTouchStringCell(&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
-        sysWinSwitchKindPane(p + 0x4e8, 0);
-        sysWinSetKindContent(p + 0x4e8, (u32)msg, 0);
-        sysWinApplyKind(p + 0x4e8, 1);
-        sysWinOpenPhase1(p + 0x4e8);
-        Cur_SetVisible(p + 0x70, 0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->switchKindPane(0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->setKindContent(reinterpret_cast<char*>((u32)msg), 0);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->applyKind(1);
+        reinterpret_cast<CSysWin*>(p + 0x4e8)->openPhase1();
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
     } else {
-        Cur_SetVisible(p + 0x70, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
     }
     p[0x528] = 0;
 }
@@ -4431,7 +4425,7 @@ __declspec(noinline) void CItemBoxGrid::ShowExchangeCur() {
     u8* p = (u8*)this;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
     ((CItemBoxGridHeadView*)p)->field_58 = 0xd;
-    Cur_SetVisible(p + 0xa0, 1);
+    ((CBaseCur*)(p + 0xa0))->SetVisible(1);
     u8 temp[16];
     u8 val529 = p[0x529];
     ExWin_CopyPanePair(temp, &mExchangeWin, val529);
@@ -4455,7 +4449,7 @@ __declspec(noinline) void CItemBoxGrid::ShowPresentCur() {
     u8 temp[16];
     getPresentPaneWorldPos(temp, p + 0x468);
     ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
-    Cur_SetVisible(p + 0xd0, 1);
+    ((CBaseCur*)(p + 0xd0))->SetVisible(1);
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
@@ -4470,9 +4464,9 @@ __declspec(noinline) void CItemBoxGrid::FinishPresent() {
 // Check system window; if active, set state and call helpers.
 __declspec(noinline) void CItemBoxGrid::OnSysWinOpen() {
     u8* p = (u8*)this;
-    if (CSysWin_isActive(p + 0x4ac)) {
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) {
         ((CItemBoxGridHeadView*)p)->field_58 = 0x16;
-        Cur_SetVisible(p + 0xa0, 1);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(1);
         UpdateCursors();
     }
 }
@@ -4480,7 +4474,7 @@ __declspec(noinline) void CItemBoxGrid::OnSysWinOpen() {
 // Handle system window state change.
 void CItemBoxGrid::HandleSysWinOK() {
     u8* p = (u8*)this;
-    if (!CSysWin_isActive(p + 0x4ac)) return;
+    if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) return;
     if (!((CItemBoxGridHeadView*)p)->field_540) {
         u8 idx = ((CItemBoxGridHeadView*)p)->field_6F;
         u8 cat = ((CItemBoxGridHeadView*)this)->field_62[(s8)idx];
@@ -4495,7 +4489,7 @@ void CItemBoxGrid::HandleSysWinOK() {
         ((CItemBoxGridHeadView*)p)->field_528 = 1;
     } else {
         ((CItemBoxGridHeadView*)p)->field_58 = 3;
-        Cur_SetVisible(p + 0x70, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
         UpdateCursors();
     }
 }
@@ -4503,16 +4497,16 @@ void CItemBoxGrid::HandleSysWinOK() {
 // Handle system window activation.
 __declspec(noinline) void CItemBoxGrid::FinishSysWin() {
     u8* p = (u8*)this;
-    if (!CSysWin_isActive(p + 0x4e8)) return;
+    if (!reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) return;
     ((CItemBoxGridHeadView*)p)->field_58 = 3;
     if (!p[0x542] && !p[0x544]) {
-        Cur_SetVisible(p + 0x70, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
     }
     if (!p[0x544]) {
         UpdateCursors();
     }
     if (p[0x544]) {
-        Cur_SetVisible(p + 0xa0, 1);
+        ((CBaseCur*)(p + 0xa0))->SetVisible(1);
     }
 }
 
@@ -5195,8 +5189,8 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     nw4r::math::VEC3 posT1;
     nw4r::math::VEC3 posDef;
     nw4r::math::VEC3 posWin;
-    if (CSysWin_getUnk34(p + 0x4ac)) {
-        sysWinGetPaneScreenPos(&posWin, (void*)(p + 0x4ac), p[0x540]);
+    if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) {
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&posWin), reinterpret_cast<CSysWin*>((void*)(p + 0x4ac)), p[0x540]);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posWin));
         return;
     }
@@ -5207,8 +5201,8 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
         nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
-        Cur_SetVisible(p + 0x70, 0);
-        Cur_SetVisible(p + 0xb8, 1);
+        ((CBaseCur*)(p + 0x70))->SetVisible(0);
+        ((CBaseCur*)(p + 0xb8))->SetVisible(1);
         return;
     }
     if (idx == -1) {
@@ -5219,8 +5213,8 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
         nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
-        Cur_SetVisible(p + 0x70, 1);
-        Cur_SetVisible(p + 0xb8, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
+        ((CBaseCur*)(p + 0xb8))->SetVisible(0);
         return;
     }
     {
@@ -5231,8 +5225,8 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
         nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
-        Cur_SetVisible(p + 0x70, 1);
-        Cur_SetVisible(p + 0xb8, 0);
+        ((CBaseCur*)(p + 0x70))->SetVisible(1);
+        ((CBaseCur*)(p + 0xb8))->SetVisible(0);
     }
 }
 
@@ -5570,7 +5564,8 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMin), lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
     CibgVec3 vecMax;
     code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMax), lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
-    Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
+    ((CCur09*)(p + 0x88))->SetTwoPanes(reinterpret_cast<const nw4r::math::VEC3*>(&vecMax),
+                                       reinterpret_cast<const nw4r::math::VEC3*>(&vecMin));
     *reinterpret_cast<CCur18*>(p + 0xa0) = CCur18(CUICfManager_getArcResourceAccessor());
     ((CBaseCur*)(p + 0xa0))->initLayout();
     *reinterpret_cast<CCur16*>(p + 0xb8) = CCur16((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c));

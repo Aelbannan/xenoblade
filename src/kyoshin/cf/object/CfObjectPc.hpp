@@ -98,12 +98,6 @@ extern const float lbl_eu_80666B18;
 extern const float lbl_eu_80666B1C;
 extern const float lbl_eu_80666B20;
 
-// 10-byte .rodata literal copied onto the stack by UnkVirtualFunc4.
-struct Lit10 {
-    u8 d[10];
-};
-extern Lit10 lbl_eu_804FC5E0;
-
 // Pointee of the +0x3F60 resource pointer (+0x4B0 byte / flag word at
 // +0x4EC).
 struct PcResFlagsObj {
@@ -147,8 +141,8 @@ struct Obj89cField {
 };
 
 // Foreign sub-object at +0x4 is a CObjectState pointer (owner: CObjectState).
-// Slot 0x30 is CObjectState_getStateData (void*). Deleted fake iface;
-// call via *(CObjectState**)((u8*)this+4)->CObjectState_getStateData().
+// Slot 0x30 is getStateData (void*). Deleted fake iface;
+// call via *(CObjectState**)((u8*)this+4)->getStateData().
 
 // Foreign sub-object at +0x8 is the embedded CBattleState (owner: CBattleState).
 // Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted

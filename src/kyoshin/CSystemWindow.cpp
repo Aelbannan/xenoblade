@@ -3,6 +3,7 @@
 // Matching session for unit kyoshin/CSystemWindow.
 
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSystemWindow.hpp"
 #include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -146,7 +147,7 @@ void CSystemWindow::Init() {
 
 void CSystemWindow::Term() {
     CDeviceVI::waitForDrawDone();
-    sysWinTermLayout(&mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
 
     lbl_eu_80663FD8 = 0;
 
@@ -169,17 +170,17 @@ void CSystemWindow::Move() {
     switch (mState) {
     case 0: {
         // Window just became ready: load strings and start animation.
-        if (CSysWin_isReady(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isReady()) {
             mState = 1;
-            sysWinSetKindContent(&mSysWin[0], &mStr1[0], &mStr2[0]);
-            sysWinApplyKind(&mSysWin[0], 1);
-            sysWinOpenPhase1(&mSysWin[0]);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->setKindContent(reinterpret_cast<char*>(&mStr1[0]), reinterpret_cast<char*>(&mStr2[0]));
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->applyKind(1);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->openPhase1();
         }
         break;
     }
     case 1:
         // Wait for the system window to become active.
-        if (CSysWin_isActive(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
             mState = 2;
         }
         break;
@@ -193,21 +194,21 @@ void CSystemWindow::Move() {
             confirmBtn = (pad->mPressedButtonFlags >> 4) & 1;
         if (confirmBtn != 0) {
             mState = 3;
-            sysWinAdvancePhase3(&mSysWin[0]);
+            reinterpret_cast<CSysWin*>(&mSysWin[0])->advancePhase3();
             playUISound(3);
         }
         break;
     }
     case 3:
         // Closing transition finished - hand control back to the UI.
-        if (CSysWin_isActive(&mSysWin[0])) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
             field_67 = 0;
             field_64 = 1;
         }
         break;
     }
 
-    sysWinDispatchPhase(&mSysWin[0]);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->dispatchPhase();
 }
 
 
@@ -220,7 +221,7 @@ void CSystemWindow::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    sysWinDrawLayout(&mSysWin[0], &drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
 }
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a

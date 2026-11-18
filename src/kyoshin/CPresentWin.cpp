@@ -258,7 +258,7 @@ extern "C" __declspec(noinline) void stepPresentResultAnim(CPresentWin* self) {
 }
 
 // Retail uses the stmw/lmw block-save frame for these two (optimize_for_size
-// shape; see KB kyoshin/CCur Cur_ShowTwoSubPanes).
+// shape; see KB kyoshin/CCur CSubCur::ShowTwoSubPanes).
 #pragma push
 #pragma optimize_for_size on
 // Repaint helper for the mField32 (primary) item: look up the item name and

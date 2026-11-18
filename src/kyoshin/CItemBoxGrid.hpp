@@ -127,8 +127,8 @@ struct CItemBoxSlotState {
 
 // (Fake-vtable cleanup: item-impl +0x54 view deleted - now CItemImpl::vf54.)
 
-// Plain 3-float vector passed by value into Cur_SetTwoPanes09 (the caller-side
-// struct copies land in the argument area).
+// Plain 3-float view of the two cursor-09 move bounds (the caller-side struct
+// copies land in the argument area; CCur09::SetTwoPanes takes them by address).
 struct CibgVec3 {
     float x, y, z;
 };
@@ -393,16 +393,12 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 GridSubMenu_GetOptionCount(void*);  // not yet decompiled (CItemBoxGridSubMenu TU stub)
 extern "C" int isPresentSettled(void*);
-extern "C" int CSysWin_isActive(void*);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void* CItem_kindPtr(u32, s16);
 // CfGameManager.hpp (included transitively) now declares the unified
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
 extern "C" void GridSubMenu_GetCursorPos(void*, void*);
 extern "C" void getPresentPaneWorldPos(void*, void*);
-extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 isPresentActive(void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" int getLanguage__9CDeviceSCFv();
@@ -412,15 +408,12 @@ extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(int);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void sysWinTermLayout(void*);
 extern "C" void dispatchCounterStepBack(void*);
 extern "C" int isPresentBusy(void*);
 extern "C" void stepPresentCounter(void*);
 extern "C" void togglePresentPath(void*);
 extern "C" u32 getPresentPath(void*);
 extern "C" void advancePresentState(void*);
-extern "C" void sysWinAdvancePhase3(void*);
-extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
@@ -443,10 +436,6 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
-extern "C" void sysWinSwitchKindPane(void*, int);
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinApplyKind(void*, int);
-extern "C" void sysWinOpenPhase1(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" char* CopyEntry9Bytes(char*, const char*);
@@ -458,12 +447,8 @@ extern "C" u32 MakeCrystalIsCreated();
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void drawPresentWin(void*, nw4r::lyt::DrawInfo*);
-extern "C" void Cur_Update(void*);
 extern "C" void updatePresentWin(void*);
-extern "C" void sysWinDispatchPhase(void*);
 extern "C" void termPresentWin(void*);
 extern "C" void CopyGridEntry9(void*, void*);
 extern "C" u32 CItem_slotCnt(u8);
@@ -472,7 +457,6 @@ extern "C" void openPresentWin(void*);
 extern "C" void showPresentRank(void*);
 extern "C" u32 getPresentRankA(void*);
 extern "C" u32 getPresentRankB(void*);
-extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void UIWin_BuildFlagBufRec(u32, u32, u32);
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
@@ -504,7 +488,6 @@ extern "C" void __dt__11CPresentWinFv(void*, int);
 extern "C" void __dt__10CNumSelectFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void MenuShopSellCopyData(void*, void*);
-extern "C" void Cur_SetTwoPanes09(void*, CibgVec3, CibgVec3);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);

@@ -169,10 +169,10 @@ struct CAIPartyMoveObj {
 };
 
 // Party/battle object stored in CAIAction::unkB14 (used by aiRebootAction /
-// aiTargetQuery). Real class is CfObjectActor/CfObjectPc/CActorParam; state sub-object at +4 is CObjectState (slot 0x30 = CObjectState_getStateData).
+// aiTargetQuery). Real class is CfObjectActor/CfObjectPc/CActorParam; state sub-object at +4 is CObjectState (slot 0x30 = getStateData).
 struct CAIPartyObj {
     void* vtable;        // 0x00 (slot 0x5C0 used - real CfObjectActor_sharesMoveFlags)
-    cf::CObjectState* unk04;   // 0x04 state sub-object (slot 0x30 = CObjectState_getStateData)
+    cf::CObjectState* unk04;   // 0x04 state sub-object (slot 0x30 = getStateData)
     u8 pad08[0x3388 - 0x8];
     u16 unk3388;              // 0x3388 status flag bits (0x8 / 0x10 tested)
     u8 pad338A[0x3E98 - 0x338A];

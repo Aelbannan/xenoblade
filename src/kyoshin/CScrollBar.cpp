@@ -2,6 +2,7 @@
 // weak copy, and ~CScrollBar elides the base call (retail shape; see CBattery).
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device.hpp"
@@ -14,10 +15,9 @@
 
 // Cross-TU layout helpers (kyoshin .text). Retail keeps these unmangled at
 // CScrollBar call sites; extern "C" stops MWCC from emitting __F... tails.
-extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
-// callers (UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
+// callers (UpdateThumb) reuse it as the returned pointer for CBaseCur::SetPaneTranslate.
 
 // The scroll-bar drag pane carries a small data block at +0x2C..+0x50 (thumb
 // dimensions / track position). The nw4r Pane layout doesn't model these
@@ -125,7 +125,7 @@ int CScrollBar::isVisible() { return mVisible; }
 int CScrollBar::isActive() { return mActive; }
 
 void CScrollBar::InitRootPane(const nw4r::math::VEC3* pos) {
-    Cur_SetPaneTranslate(mLayout->GetRootPane(), pos);
+    CBaseCur::SetPaneTranslate(mLayout->GetRootPane(), pos);
 }
 
 /* Request scroll-in: if hidden, transition to entering and mark inactive. */
@@ -157,7 +157,7 @@ void CScrollBar::UpdateThumb(u32 scrollFrom, u32 scrollTo) {
         writePanePos(pane, tmp);
         mScrollRatio = lbl_eu_80668138;
         nw4r::math::VEC3 vec;
-        Cur_SetPaneTranslate(pane,
+        CBaseCur::SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                           (nw4r::math::VEC3*)&vec.x, mThumbHeight, mContentHeight,
                           lbl_eu_80668138)));
@@ -176,7 +176,7 @@ void CScrollBar::UpdateThumb(u32 scrollFrom, u32 scrollTo) {
         writePanePos(pane, tmp);
         mScrollRatio = (mScrollPosY - ratio) / (f32)delta;
         nw4r::math::VEC3 vec;
-        Cur_SetPaneTranslate(pane,
+        CBaseCur::SetPaneTranslate(pane,
                       reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                           (nw4r::math::VEC3*)&vec.x, mThumbHeight, mContentHeight,
                           lbl_eu_80668138)));
@@ -190,7 +190,7 @@ void CScrollBar::PlaceThumb(u16 count) {
     nw4r::math::VEC3 vec;
     // Place the drag thumb on the track: X is the thumb height, Y pinned so
     // the thumb stays inside the content as the scroll ratio advances.
-    Cur_SetPaneTranslate(pane,
+    CBaseCur::SetPaneTranslate(pane,
                   reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
                       (nw4r::math::VEC3*)&vec.x, mThumbHeight,
                       -mScrollRatio * (f32)count + mContentHeight,

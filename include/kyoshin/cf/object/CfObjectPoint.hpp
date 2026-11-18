@@ -27,5 +27,5 @@ extern const char lbl_eu_804FC648[];
 // BDAT manager reset/init (retail symbol unmangled; result discarded here).
 extern "C" void* Bdat_GetTable_AA34(void);
 
-extern void* lbl_eu_8052A3B0[];
-extern u32 lbl_eu_805294E0[];
+extern u32 lbl_eu_8052A3B0[];
+extern u32 __vt__Q22cf8CfObject[];

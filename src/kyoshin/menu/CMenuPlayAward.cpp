@@ -424,7 +424,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
             break;
         }
         self->mLayout20->Animate(0);
-        Cur_Update(&self->mCursor);
+        self->mCursor.Update();
         self->mScrollBar.UpdateDispatch();
     }
 }
@@ -435,7 +435,7 @@ void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
         self->mScrollBar.draw(drawInfo);
-        Cur_DrawLayout(&self->mCursor, drawInfo);
+        self->mCursor.DrawLayout(drawInfo);
     }
 }
 
@@ -514,7 +514,7 @@ void PlayAward_RequestClose(CPlayAwardList* self) {
         self->field_0x89 = 4;
         self->field_0x8B = 0;
         PlayAward_BindOpenAnims(self);
-        Cur_SetVisible(&self->mCursor, 0);
+        self->mCursor.SetVisible(0);
         self->mScrollBar.requestScrollOut();
         playUISound(6);
     }
@@ -739,7 +739,7 @@ void PlayAward_RefreshCursor(CPlayAwardList* self) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
     sprintf(buf, &lbl_eu_8050E7C0[0x93], self->field_0x8C + 1);
-    Cur_SetVisible(&self->mCursor, 1);
+    self->mCursor.SetVisible(1);
     nw4r::lyt::Pane* pane1 = self->mLayout20->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_8050E7C0[0xab], true);
     ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout20->GetRootPane());

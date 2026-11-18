@@ -1,6 +1,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/object/CfObjectPoint.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"  // child-link interface (+0x38)
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
@@ -28,7 +29,7 @@ class CfObjectPoint; // forward declaration (field type below)
 // Real class tree, recovered from the retail vtable lbl_eu_8052A3B0
 // (code_800C17DC.s: RTTI, 0, then one word per slot through +0x174).
 // CfObjectPoint inherits CfObject; the words that differ from the CfObject
-// table (lbl_eu_805294E0) are Point's overrides:
+// table (__vt__Q22cf8CfObject) are Point's overrides:
 //
 //   CObjectParam +0x48 loadPointData (was UnkVirtualFunc4)
 //   CfObject +0x58 validatePointState, +0x5C resetPointFlags,
@@ -52,7 +53,7 @@ struct CfObjectSub54 {
     u8 field_0x0[0xC];
 };
 
-class __declspec(novtable) CObjectState {
+class CObjectState {
 public:
     virtual void setStateBitMask(u32 bits);  //0x8
     virtual int checkStateFlags(int mask);  //0xC
@@ -62,12 +63,12 @@ public:
     virtual void clearStateWord8();  //0x1C (was UnkVirtualFunc6; clears unk8)
     virtual void clearStateFlags8(int arg);  //0x20
     virtual int checkStateFlags8(int arg);  //0x24
-    virtual int CObjectState_checkStateFlagsC();  //0x28 (was UnkVirtualFunc9)
+    virtual int checkStateFlagsC(int mask);  //0x28 (was UnkVirtualFunc9)
     // Retail arity note: the base implementation (ocUnit) takes
     // (mask, flag), but every retail caller in the Point family sets only
     // r4 (the child/parent pointer) and leaves r5 stale, discarding the
     // result. The single-pointer spelling matches that dispatch exactly.
-    virtual int setStateBitMask0(CfObjectPoint* parent); //0x2C
+    virtual int setStateBitMask0(int mask, int flag); //0x2C
     virtual void* getStateData(); //0x30
     virtual void* setStateBitMask2(); //0x34
     virtual void setStateBitMask3(); //0x38
@@ -78,10 +79,10 @@ public:
     u32 unkC;          // 0x0C
 };
 
-class __declspec(novtable) CObjectParam : public CObjectState {
+class CObjectParam : public CObjectState {
 public:
     // Slot 0x3C: stores the object name (strlen to +0x30, copy to +0x10).
-    virtual void setObjectName(const char* name); //0x3C
+    virtual void CObjectParam_setObjectName(const char* name); //0x3C
     virtual void* CObjectParam_getParamPtr(); //0x40 (was UnkVirtualFunc2)
     virtual int CObjectParam_hasObjectName(); //0x44 (was UnkVirtualFunc3)
     virtual void loadPointData(); //0x48 (overridden by CfObjectPoint)
@@ -96,14 +97,14 @@ public:
     u8 unk34[4];           // 0x34-0x37
 };
 
-class __declspec(novtable) CfObject : public CObjectParam {
+class CfObject : public CObjectParam {
 public:
     // 0x54: destructor slot. Inline: ~CfObjectPoint inlines it (vtable
     // store + slot-0x68 call), and the dtor's cleanup action names the
     // out-of-line copy (linked from the CfObject unit, PLAN.md 17.8).
     // novtable: the tables live in code_800C17DC, so the store is explicit.
     virtual ~CfObject() {
-        *reinterpret_cast<u32**>(this) = lbl_eu_805294E0;
+        *reinterpret_cast<u32**>(this) = __vt__Q22cf8CfObject;
         releasePointLink();
     }
 
@@ -114,10 +115,10 @@ public:
     virtual void releasePointLink(); //0x68 (overridden by CfObjectPoint)
     // True body (defined below with a forced Fv retail name) forwards the
     // incoming r4 vector to the child; the view stays arg-free.
-    virtual void notifyChildUpdate(); //0x6C (overridden by CfObjectPoint)
-    // True body takes the hidden child pointer in r4 (see setChildPoint
+    virtual void notifyChildUpdate(const ml::CVec3* vec); //0x6C (overridden by CfObjectPoint)
+    // Takes the child point to link (see setChildPoint
     // below); the view stays arg-free.
-    virtual void setChildPoint(); //0x70 (overridden by CfObjectPoint)
+    virtual void setChildPoint(CfObjectPoint* child); //0x70 (overridden by CfObjectPoint)
     virtual bool CfObject_isMoveActiveNow();      //0x74
     virtual void CfObject_forwardSubObject();     //0x78
     virtual void CfObject_notifyMemberRemoved();     //0x7C (was UnkVirtualFunc11)
@@ -136,18 +137,18 @@ public:
     // update path calls it with ambient registers (no setup, bctrl tail).
     // Mirrors CfObject_setPosXZ at +0xA0; Coll body is UnkVirtualFunc21.
     virtual void CfObject_setPosXYZ();     //0xA4 (was UnkVirtualFunc21)
-    virtual void syncMoveTarget(const ml::CVec3* vec); //0xA8
+    virtual void CfObject_syncMoveTarget(const ml::CVec3* vec); //0xA8
     virtual ml::CVec3* CfObject_getPosVector();      //0xAC
     virtual ml::CVec3* CfObject_getPosTriple(); //0xB0 (was UnkVirtualFunc24)
     virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); //0xB4
     virtual void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount); //0xB8
-    virtual void CfObject_setRotVec(const ml::CVec3* src); //0xBC (was UnkVirtualFunc27)
+    virtual void CfObject_setRotVec(void* src); //0xBC (was UnkVirtualFunc27)
     // Base returns self+0x48; Model returns xform block / sub+0xC4.
     virtual u8* CfObject_getField48();       //0xC0 (was UnkVirtualFunc28)
     virtual void CfObject_setMoveHeadAngle(float value);     //0xC4
     virtual void CfObject_setMoveYaw(float value);     //0xC8 (was UnkVirtualFunc30)
     virtual float CfObject_getMoveHeadAngle();     //0xCC
-    virtual void CfObject_syncMoveHead();     //0xD0 (was UnkVirtualFunc32)
+    virtual void CfObject_syncMoveHead(float deg);     //0xD0 (was UnkVirtualFunc32)
     virtual void CfObject_applyMoveYaw(float amount); //0xD4 (was UnkVirtualFunc33)
     virtual float CfObject_getScaledAngle();     //0xD8 (was UnkVirtualFunc34)
     virtual void CfObject_setObjScale(float value); //0xDC (was UnkVirtualFunc35)
@@ -155,26 +156,26 @@ public:
     // Wave-62: Move-family anim-slot managers spelled via CfObject.hpp
     // aliases (Point has no call sites; novtable layout-only decls).
     // UVF41 left Unk: base stub returns 0, no Move override, no alias.
-    virtual void CfObject_resetAnimSlots();     //0xE4 (was UnkVirtualFunc37)
-    virtual void CfObject_clearAnimEntry();     //0xE8 (was UnkVirtualFunc38)
-    virtual void CfObject_armAnimSlot0();     //0xEC (was UnkVirtualFunc39)
-    virtual float CfObject_getActorScale();     //0xF0 (was UnkVirtualFunc40)
+    virtual void CfObject_resetAnimSlots(u32 arg);     //0xE4 (was UnkVirtualFunc37)
+    virtual void CfObject_clearAnimEntry(u32 arg);     //0xE8 (was UnkVirtualFunc38)
+    virtual void CfObject_armAnimSlot0(u32 id, u32 tag);     //0xEC (was UnkVirtualFunc39)
+    virtual void CfObject_armAnimSlot0N(u32 id, u32 nameIdx);     //0xF0
     virtual void CfObject_UnkVirtualFunc41();     //0xF4 (base stub; no alias)
-    virtual void CfObject_armAnimSlot1();     //0xF8 (was UnkVirtualFunc42)
-    virtual void CfObject_armAnimSlot1N();     //0xFC (was UnkVirtualFunc43)
-    virtual void CfObject_notifyActiveMember();     //0x100 (was UnkVirtualFunc44)
-    virtual void CfObject_rearmAnimSlot();     //0x104 (was UnkVirtualFunc45)
+    virtual void CfObject_armAnimSlot1(u32 id, u32 tag);     //0xF8 (was UnkVirtualFunc42)
+    virtual void CfObject_armAnimSlot1N(u32 id, u32 nameIdx);     //0xFC (was UnkVirtualFunc43)
+    virtual void CfObject_UnkVirtualFunc44();     //0x100 (base stub)
+    virtual void CfObject_rearmAnimSlot(u32 value, u32 index);     //0x104 (was UnkVirtualFunc45)
     virtual void CfObject_setMoveTargetPtr(void* arg);     //0x108
-    virtual void CfObject_createMoveTarget();     //0x10C
+    virtual void CfObject_createMoveTarget(int kind);     //0x10C
     virtual void* CfObject_getCurrentTarget();     //0x110
-    virtual void CfObject_forwardNpcAction(u32 value);     //0x114
+    virtual void CfObject_forwardNpcAction(int action);     //0x114
     virtual int CfObject_getNpcActionState();     //0x118 (was UnkVirtualFunc50)
     virtual int CfObject_getNpcTargetAction();     //0x11C (was UnkVirtualFunc51)
-    virtual void* CfObject_findNodeMatrix(const char* name);     //0x120 (was UnkVirtualFunc52)
-    virtual CfObject* CfObject_getIndexedNodeMatrix(); //0x124 (was UnkVirtualFunc53)
+    virtual void* CfObject_findNodeMatrix(const char* name) const;     //0x120 (was UnkVirtualFunc52)
+    virtual void* CfObject_getIndexedNodeMatrix(u32 idx) const; //0x124 (was UnkVirtualFunc53)
     virtual u32 CfObject_getSubPosWord();     //0x128 (was UnkVirtualFunc54)
-    virtual void* CfObject_getPosSample(int arg);     //0x12C (was UnkVirtualFunc55)
-    virtual float CfObject_getHeightDiff();     //0x130 (was UnkVirtualFunc56)
+    virtual void* CfObject_getPosSample(int arg) const;     //0x12C (was UnkVirtualFunc55)
+    virtual float CfObject_getHeightDiff() const;     //0x130 (was UnkVirtualFunc56)
     virtual void CfObject_setMoveValue(float value);     //0x134 (was UnkVirtualFunc57)
     virtual u32* CfObject_getMoveRateScale();     //0x138
     virtual void CfObject_setMoveScale(float value); //0x13C (was UnkVirtualFunc59)
@@ -212,7 +213,7 @@ public:
     u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
 };
 
-class __declspec(novtable) CfObjectPoint : public CfObject {
+class CfObjectPoint : public CfObject {
 public:
     virtual ~CfObjectPoint();
     virtual void loadPointData(); //0x48
@@ -220,8 +221,8 @@ public:
     virtual void resetPointFlags(); //0x5C
     virtual void updatePointState(); //0x60
     virtual void releasePointLink(); //0x68
-    virtual void notifyChildUpdate(); //0x6C
-    virtual void setChildPoint(); //0x70
+    virtual void notifyChildUpdate(const ml::CVec3* vec); //0x6C
+    virtual void setChildPoint(CfObjectPoint* child); //0x70
     virtual void func_80047814(const ml::CVec3* pos); //0x9C
     virtual void setPointPosition(); //0xA0
     virtual void setPointEnabled(int flag); //0x158
@@ -245,7 +246,6 @@ CfObjectPoint::~CfObjectPoint() {
     // store); the null guard and delete-flag guard are auto-generated. The
     // flags word is read before the vtable store, matching retail's schedule.
     u32 flags = mFlags68;
-    *reinterpret_cast<void***>(this) = lbl_eu_8052A3B0;
     if (flags & 0x40000000) {
         ((void* (*)(void*, void*))ArtsSelect_Remove)(ArtsSelect_GetContainer(), this);
     }
@@ -262,7 +262,7 @@ void CfObjectPoint::loadPointData() {
     Bdat_GetTable_AA34();
     u8* fp = (u8*)getFP(mName);
     u32 name = getBdatStringColumnValue(fp, lbl_eu_804FC648, mIndex8C);
-    this->setObjectName(reinterpret_cast<const char*>(name));
+    this->CObjectParam_setObjectName(reinterpret_cast<const char*>(name));
     u32 val = getBdatStringColumnValue(fp, lbl_eu_804FC648 + 5, mIndex8C);
     mFlag91 = *(u8*)&val;
 }
@@ -274,7 +274,7 @@ void CfObjectPoint::loadPointData() {
 // (CfGimmick, CfMapMineManager) call it through their own C-linkage
 // declarations; the first parameter is the object pointer.
 extern "C" void ObjPoint_SetName_13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
-    ths->setObjectName(reinterpret_cast<const char*>(a));
+    ths->CObjectParam_setObjectName(reinterpret_cast<const char*>(a));
     ths->mFlag91 = val;
 }
 
@@ -338,46 +338,44 @@ done:
 
 } // namespace cf
 
-// Retail Fv: callers leave r4 = vec for syncMoveTarget on mSubObj38 (bctr thunk).
-extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* ths, const ml::CVec3* vec) {
-    if (ths->mSubObj38 == nullptr)
+namespace cf {
+
+// Forwards the position update to the linked child point.
+void CfObjectPoint::notifyChildUpdate(const ml::CVec3* vec) {
+    if (mSubObj38 == nullptr)
         return;
-    ths->mSubObj38->syncMoveTarget(vec);
+    mSubObj38->CfObject_syncMoveTarget(vec);
 }
 
-// Forced-name form: the retail symbols setChildPoint/16F4/171C end in a
-// decompiler-guessed "Fv" (the bodies consume r4/f1/f2 arguments), and the
-// symbols.txt entries cannot be corrected to the true signatures (FPv/Fi/Fff)
-// from this TU's writable scope. A real member would mangle to the corrected
-// name, so these stay C-linkage functions with the mangled retail symbol as
-// the identifier to emit the exact symbol.
-extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* ths, cf::CfObjectPoint* child) {
-    cf::CfObjectPoint* old = ths->mSubObj38;
+void CfObjectPoint::setChildPoint(CfObjectPoint* child) {
+    CfObjectPoint* old = mSubObj38;
     if (old != nullptr) {
         if (old != nullptr) {
             old->setStateBitMask(1);
         }
-        ths->mSubObj38 = nullptr;
+        mSubObj38 = nullptr;
     }
 
-    ths->mSubObj38 = child;
+    mSubObj38 = child;
     if (child != nullptr) {
-        child->setStateBitMask0(ths);
-        ths->mSubObj38->setPointPosition();
+        reinterpret_cast<CScnItemModel*>(child)->attachModelParent((u32)this);
+        mSubObj38->setPointPosition();
     }
 }
 
-extern "C" void setPointEnabled__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* ths, int enable) {
+void CfObjectPoint::setPointEnabled(int enable) {
     if (enable != 0) {
-        ths->mFlags68 |= 0x00100000;
+        mFlags68 |= 0x00100000;
     } else {
-        ths->mFlags68 = DECOMP_PPC_RLWINM(ths->mFlags68, 0, 12, 10);
+        mFlags68 = DECOMP_PPC_RLWINM(mFlags68, 0, 12, 10);
     }
 }
 
+} // namespace cf
+
+// Forced-name form: setPointPosition reads (x, z) from f1/f2, but the only
+// in-TU caller (setChildPoint) dispatches slot 0xA0 with ambient float
+// registers, so the slot stays arg-free and the body keeps the Fv symbol.
 extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* ths, float x, float z) {
     // The const-qualified SDA float (see CfObjectPoint.hpp) lets MWCC hoist
@@ -425,124 +423,3 @@ extern const char lbl_eu_804FC648[0x10] = "name\0icon_type\0";
 extern __declspec(section ".sdata2") const float lbl_eu_80666B48 = 0.0f;
 extern __declspec(section ".sdata2") const float lbl_eu_80666B4C = -1.0f;
 extern __declspec(section ".sdata2") const float lbl_eu_80666B50[2] = { 5.0f, 0.0f };
-
-// Hand-assembled vtable data for this unit (the class is still
-// __declspec(novtable)); retail keeps it in this TU's .data.
-extern "C" {
-u32 lbl_eu_80661CB0[];
-void CObjectState_setStateBitMask__Q22cf12CObjectStateFUl();
-void CObjectState_checkStateFlags__Q22cf12CObjectStateFi();
-void CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl();
-void CObjectState_clearStateWord4__Q22cf12CObjectStateFv();
-void CObjectState_applyStateFlags__Q22cf12CObjectStateFi();
-void CObjectState_clearStateWord8__Q22cf12CObjectStateFv();
-void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi();
-void CObjectState_checkStateFlags8__Q22cf12CObjectStateFi();
-void CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi();
-void CObjectState_setStateBitMask0__Q22cf12CObjectStateFii();
-void CObjectState_getStateData__Q22cf12CObjectStateFv();
-void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
-void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
-void CObjectParam_setObjectName__Q22cf12CObjectParamFPCc();
-void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
-void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
-void loadPointData__Q22cf13CfObjectPointFv();
-void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
-void CObjectParam_signalActionEnd__Q22cf12CObjectParamFi();
-void __dt__Q22cf13CfObjectPointFv();
-void validatePointState__Q22cf13CfObjectPointFv();
-void resetPointFlags__Q22cf13CfObjectPointFv();
-void updatePointState__Q22cf13CfObjectPointFv();
-void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv();
-void releasePointLink__Q22cf13CfObjectPointFv();
-void CfObject_isMoveActiveNow__Q22cf8CfObjectFv();
-void CfObject_forwardSubObject__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv();
-void CfObject_queryTargetState__Q22cf8CfObjectFv();
-void CfObject_pushRefreshValue__Q22cf8CfObjectFf();
-void CfObject_getMoveSpeedRate__Q22cf8CfObjectFv();
-void CfObject_pushRefreshExtra__Q22cf8CfObjectFv();
-void CfObject_readRefreshValue__Q22cf8CfObjectFv();
-void CfObject_checkTargetState__Q22cf8CfObjectFv();
-void CfObjectPoint_CopyPosWords();
-void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv();
-void CfObject_getPosVector__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv();
-void CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv();
-void CfObject_setMoveHeadAngle__Q22cf8CfObjectFf();
-void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv();
-void CfObject_getMoveHeadAngle__Q22cf8CfObjectFv();
-void CfObject_syncMoveHead__Q22cf8CfObjectFf();
-void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl();
-void CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl();
-void CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl();
-void CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl();
-void CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv();
-void CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl();
-void CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl();
-void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
-void CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl();
-void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv();
-void CfObject_createMoveTarget__Q22cf8CfObjectFi();
-void CfObject_getCurrentTarget__Q22cf8CfObjectFv();
-void CfObject_forwardNpcAction__Q22cf8CfObjectFi();
-void CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc52__Q22cf8CfObjectCFPCc();
-void CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl();
-void CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc55__Q22cf8CfObjectCFi();
-void CfObject_getHeightDiff__Q22cf8CfObjectCFv();
-void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv();
-void CfObject_getMoveRateScale__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv();
-void CfObject_setAnimSlotEntry__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv();
-void CfObject_setMoveBusyState__Q22cf8CfObjectFi();
-void CfObject_setMoveReadyFlag__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi();
-void isCollEnabled__Q22cf13CfObjectPointFv();
-void CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
-void CfObject_setProgressHigh__Q22cf8CfObjectFf();
-void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
-}
-
-void* lbl_eu_8052A3B0[] = {
-    (void*)&lbl_eu_80661CB0, 0, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFUl, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFi,
-    (void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl, (void*)CObjectState_clearStateWord4__Q22cf12CObjectStateFv, (void*)CObjectState_applyStateFlags__Q22cf12CObjectStateFi, (void*)CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
-    (void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFi, (void*)CObjectState_checkStateFlags8__Q22cf12CObjectStateFi, (void*)CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi, (void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFii,
-    (void*)CObjectState_getStateData__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv, (void*)CObjectParam_setObjectName__Q22cf12CObjectParamFPCc,
-    (void*)CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv, (void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv, (void*)loadPointData__Q22cf13CfObjectPointFv, (void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
-    (void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFi, (void*)__dt__Q22cf13CfObjectPointFv, (void*)validatePointState__Q22cf13CfObjectPointFv, (void*)resetPointFlags__Q22cf13CfObjectPointFv,
-    (void*)updatePointState__Q22cf13CfObjectPointFv, (void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv, (void*)releasePointLink__Q22cf13CfObjectPointFv, (void*)notifyChildUpdate__Q22cf13CfObjectPointFv,
-    (void*)setChildPoint__Q22cf13CfObjectPointFv, (void*)CfObject_isMoveActiveNow__Q22cf8CfObjectFv, (void*)CfObject_forwardSubObject__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
-    (void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv, (void*)CfObject_queryTargetState__Q22cf8CfObjectFv, (void*)CfObject_pushRefreshValue__Q22cf8CfObjectFf, (void*)CfObject_getMoveSpeedRate__Q22cf8CfObjectFv,
-    (void*)CfObject_pushRefreshExtra__Q22cf8CfObjectFv, (void*)CfObject_readRefreshValue__Q22cf8CfObjectFv, (void*)CfObject_checkTargetState__Q22cf8CfObjectFv, (void*)CfObjectPoint_CopyPosWords,
-    (void*)setPointPosition__Q22cf13CfObjectPointFv, (void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv, (void*)CfObject_getPosVector__Q22cf8CfObjectFv,
-    (void*)CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv,
-    (void*)CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv, (void*)CfObject_setMoveHeadAngle__Q22cf8CfObjectFf, (void*)CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv, (void*)CfObject_getMoveHeadAngle__Q22cf8CfObjectFv,
-    (void*)CfObject_syncMoveHead__Q22cf8CfObjectFf, (void*)CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv,
-    (void*)CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl, (void*)CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl, (void*)CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl,
-    (void*)CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl, (void*)CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv, (void*)CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl, (void*)CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl,
-    (void*)CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv, (void*)CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl, (void*)CfObject_setMoveTargetPtr__Q22cf8CfObjectFv, (void*)CfObject_createMoveTarget__Q22cf8CfObjectFi,
-    (void*)CfObject_getCurrentTarget__Q22cf8CfObjectFv, (void*)CfObject_forwardNpcAction__Q22cf8CfObjectFi, (void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
-    (void*)CfObject_UnkVirtualFunc52__Q22cf8CfObjectCFPCc, (void*)CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl, (void*)CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc55__Q22cf8CfObjectCFi,
-    (void*)CfObject_getHeightDiff__Q22cf8CfObjectCFv, (void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv, (void*)CfObject_getMoveRateScale__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
-    (void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv, (void*)CfObject_setAnimSlotEntry__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv,
-    (void*)CfObject_setMoveBusyState__Q22cf8CfObjectFi, (void*)CfObject_setMoveReadyFlag__Q22cf8CfObjectFv, (void*)setPointEnabled__Q22cf13CfObjectPointFv, (void*)CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi,
-    (void*)isCollEnabled__Q22cf13CfObjectPointFv, (void*)CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv, (void*)CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv,
-    (void*)CfObject_setProgressHigh__Q22cf8CfObjectFf, (void*)CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv,
-};

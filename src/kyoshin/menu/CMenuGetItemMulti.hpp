@@ -235,15 +235,8 @@ struct CfGameManagerTermFields {
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
 extern "C" void Bdat_GetTable_AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
-extern "C" void sysWinTermLayout(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
-extern "C" void sysWinDrawLayout(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void Cur_DrawLayout(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void sysWinAdvancePhase3(u8* syswin);          // CSysWin re-layout
 // CSysWin content setters (grade-up window setup in GetItemMulti_PruneEntries /
 // GetItemMulti_HandlePad); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
-extern "C" void sysWinSetKindContent(u8* syswin, char* text, u32 flag);
-extern "C" void sysWinOpenPhase1(u8* syswin);
-extern "C" void sysWinSetTwoTextValues(u8* syswin, char* a, char* b);
 // Item removal helpers (item sweeps in GetItemMulti_PruneEntries): release an entry
 // and notify the item system.
 extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags);
@@ -251,15 +244,9 @@ extern "C" void CItem_thunkAllocRecord(u32 id, u32 flags);
 extern "C" void UIWin_BuildFlagBuf(u32 a, u32 id, u32 b);
 // Slot-window name source used by GetItemMulti_HandlePad's A-press open (no args).
 // Cursor position + window selection helpers (pad-input handlers).
-extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, u8* syswin, u8 sel);
-extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val); // cursor visibility setter
+// cursor visibility setter
 // Per-frame system-window/cursor updates (Move's tail after the state switch).
-extern "C" void sysWinDispatchPhase(u8* syswin);
-extern "C" void Cur_Update(CBaseCur* cur);
 // System-window lifecycle queries used by Move's state machine.
-extern "C" int CSysWin_isActive(u8* syswin);
-extern "C" u32 CSysWin_isReady(u8* syswin);
-extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers)
 // Item-menu active check (CMenuItem.cpp) and item-created callback (CUICfManager.cpp).
 extern "C" u32 ItemMenu_IsPresent();
 extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);

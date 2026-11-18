@@ -1,6 +1,7 @@
 // kyoshin/CSysWinSelect - system window "select" process (singleton).
 
 #include "kyoshin/CSysWinSelect.hpp"
+#include "kyoshin/CSysWin.hpp"
 
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -88,16 +89,16 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
     if (confirm != 0) {
         // Confirm: close the window and record the chosen row index.
         self->mState = 3;
-        sysWinAdvancePhase3(&self->mSysWin[0]);
+        reinterpret_cast<CSysWin*>(&self->mSysWin[0])->advancePhase3();
         self->field_60 = (s8)self->mCursorSel + 1;
-        Cur_SetVisible(&self->mCur18, 0);
+        self->mCur18.SetVisible(0);
         playUISound(3);
     } else if (up != 0) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
         if ((s8)self->mCursorSel < 0) self->mCursorSel = 1;
         nw4r::math::VEC3 tmp;
-        sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->mCursorSel);
         self->mCur18.setRootPaneTranslate(&tmp);
         playUISound(1);
     } else if (down != 0) {
@@ -105,7 +106,7 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         self->mCursorSel = (u8)(self->mCursorSel + 1);
         if ((s8)self->mCursorSel > 1) self->mCursorSel = 0;
         nw4r::math::VEC3 tmp;
-        sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->mCursorSel);
         self->mCur18.setRootPaneTranslate(&tmp);
         playUISound(1);
     }

@@ -54,7 +54,7 @@ extern "C" void __ct__CViewFrame(CViewFrame* frame);
 // CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
 // CFontLayer.o, which is NonMatching so no C++ declaration exists anywhere).
 extern "C" void __ct__CFontLayer(CFontLayer* layer);
-// Third arg is forwarded from CView::updateViewRect's own r4 (retail keeps
+// Third arg is the rect pointer CView::updateViewRect received (retail keeps
 // the dead mr r5,r4 because the callee prototype has three parameters).
 extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                           const CViewFrame* frame,
@@ -62,7 +62,6 @@ extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRec
 void setViewFrameMode__10CViewFrameFUl(CViewFrame* frame, u32 owner);
 u32 getWhiteColor__8CGXCacheFv();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
-void sortChildViews__5CViewFv(CView* view);
 CView* getFullScreenView__9CViewRootFv();
 CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
 void updateCmd2Color__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
@@ -266,10 +265,10 @@ extern "C" u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };
 extern "C" void CView_DtorShell1C4(u8* self);
 extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self);
 extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
-extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event);
-extern "C" int CView_UnkVirtualFunc4__5CViewFv(CView* self, IWorkEvent* event);
-extern "C" int CView_UnkVirtualFunc5__5CViewFv();
-extern "C" int CView_UnkVirtualFunc6__5CViewFv();
+extern "C" bool CView_UnkVirtualFunc3__5CViewFP10IWorkEvent(CView* self, IWorkEvent* event);
+extern "C" bool CView_UnkVirtualFunc4__5CViewFP10IWorkEvent(CView* self, IWorkEvent* event);
+extern "C" bool CView_UnkVirtualFunc5__5CViewFv();
+extern "C" bool CView_UnkVirtualFunc6__5CViewFv();
 extern "C" void CView_UnkVirtualFunc7__5CViewFv();
 extern "C" void CView_UnkVirtualFunc8__5CViewFv(CView* self);
 extern "C" void CView_UnkVirtualFunc9__5CViewFv(CView* self);
@@ -299,7 +298,8 @@ u32 lbl_eu_8056B5E0[0xD0 / 4] = {
     // CFontLayer secondary vtable (0x30)
     (u32)&lbl_eu_80663578, 0xFFFFFE3C, (u32)&CView_DtorShell1C4,
     (u32)&CView_UnkVirtualFunc1__5CViewFv, (u32)&detachRenderWork__5CViewFP11CWorkThread,
-    (u32)&CView_UnkVirtualFunc3__5CViewFv, (u32)&CView_UnkVirtualFunc4__5CViewFv,
+    (u32)&CView_UnkVirtualFunc3__5CViewFP10IWorkEvent,
+    (u32)&CView_UnkVirtualFunc4__5CViewFP10IWorkEvent,
     (u32)&CView_UnkVirtualFunc5__5CViewFv, (u32)&CView_UnkVirtualFunc6__5CViewFv,
     (u32)&CView_UnkVirtualFunc7__5CViewFv, (u32)&CView_UnkVirtualFunc8__5CViewFv,
     (u32)&CView_UnkVirtualFunc9__5CViewFv,
@@ -675,7 +675,7 @@ void CView::detachRenderWork(CWorkThread* pThread) {
 // store `param` into the payload word of the previous-index slot -- the same
 // three-step tail as CView::attachRenderWork. Note the first modulo is
 // computed signed (retail divw); the two later modulos are unsigned (divwu).
-bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
+bool CView::enqueueContextMsg(u32 param) {
     // Uninitialized stack entry: retail only reads its payload fields
     // (wid..unk22) once each from the frame home.
     volatile CMsgParamEntry msg;
@@ -690,13 +690,13 @@ bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
     u32 sum;
     u32 slot;
 
-    capSigned = (s32)view->mContextRingCapacity;
-    sumSigned = (s32)view->unk3F0 + (s32)view->mContextRingWriteIndex;
+    capSigned = (s32)this->mContextRingCapacity;
+    sumSigned = (s32)this->unk3F0 + (s32)this->mContextRingWriteIndex;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
     // Update-form pointer: advancing the pointer itself makes MWCC emit the
     // retail stwux (base+=offset) for the first payload store.
-    u8* entry = view->mContextRingBase;
+    u8* entry = this->mContextRingBase;
     entry += byteOff;
     *(u32*)entry = 1; // tag 1
     *(u32*)(entry + 0x4) = msg.wid;
@@ -710,19 +710,19 @@ bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
     entry[0x22] = msg.unk22;
     entry[0x23] = 0;
 
-    writeIdx = view->mContextRingWriteIndex + 1;
+    writeIdx = this->mContextRingWriteIndex + 1;
     prevIdx = writeIdx - 1;
-    view->mContextRingWriteIndex = writeIdx;
-    view->unk3FC = prevIdx;
+    this->mContextRingWriteIndex = writeIdx;
+    this->unk3FC = prevIdx;
 
-    sum = view->unk3F0 + prevIdx;
-    slot = sum % view->mContextRingCapacity;
-    slotPtr = view->mContextRingBase + slot * 0x24;
+    sum = this->unk3F0 + prevIdx;
+    slot = sum % this->mContextRingCapacity;
+    slotPtr = this->mContextRingBase + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = view->unk3F0 + view->unk3FC;
-    slot = sum % view->mContextRingCapacity;
-    slotPtr = view->mContextRingBase + slot * 0x24;
+    sum = this->unk3F0 + this->unk3FC;
+    slot = sum % this->mContextRingCapacity;
+    slotPtr = this->mContextRingBase + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = param;
     return true;
 }
@@ -730,7 +730,7 @@ bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
 // us-804409a8: three bubble passes over the child-view list, ordering views
 // whose first attached work resolves to this view's proc root ahead of others,
 // then by root priority (unk1E8), then by the view's own unk460.
-void sortChildViews__5CViewFv(CView* view) {
+void CView::sortChildViews() {
     // Everything is ordered relative to the *current* view's proc root.
     CView* current;
     _reslist_node<WORK_ID>* endNode;
@@ -776,10 +776,10 @@ void sortChildViews__5CViewFv(CView* view) {
     // Pass 1: move views sharing our proc root ahead of foreign-root views.
     do {
         swapped = false;
-        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
-        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+        cur = ((_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
             next = cur->mNext;
-            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            if (next == (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
                 break;
             }
             itemCur = CView::convertToView(cur->mItem);
@@ -822,10 +822,10 @@ void sortChildViews__5CViewFv(CView* view) {
     // Pass 2: within our proc root, order by root priority field unk1E8.
     do {
         swapped = false;
-        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
-        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+        cur = ((_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
             next = cur->mNext;
-            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            if (next == (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
                 break;
             }
             itemCur = CView::convertToView(cur->mItem);
@@ -869,10 +869,10 @@ void sortChildViews__5CViewFv(CView* view) {
     // Pass 3: final ordering by the view's own unk460 value.
     do {
         swapped = false;
-        cur = ((_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr)->mNext;
-        while (cur != (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+        cur = ((_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr)->mNext;
+        while (cur != (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
             next = cur->mNext;
-            if (next == (_reslist_node<CWorkThread*>*)view->mChildren.mStartNodePtr) {
+            if (next == (_reslist_node<CWorkThread*>*)this->mChildren.mStartNodePtr) {
                 break;
             }
             itemCur = CView::convertToView(cur->mItem);
@@ -1454,30 +1454,30 @@ static u32 ResListWorkSize(const reslist<WORK_ID>* list) {
 // been torn down. A stalled logout is reported through the watchdog.
 // (Defined as a retail-named free function: CWorkThread's virtual slot is
 // shared and the member cannot be declared in the read-only shared header.)
-bool wkStandbyLogout__5CViewFv(CView* self) {
+bool CView::wkStandbyLogout() {
     // Logout gate: every child thread gone, no attached work IDs left, and
     // any split frame lacking both panes. Stalled logouts hit the watchdog.
     // 30000 frames (~30s) until the check-timeout message fires.
-    self->CWorkThread::wkCheckTimeout(
+    this->CWorkThread::wkCheckTimeout(
         30000,
-        self->mChildren.empty() &&
-            ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&self->unk238)) == 0 &&
-            !(self->unk45C != nullptr &&
-              getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-              getView2__11CSplitFrameFv(self->unk45C) != nullptr),
+        this->mChildren.empty() &&
+            ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&this->unk238)) == 0 &&
+            !(this->unk45C != nullptr &&
+              getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+              getView2__11CSplitFrameFv(this->unk45C) != nullptr),
         lbl_eu_80522630);
 
-    if (self->unk45C != nullptr && !isActive__11CSplitFrameFv(self->unk45C)) {
-        if (self->unk45C != nullptr) {
-            delete static_cast<CSplitFrame*>(self->unk45C);
-            self->unk45C = nullptr;
+    if (this->unk45C != nullptr && !isActive__11CSplitFrameFv(this->unk45C)) {
+        if (this->unk45C != nullptr) {
+            delete static_cast<CSplitFrame*>(this->unk45C);
+            this->unk45C = nullptr;
         }
     }
 
-    if (self->mChildren.empty() && self->unk45C == nullptr &&
-        ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&self->unk238)) == 0) {
-        CViewRoot::invalidCurrent(self);
-        return wkStandbyLogout__11CWorkThreadFv(self);
+    if (this->mChildren.empty() && this->unk45C == nullptr &&
+        ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&this->unk238)) == 0) {
+        CViewRoot::invalidCurrent(this);
+        return wkStandbyLogout__11CWorkThreadFv(this);
     }
     return false;
 }
@@ -1532,7 +1532,7 @@ void CView::renderView() {
         return;
     }
 
-    sortChildViews__5CViewFv(this);
+    sortChildViews();
 
     crossRootFlag = 0;
     fullScreenView = getFullScreenView__9CViewRootFv();
@@ -2527,8 +2527,9 @@ CView::CView(const char* pName, CWorkThread* pParent)
     // this-adjustment sequence -- retail performs the plain addi+bl.
     __ct__CFontLayer(reinterpret_cast<CFontLayer*>(reinterpret_cast<char*>(this) + 0x1c4));
     *(void**)this = (void*)&lbl_eu_8056B5E0;
+    // Byte offset: `&lbl_eu_8056B5E0 + 0xa0` would scale by sizeof(the array).
     *(void**)(reinterpret_cast<char*>(this) + 0x1c4) =
-        (void*)(&lbl_eu_8056B5E0 + 0xa0);
+        (void*)((u8*)&lbl_eu_8056B5E0 + 0xa0);
     // The typed reserve calls below recover retail's shared 0x10 capacity
     // lifetime; guarded postprocessing closes the final register permutation.
     u32 zero;
@@ -2639,13 +2640,13 @@ void CView::CView_UnkVirtualFunc7() {
 // virtual slot 0xB4 and finally to this view via slot 0xB8.
 // Every textual getView1/getView2 occurrence is a fresh call in retail (opaque
 // callee), hence the repeated short-circuit guard/ternary pairs.
-extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event) {
+bool CView::CView_UnkVirtualFunc3(IWorkEvent* event) {
     // Unlink every node whose WORK_ID matches, marking removed nodes mNext=NULL
     // (explicitly expanded reslist<WORK_ID>::remove, statement-ordered to match
     // retail's register allocation).
     const WORK_ID removedId = reinterpret_cast<CWorkThread*>(event)->mWorkID;
     _reslist_node<WORK_ID>* head =
-        reinterpret_cast<reslist<WORK_ID>*>(&self->unk238)->mStartNodePtr;
+        reinterpret_cast<reslist<WORK_ID>*>(&this->unk238)->mStartNodePtr;
     _reslist_node<WORK_ID>* next = head->mNext;
     _reslist_node<WORK_ID>* curr = next;
     while (curr != head) {
@@ -2662,40 +2663,40 @@ extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event) {
     // Pane 1: three-way guard into saved-reg flags, ternary select of pane 1,
     // test, then recompute the guard and the pane for the dispatch itself.
     CView* pane1 =
-        (self->unk45C != nullptr &&
-         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-            ? getView1__11CSplitFrameFv(self->unk45C)
+        (this->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+            ? getView1__11CSplitFrameFv(this->unk45C)
             : nullptr;
     if (pane1 != nullptr) {
         CView* target1 =
-            (self->unk45C != nullptr &&
-             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-                ? getView1__11CSplitFrameFv(self->unk45C)
+            (this->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+                ? getView1__11CSplitFrameFv(this->unk45C)
                 : nullptr;
         reinterpret_cast<CViewVtB4If*>(target1)->fnB4(event);
     }
 
     // Pane 2: same guard/ternary pair with getView2 as the dispatched pane.
     CView* pane2 =
-        (self->unk45C != nullptr &&
-         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-            ? getView2__11CSplitFrameFv(self->unk45C)
+        (this->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+            ? getView2__11CSplitFrameFv(this->unk45C)
             : nullptr;
     if (pane2 != nullptr) {
         CView* target2 =
-            (self->unk45C != nullptr &&
-             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-                ? getView2__11CSplitFrameFv(self->unk45C)
+            (this->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+                ? getView2__11CSplitFrameFv(this->unk45C)
                 : nullptr;
         reinterpret_cast<CViewVtB4If*>(target2)->fnB4(event);
     }
 
     // Final hop: forward the event to this view's own virtual slot 0xB8.
-    reinterpret_cast<CViewVtB8If*>(self)->fnB8(event);
+    reinterpret_cast<CViewVtB8If*>(this)->fnB8(event);
 
     return 1;
 }
@@ -2705,43 +2706,43 @@ extern "C" int CView_UnkVirtualFunc3__5CViewFv(CView* self, IWorkEvent* event) {
 // to pane 1's and pane 2's view through virtual slot 0xB8. Each textual
 // occurrence of getView1/getView2 is a fresh call in retail (opaque callee, no
 // caching), hence the repeated short-circuit conditions.
-extern "C" int CView_UnkVirtualFunc4__5CViewFv(CView* self, IWorkEvent* event) {
+bool CView::CView_UnkVirtualFunc4(IWorkEvent* event) {
     // Unlink every node whose item matches, marking removed nodes mNext=NULL
     // (inlined reslist<IWorkEvent*>::remove).
-    reinterpret_cast<reslist<IWorkEvent*>*>(&self->unk258)->remove(event);
+    reinterpret_cast<reslist<IWorkEvent*>*>(&this->unk258)->remove(event);
 
     // Pane 1: retail computes the three-way guard into saved-reg flags,
     // selects pane 1 through a ternary, tests it, then recomputes the guard
     // and the pane for the dispatch itself.
     CView* pane1 =
-        (self->unk45C != nullptr &&
-         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-            ? getView1__11CSplitFrameFv(self->unk45C)
+        (this->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+            ? getView1__11CSplitFrameFv(this->unk45C)
             : nullptr;
     if (pane1 != nullptr) {
         CView* target1 =
-            (self->unk45C != nullptr &&
-             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-                ? getView1__11CSplitFrameFv(self->unk45C)
+            (this->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+                ? getView1__11CSplitFrameFv(this->unk45C)
                 : nullptr;
         reinterpret_cast<CViewVtB8If*>(target1)->fnB8(event);
     }
 
     // Pane 2: same guard/ternary pair with getView2 as the dispatched pane.
     CView* pane2 =
-        (self->unk45C != nullptr &&
-         getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-         getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-            ? getView2__11CSplitFrameFv(self->unk45C)
+        (this->unk45C != nullptr &&
+         getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+         getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+            ? getView2__11CSplitFrameFv(this->unk45C)
             : nullptr;
     if (pane2 != nullptr) {
         CView* target2 =
-            (self->unk45C != nullptr &&
-             getView1__11CSplitFrameFv(self->unk45C) != nullptr &&
-             getView2__11CSplitFrameFv(self->unk45C) != nullptr)
-                ? getView2__11CSplitFrameFv(self->unk45C)
+            (this->unk45C != nullptr &&
+             getView1__11CSplitFrameFv(this->unk45C) != nullptr &&
+             getView2__11CSplitFrameFv(this->unk45C) != nullptr)
+                ? getView2__11CSplitFrameFv(this->unk45C)
                 : nullptr;
         reinterpret_cast<CViewVtB8If*>(target2)->fnB8(event);
     }
@@ -2751,20 +2752,20 @@ extern "C" int CView_UnkVirtualFunc4__5CViewFv(CView* self, IWorkEvent* event) {
 
 // Retail stubs (0x8 bytes): addi r3,r3,476 (cast to the embedded
 // CViewFrame base) followed by a sibcall 'b' to the base implementation.
-extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self) {
-    self->mFrame.CView_UnkVirtualFunc1();
+void CView::CView_UnkVirtualFunc1() {
+    this->mFrame.CView_UnkVirtualFunc1();
 }
-extern "C" void CView_UnkVirtualFunc8__5CViewFv(CView* self) {
-    self->mFrame.CView_UnkVirtualFunc8();
+void CView::CView_UnkVirtualFunc8() {
+    this->mFrame.CView_UnkVirtualFunc8();
 }
-extern "C" void CView_UnkVirtualFunc9__5CViewFv(CView* self) {
-    self->mFrame.CView_UnkVirtualFunc9();
+void CView::CView_UnkVirtualFunc9() {
+    this->mFrame.CView_UnkVirtualFunc9();
 }
 
 // us-8043CE90: byte flag at +0x8 of the split-frame object, gated on the
 // split-frame pointer being set.
-extern "C" u8 getSplitFrameFlag__5CViewFv(CView* self) {
-    void* split = self->unk45C;
+u8 CView::getSplitFrameFlag() {
+    void* split = this->unk45C;
     if (split != nullptr) {
         return *reinterpret_cast<u8*>(static_cast<u8*>(split) + 8);
     }
@@ -2773,33 +2774,33 @@ extern "C" u8 getSplitFrameFlag__5CViewFv(CView* self) {
 
 // us-8043CEAC: split-frame view checks with explicit flags -- each condition
 // crosses a subsequent call, so the results live in saved regs in retail.
-extern "C" s32 checkSplitActive__5CViewFv(CView* self) {
+s32 CView::checkSplitActive() {
     s32 flag2 = 0;
     s32 flag1 = 0;
-    if (self->unk45C != nullptr) {
-        if (getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
+    if (this->unk45C != nullptr) {
+        if (getView1__11CSplitFrameFv(this->unk45C) != nullptr) {
             flag1 = 1;
         }
     }
     if (flag1 != 0) {
-        if (getView2__11CSplitFrameFv(self->unk45C) != nullptr) {
+        if (getView2__11CSplitFrameFv(this->unk45C) != nullptr) {
             flag2 = 1;
         }
     }
     if (flag2 != 0) {
-        return (s32)(intptr_t)getView2__11CSplitFrameFv(self->unk45C);
+        return (s32)(intptr_t)getView2__11CSplitFrameFv(this->unk45C);
     }
     return 0;
 }
 
 // us-8043CAFC: like CEAC -- returns whether BOTH split-frame views exist.
-extern "C" s32 hasSplitViews__5CViewFv(CView* self) {
+s32 CView::hasSplitViews() {
     s32 flag2 = 0, flag1 = 0;
-    if (self->unk45C != nullptr && getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
+    if (this->unk45C != nullptr && getView1__11CSplitFrameFv(this->unk45C) != nullptr) {
         flag1 = 1;
     }
     if (flag1 != 0) {
-        if (getView2__11CSplitFrameFv(self->unk45C) != nullptr) {
+        if (getView2__11CSplitFrameFv(this->unk45C) != nullptr) {
             flag2 = 1;
         }
     }
@@ -2813,8 +2814,7 @@ static CView* CView_toView(CWorkThread* thread);
 // offset straight into rect (no tail-offset application, no size stores).
 // Retail computes dy before dx each iteration and re-reads rect.mPos from
 // memory (no cached start locals), so keep those orderings here.
-extern "C" void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::accumRectToView(ml::CRect& rect, CView* other) {
     CView* cur;
     CWorkThread* parentSnap;
     ml::CRect16 off;
@@ -2849,14 +2849,14 @@ extern "C" void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 extern "C" bool isInitialized__4CLibFv();
 extern "C" bool isInitialized__9CViewRootFv();
 
-extern "C" CView* updateViewState__5CViewFv(CView* self) {
+CView* CView::updateViewState() {
     CWorkThread* parentSnap;
     CView* cur;
-    parentSnap = self->mParent;
+    parentSnap = this->mParent;
     if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
-        cur = CView_toView(self->mParent);
+        cur = CView_toView(this->mParent);
     }
     return cur;
 }
@@ -2865,23 +2865,23 @@ extern "C" CView* updateViewState__5CViewFv(CView* self) {
 // tag-6 context-ring message when the split-mode bit (unk278 bit 3) is CLEAR,
 // then forwards to the CWorkThread base login. Bit set skips straight to the
 // base call.
-extern "C" bool wkStandbyLogin__5CViewFv(CView* self) {
+bool CView::wkStandbyLogin() {
     if (!isInitialized__4CLibFv()) {
         goto login_fail;
     }
     if (!isInitialized__9CViewRootFv()) {
         goto login_fail;
     }
-    if ((self->unk278 & 8) == 0) {
+    if ((this->unk278 & 8) == 0) {
         // Tag-6 context-ring enqueue (inlined CMsgParam<10>::enqueue shape;
         // signed index, update-form stwux tag store). Payload fields are
         // uninitialized frame homes -- only read once each.
         volatile CMsgParamEntry msg;
-        s32 capSigned = (s32)self->mContextRingCapacity;
-        s32 sumSigned = (s32)self->unk3F0 + (s32)self->mContextRingWriteIndex;
+        s32 capSigned = (s32)this->mContextRingCapacity;
+        s32 sumSigned = (s32)this->unk3F0 + (s32)this->mContextRingWriteIndex;
         // Volatile-qualified view pins the base-field load above the payload
         // home reads (retail issues it right after the index-sum).
-        u8* volatile& baseRef = self->mContextRingBase;
+        u8* volatile& baseRef = this->mContextRingBase;
         u8* entry = baseRef + (u32)(sumSigned % capSigned) * 0x24u;
         *(u32*)entry = 6; // tag 6
         *(u32*)(entry + 0x4) = msg.wid;
@@ -2895,20 +2895,20 @@ extern "C" bool wkStandbyLogin__5CViewFv(CView* self) {
         entry[0x22] = msg.unk22;
         entry[0x23] = 0;
 
-        u32 writeIdx = self->mContextRingWriteIndex + 1;
+        u32 writeIdx = this->mContextRingWriteIndex + 1;
         u32 prevIdx = writeIdx - 1;
-        self->mContextRingWriteIndex = writeIdx;
-        self->unk3FC = prevIdx;
+        this->mContextRingWriteIndex = writeIdx;
+        this->unk3FC = prevIdx;
     }
-    return wkStandbyLogin__11CWorkThreadFv(self);
+    return wkStandbyLogin__11CWorkThreadFv(this);
 
 login_fail:
     return false;
 }
 
 
-extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
-extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
+bool CView::CView_UnkVirtualFunc6() { return 0; }
+bool CView::CView_UnkVirtualFunc5() { return 0; }
 
 // Static init: copy CCol4::white into sFrameColor (u32 struct copy) and
 // set lbl_8065A0C8 from four float constants. Statement order matters:
@@ -2930,8 +2930,7 @@ extern "C" void sinit_8043FB70() {
 // us-80441420: rect with zero origin and size = other->mRectData view size
 // minus its insets (left/right, top/bottom). Retail has no `this` use -- the
 // member-scoped name is emitted as a free function (rect=r3, other=r4).
-extern "C" void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::fitRectToView(ml::CRect& rect, CView* other) {
     // Best-known shape: both size chains compound, then the zero origin via
     // chained assignment. Byte diff vs retail is exactly one scheduler
     // transposition (retail issues 'sth r0,0(r3)' between the two final
@@ -2976,8 +2975,7 @@ struct CViewStackRect {
 };
 
 // us-80440f24: accumulated content origin + final frame's view-offset size.
-extern "C" void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::clipRectToView(ml::CRect& rect, CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
     s16 x = other->mFrame.mContentX;
@@ -3010,8 +3008,7 @@ extern "C" void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-80441044: accumulated content origin offset by this frame's own view
 // offset (position only, no size).
-extern "C" void adjustRectForView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::adjustRectForView(ml::CRect& rect, CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
     ml::CPnt16 walkBuf[3];
@@ -3047,8 +3044,7 @@ extern "C" void adjustRectForView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-80441164: provisional rect from this frame's offsets and view size,
 // then the walk recomputes the absolute origin.
-extern "C" void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::applyRectToView(ml::CRect& rect, CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
     ml::CPnt16 walkBuf[3];
@@ -3092,8 +3088,7 @@ extern "C" void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-804412c0: like 8043E7CC but the size is shrunk by the view insets and
 // the origin shifted by the left/top insets.
-extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
-                                                          CView* other) {
+void CView::insetRectToView(ml::CRect& rect, CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
     s16 x = other->mFrame.mContentX;
@@ -3139,7 +3134,7 @@ extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 // unk278 selects split-mode (negated view offset as content origin, size
 // from parent or render mode); otherwise size = frame rect extent. Bit4
 // (0x10) skips the setBoundsSize max-size clamp.
-extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
+void CView::updateViewRect(ml::CRect16* rect) {
     // Retail slot map (ascending): modeSize@0x8, ifPos@0xC, ifOff@0x10,
     // elsePos@0x14, elseOff@0x18, hole@0x1C, tmp@0x20. The per-branch rects
     // are split into pos/off CPnt16 halves; the callee's size half lands in
@@ -3156,28 +3151,28 @@ extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
     } modeSize;
     // Retail forwards its own r4 into the callee's third parameter.
     getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&tmp, &self->mFrame, arg);
+        (ml::CRect16*)&tmp, &this->mFrame, (u32)rect);
 
-    if ((self->unk278 & 1) != 0) {
+    if ((this->unk278 & 1) != 0) {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&ifPos, &self->mFrame);
+            (ml::CRect16*)&ifPos, &this->mFrame);
         ifOff.x = -ifPos.x;
         // Load anchored here so the scheduler places the mParent fetch
         // between the second neg and its store, matching retail.
-        parentSnap = self->mParent;
+        parentSnap = this->mParent;
         ifOff.y = -ifPos.y;
-        *(u32*)&self->mFrame.mContentX = *(u32*)&ifOff;
+        *(u32*)&this->mFrame.mContentX = *(u32*)&ifOff;
 
         CView* parentView;
         if (CViewRoot::getInstance() == parentSnap) {
             parentView = nullptr;
         } else {
-            parentView = CView::convertToView(self->mParent);
+            parentView = CView::convertToView(this->mParent);
         }
 
         if (parentView != nullptr) {
             updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &self->mRectData,
+                &this->mRectData,
                 static_cast<CView*>(parentView)->mRectData.mBoundsSize);
         } else {
             GXRenderModeObj* renderMode = getRenderModeObj__9CDeviceVIFv();
@@ -3187,19 +3182,19 @@ extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
             modeSize.x = modeW;
             modeSize.y = modeHeight;
             updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &self->mRectData, *(const ml::CPnt16*)&modeSize);
+                &this->mRectData, *(const ml::CPnt16*)&modeSize);
         }
     } else {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&elsePos, &self->mFrame);
+            (ml::CRect16*)&elsePos, &this->mFrame);
         elseOff.x = tmp.mPos.x - elsePos.x;
         elseOff.y = tmp.mPos.y - elsePos.y;
-        *(u32*)&self->mFrame.mContentX = *(u32*)&elseOff;
+        *(u32*)&this->mFrame.mContentX = *(u32*)&elseOff;
         // NOTE: passes tmp.mSize (first-call rect), not the computed extent.
-        updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+        updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&this->mRectData, tmp.mSize);
     }
 
-    if ((self->unk278 & 0x10) == 0) {
-        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+    if ((this->unk278 & 0x10) == 0) {
+        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&this->mRectData, tmp.mSize);
     }
 }

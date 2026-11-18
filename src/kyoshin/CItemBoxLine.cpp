@@ -4,6 +4,7 @@
 #define IWORK_EVENT_INLINE_DTOR // ~CItemBoxLine elides the empty base dtor (retail)
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -36,7 +37,7 @@ int CItemBoxLine::GetSelectReady() {
     if (mInfo2.GetState() == 0) return 0;
     if (mNumSel.IsLoaded() == 0) return 0;
     if (mScrollBar.isVisible() == 0) return 0;
-    if (CSysWin_isReady(&mSysWin) != 0) return field58;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isReady() != 0) return field58;
     return 0;
 }
 
@@ -48,9 +49,9 @@ void CItemBoxLine::LeaveState3() {
     if (field50 != 3) return;
     field50 = 4;
     unk59 = 0;
-    Cur_SetVisible(&mCurB8, 0);
-    Cur_SetVisible(&mCur70, 0);
-    Cur_SetVisible(&mCurA0, 0);
+    mCurB8.SetVisible(0);
+    mCur70.SetVisible(0);
+    mCurA0.SetVisible(0);
     mInfo2.Close();
     mScrollBar.requestScrollOut();
     if (!unk39E) playUISound(6);
@@ -62,7 +63,7 @@ void CItemBoxLine::LeaveState3() {
 void CItemBoxLine::RefreshTabSelect() {
     if (unk38C == -1) return;
     if (mNumSel.IsOpen()) return;
-    if (CSysWin_getUnk34(&mSysWin)) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) return;
     if (field3A0) return;
     unk38C = -1;
     unk38E = 0;
@@ -507,7 +508,7 @@ void CIBLTabCur::initLayout() {
     bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, pool + 0x139);
     bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, pool + 0x156);
     mpLayout->UnbindAllAnimation();
-    Cur_DeactivateTail(this);
+    ((CBaseCur*)(this))->DeactivateTail();
 }
 
 void ItemBoxLine_InitTabFormat(CIBLTabFull* self);
@@ -600,14 +601,14 @@ void CItemBoxLine::UpdateStates() {
         CommitOverlayState();
     }
     field40->Animate(0);
-    Cur_Update(&mCur70);
-    Cur_Update(&mCur88);
-    Cur_Update(&mCurA0);
-    Cur_Update(&mCurB8);
+    mCur70.Update();
+    mCur88.Update();
+    mCurA0.Update();
+    mCurB8.Update();
     mInfo2.UpdateAnims();
     mNumSel.UpdateStates();
     mScrollBar.UpdateDispatch();
-    sysWinDispatchPhase(&mSysWin);
+    reinterpret_cast<CSysWin*>(&mSysWin)->dispatchPhase();
 }
 
 void CItemBoxLine::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
@@ -615,22 +616,22 @@ void CItemBoxLine::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
     mInfo2.DrawLayout(drawInfo);
     drawLayout(field40, drawInfo, 0, 1);    // "line not busy" flag: both the tab-name cursor and the num-select idle.
     int noBusy = 0;
-    if (Cur_BothSubPanesOn(&mCurB8) == 0 && mNumSel.IsOpen() == 0) noBusy = 1;
+    if (mCurB8.BothSubPanesOn() == 0 && mNumSel.IsOpen() == 0) noBusy = 1;
     if (noBusy != 0) {
-        if (CSysWin_getUnk34(&mSysWin) == 0) {
-            Cur_DrawLayout(&mCur88, drawInfo);
-            Cur_DrawLayout(&mCurA0, drawInfo);
+        if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() == 0) {
+            mCur88.DrawLayout(drawInfo);
+            mCurA0.DrawLayout(drawInfo);
         }
     }
-    Cur_DrawLayout(&mCurB8, drawInfo);
+    mCurB8.DrawLayout(drawInfo);
     mScrollBar.draw(drawInfo);
     mNumSel.DrawLayout(drawInfo);
-    sysWinDrawLayout(&mSysWin, drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     // "syswin overlay armed" flag: overlay busy and nav state before 9.
     int syswinArmed = 0;
-    if (CSysWin_getUnk34(&mSysWin) != 0 && field50 < 9) syswinArmed = 1;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0 && field50 < 9) syswinArmed = 1;
     if (noBusy != 0 && syswinArmed == 0) {
-        Cur_DrawLayout(&mCur70, drawInfo);
+        mCur70.DrawLayout(drawInfo);
     }
 }
 
@@ -674,7 +675,7 @@ void CItemBoxLine::UnloadFiles() {
     mInfo2.UnloadFiles();
     mNumSel.UnloadFiles();
     mScrollBar.Teardown();
-    sysWinTermLayout(&mSysWin);
+    reinterpret_cast<CSysWin*>(&mSysWin)->termLayout();
 }
 
 
@@ -682,7 +683,7 @@ void CItemBoxLine::UnloadFiles() {
 // ItemBoxLine_IsBusy: busy-check - a CSysWin or num-select member is active, else return byte.
 // ============================================================================
 int CItemBoxLine::IsBusy() {
-    if (CSysWin_getUnk34(&mSysWin)) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) {
         return 1;
     }
     if (mNumSel.IsOpen()) {
@@ -790,18 +791,18 @@ void CItemBoxLine::TabPrev() {
 // by one row (wrapping through the tab count) and refresh the line.
 // ============================================================================
 void CItemBoxLine::CursorPageBack() {
-    if (CSysWin_getUnk34(&mSysWin) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) {
         if (field50 == 9) {
             return;
         }
-        if (CSysWin_isActive(&mSysWin) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
             u8 v = field3A3 - 1;
             field3A3 = v;
             if ((s8)v < 0) {
                 field3A3 = 1;
             }
             u8 tmp[12];
-            sysWinGetPaneScreenPos(tmp, &mSysWin, field3A3);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin), field3A3);
             mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         }
         playUISound(1);
@@ -873,15 +874,15 @@ void CItemBoxLine::CursorPageBack() {
 // tab count) and refresh the line.
 // ============================================================================
 void CItemBoxLine::CursorPageDown() {
-    if (CSysWin_getUnk34(&mSysWin) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) {
         if (field50 >= 9) {
-            if (CSysWin_isActive(&mSysWin) != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
                 field3A3++;
                 if ((s8)field3A3 > 1) {
                     field3A3 = 0;
                 }
                 u8 tmp[12];
-                sysWinGetPaneScreenPos(tmp, &mSysWin, field3A3);
+                CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin), field3A3);
                 mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
                 playUISound(1);
             }
@@ -954,7 +955,7 @@ void CItemBoxLine::CursorPageDown() {
 // otherwise handle the tab page up/down wrap and refresh the line.
 // ============================================================================
 void CItemBoxLine::CursorPageUp() {
-    if (CSysWin_getUnk34(&mSysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) return;
     if (field3A0 != 0) {
         CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A1 - 1);
@@ -1015,7 +1016,7 @@ void CItemBoxLine::CursorPageUp() {
 // otherwise handle the tab page-up wrap (unk38E += 7) and refresh the line.
 // ============================================================================
 void CItemBoxLine::CursorPageDownRow() {
-    if (CSysWin_getUnk34(&mSysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) return;
     if (field3A0 != 0) {
         CItemBoxPage* page = &mInfo2.mPage;
         s8 a = (s8)(field3A1 + 1);
@@ -1077,9 +1078,9 @@ void CItemBoxLine::CursorPageDownRow() {
 // active tab is committed; otherwise a tab/cursor hint is advanced.
 // ============================================================================
 void CItemBoxLine::ConfirmOverlayOrHint() {
-    if (CSysWin_getUnk34(&mSysWin)) {
-        if (CSysWin_isActive(&mSysWin)) {
-            sysWinAdvancePhase3(&mSysWin);
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive()) {
+            reinterpret_cast<CSysWin*>(&mSysWin)->advancePhase3();
             if (field50 >= 9) {
                 field50 = 0xb;
                 field3A3 = 1;
@@ -1090,11 +1091,11 @@ void CItemBoxLine::ConfirmOverlayOrHint() {
         if (field3A0 != 0) {
             field3A0 = 0;
             if (unk38C == -1) {
-                Cur_SetVisible(&mCurA0, 1);
+                mCurA0.SetVisible(1);
             } else {
-                Cur_SetVisible(&mCur70, 1);
+                mCur70.SetVisible(1);
             }
-            Cur_SetVisible(&mCur88, 0);
+            mCur88.SetVisible(0);
             playUISound(6);
         } else {
             if (mNumSel.IsOpen() == 0) return;
@@ -1118,9 +1119,9 @@ void CItemBoxLine::ConfirmOverlayOrHint() {
 // ============================================================================
 void CItemBoxLine::ResolveEntry() {
     char* pool = lbl_eu_805071B0;
-    if (CSysWin_getUnk34(&mSysWin)) {
-        if (CSysWin_isActive(&mSysWin)) {
-            sysWinAdvancePhase3(&mSysWin);
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive()) {
+            reinterpret_cast<CSysWin*>(&mSysWin)->advancePhase3();
             if (field50 < 9) return;
             field50 = 0xb;
             RefreshLineRows();
@@ -1165,10 +1166,10 @@ void CItemBoxLine::ResolveEntry() {
                        ? BdatTouchStringCell(pool + 0x1db, pool + 0x6c, 3)
                        : BdatTouchStringCell(pool + 0x63, pool + 0x6c, 0x11);
         }
-        sysWinSwitchKindPane(&mSysWin, 0);
-        sysWinSetKindContent(&mSysWin, (u32)text, 0);
-        sysWinApplyKind(&mSysWin, 1);
-        sysWinOpenPhase1(&mSysWin);
+        reinterpret_cast<CSysWin*>(&mSysWin)->switchKindPane(0);
+        reinterpret_cast<CSysWin*>(&mSysWin)->setKindContent(reinterpret_cast<char*>((u32)text), 0);
+        reinterpret_cast<CSysWin*>(&mSysWin)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWin)->openPhase1();
         playUISound(5);
         return;
     }
@@ -1207,10 +1208,10 @@ void CItemBoxLine::ResolveEntry() {
         unk39E = 1;
         playUISound(3);
     } else {
-        sysWinSwitchKindPane(&mSysWin, 0);
-        sysWinSetKindContent(&mSysWin, (u32)text, 0);
-        sysWinApplyKind(&mSysWin, 1);
-        sysWinOpenPhase1(&mSysWin);
+        reinterpret_cast<CSysWin*>(&mSysWin)->switchKindPane(0);
+        reinterpret_cast<CSysWin*>(&mSysWin)->setKindContent(reinterpret_cast<char*>((u32)text), 0);
+        reinterpret_cast<CSysWin*>(&mSysWin)->applyKind(1);
+        reinterpret_cast<CSysWin*>(&mSysWin)->openPhase1();
         playUISound(5);
     }
 }
@@ -1298,7 +1299,7 @@ u16 CItemBoxLine::TouchTabEntryItem() {
     return ItemBoxLine_GetTabEntryItem(&unk3A4, (unsigned char)(unk38C + unk38E));
 }
 
-void CItemBoxLine::ResetCursorB8(u32 show) { Cur_ShowTwoSubPanes(&mCurB8, show); }
+void CItemBoxLine::ResetCursorB8(bool show) { mCurB8.ShowTwoSubPanes(show); }
 
 // ============================================================================
 // ItemBoxLine_Info2SelectPrev: step the tab cursor down one slot (wrap to count-1 when it
@@ -1347,9 +1348,9 @@ void CItemBoxLine::Info2SelectNext() {
 void CItemBoxLine::ShowDetailWin() {
     if (mNumSel.IsOpen() != 0) return;
     if (field3A0 != 0) {
-        if (CSysWin_getUnk34(&mSysWin) != 0) {
-            if (CSysWin_isActive(&mSysWin) != 0) {
-                sysWinAdvancePhase3(&mSysWin);
+        if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive() != 0) {
+                reinterpret_cast<CSysWin*>(&mSysWin)->advancePhase3();
             }
             return;
         }
@@ -1364,14 +1365,14 @@ void CItemBoxLine::ShowDetailWin() {
             } else {
                 obj = (u32)BdatTouchStringCell(&lbl_eu_805071B0[0x1f0], &lbl_eu_805071B0[0x1fa], (u16)v);
             }
-            sysWinSwitchKindPane(&mSysWin, 0);
-            sysWinSetKindContent(&mSysWin, (u32)obj, 0);
-            sysWinApplyKind(&mSysWin, 1);
-            sysWinOpenPhase1(&mSysWin);
+            reinterpret_cast<CSysWin*>(&mSysWin)->switchKindPane(0);
+            reinterpret_cast<CSysWin*>(&mSysWin)->setKindContent(reinterpret_cast<char*>((u32)obj), 0);
+            reinterpret_cast<CSysWin*>(&mSysWin)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&mSysWin)->openPhase1();
         }
         return;
     }
-    if (CSysWin_getUnk34(&mSysWin) != 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened() != 0) return;
     CItemBoxPage* page2 = &mInfo2.mPage;
     u8 found = 0;
     for (u8 i = 0; i < 12; i++) {
@@ -1387,9 +1388,9 @@ void CItemBoxLine::ShowDetailWin() {
         field3A0 = 1;
         field3A1 = (u8)((float)sel * lbl_eu_80668124);
         field3A2 = (u8)(sel - (s8)field3A1 * 4);
-        Cur_SetVisible(&mCurA0, 0);
-        Cur_SetVisible(&mCur70, 0);
-        Cur_SetVisible(&mCur88, 1);
+        mCurA0.SetVisible(0);
+        mCur70.SetVisible(0);
+        mCur88.SetVisible(1);
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page2->mItemIds, sel);
         mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
@@ -1406,8 +1407,8 @@ void CItemBoxLine::ShowDetailWin() {
 u8 CItemBoxLine::ResolveFocusId() {
     if (field50 >= 6) return 0;
     if (mNumSel.IsOpen()) return 0;
-    if (CSysWin_getUnk34(&mSysWin)) return 0;
-    if (Cur_BothSubPanesOn(&mCurB8)) return 0xa;
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isOpened()) return 0;
+    if (mCurB8.BothSubPanesOn()) return 0xa;
     bool flag = code80135FDC_getByte_64077() > 1;
     if (field3A0 != 0) return 0xb;
     if (unk38C == -1) {
@@ -1444,8 +1445,8 @@ void CItemBoxLine::EnterState1() {
     field50 = 3;
     unk59 = 1;
     RefreshPageList();
-    Cur_SetVisible(&mCur70, 1);
-    Cur_SetVisible(&mCurB8, 1);
+    mCur70.SetVisible(1);
+    mCurB8.SetVisible(1);
     nw4r::math::VEC3 tmp = mInfo2.GetSlotPos(field39F);
     ((CBaseCur*)&mCurB8)->setRootPaneTranslate(&tmp);
     RefreshLineRows();
@@ -1472,8 +1473,8 @@ void CItemBoxLine::EnterState3() {
     if (AnimRewindFrame(field44, lbl_eu_80668114) != 0) {
         unk59 = 1;
         field50 = 0;
-        Cur_SetVisible(&mCur70, 0);
-        Cur_SetVisible(&mCurA0, 0);
+        mCur70.SetVisible(0);
+        mCurA0.SetVisible(0);
         field4C = 0;
     }
 }
@@ -1484,11 +1485,11 @@ void CItemBoxLine::EnterState3() {
 // cursor's vtable[2] virtual.
 // ============================================================================
 void CItemBoxLine::PushSyswinCursor() {
-    if (CSysWin_isActive(&mSysWin)) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin)->isActive()) {
         field50 = 0xa;
-        Cur_SetVisible(&mCur70, 1);
+        mCur70.SetVisible(1);
         u8 tmp[0x10];
-        sysWinGetPaneScreenPos(tmp, &mSysWin, field3A3);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&mSysWin), field3A3);
         mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     }
 }
@@ -1498,7 +1499,7 @@ void CItemBoxLine::PushSyswinCursor() {
 // and advance to state 6. csvtab index = (0x38c + 0x38e) & 0xFF.
 // ============================================================================
 void CItemBoxLine::CommitOverlayState() {
-    if (!CSysWin_isActive(&mSysWin)) return;
+    if (!reinterpret_cast<CSysWin*>(&mSysWin)->isActive()) return;
     field50 = 3;
     if ((s8)field3A3 != 0) return;
     u8 tabidx = (u8)(unk38C + unk38E);
@@ -1864,8 +1865,8 @@ void CItemBoxLine::RefreshLineRows() {
             field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= refPane->GetScale().x;
         ((CBaseCur*)&mCurA0)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
-        Cur_SetVisible(&mCurA0, 1);
-        Cur_SetVisible(&mCur70, 0);
+        mCurA0.SetVisible(1);
+        mCur70.SetVisible(0);
     } else {
         char name[0x20];
         sprintf(name, &lbl_eu_805071B0[0x3db], sel + 1);
@@ -1877,8 +1878,8 @@ void CItemBoxLine::RefreshLineRows() {
             field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= refPane->GetScale().x;
         mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
-        Cur_SetVisible(&mCur70, 1);
-        Cur_SetVisible(&mCurA0, 0);
+        mCur70.SetVisible(1);
+        mCurA0.SetVisible(0);
     }
 }
 
@@ -2574,7 +2575,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         this->mCurB8 = CSubCur((nw4r::lyt::ArcResourceAccessor*)this->field38);
         ((CBaseCur*)&this->mCurB8)->initLayout();
 
-        Cur_ShowTwoSubPanes(&this->mCurB8, 0);
+        this->mCurB8.ShowTwoSubPanes(0);
         CompactTabList();
         this->field24 = 0;
         (&mRegion04)->validateHeap();

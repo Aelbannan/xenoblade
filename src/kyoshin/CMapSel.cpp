@@ -161,7 +161,7 @@ __declspec(noinline) void CMapSel::update() {
         }
         mLayout->Animate(0);
         mScrollBar.UpdateDispatch();
-        Cur_Update(&mCursor);
+        mCursor.Update();
     }
 }
 
@@ -176,7 +176,7 @@ void CMapSel::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mActive != 0 && mState != 0) {
         drawLayout(mLayout, drawInfo, 0, 1);
         mScrollBar.draw(drawInfo);
-        Cur_DrawLayout(&mCursor, drawInfo);
+        mCursor.DrawLayout(drawInfo);
     }
 }
 #pragma pop
@@ -238,7 +238,7 @@ void CMapSel::beginClose() {
     if (mState == 3) {
         mState = 4;
         mInitFlag = 0;
-        Cur_SetVisible(&mCursor, 0);
+        mCursor.SetVisible(0);
         playUISound(6);
     }
 }
@@ -393,7 +393,7 @@ __declspec(noinline) void CMapSel::tickOpenIn() {
     if (advanceAnimTransform(mAnimTransform2, lbl_eu_8066873C) != 0) {
         mState = 3;
         mInitFlag = 1;
-        Cur_SetVisible(&mCursor, 1);
+        mCursor.SetVisible(1);
         updateCursor();
     }
 }

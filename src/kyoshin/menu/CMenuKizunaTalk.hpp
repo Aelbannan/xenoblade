@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -41,13 +42,13 @@ public:
 
 // KEEP (header-consolidation round 2, 2026-10-23): the ctor stores both
 // subobject vptrs by hand, so these stay PODs instead of the monolib classes.
-// IWorkEvent / IScnRender base subobjects: 4-byte vtable slots into the retail
+// IWorkEvent / KizunaScnRender base subobjects: 4-byte vtable slots into the retail
 // composite vtable (+0x24 / +0xAC, see the ctor). Plain PODs - the retail
 // subobject vtables are stored by the ctor, not by MWCC.
-struct IWorkEvent {
+struct KizunaWorkEvent {
     u32 mVtable;
 };
-struct IScnRender {
+struct KizunaScnRender {
     u32 mVtable;
 };
 
@@ -57,6 +58,11 @@ struct IScnRender {
 // Minimal CScn view: only the render-callback members are used by this TU
 // (retail symbols addRenderCB__4CScnFP10IScnRenderUlUl /
 // removeRenderCB__4CScnFP10IScnRender). Defined OOL in monolib/src/scn/CScn.
+// Render-callback argument type: the retail mangling is
+// addRenderCB__4CScnFP10IScnRenderUlUl, so the parameter is the canonical
+// IScnRender class (forward-declared; the subobject vtable slot is written by
+// hand through the KizunaScnRender POD above).
+class IScnRender;
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
@@ -111,15 +117,6 @@ public:
     virtual void v20() = 0;  // index 32 -> vtable +0x88
 };
 
-// KEEP: this TU defines its own IWorkEvent POD (above), so it cannot include
-// kyoshin/CSysWin.hpp. This declaration-only view gives the panel copy the
-// real mangled callee (the weak implicit CSysWin::operator=, emitted in
-// CMenuItem). Remove when the TU uses the monolib IWorkEvent.
-class CSysWin {
-public:
-    CSysWin& operator=(const CSysWin&);
-};
-
 // kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
@@ -134,7 +131,7 @@ struct KizunaScratch {
  * Retail layout (ctor / dtor / Term):
  *   0x00  IUIWindow base (0x6C)
  *   0x6C  IWorkEvent base (composite vtable + 0x24)
- *   0x70  IScnRender base (composite vtable + 0xAC)
+ *   0x70  KizunaScnRender base (composite vtable + 0xAC)
  *   0x74  CScn* owning scene (render-callback target)
  *   0x78  UnkClass_8045F564 storage (0x10 bytes)
  *   0x88/0x8C  CFileHandle* (talk-list file / shared archive)
@@ -152,7 +149,7 @@ struct KizunaScratch {
  * composite / subobject vtables by hand and the retail dtor emits no vtable
  * store, so the dtor is non-virtual and the bases carry no virtuals.
  */
-class CMenuKizunaTalk : public IUIWindow, public IWorkEvent, public IScnRender {
+class CMenuKizunaTalk : public IUIWindow, public KizunaWorkEvent, public KizunaScnRender {
 public:
     static CMenuKizunaTalk* sInstance;
 
@@ -198,7 +195,6 @@ struct KizunaTalkPadData {
 // retail symbols are unmangled, so they must stay C-linkage (the C++-linkage
 // declarations in CSysWinSelect.hpp/CSysWinSave.hpp would mangle them).
 extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 extern "C" int CfT_DispatchFrameCounts();
 extern "C" void* Bdat_GetTable_AA34();
 
@@ -210,18 +206,9 @@ extern "C" void* Bdat_GetTable_AA34();
 // zero-extends and callers keep the raw result (mr), masking only at use.
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void sysWinTermLayout(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" void sysWinSetKindContent(void*, u32, int);
-extern "C" void sysWinApplyKind(void*, int);
-extern "C" void sysWinOpenPhase1(void*);
-extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
-extern "C" int CSysWin_isActive(void*);
-extern "C" void Cur_SetVisible(void*, u8);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
-extern "C" void sysWinAdvancePhase3(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 //@@KIZUNA_DECLS@@

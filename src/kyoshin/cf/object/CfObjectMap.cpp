@@ -450,13 +450,13 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
     return self;
 }
 
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
+extern "C" void CfObject_applyMoveYaw__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     // Retail forwarder at 0xD4 -> slot 0xD0 (CfObject_UnkVirtualFunc32). The float
     // in f1 is forwarded unchanged via bcctr; Model's 32 ignores it.
     reinterpret_cast<cf::CfObject*>(self)->CfObject_syncMoveHead(value);
 }
 
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
+extern "C" void CfObject_setMoveYaw__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     // Retail forwarder at 0xC8 -> slot 0xC4 (CfObject_setMoveHeadAngle).
     reinterpret_cast<cf::CfObject*>(self)->CfObject_setMoveHeadAngle(value);
 }

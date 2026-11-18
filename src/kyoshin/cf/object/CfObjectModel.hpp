@@ -15,9 +15,9 @@ extern const float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack
 extern const float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_getModelName null placeholder (rodata, 8 bytes)
 extern u8 lbl_eu_80529318[];   // cf::CfObject vtable (retail .data, stored by the model dtor)
-extern u8 lbl_eu_805294E0[];   // cf::CfObjectModel vtable (retail .data)
+extern u8 __vt__Q22cf8CfObject[];   // cf::CfObjectModel vtable (retail .data)
 extern const char lbl_eu_80529678[];   // Panic file (node-lookup assert, line 0x53)
-extern const char lbl_eu_80529658[];   // Panic fmt (CfObject_UnkVirtualFunc52/53)
+extern const char lbl_eu_80529658[];   // Panic fmt (CfObject_findNodeMatrix/53)
 
 namespace nw4r {
 namespace g3d {
@@ -29,7 +29,7 @@ struct ResMdlData;  // forward decl (full type in nw4r/g3d/res/g3d_resmdl.h)
 // monolib/math/CVec3.hpp, already included transitively).
 extern ml::CVec3 zero__Q22ml5CVec3;
 
-// Effect-act owner for the +0xA8/+0x44 chain (CfObject_UnkVirtualFunc55):
+// Effect-act owner for the +0xA8/+0x44 chain (CfObject_getPosSample):
 // +0xA8 on the Nw4r scene model returns the embedded effect-act object,
 // whose +0x44 slot is the id-table lookup. Mirror of
 // libs/monolib/src/scn/CScnEffectActNw4r (same name, layout, and slot
@@ -77,9 +77,9 @@ public:
 
 namespace cf {
     // Sub-object at CfObjectModel+0x98: flag words read by CfModel_GetFlag7A8
-    // (bit 0 of field_7A8) and CfObject_UnkVirtualFunc69 (bit 1 of field_7A4).
+    // (bit 0 of field_7A8) and CfObject_isVisibleFlag (bit 1 of field_7A4).
     // Per-node matrix table reached through CfObjectModelSub98+0x147C: its
-    // +0xEC word is the base of 0x30-byte matrix slots (CfObject_UnkVirtualFunc52/53).
+    // +0xEC word is the base of 0x30-byte matrix slots (CfObject_findNodeMatrix/53).
     struct CfObjectModelActTable {
         u8 _padEC[0xEC];
         u8* field_EC;  // 0xEC
@@ -95,7 +95,7 @@ namespace cf {
         u8 _pad1470[0x147C - 0x1470]; // 0x1470-0x147B
         CfObjectModelActTable* field_147C;  // 0x147C
         u8 _pad1480[0x14AC - 0x1480]; // 0x1480-0x14AB
-        u32 field_14AC;               // 0x14AC (read by CfObject_UnkVirtualFunc54)
+        u32 field_14AC;               // 0x14AC (read by CfObject_getSubPosWord)
     };
     // Tiny iface for the +0xB0 resource-impl word: DELETED (Batch F). The
     // slot +0x08 table head is the owning impl class's deleting destructor
@@ -206,7 +206,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_setMoveHeadAngle();
     void CfObject_setScaledHeadAngle();
-    float CfObject_UnkVirtualFunc34();
+    float CfObject_getScaledAngle();
     void* CObjectParam_UnkVirtualFunc2();
     void setPointEnabled(int flag); //0x158 override (base renamed; keeps CfObjectModel non-abstract)
     int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr) override;
@@ -214,17 +214,17 @@ namespace cf {
     // CfObject slot overrides (retail CfObjectModel symbols in the
     // CfObjectActor / CfObjectMove vtables).
     void CfObject_setPosXZ(float a, float b);           //0xA0
-    void* CfObject_UnkVirtualFunc24();                  //0xB0
-    void* CfObject_UnkVirtualFunc28();                  //0xC0
-    void CfObject_UnkVirtualFunc35(float value);        //0xDC
-    float CfObject_UnkVirtualFunc36();                  //0xE0
-    void* CfObject_UnkVirtualFunc52(const char* name) const;  //0x120
+    void* CfObject_getPosTriple();                  //0xB0
+    void* CfObject_getField48();                  //0xC0
+    void CfObject_setObjScale(float value);        //0xDC
+    float CfObject_getObjScale();                  //0xE0
+    void* CfObject_findNodeMatrix(const char* name) const;  //0x120
     void* CfObject_getIndexedNodeMatrix(u32 idx) const;     //0x124
-    u32 CfObject_UnkVirtualFunc54();                    //0x128
-    void* CfObject_UnkVirtualFunc55(int arg) const;           //0x12C
+    u32 CfObject_getSubPosWord();                    //0x128
+    void* CfObject_getPosSample(int arg) const;           //0x12C
     float CfObject_getHeightDiff() const;                     //0x130
-    void CfObject_UnkVirtualFunc67(int flag);           //0x15C
-    u32 CfObject_UnkVirtualFunc69();                    //0x164
+    void CfObject_setVisibleFlag(int flag);           //0x15C
+    u32 CfObject_isVisibleFlag();                    //0x164
     float CfObject_getProgressLow();                    //0x16C
     void CfObject_setProgressHigh(float value);         //0x170
     float CfObject_getProgressHigh();                   //0x174

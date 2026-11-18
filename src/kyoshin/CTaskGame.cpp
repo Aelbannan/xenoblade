@@ -1,3 +1,7 @@
+// This TU owns the out-of-line IScnRender destructor/key function (retail
+// __dt__10IScnRenderFv lives here, next to __vt__10IScnRender), so the header
+// must declare it instead of defining it inline.
+#define ISCN_RENDER_OUT_OF_LINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTaskGameImports.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
@@ -680,8 +684,11 @@ extern "C" __declspec(noinline) int CTaskGame_playTimeGate() {
     return (lbl_eu_80663D18->unkD8 + 1) != 0;
 }
 cf::CfObjEnumList* CfEnumListHolder::get() { return list; }
-// IScnRender base impls (retail blr): cbRenderBefore + legacy handleEmptyRender (0x800444C0).
-void IScnRender::cbRenderBefore() {} void IScnRender::handleEmptyRender() {}
+// IScnRender base impls (retail blr at 0x800444C0 / 0x800444C4): the vtable slot 1
+// body plus the out-of-line destructor (key function -> the class vtable and
+// RTTI live in this TU in retail).
+void IScnRender::cbRenderBefore() {}
+IScnRender::~IScnRender() {}
 void Tail__8CProcessFv() {}
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
 extern "C" void CTaskGame_thunkIWorkDtor(void *self) {

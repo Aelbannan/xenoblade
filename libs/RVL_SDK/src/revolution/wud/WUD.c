@@ -67,7 +67,7 @@ extern unsigned char _wudTarget;
 
 extern char _wudWiiRemoteDescriptor[];
 extern unsigned char _wudInstallNum;
-extern unsigned short _wudPatchNum;
+extern u8 _wudPatchNum;
 extern unsigned int _wudPatchAddress;
 extern unsigned int _wudPatchOffset;
 extern unsigned int _wudPatchSize;
@@ -117,7 +117,7 @@ u32 _wudNandWbcCrc;
 int _wudNandPhase;
 u8 _wudNandLocked;
 u8 _wudInstallNum;
-unsigned short _wudPatchNum;
+u8 _wudPatchNum;
 unsigned int _wudPatchAddress;
 unsigned int _wudPatchOffset;
 unsigned int _wudPatchSize;
@@ -1457,7 +1457,6 @@ void WUDiMoveBottomSmpDevInfoPtr(WUDDevInfo* pInfo) {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
 void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
     WUDDevInfoList* pList;
     WUDCB* p = &_wcb;
@@ -1597,7 +1596,6 @@ void WUDiMoveBottomStdDevInfoPtr(WUDDevInfo* pInfo) {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
 void WUDiMoveTopOfDisconnectedStdDevice(WUDDevInfo* pInfo) {
     extern char lbl_80562530[];
     WUDDevInfo* pDev;
@@ -1785,10 +1783,10 @@ u8 __wudSyncPrepareSearch(void) {
 #pragma pop
 
 u8 __wudSyncTryConnect(void) {
-    char* pMsg = _wudWiiRemoteDescriptor;
+    BOOL enabled;
     WUDDevInfoList* pIt;
     WUDDevInfo* pFound;
-    BOOL enabled;
+    char* pMsg = _wudWiiRemoteDescriptor;
     u8 ret = WUD_STATE_SYNC_ERROR;
 
     if (memcmp(_wudDiscResp.devName, pMsg + 0x268,
@@ -1847,12 +1845,12 @@ u8 __wudSyncTryConnect(void) {
 
 
 u8 __wudSyncVirginStandard(void) {
-    WUDCB* p = &_wcb;
+    WUDDevInfo* pFound;
     BOOL enabled;
     WUDDevInfo* pWork;
     char* pMsg = _wudWiiRemoteDescriptor;
     WUDDevInfoList* pIt;
-    WUDDevInfo* pFound;
+    WUDCB* p = &_wcb;
     WUDCB* pDev;
     WUDCB* pDev3;
     WUDCB* pDev2;
@@ -2442,7 +2440,11 @@ void __wudSyncHandler(void) {
         u8 linkKeyState;
         u8 nextState;
 
-        linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
+        if (p->linkKeyState != WUD_STATE_LINK_KEY_START) {
+            linkKeyState = TRUE;
+        } else {
+            linkKeyState = FALSE;
+        }
 
         if (linkKeyState) {
             nextState = WUD_STATE_SYNC_STORED_LINK_KEY_TO_EEPROM;
@@ -2483,7 +2485,11 @@ void __wudSyncHandler(void) {
         u8 nextState;
         BOOL linkKeyState;
 
-        linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
+        if (p->linkKeyState != WUD_STATE_LINK_KEY_START) {
+            linkKeyState = TRUE;
+        } else {
+            linkKeyState = FALSE;
+        }
 
         if (linkKeyState) {
             nextState = WUD_STATE_SYNC_WAIT_FOR_STORING;
@@ -2512,7 +2518,11 @@ void __wudSyncHandler(void) {
         u8 nextState = WUD_STATE_SYNC_WAIT_FOR_READING;
         BOOL linkKeyState;
 
-        linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
+        if (p->linkKeyState != WUD_STATE_LINK_KEY_START) {
+            linkKeyState = TRUE;
+        } else {
+            linkKeyState = FALSE;
+        }
 
         if (!linkKeyState) {
             nextState = WUD_STATE_SYNC_VIRGIN_STANDARD;
@@ -2988,9 +2998,9 @@ u16 _WUDGetNotAckedSize(s8 handle) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 u8 __wudStackCheckDeviceInfo(void) {
-    WUDCB* p = &_wcb;
-    WUDDevInfo* pDev;
     WUDDevInfo* pInfo;
+    WUDDevInfo* pDev;
+    WUDCB* p = &_wcb;
     BOOL enabled;
     int i;
 
@@ -3963,8 +3973,8 @@ void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
 
     if (p1 != NULL) {
         if (_wudPatchSize == _wudPatchOffset) {
-            _wudInstallNum = 0;
             _wudPatchNum = pMsg[0x1A4];
+            _wudInstallNum = 0;
 
             length = MIN((s32)_wudPatchNum, WUD_MAX_PATCHES);
             buf2[0] = length;
@@ -4057,17 +4067,22 @@ void __wudSuperPeekPokeCallback(void) {
 void __wudAppendRuntimePatch(void) {
     u32 isInIPL = __OSInIPL;
     u8* pPatch = (u8*)&_wudWiiRemoteDescriptor[0xE8];
+    u32 addr;
+    u32 size;
 
     /* pPatch + 0x850 == descriptor + 0x938; keeps pPatch materialized */
     DEBUGPrint((char*)(pPatch + 0x850));
 
     /* Interleaved high/low halves: address and size are built in parallel */
-    _wudPatchAddress = (pPatch[3] << 8) + pPatch[2];
-    _wudPatchSize = (pPatch[7] << 8) + pPatch[6];
-    _wudPatchAddress = (_wudPatchAddress << 8) + pPatch[1];
-    _wudPatchSize = (_wudPatchSize << 8) + pPatch[5];
-    _wudPatchAddress = (_wudPatchAddress << 8) + pPatch[0];
-    _wudPatchSize = (_wudPatchSize << 8) + pPatch[4];
+    addr = (pPatch[3] << 8) + pPatch[2];
+    size = (pPatch[7] << 8) + pPatch[6];
+    addr = (addr << 8) + pPatch[1];
+    size = (size << 8) + pPatch[5];
+    addr = (addr << 8) + pPatch[0];
+    size = (size << 8) + pPatch[4];
+
+    _wudPatchAddress = addr;
+    _wudPatchSize = size;
 
     if (isInIPL != 0) {
         DEBUGPrint(_wudWiiRemoteDescriptor + 0x954);
@@ -4094,13 +4109,14 @@ void __wudInitSub(void) {
     DEV_CLASS devClass;
     int i;
     BOOL enabled;
+    char* pDbg = lbl_80562C2C;
 
     /* retail loads these from .sdata2 - keep them opaque to the optimizer */
-    *(u32*)devName = *(volatile u32*)&lbl_8066C260;
-    *(u16*)&devClass[0] = *(volatile u16*)&lbl_8066C264;
-    devClass[2] = *(volatile u8*)&lbl_8066C266;
+    *(u32*)devName = *(const u32*)&lbl_8066C260;
+    *(u16*)&devClass[0] = *(const u16*)&lbl_8066C264;
+    devClass[2] = *(const u8*)&lbl_8066C266;
 
-    DEBUGPrint(lbl_80562C2C);
+    DEBUGPrint(pDbg);
 
     BTA_DmSetDeviceName(devName);
     BTM_SetDeviceClass(devClass);
@@ -4789,6 +4805,7 @@ void __wudPowerMangeEventStackCallback(BD_ADDR addr, tBTM_PM_STATUS status,
 
             DEBUGPrint(pMsg + 0x10d0, addr[0], addr[1], addr[2], addr[3],
                        addr[4], addr[5], status);
+            return;
         }
     }
 

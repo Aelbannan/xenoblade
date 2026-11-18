@@ -2,6 +2,7 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/CCol6CheckBat.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -481,7 +482,7 @@ void CCol6Hint::Move() {
             if (advanceAnimTransform(mField94, lbl_eu_80667558) == 0) break;
             if (mScrollBar.isActive() == 0) break;
             mState = 3;
-            Cur_SetVisible(&mCur18, 1);
+            mCur18.SetVisible(1);
             {
                 char buf[0x20];
                 sprintf(buf, &lbl_eu_80502050[0xe], (s8)mField120 + 1);
@@ -533,7 +534,7 @@ void CCol6Hint::Move() {
 
         // Common tail: per-frame updates.
         mAnimHost->update(0);
-        Cur_Update(&mCur18);
+        mCur18.Update();
         mScrollBar.UpdateDispatch();
 }
 
@@ -621,7 +622,7 @@ draw:
     drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
                   &drawInfo, 0, 1);
     mScrollBar.draw(&drawInfo);
-    Cur_DrawLayout(&mCur18, &drawInfo);
+    mCur18.DrawLayout(&drawInfo);
 }
 
 // IUIWindow return type for the window factories below (declared extern "C"
@@ -787,12 +788,12 @@ extern "C" void col6HintInput(CCol6Hint* self) {
 
     if (up) {
         self->mState = 4;
-        Cur_SetVisible(&self->mCur18, 0);
+        self->mCur18.SetVisible(0);
         self->mScrollBar.requestScrollOut();
         playUISound(3);
     } else if (down) {
         self->mState = 4;
-        Cur_SetVisible(&self->mCur18, 0);
+        self->mCur18.SetVisible(0);
         self->mScrollBar.requestScrollOut();
         if (self->mField11C >= 5) {
             self->mField120 = 4;
@@ -1242,8 +1243,8 @@ void CCol6System::Term() {
     mFlagA0 = 0;
     mCur1.cleanup();
     mCur2.cleanup();
-    sysWinTermLayout(&mSysWin1);
-    sysWinTermLayout(&mSysWin2);
+    reinterpret_cast<CSysWin*>(&mSysWin1)->termLayout();
+    reinterpret_cast<CSysWin*>(&mSysWin2)->termLayout();
 
     // The outer guard plus delete's own null-check reproduce retail's two beq's
     // on the same CR0 test (MWCC D2-inlined-into-D1 artifact).
@@ -1262,9 +1263,9 @@ void CCol6System::Term() {
 // Retail inlines this helper at each call site (each copy gets its own stack
 // slots for pos/buf/vec), which drives Move()'s 0x1f0 frame layout.
 inline void CCol6System::updateCursorPos() {
-    if (CSysWin_getUnk34(&mSysWin1) != 0) {
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         nw4r::math::VEC3 pos;
-        sysWinGetPaneScreenPos(reinterpret_cast<u8*>(&pos), &mSysWin1, mPadA5[1]);
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<u8*>(&pos)), reinterpret_cast<CSysWin*>(&mSysWin1), mPadA5[1]);
         mCur2.setRootPaneTranslate(&pos);
     } else {
         char buf[0x20];
@@ -1293,10 +1294,10 @@ inline void CCol6System::updateCursorPos() {
 void CCol6System::Move() {
     if (IsMenuState621F0() == 0) return;
     if (mFlagA0 == 0) return;
-    if (CSysWin_isReady(&mSysWin1) == 0) return;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isReady() == 0) return;
     // Retail splits gate 4 into a two-instruction bne-body / b-exit pair
     // (same shape as cbRenderBefore), so use the goto split here too.
-    if (CSysWin_isReady(&mSysWin2) != 0) goto body;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isReady() != 0) goto body;
     return;
 body:
 
@@ -1392,7 +1393,7 @@ body:
 
     case 0xa:
         // Window 1 active: switch to the slot-selection state.
-        if (CSysWin_isActive(&mSysWin1) == 0) break;
+        if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() == 0) break;
         mFieldA4 = 0xb;
         mPadA5[1] = 0;
         updateCursorPos();
@@ -1404,7 +1405,7 @@ body:
 
     case 0xc:
         // Window 1 active: confirm posts the item-box sync, up re-opens.
-        if (CSysWin_isActive(&mSysWin1) == 0) break;
+        if (reinterpret_cast<CSysWin*>(&mSysWin1)->isActive() == 0) break;
         if ((s8)mPadA5[1] == 0) {
             mFieldA4 = 0xd;
             CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
@@ -1539,8 +1540,8 @@ body:
                                      cnt + 0x6c);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-            sysWinSetKindContent(&mSysWin2, buf.mString, 0);
-            sysWinOpenPhase1(&mSysWin2);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->openPhase1();
             cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         }
         break;
@@ -1551,8 +1552,8 @@ body:
 
     case 0x1d:
         // Window 2 active: pad-confirm closes it; otherwise reopen.
-        if (CSysWin_getUnk34(&mSysWin2) != 0) {
-            if (CSysWin_isActive(&mSysWin2) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
                 if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -1560,7 +1561,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
+                if (cond != 0) reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
             }
         } else {
             mFieldA4 = 7;
@@ -1580,8 +1581,8 @@ body:
         break;
 
     case 0x21:
-        if (CSysWin_getUnk34(&mSysWin2) != 0) {
-            if (CSysWin_isActive(&mSysWin2) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
                 if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -1589,7 +1590,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
+                if (cond != 0) reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
             }
         } else {
             mFieldA4 = 0x24;
@@ -1607,8 +1608,8 @@ body:
         break;
 
     case 0x23:
-        if (CSysWin_getUnk34(&mSysWin2) != 0) {
-            if (CSysWin_isActive(&mSysWin2) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
                 if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -1616,7 +1617,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
+                if (cond != 0) reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
             }
         } else {
             mFieldA4 = 0x26;
@@ -1692,8 +1693,8 @@ body:
         break;
 
     case 0x25:
-        if (CSysWin_getUnk34(&mSysWin2) != 0) {
-            if (CSysWin_isActive(&mSysWin2) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
                 if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -1701,14 +1702,14 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
+                if (cond != 0) reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
             }
         } else {
             mFieldA4 = 0x28;
             char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x80);
-            sysWinSetKindContent(&mSysWin2, s, 0);
-            sysWinOpenPhase1(&mSysWin2);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(s), 0);
+            reinterpret_cast<CSysWin*>(&mSysWin2)->openPhase1();
         }
         break;
 
@@ -1716,8 +1717,8 @@ body:
     case 0x27:
     case 0x28:
         // Window 2 active: pad-confirm closes it; otherwise fade out.
-        if (CSysWin_getUnk34(&mSysWin2) != 0) {
-            if (CSysWin_isActive(&mSysWin2) != 0) {
+        if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) {
+            if (reinterpret_cast<CSysWin*>(&mSysWin2)->isActive() != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
                 if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -1725,7 +1726,7 @@ body:
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
                 }
-                if (cond != 0) sysWinAdvancePhase3(&mSysWin2);
+                if (cond != 0) reinterpret_cast<CSysWin*>(&mSysWin2)->advancePhase3();
             }
         } else {
             mFieldA4 = 0x15;
@@ -1740,10 +1741,10 @@ body:
 
     // Common tail: per-frame updates.
     reinterpret_cast<CCol6AnimHostView*>(mpLayout)->update(0);
-    Cur_Update(&mCur1);
-    Cur_Update(&mCur2);
-    sysWinDispatchPhase(&mSysWin1);
-    sysWinDispatchPhase(&mSysWin2);
+    mCur1.Update();
+    mCur2.Update();
+    reinterpret_cast<CSysWin*>(&mSysWin1)->dispatchPhase();
+    reinterpret_cast<CSysWin*>(&mSysWin2)->dispatchPhase();
 }
 
 // Col6_SysOnFile_0118 - second layout file-load completion handler: create the
@@ -1797,8 +1798,8 @@ fail:
 void CCol6System::cbRenderBefore() {
     if (IsMenuState621F0() == 0) goto end;
     if (mFlagA0 == 0) goto end;
-    if (CSysWin_isReady(&mSysWin1) == 0) goto end;
-    if (CSysWin_isReady(&mSysWin2) != 0) goto draw;
+    if (reinterpret_cast<CSysWin*>(&mSysWin1)->isReady() == 0) goto end;
+    if (reinterpret_cast<CSysWin*>(&mSysWin2)->isReady() != 0) goto draw;
     goto end;
 end:
     return;
@@ -1808,11 +1809,11 @@ draw:
     SetWideLocAdjust(&drawInfo);
     if (mFlagA1 == 0) {
         drawLayout(mpLayout, &drawInfo, 0, 1);
-        Cur_DrawLayout(&mCur1, &drawInfo);
-        sysWinDrawLayout(&mSysWin1, &drawInfo);
-        Cur_DrawLayout(&mCur2, &drawInfo);
+        mCur1.DrawLayout(&drawInfo);
+        reinterpret_cast<CSysWin*>(&mSysWin1)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+        mCur2.DrawLayout(&drawInfo);
     }
-    sysWinDrawLayout(&mSysWin2, &drawInfo);
+    reinterpret_cast<CSysWin*>(&mSysWin2)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
 }
 
 // col6SysCreate - item-box system-window factory (same shape as
@@ -2236,7 +2237,7 @@ void col6PadHandle(CCol6System* self) {
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim94, 1);
         }
-        Cur_SetVisible(&self->mCur1, 0);
+        self->mCur1.SetVisible(0);
         if (self->mPadA5[0] == 2) self->mPadA5[0] = 3;
         playUISound(3);
     } else if (down) {
@@ -2249,16 +2250,16 @@ void col6PadHandle(CCol6System* self) {
             ->setAnim(self->mAnim90, 0);
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
             ->setAnim(self->mAnim94, 1);
-        Cur_SetVisible(&self->mCur1, 0);
+        self->mCur1.SetVisible(0);
         self->mPadA5[0] = 3;
         playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 2).
         self->mPadA5[0] = self->mPadA5[0] - 1;
         if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 2;
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2288,9 +2289,9 @@ void col6PadHandle(CCol6System* self) {
         // Player index up (wrap to 0).
         self->mPadA5[0] = self->mPadA5[0] + 1;
         if ((s8)self->mPadA5[0] > 2) self->mPadA5[0] = 0;
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2350,7 +2351,7 @@ void col6SwitchBox(CCol6System* self) {
                 ->setAnim(self->mAnim9C, 0);
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim98, 1);
-            Cur_SetVisible(&self->mCur1, 0);
+            self->mCur1.SetVisible(0);
             playUISound(3);
         } else if (CtrlRemote_TouchBitByArg(pid + 0x7fe) < 5) {
             if (Col6_ValidateBox_1024(self) != 0) {
@@ -2362,11 +2363,11 @@ void col6SwitchBox(CCol6System* self) {
                                            &lbl_eu_80502050[0x9], 7);
                 char* str3 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9], 8);
-                sysWinSetKindContent(&self->mSysWin1, str1, 0);
-                sysWinSetTwoTextValues(&self->mSysWin1, str2, str3);
-                sysWinApplyKind(&self->mSysWin1, 0);
-                sysWinOpenPhase1(&self->mSysWin1);
-                Cur_SetVisible(&self->mCur1, 1);
+                reinterpret_cast<CSysWin*>(&self->mSysWin1)->setKindContent(reinterpret_cast<char*>(str1), 0);
+                reinterpret_cast<CSysWin*>(&self->mSysWin1)->setTwoTextValues(reinterpret_cast<char*>(str2), reinterpret_cast<char*>(str3));
+                reinterpret_cast<CSysWin*>(&self->mSysWin1)->applyKind(0);
+                reinterpret_cast<CSysWin*>(&self->mSysWin1)->openPhase1();
+                self->mCur1.SetVisible(1);
                 self->mFieldA4 = 0xa;
                 playUISound(3);
             } else {
@@ -2376,9 +2377,9 @@ void col6SwitchBox(CCol6System* self) {
             // Box full: show the window-2 message.
             char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                       0xc);
-            sysWinSetKindContent(&self->mSysWin2, str, 0);
-            sysWinApplyKind(&self->mSysWin2, 1);
-            sysWinOpenPhase1(&self->mSysWin2);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(str), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->applyKind(1);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
             self->mFieldA4 = 0x1d;
             playUISound(5);
         }
@@ -2392,16 +2393,16 @@ void col6SwitchBox(CCol6System* self) {
             ->setAnim(self->mAnim9C, 0);
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
             ->setAnim(self->mAnim98, 1);
-        Cur_SetVisible(&self->mCur1, 0);
+        self->mCur1.SetVisible(0);
         playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 4) and refresh the box.
         self->mPadA5[0] = self->mPadA5[0] - 1;
         if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 4;
         col6FillSlots(self, (s8)self->mPadA5[0]);
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2432,9 +2433,9 @@ void col6SwitchBox(CCol6System* self) {
         self->mPadA5[0] = self->mPadA5[0] + 1;
         if ((s8)self->mPadA5[0] > 4) self->mPadA5[0] = 0;
         col6FillSlots(self, (s8)self->mPadA5[0]);
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2485,9 +2486,9 @@ void col6WinScroll(CCol6System* self) {
         // Scroll the slot counter down (wrap to 1), reposition the cursor.
         self->mPadA5[1] = self->mPadA5[1] - 1;
         if ((s8)self->mPadA5[1] < 0) self->mPadA5[1] = 1;
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2517,9 +2518,9 @@ void col6WinScroll(CCol6System* self) {
         // Scroll the slot counter up (wrap to 0).
         self->mPadA5[1] = self->mPadA5[1] + 1;
         if ((s8)self->mPadA5[1] > 1) self->mPadA5[1] = 0;
-        if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin1)->isOpened() != 0) {
             u8 tmp[0x18];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
+            CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(tmp), reinterpret_cast<CSysWin*>(&self->mSysWin1), self->mPadA5[1]);
             self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
@@ -2548,14 +2549,14 @@ void col6WinScroll(CCol6System* self) {
     } else if (up) {
         // Open the box for the current player (reset cursor 2).
         self->mFieldA4 = 0xc;
-        Cur_SetVisible(&self->mCur2, 0);
-        sysWinAdvancePhase3(&self->mSysWin1);
+        self->mCur2.SetVisible(0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin1)->advancePhase3();
         playUISound(3);
     } else if (down) {
         self->mFieldA4 = 0xc;
         self->mPadA5[1] = 1;
-        Cur_SetVisible(&self->mCur2, 0);
-        sysWinAdvancePhase3(&self->mSysWin1);
+        self->mCur2.SetVisible(0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin1)->advancePhase3();
         playUISound(6);
     }
 }
@@ -2867,9 +2868,9 @@ void Col6Win2_2C40(CCol6System* self) {
 
     ml::FixStr<256> buf;
     Col6FormatBufferString(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
-    sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
-    sysWinApplyKind(&self->mSysWin2, 1);
-    sysWinOpenPhase1(&self->mSysWin2);
+    reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+    reinterpret_cast<CSysWin*>(&self->mSysWin2)->applyKind(1);
+    reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
     cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
 }
 
@@ -2923,8 +2924,8 @@ void Col6_OpenBox_2DB4(CCol6System* self) {
 // vector block from the s16-keyed lookup table, then post the 0x16 fade, the
 // "player N joined" banner (count >= 5) or the per-slot threshold scan.
 extern "C" void col6Win2Count(CCol6System* self) {
-    if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
-        if (CSysWin_isActive(&self->mSysWin2) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
             if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -2933,7 +2934,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                sysWinAdvancePhase3(&self->mSysWin2);
+                reinterpret_cast<CSysWin*>(&self->mSysWin2)->advancePhase3();
             }
         }
     } else {
@@ -3027,8 +3028,8 @@ extern "C" void col6Win2Count(CCol6System* self) {
                                      0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-            sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
-            sysWinOpenPhase1(&self->mSysWin2);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
             cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         } else {
             // Per-slot threshold scan (same shape as CCol6Invite::Move).
@@ -3101,8 +3102,8 @@ extern "C" void col6Win2Count(CCol6System* self) {
 // the window's close action; otherwise scan the player-count buckets and show
 // the invite banner for the first fully-populated bucket.
 void Col6_Win2CountLadder_3614(CCol6System* self) {
-    if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
-        if (CSysWin_isActive(&self->mSysWin2) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
             if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -3111,7 +3112,7 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                sysWinAdvancePhase3(&self->mSysWin2);
+                reinterpret_cast<CSysWin*>(&self->mSysWin2)->advancePhase3();
             }
         }
     } else {
@@ -3141,8 +3142,8 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
             char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
-            sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
-            sysWinOpenPhase1(&self->mSysWin2);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+            reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
             cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         }
     }
@@ -3153,8 +3154,8 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
 // window's close action; otherwise run the player-count ladder scan and post
 // the join message for the first count bucket that is fully populated.
 void Col6_Win2Interact_378C(CCol6System* self) {
-    if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
-        if (CSysWin_isActive(&self->mSysWin2) != 0) {
+    if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->mSysWin2)->isActive() != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
             if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -3163,7 +3164,7 @@ void Col6_Win2Interact_378C(CCol6System* self) {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
             }
             if (cond != 0) {
-                sysWinAdvancePhase3(&self->mSysWin2);
+                reinterpret_cast<CSysWin*>(&self->mSysWin2)->advancePhase3();
             }
         }
     } else {
@@ -3213,8 +3214,8 @@ void col6Win2PerPl(CCol6System* self) {
         char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-        sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
-        sysWinOpenPhase1(&self->mSysWin2);
+        reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
         cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }
@@ -3299,8 +3300,8 @@ void col6JoinCheck(CCol6System* self) {
         char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
-        sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
-        sysWinOpenPhase1(&self->mSysWin2);
+        reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
+        reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
         cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }

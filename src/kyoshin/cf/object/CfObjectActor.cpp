@@ -370,7 +370,7 @@ void CfObjectActor::CActorParam_addGauge(int delta) {
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
             reinterpret_cast<cf::CActorState*>(this)->unk4)
-            ->CObjectState_getStateData());
+            ->getStateData());
     u32 id = *idPtr;
     if (testActorStatus(this, (int*)&id, 0x802) != 0) {
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
@@ -397,7 +397,7 @@ void CfObjectActor::CActorParam_addSecondGauge(int delta) {
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
             reinterpret_cast<cf::CActorState*>(this)->unk4)
-            ->CObjectState_getStateData());
+            ->getStateData());
     u32 id = *idPtr;
     if (testActorStatus(this, (int*)&id, 0x802) != 0) {
         s16 cur2 = f->field_0x1614;
@@ -422,7 +422,7 @@ void CfObjectActor::CActorParam_UnkVirtualFunc6(int val) {
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
             reinterpret_cast<cf::CActorState*>(this)->unk4)
-            ->CObjectState_getStateData());
+            ->getStateData());
     u32 id = *idPtr;
     if (testActorStatus(this, (int*)&id, 0x1c) != 0) {
         CfObjectMove_setAnimModeArgs((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject

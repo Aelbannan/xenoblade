@@ -25,59 +25,19 @@ extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
 static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
 /**
- * Factory-built object constructor (retail unmangled symbol). Builds the
- * CProcess base, installs the temp then composite vtables (+ OC sub-vtable
- * at +0x24), copies the null PMF triple into the Move/Draw callback slots,
- * zeroes/-1s the tail fields, then constructs the four embedded widgets and
- * clears the fade timers / phase latch.
+ * Class constructor. The base initialisers run IUIWindow's inline constructor
+ * (temp CTTask<IUIWindow> vtable, null Move/Draw ptmf hooks, window fields) and
+ * the IScnRender interface; MWCC then installs the composite vtable pair and
+ * the four embedded widgets are constructed in the body.
  */
-extern "C" __declspec(noinline) CMenuItemExchange*
-__ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
-    __ct__8CProcessFv(self);
-
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable.
-    // PMF triple reads share one base register; post-increment derefs fold the
-    // first access into `lwzu`. Stores are [1],[0],[2] per group.
-    self->mVtab = (u32)lbl_eu_8052D238;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    self->mPtMf3C[1] = w1;
-    self->mPtMf3C[0] = w0;
-    self->mPtMf3C[2] = *src++;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    self->mPtMf48[1] = w0;
-    self->mPtMf48[0] = w1;
-    self->mPtMf48[2] = *src++;
-
-    // Tail scalar fields: render vtable cleared, dispatch slot -1, mode byte 1.
-    self->mScnRenderVt = 0;
-    self->field_5C = 0;
-    self->field_60 = -1;
-    self->field_64 = 0;
-    self->field_65 = 0;
-    self->field_66 = 0;
-    self->field_67 = 1;
-    self->field_68 = 0;
-
-    self->mVtab = (u32)lbl_eu_80533BC0;
-    self->mOCVt = (u32)lbl_eu_80533BC0 + 0x24;
-    self->mScene = scene;
-    self->mField74 = arg;
-
-    __ct__6CBgTexFUc(&self->mBgTex, 0);
-    __ct__11CTitleAHelpFPcUc(&self->mTitleAHelp, 0, 0);
-    new (&self->mItemBoxLine) CItemBoxLine(0, 0);
-    __ct__12CItemBoxGridFUcUsUlUc(&self->mItemBoxGrid, 0, 0, 0, 1);
-
+CMenuItemExchange::CMenuItemExchange(CScn* scene, u32 arg)
+    : mScene(scene), mField74(arg), mBgTex(0), mTitleAHelp(NULL, 0), mItemBoxLine(0, 0),
+      mItemBoxGrid(0, 0, 0, 1) {
     const f32 initTimer = lbl_eu_80667E78;
-    self->mFloat511C = initTimer;
-    self->mFloat5120 = initTimer;
-    self->field_5118 = 0;
+    mFloat511C = initTimer;
+    mFloat5120 = initTimer;
+    field_5118 = 0;
     lbl_eu_8066442C = 0;
-    return self;
 }
 
 // Destructor: members are destroyed in reverse order (grid, line, title,
@@ -126,8 +86,7 @@ void CMenuItemExchange::Init() {
 
     // Register the OC render callback (adjusted-this idiom: null this stays
     // null, otherwise the +0x6c sub-object).
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mOCVt);
+    IScnRender* render = this;
     mScene->addRenderCB(render, 0xd, 0);
 }
 
@@ -140,8 +99,7 @@ extern u32 lbl_eu_80664428;
 // global active flag, and reset the CfGameManager state.
 void CMenuItemExchange::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mOCVt);
+    IScnRender* render = this;
     mScene->removeRenderCB(render);
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
@@ -224,12 +182,9 @@ extern "C" CMenuItemExchange* ItemEx_Create(CProcess* registParent, CScn* scene,
     if (lbl_eu_80664428 != 0) {
         return NULL;
     }
-    CMenuItemExchange* obj = reinterpret_cast<CMenuItemExchange*>(
-        allocate__Q23mtl10MemManagerFUlUl(
-            0x5124, reinterpret_cast<u32>(getWorkMem__17CWorkThreadSystemFv())));
-    if (obj != NULL) {
-        obj = __ct__CMenuItemExchange(obj, scene, arg);
-    }
+    CMenuItemExchange* obj = new (allocate__Q23mtl10MemManagerFUlUl(
+        0x5124, reinterpret_cast<u32>(getWorkMem__17CWorkThreadSystemFv())))
+        CMenuItemExchange(scene, arg);
     lbl_eu_80664428 = reinterpret_cast<u32>(obj);
     Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(lbl_eu_80664428),
                                   registParent, false);
@@ -274,7 +229,7 @@ void CMenuItemExchange::GateFrom3() {
     if (mTitleAHelp.isIdle() != 0 &&
         mItemBoxLine.IsReadyFlag() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
-        field_64 = 1;
+        mField64 = 1;
     }
 }
 

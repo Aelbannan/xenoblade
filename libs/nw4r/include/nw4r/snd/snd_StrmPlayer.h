@@ -78,7 +78,8 @@ public:
     }
 
     bool Setup(StrmBufferPool* pBufferPool);
-    bool Setup(StrmBufferPool* pBufferPool, int voices, u16 param, int zero);
+    int Setup(StrmBufferPool* pBufferPool, int channels, u16 trackMask,
+              int voices);
     void Shutdown();
 
     bool Prepare(ut::FileStream* pFileStream, int voices,

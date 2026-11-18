@@ -12,7 +12,6 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuPassiveSkillImports.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
-#include "kyoshin/CSysWinImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
 CMenuPassiveSkill::CMenuPassiveSkill(CScn* scene)

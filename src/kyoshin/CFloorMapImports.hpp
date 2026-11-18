@@ -381,15 +381,12 @@ struct CFloorMapRowList {
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
 extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
-extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
 
 // (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall
 // at +0x08 matches retail.)
 
-extern "C" void Cur_Update(void* cursor);      // CCur18 per-frame update
-extern "C" void sysWinDispatchPhase(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
 // retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
 
@@ -469,8 +466,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // Flat C-ABI imports used by the map-cursor functions (retail symbols are
 // unmangled). playUISound keeps C++ linkage so MWCC emits the retail
 // mangled name playUISound__FUl.
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" int CSysWin_isActive(void*);
 extern "C" u32 FloorMap_PickMarkerRow(void*);
 extern "C" void FloorMap_PlaceMarkersB(CFloorMapLayoutSlots*);
 extern "C" void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull*);
@@ -498,17 +493,11 @@ extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
 extern f32 lbl_eu_80668780;
 extern f32 lbl_eu_80668784;
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
-extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3*, void*, u8);
 extern "C" int atoi(const char*);
 
 // CSysWin sub-object helpers used by the floor-map input handlers (retail
 // flat names).
-extern "C" void sysWinAdvancePhase3(void* sysWin);
-extern "C" void Cur_SetVisible(void* cursor, int mode);
-extern "C" void sysWinSetKindContent(void* sysWin, char* nameA, char* nameB);
-extern "C" void sysWinSetTwoTextValues(void* sysWin, char* nameA, char* nameB);
 // (sysWinApplyKind comes from kyoshin/CSysWin.hpp: CSysWin* form.)
-extern "C" void sysWinOpenPhase1(void* sysWin);
 
 // .sdata2 floats / .sbss globals for the floor-map update functions.
 extern f32 lbl_eu_80668760;   // 1.0f (per-frame countdown step / anim advance)

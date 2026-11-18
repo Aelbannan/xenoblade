@@ -51,7 +51,7 @@ public:
         return mStrmPlayer;
     } // at 0x6C
 
-    bool Setup(StrmBufferPool* pPool, int voices, u16 unk);
+    int Setup(StrmBufferPool* pPool, int voices, u16 unk);
     bool Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
                  ut::FileStream* pStream);
     void InitParam();

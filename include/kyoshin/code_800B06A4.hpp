@@ -1198,13 +1198,12 @@ extern "C" void* func_80062CE4(s32 id);
 extern "C" void* func_80062D44(s32 id);
 extern "C" void func_80066714(int flag);
 extern void* lbl_eu_8052A3B0[];
-extern u8 lbl_eu_805294E0[];
+extern u8 __vt__Q22cf8CfObject[];
 extern void* lbl_eu_80529128[];
 extern void* lbl_eu_80528600[];
 // Flat constructors/dtor called from the spawner (retail symbol names).
 extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
-extern "C" void ObjObj_ReleaseModels_FAB0(void* obj, u32 w04, u32 w00);
 extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
                                 const B20B4Payload* payload, u32 arg);
 

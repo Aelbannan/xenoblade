@@ -402,7 +402,7 @@ public:
     u32 field_0x200;                 // 0x200 (flags)
 };
 
-// Minimal cf::CfObjectMove view for this TU's CfObject_UnkVirtualFunc60
+// Minimal cf::CfObjectMove view for this TU's CfObject_getMoveFactor
 // getter. The full CfObjectMove.hpp header declares that member with a void
 // return, but retail emits `lfs f1, 0x6ec(r3)` - f1 is the FP return
 // register, so the source must return float, and MWCC rejects a definition
@@ -411,7 +411,7 @@ public:
 // family in CtrlAct.hpp).
 class CfObjectMove {
 public:
-    float CfObject_UnkVirtualFunc60();
+    float CfObject_getMoveFactor();
 
     // +0x00: vptr (not modelled - no virtuals in this view)
     u8 _00[0x6EC];              // 0x00

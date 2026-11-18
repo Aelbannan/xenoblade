@@ -298,7 +298,7 @@ int setMapJumpArea(VMThread* pThread) {
     return 0;
 }
 
-void CfObjectPoint_CopyPosWords(void* self, void* src) {
+void func_80047814__Q22cf13CfObjectPointFPCQ22ml5CVec3(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);

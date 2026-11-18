@@ -216,7 +216,7 @@ void CArtsInfo_UpdateAnims(CArtsInfo* self) {
     // Post-dispatch: animate both layouts and update cursor
     self->mpLayout1->Animate(0);
     self->mpLayout2->Animate(0);
-    Cur_Update(&self->mCursor);
+    self->mCursor.Update();
 }
 
 // CArtsInfo_Draw - draw
@@ -231,7 +231,7 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
 
     s8 cursorActive = self->field_0x5A;
     if (cursorActive >= 0) {
-        Cur_DrawLayout(&self->mCursor, drawInfo);
+        self->mCursor.DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -369,7 +369,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    Cur_SetVisible(&self->mCursor, 0);
+    self->mCursor.SetVisible(0);
 
     // Real member calls so MWCC emits the retail r12 vtable dispatch
     // (vtable[0x2C] = SetAnimationEnable, vtable[0x38] = Animate).
@@ -393,7 +393,7 @@ void CArtsInfo_ToStateC(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    Cur_SetVisible(&self->mCursor, 0);
+    self->mCursor.SetVisible(0);
 
     // Bind animations to layout 2
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, false);
@@ -545,7 +545,7 @@ void CArtsInfo_AnimState6(CArtsInfo* self) {
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
-    Cur_SetVisible(&self->mCursor, 1);
+    self->mCursor.SetVisible(1);
     CArtsInfo_UpdateCursor(self);
 }
 

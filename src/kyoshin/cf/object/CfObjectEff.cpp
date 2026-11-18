@@ -56,7 +56,7 @@ CfObjectEff::CfObjectEff() {
     v->f10 = 0;
     v->f30 = 0;
     v->f34 = 0;
-    *(void**)this = (void*)&lbl_eu_805294E0;
+    *(void**)this = (void*)&__vt__Q22cf8CfObject;
     mSubObj38 = nullptr;
     mPos3C = lbl_eu_80666958;
     mPos40 = lbl_eu_80666958;
@@ -101,7 +101,7 @@ CfObjectEff::CfObjectEff() {
 }
 } // namespace cf
 
-void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_UnkVirtualFunc3() {}
 
 namespace cf {
 CfObject::~CfObject() {
@@ -114,7 +114,7 @@ CfObject::~CfObject() {
 }
 } // namespace cf
 
-void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_releaseMoveTargets() {}
 
 namespace cf {
 bool CfObjectEff::initEffState_() {
@@ -284,13 +284,13 @@ extern "C" void setEffPosVec___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
 
 // snapEffTarget is Eff's UVF25 override: forward to the base implementation with the
 // same (pos, scale) ABI, then copy into the child.
-extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self,
+extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(cf::CfObject* self,
                                                            ml::CVec3* pos,
                                                            float scale);
 void snapEffTarget__Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
                                          cf::CfObjectEffU32Vec3* src,
                                          float scale) {
-    CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
+    CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(
         self, reinterpret_cast<ml::CVec3*>(src), scale);
     // x's zero-init is dead (overwritten below) but fixes its slot as the
     // first-created local; the visible loads all stay inside the copy block.

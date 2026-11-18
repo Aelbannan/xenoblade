@@ -1,20 +1,30 @@
 #pragma once
 
-// Retail: IScnRender carries virtual cbRenderBefore (vtable __vt__10IScnRender slot 1)
-// plus legacy non-virtual empty handleEmptyRender (0x800444C0, blr; defined in
-// kyoshin/CTaskGame.cpp). Adjustor thunks take the overridden virtual's name.
+// Retail IScnRender vtable (__vt__10IScnRender, 0x10 bytes, owned by
+// kyoshin/CTaskGame.cpp): [RTTI, 0, ~IScnRender, cbRenderBefore]. Its only
+// virtuals are the destructor and cbRenderBefore; slot 1's out-of-line empty
+// body is the retail 4-byte `blr` at 0x800444C0.
 //
-// ISCN_RENDER_NO_DTOR: define it before including this header (at the top of the
-// .cpp, like IWORK_EVENT_INLINE_DTOR) in TUs whose retail objects never odr-use
-// ~IScnRender. Without the virtual dtor, MWCC neither emits a standalone
-// __dt__10IScnRenderFv copy (0x40, retail keeps it only in CTaskGame.o) nor an
-// extra dtor adjustor thunk, and derived dtors lose the base-dtor null check.
-// Those TUs fill the dtor slot of the retail sub-vtable with a manual thunk.
+// The destructor has three spellings, all used by real retail TUs:
+//   default                inline-empty, so a derived destructor elides the
+//                          empty base-dtor call (retail shape everywhere);
+//                          MWCC also emits the usual link-deduped weak copy.
+//   ISCN_RENDER_NO_DTOR    no virtual destructor at all. TUs whose retail
+//                          object fills the IScnRender dtor slot of a
+//                          hand-built sub-vtable use this (CTaskGame,
+//                          CTaskGameEff, CMenuFade, CMiniMap).
+//   ISCN_RENDER_OUT_OF_LINE_DTOR
+//                          declaration only: the derived destructor calls
+//                          __dt__10IScnRenderFv out of line, which is what
+//                          retail's CMenuUpdate destructor does.
 class IScnRender {
 public:
-#ifndef ISCN_RENDER_NO_DTOR
-    virtual ~IScnRender(){}
+#if defined(ISCN_RENDER_NO_DTOR)
+    // no destructor declared on purpose (see above)
+#elif defined(ISCN_RENDER_OUT_OF_LINE_DTOR)
+    virtual ~IScnRender();
+#else
+    virtual ~IScnRender() {}
 #endif
     virtual void cbRenderBefore();
-    void handleEmptyRender(); // non-virtual legacy empty impl (retail 0x800444C0)
 };

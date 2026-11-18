@@ -994,7 +994,7 @@ void CMenuEnemyState::Move() {
                 panel.drawLayout0Flag = (count == 0) ? 1 : 0;
             } else {
                 void* subObj = actor2->subObj4;
-                void* resultRaw = reinterpret_cast<cf::CObjectState*>(subObj)->CObjectState_getStateData();
+                void* resultRaw = reinterpret_cast<cf::CObjectState*>(subObj)->getStateData();
                 int* result = static_cast<int*>(resultRaw);
                 int localVal = *result;
                 u32 ret = testActorStatus(actor2, &localVal, 0x803);
@@ -1364,7 +1364,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
     Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
     if (actor2 == NULL) return;
 
-    int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
+    int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
     panel->drawLayout0Flag = static_cast<u8>(testActorStatus(actor2, &v, 0x802));
 
     panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
@@ -1540,7 +1540,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
             if (actor2 != NULL) {
-                int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
+                int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(testActorStatus(actor2, &v, 0x802));
 
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
@@ -1702,7 +1702,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
             if (actor2 != NULL) {
-                int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
+                int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(testActorStatus(actor2, &v2, 0x802));
 
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
@@ -2114,9 +2114,9 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
             }
         }
 
-        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
+        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
         if (testActorStatus(actor2, &v1, 0xa) == 0) {
-            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
+            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->getStateData());
             if (testActorStatus(actor2, &v2, 9) == 0) {
                 goto tail;
             }
@@ -2787,7 +2787,7 @@ void CMenuEnemyState::Init() {
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0)));
+    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->checkStateFlags8(0)));
 
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], (u32)CUICfManager_getPackedFontD8());
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], (u32)CUICfManager_getPackedFontD8());

@@ -902,8 +902,8 @@ s32 sfmpv_ConcatSub(u8* self) {
             dlm = 0;
         } else {
             u32 tc[8];
-            s32 t1;
             s32 t2;
+            s32 t1;
             sfmpv_NextTc(e00 + 4, tc);
             tc[6] = 0;
             SFTIM_Tc2Time(tc, &t1, &t2);
@@ -1253,9 +1253,6 @@ s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32
             p += ((s64)(dst[1] + w) * 0x55d4a80) / rate;
         }
         p = (p < 0) ? 0 : p;
-            if (p < 0) {
-                p = 0;
-            }
             return p;
         }
     }
@@ -1527,7 +1524,7 @@ void sfmpv_NextTc(void* in, void* out) {
     s32 t8 = (s32)*(s16*)((u8*)in + 0x1e);
     s32 t7 = (s32)*(s16*)((u8*)in + 0x1c);
     s32 t0 = *(s32*)((u8*)in + 0x00);
-    s32 sum = t8 + t7;
+    s32 sum = t7 + t8;
     s32 t5 = *(s32*)((u8*)in + 0x14);
     s32 t6 = *(s32*)((u8*)in + 0x18);
     s32 rate = lbl_eu_8051C97C[t0];
@@ -1543,7 +1540,7 @@ void sfmpv_NextTc(void* in, void* out) {
     s32 frem = f % 60;
     s32 erem = e % 60;
     /* drop-frame guard: branch chain skips the +2 when any carry term hits */
-    if (t1 != 0 && erem != 0 && frem % 10 != 0 && (u32)t3rem <= 1) {
+    if (t1 != 0 && erem == 0 && frem % 10 != 0 && (u32)t3rem <= 1) {
         t3rem = 2;
     }
     *(s32*)((u8*)out + 0x00) = t0;
@@ -1617,15 +1614,23 @@ s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
 // coloring (pic[4] -> r3 vs retail r4) and MEM_Copy arg setup follow the same
 // shift. Not retried here: unit-level flag changes (-O4,s etc.) - other fns
 // in this TU match under Wii/1.1 defaults.
+/* 0x2c-byte picture-header info block copied verbatim into the header slot. */
+typedef struct SfdMpvHdInfo {
+    u32 w[11];
+} SfdMpvHdInfo;
+
 void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
-    void* p;
+    void* v;
     void* shc;
-    s32 v;
+    void* p;
+    u8* dst;
+    s32 sz;
     s32 n;
-    v = *(s32*)((u8*)self + 0x2670);
+
+    v = *(void**)((u8*)self + 0x2670);
     shc = *(void**)((u8*)self + 0x2068);
-    /* header slot: usable only when a decode session exists and frame count is
-     * still 0 (retail branches: v==0 -> NULL, cnt>0 -> NULL, else v+0xad0) */
+    /* header slot: usable only when a decode session exists and the frame
+     * count is still 0 */
     if (v == 0) {
         p = NULL;
     } else if (*(s32*)((u8*)shc + 0x10) > 0) {
@@ -1633,37 +1638,22 @@ void sfmpv_SetMpvHd(void* self, s32 bitrate, u32* pic) {
     } else {
         p = (u8*)v + 0xad0;
     }
-    if (p == NULL || *(u32*)p != 0) {
-        return;
-    }
-    {
-        s32 sz = (s32)pic[1];
-        n = 0x200;
-        if (sz < 0x200) {
-            n = sz;
+    if (p != NULL && *(u32*)p == 0) {
+        dst = (u8*)p + 0x38;
+        sz = (s32)pic[1];
+        n = (sz < 0x200) ? sz : 0x200;
+        *(u32*)(dst + 0x200) = n;
+        MEM_Copy(dst, (void*)pic[0], n);
+        if ((u32)(bitrate - 0x30000) == 0xffff) {
+            *(s32*)((u8*)p + 4) = 0;
+            *(s32*)((u8*)p + 8) = 0;
+        } else {
+            *(s32*)((u8*)p + 4) = bitrate * 0x32;
+            *(s32*)((u8*)p + 8) = 1;
         }
+        *(SfdMpvHdInfo*)((u8*)p + 0x0c) = *(SfdMpvHdInfo*)((u8*)self + 0xdd4);
+        *(u32*)p = 1;
     }
-    *(u32*)((u8*)p + 0x238) = n;
-    MEM_Copy((u8*)p + 0x38, (void*)pic[0], n);
-    if ((u32)(bitrate - 0x30000) == 0xffff) {
-        *(s32*)((u8*)p + 4) = 0;
-        *(s32*)((u8*)p + 8) = 0;
-    } else {
-        *(s32*)((u8*)p + 4) = bitrate * 0x32;
-        *(s32*)((u8*)p + 8) = 1;
-    }
-    *(u32*)((u8*)p + 0xc) = *(u32*)((u8*)self + 0xdd4);
-    *(u32*)((u8*)p + 0x10) = *(u32*)((u8*)self + 0xdd8);
-    *(u32*)((u8*)p + 0x14) = *(u32*)((u8*)self + 0xddc);
-    *(u32*)((u8*)p + 0x18) = *(u32*)((u8*)self + 0xde0);
-    *(u32*)((u8*)p + 0x1c) = *(u32*)((u8*)self + 0xde4);
-    *(u32*)((u8*)p + 0x20) = *(u32*)((u8*)self + 0xde8);
-    *(u32*)((u8*)p + 0x24) = *(u32*)((u8*)self + 0xdec);
-    *(u32*)((u8*)p + 0x28) = *(u32*)((u8*)self + 0xdf0);
-    *(u32*)((u8*)p + 0x2c) = *(u32*)((u8*)self + 0xdf4);
-    *(u32*)((u8*)p + 0x30) = *(u32*)((u8*)self + 0xdf8);
-    *(u32*)((u8*)p + 0x34) = *(u32*)((u8*)self + 0xdfc);
-    *(u32*)p = 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -2350,14 +2340,16 @@ void fn_803C9948(void* a, void* b, s32* out1, s32* out2) {
     s32 v1 = 0;
     s32 v2 = 0;
     if (*(s32*)((u8*)a + 0x40) == 3) {
-        s32 f = *(s32*)((u8*)b + 0x2C);
-        if (f == 2) {
+        switch (*(s32*)((u8*)b + 0x2C)) {
+        case 2: {
             void* p = *(void**)((u8*)b + 0xE8);
             if (p != NULL) {
                 v1 = *(s32*)((u8*)p + 0x4C);
                 v2 = *(s32*)((u8*)p + 0x50);
             }
-        } else if (f == 3) {
+            break;
+        }
+        case 3: {
             void* p = *(void**)((u8*)b + 0xE8);
             if (p != NULL) {
                 v1 = *(s32*)((u8*)p + 0x4C);
@@ -2368,6 +2360,8 @@ void fn_803C9948(void* a, void* b, s32* out1, s32* out2) {
                 v1 += *(s32*)((u8*)q + 0x4C);
                 v2 += *(s32*)((u8*)q + 0x50);
             }
+            break;
+        }
         }
     }
     *out1 = v1;
@@ -2377,6 +2371,11 @@ void fn_803C9948(void* a, void* b, s32* out1, s32* out2) {
 // ---------------------------------------------------------------------------
 // fn_803C99C8
 // ---------------------------------------------------------------------------
+/* eight-word timecode block (runs / fields) */
+typedef struct SfdTcBlock {
+    u32 w[8];
+} SfdTcBlock;
+
 typedef struct {
     u8 pad0[0xa2c];          /* 0x000 */
     s32 a2c;                 /* 0xa2c */
@@ -2394,26 +2393,21 @@ typedef struct {
 
 void fn_803C99C8(void* self) {
     SFMPV99* o = (SFMPV99*)self;
-    u32 local[8];
-    u32* t;
+    SfdTcBlock local;
     s32* base;
     u32* dst;
     s32 flg;
     s32 t1;
     s32 t2;
     void* shc;
-    t = &o->tflag;
+
     base = (s32*)&o->tc[0];
     dst = &o->dst[0];
     if (o->dst[0] != 0) {
         return;
     }
     flg = 0;
-    *(u64*)&local[0] = *(u64*)&t[1];
-    *(u64*)&local[2] = *(u64*)&t[3];
-    *(u64*)&local[4] = *(u64*)&t[5];
-    *(u64*)&local[6] = *(u64*)&t[7];
-    /* shc->4 == 2/3 dispatch: bodies as branch targets (Wii/1.1 goto-chain) */
+    local = *(SfdTcBlock*)&o->t[0];
     shc = o->shc;
     if (*(s32*)((u8*)shc + 4) == 2) goto case2;
     if (*(s32*)((u8*)shc + 4) == 3) goto case3;
@@ -2425,16 +2419,13 @@ case3:
     flg = 1;
 done:
     if (flg == 0 && o->a2c != 0) {
-        local[6] = 0;
+        local.w[6] = 0;
     }
-    SFTIM_Tc2Time(local, &t1, &t2);
-    *(u64*)&dst[1] = *(u64*)&local[0];
-    *(u64*)&dst[3] = *(u64*)&local[2];
-    *(u64*)&dst[5] = *(u64*)&local[4];
-    *(u64*)&dst[7] = *(u64*)&local[6];
-    dst[9] = t1 - base[9];
-    dst[10] = t2;
-    dst[0] = 1;
+    SFTIM_Tc2Time(local.w, &t1, &t2);
+    *(SfdTcBlock*)&o->dst[1] = local;
+    o->dst[9] = t1 - o->tc[9];
+    o->dst[10] = t2;
+    o->dst[0] = 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -2445,8 +2436,6 @@ done:
 // Declaration-order/copy/coalescing levers all exhausted (see session notes).
 s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
     s32 n;
-    u32 m;
-    u8* obj;
     u8* seg0;
     u32 siz0;
     u8* seg1;
@@ -2455,9 +2444,10 @@ s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
     u32 info[7];
     u32 r;
     u32 type;
+    u32 m;
+
     m = mask;
-    obj = self;
-    if (SFBUF_RingGetRead(obj, *(s32*)(obj + 0x2070), info) != 0) {
+    if (SFBUF_RingGetRead(self, *(s32*)(self + 0x2070), info) != 0) {
         return 0;
     }
     if (info[1] == 0) {
@@ -2476,7 +2466,7 @@ s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
             n = 0;
         }
     }
-    SFBUF_RingAddRead(obj, *(s32*)(obj + 0x2070), n);
+    SFBUF_RingAddRead(self, *(s32*)(self + 0x2070), n);
     /* scan up to min(n,3) bytes of the (possibly two-segment) ring for a
      * non-zero byte; a nonzero byte means the skipped chunk carries data */
     seg0 = (u8*)info[0];
@@ -2497,9 +2487,9 @@ s32 sfmpv_GoDdelim(u8* self, u32 unused, u32 mask) {
         seg0++;
     }
     if (found != 0) {
-        *(s64*)(obj + 0x9c0) += n;
+        *(s64*)(self + 0x9c0) += n;
     }
-    *(s64*)(obj + 0x9b8) += n;
+    *(s64*)(self + 0x9b8) += n;
     return n;
 }
 
@@ -2625,8 +2615,9 @@ void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count) {
 // ---------------------------------------------------------------------------
 void sfmpv_ErrFn(s32 val, u32 err) {
     u32 tmp = err + 3;
-    if (tmp <= 1) return;
-    if (err == 0) return;
+    if (tmp <= 1 || err == 0) {
+        return;
+    }
     if ((err & 0xFFFF0000) == 0xFF040000)
         fn_803C34F8(val, err);
     else
@@ -2790,17 +2781,7 @@ join_p:
         return 0;
     }
     mpv = *(void**)shc;
-    *(u32*)((u8*)self + 0xdd4) = *(u32*)((u8*)p + 0xc);
-    *(u32*)((u8*)self + 0xdd8) = *(u32*)((u8*)p + 0x10);
-    *(u32*)((u8*)self + 0xddc) = *(u32*)((u8*)p + 0x14);
-    *(u32*)((u8*)self + 0xde0) = *(u32*)((u8*)p + 0x18);
-    *(u32*)((u8*)self + 0xde4) = *(u32*)((u8*)p + 0x1c);
-    *(u32*)((u8*)self + 0xde8) = *(u32*)((u8*)p + 0x20);
-    *(u32*)((u8*)self + 0xdec) = *(u32*)((u8*)p + 0x24);
-    *(u32*)((u8*)self + 0xdf0) = *(u32*)((u8*)p + 0x28);
-    *(u32*)((u8*)self + 0xdf4) = *(u32*)((u8*)p + 0x2c);
-    *(u32*)((u8*)self + 0xdf8) = *(u32*)((u8*)p + 0x30);
-    *(u32*)((u8*)self + 0xdfc) = *(u32*)((u8*)p + 0x34);
+    *(SfdMpvHdInfo*)((u8*)self + 0xdd4) = *(SfdMpvHdInfo*)((u8*)p + 0x0c);
     pic[0] = (u32)((u8*)p + 0x38);
     pic[1] = *(u32*)((u8*)p + 0x238);
     if (MPV_DecodePicAtr(mpv, pic, &out2) != 0) {

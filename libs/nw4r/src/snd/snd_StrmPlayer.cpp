@@ -179,6 +179,17 @@ inline f32 U8ToF32(u8 value) {
     return (f32)(conv.d - lbl_eu_8066A070);
 }
 
+// The cast on its own: MWCC lowers (f32)(conv.d - magic) to the retail
+// low-word fsubs only through this helper boundary (cf. ut_TextWriterBase
+// ConvF32S); a direct inline cast emits a double fsub + frsp.
+inline f32 DToF32(f64 d) {
+    return (f32)(d - lbl_eu_8066A070);
+}
+
+inline f32 DToF32Signed(f64 d) {
+    return (f32)(d - lbl_eu_8066A068);
+}
+
 inline f32 S32ToF32(s32 value) {
     union {
         f64 d;
@@ -655,41 +666,40 @@ void StrmPlayer::Stop() {
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    // Retail re-evaluates SoundThread::GetInstance() + the mutex offset at
-    // every lock/unlock site (the address is not kept in a saved register).
-    OSLockMutex(
-        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
-             ->mMutex);
+    // Free-loop walking track pointer, declared early: MWCC colors the
+    // callee-saved locals in creation order.
+    StrmTrackRetailLayout* pTrack;
 
-    // Stop the voice on every player-track slot (fixed bound of 8, not
-    // mTrackCount).
-    for (int i = 0; i < 8; i++) {
-        if (self->mTracks[i].activeFlag && self->mTracks[i].voice != NULL) {
-            self->mTracks[i].voice->Stop();
+    {
+        SoundThread::AutoLock lock;
+
+        // Stop the voice on every player-track slot (fixed bound of 8, not
+        // mTrackCount).
+        for (int i = 0; i < 8; i++) {
+            if (self->mTracks[i].activeFlag &&
+                self->mTracks[i].voice != NULL) {
+                self->mTracks[i].voice->Stop();
+            }
+        }
+
+        if (self->mActiveFlag) {
+            SoundThread::GetInstance().UnregisterPlayerCallback(this);
         }
     }
-
-    if (self->mActiveFlag) {
-        SoundThread::GetInstance().UnregisterPlayerCallback(this);
-    }
-
-    OSUnlockMutex(
-        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
-             ->mMutex);
 
     TaskManager::GetInstance().CancelTask(
         reinterpret_cast<Task*>(&self->mStrmHeaderLoadTask));
 
     // Cancel every queued stream-data load task (interrupt-protected walk
     // from the back of the pending list).
-    u32 level = OSDisableInterrupts();
+    {
+        ut::AutoInterruptLock lock;
 
-    while (!self->mStrmDataLoadTaskList.IsEmpty()) {
-        Task* pTask = &self->mStrmDataLoadTaskList.GetBack();
-        TaskManager::GetInstance().CancelTask(pTask);
+        while (!self->mStrmDataLoadTaskList.IsEmpty()) {
+            Task* pTask = &self->mStrmDataLoadTaskList.GetBack();
+            TaskManager::GetInstance().CancelTask(pTask);
+        }
     }
-
-    OSRestoreInterrupts(level);
 
     // Release every allocated channel buffer.
     for (int i = 0; i < self->mChannelCount; i++) {
@@ -700,31 +710,27 @@ void StrmPlayer::Stop() {
     }
 
     // Free every player-track voice.
-    level = OSDisableInterrupts();
+    {
+        ut::AutoInterruptLock lock;
 
-    StrmTrackRetailLayout* pTrack = self->mTracks;
-    for (int i = 0; i < self->mTrackCount; i++) {
-        if (pTrack->activeFlag && pTrack->voice != NULL) {
-            pTrack->voice->Free();
-            pTrack->voice = NULL;
+        pTrack = self->mTracks;
+        for (int i = 0; i < self->mTrackCount; i++) {
+            if (pTrack->activeFlag && pTrack->voice != NULL) {
+                pTrack->voice->Free();
+                pTrack->voice = NULL;
+            }
+            pTrack++;
         }
-        pTrack++;
     }
 
-    OSRestoreInterrupts(level);
+    {
+        SoundThread::AutoLock lock;
 
-    OSLockMutex(
-        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
-             ->mMutex);
-
-    if (self->mFileStream != NULL) {
-        self->mFileStream->Close();
-        self->mFileStream = NULL;
+        if (self->mFileStream != NULL) {
+            self->mFileStream->Close();
+            self->mFileStream = NULL;
+        }
     }
-
-    OSUnlockMutex(
-        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
-             ->mMutex);
 
     self->mStartedFlag = false;
     self->mPreparedFlag = false;
@@ -1256,13 +1262,15 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
         // One block before the buffer end: refresh the ADPCM loop context of
         // every streaming ADPCM voice.
         if (!self->mSkipUpdateAdpcmLoop && self->mValidAdpcmLoop) {
-            for (int i = 0; i < self->mTrackCount; i++) {
-            StrmTrackRetailLayout& rTrack = self->mTracks[i];
-            if (!rTrack.activeFlag || rTrack.voice == NULL) {
+            // Walking track pointer; declaration order drives MWCC's
+            // callee-saved coloring.
+            StrmTrackRetailLayout* pTrack = self->mTracks;
+            for (int i = 0; i < self->mTrackCount; pTrack++, i++) {
+            if (!pTrack->activeFlag || pTrack->voice == NULL) {
                 continue;
             }
 
-            Voice* pVoice = rTrack.voice;
+            Voice* pVoice = pTrack->voice;
             // mFormat holds nw4r::snd::SampleFormat values (retail compares
             // the raw field against 3 = SAMPLE_FORMAT_DSP_ADPCM; see
             // AxVoice.cpp IsAdpcm note).
@@ -1273,7 +1281,7 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
 
             u32 level = OSDisableInterrupts();
 
-            for (int j = 0; j < rTrack.fileInfo.channelCount; j++) {
+            for (int j = 0; j < pTrack->fileInfo.channelCount; j++) {
                 // Channels beyond the first two or with an out-of-range
                 // channel index resolve to NULL; retail still loads the
                 // pred-scale through the (null) pointer.
@@ -1283,7 +1291,7 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
                 } else {
                     // Signed local: retail compares channelIndex >= 16 with
                     // a signed cmpi (see AxVoice.cpp IsAdpcm note).
-                    s32 channelIndex = rTrack.fileInfo.channelIndex[j];
+                    s32 channelIndex = pTrack->fileInfo.channelIndex[j];
                     if (channelIndex >= 16) {
                         pChannel = NULL;
                     } else {
@@ -1967,52 +1975,21 @@ bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(StrmPlayer* pStrmPlayer) {
 // Retail 4-argument StrmPlayer::Setup(StrmBufferPool*, int, u16, int) is a
 // member, but the stale header declares only the 1-argument overload; emit
 // the retail symbol as a free function (same ABI).
-int Setup__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail14StrmBufferPooliUsi(
-    StrmPlayer* pStrmPlayer,
-    nw4r::snd::detail::StrmBufferPool* pBufferPool, int channels, u16 trackMask,
-    int voices) {
-    // The free-function definition sits at global scope; qualify lookups.
-    using namespace nw4r::snd::detail;
-    using nw4r::snd::detail::SoundThread;
+// Retail 4-argument StrmPlayer::Setup(StrmBufferPool*, int, u16, int).
+int StrmPlayer::Setup(StrmBufferPool* pBufferPool, int channels, u16 trackMask,
+                      int voices) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    OSLockMutex(
-        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
-             ->mMutex);
-
-    nw4r::snd::detail::StrmPlayerRetailLayout* self =
-        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
-            pStrmPlayer);
+    SoundThread::AutoLock lock;
 
     if (self->mSetupFlag) {
-        // Tear down any active playback first (virtual Stop()).
-        reinterpret_cast<StrmPlayer*>(self)->Stop();
-
-        OSLockMutex(
-            &reinterpret_cast<SoundThreadRetailLayout*>(
-                 &SoundThread::GetInstance())
-                 ->mMutex);
-
-        if (!self->mSetupFlag) {
-            OSUnlockMutex(
-                &reinterpret_cast<SoundThreadRetailLayout*>(
-                     &SoundThread::GetInstance())
-                     ->mMutex);
-        } else {
-            // Release the stream-data task pool.
-            self->mBufferPool = NULL;
-            self->mStrmDataLoadTaskPool.Destroy(
-                self->mStrmDataLoadTaskArea,
-                0x680); // DATA_BLOCK_COUNT_MAX * sizeof(StrmDataLoadTask)
-            self->mSetupFlag = false;
-
-            OSUnlockMutex(
-                &reinterpret_cast<SoundThreadRetailLayout*>(
-                     &SoundThread::GetInstance())
-                     ->mMutex);
-        }
+        // Tear down any active playback first (Shutdown inlines the virtual
+        // Stop plus the task-pool release under its own AutoLock).
+        Shutdown();
     }
 
-    reinterpret_cast<StrmPlayer*>(self)->InitParam();
+    InitParam();
 
     self->mChannelCount = channels > 16 ? 16 : channels;
 
@@ -2035,7 +2012,6 @@ int Setup__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail14StrmBufferPooliUs
     self->mTrackCount = trackCount;
 
     if (trackCount == 0) {
-        OSUnlockMutex(GetSoundThreadMutex());
         return 2;
     }
 
@@ -2070,7 +2046,6 @@ int Setup__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail14StrmBufferPooliUs
     report:
         if (ok == 0) {
             OSRestoreInterrupts(level);
-            OSUnlockMutex(GetSoundThreadMutex());
             return 1;
         }
 
@@ -2081,7 +2056,6 @@ int Setup__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail14StrmBufferPooliUs
 
     self->mSetupFlag = true;
 
-    OSUnlockMutex(GetSoundThreadMutex());
     return 0;
 }
 
@@ -2099,46 +2073,46 @@ extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6d
         reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
             pStrmPlayer);
 
-    // Per-track mix: player volume * file volume byte / 100 * track volume,
-    // with pan composed from the file pan byte (range -64..63) plus the
-    // track's own pan offset. Byte/int -> float conversions run through the
-    // shared 2^52 magic doubles, referenced by name so the .sdata2 relocs
-    // match retail (see ut_PackedFont.cpp F64Conv pattern).
-    union {
-        f64 d;
-        u32 w[2];
-    } conv;
-
-    conv.w[1] = pTrack->fileInfo.volume;
-    conv.w[0] = 0x43300000;
-    // Sequential multiplies mirror retail's evaluation order.
-    f32 volume = lbl_eu_8066A078 * self->mVolume;
-    volume *= (f32)(conv.d - lbl_eu_8066A070) / lbl_eu_8066A07C;
+    // Per-track mix, the nw4r detail idiom: seed accumulators from 1.0f/0.0f
+    // and fold in each component. The u8 (file volume byte) and s32
+    // (pan - 63/64) -> f32 conversions are MWCC-native 2^52-magic sequences
+    // that pool into this unit's .sdata2, matching the retail pool exactly.
+    f32 volume = 1.0f;
+    volume *= self->mVolume;
+    volume *= pTrack->fileInfo.volume / 127.0f;
     volume *= pTrack->volume;
-    f32 pitch = lbl_eu_8066A078 * self->mPitch;
-    f32 pan = lbl_eu_8066A060 + self->mPan;
-    if (pTrack->fileInfo.pan > 1) {
-        conv.w[0] = 0x43300000;
-        conv.w[1] = (u32)(pTrack->fileInfo.pan - 64) ^ 0x80000000;
-        pan += (f32)(conv.d - lbl_eu_8066A068) / lbl_eu_8066A080;
+
+    f32 pitch = 1.0f;
+    pitch *= self->mPitch;
+
+    f32 pan = 0.0f;
+    pan += self->mPan;
+    // Pan bytes 0/1 select the hard-left path (retail keeps it as the
+    // fall-through branch of the inverted test).
+    if (pTrack->fileInfo.pan <= 1) {
+        pan += (pTrack->fileInfo.pan - 63) / 63.0f;
     } else {
-        conv.w[0] = 0x43300000;
-        conv.w[1] = (u32)(pTrack->fileInfo.pan - 63) ^ 0x80000000;
-        pan += (f32)(conv.d - lbl_eu_8066A068) / lbl_eu_8066A080;
+        pan += (pTrack->fileInfo.pan - 64) / 63.0f;
     }
     pan += pTrack->field_0x34;
 
-    f32 surroundPan = lbl_eu_8066A060 + self->mSurroundPan;
-    f32 lpfFreq = lbl_eu_8066A078 + self->mLpfFreq;
+    f32 surroundPan = 0.0f;
+    surroundPan += self->mSurroundPan;
+
+    f32 lpfFreq = 1.0f;
+    lpfFreq += self->mLpfFreq;
+
     f32 biquadValue = self->mBiquadFilterValue;
-    u8 biquadType = self->mBiquadFilterType;
     u8 remoteFilter = self->mRemoteFilter;
-    f32 mainSend = lbl_eu_8066A060 + self->mMainSend;
+    u8 biquadType = self->mBiquadFilterType;
+
+    f32 mainSend = 0.0f;
+    mainSend += self->mMainSend;
 
     f32 fxSend[nw4r::snd::AUX_BUS_NUM];
     for (int i = 0; i < nw4r::snd::AUX_BUS_NUM; i++) {
-        fxSend[i] = lbl_eu_8066A060 +
-                    pStrmPlayer->GetFxSend(static_cast<nw4r::snd::AuxBus>(i));
+        fxSend[i] = 0.0f;
+        fxSend[i] += pStrmPlayer->GetFxSend(static_cast<nw4r::snd::AuxBus>(i));
     }
 
     f32 remoteOutVolume[WPAD_MAX_CONTROLLERS];
@@ -2146,14 +2120,20 @@ extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6d
     f32 remoteFxSend[WPAD_MAX_CONTROLLERS];
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         remoteOutVolume[i] = pStrmPlayer->GetRemoteOutVolume(i);
-        remoteSend[i] =
-            lbl_eu_8066A060 + pStrmPlayer->GetRemoteSend(i);
-        remoteFxSend[i] =
-            lbl_eu_8066A060 + pStrmPlayer->GetRemoteFxSend(i);
+
+        remoteSend[i] = 0.0f;
+        remoteSend[i] += pStrmPlayer->GetRemoteSend(i);
+
+        remoteFxSend[i] = 0.0f;
+        remoteFxSend[i] += pStrmPlayer->GetRemoteFxSend(i);
     }
 
+    // The voice cursor is declared before the interrupt level so MWCC
+    // creates (and colors) it first.
+    nw4r::snd::detail::Voice* pVoice;
+
     u32 level = OSDisableInterrupts();
-    nw4r::snd::detail::Voice* pVoice = pTrack->voice;
+    pVoice = pTrack->voice;
     if (pVoice != NULL) {
         pVoice->SetVolume(volume);
         pVoice->SetPitch(pitch);

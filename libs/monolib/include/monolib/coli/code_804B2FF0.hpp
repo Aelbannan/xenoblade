@@ -15,16 +15,16 @@ struct CColiMoveNode;
 struct CColiProcLocal;
 
 // C-linkage imports
-extern "C" CColiBounds* lbl_eu_80665944;
-extern "C" CColiHx* lbl_eu_8066594C;
-extern "C" CColiQx* lbl_eu_80665948;
-extern "C" s16 lbl_eu_80665950; // master node index (lha)
+extern "C" CColiBounds* g_coliBounds;
+extern "C" CColiHx* g_coliHalfExtent;
+extern "C" CColiQx* g_coliXformPos;
+extern "C" s16 g_coliNodeIndex; // master node index (lha)
 extern "C" f32 lbl_eu_8066AEB0; // 0.0f
 extern "C" f32 lbl_eu_8066AEB4; // 1.0f
 extern "C" void ColiSetMoveEnableFlag(void*, int);
 extern "C" CColiWalkState lbl_eu_8065D138;
 extern "C" u8 lbl_eu_8056F4F0;
-extern "C" void __ct__CColiProc(CColiProcLocal* self);
+extern "C" void __ct__9CColiProcFv(CColiProcLocal* self);
 extern "C" f32 lbl_eu_8066AEC0;
 extern "C" f32 lbl_eu_8066AEC4;
 extern "C" f32 lbl_eu_8066AEC8;

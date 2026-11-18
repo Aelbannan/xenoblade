@@ -23,27 +23,26 @@ extern "C" void setChainGauge(cf::CChainGauge* gauge, float value);
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
 extern "C" void requestCancelChain__Fv();
 
-// Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
-extern "C" void* lbl_eu_80538994[];
+// __vt__Q22cf11CChainCombo (retail .data:0x80538994, dtor-only): emitted here
+// by the compiler, next to the out-of-line constructor in CChainCombo.cpp.
 
 // 3-entry table indexed by probability thresholds in payoutChainCombo.
 extern "C" int lbl_eu_80538988[3];
 
 namespace cf {
 
-/* Chain arts combo tracker. Size 0x18.
-   Manual vptr @0x14 (not a normal C++ vptr-at-0 class) to match retail and
-   avoid a weak local dtor / __vt__ reloc name mismatch. */
+/* Chain arts combo tracker. Size 0x18. Polymorphic after its members, so the
+   vptr sits at 0x14; the dtor is inline (retail keeps only a weak copy) and
+   the 0xC-byte vtable is emitted here, next to the out-of-line constructor. */
 struct CChainCombo {
     int mArtsType;   // 0x0 - last arts category byte (0..8)
     int mComboCount; // 0x4 - steps 0..5
     bool mPending;   // 0x8 - set externally; consumed by payoutChainCombo
     u8 pad9[3];
     CChainGauge mGauge; // 0xC - chain gauge pair
-    void** mVtbl;       // 0x14 - lbl_eu_80538994
 
     CChainCombo();
-    ~CChainCombo();
+    virtual ~CChainCombo() {}
     void func1();
 };
 

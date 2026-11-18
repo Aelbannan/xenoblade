@@ -57,7 +57,7 @@ CScnCameraMan::~CScnCameraMan() {
 // Registers `view` at mViews[idx]: first releases the previously registered
 // view (vtable+0xB8 with the param block) when it is still valid and differs
 // from the new one, then hands the new view the param block and stores its id.
-void CamMan_SwapViewParam_AED4(CScnCameraMan* cam, CView* view, u32 idx) {
+extern "C" void CamMan_SwapViewParam_AED4(CScnCameraMan* cam, CView* view, u32 idx) {
     u32 vid = cam->mViews[idx];
     if (vid != 0xFFFFFFFF && vid != view->mWorkID) {
         CView* v = CViewRoot::getView(vid);
@@ -99,7 +99,7 @@ static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
 }
 
 // Records the camera item matching the current view as the current camera.
-bool CamMan_SyncCameraToView(CScnCameraMan* cam) {
+extern "C" bool CamMan_SyncCameraToView(CScnCameraMan* cam) {
     CView* view = CView::getCurrentView();
     CScnCameraItem* item = findCamByViewId(cam, view);
     if (item == NULL) {
@@ -141,7 +141,7 @@ static CScnCameraItem* findCamById2(s32 id, CScnCameraList* list) {
 
 // Looks up the camera item whose camera id equals the current camera id and
 // refreshes it through its vtable+0x14 slot.
-void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
+extern "C" void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
     s32 id = cam->mCamId;
     if (id < 0) {
         id = cam->mCamId;
@@ -166,7 +166,7 @@ void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
 // NOTE (byte-matching): the second comparison must be COMMUTED (constant on
 // the left); writing `type < THREAD_CVIEW_MAX` lets MWCC fuse the pair into
 // subi/cmpli, which retail does not do.
-CWorkThread* CamMan_GetViewThread(CScnCameraMan* cam, s32 id) {
+extern "C" CWorkThread* CamMan_GetViewThread(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = (s16)cam->mCamId;
     }
@@ -202,7 +202,7 @@ keep:
 
 // Searches the scene pool's camera list for the item whose camera id equals
 // `id` (falling back to the current camera id when `id` is negative).
-CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
+extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = cam->mCamId;
     }
@@ -221,7 +221,7 @@ CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
 }
 
 // Same camera-id lookup as CamMan_FindItemA_B158.
-CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
+extern "C" CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = cam->mCamId;
     }
@@ -246,7 +246,7 @@ CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
 // table read must be a named local compared against param->mViewId in that
 // order, and sentinel must be declared before node, or sentinel/node land in
 // r6/r7 instead of the retail r5/r6.
-CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraParam* param) {
+extern "C" CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     u8* pool = p->mPool;
     CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
@@ -268,7 +268,7 @@ CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraParam* param)
 // callee-saves; every tried declaration/body shape yields either
 // sentinel=r5/node=r6 (this form, fewest mismatches) or sentinel=r6/node=r7.
 // Instruction sequence, control flow, size and relocs match exactly.
-CScnCameraItem* CamMan_FindViewItemB(CScnCameraMan* cam, CScnCameraParam* param) {
+extern "C" CScnCameraItem* CamMan_FindViewItemB(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     CScnCameraList* list = CScnItemPool_lookupSubPool(p->mPool, 4);
     CScnCameraNode* node = list->sentinel->next;
@@ -406,7 +406,7 @@ extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv((void*
 // using the aspect ratio, the VI width scale, and the s16 screen offsets.
 // NOTE (byte-matching): locals are declared so MWCC's reverse-declaration
 // slot assignment yields the retail stack layout (v lowest, conversions last).
-bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
+extern "C" bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
     // s16 -> f32 through the 0x43300000/xoris double trick; hand-assembled so
     // the magic constant keeps its retail reference to lbl_eu_8066AB60.
     union {
@@ -471,7 +471,7 @@ bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* item, ml::CVe
 // Builds the camera item's perspective projection matrix from its fov / near /
 // far planes. The horizontal fov is widened for 16:9 by scaling the aspect
 // (scissor-rect ratio x fixed multiplier) with CDeviceVI::getWidthScale().
-void CamMan_BuildPerspective(Mtx44 mtx, CScnItemCamera* item) {
+extern "C" void CamMan_BuildPerspective(Mtx44 mtx, CScnItemCamera* item) {
     // Volatile reads pin the depth loads at the top of the function (retail
     // parks them in f31/f30 across the width-scale call).
     const CScnItemCameraFrustumVt* vt = (const CScnItemCameraFrustumVt*)item;
@@ -489,7 +489,7 @@ void CamMan_BuildPerspective(Mtx44 mtx, CScnItemCamera* item) {
 // (1 at <= fMin, linearly down to 0 at >= fMax) into *outFall, and the x
 // component of the view-space direction to `pos` (normalized, zero-safe) into
 // *outDirX.
-void CamMan_ComputeViewFalloff(f32* outDirX, f32* outFall, CScnCameraItem* item,
+extern "C" void CamMan_ComputeViewFalloff(f32* outDirX, f32* outFall, CScnCameraItem* item,
                    ml::CVec3* pos, f32 fMin, f32 fMax) {
     // Difference between the target point and the camera position; magnitude
     // is sign-independent. operator- keeps its temp and the named copy in

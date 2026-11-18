@@ -14,6 +14,9 @@ namespace detail {
 
 // Embedded at BasicPlayer+0x4. sizeof == 0xCC; BasicPlayer::mId follows at 0xD0.
 struct PlayerParamSet {
+    static const int VOICE_OUT_NUM = 4;
+    static const int VOICE_OUT_PARAM_NUM = 6;
+
     void Init();
 
     f32 mVolume;      // at 0x0
@@ -21,8 +24,8 @@ struct PlayerParamSet {
     f32 mPan;         // at 0x8
     f32 mSurroundPan; // at 0xC
     f32 mLpfFreq;     // at 0x10
-    f32 mUnk0x14;     // at 0x14
-    u8 mUnk0x18;      // at 0x18
+    f32 mBiquadFreq;  // at 0x14
+    u8 mBiquadType;   // at 0x18
     u8 mRemoteFilter; // at 0x19 (BasicPlayer+0x1D)
     u8 mPad0x1A[2];   // at 0x1A
     int mOutputLine;  // at 0x1C
@@ -128,6 +131,15 @@ public:
         return mParam.mRemoteFilter;
     }
     void SetRemoteFilter(int filter);
+
+    void SetBiquadFilter(int filter, f32 value);
+
+    void SetVoiceOutParam(int voice, const f32* pParam) {
+        f32* pDst = &mParam.mUnk0x6C[voice * PlayerParamSet::VOICE_OUT_PARAM_NUM];
+        for (int i = 0; i < PlayerParamSet::VOICE_OUT_PARAM_NUM; i++) {
+            pDst[i] = pParam[i];
+        }
+    }
 
     PanMode GetPanMode() const {
         return mParam.mPanMode;

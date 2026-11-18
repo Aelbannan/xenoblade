@@ -5,6 +5,9 @@
 #include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/CSelShopWin.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -14,71 +17,51 @@ class CScn;
 /*
  * Select-shop menu screen object.
  *
- * Layout mirrors the other menu objects (CMenuQstCnt / CMenuUpdate): the
- * IUIWindow task region is stored inline (vtable at +0x10, pmtf nodes at
- * +0x3C), with the OC/render subobject vtable slots at +0x6C/+0x70 and the
- * owning scene at +0x74, followed by the embedded memory region, shop window
- * widget and CCur18 cursor.
+ * Real MI class, from the retail composite vtable __vt__15CMenuSelectShop
+ * (0x80532550): IUIWindow at +0x00 (0x6C), IWorkEvent at +0x6C and
+ * IScnRender at +0x70; the +0x24 / +0xAC sub-vtables and the base list are
+ * the compiler's own output.
  *
- *   0x00  link-list nodes
- *   0x10  vtable ptr
- *   0x3C  p-mtf null region (IUIWindow/Move)
- *   0x6C  IWorkEvent vtable slot
- *   0x70  IScnRender vtable slot (render-callback subobject)
+ *   0x00  IUIWindow base (CTTask<IUIWindow> Move/Draw ptmf hooks at +0x3C/+0x48)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render-callback subobject)
  *   0x74  CScn* owning scene
  *   0x78  UnkClass_8045F564 memory region
  *   0x88  CSelShopWin shop window widget
- *   0xB0  CCur18 cursor (0x18 bytes raw storage)
+ *   0xB0  CCur18 cursor (0x18 bytes)
  *   0xC8  u8 mState
  *   0xCC  u32 mSelIndex (selection index fed to getShopWinPanePos)
+ *   0xD0  u32 mFieldD0 (ctor arg 3, default 0)
+ * retail sizeof = 0xD4 (what ShopSel_CreateSingleton allocates).
  */
-class CMenuSelectShop {
+class CMenuSelectShop : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
-    u8  mPad0[0x10];                       // 0x00 link-list nodes
-    u32 mVtab;                             // 0x10 vtable ptr
-    u8  mPad14[0x3C - 0x14];               // 0x14
-    u32 mPtmfFunc0;                        // 0x3C
-    u32 mPtmfThis0;                        // 0x40
-    u32 mPtmfDelta0;                       // 0x44
-    u32 mPtmfFunc1;                        // 0x48
-    u32 mPtmfThis1;                        // 0x4C
-    u32 mPtmfDelta1;                       // 0x50
-    nw4r::lyt::Layout* mLayout;            // 0x54
-    u32 mField58;                          // 0x58
-    u32 mField5C;                          // 0x5C
-    s32 mField60;                          // 0x60 (default -1)
-    u8  mField64;                          // 0x64 (bool)
-    u8  mField65;                          // 0x65
-    u8  mField66;                          // 0x66
-    u8  mField67;                          // 0x67 (default 1)
-    u32 mField68;                          // 0x68
-    u32 mOcc6C;                            // 0x6C IWorkEvent vtable slot
-    u32 mOcc70;                            // 0x70 IScnRender vtable slot
-    CScn* mScene;                          // 0x74
-    UnkClass_8045F564 mMemRegion;          // 0x78
-    CSelShopWin mSelShop;                  // 0x88
-    CCur18 mCursor;                        // 0xB0
-    u8  mState;                            // 0xC8
-    u8  mPadC9[3];                         // 0xC9-0xCB
-    u32 mSelIndex;                         // 0xCC
-    u32 mFieldD0;                          // 0xD0 (ctor arg 3, default 0)
+    CMenuSelectShop(void* scene, void* a3);
+    virtual ~CMenuSelectShop();
 
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    CScn* mScene;                   // 0x74
+    UnkClass_8045F564 mMemRegion;   // 0x78
+    CSelShopWin mSelShop;           // 0x88
+    CCur18 mCursor;                 // 0xB0
+    u8  mState;                     // 0xC8
+    u8  mPadC9[3];                  // 0xC9-0xCB
+    u32 mSelIndex;                  // 0xCC
+    u32 mFieldD0;                   // 0xD0 (ctor arg 3, default 0)
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // These mirror the declarations used by the sibling menu TUs (CMenuQstCnt,
 // CMenuUpdate, CSysWinSelect).
-extern "C" CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
-                                                  void* scene, void* a3);
 extern "C" void __dt__11CSelShopWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
-extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
+extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" void getShopWinPanePos(nw4r::math::VEC3*, CSelShopWin*, int);
 
 // Shop-window widget hooks. Retail keeps these unmangled (C linkage); they take
@@ -104,12 +87,7 @@ extern "C" void driveShopWinAnim(CSelShopWin*);
 extern "C" void loadShopWinArc(CSelShopWin*);
 extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
 extern "C" void __ct__8CProcessFv(void*);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__11CSelShopWinFv(void*);
-extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, void*, u32, u32);
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, UnkClass_8045F564*);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
+extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 
 // State-machine handlers (retail C-ABI helpers taking the menu object).
 extern "C" void ShopSel_State0Show(CMenuSelectShop*);
@@ -125,7 +103,4 @@ extern "C" void CUICfManager_queueShopSellMenu();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;             // cbRenderBefore gate flag (.sbss)
-extern u32 __ptmf_null[];               // null pointer-to-member-function constant
-extern char lbl_eu_8052D238[];          // IUIWindow temp base vtable
-extern char lbl_eu_80532550[];          // composite vtable
 extern char lbl_eu_80503AE0[];          // memory-region name string (.rodata)

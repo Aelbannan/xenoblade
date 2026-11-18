@@ -1656,9 +1656,12 @@ extern "C" __declspec(noinline) u32 MdlDyn_IsAnimHeldB(u8* self) { return (*(u32
 extern "C" __declspec(noinline) u32 MdlDyn_IsPoseFrozen(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
 extern "C" __declspec(noinline) void MdlDyn_FetchVec3(u8* self, void* out) {
-    const float c = *(float*)((u8*)self + 0x2C);
-    const float b = *(float*)((u8*)self + 0x1C);
-    const float a = *(float*)((u8*)self + 0x0C);
+    // Declared x/y/z ascending so the FPR colours are f0/f1/f2; the
+    // assignments run z,y,x to reproduce retail's load-descending order.
+    float a, b, c;
+    c = *(float*)((u8*)self + 0x2C);
+    b = *(float*)((u8*)self + 0x1C);
+    a = *(float*)((u8*)self + 0x0C);
     *(float*)((u8*)out + 0) = a;
     *(float*)((u8*)out + 4) = b;
     *(float*)((u8*)out + 8) = c;
@@ -1776,9 +1779,17 @@ extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r
 // this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
 extern "C" __declspec(noinline) nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v) {
     extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
-    return nw4r::math::MTX34RotXYZFIdx(mtx, lbl_eu_8066B3F0 * v[0],
-                                       lbl_eu_8066B3F0 * v[1],
-                                       lbl_eu_8066B3F0 * v[2]);
+    // k is born first (f0) but loaded after z: declare it first, assign it
+    // after z's load, so the SDA21 scale-factor load lands on slot 1 like
+    // retail. x/y/z declared ascending (f1/f2/f3) with the assignments run
+    // z,y,x reproduces retail's right-to-left argument evaluation.
+    f32 k;
+    f32 x, y, z;
+    z = v[2];
+    k = lbl_eu_8066B3F0;
+    y = v[1];
+    x = v[0];
+    return nw4r::math::MTX34RotXYZFIdx(mtx, k * x, k * y, k * z);
 }
 
 // us-804f0c48: out = a + b (nw4r MTX34Add into a stack temp, then copy out

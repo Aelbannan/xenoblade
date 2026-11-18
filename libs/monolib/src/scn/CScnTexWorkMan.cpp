@@ -322,17 +322,17 @@ extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
     }
 }
 
-void onViAfterDrawDone__14CScnTexWorkManFv(void) {}
+extern "C" void onViAfterDrawDone__14CScnTexWorkManFv(void) {}
 
 int lbl_eu_806658F8;
 
-void TexMan_SnapCursor_0314() {
+extern "C" void TexMan_SnapCursor_0314() {
     if (lbl_eu_806658FC == 0) {
         lbl_eu_806658F8 = lbl_eu_806658F0;
     }
 }
 
-void TexMan_RestoreCursor_032C() {
+extern "C" void TexMan_RestoreCursor_032C() {
     if (lbl_eu_806658FC != 0) return;
     lbl_eu_806658F0 = lbl_eu_806658F8;
     lbl_eu_806658F8 = 0;
@@ -355,7 +355,7 @@ struct CScnTexWorkManCamPersp {
     f32 field_0x1f0; // far
 };
 
-int TexMan_ApplyCamPersp_034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
+extern "C" int TexMan_ApplyCamPersp_034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
     if (view == NULL) {
         view = CView::getCurrentView();
     }
@@ -377,7 +377,7 @@ extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name)
 
 // Resolve a ResNode's next sibling (offset field at 0x64) with the nw4r
 // null/alignment asserts.
-nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode pNode) {
+extern "C" nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode pNode) {
     if (pNode.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_806639B8);
@@ -864,7 +864,8 @@ L_okChild:
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace TWMBlob {
 extern "C" void __dt__14CScnTexWorkManFv();
-extern "C" void onViAfterDrawDone__14CScnTexWorkManFv();
+// onViAfterDrawDone__14CScnTexWorkManFv is defined (extern "C") earlier
+// in this TU; the unqualified use below resolves to it.
 extern "C" void __dt__16CScnVirtualLightFv();
 extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
@@ -874,7 +875,7 @@ extern "C" u32 __RTTI__16CScnVirtualLight;
 
 // lbl_eu_8056E7D0 (24B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7D0[6] = {
-(u32)&__RTTI__14CScnTexWorkMan, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::onViAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
+(u32)&__RTTI__14CScnTexWorkMan, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&onViAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
 };
 // lbl_eu_8056E7E8 (16B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7E8[4] = {

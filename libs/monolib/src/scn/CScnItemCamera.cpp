@@ -907,7 +907,7 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
 extern "C" void ScnCamNw4r_NullHook40();
 extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void ScnCamNw4r_GetField10Ptr();
-extern "C" const u32 lbl_eu_80524268[112];  // .rodata string table (defined below)
+extern "C" const u32 lbl_eu_80524268[108];  // .rodata string table (defined below)
 extern "C" u32 lbl_eu_80524274;
 extern "C" u32 lbl_eu_80524280;
 extern "C" u32 lbl_eu_8052428C;
@@ -1047,9 +1047,12 @@ extern "C" u32 lbl_eu_8056ECC0[213] = {
     (u32)&lbl_eu_8066AE08, (u32)&lbl_eu_805243FC, (u32)&lbl_eu_8066AE10, (u32)&lbl_eu_8066AE18, (u32)&lbl_eu_8066AE1C,
 };
 
-// [.rodata] 0x80524268-0x80524428 (0x1c0B) raw words
-extern "C" const u32 lbl_eu_80524268[112] = {
-    0x434F4E53, 0x545F495F, 0x57000000, 0x504F4F4C, 0x5F494E54, 0x00000000, 0x504F4F4C, 0x5F494E54,
+// [.rodata] 0x80524258-0x80524408 (0x1b0B) raw words ("Camera%d" first). The two RTTI type-name
+// strings that follow in retail ("CColiObjCall" / "CColiResCall" at
+// 0x80524408/0x80524418) belong to the coli units and are emitted by their
+// classes there, so they are no longer part of this blob.
+extern "C" const u32 lbl_eu_80524268[108] = {
+    0x43616D65, 0x72612564, 0x00000000, 0x00000000, 0x434F4E53, 0x545F495F, 0x57000000, 0x504F4F4C, 0x5F494E54, 0x00000000, 0x504F4F4C, 0x5F494E54,
     0x5F570000, 0x504F4F4C, 0x5F464958, 0x45440000, 0x504F4F4C, 0x5F464958, 0x45445F57, 0x00000000,
     0x504F4F4C, 0x5F535452, 0x00000000, 0x504F4F4C, 0x5F535452, 0x5F570000, 0x53545F41, 0x52475F4F,
     0x4D495400, 0x4C445F41, 0x52475F30, 0x00000000, 0x4C445F41, 0x52475F31, 0x00000000, 0x4C445F41,
@@ -1062,7 +1065,6 @@ extern "C" const u32 lbl_eu_80524268[112] = {
     0x43414C4C, 0x5F494E44, 0x00000000, 0x504C5547, 0x494E5F57, 0x00000000, 0x43414C4C, 0x5F464152,
     0x00000000, 0x43414C4C, 0x5F464152, 0x5F570000, 0x4745545F, 0x4F435F57, 0x00000000, 0x47455454,
     0x45525F57, 0x00000000, 0x53455454, 0x45525F57, 0x00000000, 0x66756E63, 0x74696F6E, 0x00000000,
-    0x43436F6C, 0x694F626A, 0x43616C6C, 0x00000000, 0x43436F6C, 0x69526573, 0x43616C6C, 0x00000000,
 };
 
 // (.sdata 0x806638A8-0x80663A90 is not owned by this TU: it holds the RTTI

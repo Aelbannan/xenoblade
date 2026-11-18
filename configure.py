@@ -763,6 +763,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp"),
             Object(Matching, "kyoshin/menu/CMenuBattleChain.cpp"),
+            Object(Matching, "kyoshin/menu/code_802ADB08.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),
@@ -1307,7 +1308,7 @@ config.libs = [
     DolphinLib(
         "kpad",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/kpad/KPAD.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/kpad/KPAD.c", mw_version="Wii/1.0a"),  # Wii/1.0a (=1.0RC1): 12/29 vs 11/29 under Wii/1.1; 1.5+ regress
         ],
     ),
     DolphinLib(
@@ -1437,7 +1438,7 @@ config.libs = [
     DolphinLib(
         "wpad",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPAD.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPAD.c", mw_version="Wii/1.0a"),  # Wii/1.0a (=1.0RC1): 65/77 vs 64/77 under Wii/1.1 (__wpadCalcRadioQuality); WPADHIDParser stays default (1.1 sums higher)
             Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPADHIDParser.c"),
             Object(Matching, "RVL_SDK/src/revolution/wpad/WPADEncrypt.c"),
             Object(Matching, "RVL_SDK/src/revolution/wpad/WPADMem.c"),
@@ -1997,6 +1998,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/vm/yvm2.c", extra_cflags=["-lang=c99"]),
             Object(Matching, "monolib/src/vm/yvm_debug.c", extra_cflags=["-lang=c99"]),
             Object(NonMatching, "monolib/src/coli/code_804A6C60.cpp"),
+            Object(NonMatching, "monolib/src/coli/CColiProcBase.cpp"),
             Object(NonMatching, "monolib/src/coli/CColiProc.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B2FF0.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp"),

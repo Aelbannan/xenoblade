@@ -5,84 +5,84 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/lyt.h>
+#include <nw4r/math/math_types.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
+class CScn;
+
 /*
- * CTalkWindow - talk-window process (created by TalkWin_Create_CC78 on the work
- * heap, registered as a CProcess under the caller's parent; sizeof 0xB8).
+ * CTalkWindow - the message/talk window process (created by
+ * TalkWin_Create_CC78 on the work heap and registered as a CProcess under the
+ * caller's parent).
  *
- * Field layout (from the ctor / Term / cbRenderBefore ASM):
- *   0x00  CProcess storage (vtable at +0x10)
- *   0x3C  two null pointer-to-member-function callback slots
- *   0x54  nw4r layout (drawn by cbRenderBefore, deleted by Term)
- *   0x5C  tag-processor object (0x858 heap block, viewed as AnimTransform*)
- *   0x68  talk-source id (fed to findObjectById in cbRenderBefore)
- *   0x70  IScnRender vtable slot (render callback, passed to CScn)
- *   0x74  owning CScn
- *   0x78  UnkClass_8045F564 layout-build region (raw buffer: retail drives
- *         its ctor/dtor via C-linkage calls)
- *   0x88  5 layout animations (built by Init; page-state machine in Move)
- *   0x9C  message buffer pointer (ctor arg)
- *   0xA4  page index (pane-name table lookup into lbl_eu_8052DF70)
- *   0xB0  state/mode (1..5 dispatch in Move)
- *   0xB4  talk-enable flag (gates the character-voice logic)
+ * Real MI class: retail __vt__11CTalkWindow (0x8052DFA8) is the composite
+ * table with the +0x24 (IWorkEvent) and +0xAC (IScnRender) sub-vtables and the
+ * trailing override-pointer block, and the 0x40 base list at 0x8052E068 lists
+ * IUIWindow (-> CTTask<IUIWindow> -> CProcess -> CChildListNode ->
+ * CDoubleListNode), IWorkEvent and IScnRender. The +0x6C/+0x70 adjusting
+ * thunks and the RTTI record are compiler output.
  *
- * Deliberately NON-polymorphic (plain struct, CSystemWindow / CSysWinSave
- * idiom): the CProcess base and the UnkClass_8045F564 region are destroyed
- * by hand in the dtor, emitted as the extern "C" global __dt__11CTalkWindowFv
- * (CSysWinSave idiom - a member dtor cannot express the flags delete-check
- * placement inside the outer null-guard).
+ *   0x00  IUIWindow base (CProcess header, Move/Draw pmf hooks at +0x3C/+0x48,
+ *         layout/state fields at +0x54..+0x68)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render callback registered with the scene)
+ *   0x74  mScene      - owner scene
+ *   0x78  mMemRegion  - embedded layout-build scratch region (0x10)
+ *   0x88  field_88..field_98 - the five layout animations
+ *   0x9C  field_9C    - message-buffer pointer (ctor arg)
+ *   0xA0  field_A0    - "default animation set" flag (ctor arg)
+ *   0xA1  field_A1    - side flag (ctor arg)
+ *   0xA4  field_A4    - page index (into the page-pane-name table)
+ *   0xA8  field_A8    - page-position table index
+ *   0xAC  field_AC
+ *   0xB0  field_B0    - window state (1..5 dispatch in Move)
+ *   0xB4  field_B4    - talk-enable flag (ctor arg)
  */
-struct CTalkWindow {
-    u8    mProcHead[0x10];              // 0x00 CProcess storage head
-    u32   mVtable;                      // 0x10 CProcess vtable slot
-    u8    mProcTail[0x28];              // 0x14 CProcess storage tail
-    u32   ptmf0[3];                     // 0x3C null pointer-to-member-function
-    u32   ptmf1[3];                     // 0x48 null pointer-to-member-function
-    nw4r::lyt::Layout* mpLayout;        // 0x54
-    u32   field_58;                     // 0x58
-    nw4r::lyt::AnimTransform* field_5C; // 0x5C
-    u32   field_60;                     // 0x60 (init -1)
-    u8    field_64;                     // 0x64
-    u8    field_65;                     // 0x65
-    u8    field_66;                     // 0x66
-    u8    field_67;                     // 0x67 (init 1)
-    u32   field_68;                     // 0x68 talk-source id
-    u32   field_6C;                     // 0x6C
-    u32   mScnRender;                   // 0x70 IScnRender vtable slot
+class CTalkWindow : public IUIWindow, public IWorkEvent, public IScnRender {
+public:
+    CTalkWindow(CScn* scene, u32 sourceId, u8* msg, u32 a0, u32 a1, u32 b4);
+    virtual ~CTalkWindow();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void Draw();
+    virtual void cbRenderBefore();
+
     CScn* mScene;                       // 0x74 owning scene
-    u8    mMemRegion[0x10];             // 0x78 UnkClass_8045F564 storage (raw)
-    nw4r::lyt::AnimTransform* field_88; // 0x88 layout animation 1
-    nw4r::lyt::AnimTransform* field_8C; // 0x8C layout animation 2
-    nw4r::lyt::AnimTransform* field_90; // 0x90 layout animation 3
-    nw4r::lyt::AnimTransform* field_94; // 0x94 layout animation 4
-    nw4r::lyt::AnimTransform* field_98; // 0x98 layout animation 5
-    u32   field_9C;                     // 0x9C message buffer pointer (ctor arg)
-    u8    field_A0;                     // 0xA0
-    u8    field_A1;                     // 0xA1
+    UnkClass_8045F564 mMemRegion;       // 0x78 embedded layout-build region
+    nw4r::lyt::AnimTransform* field_88; // 0x88 intro animation
+    nw4r::lyt::AnimTransform* field_8C; // 0x8C page-in animation
+    nw4r::lyt::AnimTransform* field_90; // 0x90 page animation
+    nw4r::lyt::AnimTransform* field_94; // 0x94 accept animation
+    nw4r::lyt::AnimTransform* field_98; // 0x98 page-out animation
+    u8*   field_9C;                     // 0x9C message-buffer pointer
+    u8    field_A0;                     // 0xA0 default-animation-set flag
+    u8    field_A1;                     // 0xA1 side flag
     u8    _A2[2];                       // 0xA2
-    u32   field_A4;                     // 0xA4 page index (pane-name table)
-    u32   field_A8;                     // 0xA8
+    u32   field_A4;                     // 0xA4 page index
+    u32   field_A8;                     // 0xA8 page-position index
     u32   field_AC;                     // 0xAC
-    u32   field_B0;                     // 0xB0 state/mode (1..5 dispatch in Move)
+    u32   field_B0;                     // 0xB0 window state
     u8    field_B4;                     // 0xB4 talk-enable flag
-    u8    _B5[3];                       // 0xB5 pad to size 0xB8
+    u8    _B5[3];                       // 0xB5
+}; // size: 0xB8
 
-    void Init();
-    void Term();
-    void cbRenderBefore();
-    void Move();
-};
+// Page-pane names indexed by CTalkWindow::field_A4 (retail .data +0x00).
+// The two short literals are also used directly by Init, which is why they
+// appear in the .sdata2 pool as well as here.
+extern const char* TalkWinPagePaneName[4];
 
-#include "monolib/scn/CScn.hpp"
-
-#include "kyoshin/CTaskGame.hpp"
+// Page-position table filled by the TU static initializer (retail .bss 0xC0).
+extern nw4r::math::VEC3 TalkWinPagePos[16];
 
 // Talk-window views of the talk-source objects (func_800BBC0C result). The
 // character voice sub-object at +0x98 carries play at vtable 0x58 (same
@@ -247,8 +247,6 @@ struct CTalkWinPose;
 extern "C" {
 void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
-void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void updateTalkWindow(CTalkWindow* self);
 void driveTalkIntro(CTalkWindow* self);
 void driveTalkMessage(CTalkWindow* self);
@@ -280,53 +278,15 @@ void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CTalkWinPose* pose,
 // C++-linkage imports (retail emits the mangled forms).
 void* findObjectById(int id);
 
-// The CTalkWindow ctor is a C-ABI global (retail `__ct__CTalkWindow`, no
-// class-length mangling); defined in CTalkWindow.cpp - the factory
-// TalkWin_Create_CC78 forwards into it by this name.
-extern "C" CTalkWindow* __ct__CTalkWindow(CTalkWindow* self, u32 arg1,
-                                          u32 arg2, u8* buf, u32 arg3,
-                                          u32 arg4, u32 arg5);
+#include "monolib/scn/CScn.hpp"
+
+#include "kyoshin/CTaskGame.hpp"
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;    // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
 extern char lbl_eu_8052D238[]; // temp base vtable
-extern "C" unsigned char __data_blob[];
-extern "C" unsigned char __rodata_blob[];
-extern "C" unsigned char __sdata_blob[];
-extern "C" unsigned char __sdata2_blob[];
-extern "C" unsigned char __bss_blob[];
-extern "C" unsigned char __sbss_blob[];
 
-#define lbl_eu_8052DFA8 ((char*)&__data_blob[0x38])
-#define lbl_eu_8052E068 ((char*)&__data_blob[0xF8])
-#define lbl_eu_8052E0A8 ((char*)&__data_blob[0x138])
-#define lbl_eu_804FFCA4 ((char*)&__rodata_blob[0x0C])
-#define lbl_eu_8052DF70 ((const char**)&__data_blob[0x00])
-#define lbl_eu_80662170 ((char*)&__sdata_blob[0x00])
-#define lbl_eu_80667268 ((char*)&__sdata2_blob[0x00])
-#define lbl_eu_80667270 ((char*)&__sdata2_blob[0x08])
-#define lbl_eu_80667278 (*((f32*)&__sdata2_blob[0x10]))
-#define lbl_eu_8066727C (*((f32*)&__sdata2_blob[0x14]))
-#define lbl_eu_80667280 (*((f32*)&__sdata2_blob[0x18]))
-#define lbl_eu_80667284 (*((f32*)&__sdata2_blob[0x1C]))
-#define lbl_eu_80667288 (*((f32*)&__sdata2_blob[0x20]))
-#define lbl_eu_8066728C (*((f32*)&__sdata2_blob[0x24]))
-#define lbl_eu_80667290 (*((f32*)&__sdata2_blob[0x28]))
-#define lbl_eu_80667294 (*((f32*)&__sdata2_blob[0x2C]))
-#define lbl_eu_80667298 (*((f32*)&__sdata2_blob[0x30]))
-#define lbl_eu_8066729C (*((f32*)&__sdata2_blob[0x34]))
-#define lbl_eu_806672A0 (*((f32*)&__sdata2_blob[0x38]))
-#define lbl_eu_806672A4 (*((f32*)&__sdata2_blob[0x3C]))
-#define lbl_eu_806672A8 (*((f32*)&__sdata2_blob[0x40]))
-#define lbl_eu_806672AC (*((f32*)&__sdata2_blob[0x44]))
-#define lbl_eu_806672B0 (*((f32*)&__sdata2_blob[0x48]))
-#define lbl_eu_806672B4 (*((f32*)&__sdata2_blob[0x4C]))
-#define lbl_eu_806672B8 (*((f32*)&__sdata2_blob[0x50]))
-#define lbl_eu_806672BC (*((f32*)&__sdata2_blob[0x54]))
-#define lbl_eu_806672C0 (*((f32*)&__sdata2_blob[0x58]))
-#define lbl_eu_806672C4 (*((f32*)&__sdata2_blob[0x5C]))
-#define lbl_eu_80573A70 ((f32*)&__bss_blob[0x00])
-#define lbl_eu_80664040 (*((u8*)&__sbss_blob[0x00]))
-#define lbl_eu_80664044 (*((u32*)&__sbss_blob[0x04]))
-// updateTalkWindow projection / clamp constants.
+// Talk-window global state (.sbss 0x80664040..0x80664048).
+extern u8 lbl_eu_80664040;     // page-mode flag (0 = n-side, 1 = a-side)
+extern u32 lbl_eu_80664044;    // live talk-window counter

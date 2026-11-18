@@ -71,7 +71,7 @@ public:
     virtual void InvalidateWaveData(const void* /* pStart */,
                                     const void* /* pEnd */) {} // at 0x54
 
-    virtual void ChannelCallback(Channel* /* pChannel */) {} // at 0x58
+    virtual void ChannelCallback(Channel* pChannel); // at 0x58
 
     virtual void OnUpdateFrameSoundThread() {
         Update();
@@ -98,6 +98,10 @@ public:
 
     void SetTrackVolume(u32 trackFlags, f32 volume);
     void SetTrackPitch(u32 trackFlags, f32 pitch);
+
+    void SetSeqUserprocCallback(SeqUserprocCallback callback, void* arg);
+
+    static void InitSeqPlayer();
 
     SeqTrack* GetPlayerTrack(int idx);
     volatile s16* GetVariablePtr(int idx);
@@ -162,28 +166,32 @@ private:
     void UpdateTick(int msec);
     void SkipTick();
 
-    static void InitGlobalVariable();
+    void CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack);
 
 private:
-    bool mActiveFlag;             // at 0x8C
-    bool mStartedFlag;            // at 0x8D
-    bool mPauseFlag;              // at 0x8E
-    bool mReleasePriorityFixFlag; // at 0x8F
+    bool mActiveFlag;             // at 0xEC
+    bool mStartedFlag;            // at 0xED
+    bool mPauseFlag;              // at 0xEE
+    bool mReleasePriorityFixFlag; // at 0xEF
 
-    f32 mPanRange;                                   // at 0x90
-    f32 mTempoRatio;                                 // at 0x94
-    f32 mTickFraction;                               // at 0x98
-    u32 mSkipTickCounter;                            // at 0x9C
-    f32 mSkipTimeCounter;                            // at 0xA0
-    int mVoiceOutCount;                              // at 0xA4
-    ParserPlayerParam mParserParam;                  // at 0xA8
-    SeqTrackAllocator* mSeqTrackAllocator;           // at 0xB4
-    SeqTrack* mTracks[TRACK_NUM];                    // at 0xB8
-    u8 _pad[0x160 - 0x158];                          // layout gap (retail: mLocalVariable at 0x160)
-    volatile s16 mLocalVariable[LOCAL_VARIABLE_NUM]; // at 0x160 (retail: this-relative addi r3,r3,0x160)
-    u32 mTickCounter;                                // at 0x120
+    f32 mPanRange;      // at 0xF0
+    f32 mTempoRatio;    // at 0xF4
+    f32 mTickFraction;  // at 0xF8
+    u32 mSkipTickCounter; // at 0xFC
+    f32 mSkipTimeCounter; // at 0x100
 
-    static volatile s16 mGlobalVariable[LOCAL_VARIABLE_NUM];
+    int mVoiceOutCount;             // at 0x104
+    ParserPlayerParam mParserParam; // at 0x108
+    SeqTrackAllocator* mSeqTrackAllocator; // at 0x114
+
+    SeqUserprocCallback mSeqUserprocCallback; // at 0x118
+    void* mSeqUserprocCallbackArg;            // at 0x11C
+
+    SeqTrack* mTracks[TRACK_NUM];                    // at 0x120
+    volatile s16 mLocalVariable[LOCAL_VARIABLE_NUM]; // at 0x160
+    u32 mTickCounter;                                // at 0x180
+
+    static volatile s16 mGlobalVariable[GLOBAL_VARIABLE_NUM];
     static bool mGobalVariableInitialized; // @typo
 };
 

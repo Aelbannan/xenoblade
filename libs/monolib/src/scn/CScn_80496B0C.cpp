@@ -457,7 +457,7 @@ u32 scn80496IsComplete(CScn80496B0C* self) {
     if (a->field_0x84[1] != 0 || b->field_0x84[1] != 0) return 0;
     if (nb->field_0x18 != na->field_0x18) return 0;
     // Equality compiled by MWCC as subf/cntlzw/srwi.
-    return nb->field_0x14 == na->field_0x14;
+    return !(nb->field_0x14 - na->field_0x14);
 }
 
 extern "C" u32 scn80496HasChild2Node(u8* self) { return ((CScn80496B0C*)self)->field_0xC->field_0x84[0] != 0; }

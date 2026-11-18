@@ -7,12 +7,6 @@
 namespace nw4r {
 namespace snd {
 
-namespace detail {
-inline void InitSeqPlayer() {
-    InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
-}
-} // namespace detail
-
 extern "C" {
 __declspec(section ".data") __attribute__((aligned(8))) const unsigned char lbl_eu_8056AC30[0x48] = {
     0x3c, 0x3c, 0x20, 0x4e, 0x57, 0x34, 0x52, 0x20, 0x20, 0x20, 0x20, 0x2d, 0x20, 0x53, 0x4e, 0x44,
@@ -122,7 +116,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
             lbl_eu_8066550C));
 
     // Initialize the sequence player subsystem before creating threads
-    detail::InitSeqPlayer();
+    detail::SeqPlayer::InitSeqPlayer();
 
     lbl_eu_80638910.Create(rParam.dvdThreadPriority, pWork,
                        rParam.dvdThreadStackSize);

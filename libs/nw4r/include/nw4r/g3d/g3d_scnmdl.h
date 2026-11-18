@@ -34,6 +34,14 @@ public:
 
         ResTexSrt GetResTexSrtEx();
 
+        // Retail's "Ex" accessors (no non-Ex sibling in this unit). Their names
+        // are shifted one field against the declarations above: the retail
+        // bodies read/write mPix and mTevColor, and only GetResTevEx uses its
+        // own member (verified against the retail bodies byte-for-byte).
+        ResMatPix GetResMatIndMtxAndScaleEx();
+        ResMatTevColor GetResMatTexCoordGenEx();
+        ResTev GetResTevEx();
+
     private:
         ScnMdl* mpScnMdl;                     // at 0x0
         u32 mMatID;                           // at 0x4

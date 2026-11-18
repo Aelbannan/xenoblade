@@ -39,7 +39,7 @@ public:
     static void closeAdxfHandle();
     static int getFileSize(const char* pPath, int arg1);
     static void cancelJobsForPath(const char* pPath);
-    static bool cancel(CFileHandle* pHandle);
+    static void cancel(CFileHandle* pHandle);
     static void abortRead();
     bool beginRead();
     bool readChunk();

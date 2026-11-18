@@ -36,7 +36,7 @@ struct AdxParams {
     u32 field_0x08;         // 0x018
     u32 field_0x0C;         // 0x01C
     u32 field_0x10;         // 0x020
-    u32 field_0x14;         // 0x024
+    s32 field_0x14;         // 0x024 (signed: retail compares cmpi against 16)
     u32 field_0x18;         // 0x028 saved mwidle priority
     u32 field_0x1C;         // 0x02C
     u32 field_0x20;         // 0x030
@@ -56,7 +56,7 @@ struct AdxSetupArgs {
     u32 field_0x14;         // 0x14
 };
 
-// Base struct for the ADXM framework state at lbl_eu_805F3A50.
+// Base struct for the ADXM framework state (the adxm_frm object).
 // Accessed by adxm_safe_proc, adxm_fs_proc, adxm_unlock, and the thread
 // lifecycle functions (vsync / mwidle / shutdown).
 struct AdxmBase {
@@ -100,12 +100,23 @@ struct AdxmBase {
     u8 field_stack_0x4028[0x2000];  // 0x4028 fs thread stack (top = base+0x6028)
     u8 field_stack_0x6028[0x2000];  // 0x6028 mwidle thread stack (top = base+0x8028)
 };
-__attribute__((aligned(8))) unsigned char adx_mwii_bss[0xA350];
-#define lbl_eu_805F3A50 (*(struct AdxmBase*)adx_mwii_bss)
-#define lbl_eu_805F3A54 (*(u32*)(adx_mwii_bss+0x4))
-#define lbl_eu_805FBA78 (*(OSThread**)(adx_mwii_bss+0x8028))
-#define lbl_eu_805FBA7C (*(u32*)(adx_mwii_bss+0x802C))
-#define lbl_eu_805FDD9C (*(s32*)(adx_mwii_bss+0xA34C))
+
+/* The framework state and its neighbours are real .bss objects; their
+ * definitions sit after the last function so that every function addresses
+ * each object through its own @ha/@l symbol, like retail (see the note above
+ * the definitions at the end of the file).  Retail offsets, counted from the
+ * 0x805F3A50 block start: framework 0x000, current thread 0x8028, saved
+ * priority 0x802C, framework state word 0xA34C. */
+extern struct AdxmBase adxm_frm;         /* 0x805F3A50 framework state */
+/* Both ADXM_SetupThrd (as field_0x04 of the framework) and ADXM_IsSetupThrd
+ * (as its own object at 0x805F3A54) refer to the setup-thread refcount.  The
+ * second spelling addresses the word with a bare `lis @ha; lwz @l` and no
+ * `addi`, so it is kept as a separate declaration. */
+extern u32 adxm_setup_cnt;               /* 0x805F3A54 setup-thread refcount */
+extern OSThread* adxm_cur_thr;           /* 0x805FBA78 current thread */
+extern s32 adxm_cur_prio;                /* 0x805FBA7C saved thread priority */
+extern s32 adxm_state;                   /* 0x805FDD9C framework state word */
+extern u32 lbl_eu_805E26DC;              /* vsync counter (another unit) */
 
 void ADXM_WaitVsync(void) { VIWaitForRetrace(); }
 
@@ -117,7 +128,7 @@ void ADXM_Unlock(void) { SVM_Unlock(); }
 
 
 void adxm_lock(void) {
-    u8* g = (u8*)&lbl_eu_805F3A50;
+    u8* g = (u8*)&adxm_frm;
     volatile u32* lockcnt = (volatile u32*)((u8*)g + 0x40);
     if (*lockcnt == 0) {
         u32 irq;
@@ -139,7 +150,7 @@ void adxm_lock(void) {
 }
 
 void adxm_unlock(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     volatile s32* p = &base->field_0x40;
     *p -= 1;
     if (*p == 0) {
@@ -154,8 +165,7 @@ void adxm_unlock(void) {
 // If the thread never acknowledges within the spin limit, report the error
 // string and carry on.
 void adxm_goto_mwidle_border(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
-    struct AdxParams* prm;
+    struct AdxmBase* base = &adxm_frm;
     s32 prio;
     s32 spin;
     s32 limit;
@@ -173,24 +183,24 @@ void adxm_goto_mwidle_border(void) {
                 break;
             spin += 1;
         } while (spin < limit);
-        if (spin == limit)
+        /* retail compares the spin count against the literal limit (addis +
+         * cmpli), not against the variable it already holds */
+        if (spin == 0xBEBC200)
             SVM_CallErr1(lbl_eu_805196D4);
         OSSetThreadPriority(&base->field_0x398, prio);
     }
 }
 
 void adxm_safe_proc(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     while (base->field_0x9D0 == 1) {
         base->field_0x48 += 1;
     }
     base->field_0x9D4 = 1;
 }
 
-extern u32 lbl_eu_805E26DC;
-
 void adxm_vsync_proc(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     while (base->field_0x9D8 == 1) {
         u32 a;
         u32 b;
@@ -202,7 +212,7 @@ void adxm_vsync_proc(void) {
         base->field_0x4C = a;
         SVM_ExecSvrVsync();
         /* independent derivation keeps this pointer out of base's value graph */
-        struct AdxMwCb* cb = &lbl_eu_805F3A50.field_0x68;
+        struct AdxMwCb* cb = &adxm_frm.field_0x68;
         if (base->field_0x390 == 0) {
             OSResumeThread(&base->field_0x398);
             if (base->field_0x68.fn != NULL) {
@@ -214,7 +224,7 @@ void adxm_vsync_proc(void) {
 }
 
 void adxm_fs_proc(void) {
-    u8* base = (u8*)&lbl_eu_805F3A50;
+    u8* base = (u8*)&adxm_frm;
     while (*(s32*)(base + 0x9E0) == 1) {
         VIWaitForRetrace();
         (*(u32*)(base + 0x50))++;
@@ -224,12 +234,12 @@ void adxm_fs_proc(void) {
 }
 
 void adxm_mwidle_proc(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     s32 zero = 0;
     /* Derive prm/cb straight from the global (not via base) so MWCC keeps
      * them as separate addi webs off the shared base register, like retail */
-    struct AdxParams* prm = &lbl_eu_805F3A50.field_0x10;
-    struct AdxMwCb* cb = &lbl_eu_805F3A50.field_0x68;
+    struct AdxParams* prm = &adxm_frm.field_0x10;
+    struct AdxMwCb* cb = &adxm_frm.field_0x68;
     s32 r;
     while (base->field_0x9E8 == 1) {
         base->field_0x54 += 1;
@@ -268,7 +278,7 @@ void ADXM_SetCbErr(void) { SVM_SetCbErr(); }
 // Wii/1.1 -O4 - same wall class as the svm.c "two-add materialization" note
 // in docs/MWCC_CASES.md.
 static void adxm_create_base_thread(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     struct AdxParams* prm = &base->field_0x10;
 
     OSCreateThread(&base->field_0x78, (OSThreadFunc)adxm_safe_proc, NULL,
@@ -283,14 +293,14 @@ static void adxm_create_base_thread(void) {
     OSCreateThread(&base->field_0x398, (OSThreadFunc)adxm_mwidle_proc, NULL,
                    base->field_stack_0x6028 + 0x2000, 0x2000,
                    (s32)prm->field_0x18, 1);
-    lbl_eu_805FBA78 = OSGetCurrentThread();
+    adxm_cur_thr = OSGetCurrentThread();
     if (prm->field_0x14 != 16) {
         u32 irq = OSDisableInterrupts();
         OSDisableScheduler();
         base->field_0x70 = 1;
-        s32 prio = OSGetThreadPriority(lbl_eu_805FBA78);
-        OSSetThreadPriority(lbl_eu_805FBA78, prio);
-        lbl_eu_805FBA7C = (u32)prio;
+        s32 prio = OSGetThreadPriority(adxm_cur_thr);
+        OSSetThreadPriority(adxm_cur_thr, prio);
+        adxm_cur_prio = prio;
         base->field_0x70 = 0;
         OSEnableScheduler();
         OSRestoreInterrupts(irq);
@@ -303,7 +313,7 @@ static void adxm_create_base_thread(void) {
 void ADXM_SetupThrd(u8* arg) {
     /* Retail performs a dead volatile read of this counter before anything else */
     (void)lbl_eu_805196D0;
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
 
     if (base->field_0x04 == 0) {
         struct AdxParams* prm = &base->field_0x10;
@@ -347,12 +357,12 @@ void ADXM_SetupThrd(u8* arg) {
 
 
 u32 ADXM_IsSetupThrd(void) {
-    return (lbl_eu_805F3A54 != 0) ? 1 : 0;
+    return adxm_setup_cnt != 0;
 }
 
 s32 ADXM_ShutdownFramework(void) {
     s32 result = 1;
-    s32 state = lbl_eu_805FDD9C;
+    s32 state = adxm_state;
     if (state == 0 || state == 2) {
         goto call;
     }
@@ -372,7 +382,7 @@ done:
 
 // Drop one reference; only the last release actually tears the threads down.
 void ADXM_ShutdownThrd(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
+    struct AdxmBase* base = &adxm_frm;
     struct AdxParams* prm = &base->field_0x10;
     if (--base->field_0x04 != 0)
         return;
@@ -386,11 +396,11 @@ void ADXM_ShutdownThrd(void) {
     OSResumeThread(&base->field_0x78);
     while (base->field_0x9D4 == 0)
         OSResumeThread(&base->field_0x78);
-    if ((s32)prm->field_0x14 != 16) {
+    if (prm->field_0x14 != 16) {
         s32 irq = OSDisableInterrupts();
         OSDisableScheduler();
         base->field_0x70 = 1;
-        OSSetThreadPriority(lbl_eu_805FBA78, lbl_eu_805FBA7C);
+        OSSetThreadPriority(adxm_cur_thr, adxm_cur_prio);
         base->field_0x70 = 0;
         OSEnableScheduler();
         OSRestoreInterrupts(irq);
@@ -404,7 +414,7 @@ s32 ADXM_SetupFramework(s32 arg1, u8* arg2) {
     if (arg1 == 1)
         mode = 1;
     ADXMNG_SetFramework((u32)mode);
-    lbl_eu_805FDD9C = arg1;
+    adxm_state = arg1;
     switch (arg1) {
     case 0:
     case 2:
@@ -419,3 +429,18 @@ s32 ADXM_SetupFramework(s32 arg1, u8* arg2) {
     }
     return ret;
 }
+
+/* .bss: the ADXM framework state and its neighbours.  These are defined after
+ * the last function on purpose: MWCC compiles function by function, so code
+ * generated before the definitions addresses every object through its own
+ * symbol (@ha/@l) instead of as one section anchor plus constant offsets, and
+ * retail does the former.  MWCC emits .bss objects in reverse definition
+ * order, so they are written in reverse retail address order (0xA34C, 0x8030,
+ * 0x802C, 0x8028, 0x000 from 0x805F3A50). */
+s32 adxm_state;                          /* 0xA34C ADXM framework state word */
+/* Nothing in this TU refers to the rest of the trailing block; retail keeps it
+ * in .bss between the saved priority and the state word. */
+u8 adxm_workarea[0x231C];                /* 0x8030 */
+s32 adxm_cur_prio;                       /* 0x802C saved current-thread priority */
+OSThread* adxm_cur_thr;                  /* 0x8028 current thread */
+struct AdxmBase adxm_frm;                /* 0x000 framework state */

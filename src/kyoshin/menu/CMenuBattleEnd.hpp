@@ -12,8 +12,13 @@ class Pane;
 }
 class CScn;
 class CProcess;
-class IScnRender;
+class CEventFile;
 
+#include "monolib/work/CProcess.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
@@ -28,95 +33,59 @@ struct UnkBattleEntry {
 /*
  * Battle-end (result) screen task.
  *
- * Retail stores the vtable pointer at +0x10 (CProcess-style layout). The base
- * CProcess subobject is constructed OOL via __ct__8CProcessFv and the class's
- * own vtable + the CProcess run-time fields are filled by hand, so the struct
- * is laid out explicitly rather than inheriting (same scheme as CMenuQstCnt).
+ * Real MI class, from the retail composite vtable __vt__14CMenuBattleEnd
+ * (0x80537AB0): IUIWindow at +0x00 (0x6C, brings the CTTask<IUIWindow> Move/
+ * Draw ptmf hooks and the layout/state members from +0x54), IWorkEvent at
+ * +0x6C and IScnRender at +0x70 - the +0x24 / +0xAC sub-vtables and the base
+ * list (IScnRender@0x70, IWorkEvent@0x6C) are the compiler's own output.
  *
- *   0x00 vtable region (CProcess: link nodes + child list + flags)
- *   0x10 u32 mVtab                     (CMenuBattleEnd vtable)
- *   0x3C ptmf (Move hook, __ptmf_null copy)
- *   0x48 ptmf (Draw hook, __ptmf_null copy)
- *   0x54 nw4r::lyt::Layout*  mLayout
- *   0x6C u32 mWorkEventVt              (IWorkEvent dispatch vtable ptr)
- *   0x70 u32 mScnRenderVt              (IScnRender dispatch vtable ptr)
- *   0x74 CScn* mScene
- *   0x78 UnkClass_8045F564 mMemRegion  (0x10)
- *   0x88/0x8C AnimTransform* mAnim88 / mAnim8C (two selectable anims)
- *   0x90 AnimTransform* mAnim90        (currently selected anim)
- *   0x94 UnkBattleEntry mEntries[4]
- *   0xB4 u8 mState, 0xB5 u8 mMode, 0xB8 u32 mParam
+ *   0x00  IUIWindow base
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render callback subobject registered in Init)
+ *   0x74  mScene      - owning scene
+ *   0x78  mMemRegion  - embedded MEM2 scratch region (0x10)
+ *   0x88  mAnim88 / mAnim8C - the two selectable animations
+ *   0x90  mAnim90     - currently playing animation
+ *   0x94  mEntries[4] - queued {flag,param} requests
+ *   0xB4  mState (s8), 0xB5 mMode, 0xB8 mParam
+ * retail sizeof = 0xBC (what createBattleEndMenu allocates).
  */
-struct CMenuBattleEnd {
-    u8  mPad0[0x10];                        // 0x00 link-list nodes
-    u32 mVtab;                              // 0x10 vtable ptr
-    u8  mPad14[0x3C - 0x14];                // 0x14 rest of CProcess
-    u32 mPtMf3C[3];                         // 0x3C Move ptmf (__ptmf_null)
-    u32 mPtMf48[3];                         // 0x48 Draw ptmf (__ptmf_null)
-    nw4r::lyt::Layout* mLayout;             // 0x54 (set up in Init)
-    u32 mField58;                           // 0x58
-    u32 mField5C;                           // 0x5C
-    s32 mField60;                           // 0x60 (-1)
-    u8  mField64;                           // 0x64
-    u8  mField65;                           // 0x65
-    u8  mField66;                           // 0x66
-    u8  mActive;                            // 0x67
-    u32 mField68;                           // 0x68
-    u32 mWorkEventVt;                       // 0x6C IWorkEvent dispatch vtable ptr
-    u32 mScnRenderVt;                       // 0x70 IScnRender dispatch vtable ptr
-    CScn* mScene;                           // 0x74
-    u8  mMemRegion[0x10];                   // 0x78 UnkClass_8045F564 storage
-    nw4r::lyt::AnimTransform* mAnim88;      // 0x88
-    nw4r::lyt::AnimTransform* mAnim8C;      // 0x8C
-    nw4r::lyt::AnimTransform* mAnim90;      // 0x90
-    UnkBattleEntry mEntries[4];             // 0x94 (0x20 bytes)
-    s8  mState;                             // 0xB4 (retail compares signed)
-    u8  mMode;                              // 0xB5
-    u8  _padB6[2];
-    u32 mParam;                             // 0xB8
+class CMenuBattleEnd : public IUIWindow, public IWorkEvent, public IScnRender {
+public:
+    CMenuBattleEnd(CScn* scene, u8 mode, u32 param);
+    virtual ~CMenuBattleEnd();
 
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    CScn* mScene;                          // 0x74 owning scene
+    UnkClass_8045F564 mMemRegion;          // 0x78 embedded MEM2 region
+    nw4r::lyt::AnimTransform* mAnim88;     // 0x88
+    nw4r::lyt::AnimTransform* mAnim8C;     // 0x8C
+    nw4r::lyt::AnimTransform* mAnim90;     // 0x90 currently playing
+    UnkBattleEntry mEntries[4];            // 0x94 (0x20 bytes)
+    s8  mState;                            // 0xB4 (retail compares signed)
+    u8  mMode;                             // 0xB5
+    u8  _padB6[2];
+    u32 mParam;                            // 0xB8
 };
 
-// The retail symbols for this class's own lifecycle functions are the
-// unmangled C-linkage names below (the ctor/dtor/task entry take an explicit
-// receiver; advanceBattleEndQueue / queueBattleEndEntry are the CProcess run-time hooks and
-// the queue writer). Definitions live in CMenuBattleEnd.cpp.
+// C-Linkage entry points: the retail symbols are unmangled (factory and the
+// queue helpers are globals, not members).
 extern "C" {
-CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* obj, CScn* scene, u8 mode,
-                                     u32 param);
-CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj, int flags);
 CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode, u32 param);
 void advanceBattleEndQueue(CMenuBattleEnd* obj);
 void queueBattleEndEntry(CMenuBattleEnd* obj, u8 flag, u32 param);
-void cbRenderBefore__14CMenuBattleEndFv(void* sub);
-}
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
-// NOTE: addRenderCB / CUICfManager_getArcResourceAccessor bypass the broken monolib work.hpp-umbrella
-// headers (CScn.hpp / CUICfManager.hpp) which fail to compile repo-wide (CTTask
-// redefinition); declared here directly with their literal retail names.
-extern "C" {
-extern u32 lbl_eu_8052D238[];       // CMenuBattleEnd primary vtable
-extern u32 lbl_eu_80537AB0[];       // dispatch vtable cluster base
-extern char lbl_eu_8050E6F8[];      // layout/animation/pane name string table
-extern u32 __ptmf_null[];           // null member-function-pointer triple
-extern f32 lbl_eu_80668990;         // anim frame target for advanceAnimTransform
-extern f32 lbl_eu_80668994;         // anim reset frame for SetFrame
-void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
-void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void __ct__17UnkClass_8045F564Fv(void*);
 void __dt__17UnkClass_8045F564Fv(void*, int);
-void __dt__8CProcessFv(void*, int);
+void deleteRegion__17UnkClass_8045F564Fv(void*);
+void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
+void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void waitForDrawDone__9CDeviceVIFv();
 void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-void deleteRegion__17UnkClass_8045F564Fv(void*);
 }
-
-// C++-linkage helpers (retail symbols are their Itanium-mangled forms).
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).

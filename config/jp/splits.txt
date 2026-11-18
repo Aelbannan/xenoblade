@@ -2565,15 +2565,20 @@ kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp:
 	.sdata      start:0x80665650 end:0x80665668
 
 kyoshin/menu/CMenuBattleChain.cpp:
-	extab       start:0x8001AFC0 end:0x8001B0C8
-	extabindex  start:0x80032E1C end:0x80032EF4
-	.text       start:0x802A9B8C end:0x802AB5F0
+	extab       start:0x8001AFC0 end:0x8001B098
+	extabindex  start:0x80032E1C end:0x80032EAC
+	.text       start:0x802A9B8C end:0x802AB3D0
 	.ctors      start:0x804F59DC end:0x804F59E0
 	.rodata     start:0x8050BE90 end:0x8050BFE8
 	.data       start:0x8053D590 end:0x8053D6D8
 	.sdata      start:0x80665668 end:0x806656D0
 	.sbss       start:0x80667348 end:0x806674D0
 	.sdata2     start:0x8066B558 end:0x8066B560
+
+kyoshin/menu/code_802ADB08.cpp:
+	extab       start:0x8001B098 end:0x8001B0C8
+	extabindex  start:0x80032EAC end:0x80032EF4
+	.text       start:0x802AB3D0 end:0x802AB5F0
 
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp:
 	extab       start:0x8001B0C8 end:0x8001B10C
@@ -6944,10 +6949,12 @@ monolib/src/coli/code_804A6C60.cpp:
 	.sbss       start:0x806681E8 end:0x80668218
 	.sdata2     start:0x8066D5D0 end:0x8066D658
 
+monolib/src/coli/CColiProcBase.cpp:
+	.text	start:0x804B2578 end:0x804B2590
 monolib/src/coli/CColiProc.cpp:
 	extab       start:0x8001FC50 end:0x8001FC88
 	extabindex  start:0x80037880 end:0x800378D4
-	.text       start:0x804B2578 end:0x804B2FF0
+	.text       start:0x804B2590 end:0x804B2FF0
 	.ctors      start:0x804F5AA8 end:0x804F5AAC
 	.rodata     start:0x80527D40 end:0x80527D50
 	.data       start:0x80572BE0 end:0x80572CB0

@@ -265,7 +265,7 @@ struct CResEntry {
 extern u8 lbl_eu_806616B8[0x60]; // .bss buffer cleared by SchedRes_ClearBuf60
 
 // Zero a 0x60-byte global buffer (tail call to memset).
-void SchedRes_ClearBuf60() {
+extern "C" void SchedRes_ClearBuf60() {
     memset(lbl_eu_806616B8, 0, 0x60);
 }
 
@@ -310,7 +310,7 @@ struct TexCacheEntryView {
 // Load texture `index` of `mgr` into tex map slot `texMap` with wrap mode
 // `wrapMode`, unless that exact combination is already the cached last load
 // (the cache is indexed by tex map slot).
-void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
+extern "C" void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
                    GXTexWrapMode wrapMode) {
     TexCacheEntryView* cache = (TexCacheEntryView*)lbl_eu_806616B8;
     if (!(cache[texMap].mMgr == mgr && index == cache[texMap].mKey &&
@@ -348,7 +348,7 @@ struct ResTable {
     u32 indexOffset;
 };
 
-void* SchedRes_EntryByIndex(u8* self, int index) {
+extern "C" void* SchedRes_EntryByIndex(u8* self, int index) {
     ResTable* base = ((CResLookup*)self)->mResTable;
     ResTableIndex* entries = (ResTableIndex*)((u8*)base + base->indexOffset);
     return (u8*)base + entries[index].offset;
@@ -360,7 +360,7 @@ extern "C" int Scn_ResetAnim(int a, int b, int c);
 // Look up mTable[index]; a non-zero entry is forwarded to Scn_ResetAnim along
 // with the caller's argument. The -1 third argument is dead at the callee
 // (Scn_ResetAnim hard-codes 8 into r5) but kept for byte-identical codegen.
-int SchedRes_ResetAnimViaTable(CResLookup* self, int a, int index) {
+extern "C" int SchedRes_ResetAnimViaTable(CResLookup* self, int a, int index) {
     u32 entry = self->mTable[index];
     if (entry != 0) {
         return Scn_ResetAnim(a, entry, -1);
@@ -369,7 +369,7 @@ int SchedRes_ResetAnimViaTable(CResLookup* self, int a, int index) {
 }
 
 // Search the entry table for a matching key and return its value.
-void* SchedRes_FindValueByKey(CResLookup* self, void* key) {
+extern "C" void* SchedRes_FindValueByKey(CResLookup* self, void* key) {
     if (key != NULL) {
         int count = self->mCount;
         int off;             // byte offset of the current entry
@@ -394,7 +394,7 @@ s32 lbl_eu_80665A28[2];  // retail object is 8 bytes; only word 0 is written
 
 // Allocate/initialize the schedule-resource table: round the byte size up
 // to 32, record base/count, then zero-initialize each 0x18-byte entry.
-void* SchedRes_AllocEntries(u32 size, u32 count) {
+extern "C" void* SchedRes_AllocEntries(u32 size, u32 count) {
     u32 off;
     s32 i;
     u32 aligned = ((size + 0x1f) & ~0x1f);
@@ -438,7 +438,7 @@ extern "C" DECOMP_DONT_INLINE int __dt__804DEDCC(CResEntry* entry, void* res,
 // Find the schedule-resource entry whose key matches `key`; if no live
 // entry matches and the pool still has capacity, claim the first free
 // (key == 0) entry instead. Returns 1 when an entry was claimed/found.
-s32 SchedRes_FindOrClaim(u32 key) {
+extern "C" s32 SchedRes_FindOrClaim(u32 key) {
     CResEntry* p = lbl_eu_80665A20;
     s32 n = lbl_eu_80665A24;
     u8 found = 0;
@@ -668,7 +668,7 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj) {
 // Look up a schedule-resource entry by key; resolve its value through the
 // entry's lookup table (SchedRes_LookupKeyIndexed) and report the entry/value pointers.
 // Returns 1 on a match, 0 otherwise.
-s32 SchedRes_FindEntryValue(CResEntry** outEntry, u32* outValue, u32 key, u32 index) {
+extern "C" s32 SchedRes_FindEntryValue(CResEntry** outEntry, u32* outValue, u32 key, u32 index) {
     s32 i = 0;
     while (i < lbl_eu_80665A24) {
         CResEntry* entry = &lbl_eu_80665A20[i];
@@ -801,14 +801,14 @@ struct EffObject {
 
 // Re-initialize the schedule resource tables: clear both element arrays and
 // reset the pool counters.
-void SchedRes_ReinitTables() {
+extern "C" void SchedRes_ReinitTables() {
     lbl_eu_80665A30 = 0;
     memset(lbl_eu_80665A34, 0, (u32)lbl_eu_80665A3C * 0x14);
     memset(lbl_eu_80665A38, 0, (u32)lbl_eu_80665A3C * 0xC);
     lbl_eu_80665A40 = 0;
 }
 
-void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
+extern "C" void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
 
 // Claim or refresh a schedule-resource element for `key`:
 // - scan the 0x14-byte element array for an entry whose key matches; if none
@@ -818,7 +818,7 @@ void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
 //   and the live counter is bumped.
 // `obj` carries a priority byte at +0x58: entries with kind 0x40 are ordered
 // by the float priority, all others by the signed kind byte.
-void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
+extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
     s32 count = lbl_eu_80665A3C;
     s32 i;
     bool claimed = false;
@@ -906,7 +906,7 @@ void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
 
 // Allocate/initialize the schedule-item pool: round the byte size up to 32,
 // record base/count, then run the item initializer over each 0x58-byte item.
-void* SchedItem_AllocPool(u32 size, s32 count) {
+extern "C" void* SchedItem_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661718.base = (CScheduleItem*)aligned;
@@ -932,7 +932,7 @@ void* SchedItem_AllocPool(u32 size, s32 count) {
 // mPoolIndex is negative, re-initialize it, stamp its pool index and
 // advance the handle cursor. Returns its index, or -1 when the pool is
 // full / fully scanned / entry resolution fails.
-s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
+extern "C" s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
     CScheduleItem* node = NULL;
     if (lbl_eu_80661718.freeCount < lbl_eu_80661718.count) {
         s32 last = lbl_eu_80661718.lastHandle;
@@ -1006,7 +1006,7 @@ extern "C" void EffSys_InitRoot(CEffectObj* obj);
 // Allocate/initialize the effect-object pool: round the byte size up to 32,
 // record base/count, then run the effect-manager init over each 0x22C-byte
 // object.
-void* SchedFx_AllocPool(u32 size, s32 count) {
+extern "C" void* SchedFx_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 aligned = (size + 0x1f) & ~0x1f;
     lbl_eu_80661728.mBase = (CEffectObject*)aligned;
@@ -1030,7 +1030,7 @@ void* SchedFx_AllocPool(u32 size, s32 count) {
 // object; on constructor failure the object is released again and the handle
 // cursor rewound. Returns the object's pool index, or -1 when the pool is
 // full or the constructor failed.
-s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
+extern "C" s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
                   u8 arg5) {
     CEffectObj* node = NULL;
     if (lbl_eu_80661728.mActiveCount < lbl_eu_80661728.mCount) {
@@ -1086,19 +1086,19 @@ static void SchedFx_ReleaseIndex(s32 index) {
 
 // Release an effect object handle: remember it, run the effect-manager
 // release, and drop the active-object count.
-void SchedFx_ReleaseHandle(s16 handle) {
+extern "C" void SchedFx_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
     SchedFx_ReleaseIndex(handle);
 }
 
-u32 SchedFx_CountActive() { return lbl_eu_80661728.mActiveCount; }
+extern "C" u32 SchedFx_CountActive() { return lbl_eu_80661728.mActiveCount; }
 
-u32 SchedFx_CountTotal() { return lbl_eu_80661728.mCount; }
+extern "C" u32 SchedFx_CountTotal() { return lbl_eu_80661728.mCount; }
 
 // Look up an effect object by handle; NULL for out-of-range handles.
-CEffectObj* SchedFx_FetchByHandle(s16 handle) {
+extern "C" CEffectObj* SchedFx_FetchByHandle(s16 handle) {
     if (handle < 0) {
         return NULL;
     }
@@ -1146,7 +1146,7 @@ extern "C" void EffFxInitSceneFromSrc(CEffectNode* node, CScheduleItem* item);
 // recently released handle, claim the first slot whose mark is negative
 // (free), re-initialize it, stamp it with its index and advance the handle
 // cursor. Returns its mark, or -1 when the pool is full / fully scanned.
-s32 SchedNode_ClaimActivate(CScheduleItem* item) {
+extern "C" s32 SchedNode_ClaimActivate(CScheduleItem* item) {
     CEffectNode* node = NULL;
     if (lbl_eu_80661738.mField08 < lbl_eu_80661738.mCount) {
         s32 last = lbl_eu_80661738.mLastHandle;
@@ -1192,17 +1192,17 @@ static void SchedNode_ReleaseIndex(s32 index) {
 }
 
 // Release an effect node by handle (idempotent for invalid handles).
-void SchedNode_ReleaseHandle(s16 handle) {
+extern "C" void SchedNode_ReleaseHandle(s16 handle) {
     if (handle < 0) {
         return;
     }
     SchedNode_ReleaseIndex(handle);
 }
 
-u32 SchedNode_CountTotal() { return lbl_eu_80661738.mCount; }
+extern "C" u32 SchedNode_CountTotal() { return lbl_eu_80661738.mCount; }
 
 // Look up an effect node by index; NULL for out-of-range indices.
-CEffectNode* SchedNode_FetchByIndex(s32 index) {
+extern "C" CEffectNode* SchedNode_FetchByIndex(s32 index) {
     if (index < 0) {
         return NULL;
     }
@@ -1215,7 +1215,7 @@ CEffectNode* SchedNode_FetchByIndex(s32 index) {
 
 // Indexed handle lookup: returns the sbss pointer-slot value advanced by
 // arg*0x34 (retail folds the constant slot address into an sda21 load).
-void* SchedNode_FetchSlotPtr(s32 arg) {
+extern "C" void* SchedNode_FetchSlotPtr(s32 arg) {
     if (arg < 0) {
         return NULL;
     }
@@ -1408,7 +1408,7 @@ extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s3
 // Initialize one anim item from a 0x28-stride entry blob: reset the frame
 // state and copy the selected element's three vectors into item+0x0C/0x18/0x24
 // (all zeros when no blob), then run the usual terminator flag check.
-void SchedAnim_InitVec28(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitVec28(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1440,7 +1440,7 @@ void SchedAnim_InitVec28(CSchedAnimItem* item, u8* base) {
 // lerp each of the element's +0x04 / +0x10 / +0x1C vectors toward the
 // (frame span & 0xFF)-th element (0x28-byte stride) at `f1`, writing into
 // the item's +0x0C / +0x18 / +0x24 vectors.
-void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x28, arg3, f1);
     if (ret == NULL) {
         return;
@@ -1456,7 +1456,7 @@ void SchedAnim_AdvanceVec28(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
 }
 
 // Retail duplicate of SchedAnim_InitVec28.
-void SchedAnim_InitVec28B(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitVec28B(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1485,7 +1485,7 @@ void SchedAnim_InitVec28B(CSchedAnimItem* item, u8* base) {
 }
 
 // Same anim-vector refresh as SchedAnim_AdvanceVec28 (retail duplicate body).
-void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x28, arg3, f1);
     if (ret == NULL) {
         return;
@@ -1505,7 +1505,7 @@ void SchedAnim_AdvanceVec28B(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // into the channel rate (+0x14 / +0x10), then quantize the selected entry
 // element's u16 frame count against the new rate into the slot pair
 // (+0x0E / +0x0C). Finally run the usual terminator flag check.
-void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1563,7 +1563,7 @@ void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
 // run-end targets using random factors derived from two mtRand draws scaled
 // by the floats preceding the blob (-8 / -4); results land in the item's rate
 // floats (+0x10/+0x14) and slot handle pair (+0x0E/+0x0C).
-void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
     if (base == NULL) {
         return;
     }
@@ -1608,7 +1608,7 @@ void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
 // scaling channel A by the item's 0x14 factor (stored to slot +0x0E), and
 // deriving channel B from a constant chain fed by the item's 0x10 factor and
 // channel A's quantized result (stored to slot +0x0C).
-void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
+extern "C" void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
                    f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 8, arg3, f1);
     if (ret == NULL) {
@@ -1645,7 +1645,7 @@ void SchedAnim_AdvanceColor8(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // header byte, then (when the scale factor preceding the blob exceeds 1.0)
 // fill item+0x1C with a random vector, normalize it and scale everything by
 // that factor; otherwise zero it.
-void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
+extern "C" void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1699,7 +1699,7 @@ void SchedAnim_InitRandDir14(CSchedAnimItem* item, u8* base, f32* ref) {
 }
 
 // Spline evaluator (defined below; retail symbol SchedAnim_EvalSpline).
-void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
+extern "C" void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
                    s32 mode, void** args, f32 t);
 
 // Spline-mode anim updater (0x14-stride entry blob). Two modes selected by
@@ -1708,7 +1708,7 @@ void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
 // the vector-advance path (lerp the +4 vector toward the frame-offset
 // element, accumulate the +0x10/+0x14/+0x18 channels, and advance the
 // +0x28 scalar channel with clamping against the element value).
-void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
+extern "C" void SchedAnim_UpdateSpline14(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
                    f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x14,
                                     arg3, f1);
@@ -1850,7 +1850,7 @@ void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
 // blend it with the float preceding the blob (or 1.0 when absent) into
 // item+0x0C, scale the selected element's float by the random factor into
 // item+0x10, then run the usual terminator flag check.
-void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
     f32 one = 0.0f;
     item->mField00 = one;
     item->field_0x04 = 0;
@@ -1938,7 +1938,7 @@ extern "C" void SchedAnim_InitSlots(CSchedAnimItem* item, u8* base) {
 
 // Refresh slot handles 2/3 from the entry-blob element selected by
 // SchedEntry_ResolveElem at index 8.
-void SchedAnim_RefreshSlotHandles(CScheduleItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_RefreshSlotHandles(CScheduleItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem(item, entries, 8, arg3, f1);
     if (ret != NULL) {
         if (item->mSlots[2] != ret->mField04) {
@@ -1955,7 +1955,7 @@ void SchedAnim_RefreshSlotHandles(CScheduleItem* item, CEntryElem* entries, u8* 
 // present) copy the selected element's vector and set the 0x04 flag bits:
 // scale-deviation bits when the copied vector deviates from (1,1,1,1), plus
 // the usual run-tail terminator check.
-void SchedAnim_InitQuad14(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitQuad14(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -1999,7 +1999,7 @@ struct HueSplitOut {
     f32 mMax;   // 0x08
 };
 
-void SchedAnim_SplitHue(CScheduleItem* unused, HueSplitOut* out,
+extern "C" void SchedAnim_SplitHue(CScheduleItem* unused, HueSplitOut* out,
                    const AnimVec3* src, f32 div) {
     // Scaled channels kept in a local array (retail spills them to the stack).
     f32 ch[3];
@@ -2059,7 +2059,7 @@ extern "C" void CEVec4LerpPS(void* out, const void* a, const void* b, f32 t);
 // element's +4 vector toward the (frame span & 0xFF)-th element (0x14 stride)
 // at the current rate, then update the two deviate bits of the 0x04 flag
 // byte's 2-bit field (bits 5-6): bit5 = x/y left the 1.0 identity, bit6 = z/w.
-void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x14, arg3, f1);
     if (ret == NULL) {
         return;
@@ -2106,7 +2106,7 @@ void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3
 // rates are folded into the pre-scales, the element's +4 vector (copied to
 // +0x24..+0x2C) is scaled by the new rates, and the usual terminator check
 // runs. All rate/scale slots default to 2.0 when no blob is present.
-void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -2198,7 +2198,7 @@ void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
 // 0x10's +4 vector toward the (frame span & 0xFF)-th element (0x10-byte
 // stride) at the current rate, then scale it by the item's 0x0C..0x14
 // vector.
-void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret != NULL) {
         f32 rate = SchedAnim_FrameRate(item, entries, 0x10);
@@ -2221,7 +2221,7 @@ void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f3
 // +0x10..+0x18 factors by fresh random rates whenever the stored rate triple
 // deviates from (1,1,1), advance item+0x28 by the item velocity (+0x10),
 // decay it while the 0x0C byte is nonzero, then run the terminator check.
-void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
+extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -2349,7 +2349,7 @@ void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
 // +0x34..+0x3C first; mode 2 scales it down by the +0x0C amount, then adds
 // the span element scaled by the caller's factor. The final +0x0C decay is
 // applied whenever it is nonzero.
-void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
+extern "C" void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
                    f32 f1) {
     CSchedAnimItem* self = item;
     CEntryElem* blob = entries;
@@ -2407,7 +2407,7 @@ void SchedAnim_AdvanceQuad(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
 // or rebuild it from mtRand draws blended with those floats, copy the selected
 // element's color halfword/float data into item+0x1C..+0x20, set the 0x10
 // rate flag, and run the usual terminator check.
-void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -2518,7 +2518,7 @@ void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
 // Advance the item's 4-byte color at +0x1C and float at +0x20: lerp entry
 // element 0x10's +4 byte components toward the frame-span-th element
 // (0x10-byte stride) at the current rate.
-void SchedAnim_AdvanceColor10(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
+extern "C" void SchedAnim_AdvanceColor10(CSchedAnimItem* item, CEntryElem* entries, u8* arg3,
                    f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret == NULL) {
@@ -2541,13 +2541,13 @@ void SchedAnim_AdvanceColor10(CSchedAnimItem* item, CEntryElem* entries, u8* arg
     item->mField20 = ca + f1 * (cb - ca);
 }
 
-void SchedAnim_NoOp(){}
+extern "C" void SchedAnim_NoOp(){}
 
 // Initialize one anim item from a 0x10-stride entry blob: reset the frame
 // state, copy the selected element's three component references into
 // item+0x0C..0x18, flag bit 0x60 when the referenced components deviate from
 // 1.0, then check the run tail for the blob terminator (0x80 / 0x08 flags).
-void SchedAnim_InitVec10(CSchedAnimItem* item, u8* base) {
+extern "C" void SchedAnim_InitVec10(CSchedAnimItem* item, u8* base) {
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
@@ -2581,7 +2581,7 @@ void SchedAnim_InitVec10(CSchedAnimItem* item, u8* base) {
 // 0x10's +4 vector toward the (frame span & 0xFF)-th element (0x10-byte
 // stride) at the current rate, then set bit 0x20 of the 0x04 flag byte when
 // the vector is not (1,1,1).
-void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
+extern "C" void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
     CEntryElem* ret = SchedEntry_ResolveElem((CScheduleItem*)item, entries, 0x10, arg3, f1);
     if (ret == NULL) {
         return;
@@ -2608,7 +2608,7 @@ void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* ar
 // permutations of (v, t, p) = (value, value*(1-s*f), value*(1-s)), each
 // clamped to the upper bound; all three results are finally scaled by `mul`.
 // `self` is unused in retail.
-void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const AnimVec3* hsv,
+extern "C" void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const AnimVec3* hsv,
                    f32 mul) {
     f32 h = hsv->x;
     if (h < lbl_eu_8066B2A8) {

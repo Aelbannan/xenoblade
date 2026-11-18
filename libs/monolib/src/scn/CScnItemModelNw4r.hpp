@@ -690,16 +690,8 @@ extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
 extern "C" u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
 extern "C" u32 CScnItemPool_registerOtherList(u8* pool, CScnItemModelNw4r* model, u32 flag);
 
-// g3d free-function accessors bound to the retail mangled symbols (defined
-// in g3d_scnmdl.cpp / g3d_scnmdlexpand.cpp; the shared g3d_scnmdl.h does not
-// declare them). extern "C" keeps the mangled identifiers verbatim.
-extern "C" nw4r::g3d::ResTev
-    GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(void* self);
-extern "C" nw4r::g3d::ResMatPix
-    GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-        void* self);
-extern "C" nw4r::g3d::ResMatTevColor
-    GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(void* self);
+// CopiedMatAccess's retail "Ex" accessors are real members (declared in the
+// shared g3d_scnmdl.h).
 extern "C" bool PushBack__Q34nw4r3g3d12ScnMdlExpandFPQ34nw4r3g3d6ScnObjUl(
     nw4r::g3d::ScnMdlExpand* group, nw4r::g3d::ScnObj* obj, u32 nodeID);
 

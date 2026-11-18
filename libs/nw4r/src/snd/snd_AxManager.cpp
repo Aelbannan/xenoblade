@@ -23,17 +23,6 @@ NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 // match the stripped retail object (MWCC_CASES §1b float pools).
 extern "C" const f64 lbl_eu_80669E80; // 0x43300000_00000000 (u32->f64 conv)
 
-// The AxManager header ends its layout at 0xF0 (u8 mAuxCallbackWaitCounter[3]).
-// Retail's object carries three more u32 words at 0xF4 (the ctor zeroes them;
-// ShutdownEffect clears them per bus; AuxCallbackFunc stores OSGetTick deltas;
-// nothing in this TU reads them). The header is outside this session's
-// writable scope, so access them through a tail-view struct that mirrors the
-// real layout instead of raw pointer arithmetic.
-struct AxManagerTailView {
-    u8 field_0xF0[4];  // 0xF0: waitCounter bytes + 1 pad byte
-    u32 field_0xF4[3]; // 0xF4: per-bus tick/state words
-};
-
 u8 AxManager::sZeroBuffer[AxManager::ZERO_BUFFER_SIZE];
 
 // NOTE (matching residual): retail constructs the six MoveValue members from
@@ -61,7 +50,7 @@ AxManager::AxManager()
         mAuxUserVolume[i].InitValue(1.0f);
         mAuxCallback[i] = NULL;
         mAuxCallbackContext[i] = NULL;
-        reinterpret_cast<AxManagerTailView*>(this)->field_0xF4[i] = 0;
+        mAuxCallbackTick[i] = 0;
     }
 }
 
@@ -207,6 +196,12 @@ void AxManager::UnregisterCallback(CallbackListNode* pNode) {
 }
 
 void AxManager::SetOutputMode(OutputMode mode) {
+    if (mOutputMode == mode) {
+        return;
+    }
+
+    ut::AutoInterruptLock lock;
+
     mOutputMode = mode;
 
     switch (mode) {
@@ -232,6 +227,20 @@ void AxManager::SetOutputMode(OutputMode mode) {
     }
 
     VoiceManager::GetInstance().UpdateAllVoicesSync(Voice::SYNC_AX_MIX);
+
+    // Every registered effect has to re-prepare its buffers for the new mode.
+    FxBaseList* pList = mFxList;
+    for (int i = 0; i < AUX_BUS_NUM; i++) {
+        for (FxBaseList::Iterator it = pList->GetBeginIter();
+             it != pList->GetEndIter(); ++it) {
+            it->OnChangeOutputMode();
+        }
+        pList++;
+    }
+
+    if (mode == OUTPUT_MODE_DPL2) {
+        mAuxCallbackTick[AUX_C] = 0;
+    }
 }
 
 OutputMode AxManager::GetOutputMode() {
@@ -324,6 +333,7 @@ bool AxManager::AppendEffect(AuxBus bus, FxBase* pFx) {
 void AxManager::ClearEffect(AuxBus bus, int frame) {
     if (frame == 0) {
         ShutdownEffect(bus);
+        mAuxFadeVolume[bus].SetTarget(0.0f, 0);
         return;
     }
 
@@ -347,16 +357,19 @@ void AxManager::ShutdownEffect(AuxBus bus) {
     switch (bus) {
     case AUX_A: {
         AXRegisterAuxACallback(NULL, NULL);
+        mAuxCallbackTick[AUX_A] = 0;
         break;
     }
 
     case AUX_B: {
         AXRegisterAuxBCallback(NULL, NULL);
+        mAuxCallbackTick[AUX_B] = 0;
         break;
     }
 
     case AUX_C: {
         AXRegisterAuxCCallback(NULL, NULL);
+        mAuxCallbackTick[AUX_C] = 0;
         break;
     }
 

@@ -5,6 +5,7 @@
 #include "monolib/lod/LODMemMan.hpp"
 
 struct CEventFile;  // global (retail mangles P10CEventFile)
+struct LODViewDesc;  // TU-local view record (LODMemMan.cpp)
 
 class CTaskLOD;
 namespace LOD {
@@ -40,59 +41,59 @@ public:
     void resetAndReload();
     void resetFrameFields();
     void clearManagers();
-    void teardownG3dObjects();
+    void teardownG3dObjects(int param);
     void updateLodTick();
     void updateLodLayersForView();
     void updateSubViewFrame();
-    void setPauseFlag();
-    void attachSceneObjects();
+    void setPauseFlag(int param);
+    void attachSceneObjects(u32 param);
     void setLodScaleAndRefresh(float scale);
-    void setTimeParams();
-    void clearElementFlag();
-    void setElementFlag();
-    void toggleElementFlag();
-    void isElementFlagClear();
+    void setTimeParams(u32 a, u32 b, u32 c);
+    void clearElementFlag(int task);
+    void setElementFlag(int task);
+    void toggleElementFlag(int task, int flag);
+    void* isElementFlagClear(int task);
     void setElementLodLevel();
     void configureShrinkTargets();
-    void setElementVisibility();
+    void setElementVisibility(int task, int flag);
     void setElementScale();
-    void refreshElementScale();
-    void getElementScale();
-    void updateElementVisibility();
-    void setElementFlag80();
-    void linkTaskElements();
-    void getElementState();
+    void refreshElementScale(int task);
+    f32 getElementScale(int task);
+    void updateElementVisibility(int task, int flag);
+    void setElementFlag80(int task, int flag);
+    void linkTaskElements(int task, int value);
+    void* getElementState(int task);
     void setElementCachedValue();
-    void getElementCachedValue();
-    void updateSingleElement();
+    f32 getElementCachedValue(int task);
+    void* updateSingleElement(int id);
     void setBaseScale(float a);
     void configureFadeMode();
-    void updateViewLayers();
+    void updateViewLayers(LODViewDesc* view);
     void updateBoxElement();
     void refreshGroupFromList();
     void updateElementsByDesc();
     void refreshPaletteBinding();
     void unlinkElement();
     void linkElementToChains();
-    void rebuildElementChains();
+    void rebuildElementChains(int count);
     void updateElementLod();
     void updateLodFrame();
     void bindLodChildren();
-    void dispatchViewUpdate();
+    static void dispatchViewUpdate(UnkClass_8046D144* self, int task);
     void handleViewUpdate();
     void initSceneGroup();
     void bindResMdl();
     void acquireResFileSlot();
     void bindModelToSlot();
-    void teardownSubEntries();
+    void teardownSubEntries(UnkClass_8046D144* sub);
     void destroyAllG3dObjects();
     void notifyG3dManager();
     void resetChildMasks();
     void resetLightColor();
     void registerChildSlot();
-    void setLightScale();
+    void setLightScale(s16 value);
     void initLightScales();
-    void reloadChildGxLights();
+    void reloadChildGxLights(int childIdx);
     void allocatePoolBlock();
     void mergeElementList();
     void findPoolBlockById();
@@ -105,10 +106,10 @@ public:
     void clearFlagAndResetName();
     void allocSecondaryBuffers();
     void adjustBufferOffsets();
-    void getOrCreatePoolData();
+    // getOrCreatePoolData is a LOD::LODMemMan member (see LODMemMan.hpp).
     void delegateMergeToSub();
     void setArchiveReadyFlag();
-    void driveArchiveLoadState();
+    // driveArchiveLoadState is a LOD::LODMemMan member (see LODMemMan.hpp).
 public:
     u8 _00[0x6c];
     u32 field_0x6c;

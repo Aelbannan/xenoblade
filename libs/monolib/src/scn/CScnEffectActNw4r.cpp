@@ -72,7 +72,7 @@ extern "C" u8* EffectActNw4rGetActC4(const CScnEffectActNw4r* self) {
 }
 
 // Effect-act lookup: the local id table first, then the manager's chain.
-CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* self, u32 idx) {
+extern "C" CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* self, u32 idx) {
     if (self->mCount > idx) {
         return self->mActs[idx];
     }
@@ -85,7 +85,7 @@ CScnEffectAct* EffectActNw4rFindActIndexed(const CScnEffectActNw4r* self, u32 id
 
 // Same lookup as EffectActNw4rFindActIndexed, but gated on the manager's act flag and
 // preferring the manager's direct act slot before falling back to the chain.
-CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* self, u32 idx) {
+extern "C" CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
@@ -101,7 +101,7 @@ CScnEffectAct* EffectActNw4rFindActGated(const CScnEffectActNw4r* self, u32 idx)
 
 // Id-based lookup that scans the u16 id table before falling back to the
 // manager's chain.
-CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self, u32 idx) {
+extern "C" CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         return 0;
     }
@@ -119,7 +119,7 @@ CScnEffectAct* EffectActNw4rFindActById(const CScnEffectActNw4r* self, u32 idx) 
 
 // Id-based lookup that also copies the act's position triplet into out;
 // returns 1 on success, 0 when the fallback chain reports none.
-u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
+extern "C" u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
     u32 count = self->mCount;
     for (u32 i = 0; i < count; i++) {
         if (self->mIds[i] == idx) {
@@ -143,7 +143,7 @@ u32 EffectActNw4rGetActPosById(const CScnEffectActNw4r* self, u32 idx, ml::CVec3
 
 // Fills out with the act's position triplet; zero when the effect acts are
 // disabled or absent.
-void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
+extern "C" void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
         out->x = ml::CVec3::zero.x;
         out->y = ml::CVec3::zero.y;
@@ -178,18 +178,18 @@ void EffectActNw4rGetActPosOut(ml::CVec3* out, const CScnEffectActNw4r* self, u3
 
 extern "C" void EffectActNw4rPushWordBuf(CScnEffectActNw4r* self) { simPushWordToBuf(self->mpMgr); }
 
-void EffectActNw4rRemoveWordBuf(CScnEffectActNw4r* self) {
+extern "C" void EffectActNw4rRemoveWordBuf(CScnEffectActNw4r* self) {
     simRemoveWordFromBuf(self->mpMgr);
 }
 
-void EffectActNw4rPushXform(CScnEffectActNw4r* self) {
+extern "C" void EffectActNw4rPushXform(CScnEffectActNw4r* self) {
     scnImN4PushXform(self->mpMgr);
 }
 
 // Effect-range gate: the act is usable while the manager's range value sits
 // inside [AB74 - A208, AB74 + A208], unless the manager's act flag disables
 // the whole check (then always usable). Returns 1 usable / 0 outside range.
-u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
+extern "C" u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
     u32 result;
     u32 ok;
     CScnEffectActMgr* mgr;
@@ -335,7 +335,7 @@ end:
 
 // Scene-model init: stashes the manager, clears the act table, then binds the
 // model's root node into the act-manager (EffectActNw4rRegisterNodes).
-void EffectActNw4rInitModel(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
+extern "C" void EffectActNw4rInitModel(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
     self->mpMgr = mgr;
     self->mCount = 0;
     nw4r::g3d::ResMdl resMdl(mgr->field_0x146c);

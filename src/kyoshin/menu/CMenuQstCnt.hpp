@@ -1,6 +1,11 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/work/CProcess.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/QstData.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -41,47 +46,43 @@ struct QstEntry {
 /*
  * Quest-status menu object (size 0x1A0).
  *
- * Retail stores the vtable pointer at +0x10 (CProcess-style layout). The base
- * IUIWindow subobject is destroyed OOL via __dt__9IUIWindowFv, and the ctor
- * directly runs CProcess's ctor then fills the IUIWindow region by hand, so
- * the struct is laid out explicitly rather than inheriting.
+ * Real MI class, from the retail composite vtable __vt__11CMenuQstCnt
+ * (0x80536128): IUIWindow at +0x00 (0x6C), IWorkEvent at +0x6C and
+ * IScnRender at +0x70; the +0x24 / +0xAC sub-vtables and the base list are
+ * compiler output.
+ *
+ *   0x00  IUIWindow base (Move/Draw ptmf hooks at +0x3C/+0x48, layout/state
+ *         members at +0x54..+0x68)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render callback subobject registered in Init)
+ *   0x74  mScene      - owning scene
+ *   0x78  mMemRegion  - embedded MEM2 scratch region (0x10)
+ *   0x88  mAnim88     - open animation
+ *   0x8C  mState8C
+ *   0x90  mValue90    - layout value (0.0f)
+ *   0x94  mEntries[32]- the quest-entry page records
+ *   0x194 mSelEntry   - the selected quest record
+ *   0x19C mField19C   - ready flag
  */
-struct CMenuQstCnt {
-    u8  mPad0[0x10];                     // 0x00 link-list nodes
-    u32 mVtab;                           // 0x10 vtable ptr
-    u8  mPad14[0x3C - 0x14];             // 0x14
-    u32 mPtmfFunc0;                      // 0x3C __ptmf_null
-    u32 mPtmfThis0;                      // 0x40
-    u32 mPtmfDelta0;                     // 0x44
-    u32 mPtmfFunc1;                      // 0x48
-    u32 mPtmfThis1;                      // 0x4C
-    u32 mPtmfDelta1;                     // 0x50
-    nw4r::lyt::Layout* mLayout;          // 0x54
-    u32 mField58;                        // 0x58
-    u32 mField5C;                        // 0x5C
-    s32 mField60;                        // 0x60 (default -1)
-    u8  mField64;                        // 0x64 (bool)
-    u8  mField65;                        // 0x65
-    u8  mField66;                        // 0x66
-    u8  mField67;                        // 0x67 (default 1)
-    u32 mField68;                        // 0x68
-    u32 mOcc6C;                          // 0x6C vtable-adjusted trackers
-    u32 mOcc70;                          // 0x70 (IScnRender pointer for removeRenderCB)
-    CScn* mScene;                        // 0x74
-    u8  mMemRegion[0x10];                // 0x78 UnkClass_8045F564 storage
-    nw4r::lyt::AnimTransform* mAnim88;   // 0x88
+class CMenuQstCnt : public IUIWindow, public IWorkEvent, public IScnRender {
+public:
+    CMenuQstCnt(CScn* scene, short a, short b, u8 c, u8 d, u8 e);
+    virtual ~CMenuQstCnt();
+
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+    void RefreshDisplay();
+
+    CScn* mScene;                        // 0x74 owning scene
+    UnkClass_8045F564 mMemRegion;        // 0x78 embedded MEM2 region
+    nw4r::lyt::AnimTransform* mAnim88;   // 0x88 open animation
     u32 mState8C;                        // 0x8C
     f32 mValue90;                        // 0x90
-    QstEntry mEntries[32];               // 0x94 (0x100 bytes)
+    QstEntry mEntries[32];               // 0x94
     QstEntry mSelEntry;                  // 0x194
     u8  mField19C;                       // 0x19C
-    // sizeof = 0x1A0
-
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-    void RefreshDisplay();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -89,11 +90,6 @@ struct CMenuQstCnt {
 
 extern "C" int isLandTelopIdle();
 extern "C" int getLandTelopE0(void);
-extern "C" void __ct__8CProcessFv(void*);
-extern "C" void __dt__9IUIWindowFv(void*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
@@ -105,14 +101,10 @@ extern "C" int MenuTutorialIsCreated();
 extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int SysWinGetSingleton();
 extern "C" int isQuestLogMenuActive();
-extern "C" u32 __ptmf_null[];
-extern "C" u32 lbl_eu_8052D238[];
-extern "C" u32 lbl_eu_80536128[];
 extern "C" u32 lbl_eu_80663E28;
 extern "C" f32 lbl_eu_8066856C;
 extern "C" f32 lbl_eu_80668568;
 extern "C" void* lbl_eu_80664094;
 extern "C" void* lbl_eu_806640A8;
 extern "C" u32 lbl_eu_80573D18[];
-extern "C" char lbl_eu_80509A10[];
 extern "C" char lbl_eu_80509AB4[];

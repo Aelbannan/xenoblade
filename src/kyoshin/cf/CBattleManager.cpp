@@ -3936,8 +3936,8 @@ void cf::CBattleManager::CBattleMan_ZeroStateMask() {
 }
 
 namespace cf {
-    CChainCombo::~CChainCombo() {
-    }
+    // CChainCombo's dtor is inline in CChainCombo.hpp: retail only keeps the
+    // weak copy at 0x800D9704 and the vtable in CChainCombo.o's .data run.
 
     CChainMember::~CChainMember() {
     }

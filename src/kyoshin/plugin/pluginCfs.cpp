@@ -899,13 +899,13 @@ int changeWalker(VMThread* pThread) {
 int eventStart(VMThread* pThread) {
     int eventId;
     int idx;
-    if (!vmArgOmitChk(pThread, 1)) {
-        VMArg* arg = vmArgPtrGet(pThread, 1);
-        idx = 2;
-        eventId = vmArgIntGet(2, arg);
-    } else {
+    if (vmArgOmitChk(pThread, 1)) {
         eventId = 0;
         idx = 2;
+    } else {
+        idx = 2;
+        VMArg* arg = vmArgPtrGet(pThread, 1);
+        eventId = vmArgIntGet(2, arg);
     }
 
     // Fused ternary keeps the priority value in the return-value register
@@ -1718,7 +1718,8 @@ int setWeatherArea(VMThread* vmThread) {
 }
 
 // --- setGimmick (us-8004ade8) ---
-int setGimmick(VMThread* vmThread) {
+// Flat retail name: CfGameManager.cpp calls it as `extern "C" void setGimmick(void*, bool)`.
+extern "C" int setGimmick(VMThread* vmThread) {
     int gimmickId;
     int state;
 
@@ -2038,10 +2039,10 @@ void Cfs_Noop_A400() {
 
 void* CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv(void* self) {
     void* ptr = *(void**)((u8*)self + 0xC4);
-    if (ptr == NULL) {
-        return *(void**)((u8*)self + 0x6C0);
+    if (ptr != NULL) {
+        return *(void**)((u8*)ptr + 8);
     }
-    return *(void**)((u8*)ptr + 8);
+    return *(void**)((u8*)self + 0x6C0);
 }
 
 int clearTbox() {

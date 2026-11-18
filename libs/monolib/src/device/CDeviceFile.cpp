@@ -11,7 +11,7 @@
 // per-address symbols (chars have 1-byte alignment, so packing matches).
 extern "C" u8 lbl_eu_806636A8 = 0x01;
 u8 lbl_eu_806636A9 = 0x01;   // standby-login done flag
-u8 lbl_eu_806636AA = 0xFF;   // language override (-1 = auto)
+s8 lbl_eu_806636AA = -1;     // language override (-1 = auto)
 u32 lbl_eu_80665660;   // CDeviceFile singleton pointer (.sbss)
 int lbl_eu_80665664;   // filename-substitution table entry count (.sbss)
 void* lbl_eu_80657580[16]; // filename-substitution table (.bss, 64B)
@@ -364,7 +364,7 @@ CDeviceFile::CDeviceFile(const char* pName, CWorkThread* pParent)
     mFileList.mStartNode.mPrev = mFileList.mStartNodePtr;
     mFileList.m_vtable = lbl_eu_8056C30C;        // reslist vtable (derived)
     lbl_eu_80665660 = (u32)this;
-    lbl_eu_806636AA = 0xFF;
+    lbl_eu_806636AA = -1;
     mFileList.mList = (CDeviceFilePoolEntry*)mtl::MemManager::allocate_array(
         0xC00, CWorkThreadSystem::getWorkMem());
     // Clear the leading word of every 0x0C sub-slot in all 32 entries.
@@ -719,11 +719,12 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
         absolute = 0;
     } else {
         s8 c = (s8)path[0];
-        absolute = 0;
         if (c == '/') {
             absolute = 0;
         } else if (c == '\\') {
             absolute = 1;
+        } else {
+            absolute = 0;
         }
     }
     if (!absolute) {
@@ -957,8 +958,8 @@ void DevFile_SubstLangPath(char* pPath) {
     const char* search;
 
     lang = CDeviceSC::getLanguage();
-    u8 langOverride = lbl_eu_806636AA;
-    if ((s8)langOverride >= 0) {
+    s8 langOverride = lbl_eu_806636AA;
+    if (langOverride >= 0) {
         lang = langOverride;
     }
     if (lang == 0) return;

@@ -30,7 +30,7 @@ using namespace cf;
 // zeroes the 8-slot table via memset and seeds the three state halfwords at
 // +0x38/+0x3A/+0x3C to -1. The parent's +0x8E halfword is cleared when a
 // parent is present.
-cf::CfResPcImpl* __ct__cf_CfResPcImpl(cf::CfResPcImpl* self, cf::CfResPcParent* parent) {
+extern "C" cf::CfResPcImpl* __ct__cf_CfResPcImpl(cf::CfResPcImpl* self, cf::CfResPcParent* parent) {
     self->field_04 = lbl_eu_80667A40;
     self->field_08 = 0;
     self->field_0A = -1;
@@ -130,7 +130,7 @@ u32 CfResPcImpl_getSlotTableEntry(cf::CfResPcImpl* self, int idx)
 // slot-table buffer via func_80080F48 and installs the queried ids into the
 // secondary-interface slots (+0x30) and the parent +0x70C..+0x712 words.
 // The +0x30 slot index order (0,1,2,4,3,5,6) matches retail.
-void CfResPcImpl_loadPcState(cf::CfResPcImpl* self, u16 arg2) {
+extern "C" void CfResPcImpl_loadPcState(cf::CfResPcImpl* self, u16 arg2) {
     cf::CfResPcLoadBuffer buf;
     (self)->CfResPcImpl_teardown();
     func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, 0, 1);
@@ -1129,7 +1129,7 @@ cf::UnkClass_8018EF3C::~UnkClass_8018EF3C()
     memset(this, 0, 0x400);
 }
 
-void CfResPcFileHost_clear(unsigned char* p)
+extern "C" void CfResPcFileHost_clear(unsigned char* p)
 {
     *reinterpret_cast<unsigned int*>(p + 0x404) = 0;
     *reinterpret_cast<unsigned int*>(p + 0x400) = 0;

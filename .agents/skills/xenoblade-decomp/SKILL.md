@@ -196,6 +196,10 @@ Fix semantics/types first, then expression order with normal C++ (named locals/h
 - ABI — real C++ params/structs; never fake `Fv`/`u32* r4` register params.
 - templates in headers — `#pragma auto_inline off` + explicit instantiation + `#pragma pop`;
   check `Ui` vs `Ul` (`unsigned int` on PPC32). See `MWCC_CASES` §Template pitfalls.
+- unwanted inlining of a same-TU helper: `noinline` / `dont_inline` / `auto_inline off` are **hard
+  faithfulness smells**. Find why retail didn't inline: wrong TU boundary, definition order, or unit-wide
+  inline flags (MWCC_PATTERNS "-inline auto inlines same-TU helpers"). Keep one only with
+  `// noinline-ok: <what was tried>` on the same line.
 
 ## Declaration drift & the `extern "C"` rename shields
 

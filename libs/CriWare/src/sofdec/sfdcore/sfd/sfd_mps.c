@@ -802,10 +802,11 @@ int sfmps_CopyUsrSj(SfdHandle* self, s32 src, s32 dst, s32 size) {
     void (*fn_a)(void*, s32);
     void (*fn_b)(void*, s32);
     void* fn_b_arg;
-    /* two distinct ring-read result pairs (ptr,size); MWCC keeps them in
-     * separate stack slots like retail */
-    struct { void* p; s32 n; } t1;
+    /* two distinct ring-read result pairs (ptr,size). MWCC hands out local
+     * aggregate stack slots in REVERSE declaration order, so the pair that
+     * retail keeps at the lower slot (sp+8) must be declared last. */
     struct { void* p; s32 n; } t2;
+    struct { void* p; s32 n; } t1;
 
     if (self->trn[1].usrIdx == 8)
         return 1;
@@ -1082,7 +1083,7 @@ void sfmps_SetMpsHd(SfdHandle* self) {
 
         {
             u64 a = ((u64)(u32)hi << 32) | (u32)lo;
-            u64 b = ((u64)(u32)mpsHd->bytePosHi << 32) | (u32)mpsHd->bytePosLo;
+            u64 b = ((u64)(u32)mpsHd->field_0x020 << 32) | (u32)mpsHd->field_0x024;
             u64 d = a - b;
             self->tim.posDeltaLo = (s32)(u32)d;
             self->tim.posDeltaHi = (s32)(u32)(d >> 32);

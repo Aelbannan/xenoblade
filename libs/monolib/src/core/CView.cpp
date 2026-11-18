@@ -34,17 +34,22 @@ extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
 class CSplitFrame {
 public:
     virtual ~CSplitFrame();
+    // Declared (not defined) here; the mangled names are identical either way,
+    // so these calls bind the retail symbols directly instead of going through
+    // pre-mangled free-function spellings.
+    void apply();
+    void setSplitLine(s16 line);
 };
 
-CView* getCurrent__9CViewRootFv();
-void invalidCurrent__9CViewRootFP5CView(CView* view);
+/* CViewRoot::getCurrent / ::invalidCurrent come from CViewRoot.hpp
+ * (monolib/core.hpp) -- no pre-mangled local spellings needed. */
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern "C" CView* getView1__11CSplitFrameFv(void* splitFrame);
 extern "C" CView* getView2__11CSplitFrameFv(void* splitFrame);
 extern "C" s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
-void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
+/* void setSplitLine__11CSplitFrameFs(void*, s16); -- now a member above. */
 extern "C" bool isActive__11CSplitFrameFv(void* splitFrame);
-void apply__11CSplitFrameFv(void* splitFrame);
+/* void apply__11CSplitFrameFv(void*); -- now a member of CSplitFrame. */
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
 extern "C" void updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
@@ -1404,7 +1409,7 @@ void CView::wkUpdate() {
 
     wkUpdate_apply_check:
         if (hasView2a != 0) {
-            apply__11CSplitFrameFv(unk45C);
+            ((CSplitFrame*)unk45C)->apply();
         }
     }
 
@@ -2338,9 +2343,9 @@ void CView::setDisp(bool show, bool dropCurrent) {
     }
 
     if (dropCurrent && !show) {
-        CView* current = getCurrent__9CViewRootFv();
+        CView* current = CViewRoot::getCurrent();
         if (current == this) {
-            invalidCurrent__9CViewRootFP5CView(this);
+            CViewRoot::invalidCurrent(this);
         }
     }
 }
@@ -2413,7 +2418,7 @@ setSplitLine_no_view2:
     if (hasView2 == 0) {
         return;
     }
-    setSplitLine__11CSplitFrameFs(unk45C, line);
+    ((CSplitFrame*)unk45C)->setSplitLine(line);
 }
 
 // Offset view of the CView context-ring control block at +0x280 (used by

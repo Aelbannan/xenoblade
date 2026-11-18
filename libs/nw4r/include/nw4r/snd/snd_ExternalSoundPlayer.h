@@ -29,7 +29,6 @@ public:
     BasicSound* GetLowestPrioritySound();
 
     void InsertSoundList(BasicSound* pSound);
-    void RemoveSoundList(BasicSound* pSound);
 
     bool AppendSound(BasicSound* pSound);
     void RemoveSound(BasicSound* pSound);

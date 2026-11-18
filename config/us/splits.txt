@@ -826,7 +826,7 @@ kyoshin/CTalkWindow.cpp:
 	.ctors      start:0x804FA014 end:0x804FA018
 
 	.bss        start:0x80573a70 end:0x80573b30
-	.data        start:0x8052df70 end:0x8052e0b4
+	.data        start:0x8052df70 end:0x8052e0a8
 	.rodata        start:0x804ffc98 end:0x804ffe90
 	.sbss        start:0x80664040 end:0x80664048
 	.sdata        start:0x80662170 end:0x80662178
@@ -836,7 +836,7 @@ kyoshin/CUIBattleManager.cpp:
 	extabindex  start:0x800277B4 end:0x800278D4
 	.text       start:0x8012EA60 end:0x80130A48
 
-	.data        start:0x8052e0b4 end:0x8052e294
+	.data        start:0x8052e0a8 end:0x8052e294
 	.rodata        start:0x804ffe90 end:0x804fffc8
 	.sbss        start:0x80664048 end:0x80664050
 	.sdata        start:0x80662178 end:0x806621a8
@@ -2107,7 +2107,7 @@ kyoshin/CSysWinBuff.cpp:
 	extabindex  start:0x80030D24 end:0x80030D78
 	.text       start:0x80276958 end:0x80276FAC
 
-	.data        start:0x80537DC0 end:0x80537ED0
+	.data        start:0x80537DC0 end:0x80537EC0
 	.rodata        start:0x8050ebb8 end:0x8050ebf0
 	.sbss        start:0x806648e0 end:0x80664900
 	.sdata        start:0x806629E8 end:0x806629F0
@@ -2116,7 +2116,7 @@ kyoshin/cf/ICamControlRemote.cpp:
 	extabindex  start:0x80030D78 end:0x80030DE4
 	.text       start:0x80276FAC end:0x8027725C
 
-	.data        start:0x80537ed0 end:0x80537f98
+	.data        start:0x80537ec0 end:0x80537f98
 	.rodata        start:0x8050ebf0 end:0x8050ec48
 	.sdata        start:0x806629f0 end:0x80662a10
 kyoshin/cf/ICamControlGc.cpp:
@@ -2244,17 +2244,19 @@ kyoshin/cf/chain/CChainCombo.cpp:
 	extabindex  start:0x80031F00 end:0x80031F30
 	.text       start:0x8029638C end:0x802965B4
 
-	.data        start:0x80538988 end:0x80538994
+	.data        start:0x80538988 end:0x805389A0
+	.rodata        start:0x8050fd50 end:0x8050fd60
+	.sdata        start:0x80662b08 end:0x80662b10
 	.sdata2        start:0x80668b98 end:0x80668ba0
 kyoshin/CSysWinSave.cpp:
 	extab       start:0x800199F8 end:0x80019B1C
 	extabindex  start:0x80031F30 end:0x80031F84
 	.text       start:0x802965B4 end:0x80296E70
 
-	.data        start:0x80538994 end:0x80538aa0
-	.rodata        start:0x8050fd50 end:0x8050fd88
+	.data        start:0x805389A0 end:0x80538aa0
+	.rodata        start:0x8050fd60 end:0x8050fd88
 	.sbss        start:0x80664a08 end:0x80664a10
-	.sdata        start:0x80662b08 end:0x80662b18
+	.sdata        start:0x80662b10 end:0x80662b18
 	.sdata2        start:0x80668ba0 end:0x80668bb0
 kyoshin/realtimeevt/CREvtMovie.cpp:
 	extab       start:0x80019B1C end:0x80019B60
@@ -2509,9 +2511,9 @@ kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp:
 	.rodata        start:0x80510858 end:0x80510878
 	.sdata        start:0x80662d58 end:0x80662d70
 kyoshin/menu/CMenuBattleChain.cpp:
-	extab       start:0x8001B068 end:0x8001B170
-	extabindex  start:0x800330B8 end:0x80033190
-	.text       start:0x802AC2C4 end:0x802ADD28
+	extab       start:0x8001B068 end:0x8001B140
+	extabindex  start:0x800330B8 end:0x80033148
+	.text       start:0x802AC2C4 end:0x802ADB08
 	.ctors      start:0x804FA09C end:0x804FA0A0
 
 	.data        start:0x80539e00 end:0x80539f48
@@ -2519,6 +2521,10 @@ kyoshin/menu/CMenuBattleChain.cpp:
 	.sbss        start:0x80664a60 end:0x80664be8
 	.sdata        start:0x80662d70 end:0x80662dd8
 	.sdata2        start:0x80668cb0 end:0x80668cb8
+kyoshin/menu/code_802ADB08.cpp:
+	extab       start:0x8001B140 end:0x8001B170
+	extabindex  start:0x80033148 end:0x80033190
+	.text       start:0x802ADB08 end:0x802ADD28
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp:
 	extab       start:0x8001B170 end:0x8001B1B4
 	extabindex  start:0x80033190 end:0x800331C0
@@ -6535,7 +6541,7 @@ monolib/src/scn/CScnItemCamera.cpp:
 	.bss	start:0x80658658 end:0x80658680
 	.ctors	start:0x804FA164 end:0x804FA168
 	.data	start:0x8056ECC0 end:0x8056F014
-	.rodata	start:0x80524258 end:0x80524428
+	.rodata	start:0x80524258 end:0x80524408
 	.text	start:0x804A2A20 end:0x804A3E08
 	.sdata2        start:0x8066ABF0 end:0x8066AC40
 monolib/src/vm/yvm2.c:
@@ -6546,27 +6552,34 @@ monolib/src/vm/yvm_debug.c:
 	.text       start:0x804AADAC end:0x804AADBC
 
 monolib/src/coli/code_804A6C60.cpp:
-	.bss	start:0x8065CFA0 end:0x8065D138
+	.bss	start:0x8065CFA0 end:0x8065D0E8
 	.ctors	start:0x804FA168 end:0x804FA16C
-	.data	start:0x8056F1B8 end:0x8056F3FC
+	.data	start:0x8056F1B8 end:0x8056F3A8
+	.rodata	start:0x80524408 end:0x80524418
 	.sbss	start:0x80665910 end:0x80665944
-	.sdata	start:0x80663A90 end:0x80663AA8
+	.sdata	start:0x80663A90 end:0x80663AA0
 	.text	start:0x804AADBC end:0x804B66D4
 	.sdata2     start:0x8066ae20 end:0x8066aea8
+monolib/src/coli/CColiProcBase.cpp:
+	.text	start:0x804B66D4 end:0x804B66EC
 monolib/src/coli/CColiProc.cpp:
-	extab       start:0x8001FDB4 end:0x8001FDEC
-	extabindex  start:0x80037BA0 end:0x80037BF4
-	.text       start:0x804B66D4 end:0x804B714C
+	.bss        start:0x8065D0E8 end:0x8065D138
+	extab       start:0x8001FDB4 end:0x8001FDF4
+	extabindex  start:0x80037BA0 end:0x80037C00
+	.text       start:0x804B66EC end:0x804B7228
 	.ctors      start:0x804FA16C end:0x804FA170
+	.data       start:0x8056F3A8 end:0x8056F3C0
+	.rodata     start:0x80524418 end:0x80524428
+	.sdata      start:0x80663AA0 end:0x80663AA8
 
 monolib/src/coli/code_804B2FF0.cpp:
 	.bss	start:0x8065D138 end:0x8065D1A0
 	.ctors	start:0x804FA170 end:0x804FA174
-	.data	start:0x8056F3FC end:0x8056F508
+	.data	start:0x8056F3C0 end:0x8056F508
 	.rodata	start:0x80524428 end:0x80524468
 	.sbss	start:0x80665944 end:0x80665960
 	.sdata	start:0x80663AA8 end:0x80663AC8
-	.text	start:0x804B714C end:0x804B9B24
+	.text	start:0x804B7228 end:0x804B9B24
 	.sdata2     start:0x8066aea8 end:0x8066aed0
 monolib/src/coli/code_804B59C8.cpp:
 	.bss	start:0x8065D1A0 end:0x8065F32C

@@ -53,7 +53,7 @@ extern "C" u32 lbl_eu_8056E598[8];  // CScnMaruShadowNw4r vtable (defined below)
 // (58.3%), zero-stores-first (16.7%) - both worse, reverted. Emission order
 // follows declaration order, so A944-first+f1-color is unreachable via decl
 // steering alone; likely needs the true original statement interleaving.
-void __ct__CScnMaruShadowNw4r(CScnMaruShadowNw4r* self) {
+extern "C" void __ct__CScnMaruShadowNw4r(CScnMaruShadowNw4r* self) {
     const float b = lbl_eu_8066A948;
     const float a = lbl_eu_8066A944;
     const float c = lbl_eu_8066A940;
@@ -89,7 +89,7 @@ extern "C" CScn* __dt__4CScnFvMaruShadowNw4r(CScn* self, int flags) {
 // Shadow-texture GX pipeline setup: loads the shadow texture from static data,
 // builds a GXTexObj, configures the fixed-function pipeline (1 TEV stage,
 // alpha blend, texcoord gen), and returns 1 when the path is ready.
-int MaruShadowSetupTexturePipe(void* self) {
+extern "C" int MaruShadowSetupTexturePipe(void* self) {
     // NOTE: MWCC allocates stack homes per size-class in REVERSE declaration
     // order; this order reproduces the retail frame layout
     // (bias@8, w@10, h@12, resTex@16, img@20, minLod@24, maxLod@28,
@@ -624,7 +624,7 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
 extern const float lbl_eu_8066A994;  // foreign .sdata2
 extern const float lbl_eu_8066A9CC;  // foreign .sdata2
 
-void MaruShadowPickScale(void* obj, int condition) {
+extern "C" void MaruShadowPickScale(void* obj, int condition) {
     if (condition != 0) {
         *(float*)((char*)obj + 0x1c) = lbl_eu_8066A994;
         return;
@@ -745,7 +745,7 @@ extern "C" void MaruShadowStoreGlobalFloat(float v){
 }
 
 // us-80492ab4: MaruShadowLoadGlobalFloat (0x8 bytes) -- loads float from sda21 global
-float MaruShadowLoadGlobalFloat()
+extern "C" float MaruShadowLoadGlobalFloat()
 {
     return lbl_eu_80663964;
 }

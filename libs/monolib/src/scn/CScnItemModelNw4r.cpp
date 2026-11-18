@@ -136,8 +136,7 @@ extern "C" void  scnImN4SetTevSwap(CScnItemModelNw4r* self, u32 enable) {
             (nw4r::g3d::ScnMdl*)self->field_0x147C, i);
         // Declared before `tev` to match retail's stack slot order.
         GXTevColorChan chan;
-        nw4r::g3d::ResTev tev =
-            GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(&access);
+        nw4r::g3d::ResTev tev = access.GetResTevEx();
         // Retail keeps the four swap-table slots fully unrolled.
         if (tev.GXGetTevSwapModeTable((GXTevSwapSel)0, &chan, &chan,
                                       &chan, &chan)) {
@@ -1842,8 +1841,7 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
                 }
                 genMode.GXSetNumTevStages(tev.GetNumTevStages());
                 nw4r::g3d::ResMatPix pix =
-                    GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-                        &access);
+                    access.GetResMatIndMtxAndScaleEx();
                 if (mat.ptr() == NULL) {
                     nw4r::db::Panic(lbl_eu_8056E068, 0x26D, lbl_eu_8056E04C,
                                     &lbl_eu_806638E8, &lbl_eu_806638F0);
@@ -1924,8 +1922,7 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
                 }
                 genMode.GXSetNumTevStages(tev.GetNumTevStages() + 1);
                 nw4r::g3d::ResMatPix pix2 =
-                    GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-                        &access);
+                    access.GetResMatIndMtxAndScaleEx();
                 if (blendMode == GX_BM_NONE) {
                     pix2.GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4,
                                         (GXBlendFactor)5, (GXLogicOp)0);
@@ -1938,8 +1935,7 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
                 pix2.DCStore(false);
             }
             nw4r::g3d::ResMatTevColor tevColor =
-                GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-                    &access);
+                access.GetResMatTexCoordGenEx();
             // Simple blend modes fade via TEV register color, others via
             // the konstant color. Separate locals: retail gives each branch
             // its own staging slot.
@@ -3099,8 +3095,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             if (blendMode == (_GXBlendMode)2 || blendMode == (_GXBlendMode)3) {
                 kColorPath = false;
             }
-            nw4r::g3d::ResTev tevEx =
-                GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(&access);
+            nw4r::g3d::ResTev tevEx = access.GetResTevEx();
             if (tev.ptr() == 0) {
                 nw4r::db::Panic(lbl_eu_8056E0D0, 0x25, lbl_eu_8056E0B0,
                                 &lbl_eu_806638F4, &lbl_eu_806638FC);

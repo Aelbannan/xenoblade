@@ -24,25 +24,32 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 3 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 4 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 13,811 / 19,310 (71.5%) — checkpoint 2 was 13,601 |
-| Units complete (linked) | 617 / 1,191 |
-| Matched code / data bytes | 41.3% / 52.5% |
-| Unmatched functions by area | kyoshin 3,654 · monolib 1,048 · CriWare 343 · nw4r 257 · RVL_SDK 195 · MSL 2 |
-| Faithful hard counts | label 47,357 · mangled_c 2,848 · section 1,425 · offset_cast 5,162 · view_struct 3,195 · rule 276 · rtti_off 19 · foreign_data 605 |
-| Faithful soft counts | field_0x 28,056 · unk_name 1,139 · addr_func 1,013 · noinline 1,870 |
+| Functions at 100% | 14,290 / 19,310 (74.0%) — checkpoint 3 was 13,811 (+479; 462 better, 26 worse) |
+| Units complete (linked) | 618 / 1,193 |
+| Matched code / data bytes | 42.6% / 52.5% |
+| Unmatched functions by area | kyoshin 3,366 · monolib 889 · CriWare 340 · nw4r 231 · RVL_SDK 192 · MSL 2 |
+| Faithful hard counts | label 46,370 · mangled_c 2,772 · section 1,415 · offset_cast 5,147 · view_struct 3,187 · noinline 2,358 · rule 276 · rtti_off 19 · foreign_data 581 |
+| Faithful soft counts | field_0x 28,093 · unk_name 1,129 · addr_func 1,013 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
-Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 148/253,
-`cf/CItem` 91/169, `cf/CfRes` 70/224, `cf/CfCam` 69/181, `CArtsInfo` 66/93, `plugin/pluginCfs`
-65/73, `action/CActParamData` 64/178, `CFloorMap` 64/75, `cf/CfGameManager` 63/352,
-`action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109.
+**noinline is now a hard smell** (since checkpoint 4): `__declspec(noinline)`, `#pragma dont_inline`
+and `#pragma auto_inline off` all count, unless the line carries `// noinline-ok: <what was tried>`.
+The baseline was migrated by adding each unit's current count (+2,358 over 171 units, not `--init`).
+The count is higher than the old soft 1,870 because the pragmas now count too. Removing them means
+checking in order: wrong TU boundary → definition order → unit-wide flags (MWCC_PATTERNS).
 
-Gate state at checkpoint 3: link OK (missing 43, ratcheted), extab OK (27, ratcheted), text-order OK,
-frozen rules OK (269), registry OK, faithful OK (ratcheted). Report: `/tmp/xb_ckpt/report_c3.json`.
+Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 137/253,
+`cf/CfRes` 67/224, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144,
+`cf/CfCam` 59/181, `cf/CItem` 57/169, `CUICfManager` 56/89, `CFloorMap` 54/75,
+`cf/CtrlObjectParam` 47/109, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84.
+
+Gate state at checkpoint 4: link OK (missing 43), extab OK (27, ratcheted; CMenuBattleChain 3→1),
+text-order OK (11), frozen rules OK (269), registry OK, faithful OK (ratcheted, 21 units).
+Report: `/tmp/xb_ckpt/report_c4.json` (c3: `/tmp/xb_ckpt/report_c3.json`).
 NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
 
 ## 3. What this session established (do not re-derive)
@@ -163,7 +170,70 @@ status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
 
+0. **Checkpoint 4 debts (2026-11-19).**
+   - Identity-sweep-2 left 139 byte-identical but unpaired kyoshin helpers (CfRes 52, code_800B06A4 24,
+     CfCam 23, CItem 22, CActParamData 11, CFloorMap 7). `extern "C"` on the definition is blocked by
+     conflicting C-linkage declarations with different parameter types (e.g. `CfRes_tryResolveByBits`,
+     `CItemBlock_getSlotU16`, `cfCam_pitchFromVec`, `FloorMap_*`). Each needs one canonical declaration.
+     First step: make `CfRes_getD80Flag` (code_801A929C.cpp:209) and `CfRes_tryRefreshByBits`
+     (CfGameManager.hpp:660) `extern "C"`. Membership-proven candidates (`cf::IFactoryEvent::FactoryEvent{1,3,4}`,
+     the `cfCam_*` follow/yaw helpers, `getParamFloat08/0C`, …) need real member conversion, not renames.
+   - The handoff's `xargs -n 50 nm -u --format=posix` census recipe is broken (the `file:` prefix drops names);
+     run `nm` once per object.
+   - nw4r snd: BasicSound has 4 functions at 100% instructions that still fail on the frozen
+     `lbl_eu_8056A710` vtable reloc rule (ceiling 31/35). AxManager `Init` touches an unexplained 0x200 static.
+   - CMenuQstCnt still overflows its split by 0x3C and has an extab size mismatch. Both predate checkpoint 4
+     (Refresh/Sort/GetOrCreate/FinishAnim size diffs).
+   - Report WORSE entries are section re-cut side effects (CMenuBattleChain/CMenuBattleEnd/CTalkWindow
+     `.rodata`/`extabindex`, CSysWinSave). Re-check them after the sibling TU-tail re-cuts.
+   - SKILL.md's template advice (`#pragma auto_inline off`) now counts as a hard smell; reconcile it.
+
 0a. **Checkpoint 3 debts.**
+   - Post-checkpoint-3 debts (2026-11-19):
+     - `CtrlMoveBase.cpp` reaches the CColiProc ctor through a block-scope pre-mangled
+       `extern void __ct__9CColiProcFv(void*);`. A real construction can't reproduce retail: retail has no
+       placement-new null guard, and a real static inlines the ctor. Its 14 flat `moveBase*` names need a
+       real-member conversion together with CtrlEnemy/CfGimmick* callers.
+     - The coli identity sweep made 63 coli definitions flat `extern "C"` (report +55). This also closed
+       dangling flat references from kyoshin/scn callers.
+     - ICamControlRemote is 10/10 ✓ but its `.data` is MISMATCH (see the CSysWinBuff note below).
+     - ✅ `code_804B2FF0` split overrun fixed (ColiXformFixed z-bounds used the wrong extent field; now
+       0x28FC exactly).
+     - KPAD: the 17 residuals are mostly `.sdata2` reloc order from named static consts folding into
+       pool copies.
+     - WPAD: `.data` is 0x1BC vs retail 0x424 (missing debug strings), which costs 5 functions.
+     - KPAD.c and WPAD.c are now pinned to `Wii/1.0a` (+1 ✓ each over Wii/1.1; 1.0RC1 gives the same
+       result; 1.5+ regress). WPADHIDParser stays on the default because its 1.1 match sum is
+       higher.
+     - CMdlDynamics `MdlDyn_AddVecAll` still uses `volatile` re-reads (policy smell, 34 structural);
+       CView's three template vtables are emitted in the wrong order (reslist dtors ×2 + `wkStandbyLogout`
+       are off by 12 bytes).
+     - CScnCameraMan: 11 `CamMan_*` bodies are defined `extern "C"` so they pair with retail's flat
+       placeholders (report 4→10/17). They are really `CScnCameraMan` members, but CScn.cpp calls them
+       by flat names. Convert them together with CScn.cpp's callers.
+     - `faithful --ratchet` was run once mid-wave by an agent, which ratcheted in-flight improvements from
+       other agents. Re-check the faithful baseline at checkpoint 4.
+     - Identity sweep (monolib core/effect/scn, g3d_xsi): ~83 bodies were made `extern "C"` to pair with
+       flat retail placeholders (report +53 functions). They are interim names; revisit them when callers
+       and owners are recovered.
+     - UnkClass_80471EC8: its 15 pre-mangled `Fv` placeholders contradict the register ABI. Recover the
+       signatures from callers bottom-up first.
+     - CScnTexWorkMan is 908 B over its split.
+     - CriWare `.bss` blobs: adx_fs, adx_mwii and ahx_dcd are now real objects defined after the code in reverse
+       order. **adx_tlk (0x289C)** and **mwsfdlib (0x3720)** are blocked: their `.bss` split ranges also hold
+       objects owned by siblings with no `.bss` split (adx_lsc/sfa/sjd/stmc; mwsfdcre/svr/sl/svm/ply; the
+       address table is in MWCC_CASES). Fix the split ownership first. adx_mwii keeps one `extern adxm_setup_cnt`
+       alias of `adxm_frm+4` (a second retail spelling). g3d_state also has a blob.
+     - CMenuBattleChain: the end of the TU was split off into a new `kyoshin/menu/code_802ADB08.cpp` (8/8 ✓).
+       The resource names are plain literals now; the agent's `#define` + offset indexing was replaced.
+       Sibling candidates with the same `[__sinit][thunks][helpers]` tail: CSysWinSave, CSysWinScenarioLog,
+       CSysWinBuff, CMenuArtsSet, CMenuPlayAward, CMenuSymbolMark, CMenuGameClear, CMenuQstCnt.
+     - The kyoshin identity sweep (pluginCfs/CfResPcImpl/CfObjectEnumList/code_8018F8D8/CfObjectImplMove,
+       report +157) **de-memberized** 5 functions (`getObjectAt`, `getObjectIdAt`, `getEntryAt`,
+       `CfObjectImplMoveClearLinkIfMatch`, `MoveImplMatchIdSetRegion`) to pair with flat callers. Restore
+       them as members and update the callers. Also: 40 `extern "C"` definitions, and `CfResPcImpl_*` /
+       `CfObjectImplMove_*` pseudo-member free functions still need memberizing. COption is 7/48 with 41
+       bodies unwritten.
    - `.sdata2` pool ownership: `CGXCache.cpp` still emits a 0x11B6 "dissolved monolibdata2" array
      (875 constants) that ~80 units reach via `extern lbl_eu_*`; ~95% are really each unit's own
      literals. Re-homing must be done per unit with ✓-set diffing (pool order drives reloc identity).
@@ -171,9 +241,33 @@ status.
      Inventory: `/tmp/xb/pool/inventory.md`. CGXCache's `BiasDouble` helper (7 functions) waits on it.
    - Weak IUIWindow family: aliases `lbl_eu_8052D238` / `lbl_eu_80661ED0` stay in us/eu symbols.txt
      until the last 12 TUs are converted; `IUIWINDOW_INLINE_DTOR` / `CTTASK_INLINE_DTOR` opt-in header
-     hooks; `CSysWinBuff`/`CSysWinSave` `.data` regressed MATCH→20-byte diff; `CSystemWindow` vtable
-     collides with `CTagProcessor.cpp`'s hand copy; `@108@OnFileEvent` thunk shape (CQuestWindow,
-     CSysWinBuff); CMenuUpdate `.sdata` needs `__RTTI__Q22cf6CfBdat` odr-use.
+     hooks; CMenuUpdate `.sdata` needs `__RTTI__Q22cf6CfBdat` odr-use.
+   - `@108@OnFileEvent` thunk shape: **solved** for CSysWinBuff (12/14 ✓) and renamed for
+     CQuestWindow by making the C-linkage body the member body — see MWCC_CASES "CSysWinBuff::OnFileEvent".
+     CQuestWindow still emits a 4-byte forwarding copy (`onQuestFileEvent` + wrapper); eliminating it
+     means writing the 0x2F4 body as `CQuestWindow::OnFileEvent` (or making the override inline in
+     the header — line-count sensitive).
+   - ✅ DONE (2026-11-19) `CSysWinBuff` / `CSysWinSave` `.data` — both now **MATCH** (256 bytes /
+     252+4 tail) with no source hand-blobs. The boundaries were the whole problem: CSysWinBuff
+     `.data 0x80537DC0..0x80537EC0` (its 0x10 `camControlTable` is ICamControlRemote.cpp's user
+     object — it is followed in the same run by that TU's generated ICamControl vtables) and
+     CChainCombo `.data 0x80538988..0x805389A0` (3-word table + the weak `__vt__Q22cf11CChainCombo`)
+     with CSysWinSave `0x805389A0..0x80538AA0`. `cf::CChainCombo` is now a real class (members, then
+     `virtual ~CChainCombo() {}`: MWCC puts the vptr at 0x14 and emits a **weak** vtable in the
+     ctor's TU, which is exactly where retail keeps it; the surviving weak `__dt__` copy is
+     CBattleManager.o's). Recipes/evidence: MWCC_CASES "MWCC vtable emission, part 2" + "Split
+     boundaries cut by neighbour-owned bytes". JP's splits already had these boundaries.
+     Remaining: ICamControlRemote's other 0xC8 bytes (ICamControl/Classic/Gc vtables + RTTI as real
+     classes) and its `.sbss` instance cells (`camControlDefault/Classic/Gc`) still live in
+     CSysWinBuff's slice; `code_8027513C.cpp`'s own `.data` 0x130 vs 0xC.
+   - ✅ RESOLVED as "no change" (2026-11-19) `CSystemWindow` vtable: the block is CSystemWindow's
+     *class* data but was emitted by the TU at **CTagProcessor's** link position — all three of
+     that unit's slices start exactly there (`"CSystemWindow"` at `.rodata:0x804FEFA8`,
+     `__RTTI__13CSystemWindow` at `.sdata:0x80661EE0`, `__vt__`+base list at `.data:0x8052D378`),
+     and CSysWinSelect's three slices are exactly consumed by its own vtable/RTTI/name string. So
+     the existing US boundaries are consistent; converting CSystemWindow would emit a second copy
+     *earlier* in link order and break CSysWinSelect/CTagProcessor. Do not convert. See MWCC_CASES
+     "`__vt__13CSystemWindow` is emitted by the TU at CTagProcessor's link position".
    - `code_804DEDA8` moved to Wii/1.1 (configure.py); ReleaseHandle x3 via s16 entry + inlined s32
      worker. `SchedAnim_NoOp` is really a 0x238 colour-apply function (stub).
    - LODMemMan: `teardownG3dObjects` 65.3% (retail does not inline `clearFlagAndResetName`; no

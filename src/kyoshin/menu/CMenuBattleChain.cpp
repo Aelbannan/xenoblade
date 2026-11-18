@@ -2,6 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <nw4r/lyt/lyt_drawInfo.h>
+
+// The retail CMenuBattleChain destructor calls __dt__8CProcessFv directly: the
+// IUIWindow / CTTask<IUIWindow> / IWorkEvent destructor bodies are inlined into
+// this TU (cs. CSysWinBuff / CTalkWindow).
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuBattleChain.hpp"
@@ -18,6 +25,15 @@
 class IWorkEvent;
 class IScnRender;
 
+/*
+ * Battle-chain resource names. Retail keeps them in MWCC's string pool as one
+ * literal block: the layout/region name first, then the five anim transforms
+ * (+0x11/+0x2a/+0x46/+0x64/+0x87/+0xaa) and the pane names at +0xc9..0x133 that
+ * applyChainColorScheme indexes by chain type, plus six trailing zeros. That is
+ * why the compiler's own "CMenuBattleChain" type-name string sits ahead of it at
+ * .rodata:0x80510878 (the address __RTTI__16CMenuBattleChain points at) and the
+ * block follows at 0x8051088C.
+ */
 // Thunk targets (retail mangled names). extern "C" keeps the exact symbol
 // (no extra __FPv); GetItemMulti idiom.
 extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags);
@@ -29,95 +45,25 @@ void waitForDrawDone();
 }
 
 /*
- * Battle-chain menu constructor (retail unmangled name __ct__CMenuBattleChain,
- * 3 args: this, owning scene, chain-type byte). Builds the CProcess base,
- * installs the temp then composite vtables, copies the null PMF triple into
- * the Move/Draw callback slots, initialises the layout zone (+0x54..0x68),
- * stores the composite / IWorkEvent(+0x24) / IScnRender(+0xac) vtable slots,
- * constructs the scratch region at +0x78 and zeroes/initialises the tail
- * fields, keeping the chain-type byte at +0x9D.
+ * CMenuBattleChain::CMenuBattleChain - CProcess base, then the inlined
+ * CTTask<IUIWindow> / IUIWindow base constructors (base vptr, null Move/Draw
+ * pmf hooks, layout/state fields), the composite and sub-vptrs, the embedded
+ * layout-build region and the animation/state tail. The chain-type byte lands
+ * at +0x9D.
  */
-extern "C" CMenuBattleChain* __ct__CMenuBattleChain(CMenuBattleChain* obj,
-                                                     CScn* parent, u8 arg) {
-    __ct__8CProcessFv((CProcess*)obj);
-
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IWorkEvent (+0x24) / IScnRender (+0xac) sub-vtables. The pmf
-    // copy reads the null member-function-pointer triple through one base
-    // register; post-increment derefs of a const local pointer fold the first
-    // access into `lwzu` (btm_sco_init shape). Stores are [1],[0],[2] per
-    // group (retail order 0x40,0x3C,0x44 / 0x4C,0x48,0x50).
-    obj->mProcessVt = (u32)lbl_eu_8052D238;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    obj->ptmfMove[1] = w1;
-    obj->ptmfMove[0] = w0;
-    u32 w2 = *src++;
-    obj->ptmfMove[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    obj->ptmfDraw[1] = w0;
-    obj->ptmfDraw[0] = w1;
-    w2 = *src++;
-    obj->ptmfDraw[2] = w2;
-
-    obj->mLayout = 0;
-    obj->mField58 = 0;
-    obj->mField5C = 0;
-    obj->mField60 = -1;
-    obj->mField64 = 0;
-    obj->mField65 = 0;
-    obj->mField66 = 0;
-    obj->mField67 = 1;
-    obj->mField68 = 0;
-
-    obj->mProcessVt = (u32)&lbl_eu_80539E48[0];
-    obj->mIWorkEventVt = (u32)&lbl_eu_80539E48[9];
-    obj->mIScnRenderVt = (u32)&lbl_eu_80539E48[43];
-    obj->mScn = parent;
-
-    __ct__17UnkClass_8045F564Fv(&obj->mRegion);
-
-    obj->mAnim0 = 0;
-    obj->mAnim1 = 0;
-    obj->mAnim2 = 0;
-    obj->mAnim3 = 0;
-    obj->mAnim4 = 0;
-    obj->mField9C = 0;
-    obj->mField9D = arg;
-    obj->mField9E = 0;
-    return obj;
-}
-
-// Member/base dtors and operator delete (retail names). The redundant
-// `if (self != 0)` re-check reproduces the retail's dead double-beq.
-extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
+CMenuBattleChain::CMenuBattleChain(CScn* parent, u8 arg)
+    : mScn(parent), mRegion(), mAnim0(0), mAnim1(0), mAnim2(0), mAnim3(0),
+      mAnim4(0), mField9C(0), mField9D(arg), mField9E(0) {}
 
 /*
- * Complete-object destructor (retail __dt__16CMenuBattleChainFv). Written as
- * the explicit flags-taking ABI body: the redundant `if (self != 0)`
- * re-checks reproduce the retail's dead double-beq, and the flags>0 tail is
- * the deleting path MWCC would otherwise generate for a member dtor (a plain
- * member ~CMenuBattleChain() reorders the base/region destruction and does
- * not match; see KB sibling attempts).
+ * Complete-object destructor. The embedded layout-build region is destroyed
+ * (flags -1), then the CProcess base guarded by the nested double null-check
+ * (an MWCC D2-inlined-into-D1 artifact; the IUIWindow / CTTask<IUIWindow> /
+ * IWorkEvent base dtors are the inline-empty variants selected by the macros
+ * at the top of this file), then the deleting path calls operator delete.
+ * Same shape as ~CTalkWindow / ~CSysWinSave.
  */
-extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags) {
-    if (self == 0)
-        goto end;
-    __dt__17UnkClass_8045F564Fv(&self->mRegion, -1);
-    if (self != 0) {
-        if (self != 0) {
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
-        }
-    }
-    if (flags > 0)
-        operator delete(self);
-end:
-    return self;
-}
+CMenuBattleChain::~CMenuBattleChain() {}
 
 /*
  * Build the battle-chain menu: allocate a 0x4000 scratch region from MEM2,
@@ -128,16 +74,15 @@ end:
  */
 void CMenuBattleChain::Init() {
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    char* base = (char*)lbl_eu_8051088C;
-    mRegion.createRegion(mem2, 0x4000, base, 0);
+    mRegion.createRegion(mem2, 0x4000, "CMenuBattleChain", 0);
     Class_8045F858 regionGuard(&mRegion);
 
-    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &base[0x11]);
-    bindLayoutAnimTransform(mLayout, &mAnim0, CUICfManager_getArcResourceAccessor(), &base[0x2a]);
-    bindLayoutAnimTransform(mLayout, &mAnim1, CUICfManager_getArcResourceAccessor(), &base[0x46]);
-    bindLayoutAnimTransform(mLayout, &mAnim2, CUICfManager_getArcResourceAccessor(), &base[0x64]);
-    bindLayoutAnimTransform(mLayout, &mAnim3, CUICfManager_getArcResourceAccessor(), &base[0x87]);
-    bindLayoutAnimTransform(mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnim0, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnim1, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo_glow.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnim2, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo_chang_out.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnim3, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo_change_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), "mf70_cf54_sideinfo_break.brlan");
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)getPackedFont());
@@ -149,24 +94,14 @@ void CMenuBattleChain::Init() {
 
     mField67 = 0;
 
-    // MI adjust: IScnRender subobject at +0x70 (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->addRenderCB(cb, 0xa, 0);
+    mScn->addRenderCB(this, 0xa, 0);
 
     mRegion.validateHeap();
 }
 
 void CMenuBattleChain::Term() {
     CDeviceVI::waitForDrawDone();
-    // Same MI adjust as Init: IScnRender subobject at +0x70 (null-this safe).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
-    }
-    mScn->removeRenderCB(cb);
+    mScn->removeRenderCB(this);
     if (mLayout != 0) {
         delete mLayout;
         mLayout = 0;
@@ -282,12 +217,10 @@ extern "C" CMenuBattleChain* createBattleChainMenu(CProcess* parent, CScn* scene
         return NULL;
     }
     u32 heap = CWorkThreadSystem::getWorkMem();
-    CMenuBattleChain* obj = (CMenuBattleChain*)mtl::MemManager::allocate(0xa0, heap);
-    if (obj != NULL) {
-        // Retail keeps obj live in r3 by chaining the ctor's `this` return
-        // through the null-check, avoiding a fourth callee-saved register.
-        obj = __ct__CMenuBattleChain(obj, scene, chainType);
-    }
+    // Retail keeps obj live in r3 by chaining the ctor's `this` return
+    // through the null-check, avoiding a fourth callee-saved register.
+    CMenuBattleChain* obj = new (mtl::MemManager::allocate(0xa0, heap))
+        CMenuBattleChain(scene, chainType);
     // Retail keeps obj live in r3 across the singleton store so Regist is
     // called directly on it; the global is re-read only for the return value.
     lbl_eu_80664A60 = obj;
@@ -352,115 +285,107 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
     case 0:
         break;
     case 1: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A68, (const GXColorS10*)lbl_eu_80664A70);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D70);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D70);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D70);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D90, lbl_eu_80662D94);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664AE8, (const GXColorS10*)lbl_eu_80664AF0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664A68, (const GXColorS10*)lbl_eu_80664A70);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D70);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D70);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D70);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662D90, lbl_eu_80662D94);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664AE8, (const GXColorS10*)lbl_eu_80664AF0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664B68, (const GXColorS10*)lbl_eu_80664B70);
         break;
     }
     case 2: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A78, (const GXColorS10*)lbl_eu_80664A80);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D74);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D74);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D74);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D98, lbl_eu_80662D9C);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664AF8, (const GXColorS10*)lbl_eu_80664B00);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664A78, (const GXColorS10*)lbl_eu_80664A80);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D74);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D74);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D74);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662D98, lbl_eu_80662D9C);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664AF8, (const GXColorS10*)lbl_eu_80664B00);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664B78, (const GXColorS10*)lbl_eu_80664B80);
         break;
     }
     case 3: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A88, (const GXColorS10*)lbl_eu_80664A90);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D78);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D78);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D78);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA0, lbl_eu_80662DA4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B08, (const GXColorS10*)lbl_eu_80664B10);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664A88, (const GXColorS10*)lbl_eu_80664A90);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D78);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D78);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D78);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DA0, lbl_eu_80662DA4);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B08, (const GXColorS10*)lbl_eu_80664B10);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664B88, (const GXColorS10*)lbl_eu_80664B90);
         break;
     }
     case 4: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664A98, (const GXColorS10*)lbl_eu_80664AA0);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D7C);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D7C);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D7C);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA8, lbl_eu_80662DAC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B18, (const GXColorS10*)lbl_eu_80664B20);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664A98, (const GXColorS10*)lbl_eu_80664AA0);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D7C);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D7C);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D7C);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DA8, lbl_eu_80662DAC);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B18, (const GXColorS10*)lbl_eu_80664B20);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664B98, (const GXColorS10*)lbl_eu_80664BA0);
         break;
     }
     case 5: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AA8, (const GXColorS10*)lbl_eu_80664AB0);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D80);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D80);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D80);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB0, lbl_eu_80662DB4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B28, (const GXColorS10*)lbl_eu_80664B30);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664AA8, (const GXColorS10*)lbl_eu_80664AB0);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D80);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D80);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D80);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DB0, lbl_eu_80662DB4);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B28, (const GXColorS10*)lbl_eu_80664B30);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664BA8, (const GXColorS10*)lbl_eu_80664BB0);
         break;
     }
     case 6: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AB8, (const GXColorS10*)lbl_eu_80664AC0);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D84);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D84);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D84);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB8, lbl_eu_80662DBC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B38, (const GXColorS10*)lbl_eu_80664B40);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664AB8, (const GXColorS10*)lbl_eu_80664AC0);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D84);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D84);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D84);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DB8, lbl_eu_80662DBC);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B38, (const GXColorS10*)lbl_eu_80664B40);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664BB8, (const GXColorS10*)lbl_eu_80664BC0);
         break;
     }
     case 7: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AC8, (const GXColorS10*)lbl_eu_80664AD0);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D88);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D88);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D88);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC0, lbl_eu_80662DC4);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B48, (const GXColorS10*)lbl_eu_80664B50);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664AC8, (const GXColorS10*)lbl_eu_80664AD0);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D88);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D88);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D88);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DC0, lbl_eu_80662DC4);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B48, (const GXColorS10*)lbl_eu_80664B50);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664BC8, (const GXColorS10*)lbl_eu_80664BD0);
         break;
     }
     case 8: {
-        char* base = (char*)lbl_eu_8051088C;
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], (const GXColorS10*)lbl_eu_80664AD8, (const GXColorS10*)lbl_eu_80664AE0);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D8C);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D8C);
-        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D8C);
-        PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC8, lbl_eu_80662DCC);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], (const GXColorS10*)lbl_eu_80664B58, (const GXColorS10*)lbl_eu_80664B60);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x106], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x115], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x124], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
-        PaneMatSetTevColorsByName(self->mLayout, &base[0x133], (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic", (const GXColorS10*)lbl_eu_80664AD8, (const GXColorS10*)lbl_eu_80664AE0);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain00", -1, lbl_eu_80662D8C);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain01", -1, lbl_eu_80662D8C);
+        PaneSetVtxColorPairsByName(self->mLayout, "pic_chain02", -1, lbl_eu_80662D8C);
+        PaneSetColorFieldPair(self->mLayout, "txt_num", lbl_eu_80662DC8, lbl_eu_80662DCC);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_ic_gl", (const GXColorS10*)lbl_eu_80664B58, (const GXColorS10*)lbl_eu_80664B60);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain00_gl", (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain01_gl", (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, "pic_chain02_gl", (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
+        PaneMatSetTevColorsByName(self->mLayout, "txt_num_gl", (const GXColorS10*)lbl_eu_80664BD8, (const GXColorS10*)lbl_eu_80664BE0);
         break;
     }
     }
@@ -476,243 +401,23 @@ extern "C" void tickChainCounter(CMenuBattleChain* self) {
     self->mField9E = count;
     if (count >= 5) {
         self->mField9E = 5;
-        char* base = (char*)lbl_eu_8051088C;
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xdc], true)->SetVisible(false);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xe8], true)->SetVisible(true);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xf4], true)->SetVisible(false);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x115], true)->SetVisible(false);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x124], true)->SetVisible(true);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x133], true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain01", true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain02", true)->SetVisible(true);
+        self->mLayout->GetRootPane()->FindPaneByName("txt_num", true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain01_gl", true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain02_gl", true)->SetVisible(true);
+        self->mLayout->GetRootPane()->FindPaneByName("txt_num_gl", true)->SetVisible(false);
     } else {
-        char* base = (char*)lbl_eu_8051088C;
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xdc], true)->SetVisible(true);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xe8], true)->SetVisible(false);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0xf4], true)->SetVisible(true);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x115], true)->SetVisible(true);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x124], true)->SetVisible(false);
-        self->mLayout->GetRootPane()->FindPaneByName(&base[0x133], true)->SetVisible(true);
-        setLayoutTextBoxNumber(self->mLayout, &base[0xf4], self->mField9E);
-        setLayoutTextBoxNumber(self->mLayout, &base[0x133], self->mField9E);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain01", true)->SetVisible(true);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain02", true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("txt_num", true)->SetVisible(true);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain01_gl", true)->SetVisible(true);
+        self->mLayout->GetRootPane()->FindPaneByName("pic_chain02_gl", true)->SetVisible(false);
+        self->mLayout->GetRootPane()->FindPaneByName("txt_num_gl", true)->SetVisible(true);
+        setLayoutTextBoxNumber(self->mLayout, "txt_num", self->mField9E);
+        setLayoutTextBoxNumber(self->mLayout, "txt_num_gl", self->mField9E);
     }
 }
-
-/**
- * IWorkEvent (+0x6C) vtable this-adjusting thunk for ~CMenuBattleChain.
- * Retail: subi r3, r3, 0x6c; b __dt__16CMenuBattleChainFv
- * Single-arg cast: delete flag stays in r4 as caller leftover.
- */
-void CMenuBattleChain_dtorAdj6C(IWorkEvent* self) {
-    ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
-        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x6c));
-}
-
-/**
- * IScnRender (+0x70) vtable this-adjusting thunk for cbRenderBefore.
- * Retail: subi r3, r3, 0x70; b cbRenderBefore__16CMenuBattleChainFv
- * Flat-symbol cast keeps the 2-insn thunk (member call would inline/expand).
- */
-void CMenuBattleChain_renderBeforeAdj70(IScnRender* self) {
-    ((void (*)(CMenuBattleChain*))cbRenderBefore__16CMenuBattleChainFv)(
-        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
-}
-
-/**
- * IScnRender (+0x70) vtable this-adjusting thunk for ~CMenuBattleChain.
- * Retail: subi r3, r3, 0x70; b __dt__16CMenuBattleChainFv
- */
-void CMenuBattleChain_dtorAdj70(IScnRender* self) {
-    ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
-        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
-}
-
-// Track the current player and clear both pending toggle flags.
-extern "C" void trackChainPlayer(CBattleChainMenuState* self) {
-    self->mPlayer = cf::CfGameManager::getPlayer(0);
-    self->mFlag4 = 0;
-    self->mFlag5 = 0;
-}
-
-// Consume the pending toggle flags once the arts-select menu is interactable.
-extern "C" void consumeChainToggles(CBattleChainMenuState* self) {
-    if (CMenuArtsSelect_isInteractable()) {
-        if (self->mFlag4 != 0) {
-            CMenuArtsSelect_CreateArtsRef();
-            self->mFlag4 = 0;
-        }
-        if (self->mFlag5 != 0) {
-            CMenuArtsSelect_ResetSlotAnims();
-            self->mFlag5 = 0;
-        }
-    }
-}
-
-// Disable the arts-select menu, then (re)track the current player.
-extern "C" void reinitChainPlayer(CBattleChainMenuState* self) {
-    CMenuArtsSelect_setDisabled();
-    self->mPlayer = cf::CfGameManager::getPlayer(0);
-    self->mFlag4 = 0;
-    self->mFlag5 = 0;
-}
-
-// Disable the arts-select menu only when the tracked player changed, then
-// (re)track the current player.
-extern "C" void updateChainPlayer(CBattleChainMenuState* self) {
-    if (self->mPlayer != cf::CfGameManager::getPlayer(0)) {
-        CMenuArtsSelect_setDisabled();
-    }
-    self->mPlayer = cf::CfGameManager::getPlayer(0);
-    self->mFlag4 = 0;
-    self->mFlag5 = 0;
-}
-
-/*
- * Arts-select gate: report whether the arts menu selection state is live, and
- * set *outFlag when the current selection is "chain ready" (state 0 with
- * substate 5). A missing state or a -1 substate means "not usable".
- */
-extern "C" bool isChainReady(CBattleChainMenuState* self, u8* outFlag) {
-    // Retail keeps the two flag stores in separate branches (no store merge).
-    CArtsSelectStateView* sel = CMenuArtsSelect_getSelectState();
-    if (sel == NULL)
-        return false;
-    s8 sub = sel->field_1;
-    if (sub == -1)
-        return false;
-    s8 state = sel->field_0;
-    // Two separate stores - MWCC does not merge them.
-    if (state == 0 && sub == 5)
-        *outFlag = 1;
-    else
-        *outFlag = 0;
-    return true;
-}
-
-extern "C" void requestArtsRef(CBattleChainMenuState* self) { self->mFlag4 = 1; }
-
-// Whether the chain menu is busy (pending flag or arts-select not ready).
-extern "C" bool isChainMenuBusy(CBattleChainMenuState* self) {
-    return self->mFlag4 != 0 || CMenuArtsSelect_isNotReady();
-}
-
-extern "C" void requestAnimReset(CBattleChainMenuState* self) { self->mFlag5 = 1; }
-
-// Battle-chain singleton instance (retail .sbss head slot lbl_eu_80664A60;
-// the 48 colour records follow it, matching the split range
-// 0x80664A60-0x80664BE8).
-CMenuBattleChain* lbl_eu_80664A60;
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Battle-chain pane colour records (zero-init .sbss; values filled at startup
-// by sinit_802AAF24). Pairs are consumed by applyChainColorScheme per chain type.
-u16 lbl_eu_80664A68[4];
-u16 lbl_eu_80664A70[4];
-u16 lbl_eu_80664A78[4];
-u16 lbl_eu_80664A80[4];
-u16 lbl_eu_80664A88[4];
-u16 lbl_eu_80664A90[4];
-u16 lbl_eu_80664A98[4];
-u16 lbl_eu_80664AA0[4];
-u16 lbl_eu_80664AA8[4];
-u16 lbl_eu_80664AB0[4];
-u16 lbl_eu_80664AB8[4];
-u16 lbl_eu_80664AC0[4];
-u16 lbl_eu_80664AC8[4];
-u16 lbl_eu_80664AD0[4];
-u16 lbl_eu_80664AD8[4];
-u16 lbl_eu_80664AE0[4];
-u16 lbl_eu_80664AE8[4];
-u16 lbl_eu_80664AF0[4];
-u16 lbl_eu_80664AF8[4];
-u16 lbl_eu_80664B00[4];
-u16 lbl_eu_80664B08[4];
-u16 lbl_eu_80664B10[4];
-u16 lbl_eu_80664B18[4];
-u16 lbl_eu_80664B20[4];
-u16 lbl_eu_80664B28[4];
-u16 lbl_eu_80664B30[4];
-u16 lbl_eu_80664B38[4];
-u16 lbl_eu_80664B40[4];
-u16 lbl_eu_80664B48[4];
-u16 lbl_eu_80664B50[4];
-u16 lbl_eu_80664B58[4];
-u16 lbl_eu_80664B60[4];
-u16 lbl_eu_80664B68[4];
-u16 lbl_eu_80664B70[4];
-u16 lbl_eu_80664B78[4];
-u16 lbl_eu_80664B80[4];
-u16 lbl_eu_80664B88[4];
-u16 lbl_eu_80664B90[4];
-u16 lbl_eu_80664B98[4];
-u16 lbl_eu_80664BA0[4];
-u16 lbl_eu_80664BA8[4];
-u16 lbl_eu_80664BB0[4];
-u16 lbl_eu_80664BB8[4];
-u16 lbl_eu_80664BC0[4];
-u16 lbl_eu_80664BC8[4];
-u16 lbl_eu_80664BD0[4];
-u16 lbl_eu_80664BD8[4];
-u16 lbl_eu_80664BE0[4];
-
-// Battle-chain resource-name strings (retail .rodata). lbl_eu_80510878 is
-// the layout region name; lbl_eu_8051088C is the resource-name table whose
-// field offsets (+0x11 layout, +0x2a/+0x46/+0x64/+0x87/+0xaa anims,
-// +0xc9..0x133 panes) applyChainColorScheme indexes into. Bytes verified
-// against the retail object (build/us/obj/kyoshin/menu/CMenuBattleChain.o
-// .rodata); the table carries six trailing zero bytes (size 0x144).
-extern const char lbl_eu_80510878[] = "CMenuBattleChain";
-const char lbl_eu_8051088C[] =
-    "CMenuBattleChain\0"
-    "mf70_cf54_sideinfo.brlyt\0"
-    "mf70_cf54_sideinfo_in.brlan\0"
-    "mf70_cf54_sideinfo_glow.brlan\0"
-    "mf70_cf54_sideinfo_chang_out.brlan\0"
-    "mf70_cf54_sideinfo_change_in.brlan\0"
-    "mf70_cf54_sideinfo_break.brlan\0"
-    "pic_ic\0"
-    "pic_chain00\0"
-    "pic_chain01\0"
-    "pic_chain02\0"
-    "txt_num\0"
-    "pic_ic_gl\0"
-    "pic_chain00_gl\0"
-    "pic_chain01_gl\0"
-    "pic_chain02_gl\0"
-    "txt_num_gl\0\0\0\0\0\0";
-
-// Anim-frame constants (retail .sdata2 pool lbl_eu_80668CB0/B4: 0.0f frame
-// reset, 1.0f "finished" threshold). Values verified against the retail
-// object (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata2).
-extern const f32 lbl_eu_80668CB0 = 0.0f;
-extern const f32 lbl_eu_80668CB4 = 1.0f;
-
-// Chain-type colour/position constants (retail .sdata lbl_eu_80662D70..DCC).
-// Values verified against the retail object
-// (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata): slots 0x70-0x8C
-// are the eight per-type colours, slots 0x90-0xCC repeat them as
-// (white, colour) pairs consumed by PaneSetColorFieldPair.
-u32 lbl_eu_80662D70 = 0xF06969FF;
-u32 lbl_eu_80662D74 = 0x8A64FEFF;
-u32 lbl_eu_80662D78 = 0x48BA2AFF;
-u32 lbl_eu_80662D7C = 0xF0DC40FF;
-u32 lbl_eu_80662D80 = 0xEA7F2DFF;
-u32 lbl_eu_80662D84 = 0x4D97F2FF;
-u32 lbl_eu_80662D88 = 0xE672DEFF;
-u32 lbl_eu_80662D8C = 0xA0A0A0FF;
-u32 lbl_eu_80662D90 = 0xF0F0F0FF;
-u32 lbl_eu_80662D94 = 0xF06969FF;
-u32 lbl_eu_80662D98 = 0xF0F0F0FF;
-u32 lbl_eu_80662D9C = 0x8A64FEFF;
-u32 lbl_eu_80662DA0 = 0xF0F0F0FF;
-u32 lbl_eu_80662DA4 = 0x48BA2AFF;
-u32 lbl_eu_80662DA8 = 0xF0F0F0FF;
-u32 lbl_eu_80662DAC = 0xF0DC40FF;
-u32 lbl_eu_80662DB0 = 0xF0F0F0FF;
-u32 lbl_eu_80662DB4 = 0xEA7F2DFF;
-u32 lbl_eu_80662DB8 = 0xF0F0F0FF;
-u32 lbl_eu_80662DBC = 0x4D97F2FF;
-u32 lbl_eu_80662DC0 = 0xF0F0F0FF;
-u32 lbl_eu_80662DC4 = 0xE672DEFF;
-u32 lbl_eu_80662DC8 = 0xF0F0F0FF;
-u32 lbl_eu_80662DCC = 0xA0A0A0FF;
 
 /*
  * Static initializer filling the 48 battle-chain colour records. Written in
@@ -916,135 +621,98 @@ extern "C" void sinit_802AAF24() {
     lbl_eu_80664BE0[0] = 0xff;
 }
 
-// Retail tables owned by this unit.
-// .sdata tail (0x60-0x67): locator pair {rodata name, vtable-trailer}
-// (retail rela.sdata). __RTTI__16CMenuBattleChain is read by the vtable below. The
-// trailer word stays zero: it would reference lbl_eu_80539F08, but that
-// object dies with the frozen .data strip (extern_data_sections), so naming
-// it here would open a new link row for a symbol nothing can provide.
-// (wave DL-r4: 9F08 is now defined below and the strip is removed, so the
-// trailer names it.)
-extern void* lbl_eu_80539F08[16];
-const void* __RTTI__16CMenuBattleChain[2] = { lbl_eu_80510878, lbl_eu_80539F08 };
-// NOTE: the retail .data (jump tables + vtable + RTTI trailer) is
-// fully reconstructed in the residual notes below, but the frozen
-// CMenuBattleChain.o rule strips .data at RELOCPOST, so defining it here
-// only creates phantom link rows. Landed when the strip shrinks.
-#pragma section data_type ".data" ".data"
-// [.data] switch tables (0x00-0x47) stay compiler-pooled (@7782/@7835,
-// renamed to the jumptable labels by the unit rule); the vtable + RTTI
-// trailer below are explicit. In-file bytes are zeros at every reloc site.
-// Slots that have no C++ spelling stay zero (CFade/CMenuEnemyState idiom):
-// member-function+addend case slots, the short-named adjustor thunks
-// (dtorAdj6C/70, renderBeforeAdj70), the template Draw slot, and RTTI.
-extern "C" void Reset__14CChildListNodeFv();
-extern "C" void Tail__8CProcessFv();
-extern "C" void Init__16CMenuBattleChainFv(CMenuBattleChain* self);
-extern "C" void Term__16CMenuBattleChainFv(CMenuBattleChain* self);
-extern "C" void Move__16CMenuBattleChainFv(CMenuBattleChain* self);
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern u32 __RTTI__10IScnRender[];
-extern u32 __RTTI__15CDoubleListNode[];
-extern u32 __RTTI__14CChildListNode[];
-extern u32 __RTTI__8CProcess[];
-extern u32 lbl_eu_80661ED0[];
-extern u32 __RTTI__9IUIWindow[];
-__declspec(section ".data") __attribute__((used, aligned(8)))
-void* lbl_eu_80539E48[48] = {
-    (void*)__RTTI__16CMenuBattleChain,
-    (void*)0,
-    (void*)__dt__16CMenuBattleChainFv,
-    (void*)Reset__14CChildListNodeFv,
-    (void*)Init__16CMenuBattleChainFv,
-    (void*)Term__16CMenuBattleChainFv,
-    (void*)Move__16CMenuBattleChainFv,
-    (void*)0, // Draw__18CTTask<9IUIWindow>Fv: template-id unspellable
-    (void*)Tail__8CProcessFv,
-    (void*)__RTTI__16CMenuBattleChain,
-    (void*)0xFFFFFF94, // -108 this-adjustor
-    (void*)0, // CMenuBattleChain_dtorAdj6C: short name, link-provided nowhere
-    (void*)WorkEvent1__10IWorkEventFPvPCc,
-    (void*)OnFileEvent__10IWorkEventFP10CEventFile,
-    (void*)WorkEvent3__10IWorkEventFPv,
-    (void*)WorkEvent4__10IWorkEventFv,
-    (void*)OnPauseTrigger__10IWorkEventFb,
-    (void*)WorkEvent6__10IWorkEventFv,
-    (void*)WorkEvent7__10IWorkEventFv,
-    (void*)WorkEvent8__10IWorkEventFv,
-    (void*)WorkEvent9__10IWorkEventFv,
-    (void*)WorkEvent10__10IWorkEventFv,
-    (void*)WorkEvent11__10IWorkEventFv,
-    (void*)WorkEvent12__10IWorkEventFv,
-    (void*)WorkEvent13__10IWorkEventFv,
-    (void*)WorkEvent14__10IWorkEventFv,
-    (void*)WorkEvent15__10IWorkEventFv,
-    (void*)WorkEvent16__10IWorkEventFv,
-    (void*)WorkEvent17__10IWorkEventFv,
-    (void*)WorkEvent18__10IWorkEventFv,
-    (void*)WorkEvent19__10IWorkEventFv,
-    (void*)WorkEvent20__10IWorkEventFv,
-    (void*)WorkEvent21__10IWorkEventFv,
-    (void*)WorkEvent22__10IWorkEventFv,
-    (void*)WorkEvent23__10IWorkEventFv,
-    (void*)WorkEvent24__10IWorkEventFv,
-    (void*)WorkEvent25__10IWorkEventFv,
-    (void*)WorkEvent26__10IWorkEventFv,
-    (void*)WorkEvent27__10IWorkEventFv,
-    (void*)WorkEvent28__10IWorkEventFv,
-    (void*)WorkEvent29__10IWorkEventFv,
-    (void*)WorkEvent30__10IWorkEventFv,
-    (void*)WorkEvent31__10IWorkEventFv,
-    (void*)__RTTI__16CMenuBattleChain,
-    (void*)0xFFFFFF90, // -112 this-adjustor
-    (void*)0, // CMenuBattleChain_dtorAdj70: short name
-    (void*)0, // CMenuBattleChain_renderBeforeAdj70: short name
-    (void*)cbRenderBefore__16CMenuBattleChainFv,
-};
-__declspec(section ".data") __attribute__((used, aligned(8)))
-void* lbl_eu_80539F08[16] = {
-    (void*)&__RTTI__10IScnRender,
-    (void*)0x70, // 112: trailer count
-    (void*)0, // __RTTI__10IWorkEvent: unspellable in source
-    (void*)0x6C, // 108: trailer size
-    (void*)&__RTTI__15CDoubleListNode,
-    (void*)0,
-    (void*)&__RTTI__14CChildListNode,
-    (void*)0,
-    (void*)&__RTTI__8CProcess,
-    (void*)0,
-    (void*)&lbl_eu_80661ED0,
-    (void*)0,
-    (void*)&__RTTI__9IUIWindow,
-    (void*)0, (void*)0, (void*)0,
-};
-#pragma section data_type ".data" ".data"
+// Battle-chain singleton instance (retail .sbss head slot lbl_eu_80664A60;
+// the 48 colour records follow it, matching the split range
+// 0x80664A60-0x80664BE8).
+CMenuBattleChain* lbl_eu_80664A60;
+// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// Battle-chain pane colour records (zero-init .sbss; values filled at startup
+// by sinit_802AAF24). Pairs are consumed by applyChainColorScheme per chain type.
+u16 lbl_eu_80664A68[4];
+u16 lbl_eu_80664A70[4];
+u16 lbl_eu_80664A78[4];
+u16 lbl_eu_80664A80[4];
+u16 lbl_eu_80664A88[4];
+u16 lbl_eu_80664A90[4];
+u16 lbl_eu_80664A98[4];
+u16 lbl_eu_80664AA0[4];
+u16 lbl_eu_80664AA8[4];
+u16 lbl_eu_80664AB0[4];
+u16 lbl_eu_80664AB8[4];
+u16 lbl_eu_80664AC0[4];
+u16 lbl_eu_80664AC8[4];
+u16 lbl_eu_80664AD0[4];
+u16 lbl_eu_80664AD8[4];
+u16 lbl_eu_80664AE0[4];
+u16 lbl_eu_80664AE8[4];
+u16 lbl_eu_80664AF0[4];
+u16 lbl_eu_80664AF8[4];
+u16 lbl_eu_80664B00[4];
+u16 lbl_eu_80664B08[4];
+u16 lbl_eu_80664B10[4];
+u16 lbl_eu_80664B18[4];
+u16 lbl_eu_80664B20[4];
+u16 lbl_eu_80664B28[4];
+u16 lbl_eu_80664B30[4];
+u16 lbl_eu_80664B38[4];
+u16 lbl_eu_80664B40[4];
+u16 lbl_eu_80664B48[4];
+u16 lbl_eu_80664B50[4];
+u16 lbl_eu_80664B58[4];
+u16 lbl_eu_80664B60[4];
+u16 lbl_eu_80664B68[4];
+u16 lbl_eu_80664B70[4];
+u16 lbl_eu_80664B78[4];
+u16 lbl_eu_80664B80[4];
+u16 lbl_eu_80664B88[4];
+u16 lbl_eu_80664B90[4];
+u16 lbl_eu_80664B98[4];
+u16 lbl_eu_80664BA0[4];
+u16 lbl_eu_80664BA8[4];
+u16 lbl_eu_80664BB0[4];
+u16 lbl_eu_80664BB8[4];
+u16 lbl_eu_80664BC0[4];
+u16 lbl_eu_80664BC8[4];
+u16 lbl_eu_80664BD0[4];
+u16 lbl_eu_80664BD8[4];
+u16 lbl_eu_80664BE0[4];
+
+// (The resource-name block above is the 0x144-byte literal at retail
+// .rodata:0x8051088C; the compiler emits it into the string pool.)
+
+// Anim-frame constants (retail .sdata2 pool lbl_eu_80668CB0/B4: 0.0f frame
+// reset, 1.0f "finished" threshold). Values verified against the retail
+// object (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata2).
+extern const f32 lbl_eu_80668CB0 = 0.0f;
+extern const f32 lbl_eu_80668CB4 = 1.0f;
+
+// Chain-type colour/position constants (retail .sdata lbl_eu_80662D70..DCC).
+// Values verified against the retail object
+// (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata): slots 0x70-0x8C
+// are the eight per-type colours, slots 0x90-0xCC repeat them as
+// (white, colour) pairs consumed by PaneSetColorFieldPair.
+u32 lbl_eu_80662D70 = 0xF06969FF;
+u32 lbl_eu_80662D74 = 0x8A64FEFF;
+u32 lbl_eu_80662D78 = 0x48BA2AFF;
+u32 lbl_eu_80662D7C = 0xF0DC40FF;
+u32 lbl_eu_80662D80 = 0xEA7F2DFF;
+u32 lbl_eu_80662D84 = 0x4D97F2FF;
+u32 lbl_eu_80662D88 = 0xE672DEFF;
+u32 lbl_eu_80662D8C = 0xA0A0A0FF;
+u32 lbl_eu_80662D90 = 0xF0F0F0FF;
+u32 lbl_eu_80662D94 = 0xF06969FF;
+u32 lbl_eu_80662D98 = 0xF0F0F0FF;
+u32 lbl_eu_80662D9C = 0x8A64FEFF;
+u32 lbl_eu_80662DA0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DA4 = 0x48BA2AFF;
+u32 lbl_eu_80662DA8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DAC = 0xF0DC40FF;
+u32 lbl_eu_80662DB0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DB4 = 0xEA7F2DFF;
+u32 lbl_eu_80662DB8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DBC = 0x4D97F2FF;
+u32 lbl_eu_80662DC0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DC4 = 0xE672DEFF;
+u32 lbl_eu_80662DC8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DCC = 0xA0A0A0FF;
+

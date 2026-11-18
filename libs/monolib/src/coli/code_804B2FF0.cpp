@@ -9,6 +9,7 @@ class __declspec(novtable) CTaskColiManager;
 #include <harness_catalog.h>
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
+#include <monolib/coli/CColiProc.hpp> // CColiResCall (the mover object this TU updates)
 // The shared header declares lbl_eu_8065D138 / lbl_eu_8056F4F0 as SDA-sized
 // externs (4-byte pointer / 1-byte u8), but retail addresses both as full
 // objects via lis/addi (ADDR16_HA/LO relocs). Rename the header's declarations
@@ -76,57 +77,6 @@ struct CModelRes {
     void* resMdl; //0x146C
 };
 
-// ---------------------------------------------------------------------------
-// ColiMoverUpdate: move a collision-source position through a bone matrix twice,
-// fold the delta into the object's accumulated offset, then add the linear
-// offset component. Both stages end by notifying the target object. The
-// delta/accumulate stages use the nw4r SDK inline ASM helpers so MWCC emits
-// the retail psq_l/ps_sub/ps_add paired-single sequences.
-// ---------------------------------------------------------------------------
-struct CColiMtxSrc {
-    Mtx mtx0;       //0x0
-    char pad[0x60]; //0x30
-    Mtx mtx1;       //0x90
-};
-
-struct CColiMover {
-    char pad0[0xC];
-    Vec pos;           //0xC
-    char pad1[0xC];    //0x18
-    Vec off;           //0x24
-    char pad2[0x8];    //0x30
-    Vec acc;           //0x38
-    CColiMtxSrc* src;  //0x44
-    void* target;      //0x48
-};
-
-void ColiMoverUpdate(CColiMover* self) {
-    // Null-check the matrix source first; the vertical-offset gate only
-    // evaluates when a source exists (short-circuit, matching retail's
-    // early beq to the shared tail).
-    if (self->src != NULL) {
-        if (self->off.y > 0.0f) {
-            Vec tmp;
-            Vec* pos = &self->pos;
-            PSMTXMultVec((const f32 (*)[4])self->src->mtx1, pos, (Vec*)&tmp);
-            PSMTXMultVec((const f32 (*)[4])self->src->mtx0, (Vec*)&tmp,
-                         (Vec*)&tmp);
-            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp,
-                                (nw4r::math::VEC3*)&tmp,
-                                (nw4r::math::VEC3*)&self->pos);
-            nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
-                                (nw4r::math::VEC3*)&self->acc,
-                                (nw4r::math::VEC3*)&tmp);
-            ColiTranslatePoints(self->target);
-        }
-    }
-
-    // Tail: acc += off, then notify the target object.
-    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
-                        (nw4r::math::VEC3*)&self->acc,
-                        (nw4r::math::VEC3*)&self->off);
-    ColiTranslatePoints(self->target)
-;}
 
 // Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
 // index at 0x30 (both written by ColiFindNodePair).
@@ -144,7 +94,7 @@ struct CNameRef {
 };
 
 // Shared node-name table base (retail loads the pointer via sda21).
-extern char* lbl_eu_80665940;
+extern char* g_coliSpecTable;
 
 // C-linkage spelling for the dispatch-table participants (retail symbol
 // names; the definitions below adopt this linkage).
@@ -159,7 +109,7 @@ extern "C" void ColiFindNodePair(CDualIndexNode*, const char*, const CModelRes*,
 // ---------------------------------------------------------------------------
 void ColiFindNodePair(CDualIndexNode* self, const char* name,
                    const CModelRes* model, const CNameRef* ref) {
-    const char* name2 = lbl_eu_80665940 + ref->offset;
+    const char* name2 = g_coliSpecTable + ref->offset;
     int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
     u32 flags = 0;
     self->flags = (u16)flags;
@@ -270,7 +220,7 @@ struct CColiQuery {
     char pad1[0x8]; //0x10
 };
 
-int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   u32 mask, int arg, int isFirst, f32 val) {
     // val survives every helper call in an FP saved register.
     const f32 v = val;
@@ -375,7 +325,7 @@ int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     return found;
 }
 
-int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   const Vec* b, u32 mask, int arg, int isFirst) {
     // Distinct web for `b`: retail materializes it into a callee-saved
     // register at entry (it must survive the first helper call).
@@ -519,40 +469,40 @@ void ColiExpandSphere(CColiSphere* p) {
     // the radius is re-fetched at the top of every check).
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[0] < p->x + r) {
-            lbl_eu_80665944->max[0] = p->x + r;
+        if (g_coliBounds->max[0] < p->x + r) {
+            g_coliBounds->max[0] = p->x + r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[0] > p->x - r) {
-            lbl_eu_80665944->min[0] = p->x - r;
+        if (g_coliBounds->min[0] > p->x - r) {
+            g_coliBounds->min[0] = p->x - r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[1] < p->y + r) {
-            lbl_eu_80665944->max[1] = p->y + r;
+        if (g_coliBounds->max[1] < p->y + r) {
+            g_coliBounds->max[1] = p->y + r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[1] > p->y - r) {
-            lbl_eu_80665944->min[1] = p->y - r;
+        if (g_coliBounds->min[1] > p->y - r) {
+            g_coliBounds->min[1] = p->y - r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[2] < p->z + r) {
-            lbl_eu_80665944->max[2] = p->z + r;
+        if (g_coliBounds->max[2] < p->z + r) {
+            g_coliBounds->max[2] = p->z + r;
         }
     }
     // Final check keeps the scoped radius temp so retail's radius-first
     // load order (f1 <- p->radius before f0 <- p->z) is reproduced.
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[2] > p->z - r) {
-            lbl_eu_80665944->min[2] = p->z - r;
+        if (g_coliBounds->min[2] > p->z - r) {
+            g_coliBounds->min[2] = p->z - r;
         }
     }
 }
@@ -570,23 +520,23 @@ struct CColiEllipsoid {
 extern "C" void Coli_ExpandEllipsoid(CColiEllipsoid*);
 
 void Coli_ExpandEllipsoid(CColiEllipsoid* p) {
-    if (lbl_eu_80665944->max[0] < p->x + p->radiusXZ) {
-        lbl_eu_80665944->max[0] = p->x + p->radiusXZ;
+    if (g_coliBounds->max[0] < p->x + p->radiusXZ) {
+        g_coliBounds->max[0] = p->x + p->radiusXZ;
     }
-    if (lbl_eu_80665944->min[0] > p->x - p->radiusXZ) {
-        lbl_eu_80665944->min[0] = p->x - p->radiusXZ;
+    if (g_coliBounds->min[0] > p->x - p->radiusXZ) {
+        g_coliBounds->min[0] = p->x - p->radiusXZ;
     }
-    if (lbl_eu_80665944->max[2] < p->z + p->radiusXZ) {
-        lbl_eu_80665944->max[2] = p->z + p->radiusXZ;
+    if (g_coliBounds->max[2] < p->z + p->radiusXZ) {
+        g_coliBounds->max[2] = p->z + p->radiusXZ;
     }
-    if (lbl_eu_80665944->min[2] > p->z - p->radiusXZ) {
-        lbl_eu_80665944->min[2] = p->z - p->radiusXZ;
+    if (g_coliBounds->min[2] > p->z - p->radiusXZ) {
+        g_coliBounds->min[2] = p->z - p->radiusXZ;
     }
-    if (lbl_eu_80665944->max[1] < p->y + p->radiusY) {
-        lbl_eu_80665944->max[1] = p->y + p->radiusY;
+    if (g_coliBounds->max[1] < p->y + p->radiusY) {
+        g_coliBounds->max[1] = p->y + p->radiusY;
     }
-    if (lbl_eu_80665944->min[1] > p->y - p->radiusY) {
-        lbl_eu_80665944->min[1] = p->y - p->radiusY;
+    if (g_coliBounds->min[1] > p->y - p->radiusY) {
+        g_coliBounds->min[1] = p->y - p->radiusY;
     }
 }
 
@@ -611,28 +561,28 @@ void ColiExpandCapsule(CColiCapsule* p) {
             f32 v;
             f32 r = p->radius;
             v = p->endPos[i];
-            if (lbl_eu_80665944->max[i] < v + r) {
-                lbl_eu_80665944->max[i] = v + r;
+            if (g_coliBounds->max[i] < v + r) {
+                g_coliBounds->max[i] = v + r;
             }
         }
         {
             f32 r = p->radius;
-            if (lbl_eu_80665944->min[i] > p->endPos[i] - r) {
-                lbl_eu_80665944->min[i] = p->endPos[i] - r;
+            if (g_coliBounds->min[i] > p->endPos[i] - r) {
+                g_coliBounds->min[i] = p->endPos[i] - r;
             }
         }
         {
             f32 v;
             f32 r = p->radius;
             v = p->endPosB[i];
-            if (lbl_eu_80665944->max[i] < v + r) {
-                lbl_eu_80665944->max[i] = v + r;
+            if (g_coliBounds->max[i] < v + r) {
+                g_coliBounds->max[i] = v + r;
             }
         }
         {
             f32 r = p->radius;
-            if (lbl_eu_80665944->min[i] > p->endPosB[i] - r) {
-                lbl_eu_80665944->min[i] = p->endPosB[i] - r;
+            if (g_coliBounds->min[i] > p->endPosB[i] - r) {
+                g_coliBounds->min[i] = p->endPosB[i] - r;
             }
         }
     }
@@ -660,12 +610,12 @@ void Coli_ExpandPoint(CColiBoundsPoint* p) {
         f32 v;
         f32 r = p->radius;
         v = p->pos[i].value;
-        if (lbl_eu_80665944->max[i] < v + r) {
-            lbl_eu_80665944->max[i] = v + r;
+        if (g_coliBounds->max[i] < v + r) {
+            g_coliBounds->max[i] = v + r;
         }
         r = p->radius;
-        if (lbl_eu_80665944->min[i] > p->pos[i].value - r) {
-            lbl_eu_80665944->min[i] = p->pos[i].value - r;
+        if (g_coliBounds->min[i] > p->pos[i].value - r) {
+            g_coliBounds->min[i] = p->pos[i].value - r;
         }
     }
 }
@@ -693,38 +643,38 @@ void ColiExpandPoint(CColiBoundsPoint2* p) {
     // build vs retail r4 (see docs/MWCC_CASES.md bounds-expansion family).
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[0] < p->x + r) {
-            lbl_eu_80665944->max[0] = p->x + r;
+        if (g_coliBounds->max[0] < p->x + r) {
+            g_coliBounds->max[0] = p->x + r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[0] > p->x - r) {
-            lbl_eu_80665944->min[0] = p->x - r;
+        if (g_coliBounds->min[0] > p->x - r) {
+            g_coliBounds->min[0] = p->x - r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[1] < p->y + r) {
-            lbl_eu_80665944->max[1] = p->y + r;
+        if (g_coliBounds->max[1] < p->y + r) {
+            g_coliBounds->max[1] = p->y + r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[1] > p->y - r) {
-            lbl_eu_80665944->min[1] = p->y - r;
+        if (g_coliBounds->min[1] > p->y - r) {
+            g_coliBounds->min[1] = p->y - r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->max[2] < p->z + r) {
-            lbl_eu_80665944->max[2] = p->z + r;
+        if (g_coliBounds->max[2] < p->z + r) {
+            g_coliBounds->max[2] = p->z + r;
         }
     }
     {
         f32 r = p->radius;
-        if (lbl_eu_80665944->min[2] > p->z - r) {
-            lbl_eu_80665944->min[2] = p->z - r;
+        if (g_coliBounds->min[2] > p->z - r) {
+            g_coliBounds->min[2] = p->z - r;
         }
     }
 }
@@ -875,33 +825,33 @@ void ColiSetSphereMtx(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other
 
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[0] < r + self->pos[0])
-            lbl_eu_80665944->max[0] = r + self->pos[0];
+        if (g_coliBounds->max[0] < r + self->pos[0])
+            g_coliBounds->max[0] = r + self->pos[0];
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
-            lbl_eu_80665944->min[0] = self->pos[0] - r;
+        if (g_coliBounds->min[0] > self->pos[0] - r)
+            g_coliBounds->min[0] = self->pos[0] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[1] < r + self->pos[1])
-            lbl_eu_80665944->max[1] = r + self->pos[1];
+        if (g_coliBounds->max[1] < r + self->pos[1])
+            g_coliBounds->max[1] = r + self->pos[1];
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
-            lbl_eu_80665944->min[1] = self->pos[1] - r;
+        if (g_coliBounds->min[1] > self->pos[1] - r)
+            g_coliBounds->min[1] = self->pos[1] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[2] < r + self->pos[2])
-            lbl_eu_80665944->max[2] = r + self->pos[2];
+        if (g_coliBounds->max[2] < r + self->pos[2])
+            g_coliBounds->max[2] = r + self->pos[2];
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
-            lbl_eu_80665944->min[2] = self->pos[2] - r;
+        if (g_coliBounds->min[2] > self->pos[2] - r)
+            g_coliBounds->min[2] = self->pos[2] - r;
     }
 }
 
@@ -939,23 +889,23 @@ void ColiUpdateMtxNode(CColiMtxNode* self, const CColiMgr* mgr,
     // radius; every check reloads the stored radius, the matrix element and
     // the shared bounds pointer.
     f32 r = self->radius;
-    if (lbl_eu_80665944->max[0] < self->mtxW.m[0][3] + r)
-        lbl_eu_80665944->max[0] = self->mtxW.m[0][3] + r;
+    if (g_coliBounds->max[0] < self->mtxW.m[0][3] + r)
+        g_coliBounds->max[0] = self->mtxW.m[0][3] + r;
     r = self->radius;
-    if (lbl_eu_80665944->min[0] > self->mtxW.m[0][3] - r)
-        lbl_eu_80665944->min[0] = self->mtxW.m[0][3] - r;
+    if (g_coliBounds->min[0] > self->mtxW.m[0][3] - r)
+        g_coliBounds->min[0] = self->mtxW.m[0][3] - r;
     r = self->radius;
-    if (lbl_eu_80665944->max[1] < self->mtxW.m[1][3] + r)
-        lbl_eu_80665944->max[1] = self->mtxW.m[1][3] + r;
+    if (g_coliBounds->max[1] < self->mtxW.m[1][3] + r)
+        g_coliBounds->max[1] = self->mtxW.m[1][3] + r;
     r = self->radius;
-    if (lbl_eu_80665944->min[1] > self->mtxW.m[1][3] - r)
-        lbl_eu_80665944->min[1] = self->mtxW.m[1][3] - r;
+    if (g_coliBounds->min[1] > self->mtxW.m[1][3] - r)
+        g_coliBounds->min[1] = self->mtxW.m[1][3] - r;
     r = self->radius;
-    if (lbl_eu_80665944->max[2] < self->mtxW.m[2][3] + r)
-        lbl_eu_80665944->max[2] = self->mtxW.m[2][3] + r;
+    if (g_coliBounds->max[2] < self->mtxW.m[2][3] + r)
+        g_coliBounds->max[2] = self->mtxW.m[2][3] + r;
     r = self->radius;
-    if (lbl_eu_80665944->min[2] > self->mtxW.m[2][3] - r)
-        lbl_eu_80665944->min[2] = self->mtxW.m[2][3] - r;
+    if (g_coliBounds->min[2] > self->mtxW.m[2][3] - r)
+        g_coliBounds->min[2] = self->mtxW.m[2][3] - r;
 }
 
 // Ellipsoid-shaped collision object (ColiSetEllipsoid / ColiXformEllipsoid).
@@ -1000,9 +950,9 @@ void Coli_FindNodeRecord(CColiHead* self, const char* name, const CModelRes* mod
             if (!node.IsValid()) {
                 nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
             }
-            lbl_eu_80665950 = (s16)node.GetMtxID();
-            lbl_eu_8066594C->ax = v->v.x;
-            lbl_eu_8066594C->ay = v->v.y - v->v.z;
+            g_coliNodeIndex = (s16)node.GetMtxID();
+            g_coliHalfExtent->ax = v->v.x;
+            g_coliHalfExtent->ay = v->v.y - v->v.z;
             return;
         }
     }
@@ -1025,7 +975,7 @@ struct CColiMtxOut {
 // Coli_ShiftMtxHist: shift the previous matrix pair up into the history slots,
 // then copy the bone matrix into m0 and derive its inverse into m1.
 // ---------------------------------------------------------------------------
-void Coli_ShiftMtxHist(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+extern "C" void Coli_ShiftMtxHist(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
     dst->old = dst->cur;
     const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[hd->index];
     dst->cur.m0 = *src;
@@ -1120,14 +1070,14 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
     // axis per counted-loop iteration (retail reloads the bounds pointer for
     // every check, so dereference the global directly).
     for (int i = 0; i < 3; i++) {
-        if (lbl_eu_80665944->max[i] < self->posA[i] + self->radius)
-            lbl_eu_80665944->max[i] = self->posA[i] + self->radius;
-        if (lbl_eu_80665944->min[i] > self->posA[i] - self->radius)
-            lbl_eu_80665944->min[i] = self->posA[i] - self->radius;
-        if (lbl_eu_80665944->max[i] < self->posB[i] + self->radius)
-            lbl_eu_80665944->max[i] = self->posB[i] + self->radius;
-        if (lbl_eu_80665944->min[i] > self->posB[i] - self->radius)
-            lbl_eu_80665944->min[i] = self->posB[i] - self->radius;
+        if (g_coliBounds->max[i] < self->posA[i] + self->radius)
+            g_coliBounds->max[i] = self->posA[i] + self->radius;
+        if (g_coliBounds->min[i] > self->posA[i] - self->radius)
+            g_coliBounds->min[i] = self->posA[i] - self->radius;
+        if (g_coliBounds->max[i] < self->posB[i] + self->radius)
+            g_coliBounds->max[i] = self->posB[i] + self->radius;
+        if (g_coliBounds->min[i] > self->posB[i] - self->radius)
+            g_coliBounds->min[i] = self->posB[i] - self->radius;
     }
 }
 
@@ -1138,10 +1088,10 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
 // ---------------------------------------------------------------------------
 void ColiXformFixed(const CColiNode* unused, const CColiMgr* mgr,
                    const CColiPosVec* other) {
-    const s16 idx = lbl_eu_80665950;
+    const s16 idx = g_coliNodeIndex;
     const f32 (*src)[4] = mgr->mesh->boneTable[idx];
 
-    PSMTXMultVec(src, &other->pos, (Vec*)lbl_eu_80665948);
+    PSMTXMultVec(src, &other->pos, (Vec*)g_coliXformPos);
 
     nw4r::math::VEC3 n;
     n.x = lbl_eu_8066AEB4;
@@ -1150,44 +1100,45 @@ void ColiXformFixed(const CColiNode* unused, const CColiMgr* mgr,
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
     f32 mag = PSVECMag((const Vec*)&n);
 
-    lbl_eu_8066594C->ax = other->v.x * mag;
-    lbl_eu_8066594C->ay = other->v.y * mag;
-    lbl_eu_8066594C->f8 = other->v.z * mag;
-    lbl_eu_80665948->qy += lbl_eu_8066594C->f8;
-    lbl_eu_8066594C->ay -= lbl_eu_8066594C->f8;
+    CColiHx* hx = g_coliHalfExtent;
+    hx->ax = other->v.x * mag;
+    hx->ay = other->v.y * mag;
+    hx->f8 = other->v.z * mag;
+    g_coliXformPos->qy += g_coliHalfExtent->f8;
+    g_coliHalfExtent->ay -= g_coliHalfExtent->f8;
 
-    if (lbl_eu_80665944->max[0] < lbl_eu_80665948->qx + lbl_eu_8066594C->ax)
-        lbl_eu_80665944->max[0] = lbl_eu_80665948->qx + lbl_eu_8066594C->ax;
-    if (lbl_eu_80665944->min[0] > lbl_eu_80665948->qx - lbl_eu_8066594C->ax)
-        lbl_eu_80665944->min[0] = lbl_eu_80665948->qx - lbl_eu_8066594C->ax;
-    if (lbl_eu_80665944->max[2] < lbl_eu_80665948->qz + lbl_eu_8066594C->ay)
-        lbl_eu_80665944->max[2] = lbl_eu_80665948->qz + lbl_eu_8066594C->ay;
-    if (lbl_eu_80665944->min[2] > lbl_eu_80665948->qz - lbl_eu_8066594C->ay)
-        lbl_eu_80665944->min[2] = lbl_eu_80665948->qz - lbl_eu_8066594C->ay;
-    if (lbl_eu_80665944->max[1] < lbl_eu_80665948->qy + lbl_eu_8066594C->ay)
-        lbl_eu_80665944->max[1] = lbl_eu_80665948->qy + lbl_eu_8066594C->ay;
-    if (lbl_eu_80665944->min[1] > lbl_eu_80665948->qy)
-        lbl_eu_80665944->min[1] = lbl_eu_80665948->qy;
+    if (g_coliBounds->max[0] < g_coliXformPos->qx + g_coliHalfExtent->ax)
+        g_coliBounds->max[0] = g_coliXformPos->qx + g_coliHalfExtent->ax;
+    if (g_coliBounds->min[0] > g_coliXformPos->qx - g_coliHalfExtent->ax)
+        g_coliBounds->min[0] = g_coliXformPos->qx - g_coliHalfExtent->ax;
+    if (g_coliBounds->max[2] < g_coliXformPos->qz + g_coliHalfExtent->ax)
+        g_coliBounds->max[2] = g_coliXformPos->qz + g_coliHalfExtent->ax;
+    if (g_coliBounds->min[2] > g_coliXformPos->qz - g_coliHalfExtent->ax)
+        g_coliBounds->min[2] = g_coliXformPos->qz - g_coliHalfExtent->ax;
+    if (g_coliBounds->max[1] < g_coliXformPos->qy + g_coliHalfExtent->ay)
+        g_coliBounds->max[1] = g_coliXformPos->qy + g_coliHalfExtent->ay;
+    if (g_coliBounds->min[1] > g_coliXformPos->qy)
+        g_coliBounds->min[1] = g_coliXformPos->qy;
 }
 
 void Coli_ExpandGlobalBox() {
-    if (lbl_eu_80665944->max[0] < lbl_eu_80665948->qx + lbl_eu_8066594C->ax) {
-        lbl_eu_80665944->max[0] = lbl_eu_8066594C->ax + lbl_eu_80665948->qx;
+    if (g_coliBounds->max[0] < g_coliXformPos->qx + g_coliHalfExtent->ax) {
+        g_coliBounds->max[0] = g_coliHalfExtent->ax + g_coliXformPos->qx;
     }
-    if (lbl_eu_80665944->min[0] > lbl_eu_80665948->qx - lbl_eu_8066594C->ax) {
-        lbl_eu_80665944->min[0] = lbl_eu_80665948->qx - lbl_eu_8066594C->ax;
+    if (g_coliBounds->min[0] > g_coliXformPos->qx - g_coliHalfExtent->ax) {
+        g_coliBounds->min[0] = g_coliXformPos->qx - g_coliHalfExtent->ax;
     }
-    if (lbl_eu_80665944->max[2] < lbl_eu_80665948->qz + lbl_eu_8066594C->ax) {
-        lbl_eu_80665944->max[2] = lbl_eu_8066594C->ax + lbl_eu_80665948->qz;
+    if (g_coliBounds->max[2] < g_coliXformPos->qz + g_coliHalfExtent->ax) {
+        g_coliBounds->max[2] = g_coliHalfExtent->ax + g_coliXformPos->qz;
     }
-    if (lbl_eu_80665944->min[2] > lbl_eu_80665948->qz - lbl_eu_8066594C->ax) {
-        lbl_eu_80665944->min[2] = lbl_eu_80665948->qz - lbl_eu_8066594C->ax;
+    if (g_coliBounds->min[2] > g_coliXformPos->qz - g_coliHalfExtent->ax) {
+        g_coliBounds->min[2] = g_coliXformPos->qz - g_coliHalfExtent->ax;
     }
-    if (lbl_eu_80665944->max[1] < lbl_eu_80665948->qy + lbl_eu_8066594C->ay) {
-        lbl_eu_80665944->max[1] = lbl_eu_8066594C->ay + lbl_eu_80665948->qy;
+    if (g_coliBounds->max[1] < g_coliXformPos->qy + g_coliHalfExtent->ay) {
+        g_coliBounds->max[1] = g_coliHalfExtent->ay + g_coliXformPos->qy;
     }
-    if (lbl_eu_80665944->min[1] > lbl_eu_80665948->qy) {
-        lbl_eu_80665944->min[1] = lbl_eu_80665948->qy;
+    if (g_coliBounds->min[1] > g_coliXformPos->qy) {
+        g_coliBounds->min[1] = g_coliXformPos->qy;
     }
 }
 
@@ -1229,33 +1180,33 @@ void ColiXformRigid(CColiNode* self, const CColiMgr* mgr, const CColiRigid* othe
     // every check re-dereferences the bounds pointer and re-reads radius.
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[0] < self->mtxW[0][3] + r)
-            lbl_eu_80665944->max[0] = self->mtxW[0][3] + r;
+        if (g_coliBounds->max[0] < self->mtxW[0][3] + r)
+            g_coliBounds->max[0] = self->mtxW[0][3] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[0] > self->mtxW[0][3] - r)
-            lbl_eu_80665944->min[0] = self->mtxW[0][3] - r;
+        if (g_coliBounds->min[0] > self->mtxW[0][3] - r)
+            g_coliBounds->min[0] = self->mtxW[0][3] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[1] < self->mtxW[1][3] + r)
-            lbl_eu_80665944->max[1] = self->mtxW[1][3] + r;
+        if (g_coliBounds->max[1] < self->mtxW[1][3] + r)
+            g_coliBounds->max[1] = self->mtxW[1][3] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[1] > self->mtxW[1][3] - r)
-            lbl_eu_80665944->min[1] = self->mtxW[1][3] - r;
+        if (g_coliBounds->min[1] > self->mtxW[1][3] - r)
+            g_coliBounds->min[1] = self->mtxW[1][3] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[2] < self->mtxW[2][3] + r)
-            lbl_eu_80665944->max[2] = self->mtxW[2][3] + r;
+        if (g_coliBounds->max[2] < self->mtxW[2][3] + r)
+            g_coliBounds->max[2] = self->mtxW[2][3] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[2] > self->mtxW[2][3] - r)
-            lbl_eu_80665944->min[2] = self->mtxW[2][3] - r;
+        if (g_coliBounds->min[2] > self->mtxW[2][3] - r)
+            g_coliBounds->min[2] = self->mtxW[2][3] - r;
     }
 }
 
@@ -1309,33 +1260,33 @@ void ColiXformSphere(CColiSphereOb* self, const CColiMgr* mgr,
 
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
-            lbl_eu_80665944->max[0] = self->pos[0] + r;
+        if (g_coliBounds->max[0] < self->pos[0] + r)
+            g_coliBounds->max[0] = self->pos[0] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
-            lbl_eu_80665944->min[0] = self->pos[0] - r;
+        if (g_coliBounds->min[0] > self->pos[0] - r)
+            g_coliBounds->min[0] = self->pos[0] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
-            lbl_eu_80665944->max[1] = self->pos[1] + r;
+        if (g_coliBounds->max[1] < self->pos[1] + r)
+            g_coliBounds->max[1] = self->pos[1] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
-            lbl_eu_80665944->min[1] = self->pos[1] - r;
+        if (g_coliBounds->min[1] > self->pos[1] - r)
+            g_coliBounds->min[1] = self->pos[1] - r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
-            lbl_eu_80665944->max[2] = self->pos[2] + r;
+        if (g_coliBounds->max[2] < self->pos[2] + r)
+            g_coliBounds->max[2] = self->pos[2] + r;
     }
     {
         f32 r = self->radius;
-        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
-            lbl_eu_80665944->min[2] = self->pos[2] - r;
+        if (g_coliBounds->min[2] > self->pos[2] - r)
+            g_coliBounds->min[2] = self->pos[2] - r;
     }
 }
 
@@ -1378,18 +1329,18 @@ void ColiSetEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* ot
     // Expand the shared AABB with the horizontal (XZ) and vertical (Y)
     // radii; plain field expressions keep pos as the leading operand
     // (retail loads pos -> f1 before the radius -> f0).
-    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radiusXZ)
-        lbl_eu_80665944->max[0] = self->pos[0] + self->radiusXZ;
-    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radiusXZ)
-        lbl_eu_80665944->min[0] = self->pos[0] - self->radiusXZ;
-    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radiusXZ)
-        lbl_eu_80665944->max[2] = self->pos[2] + self->radiusXZ;
-    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radiusXZ)
-        lbl_eu_80665944->min[2] = self->pos[2] - self->radiusXZ;
-    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radiusY)
-        lbl_eu_80665944->max[1] = self->pos[1] + self->radiusY;
-    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radiusY)
-        lbl_eu_80665944->min[1] = self->pos[1] - self->radiusY;
+    if (g_coliBounds->max[0] < self->pos[0] + self->radiusXZ)
+        g_coliBounds->max[0] = self->pos[0] + self->radiusXZ;
+    if (g_coliBounds->min[0] > self->pos[0] - self->radiusXZ)
+        g_coliBounds->min[0] = self->pos[0] - self->radiusXZ;
+    if (g_coliBounds->max[2] < self->pos[2] + self->radiusXZ)
+        g_coliBounds->max[2] = self->pos[2] + self->radiusXZ;
+    if (g_coliBounds->min[2] > self->pos[2] - self->radiusXZ)
+        g_coliBounds->min[2] = self->pos[2] - self->radiusXZ;
+    if (g_coliBounds->max[1] < self->pos[1] + self->radiusY)
+        g_coliBounds->max[1] = self->pos[1] + self->radiusY;
+    if (g_coliBounds->min[1] > self->pos[1] - self->radiusY)
+        g_coliBounds->min[1] = self->pos[1] - self->radiusY;
 }
 
 // ---------------------------------------------------------------------------
@@ -1437,18 +1388,18 @@ void ColiXformEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr,
 
     // Every check re-reads the shared bounds pointer and the self fields
     // (retail reloads both per check).
-    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radiusXZ)
-        lbl_eu_80665944->max[0] = self->pos[0] + self->radiusXZ;
-    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radiusXZ)
-        lbl_eu_80665944->min[0] = self->pos[0] - self->radiusXZ;
-    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radiusXZ)
-        lbl_eu_80665944->max[2] = self->pos[2] + self->radiusXZ;
-    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radiusXZ)
-        lbl_eu_80665944->min[2] = self->pos[2] - self->radiusXZ;
-    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radiusY)
-        lbl_eu_80665944->max[1] = self->pos[1] + self->radiusY;
-    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radiusY)
-        lbl_eu_80665944->min[1] = self->pos[1] - self->radiusY;
+    if (g_coliBounds->max[0] < self->pos[0] + self->radiusXZ)
+        g_coliBounds->max[0] = self->pos[0] + self->radiusXZ;
+    if (g_coliBounds->min[0] > self->pos[0] - self->radiusXZ)
+        g_coliBounds->min[0] = self->pos[0] - self->radiusXZ;
+    if (g_coliBounds->max[2] < self->pos[2] + self->radiusXZ)
+        g_coliBounds->max[2] = self->pos[2] + self->radiusXZ;
+    if (g_coliBounds->min[2] > self->pos[2] - self->radiusXZ)
+        g_coliBounds->min[2] = self->pos[2] - self->radiusXZ;
+    if (g_coliBounds->max[1] < self->pos[1] + self->radiusY)
+        g_coliBounds->max[1] = self->pos[1] + self->radiusY;
+    if (g_coliBounds->min[1] > self->pos[1] - self->radiusY)
+        g_coliBounds->min[1] = self->pos[1] - self->radiusY;
 }
 
 // ---------------------------------------------------------------------------
@@ -1506,14 +1457,14 @@ void ColiSetCapsulePos(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* o
 
     // Every check re-dereferences the shared bounds pointer (aliasing).
     for (int i = 0; i < 3; i++) {
-        if (lbl_eu_80665944->max[i] < self->posA[i] + self->radius)
-            lbl_eu_80665944->max[i] = self->posA[i] + self->radius;
-        if (lbl_eu_80665944->min[i] > self->posA[i] - self->radius)
-            lbl_eu_80665944->min[i] = self->posA[i] - self->radius;
-        if (lbl_eu_80665944->max[i] < self->posB[i] + self->radius)
-            lbl_eu_80665944->max[i] = self->posB[i] + self->radius;
-        if (lbl_eu_80665944->min[i] > self->posB[i] - self->radius)
-            lbl_eu_80665944->min[i] = self->posB[i] - self->radius;
+        if (g_coliBounds->max[i] < self->posA[i] + self->radius)
+            g_coliBounds->max[i] = self->posA[i] + self->radius;
+        if (g_coliBounds->min[i] > self->posA[i] - self->radius)
+            g_coliBounds->min[i] = self->posA[i] - self->radius;
+        if (g_coliBounds->max[i] < self->posB[i] + self->radius)
+            g_coliBounds->max[i] = self->posB[i] + self->radius;
+        if (g_coliBounds->min[i] > self->posB[i] - self->radius)
+            g_coliBounds->min[i] = self->posB[i] - self->radius;
     }
 }
 
@@ -1522,7 +1473,7 @@ void ColiSetCapsulePos(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* o
 // derive its inverse into m1, then duplicate both up by one pair into the
 // history slots.
 // ---------------------------------------------------------------------------
-void Coli_CopyBoneMtx(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+extern "C" void Coli_CopyBoneMtx(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
     const s16 idx = hd->index;
     const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[idx];
     dst->cur.m0 = *src;
@@ -1559,7 +1510,7 @@ struct CColiList {
 // ColiSetMoveEnableFlag first. If the node is already present it is left untouched.
 // Newly-linked nodes have their forward link cleared and their swept-distance
 // accumulator (+0xA4) reset to zero.
-void ColiListAppend(CColiList* self, CColiListItem* node) {
+extern "C" void ColiListAppend(CColiList* self, CColiListItem* node) {
     ColiSetMoveEnableFlag(node, 1);
     CColiListItem* cur = self->head;
     if (cur != 0) {
@@ -1585,7 +1536,7 @@ void ColiListAppend(CColiList* self, CColiListItem* node) {
 // fixing the head when the removed node was the head. Goto-shaped to match
 // the retail control flow: pre-check on the head value, entry jump to the
 // tail condition, and the found path falling out to the common epilogue.
-void Coli_ListRemoveNode(CColiList* self, CColiListItem* findNode) {
+extern "C" void Coli_ListRemoveNode(CColiList* self, CColiListItem* findNode) {
     ColiSetMoveEnableFlag(findNode, 0);
     // Declared at function top so the allocator colours prev/next before the
     // loop variable: retail keeps cur in r4 with prev/next sharing r3.
@@ -1638,7 +1589,7 @@ extern "C" void sinit_804B598C() {
     // then point its default target data at the alternate table. The address
     // is taken twice, so MWCC keeps only the HA half in r31 and folds the LO
     // half into each use (call arg / store displacement) like retail.
-    __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D138);
+    __ct__9CColiProcFv((CColiProcLocal*)&lbl_eu_8065D138);
     ((CColiProcLocal*)&lbl_eu_8065D138)->field_0x0 = &lbl_eu_8056F4F0;
 }
 
@@ -1646,7 +1597,7 @@ extern "C" void sinit_804B598C() {
 
 // Walk the segment query: reject degenerate (equal) vectors, otherwise run
 // the segment build + node query and expand the result AABB.
-int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec* b,
+extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec* b,
                    u32 filter, int isFirst) {
     // Materialized boolean: retail keeps the && chain result in a temp
     // (li r0,0 / li r0,1 / cmpwi r0,0) instead of short-circuiting straight
@@ -1818,7 +1769,7 @@ struct CColiSeg {
 // while the segment start is past each node's max bound, then backward from
 // self->prev while the segment end is before each node's min bound. A node
 // that survives the filter/bounds/level checks and both query tests wins.
-int Coli_SweepSegNodes(u32 unused, CColiQueryNode* self, const CColiSeg* src,
+extern "C" int Coli_SweepSegNodes(u32 unused, CColiQueryNode* self, const CColiSeg* src,
                   u32 mask, void* arg) {
     if (!(self->flags & 4) || !(self->flags & 2)) return 0;
 
@@ -1868,7 +1819,7 @@ struct CColiWalkOwner {
 // (equal) vectors, then run the shared segment query over the node list and
 // report the accumulated AABB through out1 (min) / out2 (max).
 // ---------------------------------------------------------------------------
-int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
+extern "C" int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
                   Vec* a, Vec* b) {
     // Single-exit shape: every zero path breaks to one shared return block
     // (retail merges all li r3,0 sites), success falls out of the block.
@@ -2087,19 +2038,25 @@ extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__12CC
     (u32)&lbl_eu_80524458, (u32)&lbl_eu_8056F4FC,
 };
 
+// .data 0x8056F3C0..0x8056F3FC: per-type spec walk tables (step size, payload
+// size, dispatch class), indexed by entry type by the CColiProc unit.
+s16 ColiSpecEntryStep[10] = { 4, 0x10, 0xC, 0x18, 0x30, 8, 0x3C, 0x14, 0x18, 0 };
+s16 ColiSpecEntrySize[10] = { 0x14, 0x14, 0x1C, 0x1C, 0x34, 0x34, 0x74, 0x68, 0, 0 };
+s16 ColiSpecDispatchClass[10] = { 0, 0, 1, 1, 2, 2, 3, 4, 0, 0 };
+
 // .data 0x8056F3FC..0x8056F508: shape-dispatch tables, task vtables and
 // monolib RTTI hierarchy tables.
-u32 lbl_eu_8056F3FC[9] = {
+u32 ColiSpecDataHandlers[9] = {
     (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName,
     (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&ColiFindNodePair,
     (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeRecord,
 };
-u32 lbl_eu_8056F420[9] = {
+u32 ColiSpecMtxHandlers[9] = {
     (u32)&ColiSetSphereMtx, (u32)&ColiXformSphere, (u32)&ColiSetEllipsoid,
     (u32)&ColiXformEllipsoid, (u32)&ColiUpdateCapsule, (u32)&ColiSetCapsulePos,
     (u32)&ColiXformRigid, (u32)&ColiUpdateMtxNode, (u32)&ColiXformFixed,
 };
-u32 lbl_eu_8056F444[9] = {
+u32 ColiSpecExpandHandlers[9] = {
     (u32)&ColiExpandSphere, (u32)&ColiExpandSphere, (u32)&Coli_ExpandEllipsoid,
     (u32)&Coli_ExpandEllipsoid, (u32)&ColiExpandCapsule, (u32)&ColiExpandCapsule,
     (u32)&Coli_ExpandPoint, (u32)&ColiExpandPoint, (u32)&Coli_ExpandGlobalBox,
@@ -2138,10 +2095,10 @@ CColiWalkStateObj lbl_eu_8065D138;
 
 // .sbss 0x80665944..0x80665960: bounds/Hx/Qx holders, master-node index,
 // task singleton; _pad objects reproduce the retail 8-byte slots.
-CColiBounds* lbl_eu_80665944;
-CColiQx* lbl_eu_80665948;
-CColiHx* lbl_eu_8066594C;
-s16 lbl_eu_80665950;
+CColiBounds* g_coliBounds;
+CColiQx* g_coliXformPos;
+CColiHx* g_coliHalfExtent;
+s16 g_coliNodeIndex;
 int lbl_eu_80665958;
 u8 lbl_eu_80665950_pad[2];
 u8 lbl_eu_80665958_pad[4];

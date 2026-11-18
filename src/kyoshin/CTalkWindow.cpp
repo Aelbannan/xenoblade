@@ -1,9 +1,19 @@
 // CTalkWindow - talk-window process (unit kyoshin/CTalkWindow).
 //
-// Matching session: dtor, Term, cbRenderBefore, TalkWin_Create_CC78 (factory) and
-// sinit_8012DE98 (static float-table initializer).
+// Real MI class (IUIWindow + IWorkEvent + IScnRender, see the header): the
+// composite vtable __vt__11CTalkWindow (0x8052DFA8), its 0x40 base list, the
+// weak RTTI record, the +0x6C/+0x70 adjusting thunks, the "CTalkWindow"
+// type-name string and the TU static initializer that fills TalkWinPagePos
+// are compiler output.
 
 #include <nw4r/lyt/lyt_drawInfo.h>
+
+// The retail CTalkWindow destructor calls __dt__8CProcessFv directly: the
+// IUIWindow / CTTask<IUIWindow> / IWorkEvent destructor bodies are inlined
+// into this TU (cs. CSysWinBuff / CSysWinSave).
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include "kyoshin/CTalkWindow.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
@@ -16,345 +26,445 @@
 #include <new>
 #include <string.h>
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __data_blob[324] = { 0x80, 0x66, 0x72, 0x68, 0x80, 0x66, 0x72, 0x70, 0x80, 0x66, 0x72, 0x68, 0x80, 0x66, 0x72, 0x68, 0x80, 0x12, 0xca, 0x1c, 0x80, 0x12, 0xc9, 0x60, 0x80, 0x12, 0xc9, 0x84, 0x80, 0x12, 0xc9, 0xa0, 0x80, 0x12, 0xc9, 0xd0, 0x80, 0x12, 0xc9, 0xdc, 0x80, 0x12, 0xc9, 0xf8, 0x80, 0x12, 0xca, 0x0c, 0x80, 0x12, 0xca, 0x1c, 0x00, 0x00, 0x00, 0x00, 0x80, 0x66, 0x21, 0x70, 0x00, 0x00, 0x00, 0x00, 0x80, 0x12, 0xc8, 0x28, 0x80, 0x44, 0x90, 0xcc, 0x80, 0x12, 0xc8, 0xa8, 0x80, 0x12, 0xd2, 0xc4, 0x80, 0x12, 0xd3, 0x74, 0x80, 0x12, 0xd6, 0x9c, 0x80, 0x04, 0x44, 0xbc, 0x80, 0x66, 0x21, 0x70, 0xff, 0xff, 0xff, 0x94, 0x80, 0x12, 0xea, 0x48, 0x80, 0x03, 0xa1, 0xd4, 0x80, 0x03, 0xa1, 0xcc, 0x80, 0x03, 0xa1, 0xc4, 0x80, 0x03, 0xa1, 0xbc, 0x80, 0x03, 0xa1, 0xb8, 0x80, 0x03, 0xa1, 0xb0, 0x80, 0x03, 0xa1, 0xa8, 0x80, 0x03, 0xa1, 0xa0, 0x80, 0x03, 0xa1, 0x98, 0x80, 0x03, 0xa1, 0x90, 0x80, 0x03, 0xa1, 0x88, 0x80, 0x03, 0xa1, 0x80, 0x80, 0x03, 0xa1, 0x78, 0x80, 0x03, 0xa1, 0x70, 0x80, 0x03, 0xa1, 0x68, 0x80, 0x03, 0xa1, 0x60, 0x80, 0x03, 0xa1, 0x58, 0x80, 0x03, 0xa1, 0x50, 0x80, 0x03, 0xa1, 0x48, 0x80, 0x03, 0xa1, 0x40, 0x80, 0x03, 0xa1, 0x38, 0x80, 0x03, 0xa1, 0x30, 0x80, 0x03, 0xa1, 0x28, 0x80, 0x03, 0xa1, 0x20, 0x80, 0x03, 0xa1, 0x18, 0x80, 0x03, 0xa1, 0x10, 0x80, 0x03, 0xa1, 0x08, 0x80, 0x03, 0xa1, 0x00, 0x80, 0x03, 0xa0, 0xf8, 0x80, 0x03, 0xa0, 0xf0, 0x80, 0x03, 0xa0, 0xec, 0x80, 0x66, 0x21, 0x70, 0xff, 0xff, 0xff, 0x90, 0x80, 0x12, 0xea, 0x58, 0x80, 0x12, 0xea, 0x50, 0x80, 0x12, 0xd6, 0xa0, 0x80, 0x66, 0x19, 0x40, 0x00, 0x00, 0x00, 0x70, 0x80, 0x66, 0x18, 0xa8, 0x00, 0x00, 0x00, 0x6c, 0x80, 0x66, 0x19, 0x58, 0x00, 0x00, 0x00, 0x00, 0x80, 0x66, 0x19, 0x50, 0x00, 0x00, 0x00, 0x00, 0x80, 0x66, 0x19, 0x48, 0x00, 0x00, 0x00, 0x00, 0x80, 0x66, 0x1e, 0xd0, 0x00, 0x00, 0x00, 0x00, 0x80, 0x66, 0x1e, 0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x80, 0x12, 0xfd, 0x70 };
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __rodata_blob[504] = { 0x43, 0x54, 0x61, 0x6C, 0x6B, 0x57, 0x69, 0x6E, 0x64, 0x6F, 0x77, 0x00, 0x43, 0x54, 0x61, 0x6C, 0x6B, 0x57, 0x69, 0x6E, 0x64, 0x6F, 0x77, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x5F, 0x64, 0x65, 0x66, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x5F, 0x6F, 0x75, 0x74, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x5F, 0x66, 0x61, 0x64, 0x65, 0x6F, 0x75, 0x74, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x30, 0x30, 0x5F, 0x66, 0x61, 0x64, 0x65, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x5F, 0x30, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x5F, 0x30, 0x32, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x5F, 0x30, 0x33, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x5F, 0x30, 0x34, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6D, 0x65, 0x73, 0x73, 0x30, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6D, 0x65, 0x73, 0x73, 0x30, 0x31, 0x00, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6D, 0x65, 0x73, 0x73, 0x30, 0x32, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6D, 0x65, 0x73, 0x73, 0x30, 0x33, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x74, 0x61, 0x69, 0x6C, 0x5F, 0x6F, 0x76, 0x65, 0x72, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x74, 0x61, 0x69, 0x6C, 0x5F, 0x75, 0x6E, 0x64, 0x65, 0x72, 0x00, 0x77, 0x69, 0x6E, 0x5F, 0x6E, 0x00, 0x77, 0x69, 0x6E, 0x5F, 0x61, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x74, 0x61, 0x69, 0x6C, 0x5F, 0x6E, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x6C, 0x69, 0x6E, 0x65, 0x5F, 0x6E, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x74, 0x61, 0x69, 0x6C, 0x5F, 0x61, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x6C, 0x69, 0x6E, 0x65, 0x5F, 0x61, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x74, 0x61, 0x69, 0x6C, 0x5F, 0x74, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x37, 0x30, 0x5F, 0x63, 0x66, 0x30, 0x30, 0x5F, 0x74, 0x77, 0x69, 0x6E, 0x5F, 0x6C, 0x69, 0x6E, 0x65, 0x5F, 0x74, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x65, 0x70, 0x31, 0x30, 0x30, 0x00, 0x00, 0x00, 0x00 };
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __sdata_blob[8] = { 0x80, 0x4f, 0xfc, 0x98, 0x80, 0x52, 0xe0, 0x68 };
-extern "C" __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) unsigned char __sdata2_blob[96] = { 0x77, 0x69, 0x6E, 0x5F, 0x6E, 0x00, 0x00, 0x00, 0x77, 0x69, 0x6E, 0x5F, 0x61, 0x00, 0x00, 0x00, 0x42, 0x18, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x43, 0xA0, 0x00, 0x00, 0x43, 0x60, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x41, 0xA0, 0x00, 0x00, 0xC3, 0xA0, 0x00, 0x00, 0xC3, 0x60, 0x00, 0x00, 0x42, 0x48, 0x00, 0x00, 0xC3, 0x48, 0x00, 0x00, 0x43, 0x48, 0x00, 0x00, 0x3F, 0x4C, 0xCC, 0xCD, 0x40, 0x40, 0x00, 0x00, 0x42, 0x1C, 0x00, 0x00, 0x41, 0x90, 0x00, 0x00, 0x42, 0x10, 0x00, 0x00, 0x43, 0x70, 0x00, 0x00, 0xC3, 0x70, 0x00, 0x00 };
-extern __attribute__((used)) unsigned char __bss_blob[192];
-extern __attribute__((used)) unsigned char __sbss_blob[8];
+// .data (retail 0x8052DF70): page-pane names indexed by field_A4. The two
+// short literals are also spelled directly in Init, hence the duplicate
+// .sdata2 copies retail carries.
+const char* TalkWinPagePaneName[4] = {"win_n", "win_a", "win_n", "win_n"};
 
+// Page-position table (retail .bss 0x80573A70, 0xC0). VEC3 has a user ctor, so
+// the initializer is a dynamic one: the compiler reserves .bss and emits the
+// TU static initializer (retail sinit_8012DE98) that stores the 48 floats.
+nw4r::math::VEC3 TalkWinPagePos[16] = {
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(-320.0f, 240.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 240.0f, 0.0f),
+    nw4r::math::VEC3(320.0f, 240.0f, 0.0f),
+    nw4r::math::VEC3(-320.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(320.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(-320.0f, -240.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, -240.0f, 0.0f),
+    nw4r::math::VEC3(320.0f, -240.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+    nw4r::math::VEC3(0.0f, 0.0f, 0.0f),
+};
 
+// .sbss (retail 0x80664040): page-mode flag byte + live talk-window counter.
+u8 lbl_eu_80664040 = 0;
+u32 lbl_eu_80664044 = 0;
 
+// ---------------------------------------------------------------------------
+// CTalkWindow::CTalkWindow (us-8012c710)
+// CProcess base, then the inlined CTTask<IUIWindow>/IUIWindow base ctors (base
+// vptr + null Move/Draw pmf hooks + layout/state members), the composite and
+// sub-vptrs, the embedded layout-build region and the animation/state fields.
+// The window id (IUIWindow::mField68) is stored last.
+// ---------------------------------------------------------------------------
+CTalkWindow::CTalkWindow(CScn* scene, u32 sourceId, u8* msg, u32 a0, u32 a1,
+                         u32 b4)
+    : mScene(scene), mMemRegion(), field_88(0), field_8C(0), field_90(0),
+      field_94(0), field_98(0), field_9C(msg), field_A0(a0), field_A1(a1),
+      field_A4(0), field_A8(0), field_AC(0), field_B0(1), field_B4(b4) {
+    mField68 = sourceId;
+}
 
-// Global-view declarations so the catalog thunks (TalkWin_DtorThunkA_DF78/80/88) can
-// address the member dtor / render callback by their retail symbol names
-// (the definitions below emit those symbols). extern "C" keeps the emitted
-// reloc names unmangled.
-extern "C" void* __dt__11CTalkWindowFv(CTalkWindow* self, int flags);
-extern "C" void cbRenderBefore__11CTalkWindowFv(void* self);
+// ---------------------------------------------------------------------------
+// ~CTalkWindow (us-8012c828)
+// Complete-object destructor. The embedded layout-build region is destroyed
+// (flags -1), then the CProcess base guarded by the nested double null-check
+// (an MWCC D2-inlined-into-D1 artifact; the IUIWindow/CTTask/IWorkEvent base
+// dtors are the inline-empty variants selected by the macros at the top of
+// this file), then the deleting path calls operator delete. Same shape as
+// ~CSysWinSave.
+// ---------------------------------------------------------------------------
+CTalkWindow::~CTalkWindow() {}
 
-void Draw__11CTalkWindowFv() {}
-
-// (lbl_eu_80664044 via blob macro)
+// (lbl_eu_80664044 is the live talk-window counter)
 extern "C" void TalkWin_ClearFlag_BDD0() { lbl_eu_80664044 = 0; }
 
 // ---------------------------------------------------------------------------
-// __ct__CTalkWindow (us-8012c710)
-// Runs CProcess's ctor then fills the IUIWindow region by hand (the temp
-// vtable at +0x10 is written first, then the CTalkWindow composite vtable),
-// copies the two null ptmf callback slots, constructs the embedded
-// UnkClass_8045F564 region, and initialises the animation / state fields.
-// The retail symbol carries no class-length mangling, so it stays a plain
-// C-ABI global (CSystemWindow / CSysWinSave idiom); the definition inherits
-// C linkage from the header declaration.
+// CTalkWindow::Init (us-8012c8a8)
+// Open a scratch region (Class_8045F858 RAII guard), allocate and prime the
+// tag processor, then dispatch on its +0x814 mode byte. Mode 7 builds the
+// full talk layout (5 animations, font binding, message panes, corner
+// pictures), wires the page panes and registers the render callback.
+//
+// Matching notes from the retail ASM (for the next iteration):
+//  - Retail holds `this` in r25 (_savegpr_25) and the tag processor in r29
+//    across the whole case-7 body; the decomp currently copies this into
+//    r29 first, shifting every later register assignment.
+//  - Every pane show/hide compiles to `lbz 0xbb; rlwinm r0,r0,0,24,30
+//    [; ori 1]; stb` - i.e. (old & 0x7F) [| 1]: bit 7 of the flag byte is
+//    ALWAYS cleared. That shape needs two merged bitfield writes on CTalkWinPane
+//    (a :7 field + a :1 field both assigned per site); plain `u8 mFlag |= 1`
+//    gives lbz/ori/stb without the mask.
+//  - Font binding order: retail loads GetRootPane() BEFORE calling
+//    getFontInfo(1, layout) (hoist into its own statement).
+//  - The literal pool base is materialised once into r30 before the
+//    five bindLayoutAnimTransform calls, then rematerialised (r30/r28/r27/r30 again)
+//    at each section boundary after Animate() - the source likely redeclares
+//    a base pointer per scope rather than sharing one.
+//  - Member calls on reinterpret_cast<UnkClass_8045F564*> (createRegion /
+//    validateHeap) add null-check branches retail lacks; extern "C"
+//    pre-mangled declarations avoid that but shift other allocation.
 // ---------------------------------------------------------------------------
-CTalkWindow* __ct__CTalkWindow(CTalkWindow* _this, u32 arg1, u32 arg2,
-                               u8* buf, u32 arg3, u32 arg4, u32 arg5) {
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(_this));
+void CTalkWindow::Init() {
+    mMemRegion.createRegion(
+        mtl::MemManager::getHandleMEM2(), 0x4000, "CTalkWindow", 0);
+    Class_8045F858 guard(&mMemRegion);
 
-    _this->mVtable = (u32)lbl_eu_8052D238;
-    // Post-increment derefs of a local pointer make MWCC fold the first
-    // access into `lwzu` (single base register via @ha/@l, offsets on the
-    // rest) instead of an addi-materialised pointer (cf. MWCC_CASES
-    // btm_sco_init lwzu shape). The stores into _this can alias the non-const
-    // global, forcing the 4..6/4..5 reloads between the two callback slots.
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    _this->ptmf0[1] = w1;
-    _this->ptmf0[0] = w0;
-    u32 w2 = *src++;
-    _this->ptmf0[2] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    _this->ptmf1[1] = w0;
-    _this->ptmf1[0] = w1;
-    w2 = *src++;
-    _this->ptmf1[2] = w2;
+    lbl_eu_80664044++;
 
-    _this->mpLayout = 0;
-    _this->field_58 = 0;
-    _this->field_5C = 0;
-    _this->field_60 = -1;
-    _this->field_64 = 0;
-    _this->field_65 = 0;
-    _this->field_66 = 0;
-    _this->field_67 = 1;
-    _this->field_68 = 0;
+    void* tagMem = mtl::MemManager::allocate(
+        0x858, CLibLayout::getAllocHandle());
+    if (tagMem != 0) {
+        tagMem = __ct__CTagProcessor(tagMem);
+    }
+    mField5C = reinterpret_cast<nw4r::lyt::AnimTransform*>(tagMem);
+    CTalkWinTagProc* tagProc = reinterpret_cast<CTalkWinTagProc*>(tagMem);
+    tagProc->Proc(reinterpret_cast<u8*>(field_9C), 38.0f,
+                  38.0f, mField68);
 
-    _this->mVtable = (u32)lbl_eu_8052DFA8;
-    _this->field_6C = (u32)lbl_eu_8052DFA8 + 0x24;
-    _this->mScnRender = (u32)lbl_eu_8052DFA8 + 0xac;
-    _this->mScene = reinterpret_cast<CScn*>(arg1);
+    // Early-init dispatch on the tag-processor mode byte (+0x814). Modes 0-6
+    // are small setups; mode 7 builds the layout; 3/8 just mark ready.
+    u8 type = tagProc->field_0x814;
+    switch (type) {
+    case 0:
+        CUICfManager_queueFadeMenu(tagProc->field_0x81A, 0, tagProc->field_0x81C,
+                      -1.0f, -1.0f);
+        mField64 = 1;
+        break;
+    case 1:
+        UIWin_CreateQuestWin(tagProc->field_0x818, 0, 0);
+        mField64 = 1;
+        break;
+    case 2: {
+        cf::CfObject* s2 = reinterpret_cast<cf::CfObject*>(
+            findObjectById(mField68));
+        if (s2 != 0) {
+            s2->setPointEnabled(0);
+        }
+        mField64 = 1;
+        break;
+    }
+    case 3:
+    case 8:
+        mField64 = 1;
+        break;
+    case 4: {
+        cf::CfObject* s4 = reinterpret_cast<cf::CfObject*>(
+            findObjectById(mField68));
+        UIWin_CreateBEDE0Win(
+            reinterpret_cast<CTalkActorId*>(s4)->msgId8C);
+        mField64 = 1;
+        break;
+    }
+    case 5:
+        UIWin_CreateShopWin(tagProc->field_0x818);
+        mField64 = 1;
+        break;
+    case 6:
+        CUICfManager_queueMakeCrystalMenu();
+        mField64 = 1;
+        break;
+    case 7: {
+        // Full layout build: page index, layout + 5 animations from the
+        // shared arc (re-acquired per build call), font binding, then the
+        // message / corner panes.
+        field_A4 = tagProc->field_0x816;
 
-    __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(&_this->mMemRegion[0]));
+        buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00.brlyt");
+        bindLayoutAnimTransform(mLayout, &field_88, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_in.brlan");
+        bindLayoutAnimTransform(mLayout, &field_8C, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_def.brlan");
+        bindLayoutAnimTransform(mLayout, &field_90, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_out.brlan");
+        bindLayoutAnimTransform(mLayout, &field_94, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_fadeout.brlan");
+        bindLayoutAnimTransform(mLayout, &field_98, CUICfManager_getArcResourceAccessor(), "mf70_cf00_twin00_fadein.brlan");
 
-    _this->field_88 = 0;
-    _this->field_8C = 0;
-    _this->field_90 = 0;
-    _this->field_94 = 0;
-    _this->field_98 = 0;
-    _this->field_9C = reinterpret_cast<u32>(buf);
-    _this->field_A0 = static_cast<u8>(arg3);
-    _this->field_A1 = static_cast<u8>(arg4);
-    _this->field_A4 = 0;
-    _this->field_A8 = 0;
-    _this->field_AC = 0;
-    _this->field_B0 = 1;
-    _this->field_B4 = static_cast<u8>(arg5);
-    _this->field_68 = arg2;
-    return _this;
-}
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+            1, mLayout);
+        ApplyFontToTxtPanes(mLayout->GetRootPane(),
+                      (const nw4r::ut::Font*)(reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle()));
 
-// ---------------------------------------------------------------------------
-// driveTalkIntro (us-8012e390)
-// Window-state 1 driver: play the intro anim (field_88); when the talk-enable
-// flag (field_B4) is set, run the character-voice playback through the talk
-// source (with the page-id / talk-source checks), then switch the enabled
-// animations to state 2.
-// ---------------------------------------------------------------------------
-void driveTalkIntro(CTalkWindow* self) {
-    f32 frame = lbl_eu_80667284;
-    if (advanceAnimTransform(self->field_88, frame) == 0) return;
-    if (self->field_B4 != 0) {
-        if (code80135FDC_getByte_64058() == 0) {
-            if (findObjectById(self->field_68) != 0) {
-                CTalkWinTalkSrc* src =
-                    reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
-                // Re-read mTalkC4 at each use: retail reloads the field
-                // around the voice call (memory-clobber), and keeping it in
-                // a local would shrink the body by two loads.
-                if (src->mTalkC4 != 0) {
-                    // Talk-stop flag: leave the intro playing.
-                    if ((src->mTalkC4->field_270 & 0x80) != 0) return;
-                    src->mVoice->play(1, 0);
-                    int page = getAnimModelId(src->mTalkC4);
-                    // Two separate compares branching to a shared call site
-                    // (not a fused range test): retail keeps
-                    // `cmpwi 0x21 / cmpwi 0x26` with blt/ble gates.
-                    if (page < 0x21) goto do_b9d4;
-                    if (page <= 0x26) goto skip_b9d4;
-do_b9d4:
-                    func_8004B9D4(src->mTalkC4, 0x1f, 0, -1, 0);
-skip_b9d4:;
+        // Prime the message-window pane and bind the four corner panes.
+        CTalkWinPane* paneB0 = reinterpret_cast<CTalkWinPane*>(
+            mLayout->GetRootPane()->FindPaneByName("txt_name", 1));
+        paneB0->FreeStringBuffer();
+        paneB0->AllocStringBuffer(0x20);
+
+        char* msg = GetBdatNameByNumId(reinterpret_cast<char*>(
+            reinterpret_cast<cf::CfObject*>(
+                findObjectById(mField68))->CObjectParam_getParamPtr()));
+        LayoutSetTextBoxFmtValue(mLayout, "txt_name", msg, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_shadow_01", msg, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_shadow_02", msg, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_shadow_03", msg, 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_shadow_04", msg, 0);
+
+        // Page-select pane: attach the tag processor and name the sub-panes.
+        CTalkWinPane* paneF1 = reinterpret_cast<CTalkWinPane*>(
+            mLayout->GetRootPane()->FindPaneByName("txt_mess00", 1));
+        paneF1->FreeStringBuffer();
+        paneF1->AllocStringBuffer(0x400);
+        paneF1->mFlag |= 1;
+        paneF1->field_F8 = reinterpret_cast<u32>(mField5C);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_mess01", "", 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_mess02", "", 0);
+        LayoutSetTextBoxFmtValue(mLayout, "txt_mess03", "", 0);
+
+        TagProcRenderPage(mField5C,
+                      mLayout->GetRootPane()->FindPaneByName(
+                          "txt_mess00", 1),
+                      mLayout->GetRootPane()->FindPaneByName(
+                          TalkWinPagePaneName[field_A4], 1),
+                      mLayout->GetRootPane()->FindPaneByName(
+                          "txt_name", 1), 0);
+
+        updateTalkWindow(this);
+        layoutTalkPanes(this);
+
+        // Hide the arrow panes, then reveal the active side.
+        reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+            FindPaneByName("pic_tail_over", 1))->mFlag &= ~1;
+        reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+            FindPaneByName("pic_tail_under", 1))->mFlag &= ~1;
+        if (field_A1 != 0) {
+            reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                FindPaneByName("pic_tail_over", 1))->mFlag |= 1;
+        } else {
+            reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                FindPaneByName("pic_tail_under", 1))->mFlag |= 1;
+        }
+
+        // Default animation set: intro anim active, page anims off.
+        if (field_A0 == 0) {
+            lbl_eu_80664040 = 0;
+            mLayout->SetAnimationEnable(field_8C, false);
+            mLayout->SetAnimationEnable(field_90, false);
+            mLayout->SetAnimationEnable(field_94, false);
+            mLayout->SetAnimationEnable(field_98, false);
+            mLayout->SetAnimationEnable(field_88, true);
+            reinterpret_cast<CTalkAnimFrame*>(field_88)->mFrame =
+                0.0f;
+        }
+        mLayout->Animate(0);
+
+        // Page-mode banner panes + the shared 'timg' page texture.
+        u8 opt = tagProc->field_0x815;
+        reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+            FindPaneByName("win_n", 1))->mFlag |= 1;
+        reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+            FindPaneByName("win_a", 1))->mFlag &= ~1;
+        void* res = CUICfManager_getArcResourceAccessor()->GetResource(
+            0x74696d67, "mf70_cf00_twin_tail_n.tpl", 0);
+        CUICfManager_getArcResourceAccessor()->GetResource(
+            0x74696d67, "mf70_cf00_twin_line_n.tpl", 0);
+        playUISound(0x29);
+
+        // Mode-specific page setup (retail keeps the type==0 guard as dead
+        // code: type is always 7 on this path).
+        if (type != 0) {
+            if ((opt & 0x4) != 0) {
+                if (field_A4 == 0) {
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_n", 1))->mFlag |= 1;
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_a", 1))->mFlag &= ~1;
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_tail_n.tpl", 0);
+                    CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_line_n.tpl", 0);
+                    playUISound(0x29);
+                } else if (field_A4 == 1) {
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_n", 1))->mFlag &= ~1;
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_a", 1))->mFlag |= 1;
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_tail_a.tpl", 0);
+                    CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_line_a.tpl", 0);
+                    lbl_eu_80664040 = 1;
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("pic_tail_over", 1))->mFlag &= ~1;
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("pic_tail_under", 1))->mFlag &= ~1;
+                    playUISound(0x72);
+                } else if (field_A4 == 3) {
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_n", 1))->mFlag |= 1;
+                    reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                        FindPaneByName("win_a", 1))->mFlag &= ~1;
+                    res = CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_tail_t.tpl", 0);
+                    CUICfManager_getArcResourceAccessor()->GetResource(
+                        0x74696d67, "mf70_cf00_twin_line_t.tpl", 0);
+                    playUISound(0x74);
                 }
             }
-        } else if (code80135FDC_getByte_64059() != 0) {
-            if (findObjectById(self->field_68) != 0) {
-                CTalkWinTalkSrc* src =
-                    reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
-                src->mVoice->play(1, 0);
+            if ((opt & 0x1) != 0) {
+                lbl_eu_80664040 = 1;
+                reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                    FindPaneByName("pic_tail_over", 1))->mFlag &= ~1;
+                reinterpret_cast<CTalkWinPane*>(mLayout->GetRootPane()->
+                    FindPaneByName("pic_tail_under", 1))->mFlag &= ~1;
+            }
+            if ((opt & 0x2) != 0) {
+                field_A8 = tagProc->field_0x817;
             }
         }
+
+        // Bind the page texture to the two arrow panes.
+        if (res != 0) {
+            PaneSetTexPaletteByName(mLayout, "pic_tail_over", (TPLPalette*)res);
+            PaneSetTexPaletteByName(mLayout, "pic_tail_under", (TPLPalette*)res);
+        }
+
+        mScene->addRenderCB(this, 0xa, 0);
+        break;
     }
-    self->mpLayout->SetAnimationEnable(self->field_90, false);
-    self->mpLayout->SetAnimationEnable(self->field_94, false);
-    self->mpLayout->SetAnimationEnable(self->field_98, false);
-    self->mpLayout->SetAnimationEnable(self->field_88, false);
-    self->mpLayout->SetAnimationEnable(self->field_8C, true);
-    self->field_B0 = 2;
+    default:
+        break;
+    }
+
+    mMemRegion.validateHeap();
 }
 
 // ---------------------------------------------------------------------------
-// driveTalkMessage (us-8012e53c)
-// Window-state 2 driver: find the three page panes, blend the tag-processor
-// animation (TagProcPumpMessage / TagProcStepMessage depending on the confirm button),
-// then dispatch the result: state 4 accepts the selection, otherwise the
-// voice/page logic runs (or the page-loop flag flips).
+// CTalkWindow::Term (us-8012d2c4)
+// Wait for VI draw completion, drop the instance counter, detach the render
+// callback, delete the two layout objects and release the layout-build
+// scratch region.
 // ---------------------------------------------------------------------------
-void driveTalkMessage(CTalkWindow* self) {
-    nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* p1 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
-    nw4r::lyt::Pane* p2 =
-        root->FindPaneByName(lbl_eu_8052DF70[self->field_A4], 1);
-    nw4r::lyt::Pane* p3 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1);
-
-    int state;
-    if (GetSysStateFlag31() != 0) {
-        state = TagProcPumpMessage(self->field_5C, p1, p2, p3);
-    } else {
-        CTalkPadView* pad = reinterpret_cast<CTalkPadView*>(
-            cf::CfGameManager::getCurrentPad());
-        int confirm;
-        // Co-op (Classic) vs single-player (Wiimote) confirm-press bits.
-        if (cf::CfGameManager::isClassicController(-1) != 0)
-            confirm = (pad->field_04 & 0x00600000) != 0;
-        else
-            confirm = (pad->field_04 & 0x00000030) != 0;
-        if (confirm != 0)
-            state = TagProcPumpMessage(self->field_5C, p1, p2, p3);
-        else
-            state = TagProcStepMessage(self->field_5C, p1, p2, p3);
+void CTalkWindow::Term() {
+    CDeviceVI::waitForDrawDone();
+    lbl_eu_80664044--;
+    mScene->removeRenderCB(this);
+    if (mField5C != 0) {
+        delete reinterpret_cast<nw4r::lyt::AnimTransform*>(mField5C);
+        mField5C = 0;
     }
-
-    if (state == 4) {
-        // Selection accepted: play the confirm voice and switch to state 4.
-        self->mpLayout->SetAnimationEnable(self->field_88, false);
-        self->mpLayout->SetAnimationEnable(self->field_8C, false);
-        self->mpLayout->SetAnimationEnable(self->field_98, false);
-        self->mpLayout->SetAnimationEnable(self->field_90, false);
-        self->mpLayout->SetAnimationEnable(self->field_94, true);
-        reinterpret_cast<CTalkAnimFrame*>(self->field_94)->mFrame =
-            lbl_eu_80667280;
-        playUISound(0x2b);
-        self->field_B0 = 4;
-    } else if (state == 0 || self->field_65 != 0 || self->field_66 != 0) {
-        // Page-advance path: clear the pending flag, run the character-voice
-        // playback, then switch the enabled animations to state 3.
-        if (self->field_65 != 0) self->field_65 = 0;
-        if (self->field_B4 != 0) {
-            if (code80135FDC_getByte_64058() == 0) {
-                if (findObjectById(self->field_68) != 0) {
-                    CTalkWinTalkSrc* src =
-                        reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
-                    CTalkWinTalkC4* talkC4 = src->mTalkC4;
-                    if (talkC4 != 0) {
-                        src->mVoice->play(0, 0);
-                        int page = getAnimModelId(talkC4);
-                        if (page < 0x21 || page > 0x26) {
-                            func_8004B9D4(talkC4, 1, 0, -1, 0);
-                        }
-                    }
-                }
-            } else if (code80135FDC_getByte_64059() != 0) {
-                if (findObjectById(self->field_68) != 0) {
-                    CTalkWinTalkSrc* src =
-                        reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
-                    src->mVoice->play(0, 0);
-                }
-            }
-        }
-        self->mpLayout->SetAnimationEnable(self->field_94, false);
-        self->mpLayout->SetAnimationEnable(self->field_88, false);
-        self->mpLayout->SetAnimationEnable(self->field_8C, false);
-        self->mpLayout->SetAnimationEnable(self->field_98, false);
-        self->mpLayout->SetAnimationEnable(self->field_90, true);
-        reinterpret_cast<CTalkAnimFrame*>(self->field_90)->mFrame =
-            lbl_eu_80667280;
-        switch (self->field_A4) {
-        case 0:
-            playUISound(0x2a);
-            break;
-        case 1:
-            playUISound(0x73);
-            break;
-        case 3:
-            playUISound(0x75);
-            break;
-        default:
-            break;
-        }
-        self->field_B0 = 3;
-    } else {
-        // Page-loop flag flips (only reached when field_65/field_66 are clear).
-        if (state == 1) {
-            if (self->field_65 == 0) self->field_65 = 1;
-        } else if (state == 3) {
-            self->field_67 = 0;
-            if (self->field_AC != 0) self->field_65 = 1;
-        }
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
     }
-
-    advanceAnimTransform(self->field_8C, lbl_eu_80667284);
+    mMemRegion.deleteRegion();
 }
 
 // ---------------------------------------------------------------------------
-// layoutTalkPanes (us-8012dea8)
-// Place the four corner message panes around the reference pane (0xb0) and
-// lay out the remaining page panes with scale-derived offsets, using the
-// page-name table (lbl_eu_8052DF70) for the final pane.
+// CTalkWindow::Move (us-8012d374)
+// Per-frame driver: gate on the task/global flags, run the shared
+// updateTalkWindow update, dispatch the state machine (1..5), then always
+// advance the layout animations.
 // ---------------------------------------------------------------------------
-void layoutTalkPanes(CTalkWindow* self) {
-    nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* ref =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1);
+void CTalkWindow::Move() {
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (IsMenuState621F0() == 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
+    updateTalkWindow(this);
 
-    f32 tx = ref->GetTranslate().x;
-    f32 ty = ref->GetTranslate().y;
-    f32 tz = ref->GetTranslate().z;
-    f32 sx = ref->GetScale().x;
-    f32 sy = ref->GetScale().y;
-
-    nw4r::lyt::Pane* p2 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xb9], 1);
-    p2->SetTranslate(nw4r::math::VEC3(tx - lbl_eu_806672AC,
-                                      lbl_eu_806672AC + ty, tz));
-    p2->SetScale(nw4r::math::VEC2(sx, sy));
-
-    nw4r::lyt::Pane* p3 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xc7], 1);
-    p3->SetTranslate(nw4r::math::VEC3(lbl_eu_806672AC + tx,
-                                      lbl_eu_806672AC + ty, tz));
-    p3->SetScale(nw4r::math::VEC2(sx, sy));
-
-    nw4r::lyt::Pane* p4 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xd5], 1);
-    p4->SetTranslate(nw4r::math::VEC3(lbl_eu_806672AC + tx,
-                                      ty - lbl_eu_806672AC, tz));
-    p4->SetScale(nw4r::math::VEC2(sx, sy));
-
-    nw4r::lyt::Pane* p5 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xe3], 1);
-    p5->SetTranslate(nw4r::math::VEC3(tx - lbl_eu_806672AC,
-                                      ty - lbl_eu_806672AC, tz));
-    p5->SetScale(nw4r::math::VEC2(sx, sy));
-
-    nw4r::lyt::Pane* p6 =
-        root->FindPaneByName(lbl_eu_8052DF70[self->field_A4], 1);
-    p6->SetTranslate(nw4r::math::VEC3(tx - lbl_eu_806672AC,
-                                      ty - lbl_eu_806672AC, tz));
-    p6->SetScale(nw4r::math::VEC2(sx, sy));
-
-    // Centre-pane scale: pane6's scale.x scaled to a layout offset, flipped
-    // when the root pane sits on the negative side of the origin.
-    f32 g = p6->GetScale().x / lbl_eu_806672B0 * lbl_eu_80667290;
-    if (root->GetTranslate().x <= 0.0f) {
-        g *= lbl_eu_8066727C;
+    // Signed switch: retail emits a beq dispatch chain with signed cmpwi.
+    switch ((int)field_B0) {
+    case 1:
+        driveTalkIntro(this);
+        break;
+    case 2:
+        driveTalkMessage(this);
+        break;
+    case 3:
+        if (advanceAnimTransform(field_90, 1.0f) != 0) {
+            mScene->removeRenderCB(this);
+            mField64 = 1;
+            field_B0 = 0;
+        }
+        break;
+    case 4: {
+        if (advanceAnimTransform(field_94, 1.0f) == 0) break;
+        mLayout->SetAnimationEnable(field_90, false);
+        mLayout->SetAnimationEnable(field_94, false);
+        mLayout->SetAnimationEnable(field_88, false);
+        mLayout->SetAnimationEnable(field_8C, false);
+        mLayout->SetAnimationEnable(field_98, true);
+        reinterpret_cast<CTalkAnimFrame*>(field_98)->mFrame = 0.0f;
+        // Declared p2-first: MWCC allocates the two pane locals in reverse
+        // declaration order, matching retail's r28/r29 split.
+        nw4r::lyt::Pane* p2;
+        nw4r::lyt::Pane* p1;
+        p1 = mLayout->GetRootPane()->
+            FindPaneByName("txt_mess00", 1);
+        p2 = mLayout->GetRootPane()->FindPaneByName(
+            TalkWinPagePaneName[field_A4], 1);
+        nw4r::lyt::Pane* p3 = mLayout->GetRootPane()->FindPaneByName(
+            "txt_name", 1);
+        TagProcResetPage(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField5C), p1, p2, p3);
+        layoutTalkPanes(this);
+        field_B0 = 5;
+        break;
+    }
+    case 5:
+        if (advanceAnimTransform(field_98, 1.0f) != 0) {
+            mLayout->SetAnimationEnable(field_90, false);
+            mLayout->SetAnimationEnable(field_94, false);
+            mLayout->SetAnimationEnable(field_88, false);
+            mLayout->SetAnimationEnable(field_98, false);
+            mLayout->SetAnimationEnable(field_8C, true);
+            reinterpret_cast<CTalkAnimFrame*>(field_8C)->mFrame =
+                0.0f;
+            field_B0 = 2;
+        }
+        break;
+    default:
+        break;
     }
 
-    nw4r::lyt::Pane* p7 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1);
-    p7->SetTranslate(nw4r::math::VEC3(
-        g, p6->GetScale().y * lbl_eu_80667290 + p6->GetTranslate().y +
-               p7->GetScale().y * lbl_eu_80667290 - lbl_eu_806672B4,
-        p6->GetTranslate().z));
-
-    nw4r::lyt::Pane* p8 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
-    p8->SetTranslate(nw4r::math::VEC3(
-        g, lbl_eu_806672B4 + (p6->GetTranslate().y -
-                               p6->GetScale().y * lbl_eu_80667290 -
-                               p8->GetScale().y * lbl_eu_80667290),
-        p6->GetTranslate().z));
-
-    nw4r::lyt::Pane* p9 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0xfc], 1);
-    p9->SetTranslate(p8->GetTranslate());
-
-    nw4r::lyt::Pane* p10 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0x108], 1);
-    p10->SetTranslate(nw4r::math::VEC3(
-        p8->GetTranslate().x, p8->GetTranslate().y - lbl_eu_806672B8,
-        p8->GetTranslate().z));
-
-    nw4r::lyt::Pane* p11 =
-        root->FindPaneByName(&lbl_eu_804FFCA4[0x113], 1);
-    p11->SetTranslate(nw4r::math::VEC3(
-        p8->GetTranslate().x, p8->GetTranslate().y - lbl_eu_806672BC,
-        p8->GetTranslate().z));
+    mLayout->Animate(0);
 }
 
-void TalkWin_DtorThunkA_DF78(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x6c); }
+void CTalkWindow::Draw() {}
 
-void TalkWin_RenderThunk_DF80(void* self) { ((void(*)(void*))cbRenderBefore__11CTalkWindowFv)((char*)self - 0x70); }
+// ---------------------------------------------------------------------------
+// CTalkWindow::cbRenderBefore (us-8012d6a0)
+// Gate prefix (task busy / global bit / scene-active / talk source) then draw
+// the layout through a stack DrawInfo.
+// ---------------------------------------------------------------------------
+void CTalkWindow::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (IsMenuState621F0() == 0)
+        return;
+    if (findObjectById((int)mField68) == 0)
+        return;
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    nw4r::lyt::DrawInfo drawInfo;
+    SetWideLocAdjust(&drawInfo);
+    drawLayout(mLayout, &drawInfo, 0, 1);
+}
 
-void TalkWin_DtorThunkB_DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
+// ---------------------------------------------------------------------------
+// TalkWin_Create_CC78 (us-8012d744)
+// Talk-window factory: copy the message source into a zeroed stack buffer,
+// allocate the 0xB8-byte CTalkWindow on the work heap, run the ctor and
+// register it under the caller's parent.
+// ---------------------------------------------------------------------------
+extern "C" CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2,
+                                      const u8* msgSrc, u32 arg3, u32 arg4,
+                                      u32 arg5) {
+    u8 buf[0x800];
+    memset(buf, 0, 0x800);
+    Utf8ToWcsCopyFix((const char*)msgSrc, (u16*)buf, 0x400);
 
-// (lbl_eu_80664044 via blob macro)
+    u32 workMem = CWorkThreadSystem::getWorkMem();
+    CTalkWindow* obj = new (mtl::MemManager::allocate(0xb8, workMem))
+        CTalkWindow((CScn*)arg1, arg2, buf, arg3, arg4, arg5);
+    reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
+    return obj;
+}
+
 extern "C" bool TalkWin_IsActive_CD24() {
     u32 v = lbl_eu_80664044;
     return ((-v) & ~v) >> 31;
@@ -362,14 +472,10 @@ extern "C" bool TalkWin_IsActive_CD24() {
 
 extern "C" void updateTalkWindow(CTalkWindow* self) {
     cf::CfObject* src =
-        reinterpret_cast<cf::CfObject*>(findObjectById(self->field_68));
+        reinterpret_cast<cf::CfObject*>(findObjectById(self->mField68));
     if (src == 0) {
-        IScnRender* render = reinterpret_cast<IScnRender*>(self);
-        if (self != 0) {
-            render = reinterpret_cast<IScnRender*>(&self->mScnRender);
-        }
-        self->mScene->removeRenderCB(render);
-        self->field_64 = 1;
+        self->mScene->removeRenderCB(self);
+        self->mField64 = 1;
         self->field_B0 = 0;
         return;
     }
@@ -397,7 +503,7 @@ extern "C" void updateTalkWindow(CTalkWindow* self) {
     // yields strided components (+0xc/+0x1c/+0x2c), else the +0xAC fallback.
     const nw4r::math::VEC3* wsrc;
     CTalkWinPosObj* obj = reinterpret_cast<CTalkWinPosObj*>(
-        src->CfObject_findNodeMatrix(&lbl_eu_804FFCA4[0x1e3]));
+        src->CfObject_findNodeMatrix("ep100"));
     if (obj != 0) {
         // Load the strided components in retail's z,y,x order.
         f32 tz = obj->field_0x2C;
@@ -419,128 +525,127 @@ extern "C" void updateTalkWindow(CTalkWindow* self) {
     CTalkWinPose* pose = Scn_FindCamItem(self->mScene, -1);
     CamMan_ProjectToScreen(&screen, pose, &world);
 
-    screen.z = lbl_eu_80667280;
-    screen.y = (screen.y - lbl_eu_8066728C) * lbl_eu_8066727C;
-    screen.x = screen.x - lbl_eu_80667288;
+    screen.z = 0.0f;
+    screen.x = screen.x - 320.0f;
+    screen.y = (screen.y - 224.0f) * -1.0f;
     world = screen;  // pre-clamp copy (dx uses world.x later)
 
-    nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->
-        FindPaneByName(lbl_eu_8052DF70[self->field_A4], 1);
-    screen.y = screen.y + pane->GetScale().y * lbl_eu_80667290 +
-               lbl_eu_80667294;
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->
+        FindPaneByName(TalkWinPagePaneName[self->field_A4], 1);
+    screen.y = screen.y + pane->GetScale().y * 0.5f;
+    screen.y = screen.y + 20.0f;
     scaleX = pane->GetScale().x;
     scaleY = pane->GetScale().y;
 
     if (self->field_A1 != 0) {
-        screen.y *= lbl_eu_8066727C;
+        screen.y *= -1.0f;
     }
     if (self->field_A8 != 0) {
         // Override the projected position with the page-position table entry.
-        table = reinterpret_cast<nw4r::math::VEC3*>(lbl_eu_80573A70)
-                    [self->field_A8];
+        table = TalkWinPagePos[self->field_A8];
         screen = table;
     }
 
     // Clamp the projected point inside the pane bounds (expanded forms match
     // the retail fmadds/fnmsubs folds).
-    if (screen.x - scaleX * lbl_eu_80667290 < lbl_eu_80667298) {
+    if (screen.x - scaleX * 0.5f < -320.0f) {
         screen.x = screen.x +
-                   (lbl_eu_80667298 - (screen.x - scaleX * lbl_eu_80667290));
-    } else if (screen.x + scaleX * lbl_eu_80667290 > lbl_eu_80667288) {
+                   (-320.0f - (screen.x - scaleX * 0.5f));
+    } else if (screen.x + scaleX * 0.5f > 320.0f) {
         screen.x = screen.x -
-                   ((screen.x + scaleX * lbl_eu_80667290) - lbl_eu_80667288);
+                   ((screen.x + scaleX * 0.5f) - 320.0f);
     }
-    if (screen.y + scaleY * lbl_eu_80667290 > lbl_eu_8066728C) {
+    if (screen.y + scaleY * 0.5f > 224.0f) {
         screen.y = screen.y -
-                   ((screen.y + scaleY * lbl_eu_80667290) - lbl_eu_8066728C);
-    } else if (screen.y - scaleY * lbl_eu_80667290 < lbl_eu_8066729C) {
+                   ((screen.y + scaleY * 0.5f) - 224.0f);
+    } else if (screen.y - scaleY * 0.5f < -224.0f) {
         screen.y = screen.y +
-                   (lbl_eu_8066729C - (screen.y - scaleY * lbl_eu_80667290));
+                   (-224.0f - (screen.y - scaleY * 0.5f));
     }
 
     if (self->field_A1 != 0 && self->field_A8 == 0) {
-        screen.y += lbl_eu_806672A0;
+        screen.y += 50.0f;
     }
 
-    self->mpLayout->GetRootPane()->SetTranslate(screen);
+    self->mLayout->GetRootPane()->SetTranslate(screen);
     dx = world.x - screen.x;
-    if (lbl_eu_806672A4 <= world.x && world.x <= lbl_eu_806672A8) {
-        dx = lbl_eu_80667280;
+    if (-200.0f <= world.x && world.x <= 200.0f) {
+        dx = 0.0f;
     }
 
     // Corner-picture UV flips: the sign of dx (and the pane translate for the
     // centred case) picks one of the four corner rotations.
-    nw4r::lyt::Pane* p1 = self->mpLayout->GetRootPane()->
-        FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1);
+    nw4r::lyt::Pane* p1 = self->mLayout->GetRootPane()->
+        FindPaneByName("pic_tail_over", 1);
     if (p1 != 0) {
         trans1 = p1->GetTranslate();
         sx1 = p1->GetScale().x;
         sy1 = p1->GetScale().y;
-        if (dx > lbl_eu_80667280) {
-            cornerUVs[0][0] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[0][1] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[0][2] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[0][3] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
+        if (dx > 0.0f) {
+            cornerUVs[0][0] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[0][1] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[0][2] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[0][3] = nw4r::math::VEC2(0.0f, 0.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p1)->SetTexCoord(0, cornerUVs[0]);
             goto p1done;
         }
-        if (dx < lbl_eu_80667280) {
-            cornerUVs[1][0] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[1][1] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[1][2] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[1][3] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
+        if (dx < 0.0f) {
+            cornerUVs[1][0] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[1][1] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[1][2] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[1][3] = nw4r::math::VEC2(1.0f, 0.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p1)->SetTexCoord(0, cornerUVs[1]);
             goto p1done;
         }
-        if (trans1.x <= lbl_eu_80667280) {
-            cornerUVs[2][0] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[2][1] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[2][2] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[2][3] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
+        if (trans1.x <= 0.0f) {
+            cornerUVs[2][0] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[2][1] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[2][2] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[2][3] = nw4r::math::VEC2(0.0f, 0.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p1)->SetTexCoord(0, cornerUVs[2]);
         } else {
-            cornerUVs[3][0] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[3][1] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[3][2] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[3][3] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
+            cornerUVs[3][0] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[3][1] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[3][2] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[3][3] = nw4r::math::VEC2(1.0f, 0.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p1)->SetTexCoord(0, cornerUVs[3]);
         }
 p1done:;
     }
 
-    nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->
-        FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1);
+    nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->
+        FindPaneByName("pic_tail_under", 1);
     if (p2 != 0) {
         trans2 = p2->GetTranslate();
         sx2 = p2->GetScale().x;
         sy2 = p2->GetScale().y;
-        if (dx > lbl_eu_80667280) {
-            cornerUVs[4][0] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[4][1] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[4][2] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[4][3] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
+        if (dx > 0.0f) {
+            cornerUVs[4][0] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[4][1] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[4][2] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[4][3] = nw4r::math::VEC2(0.0f, 1.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p2)->SetTexCoord(0, cornerUVs[4]);
             goto p2done;
         }
-        if (dx < lbl_eu_80667280) {
-            cornerUVs[5][0] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[5][1] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[5][2] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[5][3] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
+        if (dx < 0.0f) {
+            cornerUVs[5][0] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[5][1] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[5][2] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[5][3] = nw4r::math::VEC2(1.0f, 1.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p2)->SetTexCoord(0, cornerUVs[5]);
             goto p2done;
         }
-        if (trans2.x <= lbl_eu_80667280) {
-            cornerUVs[6][0] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[6][1] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[6][2] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
-            cornerUVs[6][3] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
+        if (trans2.x <= 0.0f) {
+            cornerUVs[6][0] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[6][1] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[6][2] = nw4r::math::VEC2(1.0f, 1.0f);
+            cornerUVs[6][3] = nw4r::math::VEC2(0.0f, 1.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p2)->SetTexCoord(0, cornerUVs[6]);
         } else {
-            cornerUVs[7][0] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667280);
-            cornerUVs[7][1] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667280);
-            cornerUVs[7][2] = nw4r::math::VEC2(lbl_eu_80667280, lbl_eu_80667284);
-            cornerUVs[7][3] = nw4r::math::VEC2(lbl_eu_80667284, lbl_eu_80667284);
+            cornerUVs[7][0] = nw4r::math::VEC2(0.0f, 0.0f);
+            cornerUVs[7][1] = nw4r::math::VEC2(1.0f, 0.0f);
+            cornerUVs[7][2] = nw4r::math::VEC2(0.0f, 1.0f);
+            cornerUVs[7][3] = nw4r::math::VEC2(1.0f, 1.0f);
             reinterpret_cast<nw4r::lyt::Picture*>(p2)->SetTexCoord(0, cornerUVs[7]);
         }
 p2done:;
@@ -548,475 +653,242 @@ p2done:;
 }
 
 // ---------------------------------------------------------------------------
-// CTalkWindow::Init (us-8012c8a8)
-// Open a scratch region (Class_8045F858 RAII guard), allocate and prime the
-// tag processor, then dispatch on its +0x814 mode byte. Mode 7 builds the
-// full talk layout (5 animations, font binding, message panes, corner
-// pictures), wires the page panes and registers the render callback.
-//
-// Matching notes from the retail ASM (for the next iteration):
-//  - Retail holds `this` in r25 (_savegpr_25) and the tag processor in r29
-//    across the whole case-7 body; the decomp currently copies this into
-//    r29 first, shifting every later register assignment.
-//  - Every pane show/hide compiles to `lbz 0xbb; rlwinm r0,r0,0,24,30
-//    [; ori 1]; stb` - i.e. (old & 0x7F) [| 1]: bit 7 of the flag byte is
-//    ALWAYS cleared. That shape needs two merged bitfield writes on CTalkWinPane
-//    (a :7 field + a :1 field both assigned per site); plain `u8 mFlag |= 1`
-//    gives lbz/ori/stb without the mask.
-//  - Font binding order: retail loads GetRootPane() BEFORE calling
-//    getFontInfo(1, layout) (hoist into its own statement).
-//  - The lbl_eu_804FFCA4 blob base is materialised once into r30 before the
-//    five bindLayoutAnimTransform calls, then rematerialised (r30/r28/r27/r30 again)
-//    at each section boundary after Animate() - the source likely redeclares
-//    a base pointer per scope rather than sharing one.
-//  - Member calls on reinterpret_cast<UnkClass_8045F564*> (createRegion /
-//    validateHeap) add null-check branches retail lacks; extern "C"
-//    pre-mangled declarations avoid that but shift other allocation.
+// layoutTalkPanes (us-8012dea8)
+// Place the four corner message panes around the reference pane (0xb0) and
+// lay out the remaining page panes with scale-derived offsets, using the
+// page-name table (lbl_eu_8052DF70) for the final pane.
 // ---------------------------------------------------------------------------
-void CTalkWindow::Init() {
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->createRegion(
-        mtl::MemManager::getHandleMEM2(), 0x4000, lbl_eu_804FFCA4, 0);
-    Class_8045F858 guard(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0]));
+void layoutTalkPanes(CTalkWindow* self) {
+    nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
+    nw4r::lyt::Pane* ref =
+        root->FindPaneByName("txt_name", 1);
 
-    lbl_eu_80664044++;
+    f32 tx = ref->GetTranslate().x;
+    f32 ty = ref->GetTranslate().y;
+    f32 tz = ref->GetTranslate().z;
+    f32 sx = ref->GetScale().x;
+    f32 sy = ref->GetScale().y;
 
-    void* tagMem = mtl::MemManager::allocate(
-        0x858, CLibLayout::getAllocHandle());
-    if (tagMem != 0) {
-        tagMem = __ct__CTagProcessor(tagMem);
+    nw4r::lyt::Pane* p2 =
+        root->FindPaneByName("txt_shadow_01", 1);
+    p2->SetTranslate(nw4r::math::VEC3(tx - 0.8f,
+                                      0.8f + ty, tz));
+    p2->SetScale(nw4r::math::VEC2(sx, sy));
+
+    nw4r::lyt::Pane* p3 =
+        root->FindPaneByName("txt_shadow_02", 1);
+    p3->SetTranslate(nw4r::math::VEC3(0.8f + tx,
+                                      0.8f + ty, tz));
+    p3->SetScale(nw4r::math::VEC2(sx, sy));
+
+    nw4r::lyt::Pane* p4 =
+        root->FindPaneByName("txt_shadow_03", 1);
+    p4->SetTranslate(nw4r::math::VEC3(0.8f + tx,
+                                      ty - 0.8f, tz));
+    p4->SetScale(nw4r::math::VEC2(sx, sy));
+
+    nw4r::lyt::Pane* p5 =
+        root->FindPaneByName("txt_shadow_04", 1);
+    p5->SetTranslate(nw4r::math::VEC3(tx - 0.8f,
+                                      ty - 0.8f, tz));
+    p5->SetScale(nw4r::math::VEC2(sx, sy));
+
+    nw4r::lyt::Pane* p6 =
+        root->FindPaneByName(TalkWinPagePaneName[self->field_A4], 1);
+    p6->SetTranslate(nw4r::math::VEC3(tx - 0.8f,
+                                      ty - 0.8f, tz));
+    p6->SetScale(nw4r::math::VEC2(sx, sy));
+
+    // Centre-pane scale: pane6's scale.x scaled to a layout offset, flipped
+    // when the root pane sits on the negative side of the origin.
+    f32 g = p6->GetScale().x / 3.0f * 0.5f;
+    if (root->GetTranslate().x <= 0.0f) {
+        g *= -1.0f;
     }
-    field_5C = reinterpret_cast<nw4r::lyt::AnimTransform*>(tagMem);
-    CTalkWinTagProc* tagProc = reinterpret_cast<CTalkWinTagProc*>(tagMem);
-    tagProc->Proc(reinterpret_cast<u8*>(field_9C), lbl_eu_80667278,
-                  lbl_eu_80667278, field_68);
 
-    // Early-init dispatch on the tag-processor mode byte (+0x814). Modes 0-6
-    // are small setups; mode 7 builds the layout; 3/8 just mark ready.
-    u8 type = tagProc->field_0x814;
-    switch (type) {
-    case 0:
-        CUICfManager_queueFadeMenu(tagProc->field_0x81A, 0, tagProc->field_0x81C,
-                      lbl_eu_8066727C, lbl_eu_8066727C);
-        field_64 = 1;
-        break;
-    case 1:
-        UIWin_CreateQuestWin(tagProc->field_0x818, 0, 0);
-        field_64 = 1;
-        break;
-    case 2: {
-        cf::CfObject* s2 = reinterpret_cast<cf::CfObject*>(
-            findObjectById(field_68));
-        if (s2 != 0) {
-            s2->setPointEnabled(0);
-        }
-        field_64 = 1;
-        break;
-    }
-    case 3:
-    case 8:
-        field_64 = 1;
-        break;
-    case 4: {
-        cf::CfObject* s4 = reinterpret_cast<cf::CfObject*>(
-            findObjectById(field_68));
-        UIWin_CreateBEDE0Win(
-            reinterpret_cast<CTalkActorId*>(s4)->msgId8C);
-        field_64 = 1;
-        break;
-    }
-    case 5:
-        UIWin_CreateShopWin(tagProc->field_0x818);
-        field_64 = 1;
-        break;
-    case 6:
-        CUICfManager_queueMakeCrystalMenu();
-        field_64 = 1;
-        break;
-    case 7: {
-        // Full layout build: page index, layout + 5 animations from the
-        // shared arc (re-acquired per build call), font binding, then the
-        // message / corner panes.
-        field_A4 = tagProc->field_0x816;
+    nw4r::lyt::Pane* p7 =
+        root->FindPaneByName("pic_tail_over", 1);
+    p7->SetTranslate(nw4r::math::VEC3(
+        g, p6->GetScale().y * 0.5f + p6->GetTranslate().y +
+               p7->GetScale().y * 0.5f - 39.0f,
+        p6->GetTranslate().z));
 
-        buildLayout(&mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0xc]);
-        bindLayoutAnimTransform(mpLayout, &field_88, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x23]);
-        bindLayoutAnimTransform(mpLayout, &field_8C, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x3d]);
-        bindLayoutAnimTransform(mpLayout, &field_90, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x58]);
-        bindLayoutAnimTransform(mpLayout, &field_94, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x73]);
-        bindLayoutAnimTransform(mpLayout, &field_98, CUICfManager_getArcResourceAccessor(), &lbl_eu_804FFCA4[0x92]);
+    nw4r::lyt::Pane* p8 =
+        root->FindPaneByName("txt_mess00", 1);
+    p8->SetTranslate(nw4r::math::VEC3(
+        g, 39.0f + (p6->GetTranslate().y -
+                               p6->GetScale().y * 0.5f -
+                               p8->GetScale().y * 0.5f),
+        p6->GetTranslate().z));
 
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-            1, mpLayout);
-        ApplyFontToTxtPanes(mpLayout->GetRootPane(),
-                      (const nw4r::ut::Font*)(reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle()));
+    nw4r::lyt::Pane* p9 =
+        root->FindPaneByName("txt_mess01", 1);
+    p9->SetTranslate(p8->GetTranslate());
 
-        // Prime the message-window pane and bind the four corner panes.
-        CTalkWinPane* paneB0 = reinterpret_cast<CTalkWinPane*>(
-            mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1));
-        paneB0->FreeStringBuffer();
-        paneB0->AllocStringBuffer(0x20);
+    nw4r::lyt::Pane* p10 =
+        root->FindPaneByName("txt_mess02", 1);
+    p10->SetTranslate(nw4r::math::VEC3(
+        p8->GetTranslate().x, p8->GetTranslate().y - 18.0f,
+        p8->GetTranslate().z));
 
-        char* msg = GetBdatNameByNumId(reinterpret_cast<char*>(
-            reinterpret_cast<cf::CfObject*>(
-                findObjectById(field_68))->CObjectParam_getParamPtr()));
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xd5], msg, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xe3], msg, 0);
+    nw4r::lyt::Pane* p11 =
+        root->FindPaneByName("txt_mess03", 1);
+    p11->SetTranslate(nw4r::math::VEC3(
+        p8->GetTranslate().x, p8->GetTranslate().y - 36.0f,
+        p8->GetTranslate().z));
+}
 
-        // Page-select pane: attach the tag processor and name the sub-panes.
-        CTalkWinPane* paneF1 = reinterpret_cast<CTalkWinPane*>(
-            mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1));
-        paneF1->FreeStringBuffer();
-        paneF1->AllocStringBuffer(0x400);
-        paneF1->mFlag |= 1;
-        paneF1->field_F8 = reinterpret_cast<u32>(field_5C);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xfc], &lbl_eu_804FFCA4[0x107], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x108], &lbl_eu_804FFCA4[0x107], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x113], &lbl_eu_804FFCA4[0x107], 0);
-
-        TagProcRenderPage(field_5C,
-                      mpLayout->GetRootPane()->FindPaneByName(
-                          &lbl_eu_804FFCA4[0xf1], 1),
-                      mpLayout->GetRootPane()->FindPaneByName(
-                          lbl_eu_8052DF70[field_A4], 1),
-                      mpLayout->GetRootPane()->FindPaneByName(
-                          &lbl_eu_804FFCA4[0xb0], 1), 0);
-
-        updateTalkWindow(this);
-        layoutTalkPanes(this);
-
-        // Hide the arrow panes, then reveal the active side.
-        reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-            FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1))->mFlag &= ~1;
-        reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-            FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1))->mFlag &= ~1;
-        if (field_A1 != 0) {
-            reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1))->mFlag |= 1;
-        } else {
-            reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1))->mFlag |= 1;
-        }
-
-        // Default animation set: intro anim active, page anims off.
-        if (field_A0 == 0) {
-            lbl_eu_80664040 = 0;
-            mpLayout->SetAnimationEnable(field_8C, false);
-            mpLayout->SetAnimationEnable(field_90, false);
-            mpLayout->SetAnimationEnable(field_94, false);
-            mpLayout->SetAnimationEnable(field_98, false);
-            mpLayout->SetAnimationEnable(field_88, true);
-            reinterpret_cast<CTalkAnimFrame*>(field_88)->mFrame =
-                lbl_eu_80667280;
-        }
-        mpLayout->Animate(0);
-
-        // Page-mode banner panes + the shared 'timg' page texture.
-        u8 opt = tagProc->field_0x815;
-        reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-            FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
-        reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-            FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-        void* res = CUICfManager_getArcResourceAccessor()->GetResource(
-            0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
-        CUICfManager_getArcResourceAccessor()->GetResource(
-            0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
-        playUISound(0x29);
-
-        // Mode-specific page setup (retail keeps the type==0 guard as dead
-        // code: type is always 7 on this path).
-        if (type != 0) {
-            if ((opt & 0x4) != 0) {
-                if (field_A4 == 0) {
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-                    res = CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
-                    CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
-                    playUISound(0x29);
-                } else if (field_A4 == 1) {
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag &= ~1;
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag |= 1;
-                    res = CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x17b], 0);
-                    CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x195], 0);
-                    lbl_eu_80664040 = 1;
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1))->mFlag &= ~1;
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1))->mFlag &= ~1;
-                    playUISound(0x72);
-                } else if (field_A4 == 3) {
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
-                    reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                        FindPaneByName(&lbl_eu_804FFCA4[0x141], 1))->mFlag &= ~1;
-                    res = CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x1af], 0);
-                    CUICfManager_getArcResourceAccessor()->GetResource(
-                        0x74696d67, &lbl_eu_804FFCA4[0x1c9], 0);
-                    playUISound(0x74);
+// ---------------------------------------------------------------------------
+// driveTalkIntro (us-8012e390)
+// Window-state 1 driver: play the intro anim (field_88); when the talk-enable
+// flag (field_B4) is set, run the character-voice playback through the talk
+// source (with the page-id / talk-source checks), then switch the enabled
+// animations to state 2.
+// ---------------------------------------------------------------------------
+void driveTalkIntro(CTalkWindow* self) {
+    f32 frame = 1.0f;
+    if (advanceAnimTransform(self->field_88, frame) == 0) return;
+    if (self->field_B4 != 0) {
+        if (code80135FDC_getByte_64058() == 0) {
+            if (findObjectById(self->mField68) != 0) {
+                CTalkWinTalkSrc* src =
+                    reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
+                // Re-read mTalkC4 at each use: retail reloads the field
+                // around the voice call (memory-clobber), and keeping it in
+                // a local would shrink the body by two loads.
+                if (src->mTalkC4 != 0) {
+                    // Talk-stop flag: leave the intro playing.
+                    if ((src->mTalkC4->field_270 & 0x80) != 0) return;
+                    src->mVoice->play(1, 0);
+                    int page = getAnimModelId(src->mTalkC4);
+                    // Two separate compares branching to a shared call site
+                    // (not a fused range test): retail keeps
+                    // `cmpwi 0x21 / cmpwi 0x26` with blt/ble gates.
+                    if (page < 0x21) goto do_b9d4;
+                    if (page <= 0x26) goto skip_b9d4;
+do_b9d4:
+                    func_8004B9D4(src->mTalkC4, 0x1f, 0, -1, 0);
+skip_b9d4:;
                 }
             }
-            if ((opt & 0x1) != 0) {
-                lbl_eu_80664040 = 1;
-                reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                    FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1))->mFlag &= ~1;
-                reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
-                    FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1))->mFlag &= ~1;
-            }
-            if ((opt & 0x2) != 0) {
-                field_A8 = tagProc->field_0x817;
+        } else if (code80135FDC_getByte_64059() != 0) {
+            if (findObjectById(self->mField68) != 0) {
+                CTalkWinTalkSrc* src =
+                    reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
+                src->mVoice->play(1, 0);
             }
         }
-
-        // Bind the page texture to the two arrow panes.
-        if (res != 0) {
-            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x11e], (TPLPalette*)res);
-            PaneSetTexPaletteByName(mpLayout, &lbl_eu_804FFCA4[0x12c], (TPLPalette*)res);
-        }
-
-        IScnRender* render = reinterpret_cast<IScnRender*>(this);
-        if (this != 0) {
-            render = reinterpret_cast<IScnRender*>(&mScnRender);
-        }
-        mScene->addRenderCB(render, 0xa, 0);
-        break;
     }
-    default:
-        break;
-    }
-
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->validateHeap();
+    self->mLayout->SetAnimationEnable(self->field_90, false);
+    self->mLayout->SetAnimationEnable(self->field_94, false);
+    self->mLayout->SetAnimationEnable(self->field_98, false);
+    self->mLayout->SetAnimationEnable(self->field_88, false);
+    self->mLayout->SetAnimationEnable(self->field_8C, true);
+    self->field_B0 = 2;
 }
 
 // ---------------------------------------------------------------------------
-// CTalkWindow::Move (us-8012d374)
-// Per-frame driver: gate on the task/global flags, run the shared
-// updateTalkWindow update, dispatch the state machine (1..5), then always
-// advance the layout animations.
+// driveTalkMessage (us-8012e53c)
+// Window-state 2 driver: find the three page panes, blend the tag-processor
+// animation (TagProcPumpMessage / TagProcStepMessage depending on the confirm button),
+// then dispatch the result: state 4 accepts the selection, otherwise the
+// voice/page logic runs (or the page-loop flag flips).
 // ---------------------------------------------------------------------------
-void CTalkWindow::Move() {
-    CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
-    if (IsMenuState621F0() == 0) return;
-    if (cf::CfGameManager::isSceneLoading() != 0) return;
-    updateTalkWindow(this);
+void driveTalkMessage(CTalkWindow* self) {
+    nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
+    nw4r::lyt::Pane* p1 =
+        root->FindPaneByName("txt_mess00", 1);
+    nw4r::lyt::Pane* p2 =
+        root->FindPaneByName(TalkWinPagePaneName[self->field_A4], 1);
+    nw4r::lyt::Pane* p3 =
+        root->FindPaneByName("txt_name", 1);
 
-    // Signed switch: retail emits a beq dispatch chain with signed cmpwi.
-    switch ((int)field_B0) {
-    case 1:
-        driveTalkIntro(this);
-        break;
-    case 2:
-        driveTalkMessage(this);
-        break;
-    case 3:
-        if (advanceAnimTransform(field_90, lbl_eu_80667284) != 0) {
-            IScnRender* render = reinterpret_cast<IScnRender*>(this);
-            if (this != 0) {
-                render = reinterpret_cast<IScnRender*>(&mScnRender);
-            }
-            mScene->removeRenderCB(render);
-            field_64 = 1;
-            field_B0 = 0;
-        }
-        break;
-    case 4: {
-        if (advanceAnimTransform(field_94, lbl_eu_80667284) == 0) break;
-        mpLayout->SetAnimationEnable(field_90, false);
-        mpLayout->SetAnimationEnable(field_94, false);
-        mpLayout->SetAnimationEnable(field_88, false);
-        mpLayout->SetAnimationEnable(field_8C, false);
-        mpLayout->SetAnimationEnable(field_98, true);
-        reinterpret_cast<CTalkAnimFrame*>(field_98)->mFrame = lbl_eu_80667280;
-        // Declared p2-first: MWCC allocates the two pane locals in reverse
-        // declaration order, matching retail's r28/r29 split.
-        nw4r::lyt::Pane* p2;
-        nw4r::lyt::Pane* p1;
-        p1 = mpLayout->GetRootPane()->
-            FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
-        p2 = mpLayout->GetRootPane()->FindPaneByName(
-            lbl_eu_8052DF70[field_A4], 1);
-        nw4r::lyt::Pane* p3 = mpLayout->GetRootPane()->FindPaneByName(
-            &lbl_eu_804FFCA4[0xb0], 1);
-        TagProcResetPage(field_5C, p1, p2, p3);
-        layoutTalkPanes(this);
-        field_B0 = 5;
-        break;
-    }
-    case 5:
-        if (advanceAnimTransform(field_98, lbl_eu_80667284) != 0) {
-            mpLayout->SetAnimationEnable(field_90, false);
-            mpLayout->SetAnimationEnable(field_94, false);
-            mpLayout->SetAnimationEnable(field_88, false);
-            mpLayout->SetAnimationEnable(field_98, false);
-            mpLayout->SetAnimationEnable(field_8C, true);
-            reinterpret_cast<CTalkAnimFrame*>(field_8C)->mFrame =
-                lbl_eu_80667280;
-            field_B0 = 2;
-        }
-        break;
-    default:
-        break;
+    int state;
+    if (GetSysStateFlag31() != 0) {
+        state = TagProcPumpMessage(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->mField5C), p1, p2, p3);
+    } else {
+        CTalkPadView* pad = reinterpret_cast<CTalkPadView*>(
+            cf::CfGameManager::getCurrentPad());
+        int confirm;
+        // Co-op (Classic) vs single-player (Wiimote) confirm-press bits.
+        if (cf::CfGameManager::isClassicController(-1) != 0)
+            confirm = (pad->field_04 & 0x00600000) != 0;
+        else
+            confirm = (pad->field_04 & 0x00000030) != 0;
+        if (confirm != 0)
+            state = TagProcPumpMessage(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->mField5C), p1, p2, p3);
+        else
+            state = TagProcStepMessage(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->mField5C), p1, p2, p3);
     }
 
-    mpLayout->Animate(0);
-}
-
-// ---------------------------------------------------------------------------
-// ~CTalkWindow (us-8012c828)
-// Complete-object destructor: destroy the embedded UnkClass_8045F564 region
-// (flags -1), then the CProcess base at +0 (guarded by the nested double
-// null-check - an MWCC D2-inlined-into-D1 artifact), then conditional
-// operator delete when flags > 0. Same shape as ~CSysWinSave.
-// ---------------------------------------------------------------------------
-extern "C" void* __dt__11CTalkWindowFv(CTalkWindow* _this, int flags) {
-    if (_this != 0) {
-        __dt__17UnkClass_8045F564Fv(
-            reinterpret_cast<UnkClass_8045F564*>(&_this->mMemRegion[0]), -1);
-        if (_this != 0) {
-            if (_this != 0) {
-                __dt__8CProcessFv(reinterpret_cast<CProcess*>(_this), 0);
+    if (state == 4) {
+        // Selection accepted: play the confirm voice and switch to state 4.
+        self->mLayout->SetAnimationEnable(self->field_88, false);
+        self->mLayout->SetAnimationEnable(self->field_8C, false);
+        self->mLayout->SetAnimationEnable(self->field_98, false);
+        self->mLayout->SetAnimationEnable(self->field_90, false);
+        self->mLayout->SetAnimationEnable(self->field_94, true);
+        reinterpret_cast<CTalkAnimFrame*>(self->field_94)->mFrame =
+            0.0f;
+        playUISound(0x2b);
+        self->field_B0 = 4;
+    } else if (state == 0 || self->mField65 != 0 || self->mField66 != 0) {
+        // Page-advance path: clear the pending flag, run the character-voice
+        // playback, then switch the enabled animations to state 3.
+        if (self->mField65 != 0) self->mField65 = 0;
+        if (self->field_B4 != 0) {
+            if (code80135FDC_getByte_64058() == 0) {
+                if (findObjectById(self->mField68) != 0) {
+                    CTalkWinTalkSrc* src =
+                        reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
+                    CTalkWinTalkC4* talkC4 = src->mTalkC4;
+                    if (talkC4 != 0) {
+                        src->mVoice->play(0, 0);
+                        int page = getAnimModelId(talkC4);
+                        if (page < 0x21 || page > 0x26) {
+                            func_8004B9D4(talkC4, 1, 0, -1, 0);
+                        }
+                    }
+                }
+            } else if (code80135FDC_getByte_64059() != 0) {
+                if (findObjectById(self->mField68) != 0) {
+                    CTalkWinTalkSrc* src =
+                        reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
+                    src->mVoice->play(0, 0);
+                }
             }
         }
-        if (flags > 0) {
-            operator delete(_this);
+        self->mLayout->SetAnimationEnable(self->field_94, false);
+        self->mLayout->SetAnimationEnable(self->field_88, false);
+        self->mLayout->SetAnimationEnable(self->field_8C, false);
+        self->mLayout->SetAnimationEnable(self->field_98, false);
+        self->mLayout->SetAnimationEnable(self->field_90, true);
+        reinterpret_cast<CTalkAnimFrame*>(self->field_90)->mFrame =
+            0.0f;
+        switch (self->field_A4) {
+        case 0:
+            playUISound(0x2a);
+            break;
+        case 1:
+            playUISound(0x73);
+            break;
+        case 3:
+            playUISound(0x75);
+            break;
+        default:
+            break;
+        }
+        self->field_B0 = 3;
+    } else {
+        // Page-loop flag flips (only reached when mField65/mField66 are clear).
+        if (state == 1) {
+            if (self->mField65 == 0) self->mField65 = 1;
+        } else if (state == 3) {
+            self->mField67 = 0;
+            if (self->field_AC != 0) self->mField65 = 1;
         }
     }
-    return _this;
+
+    advanceAnimTransform(self->field_8C, 1.0f);
 }
 
-// ---------------------------------------------------------------------------
-// CTalkWindow::Term (us-8012d2c4)
-// Wait for VI draw completion, drop the instance counter, detach the render
-// callback, delete the two layout objects and release the layout-build
-// scratch region.
-// ---------------------------------------------------------------------------
-void CTalkWindow::Term() {
-    CDeviceVI::waitForDrawDone();
-    lbl_eu_80664044--;
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
-    }
-    mScene->removeRenderCB(render);
-    if (field_5C != 0) {
-        delete field_5C;
-        field_5C = 0;
-    }
-    if (mpLayout != 0) {
-        delete mpLayout;
-        mpLayout = 0;
-    }
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->deleteRegion();
-}
-
-// ---------------------------------------------------------------------------
-// CTalkWindow::cbRenderBefore (us-8012d6a0)
-// Gate prefix (task busy / global bit / scene-active / talk source) then draw
-// the layout through a stack DrawInfo.
-// ---------------------------------------------------------------------------
-void CTalkWindow::cbRenderBefore() {
-    CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
-        return;
-    if (IsMenuState621F0() == 0)
-        return;
-    if (findObjectById((int)field_68) == 0)
-        return;
-    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    nw4r::lyt::DrawInfo drawInfo;
-    SetWideLocAdjust(&drawInfo);
-    drawLayout(mpLayout, &drawInfo, 0, 1);
-}
-
-// ---------------------------------------------------------------------------
-// TalkWin_Create_CC78 (us-8012d744)
-// Talk-window factory: copy the message source into a zeroed stack buffer,
-// allocate the 0xB8-byte CTalkWindow on the work heap, run the ctor (retail
-// C-ABI __ct__CTalkWindow) and register it under the caller's parent.
-// ---------------------------------------------------------------------------
-extern "C" CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2,
-                                      const u8* msgSrc, u32 arg3, u32 arg4,
-                                      u32 arg5) {
-    u8 buf[0x800];
-    memset(buf, 0, 0x800);
-    Utf8ToWcsCopyFix((const char*)msgSrc, (u16*)buf, 0x400);
-
-    u32 workMem = CWorkThreadSystem::getWorkMem();
-    CTalkWindow* obj =
-        (CTalkWindow*)mtl::MemManager::allocate(0xb8, workMem);
-    if (obj != 0) {
-        obj = __ct__CTalkWindow(obj, arg1, arg2, buf, arg3, arg4, arg5);
-    }
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
-    return obj;
-}
-
-// ---------------------------------------------------------------------------
-// sinit_8012DE98 (us-8012e968)
-// Static initializer for the talk-window float table lbl_eu_80573A70 (48
-// floats). MWCC emits the constant loads from the shared .sdata2 pool, so the
-// source references the retail SDA2 constants by name.
-// ---------------------------------------------------------------------------
-// sdata2/bss symbols provided via blob macros in CTalkWindow.hpp
-
-extern "C" void sinit_8012DE98() {
-    lbl_eu_80573A70[0] = lbl_eu_80667280;
-    lbl_eu_80573A70[1] = lbl_eu_80667280;
-    lbl_eu_80573A70[2] = lbl_eu_80667280;
-    lbl_eu_80573A70[3] = lbl_eu_80667298;
-    lbl_eu_80573A70[4] = lbl_eu_806672C0;
-    lbl_eu_80573A70[5] = lbl_eu_80667280;
-    lbl_eu_80573A70[6] = lbl_eu_80667280;
-    lbl_eu_80573A70[7] = lbl_eu_806672C0;
-    lbl_eu_80573A70[8] = lbl_eu_80667280;
-    lbl_eu_80573A70[9] = lbl_eu_80667288;
-    lbl_eu_80573A70[10] = lbl_eu_806672C0;
-    lbl_eu_80573A70[11] = lbl_eu_80667280;
-    lbl_eu_80573A70[12] = lbl_eu_80667298;
-    lbl_eu_80573A70[13] = lbl_eu_80667280;
-    lbl_eu_80573A70[14] = lbl_eu_80667280;
-    lbl_eu_80573A70[15] = lbl_eu_80667280;
-    lbl_eu_80573A70[16] = lbl_eu_80667280;
-    lbl_eu_80573A70[17] = lbl_eu_80667280;
-    lbl_eu_80573A70[18] = lbl_eu_80667288;
-    lbl_eu_80573A70[19] = lbl_eu_80667280;
-    lbl_eu_80573A70[20] = lbl_eu_80667280;
-    lbl_eu_80573A70[21] = lbl_eu_80667298;
-    lbl_eu_80573A70[22] = lbl_eu_806672C4;
-    lbl_eu_80573A70[23] = lbl_eu_80667280;
-    lbl_eu_80573A70[24] = lbl_eu_80667280;
-    lbl_eu_80573A70[25] = lbl_eu_806672C4;
-    lbl_eu_80573A70[26] = lbl_eu_80667280;
-    lbl_eu_80573A70[27] = lbl_eu_80667288;
-    lbl_eu_80573A70[28] = lbl_eu_806672C4;
-    lbl_eu_80573A70[29] = lbl_eu_80667280;
-    lbl_eu_80573A70[30] = lbl_eu_80667280;
-    lbl_eu_80573A70[31] = lbl_eu_80667280;
-    lbl_eu_80573A70[32] = lbl_eu_80667280;
-    lbl_eu_80573A70[33] = lbl_eu_80667280;
-    lbl_eu_80573A70[34] = lbl_eu_80667280;
-    lbl_eu_80573A70[35] = lbl_eu_80667280;
-    lbl_eu_80573A70[36] = lbl_eu_80667280;
-    lbl_eu_80573A70[37] = lbl_eu_80667280;
-    lbl_eu_80573A70[38] = lbl_eu_80667280;
-    lbl_eu_80573A70[39] = lbl_eu_80667280;
-    lbl_eu_80573A70[40] = lbl_eu_80667280;
-    lbl_eu_80573A70[41] = lbl_eu_80667280;
-    lbl_eu_80573A70[42] = lbl_eu_80667280;
-    lbl_eu_80573A70[43] = lbl_eu_80667280;
-    lbl_eu_80573A70[44] = lbl_eu_80667280;
-    lbl_eu_80573A70[45] = lbl_eu_80667280;
-    lbl_eu_80573A70[46] = lbl_eu_80667280;
-    lbl_eu_80573A70[47] = lbl_eu_80667280;
-}

@@ -30,8 +30,8 @@
 // 3-component subtract: out = a - b.  a.xy/b.xy as one pair, a.z/b.z as
 // 32-bit singles.  The `b .+4` is the retail scheduler barrier (branches to
 // the very next instruction; kept for byte identity).
-asm void scnVlVecSub(register void* a, register void* out,
-                       register const void* b) {
+extern "C" asm void scnVlVecSub(register Vec* a, register Vec* out,
+                                register const Vec* b) {
     nofralloc
     mr         r0, r3
     mr         r3, r4
@@ -54,7 +54,7 @@ lbl_97C50:
 #else
 
 // Scalar fallback (PC / NONMATCHING builds).
-void scnVlVecSub(void* a, void* out, const void* b) {
+extern "C" void scnVlVecSub(Vec* a, Vec* out, const Vec* b) {
     const f32* av = (const f32*)a;
     const f32* bv = (const f32*)b;
     f32* ov = (f32*)out;

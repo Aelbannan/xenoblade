@@ -21,6 +21,7 @@ namespace nw4r {
 namespace snd {
 
 // Forward declarations
+class SoundActor;
 class SoundHandle;
 class SoundPlayer;
 
@@ -47,18 +48,21 @@ public:
         };
 
         virtual ~AmbientParamUpdateCallback() {} // at 0x8 (retail slot)
-        virtual void detail_Update(SoundParam* pParam, u32 id,
-                                   BasicSound* pSound, const void* pArg,
-                                   u32 flags) = 0; // at 0xC
+        // US retail passes (arg, id, voice-out count, out param).
+        virtual void detail_Update(void* pArg, u32 id, u32 voiceOutCount,
+                                   SoundParam* pParam) = 0; // at 0xC
         virtual u32 GetPriority(void* arg, u32 param) = 0; // at 0x10
+        virtual u32 GetVoiceOutCount(void* arg, u32 param) = 0; // at 0x14
     };
 
     struct AmbientArgUpdateCallback {
+        virtual ~AmbientArgUpdateCallback() {} // at 0x8 (retail slot)
         virtual void detail_Update(void* pArg,
                                    const BasicSound* pSound) = 0; // at 0xC
     };
 
     struct AmbientArgAllocaterCallback {
+        virtual ~AmbientArgAllocaterCallback() {} // at 0x8 (retail slot)
         virtual void* detail_AllocAmbientArg(u32 size) = 0; // at 0xC
 
         virtual void
@@ -86,6 +90,14 @@ public:
 
     static const u32 INVALID_ID = 0xFFFFFFFF;
     static const int PRIORITY_MAX = 127;
+
+private:
+    enum PauseState {
+        PAUSE_STATE_NONE,      // 0
+        PAUSE_STATE_PAUSING,   // 1
+        PAUSE_STATE_PAUSED,    // 2
+        PAUSE_STATE_UNPAUSING, // 3
+    };
 
 public:
     BasicSound(int priority, int arg);
@@ -151,6 +163,14 @@ public:
     void AttachSoundPlayer(SoundPlayer* pPlayer);
     void DetachSoundPlayer(SoundPlayer* pPlayer);
 
+    SoundActor* GetSoundActor() {
+        return mSoundActor;
+    }
+    void SetSoundActor(SoundActor* pActor) {
+        mSoundActor = pActor;
+    }
+    void AttachSoundActor(SoundActor* pActor);
+
     ExternalSoundPlayer* GetExternalSoundPlayer() {
         return mExtSoundPlayer;
     }
@@ -187,6 +207,7 @@ public:
                                  AmbientArgUpdateCallback* pArgUpdate,
                                  AmbientArgAllocaterCallback* pArgAlloc,
                                  void* pArg);
+    void SetAmbientInfo(const AmbientInfo& rInfo);
 
     void SetPriority(int priority) {
         mPriority = priority;
@@ -230,14 +251,14 @@ private:
     SoundHandle* mGeneralHandle;          // at 0x8
     SoundHandle* mTempGeneralHandle;      // at 0xC
     SoundPlayer* mSoundPlayer;            // at 0x10
-    ExternalSoundPlayer* mExtSoundPlayer; // at 0x14
+    SoundActor* mSoundActor;              // at 0x14
+    ExternalSoundPlayer* mExtSoundPlayer; // at 0x18
 
-    AmbientParamUpdateCallback* mAmbientParamUpdateCallback;   // at 0x18
-    AmbientArgUpdateCallback* mAmbientArgUpdateCallback;       // at 0x1C
-    AmbientArgAllocaterCallback* mAmbientArgAllocaterCallback; // at 0x20
-    void* mAmbientArg;                                         // at 0x24
-    u32 mUnk0x28;                                              // at 0x28
-    u32 mUnk0x2C;                                              // at 0x2C
+    AmbientParamUpdateCallback* mAmbientParamUpdateCallback;   // at 0x1C
+    AmbientArgUpdateCallback* mAmbientArgUpdateCallback;       // at 0x20
+    AmbientArgAllocaterCallback* mAmbientArgAllocaterCallback; // at 0x24
+    void* mAmbientArg;                                         // at 0x28
+    u32 mAmbientArgSize;                                       // at 0x2C
     SoundParam mAmbientParam;                                  // at 0x30
     u32 mUnk0x50;                                              // at 0x50 (ctor arg)
     f32 mUnk0x54;                                              // at 0x54
@@ -258,7 +279,7 @@ private:
     int mAutoStopCounter;                 // at 0x8C
     u32 mUpdateCounter;                   // at 0x90
     u8 mPriority;                         // at 0x94
-    u8 mUnk0x95;                          // at 0x95
+    u8 mVoiceOutCount;                    // at 0x95
     bool mOutputLineFlagEnable;           // at 0x96
     u8 mPad0x97;                          // at 0x97
     u32 mId;                              // at 0x98

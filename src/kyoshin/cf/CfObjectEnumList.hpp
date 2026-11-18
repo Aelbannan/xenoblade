@@ -19,9 +19,6 @@ public:
     CfObjEnumList();
     ~CfObjEnumList();
 
-    void* getObjectIdAt(int index);
-    void* getObjectAt(unsigned long idx);
-    void* getEntryAt(int index);
 
     // reslist base: vtable pointer (0x00), sentinel, backing storage, and
     // ownership flag. The methods below are plain (direct-call) methods, but
@@ -292,7 +289,7 @@ extern "C" int ColiCheckMoveGate(void* self, void* spot, float threshold); // di
 extern void* lbl_eu_80665958;
 // Data import used by the list-rebuild ctor __ct__800FD250 (reslist-ish sort
 // descriptor table; only its address is taken, at +0 and +8).
-extern u8 lbl_eu_8052BDA0[0x20];
+extern u8 gCfEnumListSortDispatch[0x20];
 
 // Context blob passed to CfEnumProjView::vX120 by sortEntriesByScreenX.
 extern u8 lbl_eu_804FCD24[];
@@ -331,7 +328,7 @@ extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
 // .bss probe-offset table written by probePartnerSegment (12 floats).
-extern float lbl_eu_80573A30[12];
+extern float gCfEnumListProbeOffsets[12];
 
 // .sbss flag byte guarding the probe-offset table init (signed: retail
 // lbz + extsb. tests the raw byte).

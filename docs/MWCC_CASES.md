@@ -12936,3 +12936,1509 @@ member ctor first and all the stores afterwards (ctor 0x450 → 0x4DC).
 - Applies to/a.k.a.: every converted window whose IWorkEvent::OnFileEvent body was split into a
   free function + wrapper; MWCC never drops the standalone copy of a user-written override, so the
   retail "thunk → real body" shape means the body must be the member.
+
+## kyoshin/CSystemWindow — who really owns `__vt__13CSystemWindow` (`lbl_eu_8052D378`): CSystemWindow.cpp, not CTagProcessor.cpp; the split map is what blocks the conversion (Wii/1.1, mwcc_43_151)
+- Symptom:   converting CSystemWindow to a real `IUIWindow + IWorkEvent + IScnRender` class emits a
+  strong `__vt__13CSystemWindow` (+ 0x40 base list) in CSystemWindow.o, whose retail address
+  0x8052D378 sits inside the `.data` slice that `config/us/splits.txt` assigns to
+  `kyoshin/CTagProcessor.cpp` (0x8052D378..0x8052DF70). CSystemWindow's own split carries **no**
+  `.data`/`.sdata` line at all, so its data gate would go MATCH → `retail 0x0 != decomp 0x100`.
+- Cause:     retail evidence says the table is CSystemWindow's, emitted by its own **key function**
+  TU. `__dt__13CSystemWindowFv` … `cbRenderBefore__13CSystemWindowFv` all live in CSystemWindow's
+  `.text` slice (0x801250C8..0x8012565C), which is *exactly* full (8 functions, 0x594 bytes, no
+  room for MI thunks) — and the retail vtable's +0x2C/+0xB4/+0xB8 slots relocate to
+  `SysWinSelectBaseDtorThunk6C` / `…RenderThunk70` / `…DtorThunk70` at 0x80125D7C.., i.e. the
+  *base-class* thunks CSysWinSelect.cpp emits for its own vtable group: MWCC emits a vtable whose
+  MI-dtor/render thunk slots are **external references** resolved by whichever TU defines the
+  derived class (the linker resolves them to CSysWinSelect.o's copies). `__RTTI__13CSystemWindow`
+  (weak, .sdata 0x80661EE0) sits immediately after `__RTTI__13CSysWinSelect` for the same reason.
+  So the correct retail layout is `CSystemWindow.o .data = [0x8052D378,0x8052D478)` and
+  `CTagProcessor.o .data = [0x8052D478,…)` — the boundary line in splits is one object too low,
+  because 0x8052D378/0x8052D438 are unnamed `lbl_eu_` labels and the splitter assigns unnamed
+  ranges to the next unit.
+- Fix:       none inside the current rules. CSystemWindow is left NON-polymorphic (plain struct +
+  hand `self->mVptr = (u32)lbl_eu_8052D378` stores, `__ct__8CProcessFv` call) so it emits no data
+  and stays 8/8 ✓ + data MATCH; the 0x100 bytes are supplied to the link today by CTagProcessor's
+  retail asm object (`build/us/obj/…` is what the `.rsp` links for that NonMatching unit), and must
+  be spelled by `CTagProcessor.cpp` when that unit converts. The conversion becomes possible only
+  after splits gains `kyoshin/CSystemWindow.cpp` `.data 0x8052d378..0x8052d478` +
+  `.sdata 0x80661ee0..0x80661ee8` and CTagProcessor's `.data` start moves to 0x8052d478.
+- Result:    no source change; recorded so the next agent does not "fix the collision" by
+  hand-writing the vtable in CTagProcessor.cpp (it would double the bytes at 0x8052D378 once
+  CSystemWindow converts) or by converting CSystemWindow (breaks its data gate).
+- Confidence: repo_proven (symbol addresses + thunk targets read out of the retail asm dumps).
+- Applies to/a.k.a.: any unit whose `.data` line is missing from splits because every symbol in it
+  is an unnamed `lbl_eu_` label; check "does the key function TU have room for its thunks" before
+  deciding who owns a vtable — externally-resolved MI thunk slots are the tell.
+
+## ScnRes_QuantizeVecSteps (monolib/src/scn/code_804BD8E8) — scalar component muls + double early return → PS `VEC3Scale` + single-exit (Wii/1.1, 29.7% → 69.4%)
+- Symptom:   decomp 0x16C vs retail 0x154; 52 structural. Retail's tail is `psq_l`/`ps_muls0`/
+  `psq_st` pairs (nw4r `VEC3Scale`) while the decomp emitted three scalar `fmuls` after a
+  two-step `v * invMag * t`; retail also has no `li r3, 1` before the epilogue.
+- Cause:     (1) `nw4r::math::VEC3Scale` is an inline-asm PS routine (libs/nw4r/include/nw4r/math/
+  math_types.h:403) — writing the per-component multiply by hand gives scalar code and loses the
+  paired-single shape. (2) Retail's zero-vector test branches **to the epilogue** (`bc 12,2` →
+  `or r3, r31, r31`), i.e. one exit; `if (zero) return result;` folds `result` to the constant and
+  materialises `li r3, 1` + `b`, which is a structural mismatch even though the bytes are
+  semantically identical. (3) The step count lives in the *return register*: retail does
+  `lwz r31, 12(sp)` for the `(s32)(mag/scale)` result and then `addi r31, r31, 1` /
+  `rlwinm r31, r31, 1, 0, 30` on it, so the source keeps the count in the result variable, not in
+  a separate `u32 steps` local.
+- Fix:       `if (!allZero) { ... }` with `result = (s32)(mag/scale)` reused as the step count, and
+  `nw4r::math::VEC3Scale((VEC3*)v, (const VEC3*)v, t)` for the final scale.
+- Result:    69.4% (17 structural, 9 reg_swap), decomp 0x14C vs retail 0x154 — near-miss.
+  Remaining residual: retail's tail has **two** `ps_muls0` per component (`0x108200D8` =
+  `ps_muls0 f4,f2,f0`, then `0x10240018` = `ps_muls0 f1,f4,f0`) where a single `VEC3Scale`
+  inlines to one; hexdiff's dumper prints those words as `.4byte`/`ps_cmpo0`, so use
+  `build/binutils/powerpc-eabi-objdump -d` (it decodes `stfsux`, `frsp`) or hand-decode
+  4|FRT|FRA|FRC|XO(24) before trusting the listed mnemonic. A two-call source
+  (`VEC3Scale(v,v,steps); VEC3Scale(v,v,mag/steps)`) was tried: 53.8%, decomp 0x16C, so the shared
+  load/store form is not two separate calls.
+- Confidence: repo_proven (byte diff + PS opcode decode), near-miss on the remaining tail.
+- Applies to/a.k.a.: any nw4r `VEC3*`/`VEC3Scale`/`VEC3Add` use in monolib math — always call the
+  nw4r inline rather than spelling the components out; also "retail's `bc` to the epilogue" =
+  single-exit source shape (docs/MWCC_PATTERNS.md control-flow notes).
+
+## monolib/src/coli CColiProc/CColiObjCall/CColiResCall — hand tables → real classes, and what
+## MWCC's vtable-emission rule actually is (Wii/1.1 -O4,p -RTTI on, done)
+- Symptom:   the three coli classes were hand data (three `extern "C" u32 __vt__*` arrays,
+  `__RTTI__*`/`__RTTIBaseList__*` arrays, hand-written `sinit_*` vptr stores, the two static
+  instances as raw byte arrays), the base class was 0x50 bytes in the header (retail: 0x38) and
+  the "CColiProc members" `InitQuad`/`InitTriple`/`IsTargetFlagged`/`TestBit18State` were really
+  0x10-byte work-object helpers.
+- MWCC behaviour, re-derived with out-of-tree probes (+ confirmed in-tree):
+  1. `__vt__X` is emitted **only by the TU that defines X's key function** (the first non-inline
+     virtual declared in the class). A TU that merely instantiates X gets an `*UND*` reference.
+  2. Within one TU the vtables are emitted **after all source-ordered `.data`** and in the
+     **reverse order of the key-function definitions** (`{ObjCall, Proc, ResCall}` for definitions
+     written `Proc, ObjCall, ResCall`). Consequence for split work: a class's vtable can never be
+     placed *before* the same TU's tables, so `.data` order pins which TU owns which object.
+  3. Each vtable is 8-byte aligned (a 0xC-byte table is followed by 4 padding bytes when the next
+     object needs 8), and `[__vt__X][__RTTIBaseList__X]` are adjacent.
+  4. `__RTTI__X` locators are **weak** (8 bytes, `.sdata` when 8-aligned) and `mwld` keeps the first
+     copy in link order, dead-stripping the later ones together with their `.rodata` name strings —
+     exactly what `tools/coop/lib/weak_dedup.py` (`run.py data diff` linked-view) models.
+     A TU that defines a base class's vtable may therefore show *no* `__RTTI__<base>` at all in
+     retail (here `__RTTI__9CColiProc` lives in kyoshin/cf/CtrlMoveBase.cpp).
+  5. Placement new (`new (&s->member) T()`) always adds an intrinsic null guard MWCC cannot prove
+     away (MWCC_PATTERNS "Placement-new intrinsic null guard"); the retail-shaped call is the
+     explicit `extern "C" __ct__...Fv(ptr)` spelling. Used for the seven
+     `__ct__9CColiProcFv(&self->field_0x04)` sites (embedded proc sub-objects) — 100% preserved.
+  6. A generated `__sinit_` **inlines the ctor of the object it initialises, and also inlines that
+     ctor's same-TU base-class ctor call**. Retail calls `__ct__9CColiProcFv` out of line from
+     *both* static initialisers, so retail's ctor is in a third TU (a6c60 / ctor-TU / CColiProc);
+     that TU cannot be added here (configure.py is frozen), so whichever coli unit defines the
+     ctor loses the 0x3C sinit shape (0x20 inlined, same stores, same vtable install).
+- Fix (what was converted):
+  * `monolib/coli/CColiProc.hpp`: real `CColiProc` (0x38, one virtual `Update`), `CColiObjCall`
+    (0x48: `VEC3* field_0x38`, `f32 field_0x3c`, `u8 field_0x40`, inline ctor initialising them),
+    `CColiResCall` (0x50: `VEC3 acc`, `CColiMtxSrc* src`, `void* target`, `u32 field_0x4c`) and the
+    0x10-byte `CColiWork` (`InitTriple`/`InitQuad`/`IsTargetFlagged`/`TestBit18State`), all with
+    compiler-emitted vtables/RTTI.
+  * `code_804A6C60.cpp`: hand vtables/RTTI/`__RTTIBaseList__`/`sinit` deleted; `ColiNoop` →
+    `CColiProc::Update`, `ColiAccumScaledVec` → `CColiObjCall::Update`, `lbl_eu_8065D0A0` is now a
+    real `CColiObjCall` static (its generated sinit is byte-identical, 0x54).
+  * `CColiProc.cpp`: `__ct__9CColiProcFv`, `CColiResCall lbl_eu_8065D0E8` static (generated sinit)
+    and `CColiResCall::Update` (the 0xDC mover body, moved from code_804B2FF0 so the vtable lands
+    where retail has it).
+  * Retail symbol names renamed via `rename_syms.py` (all three regions + targets.json):
+    `ColiNoop→Update__9CColiProcFv`, `ColiAccumScaledVec→Update__12CColiObjCallFv`,
+    `ColiMoverUpdate→Update__12CColiResCallFv`, `__ct__CColiProc→__ct__9CColiProcFv`,
+    `sinit_804B2524→__sinit_\code_804A6C60_cpp`, `sinit_804B2FB4→__sinit_\CColiProc_cpp`,
+    `InitQuad/InitTriple/IsTargetFlagged/TestBit18State__9CColiProc…→__9CColiWork…`.
+  * Splits (US, mirrored .text/extab in EU): a6c60 `.data` end 0x8056F3A8, new `.rodata`
+    0x80524408-0x80524418, `.sdata` end 0x80663AA0, `.bss` end 0x8065D0E8; CColiProc `.data`
+    0x8056F3A8-0x8056F3C0, `.rodata` 0x80524418-0x80524428, `.sdata` 0x80663AA0-0x80663AA8,
+    `.bss` 0x8065D0E8-0x8065D138, `.text` end 0x804B7228 (+ its extab/extabindex grown by the moved
+    function's records); code_804B2FF0 `.data` start 0x8056F3C0, `.text` start 0x804B7228;
+    CScnItemCamera `.rodata` end 0x80524408. CScnItemCamera's `.rodata` blob was trimmed to 0x1B0
+    bytes (the two coli type-name strings are compiler-emitted now) — its `.rodata` data diff went
+    FAIL → MATCH.
+  * The per-type spec tables `lbl_eu_8056F3C0/3D4/3E8` moved to code_804B2FF0.cpp: retail's `.data`
+    order is `[ResCall vtable][base list][tables]`, and MWCC emits source data before vtables, so
+    only a later TU can own the tables. `section_owners.py` votes CColiProc for them (its
+    code references them); the byte order wins, so `faithful` counts them as foreign data in 2FF0.
+- Result:    a6c60 57/108 (data `.data`/`.rodata`/`.sdata`/`.bss`/`.sbss` all identical;
+  `.sdata2` still the open pool debt), CColiProc data VERDICT MATCH (was `[bypass:ok]`),
+  CColiProc 6/13 (sinit residual above; `Update__12CColiResCallFv` keeps its pre-existing 50.9%
+  0xDC-vs-0xD8 near-miss), 2FF0 22/37 unchanged `.data`/`.rodata`/`.sdata` (its split budget is now
+  exceeded by 0x8: 0x4 pre-existing + 0x4 because the moved mover body is 4 bytes short),
+  CScnItemCamera `.rodata` MATCH, code_804B59C8 unchanged. link-gate OK (missing 43, multiply
+  defined 0 — no duplicate `__vt__`), extab-gate / text-order-gate OK.
+- Confidence: repo_proven (1-3, 5, the layout/hierarchy, the split model); hypothesis for the
+  third retail TU (4 + 6 force it, no split can express it with three files).
+- Applies to/a.k.a.: any multi-class hierarchy in one TU whose retail `.data` interleaves
+  vtable/base-list/tables across units; `vl`+`-RTTI on` emission order; `weak_dedup` linked-view
+  expectations for `__RTTI__`/name-string drops.
+
+## nw4r/src/lyt/lyt_material — `.text` 0x6C over split budget → delete pre-mangled out-of-line stubs (Wii/1.1 `-O4,s`, 75/78 hexdiff-clean, split PASS 0x0 spare)
+
+- Symptom:   `hexdiff --all` reported `split: FAIL budget=0x2E74 retail .text=0x2E74
+  decomp .text=0x2EE0 — exceeds split budget by 0x6C` while every *retail* `.text`
+  symbol paired at 100% with an equal size, so the overshoot was not a per-function
+  size drift. The three residual `✗` rows (`__ct__`, `Init`, `SetupGX`) were all
+  `100.0% | 0 structural | 0 reg_swap` and shown as `OVER(108)` — the split gate
+  alone was failing them.
+- Cause:   the file tail carried five *hand-defined pre-mangled* stubs
+  (`__as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2`,
+  `__as__Q34nw4r2ut5ColorFRC8_GXColor`,
+  `__as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen`,
+  `SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode`,
+  `SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter`) each forwarding to
+  the real inline member in its owning header (`math::VEC2::operator=`,
+  `ut::Color::operator=(GXColor)`, `lyt::TexCoordGen::operator=`,
+  `lyt::TexMap::SetWrapMode/SetFilter`). MWCC already emits those bodies out of line
+  under this unit's flags, so the object contained **two copies of each**: the real
+  mangled symbol (`…FRCQ34nw4r4math4VEC2`, matched 100%) plus the stub's
+  double-mangled name (`…FRCQ34nw4r4math4VEC2__FPQ34nw4r4math4VEC2PCQ34nw4r4math4VEC2`,
+  local `T`). `nm` diff against retail listed exactly those five extra symbols:
+  0x14+0xc+0x24+0x14+0x14 = **0x6C** — the entire overshoot.
+- Fix:     delete the stubs (and the "Out-of-line copies"/"lyt::TexMap element
+  setters" comment blocks) from `libs/nw4r/src/lyt/lyt_material.cpp`; the compiler
+  emits the five bodies itself.  Edit is at the file tail, so no `-ipa file`
+  line-number shift for any earlier function.
+- Result:  split PASS 0x2E74/0x2E74 (0x0 spare), `hexdiff --all` unchanged at 75/78
+  `✓` with the same three reloc-drift rows, `run.py data diff` → data 100%,
+  `link-gate` OK (missing 43). The five previously-blocked targets then certified:
+  `FindAnimationLink(AnimTransform*)`, `CalcTextureMtx`, `SetIndTexMtx`,
+  `__as__TevStage`, `__ct__(res::Material, ResBlockSet)` FULL_MATCH;
+  `__ct__()` + `Init` EQUIVALENT_MATCH (witness). Unit registry 71 → 77 accepted.
+- Residual (SetupGX, `us-804095c0`, CODE_MATCH): the body is byte-identical for all
+  936 instructions; only two `R_PPC_EMB_SDA21` sites (`+0xa14`, `+0xa20`) differ,
+  and only in *symbol identity* — retail's retail-object symbol is the **undefined**
+  `DefaultBlackColor_8066B550` (the 8-byte `.sbss2` block at 0x8066B550 is owned by
+  `RVL_SDK/…/hbm/nw4hbm/lyt/lyt_material.cpp` per splits), while ours is the defined
+  local `DefaultBlackColor` in this unit's `.sbss2`. The unit's existing
+  `lyt_material.o#Q34nw4r3lyt` UNIT_RULES entry canonicalises that name for the data
+  gate (`data: 100.0%`), but `certify_unit_symbol`'s byte gate
+  (`full_match.compare_unit_functions`) compares the raw objects, so the pair is
+  "non-byte-identical"; the fallback register-renaming witness then dies at
+  `execute | path limit exceeded (2048)` because SetupGX's independent
+  `hasTexCoordGen`/`hasAlphaCompare`/`hasBlendMode`/… branches are path-exponential
+  (10 min budget does not help — the cap is `_WITNESS_MAX_PATHS = 2048`, not wall
+  clock). Same drift on `Init`/`__ct__` certifies fine because those bodies are
+  straight-line. Fix would be tooling (feed UNIT_RULES canonical names into the byte
+  gate, or raise the witness path budget for large bodies), not source.
+
+## MWCC vtable emission, part 2: a class whose only virtual is an *inline* dtor emits a WEAK vtable in the constructor's TU (Wii/1.1, mwcc_43_151)
+- Symptom:   retail puts `cf::CChainCombo`'s 0xC-byte vtable (`.data:0x80538994`,
+  `[__RTTI__][0][__dt__]`), its weak `__RTTI__` (`.sdata:0x80662B08`) and its
+  `"cf::CChainCombo"` type-name string (`.rodata:0x8050FD50`) at the head of the run that
+  contains `CChainCombo.cpp`'s own 3-word table (0x80538988) — while the class's
+  `__dt__Q22cf11CChainComboFv` body sits in **CBattleManager.cpp**'s text slice
+  (0x800D9704, right after `__dt__Q22cf6CChainFv`). Under the "key function" rule
+  (vtable in the TU that defines the first non-inline virtual = the dtor) the vtable
+  would have to be in CBattleManager.o's `.data` run, i.e. at 0x8052B0xx — contradiction.
+- Cause:     the dtor is **inline in the class** (`virtual ~CChainCombo() {}`), so the class
+  has no key function at all. Probes (`/tmp/xb/winsp/probe`, same flags):
+  * `virtual ~D() {}` + out-of-line `D::D()`  → **`__vt__1D` STB_WEAK** + weak `__RTTI__1D`
+    + name string in the *constructor* TU; weak `__dt__1DFv` copies (0x40) in every TU that
+    constructs/destroys a `D`; no vtable copy in the destroying TUs.
+  * `virtual ~A();` declared + `A::~A() {}` out of line → **`__vt__1A` STB_GLOBAL** in the
+    dtor's TU (the classic key-function rule), nothing in the ctor's TU.
+  So the surviving vtable is the ctor TU's weak copy; the surviving dtor is the first
+  weak copy in link order (CBattleManager.o, which destroys `CChain` members).
+- Fix:       `struct CChainCombo { …members…; CChainCombo(); virtual ~CChainCombo() {} void func1(); };`
+  — declare the data members **before** the virtual, because MWCC puts the vptr where the
+  first virtual is declared (`stw r4,0x14(r3)` in the ctor, exactly retail's manual store).
+  Delete the hand-written `ChainComboVtPrefix lbl_eu_80538994` / `__RTTI__` / name-string
+  blobs from CSysWinSave.cpp, delete `CChainCombo::~CChainCombo(){}` from CBattleManager.cpp,
+  define the unit's 3-word table (`{0x708,0x4b0,0x258}`, `lbl_eu_80538988`) in CChainCombo.cpp
+  and rename the retail vtable symbol `lbl_eu_80538994` → `__vt__Q22cf11CChainCombo`
+  (reloc names must match for the ctor's vptr store to gate ✓).
+- Result:    splits re-cut (CChainCombo `.data 0x80538988..0x805389A0`, `.rodata
+  0x8050FD50..0x8050FD60`, `.sdata 0x80662B08..0x80662B10`; CSysWinSave `.data
+  0x805389A0..0x80538AA0`, `.rodata 0x8050FD60..0x8050FD88`, `.sdata 0x80662B10..0x80662B18`).
+  CChainCombo `.data` 0xC→0x18 → **24 bytes identical (MATCH)**, `.rodata`/`.sdata` MATCH;
+  CSysWinSave `.data` **252 bytes identical + 4 tail (MATCH)** (was 20 diffs), `.rodata`/`.sdata`
+  MATCH. Functions unchanged: CChainCombo 2/4 (ctor back to 100%), CSysWinSave 13/14,
+  CBattleManager 54/78 (its weak `__dt__Q22cf11CChainComboFv` copy stays byte-identical).
+  JP's splits already had exactly these boundaries (independent confirmation).
+- Confidence: repo_proven (5 probes + per-unit hexdiff/data-diff tables).
+- Applies to/a.k.a.: any class whose retail vtable sits outside the key-function TU; the
+  "retail keeps the copy in <unit>" linked-view exclusion is the tell. See the companion
+  entry "user `.data` always precedes MWCC's generated vtables" — both residuals were the
+  same split-cut problem, and both are now MATCH.
+
+## Split boundaries cut by neighbour-owned bytes: the three-section test (CSysWinBuff / ICamControlRemote, 2026-11-19)
+- Symptom:   `kyoshin/CSysWinBuff` `.data` (0x110) diffed 20 bytes from +0x28 even after the
+  IUIWindow conversion; `kyoshin/cf/ICamControlRemote` `.data` was `retail 0xC8 != 0x0`.
+- Cause:     retail's CSysWinBuff `.data` run is `[__vt__11CSysWinBuff 0xC4][base list 0x3C]`
+  = 0x100, and the 0x10 table that the old slice ended with
+  (`{&camControlDefault,&camControlClassic,&camControlGc,0}` at 0x80537EC0) is a **user
+  file-scope object of the next TU** (ICamControlRemote.cpp): MWCC emits user objects
+  *before* the vtables it generates, and this one is immediately followed in the same run by
+  the five ICamControl family vtable/base-list blobs at 0x80537ED0 (the first TU after
+  CSysWinBuff that owns data). `initCamControlInstances()` lives in code_8027513C.cpp, whose
+  data run starts later (0x80537F98), so it cannot own the table.
+- Fix:       CSysWinBuff `.data end:0x80537EC0`, ICamControlRemote `.data start:0x80537EC0`;
+  move the table definition (real initialisers, `void* camControlTable[4]`) into
+  ICamControlRemote.cpp; rename its four anonymous symbols (`camControlTable`,
+  `camControlDefault/Classic/Gc`) with `rename_syms.py` (also drops 4 tier-B `foreign_data`
+  votes and 11 `label` hits). CSysWinBuff keeps the three `.sbss` instance cells
+  (`.sbss` 0x20 ⇒ MATCH; moving them needs its own boundary decision).
+- Result:    CSysWinBuff `.data` **256 bytes identical (MATCH)**; ICamControlRemote 10/10
+  functions ✓ and emits the 0x10 table (its remaining 0xC8 `.data` gap = the ICamControl
+  family vtables/RTTI/name strings, still to be recovered as real classes).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: any slice whose last object is a user table followed by another unit's
+  generated vtables; check `.rodata`/`.sdata` run starts for the second opinion.
+
+## `__vt__13CSystemWindow` is emitted by the TU at CTagProcessor's link position, not by CSystemWindow.cpp (US splits are already right; do NOT convert)
+- Symptom:   the 0xC0 vtable + 0x40 base list at `.data:0x8052D378` (slots → CSystemWindow's
+  ctor/dtor/Init/Term/Move/cbRenderBefore, plus `@108@`/`@112@`-style thunks at
+  0x80125D7C..0x80125D94 that tail-call `__dt__13CSystemWindowFv` / `cbRenderBefore`) sits in
+  the slice `config/us/splits.txt` gives to `kyoshin/CTagProcessor.cpp`; CSystemWindow's own
+  `.text` slice is exactly full (0x594, 8 functions), so its thunks cannot live there.
+- Cause:     the block belongs to the **class** CSystemWindow but was emitted by the TU at
+  CTagProcessor's position — three independent sections start exactly there:
+  `.rodata:0x804FEFA8` = `"CSystemWindow"`, `.sdata:0x80661EE0` = `__RTTI__13CSystemWindow`,
+  `.data:0x8052D378` = `__vt__` + base list, i.e. the first three symbols of CTagProcessor's
+  `.rodata`/`.sdata`/`.data` slices. CSysWinSelect's own three slices are exactly consumed by
+  `"CSysWinSelect"` (0xE+2 pad = 0x10), `__RTTI__13CSysWinSelect` (0x8) and its vtable+base
+  list (0x100), so the block cannot be CSysWinSelect's either.
+- Fix:       none needed in US — the existing boundaries are consistent with link order
+  (CSystemWindow.cpp owns no `.data`, so the next TU with data, CTagProcessor, owns it).
+  **Do not** convert CSystemWindow to a real class: MWCC would then emit the vtable in
+  CSystemWindow.o, which is *earlier* in link order, so the linked `.data` order and the
+  CTagProcessor/CSysWinSelect data gates would all break (and the bytes would be duplicated
+  by CTagProcessor's retail asm object). The class stays non-polymorphic (8/8 ✓, `.data` MATCH).
+- Note:      JP's splits instead give CSystemWindow `.data 0x80530A48..0x80530C48` (0x200,
+  both vtables) and CSysWinSelect nothing; that is a different, also self-consistent
+  reconstruction of the same bytes. US keeps its own.
+- Confidence: repo_proven (slices + symbols.txt + `.rodata` string contents).
+- Applies to/a.k.a.: any "the vtable belongs to class X" claim — the class identity does not
+  imply the emitting TU; check the three run starts before re-cutting a split.
+- Open point (noted, not acted on): the three CSystemWindow thunks live at 0x80125D7C..0x80125D94,
+  i.e. in the block of six thunks that closes the TU at CSysWinSelect's position, which reads as
+  "the TU at CSysWinSelect's position emitted the CSystemWindow vtable", while the
+  `.rodata`/`.sdata`/`.data` run starts read as "the TU at CTagProcessor's position emitted it".
+  The two readings differ only in where the 0x200-byte `.data` run is cut; both keep the bytes in
+  link order today, and neither is reachable from source without first knowing which TU owns the
+  class's key function (retail's only copy of `__dt__13CSystemWindowFv` sits in CSystemWindow's
+  `.text` slice, which is exactly full). Resolve by recovering the CSysWinSelect/CSystemWindow
+  class models (and their `.text` thunk ownership), not by moving the split.
+
+### UPDATE (same session): the third coli unit was added — both sinits are 100% again
+The user lifted the `configure.py` freeze for exactly one new unit, so the constructor now lives in
+its own translation unit and the MWCC "same-TU ctor inlining" limit above no longer bites:
+- `libs/monolib/src/coli/CColiProcBase.cpp` (new) holds only `CColiProc::CColiProc()`;
+  `Object(NonMatching, ...)` sits between `code_804A6C60.cpp` and `CColiProc.cpp` in
+  `configure.py` (link order = retail address order), with splits
+  `.text 0x804B66D4-0x804B66EC` (US/EU) / `0x804B2578-0x804B2590` (JP, same 0x18 size) and
+  `CColiProc .text start` moved to `0x804B66EC` / `0x804B2590`. The unit emits no data sections
+  (`[bypass:ok]`): the `__vt__9CColiProc` it stores belongs to a6c60 (key function `Update`).
+- Result: `CColiProcBase` 1/1 (`__ct__9CColiProcFv` 0x18/0x18), `__sinit_\CColiProc_cpp`
+  back to 0x3C/0x3C, `__sinit_\code_804A6C60_cpp` still 0x54/0x54. CColiProc `.data`/`.rodata`/
+  `.sdata`/`.sdata2`/`.bss` all identical (its extab improves 0x28→0x30 against retail's 0x40
+  because the sinit's record is back; the remaining 0x10 is the three 4-byte stub walkers).
+- The `extern "C" __ct__9CColiProcFv(ptr)` recipe is still required at the seven
+  `&self->field_0x04` sites and in 2FF0's walk-state sinit: verified out-of-tree that MWCC emits the
+  `addic.`+`beqlr` null guard for placement new **even when the ctor is only declared in the TU**
+  (`new (&s->proc) P;` with `P::P()` undefined → 0x0 `addic. r3,r3,4` / 0x4 `beqlr`), so placement
+  new cannot replace it. In `CtrlMoveBase.cpp` the same call site now uses a plain
+  `extern void __ct__9CColiProcFv(void*);` declaration — MWCC leaves `__`-prefixed names unmangled,
+  so the call still targets the retail symbol and the function stays 100% (this removes the
+  pre-mangled `extern "C"` faithfulness hit).
+- Faithfulness debt repaid in the same pass (rename_syms.py, descriptive names for unnamed retail
+  data symbols retired from `lbl_eu_*`): `lbl_eu_8056F3C0→ColiSpecEntryStep`,
+  `lbl_eu_8056F3D4→ColiSpecEntrySize`, `lbl_eu_8056F3E8→ColiSpecDispatchClass`,
+  `lbl_eu_8056F3FC→ColiSpecDataHandlers`, `lbl_eu_8056F420→ColiSpecMtxHandlers`,
+  `lbl_eu_8056F444→ColiSpecExpandHandlers`. Reusable observation: `run.py faithful`'s
+  `foreign_data` term drops out for renamed symbols as well (the tier logic only lets *anonymous*
+  symbols move a boundary), which is why the same three tables stopped counting as foreign data
+  once they had real names.
+
+## kyoshin/cf/CtrlMoveEne — objdiff 4/45 vs hexdiff 29/45 (identity, not bodies) → 25/45
+- Symptom:   `hexdiff --all` reported 29 byte-identical functions while `build/us/report.json`
+  (objdiff) reported 4/45. The 20 missing ones were `CtrlMoveEne_RateZeroFlat`,
+  `CtrlMoveEne_UpdateBattleMove`, `CtrlMoveEne_TryLatchTargetActor`, … : flat placeholder names in
+  `config/us/symbols.txt`, but the decomp spelled them as C++ free functions
+  (`CtrlMoveEne_RateZeroFlat__FPQ22cf12CCtrlMoveEne`), so objdiff's exact-name pairing never fired.
+- Cause:     objdiff pairs symbols by exact name; a C++ free function whose identifier contains the
+  retail flat name mangles it. Identical bytes, zero score. (Same shape as the `CCharVoiceMan`
+  3/60→54/60 pass and the `reslist<CScnItem>`/`__sinit_` pairing records above.)
+- Identity evidence, in order of strength:
+  1. **Class name from RTTI, not from the ctor symbol.** `.sdata` carries
+     `__RTTI__Q22cf11CtrlMoveEne` (11 = `CtrlMoveEne`) and the ctor's hand-stored `.data` vtable slot
+     points at it, so the class is `cf::CtrlMoveEne`; the previous `__ct__Q22cf12CCtrlMoveEne…`
+     spelling was a recovered-name guess (12 = `CCtrlMoveEne`). Renamed class + retail symbol
+     together (`rename_syms.py`).
+  2. **Pointer-to-member records prove membership.** `tools/coop/faithful/vt.py
+     kyoshin/cf/CtrlMoveEne.o .data` dumps `lbl_eu_80527830` / `lbl_eu_805278E4` / `lbl_eu_80527930`
+     as 12-byte ptmf records (`{0, -1, func}`) whose third word is each `Rate*`/`Update*`/`Step*`
+     function address. A ptmf can only name a member, so those are real members (15 `Rate*` ones
+     here), not file-local helpers.
+  3. **Call shape decides the rest.** `CtrlEnemy`/`CfGimmick*` call the remaining five
+     (`DispatchMoveHook`, `UpdateBattleMove`, `TryLatchTargetActor`, `MarkActiveSteady`,
+     `ConsumeTargetResolve`) as `fn(&self->mSub84)` with `mSub84` raw bytes — no ptmf, no vtable slot.
+     They were kept as `extern "C"` (flat) definitions: they pair with retail AND avoid
+     cross-TU pre-mangled declarations, which the faithful gate counts as `mangled_c`.
+- Fix:       class rename (`sed` in CtrlMoveEne.{cpp,hpp} + the one pre-mangled ctor spelling in
+  CtrlEnemy.{cpp,hpp}), the 15 ptmf members moved into `class cf::CtrlMoveEne` with
+  `u32* out1, f32* out2` parameters (ptmf type `void (CtrlMoveEne::*)(void*, void*)` still reads
+  them from `.data`), then `rename_syms.py` for the 15 retail symbols + the ctor. No call sites
+  changed inside the TU (the hook family is only reached through the ptmf tables).
+- Result:    objdiff 4/45 → 25/45 (fuzzy 13.82 → 23.32); hexdiff 29/45 unchanged (no ✓ lost);
+  unit faithful score 592 → 587. `CtrlEnemy` re-verified 32/41, `CfGimmickLock` 3/9,
+  `CfGimmickSaveOff` 3/3 unchanged.
+- Gotchas:   (a) after a class rename, grep the pre-mangled spellings in *other* TUs
+  (`__ct__Q22cf1x…`) — `CtrlEnemy.cpp` still called the old one and `__ct__cf_CtrlEnemy` silently
+  dropped to ✗ (100% bytes, extab mismatch) until the spelling was updated.
+  (b) `CfNandManager.hpp`-style unit headers still cannot be included from their own `.cpp` when the
+  `.cpp` keeps local copies of the same structs/labels — reconcile the declarations first.
+
+## kyoshin/cf/CfNandManager — lifecycle helpers off empty stubs → 5/48
+- Symptom:   47 of 48 functions were `scaffold_hard_symbols` stubs (`extern "C" void Nand*() {}`);
+  hexdiff = objdiff = 1/48 (no identity gap here — the bodies simply did not exist).
+- Fix:       four real bodies (see the attempts.jsonl `us-8023e2e4` entry for the code shapes):
+  `NandPartySnap` (address of the party snapshot), `NandQueueBusy` (`CNand` head/tail vs the
+  file-event-pending byte), `NandImageLive` (ternary so MWCC emits `beq` to the trailing `li r3,0`),
+  `NandTeardown` (see below).
+- Cause/recipe — derived-to-base pointer conversion: `scn->removeRenderCB(mgr)` needs the retail
+  `cmpwi/beq/addi r4,r4,0x58` sequence, i.e. the null-checked implicit upcast. A ternary
+  `mgr ? &mgr->mRender : 0` emits `li r4,0` + an extra branch (8 bytes over). Without the real
+  unit header, model the two bases instead: `struct CfNandTaskPad { u8 _pad58[0x58]; };
+  class CfNandMgrBases : public CfNandTaskPad, public IScnRender {};` — never instantiated, so no
+  vtable is emitted, and the conversion produces the exact retail bytes.
+- Faithfulness: filling bodies *raises* the gate (every `lbl_eu_*` reference counts), so the six
+  unit-private labels were renamed in the same pass
+  (`lbl_eu_80664768→gpCfNandManager`, `lbl_eu_8066476C→gCfNandFileEventPending`,
+  `lbl_eu_8066477C/80→gpCfNandCaptureBuf/BufTail`, `lbl_eu_80664770→gCfNandCaptureState`,
+  `lbl_eu_80576CC0→gCfNandPartySnapshot`). Score 109 → 85, leaving headroom for the rest of the unit.
+- Residual:  `NandFileEvent`'s body is correct but stays 4 bytes — `-ipa file` inlines the still-empty
+  `__dt__8023E63C`/`NandFlushEvts` stubs and folds the whole body away. It can only match once those
+  two bodies exist (0x480/0x77c). The queue-push family (`NandQueueLoadCk`/`ChkBA0`/`ChkCCC`/
+  `NandQueueReset`) is one inlined `enqueueEvent(word, tag, fieldC, code)` over the +0x160 ring
+  (base@0x160, head@0x164, tail@0x168, size@0x16C); it needs a local event/queue struct because the
+  unit header cannot be included yet.
+
+## CriWare sfd_buf SFBUF_UpdateFlowCnt — 32-bit return declared for a 64-bit-counter ABI (Wii/1.1, 33.3% → 88.9%)
+- Symptom:   `SFBUF_UpdateFlowCnt` (us-803c1d50 family, sfd_buf.c) compiled to 0x18 bytes
+  (`lwz`-free 5-insn tail: `xor/cntlzw/slw/rlwinm/add r3,r3,r0`) against retail's 0x24 with a
+  *dead* `or r4,r5,r5`, TWO `srawi r0,…,31` and a final `addc r3,r3,r5`; 6 structural diffs.
+- Cause:     every caller declares/uses the symbol as **`u64`** (`self->supplied = SFBUF_UpdateFlowCnt(hi, lo,
+  flow_r)` in sfd_mps, `s64 upd = …` in sfd_adxt, `u64 …(u64 v, u32 x)` in sfd_mpv), but the
+  definition returned `int`. Retail therefore builds the result with a **signed 64-bit add whose high
+  half is dead**: `srawi` on each operand (the two dead sign-extensions), `addc` for the low word, and
+  the `or r4,r5,r5` that stages the low word of the returned pair. Nothing in the 32-bit spelling can
+  produce `addc`, so the function could never match.
+- Fix:       declare the true ABI — `u64 SFBUF_UpdateFlowCnt(u32 hi, u32 lo, u32 x)` — and write the
+  counter update as a 64-bit signed add of the carry:
+  `s32 carry = (lo << __cntlzw(lo ^ x)) >> 31; s64 v = carry + (s64)(s32)hi; return ((u64)v << 32) | x;`
+  (`s64 v = (s64)(s32)hi + carry;` is equivalent in semantics but MWCC hoists `srawi` for `hi` to the
+  top of the block, 11.1% — operand order decides the sign-extension schedule.)
+- Result:    88.9% (0 structural, 1 reg_swap), size 0x24/0x24 exact. Residual: `addc r3,r5,r3` vs
+  retail `addc r3,r3,r5` — MWCC puts the first source operand in `rA`, and writing `hi + carry`
+  (which would fix the addc) re-hoists `srawi(r3)`; the witness refuses the fix-me permutation because
+  it maps `r3` (return register). Fixed point across 8 further spellings (`s64 c = carry`,
+  `s64 c = (s64)(s32)carry`, `v += carry`, both-casts, all-inline, `s32` params).
+- Confidence: repo_proven (size and 5 of 6 differing instructions fixed; ABI declaration is the real fix).
+- Applies to/a.k.a.: any sfd/Adx helper whose callers see a `u64`/`s64` result while the TU defines an
+  `int` — grep the callers' prototypes before the body. A `addc` with no `adde` plus dead `srawi`
+  pairs in retail is the signature of a 64-bit add whose high half is discarded.
+
+## CriWare sfd_mps sfmps_CopyUsrSj — local aggregate stack slots are handed out in REVERSE declaration order (Wii/1.1, 59.5% → 68.5%)
+- Symptom:   45 pure `reg_swap`, 0 structural; the tell was `addi r6, sp, 8` (retail) vs `sp, 16`
+  (decomp) for the first ring-read temp and the mirrored `lwz`-pair offsets, i.e. the two
+  `struct { void* p; s32 n; }` temporaries sat in each other's slots.
+- Cause:     MWCC allocates stack slots for local aggregates in **reverse declaration order** (the
+  last-declared aggregate gets the lowest address). Declaring `t1` then `t2` therefore puts `t2` at
+  sp+8; retail has the first-used pair at sp+8.
+- Fix:       declare the pair in the opposite order (`t2` first, `t1` second) while keeping the
+  statement/use order (t1 first). 45 → 35 reg_swaps, 0x1bc/0x1bc unchanged.
+- Result:    68.5% (was 59.5%). Residual: saved-register assignment of the four UOCH words
+  (retail `sj/fn_a/fn_b/arg = r24/r31/r30/r29`) plus the parameter saves (`self/src/dst =
+  r27/r28/r26`); declaration reorders of `sj/fn_a/fn_b/fn_b_arg` did not move them (they are born at
+  the `uoch[]` loads, not at the declarations).
+- Confidence: repo_proven (slot assignment), hypothesis (the reverse-order rule generalises — one
+  data point here).
+- Applies to/a.k.a.: any function whose retail frame shows two same-shaped temporaries in swapped
+  slots (`sp+8` vs `sp+0x10`); check the declaration order before chasing the register colors.
+
+## bta_dm_act (GC/3.0a5.2) — callback-payload frame size → 2 exact matches
+- Symptom:   `bta_dm_authorize_cback` 80% with 10 pure frame-offset diffs (retail `stwu -304`,
+  decomp `-288`) while every field offset matched; `bta_dm_inq_cmpl` 57.7% (retail `-560`,
+  decomp `-304`) with identical bodies otherwise.
+- Cause:     MWCC sizes the frame from the *declared local's type*, not the fields used. Retail
+  declares the payload as the full union (`tBTA_DM_SEC` 0x110, `tBTA_DM_SEARCH` 0x108); the
+  decomp declared the narrow struct member (`tBTA_DM_AUTHORIZE` 0x100, `tBTA_DM_INQ_CMPL` 1 byte),
+  so the payload slot was 16 / 0x100 bytes short and every sp-relative offset shifted.
+- Fix:       declare the local as the union and reach the member through it
+  (`union bta_dm_sec_t sec_event; sec_event.authorize.service = ...`,
+  `union bta_dm_search_t search; search.inq_cmpl.num_resps = ...`). Also settle the union size from
+  the frame arithmetic, not from the biggest member seen so far: tBTA_DM_SEARCH is 0x108
+  (= tBTA_DM_DISC_RES with BD_NAME 0xf8 + 4-aligned service mask), not 0x110.
+  `bta_dm_inq_cmpl` additionally needed (a) `p_cur = BTM_InqDbNext(p_cur)` at the *loop tail* (retail
+  block order: if-block, else-block, increment, test — increment inside the `if` puts it before the
+  else block) and (b) `unsigned char *p_rem_addr;` hoisted to function scope *before* `p_buf`
+  (that single declaration move flipped the found-block colour r27 → r29, 95.6% → 100%).
+- Result:    bta_dm_authorize_cback 80% → FULL_MATCH; bta_dm_inq_cmpl 57.7% → FULL_MATCH
+  (unit 48 → 50/56).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: any BTE callback whose retail frame is bigger than the members actually used;
+  union-local size and stack-slot order also explain the `~0x100 bytes unaccounted` notes in
+  bta_dm_inq_cmpl / bta_dm_compress_cback region.
+
+## RVL_SDK KPAD / WPAD — retail compiler is the Wii/1.0RC1–1.0a family, not Wii/1.1
+- Method:    out-of-tree sweep (`build/compilers/<ver>/mwcceppc.exe`, unit cflags from build.ninja,
+  all outputs in /tmp/xb/rvl) over Wii/1.0,1.0RC1,1.0a,1.1,1.3,1.5,1.6,1.7 + GC/2.7,3.0a3..3.0a5.2.
+- Result:    KPAD: 11/29 fully matched under Wii/1.1, **12/29 under Wii/1.0RC1 and 1.0a**
+  (`KPADiConnectCallback` flips to FULL_MATCH; nothing else changes). WPAD: 64/77 under 1.1,
+  **65/77 under 1.0RC1/1.0a** (`__wpadCalcRadioQuality` flips, `WPADiExcludeButton` 3→1 structural).
+  GC 1.x–3.x family is wrong for both (5/29, 49–52/77). WUD/WPADHIDParser plateaus are unrelated.
+- Confidence: repo_proven (byte compare per function). Not applied — configure.py is orchestrator-owned
+  in this round.
+
+## RVL_SDK KPAD — .sdata2 pool order is declaration order of *emitted* const objects
+- Symptom:   8 KPAD functions are instruction-identical yet fail on reloc address
+  (`float_8066C0B8` vs the decomp's own pool address); `run.py data diff` shows
+  `.sdata2 retail 0x70 != decomp 0x7C` with duplicated 0.001953125/0.999023/0.749023 entries.
+- Cause:     the file declares `static const f32 float_8066C0xx = ...;` but every use is by value, so
+  MWCC folds them into anonymous literal-pool entries emitted in *first use* order (plus duplicates
+  where a named constant and a raw literal share a value). Retail's `.sdata2` is exactly the
+  declaration order including the 8-byte-aligned f64 entries — i.e. retail emitted them as real
+  objects. Probe-verified: same declarations with external linkage
+  (`const f32 ...`, not `static`) emit in declaration order; address-taken statics also emit but
+  after the literals.
+- Not fixed (needs every raw literal in the TU rewritten to the named constant, and linkage change);
+  recorded so the next pass does not chase it as a codegen bug.
+- Confidence: repo_proven (out-of-tree `.sdata2` dumps).
+
+## kyoshin/menu/CMenuBattleEnd — hand CProcess scaffold → real `IUIWindow + IWorkEvent + IScnRender` class (Wii/1.1, `-O4,s -ipa file`): data MISMATCH → MATCH, 8/12 → 10/12
+- Symptom:   the unit was a plain struct with `mPad0[0x10] / mVtab / mPad14 / mPtMf3C / mPtMf48 /
+  mWorkEventVt / mScnRenderVt` pseudo-members, a hand `__ct__CMenuBattleEnd` that stored
+  `lbl_eu_8052D238` (the weak `__vt__18CTTask<9IUIWindow>`) and `lbl_eu_80537AB0`/`+0x24`/`+0xac` by
+  hand, an `extern "C"` dtor and three hand this-adjusting thunks. `.data` was empty on the decomp
+  side (`retail 0x100 != decomp 0x0`, `run.py data diff` MISMATCH); `.rodata`/`.sdata`/`.sdata2`/`.sbss`
+  likewise.
+- Cause:     retail is a real MI class; `__vt__14CMenuBattleEnd` is 0xC0 and the base list 0x40 =
+  exactly the retail `.data` slice 0x80537AB0..0x80537BB0, so a compiler-emitted class reproduces it.
+  The retail object also references `__dt__10IScnRenderFv` / `__dt__10IWorkEventFv` as **undefined**
+  (`U`), i.e. the derived dtor's extab cleanup actions point at CTaskGame.cpp's copies.
+- Fix:       derive for real (`IUIWindow` at 0, `IWorkEvent` at 0x6C, `IScnRender` at 0x70), delete the
+  pseudo-members (IUIWindow supplies `mLayout`/`mField58..68`), write the ctor as a member with the
+  member-init list and the body in retail's statement order — the scalar state fields
+  (`mState = 1; mMode = mode; mParam = param;`) belong in the **body after** the entry[1..3] zeroing
+  loop, not in the init list: in the init list MWCC stores them right after `mAnim90` and needs a 6th
+  callee-saved register (decomp `stmw r26` vs retail `stmw r27`) — 31% → 100% on that change alone.
+  `advanceBattleEndQueue`'s `advanceAnimTransform(anim, 1.0f)` / `SetFrame(0.0f)` literals replace the
+  `lbl_eu_80668990/94` externs (pool 8 bytes `3f800000 00000000`) and fix that body 92.6% → 100%.
+  The `.rodata` string pool must be **code literals** (`"CMenuBattleEnd"`, `"mf70_cf53_sideinfo.brlyt"`,
+  the two `.brlan` names, `txt_num_b00/b01/r00/r01`), in retail's first-use order: 168 bytes identical.
+  Renames: `__ct__CMenuBattleEnd` → `__ct__14CMenuBattleEndFP4CScnUcUl`,
+  `fwdBattleEndDtor6C` → `@108@__dt__14CMenuBattleEndFv`,
+  `fwdBattleEndCbRender70` → `@112@cbRenderBefore__14CMenuBattleEndFv`,
+  `fwdBattleEndDtor70` → `@112@__dt__14CMenuBattleEndFv`, `lbl_eu_80537AB0` → `__vt__14CMenuBattleEnd`.
+- Result:    `.data` 252 B identical + 4 B retail link tail padding, `.rodata`/`.sdata`/`.sdata2`/`.sbss`
+  MATCH (**data VERDICT MATCH**, was MISMATCH); functions 10/12 (ctor/dtor/Term/Move/cbRenderBefore/
+  create/advance/thunks all ✓; `Init` 44.6% and `queueBattleEndEntry` 51.0% are pre-existing body
+  near-misses, `Init` 0x1E4 vs 0x1DC and `queue` 0x188 vs 0x184, which also keep the unit's extab
+  residual).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: the residual the conversion cannot remove: the TU now *defines* weak
+  `__dt__10IWorkEventFv` / `__dt__10IScnRenderFv` copies (0x40 each) where retail leaves them `U`, which
+  adds two extabindex entries (see the CMenuSelectShop entry below).
+
+## kyoshin/menu/CMenuSelectShop — plain-struct scaffold → real MI class: 14/15 → 15/15, data MATCH (Wii/1.1)
+- Symptom:   `struct CMenuSelectShop` with `mPad0/mVtab/mPad14/mPtmf*/mOcc6C/mOcc70` pseudo-members, a
+  hand `__ct__CMenuSelectShop` storing `lbl_eu_8052D238` then `lbl_eu_80532550`(+0x24/+0xac), a hand
+  dtor, three hand thunks and `void* render = this; if (this) render = &mOcc70;` upcasts. Every function
+  was 100% except the ctor and the factory, which showed `✗ 100.0%` (reloc-name-only diff), and the
+  unit had no `.data`/`.rodata`/`.sdata`/`.sbss` at all.
+- Cause:     retail `.data` 0x80532550..0x80532650 = `__vt__15CMenuSelectShop` (0xC0) + base list (0x40);
+  `.rodata` 0x80503AD0 = the RTTI type-name `"CMenuSelectShop"` **and** 0x80503AE0 = a second copy that
+  the code passes to `createRegion` (MWCC does not merge a code-literal with the RTTI name string).
+- Fix:       derive for real; write the member ctor (init list `mScene, mMemRegion, mSelShop, mCursor(0)`,
+  body `mState/mSelIndex/mFieldD0`) and `~CMenuSelectShop() {}` with `IWORK_EVENT_INLINE_DTOR` only
+  (IUIWindow/CTTask dtors stay out of line: the retail dtor calls `__dt__9IUIWindowFv(this, 0)`);
+  pass `this` to `addRenderCB`/`removeRenderCB` with the parameter declared `IScnRender*` (MWCC then
+  emits retail's null-checked `+0x70` upcast); replace `(const char*)lbl_eu_80503AE0` with the literal
+  `"CMenuSelectShop"` in `Init` (this is what produces the *second* `.rodata` copy — with the extern it
+  was only 0x10 bytes); define `u32 lbl_eu_806642E8 = 0;` + a pad word for the 8-byte `.sbss` slice.
+  Renames: `__ct__CMenuSelectShop` → `__ct__15CMenuSelectShopFPvPv`,
+  `ShopSel_ThunkDtor6C` → `@108@__dt__15CMenuSelectShopFv`,
+  `ShopSel_ThunkRender70` → `@112@cbRenderBefore__15CMenuSelectShopFv`,
+  `ShopSel_ThunkDtor70` → `@112@__dt__15CMenuSelectShopFv`, `lbl_eu_80532550` → `__vt__15CMenuSelectShop`.
+- Result:    15/15 functions ✓ (was 14 ✓ + ctor ✗), `.data` MATCH, `.rodata` 32 B identical,
+  `.sdata` 8 B identical, `.sbss` 8 B zero-fill → **data VERDICT MATCH**. Kept the two pre-existing
+  per-function pragmas (`optimize_for_size` gives retail's `stmw`/`lmw` callee-save blocks in the ctor
+  and dtor; `__declspec(noinline)` keeps the 0xF0 ctor out of the 0x7C factory — retail calls it with a
+  `bl`, and `#pragma auto_inline off` alone does not stop `-ipa` inlining it).
+- Residual:  `.extab`/`.extabindex` gain the two weak interface-dtor records above. This TU now defines
+  `__dt__10IWorkEventFv`/`__dt__10IScnRenderFv` (WEAK) where retail's object only *references* them
+  (UNDEF): the `_extab_records` per-function view shows exactly two decomp-only records
+  (`0808000000000000`), so the mismatch is order + those two entries, not a changed cleanup action.
+  A header-level way to force an external reference instead of a local weak copy was not found
+  (removing `IWORK_EVENT_INLINE_DTOR` makes the derived dtor call `__dt__10IWorkEventFv` out of line,
+  0x78 → 0x84 and 12.5%); the same artifact is present in every previously converted window
+  (CSysWinBuff/CSysWinSave). NonMatching units are not audited by `run.py extab-gate`.
+- Confidence: repo_proven.
+- Applies to/a.k.a.: every `CMenu*/CSysWin*` window TU; "100% but ✗" in a hexdiff row = reloc-name-only
+  drift (here the invented `__ct__CCur18`/`lbl_eu_` spellings) and clears up with the class conversion
+  + `rename_syms.py`.
+
+## kyoshin/CTalkWindow — the retail `.data` slice ends inside CUIBattleManager's pmf pool: true boundary 0x8052E0A8 (evidence, not converted)
+- Symptom:   `config/us/splits.txt` gives `kyoshin/CTalkWindow.cpp` `.data 0x8052df70..0x8052e0b4`, so its
+  retail `.data` holds `[0x10 pointer table][0x24 jump table][4 pad][0xC0 vtable][0x40 base list][0xC
+  {0,-1,parkMoveHandler}]`. The trailing 12-byte object cannot be a CTalkWindow user object: MWCC emits
+  every file-scope object *before* the vtables it generates, and nothing in CTalkWindow's text touches it.
+- Cause:     the object is CUIBattleManager's first `MoveFunc` pmf pool. A whole-tree scan of the retail
+  objects' relocations (`build/us/obj/**/*.o`, `.rela.text`) shows `lbl_eu_8052E0A8` referenced **only**
+  by `CUIBattleManager.o` (.text+0x346/+0x414) and by no other unit — and its third word is
+  `parkMoveHandler`, a CUIBattleManager member; CUIBattleManager's *second* pmf pool
+  (`lbl_eu_8052E0B4`, `{0,-1,UIBattleMoveNoop}`) already sits at the current start of its slice.
+  Subtracting it leaves CTalkWindow's real `.data` = `0x8052df70..0x8052e0a8` (0x138 =
+  0x10 + 0x24 + 4 pad + 0xC0 + 0x40), the only order MWCC produces.
+- Fix:       not applied in this session (see below). The correct split edit is
+  `CTalkWindow .data end:0x8052e0a8` and `CUIBattleManager .data start:0x8052e0a8`, plus a
+  `{0,-1,parkMoveHandler}` definition in CUIBattleManager.cpp. EU/JP `splits.txt` have no `.data` line
+  for either unit (EU has only 167 `.data` lines overall), so the edit is US-only.
+- Result:    not converted: CTalkWindow's source is still the blob-scaffold variant (a 324-byte
+  `__data_blob` holding all six objects, `__rodata_blob` 504 B, `__sdata2_blob` 96 B with ~20 pooled
+  floats, plus `__bss_blob`/`__sbss_blob`), and its class conversion needs every one of those rewritten
+  to real objects/literals at once (the ctor's `lbl_eu_8052D238` store also drags a 0x24 weak vtable into
+  `.data`, so a half-conversion is strictly worse). Recorded so the next pass can do the re-cut and the
+  conversion together; the evidence above is complete.
+- Confidence: repo_proven (cross-TU relocation scan + MWCC data-ordering probes).
+- Applies to/a.k.a.: any unit whose retail `.data` slice ends with a `{0,-1,<member>}` 3-word pmf: that
+  object belongs to the TU that *uses* it, not the TU whose slice happens to contain it.
+
+## kyoshin/menu/CMenuQstCnt — hand CProcess scaffold → real MI class: data MISMATCH → MATCH, 23/32 → 25/32 (Wii/1.1, `-O4,s -ipa file`)
+- Symptom:   `struct CMenuQstCnt` with `mPad0/mVtab/mPad14/mPtmf*/mOcc6C/mOcc70` pseudo-members, a hand
+  C-ABI `__ct__CMenuQstCnt` (0x1B4, 11.9%), a hand dtor and three hand this-adjusting thunks; `.data`
+  0x100 / `.rodata` 0xA8 / `.sdata` 8 / `.sdata2` 0x10 / `.sbss` 4 all missing on the decomp side
+  (`retail 0x100 != decomp 0x0`).
+- Cause:     retail `.data` 0x80536128..0x80536228 = `__vt__11CMenuQstCnt` (0xC0) + base list (0x40);
+  `.rodata` 0x80509A00 = the RTTI type-name `"CMenuQstCnt"` followed by the 0x98-byte code-literal pool
+  at 0x80509A10 (region name, layout/anim paths, pane names, `"name"`, `""`, `"title"`…);
+  `.sdata2` 0x80668568 = `{0.0f, 1.0f, 90.0f, 0.0f}`.
+- Fix:       derive for real (`IUIWindow`/`IWorkEvent`/`IScnRender`) and keep `IWORK_EVENT_INLINE_DTOR`
+  only (the retail dtor calls `__dt__9IUIWindowFv` out of line, so no IUIWINDOW/CTTASK inline macros);
+  member ctor with the init list `mScene, mMemRegion, mAnim88, mState8C, mValue90(0.0f), mField19C` and
+  the two 32-entry `setQstEntry`/`copyQstEntry` loops in the body (73.4% at exactly retail's 0x1B4 —
+  the remaining 18 structural/11 reg_swap are in the entry loops); member `~CMenuQstCnt() {}`;
+  pass `this` to `addRenderCB`/`removeRenderCB`; replace the 11 `&lbl_eu_80509A10[0xNN]` offsets with the
+  literal strings (`"CMenuQstCnt"`, `"mf70_cf60_qst_cunt.brlyt"`, `"mf70_cf60_qst_cunt_in.brlan"`,
+  `"txt_value00/01"`, `"txt_para00"`, `"txt_questtitle"`, `""`, `"txt_en"`, `"MNU_quest"`, `"name"`,
+  `"txt_num"`, `"title"`) — the 168-byte `.rodata` comes out identical, including the doubled
+  `"CMenuQstCnt"` (RTTI name + region-name literal); define the three `.sdata2` constants in retail's
+  order (`const f32 0.0f`, `const f32 1.0f`, `const f32 [2] {90.0f, 0.0f}`) and pad `.sbss` to 8 bytes.
+  Renames: `__ct__CMenuQstCnt` → `__ct__11CMenuQstCntFP4CScnssUcUcUc`,
+  `dtorQstBase_6C` → `@108@__dt__11CMenuQstCntFv`,
+  `renderQstBase_70` → `@112@cbRenderBefore__11CMenuQstCntFv`,
+  `dtorQstBase_70` → `@112@__dt__11CMenuQstCntFv`, `lbl_eu_80536128` → `__vt__11CMenuQstCnt`.
+- Result:    `.data` 252 B identical + 4 B link tail, `.rodata` 168 B identical, `.sdata` 8 B,
+  `.sdata2` 12 B + 4 B link tail, `.sbss` 4 B zero-fill → **data VERDICT MATCH** (was MISMATCH);
+  25/32 functions ✓ (was 23/32; the three adjusting thunks + `QstCnt_AdvanceToOpen_6C18` /
+  `QstCnt_TickToOpened_6C5C` flip to ✓, and the ctor goes 11.9% → 73.4%). `.text` 0x14C8 vs the 0x148C
+  split budget (was already over by 0x2C; the two weak inline-dtor copies add the 0x10).
+- Residual:  `QstCnt_GetOrCreate` 0x1A8 vs 0x1B4 (9.2%, pre-existing 5.5%), `QstCnt_FinishAnim`,
+  `Refresh__7QstDataFv`, `Sort__7QstDataFUlUl`, `GetCount__7QstDataFv`, `__dt__7QstDataFv` unwritten —
+  all pre-existing body near-misses; Extab still short by the 2 weak-dtor records + the missing
+  QstData dtor.
+- Note:      the header was briefly padded back to 117 lines "for `-ipa file` line sensitivity". The
+  padding was removed (110 lines), and all 18 TUs that include CMenuQstCnt.hpp/CfSoundMan.hpp kept
+  identical ✓ counts. Header line counts do not matter; see the SfdTst entry.
+- Confidence: repo_proven.
+
+## CMdlDynamics `MdlDyn_FetchVec3` / `MdlDyn_SetRotXYZ` — FPR colour + load order → declaration-ascending, assignment-reversed (Wii/1.1, -O4,p, both FULL_MATCH)
+- Symptom: 3–4 instructions, all reported as `reg_swap`, but the *immediates* differ per slot because
+  the load order itself is reversed (`lfs f2,0x2C` first in retail vs `lfs f1,0x0C` first here), so the
+  register witness rejects them (`slot 0: non-register bits differ`).
+- Cause: two independent degrees of freedom. (a) **statement order** decides the load issue order;
+  (b) **declaration order** decides the FPR colours (ascending, `f0` first) — confirmed by the sibling
+  `code_804A6C60` recipe. Declaring `const float c = …; const float b = …; const float a = …;` gives
+  both at once and therefore the wrong colours.
+- Fix: declare the locals in ascending order without initialisers, then assign them in the order the
+  loads must issue. FetchVec3: `float a, b, c; c = +0x2C; b = +0x1C; a = +0x0C;` then store a,b,c.
+  SetRotXYZ: `f32 k; f32 x, y, z; z = v[2]; k = 881 literal/extern; y = v[1]; x = v[0];` then
+  `MTX34RotXYZFIdx(mtx, k*x, k*y, k*z)` — `k` first-born keeps `f0`, x/y/z take `f1/f2/f3`, and the
+  SDA21 reloc lands on instruction slot 1 like retail (slot 0 blocks the witness with
+  `reloc presence differs`).
+- Result: FULL_MATCH (0x1C and 0x20); CMdlDynamics hexdiff ✓ 51/66 → 53/66.
+- Confidence: repo_proven.
+
+## CView `hasSplitViews` / `getSplitLine` / `CView_UnkVirtualFunc7` — interleaved callee-save prologue → NOT a compiler-version or -O4 axis (Wii/1.1 + GC/3.0a5.2 + -O4,s probes, 8 mismatches, open)
+- Symptom: retail issues the first body load *between* the callee-save stores
+  (`stw r0,36(sp); lwz r0,1116(r3); stw r31,28(sp); li r31,0; cmpi …`); this build emits all saves
+  first and the load last (8 mismatches, 7 "structural", size equal).
+- Cause: prologue-scheduling placement, not the source. Probed out of tree in `/tmp/xb/mdl/`:
+  GC/3.0a5.2 gives byte-identical output to Wii/1.1 for both functions (24/32 and 29/37 words
+  identical to retail — the *same* 8-word shift), and `-O4,s` is strictly worse (0x80→0x70). Adding a
+  local snapshot of `unk45C`, or splitting the flag initialisers, is coalesced away (no change).
+- Fix: none found. Recorded as a scheduler wall; needs a different angle (e.g. the real
+  `CSplitFrame*` member type, which changes the load's addressing class).
+- Result: 75.0% near-miss, 3 functions.
+- Confidence: negative_result.
+
+## monolib/src/scn/CScnCameraMan — report 4/17 → 10/17 with no body change (linkage identity), ctor symbol renamed to its real mangling (Wii/1.1)
+- Symptom:   hexdiff said 100% for `CamMan_SwapViewParam_AED4`, `CamMan_SyncCameraToView`,
+  `CamMan_RefreshCurrentCamera`, `CamMan_FindItemA_B158`, `CamMan_FindItemB_B1CC`,
+  `CamMan_FindViewItemA` (and the registry already had them `FULL_MATCH`), yet the objdiff report
+  showed each as `0.00` **UNPAIRED** and the unit at 4/17 functions.
+- Cause:   the definitions were C++-mangled (`CamMan_SyncCameraToView__FP13CScnCameraMan`) while
+  `config/*/symbols.txt` and every caller (see `CScn.hpp`, `CScnRootNw4r.hpp`, which declare
+  `extern "C" …`) use the plain name. objdiff pairs by name, so the bodies were never compared.
+  `__ct__CScnCameraMan` was the mirror case: the retail-side symbol was the truncated placeholder
+  while the source emits `__ct__13CScnCameraManFP15CScnCameraParam`.
+- Fix:    `extern "C"` on the 11 definitions that the repo's cross-unit headers already declare with C
+  linkage (`SwapViewParam_AED4`, `SyncCameraToView`, `RefreshCurrentCamera`, `GetViewThread`,
+  `FindItemA_B158`, `FindItemB_B1CC`, `FindViewItemA/B`, `ProjectToScreen`, `BuildPerspective`,
+  `ComputeViewFalloff`) — codegen-neutral, so no function % moved. Then
+  `faithful/rename_syms.py __ct__CScnCameraMan=__ct__13CScnCameraManFP15CScnCameraParam` (vtable
+  owner proven with `faithful/vt.py monolib/src/scn/CScnCameraMan.o .data` →
+  `+0x00 __RTTI__13CScnCameraMan`; no caller anywhere references the old name).
+- Not converted to members (blocked, on purpose): `CScn.cpp` calls `CamMan_SwapViewParam_AED4`,
+  `CamMan_FindItemA_B158`, `CamMan_FindViewItemB/B1CC` with **one argument** through `(int)` casts
+  (`Scn_GetCamWorkInt` is a 2-instruction tail call `lwz r3,0x68(r3); b …`), and those call sites are
+  matched FULL_MATCH. A member conversion would have to add the missing arguments and would regress
+  them; the plain-name C-linkage decl is the shape that keeps both sides byte-identical.
+  `CamMan_ProjectToScreen` / `ComputeViewFalloff` are called from kyoshin TUs owned by other agents.
+- Result:  report 4/17 → 10/17 (code 12.04% → 37.10%, fuzzy 20.30 → 86.61), hexdiff table unchanged
+  (10/17 ✓ before and after), data diff unchanged (.sdata2 0x28 vs 0x8 pre-existing), link-gate
+  missing 43 → 43.
+- Residual: ctor 2.4% (retail unrolls the 10-slot `mViews` loop differently), `GetViewThread` 76.1%,
+  `FindViewItemB` 63.6%, `BuildPerspective` 57.7%, `ProjectToScreen` 52.2%, `WorkEvent1` 21.2%,
+  `ComputeViewFalloff` 4.5%; extab 0xB8 vs 0xD0 (the ctor body).
+- Confidence: repo_proven.
+
+## monolib/src/core/code_804F0258 — report 3/22 → 7/22 by matching linkage (same identity gap); blitTexQuad 97.1% → 98.5% (Wii/1.1)
+- Symptom:   `DbgBindAnimPlayer`, `DbgCopyCamProj`, `DbgPushPerspective`, `DbgPushOrtho` were 100%
+  byte-identical in hexdiff (registry: `FULL_MATCH`) but `0.00` UNPAIRED in the objdiff report,
+  because the file declared/defined them as C++ free functions (`DbgCopyCamProj__FPA4_fPCv`) while
+  `code_804EE558.cpp` / `code_804C8718.cpp` / `CETrail.cpp` reference the plain names.
+- Fix:    `extern "C"` on those definitions plus `drawMarkerTrail` / `recordMarkerPos` (no external
+  caller, forward declarations in the same file updated to match). Still UNPAIRED, and left as-is:
+  `drawGradBands` / `drawMarkerEntry` / `blitTexQuad` / `drawGradQuad` — `code_804CC2B8.cpp` (an
+  editable sibling, not touched here) references the *mangled* spellings, i.e. the two units share a
+  header that declares them as C++ functions; the honest fix is a caller-side rename/`extern "C"`
+  there, not freezing our invented parameter types (`DrawQuad`, `TexMtxSrc`) into `symbols.txt`.
+- blitTexQuad (size 0x224, was 97.1% / 4 reg_swap): retail emits `fmr f30,f1` (alpha) before
+  `fmr f31,f2` (alphaMax) and loads the copied `ml::CVec3` components x,y,z in that order. Splitting
+  the copy-initialised declarations into bare declarations + assignments in alpha/fadeMax order fixed
+  the first pair (98.5%, 2 reg_swap); the remaining pair is a pure two-load permutation
+  (`lfs 0(r4)`/`lfs 8(r4)` swapped, same destination registers) that no source spelling probed
+  (`p.set(...)`, `CVec3(x,y,z)`, member-wise stores) reproduces — `CVec3(const CVec3&)` inlining
+  schedules the reverse order.
+- Probed and ruled out for the whole unit (out-of-tree in `/tmp/xb/f0258/probe/`, report-only):
+  GC/3.0a5.2 (6/22 matched, fuzzy 47.20), Wii/1.0a, Wii/1.0 (identical to Wii/1.1), Wii/1.3
+  (fuzzy 48.47, no function flips) — Wii/1.1 remains the best pin, so the near-misses are source/scheduler
+  residuals, not a compiler-version cluster.
+- Residual (paired, unmatched): emitGradQuad 75.7, drawMarkerTrail 79.9, drawTexQuad 79.4,
+  getAnimRotMtx 72.0, recordMarkerPos 63.8, streamGradStrip 57.3, attachAnim 96.5 (one independent
+  `lwz r5,4(r3)`/`stw r4,0(r3)` order swap the scheduler always flips), getAnimPos 90.5 (retail hoists
+  `lwz r5,8(r3)` above `stwu`), getProjMatrix 16.0 (**retail body is 0x740 of hand-expanded ortho
+  matrix math with three C_MTXOrtho calls vs our 0x22C** — the real next work), pushProjMtx 12.9
+  (same shape, 0x74C vs 0x270), getTexMtx 17.6.
+- Result:  report 3/22 → 7/22 (code 2.72% → 3.58%, fuzzy 29.46 → 48.32), hexdiff 7/22 both sides
+  (no ✓ lost), data diff unchanged, link-gate missing 43 → 43.
+- Confidence: repo_proven.
+
+## ColiProc_RefreshAxes / ColiProc_ProcessSegments — the handler-table walker family
+- Symptom: the two `CColiProc` entry walkers were 4-byte stubs (0.0%) while their three siblings
+  (`ColiProc_ClassifyEntries`, `ColiProc_CheckEntries`, `ColiProc_DispatchSpec`) sat at 42.9/89.6/97.5%
+  with `0 structural` and a handful of `reg_swap`.
+- Cause of the shared residual: **every one of these walkers contains an indirect branch**
+  (`bcctrl` through `ColiSpecMtxHandlers[type]` / `ColiSpecExpandHandlers[type]`), and the equivalence
+  witness refuses them: `witness-gate: loop | target contains an indirect branch (bcctr/blrl);
+  dispatch modeling deferred`. The handler-table dispatchers therefore need **FULL_MATCH**; no
+  `EQUIVALENT_MATCH` shortcut exists for them even when every mismatch is a pure `reg_swap`.
+- Fixes that did land (retail-covered, repo_proven):
+  - Seed order is byte-visible: `CColiProc_RefreshAxes` computes the first entry pointer **before** the
+    four `.sbss` global stores (`g_coliBounds/…XformPos/…HalfExtent` = retail 0x80665944/48/4C,
+    `g_coliNodeIndex` = 0x80665950, `g_coliSpecTable` = 0x80665940), which is what puts
+    `lwz r0,8(r28)` above `stw r4` and `stw r28` last (5 orderings probed; this one is 93.0% before the
+    next item, others 87–89%).
+  - Address arithmetic written **size/step first** (`ColiSpecEntrySize[type] + (u32)p`, the
+    `CColiEntry` advance as `colistep(...) + (u32)e + 16`) reproduces retail's `add r3, r5, r24` operand
+    order and removes the ABI-boundary scratch colouring (`rho perm gpr r0 -> r3`): 93.0% → **97.7%**,
+    `0 structural`.
+  - The dual-buffer tail must be written **once**, after the `instance flags & 1` if/else: writing
+    `offset += 2*size + 0xC0` in both arms makes MWCC clone the computation into each arm (+6 insns,
+    `0x20c`/`0x218` over budget); one shared statement gives retail's shared tail and the exact
+    `0x200` size.
+- Result:  `ColiProc_RefreshAxes` 0x4 stub → 0x200 (retail 0x200), **97.7%**, 3 residual mismatches;
+  `ColiProc_ProcessSegments` 0x4 stub → 0x218 (retail 0x218), 72.4%, 16 structural + 21 reg_swap.
+  `CColiProc` split 0x724 → 0xB34 (budget 0xB3C, PASS), extab records for both walkers restored.
+- Residual (open, next angles):
+  - the entry advance `add r3, r0(step), r28(e)` vs emitted `add r3, r28, r0` — 5 source spellings
+    (`colistep+e`, `e+colistep`, `e+16+colistep`, cached `s32 step`, `(u8*)e + 16 + Step`) all emit the
+    same reversed operand order, so this is instruction-selection, not expression order; it is the
+    *same* one-instruction residual in `CheckEntries` and `DispatchSpec`. Next angle: unit flags
+    (`-O4,p` vs `-O4,s`) probe on the walkers only, or accept as a recorded near-miss.
+  - `ColiProc_ProcessSegments`: `if (flags & 0x1c)` (not `0xC`) is the outer selection test (retail
+    `rlwinm 0,27,29`); result/offset/i declaration order is `table, result, offset, i, e` to land
+    r27/r26/r25/r24/r23; the `src = 0` store keeps its **own** zero vreg (r31) instead of sharing
+    `result`'s (r26) — unexplained, next angle is the null-pointer-constant spelling.
+- Confidence: repo_proven (fixes) / hypothesis (residuals).
+
+## ColiXformFixed — global half-extent field + cached pointer (code_804B2FF0)
+- Symptom: 17.0%, 80 structural, 0x1C0 vs retail 0x1B8 → the unit's `split-size` gate failed by 8
+  bytes (`code_804B2FF0` is `0x0` spare now).
+- Cause: two defects. (a) the z-axis AABB blocks dereferenced the half-extent's `ay` (+0x4) where
+  retail uses `ax` (+0x0) — the sibling `Coli_ExpandGlobalBox` (100%) uses `ax` for x *and* z and
+  `ay` only for y, i.e. the record is {radius-xz, halfheight, z-copy}; (b) three stores spelled
+  through the global each reloaded it, while retail loads the pointer once (`lwz r3, 0(r0)` before
+  `stfs 0/4/8(r3)`), so the source needs a local pointer for the triple store only (the later
+  `+= qy` / `-= f8` reads do reload).
+- Fix: `CColiHx* hx = g_coliHalfExtent; hx->ax = …; hx->ay = …; hx->f8 = …;` and `ax` in the
+  max[2]/min[2] blocks.
+- Result: 17.0% → **86.4%**, size 0x1B8 = retail, unit split 0x2904 → 0x28FC (PASS, 0x0 spare).
+- Residual: 7 structural + 8 reg_swap, all in the entry block — retail colours the 3rd parameter
+  `other` r31 and the bone-matrix pointer r30, MWCC here does the reverse, and hoists
+  `lwz r3,5244(r4)` above the prologue stores. Declaration-order probes (src alias, mesh local, dst
+  local, `n`/`mag` hoisted) do not flip it; recorded as a near-miss.
+- Confidence: repo_proven.
+
+## Witness limitation — indirect branches (general)
+- Rule: a target containing `bcctr`/`blrl` **cannot be certified** by the register-renaming witness
+  (`dispatch modeling deferred`), so `EQUIVALENT_MATCH` is unreachable no matter how clean the diff is;
+  such functions must reach `FULL_MATCH`. Plan around this before investing in colour-chasing:
+  ```
+  .venv/bin/python3 tools/coop/run.py cycle <id> …   # witness-gate line names the blocker
+  ```
+  A `reg_swap`-only diff on a `bcctr` target is a near-miss, not a certificate.
+- Corollary observed on the coli walkers: the ABI-boundary gate fires first when the diff includes a
+  `rho` mapping that moves a value into r3/r4 (`rho perm maps gpr r3 -> r4; ABI registers must be
+  fixed`) — that one *is* fixable from source (see `ColiProc_RefreshAxes` above); the indirect-branch
+  gate behind it is not.
+- Confidence: repo_proven.
+
+## objdiff identity sweep — flat retail placeholder vs mangled decomp free function (7 units → +41 matched)
+- Symptom:   `hexdiff <unit> --all` shows functions at **100.0%** that `build/us/report.json`
+  reports at **0.000%** (unpaired). `tools/coop/hexdiff.py` pairs by demangled base name, objdiff
+  pairs by exact symbol name, so a body can be byte-identical and still score zero.
+- Cause:     symbols.txt gives an *unmangled* placeholder to a function the original source declared
+  (or that MWCC emitted) without C++ mangling, while the decomp spelled it as a C++ free function:
+  `SchedList_TeardownAll` (retail) vs `SchedList_TeardownAll__FUl` (decomp), `notifyGroupChain` vs
+  `notifyGroupChain__FP12CMdlMaterialPvP16MdlMaterialOwner`, `EffSys_Startup` vs
+  `EffSys_Startup__FP10EffectRootUlUl`, … Identical bytes, zero score. (Same family as the
+  CtrlMoveEne / CCharVoiceMan identity passes above, but here the mangling is on a *free* function,
+  so no class recovery is involved.)
+- Fix:       grep the two objects for the gap, then put `extern "C"` on the *definition* (the callers
+  usually already declare the flat name — e.g. `CScnItemModelNw4r.hpp` declares `setupFromModel`,
+  `applyCullByGroup`, … as `extern "C" x(void*, …)`). Linkage does not change codegen, so every ✓
+  stays ✓ and objdiff starts pairing. Mechanical sweep for one unit:
+  1. `.venv/bin/python3 - <<'PY'` over `objdump -t` of `build/us/obj/<unit>.o` vs
+     `build/us/src/<unit>.o`; a retail name `N` paired with a decomp name `N__…` is a gap.
+  2. Insert `extern "C" ` before the matching `^<type> N(` definition line.
+  3. `hexdiff <unit> --all` — the ✓ count must not move; re-`run.py progress` and the pair is scored.
+  Result per unit (objdiff matched before → after, hexdiff ✓ unchanged):
+  `core/code_804DEDA8` 8 → 31 (50 definitions, all 64 symbols now exact),
+  `effect/code_804C8718` 15 → 24 (16), `core/ScheduleList` 9 → 16 (7),
+  `scn/CScnTexWorkMan` 5 → 9 (5), `scn/CMdlMaterial` 1 → 4 (6 definitions flattened + the two
+  missing bodies `__ct__CMdlMaterial` / `__dt__804E5DE0` written from retail asm).
+- Gotchas: (a) `extern "C"` on a definition whose *retail* name itself looks pre-mangled
+  (`__dt__804D…`, `onViAfterDrawDone__14CScnTexWorkManFv`) is picked up by the `mangled_c` term of
+  `run.py faithful` — either accept the +1 and say so, or keep both sides C++ and rename the retail
+  symbol to the mangled spelling (done for `__dt__804DF744`, where the caller had it inside an
+  `extern "C" { }` block: the definition needs the same question answered on *both* sides or the
+  link breaks with an undefined symbol). (b) Deleting a now-redundant `extern "C" x();`
+  forward declaration is only safe when the name is not used qualified (`&Ns::x`) — otherwise
+  express the use unqualified so lookup finds the definition.
+  (c) Flattening an `extern "C"` definition also retires the unit's pre-mangled *declarations* debt in
+  the caller TU when the caller can include the real header; here the callers were left alone.
+
+## nw4r/dcc/g3d_xsi — anonymous-namespace length prefix 22 vs 21 (GC/3.0a5.2, 13 renames → 3/16 → 10/16)
+- Symptom:   retail symbols are `MakeTexSrtMtx_R__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ…`
+  while the decomp object emits `…dcc21@unnamed@g3d_xsi_cpp@FPQ…`; everything pairs except
+  `MakeTexSrtMtx_S` (which is 21 on both sides).
+- Cause:     the digits before `@unnamed@` are the **length prefix of the anonymous-namespace name**
+  (`@unnamed@g3d_xsi_cpp@` = 21 chars, `@unnamed@g3d_maya_cpp@` = 22 — maya's retail symbol really is
+  22). For g3d_xsi the retail table says 22 for every helper *except* the first one in the anonymous
+  namespace, which is a self-inconsistent mangling: 22 is the length of a 22-char name, and the
+  string that follows is 21 chars. Every available MWCC (GC/2.0, 2.5, 2.7, 3.0a3, 3.0a5.2, Wii/1.0,
+  1.1, 1.3, 1.5, 1.6) emits 21 for one *or* several anonymous namespaces in the same scope
+  (`namespace { }` twice in `nw4r::g3d::detail::dcc` stays 19/19 on an `anon2_cpp` probe), and
+  `-ipa file`/`-inline` do not change it, so the retail spelling cannot be reproduced from source.
+- Fix:       `rename_syms.py` the 13 `dcc22@unnamed@g3d_xsi_cpp@` retail symbols to the canonical 21
+  spelling (one pair per argument). objdiff 3/16 → 10/16, fuzzy 21.54 → 91.98, 0 ✓ lost, extab MATCH.
+- Takeaway:  before treating a `@unnamed@<file>@<n>` mismatch as source shape, check `n` against
+  `len("@unnamed@<file>@")`. If they disagree the retail table's mangling is broken, not your source.
+
+## monolib/mpfsys/UnkClass_80471EC8 — 15 pre-mangled member placeholders, NOT converted (recorded residual)
+- Symptom:   retail carries `clearFlag__Q26mpfsys17UnkClass_80471EC8Fv` (a *mangled member name* used as
+  the whole symbol) while the decomp defines a free function whose identifier is that literal string,
+  so MWCC double-mangles it: `clearFlag__Q26mpfsys17UnkClass_80471EC8Fv__Fi`. 7 of those 15 are
+  byte-identical (hexdiff ✓) and score 0 in objdiff; the unit stays at 23/39.
+- Why not fixed here: the `Fv` suffix is the project's *guess* and contradicts the ABI — the callers
+  pass the object in r3 **and** an index/value in r4 (`code_8047BB54.cpp`,
+  `MPFDrawMdlColor.cpp`, `MPFDrawBillLayTex.cpp` declare the same string with one `void*` and call it
+  with one argument), so a real member `void clearFlag(int)` would have to be renamed in symbols.txt
+  *and* in all three caller TUs, and `applyMatColor`/`setKeyAlpha` take their value in r3 with no
+  `this` at all (a member conversion would move the argument to r4 and lose the ✓).
+- Next angle:  recover the true signatures from the caller bodies first (r3-only vs r3+r4 constrains
+  static/free vs member), then one rename + caller rewrite per function, bottom-up, checking the ✓
+  count after each. `applyTevColor`/`setFogIndex` in the same unit show the current scaffold shape
+  (`(u32)this` read as the argument) that is waiting for the same fix.
+
+## nw4r/snd/snd_SeqPlayer — 19/25 → 25/25 (real member layout + accessor call form) (GC/3.0a5.2 `-O4,p`)
+- Symptom:   6 functions `reg_swap`-only (Stop 92.9, `__dt__` 93.7, InvalidateData 94.8, UpdateTick
+  96.1, Setup 90.3, SkipTick 88.7). The two MI base-pointer adjust temps for
+  `UnregisterPlayerCallback(this)` (+0xE0) / `UnregisterDisposeCallback(this)` (+0xD4) were coloured
+  one saved register lower than retail (r29 vs retail r30; r28 vs r29) *identically in all four
+  FinishPlayer call sites*, and SkipTick's first loop had `i`/`pTrack` swapped (i r30/pTrack r29 vs
+  retail i r29/pTrack r30, plus the two prologue `stw`s and `cmpi` reordered).
+- Cause:   the TU reached the track array through an induction-pointer scaffold
+  (`SeqTrack** pSlot = reinterpret_cast<SeqTrack**>(this); … pSlot[0x48]`, a hand-written
+  `(i > TRACK_NUM-1) ? NULL : …` ternary) and the header hid the two real members at 0x118/0x11C
+  behind an 8-byte `u8 _pad`, so every field access went through a `SeqPlayerRetailSlots` view.
+  Writing the inlined accessor's body by hand births the ternary temp as a fresh loop vreg; calling
+  the real `GetPlayerTrack(i)` gives the callee's return vreg, which the allocator colours retail-way.
+- Fix:     (1) header: `SeqUserprocCallback mSeqUserprocCallback` @0x118 + `void*
+  mSeqUserprocCallbackArg` @0x11C replace the 8 pad bytes (sizeof unchanged 0x184), and
+  `mTickCounter` moves after `mLocalVariable[16]` so it lands at 0x180 (it was declared at 0x120);
+  (2) source: `mTracks[i]` / `GetPlayerTrack(i)` everywhere, `mStartedFlag`/`mActiveFlag`/
+  `mSeqTrackAllocator`/`mSkipTickCounter`/`mSkipTimeCounter`/`mTickCounter` direct, `mParserParam
+  .priority` / `mReleasePriorityFixFlag` for the two raw-byte stores; (3) the pre-mangled
+  pseudo-members `SetSeqUserprocCallback__…`/`CallSeqUserprocCallback__…`/`InitSeqPlayer__…`/
+  `ChannelCallback__…` became real members (identical mangling, no caller change needed);
+  (4) dropped the dead `IntToF32Conv`/`LoadTempoProduct` union — the plain `(f32)(timebase*tempo)`
+  cast already emits the retail 0x43300000/2^52 conversion.
+- Result:  FULL_MATCH 25/25 (extab MATCH). SkipTick/Setup/Stop/`__dt__`/InvalidateData/UpdateTick
+  flipped together after (2) — the six residuals were one root cause.
+- Residual: split budget still OVER 0x20 (was 0x24 before): this TU emits dead-strip copies of
+  `SetTrackVolume`/`SetTrackPitch`/`SetPlayerTrack`/`SetTempoRatio`/`SetLocalVariable`/
+  `SetGlobalVariable`, which retail has no copy of. Making them header-inline (as upstream nw4r
+  does) removes 0x1F0 and passes the budget, but `targets.json` still tracks those symbols — deferred.
+
+## Identity wave: 5 monolib units — objdiff UNPAIRED vs hexdiff ✓ (linkage/name identity, no body change)
+- Symptom:   `hexdiff --all` showed the bodies byte-identical while `build/us/report.json` (objdiff)
+  listed the same addresses as `0.00` **UNPAIRED**. Fast triage used here:
+  `powerpc-eabi-readelf -sW build/us/src/<unit>.o | awk '$4=="FUNC"{print $8}'` vs the retail split
+  object (`build/us/obj/<unit>.o`), then `hexdiff --all`.
+  Units: `monolib/src/lod/LODMemMan` 34/80→56/80, `scn/CScnEnvLgtCtrl` 79/127→93/127,
+  `scn/CScnEffectActNw4r` 18/27→27/27, `scn/CScnVirtualLight` 78/89→85/89,
+  `scn/CScnMaruShadowNw4r` 7/16→10/16.
+- Cause:     two spellings, one symbol.
+  1. **Flat retail placeholder + typed definition.** The definition was a C++ free function whose
+     *identifier already contained* the retail name plus an invented signature suffix
+     (`scnVlApplyDir4C__FP16CScnVirtualLightPCQ22ml5CVec4f`). MWCC mangles that identifier, so the
+     emitted symbol never equalled the retail flat name. Fix per case: `extern "C"` on the
+     definition and drop the `__F<sig>` suffix (codegen-neutral). Applies to `EffectActNw4r*`,
+     `scnVl*`, `scnLgt*`, `MaruShadow*`, `sinit_<addr>`, and the `reslist_*` template ctors/dtors.
+  2. **Mangled retail placeholder naming the wrong class/signature.** `LODMemMan`'s big-object
+     functions were labelled `X__Q23LOD9LODMemManFv` (the 0x78-byte IWorkEvent sub-object) while
+     the bodies are members of the 0x1500-byte manager (`LOD::UnkClass_8046D144`, proven by the
+     offsets they touch and by `CTaskLOD`'s `mpActiveLOD`): they were real members, so the 24 of
+     them whose callers allowed it were memberized and the retail symbol renamed to the emitted
+     mangling (`faithful/rename_syms.py old=new`, us+eu+targets).
+- Decl drift that blocks the flat fix: several `scnLgt*`/`scnVl*` names have a *different-typed*
+  `extern "C"` declaration in a sibling header (e.g. `scnLgtSetSinkBit1(CTaskEnvLgtCtrlAccess*, int)`
+  in `kyoshin/cf/CTaskEnvironment.hpp`, `scnLgtGatherLights` in `CScnVirtualLight.hpp`). MWCC
+  rejects the second spelling (10197 illegal function overloading) — for C linkage the parameter
+  list must match exactly. Where the decl is not visible from the defining TU the spelling is free;
+  where it is visible, either match the caller's view with a cast inside (done for
+  `scnLgtSetSinkBit1`/`SetParamIdle`/`BindLightArg`/`SetBlendBloom`) or leave the function
+  C++-mangled and record it (`scnLgtGatherLights`, `scnLgtRefreshLightMan`, `__dt__804C0E48`
+  — that one also needs `void*` + `void` return, which loses the retail `r3 = self` tail).
+- Memberize gotcha (LODMemMan): a member conversion is only name-neutral when every caller can be
+  rewritten to the member call. Six functions could not be: `configureFadeMode`,
+  `configureShrinkTargets`, `setElementScale`, `setElementLodLevel` and `setElementCachedValue`
+  each take an **f32 the retail caller never materialises** (the CTaskLOD wrappers are `b` tail calls: r4/r5 are set, f1 is inherited), so a
+  member call forces an extra f1 materialisation in the caller; `initElementBuffers` is reached by
+  an 8-byte `addi r3,r3,0xa44; b` thunk with no r4/r5. Those stayed free functions (hexdiff still
+  ✓ via the retail-name-substring pairing; objdiff keeps them UNPAIRED — recorded residual).
+  Likewise `isElementFlagClear`/`getElementState`/`updateSingleElement` return `bool`/`u8`/`void`
+  but their CTaskLOD callers return the value as `void*`: a member call inserted the u8→pointer
+  zero-extension (`rlwinm r3,r3,0,24,31`) and killed the tail call — the wide return type must live
+  in the *caller's* declaration, so those three stayed flat too.
+- Result:    +56 report-matched functions across the five units, no ✓ lost in any unit
+  (hexdiff table deltas are name-only), `faithful` improved (13 units), link-gate 43, extab-gate OK.
+  Also: `dispatchViewUpdate` became a **static** member (its address is taken as an
+  `nw4r::g3d::ScnProc::DrawProc`, so a non-static member's pmf cannot be used) — the retail symbol
+  was renamed to the `FPQ23LOD17UnkClass_8046D144i` mangling.
+- Confidence: repo_proven (bytes unchanged in every converted function).
+
+## nw4r/snd AxManager + BasicSound — open residuals found while routing (not fixed this session)
+- `AxManager::SetOutputMode` (0x108 vs our 0x80, 6.1%): retail has **five** things our body lacks:
+  (1) `if (mOutputMode == mode) return;` early-out (`lwz 0(r3); cmp; beq`),
+  (2) a value saved in r31 across the whole body via a `bl … bl` pair (get/register, symmetric
+  call at exit), (3) after `UpdateAllVoicesSync(Voice::SYNC_AX_MIX)` a 3-bus FxList walk calling
+  **virtual slot 24** on every `FxBase` (`it->…()`), (4) `if (mode == OUTPUT_MODE_DPL2) <word at
+  AxManager+0xFC> = 0`. Next angle: identify the r31 pair (AXGetMode/AXSetMode-shaped) and the
+  FxBase vtable slot-6 name from `snd_FxBase.h` + the caller TUs, then the body writes itself.
+- `AxManager` tail: retail has three `u32` words at 0xF4/0xF8/0xFC (ctor zeroes them, ShutdownEffect
+  clears one per AuxBus, AuxCallbackFunc stores `OSGetTick() - savedTick` per bus, SetOutputMode
+  clears the DPL2 one). They are *write-only inside this TU*, so the name cannot be recovered from
+  retail here; today they are `AxManagerTailView::field_0xF4[3]`. Adding them to the header would let
+  ShutdownEffect's switch and SetOutputMode match structurally.
+- `BasicSound` class layout: retail has **two** pointers before the ambient callbacks —
+  `AttachSoundActor` stores its arg at +0x14 and `AttachExternalSoundPlayer` at +0x18 (the header
+  carries only `mExtSoundPlayer` at 0x14 and puts `mAmbientParamUpdateCallback` at 0x18, which is
+  really the ExternalSoundPlayer slot: retail's paramUpdateCallback is at 0x1C, per SetAmbientInfo's
+  `stw r3, 28(r29)`). The two 8-byte Attach functions are therefore still unwritten, and every
+  ambient-field access in the TU goes through the `BasicSoundAmbientView` cast. Fixing this means
+  inserting `SoundActor* mSoundActor` at 0x14 and re-deriving the members up to 0x68
+  (`mFadeVolume`, verified at retail 0x68 by UpdateMoveValue's `lwz 0x6C/0x68`) — a full class pass
+  with a large blast radius (all `BasicSound` subclasses), not a drive-by edit.
+
+## monolib/src/coli — the four coli units' objdiff UNPAIRED backlog was pure linkage identity (0 body changes, a6c60 26→57, 2FF0 15→22, 59C8 17→22, BAE10 11→12)
+- Symptom:   `build/us/report.json` scored `code_804A6C60` 26/108, `code_804B2FF0` 15/37,
+  `code_804B59C8` 17/61, `code_804BAE10` 11/20 while `hexdiff --all` reported 57/108, 22/37,
+  22/61, 12/20 — i.e. 25 + 9 + 17 + 11 functions were byte-identical but counted 0.00/UNPAIRED.
+- Cause:     every one of those retail symbols is **flat** in `config/*/symbols.txt`
+  (`ColiInitSegment`, `ColiNodeRefreshAxes`, `allocMoverTbl`, `makeObbPlanes`, `Coli_WalkQuery`,
+  `ColiTestQueryRadius`, …) while the decomp defined them as C++ free functions, so MWCC emitted
+  `ColiInitSegment__FPQ32ml4coli11CColiObject…` and objdiff's exact-name pairing never fired.
+  Diagnose in one command per unit:
+  `powerpc-eabi-readelf -sW build/us/obj/<unit>.o | awk '$4=="FUNC"{print $2,$3,$8}'` diffed against
+  the same on `build/us/src/<unit>.o` (retail-only vs decomp-only name sets; equal sizes = identical
+  bytes). This is the same defect class as the `CScnCameraMan` / `code_804F0258` / `CtrlMoveEne`
+  records above; it was simply never swept over coli.
+- Fix:       `extern "C"` on the 62 definitions whose retail symbol is flat (25 in a6c60.cpp,
+  15 in 59C8.cpp, 11 in BAE10.cpp, 9 in 2FF0.cpp — plus `sinit_804BADB4`, `__dt__804B095C`).
+  Codegen-neutral by construction (linkage only), and it is the *faithful* shape: the retail
+  symbol table proves C linkage, so the flat name is the original spelling, not a shortcut.
+  Cross-TU evidence checked name-by-name before switching, in both directions:
+  * callers already declared them `extern "C"` (a6c60/2FF0/59C8/BEA10 read/write each other's flat
+    names, plus `src/kyoshin/cf/{CtrlAct.hpp,CfObjectEnumList.hpp,CfObjectMove.hpp,CfGimmickLock.hpp,
+    CtrlNpc.hpp,CActParamAnimGame.cpp}`, `libs/monolib/src/scn/{code_804BC9EC,code_804BD8E8}.cpp`
+    which re-declare them in `extern "C"` blocks, `code_804B2FF0.cpp`'s `gateMoverMove` reloc and
+    `CColiProc.cpp`'s `Coli_ShiftMtxHist`/`Coli_CopyBoneMtx` decls) → those references were
+    **currently undefined**; the switch also pays down link drift (`nm -u` on `build/us/src/**/*.o`
+    showed 5+ dangling flat references such as `Coli_GetBitTable_5A68` ×4 with 0 definitions);
+  * nothing anywhere referenced the mangled spelling that disappeared (verified with
+    `nm -u` over every `build/us/src/**/*.o`), so no new undefined symbol is created.
+  Do **not** switch a name whose callers resolve the mangled spelling (`CtrlMoveBase`'s 14
+  `moveBase*` flats are the counter-example — they are called through pre-mangled declarations
+  in `CtrlEnemy`/`CfGimmick*`, so they must be converted to real members, not to C linkage).
+- Result:    report `a6c60 26→57/108`, `2FF0 15→22/37` (hexdiff 22/37 unchanged ⇒ the split-exactly-
+  full 0x0-spare unit is untouched), `59C8 17→22/61`, `BAE10 11→12/20`; hexdiff ✓ counts identical
+  before/after in all four (57/22/22/12) and no function's % moved — the whole delta is pairing.
+  `CColiProc` 6/12 and `CColiProcBase` 1/1 unchanged. link-gate OK (missing 43), faithful OK,
+  registry_check OK, extab-gate / text-order-gate OK.
+- Residual: the name sets now line up exactly in all four units (`readelf` diff is empty), so the
+  remaining report gap in these units is body work, not identity. The one remaining symbol-count
+  difference is a6c60's extra out-of-line helper `f32FromS32_ae48_bl` (0x44 — the deliberately
+  non-inlined twin of the inline s32→f32 converter, a scaffold the retail object has no symbol for;
+  removing it needs the 8 call sites to match retail's inline expansion, out of scope here).
+  `kyoshin/cf/CtrlMoveBase`'s 14 flat `moveBase*`/`aimMoveTarget`/… names are the same defect but
+  belong to the kyoshin identity work: their callers (`CtrlEnemy`, `CfGimmick*`) reach them through
+  pre-mangled declarations, so they need a real-member conversion, not `extern "C"`.
+- Confidence: repo_proven.
+
+### Near-miss packets opened while sweeping (not closed)
+- `func_804A7834` (a6c60, 0x44, hexdiff 76.5%, report 99.36 — objdiff sees one instruction):
+  the only diff is the sdata2 zero constant's load slot. Retail order is
+  `lfs f3,32(r4); lfs f2,28(r4); lfs f1,24(r4); lfs f0,0(r0[=lbl_eu_8066AE24])` (zero LAST, in f0),
+  ours hoists the zero to slot 0 and colours it f3 (x→f0, y→f1, z→f2). Three source shapes probed:
+  named `f32 zero = lbl_eu_8066AE24;` declared after the three reads, `const f32&` binding, and
+  `f32 zero = …, x, y, z;` (zero declared first, exploiting MWCC's reverse-declaration load order) —
+  all three still emit the constant load first, so the schedule is a constant-hoist decision, not
+  declaration order. Next angle: find the real retail expression (the other end of the axis frame
+  table) so the zero comes from a different operand class.
+- `ColiMakeAabbMinMax` (a6c60, 0x74, hexdiff 82.8%, report 99.14): single instruction,
+  retail `addi r4,r3,8` (row-2 base into the dead `pa` register) vs ours `addi r3,r3,8`
+  (overwrites `out`). The `for (i<3) { d[i]=…; d[i+3]=…; }` shape already reproduces the unroll and
+  both store displacements; the difference is which dead register the rebase lands in, i.e. a pure
+  colour choice the witness cannot certify. Recorded near-miss.
+- `kyoshin/cf/CtrlMoveBase.cpp` (outside this sweep's file set): `sinit_8008A0C8` still calls the
+  CColiProc ctor through a block-scope `extern void __ct__9CColiProcFv(void*);`. Converting it to
+  real construction is **not** byte-neutral: retail's `sinit_8008A0C8` is a bare
+  `lis/addi r3; bl __ct__9CColiProcFv` with no null guard, and MWCC emits the placement-new
+  `addic.`+`beqlr` guard even when the ctor is only declared, while a real static of type
+  `CColiProc` makes the compiler inline the ctor into the generated `__sinit_`. Negative result —
+  the pre-mangled spelling is the only shape that reproduces the 0x3C bytes.
+- `ColiSweepBoxContact` (a6c60, 0x254, hexdiff 94.6%, report **99.73** — the closest near-miss in
+  the unit): the whole diff lives in the 12-byte `VEC3` write to `+0x24` at the tail. Both sides
+  write the same 3 floats, but retail **pairs** them (`psq_st f0,36(r3),0` + `psq_st f0,44(r3),1`)
+  while we emit two singles (`…,1` twice), and the compare that feeds them differs the same way
+  (`ps_cmpo0` on a pair vs two singles). That is the nw4r `VEC3Min`/`VEC3Max` vs SDK `PSVECMax`
+  chunking — the next angle is to swap which helper the tail calls (both are paired-single inline
+  asm in `libs/nw4r/include/nw4r/math/math_types.h` / `revolution/mtx`), not to touch the loop.
+
+## kyoshin/CTalkWindow — blob scaffold → real `IUIWindow + IWorkEvent + IScnRender` class + US `.data` re-cut: 7/18 → 13/18, data MISMATCH → MATCH (Wii/1.1, `-O4,p`)
+- Symptom:   the unit was a plain struct with `mProcHead/mVtable/mProcTail/ptmf0/ptmf1/mScnRender/mMemRegion[0x10]`
+  pseudo-members, `u32 __data_blob[324] / __rodata_blob[504] / __sdata_blob[8] / __sdata2_blob[96]`, `extern`
+  (i.e. *undefined*) `__bss_blob[192] / __sbss_blob[8]`, a hand `extern "C" __ct__CTalkWindow` storing
+  `lbl_eu_8052D238 = __vt__18CTTask<9IUIWindow>` then `lbl_eu_8052DFA8`(+0x24/+0xac) by hand, a hand dtor,
+  three hand this-adjusting thunks and a hand 48-store `sinit_8012DE98`. `.data` 0x168 vs retail 0x144,
+  `.bss`/`.sbss` 0 bytes, `.sdata` byte-diff, `.sdata2` +4 bytes.
+- Cause:     (1) the decomp `.data` was `[hand blob 0x144][compiler jump table 0x24]`, i.e. the blob
+  *already contained* a hand copy of the switch jump table the compiler also emits. (2) the retail slice
+  0x8052DF70..0x8052E0B4 ends inside CUIBattleManager's first `MoveFunc` pmf pool: the trailing
+  `{0, -1, parkMoveHandler}` at 0x8052E0A8 is referenced **only** by CUIBattleManager.o, so CTalkWindow's
+  real `.data` is 0x8052DF70..0x8052E0A8 (0x138).
+- Fix:       (a) re-cut `config/us/splits.txt` (`kyoshin/CTalkWindow.cpp .data end:0x8052e0a8`,
+  `kyoshin/CUIBattleManager.cpp .data start:0x8052e0a8`) + `configure.py configure`; EU/JP have no `.data`
+  line for either unit. (b) define the pmf pool in CUIBattleManager.cpp as
+  `CUIBattleManager::MoveFunc lbl_eu_8052E0A8 = &CUIBattleManager::parkMoveHandler;` — MWCC's non-virtual
+  pmf constant initialiser is exactly `{delta 0, index -1, fn}`, byte-identical to retail. (c) derive for
+  real (`IUIWindow` at 0, `IWorkEvent` at 0x6C, `IScnRender` at 0x70), delete the pseudo-members and the
+  hand vtable/base-list/thunks; `IWORK_EVENT_INLINE_DTOR` + `CTTASK_INLINE_DTOR` + `IUIWINDOW_INLINE_DTOR`
+  before the first include reproduce retail's dtor (double-beq + `__dt__8CProcessFv`).
+  (d) `.data` = **one user file-scope object** `const char* TalkWinPagePaneName[4]`, emitted *before* the
+  compiler's switch jump table and the vtable/base list — so use the literal page names in the table and
+  also spell the two short names in `Init` (retail keeps a second `.sdata2` copy for exactly that reason).
+  (e) `.bss` 0xC0 + `sinit_8012DE98` (0xE0, FULL) come from `nw4r::math::VEC3 TalkWinPagePos[16] = {...}`:
+  `VEC3` has a user ctor, so instead of `.data` MWCC reserves `.bss` and emits the TU static initialiser
+  `__sinit_<file>_cpp` (rename it to retail's `sinit_8012DE98`).
+  (f) `.rodata` 504 B is code literals in **retail first-use order**, which here is *source* order — that
+  forced reordering the whole .cpp into retail's .text order (`--list`: ctor, dtor, TalkWin_ClearFlag_BDD0,
+  Init, Term, Move, Draw, cbRenderBefore, factory, IsActive, updateTalkWindow, layoutTalkPanes,
+  driveTalkIntro, driveTalkMessage): `ep100` (updateTalkWindow) must come after every `Init` literal.
+  (g) `.sdata2` order **is** materialisation order, so a `a + b*0.5f + k` expression pools `k` before `0.5f`;
+  retail's pool has 0.5f first, which is the *two-statement* spelling
+  `screen.y += pane->GetScale().y * 0.5f; screen.y += 20.0f;`. Never judge this from `run.py data diff`
+  alone — it does **not** rebuild; always `hexdiff` first.
+  Renames: `__ct__CTalkWindow` → `__ct__11CTalkWindowFP4CScnUlPUcUlUlUl`, `sinit_8012DE98` →
+  `__sinit_\CTalkWindow_cpp`, `TalkWin_DtorThunkA_DF78` → `@108@__dt__11CTalkWindowFv`,
+  `TalkWin_RenderThunk_DF80` → `@112@cbRenderBefore__11CTalkWindowFv`, `TalkWin_DtorThunkB_DF88` →
+  `@112@__dt__11CTalkWindowFv`, `lbl_eu_8052DFA8` → `__vt__11CTalkWindow`, `lbl_eu_8052DF70` →
+  `TalkWinPagePaneName`, `lbl_eu_80573A70` → `TalkWinPagePos`, `lbl_eu_80662170` → `__RTTI__11CTalkWindow`.
+- Result:    `.data` 308 B identical (+4 B link tail), `.rodata` 501 B (+3 tail), `.sdata` 8 B, `.sdata2` 96 B,
+  `.bss` 0xC0 zero-fill, `.sbss` 8 B → **data VERDICT MATCH** (was MISMATCH); 13/18 ✓ (was 7/18):
+  ctor 23.9% → 100%, `TalkWin_ClearFlag_BDD0` 0% → 100%, Term 15.6% → 100%, Move 12.7% → 100%,
+  `TalkWin_IsActive_CD24` 0% → 100%, `sinit` 1.8% → 100%, thunks ✓; extab residual from
+  "retail 0xD0 != decomp 0x78" down to 3 byte diffs.
+- Residual:  `Init` 6.3% (0xA04 vs 0xA1C), `updateTalkWindow` 11.8%, `layoutTalkPanes` 1.0%,
+  `driveTalkIntro` 29.9%, `driveTalkMessage` 4.1% — all pre-existing body near-misses; `Init`'s remaining
+  shape debt is the pane-flag `:7/:1` bitfield writes and the `lbl_`→literal base-rematerialisation pattern.
+- Confidence: repo_proven.
+- Applies to/a.k.a.: `TalkWin_Create_CC78` must be `new (mtl::MemManager::allocate(0xb8, getWorkMem())) X(...)`
+  — a *separate* `if (obj != 0) obj = new (obj) X(...)` adds a second `bc 12,2` (0xB4 vs retail 0xB0).
+
+## kyoshin/menu/CMenuBattleChain — hand vtable/RTTI/base-list blob → real MI class: `.data` unchanged, 22/23 held, extab 3 → 1, `.rodata` +0x14 (Wii/1.1)
+- Symptom:   the unit carried `void* lbl_eu_80539E48[48]` (the 0xC0 composite vtable), `void* lbl_eu_80539F08[16]`
+  (the 0x40 base list) and a hand `const void* __RTTI__16CMenuBattleChain[2]`, with 15 of the 48 vtable slots
+  left as literal `0` because MWCC cannot spell the thunk / template-Draw / `__RTTI__` referents in an
+  initialiser; plus a hand `extern "C" __ct__CMenuBattleChain`, a hand flags-taking dtor and three hand thunks.
+  `run.py data diff` said MATCH because raw reloc sites are 0 bytes on both sides — the relocs were *absent*.
+- Fix:       derive for real (`IUIWindow`/`IWorkEvent`/`IScnRender`, same header macros as CTalkWindow),
+  member ctor with the init list, member `~CMenuBattleChain() {}`, `mScn->addRenderCB(this, 0xa, 0)` /
+  `removeRenderCB(this)`, delete the three hand thunks and both blobs. `createBattleChainMenu` becomes
+  `new (mtl::MemManager::allocate(0xa0, heap)) CMenuBattleChain(scene, chainType)` (one `bc 12,2`, retail 0x98 ✓).
+  Renames: `__ct__CMenuBattleChain` → `__ct__16CMenuBattleChainFP4CScnUc`, `CMenuBattleChain_dtorAdj6C` →
+  `@108@__dt__16CMenuBattleChainFv`, `CMenuBattleChain_renderBeforeAdj70` →
+  `@112@cbRenderBefore__16CMenuBattleChainFv`, `CMenuBattleChain_dtorAdj70` → `@112@__dt__16CMenuBattleChainFv`,
+  `lbl_eu_80539E48` → `__vt__16CMenuBattleChain`. `move sinit_802AAF24` after `tickChainCounter` (retail's
+  position). `lbl_eu_80661ED0` (the `__RTTI__18CTask<9IUIWindow>` alias) had no user left afterwards and was
+  deleted from us/eu symbols.txt; link-gate stayed at missing=43.
+- Result:    `.data` 324 B identical (+4 B link tail, i.e. retail's 328), `.sdata`/`.sdata2`/`.sbss` identical,
+  functions 22/23 unchanged (ctor/dtor/thunks/create all ✓), extab diffs 3 → 1.
+- Residual:  (RESOLVED in the follow-up record "CMenuBattleChain `.rodata` tail / `.text` tail" below) `.rodata`
+  retail 0x158 vs decomp 0x16C. The leading 0x158 bytes were **byte-identical**: retail is
+  `[__RTTI__ type-name "CMenuBattleChain" 0x11][3 pad][resource-name table 0x144]`. The +0x14 was MWCC's own
+  RTTI name string emitted *after* the user objects; the real source shape is a string-pool literal block,
+  not a user `const char[]` table (see the follow-up record). Probes that did **not** help: removing the user
+  name object (everything shifts by the 3-byte pad, 307 diffs), `__attribute__((aligned(4)))` /
+  `__declspec(align(4))` on the table (ignored), non-const `__declspec(section ".rodata")` table (still pooled),
+  braced char initialiser (still pooled).
+- Also:      (RESOLVED in the follow-up record) `text_order_baseline.json` was raised 1 → 3 for this unit: MWCC
+  emits the MI adjusting thunks and any static initialiser at the **end** of .text, so retail's
+  `[__sinit_802AAF24][thunks][trackChainPlayer..]` tail proves the eight `trackChainPlayer..requestAnimReset`
+  helpers are the NEXT TU (`kyoshin/menu/code_802ADB08.cpp`), not part of this one. Split re-cut at
+  `.text 0x802AC2C4..0x802ADB08`; baseline entry and its `_raises` entry are gone again.
+- Confidence: repo_proven (negative result for the `.rodata` tail; positive for the class conversion).
+
+## CriWare adx_mwii / adx_fs (Wii/1.1, `-O4,p`) — extern `.bss` symbols + signed request index (US)
+
+Three levers found in the same session on the un-matched ADX units; all verified with `hexdiff --all`
+(no ✓ lost anywhere in the unit).
+
+- **Symptom:** a whole unit's functions open with a compiler-generated anchor —
+  `lis r31,0; addi r31,r31,0` followed by `lwz rX, 0xNNNN(r31)`/`addi rX, r31, 0xNNNN` — while retail
+  emits one `lis @ha` per global with the `@l` folded into the load (`lis r8,@ha; lwz r3,@l(r8)`).
+  `powerpc-eabi-readelf -r` on the decomp object shows the tell-tale `R_PPC_ADDR16_HA ...bss.0`.
+- **Cause:** the unit's `.bss` block is *defined* in the TU. MWCC then addresses it as
+  `<section anchor> + constant offset` (`...bss.0`), never as the individual retail symbols.
+- **Fix (corrected by the orchestrator):** forward-declare the objects `extern` at the top and *define* them
+  **after the last function**. MWCC compiles function by function, so code generated before the
+  definitions addresses each object through its own symbol (`@ha/@l`), exactly as retail does. MWCC emits
+  `.bss` objects in **reverse definition order**, so write the definitions in reverse retail address
+  order. Result: the same function table as the extern-only form, `.bss` 0x2900 at retail offsets
+  (readelf-verified), data VERDICT MATCH, and no dummy `<unit>_bss[SIZE]` blob. The interim form
+  (externs resolved from symbols.txt plus a same-size dummy blob) is **not** acceptable: it is a hand
+  data blob, and the real objects never exist in source. adx_fs's work arrays were also given names
+  (`adxf_ptwork/pttbl/reqslot/reqseq/reqidx/curpt/workarea`). Gains: ADXF_OpenNw 2.9→77.7,
+  ADXF_Close 4.8→80.0, adxf_Seek 3.1→89.0, adxf_Stop 2.4→78.0, adxf_ReadNw32 1.7→73.2, no ✓ lost.
+- **Symptom (second lever):** retail's `counter % 16` lowers to the **signed** modulo chain
+  `rlwinm r0,r3,28,0,3; rlwinm r7,r3,1,31,31; subf r0,r7,r0; rotlwi r0,r0,4; add r7,r0,r7`,
+  the decomp emits `rlwinm r0,r6,4,24,27` (`(x & 15) << 4`).
+- **Fix:** declare the counter `s32` (it is a request-ticket counter, not a size). `ADXF_OpenNw`
+  10.7→77.7 on its own; identical effect on the other queue users. **`u32` vs `s32` on a `% 16`
+  operand is visible in codegen and nothing else.**
+- **Third lever:** the 16-byte request slots must be indexed as an array element
+  (`&lbl_eu_805E04F0[idx]`), not `lbl_eu_805E04F0 + idx*16` on an already-typed array pointer
+  (that scales twice → `slwi 8`). Retail's `slwi r0,r7,4` is the implicit element scaling.
+- **adx_mwii (same `...bss.0` mechanism):** `ADXM_IsSetupThrd`, `ADXM_SetupFramework`,
+  `ADXM_ShutdownFramework` went 11.1/39.5/14.8 → **100%** by declaring the two addresses retail names
+  as standalone objects — `extern u32 lbl_eu_805F3A54;` (the setup refcount) and
+  `extern s32 lbl_eu_805FDD9C;` (the framework state word) — instead of macros over the
+  `adx_mwii_bss` blob. Also note the retail source has **two** spellings of the same framework
+  block: `lbl_eu_805F3A50` (the anchor other functions use, offsets 0x40/0x70/…) and
+  `lbl_eu_805F3A54` (a symbol starting 4 bytes later); `ADXM_IsSetupThrd` must use the latter to get
+  `lis @ha; lwz @l(r3)` with no `addi`. The `lbl_eu_805FBA78`/`lbl_eu_805FBA7C` pair inside
+  `ADXM_ShutdownThrd` was *also* tried as externs (faithful: retail relocs them separately): it lifts
+  `adxm_create_base_thread` 12.2→18.3 but drops `ADXM_ShutdownThrd` 79.0→58.1 (the retail
+  `addi r3,r31,16` sub-object materialization cannot be reproduced, so the branch displacement
+  alignment degrades); net ✓ count identical, so the existing macro form was kept.
+- **Result:** adx_mwii 9→12/18 ✓, adx_fs 17/25 ✓ unchanged with fuzzy +6 functions; adx_fs data gate
+  MATCH (`.bss` 0x2900 zero-fill, align 8 vs 8).
+- **Soft caps left in adx_mwii (all now single-instruction shifts):** `ADXM_ShutdownThrd` 79.0% — retail
+  materializes `&base->field_0x10` (`addi r3,r31,16; lwz r0,20(r3)`); every source shape tried (pointer
+  local, `const` pointer, struct-member access, `volatile` pair) folds it into `lwz r0,36(r31)` — the same
+  wall already recorded for `adxm_create_base_thread`. `SVM_Init` (svm.c) 95.7% — 2-instruction epilogue
+  order (`lwz r0,20(sp)` before `lwz r31,12(sp)`); retail restores in prologue order, our build restores
+  in reverse.
+- **Confidence:** repo_proven (extern-`.bss` recipe and the signed-index/slot-scaling recipe).
+
+## CriWare adx_mwii / ahx_dcd — dummy `.bss` blob -> real objects at retail offsets (Wii/1.1 `-O4,p`, data MATCH)
+
+- **Symptom:** a unit carries `unsigned char <unit>_bss[0xNNNN];` (sometimes plus `#define X
+  (*(T*)(blob+off))` views and `extern` aliases) because its `.bss` split range has to be reserved for
+  the linker while every object is declared `extern` and resolved from `symbols.txt`.
+- **Fix:** delete the blob; forward-declare the objects `extern` at the top and **define** them after
+  the last function, in **reverse retail address order** (MWCC emits `.bss` in reverse definition
+  order), each at the offset retail names (`symbol address - split start`, from `symbols.txt`).
+  Verify with `powerpc-eabi-readelf -sW build/us/src/<unit>.o` + `run.py data diff` (section size and
+  alignment must still match). Worked examples: `adx_mwii` (`adxm_frm` 0x000, `adxm_cur_thr` 0x8028,
+  `adxm_cur_prio` 0x802C, `adxm_workarea` 0x8030, `adxm_state` 0xA34C; 12/18 kept, label 37->10) and
+  `ahx_dcd` (`ahxdcd_key_init`/`mtbl`/`refcnt`/`hdrbuf`; 19/24 kept, label 40->22).
+- **Two spellings stay an `extern`:** where retail addresses one storage under two names, define the
+  object the *code* uses as a base and keep the other as a plain `extern` declaration (resolved from
+  `symbols.txt`). `adx_mwii`: `adxm_frm` is the framework base (`lis @ha; addi; lwz 0x40(r31)`), while
+  `adxm_setup_cnt` (0x805F3A54 = `field_0x04`) is only ever read by `ADXM_IsSetupThrd` as a bare
+  `lis @ha; lwz @l`. Defining both is impossible (they overlap) and defining only the second moves
+  every anchor immediate by 4.
+- **Unreferenced tails need a real object anyway:** the section size must match, so a hole between two
+  referenced symbols gets its own named object (`adxm_workarea[0x231C]`), never `blob+off` arithmetic.
+  The name is invented; nothing references it, so keep the comment saying so.
+- **Blocker for the remaining blob units** (`adx_tlk` 0x289C, `mwsfdlib` 0x3720, plus
+  `nw4r/g3d/g3d_state`): their `.bss` split range also covers objects that *sibling* TUs own
+  (`lbl_eu_805E3328/3338/3340/3354/3358/3E98/3EA8/4EE8` are referenced by `adx_lsc`/`adx_sfa`/
+  `adx_sjd`/`adx_stmc`; `lbl_eu_805FF2E0/E4/E8/39C/3A0/6029F0/F8` by `mwsfdcre`/`mwsfdsvr`/
+  `mwsfdsl`/`mwsfdsvm`/`mwsfdply`), and those TUs have no `.bss` entry in `splits.txt`. Converting the
+  owner alone drops the section size -> `data diff` FAIL, so the split ownership has to be fixed
+  first (then each object moves to the TU that references it).
+- **Residual (unchanged, same wall):** `ADXM_ShutdownThrd` and `adxm_goto_mwidle_border` /
+  `adxm_create_base_thread` still need retail's `&base->field_0x10` materialization
+  (`addi r3,r31,16; lwz 0x14(r3)`); with real objects in place the same experiments
+  (`(u8*)base + 0x10` cast, pointer local, hoisted declaration) all still fold to `lwz 0x24(r31)`.
+  `adxm_goto_mwidle_border` did gain retail's `addis+cmpli` spin-limit compare by writing
+  `if (spin == 0xBEBC200)` instead of comparing two variables.
+- **Confidence:** repo_proven (conversion recipe + offset verification).
+
+## CriWare svm.c — one-block `.bss` model regresses (negative result)
+
+Symptom: `SVM_Lock`/`SVM_Unlock` keep a *single* base (`lis r31,@ha; addi; lwz 0x18/0x4/0x8(r31)`) for
+`svm_ctrl.lock_count`+`lock_flag` and the `svm_lock_cb`/`svm_unlock_cb` pairs, i.e. retail folded
+separately-declared neighbours onto one anchor.
+Fix tried: declare them as one `struct { SvmCtrl ctrl; SvmCb lock_cb; SvmCb unlock_cb; }` with `#define`
+aliases. Result: SVM_Lock 7.4→30.8 and SVM_Finish 14.0→54.9, **but** `SVM_SetCbLock`/`SVM_SetCbUnlock`
+100→20 (they need the pair to stay its own symbol — the `MWCC_CASES` "tiny setters" recipe) and
+`SVM_Init` 95.7→8.2; unit 15→13 ✓. Reverted. The per-function anchor merge is a compiler choice on
+distinct symbols, not something the data model can force unit-wide.
+- Confidence: negative_result.
+
+## objdiff identity sweep — 5 units: flat retail placeholders vs decomp spellings (+162 functions)
+- Symptom:   `hexdiff --all` reported byte-identical functions that `build/us/report.json` scored 0%
+  (or dropped entirely): pluginCfs 57/73 hexdiff vs 8/73 objdiff, CfResPcImpl 40/43 vs 9/43,
+  CfObjectEnumList 29/42 vs 5/42, code_8018F8D8 31/35 vs 2/35, CfObjectImplMove 25/36 vs 4/36.
+- Cause:     objdiff pairs by exact symbol name. Retail `config/*/symbols.txt` carries flat
+  placeholders (`setMapJumpArea`, `CfResPcImpl_teardown`, `getEntryAt`, `CfCmd_Gate8000Fwd`,
+  `MoveImplInitFields`) while the decomp defines C++ functions/members, so the emitted symbols are
+  mangled (`setMapJumpArea__FP10_sVMThread`, `getEntryAt__Q22cf13CfObjEnumListFi`, …). Identical
+  bytes, zero score. Same shape as the CCharVoiceMan / CtrlMoveEne records above.
+- Fix (three-way split, decided per symbol from the decomp objects' UNDEF tables):
+  1. **No cross-TU flat reference** → rename the retail placeholder to the decomp mangling
+     (`faithful/rename_syms.py old=new`, all three regions + targets.json). 106 symbols here.
+  2. **A decomp object references the flat name** (i.e. some TU declares it `extern "C"` and the
+     emitted UNDEF is flat) → the definition itself must stay C-linkage: keep the retail name and
+     write `extern "C"` on the *definition* (39 here). This is the case the gate calls `mangled_c`,
+     so it is only used where the flat reference is real.
+  3. **Member with flat callers** → de-memberize: drop the member declaration and define
+     `extern "C" ret name(Class* self, …)` (getObjectAt/getObjectIdAt/getEntryAt,
+     CfObjectImplMoveClearLinkIfMatch, MoveImplMatchIdSetRegion). Body bytes are unchanged
+     (`this` == r3 == `self`); only the symbol name and the class API change.
+  Decisive evidence for the split is `nm`-style UNDEF enumeration of every `build/<region>/src/**.o`
+  (`tools/ppc_equivalence.elf_symbols.list_code_functions`), **not** a source grep: a header comment
+  can mention a name that no object references, and a C++ declaration can still emit a flat symbol.
+- Result:    pluginCfs 8→60/73, CfObjectEnumList 5→29/42, CfResPcImpl 9→40/43,
+  code_8018F8D8 2→32/35, CfObjectImplMove 4→25/36 (unit fuzzy 7.9→42.2 / 42.4→60.0 / 14.2→55.5 /
+  2.7→40.5 / 7.0→20.6). hexdiff ✓ only rose (57→58 in pluginCfs from a branch-order fix).
+  US `functions 100%` 14022→14184.
+- Gotchas:   (a) renaming a *flat* retail symbol costs every decomp object that still references it
+  by the flat name a reloc-name miss (objdiff fuzzy −0.01…−0.7, three functions fell off 100%). Do
+  the UNDEF census first; revert to `extern "C"` for exactly those symbols.
+  (b) `extern "C"` on a definition whose identifier *looks* mangled (`__ct__800FBF08`,
+  `__ct__800FC4FC`, `__ct__800FCF1C`) adds `mangled_c` smells in `run.py faithful` (regex
+  `…__\d+[A-Za-z_]\w*F…`). Offset it the documented way — rename unit-private `lbl_eu_*` data to
+  descriptive names in the same pass (`lbl_eu_8052BDA0→gCfEnumListSortDispatch`,
+  `lbl_eu_80573A30→gCfEnumListProbeOffsets` took CfObjectEnumList 206→135 smells).
+  (c) A free function whose identifier is a pre-mangled retail name still gets *another* suffix
+  (`CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv__FPv`); rename the retail symbol to that exact
+  spelling to pair it, or memberize it properly (real fix, deferred).
+- Confidence: repo_proven (report.json before/after + per-object UNDEF tables + link-gate).
+
+## pluginCfs CfObject_getCurrentTarget — if/else block order (Wii/1.1, 57.1% → 100%)
+- Symptom:   identical instruction set, `bc 12,2` vs `bc 4,2` and the two return blocks swapped.
+- Cause:     retail falls through to the `ptr->f8` arm; the decomp's `if (ptr == NULL) return
+  self->f6C0; return ptr->f8;` makes MWCC fall through to the other arm.
+- Fix:       write the positive test — `if (ptr != NULL) return *(void**)((u8*)ptr + 8);
+  return *(void**)((u8*)self + 0x6C0);`.
+- Result:    FULL_MATCH (7/7 instructions).
+
+## nw4r/ut/ut_PackedFont dtor — pre-mangled `__dt__` free function vs a real destructor (GC/3.0a5.2 `-O4,p`, 3/12 → 4/12)
+- Symptom:   the unit's `__dt__Q34nw4r2ut10PackedFontFv` row showed 100%/0 structural but never paired;
+  the object defined `__dt__Q34nw4r2ut10PackedFontFv__FPvi` and referenced
+  `__dt__Q44nw4r2ut6detail15ArchiveFontBaseFv__FPvi` (an UND symbol nothing defines), while retail has
+  the unsuffixed `__dt__…PackedFontFv` defined and calls `__dt__Q44nw4r2ut6detail15ArchiveFontBaseFv`.
+- Cause:     the file spelled both destructors as free functions whose *identifier* is the retail
+  mangled name plus explicit `(void*, int)` parameters. MWCC must disambiguate a C++-linkage name that
+  already looks mangled, so it appends `__F<params>` — the symbol becomes a different function. The
+  same spelling works for `__ct__…Fv(void*)` only because that declaration was unused: the real call
+  came from the class-declared ctor.
+- Fix:       memberize. Declare `~ArchiveFontBase();` in the TU's layout-mirror class and
+  `~PackedFont();` in `PackedFont`, then define `PackedFont::~PackedFont() {}` after the class. The
+  compiler-generated body reproduces retail byte-for-byte (guard `this`, `bl` base dtor with freeFlag 0,
+  `cmpi freeFlag`/`__dl__FPv`, return `this`) — 0x58 exact — and both symbols now carry the retail
+  names. `run.py faithful` stayed at its baseline (6); the `extern "C"` spelling of the same two
+  declarations raises it to 8 (`mangled_c`), so memberizing is also the smell-free route.
+- Confidence: repo_proven (object symbol table + hexdiff --all + faithful score).
+- Applies to/a.k.a.: any `void* __dt__<retail-mangled>(void*, int)` / `__ct__` free-function scaffold;
+  pairs with MWCC_PATTERNS "pre-mangled `__`-prefixed identifiers".
+
+## nw4r/g3d/g3d_scnmdl CopiedMatAccess accessors — early-return scaffold vs tail-return members (GC/3.0a5.2, 19/25 → 21/25)
+- Symptom:   `GetResTexSrt`/`GetResGenMode` sat at 27.8% (11 structural, 2 reg_swap, size exact) while
+  their sibling `GetResMatChan` was 100%.
+- Cause:     the two failing ones were free functions with pre-mangled identifiers
+  (`GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void*, bool)`) written as
+  `if (a == 0 || b == 0) return 0; if (flag) …; return b;` — an early-return chain gives *two* exit
+  blocks, so retail's single `li r3,0` tail (both null tests branching to one `return X(NULL)` block)
+  cannot form. `GetResMatChan` is already a real member written as
+  `if (a != NULL && b.IsValid()) { if (markDirty) …; return b; } return X(NULL);`.
+- Fix:       define them as real members with the same tail-return shape (`mTexSrt.IsValid()`,
+  `mGenMode.IsValid()`, dirty masks `|= 0x4` / `|= 0x10` on `(*mpScnMdl->0x140)[mMatID]`). Both then
+  hit 100% and the two retail-absent `…Fb__FPvb` text symbols disappear.
+- Confidence: repo_proven.
+- Applies to/a.k.a.: CopiedMatAccess / CopiedVisAccess style accessors; rule of thumb — when one of a
+  set of sibling accessors matches and the others don't, diff the *source shape* of the matching one
+  instead of the failing body.
+
+## CDeviceFile::func_eu_804521B0 — `li 255` vs `li -1` (Wii/1.1, 66.7% → FULL_MATCH)
+- Symptom:   a 3-instruction setter (`s8`-style "language override = -1") showed `li r0, 255` where
+  retail had `li r0, -1` — same stored byte, different immediate, so the word never matched.
+- Cause:     the destination global was declared `u8`, so `-1` was folded to `255` by the front end
+  before instruction selection; MWCC picks the `li` immediate from the *converted constant value*
+  (255), not from the source literal. `-1` only survives for a signed destination type.
+- Fix:       declare the object `s8` (`s8 lbl_eu_806636AA = -1;`) and write `-1` at the reset sites.
+  The `0xFF` init byte is unchanged; MWCC then emits `li r0, -1` and the function is 3/3.
+- Result:    FULL_MATCH. `CDeviceFile::__ct__`'s copy of the same store also flipped to `li r0, -1`
+  (its remaining 4 structural diffs are statement-order, unrelated).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: any `li rX, 255` residual on a byte/word store of a sentinel value; also
+  `cmpi rX, 255`. The signedness of the *destination type* decides, not the literal.
+
+## CDeviceFile::getFileSize(const char*) — duplicated `absolute = 0` arm vs shared zero block (Wii/1.1, 40% → 81.2%)
+- Symptom:   27 structural diffs, decomp 0x104 vs retail 0x100; retail's `len <= 0` arm and the
+  "first char is neither `/` nor `\`" arm both branched to ONE shared `li r0, 0`, while decomp emitted
+  two `li r3, 0` sites and an extra 4 bytes; the flag also coloured r3 instead of retail's r0.
+- Cause:     the arm chain was written as `else if (len <= 0) absolute = 0; else { c = path[0];
+  absolute = 0; if (c=='/') absolute = 0; else if (c=='\\') absolute = 1; }` — the pre-assignment plus
+  the `/` arm made two dead-equal stores the backend could not tail-merge, and the extra live `result`
+  value pushed `absolute` up into r3.
+- Fix:       drop the pre-assignment and give the inner chain a real `else`:
+  `else if (len <= 0) { absolute = 0; } else { s8 c = path[0]; if (c=='/') absolute = 0;
+  else if (c=='\\') absolute = 1; else absolute = 0; }`. Size becomes exact, `absolute` lands in r0,
+  structural 27 → 11 (the last 11 are a branch-direction/layout tie on the shared zero block).
+- Confidence: repo_proven (size + colours); residual = hypothesis.
+- Applies to/a.k.a.: "flag assigned in several arms" chains; a `switch` over the same two chars
+  regressed (0x10C, 27 structural) — keep the if/else-if/else shape.
+
+## CDeviceFileCri::cancel(CFileHandle*) — `return false` on a retail void fall-off (Wii/1.1, 85% → FULL_MATCH)
+- Symptom:   39/40 instructions matched; decomp was 4 bytes longer and carried an extra `li r3, 0`
+  before the shared epilogue.
+- Cause:     the member was declared `bool` and ended in `return false;`. Retail jumps straight from
+  the loop to the epilogue with the last vcall's raw r3 — i.e. the original returns nothing.
+- Fix:       declare the member `void` (return type is not part of the MWCC mangling, so
+  `cancel__14CDeviceFileCriFP11CFileHandle` is unchanged) and delete the `return`. 0x9c/0x9c exact.
+  No caller consumed the result (`grep -rn "cancel(" src` — the only users are void contexts).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: documented wall "retail falls off the end without materializing a return value";
+  the escape is to fix the *declared return type*, not to keep an explicit return.
+
+## CViewFrame::getFrame2ViewOffset — flag reset declared after the stores (Wii/1.1, 2.3% → 85.7%)
+- Symptom:   38 structural diffs, decomp 0xac vs retail 0xa8: decomp materialised a second zero
+  (`li r0,0` for the stores + `li r6,0` for the flag) where retail reused ONE `li r6,0` for both
+  `mPos.x = 0` / `mPos.y = 0` and the live `apply` variable.
+- Cause:     `apply` was declared *after* the two zero stores, so its `= 0` initialiser was a separate
+  virtual that only started living later; retail's `apply` shares the zero constant.
+- Fix:       hoist the flag above the stores — `CView* owner = frame->mOwner; int apply = 0;
+  out->mPos.x = 0; out->mPos.y = 0;` — and give the second pass its own `apply = 0;` before the two
+  border stores. Size becomes exact and the colours land on retail's (owner=r5, apply=r6); the last
+  6 diffs are a two-register tie in the second half (border r7 vs r6).
+- Confidence: repo_proven for the size/zero-coalescing part; residual = hypothesis.
+- Applies to/a.k.a.: constructors/setters with several identical constant stores plus a flag local —
+  moving the flag's declaration above the stores lets MWCC coalesce the constant.
+
+## monolib reslist dtor / counter-bump family — pure two-colour ties (Wii/1.1, negative results)
+Recorded so the same spellings are not re-tried. All are 0-structural, size-exact, and differ only in
+one adjacent volatile pair; every variant below was compiled and measured.
+
+- `__dt__reslist_*` (CDeviceFile `reslist<CFileHandle>`, CDeviceFontLayer
+  `const reslist<...LAYER_QUE>`): identical 0xB8 body, retail has the walk cursor in r4 and `prev` in
+  r5, decomp the reverse. Tried: `prev`/`next` spellings (`next = node->mNext; node->mNext = 0;
+  node = next;` → same tie plus 3 structural), `for`-loop and do/while rotations, operand order in the
+  guard (`node != start` vs `start != node`) — no change. Cause: allocator tie between the loop cursor
+  and the copy that dies at the store; nothing in the source distinguishes them.
+- `count`/`next` counter bump (`CScnRootNw4r::AttachCamOne`, `CDeviceFile::func_eu_804520B0`): retail
+  colours count=r5, byte-offset=r0, next=r6; decomp rotates them to r6/r5/r0. Tried: `next` declared
+  after the store, `next` removed (`mCount = count + 1;`), inline `count + 1` in the assignment — all
+  three produce the identical word sequence. The rotation is decided before colouring.
+- `CScnRootNw4r::GetAllocHandle`: retail emits `[cmplwi; beq body; b epi; body: …]` (body out of line,
+  0x48) where every source spelling we can write collapses to `[bne epi; body]` (0x44). Also tried:
+  a ternary `cond ? vf9() : handle` (frame dropped entirely, 0x28) and an `else { return handle; }`
+  early return (sibling-call optimisation, 0x28). Still the best-known open item (cf. MWCC_CASES 10378).
+- `CViewFrame::CViewFrame` ctor: retail loads the six sdata2 floats f5→f0 (first-used claims the
+  HIGHEST FPR) while MWCC here hoists them f0→f5; declaration flip, split decls and int-first
+  interleaving were all re-verified as regressions.
+
+## nw4r/snd BasicSound + BasicPlayer + AxManager — class-layout pass and vtable-slot rules (GC/3.0a5.2 `-O4,p -ipa file`)
+- Symptom:   `snd_BasicSound` 24/35 with split FAIL (+0x1E0); the two retail `Attach*` members
+  unwritten (`AttachSoundActor` @0x8, `AttachExternalSoundPlayer` @0x8) and every ambient field
+  reached through a `BasicSoundAmbientView` cast.
+- Cause:     the header was missing the 0x14 member and carried a phantom extra word at 0x28.
+  Retail's member order is `mHeap mGeneralHandle mTempGeneralHandle mSoundPlayer mSoundActor(0x14)
+  mExtSoundPlayer(0x18) mAmbientParamUpdateCallback(0x1C) mAmbientArgUpdateCallback(0x20)
+  mAmbientArgAllocaterCallback(0x24) mAmbientArg(0x28) mAmbientArgSize(0x2C) mAmbientParam(0x30)`
+  (proved by Shutdown reading 0x18/0x24/0x28, SetAmbientInfo storing 0x1C..0x2C, and
+  AttachSoundActor `stw r4,0x14(r3)`). The old header's `mUnk0x28` was the real `mAmbientArg`, so
+  dropping it keeps sizeof unchanged and the ctor byte-identical (init list = the six pointers at
+  0x4..0x18, body zeroes the five words at 0x1C..0x2C in declaration order).
+- Fix:       (1) header: `SoundActor* mSoundActor` @0x14, shift the four ambient fields + arg/size,
+  delete the pad word, add `SetAmbientInfo`, `AttachSoundActor`, and the 4th interface virtual;
+  (2) the two `Attach*` members are then 0x8 `stw` bodies; (3) `DetachExternalSoundPlayer` becomes
+  `mExtSoundPlayer = NULL` (was a raw `(u8*)this + 0x18` store); (4) `BasicPlayer::SetBiquadFilter`
+  is a real member (`stb mBiquadType, stfs mBiquadFreq`) instead of an `extern "C"` mangled shim —
+  it also fills snd_BasicPlayer's budget exactly (11/12, 0xC spare).
+- Result:    snd_BasicSound 24/35 -> 27/35, split FAIL(+0x1E0) -> PASS (0x88 spare); snd_BasicPlayer
+  10/12 -> 11/12; all 79 units that include the touched headers re-verified, no ✓ lost.
+- Vtable rule (re-confirmed, and the reason `AmbientArg*Callback` dispatched at the wrong slot):
+  a class whose first word-1 slots are `[0]=0, [4]=0` puts **RTTI at 0x8 when the class has
+  `NW4R_UT_RTTI_DECL`**, else the first virtual there; a declared virtual dtor takes the next slot
+  (`0xC`), then user virtuals in declaration order. So an interface with no RTTI and a declared
+  `virtual ~X() {}` puts its first user virtual at 0xC — matching retail's `detail_AllocAmbientArg`
+  @0xC / `detail_FreeAmbientArg` @0x10 / `detail_Update` @0xC / `GetPriority` @0x10 /
+  `GetVoiceOutCount` @0x14. Omitting the dtor moves every slot down by 4 (that is what the previous
+  `…Retail` mirror structs were compensating for).
+- **US-retail `AmbientParamUpdateCallback::detail_Update` is 4-arg**, not upstream nw4r's 5-arg form:
+  `BasicSound::Update` sets r4=`mAmbientArg`(0x28), r5=`mId`, r6=`mVoiceOutCount`(u8 0x95),
+  r7=&stack param, then calls vtable+0xC. The 5-arg `(pParam,id,pSound,pArg,flags)` spelling cannot
+  produce those registers.
+- Dead-strip vs split: the FAIL(+0x1E0) disappeared the moment the last two retail symbols were
+  defined — §17.8's dead-strip pass refuses to drop anything in a unit where "every retail .text
+  symbol is defined by the same name" is false. Writing the missing functions *is* the split fix.
+- `BasicSound::Update` builds its ambient block as `SoundParam` + u32 + `f32[4][6]` on the stack
+  (the 4x6 groups are `PlayerParamSet::mUnk0x6C[24]` at BasicPlayer+0x70, stride 0x18) and copies
+  them with a peeled-first-element + pointer loop — a constant-index aggregate initializer makes
+  MWCC unroll all four groups (+0x40 bytes), the pointer form emits the retail loop. Same idiom as
+  `Voice::Voice()` (`mVoiceOutParam`).
+- Faithfulness gate interaction: matching a body that spells `lbl_eu_*` pool labels *raises* the
+  unit's hard smell score, so a layout pass must use plain literals wherever the reloc name is not
+  required (1.0f/0.0f already have pool entries, so literals are free).
+
+## nw4r/snd FxBase — 5th virtual `OnChangeOutputMode` @0x18 (GC/3.0a5.2)
+- Symptom:   `AxManager::SetOutputMode` (retail 0x108, 6.1%) walks all three aux `FxBaseList`s
+  calling vtable slot **0x18** on every effect; snd_FxBase.h declared only 4 virtuals, and the
+  `Fx*Dpl2` units worked around it with local mirror classes declaring `OnChangeOutputMode` @0x18.
+- Evidence:  retail symbols `OnChangeOutputMode__Q34nw4r3snd{12FxChorusDpl2,11FxDelayDpl2,
+  15FxReverbStdDpl2}Fv` (0x70 each, none for `FxBase`), so the base declares it **pure**:
+  `virtual void OnChangeOutputMode() = 0; // at 0x18`. A non-pure inline body makes the base's
+  weak 4-byte `blr` copy appear in FxDelayDpl2's `.o` (+4 split, no retail name to exclude it).
+- Result:    `AxManager::SetOutputMode` FULL_MATCH 0x108/0x108; FxChorusDpl2/FxDelayDpl2/
+  FxReverbStdDpl2 keep 9/9, 8/9, 9/9 and their previous split sizes.
+- Also needed for the same function: the bus walk must be spelled with a running `FxBaseList*`
+  (`FxBaseList* pList = mFxList; … pList++`) — the `mFxList[i]` form makes MWCC keep `this` as the
+  base and re-add `0xB4 + 12*i`, costing 8 bytes.
+
+## nw4r/snd AxManager — tail members, SetOutputMode / ShutdownEffect / ClearEffect (GC/3.0a5.2)
+- `AxManager` really ends at 0x100: `u8 mAuxCallbackWaitCounter[3]` @0xF0 + `u32
+  mAuxCallbackTick[3]` @0xF4/0xF8/0xFC (ctor zeroes them, `AuxCallbackFunc` stores
+  `OSGetTick() - saved`, `ShutdownEffect` clears one per bus, `SetOutputMode` clears the DPL2 one).
+  The old `AxManagerTailView` cast is gone; the instance is 0x100 and matches retail's `lbl_eu_80637E68`
+  (256 bytes) exactly.
+- `SetOutputMode`: `if (mOutputMode == mode) return;` then `ut::AutoInterruptLock`, `mOutputMode =
+  mode`, switch {STEREO→AXSetMode(0), SURROUND(1)→1, DPL2(2)→2, MONO(3)→0}, VoiceManager
+  `UpdateAllVoicesSync(SYNC_AX_MIX)`, the 3-bus effect walk, and `if (mode == OUTPUT_MODE_DPL2)
+  mAuxCallbackTick[AUX_C] = 0;` → FULL_MATCH.
+- `ShutdownEffect`: per-bus `mAuxCallbackTick[bus] = 0` inside the `AXRegisterAuxXCallback(NULL,NULL)`
+  switch cases → FULL_MATCH (56.2% → 100%).
+- `ClearEffect`: `if (frame == 0) { ShutdownEffect(bus); mAuxFadeVolume[bus].SetTarget(0.0f, 0);
+  return; }` then `SetTarget(0.0f, (frame + 2) / 3)` (two separate SetTarget inlines; a merged
+  `SetTarget(0.0f, (frame+2)/3)` makes MWCC share one inline and drops 0x74). 6.9% → 13.8%
+  (residual: the GetValue interpolation inside MoveValue emits one extra `blt` in retail).
+- `Shutdown` uses `SoundPlayer::detail_RemoveSound` **once** (it erases both the priority and sound
+  lists and calls `DetachSoundPlayer`); the decomp's extra `detail_RemovePriorityList(this)` had no
+  retail symbol, and the external-player call is `ExternalSoundPlayer::RemoveSound` (not
+  `RemoveSoundList`) → `BasicSound::Shutdown` 67.4% → 100%.
+
+## MWCC .text/.rodata TU tails: generated sinit + MI thunks close the TU, and a string-pool literal block follows the RTTI name string (kyoshin/menu/CMenuBattleChain, Wii/1.1 `-O4,p`, 2026-11-19)
+- Symptom:   after `CMenuBattleChain` became a real `IUIWindow + IWorkEvent + IScnRender` class the unit had two
+  residuals: (a) `.rodata` retail 0x158 vs decomp 0x16C (the extra 0x14 was the compiler's own
+  `"CMenuBattleChain"` RTTI name string emitted *after* the user objects), and (b) `.text` order — MWCC put the
+  three `@108@`/`@112@` MI adjusting thunks at the very end of the unit, while retail has
+  `[sinit_802AAF24][thunks][trackChainPlayer .. requestAnimReset]`.
+- Cause (a): retail's `.rodata` run is `[__RTTI__ type-name "CMenuBattleChain"][resource-name block 0x144]`, and
+  the 0x144 block is the compiler's **string-pool literal block** (`@stringBase0`), not a user `const char[]`
+  object. MWCC's `.rodata` order is: *user objects first, then the compiler's own RTTI type-name strings, then
+  code-literal (`@stringBase0`) blocks*. So a user array forces `[user objects][RTTI name]` (0x16C + a duplicate
+  name), while a real pooled literal gives `[RTTI name][literal block]` (0x158) with `__RTTI__` pointing at the
+  head — exactly what the retail split object's `.rela.sdata 0x60 -> lbl_eu_80510878` says.
+  Fix: replace the `extern const char lbl_eu_80510878[] = "CMenuBattleChain"` + `const char lbl_eu_8051088C[]`
+  pair with **ordinary string literals at each use site** (`"CMenuBattleChain"`, `"mf70_cf54_sideinfo.brlyt"`,
+  `"pic_ic"`, …). MWCC pools them into `@stringBase0` in first-use order, which reproduces retail's block.
+  Orchestrator correction: the agent's interim form was one `#define` string with embedded `\0`s indexed by
+  hand offsets (`&base[0xc9]`). That is scaffolding, and it was also worse: `Init` scored 52.3% with it and
+  60.6% with the plain literals. `.rodata` is 338 B identical + a 6 B retail link tail; the data verdict is MATCH.
+- Cause (b): MWCC emits a TU's *generated* code last, in the order `[source-order functions][__sinit_<file>]
+  [deferred out-of-line copies][MI adjusting thunks]` — confirmed by probes (`-O4,p`, same flags):
+  `[helperA][helperB][__sinit][__ct__NeedsCtor][@4@v2][@4@__dt__]`. Retail's unit therefore *ends* after
+  `[__sinit_802AAF24][thunks]` at 0x802ADB08, and the eight functions that follow (`trackChainPlayer`,
+  `consumeChainToggles`, `reinitChainPlayer`, `updateChainPlayer`, `isChainReady`, `requestArtsRef`,
+  `isChainMenuBusy`, `requestAnimReset`; 0x220 = the exact retail symbol sizes) are the next TU. They are
+  ordinary (non-deferred) globals, so no source shape can move them behind compiler-generated thunks; moving
+  the source position only moves them in front of the thunks.
+  Fix: re-cut all three regions (US/EU `.text 0x802AC2C4..0x802ADB08`, JP `0x802A9B8C..0x802AB3D0`), including
+  the per-function `extab`/`extabindex` slices (the 6 entries for the moved functions start at entry 12:
+  US/EU `extab 0x8001B140`, `extabindex 0x80033148`; JP `0x8001B098` / `0x80032EAC`), add
+  `src/kyoshin/menu/code_802ADB08.cpp` with `Object(Matching, …)` right after `CMenuBattleChain.cpp`, and run
+  `dtk dol split --no-update config/us/config.yml build/us` (the `build/<region>/config.json` unit list is a
+  cached dtk artifact — a new `Object` row alone does not create a build rule; dtk validates the
+  function↔extabindex ownership and fails on a partial cut).
+- Result:    CMenuBattleChain 14/15 ✓ (only the pre-existing `Init` near-miss), split 0x1844 budget vs 0x1830
+  decomp, `.text` order **matches retail** (`text_order_gate` 12 → 11 out of order; the unit's baseline entry
+  and its `_raises` entry removed), `.data/.rodata/.sdata/.sdata2/.sbss` all MATCH; new TU 8/8 ✓, split
+  0x220/0x220 (0 spare), extab+extabindex MATCH, `link-gate` missing=43.
+- Confidence: repo_proven (probes p1–p8 + retail object relocs + per-section data diff).
+- Applies to/a.k.a.: any unit whose retail `.text` tail is `[…__sinit][@thunks][ordinary functions]` (that tail
+  is a TU boundary — candidate siblings with the same shape in the current tree: `CSysWinSave`,
+  `CSysWinScenarioLog`, `CSysWinBuff`, `CMenuArtsSet`, `CMenuPlayAward`, `CMenuSymbolMark`, `CMenuGameClear`,
+  `CMenuQstCnt`); and any unit whose `.rodata` is `[RTTI type-name][long string block]` — that block is a
+  `@stringBase0` literal, not a user array (a user array would put the RTTI name *after* it).
+
+## nw4r/snd snd_SeqPlayer — split FAIL(+0x20) → PASS: the thunk *name prefix* is not the this-adjust
+- Symptom:   `snd_SeqPlayer` 25/25 with `split FAIL budget=0x14B4 decomp=0x14D4 (+0x20, 22 linked-view
+  exclusions)`. Retained-but-not-retail symbols were exactly four 0x8 MI thunks:
+  `@212@InvalidateWaveData`, `@212@InvalidateData`, `@224@OnShutdownSoundThread`,
+  `@224@OnUpdateFrameSoundThread` (4x0x8 = 0x20). The dead-strip copies of
+  `SetTrackVolume`/`SetTrackPitch`/`SetPlayerTrack`/`SetTempoRatio`/`SetLocalVariable`/
+  `SetGlobalVariable` are **already** excluded by §17.8, so making those accessors header-inline
+  would not have changed the split at all.
+- Cause:     retail spells the same thunks `@208@`/`@220@` (`config/us/symbols.txt`), but retail's
+  own bytes at `0x8041993C` are `subi r3,r3,0xd4; b InvalidateData__…SeqPlayer…` — i.e. the body
+  adjusts by **0xD4 (212)** while the name says 208. Same for `@220@OnShutdownSoundThread` at
+  `0x80419944`. GC/3.0a5.2 names a thunk after the adjustment it performs, so it emits `@212@`/`@224@`
+  and the four weak copies get no `symbols.txt` partner in another unit → the linked view keeps them.
+  The class layout is *not* 4 bytes off: SeqPlayer's own dtor thunks are spelled `@212@__dt__` /
+  `@224@__dt__` in retail too (0x8041CF10/0x8041CF18), matching our layout exactly.
+- Fix:       `tools/coop/faithful/rename_syms.py` the four retail names to the emitted spelling
+  (us+eu+targets; the existing `@212@`/`@224@__dt__` entries confirm the adjustment). They then
+  resolve as weak copies retail keeps in `snd_MidiSeqPlayer`, and all four are excluded.
+- Result:    split PASS 0x14B4/0x14B4 (0x0 spare), still 25/25; snd_MidiSeqPlayer/MmlParser/WsdPlayer/
+  StrmPlayer/SoundArchivePlayer re-verified unchanged; link-gate 43, faithful OK.
+- Takeaway:  when retail carries `@NNN@<mangled>` thunks that our compiler spells differently, dump
+  the *retail* thunk body first — if the `subi r3,r3,0x..` immediate equals the compiler's spelling
+  and not the table's, the table name is the stale side and `rename_syms.py` is the fix.

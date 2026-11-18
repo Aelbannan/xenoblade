@@ -10,13 +10,16 @@
 // sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
 // (forward decl for kChainGaugeTwo, defined below after the pooling functions).
 extern const volatile f64 kChainGaugeTwo;
-// cf::CChainCombo materialised here in retail (the TU constructs one somewhere
-// not yet recovered): the compiler emitted its 0xC-byte vtable (first words of
-// this unit's .data) plus the weak RTTI record and the type-name string. Kept as
-// explicit data until that use site is found.
-extern void* __RTTI__Q22cf11CChainCombo[2];
-extern char lbl_eu_8050FD50[];
-extern "C" void* __dt__Q22cf11CChainComboFv(void* self, int flags);
+// cf::CChainCombo's 0xC-byte vtable, its weak RTTI record and the
+// "cf::CChainCombo" type-name string belong to CChainCombo.o (retail .data
+// 0x80538994 / .sdata 0x80662B08 / .rodata 0x8050FD50): the class is
+// polymorphic with an inline dtor, so MWCC emits that weak vtable block next to
+// the out-of-line constructor in CChainCombo.cpp. Nothing to spell here — this
+// unit's own .data run starts at 0x805389A0 with __vt__11CSysWinSave.
+//
+//
+//
+//
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -338,16 +341,9 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
     return lbl_eu_80664A08;
 }
 
-// Retail data. The first 0xC bytes of this unit's .data are the tail of
-// cf::CChainCombo's vtable (the split boundary cuts the table the linker placed
-// between CChainCombo.cpp's and this unit's contribution); the class's own
-// __vt__11CSysWinSave / base list / RTTI record and the "CSysWinSave" type-name
-// string are compiler-emitted.
-__declspec(section ".rodata") char lbl_eu_8050FD50[0x10] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x43, 0x6f, 0x6d, 0x62, 0x6f, 0x00};
-struct ChainComboVtPrefix { void* h[3]; };
-__declspec(section ".data") __attribute__((used))
-struct ChainComboVtPrefix lbl_eu_80538994 = { { (void*)__RTTI__Q22cf11CChainCombo, 0, (void*)__dt__Q22cf11CChainComboFv } };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used))
-void* __RTTI__Q22cf11CChainCombo[2] = { (void*)lbl_eu_8050FD50, 0 };
+// Retail data: __vt__11CSysWinSave (0xC0) + its 0x40 base list, both
+// compiler-emitted (the "CSysWinSave" type-name string and the weak RTTI
+// record come with them). cf::CChainCombo's vtable/RTTI/name string live in
+// CChainCombo.o, before this run.
 CSysWinSave* lbl_eu_80664A08 = 0;
 u32 save_sbss_padA0C = 0; // (retail .sbss is 8B; content ignored by gate)

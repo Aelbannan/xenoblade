@@ -85,16 +85,16 @@ namespace cf {
         CfSelectorObjEnumList mList; // 0x04
     };
 
-    void* CfObjEnumList::getObjectIdAt(int index) {
-        return reinterpret_cast<void*>(mPtrArray[index]->objectId);
+    extern "C" void* getObjectIdAt(cf::CfObjEnumList* self, int index) {
+        return reinterpret_cast<void*>(self->mPtrArray[index]->objectId);
     }
 
-    void* CfObjEnumList::getObjectAt(unsigned long idx) {
-        return mPtrArray[idx]->object;
+    extern "C" void* getEntryAt(cf::CfObjEnumList* self, int index) {
+        return self->mPtrArray[index];
     }
 
-    void* CfObjEnumList::getEntryAt(int index) {
-        return mPtrArray[index];
+    extern "C" void* getObjectAt(cf::CfObjEnumList* self, u32 idx) {
+        return self->mPtrArray[idx]->object;
     }
 }
 
@@ -135,8 +135,8 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
     // derived fields
     self->mVtable = (void*)&lbl_eu_8052BD80[0];
     self->mPtrCount = 0;
-    self->mSortVtableB = (void*)&lbl_eu_8052BDA0[0];
-    self->mSortVtableA = (void*)&lbl_eu_8052BDA0[8];
+    self->mSortVtableB = (void*)&gCfEnumListSortDispatch[0];
+    self->mSortVtableA = (void*)&gCfEnumListSortDispatch[8];
     // mObjInfo flag-byte init: element 0 peeled into the straight-line store
     // block, the rest is MWCC's x8-unroll + scalar remainder of a pointer walk.
     self->mObjInfo[0].field_18 = 0;
@@ -194,7 +194,7 @@ void appendEnumEntries(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
 // (param - 0x80000000 selects one of five presets) and hand off to the main
 // enumerator runEnumObjects as a tail call.  An unset param (0) just clears the
 // lists.  The default case passes the raw (param, param2) pair through.
-void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
+extern "C" void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
     self->mPtrCount = 0;
     self->mObjInfoCount = 0;
     if (param == 0) {
@@ -1044,7 +1044,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
 // local sObjInfo is only partially initialized (field_18/objectId/object);
 // the remaining fields are copied as-is from the local's stack slot, matching
 // the retail garbage-field copy.
-void appendObjectById(cf::CfObjEnumList* self, int param) {
+extern "C" void appendObjectById(cf::CfObjEnumList* self, int param) {
     CfEnumObject* obj = findObjectById__Fi(param);
     if (obj == 0) {
         return;
@@ -1061,7 +1061,7 @@ void appendObjectById(cf::CfObjEnumList* self, int param) {
 // findFirstCleanObjectId: find the first entry (cycling from index 0 through
 // count-1) whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if every entry is flagged.
-void* findFirstCleanObjectId(cf::CfObjEnumList* self) {
+extern "C" void* findFirstCleanObjectId(cf::CfObjEnumList* self) {
     volatile u32* countPtr = &self->mPtrCount;
     u32 count = *countPtr;
     if (count == 0) {
@@ -1300,8 +1300,8 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
         u32 pad00;                             // +0x000 (never written)
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
         u32 count;                             // +0x604
-        void* descHi;                          // +0x608 (lbl_eu_8052BDA0 + 8)
-        void* descLo;                          // +0x60C (lbl_eu_8052BDA0)
+        void* descHi;                          // +0x608 (gCfEnumListSortDispatch + 8)
+        void* descLo;                          // +0x60C (gCfEnumListSortDispatch)
         u32 sortFlag;                          // +0x610
     };
     struct CopyArr {
@@ -1311,8 +1311,8 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.descHi = &lbl_eu_8052BDA0[8];
-    ctx.descLo = &lbl_eu_8052BDA0[0];
+    ctx.descHi = &gCfEnumListSortDispatch[8];
+    ctx.descLo = &gCfEnumListSortDispatch[0];
     ctx.sortFlag = self->field_062C;
     self->mPtrCount = 0;
     for (u32 i = 0; i < ctx.count; i++) {
@@ -1345,8 +1345,8 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
         u32 pad;                               // +0x000 (never written)
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
         u32 count;                             // +0x604
-        void* descHi;                          // +0x608 (lbl_eu_8052BDA0 + 8)
-        void* descLo;                          // +0x60C (lbl_eu_8052BDA0)
+        void* descHi;                          // +0x608 (gCfEnumListSortDispatch + 8)
+        void* descLo;                          // +0x60C (gCfEnumListSortDispatch)
         u32 sortFlag;                          // +0x610
     };
     struct CopyArr {
@@ -1356,8 +1356,8 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = count;
-    ctx.descHi = &lbl_eu_8052BDA0[8];
-    ctx.descLo = &lbl_eu_8052BDA0[0];
+    ctx.descHi = &gCfEnumListSortDispatch[8];
+    ctx.descLo = &gCfEnumListSortDispatch[0];
     ctx.sortFlag = list->field_062C;
     list->mPtrCount = 0;
 
@@ -1491,8 +1491,8 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -1568,8 +1568,8 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        void* b;                               // +0x604 (lbl_eu_8052BDA0 + 8)
-        void* a;                               // +0x608 (lbl_eu_8052BDA0)
+        void* b;                               // +0x604 (gCfEnumListSortDispatch + 8)
+        void* a;                               // +0x608 (gCfEnumListSortDispatch)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
@@ -1579,8 +1579,8 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     for (u32 i = 0; i < ctx.count; i++) {
@@ -1645,8 +1645,8 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        void* hi;                              // +0x604 (lbl_eu_8052BDA0 + 8)
-        void* lo;                              // +0x608 (lbl_eu_8052BDA0)
+        void* hi;                              // +0x604 (gCfEnumListSortDispatch + 8)
+        void* lo;                              // +0x608 (gCfEnumListSortDispatch)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
@@ -1665,8 +1665,8 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.lo = &lbl_eu_8052BDA0[0];
-    ctx.hi = &lbl_eu_8052BDA0[8];
+    ctx.lo = &gCfEnumListSortDispatch[0];
+    ctx.hi = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     for (u32 i = 0; i < ctx.count; i++) {
@@ -1748,8 +1748,8 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0[0];
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.a = &gCfEnumListSortDispatch[0];
+    ctx.b = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     const float pi = ml::pi;         // f22
@@ -1856,8 +1856,8 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
         u32 pad00;                             // +0x000 (never written)
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
         u32 count;                             // +0x604
-        void* hi;                              // +0x608 (lbl_eu_8052BDA0 + 8)
-        void* lo;                              // +0x60C (lbl_eu_8052BDA0)
+        void* hi;                              // +0x608 (gCfEnumListSortDispatch + 8)
+        void* lo;                              // +0x60C (gCfEnumListSortDispatch)
         u32 field;                             // +0x610
     };
     struct CopyArr {
@@ -1867,8 +1867,8 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.lo = &lbl_eu_8052BDA0[0];
-    ctx.hi = &lbl_eu_8052BDA0[8];
+    ctx.lo = &gCfEnumListSortDispatch[0];
+    ctx.hi = &gCfEnumListSortDispatch[8];
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
 
@@ -2006,15 +2006,15 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
 // arts-state gate: MapFx_ResolveOwner(object) then isBattleStatusActive(actor+8, tag).
 // flags bit 1 inverts the accept decision; accepted entries get the 0x70
 // mark and are only re-appended when flags bit 0 is set.
-void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
+extern "C" void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     if (list->mPtrCount == 0) {
         return;
     }
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        void* a;                               // +0x604 (lbl_eu_8052BDA0 + 8)
-        void* b;                               // +0x608 (lbl_eu_8052BDA0)
+        void* a;                               // +0x604 (gCfEnumListSortDispatch + 8)
+        void* b;                               // +0x608 (gCfEnumListSortDispatch)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
@@ -2024,8 +2024,8 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.b = lbl_eu_8052BDA0;
-    ctx.a = lbl_eu_8052BDA0 + 8;
+    ctx.b = gCfEnumListSortDispatch;
+    ctx.a = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     // Explicit walk pointer + counter: keeps the pointer-register init at the
@@ -2062,7 +2062,7 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
 // fails BOTH tag probes (isBattleStatusActive with tag1 and tag2).  options bit 1
 // inverts the keep decision; rejected entries get the 0x70 mark and are only
 // re-appended when options bit 0 is set.
-void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
+extern "C" void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2084,8 +2084,8 @@ void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2119,7 +2119,7 @@ void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
 // arts-state gate (testActorStatus on the slot-0x30 word, queried with arg1)
 // reports failure; when arg1 == 0x1C and the gate passed, additionally
 // require the embedded move sub-object's vtable-0x84 result to be non-zero.
-void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
+extern "C" void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2137,8 +2137,8 @@ void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2173,7 +2173,7 @@ void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
 // fails BOTH arts-state gates (testActorStatus with arg1 and arg2); when
 // arg1 == 0x1C and the gates passed, additionally require the embedded move
 // sub-object's vtable-0x84 word to be non-zero.
-void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
+extern "C" void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2191,8 +2191,8 @@ void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2231,7 +2231,7 @@ void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
 
 // __ct__800FC4FC: like __ct__800FC648 but keeps entries whose value() is
 // greater-or-equal to the threshold (inverse comparison).
-void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
+extern "C" void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     if (self->mPtrCount == 0) {
         return;
     }
@@ -2249,8 +2249,8 @@ void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0;
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.a = &gCfEnumListSortDispatch;
+    ctx.b = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2282,7 +2282,7 @@ void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
 // re-appended when flags bit 0 is set.  The current mPtrArray is snapshotted
 // to a stack copy first (the count is reloaded from the saved descriptor
 // inside the search loop).
-void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float threshold) {
+extern "C" void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float threshold) {
     if (self->mPtrCount == 0) {
         return;
     }
@@ -2305,8 +2305,8 @@ void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float threshold) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0;
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.a = &gCfEnumListSortDispatch;
+    ctx.b = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2334,7 +2334,7 @@ void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float threshold) {
 
 // __ct__800FC790: like __ct__800FC8DC but keeps entries whose value2() is
 // greater-or-equal to the threshold (inverse comparison).
-void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float threshold) {
+extern "C" void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float threshold) {
     if (self->mPtrCount == 0) {
         return;
     }
@@ -2352,8 +2352,8 @@ void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float threshold) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0;
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.a = &gCfEnumListSortDispatch;
+    ctx.b = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2381,7 +2381,7 @@ void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float threshold) {
 
 // __ct__800FC8DC: like __ct__800FC648 but compares value2() (vtable +0x160)
 // against the threshold.
-void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
+extern "C" void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     if (self->mPtrCount == 0) {
         return;
     }
@@ -2399,8 +2399,8 @@ void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.a = &lbl_eu_8052BDA0;
-    ctx.b = &lbl_eu_8052BDA0[8];
+    ctx.a = &gCfEnumListSortDispatch;
+    ctx.b = &gCfEnumListSortDispatch[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2429,7 +2429,7 @@ void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
 // __ct__800FCA24: rebuild the object list keeping only entries whose actor's
 // embedded move sub-object (vtable 0x4C) does NOT reference the given spot
 // AND that the battle manager rejects (CBattleMan_ListHasValue == 0).
-void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
+extern "C" void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2447,8 +2447,8 @@ void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2484,7 +2484,7 @@ void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
 // neither flagged by the player-state word (flags64 bits 1/2 of
 // findObjectById(spotId) select the field_3F00 bit test) nor references the
 // given spot via the embedded move sub-object (vtable 0x4C).
-void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
+extern "C" void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2502,8 +2502,8 @@ void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     CfEnumObject* obj = findObjectById__Fi(spotId);
@@ -2549,7 +2549,7 @@ void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
 // not reference the actor's field_3F10, and who is accepted by
 // CBattleMan_ListHasValue.  The list walk starts at CBattleMan_NextListItem(manager) (+0x3E9C)
 // and advances via CBattleMan_FindNextActorRef.
-void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
+extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2567,8 +2567,8 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2643,7 +2643,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
 // __ct__800FCF1C: rebuild the object list keeping only entries whose actor's
 // arts-state gate (testActorStatus, mode 0x806) fails, or whose vf298() battle
 // block byte at +0x42 differs from arg1 (or is missing).
-void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
+extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2661,8 +2661,8 @@ void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2722,8 +2722,8 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(list->mPtrArray);
     ctx.count = list->mPtrCount;
-    ctx.a = lbl_eu_8052BDA0;
-    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.a = gCfEnumListSortDispatch;
+    ctx.b = gCfEnumListSortDispatch + 8;
     ctx.field = list->field_062C;
     list->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2764,15 +2764,15 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
 // field_18 has none of the 0x70 flag bits set.  The current mPtrArray is
 // snapshotted to a stack context (with the dead sort-descriptor stores the
 // retail keeps), then the array is recompacted from index 0.
-void __ct__800FD250(cf::CfObjEnumList* self) {
+extern "C" void __ct__800FD250(cf::CfObjEnumList* self) {
     if (self->mPtrCount == 0) {
         return;
     }
     struct RebuildCtx {
         cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
         u32 count;                             // +0x600
-        void* a;                               // +0x604 (lbl_eu_8052BDA0 + 8)
-        void* b;                               // +0x608 (lbl_eu_8052BDA0)
+        void* a;                               // +0x604 (gCfEnumListSortDispatch + 8)
+        void* b;                               // +0x608 (gCfEnumListSortDispatch)
         u32 field;                             // +0x60C
     };
     struct CopyArr {
@@ -2782,8 +2782,8 @@ void __ct__800FD250(cf::CfObjEnumList* self) {
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
     ctx.count = self->mPtrCount;
-    ctx.b = lbl_eu_8052BDA0;
-    ctx.a = lbl_eu_8052BDA0 + 8;
+    ctx.b = gCfEnumListSortDispatch;
+    ctx.a = gCfEnumListSortDispatch + 8;
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
     u32 n = ctx.count;
@@ -2798,7 +2798,7 @@ void __ct__800FD250(cf::CfObjEnumList* self) {
 // findNextCleanObjectId: search forward from (index + 1) mod count for the first
 // entry whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if the whole cycle is flagged.
-void* findNextCleanObjectId(cf::CfObjEnumList* self, int index) {
+extern "C" void* findNextCleanObjectId(cf::CfObjEnumList* self, int index) {
     volatile u32* countPtr = &self->mPtrCount;
     int i = (index + 1) % *countPtr;
     while (index != i) {
@@ -2818,7 +2818,7 @@ void* findNextCleanObjectId(cf::CfObjEnumList* self, int index) {
 // findPrevCleanObjectId: search backward from (index + count - 1) mod count for the
 // first entry whose field_18 has none of the 0x70 flag bits set; return its
 // objectId, or 0 if the whole cycle is flagged.
-void* findPrevCleanObjectId(cf::CfObjEnumList* self, int index) {
+extern "C" void* findPrevCleanObjectId(cf::CfObjEnumList* self, int index) {
     volatile u32* countPtr = &self->mPtrCount;
     u32 count = *countPtr;
     int i = (index + count - 1) % count;
@@ -2899,22 +2899,22 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
     ml::CVec3::sub(zero, *high, *high);
     if (lbl_eu_80663F08 == 0) {
         // Probe-offset table: four diagonal direction vectors.
-        lbl_eu_80573A30[0] = lbl_eu_80666EBC;
-        lbl_eu_80573A30[1] = lbl_eu_80666EB8;
-        lbl_eu_80573A30[2] = lbl_eu_80666EBC;
-        lbl_eu_80573A30[3] = lbl_eu_80666EF0;
-        lbl_eu_80573A30[4] = lbl_eu_80666EB8;
-        lbl_eu_80573A30[5] = lbl_eu_80666EBC;
-        lbl_eu_80573A30[6] = lbl_eu_80666EF0;
-        lbl_eu_80573A30[7] = lbl_eu_80666EB8;
-        lbl_eu_80573A30[8] = lbl_eu_80666EF0;
-        lbl_eu_80573A30[9] = lbl_eu_80666EBC;
-        lbl_eu_80573A30[10] = lbl_eu_80666EB8;
-        lbl_eu_80573A30[11] = lbl_eu_80666EF0;
+        gCfEnumListProbeOffsets[0] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[1] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[2] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[3] = lbl_eu_80666EF0;
+        gCfEnumListProbeOffsets[4] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[5] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[6] = lbl_eu_80666EF0;
+        gCfEnumListProbeOffsets[7] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[8] = lbl_eu_80666EF0;
+        gCfEnumListProbeOffsets[9] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[10] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[11] = lbl_eu_80666EF0;
         lbl_eu_80663F08 = 1;
     }
     const ml::CVec3* tblBase =
-        reinterpret_cast<const ml::CVec3*>(lbl_eu_80573A30);
+        reinterpret_cast<const ml::CVec3*>(gCfEnumListProbeOffsets);
     for (u32 i = 0; i < 4; i++) {
         const ml::CVec3& tbl = tblBase[i];
         // add() = { temp; VEC3Add(temp, lhs, rhs); out.set(temp); } - the

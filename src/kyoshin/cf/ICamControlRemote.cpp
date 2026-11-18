@@ -79,3 +79,16 @@ u32 cf::ICamControl::isLongHold11(int arg) {
     CPad* st = this->fetchPad();
     return ((st->mLongHoldButtonFlags >> 11) & 1) != 0;
 }
+
+// Pad-type -> active camera-control instance dispatch table (retail
+// .data:0x80537EC0, the first 0x10 bytes of this unit's data run: MWCC emits
+// user file-scope objects before the vtables it generates, and the ICamControl
+// family tables follow at 0x80537ED0). The three slots hold the lazily
+// initialised 4-byte instance cells (camControlDefault/Classic/Gc in .sbss)
+// that initCamControlInstances() (kyoshin/code_8027513C.cpp) fills with each
+// instance's vptr; index 0 = default, 1 = classic, 2 = GC pad, then NULL.
+extern u32 camControlDefault;
+extern u32 camControlClassic;
+extern u32 camControlGc;
+void* camControlTable[4] = {(void*)&camControlDefault, (void*)&camControlClassic,
+                            (void*)&camControlGc, 0};

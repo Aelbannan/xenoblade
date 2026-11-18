@@ -22,17 +22,17 @@ u8 lbl_eu_806648E8 = 0;
 u8 buff_sbss_padE9a = 0;
 u8 buff_sbss_padE9b = 0;
 u8 buff_sbss_padE9c = 0;
-u32 lbl_eu_806648EC = 0;
+u32 camControlDefault = 0;
 u8 lbl_eu_806648F0 = 0;
 u8 buff_sbss_padF1a = 0;
 u8 buff_sbss_padF1b = 0;
 u8 buff_sbss_padF1c = 0;
-u32 lbl_eu_806648F4 = 0;
+u32 camControlClassic = 0;
 u8 lbl_eu_806648F8 = 0;
 u8 buff_sbss_padF9a = 0;
 u8 buff_sbss_padF9b = 0;
 u8 buff_sbss_padF9c = 0;
-u32 lbl_eu_806648FC = 0;
+u32 camControlGc = 0;
 // CBdat / CfGameManager callees: mangled names as extern "C" (declared in
 // CSysWinBuff.hpp). MWCC-1.1 rejects true member-call spelling (10322).
 #include "monolib/scn/CScn.hpp"
@@ -150,5 +150,3 @@ CSysWinBuff* CSysWinBuff::getInstance() { return lbl_eu_806648E0; }
 // retail's .rodata order); the table below points at the three .sbss words
 // code_8027513C.cpp indexes.
 const char lbl_eu_8050EBC4[0x2c] = {0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x6a, 0x70, 0x2f, 0x62, 0x64, 0x61, 0x74, 0x5f, 0x6d, 0x65, 0x6e, 0x75, 0x5f, 0x6d, 0x65, 0x73, 0x2e, 0x62, 0x69, 0x6e, 0x00, 0x68, 0x65, 0x6c, 0x70, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x62, 0x75, 0x66, 0x66, 0x00, 0x00};
-__declspec(section ".data") void* lbl_eu_80537EC0[4] = {(void*)&lbl_eu_806648EC, (void*)&lbl_eu_806648F4,
-                                                       (void*)&lbl_eu_806648FC, 0};

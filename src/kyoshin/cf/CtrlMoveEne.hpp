@@ -12,7 +12,7 @@
 
 namespace cf {
 
-// Target-state object behind CCtrlMoveEne::mTargetC4: CfObject_checkTargetState
+// Target-state object behind CtrlMoveEne::mTargetC4: CfObject_checkTargetState
 // reads bit 23 of the +0x270 state word.
 struct CfObjectMoveC4Target {
     u8 _pad[0x270];         // 0x00-0x26F
@@ -22,9 +22,9 @@ struct CfObjectMoveC4Target {
 
 class CtrlEnemy;
 
-class __declspec(novtable) CCtrlMoveEne : public CCtrlMoveBase {
+class __declspec(novtable) CtrlMoveEne : public CCtrlMoveBase {
 public:
-    CCtrlMoveEne(CtrlEnemy* owner);
+    CtrlMoveEne(CtrlEnemy* owner);
 
     f32 field_0x4C;                   // 0x4C (ctor / CtrlMoveEne_InitMoveHook store the move-sub +0xCC result)
     u32 field_0x50;                   // 0x50 (CtrlMoveEne_InitMoveHook stores the bdat-derived state)
@@ -34,10 +34,11 @@ public:
     u8 _pad60[0xC4 - 0x60];           // 0x60-0xC3
     CfObjectMoveC4Target* mTargetC4;  // 0xC4
     u8 _padC8[0x12C - 0xC8];          // 0xC8-0x12B
-    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C-0x137 ptmf hook (CtrlMoveEne_DispatchMoveHook / ctor)
+    void (CtrlMoveEne::*mMoveHook)();  // 0x12C-0x137 ptmf hook (CtrlMoveEne_DispatchMoveHook / ctor)
     ml::CVec3 mVec138;                  // 0x138 (ctor copies ml::CVec3::zero)
     ml::CVec3 mVec144;                  // 0x144 (ctor copies ml::CVec3::zero)
-    u8 _pad150[0x160 - 0x150];          // 0x150-0x15F
+    u8 _pad150[0x15C - 0x150];          // 0x150-0x15B
+    int field_0x15C;                    // 0x15C latched actor id (TryLatchTargetActor / ConsumeTargetResolve)
     f32 field_0x160;                    // 0x160 (ctor stores lbl_eu_806665C4; CtrlMoveEne_TickMoveControl reads)
     f32 field_0x164;                    // 0x164 (ctor zeroes)
     f32 field_0x168;                    // 0x168 (zeroed by CtrlMoveEne_ResetMoveState)
@@ -60,12 +61,31 @@ public:
     s16 field_0x198;                    // 0x198 (CtrlMoveEne_TickMoveControl lha's and compares to 90)
     u8 _pad19A[0x19C - 0x19A];          // 0x19A-0x19B
     f32 field_0x19C;                    // 0x19C (zeroed by CtrlMoveEne_ResetMoveState)
+
+    // Retail installs these as pointer-to-member hooks: the 12-byte ptmf
+    // records in lbl_eu_80527830 hold each member's address, and CtrlMoveEne
+    // copies them into its +0x12C move hook. Bodies in CtrlMoveEne.cpp.
+    void RateZeroFlat(u32* out1, f32* out2);    // rate 0.0f
+    void RateDivisorSlot0(u32* out1, f32* out2);
+    void RateDivisorSlot12C(u32* out1, f32* out2);
+    void RateDivisorSlot258(u32* out1, f32* out2);
+    void RateDivisorSlot384(u32* out1, f32* out2);
+    void RateUnitFlat(u32* out1, f32* out2);    // rate 1.0f
+    void RateUnitSlot12C(u32* out1, f32* out2);
+    void RateUnitSlot258(u32* out1, f32* out2);
+    void RateUnitSlot384(u32* out1, f32* out2);
+    void RateRandGate50Slot0(u32* out1, f32* out2);
+    void RateRandGate46Slot12C(u32* out1, f32* out2);
+    void RateRandGate3CSlot258(u32* out1, f32* out2);
+    void RateRandGate32Slot384(u32* out1, f32* out2);
+    void RateSelectDuel50(u32* out1, f32* out2);
+    void RateSelectTriple5A3C(u32* out1, f32* out2);
 };
 
-// View of the CCtrlMoveEne layout used by the CtrlMoveEne_ScanGimmickTargets / CtrlMoveEne_UpdateMoveHeading /
+// View of the CtrlMoveEne layout used by the CtrlMoveEne_ScanGimmickTargets / CtrlMoveEne_UpdateMoveHeading /
 // CtrlMoveEne_UpdateFleeWander family: the base CCtrlMoveBase position/velocity words and
 // the +0x60..+0x72 / +0x15C / +0x18E fields those functions touch. Kept as a
-// separate view so the matched CCtrlMoveEne stays byte-for-byte the same.
+// separate view so the matched CtrlMoveEne stays byte-for-byte the same.
 struct CfObjectMoveView9 {
     u8 _pad[0x0C];                    // 0x00-0x0B
     ml::CVec3 mPosition;              // 0x0C (base CCtrlMoveBase)
@@ -101,7 +121,7 @@ struct CfObjectMoveView9 {
     s16 field_0x198;                  // 0x198
 };
 
-// Word view of CCtrlMoveEne::field_0x4C: CtrlMoveEne_InitMoveHook clears it with an
+// Word view of CtrlMoveEne::field_0x4C: CtrlMoveEne_InitMoveHook clears it with an
 // integer store and ORs bit 2 into it, while the ctor stores a float there.
 struct CfObjectMove4CView {
     u8 _pad[0x4C];                  // 0x00-0x4B
@@ -197,7 +217,7 @@ struct CFunc8008D444Obj {
 
 // +0xC4 data word of the move sub-object (read by CtrlMoveEne_UpdateFleeWander /
 // CtrlMoveEne_ScanGimmickTargets). Former virtual mirror deleted: all calls now go through
-// CCtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
+// CtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
 struct CFunc8008F9ECSub {
     void* vtable;                       // 0x00
     u8 _pad04[0xC4 - 0x04];           // 0x04-0xC3
@@ -206,7 +226,7 @@ struct CFunc8008F9ECSub {
 
 // +0x98 / +0xC4 data words of the move sub-object (read by CtrlMoveEne_UpdateMoveHeading /
 // CtrlMoveEne_RunMoveStateMachine). Former virtual mirror deleted: all calls now go through
-// CCtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
+// CtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
 struct CFunc8008EF04Sub {
     void* vtable;                       // 0x00
     u8 _pad04[0x98 - 0x04];           // 0x04-0x97
@@ -232,7 +252,7 @@ struct CFunc8008EF04Sub98 {
 // leg is redeclared here with retail names and arity (Move1-4 copied from
 // object/CfObjectMove.hpp; Move5 is float* per the +0x6E8 impl and the
 // dereference/divide call sites). Never instantiated, so no vtable emitted.
-class __declspec(novtable) CCtrlMoveEneSub : public CfObjectModel {
+class __declspec(novtable) CtrlMoveEneSub : public CfObjectModel {
 public:
     virtual void CfObjectMove_dropMoveRequest();  //0x1C8
     virtual void CfObjectMove_detachModelList();  //0x1CC
@@ -255,7 +275,7 @@ struct CFunc8009DataView {
 // View of the movement-controller object CtrlMoveEne_TryLatchTargetActor / CtrlMoveEne_MarkActiveSteady /
 // CtrlMoveEne_ConsumeTargetResolve operate on (CtrlMoveEne unit): +0x15C is an actor id fed to
 // findObjectById, +0x17C a flags word.
-struct CCtrlMoveEneView {
+struct CtrlMoveEneView {
     u8 _pad[0x15C];                 // 0x00-0x15B
     int field_0x15C;                // 0x15C
     u8 _pad160[0x17C - 0x160];      // 0x160-0x17B
@@ -274,7 +294,7 @@ struct CfMoveSubEntry {
     f32 field_0x10;                 // 0x10
 };
 
-// CtrlMoveEne_InitMoveList's word/halfword view of CCtrlMoveEne fields 0x58-0x72: the
+// CtrlMoveEne_InitMoveList's word/halfword view of CtrlMoveEne fields 0x58-0x72: the
 // init path stores u16s at 0x58/0x5A and words at 0x5C/0x60, while the
 // matched CtrlMoveEne_InitMoveHook / CtrlMoveEne_UpdateFleeWander read the same storage as f32s.
 struct CfObjectMoveInitView {
@@ -296,7 +316,7 @@ struct CfObjectMoveInitView {
     u8 _pad74[0x78 - 0x74];         // 0x74-0x77
     CfMoveSubEntry field_0x78[8];   // 0x78 move-list array (8 * 0x14 = 0xA0; overlaps later words)
     u8 _pad118[0x12C - 0x118];      // 0x118-0x12B
-    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf hook
+    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf hook
     u8 _pad138[0x17C - 0x138];      // 0x138-0x17B
     u32 field_0x17C;                // 0x17C flags
     u32 field_0x180;                // 0x180 flags
@@ -333,7 +353,7 @@ struct CFunc8008B9C0Target {
     f32 field_0x508;            // 0x508
 };
 
-// CtrlMoveEne_TrackMoveTarget's view of CCtrlMoveEne: +0x150 target position, +0x17C flags
+// CtrlMoveEne_TrackMoveTarget's view of CtrlMoveEne: +0x150 target position, +0x17C flags
 // and +0x18A timer halfword.
 struct CFunc8008CDE8View {
     u8 _pad[0xC];               // 0x00-0x0B
@@ -453,10 +473,10 @@ struct CFunc8008E760Data {
     u16 field_74;                                       // 0x74
 };
 
-// CtrlMoveEne_InitBattleMove's view of CCtrlMoveEne: the position words at +0x00, the
+// CtrlMoveEne_InitBattleMove's view of CtrlMoveEne: the position words at +0x00, the
 // hook ptmf at +0x12C, the word-triple mVec144 and the fields the function
 // initializes. field_4C/field_50/field_54 are u32 here because the pos copy
-// uses lwz/stw word stores (the float-store path goes through CCtrlMoveEne).
+// uses lwz/stw word stores (the float-store path goes through CtrlMoveEne).
 struct CFunc8008E760View {
     CFunc8008E760Vec3W mPos0W;          // 0x00
     u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / CPartsChange_ProcessPartyInfo)
@@ -464,7 +484,7 @@ struct CFunc8008E760View {
     u8 _pad14[0x34 - 0x14];             // 0x14-0x33
     CCtrlMoveData* field_0x34;       // 0x34
     u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
-    u32 field_4C;                       // 0x4C (word stores; float store via CCtrlMoveEne)
+    u32 field_4C;                       // 0x4C (word stores; float store via CtrlMoveEne)
     u32 field_50;                       // 0x50
     u32 field_54;                       // 0x54
     u16 field_0x58;                     // 0x58
@@ -478,7 +498,7 @@ struct CFunc8008E760View {
     u8 _pad74[0x76 - 0x74];             // 0x74-0x75
     u16 field_0x76;                     // 0x76
     u8 _pad78[0x12C - 0x78];            // 0x78-0x12B
-    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
+    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
     u8 _pad138[0x144 - 0x138];          // 0x138-0x143
     CFunc8008E760Vec3W mVec144W;        // 0x144
     u8 _pad150[0x160 - 0x150];          // 0x150-0x15F
@@ -496,7 +516,7 @@ struct CFunc8008E760View {
     u16 field_0x18E;                    // 0x18E
 };
 
-// CtrlMoveEne_StepMoveEntry's view of CCtrlMoveEne: base position/velocity words, the
+// CtrlMoveEne_StepMoveEntry's view of CtrlMoveEne: base position/velocity words, the
 // move-list entry pointer arithmetic at +0x78, the hook ptmf at +0x12C, the
 // mVec138 words and the timers/flags.
 struct CFunc80090DB4View {
@@ -520,7 +540,7 @@ struct CFunc80090DB4View {
     u8 _pad74[0x78 - 0x74];             // 0x74-0x77
     CfMoveSubEntry field_0x78[8];       // 0x78 move-list entries
     u8 _pad118[0x12C - 0x118];          // 0x118-0x12B
-    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
+    void (CtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
     CFunc8008E760Vec3W mVec138W;        // 0x138
     u8 _pad144[0x160 - 0x144];          // 0x144-0x15F
     f32 field_0x160;                    // 0x160
@@ -580,7 +600,7 @@ struct CFunc8008D51CObj {
     u16 field_455A;                                     // 0x455A
 };
 
-// CtrlMoveEne_CheckKeepMoving's view of CCtrlMoveEne: the +0x144/+0x168..+0x19C fields it
+// CtrlMoveEne_CheckKeepMoving's view of CtrlMoveEne: the +0x144/+0x168..+0x19C fields it
 // reads and writes (0x188 / 0x18E are s16s read with lha).
 struct CFunc8008D51CView {
     u8 _pad[0x34];                              // 0x00-0x33
@@ -605,7 +625,7 @@ struct CFunc8008D51CView {
     f32 field_0x19C;                            // 0x19C
 };
 
-// CtrlMoveEne_StepMoveList's view of CCtrlMoveEne: base position/velocity words, the
+// CtrlMoveEne_StepMoveList's view of CtrlMoveEne: base position/velocity words, the
 // move-list entries at +0x78, the mVec138 words, the heading/turn state and
 // the timers.
 struct CFunc8008FE8CView {
@@ -657,7 +677,7 @@ struct CFunc8008FE8CSub {
     f32 field_63C;                                      // 0x63C
 };
 
-// CtrlMoveEne_UpdateBattleAI's view of CCtrlMoveEne: the velocity words, the mVec138 /
+// CtrlMoveEne_UpdateBattleAI's view of CtrlMoveEne: the velocity words, the mVec138 /
 // mVec144 copies, the heading/timer halfwords and the +0x164..+0x19C floats.
 struct CFunc8008A2C8View {
     u8 _pad[0x0C];                              // 0x00-0x0B
@@ -731,7 +751,7 @@ struct CFunc80091864Target {
     u32 field_200;                                      // 0x200 flags
 };
 
-// CtrlMoveEne_RunMoveStateMachine's view of CCtrlMoveEne: the +0x4 height float, the base
+// CtrlMoveEne_RunMoveStateMachine's view of CtrlMoveEne: the +0x4 height float, the base
 // position words copied into mVec144, the word/halfword state fields and the
 // flags words. 0x4C/0x50/0x54 are word-copied from the sub position.
 struct CFunc80091864View {
@@ -786,22 +806,22 @@ extern const f32 lbl_eu_804FB9C8[];
 // defined in CtrlMoveBase.cpp; CtrlMoveEne_TickMoveControl / CtrlMoveEne_CheckKeepMoving in this TU. The
 // extern "C" keeps the call-site relocs at the unmangled retail names.
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void moveBaseSyncVel(cf::CCtrlMoveEne* self);
-extern "C" void CtrlMoveEne_TickMoveControl(cf::CCtrlMoveEne* self);
-extern "C" int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self);
+extern "C" void moveBaseSyncVel(cf::CtrlMoveEne* self);
+extern "C" void CtrlMoveEne_TickMoveControl(cf::CtrlMoveEne* self);
+extern "C" int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self);
 // Defined in CtrlMoveBase.cpp (maskMoveChildFlags) and CtrlAct.cpp / CtrlMoveBase
 // (ctrlActClearState30 / ctrlActUpdateData70); called by CtrlMoveEne_ResetMoveState on the move-data
 // block / controller.
-extern "C" void maskMoveChildFlags(cf::CCtrlMoveEne* self);
+extern "C" void maskMoveChildFlags(cf::CtrlMoveEne* self);
 extern "C" void ctrlActClearState30(cf::CCtrlMoveData* data);
 extern "C" void ctrlActUpdateData70(cf::CCtrlMoveData* data);
 // Per-frame move helpers (CtrlMoveBase.cpp / CtrlMoveNpc.cpp): moveBaseUpdate
 // computes the approach direction, setMoveFacing commits a velocity.
-extern "C" int moveBaseUpdate(cf::CCtrlMoveEne* self, ml::CVec3* out,
+extern "C" int moveBaseUpdate(cf::CtrlMoveEne* self, ml::CVec3* out,
                              const ml::CVec3* src, int flagA, int flagB);
-extern "C" void setMoveFacing(cf::CCtrlMoveEne* self, const ml::CVec3* vec,
+extern "C" void setMoveFacing(cf::CtrlMoveEne* self, const ml::CVec3* vec,
                               f32 f);
-extern "C" void moveBaseChase(cf::CCtrlMoveEne* self, ml::CVec3* out,
+extern "C" void moveBaseChase(cf::CtrlMoveEne* self, ml::CVec3* out,
                               const ml::CVec3* src);
 // Circular gimmick-object list accessor (CfGimmick.cpp) and battle-event
 // helper (CfObjectImpl.cpp); testActorStatus queries an actor word (CfAct.cpp).
@@ -810,12 +830,12 @@ extern "C" cf::CFunc8009156CList* getReslistB48();
 // bdat row-value reader (CfObjectEne.cpp): (obj, column, row) -> raw word.
 // Move-data approach helper (CtrlMoveBase.cpp) and coli segment probe used by
 // CtrlMoveEne_TrackMoveTarget (retail C-ABI names).
-extern "C" int moveBaseRoute(cf::CCtrlMoveEne* self, ml::CVec3* pos, int flag);
+extern "C" int moveBaseRoute(cf::CtrlMoveEne* self, ml::CVec3* pos, int flag);
 extern "C" int ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f,
                              void* g);
 // Global coli probe object (retail .sdata pointer) and the probe-block buffer
 // CtrlMoveEne_TrackMoveTarget passes to ColiWalkSegment.
-// Typed as void* to match CCtrlMoveEne.hpp (same .sbss global).
+// Typed as void* to match CtrlMoveEne.hpp (same .sbss global).
 extern void* lbl_eu_80665958;
 extern u8 lbl_eu_80571810[0x38];
 // Collision-list height probe API used by CtrlMoveEne_ProbeApproachPoint (retail C-ABI names;
@@ -828,11 +848,11 @@ extern "C" void* ScnRes_GetEntryPtr_E50C(u32 index);
 extern "C" void* ScnRes_GetEntryHead2_E520(int index);
 extern "C" int ScnRes_EntryFlagThunk_E5A4(int a, int b);
 // CtrlMoveBase.cpp helper CtrlMoveEne_ProbeApproachPoint re-probes with (retail C-ABI name).
-extern "C" int moveBaseQuery(cf::CCtrlMoveEne* self, ml::CVec3* pos);
+extern "C" int moveBaseQuery(cf::CtrlMoveEne* self, ml::CVec3* pos);
 // In-unit approach probe (retail CtrlMoveEne_ProbeApproachPoint): extern "C" keeps the
 // call-site relocs in CtrlMoveEne_UpdateFleeWander / CtrlMoveEne_UpdatePursuit at the unmangled name.
-extern "C" int CtrlMoveEne_ProbeApproachPoint(cf::CCtrlMoveEne* self, ml::CVec3* out,
-                             cf::CCtrlMoveEne* other, f32 f1, f32 f2, int arg);
+extern "C" int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self, ml::CVec3* out,
+                             cf::CtrlMoveEne* other, f32 f1, f32 f2, int arg);
 // nw4r fixed-point math kernels (C-ABI SDK functions; names are the retail
 // mangled identifiers - keep C linkage so the call relocs match).
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
@@ -890,7 +910,7 @@ bool isGlobalCamFlagSet(int r3);
 extern const f32 lbl_eu_806665C0;  // 0.0f
 extern const f32 lbl_eu_806665E4;  // 1.0f (rand-gated fallback)
 
-// Further sdata2 constants used by the ctor (CCtrlMoveEne::CCtrlMoveEne) and the
+// Further sdata2 constants used by the ctor (CtrlMoveEne::CtrlMoveEne) and the
 // CtrlMoveEne_TickMoveControl / CtrlMoveEne_InitMoveHook family.
 extern const f32 lbl_eu_806665C4;   // ctor -> field_0x160
 extern const f32 lbl_eu_806665C8;   // ctor -> field_0x170/0x174
@@ -962,53 +982,53 @@ extern const char lbl_eu_804FB9E8[];
 // Ptmf hook constants (retail data symbols): the ctor installs __ptmf_null
 // and then the hook at lbl_eu_805278E4; CtrlMoveEne_InitMoveHook installs the hooks at
 // lbl_eu_80527830 + 0x118 / 0x124 / 0x130.
-extern void (cf::CCtrlMoveEne::*const __ptmf_null)();
-extern void (cf::CCtrlMoveEne::*const lbl_eu_805278E4)();
-typedef void (cf::CCtrlMoveEne::*CfMoveDispatchPtmf)(void* a, void* b);
+extern void (cf::CtrlMoveEne::*const __ptmf_null)();
+extern void (cf::CtrlMoveEne::*const lbl_eu_805278E4)();
+typedef void (cf::CtrlMoveEne::*CfMoveDispatchPtmf)(void* a, void* b);
 struct CfMoveHookPtmfs {
     u8 _pad[0x118];                                  // 0x00-0x117
-    void (cf::CCtrlMoveEne::*hook118)();             // 0x118
-    void (cf::CCtrlMoveEne::*hook124)();             // 0x124
-    void (cf::CCtrlMoveEne::*hook130)();             // 0x130
+    void (cf::CtrlMoveEne::*hook118)();             // 0x118
+    void (cf::CtrlMoveEne::*hook124)();             // 0x124
+    void (cf::CtrlMoveEne::*hook130)();             // 0x130
 };
 // Full hook-table view (adds the +0x13C..+0x1B4 records used by
 // CtrlMoveEne_InitMoveList / CtrlMoveEne_InitBattleMove / CtrlMoveEne_StepMoveEntry). Declared as the symbol's
 // extern type so member access emits the retail addi + base-load ptmf copy.
 struct CfMoveHookPtmfsAll {
     u8 _pad[0x118];                                  // 0x00-0x117
-    void (cf::CCtrlMoveEne::*hook118)();             // 0x118
-    void (cf::CCtrlMoveEne::*hook124)();             // 0x124
-    void (cf::CCtrlMoveEne::*hook130)();             // 0x130
-    void (cf::CCtrlMoveEne::*hook13C)();             // 0x13C
-    void (cf::CCtrlMoveEne::*hook148)();             // 0x148
-    void (cf::CCtrlMoveEne::*hook154)();             // 0x154
-    void (cf::CCtrlMoveEne::*hook160)();             // 0x160
-    void (cf::CCtrlMoveEne::*hook16C)();             // 0x16C
-    void (cf::CCtrlMoveEne::*hook178)();             // 0x178
-    void (cf::CCtrlMoveEne::*hook184)();             // 0x184
-    void (cf::CCtrlMoveEne::*hook190)();             // 0x190
-    void (cf::CCtrlMoveEne::*hook19C)();             // 0x19C
-    void (cf::CCtrlMoveEne::*hook1A8)();             // 0x1A8 (CtrlMoveEne_StepMoveEntry)
-    void (cf::CCtrlMoveEne::*hook1B4)();             // 0x1B4 (CtrlMoveEne_StepMoveEntry)
+    void (cf::CtrlMoveEne::*hook118)();             // 0x118
+    void (cf::CtrlMoveEne::*hook124)();             // 0x124
+    void (cf::CtrlMoveEne::*hook130)();             // 0x130
+    void (cf::CtrlMoveEne::*hook13C)();             // 0x13C
+    void (cf::CtrlMoveEne::*hook148)();             // 0x148
+    void (cf::CtrlMoveEne::*hook154)();             // 0x154
+    void (cf::CtrlMoveEne::*hook160)();             // 0x160
+    void (cf::CtrlMoveEne::*hook16C)();             // 0x16C
+    void (cf::CtrlMoveEne::*hook178)();             // 0x178
+    void (cf::CtrlMoveEne::*hook184)();             // 0x184
+    void (cf::CtrlMoveEne::*hook190)();             // 0x190
+    void (cf::CtrlMoveEne::*hook19C)();             // 0x19C
+    void (cf::CtrlMoveEne::*hook1A8)();             // 0x1A8 (CtrlMoveEne_StepMoveEntry)
+    void (cf::CtrlMoveEne::*hook1B4)();             // 0x1B4 (CtrlMoveEne_StepMoveEntry)
 };
 extern const CfMoveHookPtmfsAll lbl_eu_80527830;
 // CtrlMoveEne_InitMoveList's extension of the hook table (+0x13C / +0x148 records).
 struct CfMoveHookPtmfsE2D4 {
     u8 _pad[0x13C];                                  // 0x00-0x13B
-    void (cf::CCtrlMoveEne::*hook13C)();             // 0x13C
-    void (cf::CCtrlMoveEne::*hook148)();             // 0x148
+    void (cf::CtrlMoveEne::*hook13C)();             // 0x13C
+    void (cf::CtrlMoveEne::*hook148)();             // 0x148
 };
 // CtrlMoveEne_InitBattleMove's extension of the hook table (+0x154 / +0x160 / +0x16C
 // records).
 struct CfMoveHookPtmfsE760 {
     u8 _pad[0x154];                                  // 0x00-0x153
-    void (cf::CCtrlMoveEne::*hook154)();             // 0x154
-    void (cf::CCtrlMoveEne::*hook160)();             // 0x160
-    void (cf::CCtrlMoveEne::*hook16C)();             // 0x16C
+    void (cf::CtrlMoveEne::*hook154)();             // 0x154
+    void (cf::CtrlMoveEne::*hook160)();             // 0x160
+    void (cf::CtrlMoveEne::*hook16C)();             // 0x16C
 };
 // Ptmf hook constant installed by CtrlMoveEne_ScanGimmickTargets (3-word record at
 // lbl_eu_805279F0).
-extern void (cf::CCtrlMoveEne::*const lbl_eu_805279F0)();
+extern void (cf::CtrlMoveEne::*const lbl_eu_805279F0)();
 // Secondary vtable installed at +0x48 by the ctor.
 extern const u8 lbl_eu_805279FC[];
 
@@ -1018,10 +1038,10 @@ extern const u8 lbl_eu_805279FC[];
 // site. maskMoveBaseFlags / writeMoveSlotFloat are defined in
 // CtrlMoveBase.cpp; setSnapFlags in CActParamAnim.cpp; getEneBdatColumn in
 // CfObjectEne.cpp; CtrlMoveEne_ResetMoveState / CtrlMoveEne_CheckActorState in this TU.
-extern "C" void maskMoveBaseFlags(cf::CCtrlMoveEne* self);
+extern "C" void maskMoveBaseFlags(cf::CtrlMoveEne* self);
 extern "C" void setSnapFlags(void* self, u32 a, u32 b, f32 value);
 extern "C" void* setAnimPosVec(void* out, const ml::CVec3* src);
 extern "C" void writeMoveSlotFloat(void* obj, f32 value);
-extern "C" void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
-extern "C" void CtrlMoveEne_CheckActorState(cf::CCtrlMoveEne* self, void* obj, int arg2, u32 arg3);
-extern "C" void CtrlMoveEne_TrackMoveTarget(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1);
+extern "C" void CtrlMoveEne_ResetMoveState(cf::CtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
+extern "C" void CtrlMoveEne_CheckActorState(cf::CtrlMoveEne* self, void* obj, int arg2, u32 arg3);
+extern "C" void CtrlMoveEne_TrackMoveTarget(cf::CtrlMoveEne* self, ml::CVec3* out, f32 f1);

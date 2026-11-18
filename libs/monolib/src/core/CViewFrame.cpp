@@ -710,11 +710,11 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
 // @param frame  The frame whose border inset to compute.
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame) {
-    out->mPos.x = 0;
-    out->mPos.y = 0;
-
     CView* owner = frame->mOwner;
     int apply = 0;
+
+    out->mPos.x = 0;
+    out->mPos.y = 0;
     if ((owner->unk27C & 1) != 0) {
         u32 flags = owner->unk278;
         if ((flags & 1) == 0 && (flags & 2) == 0) {
@@ -725,10 +725,10 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         return;
     }
 
+    apply = 0;
     out->mPos.x = (s16)(out->mPos.x + frame->mBorder);
     out->mPos.y = (s16)(out->mPos.y + frame->mBorder);
 
-    apply = 0;
     owner = frame->mOwner;
     if ((owner->unk27C & 2) != 0) {
         u32 flags = owner->unk278;

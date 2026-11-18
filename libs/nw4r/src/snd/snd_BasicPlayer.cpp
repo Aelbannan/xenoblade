@@ -36,15 +36,15 @@ void PlayerParamSet::Init() {
     const f32 zero = lbl_eu_80669EE4;
     const f32 one = lbl_eu_80669EE0;
 
-    // Store order matches US retail (pan before volume/pitch; filter bytes
-    // around mUnk0x14; remotes interleaved per index).
+    // Store order matches US retail (pan before volume/pitch; filter fields
+    // around mBiquadFreq; remotes interleaved per index).
     mPan = zero;
     mVolume = one;
     mPitch = one;
     mSurroundPan = zero;
     mLpfFreq = zero;
-    mUnk0x18 = 0;
-    mUnk0x14 = zero;
+    mBiquadType = 0;
+    mBiquadFreq = zero;
     mRemoteFilter = 0;
     mOutputLine = OUTPUT_LINE_MAIN;
     mMainOutVolume = one;
@@ -103,6 +103,11 @@ f32 BasicPlayer::GetRemoteFxSend(int remote) const {
 
 void BasicPlayer::SetRemoteFilter(int filter) {
     mParam.mRemoteFilter = filter;
+}
+
+void BasicPlayer::SetBiquadFilter(int filter, f32 value) {
+    mParam.mBiquadType = filter;
+    mParam.mBiquadFreq = value;
 }
 
 } // namespace detail

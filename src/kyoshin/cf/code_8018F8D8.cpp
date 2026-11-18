@@ -605,7 +605,8 @@ int CfCmd_PumpRingBuf(MenuCmdRingView* buf, u32* outFlag) {
 }
 
 extern float lbl_eu_80667A90;
-float CfCmd_GetThreshold() { return lbl_eu_80667A90; }
+// Flat retail name: CtrlAct.cpp declares it as `extern "C" f32 CfCmd_GetThreshold()`.
+extern "C" float CfCmd_GetThreshold() { return lbl_eu_80667A90; }
 
 // State-gate probe: refresh the actor's current control word through the
 // +0x4 sub-object's slot-0x30 getter, then test it against `gate` via

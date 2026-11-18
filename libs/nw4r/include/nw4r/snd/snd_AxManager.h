@@ -101,6 +101,7 @@ private:
     AXAuxCallback mAuxCallback[AUX_BUS_NUM];         // at 0xD8
     void* mAuxCallbackContext[AUX_BUS_NUM];          // at 0xE4
     u8 mAuxCallbackWaitCounter[AUX_BUS_NUM];         // at 0xF0
+    u32 mAuxCallbackTick[AUX_BUS_NUM];               // at 0xF4 (OSGetTick delta)
 
     static u8 sZeroBuffer[ZERO_BUFFER_SIZE];
 };

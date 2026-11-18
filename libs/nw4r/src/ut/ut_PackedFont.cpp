@@ -14,7 +14,6 @@
 #include <revolution/GX.h>
 #include <revolution/OS.h>
 
-void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*);
 extern unsigned char lbl_eu_8056B084[];
 extern const double lbl_eu_8066A138;  // 2^52 magic double for the int->float conversion
 
@@ -35,17 +34,6 @@ union F64Conv {
     double d;
 };
 
-
-void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*, int);
-void* __dt__Q34nw4r2ut10PackedFontFv(void* self, int freeFlag)
-{
-    if (self != 0) {
-        __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(self, 0);
-        if (freeFlag > 0)
-            operator delete(self);
-    }
-    return self;
-}
 
 namespace nw4r {
 namespace ut {
@@ -170,6 +158,7 @@ protected:
 class ArchiveFontBase : public ResFontBase {
 public:
     ArchiveFontBase();
+    ~ArchiveFontBase();
 
     class CachedStreamReader;
     struct ConstructContext;
@@ -306,6 +295,7 @@ struct GlyphGroupsBlock {
 class PackedFont : public detail::ArchiveFontBase {
 public:
     PackedFont();
+    ~PackedFont();
 
     bool Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
                    const char* pName);
@@ -403,6 +393,16 @@ bool PackedFont::Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
     // StreamingConstruct returns an op status code; success is exactly 1.
     return StreamingConstruct(&ctx, pArchive, fileSize) == 1;
 }
+
+/******************************************************************************
+ *
+ * Destructor
+ *
+ ******************************************************************************/
+
+// The compiler expands this into retail's shape: guard `this`, run the base
+// class destructor, and free the storage when the deleting form asks for it.
+PackedFont::~PackedFont() {}
 
 /******************************************************************************
  *

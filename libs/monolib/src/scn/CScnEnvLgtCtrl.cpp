@@ -119,7 +119,7 @@ extern "C" void scnLgtSetBound(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) 
 // the active-light count); finish with the post-update hook and store the
 // count into CScnEnvLgtData::mActiveLightCount. The float param stays live
 // across every virtual call (MWCC f31-save prologue).
-void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
+extern "C" void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
                    float f) {
     u32 count = 0;
     data->ClearLights();
@@ -143,7 +143,7 @@ void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
 // scnLgtBindLightArg (us-804c575c): walk the light-object ring at +0x0C and
 // dispatch vtable slot 10 (0x28) on every item with `arg`; the arg is then
 // remembered at +0x3C.
-void scnLgtBindLightArg(CScnEnvLgtCtrl* self, void* arg) {
+extern "C" void scnLgtBindLightArg(CScnEnvLgtCtrl* self, void* arg) {
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {
         node->mItem->v8(arg);
@@ -242,7 +242,7 @@ void scnLgtRefreshLightMan(CScnEnvLgtCtrl* self) {
 // set, walk the light-object ring and hand every active item (vtable 0x64)
 // the scene root through vtable slot 0x48, then set bit 0x10 and clear bit
 // 0x20 in +0x00.
-void scnLgtEnterMode10(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtEnterMode10(CScnEnvLgtCtrl* self) {
     u32 flags = self->flags;
     self->flags = flags & ~0x40;
     if (!(flags & 0x10)) {
@@ -261,7 +261,7 @@ void scnLgtEnterMode10(CScnEnvLgtCtrl* self) {
 // set, walk the light-object ring and hand every active item (vtable 0x64)
 // the scene root through vtable slot 0x4C, then set bit 0x20 and clear bit
 // 0x10 in +0x00 (mirror image of scnLgtEnterMode10's bit dance).
-void scnLgtEnterMode20(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* self) {
     u32 flags = self->flags;
     self->flags = flags & ~0x40;
     if (!(flags & 0x20)) {
@@ -279,7 +279,7 @@ void scnLgtEnterMode20(CScnEnvLgtCtrl* self) {
 // scnLgtPushFogNone (us-804c5bc0): clear +0x00 flag bits 0x30 unconditionally;
 // when bit 0x40 was clear, set it and push fog slot 0 to GX - reset the fog
 // type to GX_FOG_NONE and forward the scene root's fog 0 to G3DState.
-void scnLgtPushFogNone(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtPushFogNone(CScnEnvLgtCtrl* self) {
     u32 flags = self->flags;
     self->flags = flags & ~0x30;
     if (!(flags & 0x40)) {
@@ -300,7 +300,7 @@ void scnLgtPushFogNone(CScnEnvLgtCtrl* self) {
 // scnLgtScaleLgtRing (us-804c5c58): clear the +0x00 flag bits 0x70, then walk
 // the light-object ring; every active item (vtable 0x64) gets the scene
 // root (getScnRootSlot10) plus this function's float through vtable slot 0x50.
-void scnLgtScaleLgtRing(CScnEnvLgtCtrl* self, float f) {
+extern "C" void scnLgtScaleLgtRing(CScnEnvLgtCtrl* self, float f) {
     self->flags &= ~0x70;
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {
@@ -333,7 +333,7 @@ static inline u32 LgtRingDistance(
 // dispatch v25(1) (vtable 0x6C). Then refresh via scnLgtResetLightState and, when
 // the ring holds exactly one item, push the teardown dispatch v37(1)
 // (vtable 0x9C) on it. Returns the created controller.
-void* scnLgtCreateEnvController(CScnEnvLgtCtrl* self, const u32* data, void* arg) {
+extern "C" void* scnLgtCreateEnvController(CScnEnvLgtCtrl* self, const u32* data, void* arg) {
     // The +0x08 work area hosts an embedded reslist<...>: start-node pointer
     // at +0x0C, sentinel node at +0x10, 0xc-stride node pool at +0x1C and
     // capacity at +0x20. push_back/size inline to the retail shape (the
@@ -367,7 +367,7 @@ void* scnLgtCreateEnvController(CScnEnvLgtCtrl* self, const u32* data, void* arg
 // +0x0C. If the removed item reported "in use" (v30), re-scan the ring: when
 // every item is free, dispatch the teardown pass (v25(0)) on each. Finally,
 // when the ring is empty, clear +0x00 bit 1 and refresh via scnLgtResetLightState.
-void scnLgtRemoveLgtItem(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlListItem* target) {
+extern "C" void scnLgtRemoveLgtItem(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlListItem* target) {
     CScnEnvLgtCtrlListNode* node;
     bool freed = false;
     if (target != NULL) {
@@ -430,7 +430,7 @@ void scnLgtRemoveLgtItem(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlListItem* target) {
 // scnLgtPushLgtValue (us-804c606c): walk the light-item ring and push the float
 // value to every active item (v23 gate, vtable 0x60). The active pass
 // (flag != 0) hands v22(f, 1, flag-1); the idle pass hands v22(f, 0, 0).
-void scnLgtPushLgtValue(CScnEnvLgtCtrl* self, s32 flag, float f) {
+extern "C" void scnLgtPushLgtValue(CScnEnvLgtCtrl* self, s32 flag, float f) {
     if (flag != 0) {
         CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
         while (node != self->field_0x0C) {
@@ -476,7 +476,7 @@ void CScnEnvLgtCtrl::CallLightV27(void* a, void* b, float f) {
 // float pair toward it and push a 7-word color/scale block into the +0x28
 // object (each float bit pattern lands as a u32 via the stfs-to-stack/lwz
 // roundtrip) plus a direction selector at +0x5C (1 or 3).
-void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
+extern "C" void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
     int v = (int)self->alt6.field_0x3C;
     f32 f1;
     if (lbl_eu_80663AE8 >= v || lbl_eu_80663AF4 <= v || flag != 0) {
@@ -638,7 +638,7 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
 // scene's camera-work blob (CScn+0x68) and walk the light-object ring;
 // every active item (vtable 0x64) receives the camera data at +0x10c of
 // the camera item through vtable slot 0x10.
-void scnLgtBindCamera(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* self) {
     CScnEnvLgtCtrlCamWork* cam = ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68;
     CScnEnvLgtCtrlCamView* camView =
         (CScnEnvLgtCtrlCamView*)CamMan_FindItemA_B158(cam, cam->mCamId);
@@ -1293,7 +1293,7 @@ extern "C" void scnLgtRebuildSlots(CScnEnvLgtCtrl* self, CLightEnv* env) {
 // flag path uses the +0x20 0x40-byte entry rows (indexed by the control's
 // u16 at +0x1E), scaling their vec3 by the +0xB8 slot factor when the index
 // matches the stored +0xBC slot (else by 1.0).
-int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
+extern "C" int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
                   CScnEnvLgtCtrlLgtCmd* ctl) {
     u16 index = ctl->field_0x00;
     if (self->field_0x28[index >> 5] &
@@ -1350,7 +1350,7 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
 // the fallback path's scnLgtFillLightVec4 rejects the control. The +0x8000 flag
 // path uses the +0x20 64-byte entry rows (indexed by the control's u16 at
 // +0x1E), scaling their vec3 by f1.
-int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
+extern "C" int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
                   CScnEnvLgtCtrlLgtCmd* ctl, float f1) {
     s16 index = ctl->field_0x00;
     u32* bits = self->field_0x28;
@@ -1399,7 +1399,7 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
 // direction pair via LightCtlInitDistAttn/LightCtlInitSpot, and the fallback pushes
 // the control's +0x44/+0x50 block). Returns 0 when the index bit is already
 // set or scnLgtFillLightVec4 rejects the control.
-int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
+extern "C" int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
                   CScnEnvLgtCtrlLgtCmd* ctl, float f1) {
     u16 index = ctl->field_0x00;
     u32* bits = self->field_0x28;
@@ -1908,7 +1908,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
 // r5, row[4] -> r6). Unless the caller's f1 equals the shared .sdata2
 // constant, scale the outputs by f2 and blend in the previous row (r8-1)
 // scaled by f1 (fmadds).
-void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32* out6,
+extern "C" void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32* out6,
                    f32 f1, f32 f2, u32 col, u32 rowIdx) {
     f32 v = kLgtZeroShared;
     f32* row = self->alt2.field_0x50 + col + rowIdx * 5;
@@ -1949,7 +1949,7 @@ extern "C" __declspec(noinline) void scnLgtWalkFogGateEntry(CScnEnvLgtCtrl* self
 // allocates the 0x60-byte node array through the scene owner's handle and
 // clears each node's mNext (the mList member is re-loaded per store because
 // the store aliases it - retail's unrolled pattern).
-void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
+extern "C" void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
                                CScnItemModelNw4rOwner* owner) {
     self->mCount = 0;
     self->mOwner = owner;
@@ -1985,7 +1985,7 @@ void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
 // flat retail name cannot be produced by a template instantiation under
 // Wii/1.1 (symbolic mangling), so it is spelled out (cf. the flattened
 // reslist pattern in MWCC_CASES / CScnFilterMan.cpp).
-void* __dt___reslist_base_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
+extern "C" void* __dt___reslist_base_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
     if (self != 0) {
         self->mVtable = (void*)lbl_eu_8056F978;
         CScnEnvLgtCtrlIScnResNode* node = self->mStartNodePtr->mNext;
@@ -2017,7 +2017,7 @@ void* __dt___reslist_base_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleti
 // the base destructor body is inlined (retail has no bl to the base dtor);
 // the nested identical tests reproduce the retail double `beq` off the one
 // `cmpwi r3, 0` (outer guard + inlined base-dtor guard).
-void* __dt__reslist_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
+extern "C" void* __dt__reslist_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
     if (self != 0) {
         if (self != 0) {
             self->mVtable = (void*)lbl_eu_8056F978;
@@ -4032,7 +4032,7 @@ extern "C" __declspec(noinline) void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWor
 // lbl_eu_8065FA40 (dest has a 4-byte gap at +0xB4 that is not copied).
 // The retail emits seven unrolled lwz/stw copy waves; explicit block-local
 // u32 temps reproduce MWCC's load-all/store-all codegen (GXFrameBuf idiom).
-void sinit_804C8174() {
+extern "C" void sinit_804C8174() {
     const u8* src = (const u8*)&lbl_eu_8056FA68;
     u8* dst = (u8*)&lbl_eu_8065FA40;
     // loads: wave a [0x00..0x58) first (22 words, takes the registers)
@@ -4214,7 +4214,7 @@ void sinit_804C8174() {
 // flags. With r4 == 0 and bit 3 set: unregister both filters, release the
 // blend and bloom objects (deleting-dtor dispatch through their vtable
 // entries; the bloom's main vtable sits at +0x80) and clear +0x00 bit 3.
-void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
+extern "C" void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
     if (init != 0) {
         if (!(self->flags & 0x8)) {
             CScnEnvLgtBlend* blend = (CScnEnvLgtBlend*)mtl::MemManager::allocate(
@@ -4280,7 +4280,7 @@ void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
         }
     }
 }
-void scnLgtSetSinkBit1(void* self, int flag) {
+extern "C" void scnLgtSetSinkBit1(void* self, int flag) {
     u32* obj = ((CScnEnvLgtCtrl*)self)->field_0x28;
     if (obj == 0) return;
     if (flag != 0)
@@ -4288,7 +4288,7 @@ void scnLgtSetSinkBit1(void* self, int flag) {
     else
         obj[2] &= ~2;
 }
-void scnLgtSetParamIdle(void* self, int flag) {
+extern "C" void scnLgtSetParamIdle(void* self, int flag) {
     u8* obj = (u8*)((CScnEnvLgtCtrl*)self)->field_0x30;
     if (obj == 0) return;
     if (flag != 0)
@@ -4300,7 +4300,7 @@ void scnLgtSetParamIdle(void* self, int flag) {
 // (Scn_GetFrameDelta on the shared view) and dispatch vtable slot 3 (0x0C).
 // Sets +0x00 bit 0x100 when any item was visited, clears it otherwise, and
 // returns whether the ring was non-empty.
-u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self) {
+extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self) {
     u32 ret = 0;
     CScnEnvLgtCtrlListNode* sentinel = self->field_0x0C;
     CScnEnvLgtCtrlListNode* node = sentinel->mNext;

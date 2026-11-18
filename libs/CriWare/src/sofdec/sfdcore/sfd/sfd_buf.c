@@ -996,19 +996,16 @@ void SFBUF_GetFlowCnt(void *self, u32 *readCnt, u32 *writeCnt) {
 /*
  * SFBUF_UpdateFlowCnt - Update flow control counter
  *
- * Computes a new flow count based on bit changes between
- * old and new values. Uses leading zero count to determine
- * which bit changed.
- *
- * @param count   Current flow count
- * @param newVal  New value
- * @param oldVal  Old value
- * @return Updated flow count
- */
-int SFBUF_UpdateFlowCnt(int count, int newVal, int oldVal) {
-    u32 diff = newVal ^ oldVal;
-    u32 leading = __cntlzw(diff);
-    u32 shifted = newVal << leading;
-    u32 bit = shifted >> 31;
-    return count + (int)bit;
+ * Advances the 64-bit "supplied bytes" counter: the low word is re-synced to
+ * the library count x, and the high word accumulates one carry per wrap. The
+ * carry is the bit of the previous low word that differs from x. Retail builds
+ * this as a *signed* 64-bit add whose high half is then discarded (the two
+ * dead `srawi` sign-extensions in front of the addc are that add's remains),
+ * which is why the definition returns u64: only the carry crosses into the
+ * high word, but the ABI result is a two-word value. */
+u64 SFBUF_UpdateFlowCnt(u32 hi, u32 lo, u32 x) {
+    s32 carry = (lo << __cntlzw(lo ^ x)) >> 31;
+    s64 v = carry + (s64)(s32)hi;
+
+    return ((u64)v << 32) | x;
 }

@@ -335,7 +335,7 @@ rest of the function). Probed ~15 source shapes via .scratch mwcceppc probes
 
 ---
 
-### Small wrapper definitions need `__declspec(noinline)` or -inline auto inlines them into callers (CfGameManager func_80084F50, FULL_MATCH)
+### Small wrapper definitions get inlined by -inline auto (CfGameManager func_80084F50, FULL_MATCH)
 
 When a TU defines a tiny wrapper function under its RETAIL name while other code
 in the same TU is being matched, `-inline auto` will inline the wrapper body into
@@ -344,7 +344,14 @@ wrapper symbol, breaking an otherwise-100% function.
 
 - Symptom:   caller hexdiff shows one reloc drift: decomp calls the callee where retail calls the wrapper; everything else byte-identical
 - Cause:     retail-named definition added without inline protection; MWCC inlined it at the call site
-- Fix:       mark small standalone definitions `extern "C" __declspec(noinline)` (repo convention, cf. cfCam_zeroVec3) so they stay callable symbols
+- Fix (historical):  marked small standalone definitions `extern "C" __declspec(noinline)` (repo convention, cf. cfCam_zeroVec3) so they stay callable symbols
+- **Superseded (2026-11-19):** `noinline` is now a *hard* faithfulness smell (`run.py faithful`). Retail
+  making a real `bl` to a small same-TU helper means something in the original prevented inlining. Check,
+  in order: (1) the helper belongs to a **different TU** (wrong split; e.g. CMenuBattleChain's tail became
+  `code_802ADB08.cpp`); (2) **definition order**: without `-ipa file`, MWCC only inlines bodies it has
+  already seen, so define the helper after its callers; (3) **unit-wide flags** (`-inline noauto`/`off`,
+  optimisation level), set once in configure.py. Only if all three fail, keep it with
+  `// noinline-ok: <what was tried>` on the same line.
 - Result:    func_80084F50 96.7% -> 100% FULL_MATCH (drift was self-inflicted by an unprotected definition)
 - Confidence: repo_proven (Wii/1.1 -O4,p)
 - Applies to/a.k.a.: any single-call wrapper/thunk added to a matched TU; also explains "caller regressed after I added a helper" reports
@@ -2247,9 +2254,17 @@ The equivalence probe resolves the decomp side **by symbol name only** (`_resolv
 
 ---
 
-### MWCC `-inline auto` inlines same-TU helpers — use `__declspec(noinline)`
+### MWCC `-inline auto` inlines same-TU helpers — find why retail didn't (TU boundary / definition order / unit flags)
 
-`-inline auto` (kyoshin TUs) inlines any small function defined in the same TU, even when retail made a real `bl` (e.g. a 0x64 sinit inlined into a caller, or a 0x30 list-clear inlined at 10 call sites — body ballooned 0x108 → 0x278). Established fix: `extern "C" __declspec(noinline) void f(...)`. Also apply to the forward decl so callers before the definition see it.
+`-inline auto` (kyoshin TUs) inlines any small function defined in the same TU, even when retail made a real `bl` (e.g. a 0x64 sinit inlined into a caller, or a 0x30 list-clear inlined at 10 call sites — body ballooned 0x108 → 0x278). Historical fix was `extern "C" __declspec(noinline) void f(...)`.
+
+- **Superseded (2026-11-19):** `noinline` is now a *hard* faithfulness smell (`run.py faithful`). Retail
+  making a real `bl` to a small same-TU helper means something in the original prevented inlining. Check,
+  in order: (1) the helper belongs to a **different TU** (wrong split; e.g. CMenuBattleChain's tail became
+  `code_802ADB08.cpp`); (2) **definition order**: without `-ipa file`, MWCC only inlines bodies it has
+  already seen, so define the helper after its callers; (3) **unit-wide flags** (`-inline noauto`/`off`,
+  optimisation level), set once in configure.py. Only if all three fail, keep it with
+  `// noinline-ok: <what was tried>` on the same line.
 
 ---
 
@@ -6100,3 +6115,94 @@ decisions. The width lever above was found this way after nine if/goto/helper sh
 - Confidence: repo_proven.
 - Applies to/a.k.a.: `CFBC8Target` in code_804CC2B8, view-struct polymorphic callbacks, "vtable +0x14"
   comments in this tree.
+
+### Pre-mangled identifier declared as a C++ function gains a `__<params>` suffix → reloc identity breaks (repo_proven, CView)
+- Symptom: hexdiff reports `100.0% | 0 structural | 0 reg_swap` with equal sizes yet the function is not
+  ✓. `--json` shows only `wrong-address`/`unproven relocation … ('address', 0x8044xxxx) vs ('symbol',
+  'apply__11CSplitFrameFv__FPv', 0)` — the decomp side's call resolves to a *symbol*, not an address.
+- Cause: a retail-named symbol spelled as a plain C++ free function is re-mangled by MWCC:
+  `void apply__11CSplitFrameFv(void*)` emits the symbol `apply__11CSplitFrameFv__FPv`, which is not the
+  retail name, so the reloc never binds to the retail address. (The same spelling left *un*mangled —
+  `extern "C"` — binds correctly, but adds `faithful` `mangled_c` debt, so it is not the preferred fix.)
+- Fix: give the symbol its owning class and call it as a member. A non-virtual member of class `X`
+  mangling `foo__<X>Fv` reproduces the retail symbol exactly, and the call ABI is identical to the free
+  function (this in r3), so the body stays byte-identical. Where the real class is not decompiled yet,
+  declaring the member on the TU-local class stub is enough (`class CSplitFrame { …; void apply(); };` +
+  `((CSplitFrame*)unk45C)->apply();`), and it *removes* the pre-mangled decl from the source.
+- Result: CView `setDisp` / `setSplitLine` / `wkUpdate` 100%·not-paired → FULL_MATCH; CView hexdiff
+  ✓ 25/45 → 28/45 with the unit's `faithful` score unchanged (192).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: any `NAME__Q…`/`NAME__N…` declaration whose emitted name is not in
+  `config/us/symbols.txt`; the `…__FPv` / `…__Fv` extra suffix is the tell. Members of a class declared
+  in another TU's *stub* header are safe only while that stub's layout is unused here.
+
+## Report counts only *paired* functions — a C++-mangled definition never pairs with a plain retail placeholder name (identity gap triage, Wii/1.1)
+- Symptom:   `tools/coop/hexdiff.py <unit> --all` lists a function at 100.0% (0 struc / 0 regsw) but
+  `build/us/report.json` / `objdiff report generate` shows the *same* function at `0.00` with no
+  `fuzzy_match_percent` key at all (`objdiff_report.FunctionMatch.mapped == False`, printed as
+  "UNPAIRED" by a per-unit report dump). Unit-level `matched_functions` is then far below the
+  registry, which already says `FULL_MATCH` for it: reversed-established acceptance, not a code bug.
+- Cause:     objdiff pairs the retail and candidate objects **by symbol name**. hexdiff pairs by
+  retail address order, so it scores the body fine even when the emitted name differs. The usual
+  disagreement is linkage/mangling: the source defines `void Foo(void* self, …)` (C++, emitted as
+  `Foo__FPv…`) while `config/*/symbols.txt` carries the plain placeholder `Foo` (or the reverse, for
+  a member function defined as a free function). Identify it in one shot:
+  `powerpc-eabi-readelf -sW build/us/src/<unit>.o | awk '$4=="FUNC"{print $2,$3,$8}'` and compare
+  against `build/us/obj/<unit>.o` — the decomp side shows the mangled name, the retail side the
+  placeholder.
+- Fix (evidence-first, cheapest first):
+  1. **The symbol really is a plain C-linkage helper** (every cross-unit caller references the plain
+     name — check `readelf -sW <caller>.o | awk '$7=="UND"'`; repo headers usually already declare it
+     with the shape `CScn.hpp`/`CScnRootNw4r.hpp` do: `extern "C" void CamMan_RefreshCurrentCamera(...)`):
+     give the *definition* C linkage. Zero codegen change (only the reloc's symbol name), so no
+     ✓/✗ can move — this is the fix that raised both units below.
+  2. **The function is really a member** (self-shaped first argument, callers are in already-matched
+     TUs, no argument-count hacks): convert it to a real member and
+     `tools/coop/faithful/rename_syms.py old='<mangled member name>'`; the call ABI is identical.
+  3. **The retail name is a plain placeholder but the callers reference the mangled name** (e.g.
+     `code_804CC2B8` calls `drawGradBands__FPvP8DrawQuad…`): rename the retail symbol to the mangled
+     spelling (`rename_syms.py`), or make the caller's declarations `extern "C"`. Renames of that kind
+     freeze our invented parameter-type names into `symbols.txt` — prefer the caller-side fix when the
+     signature is still a guess.
+- Also: a global rename triggers a full `configure.py` split rebuild from inside hexdiff. Then re-read
+  the report; `rename_syms.py` updates us/eu/jp `symbols.txt` + `targets.json` (ids are address-based,
+  so they survive).
+- Result:    CScnCameraMan report 4/17 → 10/17 matched (code 12.0% → 37.1%, fuzzy 20.3 → 86.6),
+  code_804F0258 3/22 → 7/22 (code 2.7% → 3.6%, fuzzy 29.5 → 48.3), with *no* hexdiff change to any
+  function body and no `link-gate` movement (missing stayed 43).
+- Confidence: repo_proven.
+- Applies to/a.k.a.: "UNPAIRED", `mapped == False`, "report says 0.00 but hexdiff says 100",
+  `matched_functions` below the registry, `symbols.txt` placeholder vs emitted mangling.
+
+## Inlined-accessor call form vs hand-expanded ternary — loop-pointer saved-register colour (GC/3.0a5.2 `-O4,p`)
+- Symptom:   a loop whose body retail inlined is `reg_swap`-only: `pTrack = (i > N-1) ? NULL : mTracks[i]`
+  gives pTrack/r29 + `i`/r30 while retail has pTrack/r30 + `i`/r29 (plus the prologue save order and
+  one `cmpi` shuffled into it).
+- Cause:     writing the inlined accessor's body by hand makes the ternary result a fresh vreg born in
+  the loop body, so Rule-A birth order puts `i` (declared in the for-init) on the higher register.
+  Writing the *call* (`GetPlayerTrack(i)`, a real member MWCC inlines from the same TU) makes the loop
+  value the callee's return vreg, which the allocator colours the retail way even though the emitted
+  instruction graph is identical.
+- Fix:       call the real accessor and let `-inline auto`/`-ipa file` inline it; never hand-copy an
+  accessor body that retail inlined.
+- Confidence: repo_proven
+- Applies to: any "retail inlines X here" body that was transcribed as an expression instead of a call
+  (also seen: member-index vs `reinterpret_cast<T**>(this)[0x48 + i]` induction-pointer scaffolds).
+
+## Pre-mangled `__`-prefixed identifiers: a free-standing declaration gains `__F<params>`, a class-declared one does not (GC/3.0a5.2 `-O4,p`)
+- Symptom:   a TU's symbol table defines/needs `__dt__<retail-mangled>Fv__FPvi` instead of the retail
+  `__dt__<retail-mangled>Fv`, so the row shows 100% instructions but never pairs and the counterpart is
+  an UND symbol nothing defines (link-gate `missing` +1).
+- Cause:     MWCC only mangles names it must distinguish. An *identifier that already is* the mangled
+  spelling, declared/defined as a free function with C++ linkage, gets a second parameter suffix
+  appended (`__F…`); the same string reached through a class member (ctor/dtor/virtual) is emitted
+  verbatim, because the compiler generates the name itself.
+- Fix:       memberize instead of widening the scaffold — declare the destructor (or ctor) in the class
+  and `#include`-order it so the definition sees a complete type; the compiler-generated dtor body is
+  the retail `guard this → base dtor(freeFlag 0) → __dl__FPv when freeFlag > 0 → return this` sequence.
+  `extern "C"` on the same declarations also fixes identity and bytes, but adds `mangled_c` smells to
+  `run.py faithful`, so it is the fallback, not the fix.
+- Confidence: repo_proven (ut_PackedFont: object symbol table, hexdiff --all 3/12→4/12, faithful 6→6
+  memberized vs 6→8 with `extern "C"`).
+- Applies to/a.k.a.: `__dt__…`/`__ct__…` free-function scaffolds, "100% but unpaired", "report says 0,
+  hexdiff says 100", `…__FPv`/`…__FPvi` self-appended suffixes.

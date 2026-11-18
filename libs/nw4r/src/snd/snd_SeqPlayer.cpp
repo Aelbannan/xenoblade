@@ -1,54 +1,15 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
-// .sdata2 constant-pool entries referenced by the functions below.
-extern const f64 lbl_eu_8066A008; // 2^52 (signed int -> float magic)
-
 namespace {
 
-// Signed-int -> f32 conversion using the retail 0x43300000/2^52 trick.
-union IntToF32Conv {
-    f64 d;
-    u32 w[2];
-};
-
-// Retail layout mirror: userproc callback/arg at +0x118/+0x11C and the real
-// track pointer array at +0x120. The shared header places mTracks at 0x118,
-// so everything written here goes through this mirror instead.
-// Retail layout mirror: SeqTrack stores the parser base address at +0x1C
-// (the shared header's field layout differs).
-struct SeqTrackRetailSlots {
+// The shared snd_SeqTrack.h member layout does not match retail yet (retail
+// keeps the parser base address at SeqTrack+0x1C), so the parser-slice access
+// below stays behind this view until SeqTrack itself is recovered.
+struct SeqTrackParserView {
     char field_0x0[0x1C];
     const u8* baseAddr; // at 0x1C
 };
-
-struct SeqPlayerRetailSlots {
-    char field_0x0[0xEC];
-    bool activeFlag;                          // at 0xEC
-    bool startedFlag;                         // at 0xED
-    char field_0xEE[0xF4 - 0xEE];
-    f32 tempoRatio;                           // at 0xF4
-    char field_0xF8[0xFC - 0xF8];
-    u32 skipTickCounter;                      // at 0xFC
-    f32 skipTimeCounter;                      // at 0x100
-    char field_0x104[0x10A - 0x104];
-    u8 timebase;                              // at 0x10A
-    u16 tempo;                                // at 0x10C
-    char field_0x10E[0x114 - 0x10E];
-    nw4r::snd::detail::SeqTrackAllocator* allocator; // at 0x114
-    void* callback;                       // at 0x118
-    void* arg;                            // at 0x11C
-    nw4r::snd::detail::SeqTrack* tracks[16]; // at 0x120
-    char field_0x160[0x180 - 0x160];
-    int tickCounter;                          // at 0x180
-};
-
-// Loads timebase*tempo through the 0x43300000/2^52 conversion union.
-inline f64 LoadTempoProduct(SeqPlayerRetailSlots* pSlot, IntToF32Conv& conv) {
-    conv.w[0] = 0x43300000;
-    conv.w[1] = (u32)(pSlot->timebase * pSlot->tempo) ^ 0x80000000;
-    return conv.d;
-}
 
 } // namespace
 
@@ -63,41 +24,34 @@ volatile s16 SeqPlayer::mGlobalVariable[GLOBAL_VARIABLE_NUM];
 // InitSeqPlayer eagerly fills the global-variable array with -1 before any
 // sound can run, so there is no lazy-init guard byte in the retail data pool.
 
-// FinishPlayer body (retail inlines it into Stop/~SeqPlayer via IPA). Kept
-// as a standalone callee so `-ipa file` re-inlines it in CALLER context,
-// reproducing retail's Chaitin register colors.
-static inline void FinishPlayerImpl(SeqPlayer& rPlayer) {
-    SeqPlayer* pPlayer = &rPlayer;
+// FinishPlayer (retail inlines it into ~SeqPlayer/Setup/InvalidateData via
+// IPA; no out-of-line copy survives in the retail slice).
+inline void SeqPlayer::FinishPlayer() {
     SoundThread::AutoLock lock;
 
-    if (reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->startedFlag) {
-        SoundThread::GetInstance().UnregisterPlayerCallback(pPlayer);
-        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->startedFlag = false;
+    if (this->mStartedFlag) {
+        SoundThread::GetInstance().UnregisterPlayerCallback(this);
+        this->mStartedFlag = false;
     }
 
-    if (reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->activeFlag) {
+    if (this->mActiveFlag) {
         DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(
-            pPlayer);
-        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)->activeFlag = false;
+            this);
+        this->mActiveFlag = false;
     }
 
     // Explicit continue keeps two scope-exit edges (retail emits the
     // track-lock unlock twice); FreeTrack's argument reloads the slot.
-    // Induction pointer based at the player; the 0x120 track-array base is
-    // folded into the access displacement (pSlot[0x48]), as in retail.
-    SeqTrack** pSlot = reinterpret_cast<SeqTrack**>(pPlayer);
-    for (int i = 0; i < SeqPlayer::TRACK_NUM; pSlot++, i++) {
+    for (int i = 0; i < TRACK_NUM; i++) {
         SoundThread::AutoLock trackLock;
 
-        SeqTrack* pTrack =
-            (i > SeqPlayer::TRACK_NUM - 1) ? NULL : pSlot[0x48];
+        SeqTrack* pTrack = GetPlayerTrack(i);
         if (pTrack == NULL) {
             continue;
         }
         pTrack->Close();
-        reinterpret_cast<SeqPlayerRetailSlots*>(pPlayer)
-            ->allocator->FreeTrack(pSlot[0x48]);
-        pSlot[0x48] = NULL;
+        this->mSeqTrackAllocator->FreeTrack(mTracks[i]);
+        mTracks[i] = NULL;
     }
 }
 
@@ -115,8 +69,8 @@ SeqPlayer::SeqPlayer() {
     mTickCounter = 0;
     mVoiceOutCount = 0;
 
-    reinterpret_cast<SeqPlayerRetailSlots*>(this)->callback = NULL;
-    reinterpret_cast<SeqPlayerRetailSlots*>(this)->arg = NULL;
+    mSeqUserprocCallback = NULL;
+    mSeqUserprocCallbackArg = NULL;
 
     mParserParam.tempo = DEFAULT_TEMPO;
     mParserParam.timebase = DEFAULT_TIMEBASE;
@@ -128,7 +82,7 @@ SeqPlayer::SeqPlayer() {
         mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
     }
     for (int i = 0; i < TRACK_NUM; i++) {
-        reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] = NULL;
+        mTracks[i] = NULL;
     }
 }
 
@@ -138,7 +92,7 @@ SeqPlayer::SeqPlayer() {
 void SeqPlayer::Stop() {
     SoundThread::AutoLock lock;
 
-    FinishPlayerImpl(*this);
+    FinishPlayer();
 }
 
 SeqPlayer::~SeqPlayer() {
@@ -146,7 +100,7 @@ SeqPlayer::~SeqPlayer() {
         SoundThread::AutoLock lock;
 
         // FinishPlayer fully inlined here by -ipa (same as Stop).
-        FinishPlayerImpl(*this);
+        FinishPlayer();
     }
 
     // Retail destructor takes the hidden delete flag; free the player when
@@ -178,7 +132,7 @@ void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
     }
     // Header layout puts mTracks at 0x118; retail keeps it at 0x120.
     for (int i = 0; i < TRACK_NUM; i++) {
-        reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] = NULL;
+        mTracks[i] = NULL;
     }
 }
 
@@ -193,7 +147,7 @@ SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
         SoundThread::AutoLock stopLock;
 
         // FinishPlayer inlined by retail; it owns its own lock scope.
-        FinishPlayerImpl(*this);
+        FinishPlayer();
     }
 
     InitParam(voices, pCallback);
@@ -226,7 +180,7 @@ SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
                 if (i > TRACK_NUM - 1) {
                     continue;
                 }
-                reinterpret_cast<SeqTrack**>(this)[0x48 + i] = pTrack;
+                mTracks[i] = pTrack;
                 pTrack->SetPlayerTrackNo(i);
             }
         }
@@ -234,8 +188,8 @@ SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
 
     DisposeCallbackManager::GetInstance().RegisterDisposeCallback(this);
 
-    reinterpret_cast<SeqPlayerRetailSlots*>(this)->allocator = pAllocator;
-    reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag = true;
+    mSeqTrackAllocator = pAllocator;
+    mActiveFlag = true;
 
     return SETUP_SUCCESS;
 }
@@ -268,10 +222,7 @@ void SeqPlayer::Pause(bool flag) {
     // GetPlayerTrack(i) inlined by retail: MWCC keeps (this + i*4) as the
     // induction pointer and folds the 0x120 track-array base into the load.
     for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack =
-            (i > TRACK_NUM - 1)
-                ? NULL
-                : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
+        SeqTrack* pTrack = GetPlayerTrack(i);
 
         if (pTrack != NULL) {
             pTrack->PauseAllChannel(flag);
@@ -304,11 +255,11 @@ void SeqPlayer::SetTempoRatio(f32 tempo) {
 }
 
 void SeqPlayer::SetChannelPriority(int priority) {
-    *(u8*)((char*)this + 0x109) = priority;
+    mParserParam.priority = priority;
 }
 
 void SeqPlayer::SetReleasePriorityFix(bool flag) {
-    *(unsigned char*)((unsigned char*)this + 0xEF) = (unsigned char)flag;
+    mReleasePriorityFixFlag = flag;
 }
 
 void SeqPlayer::SetLocalVariable(int idx, s16 value) {
@@ -354,20 +305,18 @@ void SeqPlayer::SetTrackPitch(u32 trackFlags, f32 pitch) {
 void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
     SoundThread::AutoLock lock;
 
-    if (reinterpret_cast<SeqPlayerRetailSlots*>(this)->activeFlag) {
+    if (mActiveFlag) {
         // First scan has no calls on the non-matching path, so MWCC walks it
         // entirely in volatile registers: the induction pointer is based at
         // the player with the 0x120 track-array base folded into the load.
         SeqTrack** pTracks = reinterpret_cast<SeqTrack**>(this);
         for (int i = 0; i < TRACK_NUM; i++) {
-            SeqTrack* pTrack =
-                (i > TRACK_NUM - 1) ? NULL : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
+            SeqTrack* pTrack = GetPlayerTrack(i);
             if (pTrack == NULL) {
                 continue;
             }
 
-            const u8* pBase =
-                reinterpret_cast<SeqTrackRetailSlots*>(pTrack)->baseAddr;
+            const u8* pBase = reinterpret_cast<SeqTrackParserView*>(pTrack)->baseAddr;
             if (pStart <= pBase && pBase <= pEnd) {
                 // SeqPlayer::Stop() inlined by retail.
                 // Hoisted NULL for the track-slot store; retail pins it in
@@ -377,7 +326,7 @@ void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
                 {
                     SoundThread::AutoLock stopLock;
 
-                    FinishPlayerImpl(*this);
+                    FinishPlayer();
                 }
                 break;
             }
@@ -401,8 +350,7 @@ SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
         return NULL;
     }
 
-    SeqTrack** tracks = (SeqTrack**)((u8*)this + 0x120);
-    return tracks[idx];
+    return mTracks[idx];
 }
 
 int SeqPlayer::ParseNextTick(bool doNoteOn) {
@@ -416,10 +364,7 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
     for (int i = 0; i < TRACK_NUM; i++) {
         // GetPlayerTrack(i) inlined by retail: bounds-checked load off the
         // 0x120 track array.
-        SeqTrack* pTrack =
-            (i > TRACK_NUM - 1)
-                ? NULL
-                : reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i];
+        SeqTrack* pTrack = GetPlayerTrack(i);
         if (pTrack == NULL) {
             continue;
         }
@@ -433,11 +378,7 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
             do {
                 SoundThread::AutoLock lock2;
 
-                SeqTrack* pClose =
-                    (i > TRACK_NUM - 1)
-                        ? NULL
-                        : reinterpret_cast<SeqPlayerRetailSlots*>(this)
-                              ->tracks[i];
+                SeqTrack* pClose = GetPlayerTrack(i);
                 if (pClose == NULL) {
                     break;
                 }
@@ -445,12 +386,8 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
                 pClose->Close();
                 // Retail reloads the track slot for the FreeTrack argument
                 // (pClose does not stay live across the Close call).
-                reinterpret_cast<SeqPlayerRetailSlots*>(this)
-                    ->allocator->FreeTrack(
-                        reinterpret_cast<SeqPlayerRetailSlots*>(this)
-                            ->tracks[i]);
-                reinterpret_cast<SeqPlayerRetailSlots*>(this)->tracks[i] =
-                    pRemovedTrack;
+                mSeqTrackAllocator->FreeTrack(mTracks[i]);
+                mTracks[i] = pRemovedTrack;
             } while (false);
         }
 
@@ -504,10 +441,7 @@ void SeqPlayer::Update() {
         for (int i = 0; i < TRACK_NUM; i++) {
             // GetPlayerTrack(i) inlined by retail: bounds-checked load off the
             // 0x120 track array.
-            SeqTrack* pTrack =
-                (i > TRACK_NUM - 1)
-                    ? NULL
-                    : reinterpret_cast<SeqTrack**>(this)[0x48 + i];
+            SeqTrack* pTrack = GetPlayerTrack(i);
 
             if (pTrack != NULL) {
                 pTrack->UpdateChannelParam();
@@ -518,8 +452,6 @@ void SeqPlayer::Update() {
 
 // FinishPlayer, inlined by retail (no out-of-line symbol).
 void SeqPlayer::UpdateTick(int msec) {
-    IntToF32Conv conv;
-
     // Base tempo: mTempoRatio * (timebase * tempo) / 60000, with the integer
     // product converted through the retail 2^52 pool constant.
     f32 tickPerMsec =
@@ -536,7 +468,7 @@ void SeqPlayer::UpdateTick(int msec) {
         restMsec -= nextMsec;
 
         if (ParseNextTick(true) != 0) {
-            FinishPlayerImpl(*this);
+            FinishPlayer();
             return;
         }
 
@@ -558,9 +490,8 @@ void SeqPlayer::UpdateTick(int msec) {
 
 void SeqPlayer::SkipTick() {
     // Release every voice on every open track before skipping ahead.
-    SeqTrack** pSlot = reinterpret_cast<SeqTrack**>(this);
-    for (int i = 0; i < TRACK_NUM; i++, pSlot++) {
-        SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : pSlot[0x48];
+    for (int i = 0; i < TRACK_NUM; i++) {
+        SeqTrack* pTrack = GetPlayerTrack(i);
 
         if (pTrack != NULL) {
             pTrack->ReleaseAllChannel(127);
@@ -568,42 +499,40 @@ void SeqPlayer::SkipTick() {
         }
     }
 
-    SeqPlayerRetailSlots* pSlotRetail =
-        reinterpret_cast<SeqPlayerRetailSlots*>(this);
-
     int tickCount = 0;
-    while (pSlotRetail->skipTickCounter != 0 ||
-           pSlotRetail->skipTimeCounter *
-                   (pSlotRetail->tempoRatio *
-                    (pSlotRetail->timebase * pSlotRetail->tempo) / 60000.0f) >=
+    while (mSkipTickCounter != 0 ||
+           mSkipTimeCounter *
+                   (mTempoRatio * (mParserParam.timebase * mParserParam.tempo) /
+                    60000.0f) >=
                1.0f) {
         if (tickCount >= MAX_SKIP_TICK_PER_FRAME) {
             return;
         }
 
         // Consume one skipped tick, or the time equivalent of one tick.
-        if (pSlotRetail->skipTickCounter != 0) {
-            pSlotRetail->skipTickCounter--;
+        if (mSkipTickCounter != 0) {
+            mSkipTickCounter--;
         } else {
-            pSlotRetail->skipTimeCounter -=
-                1.0f / (pSlotRetail->tempoRatio *
-                        (pSlotRetail->timebase * pSlotRetail->tempo) /
+            mSkipTimeCounter -=
+                1.0f / (mTempoRatio *
+                        (mParserParam.timebase * mParserParam.tempo) /
                         60000.0f);
         }
 
         if (ParseNextTick(false)) {
-            FinishPlayerImpl(*this);
+            FinishPlayer();
             return;
         }
 
-        pSlotRetail->tickCounter++;
+        mTickCounter++;
         tickCount++;
     }
 
-    pSlotRetail->skipTimeCounter = 0.0f;
+    mSkipTimeCounter = 0.0f;
 }
 
-void SeqPlayer::InitGlobalVariable() {
+// Eagerly resets the shared global variable array (retail symbol InitSeqPlayer).
+void SeqPlayer::InitSeqPlayer() {
     for (int i = 0; i < GLOBAL_VARIABLE_NUM; i++) {
         mGlobalVariable[i] = DEFAULT_VARIABLE_VALUE;
     }
@@ -613,63 +542,40 @@ Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
     return mParserParam.callback->NoteOn(this, bankNo, rInfo);
 }
 
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
-
-void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
-    void* _this, void* callback, void* arg)
-{
-    *(u32*)((u8*)_this + 0x118) = (u32)callback;
-    *(u32*)((u8*)_this + 0x11C) = (u32)arg;
-}
-// Retail global variable array; attached to SeqPlayer via the symbol map.
-extern volatile s16 lbl_eu_806382C0[16];
-
-void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {
-    for (int i = 0; i < 16; i++) {
-        lbl_eu_806382C0[i] = -1;
-    }
+void SeqPlayer::SetSeqUserprocCallback(SeqUserprocCallback callback,
+                                       void* arg) {
+    mSeqUserprocCallback = callback;
+    mSeqUserprocCallbackArg = arg;
 }
 
-void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack(
-    nw4r::snd::detail::SeqPlayer* selfPtr, unsigned short usertype, nw4r::snd::detail::SeqTrack* trackPtr)
-{
-    struct SeqUserprocCallbackParam {
-        volatile s16* variablePtr;   // 0x0
-        volatile s16* variablePtr2;  // 0x4
-        volatile s16* variablePtr3;  // 0x8
-        u8 value;                    // 0xC
-        u8 field_0xD;
-        u8 field_0xE;
-        u8 field_0xF;
-    };
-    struct SeqPlayerProcLayout {
-        char field_0x0[0x118];
-        void (*callback)(unsigned short, SeqUserprocCallbackParam*, void*); // 0x118
-        void* arg;                                            // 0x11C
-        char field_0x120[0x160 - 0x120];
-        volatile s16 variableV;                               // 0x160
-    };
-    struct SeqTrackProcLayout {
-        char field_0x0[0x24];
-        u8 value; // 0x24
-    };
+// The track byte the userproc may rewrite sits at SeqTrack+0x24 in retail; the
+// shared SeqTrack layout is not recovered yet, so read it through a view.
+struct SeqTrackUserprocView {
+    char field_0x0[0x24];
+    u8 value; // at 0x24
+};
 
-    SeqPlayerProcLayout* self = (SeqPlayerProcLayout*)selfPtr;
-    if (self->callback == NULL) {
+void SeqPlayer::CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack) {
+    if (mSeqUserprocCallback == NULL) {
         return;
     }
 
+    SeqTrackUserprocView* pTrackView =
+        reinterpret_cast<SeqTrackUserprocView*>(pTrack);
+
     SeqUserprocCallbackParam param;
-    param.variablePtr = &self->variableV; // player variable region (0x160)
-    param.variablePtr2 = lbl_eu_806382C0; // global variable array
-    param.variablePtr3 = trackPtr->GetVariablePtr(0);
-    param.value = ((SeqTrackProcLayout*)trackPtr)->value;
+    param.variablePtr = &mLocalVariable[0];
+    param.variablePtr2 = mGlobalVariable;
+    param.variablePtr3 = pTrack->GetVariablePtr(0);
+    param.value = pTrackView->value;
 
-    self->callback(usertype, &param, self->arg);
+    mSeqUserprocCallback(usertype, &param, mSeqUserprocCallbackArg);
 
-    ((SeqTrackProcLayout*)trackPtr)->value = param.value;
+    pTrackView->value = param.value;
 }
-extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}
+
+void SeqPlayer::ChannelCallback(Channel* /* pChannel */) {}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

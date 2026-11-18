@@ -16,7 +16,7 @@ extern "C" void SchedList_StepBoth(f32);
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CMat34.hpp"
 
-void sinit_804CC2B4(void) {}
+extern "C" void sinit_804CC2B4(void) {}
 
 // ---------------------------------------------------------------------------
 // Effect-manager singleton (lbl_eu_8065FC18) partial layout. The retail class
@@ -276,9 +276,12 @@ inline f32 s32ToF_b0b0(u32 v) {
 // Cross-TU imports + in-TU C-linkage declarations (retail symbol names -
 // extern "C" keeps the unmangled reloc names; the definitions further down
 // inherit this linkage so their symbols match the retail names).
+// __dt__804DF744 is a C++ free function (mangled __Fv); see the declaration
+// below the C-linkage block.
+void __dt__804DF744();
+
 extern "C" {
 void SchedRes_ClearLiveCount(void);
-void __dt__804DF744(void);
 void SchedList_TeardownAll(u32 x);
 u32 SchedRes_ReleaseEntries(void* key);
 void EffCtl_EmptyStub8C(void);
@@ -434,7 +437,7 @@ void EffSys_InitRoot(EffectRoot* self) {
 // chain head (0x24), zeroes the 16-word tail state block (0xdc..0x11c), then
 // sets the per-effect defaults (floats at 0x0c/0x18 from sdata2, -1 sentinels
 // at 0x1e/0x20, cleared 0x23 flag).
-void EffRoot_InitDefaults(EffectRoot* self) {
+extern "C" void EffRoot_InitDefaults(EffectRoot* self) {
     ((EffectNode*)self->renderArg)->EffFxReleaseNodeChain();
     // Load order/register naming: A0's temp must be born first (f0), A4's
     // second (f1); MWCC then schedules both sdata2 loads right after the call.
@@ -499,7 +502,7 @@ void EffectRoot::EffRender_PassHideSet() {
     EffFxRenderDispatch(this->renderArg, this->field_0x08->field_0x0c);
 }
 
-s32 EffObj_GetPriority(EffObj* obj) {
+extern "C" s32 EffObj_GetPriority(EffObj* obj) {
     // Direct-priority path: return the signed priority byte unchanged.
     if ((obj->field_0x1c >> 11) & 1) {
         return obj->field_0x23;
@@ -559,13 +562,13 @@ s32 EffObj_GetPriority(EffObj* obj) {
     return (s32)depth;
 }
 
-void* EffSys_GetConstBase(void){ return (void*)0x2FDA00; }
+extern "C" void* EffSys_GetConstBase(void){ return (void*)0x2FDA00; }
 
 // EffSys_Startup: effect-system init. Reserves four schedule pools at the given
 // arena base (each setup helper returns its input pointer for chaining), arms
 // the GQR fast-cast registers, builds the sin/cos table, seeds the CE random
 // generator, marks the 0x8800 flags, then creates the effect memory region.
-void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
+extern "C" void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
     u32 p = memAlloc;
     p = SchedRes_AllocEntries(p, 0x80);
     p = SchedItem_AllocPool(p, 0x200);
@@ -582,7 +585,7 @@ void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
 
 // EffSys_InitScene: when the 0x8000 flag is set, fold clz(arg) into flag bit 10,
 // set bit 13, then (re)initialize the schedule lists and scene snapshot.
-void EffSys_InitScene(EffectRoot* self, void* scene, u32 arg) {
+extern "C" void EffSys_InitScene(EffectRoot* self, void* scene, u32 arg) {
     u16 flags = self->flags0;
     if ((flags >> 15) & 1) {
         // clz folded straight into flag bit 10 via a single rlwimi
@@ -623,7 +626,7 @@ void EffSys_StepSchedules() {
 // byte from the current scene pointer, refresh the ortho projection (0x48)
 // from the render mode, and set the 0x4000 flag. Always ends with the
 // fog-state refresh.
-void func_804CBB84(EffectRoot* self, void* scene) {
+extern "C" void func_804CBB84(EffectRoot* self, void* scene) {
     if ((self->flags0 >> 11) & 1) {
         if (((self->flags0 >> 13) & 1) || ((self->flags0 >> 12) & 1)) {
             u32 a = SchedList_TallyBoth();
@@ -677,7 +680,7 @@ void __declspec(noinline) EffRender_PassBase(EffectRoot* self) {
 // EffRender_PassFilteredA: render pass over the registered effect list. Mirrors
 // EffRender_PassSecond but skips outer nodes whose 0x10 child flag is clear and runs
 // the bit-7-hide render path (EffRender_PassNoHide) per inner node.
-void EffRender_PassFilteredA(EffectRoot* self) {
+extern "C" void EffRender_PassFilteredA(EffectRoot* self) {
     if (!((self->flags0 >> 14) & 1)) return;
     if (lbl_eu_80665A30 == 0) return;
     EffRender_SetupGX();
@@ -725,7 +728,7 @@ void __declspec(noinline) EffRender_PassFlag5(EffectRoot* self) {
 
 // EffRender_PassFilteredB: render pass twin of EffRender_PassFilteredA, running the other hide
 // path (EffRender_PassHideSet) per inner node over the same filtered list.
-void EffRender_PassFilteredB(EffectRoot* self) {
+extern "C" void EffRender_PassFilteredB(EffectRoot* self) {
     if (!((self->flags0 >> 14) & 1)) return;
     if (lbl_eu_80665A30 == 0) return;
     EffRender_SetupGX();
@@ -780,7 +783,7 @@ void __declspec(noinline) EffRender_SetupGX() {
 
 // EffSys_ResetAlpha: reset the global alpha-compare state (GREATER/AND) and clear
 // the 0x4000 flag on the effect singleton.
-void EffSys_ResetAlpha(EffectRoot* self) {
+extern "C" void EffSys_ResetAlpha(EffectRoot* self) {
     SchedRes_ClearLiveCount();
     self->flags0 = (u16)(self->flags0 & ~0x4000);
     GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_GREATER, 0);
@@ -788,7 +791,7 @@ void EffSys_ResetAlpha(EffectRoot* self) {
 
 // EffSys_Teardown: tear down the schedule lists and mem region when the 0x2000
 // flag is set, then mark the alloc handle invalid.
-void EffSys_Teardown(EffectRoot* self) {
+extern "C" void EffSys_Teardown(EffectRoot* self) {
     if ((self->flags0 >> 13) & 1) {
         __dt__804DF744();
         SchedList_TeardownAll(0);
@@ -805,14 +808,14 @@ void EffSys_Teardown(EffectRoot* self) {
 // result; otherwise 0. The retail halfword is read once (lhz) and the flag
 // extracted with rlwinm. r0,r0,17,31,31 ((flags0 >> 15) & 1).
 extern "C" u32 SchedRes_FindOrClaim(void* key);
-u32 EffSched_LookupA(EffectRoot* self, void* key) {
+extern "C" u32 EffSched_LookupA(EffectRoot* self, void* key) {
     if ((self->flags0 >> 15) & 1) {
         return SchedRes_FindOrClaim(key);
     }
     return 0;
 }
 
-u32 EffSched_LookupB(EffectRoot* self, void* key) {
+extern "C" u32 EffSched_LookupB(EffectRoot* self, void* key) {
     if ((self->flags0 >> 15) & 1) {
         return SchedRes_ReleaseEntries(key);
     }
@@ -830,7 +833,7 @@ inline u32 EntryEnd(const CScheduleEntryData* e, u16 off) {
 }
 } // namespace
 
-u32 EffRoot_AddSchedReq(EffectRoot* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
+extern "C" u32 EffRoot_AddSchedReq(EffectRoot* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     u16 flags = self->flags0;
     if (!((flags >> 13) & 1)) {
         if (!((flags >> 12) & 1)) return 0;
@@ -1098,7 +1101,7 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     return factor;
 }
 
-void EffObj_Update(EffObject* obj, f32 delta) {
+extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
     EffFrameTail* ft = (EffFrameTail*)&obj->sub_0x17c[1];
     EffObj* eo = (EffObj*)obj;
 
@@ -1420,7 +1423,7 @@ struct EffNodeSink {
 // optionally rescaled by the bound scene's 0x34 factors) once up front and
 // again per node inside the chain walk, calling EffObj_EmitUpdate and folding the
 // resulting matrices back into each node.
-void EffFrame_Update(EffFrameObj* obj) {
+extern "C" void EffFrame_Update(EffFrameObj* obj) {
     f32 cZero;
     if (obj->field_0x2e <= 0) return;
     s32 ok = 0;

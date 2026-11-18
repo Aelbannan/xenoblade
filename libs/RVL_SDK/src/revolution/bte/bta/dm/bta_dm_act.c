@@ -111,12 +111,13 @@ struct bta_dm_inq_res_t {
     unsigned char device_type;      /* 0x0a */
 };
 
-/* tBTA_DM_SEARCH: union of the search callback payloads (retail size 0x110) */
+/* tBTA_DM_SEARCH: union of the search callback payloads (retail size 0x108,
+   the disc-result frame; the inq/cmpl payloads are smaller). */
 union bta_dm_search_t {
     struct bta_dm_inq_res_t inq_res;
     struct bta_dm_inq_cmpl_res_t inq_cmpl;
     struct bta_dm_disc_res_t disc_res;
-    unsigned char _pad[0x110];
+    unsigned char _pad[0x108];
 };
 
 /* tBTM_REMOTE_DEV_NAME */
@@ -284,6 +285,7 @@ union bta_dm_sec_t {
     } acl_change;
     struct bta_dm_pin_req_t pin_req;
     struct bta_dm_auth_cmpl_t auth_cmpl;
+    struct bta_dm_authorize_t authorize;
     unsigned char _pad[0x110];
 };
 
@@ -684,8 +686,9 @@ void bta_dm_discover(struct bta_dm_msg *p_data) {
 }
 
 void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
+    union bta_dm_search_t search;
     struct bta_dm_disc_res_t disc_res;
-    struct bta_dm_inq_cmpl_res_t inq_cmpl;
+    unsigned char *p_rem_addr;
     struct bta_dm_buf_t *p_msg;
     unsigned char found = 1;
 
@@ -718,8 +721,6 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
                     disc_res.bd_name[0] = 0;
                     disc_res.services = 0;
                     bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, &disc_res);
-                    bta_dm_search_cb.p_cur =
-                        (struct btm_inq_info_t *)BTM_InqDbNext(bta_dm_search_cb.p_cur);
                 } else {
                     if (btm_cb.page_timeout < 0x7530) {
                         bta_sys_start_timer(&bta_dm_search_cb.svc_timer, 0x205,
@@ -728,8 +729,6 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
                     if ((unsigned char)BTM_ReadRemoteDeviceName(
                             bta_dm_search_cb.p_cur->results.remote_bd_addr,
                             (void *)bta_dm_remname_cback) != 1) {
-                        unsigned char *p_rem_addr;
-
                         bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
                         p_rem_addr =
                             bta_dm_search_cb.p_cur->results.remote_bd_addr;
@@ -744,6 +743,8 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
                     found = 0;
                     break;
                 }
+                bta_dm_search_cb.p_cur =
+                    (struct btm_inq_info_t *)BTM_InqDbNext(bta_dm_search_cb.p_cur);
             }
         }
     }
@@ -759,11 +760,10 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
         }
     }
 
-    /* NOTE(residual): retail's frame reserves ~0x100 bytes more stack than
-       any local we can identify, so its disc-result local sits at sp+8 while
-       ours lands at sp+0x10; every field offset matches. */
-    inq_cmpl.num_resps = p_data->inq_cmpl.num;
-    bta_dm_search_cb.p_search_cback(BTA_DM_INQ_CMPL_EVT, &inq_cmpl);
+    /* The complete-payload local is a full tBTA_DM_SEARCH union: retail's
+       frame reserves the disc-result size (0x108) for it. */
+    search.inq_cmpl.num_resps = p_data->inq_cmpl.num;
+    bta_dm_search_cb.p_search_cback(BTA_DM_INQ_CMPL_EVT, &search);
 }
 
 /* Search-machine and API handlers below: enable/disable, the name and
@@ -773,7 +773,10 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
    tBTA_DM_SEC) are laid out locally because the Wii-era BD_NAME_LEN (0xf8)
    differs from the AOSP header, and the disc result's service mask is
    4-aligned to 0x100 after the name.
-   The .sdata2 attribute pair used by find_services is not reproduced yet. */
+   The .sdata2 attribute pair used by find_services is defined below and its
+   bytes already match retail; note the retail code *loads* both values from
+   .sdata2 (two SDA relocs) while MWCC folds our file-scope consts into
+   immediates — an open residual of bta_dm_find_services. */
 
 /* --- Verbatim-recovered functions (session transcript) --- */
 
@@ -1034,43 +1037,35 @@ void bta_dm_find_services(unsigned char *bd_addr) {
 
     while (bta_dm_search_cb.services_index < 23) {
         if ((bta_dm_search_cb.services_cached &
-             (1 << bta_dm_search_cb.services_index)) == 0) {
-            bta_dm_search_cb.services_index++;
-            continue;
+             (1 << bta_dm_search_cb.services_index)) != 0) {
+            bta_dm_search_cb.p_sdp_db = GKI_getbuf(250);
+            if (bta_dm_search_cb.p_sdp_db != NULL) {
+                uuid.uu.uuid16 =
+                    bta_service_id_to_uuid_lkup_tbl[bta_dm_search_cb.services_index];
+                bta_dm_search_cb.services_cached &=
+                    ~(1 << bta_dm_search_cb.services_index);
+
+                if (uuid.uu.uuid16 == 0x1200) {
+                    num_attr = 2;
+                }
+                uuid.len = 2;
+
+                SDP_InitDiscoveryDb(bta_dm_search_cb.p_sdp_db, 250, 1, &uuid,
+                                    num_attr, attr_list);
+
+                if (SDP_ServiceSearchAttributeRequest(bd_addr,
+                                                      bta_dm_search_cb.p_sdp_db,
+                                                      bta_dm_sdp_callback) != 0) {
+                    bta_dm_search_cb.services_index++;
+                    return;
+                }
+
+                GKI_freebuf(bta_dm_search_cb.p_sdp_db);
+                bta_dm_search_cb.p_sdp_db = NULL;
+                bta_dm_search_cb.services_index = 23;
+            }
         }
-
-        bta_dm_search_cb.p_sdp_db = GKI_getbuf(250);
-        if (bta_dm_search_cb.p_sdp_db == NULL) {
-            bta_dm_search_cb.services_index++;
-            continue;
-        }
-
-        uuid.uu.uuid16 =
-            bta_service_id_to_uuid_lkup_tbl[bta_dm_search_cb.services_index];
-        bta_dm_search_cb.services_cached &=
-            ~(1 << bta_dm_search_cb.services_index);
-
-        if (uuid.uu.uuid16 == 0x1200) {
-            num_attr = 2;
-        }
-        uuid.len = 2;
-
-        SDP_InitDiscoveryDb(bta_dm_search_cb.p_sdp_db, 250, 1, &uuid, num_attr,
-                            attr_list);
-
-        if (SDP_ServiceSearchAttributeRequest(bd_addr,
-                                              bta_dm_search_cb.p_sdp_db,
-                                              bta_dm_sdp_callback) == 0) {
-            /* request failed: drop the db and give up on this search */
-            GKI_freebuf(bta_dm_search_cb.p_sdp_db);
-            bta_dm_search_cb.p_sdp_db = NULL;
-            bta_dm_search_cb.services_index = 23;
-            bta_dm_search_cb.services_index++;
-            continue;
-        }
-
         bta_dm_search_cb.services_index++;
-        return;
     }
 
     p_msg = (struct bta_dm_disc_msg_t *)GKI_getbuf(0x110);
@@ -1218,22 +1213,22 @@ int bta_dm_authorize_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                            unsigned char *bd_name, unsigned char *p_service_name,
                            unsigned char service_id, unsigned char is_authorized) {
     unsigned char service;
-    struct bta_dm_authorize_t auth_req;
+    union bta_dm_sec_t sec_event;
 
     service = 1;
-    bdcpy(auth_req.bd_addr, bd_addr);
-    strncpy((char *)auth_req.bd_name, (char *)bd_name, 0x20);
+    bdcpy(sec_event.authorize.bd_addr, bd_addr);
+    strncpy((char *)sec_event.authorize.bd_name, (char *)bd_name, 0x20);
 
     while (service < 24) {
         if (bta_service_id_to_btm_srv_id_lkup_tbl[service] == service_id) {
-            auth_req.service = service;
+            sec_event.authorize.service = service;
             break;
         }
         service++;
     }
 
     if (bta_dm_cb.cback != NULL && service <= 23) {
-        bta_dm_cb.cback(4, &auth_req);
+        bta_dm_cb.cback(4, &sec_event);
         return 1;
     }
     return 0xb;

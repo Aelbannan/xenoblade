@@ -791,11 +791,11 @@ extern "C" void emptyMoveBaseHookTail() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8008A0C8() {
-    extern void __ct__CColiProc(void*);
+    extern void __ct__9CColiProcFv(void*);   // pre-mangled retail ctor symbol (MWCC keeps __ names unmangled)
     extern char lbl_eu_80571810[];
     extern const void lbl_eu_80527814;
 
-    __ct__CColiProc(lbl_eu_80571810);
+    __ct__9CColiProcFv(lbl_eu_80571810);
     *(void**)lbl_eu_80571810 = (void*)&lbl_eu_80527814;
 }
 

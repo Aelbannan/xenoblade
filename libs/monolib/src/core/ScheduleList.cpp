@@ -655,7 +655,7 @@ SLList* __dt__12ScheduleListFv(SLList* self, int flag) {
 }
 
 // SchedList_TeardownAll: terminate the global schedule lists.
-void SchedList_TeardownAll(u32 x) {
+extern "C" void SchedList_TeardownAll(u32 x) {
     if (x != 0) {
         if (lbl_eu_80665A54 != 0) {
             if (lbl_eu_80665A54 != 0) {
@@ -673,7 +673,7 @@ void SchedList_TeardownAll(u32 x) {
 }
 
 // SchedList_AdvanceBoth: advance both global schedule lists (vtable 0x10).
-void SchedList_AdvanceBoth() {
+extern "C" void SchedList_AdvanceBoth() {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->updateAll();
@@ -685,7 +685,7 @@ void SchedList_AdvanceBoth() {
 }
 
 // SchedList_StepBoth: forward delta to both global schedule lists (vtable 0xc).
-void SchedList_StepBoth(f32 x) {
+extern "C" void SchedList_StepBoth(f32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->step(x);
@@ -697,7 +697,7 @@ void SchedList_StepBoth(f32 x) {
 }
 
 // SchedList_FindBoth: hand an argument to both global schedule lists (vtable 0x14).
-void SchedList_FindBoth(u32 x) {
+extern "C" void SchedList_FindBoth(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->find((void*)x);
@@ -709,7 +709,7 @@ void SchedList_FindBoth(u32 x) {
 }
 
 // SchedList_RouteAddReq: route an add-schedule request to one of the two lists.
-void SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5) {
+extern "C" void SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5) {
     SLList* list;
     u32 use54 = 0;
     if (((lbl_eu_8065FC18[0] >> 12) & 1) != 0 && p4 == 0) {
@@ -761,7 +761,7 @@ void __ct__804E4F9C() {
 }
 
 // SchedList_DropBoth: forward an argument to both global schedule lists (vtable 0x1c).
-void SchedList_DropBoth(u32 x) {
+extern "C" void SchedList_DropBoth(u32 x) {
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {
         ((SLDispatch*)a)->removeItem((CSchedule*)x);
@@ -773,7 +773,7 @@ void SchedList_DropBoth(u32 x) {
 }
 
 // SchedList_TallyBoth: sum the per-list counts reported by both global lists.
-u32 SchedList_TallyBoth() {
+extern "C" u32 SchedList_TallyBoth() {
     u32 total = 0;
     SLList* a = lbl_eu_80665A50;
     if (a != 0) {

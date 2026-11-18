@@ -9,7 +9,6 @@ class CfObjectImplMove {
 public:
     virtual ~CfObjectImplMove();
 
-    void CfObjectImplMoveClearLinkIfMatch(unsigned int* param);
     void CfObjectImplMoveDtorThunkC();
     void CfObjectImplMoveDtorThunk10();
 };
@@ -23,7 +22,6 @@ struct CfObjectImplMoveData {
     u8 _00_13[0x14];              // 0x00-0x13
     CfObjectImplMoveSubObj* mSubObj;                // 0x14, sub-object with field at +0xc4
 
-    void MoveImplMatchIdSetRegion(unsigned int a, unsigned int b);
 };
 
 class CfMoveFieldE4;

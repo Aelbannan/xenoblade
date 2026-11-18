@@ -10,6 +10,9 @@ public:
     virtual ~LODMemMan();
     virtual bool OnFileEvent(CEventFile* evt);
     void initElementBuffers();
+    void driveArchiveLoadState();
+    u8* getOrCreatePoolData(int id);
+    static void freePersistentBuffer();
     void resetManagerState();
     void cancelFileAndRelease();
     void clearFlagAndResetName();

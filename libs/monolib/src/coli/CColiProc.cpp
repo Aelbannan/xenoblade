@@ -3,6 +3,8 @@
 
 #include <types.h>
 #include <nw4r/math/math_types.h>
+#include <revolution/mtx.h>
+#include <revolution/mtx/mtxvec.h>
 #include <cstring>
 #include "monolib/coli/CColiProc.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -15,22 +17,29 @@ struct CColiLinkObj {
     CColiProc* field_0x3C;
 };
 
-// The single global CColiResCall instance (retail bss, size 0x50) and the
-// CColiResCall vtable installed into it at static-init time (both owned by
-// code_804A6C60.cpp; see the class hierarchy note there).
-extern "C" u8 lbl_eu_8065D0E8[0x50];
-extern "C" u32 __vt__12CColiResCall[];
+// The single global CColiResCall instance (retail .bss 0x8065D0E8, size 0x50)
+// is defined at the end of this file; its static initializer
+// (retail __sinit_\CColiProc_cpp, .ctors 0x804FA16C) runs the CColiProc base
+// ctor and then installs __vt__12CColiResCall into the instance.
+CColiResCall g_coliResCall;
 extern "C" const f32 lbl_eu_8066AEA8;
-extern "C" void ColiProc_ProcessSegments();
-extern "C" void __ct__CColiProc(CColiProc* self);
+extern "C" int ColiProc_ProcessSegments(CColiWork* work,
+                                         struct CColiObjDispatch* obj);
 
-void CColiProc::InitTriple(CColiProcTarget* target, u32 a) {
+// Object-view types the shared bounds/transform globals point at; defined with
+// their real layouts in the code_804B2FF0 unit (see
+// monolib/coli/code_804B2FF0.hpp), used here only as opaque pointers.
+struct CColiBounds;
+struct CColiQx;
+struct CColiHx;
+
+void CColiWork::InitTriple(CColiProcTarget* target, u32 a) {
     this->field_0x0 = target;
     this->field_0x4 = a;
     this->field_0xC = 0;
 }
 
-void CColiProc::InitQuad(CColiProcTarget* target, u32 a, u32 b) {
+void CColiWork::InitQuad(CColiProcTarget* target, u32 a, u32 b) {
     this->field_0x0 = target;
     this->field_0x4 = a;
     this->field_0x8 = b;
@@ -39,7 +48,7 @@ void CColiProc::InitQuad(CColiProcTarget* target, u32 a, u32 b) {
 
 // Returns true if field_0x0 is non-null and bit 0 of its u16 at offset 6 is set.
 // Both failure paths share a single return-0 tail to match retail branch layout.
-bool CColiProc::IsTargetFlagged() {
+bool CColiWork::IsTargetFlagged() {
     if (this->field_0x0 != nullptr && (this->field_0x0->field_0x6 & 1)) {
         return true;
     }
@@ -47,7 +56,7 @@ bool CColiProc::IsTargetFlagged() {
 }
 
 // Returns bit 18 of field_0xC (extrwi extraction).
-bool CColiProc::TestBit18State() {
+bool CColiWork::TestBit18State() {
     return ((this->field_0xC >> 18) & 1) != 0;
 }
 
@@ -61,7 +70,7 @@ struct CColiTable {
     u32 field_0xC; // entry count
 };
 
-// Variable-length entry chained via lbl_eu_8056F3C0[type]+16; data follows the
+// Variable-length entry chained via ColiSpecEntryStep[type]+16; data follows the
 // 0x10-byte header (handler receives a pointer to field_0x10).
 struct CColiEntry {
     u16 field_0x0; // type index into the exported tables
@@ -72,43 +81,42 @@ struct CColiEntry {
 };
 
 // Per-type metadata and handler vectors (retail .data tables).
-// lbl_eu_8056F3C0      : s16 per-entry step size (+16 byte header), index by type
-// lbl_eu_8056F3D4      : s16 per-entry data size, index by type
-// lbl_eu_8056F3FC      : handler function-pointer vector, index by type
+// ColiSpecEntryStep      : s16 per-entry step size (+16 byte header), index by type
+// ColiSpecEntrySize      : s16 per-entry data size, index by type
+// ColiSpecDataHandlers      : handler function-pointer vector, index by type
 
-extern s16 lbl_eu_8056F3C0[];
-extern s16 lbl_eu_8056F3D4[];
+extern s16 ColiSpecEntryStep[];
+extern s16 ColiSpecEntrySize[];
 typedef void (*CColiDataFn)(u8* dst, u32 src, u32 data, u8* raw);
-extern CColiDataFn lbl_eu_8056F3FC[];
+extern CColiDataFn ColiSpecDataHandlers[];
 
-// The generic object the collision work is run against.
-struct CColiWork {
-    CColiTable* field_0x0; // target table
-    u32 field_0x4;
-    u32 field_0x8;
-    u32 field_0xC; // flags (bit18 set below => 0x40000)
-};
+// The generic work object the collision walkers run against is CColiWork
+// (CColiProc.hpp); its +0x00 slot holds the target table.
+static inline CColiTable* colitable(CColiWork* work) {
+    return (CColiTable*)work->field_0x0;
+}
 
 // Owner whose +0x7C holds the ALLOC_HANDLE used for the output buffer.
 struct CColiAllocOwner {
     u8 field_0x0[0x7C];
     mtl::ALLOC_HANDLE field_0x7C;
 };
-
 // Shared bss globals (set/read by this routine and by siblings).
-extern u32 lbl_eu_80665940;
-extern u32 lbl_eu_8066594C;
-extern s16 lbl_eu_80665950;
+extern u32 g_coliSpecTable;
+extern CColiBounds* g_coliBounds;
+extern CColiQx* g_coliXformPos;
+extern CColiHx* g_coliHalfExtent;
+extern s16 g_coliNodeIndex;
 extern CColiAllocOwner* lbl_eu_80665958;
 
 // Compute the packed buffer size for every entry, allocate it, then fill it
-// by dispatching each entry's data through lbl_eu_8056F3FC[type]. Returns an
+// by dispatching each entry's data through ColiSpecDataHandlers[type]. Returns an
 // index/count code: 0 when no selection was made yet, else 2 (0 selected) or 1.
 extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** outBuf,
-                             u32 arg4) {
-    CColiTable* table = work->field_0x0;
-    lbl_eu_80665940 = (u32)table;
-    lbl_eu_8066594C = arg4;
+                             CColiHx* arg4) {
+    CColiTable* table = colitable(work);
+    g_coliSpecTable = (u32)table;
+    g_coliHalfExtent = arg4;
 
     // Pass 1: accumulate the total byte size of all entries.
     s32 total = 0;
@@ -118,11 +126,11 @@ extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** o
         u16 type = e->field_0x0;
         u16 flags = e->field_0x2;
         // Advance to the next entry first (chained by C0[type]+16).
-        e = (CColiEntry*)((u8*)e + lbl_eu_8056F3C0[type] + 16);
+        e = (CColiEntry*)((u8*)e + ColiSpecEntryStep[type] + 16);
         if ((flags & 2) && type != 8) {
-            total += 2 * lbl_eu_8056F3D4[type] + 0xc0;
+            total += 2 * ColiSpecEntrySize[type] + 0xc0;
         } else {
-            total += lbl_eu_8056F3D4[type];
+            total += ColiSpecEntrySize[type];
         }
     }
 
@@ -135,8 +143,8 @@ extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** o
     // Pass 2: dispatch each entry's handler and pack its data into buf.
     u32 cntBit0 = 0;
     u32 offset = 0;
-    CColiEntry* q = (CColiEntry*)((u8*)work->field_0x0 + table->field_0x8);
-    lbl_eu_80665950 = -1;
+    CColiEntry* q = (CColiEntry*)((u8*)colitable(work) + table->field_0x8);
+    g_coliNodeIndex = -1;
     for (u32 i = 0; i < table->field_0xC; i++) {
         if (q->field_0x2 & 1) {
             cntBit0++;
@@ -146,65 +154,36 @@ extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** o
         }
         if ((q->field_0x2 & 2) && q->field_0x0 != 8) {
             u8* dst = buf + offset;
-            lbl_eu_8056F3FC[q->field_0x0](
-                dst, (u32)work->field_0x0 + q->field_0x4, work->field_0x4,
+            ColiSpecDataHandlers[q->field_0x0](
+                dst, (u32)colitable(work) + q->field_0x4, work->field_0x4,
                 &q->field_0x10);
-            memcpy(dst + (s32)lbl_eu_8056F3D4[q->field_0x0], dst,
-                   (size_t)lbl_eu_8056F3D4[q->field_0x0]);
-            offset += 2 * lbl_eu_8056F3D4[q->field_0x0] + 0xc0;
+            memcpy(dst + (s32)ColiSpecEntrySize[q->field_0x0], dst,
+                   (size_t)ColiSpecEntrySize[q->field_0x0]);
+            offset += 2 * ColiSpecEntrySize[q->field_0x0] + 0xc0;
         } else {
             u8* dst = buf + offset;
-            lbl_eu_8056F3FC[q->field_0x0](
-                dst, (u32)work->field_0x0 + q->field_0x4, work->field_0x4,
+            ColiSpecDataHandlers[q->field_0x0](
+                dst, (u32)colitable(work) + q->field_0x4, work->field_0x4,
                 &q->field_0x10);
-            offset += lbl_eu_8056F3D4[q->field_0x0];
+            offset += ColiSpecEntrySize[q->field_0x0];
         }
-        q = (CColiEntry*)((u8*)q + lbl_eu_8056F3C0[q->field_0x0] + 16);
+        q = (CColiEntry*)((u8*)q + ColiSpecEntryStep[q->field_0x0] + 16);
     }
 
     *outBuf = buf;
-    if (lbl_eu_80665950 == -1) {
+    if (g_coliNodeIndex == -1) {
         return 0;
     }
     s32 sign = -(s32)cntBit0 | (s32)cntBit0;
-    *outIndex = lbl_eu_80665950;
+    *outIndex = g_coliNodeIndex;
     return (sign >> 31) + 2;
 }
 
-extern "C" void ColiProc_RefreshAxes(){}
-// Prepare the shared CColiProc instance against a work object, pass it to the
-// generic position update, then (on success) add the instance's offet vector.
-extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
-                             CColiLinkObj* pLink, s32 flag) {
-    CColiProc* pColi = (CColiProc*)lbl_eu_8065D0E8;
-    f32 zero = lbl_eu_8066AEA8;
+// ---------------------------------------------------------------------------
+// Sweep-link helper shared with the object units (retail ColiLinkSweepRecord,
+// code_804A6C60 unit): records the dispatch class on the object for the entry.
+extern "C" void ColiLinkSweepRecord(CColiObjDispatch* obj, u32 cls, u8* entry);
 
-    pColi->field_0x44 = 0;
-    pColi->field_0x38.x = zero;
-    pColi->field_0x38.y = zero;
-    pColi->field_0x38.z = zero;
-    pColi->field_0x48 = pLink;
-
-    if (pColi != 0) {
-        pLink->field_0x3C = pColi;
-    } else {
-        pLink->field_0x3C = (CColiProc*)((u8*)pLink + 4);
-    }
-
-    if (flag != 0) {
-        self->field_0xC |= 1;
-    }
-
-    typedef int (*F2AA4)(CColiProc*, CColiLinkObj*);
-    if (((F2AA4)ColiProc_ProcessSegments)(self, pLink) != 0) {
-        nw4r::math::VEC3* pG =
-            &((CColiProc*)lbl_eu_8065D0E8)->field_0x38;
-        nw4r::math::VEC3Add(pVec, pVec, pG);
-        return 1;
-    }
-    return 0;
-}
-extern "C" void ColiProc_ProcessSegments(){}
 // --- ColiProc_DispatchSpec dependencies ---
 
 // The collision object a spec dispatch runs against: only the two counters it
@@ -220,19 +199,195 @@ struct CColiSpecHead;       // spec table handed to ColiRegisterSubObjects
 struct CColiDispatchTarget; // object the method-table dispatcher runs on
 
 // Per-type dispatch class (s16 pair table, defined with the other coli tables).
-extern s16 lbl_eu_8056F3E8[];
+extern s16 ColiSpecDispatchClass[];
 
 // Per-type spec record sizes: step (next-entry advance), payload size and
 // dispatch class. Accessors keep the offset tables spelled once.
-static inline s32 colistep(u32 type) { return lbl_eu_8056F3C0[type]; }
-static inline s32 colisize(u32 type) { return lbl_eu_8056F3D4[type]; }
-static inline s32 coliclass(u32 type) { return lbl_eu_8056F3E8[type]; }
+static inline s32 colistep(u32 type) { return ColiSpecEntryStep[type]; }
+static inline s32 colisize(u32 type) { return ColiSpecEntrySize[type]; }
+static inline s32 coliclass(u32 type) { return ColiSpecDispatchClass[type]; }
 
 // Sibling helpers (defined in the code_804A6C60 unit).
 extern "C" void ColiRegisterSubObjects(void* unused, CColiSpecHead* spec);
 extern "C" u32 ColiSetDispatchIndex(void* unused, u32 val);
 extern "C" int ColiDispatchByIndex(CColiDispatchTarget* self, u32 val);
 
+// Instance record head at the start of one work-buffer entry
+// CColiHead: signed bone index + flag halfword). The matrix handlers take the
+// record by pointer, so the head and its payload are addressed separately.
+// ---------------------------------------------------------------------------
+struct CColiInstHead {
+    s16 index; //0x0
+    u16 flags; //0x2
+};
+
+// Per-type matrix handlers (retail .data ColiSpecMtxHandlers): fill one
+// instance record from the node's bone/root matrix. The expander family
+// (ColiSpecExpandHandlers) grows a duplicated payload in place.
+typedef void (*CColiMtxFn)(u8* inst, void* mgr, u8* data);
+typedef void (*CColiExpandFn)(u8* inst);
+
+extern CColiMtxFn ColiSpecMtxHandlers[];
+extern CColiExpandFn ColiSpecExpandHandlers[];
+extern "C" void Coli_ShiftMtxHist(CColiInstHead* head, void* dst, void* mgr);
+extern "C" void Coli_CopyBoneMtx(CColiInstHead* head, void* dst, void* mgr);
+
+// Rebuild the axes/matrices of every entry in the work object's table: seed
+// the shared bounds / xform-position / half-extent globals and the node index
+// from the caller's object, then walk the entries. The
+// dual-buffer entries (flag bit 1, i.e. the types that carry a second copy of
+// their payload) duplicate the record, expand the copy and rebuild the matrix
+// pair when the instance head asks for it (bit 0), and only copy the bone
+// matrix otherwise.
+extern "C" void ColiProc_RefreshAxes(CColiWork* work, CColiBounds* bounds,
+                                     CColiQx* q, CColiHx* h, s16 index) {
+    CColiTable* table = colitable(work);
+    CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
+    g_coliBounds = bounds;
+    g_coliXformPos = q;
+    g_coliHalfExtent = h;
+    g_coliNodeIndex = index;
+    g_coliSpecTable = (u32)table;
+    u32 offset = 0;
+    for (u32 i = 0; i < table->field_0xC; i++) {
+        if (e->field_0x0 != 8 && (e->field_0x2 & 2)) {
+            CColiInstHead* p = (CColiInstHead*)((u8*)work->field_0x8 + offset);
+            if (p->flags & 1) {
+                memcpy((u8*)(ColiSpecEntrySize[e->field_0x0] + (u32)p), p,
+                       (size_t)ColiSpecEntrySize[e->field_0x0]);
+                ColiSpecExpandHandlers[e->field_0x0](
+                    (u8*)work->field_0x8 + offset +
+                    ColiSpecEntrySize[e->field_0x0]);
+                ColiSpecMtxHandlers[e->field_0x0](
+                    (u8*)work->field_0x8 + offset, (void*)work->field_0x4,
+                    &e->field_0x10);
+                Coli_ShiftMtxHist(
+                    p,
+                    (u8*)work->field_0x8 + offset +
+                        2 * ColiSpecEntrySize[e->field_0x0],
+                    (void*)work->field_0x4);
+            } else {
+                ColiSpecMtxHandlers[e->field_0x0](
+                    (u8*)work->field_0x8 + offset, (void*)work->field_0x4,
+                    &e->field_0x10);
+                memcpy((u8*)(ColiSpecEntrySize[e->field_0x0] +
+                             (u32)(work->field_0x8 + offset)),
+                       (u8*)work->field_0x8 + offset,
+                       (size_t)ColiSpecEntrySize[e->field_0x0]);
+                Coli_CopyBoneMtx(
+                    p,
+                    (u8*)work->field_0x8 + offset +
+                        2 * ColiSpecEntrySize[e->field_0x0],
+                    (void*)work->field_0x4);
+            }
+            offset += 2 * ColiSpecEntrySize[e->field_0x0] + 0xc0;
+            e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+        } else {
+            ColiSpecMtxHandlers[e->field_0x0](
+                (u8*)work->field_0x8 + offset, (void*)work->field_0x4,
+                &e->field_0x10);
+            offset += ColiSpecEntrySize[e->field_0x0];
+            e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+        }
+    }
+}
+// Prepare the shared CColiProc instance against a work object, pass it to the
+// generic position update, then (on success) add the instance's offet vector.
+extern "C" u32 ColiProc_RunCollideScan(CColiWork* self, nw4r::math::VEC3* pVec,
+                             CColiLinkObj* pLink, s32 flag) {
+    CColiResCall* pColi = &g_coliResCall;
+    f32 zero = lbl_eu_8066AEA8;
+
+    pColi->src = 0;
+    pColi->acc.x = zero;
+    pColi->acc.y = zero;
+    pColi->acc.z = zero;
+    pColi->target = pLink;
+
+    if (pColi != 0) {
+        pLink->field_0x3C = pColi;
+    } else {
+        pLink->field_0x3C = (CColiProc*)((u8*)pLink + 4);
+    }
+
+    if (flag != 0) {
+        self->field_0xC |= 1;
+    }
+
+    typedef int (*F2AA4)(CColiWork*, CColiLinkObj*);
+    if (((F2AA4)ColiProc_ProcessSegments)(self, pLink) != 0) {
+        nw4r::math::VEC3* pG =
+            &g_coliResCall.acc;
+        nw4r::math::VEC3Add(pVec, pVec, pG);
+        return 1;
+    }
+    return 0;
+}
+// Sweep every entry of the work object's table through the object's method
+// table: an entry whose selection bits match the work object's state is
+// skipped (its payload is only reserve space), every other one first links
+// the sweep record for its dispatch class, then runs the object's dispatcher
+// at the running data offset. The dual-buffer entries (flag bit 1) dispatch
+// the duplicated copy first and only fall back to the primary record when
+// that misses; the accumulator makes the walk exhaustive instead of
+// first-hit.
+extern "C" int ColiProc_ProcessSegments(CColiWork* work, CColiObjDispatch* obj) {
+    obj->field_0x210 = 0;
+    obj->field_0x2d4 = 0;
+    CColiTable* table = colitable(work);
+    u32 result = 0;
+    u32 offset = 0;
+    u32 i;
+    CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
+    ColiRegisterSubObjects(obj, (CColiSpecHead*)table);
+    for (i = 0; i < table->field_0xC; i++) {
+        u32 extra = 0;
+        if (e->field_0x0 != 8) {
+            bool sel = false;
+            if (e->field_0x2 & 0x1c) {
+                if (e->field_0x2 & 0x10) {
+                    sel = true;
+                } else if ((work->field_0xC & 1) && (e->field_0x2 & 4)) {
+                    sel = true;
+                } else if ((work->field_0xC & 4) && (e->field_0x2 & 8)) {
+                    sel = true;
+                }
+            }
+            if (sel) {
+                if (e->field_0x2 & 2) {
+                    extra = (u32)colisize(e->field_0x0) + 0xc0;
+                }
+                offset += (u32)colisize(e->field_0x0) + extra;
+                e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+                continue;
+            }
+            ColiLinkSweepRecord(obj, (u32)coliclass(e->field_0x0), (u8*)e);
+            if (e->field_0x2 & 2) {
+                if (work->field_0xC & 2) {
+                    g_coliResCall.src = (CColiMtxSrc*)(
+                        work->field_0x8 + offset +
+                        2 * (u32)colisize(e->field_0x0));
+                    if (ColiDispatchByIndex(
+                            (CColiDispatchTarget*)obj,
+                            work->field_0x8 + offset +
+                                (u32)colisize(e->field_0x0)) != 0) {
+                        result |= 1;
+                        offset += 2 * (u32)colisize(e->field_0x0) + 0xc0;
+                        e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+                        continue;
+                    }
+                }
+                extra = (u32)colisize(e->field_0x0) + 0xc0;
+            }
+            g_coliResCall.src = (CColiMtxSrc*)0;
+            result |= (u32)ColiDispatchByIndex((CColiDispatchTarget*)obj,
+                                               work->field_0x8 + offset);
+        }
+        offset += (u32)colisize(e->field_0x0) + extra;
+        e = (CColiEntry*)(colistep(e->field_0x0) + (u32)e + 16);
+    }
+    return result != 0;
+}
 // Same spec walk as ColiProc_DispatchSpec, but the *matched* entries are the
 // ones the walk passes over: an entry is skipped when its +0x2 bits 2-3
 // intersect the work object's selection state (+0xC bit 0 against entry bit 2,
@@ -240,7 +395,7 @@ extern "C" int ColiDispatchByIndex(CColiDispatchTarget* self, u32 val);
 extern "C" int ColiProc_CheckEntries(CColiWork* work, CColiObjDispatch* obj) {
     obj->field_0x210 = 0;
     obj->field_0x2d4 = 0;
-    CColiTable* table = work->field_0x0;
+    CColiTable* table = colitable(work);
     CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
     ColiRegisterSubObjects(obj, (CColiSpecHead*)table);
     u32 offset = 0;
@@ -281,13 +436,13 @@ extern "C" int ColiProc_CheckEntries(CColiWork* work, CColiObjDispatch* obj) {
 
 // Walk the work object's spec table and hand every entry whose +0x2 flags
 // carry bit 4 to the object's method table: the entry type selects the
-// dispatch class (lbl_eu_8056F3E8) and the running data offset is the
+// dispatch class (ColiSpecDispatchClass) and the running data offset is the
 // dispatch key. Returns 1 as soon as a handler reports a hit.
 extern "C" int ColiProc_DispatchSpec(CColiWork* work,
                                      CColiObjDispatch* obj) {
     obj->field_0x210 = 0;
     obj->field_0x2d4 = 0;
-    CColiTable* table = work->field_0x0;
+    CColiTable* table = colitable(work);
     CColiEntry* e = (CColiEntry*)((u8*)table + table->field_0x8);
     ColiRegisterSubObjects(obj, (CColiSpecHead*)table);
     u32 offset = 0;
@@ -317,21 +472,53 @@ extern "C" int ColiProc_DispatchSpec(CColiWork* work,
     return 0;
 }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// CColiProc's ctor lives in its own unit (libs/monolib/src/coli/CColiProcBase.cpp,
+// retail .text 0x804B66D4-0x804B66EC) so this unit's generated static
+// initializer keeps calling it out of line, as retail does.
 
-// Static initializer for the global CColiProc instance: default-construct it,
-// then install the alternate default target-data pointer into field_0x0.
-void sinit_804B2FB4() {
-    typedef void (*CtorFn)(CColiProc*);
-    // Called through a cast so MWCC emits an out-of-line call to the retail
-    // ctor symbol instead of inlining the same-TU body.
-    ((CtorFn)__ct__CColiProc)((CColiProc*)lbl_eu_8065D0E8);
-    ((CColiProc*)lbl_eu_8065D0E8)->field_0x0 = (CColiProcTarget*)__vt__12CColiResCall;
-}
+// ---------------------------------------------------------------------------
+// CColiResCall's virtual slot 0 (retail ColiMoverUpdate, the first function of
+// the unit that follows this one in retail .text): move the tracked position
+// through the two bone matrices, fold the delta into the accumulated offset,
+// then add the linear offset component. Both stages notify the target object.
+// ---------------------------------------------------------------------------
+extern "C" void ColiTranslatePoints(void* self);
+struct CColiMtxSrc {
+    Mtx mtx0;       //0x0
+    char pad[0x60]; //0x30
+    Mtx mtx1;       //0x90
+};
 
-// Defined after sinit so the static-init call stays an out-of-line call
-// rather than being inlined by MWCC.
-extern "C" void __ct__CColiProc(CColiProc* self) {
-    self->field_0x0 = (CColiProcTarget*)__vt__9CColiProc;
-    self->field_0x4 = 0;
-}
+// CColiResCall's virtual slot 0 (retail ColiMoverUpdate): the object itself,
+// reached through the CColiProc members pos (+0x0C) / off (+0x24) and the
+// CColiResCall members acc (+0x38) / src (+0x44) / target (+0x48).
+void CColiResCall::Update() {
+    CColiResCall* self = this;
+    // Null-check the matrix source first; the vertical-offset gate only
+    // evaluates when a source exists (short-circuit, matching retail's
+    // early beq to the shared tail).
+    if (self->src != NULL) {
+        // Retail compares against the shared 0.0f pool entry (@sda21 reloc to
+        // lbl_eu_8066AEA8), not a TU-local literal.
+        if (self->off.y > lbl_eu_8066AEA8) {
+            Vec tmp;
+            Vec* pos = (Vec*)&self->pos;
+            PSMTXMultVec((const f32 (*)[4])self->src->mtx1, pos, (Vec*)&tmp);
+            PSMTXMultVec((const f32 (*)[4])self->src->mtx0, (Vec*)&tmp,
+                         (Vec*)&tmp);
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp,
+                                (nw4r::math::VEC3*)&tmp,
+                                (nw4r::math::VEC3*)&self->pos);
+            nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
+                                (nw4r::math::VEC3*)&self->acc,
+                                (nw4r::math::VEC3*)&tmp);
+            ColiTranslatePoints(self->target);
+        }
+    }
+
+    // Tail: acc += off, then notify the target object.
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
+                        (nw4r::math::VEC3*)&self->acc,
+                        (nw4r::math::VEC3*)&self->off);
+    ColiTranslatePoints(self->target)
+;}

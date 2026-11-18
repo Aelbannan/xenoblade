@@ -1,8 +1,11 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuSelectShop.
-// The retail select-shop menu object is laid out as a plain struct with the
-// IUIWindow region inline; its ctor/dtor and member hooks are emitted under the
-// retail symbol names.
+// kyoshin/menu/CMenuSelectShop - select-shop menu screen.
+//
+// Real MI class (IUIWindow + IWorkEvent + IScnRender, see the header): the
+// composite vtable __vt__15CMenuSelectShop, its 0x40 base list, the weak RTTI
+// record and the "CMenuSelectShop" type-name string are all compiler output,
+// matching retail's .data 0x100 / .rodata 0x20 / .sdata 8 byte for byte.
 
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
 #include "kyoshin/CTaskGame.hpp"
 
@@ -29,17 +32,15 @@
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on
+#pragma auto_inline off
 extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
                                           void* a3) {
     if (lbl_eu_806642E8 != 0)
         return 0;
 
-    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
     CMenuSelectShop* obj =
-        (CMenuSelectShop*)mtl::MemManager::allocate(0xd4, workMem);
-    if (obj != 0) {
-        obj = __ct__CMenuSelectShop(obj, a2, a3);
-    }
+        new (mtl::MemManager::allocate(0xd4, CWorkThreadSystem::getWorkMem()))
+            CMenuSelectShop(a2, a3);
     lbl_eu_806642E8 = (u32)obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
     return (CMenuSelectShop*)lbl_eu_806642E8;
@@ -48,72 +49,21 @@ extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop ctor (us-8018b39c)
-// CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks +
-// scalar defaults), then the composite vtable / OC / render slots, the
-// embedded subobjects and scalar state. `scene` goes to mScene, `a3` to
-// mFieldD0. Written in the CMenuShopBuy ctor shape: direct two-stage vtable
-// stores (no cached composite-vtable local) so MWCC allocates the retail
-// r28-r30 callee-save set and emits the lwzu/lwz ptmf load pair.
-// optimize_for_size merges the r28-r31 callee-save set into retail stmw r28.
-// __declspec(noinline) keeps -inline auto from inlining it into the factory
-// (optimize_for_size flips MWCC's inline decision; auto_inline off does not
-// override it).
+// Merges the two pre-conversion workarounds that retail's byte shape needs:
+// optimize_for_size merges the r28-r31 callee-save set into retail's
+// `stmw r28,16(sp)` (otherwise MWCC emits four individual stw), and
+// __declspec(noinline) keeps -ipa from inlining the ctor into
+// ShopSel_CreateSingleton (retail keeps it out of line at 0x8018b39c and the
+// factory is a 0x7C `bl __ct__...`).
 // ---------------------------------------------------------------------------
 #pragma push
+#pragma auto_inline off
 #pragma optimize_for_size on
-
-extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
-                                                  void* scene, void* a3) {
-    __ct__8CProcessFv(self);
-
-    // Temp (CProcess) vtable.
-    self->mVtab = (u32)lbl_eu_8052D238;
-
-    // Null-ptmf slot groups: update-form first load (*n++) materializes the
-    // __ptmf_null base once (retail lwzu); each group stores its second slot
-    // first. The sub-table addresses are computed between the loads so MWCC
-    // keeps them live across the stores (retail addi pair); they are stored
-    // late with the composite vtable (CMenuQuestLog shape).
-    u32* n = __ptmf_null;
-    u32 a0 = *n++;
-    u32 occ6c = (u32)lbl_eu_80532550 + 0x24;
-    u32 a1 = n[0];
-    self->mPtmfThis0 = a1;
-    u32 occ70 = (u32)lbl_eu_80532550 + 0xAC;
-    self->mPtmfFunc0 = a0;
-    u32 a2 = n[1];
-    self->mPtmfDelta0 = a2;
-
-    a0 = n[-1];
-    a1 = n[0];
-    self->mPtmfThis1 = a1;
-    self->mPtmfFunc1 = a0;
-    a2 = n[1];
-    self->mPtmfDelta1 = a2;
-    self->mLayout = 0;
-    self->mField58 = 0;
-    self->mField5C = 0;
-    self->mField60 = -1;
-    self->mField64 = 0;
-    self->mField65 = 0;
-    self->mField66 = 0;
-    self->mField67 = 1;
-    self->mField68 = 0;
-
-    // Derived-class overrides: composite vtable + interface sub-tables.
-    self->mVtab = (u32)lbl_eu_80532550;
-    self->mOcc6C = occ6c;
-    self->mOcc70 = occ70;
-    self->mScene = (CScn*)scene;
-
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    __ct__11CSelShopWinFv(&self->mSelShop);
-    __ct__CCur18(&self->mCursor, 0);
-
-    self->mState = 0;
-    self->mSelIndex = 0;
-    self->mFieldD0 = (u32)a3;
-    return self;
+__declspec(noinline) CMenuSelectShop::CMenuSelectShop(void* scene, void* a3)
+    : mScene((CScn*)scene), mMemRegion(), mSelShop(), mCursor(0) {
+    mState = 0;
+    mSelIndex = 0;
+    mFieldD0 = (u32)a3;
 }
 #pragma pop
 
@@ -127,18 +77,7 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on
-extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int flags) {
-    if (self != 0) {
-        __dt__6CCur18Fv(&self->mCursor, -1);
-        __dt__11CSelShopWinFv(&self->mSelShop, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
-        __dt__9IUIWindowFv(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CMenuSelectShop::~CMenuSelectShop() {}
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -149,7 +88,7 @@ extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int
 // ---------------------------------------------------------------------------
 void CMenuSelectShop::Init() {
     mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
-                            (const char*)lbl_eu_80503AE0, 0);
+                            "CMenuSelectShop", 0);
 
     // RAII scratch-region guard, destroyed at the end of this scope (retail
     // stack slot sp+0x8).
@@ -182,9 +121,7 @@ void CMenuSelectShop::Init() {
 
     playUISound(0x29);
 
-    void* render = this;
-    if (this) render = &mOcc70;
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, render, 0xd, 0);
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 0xd, 0);
 
     mMemRegion.validateHeap();
 }
@@ -199,9 +136,7 @@ void CMenuSelectShop::Init() {
 void CMenuSelectShop::Term() {
     CDeviceVI::waitForDrawDone();
 
-    void* render = this;
-    if (this) render = &mOcc70;
-    removeRenderCB__4CScnFP10IScnRender(mScene, render);
+    removeRenderCB__4CScnFP10IScnRender(mScene, this);
 
     teardownShopWin(&mSelShop);
     mCursor.cleanup();
@@ -383,7 +318,6 @@ extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
 // embedded shop window and (when a selection is present) the cursor through a
 // stack DrawInfo.
 // ---------------------------------------------------------------------------
-extern "C" void cbRenderBefore__15CMenuSelectShopFv(void*);
 void CMenuSelectShop::cbRenderBefore() {
     // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
@@ -400,16 +334,6 @@ void CMenuSelectShop::cbRenderBefore() {
 
 extern "C" u32 ShopSel_GetSingleton() { return (u32)lbl_eu_806642E8; }
 
-// OC/render subobject this-adjusting thunks (not match targets). The IScnRender
-// subobject sits at +0x70, the IWorkEvent/OC subobject at +0x6C.
-void ShopSel_ThunkDtor6C(void* sub) {
-    ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x6c);
-}
-
-void ShopSel_ThunkRender70(void* sub) {
-    ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)sub - 0x70);
-}
-
-extern "C" void ShopSel_ThunkDtor70(void* sub) {
-    ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x70);
-}
+// .sbss singleton; retail's slice is 8 bytes (pad word keeps the size).
+u32 lbl_eu_806642E8 = 0;
+u32 selectShop_sbss_padEC = 0;

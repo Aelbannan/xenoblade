@@ -1,6 +1,10 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuQstCnt
-// Replace stubs with high-level C/C++ during decomp.
+// kyoshin/menu/CMenuQstCnt - quest-status menu screen.
+//
+// Real MI class (IUIWindow + IWorkEvent + IScnRender, see the header): the
+// composite vtable __vt__11CMenuQstCnt, its 0x40 base list, the weak RTTI
+// record and the "CMenuQstCnt" type-name string are compiler output.
 
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -36,7 +40,6 @@ extern "C" {
 void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src);
 QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src);
-void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 int QstCnt_HasInstance_6B94();
 void invalidateQstFlag();
@@ -68,57 +71,30 @@ void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned ch
 }
 #pragma pop
 
-// Constructor (unmangled retail symbol). Runs CProcess's ctor then fills the
-// IUIWindow base region by hand (the IUIWindow base ctor is out-of-line in
-// retail, so its effects are emitted inline at the head of this ctor).
-void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
-    __ct__8CProcessFv(self);
-
-    self->mVtab = (u32)lbl_eu_8052D238;
-    u32* ptmf = __ptmf_null;
-    self->mPtmfFunc0 = ptmf[0];
-    self->mPtmfThis0 = ptmf[1];
-    self->mPtmfDelta0 = ptmf[2];
-    self->mPtmfFunc1 = ptmf[0];
-    self->mPtmfThis1 = ptmf[1];
-    self->mPtmfDelta1 = ptmf[2];
-    self->mLayout = 0;
-    self->mField58 = 0;
-    self->mField5C = 0;
-    self->mField60 = -1;
-    self->mField64 = 0;
-    self->mField65 = 0;
-    self->mField66 = 0;
-    self->mField67 = 1;
-    self->mField68 = 0;
-
-    self->mVtab = (u32)lbl_eu_80536128;
-    self->mOcc6C = (u32)lbl_eu_80536128 + 0x24;
-    self->mOcc70 = (u32)lbl_eu_80536128 + 0xAC;
-    self->mScene = scene;
-
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion[0]);
-
-    self->mAnim88 = 0;
-    self->mState8C = 0;
-    self->mValue90 = lbl_eu_80668568;
-
+// ---------------------------------------------------------------------------
+// CMenuQstCnt (retail 0x802280F8): CProcess base ctor, then the inlined
+// CTTask<IUIWindow>/IUIWindow ctor bodies (base vptr + null ptmf hooks +
+// layout/state members), the composite + sub-vptrs, the embedded MEM2 region,
+// the 32-entry page table and the selected entry.
+// ---------------------------------------------------------------------------
+CMenuQstCnt::CMenuQstCnt(CScn* scene, short a, short b, u8 c, u8 d, u8 e)
+    : mScene(scene), mMemRegion(), mAnim88(0), mState8C(0), mValue90(0.0f),
+      mField19C(0) {
     u8 i;
     for (i = 0; i < 32; i++) {
-        setQstEntry(&self->mEntries[i], 0, 0, 0, 0, 0);
+        setQstEntry(&mEntries[i], 0, 0, 0, 0, 0);
     }
-    setQstEntry(&self->mSelEntry, 0, 0, 0, 0, 0);
-    self->mField19C = 0;
+    setQstEntry(&mSelEntry, 0, 0, 0, 0, 0);
 
     for (i = 0; i < 32; i++) {
         QstEntry tmp;
         setQstEntry(&tmp, 0, 0, 0, 0, 0);
-        copyQstEntry(&self->mEntries[i], &tmp);
+        copyQstEntry(&mEntries[i], &tmp);
     }
     {
         QstEntry tmp;
         setQstEntry(&tmp, a, b, c, d, e);
-        copyQstEntry(&self->mSelEntry, &tmp);
+        copyQstEntry(&mSelEntry, &tmp);
     }
 }
 
@@ -143,18 +119,15 @@ QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src) {
 }
 #pragma pop
 
+// ---------------------------------------------------------------------------
+// CMenuQstCnt::~CMenuQstCnt (retail 0x80228254): the IWorkEvent/IScnRender
+// dtors are inline, the IUIWindow base dtor is out of line (retail
+// `bl __dt__9IUIWindowFv`), the MEM2 region runs its member dtor, then the
+// deleting path calls operator delete.
+// ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on
-extern "C" CMenuQstCnt* __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
-    if (self != 0) {
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion[0], -1);
-        __dt__9IUIWindowFv(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CMenuQstCnt::~CMenuQstCnt() {}
 #pragma pop
 
 // C++-linkage retail symbol (getPackedFont__Fv): returns a u32 message/flag
@@ -168,16 +141,14 @@ void CMenuQstCnt::Init() {
 #pragma optimize_for_size on
 #pragma dont_inline on
     // Set up the scoped MEM2 region guard, then build the layout/animations.
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)
-        ->createRegion((int)mtl::MemManager::getHandleMEM2(), 0x4000,
-                       (const char*)lbl_eu_80509A10, 0);
-    Class_8045F858 regionGuard(
-        reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
+    mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x4000,
+                            "CMenuQstCnt", 0);
+    Class_8045F858 regionGuard(&mMemRegion);
 
     buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80509A10[0xc]);
+                "mf70_cf60_qst_cunt.brlyt");
     bindLayoutAnimTransform(mLayout, &mAnim88, CUICfManager_getArcResourceAccessor(),
-                  (char*)&lbl_eu_80509A10[0x25]);
+                            "mf70_cf60_qst_cunt_in.brlan");
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -187,56 +158,45 @@ void CMenuQstCnt::Init() {
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontResult);
 
     // First three text fields are filled straight from the message table.
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], (u32)getPackedFont());
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x4d], (u32)getPackedFont());
-    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x59], (u32)getPackedFont());
+    setLayoutTextBoxFont(mLayout, "txt_value00", (u32)getPackedFont());
+    setLayoutTextBoxFont(mLayout, "txt_value01", (u32)getPackedFont());
+    setLayoutTextBoxFont(mLayout, "txt_para00", (u32)getPackedFont());
 
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x64], &lbl_eu_80509A10[0x73], 0);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x74], &lbl_eu_80509A10[0x73], 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_questtitle", "", 0);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_en", "", 0);
 
     // Helper returns formatted text for the two quest-log fields (the first,
     // 12-entry form, is computed and discarded); the remaining field uses it.
-    BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x8a], &lbl_eu_80509A10[0x73], 0);
+    BdatTouchStringCell("MNU_quest", "name", 12);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_num", "", 0);
 
-    char* text =
-        (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 11);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80509A10[0x59], text, 0);
+    char* text = (char*)BdatTouchStringCell("MNU_quest", "name", 11);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_para00", text, 0);
 
     // Start the open animation from frame 0 and tick it once.
     mLayout->SetAnimationEnable(mAnim88, true);
-    mAnim88->SetFrame(lbl_eu_80668568);
+    mAnim88->SetFrame(0.0f);
     mLayout->Animate(0);
 
     mField67 = 0;
     this->RefreshDisplay();
 
-    // Retail guards a dead null-check on this before picking the +0x70
-    // IScnRender subobject (same shape as Term()).
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>(&this->mOcc70);
-    }
-    mScene->addRenderCB(cb, 0xa, 0);
+    mScene->addRenderCB(this, 0xa, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->validateHeap();
+    mMemRegion.validateHeap();
     mField19C = 1;
 }
 #pragma pop
 
 void CMenuQstCnt::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>(&this->mOcc70);
-    }
-    mScene->removeRenderCB(cb);
+    mScene->removeRenderCB(this);
     if (mLayout) {
         // Deleting-dtor dispatch: virtual ~Layout at vtable slot +8 (flag 1).
         delete mLayout;
         mLayout = 0;
     }
-    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
+    mMemRegion.deleteRegion();
     lbl_eu_80664720 = 0;
 }
 
@@ -354,11 +314,9 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b,
         }
         return 0;
     }
-    u32 mem = getWorkMem__17CWorkThreadSystemFv();
-    CMenuQstCnt* obj = (CMenuQstCnt*)allocate__Q23mtl10MemManagerFUlUl(0x1A0, mem);
-    if (obj) {
-        __ct__CMenuQstCnt(obj, scene, a, b, c, d, e);
-    }
+    CMenuQstCnt* obj =
+        new (mtl::MemManager::allocate(0x1A0, CWorkThreadSystem::getWorkMem()))
+            CMenuQstCnt(scene, a, b, c, d, e);
     lbl_eu_80664720 = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
     return lbl_eu_80664720;
@@ -455,22 +413,22 @@ void CMenuQstCnt::RefreshDisplay() {
         this->mSelEntry.f4 = this->mSelEntry.f5;
     }
     u32 v = SearchThresholdIdx(this->mSelEntry.f0);
-    char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], this->mSelEntry.f0);
-    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x64], s, 0);
+    char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], "title", this->mSelEntry.f0);
+    LayoutSetTextBoxFmtValue(this->mLayout, "txt_questtitle", s, 0);
     if (this->mSelEntry.f6 == 0) {
-        s = BdatGetPtrDirect(lbl_eu_80664094, &lbl_eu_80509A10[0x85], this->mSelEntry.f2);
+        s = BdatGetPtrDirect(lbl_eu_80664094, "name", this->mSelEntry.f2);
     } else {
         s = BuildItemNameStr(this->mSelEntry.f2);
     }
-    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x74], s, 0);
+    LayoutSetTextBoxFmtValue(this->mLayout, "txt_en", s, 0);
     if (this->mSelEntry.f6 == 0) {
-        s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
+        s = (char*)BdatTouchStringCell("MNU_quest", "name", 12);
     } else {
-        s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
+        s = (char*)BdatTouchStringCell("MNU_quest", "name", 13);
     }
-    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
-    setLayoutTextBoxNumber(this->mLayout, &lbl_eu_80509A10[0x41], this->mSelEntry.f4);
-    setLayoutTextBoxNumber(this->mLayout, &lbl_eu_80509A10[0x4d], this->mSelEntry.f5);
+    LayoutSetTextBoxFmtValue(this->mLayout, "txt_num", s, 0);
+    setLayoutTextBoxNumber(this->mLayout, "txt_value00", this->mSelEntry.f4);
+    setLayoutTextBoxNumber(this->mLayout, "txt_value01", this->mSelEntry.f5);
 }
 
 QstData::QstData() {
@@ -631,21 +589,3 @@ u16 QstData::FindIndex(u16 id) {
     return 0;
 }
 
-// --- IScnRender vtable this-adjusting thunks ---
-// The IScnRender subobject sits at +0x70 within CMenuQstCnt; vtable dispatch
-// through that subobject passes 'this' pointing at +0x70, so each thunk
-// subtracts it back and tail-calls the real implementation.
-// Retail: subi r3, r3, 0x70; b cbRenderBefore__11CMenuQstCntFv
-void renderQstBase_70(CMenuQstCnt* sub) {
-    reinterpret_cast<CMenuQstCnt*>(reinterpret_cast<char*>(sub) - 0x70)->cbRenderBefore();
-}
-
-// Retail: subi r3, r3, 0x6c; b __dt__11CMenuQstCntFv
-void dtorQstBase_6C(u8* sub) {
-    ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x6C);
-}
-
-// Retail: subi r3, r3, 0x70; b __dt__11CMenuQstCntFv
-void dtorQstBase_70(u8* sub) {
-    ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x70);
-}

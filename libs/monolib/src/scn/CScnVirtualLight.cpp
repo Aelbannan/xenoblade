@@ -565,7 +565,7 @@ __declspec(noinline) CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self
 // Sibling of scnVlApplyDir6C over the +0x4C reslist: applies `value`/`src` to
 // every armed dir light, then stores the scaled vec4 into the +0x8C blend
 // target and copies that into the +0xAC blend-current field.
-void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
+extern "C" void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
     ml::CVec4 v18;                  // sp+0x18
     CScnVirtualLightNode* it;       // sp+0x14
     CScnVirtualLightNode* itTmp;    // sp+0x10
@@ -608,7 +608,7 @@ __declspec(noinline) s32 scnVlIterNe(const u32* a, const u32* b) {
 // iteration (scnVlCopyValue + copy), advance scnVlIterNext, deref scnVlIterItem.
 // The item is re-dereferenced at every use (retail calls scnVlIterItem three
 // times; MWCC cannot CSE the call across the other calls).
-void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
+extern "C" void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
     ml::CVec4 v18;                  // sp+0x18
     CScnVirtualLightNode* it;       // sp+0x14
     CScnVirtualLightNode* itTmp;    // sp+0x10
@@ -636,7 +636,7 @@ void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
 // env's per-slot CLight banks (mSlotPtrs/mSlotCounts/mSlotFields). The local
 // declaration order mirrors the retail stack layout (slot banks at sp+0x68..
 // sp+0x38, then the four reslist-walk value/copy/end triples descending).
-void scnVlPushFrame(CScnVirtualLight* self, CLightEnv* env) {
+extern "C" void scnVlPushFrame(CScnVirtualLight* self, CLightEnv* env) {
     u32 slotFields[4];   // env mSlotFields (sp+0x68)
     u32 slotCounts[4];   // env mSlotCounts (sp+0x58)
     u32 slotPtrs[4];     // env mSlotPtrs (sp+0x48)
@@ -848,7 +848,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
     CLight* dst;
     scnVlUpdateShape(data, vec, mode, enabled, f1 + scnVlGetFade((void*)self));
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
-        scnLgtGatherLights(getSubField7C(self->mSub), f1, data, vec);
+        scnLgtGatherLights((CScnEnvLgtCtrl*)getSubField7C(self->mSub), data, (void*)vec, f1);
     } else {
         scnVlInitVec4(&v18);
         CScnVirtualLightData* p = (CScnVirtualLightData*)scnVlPtrVal14(
@@ -1014,7 +1014,7 @@ extern "C" float scnVlGetSpotA(void* self) { return ((CScnVirtualLightData*)self
 // slot whose pointer is null, link it to the record array entry and bump the
 // slot count, returning the handle (retail scnVlAllocSlot). The member
 // re-reads in the success path (mHandles / mCount) mirror the retail loads.
-void* scnVlAllocSlot(CScnVirtualLightPool* self) {
+extern "C" void* scnVlAllocSlot(CScnVirtualLightPool* self) {
     for (int i = 0; i < 128; i++) {
         if (self->mHandles[i] == 0) {
             self->mHandles[i] = &self->mRecords[i];
@@ -1029,7 +1029,7 @@ void* scnVlAllocSlot(CScnVirtualLightPool* self) {
 // (LightCtlSetAttnMode), clear the handle and decrement the slot count, clamped at
 // 0. The mHandles base reload every iteration mirrors the retail aliasing
 // loads around the bl (retail scnVlFreeSlot).
-void scnVlFreeSlot(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
+extern "C" void scnVlFreeSlot(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
     for (int i = 0; i < 128; i++) {
         if (self->mHandles[i] == slot) {
             LightCtlSetAttnMode((u8*)slot, 0);
@@ -1047,7 +1047,7 @@ void scnVlFreeSlot(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
 // bound when `flag` is set, subtract+lower bound otherwise), then blend the
 // two position vec4s (+0x9C scaled by t, +0x8C scaled by 1-t) into +0xAC
 // (retail scnVlBlendStep).
-void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
+extern "C" void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
     if (flag != 0) {
         // Declaration order fixes fpr assignment (lim=f0, step=f1,
         // cur=f2); initializing cur before step puts the member load first
@@ -1093,7 +1093,7 @@ __declspec(noinline) void scnVlVec4Add(f32* a, const f32* b) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static-init for the retail-owned vec4 object lbl_eu_80658648: fills it with
 // (v, v, v, w) from the two sdata2 constants and tail-calls the vec4 setter.
-void sinit_80494300() {
+extern "C" void sinit_80494300() {
     CTaskGame_setVec4(&lbl_eu_80658648, lbl_eu_8066AA14, lbl_eu_8066AA14,
                   lbl_eu_8066AA14, lbl_eu_8066AA18);
 }

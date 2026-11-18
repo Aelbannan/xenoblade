@@ -260,19 +260,14 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
     int curLen = name.nameLen;
 
     // Find the extension; the scan index becomes -1 when the whole name is
-    // scanned without a match. MWCC hoists name.nameLen into a register for
-    // the loop condition and re-reads it after the loop.
+    // scanned without a match. MWCC hoists name.nameLen for the loop and
+    // re-reads it after. The increments live in the for-clause on purpose:
+    // retail bumps only on the "no match" edge and folds the exhausted edge
+    // straight to i = -1 (a `continue` body adds a redundant second compare).
     int c;
-    // Find the extension; the scan index becomes -1 when the whole name is
-    // scanned without a match.
-    while (i < curLen) {
+    for (; i < curLen; i++, pName++) {
         c = strncmp(pName, ext, extLen);
-        if (c != 0) {
-            pName++;
-            i++;
-            continue;
-        }
-        break;
+        if (c == 0) break;
     }
     if (i >= curLen) i = -1;
 
@@ -318,7 +313,7 @@ void CDeviceFileCri::cancelJobsForPath(const char* pPath) {
     }
 }
 
-bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
+void CDeviceFileCri::cancel(CFileHandle* pHandle) {
     // Cancel the first matching DVD-read child whose cancel succeeds
     // (vtable slot 0xA8); stops at the first job that reports success.
     // Retail walks raw nodes (re-reading the singleton's list head in the
@@ -348,7 +343,6 @@ bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
             }
         }
     }
-    return false;
 }
 
 void CDeviceFileCri::abortRead() {

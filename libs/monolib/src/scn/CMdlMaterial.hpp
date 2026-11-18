@@ -12,7 +12,7 @@ extern "C" const char* lbl_eu_80663C30;
  * CMdlMaterial - model material descriptor.
  *
  * Layout derived from constructor (__ct__CMdlMaterial at 0x804E98E0)
- * and vtable at lbl_eu_805700D8 (single virtual: destructor).
+ * and vtable at CMdlMaterialVtable (single virtual: destructor).
  * Size: 0x38 bytes (inferred from spacing before CMdlMouth at 0x1700
  * vs CMdlMaterial at 0x16C8 in CScnItemModelNw4r).
  */

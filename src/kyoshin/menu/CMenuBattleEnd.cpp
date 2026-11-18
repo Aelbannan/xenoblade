@@ -1,6 +1,9 @@
 // Catalog TU for kyoshin/menu/CMenuBattleEnd
 // Battle-end (result) screen task reconstruction.
 
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
 
@@ -12,122 +15,63 @@
 
 #include "kyoshin/menu/CMenuBattleEnd.hpp"
 
-void cbRenderBefore__14CMenuBattleEndFv(void*);
-
 // ---------------------------------------------------------------------------
-// Constructor (unmangled retail symbol). Runs CProcess's ctor then fills the
-// CProcess-style region by hand (vtable, run-time ptmf hooks, state fields)
-// and constructs the embedded MEM2 layout region.
+// CMenuBattleEnd (us-80271800)
+// CProcess base ctor, then the inlined CTTask<IUIWindow>/IUIWindow ctor
+// bodies (base vptr, null ptmf hooks, layout/state members), the composite +
+// sub-vptrs, the embedded MEM2 region and the queue/state fields.
 // ---------------------------------------------------------------------------
-extern "C" CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* self, CScn* scene,
-                                                u8 mode, u32 param) {
-    __ct__8CProcessFv((CProcess*)self);
-
-    self->mVtab = (u32)lbl_eu_8052D238;
-
-    // Post-increment pointer form: MWCC folds the base @l into a single
-    // `lwzu` for the first load and keeps the base register for the rest;
-    // the second triple re-reads the same elements through the folded
-    // negative offsets (retail re-loads ptmf[0..2] after the first stores).
-    const u32* ptmf = __ptmf_null;
-    u32 p0, p1, p2, q0, q1, q2;
-    p0 = *ptmf++;
-    p1 = *ptmf++;
-    self->mPtMf3C[1] = p1;
-    self->mPtMf3C[0] = p0;
-    p2 = *ptmf++;
-    self->mPtMf3C[2] = p2;
-    q0 = ptmf[-3];
-    q1 = ptmf[-2];
-    self->mPtMf48[1] = q1;
-    self->mPtMf48[0] = q0;
-    q2 = ptmf[-1];
-    self->mPtMf48[2] = q2;
-
-    self->mLayout = 0;
-    self->mField58 = 0;
-    self->mField5C = 0;
-    self->mField60 = -1;
-    self->mField64 = 0;
-    self->mField65 = 0;
-    self->mField66 = 0;
-    self->mActive = 1;
-    self->mField68 = 0;
-    // Retail re-stores +0x10 with the dispatch vtable cluster base after the
-    // class vtable (same double-store scheme as CMenuQstCnt); +0x24/+0xac are
-    // the IWorkEvent / IScnRender dispatch slots inside that cluster.
-    self->mVtab = (u32)lbl_eu_80537AB0;
-    self->mWorkEventVt = (u32)lbl_eu_80537AB0 + 0x24;
-    self->mScnRenderVt = (u32)lbl_eu_80537AB0 + 0xac;
-    self->mScene = scene;
-
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion[0]);
-
-    self->mAnim88 = 0;
-    self->mAnim8C = 0;
-    self->mAnim90 = 0;
-    self->mEntries[0].flag = 0;
-    self->mEntries[0].param = 0;
+CMenuBattleEnd::CMenuBattleEnd(CScn* scene, u8 mode, u32 param)
+    : mScene(scene), mMemRegion(), mAnim88(0), mAnim8C(0), mAnim90(0) {
+    mEntries[0].flag = 0;
+    mEntries[0].param = 0;
     // Pointer loop over entries[1..3]: retail computes the trip count from the
     // end/start addresses and guards with a redundant cmplw/bge pair.
-    for (UnkBattleEntry* p = &self->mEntries[1]; p < &self->mEntries[4]; p++) {
+    for (UnkBattleEntry* p = &mEntries[1]; p < &mEntries[4]; p++) {
         p->flag = 0;
         p->param = 0;
     }
 
-    self->mState = 1;
-    self->mMode = mode;
-    self->mParam = param;
+    mState = 1;
+    mMode = mode;
+    mParam = param;
+
     // Retail re-clears the whole queue unrolled after setting the state fields.
-    self->mEntries[0].flag = 0;
-    self->mEntries[0].param = 0;
-    self->mEntries[1].flag = 0;
-    self->mEntries[1].param = 0;
-    self->mEntries[2].flag = 0;
-    self->mEntries[2].param = 0;
-    self->mEntries[3].flag = 0;
-    self->mEntries[3].param = 0;
-    return self;
+    mEntries[0].flag = 0;
+    mEntries[0].param = 0;
+    mEntries[1].flag = 0;
+    mEntries[1].param = 0;
+    mEntries[2].flag = 0;
+    mEntries[2].param = 0;
+    mEntries[3].flag = 0;
+    mEntries[3].param = 0;
 }
 
 // ---------------------------------------------------------------------------
-// Destructor. The CProcess subobject is destroyed OOL (flag 0), the embedded
-// MEM2 region runs its member dtor (flag -1), and the deleting-flag path calls
-// operator delete. The inner re-test of `obj` is required: retail re-emits the
-// compare and branches twice (MWCC keeps one beq per source-level if).
+// CMenuBattleEnd::~CMenuBattleEnd (us-80271950)
+// Complete-object destructor: IUIWindow/CTTask/IWorkEvent/IScnRender dtors are
+// inline (retail calls __dt__8CProcessFv directly), the embedded MEM2 region
+// runs its member dtor, then the deleting-flag path calls operator delete.
 // ---------------------------------------------------------------------------
-extern "C" CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj,
-                                                    int flags) {
-    if (obj != 0) {
-        __dt__17UnkClass_8045F564Fv(&obj->mMemRegion[0], -1);
-        if (obj != 0) {
-            if (obj != 0) {
-                __dt__8CProcessFv(obj, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(obj);
-        }
-    }
-    return obj;
-}
+CMenuBattleEnd::~CMenuBattleEnd() {}
 
 void CMenuBattleEnd::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     nw4r::lyt::ArcResourceAccessor* accessor;
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)
-        ->createRegion((int)handle, 0x4000, lbl_eu_8050E6F8, 0);
-    Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
+    mMemRegion.createRegion((int)handle, 0x4000, "CMenuBattleEnd", 0);
+    Class_8045F858 regionGuard(&mMemRegion);
 
     accessor = CUICfManager_getArcResourceAccessor();
-    buildLayout(&mLayout, accessor, &lbl_eu_8050E6F8[0xf]);
+    buildLayout(&mLayout, accessor, "mf70_cf53_sideinfo.brlyt");
 
     accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform(mLayout, &mAnim88, accessor, (char*)&lbl_eu_8050E6F8[0x28]);
+    bindLayoutAnimTransform(mLayout, &mAnim88, accessor,
+                            "mf70_cf53_sideinfo_battle.brlan");
 
     accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform(mLayout, &mAnim8C, accessor, (char*)&lbl_eu_8050E6F8[0x48]);
+    bindLayoutAnimTransform(mLayout, &mAnim8C, accessor,
+                            "mf70_cf53_sideinfo_renkei.brlan");
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     u32 fontResult = (u32)getPackedFont();
@@ -138,13 +82,13 @@ void CMenuBattleEnd::Init() {
     switch (mMode) {
     case 1:
         mAnim90 = mAnim88;
-        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x68], (u8)mParam);
-        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x74], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, "txt_num_b00", (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, "txt_num_b01", (u8)mParam);
         break;
     case 2:
         mAnim90 = mAnim8C;
-        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x80], (u8)mParam);
-        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x8c], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, "txt_num_r00", (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, "txt_num_r01", (u8)mParam);
         break;
     default:
         break;
@@ -157,31 +101,21 @@ void CMenuBattleEnd::Init() {
         playUISound(0x2c);
     }
 
-    {
-        IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-        if (this != 0) {
-            cb = reinterpret_cast<IScnRender*>(&mScnRenderVt);
-        }
-        addRenderCB__4CScnFP10IScnRenderUlUl(mScene, cb, 0xa, 0);
-    }
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, this, 0xa, 0);
 
-    reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->validateHeap();
+    mMemRegion.validateHeap();
 }
 
 void CMenuBattleEnd::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
-    if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>(&mScnRenderVt);
-    }
-    removeRenderCB__4CScnFP10IScnRender(mScene, cb);
+    removeRenderCB__4CScnFP10IScnRender(mScene, this);
     if (mLayout) {
         // Deleting-dtor dispatch: virtual ~Layout at vtable slot +8 (flag 1).
         delete mLayout;
         mLayout = 0;
     }
     lbl_eu_80664898 = 0;
-    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion);
 }
 
 void CMenuBattleEnd::Move() {
@@ -220,14 +154,9 @@ extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8
         queueBattleEndEntry(lbl_eu_80664898, mode, param);
         return 0;
     }
-    CMenuBattleEnd* obj = (CMenuBattleEnd*)mtl::MemManager::allocate(
-        0xbc, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        // Reassign from the ctor return so obj stays in volatile r3 (retail
-        // never spills it to a callee-saved register; a discarded ctor result
-        // would force a 5th saved register and stmw prologue).
-        obj = __ct__CMenuBattleEnd(obj, scene, mode, param);
-    }
+    CMenuBattleEnd* obj =
+        new (mtl::MemManager::allocate(0xbc, CWorkThreadSystem::getWorkMem()))
+            CMenuBattleEnd(scene, mode, param);
     lbl_eu_80664898 = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
     return lbl_eu_80664898;
@@ -238,11 +167,11 @@ extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8
 // reaches the target, drain the next queued entry (if any) to the screen.
 // ---------------------------------------------------------------------------
 extern "C" void advanceBattleEndQueue(CMenuBattleEnd* obj) {
-    if (advanceAnimTransform(obj->mAnim90, lbl_eu_80668990) == 0) return;
+    if (advanceAnimTransform(obj->mAnim90, 1.0f) == 0) return;
 
     obj->mLayout->Animate(0);
     obj->mLayout->UnbindAnimation(obj->mAnim90);
-    obj->mAnim90->SetFrame(lbl_eu_80668994);
+    obj->mAnim90->SetFrame(0.0f);
     obj->mAnim90 = 0;
     obj->mState = 1;
 
@@ -255,13 +184,13 @@ extern "C" void advanceBattleEndQueue(CMenuBattleEnd* obj) {
         switch (e->flag) {
         case 1:
             obj->mAnim90 = obj->mAnim88;
-            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x68], e->param);
-            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x74], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, "txt_num_b00", e->param);
+            setLayoutTextBoxNumber(obj->mLayout, "txt_num_b01", e->param);
             break;
         case 2:
             obj->mAnim90 = obj->mAnim8C;
-            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x80], e->param);
-            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x8c], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, "txt_num_r00", e->param);
+            setLayoutTextBoxNumber(obj->mLayout, "txt_num_r01", e->param);
             break;
         default:
             break;
@@ -325,8 +254,8 @@ extern "C" void queueBattleEndEntry(CMenuBattleEnd* obj, u8 flag, u32 param) {
     }
 }
 
-extern "C" void fwdBattleEndDtor6C(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x6c); }
-
-extern "C" void fwdBattleEndCbRender70(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuBattleEndFv)((char*)self - 0x70); }
-
-extern "C" void fwdBattleEndDtor70(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x70); }
+// Retail data: __vt__14CMenuBattleEnd (0xC0) + its 0x40 base list, both
+// compiler-emitted from the real class above (the "CMenuBattleEnd" type-name
+// string and the weak __RTTI__14CMenuBattleEnd record come with them).
+CMenuBattleEnd* lbl_eu_80664898 = 0;
+u32 battleEnd_sbss_pad9C = 0; // (retail .sbss is 8B; content ignored by gate)

@@ -92,7 +92,7 @@ extern "C" void ColiQuery_Reset(void* self) { *(u32*)self = 0; }
 // Clamp the query box (a = max corner, b = min corner) to the shared world
 // AABB origin per-axis, then test the squared distance of the clamped point
 // against the query radius stored in lbl_eu_80665960.
-bool ColiTestQueryRadius(const Vec3* a, const Vec3* b) {
+extern "C" bool ColiTestQueryRadius(const Vec3* a, const Vec3* b) {
     Vec3 v = lbl_eu_8065F3F0;
     if (a->x < lbl_eu_8065F3F0.x) v.x = a->x;
     if (a->y < lbl_eu_8065F3F0.y) v.y = a->y;
@@ -119,7 +119,7 @@ struct QueryState {
 // ColiWalkSegTree): shrink the segment [b -> a] toward its midpoint by the
 // sdata2 scale, form D = query-box min corner - shrunken point, then reject
 // if any axis slab test or edge-plane cross test fails.
-bool ColiTestSegBoxEdge(const Vec3* a, const Vec3* b) {
+extern "C" bool ColiTestSegBoxEdge(const Vec3* a, const Vec3* b) {
     QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
     const nw4r::math::VEC3& va = *reinterpret_cast<const nw4r::math::VEC3*>(a);
     const nw4r::math::VEC3& vb = *reinterpret_cast<const nw4r::math::VEC3*>(b);
@@ -152,7 +152,7 @@ bool ColiTestSegBoxEdge(const Vec3* a, const Vec3* b) {
 // the running [min,max] interval (initialized from the sdata2 constants)
 // collapses; axes whose scale equals the epsilon constant fall back to a
 // point-in-range check of the AABB corner.
-bool ColiTestSegSlab(const f32* a, const f32* b) {
+extern "C" bool ColiTestSegSlab(const f32* a, const f32* b) {
     const f32* scale = &lbl_eu_8065F3FC.x;      // r5
     const f32* minCorner = &lbl_eu_8065F3F0.x;  // r6
     f32 s;
@@ -185,7 +185,7 @@ bool ColiTestSegSlab(const f32* a, const f32* b) {
     return true;
 }
 
-bool Coli_PointInSlab(const Vec3* a, const Vec3* b) {
+extern "C" bool Coli_PointInSlab(const Vec3* a, const Vec3* b) {
     if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3F0.x <= a->x &&
         b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3F0.z <= a->z &&
         a->y >= lbl_eu_8065F3F0.y && lbl_eu_80665960 >= b->y) {
@@ -194,7 +194,7 @@ bool Coli_PointInSlab(const Vec3* a, const Vec3* b) {
     return false;
 }
 
-bool Coli_PointInBox(const Vec3* a, const Vec3* b) {
+extern "C" bool Coli_PointInBox(const Vec3* a, const Vec3* b) {
     if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3FC.x <= a->x &&
         b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3FC.z <= a->z &&
         b->y <= lbl_eu_8065F3F0.y && lbl_eu_8065F3FC.y <= a->y) {
@@ -207,7 +207,7 @@ bool Coli_PointInBox(const Vec3* a, const Vec3* b) {
 // into the AABB spanned by the two vertex indices, test the squared distance
 // against the query radius, then descend into the node's children (branch
 // nodes) or iterate its child-triangle range (leaf nodes).
-void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
+extern "C" void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
     // both vertex indices are read before any address math (retail lhz pair)
     const Vec3* vA = &self->verts[tri->field_0x4];
     const Vec3* vB = &self->verts[tri->field_0x6];
@@ -249,7 +249,7 @@ void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
 // the point escapes the box expanded by the extents or fails one of the
 // three edge-plane tests (each compared against the two perpendicular
 // extent axes); otherwise dispatch into children/leaves.
-void ColiWalkSegTree(ColiObj* self, ColiTri* tri) {
+extern "C" void ColiWalkSegTree(ColiObj* self, ColiTri* tri) {
     QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
     const nw4r::math::VEC3* vA =
         reinterpret_cast<const nw4r::math::VEC3*>(&self->verts[tri->field_0x4]);
@@ -518,7 +518,7 @@ extern "C" void ColiQuerySphere(ColiObj* self, const Vec3* src, int idx, f32 rad
 // the per-index scale factor, record the shrunken endpoints as the shared
 // query min/max corners, expand the box extents by |max| + the per-index
 // base, then descend into the segment-vs-tree walker.
-void ColiQuerySegmentSweep(ColiObj* self, const Vec3* a, const Vec3* b, int idx) {
+extern "C" void ColiQuerySegmentSweep(ColiObj* self, const Vec3* a, const Vec3* b, int idx) {
     // paired-single vector kernels (VEC3Add/Sub/Scale) reproduce retail PS ops
     QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
     const nw4r::math::VEC3& va = *reinterpret_cast<const nw4r::math::VEC3*>(a);
@@ -566,7 +566,7 @@ extern "C" void ColiQueryBoxPt(ColiObj* self, const Vec3* src, int idx, f32 radi
 // scales it and offsets by base. All 8 corners are materialized before the
 // shared query AABB (seeded from the sdata2 slab constants) is folded,
 // matching retail's schedule.
-void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* base, f32 s0, f32 s1, f32 s2,
+extern "C" void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* base, f32 s0, f32 s1, f32 s2,
                    int idx) {
     // scale the three signed axis pairs (+X,-X / +Y,-Y / +Z,-Z) once, then
     // enumerate the 8 corners by accumulating one axis from each pair onto
@@ -621,7 +621,7 @@ void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* base, f32 s0
 // secondary BVH rooted at self->tris2. The root level of the walk is written
 // out (retail one-level-inlines ColiWalkBvhSplit); deeper levels recurse
 // through ColiWalkBvhSplit.
-bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
+extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     u32* dstMin = (u32*)&lbl_eu_8065F3F0;
     u32* dstMax = (u32*)&lbl_eu_8065F3FC;
     const u32* sMin = (const u32*)minSrc;
@@ -728,7 +728,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
 
 extern "C" u32 Coli_CheckFlag(u32* self) { return *(u32*)self != 0; }
 
-void Coli_RebiasIndices(int *dest, int offset, int *src) {
+extern "C" void Coli_RebiasIndices(int *dest, int offset, int *src) {
     dest[0] = offset + src[1];
     dest[1] = offset + src[2];
     dest[2] = offset + src[3];

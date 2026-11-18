@@ -475,7 +475,7 @@ extern "C" void Coli_Noop_7AC8(void);
 // Paired-single lowering comes from the inlined nw4r VEC3Sub/VEC3LenSq.
 // Movement gate: first call always records; afterwards only record when the
 // mover moved at least the stored threshold distance.
-void gateMoverMove(CTrackedMover* self) {
+extern "C" void gateMoverMove(CTrackedMover* self) {
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3Sub(&delta, (const nw4r::math::VEC3*)&self->field_0x50,
                         (const nw4r::math::VEC3*)&self->field_0x0C);
@@ -494,7 +494,7 @@ void gateMoverMove(CTrackedMover* self) {
     self->field_0x5C = dist2;
 }
 
-u32 Coli_GetBitTable_5A68(void) {
+extern "C" u32 Coli_GetBitTable_5A68(void) {
     extern u32 lbl_eu_80663AC8;
     return lbl_eu_80663AC8;
 }
@@ -1255,7 +1255,7 @@ extern "C" void Coli_InstallDataPtrs_74F0(ScnResData* self, u8* data) {
 // allocation, allocate count * 0xE0 bytes, then fill each entry from the
 // 0x3C-byte input records (matrix copy, inverse, previous-matrix copies,
 // AABB = translation +/- half-extent).
-void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, int count) {
+extern "C" void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, int count) {
     self->field_0x44 = input;
     self->field_0x78 = count;
     if (count == 0) return;
@@ -1480,7 +1480,7 @@ bool CColiObj2::rayBoxHitTest(const u16* list, int count) {
 }
 
 extern char lbl_eu_8065F1A0[];
-void clrSeenBitTbl(int, int bit_index) {
+extern "C" void clrSeenBitTbl(int, int bit_index) {
     if (bit_index > 0x140) bit_index = 0x140;
     int word_idx = bit_index >> 5;
     int bit_off = bit_index & 0x1F;
@@ -1492,7 +1492,7 @@ void clrSeenBitTbl(int, int bit_index) {
 // setSeenBitTbl - reserve a bit in the shared seen-bit table for the given
 // absolute index, clamping the index up to the first free word boundary
 // (320), and always report success.
-bool setSeenBitTbl(u32* self, int idx) {
+extern "C" bool setSeenBitTbl(u32* self, int idx) {
     if (idx > 320) {
         idx = 320;
     }
@@ -1506,7 +1506,7 @@ bool setSeenBitTbl(u32* self, int idx) {
 // inverse into the previous slots, install the new 48-byte matrix block,
 // recompute the inverse, then expand the AABB to cover the movement between
 // the previous and new translations plus/minus the entry half-extent.
-void updateMoverSt(CColiMoverState* self, int idx, const CColiMtx* data) {
+extern "C" void updateMoverSt(CColiMoverState* self, int idx, const CColiMtx* data) {
     if (self->field_0x78 == 0) return;
     CColiOutEntry* out = (CColiOutEntry*)(self->field_0x60 + idx * 0xE0);
     const CColiInEntry* in = &self->field_0x44[idx];
@@ -1540,7 +1540,7 @@ void updateMoverSt(CColiMoverState* self, int idx, const CColiMtx* data) {
 
 // Coli_ClearOutFlag_8078: when the mover state is active, align the entry's flag word
 // to 4 and store the pooled float constant at +4.
-void Coli_ClearOutFlag_8078(CColiMoverState* self, int idx) {
+extern "C" void Coli_ClearOutFlag_8078(CColiMoverState* self, int idx) {
     if (self->field_0x78 == 0) {
         return;
     }
@@ -1551,7 +1551,7 @@ void Coli_ClearOutFlag_8078(CColiMoverState* self, int idx) {
 
 // Coli_GetOutMatrix_80A4: when the mover state is active (field_0x78), return a
 // pointer to the mover-state entry's matrix at +8 (0xE0 stride); else null.
-void* Coli_GetOutMatrix_80A4(CColiMoverState* self, int idx) {
+extern "C" void* Coli_GetOutMatrix_80A4(CColiMoverState* self, int idx) {
     if (self->field_0x78 != 0) {
         return &reinterpret_cast<CColiOutEntry*>(self->field_0x60)[idx].mtx;
     }
@@ -1560,7 +1560,7 @@ void* Coli_GetOutMatrix_80A4(CColiMoverState* self, int idx) {
 
 // getMoverEntry - find the mover-state input entry whose id word (+0x02)
 // equals idx; returns its index or 0 when none/count is zero.
-int getMoverEntry(CColiMoverState* self, int idx) {
+extern "C" int getMoverEntry(CColiMoverState* self, int idx) {
     if (self->field_0x78 != 0) {
         int n = self->field_0x78;
         const u16* e = (const u16*)self->field_0x44;
@@ -1577,7 +1577,7 @@ int getMoverEntry(CColiMoverState* self, int idx) {
 // ml::CVec3::zero for null axes), then stored as the plane normals at
 // 0x3C/0x48/0x54/0x60/0x6C/0x78 (+/- each axis, flipped by 0x8066AED8) with
 // the plane offsets at 0x84..0x98 computed as (center +/- axis*scale).axis.
-void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
+extern "C" void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const f32 zero = lbl_eu_8066AED0;
     const f32 flip = lbl_eu_8066AED8;
@@ -1650,7 +1650,7 @@ void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scale
 // already set in the seen table or when its AABB overlaps the manager's
 // AABB; otherwise invalidate the seen-bit window, copy the volume's 3x3
 // rotation into the manager's embedded matrix and update the hook pointers.
-u32 regColiVolume(CColiThing* self, CColiVolume* vol, CColiQuery* query, u32 arg6) {
+extern "C" u32 regColiVolume(CColiThing* self, CColiVolume* vol, CColiQuery* query, u32 arg6) {
     u16 flags = query->field_0x02;
     u32* bits = (u32*)&lbl_eu_8065F1A0;
     if (bits[flags >> 5] & (1u << (flags & 0x1F))) return 0;
@@ -1683,7 +1683,7 @@ u32 regColiVolume(CColiThing* self, CColiVolume* vol, CColiQuery* query, u32 arg
 // the default config table's matrix for the query and restores it after, and
 // the per-stage matrix configuration is read from the low block of the
 // default table.  Same GQR5 fast-cast wall as beginColiPass.
-void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
+extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     mgr->field_0x00 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x18 = *(const nw4r::math::_VEC3*)offset;
@@ -2267,7 +2267,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
 // accepted volume to the query helper.  The GQR5 fast-cast setup (scale 14)
 // around the pass is a known wall: no high-level C emits the orphaned
 // mtspr writes, so the prologue/epilogue cannot be byte-matched.
-void beginColiPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
+extern "C" void beginColiPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     mgr->field_0x00 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x18 = *(const nw4r::math::_VEC3*)offset;
@@ -2375,7 +2375,7 @@ void beginColiPass(CColiMoverState* state, const Vec* offset, u32 flags, int mod
 // centre is carried into volume space and the BVH descent (ColiQueryOrientBox)
 // runs with per-axis extrusion scales.  ctx is parked in the manager context
 // slot (+0xA0) and gates the early-out checks.
-void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, u32 flagsA,
+extern "C" void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, u32 flagsA,
                    u32 flagsB, f32 sx, f32 sy, f32 sz) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const u32* tbl = lbl_eu_8056F508;
@@ -2509,7 +2509,7 @@ void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, u32 flagsA,
 // direction vector (0x0C) from the delta `b - a`, zero the word window just
 // below the shared bit-table (its base is stored in lbl_eu_80663ACC), then
 // delegate to ColiQueryBoxBvh.
-void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
+extern "C" void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
     lbl_eu_8065F1C8.field_0x00 = *(const nw4r::math::_VEC3*)a;
     nw4r::math::VEC3 tmp;
     nw4r::math::VEC3Sub(&tmp, (const nw4r::math::VEC3*)b, (const nw4r::math::VEC3*)a);
@@ -2530,7 +2530,7 @@ void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
 // registered anything, the last entry's displacement (src - scene-resource
 // header, in its own matrix space) is written to `dst` and, when `angle` is
 // non-null, the heading computed from the saved/current matrix Z columns.
-u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
+extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
                   u32 flagsA, u32 flagsB, f32 yOff, f32 yRange) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     if (Coli_CheckFlag(self) == 0) return 0;
@@ -2673,7 +2673,7 @@ extern "C" u32 Coli_IsSlotActive_ADA0(u8* self) { return ((CColiMoverState*)self
 // Static initializer for the scene-resource object (lbl_eu_8065F32C): reset
 // the collision mover state, clear the element-array pointer, re-run the
 // state init, and register the object for exit-time destruction.
-void sinit_804BADB4() {
+extern "C" void sinit_804BADB4() {
     CColiMoverState* obj = (CColiMoverState*)&lbl_eu_8065F32C;
     ColiQuery_Reset(obj);
     ((ScnResData*)obj)->field_0x60 = NULL;

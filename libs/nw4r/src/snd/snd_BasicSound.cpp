@@ -11,25 +11,6 @@ extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0(NULL);
 
 namespace {
 
-// Retail AmbientParamUpdateCallback carries a 4th virtual (GetVoiceOutCount)
-// at vtable+0x14 that snd_BasicSound.h does not declare (header is outside the
-// writable scope). Mirror it via derivation so SetAmbientInfo dispatches at the
-// correct slot.
-struct AmbientParamUpdateCallbackV4
-    : public BasicSound::AmbientParamUpdateCallback {
-    virtual u32 GetVoiceOutCount(void* arg, u32 param) = 0; // at 0x14
-};
-
-// Retail AmbientArgAllocaterCallback declares a virtual dtor (vtable: RTTI,
-// dtor, dtor, Alloc@0xC, Free@0x10); the header's version without an explicit
-// dtor compiles Alloc at 0x8. Mirror the retail layout.
-struct AmbientArgAllocaterCallbackRetail {
-    virtual ~AmbientArgAllocaterCallbackRetail() {} // at 0x4, 0x8
-    virtual void* detail_AllocAmbientArg(u32 size) = 0; // at 0xC
-    virtual void detail_FreeAmbientArg(void* pArg,
-                                       const BasicSound* pSound) = 0; // at 0x10
-};
-
 // SoundPlayer fields at 0x30/0x3C/0x40/0x54/0x58 that UpdateParam reads are
 // private in snd_SoundPlayer.h; mirror the layout to read them directly.
 struct SoundPlayerParamView {
@@ -43,38 +24,15 @@ struct SoundPlayerParamView {
     f32 fxSend[AUX_BUS_NUM];  // 0x58..0x63
 };
 
-// BasicSound fields that SetAmbientInfo writes are private in snd_BasicSound.h
-// (which also does not declare SetAmbientInfo - header is read-only this
-// session); mirror the layout to implement the retail symbol as a free
-// function.
-struct BasicSoundAmbientView {
-    u8 _pad0x00[0x1C];             // 0x00..0x1B
-    void* paramUpdateCallback;     // 0x1C
-    void* argUpdateCallback;       // 0x20
-    void* argAllocaterCallback;    // 0x24
-    void* ambientArg;              // 0x28
-    u32 unk2C;                     // 0x2C
-    u8 _pad0x30[0x95 - 0x30];      // 0x30..0x94
-    u8 unk95;                      // 0x95
-    u8 _pad0x96[0x98 - 0x96];      // 0x96..0x97
-    u32 id;                        // 0x98
-};
-
 } // namespace
-
-// BasicPlayer::SetBiquadFilter is not declared in snd_BasicPlayer.h (header is
-// read-only this session); the retail symbol is referenced verbatim so
-// UpdateParam can emit the `bl`.
-extern "C" void SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(
-    BasicPlayer* pPlayer, int filter, f32 value);
 
 BasicSound::BasicSound(int priority, int arg)
     : mHeap(NULL),
       mGeneralHandle(NULL),
       mTempGeneralHandle(NULL),
       mSoundPlayer(NULL),
-      mExtSoundPlayer(NULL),
-      mAmbientParamUpdateCallback(NULL) {
+      mSoundActor(NULL),
+      mExtSoundPlayer(NULL) {
     mAmbientParam.volume = lbl_eu_80669EE8;
     mAmbientParam.pitch = lbl_eu_80669EE8;
     mAmbientParam.pan = lbl_eu_80669EEC;
@@ -100,19 +58,19 @@ BasicSound::BasicSound(int priority, int arg)
     nodePlayerPrio.Init();
     nodeExtPlay.Init();
 
+    mAmbientParamUpdateCallback = NULL;
     mAmbientArgUpdateCallback = NULL;
     mAmbientArgAllocaterCallback = NULL;
     mAmbientArg = NULL;
-    mUnk0x28 = 0;
-    mUnk0x2C = 0;
+    mAmbientArgSize = 0;
 
-    mUnk0x95 = 1;
+    mVoiceOutCount = 1;
     mPriority = priority;
     mUnk0x50 = arg;
 }
 
 int BasicSound::GetVoiceOutCount() const {
-    return mUnk0x95;
+    return mVoiceOutCount;
 }
 
 u32 BasicSound::GetAmbientPriority(const AmbientInfo& info, u32 param) {
@@ -207,8 +165,7 @@ void BasicSound::UpdateParam() {
     rPlayer.SetSurroundPan(surroundPan);
     rPlayer.SetPitch(pitch);
     rPlayer.SetLpfFreq(lpfFreq);
-    SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(
-        &rPlayer, static_cast<int>(filter), filterValue);
+    rPlayer.SetBiquadFilter(static_cast<int>(filter), filterValue);
     rPlayer.SetOutputLine(outputLine);
     rPlayer.SetMainOutVolume(mainOutVol);
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
@@ -302,44 +259,41 @@ void BasicSound::Stop(int frames) {
 void BasicSound::Pause(bool flag, int frames) {
     // Xenoblade Pause is driven by mPauseState, not mPauseFlag / player.Pause.
     if (flag) {
-        int state = mPauseState;
-        if (state == 2) {
-            return;
-        }
-        // Retail: bge to >=2 block, else cmpwi 0 / bge work.
-        if (state < 2) {
-            if (state < 0) {
-                return;
+        switch (mPauseState) {
+        case PAUSE_STATE_NONE:
+        case PAUSE_STATE_PAUSING:
+        case PAUSE_STATE_UNPAUSING: {
+            int t = frames * mPauseFadeVolume.GetValue();
+            if (t <= 0) {
+                t = 1;
             }
-        } else {
-            if (state >= 4) {
-                return;
-            }
+            mPauseFadeVolume.SetTarget(lbl_eu_80669EEC, t);
+            mPauseState = PAUSE_STATE_PAUSING;
+            mPauseFadeFlag = false;
+            break;
         }
 
-        int t = frames * mPauseFadeVolume.GetValue();
-        if (t <= 0) {
-            t = 1;
+        default:
+            return;
         }
-        mPauseFadeVolume.SetTarget(lbl_eu_80669EEC, t);
-        mPauseState = 1;
-        mPauseFadeFlag = false;
     } else {
         switch (mPauseState) {
-        case 0:
+        case PAUSE_STATE_NONE:
             return;
-        case 1:
-        case 2:
-        case 3: {
+
+        case PAUSE_STATE_PAUSING:
+        case PAUSE_STATE_PAUSED:
+        case PAUSE_STATE_UNPAUSING: {
             int t = frames * (lbl_eu_80669EE8 - mPauseFadeVolume.GetValue());
             if (t <= 0) {
                 t = 1;
             }
             mPauseFadeVolume.SetTarget(lbl_eu_80669EE8, t);
-            mPauseState = 3;
+            mPauseState = PAUSE_STATE_UNPAUSING;
             mPauseFadeFlag = true;
             break;
         }
+
         default:
             return;
         }
@@ -369,11 +323,14 @@ void BasicSound::Update() {
 
     if (mAutoStopFlag && rPlayer.IsActive()) {
         if (mAutoStopCounter == 0) {
-            Stop(0);
-            return;
+            if (mPauseState == PAUSE_STATE_NONE ||
+                mPauseState == PAUSE_STATE_UNPAUSING) {
+                Stop(0);
+                return;
+            }
+        } else {
+            mAutoStopCounter--;
         }
-
-        mAutoStopCounter--;
     }
 
     bool startPlayer = false;
@@ -398,15 +355,19 @@ void BasicSound::Update() {
         return;
     }
 
-    if (rPlayer.IsPause()) {
-        return;
-    }
+    switch (mPauseState) {
+    case PAUSE_STATE_NONE:
+        UpdateMoveValue();
+        break;
 
-    if (mPauseFadeFlag) {
+    case PAUSE_STATE_PAUSING:
         mPauseFadeVolume.Update();
-    } else {
-        mFadeVolume.Update();
-        mExtMoveVolume.Update();
+        break;
+
+    case PAUSE_STATE_UNPAUSING:
+        mPauseFadeVolume.Update();
+        UpdateMoveValue();
+        break;
     }
 
     if (mAmbientArgUpdateCallback != NULL) {
@@ -414,67 +375,58 @@ void BasicSound::Update() {
     }
 
     if (mAmbientParamUpdateCallback != NULL) {
-        mAmbientParamUpdateCallback->detail_Update(&mAmbientParam, mId, this,
-                                                   mAmbientArg, 0xFFFFFFFF);
+        // US retail defaults an ambient block on the stack and hands it to the
+        // callback: the sound param (which the callback rewrites), the player
+        // priority offset that follows it, and one 6-float voice-out group per
+        // voice. The result is applied to this sound and to its player.
+        SoundParam param;
+        param.volume = 1.0f;
+        param.pitch = 1.0f;
+        param.pan = 0.0f;
+        param.surroundPan = 0.0f;
+        param.fxSend = 0.0f;
+        param.lpf = 0.0f;
+        param.unk18 = 0.0f;
+        param.priority = 0;
+
+        u32 priority = 0;
+
+        f32 voiceOutParam[PlayerParamSet::VOICE_OUT_NUM]
+                          [PlayerParamSet::VOICE_OUT_PARAM_NUM];
+
+        voiceOutParam[0][0] = 1.0f;
+        voiceOutParam[0][1] = 1.0f;
+        voiceOutParam[0][2] = 0.0f;
+        voiceOutParam[0][3] = 0.0f;
+        voiceOutParam[0][4] = 0.0f;
+        voiceOutParam[0][5] = 0.0f;
+
+        f32(*pParam)[PlayerParamSet::VOICE_OUT_PARAM_NUM] =
+            &voiceOutParam[1];
+        f32(*pEnd)[PlayerParamSet::VOICE_OUT_PARAM_NUM] =
+            &voiceOutParam[PlayerParamSet::VOICE_OUT_NUM];
+        while (pParam < pEnd) {
+            (*pParam)[0] = 1.0f;
+            (*pParam)[1] = 1.0f;
+            (*pParam)[2] = 0.0f;
+            (*pParam)[3] = 0.0f;
+            (*pParam)[4] = 0.0f;
+            (*pParam)[5] = 0.0f;
+            pParam++;
+        }
+
+        mAmbientParamUpdateCallback->detail_Update(mAmbientArg, mId,
+                                                   mVoiceOutCount, &param);
+
+        mAmbientParam = param;
+        mUnk0x50 = priority;
+
+        for (int i = 0; i < mVoiceOutCount; i++) {
+            rPlayer.SetVoiceOutParam(i, voiceOutParam[i]);
+        }
     }
 
-    f32 volume;
-    f32 pan;
-    f32 surroundPan;
-    f32 pitch;
-    f32 mainOutVol;
-
-    volume = 1.0f;
-    volume *= GetInitialVolume();
-    volume *= mSoundPlayer->GetVolume();
-    if (mExtSoundPlayer != NULL) {
-        volume *= mExtSoundPlayer->detail_GetVolume();
-    }
-    volume *= GetMoveVolume();
-    volume *= mFadeVolume.GetValue();
-    volume *= mPauseFadeVolume.GetValue();
-    volume *= GetAmbientParam().volume;
-
-    pan = 0.0f;
-    pan += GetPan();
-    pan += GetAmbientParam().pan;
-
-    pitch = 1.0f;
-    pitch *= GetPitch();
-
-    surroundPan = 0.0f;
-    surroundPan += GetSurroundPan();
-    surroundPan += GetAmbientParam().surroundPan;
-
-    mainOutVol = 1.0f;
-    mainOutVol *= mSoundPlayer->detail_GetMainOutVolume();
-    mainOutVol *= GetMainOutVolume();
-
-    int outputLine = OUTPUT_LINE_MAIN;
-    if (mSoundPlayer->detail_IsEnabledOutputLine()) {
-        outputLine = mSoundPlayer->detail_GetOutputLine();
-    }
-    if (mOutputLineFlagEnable) {
-        outputLine = GetOutputLine();
-    }
-
-    f32 remoteOutVol[WPAD_MAX_CONTROLLERS];
-    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        remoteOutVol[i] = 1.0f;
-        remoteOutVol[i] *= mSoundPlayer->GetRemoteOutVolume(i);
-        remoteOutVol[i] *= GetRemoteOutVolume(i);
-    }
-
-    rPlayer.SetVolume(volume);
-    rPlayer.SetPan(pan);
-    rPlayer.SetSurroundPan(surroundPan);
-    rPlayer.SetPitch(pitch);
-    rPlayer.SetOutputLine(outputLine);
-    rPlayer.SetMainOutVolume(mainOutVol);
-
-    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        rPlayer.SetRemoteOutVolume(i, remoteOutVol[i]);
-    }
+    UpdateParam();
 
     if (mFadeOutFlag && mFadeVolume.IsFinished()) {
         mFadeOutFlag = false;
@@ -482,17 +434,30 @@ void BasicSound::Update() {
         return;
     }
 
-    if (mPauseFadeFlag && mPauseFadeVolume.IsFinished()) {
-        mPauseFadeFlag = false;
-
-        if (mPauseFlag) {
-            rPlayer.Pause(mPauseFlag);
+    if (startPlayer) {
+        if (rPlayer.Start()) {
+            mStartedFlag = true;
+            mStartFlag = false;
+        } else {
+            Shutdown();
+            return;
         }
     }
 
-    if (startPlayer && rPlayer.Start()) {
-        mStartedFlag = true;
-        mStartFlag = false;
+    if (mPauseState == PAUSE_STATE_PAUSING) {
+        if (mPauseFadeVolume.IsFinished()) {
+            rPlayer.Pause(true);
+            mPauseState = PAUSE_STATE_PAUSED;
+        }
+    } else if (mPauseState == PAUSE_STATE_UNPAUSING) {
+        if (mPauseFadeVolume.IsFinished()) {
+            mPauseState = PAUSE_STATE_NONE;
+        }
+    }
+
+    if (mPauseFadeFlag) {
+        rPlayer.Pause(false);
+        mPauseFadeFlag = false;
     }
 }
 
@@ -501,7 +466,7 @@ void BasicSound::Shutdown() {
 
     if (rPlayer.IsActive()) {
         if (mFadeOutFlag) {
-            rPlayer.SetVolume(0.0f);
+            rPlayer.SetVolume(lbl_eu_80669EEC);
         }
 
         rPlayer.Stop();
@@ -525,11 +490,12 @@ void BasicSound::Shutdown() {
         mSoundPlayer->detail_FreePlayerHeap(this);
     }
 
-    mSoundPlayer->detail_RemovePriorityList(this);
-    mSoundPlayer->detail_RemoveSoundList(this);
+    if (mSoundPlayer != NULL) {
+        mSoundPlayer->detail_RemoveSound(this);
+    }
 
     if (mExtSoundPlayer != NULL) {
-        mExtSoundPlayer->RemoveSoundList(this);
+        mExtSoundPlayer->RemoveSound(this);
     }
 
     if (mAmbientArgAllocaterCallback != NULL) {
@@ -675,9 +641,17 @@ void BasicSound::DetachSoundPlayer(SoundPlayer* pPlayer) {
     mSoundPlayer = NULL;
 }
 
+void BasicSound::AttachSoundActor(SoundActor* pActor) {
+    mSoundActor = pActor;
+}
+
+void BasicSound::AttachExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer) {
+    mExtSoundPlayer = pExtPlayer;
+}
+
 void BasicSound::DetachExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer) {
     (void)pExtPlayer;
-    *(ExternalSoundPlayer**)((u8*)this + 0x18) = NULL;
+    mExtSoundPlayer = NULL;
 }
 
 bool BasicSound::IsAttachedGeneralHandle() {
@@ -717,55 +691,42 @@ const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const 
 } // namespace snd
 } // namespace nw4r
 
-// Retail symbol for BasicSound::SetAmbientInfo(const AmbientInfo&); the header
-// does not declare it (read-only this session), so define the mangled name as
-// a C-linkage free function with an explicit self pointer.
-// Absorb: pad .sbss 0x4->0x8
+// Pads the unit's .sbss to the retail 8 bytes (RTTI object + 4).
 unsigned int snd_BasicSound_sbss_pad;
 
-extern "C" void
-SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
-    nw4r::snd::detail::BasicSound* self,
-    const nw4r::snd::detail::BasicSound::AmbientInfo& info) {
-    using namespace nw4r::snd::detail;
+namespace nw4r {
+namespace snd {
+namespace detail {
 
-    BasicSoundAmbientView* pSound =
-        reinterpret_cast<BasicSoundAmbientView*>(self);
+void BasicSound::SetAmbientInfo(const AmbientInfo& rInfo) {
+    void* pArg =
+        rInfo.argAllocaterCallback->detail_AllocAmbientArg(rInfo.argSize);
+    if (pArg == NULL) {
+        return;
+    }
 
-    AmbientArgAllocaterCallbackRetail* pAlloc =
-        reinterpret_cast<AmbientArgAllocaterCallbackRetail*>(
-            info.argAllocaterCallback);
-    void* pArg = pAlloc->detail_AllocAmbientArg(info.argSize);
-    if (pArg != NULL) {
-        std::memcpy(pArg, info.arg, info.argSize);
+    std::memcpy(pArg, rInfo.arg, rInfo.argSize);
 
-        // Retail keeps a dead store of info.arg into mAmbientArg before it is
-        // overwritten by pArg.
-        // Evaluate the NULL check before the stores: the store-side reload of
-        // info.paramUpdateCallback then happens after the (possibly aliasing)
-        // member stores, matching retail.
-        // Retail keeps a dead store of info.arg into mAmbientArg before it is
-        // overwritten by pArg.
-        pSound->ambientArg = info.arg;
+    // Retail keeps this store of the raw arg before the callback fields (it is
+    // overwritten by pArg below).
+    mAmbientArg = rInfo.arg;
 
-        pSound->paramUpdateCallback = info.paramUpdateCallback;
-        pSound->argUpdateCallback = info.argUpdateCallback;
-        pSound->argAllocaterCallback = info.argAllocaterCallback;
-        pSound->unk2C = info.argSize;
-        pSound->ambientArg = pArg;
+    mAmbientParamUpdateCallback = rInfo.paramUpdateCallback;
+    mAmbientArgUpdateCallback = rInfo.argUpdateCallback;
+    mAmbientArgAllocaterCallback = rInfo.argAllocaterCallback;
+    mAmbientArgSize = rInfo.argSize;
+    mAmbientArg = pArg;
 
-        // Second textual use of info.paramUpdateCallback.
-        if (info.paramUpdateCallback != NULL) {
-            AmbientParamUpdateCallbackV4* pCallback =
-                static_cast<AmbientParamUpdateCallbackV4*>(
-                    info.paramUpdateCallback);
-            int voiceOut =
-                static_cast<int>(pCallback->GetVoiceOutCount(pArg, pSound->id));
-            if (voiceOut > 4) {
-                voiceOut = 4;
-            }
-            pSound->unk95 = static_cast<u8>(voiceOut);
+    if (rInfo.paramUpdateCallback != NULL) {
+        int voiceOutCount = static_cast<int>(
+            rInfo.paramUpdateCallback->GetVoiceOutCount(pArg, mId));
+        if (voiceOutCount > 4) {
+            voiceOutCount = 4;
         }
+        mVoiceOutCount = static_cast<u8>(voiceOutCount);
     }
 }
 
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

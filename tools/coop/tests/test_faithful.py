@@ -22,7 +22,20 @@ class SmellCounts(unittest.TestCase):
             '__declspec(section ".sdata2") const float f = 1.0f;\n'
         )
         hard, _ = faithful.count_smells(src)
-        self.assertEqual(hard, {"label": 1, "mangled_c": 1, "section": 1, "offset_cast": 1, "view_struct": 1})
+        self.assertEqual(hard, {"label": 1, "mangled_c": 1, "section": 1, "offset_cast": 1, "view_struct": 1,
+                               "noinline": 0})
+
+    def test_noinline_is_hard_unless_justified(self):
+        src = (
+            "__declspec(noinline) void a();\n"
+            "#pragma dont_inline on\n"
+            "#pragma auto_inline off\n"
+            "__declspec(noinline) void b(); // noinline-ok: split, decl order and -inline flags tried\n"
+            "__declspec(noinline) void c(); // noinline-ok:\n"
+        )
+        hard, soft = faithful.count_smells(src)
+        self.assertEqual(hard["noinline"], 4)
+        self.assertNotIn("noinline", soft)
 
     def test_plain_extern_c_is_not_mangled(self):
         hard, _ = faithful.count_smells('extern "C" void OSReport(const char* fmt, ...);\n')

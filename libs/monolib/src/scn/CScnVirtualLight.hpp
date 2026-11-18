@@ -280,8 +280,9 @@ extern "C" void* __construct_new_array(void* block, ConstructorDestructor ctor,
 extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
 extern "C" void LightCtlCopyObj(CLight* self, u32 value);
 extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
-extern "C" void scnLgtGatherLights(CScnVirtualLightSub* self, f32 f, CScnEnvLgtData* data,
-                               const ml::CVec3* vec);
+class CScnEnvLgtCtrl;
+extern "C" void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
+                                   f32 f);
 extern "C" void blendSlotAmbient(CLightEnv* self, const ml::CVec3* v);
 extern "C" void bindOrientedLight(CLightEnv* self, u32 a, f32 f1, f32 f2);
 extern "C" void bindAttenuatedLight(CLightEnv* self, u32 a, u32 b, f32 f);

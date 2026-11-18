@@ -2,7 +2,11 @@
 
 #include <types.h>
 
+#include "monolib/work/CProcess.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 namespace cf {
@@ -34,62 +38,50 @@ struct CBattleChainMenuState {
 };
 
 /*
- * Battle-chain menu controller.
+ * Battle-chain menu controller (size 0xA0).
  *
- * Deliberately NON-polymorphic (the CMenuGetItem idiom): the CProcess base
- * region is embedded at +0x00 and the composite / IWorkEvent / IScnRender
- * vtables are stored as raw u32 slots, so the retail unmangled ctor
- * `__ct__CMenuBattleChain` can be written as an extern "C" free function that
- * stores the retail vtable addresses directly.
+ * Real MI class, from the retail composite vtable __vt__16CMenuBattleChain
+ * (0x80539E48): IUIWindow at +0x00, IWorkEvent at +0x6C and IScnRender at
+ * +0x70; the +0x24 / +0xAC sub-vtables, the 0x40 base list and the
+ * +0x6C/+0x70 adjusting thunks are compiler output.
+ *
+ *   0x00  IUIWindow base (CProcess header, Move/Draw pmf hooks at +0x3C/+0x48,
+ *         layout/state fields at +0x54..+0x68)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render callback registered with the scene)
+ *   0x74  mScn     - owning scene (addRenderCB target)
+ *   0x78  mRegion  - embedded layout-build scratch region (0x10)
+ *   0x88  mAnim0..mAnim4 - the five layout animations
+ *   0x9C  mField9C - state/mode byte
+ *   0x9D  mField9D - chain-type byte (ctor arg)
+ *   0x9E  mField9E - frame counter
  */
-class CMenuBattleChain {
+class CMenuBattleChain : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
-    CMenuBattleChain();
-    ~CMenuBattleChain();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
+    CMenuBattleChain(CScn* parent, u8 arg);
+    virtual ~CMenuBattleChain();
 
-    u8 mProcess[0x10];          // 0x00 CProcess storage head
-    u32 mProcessVt;             // 0x10 CProcess vtable slot (temp, then composite)
-    u8 mProcRest[0x3C - 0x14];  // 0x14..0x3B CProcess tail
-    u32 ptmfMove[3];            // 0x3C move-callback PMF (null triple)
-    u32 ptmfDraw[3];            // 0x48 draw-callback PMF (null triple)
-    nw4r::lyt::Layout* mLayout; // 0x54 main layout
-    u32 mField58;               // 0x58
-    u32 mField5C;               // 0x5C
-    s32 mField60;               // 0x60 current anim index (-1 = none)
-    u8 mField64;                // 0x64
-    u8 mField65;                // 0x65
-    u8 mField66;                // 0x66
-    u8 mField67;                // 0x67 ready flag (1 after ctor, cleared by Init)
-    u32 mField68;               // 0x68
-    u32 mIWorkEventVt;          // 0x6C IWorkEvent subobject vtable slot
-    u32 mIScnRenderVt;          // 0x70 IScnRender subobject vtable slot
-    CScn* mScn;                 // 0x74 owning scene (addRenderCB target)
-    UnkClass_8045F564 mRegion;  // 0x78 scratch memory region (0x10 bytes)
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
+    CScn* mScn;                       // 0x74 owning scene
+    UnkClass_8045F564 mRegion;        // 0x78 scratch memory region
     nw4r::lyt::AnimTransform* mAnim0; // 0x88
     nw4r::lyt::AnimTransform* mAnim1; // 0x8C
     nw4r::lyt::AnimTransform* mAnim2; // 0x90
     nw4r::lyt::AnimTransform* mAnim3; // 0x94
     nw4r::lyt::AnimTransform* mAnim4; // 0x98
-    u8 mField9C;                // 0x9C state/mode byte
-    u8 mField9D;                // 0x9D chain-type byte (ctor arg)
-    u8 mField9E;                // 0x9E frame counter
-    u8 _pad9F;                  // 0x9F
+    u8 mField9C;                      // 0x9C state/mode byte
+    u8 mField9D;                      // 0x9D chain-type byte (ctor arg)
+    u8 mField9E;                      // 0x9E frame counter
+    u8 _pad9F;                        // 0x9F
     void switchChainType(u8 arg);
-};
+}; // size: 0xA0
 
 // Battle-chain singleton (retail SDA symbol, .sbss).
 extern CMenuBattleChain* lbl_eu_80664A60;
-
-// Temp (CProcess) vtable written before the PMF copy; composite vtable with
-// the IWorkEvent sub-vtable at +0x24 and IScnRender sub-vtable at +0xac.
-extern char lbl_eu_8052D238[];
-extern void* lbl_eu_80539E48[48];
-// Null pointer-to-member-function constant (3 words, copied into +0x3C..0x53).
-extern u32 __ptmf_null[3];
 
 // Battle-chain resource-name strings: the layout region name and the
 // resource-name table (region at +0x00, layout at +0x11, anims at

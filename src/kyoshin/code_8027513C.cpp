@@ -47,11 +47,11 @@ int CfObjectImplTbox_noop59A8(void* self) { return 0; }
 // One-time-init flag / instance-pointer pairs for the three camera-control
 // singleton slots (retail .sbss/.sdata).
 extern s8 lbl_eu_806648E8;
-extern void* lbl_eu_806648EC;
+extern void* camControlDefault;
 extern s8 lbl_eu_806648F0;
-extern void* lbl_eu_806648F4;
+extern void* camControlClassic;
 extern s8 lbl_eu_806648F8;
-extern void* lbl_eu_806648FC;
+extern void* camControlGc;
 
 // Camera-control instance blobs (retail .data) handed to the registrars.
 extern u8 lbl_eu_80537F58[];
@@ -59,7 +59,7 @@ extern u8 lbl_eu_80537ED0[];
 extern u8 lbl_eu_80537F10[];
 
 // Pad-type -> control-instance dispatch table {default, classic, GC}.
-extern void* lbl_eu_80537EC0[];
+extern void* camControlTable[];
 
 // Pad controller state read by initCamControlInstances (type word at 0xE8).
 class CPad {
@@ -81,15 +81,15 @@ enum PadType {
 
 void* initCamControlInstances() {
     if (lbl_eu_806648E8 == 0) {
-        lbl_eu_806648EC = lbl_eu_80537F58;
+        camControlDefault = lbl_eu_80537F58;
         lbl_eu_806648E8 = 1;
     }
     if (lbl_eu_806648F0 == 0) {
-        lbl_eu_806648F4 = lbl_eu_80537ED0;
+        camControlClassic = lbl_eu_80537ED0;
         lbl_eu_806648F0 = 1;
     }
     if (lbl_eu_806648F8 == 0) {
-        lbl_eu_806648FC = lbl_eu_80537F10;
+        camControlGc = lbl_eu_80537F10;
         lbl_eu_806648F8 = 1;
     }
 
@@ -104,7 +104,7 @@ void* initCamControlInstances() {
         index = 2;
     }
 
-    return lbl_eu_80537EC0[index];
+    return camControlTable[index];
 }
 
 void camPadPress12(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }

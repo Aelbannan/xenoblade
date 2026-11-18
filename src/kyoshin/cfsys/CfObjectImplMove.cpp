@@ -27,7 +27,7 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self);
 void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param);
 void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param);
 
-void MoveImplInitFields(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplInitFields(CfObjectImplMoveObj* self) {
     // Init helper: -1 at 0x20, 0 at 0x1c, shared float constant at 0x24.
     self->field_0x20 = 0xFFFFFFFF;
     self->field_0x1C = 0;
@@ -38,7 +38,7 @@ void MoveImplInitFields(CfObjectImplMoveObj* self) {
 // (0xd4-0xe0); then, if the driver's flag word (bit 0x2 or bit 0x80) is set,
 // chain vfE4 -> slot 0x10; finally run updatePosition on the embedded buffer
 // when the status word and flag bit 0x2 are both live.
-void MoveImplUpdateState(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplUpdateState(CfObjectImplMoveObj* self) {
     if (self->field_0x18 != nullptr) {
         self->vfD4();
         self->vfD8();
@@ -57,7 +57,7 @@ void MoveImplUpdateState(CfObjectImplMoveObj* self) {
 // Full reset: unregister this object's callback source on the bound actor,
 // tear down effects, run the buffer cleanup, and clear the attached
 // flag-word object (+0xb0 word zeroed, bit 0x40 set, pointer released).
-void MoveImplResetFull(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplResetFull(CfObjectImplMoveObj* self) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && actor->sub.field_98 != 0) {
         void* src = self;
@@ -77,7 +77,7 @@ void MoveImplResetFull(CfObjectImplMoveObj* self) {
     }
 }
 
-void MoveImplPushEventId(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplPushEventId(CfObjectImplMoveObj* self) {
     // Dispatch the sub-object's event id to the callback source (this+0xc).
     unsigned int id = self->mSubObj->field_0x98;
     if (id == 0) {
@@ -90,7 +90,7 @@ void MoveImplPushEventId(CfObjectImplMoveObj* self) {
     simPushWordToBuf(id, src);
 }
 
-void MoveImplNoopA(void) {}
+extern "C" void MoveImplNoopA(void) {}
 
 // Move-start dispatcher: plays the entry sound for ids 0x111/0x112, then
 // runs the per-id jump-table body (embedded-handler teardown, driver state
@@ -418,7 +418,7 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
 
 // Presentation event gate: the embedded handler at actor +0x08 must accept
 // the id before the vf8C presentation virtual is dispatched.
-void MoveImplGatePresent(CfObjectImplMoveObj* self, u32 id) {
+extern "C" void MoveImplGatePresent(CfObjectImplMoveObj* self, u32 id) {
     if (isBattleStatusActive(self->field_0x18->field_08, id) == 0) {
         self->vf94(id);
     }
@@ -563,7 +563,7 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
     }
 }
 
-void MoveImplNoopB(void) {}
+extern "C" void MoveImplNoopB(void) {}
 
 // Move-effect update driver. Gates on the bound event object (+0x3F60), the
 // presentation probe, elapsed-time thresholds and global mode bits, then
@@ -615,7 +615,7 @@ void MoveImplRepositionEffect(CfObjectImplMoveObj* self) {
 // Battle-entry hook: when the incoming id matches the bound actor's battle
 // id (+0x3F60), fire the vf64 entry virtual and hand the actor to the battle
 // manager's party-chain helper.
-void MoveImplOnBattleEntry(CfObjectImplMoveObj* self, u32 battleId) {
+extern "C" void MoveImplOnBattleEntry(CfObjectImplMoveObj* self, u32 battleId) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && battleId == actor->sub.field_C4) {
         self->vf64();
@@ -969,7 +969,7 @@ void MoveImplDriveMoveSounds(){}
 // if it is within the threshold (param override, or base constant x event
 // scale), fade a shake scale from 1 down to 0 across the threshold band and
 // fire the camera shake with the parameter block's vectors scaled by it.
-void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
+extern "C" void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Target* target,
                    CfMoveCd460Arg* param) {
     CfMoveEvt60* evt = (CfMoveEvt60*)self->field_0x18->sub.field_98;
     if (evt == nullptr) {
@@ -1021,8 +1021,8 @@ void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Target* targe
 
 extern "C" void CfObjectMove_setRegionAttached(void*, unsigned int);
 
-void CfObjectImplMoveData::MoveImplMatchIdSetRegion(unsigned int a, unsigned int b) {
-    CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)this->mSubObj;
+extern "C" void MoveImplMatchIdSetRegion(CfObjectImplMoveData* self, unsigned int a, unsigned int b) {
+    CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)self->mSubObj;
     if (a == inner->mSomeId) {
         CfObjectMove_setRegionAttached(inner, b);
     }
@@ -1441,7 +1441,7 @@ void CfObjectImplMoveObj::SweepReposition() {
 // raise the presentation virtual or the MoveImplGateEventCmd event dispatch, then
 // releases the embedded handlers (0xf via slot 0x20, 0x100 via slot 0x30),
 // clears the move state bits and resets the driver bookkeeping fields.
-void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
     CfMoveVf29CItem* item = self->field_0x18->vf29C(0);
     if (item->field_0x50 != nullptr) {
         CfMoveVf29CItem* item2 = self->field_0x18->vf29C(0);
@@ -1481,7 +1481,7 @@ void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
     self->field_0x18->vf2B0();
 }
 
-void MoveImplResolveActorRef(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplResolveActorRef(CfObjectImplMoveObj* self) {
     // Virtual dispatch on the sub-object embedded at +0x3e9c of the actor
     // object (vtable slot 0x4c), then chain the result through
     // findObjectById (actor id lookup) into MapFx_ResolveOwner.
@@ -1493,7 +1493,7 @@ void MoveImplResolveActorRef(CfObjectImplMoveObj* self) {
 // 0xa/0xb), bail under the game manager presentation mask, then - unless the
 // embedded handler already resolves to param - rebind it via CCharVoiceMan_EnqueueRebindVoice,
 // refresh the handler slots, and forward the parameter to vf84.
-void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
+extern "C" void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
     // Retail reloads self->field_0x18 (actor) from memory before every use.
     CfActorObj* actor = self->field_0x18;
     u32 valA = actor->field_04->b30()->field_0;
@@ -1523,7 +1523,7 @@ void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
 // Battle roster sync: wake both field_04 sub-object channels (0x40/0x80),
 // resolve this object's actor via the id lookup chain, then copy the battle
 // state's per-slot handles into the actor's vf29C item list.
-void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x400000);
     self->field_0x18->field_04->b20(0x800000);
     // The embedded handler probe result feeds straight into the actor-id lookup.
@@ -1560,7 +1560,7 @@ void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
 // Rebind the driver sub-object: store the request word at +0x04, resolve the
 // source object via func_800BBC0C into +0x14, then derive the actor pointer
 // back from it (source - 0x3e9c) when its slot-0x200 probe succeeds.
-void MoveImplBindDriver(CfObjectImplMoveObj* self, u8* param) {
+extern "C" void MoveImplBindDriver(CfObjectImplMoveObj* self, u8* param) {
     self->field_0x04 = param;
     CfObjectImplMoveSubObj* src = (CfObjectImplMoveSubObj*)func_800BBC0C(param);
     self->mSubObj = src;
@@ -1578,7 +1578,7 @@ void MoveImplBindDriver(CfObjectImplMoveObj* self, u8* param) {
 // global presentation word has bit 0x40000 set, start with enable=0 instead of
 // 1; then, if an event object is bound, push the resulting active state into
 // its slot-0x88 callback.
-void MoveImplStartDispatch(CfObjectImplMoveObj* self) {
+extern "C" void MoveImplStartDispatch(CfObjectImplMoveObj* self) {
     if ((self->mSubObj->field_0x64 & 4) != 0 && (lbl_eu_80663E24 & 0x40000) == 0) {
         self->vf30(0x100, 1);
         if (self->mSubObj->field_0x98 == 0) {
@@ -1606,7 +1606,7 @@ void MoveImplStartDispatch(CfObjectImplMoveObj* self) {
 // object is bound, then forward the resolved state to the event object's
 // slot 0x88 - a literal 1 when vf40(0x200) reports active, otherwise the
 // result of the fallback query vf40(0x100).
-void MoveImplSyncEffectState(CfObjectImplMoveObj* self, u32 param) {
+extern "C" void MoveImplSyncEffectState(CfObjectImplMoveObj* self, u32 param) {
     self->vf30(0x100, param);
     if (self->mSubObj->field_0x98 == 0) {
         return;
@@ -1633,7 +1633,7 @@ extern "C" void MoveImplRunEffectVirtuals(CfObjectImplMoveObj* self) {
     self->vfE4()->e14();
 }
 
-void MoveImplNoopC(void) {}
+extern "C" void MoveImplNoopC(void) {}
 
 // Impact/land presentation driver: resolves an effect object through the
 // bound move event (slot 0x44 refreshes the cached handle at +0x20 when it is
@@ -2207,8 +2207,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
                   lbl_eu_80666C98);
 }
 
-void cf::CfObjectImplMove::CfObjectImplMoveClearLinkIfMatch(unsigned int* param) {
-    unsigned int* self = reinterpret_cast<unsigned int*>(this);
+extern "C" void CfObjectImplMoveClearLinkIfMatch(unsigned int* self, unsigned int* param) {
     if (param == (unsigned int*)self[7]) {
         param[44] = 0;
         self[7] = 0;

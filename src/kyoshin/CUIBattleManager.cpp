@@ -94,6 +94,12 @@ _reslist_base<CUIBattleChild*>::~_reslist_base() {
     }
 }
 
+// Initial Move-callback pmf pool (retail .data 0x8052E0A8, the first user
+// object of this unit's slice): the {delta = 0, index = -1, fn} record MWCC
+// emits for a constant pointer-to-member-function. CUIBattleManager's
+// constructor copies it into CTTask<CUIBattleManager>::mMoveFunc.
+CUIBattleManager::MoveFunc lbl_eu_8052E0A8 = &CUIBattleManager::parkMoveHandler;
+
 // 3-word null-pmf constant mirror (retail __ptmf_null). Struct access keeps
 // MWCC on a single materialised base register instead of folding the offset-0
 // word into `lwz @l(r5)` (which would add a reloc retail lacks).
@@ -122,7 +128,6 @@ u32 lbl_eu_80663E28;
 void* lbl_eu_8052E248[]; // interim CTTask<CUIBattleManager> vtable
 void* lbl_eu_8052E0C0[]; // final CUIBattleManager vtable
 void* lbl_eu_8052E19C[]; // reslist<CUIBattleChild*> vtable
-void* lbl_eu_8052E0A8[]; // initial mMoveFunc pmf pool
 void __ct__8CProcessFv(CProcess*);
 
 void* BtlDmg_Create(void* proc, void* scn);
@@ -697,7 +702,7 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
     }
     // Initial move-hook pmf from the split1 pool (w1 word stored first).
     {
-        u32* ip = reinterpret_cast<u32*>(lbl_eu_8052E0A8);
+        u32* ip = reinterpret_cast<u32*>(&lbl_eu_8052E0A8);
         movePmf0 = *ip++;   // w0
         hookPmf1 = *ip;     // w1
         hookPmf2 = *(ip + 1); // w2

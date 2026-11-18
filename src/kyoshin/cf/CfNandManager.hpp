@@ -189,17 +189,17 @@ namespace cf{
 } //namespace cf
 
 // cf::CfNandManager singleton (set by the ctor; .sbss).
-extern cf::CfNandManager* lbl_eu_80664768;
+extern cf::CfNandManager* gpCfNandManager;
 // NAND queue idle flag checked by NandQueueBusy (.sbss byte).
-extern u8 lbl_eu_8066476C;
+extern u8 gCfNandFileEventPending;
 // u16 event-status word (.sbss) cleared by NandQueueReset, set by the ctor
 // and by NandFileEvent's file-event handling.
 extern u16 lbl_eu_8066476E;
 // NAND resource teardown globals (.sbss) cleared by NandTeardown.
-extern u8* lbl_eu_8066477C;   // heap buffer freed via MemManager::deallocate
+extern u8* gpCfNandCaptureBuf;   // heap buffer freed via MemManager::deallocate
 // Second half of the buffer pair allocated by NandAllocBufs (buf + size1).
-extern u8* lbl_eu_80664780;
-extern u16 lbl_eu_80664770;   // u16 counter cleared on teardown
+extern u8* gpCfNandCaptureBufTail;
+extern u16 gCfNandCaptureState;   // u16 counter cleared on teardown
 
 // D80 scene flag (.sbss; holds a CScn*). Retail-unmangled C helper defined in
 // CfRes.cpp; declared here for the CfNandManager TU's teardown path.

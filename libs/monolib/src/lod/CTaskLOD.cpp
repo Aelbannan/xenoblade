@@ -82,33 +82,33 @@ __attribute__((aligned(8))) CTaskLOD* lbl_eu_80665730[2];
 // declared with C linkage: MWCC emits the identifier verbatim, making both
 // the wrapper symbols and the tail-call relocs carry the exact retail names
 // (no reloc drift).  Same pattern as the accepted LODMemMan.cpp TU.
-extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
-extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
-extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
-extern "C" void linkTaskElements__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int value);
-extern "C" void setTimeParams__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, void* a, void* b);
-extern "C" void clearElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void setElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void toggleElementFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int flag);
-extern "C" void setPauseFlag__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param);
-extern "C" void attachSceneObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void* isElementFlagClear__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+// setElementVisibility is a real LOD::UnkClass_8046D144 member (int task, int flag).
+// updateElementVisibility is a real LOD::UnkClass_8046D144 member (int task, int flag).
+// setElementFlag80 is a real LOD::UnkClass_8046D144 member (int task, int flag).
+// linkTaskElements is a real LOD::UnkClass_8046D144 member (int task, int value).
+// setTimeParams is a real LOD::UnkClass_8046D144 member (u16 a, u16 b, u16 c).
+// clearElementFlag is a real LOD::UnkClass_8046D144 member (int task).
+// setElementFlag is a real LOD::UnkClass_8046D144 member (int task).
+// toggleElementFlag is a real LOD::UnkClass_8046D144 member (int task, int flag).
+// setPauseFlag is a real LOD::UnkClass_8046D144 member (int param).
+// attachSceneObjects is a real LOD::UnkClass_8046D144 member (u32 param).
+// isElementFlagClear is a real LOD::UnkClass_8046D144 member (int task) -> bool.
 extern "C" void configureFadeMode__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int a, int b);
 extern "C" void updateSubObject__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void setElementLodLevel__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
 extern "C" void setElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void refreshElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" float getElementScale__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+// refreshElementScale is a real LOD::UnkClass_8046D144 member (int task).
+// getElementScale is a real LOD::UnkClass_8046D144 member (int task) -> f32.
 extern "C" float getBaseScale__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
-extern "C" void* getElementState__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
+// getElementState is a real LOD::UnkClass_8046D144 member (int task) -> u8.
 extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void* updateSingleElement__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task);
-extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
+// getElementCachedValue is a real LOD::UnkClass_8046D144 member (int task) -> f32.
+// updateSingleElement is a real LOD::UnkClass_8046D144 member (int id) -> u8.
+// freePersistentBuffer is a static LOD::LODMemMan member (LODMemMan.hpp).
 
 
 // (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrl::CallLightV26; declaration moved into class CScnEnvLgtCtrl)
-extern "C" void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, int param);
+// teardownG3dObjects is a real LOD::UnkClass_8046D144 member (int param).
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, int a);
 extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
@@ -144,19 +144,19 @@ void CTaskLOD::enableLOD() {
     if (lbl_eu_80665730[0]) {
         // Retail symbol is .Fv though r4 carries the arg; route through the
         // extern "C" retail-named wrapper so the reloc name matches.
-        setPauseFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 1);
+        lbl_eu_80665730[0]->mpActiveLOD->setPauseFlag(1);
     }
 }
 
 void CTaskLOD::disableLOD() {
     if (lbl_eu_80665730[0]) {
-        setPauseFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, 0);
+        lbl_eu_80665730[0]->mpActiveLOD->setPauseFlag(0);
     }
 }
 
 void CTaskLOD::bindTaskToLOD() {
     if (lbl_eu_80665730[0]) {
-        attachSceneObjects__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        lbl_eu_80665730[0]->mpActiveLOD->attachSceneObjects((u32)this);
     }
 }
 
@@ -189,7 +189,7 @@ void CTaskLOD::Term() {
         }
     }
     mpActiveLOD->clearManagers();
-    freePersistentBuffer__Q23LOD9LODMemManFv();
+    LOD::LODMemMan::freePersistentBuffer();
 }
 
 void CTaskLOD::Move() { mpActiveLOD->updateLodTick(); }
@@ -237,7 +237,7 @@ extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
             lod = new (lod) LOD::UnkClass_8046D144();
             t->mpSecondaryLOD = lod;
             t->mpActiveLOD = lod;
-            setPauseFlag__Q23LOD9LODMemManFv(&t->mLODMemMan, 0);
+            t->mLODMemMan.setPauseFlag(0);
         }
         return resetAndReload__Q23LOD9LODMemManFv(
             lbl_eu_80665730[0]->mpActiveLOD, self, lbl_eu_80665730[0]->mParam1);
@@ -251,7 +251,7 @@ extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
 // instance (retail never touches `this` except via the delegate call).
 void CTaskLOD::resetActiveLOD() {
     if (lbl_eu_80665730[0]) {
-        teardownG3dObjects__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, (int)this);
+        lbl_eu_80665730[0]->mpActiveLOD->teardownG3dObjects((int)this);
         CTaskLOD* t = lbl_eu_80665730[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
@@ -260,7 +260,7 @@ void CTaskLOD::resetActiveLOD() {
             }
         }
         t->mpActiveLOD = &t->mLODMemMan;
-        setPauseFlag__Q23LOD9LODMemManFv(&t->mLODMemMan, 1);
+        t->mLODMemMan.setPauseFlag(1);
     }
 }
 
@@ -277,7 +277,7 @@ void CTaskLOD::restorePrimaryLOD() {
             }
         }
         t->mpActiveLOD = &t->mLODMemMan;
-        setPauseFlag__Q23LOD9LODMemManFv(&t->mLODMemMan, 1);
+        t->mLODMemMan.setPauseFlag(1);
     }
 }
 
@@ -328,7 +328,7 @@ void CTaskLOD::syncLODTask() {
 // `.Fv` symbol name (see note above).
 extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
     if (lbl_eu_80665730[0]) {
-        setTimeParams__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a, b);
+        lbl_eu_80665730[0]->mpActiveLOD->setTimeParams((u32)(int)self, (u32)(int)a, (u32)(int)b);
     }
 }
 
@@ -337,14 +337,14 @@ extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, v
 // scene-light control list (scnLgtCallLightV26 ring walk).
 void CTaskLOD::activateLOD() {
     if (lbl_eu_80665730[0]) {
-        clearElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        lbl_eu_80665730[0]->mpActiveLOD->clearElementFlag((int)this);
         (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)1);
     }
 }
 
 void CTaskLOD::deactivateLOD() {
     if (lbl_eu_80665730[0]) {
-        setElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        lbl_eu_80665730[0]->mpActiveLOD->setElementFlag((int)this);
         (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)0);
     }
 }
@@ -355,7 +355,7 @@ void CTaskLOD::deactivateLOD() {
 // on the dispatchLODArgs family above).
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
     if (lbl_eu_80665730[0]) {
-        toggleElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, flag);
+        lbl_eu_80665730[0]->mpActiveLOD->toggleElementFlag((int)self, flag);
         (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(self, (void*)flag);
     }
 }
@@ -365,7 +365,7 @@ extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
 // pointer/float returns come straight back from the delegate.
 void* CTaskLOD::getLODData() {
     if (lbl_eu_80665730[0]) {
-        return isElementFlagClear__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        return (void*)lbl_eu_80665730[0]->mpActiveLOD->isElementFlagClear((int)this);
     }
     return 0;
 }
@@ -390,7 +390,7 @@ extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b
 // active LODMemMan (tail-call `b`).  `b` is unused in retail.
 extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
-        setElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
+        lbl_eu_80665730[0]->mpActiveLOD->setElementVisibility((int)self, a);
     }
 }
 
@@ -402,36 +402,36 @@ void CTaskLOD::removeLODEntry() {
 
 void CTaskLOD::clearLODEntry() {
     if (lbl_eu_80665730[0]) {
-        refreshElementScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        lbl_eu_80665730[0]->mpActiveLOD->refreshElementScale((int)this);
     }
 }
 
 float CTaskLOD::getLODDistance() {
     if (lbl_eu_80665730[0]) {
-        return getElementScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        return lbl_eu_80665730[0]->mpActiveLOD->getElementScale((int)this);
     }
     return 0.0f;
 }
 extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
-        updateElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
+        lbl_eu_80665730[0]->mpActiveLOD->updateElementVisibility((int)self, a);
     }
 }
 
 extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
-        setElementFlag80__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
+        lbl_eu_80665730[0]->mpActiveLOD->setElementFlag80((int)self, a);
     }
 }
 
 extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
-        linkTaskElements__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
+        lbl_eu_80665730[0]->mpActiveLOD->linkTaskElements((int)self, a);
     }
 }
 void* CTaskLOD::getLODObject() {
     if (lbl_eu_80665730[0]) {
-        return getElementState__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        return (void*)lbl_eu_80665730[0]->mpActiveLOD->getElementState((int)this);
     }
     return 0;
 }
@@ -444,7 +444,7 @@ void CTaskLOD::updateLODObject() {
 
 float CTaskLOD::getLODLevel() {
     if (lbl_eu_80665730[0]) {
-        return getElementCachedValue__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        return lbl_eu_80665730[0]->mpActiveLOD->getElementCachedValue((int)this);
     }
     return 0.0f;
 }
@@ -453,8 +453,7 @@ float CTaskLOD::getLODLevel() {
 // body returns `this` unchanged (beqlr with r3 still holding `this`).
 CTaskLOD* CTaskLOD::getLODOrSelf() {
     if (lbl_eu_80665730[0]) {
-        return static_cast<CTaskLOD*>(
-            updateSingleElement__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this));
+        return (CTaskLOD*)(u32)lbl_eu_80665730[0]->mpActiveLOD->updateSingleElement((int)this);
     }
     return this;
 }

@@ -23,8 +23,15 @@ A unit is **faithful** when all of these are zero:
 
 Counts cover the unit's source file plus the header with the same stem, with
 comments stripped.  Naming debt that does not change the program's shape
-(``field_0x..``, ``Unk...``, ``func_XXXXXXXX``, ``noinline``) is reported as
-``soft`` and does not gate.
+(``field_0x..``, ``Unk...``, ``func_XXXXXXXX``) is reported as ``soft`` and
+does not gate.
+
+  noinline      ``__declspec(noinline)`` / ``#pragma dont_inline`` /
+                ``#pragma auto_inline off`` forcing a call the original source
+                did not need to force.  Check the real causes first: wrong TU
+                boundary, definition order, unit-wide inline flags.  A use that
+                survives those checks is exempt when its line carries
+                ``// noinline-ok: <what was tried>``.
 
 The gate compares against ``docs/evidence/faithful_baseline.json``: a unit's
 score may not rise and a faithful unit may not stop being faithful.
@@ -49,12 +56,12 @@ HARD = {
     "section": re.compile(r"__declspec\s*\(\s*section"),
     "offset_cast": re.compile(r"\(\s*(?:const\s+)?(?:u8|s8|char|unsigned char)\s*\*\s*\)\s*\(?\s*\w+\s*\)?\s*[+-]\s*0x[0-9A-Fa-f]+"),
     "view_struct": re.compile(r"\b\w*(?:View|At[0-9A-F]{2,}|Off)\s*\*"),
+    "noinline": re.compile(r"\bnoinline\b|#\s*pragma\s+(?:dont_inline\b|auto_inline\s+off\b)"),
 }
 SOFT = {
     "field_0x": re.compile(r"\bfield_0x[0-9A-Fa-f]+\b"),
     "unk_name": re.compile(r"\bUnk(?:Class|VirtualFunc|Struct)?_?[0-9A-Fa-f]+\b"),
     "addr_func": re.compile(r"\b(?:func|fn)_[0-9A-Fa-f]{8}\b"),
-    "noinline": re.compile(r"\bnoinline\b"),
 }
 COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
 HEADER_EXT = (".hpp", ".h")
@@ -65,8 +72,18 @@ def strip_comments(text: str) -> str:
     return COMMENT.sub(" ", text)
 
 
+NOINLINE_OK = re.compile(r"//\s*noinline-ok:\s*\S")
+
+
+def exempt_justified_noinline(text: str) -> str:
+    """Drop the noinline smell from lines annotated ``// noinline-ok: <reason>``."""
+    return "\n".join(
+        HARD["noinline"].sub(" ", line) if NOINLINE_OK.search(line) else line
+        for line in text.split("\n"))
+
+
 def count_smells(text: str) -> tuple[dict[str, int], dict[str, int]]:
-    code = strip_comments(text)
+    code = strip_comments(exempt_justified_noinline(text))
     return ({k: len(p.findall(code)) for k, p in HARD.items()},
             {k: len(p.findall(code)) for k, p in SOFT.items()})
 

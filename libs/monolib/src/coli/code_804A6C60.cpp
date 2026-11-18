@@ -5,11 +5,10 @@
 #include <harness_catalog.h>
 #include <PowerPC_EABI_Support/MSL_C/MSL_Common/rand.h>
 #include <cstring>
+#include <new>
 #include <monolib/coli/code_804A6C60.hpp>
 #include <monolib/coli/coli_types.hpp>
-// CColiProc.hpp declares __vt__9CColiProc with exactly the u32[4] type this TU
-// defines, so the old `lbl_eu_8056F398` name shield is no longer needed.
-#include <monolib/coli/CColiProc.hpp> // CColiProc/CColiProcTarget authority (single def)
+#include <monolib/coli/CColiProc.hpp> // CColiProc/CColiObjCall/CColiWork hierarchy
 #include <monolib/lod/CLODCacheManagerS.hpp>
 #include <monolib/math/CVec3.hpp>
 #include <monolib/util/MemManager.hpp>
@@ -27,10 +26,9 @@ using nw4r::math::_VEC3;
 // function pointers are the retail-named catalog stubs; non-slot words are
 // raw retail bytes. Foreign data labels are extern "C" declared.
 extern "C" u32 lbl_eu_8066AE30;   // .sdata2 float-const pool (CGXCache-owned)
-extern "C" u32 lbl_eu_80524408;   // .rodata RTTI name string (code_804B2FF0)
-extern "C" u32 lbl_eu_80524418;   // .rodata RTTI name string (code_804B2FF0)
-extern "C" u32 __RTTI__9CColiProc;   // .data view-base object (CView-owned)
-extern "C" void ColiMoverUpdate();  // next-TU catalog stub
+// The two RTTI type-name strings ("CColiObjCall"/"CColiResCall", .rodata
+// 0x80524408/0x80524418) are emitted by the compiler together with the
+// vtables below, so they are no longer declared here.
 
 // Forward declarations for the in-TU catalog functions referenced by the
 // dispatch tables below (definitions appear later in the file; all are
@@ -42,7 +40,6 @@ extern "C" void ColiBuildAxisFrameMixed(CColiObject* self, CColiObject* src, CCo
 extern "C" void ColiBuildXformRotate(f32* out, const struct CColiXformSrc* src);
 extern "C" void ColiBuildXformRotScale(f32* out, const struct CColiXformSrc* src);
 extern "C" void func_804A7834(CColiObject* self, const CColiObject* other);
-extern "C" void ColiNoop(void);
 extern "C" int ColiSweepSegmentSphere(CColiObject* self);
 extern "C" int ColiClassifyXfrmRadius(CColiObject* self);
 extern "C" int ColiResolveContacts(CColiObject* self);
@@ -66,7 +63,6 @@ extern "C" int ColiClipDualSegment(CColiObject* self);
 extern "C" void ColiClipSampledRows(struct CColiContactObj* self);
 extern "C" int ColiClipContactPoint(struct CColiContactObj* self, const VEC3* v, f32 f);
 extern "C" int ColiReturnZeroStub(CColiObject* self);
-extern "C" void ColiAccumScaledVec(CColiObject* self);
 extern "C" int ColiSweepSphere(CColiObject* self);
 extern "C" int ColiSweepSphereSegment(CColiObject* self);
 extern "C" int ColiSweepPointPair(CColiObject* self);
@@ -80,54 +76,42 @@ extern "C" int ColiClipCentreRadius(CColiObject* self);
 // view-base word. lbl_eu_80663A90 is the 8-byte locator {name-ptr, 0}; the
 // decl below was widened to the array type and its read sites use word 0.
 u32 lbl_eu_80663A90[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
-extern "C" u32 __RTTI__12CColiObjCall[2];
-extern "C" u32 __RTTI__12CColiResCall[2];
-extern "C" u32 __RTTIBaseList__12CColiObjCall[3];
-extern "C" u32 __RTTIBaseList__12CColiResCall[3];
 extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
 extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
 // ---- Class identity of this unit ----------------------------------------
-// .rodata 0x80524408/0x80524418 hold the type-name strings "CColiObjCall" and
-// "CColiResCall" (13 bytes each, read straight out of main.dol), and the .sdata
-// RTTI locators below pair them with a base list. Both base lists are
-// { __RTTI__9CColiProc, 0, 0 } - one base class at offset 0 plus the 2-word
-// terminator - so the hierarchy this TU belongs to is
+// This TU defines both derived classes' virtual functions, so MWCC emits
+// their vtables here (retail .data 0x8056F380/0x8056F3A8) together with the
+// RTTI base lists, the .sdata locators and the .rodata type-name strings
+// "CColiObjCall" / "CColiResCall" (0x80524408 / 0x80524418):
 //
-//     class CColiProc;                     // base, 1 virtual slot
-//     class CColiObjCall : public CColiProc;
-//     class CColiResCall : public CColiProc;
+//     class CColiProc;                     // base, 1 virtual slot (ColiNoop)
+//     class CColiObjCall : public CColiProc;// slot0 ColiAccumScaledVec
+//     class CColiResCall : public CColiProc;// slot0 ColiMoverUpdate
 //
-// Each class has exactly one virtual function (see the 3-word vtables below:
-// {RTTI, offset-to-top, slot0}); CColiObjCall's slot 0 is ColiAccumScaledVec
-// (the last function in this TU, which reads only members inside the 0x48-byte
-// static instance), CColiResCall's is ColiMoverUpdate (defined in CColiProc.cpp).
-// CColiProc's own table is the 4-word {RTTI, 0, ColiNoop} + 4-byte pad that
-// __ct__CColiProc installs at this+0x0.
+// Each class has exactly one virtual function (3-word vtable {RTTI,
+// offset-to-top, slot0}); CColiObjCall's slot 0 is the last function of this
+// TU, which reads only members inside the 0x48-byte static instance.
+// CColiProc's own table is {RTTI, 0, ColiNoop} followed by 4 alignment bytes
+// before the next vtable; __ct__CColiProc (CColiProc.cpp) installs it.
 //
-// The two static instances that the .ctors entries initialise are
-// lbl_eu_8065D0A0 (CColiObjCall, .bss 0x48) and lbl_eu_8065D0E8 (CColiResCall,
-// .bss 0x50); both run __ct__CColiProc and then overwrite this+0x0 with their
-// own vtable.
-extern "C" u32 __vt__12CColiObjCall[0x3] = { (u32)&__RTTI__12CColiObjCall, 0x00000000, (u32)&ColiAccumScaledVec };
-extern "C" u32 __RTTIBaseList__12CColiObjCall[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
-extern "C" u32 __vt__9CColiProc[0x4] = { (u32)&__RTTI__9CColiProc, 0x00000000, (u32)&ColiNoop, 0x00000000 };
-extern "C" u32 __vt__12CColiResCall[0x3] = { (u32)&__RTTI__12CColiResCall, 0x00000000, (u32)&ColiMoverUpdate };
-extern "C" u32 __RTTIBaseList__12CColiResCall[0x3] = { (u32)&__RTTI__9CColiProc, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056F3C0[0x5] = { 0x00040010, 0x000C0018, 0x00300008, 0x003C0014, 0x00180000 };
-extern "C" u32 lbl_eu_8056F3D4[0x5] = { 0x00140014, 0x001C001C, 0x00340034, 0x00740068, 0x00000000 };
-extern "C" u32 lbl_eu_8056F3E8[0x5] = { 0x00000000, 0x00010001, 0x00020002, 0x00030004, 0x00000000 };
-
-
-extern "C" u32 __RTTI__12CColiObjCall[2] = { (u32)&lbl_eu_80524408, (u32)&__RTTIBaseList__12CColiObjCall };
-extern "C" u32 __RTTI__12CColiResCall[2] = { (u32)&lbl_eu_80524418, (u32)&__RTTIBaseList__12CColiResCall };
+// The two static instances the .ctors entries initialise are
+// lbl_eu_8065D0A0 (CColiObjCall, .bss 0x48, built here) and g_coliResCall
+// (CColiResCall, .bss 0x50, built in the CColiProc unit); each one runs the
+// CColiProc base ctor and then installs its own vtable.
+// The per-type spec tables ColiSpecEntryStep/3D4/3E8 live in the next unit
+// (code_804B2FF0.cpp .data 0x8056F3C0..0x8056F3FC, where retail places them);
+// this TU only reads them through the declarations in CColiProc.cpp.
 
 
 // 3-word sub-spec copied raw into the +0x44 point; full definition appears
 // below the ctor family that uses it.
 struct CColiSubSpec804A7878;
-// Embedded CColiProc base sub-object at +0x04; definition appears below.
-struct CColiProcLocal;
-extern "C" void __ct__CColiProc(CColiProcLocal* self);
+// Embedded CColiProc sub-object at +0x04 of the objects the ColiInit*Spec
+// helpers fill in. Those helpers construct it in place; MWCC's placement-new
+// expansion adds a null guard retail does not have (see MWCC_PATTERNS "Guard
+// on a provably-nonnull member address"), so the ctor is called through its
+// own symbol, as the sibling __dt__/__ct__ call sites do.
+extern "C" void __ct__9CColiProcFv(CColiProc* self);
 
 // SDA2 zero constant used to fill the axis-helper vectors (retail @sda21 reloc).
 extern const float lbl_eu_8066AE24;
@@ -208,16 +192,10 @@ extern const float lbl_eu_8066AE68;  // exit-face reach init (ColiSweepPointBox)
 extern u32 lbl_eu_80663A90[2];
 
 // Current-segment global used by ColiDispatchMoveSegment: the active segment point
-// (+0x38) and scalar (+0x3c), plus a flag byte (+0x40). The +0x3c slot is
-// also pointed at by the caller's object as its partner.
-struct CColiGlobal805D0A0 {
-    u8 _00[0x38];          // +0x00 .. +0x37
-    VEC3* field_0x38;      // +0x38 current segment point
-    f32 field_0x3c;        // +0x3c current segment scalar
-    u8 field_0x40;         // +0x40 flag byte
-    u8 _44[0x48 - 0x44];   // pad to the retail 72-byte object
-};
-extern CColiGlobal805D0A0 lbl_eu_8065D0A0;
+// (+0x38), scalar (+0x3c), plus a flag byte (+0x40). The +0x3c slot is also
+// pointed at by the caller's object as its partner, so it is a real CColiObjCall
+// instance (built by the generated static initializer of this TU).
+extern CColiObjCall lbl_eu_8065D0A0;
 
 // Registered-collision globals (sbss 0x65910..0x65938) written by
 // ColiRegisterSubObjects / ColiSetDispatchIndex: the current collision object plus its
@@ -819,7 +797,7 @@ extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
 // index or the embedded proc itself. Returns self.
 extern "C" CColiObject* ColiInitAngleSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                            double f1, double f2, u32 idx) {
-    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
     const u32* s = (const u32*)spec;
     u32* d = (u32*)&self->field_0x44;
     d[1] = s[1];   // +0x48
@@ -859,9 +837,9 @@ extern "C" CColiObject* ColiInitAngleSpec(CColiObject* self, const CColiSubSpec8
 // +0x68 and normalise it to unit length, storing the original length at
 // +0x308. The +0x40 sub-object offset is 10; the +0x3c partner slot points
 // at the caller's index or the embedded proc itself. Returns self.
-CColiObject* ColiInitSegment(CColiObject* self, const CColiSubSpec804A7878* spec,
-                           const VEC3* v, u32 idx) {
-    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+extern "C" CColiObject* ColiInitSegment(CColiObject* self, const CColiSubSpec804A7878* spec,
+                                         const VEC3* v, u32 idx) {
+    __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
     const u32* sa = (const u32*)spec;
     const u32* sv = (const u32*)v;
     u32* d = (u32*)&self->field_0x44;
@@ -892,19 +870,10 @@ CColiObject* ColiInitSegment(CColiObject* self, const CColiSubSpec804A7878* spec
     return self;
 }
 
-// Embedded CColiProc base sub-object at +0x04; only its constructor runs
-// from this TU (retail symbol __ct__CColiProc, defined in the sibling
-// CColiProc unit).
-struct CColiProcLocal {
-    u32 field_0x0;   // +0x0
-    u32 field_0x4;   // +0x4
-    u32 field_0x8;   // +0x8
-    u32 field_0xc;   // +0xc
-    // Storage-only 0x10-byte view of CColiProc base (first 0x10 bytes).
-    // Calls use ((CColiProc*)&proc)-> for correct retail relocs
-    // (InitQuad__9CColiProcFP15CColiProcTargetUlUl etc.).
-};
-extern "C" void __ct__CColiProc(CColiProcLocal* self);
+// Local 0x10-byte collision work object (CColiWork, CColiProc.hpp): the
+// /proc entry walkers seed it through its real members and the CColiProc
+// unit classifies it. `CColiProcLocal` is kept as the short local alias.
+typedef CColiWork CColiProcLocal;
 
 // Local proc seeded by ColiProc_InitQuad and classified by ColiProc_CheckEntries (both
 // defined in the sibling CColiProc TU; same-TU stubs are declared below).
@@ -976,7 +945,7 @@ extern "C" CColiObject* ColiInitPointRadius(CColiObject* out, const VEC3* in, f3
 #pragma auto_inline off
 CColiObject* ColiInitPointRadius(CColiObject* out, const VEC3* in, f32 d, u32 idx) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)out;
-    __ct__CColiProc((CColiProcLocal*)&s->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&s->field_0x04);
     const u32* src = (const u32*)in;
     s->field_0x44 = src[0];
     s->field_0x48 = src[1];
@@ -1017,7 +986,7 @@ extern "C" CColiObject* ColiInitPointSpec(CColiObject* self,
 CColiObject* ColiInitPointSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                            CColiObject* parent) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
-    __ct__CColiProc((CColiProcLocal*)&s->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&s->field_0x04);
     s->field_0x44 = spec->field_0x00;
     s->field_0x48 = spec->field_0x04;
     s->field_0x4c = spec->field_0x08;
@@ -1042,7 +1011,7 @@ CColiObject* ColiInitPointSpec(CColiObject* self, const CColiSubSpec804A7878* sp
 #pragma auto_inline off
 extern "C" CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f);
 CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f) {
-    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
     const u32* sv = (const u32*)v;
     u32* d = (u32*)&self->field_0x44;
     d[0] = sv[0];
@@ -1070,7 +1039,7 @@ CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f) {
 extern "C" CColiObject* ColiInitScaledSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                             f32 f1, f32 f2, f32 f3) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
-    __ct__CColiProc((CColiProcLocal*)&s->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&s->field_0x04);
     s->field_0x44 = spec->field_0x00;
     s->field_0x48 = spec->field_0x04;
     s->field_0x4c = spec->field_0x08;
@@ -1092,7 +1061,7 @@ extern "C" CColiObject* ColiInitScaledSpec(CColiObject* self, const CColiSubSpec
 #pragma auto_inline off
 extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
                                        const VEC3* b, f32 f) {
-    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
     // Raw word copies so MWCC emits lwz/stw for the point slots (retail).
     const u32* sa = (const u32*)a;
     const u32* sb = (const u32*)b;
@@ -1126,7 +1095,7 @@ extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
 // as absolute pointers, and the object itself is always registered last.
 // The seven pointers are computed into locals first so MWCC hoists all the
 // loads/adds ahead of the stores (retail's schedule).
-void ColiRegisterSubObjects(u32 unused, CColiObject* self) {
+extern "C" void ColiRegisterSubObjects(u32 unused, CColiObject* self) {
     if (self->field_0x10 != 0) {
         CColiObject* p0 = (CColiObject*)((u8*)self + self->field_0x10);
         CColiObject* p1 = (CColiObject*)((u8*)self + self->field_0x38);
@@ -1174,7 +1143,7 @@ extern "C" void ColiLinkSweepRecord(CColiObject* self, u32 v, u8* p) {
     lbl_eu_80665938 = v;
 }
 
-u32 ColiSetDispatchIndex(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
+extern "C" u32 ColiSetDispatchIndex(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
 
 // Object handed to the collision dispatch handlers: ColiDispatchByIndex stores the
 // caller parameter into field_0x00 and dispatches through the ptmf table at
@@ -1191,14 +1160,14 @@ struct CColiDispatchObj {
 typedef void (CColiDispatchObj::*CColiDispatchFn)();
 extern u32 lbl_eu_8056F1D8[];  // 3-word PMF table (raw words + fn ptrs; cast at call site)
 
-void ColiTranslatePoints(CColiObject* self, const VEC3* v) {
+extern "C" void ColiTranslatePoints(CColiObject* self, const VEC3* v) {
     // Add v to both embedded vectors; the nw4r VEC3Add helper reproduces
     // the retail paired-single (psq_l/ps_add/psq_st) sequence.
     VEC3Add(&self->field_0x44, &self->field_0x44, v);
     VEC3Add(&self->field_0x50, &self->field_0x50, v);
 }
 
-void ColiDispatchByIndex(CColiDispatchObj* self, u32 val) {
+extern "C" void ColiDispatchByIndex(CColiDispatchObj* self, u32 val) {
     self->field_0x00 = val;
     u32 idx = self->field_0x40 + lbl_eu_80665938;
     CColiDispatchFn const& pmf =
@@ -1209,9 +1178,9 @@ void ColiDispatchByIndex(CColiDispatchObj* self, u32 val) {
 // Sphere test with contact write-back (defined at the end of the file).
 extern "C" int ColiSweepSphere(CColiObject* self);
 
-// No-op handler. Used as a default stub in collision dispatch tables for
-// method slots that require no action (e.g. optional callbacks).
-extern "C" void ColiNoop() {}
+// CColiProc's virtual slot 0: the empty default the base vtable installs
+// (retail ColiNoop, 4-byte `blr`).
+void CColiProc::Update() {}
 
 // Object reached through CColiObject::field_0x3c (the proc): the computed
 // contact point at +0x0c, the contact normal at +0x18 and the vtable in
@@ -4476,7 +4445,7 @@ extern "C" void ColiMakeAabbRadius(CColiObject* self, const VEC3* in, f32 d) {
 }
 #pragma pop
 
-void ColiMakeAabbAsym(CColiObject* self, const VEC3* in, f32 a, f32 b, f32 c) {
+extern "C" void ColiMakeAabbAsym(CColiObject* self, const VEC3* in, f32 a, f32 b, f32 c) {
     // Asymmetric AABB corner pair around in (half-extents a/b/c mixed axes).
     self->field_0x00[0].x = in->x + a;
     self->field_0x00[0].y = in->y + b;
@@ -4490,7 +4459,7 @@ void ColiMakeAabbAsym(CColiObject* self, const VEC3* in, f32 a, f32 b, f32 c) {
 // maximum of the two points, field_0x00[1] the minimum. Written as a
 // 3-component walk; MWCC unrolls it and rebases the output pointer after
 // the second component (retail addi r4, r3, 8).
-void ColiMakeAabbMinMax(CColiObject* out, const CColiObject* a, const CColiObject* b) {
+extern "C" void ColiMakeAabbMinMax(CColiObject* out, const CColiObject* a, const CColiObject* b) {
     f32* d = &out->field_0x00[0].x;
     const f32* pa = &a->field_0x00[0].x;
     const f32* pb = &b->field_0x00[0].x;
@@ -4542,7 +4511,7 @@ extern "C" bool ColiTestAabbContains(const CColiObject* a, const CColiObject* b)
 // above the sdata2 threshold extend the max corner (row 0), the rest drag the
 // min corner (row 1). The z block rebases the base pointer (self += 2 floats)
 // so the two stores use 0/0xc displacements (retail's addi r3, r3, 8 shape).
-void ColiMoveAabbThreshold(f32* self, const f32* v) {
+extern "C" void ColiMoveAabbThreshold(f32* self, const f32* v) {
     // 3-axis walk; the unrolled loop rebases self after the second axis
     // (retail addi r3, r3, 8). The threshold global is referenced directly -
     // MWCC CSEs it into f1 ahead of the v elements (retail colours).
@@ -4563,7 +4532,7 @@ struct CColi804B095C {
     u8* field_0x4;   // +0x04 owned buffer (mtl::MemManager::deallocate)
 };
 
-void* __dt__804B095C(CColi804B095C* self, int deleting) {
+extern "C" void* __dt__804B095C(CColi804B095C* self, int deleting) {
     if (self != 0) {
         // Nested null-check on the buffer: MWCC CSEs the load/cmpwi but
         // emits both beqs (retail has the duplicated branch).
@@ -4602,14 +4571,14 @@ struct CColiNode804B09C8 {
 };
 
 // Clear the owned collision-data pointer, run the node's init, return self.
-void ColiNodeResetAll(CColiNode804B09C8* self);
+extern "C" void ColiNodeResetAll(CColiNode804B09C8* self);
 extern "C" CColiNode804B09C8* ColiNodeInit(CColiNode804B09C8* self) {
     self->field_0x04 = 0;
     ColiNodeResetAll(self);
     return self;
 }
 
-void ColiNodeResetAll(CColiNode804B09C8* self) {
+extern "C" void ColiNodeResetAll(CColiNode804B09C8* self) {
     f32 k = lbl_eu_8066AE88;
     self->field_0x00 = 0;
     self->field_0x08 = 0;
@@ -4645,7 +4614,7 @@ extern "C" void ColiNodeSetWord8Rebuild(void* self, u32 val) { ((CColiNode804B09
 // Node reset: clear the +0x08/+0x00 words first, then release the owned
 // +0x04 buffer and null it. The doubled emptiness check on the saved buffer
 // pointer is retained (MWCC keeps the redundant branch in retail).
-void ColiNodeReleaseBuffer(CColiNode804B09C8* self) {
+extern "C" void ColiNodeReleaseBuffer(CColiNode804B09C8* self) {
     u8* buf = self->field_0x04;
     self->field_0x08 = 0;
     self->field_0x00 = 0;
@@ -4657,7 +4626,7 @@ void ColiNodeReleaseBuffer(CColiNode804B09C8* self) {
     }
 }
 
-void ColiSetMoveVec2(CColiObject* self, int arg, f32 x, f32 y) {
+extern "C" void ColiSetMoveVec2(CColiObject* self, int arg, f32 x, f32 y) {
     u32 flags = self->field_0xa8;
     self->field_0x30.x = x;
     flags = (flags & ~0x20) | 0x10;
@@ -4670,7 +4639,7 @@ void ColiSetMoveVec2(CColiObject* self, int arg, f32 x, f32 y) {
     }
 }
 
-void ColiSetMoveVecFlagged(CColiObject* self, const _VEC3* v, int flag) {
+extern "C" void ColiSetMoveVecFlagged(CColiObject* self, const _VEC3* v, int flag) {
     // Raw-copy the 3-word vector via u32 (retail lwz/stw, not lfs/stfs),
     // then update the behaviour flags: clear bit 4, set bit 5, and
     // set/clear bit 10 according to the caller-supplied flag.
@@ -4695,7 +4664,7 @@ void ColiSetMoveVecFlagged(CColiObject* self, const _VEC3* v, int flag) {
 // one (kind 0) with bits 4..7 set, fill the +0x0c..+0x20 axis block with the
 // two sdata2 constants. Hand the object to ColiGrowMoveAabb last. The vector is
 // copied as words (lwz/stw) so the +0x24 slot keeps the raw bit pattern.
-void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
+extern "C" void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
     const u32* src = (const u32*)v;
     u32* dst = (u32*)&self->field_0x00[3];
     u32 flags = self->field_0xa8;
@@ -4734,7 +4703,7 @@ void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
 // translation column and invert it into +0x6c; when the object is a fresh one
 // (kind 0) with bits 4..7 set, fill the +0x0c..+0x20 axis block with the two
 // sdata2 constants. Hand the object to ColiGrowMoveAabb last.
-void ColiSetAxisBlockRotInverse(CColiObject* self, const _VEC3* v, const _VEC3* rot) {
+extern "C" void ColiSetAxisBlockRotInverse(CColiObject* self, const _VEC3* v, const _VEC3* rot) {
     const u32* src = (const u32*)v;
     u32* dst = (u32*)&self->field_0x00[3];
     u32 flags = self->field_0xa8;
@@ -4791,7 +4760,7 @@ struct CColiKind804B0CE8 {
 // with the two sdata2 constants, re-seeds the local proc and classifies the
 // segment via ColiProc_RefreshAxes, then runs ColiGrowMoveAabb when behaviour bits
 // 7-8 are set. Always ends by setting bit 1.
-void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
+extern "C" void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
     u32 flags = self->field_0xa8;
     if (flags & 0x1) {
         self->field_0xa8 = flags & ~0x1;
@@ -4817,7 +4786,7 @@ void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
             self->field_0x0c[4] = c2;
             self->field_0x0c[5] = c2;
             CColiProcLocal proc;
-            ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)(CColiObject*)self->field_0x00, self->field_0x08, (u32)self->field_0x04);
+            proc.InitQuad((CColiProcTarget*)(CColiObject*)self->field_0x00, self->field_0x08, (u32)self->field_0x04);
             ColiProc_RefreshAxes(&proc, self->field_0x0c, self->field_0x24,
                           &self->field_0x24[3], self->field_0xb0);
             if (self->field_0xa8 & 0xC0) {
@@ -4833,7 +4802,7 @@ void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
 // the head and relink self after the last node whose key is still greater.
 // The tail updates the +0xa4 scalar from +0x0c, clamped up to the next
 // node's value. Skipped entirely when the +0xa8 bit-1 flag is set.
-void ColiNodeResortKeyed(CColiNode804B09C8* self) {
+extern "C" void ColiNodeResortKeyed(CColiNode804B09C8* self) {
     if (!(self->field_0xa8 & 0x2)) return;
     CColiNode804B09C8* oldNext = self->field_0xa0;
     CColiNode804B09C8* prev;
@@ -4955,7 +4924,7 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
         }
         node->field_0xa8 &= 0xFFFFBB01;
         CColiProcLocal proc;
-        ((CColiProc*)&proc)->InitTriple((CColiProcTarget*)(CColiObject*)node->field_0x00, node->field_0x08);
+        proc.InitTriple((CColiProcTarget*)(CColiObject*)node->field_0x00, node->field_0x08);
         switch (ColiProc_ClassifyEntries(&proc, &node->field_0xb0,
                               (void**)&node->field_0x04, &node->field_0x24[3])) {
         case 1:
@@ -4966,10 +4935,10 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
             break;
         }
         node->field_0xa8 |= 0x1;
-        if (((CColiProc*)&proc)->IsTargetFlagged()) {
+        if (proc.IsTargetFlagged()) {
             node->field_0xa8 |= 0x2000;
         }
-        if (((CColiProc*)&proc)->TestBit18State()) {
+        if (proc.TestBit18State()) {
             node->field_0xa8 |= 0x4000;
         }
     }
@@ -4979,7 +4948,7 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
 // retail: build a {f,f,f} local vec from the SDA2 float and forward the
 // caller's r3-r5 to ColiResolveNodeMove with the vec in r6 (passthrough wrapper).
 extern "C" bool __declspec(noinline) ColiResolveNodeMove(CColiNode804B09C8* a, VEC3* b, const VEC3* c, const VEC3* v);  // defined below
-void ColiResolveMoveDefault(void* a, void* b, u32 c) {
+extern "C" void ColiResolveMoveDefault(void* a, void* b, u32 c) {
     f32 v[3] = { lbl_eu_8066AE88, lbl_eu_8066AE88, lbl_eu_8066AE88 };
     ColiResolveNodeMove((CColiNode804B09C8*)a, (VEC3*)b, (const VEC3*)c, (const VEC3*)v);
 }
@@ -5264,7 +5233,7 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
 // contained in self's box, sample the partner segment at +0x20 and process
 // it, forwarding the helper's status. The seg local is 0x18 bytes so the
 // second local lands at sp+0x20 exactly like the retail frame.
-int ColiCheckMoveRadius(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5) {
+extern "C" int ColiCheckMoveRadius(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5) {
     CColiSeg804B192C seg;
     ColiMakeAabbRadius((CColiObject*)&seg, in, d);
     if (ColiTestAabbContains((CColiObject*)&seg, self)) {
@@ -5282,7 +5251,7 @@ int ColiCheckMoveRadius(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5
 // ColiProc_DispatchSpec, returning 1 on success. Otherwise seed a local object from
 // the sub-spec and forward self/local/arg to ColiQueryNodePoint, returning its
 // status (retail tail block).
-int ColiQuerySpecDispatch(CColiObject* self, const CColiSubSpec804A7878* spec,
+extern "C" int ColiQuerySpecDispatch(CColiObject* self, const CColiSubSpec804A7878* spec,
                   const void* a5, u32 a6) {
     CColiProcLocal proc;   // +0x8
     CColiObject local;     // +0x330
@@ -5307,7 +5276,7 @@ int ColiQuerySpecDispatch(CColiObject* self, const CColiSubSpec804A7878* spec,
         if (t != 0) return 0;
         local.field_0x314 = (u32)self;
         if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-            ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+            proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
             if (ColiProc_DispatchSpec(&proc, &local) != 0) return 1;
         }
         return 0;
@@ -5324,7 +5293,7 @@ tail:
 // and bit 3 set. On success, build the segment AABB around (v, f), verify it
 // is contained in self's box, construct a local object via ColiInitPointScalar14,
 // link it to self and forward both to ColiProc_CheckEntries, returning its status.
-bool ColiCheckMoveGate(CColiObject* self, const VEC3* v, f32 f) {
+extern "C" bool ColiCheckMoveGate(CColiObject* self, const VEC3* v, f32 f) {
     CColiProcLocal proc;
     CColiSeg804B192C seg;
     CColiObject local;
@@ -5349,7 +5318,7 @@ bool ColiCheckMoveGate(CColiObject* self, const VEC3* v, f32 f) {
     if (!ColiTestAabbContains((CColiObject*)&seg, self)) goto fail;
     ColiInitPointScalar14(&local, v, f);
     local.field_0x314 = (u32)self;
-    ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+    proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return true;
 fail:
@@ -5363,7 +5332,7 @@ fail:
 // forward both to ColiProc_CheckEntries, returning its status.
 typedef CColiObject* (*LocalObjCtor1)(CColiObject*);
 
-bool ColiCheckStateGate(CColiObject* self) {
+extern "C" bool ColiCheckStateGate(CColiObject* self) {
     CColiProcLocal proc;   // +0x8
     CColiObject local;     // +0x18 (0x318 bytes)
     if (self->field_0x04 == 0) goto fail;
@@ -5389,7 +5358,7 @@ bool ColiCheckStateGate(CColiObject* self) {
     ((LocalObjCtor1)&ColiInitFlatSegment)(&local);
     local.field_0x314 = (u32)self;
     CColiObject* tgt = self->field_0x00_obj;
-    ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)tgt, self->field_0x08, self->field_0x04);
+    proc.InitQuad((CColiProcTarget*)tgt, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return true;
 fail:
@@ -5401,7 +5370,7 @@ fail:
 // around (v, f1), verify it is contained in self's box, construct a local
 // object from the same sub-spec via ColiInitScaledSpec, link it to self and
 // classify it through the local proc, returning the classifier's status.
-int ColiCheckMoveScaled(CColiObject* self, const VEC3* v, f32 f1, f32 f2, f32 f3) {
+extern "C" int ColiCheckMoveScaled(CColiObject* self, const VEC3* v, f32 f1, f32 f2, f32 f3) {
     CColiProcLocal proc;   // +0x8
     CColiSeg804B192C seg;  // +0x18
     CColiObject local;     // +0x30
@@ -5425,14 +5394,14 @@ int ColiCheckMoveScaled(CColiObject* self, const VEC3* v, f32 f1, f32 f2, f32 f3
     if (!ColiTestAabbContains((CColiObject*)&seg, self)) goto fail;
     ColiInitScaledSpec(&local, (const CColiSubSpec804A7878*)v, f1, f2, f3);
     local.field_0x314 = (u32)self;
-    ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+    proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return 1;
 fail:
     return 0;
 }
 
-void ColiSetMoveEnableFlag(u8* self, int arg) {
+extern "C" void ColiSetMoveEnableFlag(u8* self, int arg) {
     int* flags = (int*)&((CColiObject*)self)->field_0xa8;
     if (arg != 0) {
         *flags &= ~0x100;
@@ -5479,8 +5448,8 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
         lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AEA0;
         CColiProcLocal proc;
-        ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
-        proc.field_0xc |= 0x2;
+        proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+        proc.field_0xC |= 0x2;
         result = (result | ColiProc_RunCollideScan(&proc, outVec, obj,
                                          (self->field_0xa8 >> 9) & 1)) != 0;
     }
@@ -5492,7 +5461,7 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     // Behaviour 0x50/0x80 gate: seed the partner slot with the current-segment
     // global (or the embedded proc) and run the sphere-sweep contact. The
     // global address is kept in a local so it survives the callee call (r27).
-    CColiGlobal805D0A0* g = &lbl_eu_8065D0A0;
+    CColiObjCall* g = &lbl_eu_8065D0A0;
     if (&lbl_eu_8065D0A0 != 0) {
         obj->field_0x3c_u = (u32)&lbl_eu_8065D0A0;
     } else {
@@ -5514,7 +5483,7 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     goto exit;
 block60F4:
     if (fl & 0x20) {
-        CColiGlobal805D0A0* g2 = &lbl_eu_8065D0A0;
+        CColiObjCall* g2 = &lbl_eu_8065D0A0;
         if (&lbl_eu_8065D0A0 != 0) {
             obj->field_0x3c_u = (u32)&lbl_eu_8065D0A0;
         } else {
@@ -5650,9 +5619,9 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
     v->field_0x314 = (u32)self;
     int result = 0;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+        proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
-            proc.field_0xc |= 0x4;
+            proc.field_0xC |= 0x4;
         }
         // result is provably 0 here, so MWCC folds `result | r3` into the
         // or-with-zero (ori r3, r3, 0) before the neg/or/srwi booleanize.
@@ -5678,7 +5647,7 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
 // proc-seed block; behaviour bit 10 selects the capsule clip pair
 // (ColiSweepCylinderPair / ColiSweepSegmentAabb) vs the sphere clip pair (ColiSweepSphereClip /
 // ColiFrameSweepClip), each with the 0x50/0x20 dispatch inside.
-int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
+extern "C" int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
     CColiProcLocal proc;
     int t = 1;
     int w = 1;
@@ -5697,9 +5666,9 @@ int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
     v->field_0x314 = (u32)self;
     int result = 0;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+        proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
-            proc.field_0xc |= 0x4;
+            proc.field_0xC |= 0x4;
         }
         // result is provably 0 here, so MWCC folds `result | r3` into the
         // or-with-zero (ori r3, r3, 0) before the neg/or/srwi booleanize.
@@ -5763,9 +5732,9 @@ extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
     if (t != 0) return 0;
     v->field_0x314 = (u32)self;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ((CColiProc*)&proc)->InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
+        proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
-            proc.field_0xc |= 0x4;
+            proc.field_0xC |= 0x4;
         }
         if (ColiProc_CheckEntries(&proc, v) != 0) return 1;
     }
@@ -5785,19 +5754,19 @@ extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
     return 0;
 }
 
-// Scale the +0x24 vector by the +0x3c scalar, optionally overwrite v.y with
-// the sdata2 constant when the +0x40 flag byte is set, then add the result
-// into the VEC3 pointed at by +0x38.
-extern "C" void ColiAccumScaledVec(CColiObject* self) {
+// CColiObjCall's virtual slot 0: scale the +0x24 offset vector by the +0x3c
+// scalar, optionally overwrite v.y with the sdata2 constant when the +0x40
+// flag byte is set, then add the result into the accumulator at +0x38.
+void CColiObjCall::Update() {
     VEC3 v;
-    v.x = self->field_0x00[3].x;
-    v.y = self->field_0x00[3].y;
-    v.z = self->field_0x00[3].z;
-    VEC3Scale(&v, &v, self->field_0x3c_f);
-    if (self->field_0x40_b != 0) {
+    v.x = off.x;
+    v.y = off.y;
+    v.z = off.z;
+    VEC3Scale(&v, &v, field_0x3c);
+    if (field_0x40 != 0) {
         v.y = lbl_eu_8066AE88;
     }
-    VEC3Add((VEC3*)self->field_0x38, (VEC3*)self->field_0x38, &v);
+    VEC3Add(field_0x38, field_0x38, &v);
 }
 
 // ---------------------------------------------------------------------------
@@ -6212,24 +6181,14 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
     return 1;
 }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Static init: construct the +0x3C vtable pair and the singleton, then zero
-// the +0x38/+0x3C/+0x40 state.
-extern const f32 lbl_eu_8066AE88;
-extern "C" void sinit_804B2524(void) {
-    extern u32 __vt__12CColiObjCall[];
-    __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D0A0);
-    *(void**)&lbl_eu_8065D0A0 = __vt__12CColiObjCall;
-    lbl_eu_8065D0A0.field_0x38 = 0;
-    lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AE88;
-    lbl_eu_8065D0A0.field_0x40 = 0;
-}
-
 // ===== Dissolved monolibdata2 zero-fill (bss/sbss) owned by this TU =====
 // Definitions typed to match the pre-existing extern declarations above.
 u32 lbl_eu_8065CFA0[0x100 / 4];                 // .bss 256B
-CColiGlobal805D0A0 lbl_eu_8065D0A0;             // .bss 72B
-u8 lbl_eu_8065D0E8[0x50];                       // .bss 80B
+// The CColiObjCall singleton (retail .bss 0x8065D0A0, 72B). MWCC emits this
+// TU's static initializer (retail sinit_804B2524, .ctors 0x804FA168) from it:
+// run the CColiProc base ctor, install __vt__12CColiObjCall, then the +0x38/
+// +0x3C/+0x40 member initializers of the class's inline ctor.
+CColiObjCall lbl_eu_8065D0A0;
 // .sbss single-word globals (declared at top with their field types).
 ml::coli::CColiObject* lbl_eu_80665910;
 ml::coli::CColiObject* lbl_eu_80665914;
@@ -6243,4 +6202,4 @@ ml::coli::CColiObject* lbl_eu_80665930;
 CColiSweepCtrl* lbl_eu_80665934;
 u32 lbl_eu_80665938;
 u32 lbl_eu_8066593C;              // 2nd word of the 8B retail lbl_eu_80665938
-u32 lbl_eu_80665940;
+u32 g_coliSpecTable;

@@ -229,7 +229,7 @@ static inline f64 convS32ToD(s32 v, f64 magic) {
 class CMarkerDistProvider;
 
 // Marker trail renderer (see definition below).
-s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
+extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
                   const f32* sizeF, s32 density, CMarkerDistProvider* prov,
                   QuadTexCtx* mtxSrc, s32 boundFlag);
 
@@ -277,7 +277,7 @@ static inline u32 f32bits10A0(f32 f) {
 
 class CMarkerDistProvider;
 class CMarkerUser;
-void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* extent,
+extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* extent,
                    ml::CVec3* step, s32 count, u8* colorBytes,
                    CMarkerDistProvider* provider, s32 farFlag, bool saveFirst);
 
@@ -309,7 +309,7 @@ union FifoWord {
 // recordMarkerPos. The triangle strip is bookended by two FIFO vertices: the
 // scaled marker position up front and the first emitted trail point (saved
 // in lbl_eu_80665A68..74 via recordMarkerPos's saveFirst) at the end.
-s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
+extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
                   const f32* sizeF, s32 density, CMarkerDistProvider* prov,
                   QuadTexCtx* mtxSrc, s32 boundFlag) {
     IntFltCvt cvt;
@@ -586,7 +586,7 @@ static volatile FifoWord* const s_altFifo = reinterpret_cast<volatile FifoWord*>
 // steps, normalizes each step offset against `step` and streams position /
 // color / texcoord data straight into the alternate GX FIFO window.
 // Leading `user` parameter is unused in the body but occupies r3 in retail.
-void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* extent,
+extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* extent,
                    ml::CVec3* step, s32 count, u8* colorBytes,
                    CMarkerDistProvider* provider, s32 farFlag, bool saveFirst) {
     (void)user;
@@ -673,10 +673,14 @@ void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3*
 // magic with an identical extern; binding follows the LAST declaration.
 void blitTexQuad(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
                    f32 alphaMax, void* material, TexMtxSrc* mtxSrc) {
-    // Declared in this order so MWCC pins fadeMax to f31 and alpha to f30
-    // (descending-by-declaration allocation; matches retail).
-    f32 fadeMax = alphaMax;
-    f32 a = alpha;
+    // Bare declarations, then assignments in alpha/fadeMax order: allocation
+    // still pins fadeMax to f31 and alpha to f30, and the split keeps retail's
+    // fmr f30,f1 (alpha) before fmr f31,f2 (alphaMax) emission. Copy-initialized
+    // declarations emit the two fmr in the opposite order (97.1% version).
+    f32 fadeMax;
+    f32 a;
+    a = alpha;
+    fadeMax = alphaMax;
     if (size->field_0x0c <= lbl_eu_8066B4B0) return;
     if (a <= lbl_eu_8066B4B0) return;
     if (fadeMax <= lbl_eu_8066B4B0) fadeMax = a;
@@ -1008,7 +1012,7 @@ struct CAnim {
     virtual bool v23() = 0; // vptr + 0x64: player availability check
 };
 
-void DbgBindAnimPlayer(CAnimPlayerRef* self, CAnim* anim, u32 id) {
+extern "C" void DbgBindAnimPlayer(CAnimPlayerRef* self, CAnim* anim, u32 id) {
     self->mAnim = anim;
     self->mId = id;
     self->mPlayer = 0;
@@ -1019,7 +1023,7 @@ void DbgBindAnimPlayer(CAnimPlayerRef* self, CAnim* anim, u32 id) {
     }
 }
 
-void attachAnim(CAnimPlayerRef* self, CAnim* anim) {
+extern "C" void attachAnim(CAnimPlayerRef* self, CAnim* anim) {
     if (self->mAnim != anim) {
         u32 id = self->mId;
         self->mAnim = anim;
@@ -1055,7 +1059,7 @@ MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx);
 // Extract the rotation axis/angle of the bound player's world matrix into
 // `out`, renormalizing degenerate basis columns first. The copy target is a
 // flat 12-float block addressed by column (mat[i], mat[4+i], mat[8+i]).
-bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
+extern "C" bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
     if (self->mPlayer == 0) return false;
 
     f32 angle;
@@ -1100,7 +1104,7 @@ bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
     return true;
 }
 
-s32 getAnimPos(CAnimPlayerRef* self, ml::CVec3* out) {
+extern "C" s32 getAnimPos(CAnimPlayerRef* self, ml::CVec3* out) {
     if (self->mPlayer == 0) return 0;
     CAnimPlayer* p = self->mPlayer;
     // Force z,y,x evaluation order so registers match retail.
@@ -1472,7 +1476,7 @@ void DbgSetTevSwapMode(s32 mode) {
     }
 }
 
-void DbgCopyCamProj(Mtx mtx, const void* scene) {
+extern "C" void DbgCopyCamProj(Mtx mtx, const void* scene) {
     Scn_CopyCamProjMatrix(scene, mtx, -1);
 }
 
@@ -1908,7 +1912,7 @@ void DbgSetPerspectiveProj(const void* src) {
     GXSetProjection(m, GX_PERSPECTIVE);
 }
 
-void DbgPushPerspective(Mtx mtx){ GXSetProjection(mtx, GX_PERSPECTIVE); }
+extern "C" void DbgPushPerspective(Mtx mtx){ GXSetProjection(mtx, GX_PERSPECTIVE); }
 
 // Projection updater (see getProjMatrix): refreshes the texture-scale table
 // when the cache view is valid, then builds and uploads an ortho projection
@@ -1947,4 +1951,4 @@ void pushProjMtx(s32 update, f32 bottom, f32 top) {
     GXSetProjection(m, GX_ORTHOGRAPHIC);
 }
 
-void DbgPushOrtho(Mtx mtx){ GXSetProjection(mtx, GX_ORTHOGRAPHIC); }
+extern "C" void DbgPushOrtho(Mtx mtx){ GXSetProjection(mtx, GX_ORTHOGRAPHIC); }

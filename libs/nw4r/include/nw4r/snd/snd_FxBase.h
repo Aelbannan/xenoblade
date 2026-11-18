@@ -31,6 +31,11 @@ public:
                               f32 /* sampleRate */, OutputMode /* mode */) {
     } // at 0x14
 
+    // US retail notifies every registered effect after the AX output mode
+    // changes (AxManager::SetOutputMode walks all three aux buses). Every
+    // retail FxBase subclass implements it, so it has no base body.
+    virtual void OnChangeOutputMode() = 0; // at 0x18
+
 public:
     NW4R_UT_LINKLIST_NODE_DECL(); // at 0x4
 };

@@ -934,30 +934,34 @@ extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
 s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
     s32 result = 1;
     outLen[0] = lbl_eu_8066AF4C;
-    if (v[0] == lbl_eu_8066AF44 && v[1] == lbl_eu_8066AF44 && v[2] == lbl_eu_8066AF44) {
-        return result;
-    }
-    f32 mag = PSVECMag((const Vec*)v);
-    if (mag != lbl_eu_8066AF44) {
-        s32 q = (s32)(mag / scale);
-        if (q == 0) {
-            if (flag != 0) {
-                outLen[0] = lbl_eu_8066AF6C;
-                nw4r::math::VEC3Scale((nw4r::math::VEC3*)v, (const nw4r::math::VEC3*)v, lbl_eu_8066AF6C);
-                result = 2;
+    // Single-exit shape: retail branches straight to the epilogue for the
+    // zero-vector early out (no `li r3, 1` materialisation).
+    if (v[0] != lbl_eu_8066AF44 || v[1] != lbl_eu_8066AF44 ||
+        v[2] != lbl_eu_8066AF44) {
+        f32 mag = PSVECMag((const Vec*)v);
+        if (mag != lbl_eu_8066AF44) {
+            result = (s32)(mag / scale);
+            if (result == 0) {
+                if (flag != 0) {
+                    // Too short to quantise: halve it in place.
+                    outLen[0] = lbl_eu_8066AF6C;
+                    nw4r::math::VEC3Scale((nw4r::math::VEC3*)v,
+                                          (const nw4r::math::VEC3*)v,
+                                          lbl_eu_8066AF6C);
+                    result = 2;
+                } else {
+                    result = 1;
+                }
+            } else {
+                ++result;
+                if (flag != 0) {
+                    result <<= 1;
+                }
+                outLen[0] = lbl_eu_8066AF4C / mag;
+                f32 t = mag / (f32)(s32)result;
+                nw4r::math::VEC3Scale((nw4r::math::VEC3*)v,
+                                      (const nw4r::math::VEC3*)v, t);
             }
-        } else {
-            u32 steps = q + 1;
-            if (flag != 0) {
-                steps <<= 1;
-            }
-            f32 invMag = lbl_eu_8066AF4C / mag;
-            outLen[0] = invMag;
-            f32 t = mag / (f32)((f64)steps - lbl_eu_8066AF58);
-            v[0] = v[0] * invMag * t;
-            v[1] = v[1] * invMag * t;
-            v[2] = v[2] * invMag * t;
-            result = steps;
         }
     }
     return result;

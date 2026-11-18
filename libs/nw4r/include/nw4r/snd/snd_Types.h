@@ -60,6 +60,20 @@ enum PanCurve {
     PAN_CURVE_LINEAR_0DB_CLAMP,
 };
 
+// Argument block handed to the sequence userproc callback (SMDL "userproc").
+// Retail mangling puts the name in nw4r::snd (not detail):
+//   SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerF
+//       PFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv
+struct SeqUserprocCallbackParam {
+    volatile s16* variablePtr;  // at 0x0 (player local variables)
+    volatile s16* variablePtr2; // at 0x4 (player global variables)
+    volatile s16* variablePtr3; // at 0x8 (track variables)
+    u8 value;          // at 0xC (track byte the callback may rewrite)
+};
+
+typedef void (*SeqUserprocCallback)(u16 usertype,
+                                    SeqUserprocCallbackParam* pParam, void* arg);
+
 namespace detail {
 
 struct AdpcmParam {

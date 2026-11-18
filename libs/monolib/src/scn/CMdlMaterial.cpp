@@ -80,6 +80,9 @@ extern const char lbl_eu_80570148[];
 extern const char lbl_eu_805701A0[];
 extern const char lbl_eu_80570180[];
 
+// Hand-built vtable (defined with the rest of the dissolved .data below).
+extern "C" u32 CMdlMaterialVtable[];
+
 // The .sdata "ref" message strings are defined locally below as lbl_sd_04..09
 // (retail labels 80663C40..80663C54); reference them through the local
 // definitions so MWCC emits SDA-relative addressing.
@@ -231,6 +234,36 @@ static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
 }
 
 // =============================================================================
+// CMdlMaterial constructor (flat retail symbol __ct__CMdlMaterial)
+// =============================================================================
+// Stores the hand-built vtable pointer (CMdlMaterialVtable, this TU) and zeroes
+// the owner/buffer/index fields; field_0x14 starts at -1. The u16 table at
+// 0x18 is deliberately left uninitialised (retail stores nothing there).
+extern "C" void __ct__CMdlMaterial(CMdlMaterial* self) {
+    *(void**)self = (void*)CMdlMaterialVtable;
+    self->field_0x04 = 0;
+    self->buffer = 0;
+    self->field_0x0C = 0;
+    self->flag_0x10 = 0;
+    self->field_0x14 = -1;
+    self->field_0x30 = 0;
+    self->field_0x34 = 0;
+}
+
+// Buffer-owning teardown (flat retail symbol __dt__804E5DE0): release the
+// GXColor array when this object owns it (flag_0x10 == 0).
+extern "C" void __dt__804E5DE0(CMdlMaterial* self) {
+    if (self->flag_0x10 == 0) {
+        if (self->buffer != 0) {
+            operator delete[](self->buffer);
+            self->buffer = 0;
+        }
+    } else {
+        self->buffer = 0;
+    }
+}
+
+// =============================================================================
 // CMdlMaterial destructor
 // =============================================================================
 // CMdlMaterial::~CMdlMaterial() - D0 deleting destructor.
@@ -244,8 +277,8 @@ CMdlMaterial::~CMdlMaterial() {}
 // GXColor buffer (4 channels per material), extracts ambient channel colours,
 // and scans each material's user-data block for an item whose name matches a
 // known constant, accumulating its S32 value into a 16-bit table.
-void CMdlMaterial::setupFromModel(void* arg) {
-    field_0x04 = arg;
+extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
+    self->field_0x04 = arg;
 
     // Build a local ResMdl from the model data pointer embedded in arg.
     nw4r::g3d::ResMdl resMdl(reinterpret_cast<nw4r::g3d::ResMdlData*>(
@@ -253,13 +286,13 @@ void CMdlMaterial::setupFromModel(void* arg) {
 
     // Try to attach to an existing resident buffer first.
     if (scnImN4PoolHasSpc(arg, resMdl.GetResMatNumEntries() * 16) != NULL) {
-        buffer = scnImN4PoolAlloc(arg, resMdl.GetResMatNumEntries() * 16);
-        flag_0x10 = 1;
+        self->buffer = scnImN4PoolAlloc(arg, resMdl.GetResMatNumEntries() * 16);
+        self->flag_0x10 = 1;
     } else {
         // Fallback: allocate via MemManager (buffer owned by this object).
         u32 handle = Scn_CallUnk8C_V8(
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 4));
-        buffer = mtl::MemManager::allocate_array(
+        self->buffer = mtl::MemManager::allocate_array(
             resMdl.GetResMatNumEntries() * 16, handle);
     }
 
@@ -281,13 +314,13 @@ void CMdlMaterial::setupFromModel(void* arg) {
         // Four ambient channels per material; post-increment writes the next
         // slot index before the call (matches the retail store ordering).
         chan.GXGetChanAmbColor((GXChannelID)0,
-                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+                               &reinterpret_cast<GXColor*>(self->buffer)[self->field_0x0C++]);
         chan.GXGetChanAmbColor((GXChannelID)2,
-                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+                               &reinterpret_cast<GXColor*>(self->buffer)[self->field_0x0C++]);
         chan.GXGetChanAmbColor((GXChannelID)1,
-                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+                               &reinterpret_cast<GXColor*>(self->buffer)[self->field_0x0C++]);
         chan.GXGetChanAmbColor((GXChannelID)3,
-                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+                               &reinterpret_cast<GXColor*>(self->buffer)[self->field_0x0C++]);
 
         // Scan the material's user-data block for an item matching the target
         // name; accumulate its S32 value into the 16-bit table.
@@ -331,9 +364,9 @@ void CMdlMaterial::setupFromModel(void* arg) {
                         ? reinterpret_cast<u8*>(item) + item->dataOffset
                         : NULL;
 
-                    field_0x18[field_0x34] =
+                    self->field_0x18[self->field_0x34] =
                         (u16)(counter + *reinterpret_cast<const u32*>(data));
-                    field_0x34++;
+                    self->field_0x34++;
                     break;
                 }
             }
@@ -434,7 +467,7 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
 // applyCullByGroup: for each entry in the material value table whose group id
 // (value / 10) matches the requested value, copy that material's cull mode
 // from the model resource into the scene model.
-void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
+extern "C" void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
     MdlMatContext* ctx = reinterpret_cast<MdlMatContext*>(self->field_0x04);
 
@@ -487,7 +520,7 @@ void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
 
 // applyAmbientAll: apply a colour (built from an RGB float triple scaled by
 // 255.0f) as ambient colour on all four channels of every material.
-bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
+extern "C" bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
     if (ap->colors == NULL) {
         return false;
     }
@@ -524,7 +557,7 @@ bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
 // applyAmbientByLight: like applyAmbientAll, but restricted to materials whose light
 // set index matches the requested one (all materials when lightSet == -1).
 // Returns whether any material was updated.
-bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
+extern "C" bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
     bool applied = false;
 
     if (ap->colors == NULL) {
@@ -581,7 +614,7 @@ bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
 
 // applyAmbientArray: apply per-channel ambient colours taken sequentially from
 // the applier's colour array to every material of the model.
-bool applyAmbientArray(MdlMatApplier* ap) {
+extern "C" bool applyAmbientArray(MdlMatApplier* ap) {
     if (ap->colors == NULL) {
         return false;
     }
@@ -614,7 +647,7 @@ bool applyAmbientArray(MdlMatApplier* ap) {
 // notifyGroupChain: for each flag byte whose group id (byte / 10) equals the
 // owner material's accumulated value, invoke the chain-notify helper with
 // the byte's sub-index (byte % 10).
-void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
+extern "C" void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
     for (u32 i = 0; i < self->field_0x30; i++) {
         s32 b = self->field_0x28[i];
@@ -634,7 +667,7 @@ extern "C" u32 __RTTI__12CMdlMaterial;          // .sdata RTTI locator (defined 
 extern "C" const u32 lbl_eu_80524798[7];  // .rodata name string (defined below)
 extern "C" void __dt__12CMdlMaterialFv();  // member dtor (this TU, retail reloc)
 
-extern "C" u32 lbl_eu_805700D8[54] = {
+extern "C" u32 CMdlMaterialVtable[54] = {
     (u32)&__RTTI__12CMdlMaterial, 0x00000000, (u32)&__dt__12CMdlMaterialFv,
     0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000,
     0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420,

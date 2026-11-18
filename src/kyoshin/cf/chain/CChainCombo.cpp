@@ -5,7 +5,7 @@
 
 namespace cf{
     CChainCombo::CChainCombo(){
-        mVtbl = lbl_eu_80538994;
+        // (implicit vptr store to __vt__Q22cf11CChainCombo at +0x14)
         initChainGauge__FPv(&mGauge);
         mArtsType = 0;
         mComboCount = 0;
@@ -83,3 +83,9 @@ void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     volatile bool* pending = &self->mPending;
     *pending = false;
 }
+
+// Second-gauge payout selected by the probability roll in payoutChainCombo
+// (5% -> 1800, 25% -> 1200, otherwise 600). Retail keeps this as the third
+// word triple at .data:0x80538988, i.e. the user file-scope object that MWCC
+// emits before the compiler-generated __vt__Q22cf11CChainCombo.
+extern "C" int lbl_eu_80538988[3] = {0x708, 0x4b0, 0x258};

@@ -4,23 +4,32 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 
-void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
-{
-    unsigned char* object = static_cast<unsigned char*>(self);
-    void* resource = *reinterpret_cast<void**>(object);
-    if (resource == 0 || *reinterpret_cast<void**>(object + 0x10) == 0)
-        return 0;
-    if (enable)
-    {
-        unsigned int index = *reinterpret_cast<unsigned int*>(object + 0x4);
-        unsigned int* flags = *reinterpret_cast<unsigned int**>(static_cast<unsigned char*>(resource) + 0x140);
-        flags[index] |= 0x4;
-    }
-    return *reinterpret_cast<void**>(object + 0x10);
-}
-
 namespace nw4r {
 namespace g3d {
+
+ResTexSrt ScnMdl::CopiedMatAccess::GetResTexSrt(bool markDirty) {
+    if (mpScnMdl != NULL && mTexSrt.IsValid()) {
+        if (markDirty) {
+            u32* dirtyFlags =
+                *reinterpret_cast<u32**>(reinterpret_cast<u8*>(mpScnMdl) + 0x140);
+            dirtyFlags[mMatID] |= 0x4;
+        }
+        return mTexSrt;
+    }
+    return ResTexSrt(NULL);
+}
+
+ResGenMode ScnMdl::CopiedMatAccess::GetResGenMode(bool markDirty) {
+    if (mpScnMdl != NULL && mGenMode.IsValid()) {
+        if (markDirty) {
+            u32* dirtyFlags =
+                *reinterpret_cast<u32**>(reinterpret_cast<u8*>(mpScnMdl) + 0x140);
+            dirtyFlags[mMatID] |= 0x10;
+        }
+        return mGenMode;
+    }
+    return ResGenMode(NULL);
+}
 
 ResMatChan ScnMdl::CopiedMatAccess::GetResMatChan(bool markDirty) {
     if (mpScnMdl != NULL && mChan.IsValid()) {
@@ -34,54 +43,38 @@ ResMatChan ScnMdl::CopiedMatAccess::GetResMatChan(bool markDirty) {
     return ResMatChan(NULL);
 }
 
-// The shared header does not declare the CopiedMatAccess "Ex" accessors, so
-// they are emitted as free functions bound to the retail mangled symbols.
-// Overlay of the private CopiedMatAccess field layout (offsets verified
-// against the retail CopiedMatAccess ctor). NB: in retail the two accessors
-// below are shifted by one field - GetResMatIndMtxAndScaleEx reads/writes
-// mPix (dlPix at DL+0x0) and GetResMatTexCoordGenEx reads/writes mTevColor
-// (dlTevColor at DL+0x20); only GetResTevEx uses its own field.
-struct CopiedMatAccessExView {
-    ScnMdl* mpScnMdl;           // at 0x0
-    u32 mMatID;                 // at 0x4
-    u8 field_0x08[0x20 - 0x8];  // ResTexObj .. ResMatMisc
-    ResMatPix mPix;             // at 0x20
-    ResMatTevColor mTevColor;   // at 0x24
-    u8 field_0x28[0x30 - 0x28]; // ResMatIndMtxAndScale, ResMatTexCoordGen
-    ResTev mTev;                // at 0x30
-};
-
-ResMatPix GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-    CopiedMatAccessExView* self) {
-    if (self->mpScnMdl != NULL) {
-        if (self->mPix.IsValid()) {
-            return self->mPix;
+// The retail "Ex" accessors are shifted one field against the header's
+// declaration order: GetResMatIndMtxAndScaleEx reads/writes mPix and
+// GetResMatTexCoordGenEx reads/writes mTevColor; only GetResTevEx uses its own
+// member. Offsets verified against the retail bodies (0x20 / 0x24 / 0x30).
+ResMatPix ScnMdl::CopiedMatAccess::GetResMatIndMtxAndScaleEx() {
+    if (mpScnMdl != NULL) {
+        if (mPix.IsValid()) {
+            return mPix;
         }
-        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        ResMat mat = ResMdl(mpScnMdl->GetResMdl()).GetResMat(mMatID);
         return mat.GetResMatPix();
     }
     return ResMatPix(NULL);
 }
 
-ResMatTevColor GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-    CopiedMatAccessExView* self) {
-    if (self->mpScnMdl != NULL) {
-        if (self->mTevColor.IsValid()) {
-            return self->mTevColor;
+ResMatTevColor ScnMdl::CopiedMatAccess::GetResMatTexCoordGenEx() {
+    if (mpScnMdl != NULL) {
+        if (mTevColor.IsValid()) {
+            return mTevColor;
         }
-        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        ResMat mat = ResMdl(mpScnMdl->GetResMdl()).GetResMat(mMatID);
         return mat.GetResMatTevColor();
     }
     return ResMatTevColor(NULL);
 }
 
-ResTev GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
-    CopiedMatAccessExView* self) {
-    if (self->mpScnMdl != NULL) {
-        if (self->mTev.IsValid()) {
-            return self->mTev;
+ResTev ScnMdl::CopiedMatAccess::GetResTevEx() {
+    if (mpScnMdl != NULL) {
+        if (mTev.IsValid()) {
+            return mTev;
         }
-        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        ResMat mat = ResMdl(mpScnMdl->GetResMdl()).GetResMat(mMatID);
         return mat.GetResTev();
     }
     return ResTev(NULL);
@@ -89,27 +82,6 @@ ResTev GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
 
 } // namespace g3d
 } // namespace nw4r
-
-void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
-    struct Model {
-        unsigned char pad[0x140];
-        unsigned* flags;
-    };
-    struct Access {
-        Model* model;
-        unsigned index;
-        unsigned char pad[0x10];
-        void* resGenMode;
-    };
-    Access* access = static_cast<Access*>(self);
-    if (access->model == 0 || access->resGenMode == 0)
-        return 0;
-    if (enable)
-        access->model->flags[access->index] |= 0x10;
-    return access->resGenMode;
-}
-
-void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
 // ScnMdl vtable (data lives in nw4r_data.o; the shared header declares no
 // ScnMdl ctor, so Construct patches the base ctor's vtable manually). The

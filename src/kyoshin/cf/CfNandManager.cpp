@@ -2,6 +2,9 @@
 #include <cstring>
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/nand/CNand.hpp"
+#include "monolib/scn/IScnRender.hpp"
+#include "monolib/scn/CScn.hpp"
 
 extern "C" void dummy() {}
 
@@ -156,23 +159,32 @@ __declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf13Cf
 __declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628D0[2] = { lbl_eu_8050B454, lbl_eu_80536CD8 };
 // typed .bss/.sbss zero-fill (nobits compare sizes only; small sbss objects
 // stay in .sbss automatically, no section attr needed).
-char lbl_eu_80576CC0[0x38];
-unsigned int lbl_eu_80664768;
-unsigned char lbl_eu_8066476C;
+char gCfNandPartySnapshot[0x38];
+unsigned int gpCfNandManager;
+unsigned char gCfNandFileEventPending;
 unsigned char lbl_eu_8066476D;
 unsigned short lbl_eu_8066476E;
-unsigned short lbl_eu_80664770;
+unsigned short gCfNandCaptureState;
 unsigned short lbl_eu_80664772;
 unsigned short lbl_eu_80664774;
 unsigned short lbl_eu_80664776_gap;
 unsigned int lbl_eu_80664778;
-void* lbl_eu_8066477C;
-void* lbl_eu_80664780;
+void* gpCfNandCaptureBuf;
+void* gpCfNandCaptureBufTail;
 unsigned int lbl_eu_80664780_b;
 unsigned int lbl_eu_80664788_a;
 unsigned int lbl_eu_80664788_b;
 
 #pragma section code_type ".text" ".text"
+
+// Manager base layout for the render-callback path: the CTTask (0x54) and
+// CIWorkEventSlot (4) bases come first, so the IScnRender base sub-object the
+// scene registers sits at +0x58. Never instantiated (data only), so MWCC emits
+// no vtable/RTTI for it.
+struct CfNandTaskPad {
+    u8 _pad58[0x58];
+};
+class CfNandMgrBases : public CfNandTaskPad, public IScnRender {};
 
 // Local copies of the save-image / work-entry views (the unit header cannot
 // be included here: it redeclares this TU's .sbss/.bss labels with different
@@ -536,6 +548,9 @@ struct CfNandWorkBuf {
 };
 
 extern "C" int NandCheckSave(void* block);
+extern "C" void __dt__8023E63C(void* self);
+extern "C" void NandFlushEvts(void* self);
+extern "C" int CfRes_getD80Flag();
 extern "C" u32 CtrlRemote_GetFixedSize1214();
 extern "C" u8* CtrlRemote_GetSharedBufPtr();
 extern "C" u8* CtrlRemote_GetFileEventIds();
@@ -762,7 +777,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
         CfT_PlayClockReset(image->progress.f04);
         lbl_eu_80661AF4 = image->progress.f08;
         lbl_eu_80661AF6 = image->progress.f0A;
-        CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
+        CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
         *snapDst = image->snapshot;
         memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
         cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
@@ -853,7 +868,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
     CfT_PlayClockReset(v1->progress.f04);
     lbl_eu_80661AF4 = v1->progress.f08;
     lbl_eu_80661AF6 = v1->progress.f0A;
-    CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
+    CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
     *snapDst = v1->snapshot;
 
     u8* item = (u8*)lbl_eu_806641B8;
@@ -901,7 +916,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
 // around the apply so CSysWinScenarioLog can poll the teardown.
 extern "C" int __dt__8023E448() {
     u8* none = 0;
-    u8* img = *(u8**)(lbl_eu_80664768 + 0x5C);
+    u8* img = *(u8**)(gpCfNandManager + 0x5C);
     if (img == none) {
         img = none;
     }
@@ -912,10 +927,10 @@ extern "C" int __dt__8023E448() {
     lbl_eu_80664772 = 1;
     int result = NandApplySave((CfNandSaveImage*)img);
     lbl_eu_80664772 = clear;
-    u8* still = *(u8**)(lbl_eu_80664768 + 0x5C);
+    u8* still = *(u8**)(gpCfNandManager + 0x5C);
     if (still != 0) {
         operator delete(still);
-        *(u8**)(lbl_eu_80664768 + 0x5C) = (u8*)(u32)clear;
+        *(u8**)(gpCfNandManager + 0x5C) = (u8*)(u32)clear;
     }
     return result;
 }
@@ -931,46 +946,46 @@ class CDeviceVI {
 public:
     static NandGXRenderMode* getRenderModeObj();
 };
-extern "C" {
-void GXSetTexCopySrc(u16 x, u16 y, u16 w, u16 h);
-void GXSetTexCopyDst(u16 w, u16 h, u32 fmt, u8 mipmap);
-void GXCopyTex(void* dest, u8 clear);
-void GXPixModeSync(void);
-void GXInvalidateTexAll(void);
-u32 GXGetTexBufferSize(u16 w, u16 h, u32 fmt, u8 mipmap, u8 max_lod);
-void DCFlushRange(void* addr, u32 nBytes);
-}
+// GX / cache entry points come from the SDK headers pulled in by CScn.hpp.
 
 // While the counter is armed (1), copy the EFB into the shared texture
 // buffer and flush it, then disarm. Body recovered from CfNandManager.ctx.c.
 extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
-    if (lbl_eu_80664770 == 1) {
+    if (gCfNandCaptureState == 1) {
         u16 h1;
         u16 h2;
         u32 size1;
         h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, h1);
         h2 = CDeviceVI::getRenderModeObj()->efbHeight;
-        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, h2, 6, 0);
-        GXCopyTex(lbl_eu_80664780, 0);
+        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, h2, (GXTexFmt)6, (GXBool)0);
+        GXCopyTex(gpCfNandCaptureBufTail, 0);
         GXPixModeSync();
         GXInvalidateTexAll();
         size1 = GXGetTexBufferSize(0xa4, 0x74, 4, 0, 0);
         h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         u32 size2 = GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h1, 6, 0, 0);
-        DCFlushRange(lbl_eu_8066477C, size1 + size2);
-        lbl_eu_80664770 = 2;
+        DCFlushRange(gpCfNandCaptureBuf, size1 + size2);
+        gCfNandCaptureState = 2;
     }
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// LLM-HARNESS-BEGIN: us-8023e2e4
-extern "C" void NandPartySnap() {}
-// LLM-HARNESS-END: us-8023e2e4
+// Address of the shared party-snapshot block (read by CfGameManager and the
+// status/save windows).
+extern "C" CfNandPartySnapshot* NandPartySnap() {
+    return (CfNandPartySnapshot*)gCfNandPartySnapshot;
+}
 
-// LLM-HARNESS-BEGIN: us-8023e2f0
-extern "C" void NandQueueBusy() {}
-// LLM-HARNESS-END: us-8023e2f0
+// Nonzero while the NAND request queue still has work: the global CNand's
+// head/tail counters differ, or the file-event suppression flag is set.
+extern "C" int NandQueueBusy() {
+    s32 busy = 0;
+    if (nand.mHead != nand.mTail || gCfNandFileEventPending != 0) {
+        busy = 1;
+    }
+    return busy;
+}
 
 // LLM-HARNESS-BEGIN: us-8023e320
 extern "C" void NandCopyParty() {}
@@ -1001,16 +1016,25 @@ extern "C" void NandVerifyBlk() {}
 // LLM-HARNESS-END: us-80240688
 
 // LLM-HARNESS-BEGIN: us-80240780
-extern "C" void __dt__8023E63C() {}
+extern "C" void __dt__8023E63C(void* self) {}
 // LLM-HARNESS-END: us-80240780
 
 // LLM-HARNESS-BEGIN: us-80240cbc
-extern "C" void NandFlushEvts() {}
+extern "C" void NandFlushEvts(void* self) {}
 // LLM-HARNESS-END: us-80240cbc
 
-// LLM-HARNESS-BEGIN: us-80241438
-extern "C" void NandFileEvent() {}
-// LLM-HARNESS-END: us-80241438
+// File-event pump: while the queue is idle, retire the pending event and
+// flush the ring.
+extern "C" void NandFileEvent(void* self) {
+    s32 busy = 0;
+    if (nand.mHead != nand.mTail || gCfNandFileEventPending != 0) {
+        busy = 1;
+    }
+    if (busy == 0) {
+        __dt__8023E63C(self);
+        NandFlushEvts(self);
+    }
+}
 
 // LLM-HARNESS-BEGIN: us-802414a4
 extern "C" void NandQueueChkFc() {}
@@ -1064,9 +1088,18 @@ extern "C" void NandTitleFile() {}
 extern "C" void create__Q22cf13CfNandManagerFv() {}
 // LLM-HARNESS-END: us-80242188
 
-// LLM-HARNESS-BEGIN: us-80242214
-extern "C" void NandImageLive() {}
-// LLM-HARNESS-END: us-80242214
+// Manager head view: the capture-buffer pointer at +0x5C.
+struct CfNandMgrHead {
+    u8 _pad5C[0x5C];
+    u8* field_0x5C;
+};
+
+// True while the save-image capture buffer (+0x5C) is present.
+extern "C" u32 NandImageLive() {
+    return gpCfNandManager != 0
+               ? (u32)(((CfNandMgrHead*)gpCfNandManager)->field_0x5C != 0)
+               : 0;
+}
 
 // LLM-HARNESS-BEGIN: us-8024223c
 extern "C" void NandDownsample() {}
@@ -1076,9 +1109,20 @@ extern "C" void NandDownsample() {}
 extern "C" void NandAllocBufs() {}
 // LLM-HARNESS-END: us-80242518
 
-// LLM-HARNESS-BEGIN: us-802425d8
-extern "C" void NandTeardown() {}
-// LLM-HARNESS-END: us-802425d8
+// Release the capture state: unregister the render callback from the D80
+// scene, free the shared texture buffer, drop the capture counter.
+extern "C" void NandTeardown() {
+    CScn* scn = (CScn*)CfRes_getD80Flag();
+    if (scn != 0) {
+        CfNandMgrBases* mgr = (CfNandMgrBases*)gpCfNandManager;
+        scn->removeRenderCB(mgr);
+    }
+    if (gpCfNandCaptureBuf != 0) {
+        mtl::MemManager::deallocate(gpCfNandCaptureBuf);
+        gpCfNandCaptureBuf = 0;
+    }
+    gCfNandCaptureState = 0;
+}
 
 // LLM-HARNESS-BEGIN: us-802427a8
 extern "C" void sinit_802405F0() {}

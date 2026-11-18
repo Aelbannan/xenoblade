@@ -197,7 +197,7 @@ struct CtrlNpcC4Target {
     u8 _pad[0x37C];            // 0x00-0x37B
     unsigned long field_37C;  // 0x37C-0x37F
 };
-void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned long val) {
+void CfObjectMove_setTargetC4Arg__Q22cf12CfObjectMoveFUl(void* self, unsigned long val) {
     void* ptr = static_cast<cf::CfObjectMove*>(self)->mTargetC4;
     if (ptr != 0)
         reinterpret_cast<CtrlNpcC4Target*>(ptr)->field_37C = val;
@@ -861,9 +861,9 @@ struct CtrlNpcModelA4View {
     u8 _pad[0xA4];   // 0x00-0xA3
     float field_A4;  // 0xA4-0xA7
 };
-float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return reinterpret_cast<CtrlNpcModelA4View*>(self)->field_A4; }
+float cf::CfObjectModel::CfObject_getProgressHigh() { return reinterpret_cast<CtrlNpcModelA4View*>(this)->field_A4; }
 
-float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return static_cast<cf::CfObjectModel*>(self)->field_A0; }
+float cf::CfObjectModel::CfObject_getProgressLow() { return static_cast<cf::CfObjectModel*>(this)->field_A0; }
 
 // 0x800959D8: when the character object's field_C4 flag is set, feed the
 // halfword field_16C into the battle-status helper and bump the busy counter.

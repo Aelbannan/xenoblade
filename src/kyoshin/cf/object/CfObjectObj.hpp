@@ -28,7 +28,7 @@ namespace cf {
 
 // CfObjectObj retail vtable (data TU; the ctor/dtor store it explicitly, same
 // scheme as CfObjectMove.hpp's lbl_eu_80529690).
-extern u8 lbl_eu_80529B4C[];
+extern void* lbl_eu_80529B4C[];
 
 // RTTI typeinfo pair for the ctor's __dynamic_cast guard: the 0x1C-byte
 // CfResObjImpl resource object is allocated only when the cast fails. Passed

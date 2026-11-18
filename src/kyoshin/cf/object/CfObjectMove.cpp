@@ -203,7 +203,7 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
             if (self->mSubObj98 != 0) {
                 effReady = (self->mSubObj98->field_7A4 & 0x04000000) == 0;
             }
-            if (((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect() != 0) {
+            if (((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect() != 0) {
                 if (self->mSubObj98 != 0) {
                     if (((CScnItemModel*)self->mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
                         scaleHi = 1;
@@ -212,7 +212,7 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 if (cond == 0 && self->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi == 0) {
                     pointEnable = 1;
                 }
-                int q = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+                int q = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
                 CharEffSetPointEnabled((void*)q, pointEnable);
             }
         }
@@ -260,11 +260,11 @@ extern "C" void CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv(cf::CfObjectM
 // function Fv keeps the Unk linker name that hand-built tables / CREvtModel
 // reference. Base impl is the non-virtual UnkVirtualFunc1 out-of-line body
 // on CfObjectModel (novtable; virtual primary is releaseModelSub).
-extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    self->CfObjectMove_releaseSlotById(0);
-    self->CfObjectMove_releaseSlotById(1);
+void cf::CfObjectMove::CfObjectModel_releaseModelSub() {
+    this->CfObjectMove_releaseSlotById(0);
+    this->CfObjectMove_releaseSlotById(1);
     for (int i = 0; i < 2; i++) {
-        void* t = (&self->mTargetC8)[i];
+        void* t = (&this->mTargetC8)[i];
         // Redundant nested checks mirror retail's three beq targets (MWCC
         // keeps them; the final clear only runs when the first two pass).
         if (t != 0) {
@@ -272,24 +272,24 @@ extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf12CfObjectMoveFv(cf::CfObjec
                 if (t != 0) {
                     reinterpret_cast<cf::CObjectState*>(t)->CObjectState_setStateBitMask(1);
                 }
-                (&self->mTargetC8)[i] = 0;
+                (&this->mTargetC8)[i] = 0;
             }
         }
     }
-    cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
-    if (sub != 0 && self->mFieldC0 != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            CharEffDetachBySubId((void*)r, self->mSubObj98);
+    cf::CfObject* sub = (cf::CfObject*)this->mSubObj38;
+    if (sub != 0 && this->mFieldC0 != 0) {
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
+            CharEffDetachBySubId((void*)r, this->mSubObj98);
         }
     }
-    self->CfObjectModel::CfObjectModel_UnkVirtualFunc1();
-    self->mFlags68 &= ~0x4;
-    ColiNodeReleaseBuffer(self->_60C_region);
-    if (self->mTargetC4 != 0) {
+    this->CfObjectModel::CfObjectModel_UnkVirtualFunc1();
+    this->mFlags68 &= ~0x4;
+    ColiNodeReleaseBuffer(this->_60C_region);
+    if (this->mTargetC4 != 0) {
         // Same owning-class slot as above (CActParamAnim +0xE0).
-        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->initAnimState();
-        self->mTargetC4 = 0;
+        reinterpret_cast< ::CActParamAnim*>(this->mTargetC4)->initAnimState();
+        this->mTargetC4 = 0;
     }
 }
 
@@ -297,34 +297,34 @@ extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf12CfObjectMoveFv(cf::CfObjec
 // Wave-61: override of CfObjectModel_releaseModelList (+0x17C). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the widened member decl in the header serves call-site codegen.
-extern "C" void CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObjectModel_releaseModelList() {
     // Refresh the two animation slots (+0x1CC before the release work,
     // +0x1C8 after), releasing both model lists (+0x9C from the base class
     // and +0x6D4) through the C4 target, then hop the +0xB0 sub-object's
     // vtable slot +0x24.
-    self->CfObjectMove_detachModelList();
+    this->CfObjectMove_detachModelList();
     // field_0x9C is the u8[4] base-class slot; access it as the pointer it
     // holds (model list released through the C4 target).
-    void*& list9C = *reinterpret_cast<void**>(self->field_0x9C);
+    void*& list9C = *reinterpret_cast<void**>(this->field_0x9C);
     if (list9C != 0) {
-        if (self->mTargetC4 != 0) {
-            releaseAnimObj(self->mTargetC4, list9C);
+        if (this->mTargetC4 != 0) {
+            releaseAnimObj(this->mTargetC4, list9C);
         }
         Scn_IsAnimActiveOrNull(list9C);
         list9C = 0;
     }
-    if (self->mField6D4 != 0) {
-        if (self->mTargetC4 != 0) {
-            releaseAnimObj(self->mTargetC4, self->mField6D4);
+    if (this->mField6D4 != 0) {
+        if (this->mTargetC4 != 0) {
+            releaseAnimObj(this->mTargetC4, this->mField6D4);
         }
-        Scn_IsAnimActiveOrNull(self->mField6D4);
-        self->mField6D4 = 0;
+        Scn_IsAnimActiveOrNull(this->mField6D4);
+        this->mField6D4 = 0;
     }
     // Base +0x17C: retail reloc spells UnkVirtualFunc2 (Model's empty stub);
     // call the forced-name Fv so the reloc name matches.
-    CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv(self);
-    self->CfObjectMove_dropMoveRequest();
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_noop24();
+    CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv(this);
+    this->CfObjectMove_dropMoveRequest();
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_noop24();
 }
 
 
@@ -481,16 +481,16 @@ void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, v
 // CfObject_setMoveTargetPtr/49). extern "C" so the definition symbol is the
 // exact retail name. Allocates and constructs the movement-target object for
 // the id, then dispatches it through the vtable +0x108 slot.
-extern "C" void CfObject_createMoveTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
+void cf::CfObjectMove::CfObject_createMoveTarget(int arg) {
     // Two separate guards (retail emits two beq targets to the epilogue; a
     // single ||-condition adds an extra branch).
-    if (self->_6CA == arg) {
+    if (this->_6CA == arg) {
         return;
     }
     if (arg == -1) {
         return;
     }
-    self->_6CA = (s16)arg;
+    this->_6CA = (s16)arg;
     // obj declared (and zeroed) before the heap query so MWCC colours it
     // into r31 and the heap handle into r30, as in retail.
     void* obj = 0;
@@ -500,36 +500,36 @@ extern "C" void CfObject_createMoveTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMov
         // straight into the tracked slot (no intermediate temporary).
         obj = allocate__Q23mtl10MemManagerFUlUl(0x224, CfRes_getAllocHandle());
         if (obj != 0) {
-            __ct__cf_CtrlEnemy(obj, self);
+            __ct__cf_CtrlEnemy(obj, this);
         }
     } else if (arg == 9) {
         obj = allocate__Q23mtl10MemManagerFUlUl(0x180, CfRes_getAllocHandle());
         if (obj != 0) {
-            __ct__CtrlNpc(obj, self);
+            __ct__CtrlNpc(obj, this);
         }
     } else if (arg == 10) {
         obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, CfRes_getHeapHandle());
         if (obj != 0) {
-            __ct__cf_CtrlPc(obj, self, 0);
+            __ct__cf_CtrlPc(obj, this, 0);
         }
     } else {
-        float f = self->CfObject_getMoveHeadAngle();
+        float f = this->CfObject_getMoveHeadAngle();
         if (arg >= 0 && arg <= 3) {
             obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
             if (obj != 0) {
-                __ct__CtrlRemote(obj, self, arg);
+                __ct__CtrlRemote(obj, this, arg);
             }
         } else if (arg >= 4 && arg <= 7) {
             obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
             if (obj != 0) {
-                __ct__cf_CtrlPad(obj, self, arg);
+                __ct__cf_CtrlPad(obj, this, arg);
             }
         }
-        if (self->mTarget6C0 != 0) {
-            *(float*)((char*)self->mTarget6C0 + 0xC) = f;
+        if (this->mTarget6C0 != 0) {
+            *(float*)((char*)this->mTarget6C0 + 0xC) = f;
         }
     }
-    self->CfObject_setMoveTargetPtr(obj);
+    this->CfObject_setMoveTargetPtr(obj);
 }
 
 // Retail symbol is Fv but the body consumes r4 (an action id forwarded to
@@ -537,11 +537,11 @@ extern "C" void CfObject_createMoveTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // hidden arg. When a 6C0 target exists, record the target's +0xC0 action id
 // and the incoming id in the +0x6CF/+0x6CE bytes, then dispatch the id to
 // CtrlNpcSetAction (ids 1,2,3,5,4 map to themselves; anything else maps to 0).
-void CfObject_forwardNpcAction__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+void cf::CfObjectMove::CfObject_forwardNpcAction(int arg) {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
-        self->field_6CF = (u8)((cf::CfObjectMoveNpcView*)target)->field_C0;
-        self->field_6CE = (u8)arg;
+        this->field_6CF = (u8)((cf::CfObjectMoveNpcView*)target)->field_C0;
+        this->field_6CE = (u8)arg;
         if (arg == 1) {
             CtrlNpcSetAction(target, 1);
         } else if (arg == 2) {
@@ -577,13 +577,13 @@ void cf::CfObjectMove::CfObject_setMoveBusyState(int flag) {
 
 // Retail symbol is Fv but the body reads r4 (a flag) - forced-name form
 // (same scheme as CfObject_setMoveBusyState, whose symbol carries the Fi).
-void CfObject_setMoveReadyFlag__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag) {
+void cf::CfObjectMove::CfObject_setMoveReadyFlag(int flag) {
     if (flag != 0) {
-        self->mFlags68 |= 0x02000000;
+        this->mFlags68 |= 0x02000000;
     } else {
-        self->mFlags68 &= ~0x02000000;
+        this->mFlags68 &= ~0x02000000;
     }
-    void* target = self->mTargetC4;
+    void* target = this->mTargetC4;
     if (target != 0) {
         CfObjectMoveC4Flags* view = (CfObjectMoveC4Flags*)target;
         if (flag != 0) {
@@ -606,37 +606,37 @@ extern "C" void CfObjectMove_syncRegionToPos(cf::CfObjectMove* self) {
 // Retail symbol is Fv but the body reads r4 (a position vector forwarded to
 // the base +0x9C implementation) - forced-name form, same scheme as the
 // CfObjectModel sibling defined in CfObjectModel.cpp.
-void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
-    void* target = self->mTargetC4;
+void cf::CfObjectMove::CfObject_setMoveTargetVec(const ml::CVec3* vec) {
+    void* target = this->mTargetC4;
     if (target != 0) {
         // One-arg call: retail leaves r4 (the vec) untouched for the base
         // call below, so the source passes only the C4 target.
         setAnimSubPos(target);
     }
-    CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(self, vec);
+    CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(this, vec);
 }
 
 // Retail symbol is Fv but the body reads r4 (a position vector forwarded to
 // the base +0x9C implementation) - forced-name form, same scheme as the
 // CfObject_setMoveTargetVec sibling. The C4 target and +0x98 sub-object are
 // processed when present before the base call.
-void CfObject_UnkVirtualFunc22__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
-    cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
+void cf::CfObjectMove::CfObject_syncMoveTarget(const ml::CVec3* vec) {
+    cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)this->mTargetC4;
     if (target != 0) {
         setAnimLastPos(target);
-        if (self->mSubObj98 != 0) {
-            scnImN4DynStart(self->mSubObj98);
+        if (this->mSubObj98 != 0) {
+            scnImN4DynStart(this->mSubObj98);
         }
     }
-    CfObjectModel_syncMoveTarget(self, vec);
+    CfObjectModel_syncMoveTarget(this, vec);
 }
 
 // Retail symbol is Fv but the body consumes r4 (a position vector) and f1
 // (an amount) - forced-name form carrying the hidden args (same scheme as
 // CfObject_setMoveTargetVec/22/26). Each unk64 bit test is normalized through
 // the double-cntlzw booleanize idiom (retail booleanizes twice).
-extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec, float amount) {
-    u32 flags = self->unk64;
+void cf::CfObjectMove::CfObject_snapMoveTarget(ml::CVec3* vec, float amount) {
+    u32 flags = this->unk64;
     if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x08000000) >> 5)) >> 5) == 0) {
         // Positive &&-chain: each guard emits its own compare-and-branch
         // (the negated ||-chain made MWCC add a cror to the fcmpo).
@@ -651,18 +651,18 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMov
                           ::lbl_eu_80666A88);
             ml::CVec3 arg;
             arg = *vec + off;
-            CfObject_snapMoveTargetBase(self, &arg);
+            CfObject_snapMoveTargetBase(this, &arg);
         } else {
-            CfObject_snapMoveTargetBase(self, vec);
+            CfObject_snapMoveTargetBase(this, vec);
         }
         // Both dispatch paths raise busy bit 8.
-        self->mFlags68 |= 0x100;
+        this->mFlags68 |= 0x100;
     }
-    if (self->mTargetC4 != 0) {
+    if (this->mTargetC4 != 0) {
         // Two-arg call form: retail sets r4 = this+0x3C explicitly.
-        ((bool (*)(void*, void*))setAnimSubPos)(self->mTargetC4, &self->mPos3C);
-        if (self->mSubObj98 != 0) {
-            scnImN4DynStart(self->mSubObj98);
+        ((bool (*)(void*, void*))setAnimSubPos)(this->mTargetC4, &this->mPos3C);
+        if (this->mSubObj98 != 0) {
+            scnImN4DynStart(this->mSubObj98);
         }
     }
 }
@@ -671,10 +671,10 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // (an amount) - forced-name form carrying the hidden args (same scheme as
 // CfObject_setMoveTargetVec/22). extern "C" so the definition symbol is the
 // exact retail name.
-extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec, float amount) {
+void cf::CfObjectMove::CfObject_applyMoveOffset(const ml::CVec3* vec, float amount) {
     // Each unk64 bit test is normalized through the double-cntlzw booleanize
     // idiom (retail booleanizes each test twice).
-    u32 flags = self->unk64;
+    u32 flags = this->unk64;
     if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x08000000) >> 5)) >> 5) == 0) {
         // Same positive &&-chain shape as Func25.
         if (((((u32)__cntlzw((u32)__cntlzw(flags & 0x10000000) >> 5)) >> 5) != 0) &&
@@ -685,21 +685,21 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMov
                           ::lbl_eu_80666A88);
             ml::CVec3 arg;
             arg = *vec + off;
-            CfObject_snapMoveTargetBase(self, &arg);
+            CfObject_snapMoveTargetBase(this, &arg);
         } else {
-            CfObject_snapMoveTargetBase(self, vec);
+            CfObject_snapMoveTargetBase(this, vec);
         }
         // Both dispatch paths raise busy bit 8 (retail converges here from
         // the base-call branch target before falling into the tail).
-        self->mFlags68 |= 0x100;
+        this->mFlags68 |= 0x100;
     }
-    if (self->mTargetC4 != 0) {
+    if (this->mTargetC4 != 0) {
         // Two-arg call form: retail sets r4 = this+0x3C (position) explicitly
         // before the call, so pass the position through the function-pointer
         // cast (the header declares the one-arg form used by Func22).
-        ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
-        if (self->mSubObj98 != 0) {
-            scnImN4DynStart(self->mSubObj98);
+        ((bool (*)(void*, void*))setAnimLastPos)(this->mTargetC4, &this->mPos3C);
+        if (this->mSubObj98 != 0) {
+            scnImN4DynStart(this->mSubObj98);
         }
     }
 }
@@ -879,8 +879,8 @@ extern "C" float CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv(cf::CfObjectMo
     return ((float (*)())CfT_PlayRateGet)();
 }
 
-extern "C" float CfObject_readRefreshValue__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    void* target = self->mTargetC4;
+float cf::CfObjectMove::CfObject_readRefreshValue() {
+    void* target = this->mTargetC4;
     if (target != 0) {
         return *(float*)((char*)target + 0x38C);
     }
@@ -961,20 +961,20 @@ extern "C" int CfObjectMove_queryNpcAdvance__Q22cf12CfObjectMoveFv(const cf::CfO
 // Retail symbol is Fv but the body consumes f1 (three null-checked stores at
 // +0x38C of the C4/C8/CC targets) - forced-name form with the hidden float
 // arg (same scheme as CfObjectMove_recordMoveValue).
-extern "C" void* CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
-    void* target = self->mTargetC4;
+void* cf::CfObjectMove::CfObject_pushRefreshExtra(float value) {
+    void* target = this->mTargetC4;
     if (target != 0) {
         *(float*)((char*)target + 0x38C) = value;
     }
-    target = self->mTargetC8;
+    target = this->mTargetC8;
     if (target != 0) {
         *(float*)((char*)target + 0x38C) = value;
     }
-    target = self->mTargetCC;
+    target = this->mTargetCC;
     if (target != 0) {
         *(float*)((char*)target + 0x38C) = value;
     }
-    return self;
+    return this;
 }
 
 // Retail symbols are Fv but the bodies consume r4 (an index forwarded to
@@ -986,8 +986,8 @@ extern "C" void* CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFv(cf::CfObjectMo
 void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             CharEffSetSlotBit((void*)r, arg);
         }
     }
@@ -996,8 +996,8 @@ void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
 void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             CharEffMoveBit((void*)r, arg);
         }
     }
@@ -1011,8 +1011,8 @@ void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
 void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             // c is widened here so the int->short conversion emits the retail
             // extsh at the call site (MWCC defers it after the plain moves).
             CharEffRegisterSlot((void*)r, a, b, (s16)c, d, e);
@@ -1026,8 +1026,8 @@ void cf::CfObjectMove::CfObjectMove_flushEffectSlots() {
     // character effect slots.
     cf::CfObject* sub = (cf::CfObject*)mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            ((cf::CfObject*)mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            ((cf::CfSubObj38Slots*)mSubObj38)->getCharEffect();
             CharEffReleaseSlots0A10();
         }
     }
@@ -1049,8 +1049,8 @@ void cf::CfObjectMove::CfObjectMove_setAllEffectBits() {
 bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             return CharEffIsSlotOccupied((unsigned int*)r, arg);
         }
     }
@@ -1060,8 +1060,8 @@ bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
 void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, u32 arg) {
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             CharEffSetPointEnabled((void*)r, arg);
         }
     }
@@ -1075,11 +1075,11 @@ void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
 // slot +0xE4; on a non-zero result re-run the query (retail reloads the
 // sub pointer) and forward the query result plus the incoming arg to
 // CharEffRemoveByPtr.
-void CfObjectModel_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
+void cf::CfObjectMove::CfObjectModel_detachEffectSlot(void* arg) {
+    cf::CfObject* sub = (cf::CfObject*)this->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
             CharEffRemoveByPtr((void*)r, (void*)arg);
         }
     }
@@ -1170,8 +1170,8 @@ extern "C" void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(cf::CfObjectMove
     reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_IsInUse_C860();
 }
 
-extern "C" void CfObject_forwardSubObject__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfObjectMove_relaySubB0Slot14();
+void cf::CfObjectMove::CfObject_forwardSubObject() {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfObjectMove_relaySubB0Slot14();
 }
 
 void cf::CfObjectMove::virtCall10(){
@@ -1188,8 +1188,8 @@ extern "C" void CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl(cf::CfObject
 
 // Retail symbol is Fv but the body is a bcctr thunk that leaves the caller's
 // r4 live into CfResObjImpl::ResObj_GetWork_CCBC (slot +0x34).
-extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int idx) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_GetWork_CCBC(idx);
+u32 cf::CfObjectMove::CfObject_UnkVirtualFunc62(u32 idx) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->ResObj_GetWork_CCBC(idx);
 }
 
 // Wave-62: override of CfObject_refreshSubB0 (+0x80). Free-function Fv form
@@ -1219,8 +1219,8 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self,
             }
             cf::CfObject* sub38 = (cf::CfObject*)self->mSubObj38;
             if (sub38 != 0) {
-                if (sub38->CfObject_getCharEffect() != 0) {
-                    int q = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+                if (((cf::CfSubObj38Slots*)sub38)->getCharEffect() != 0) {
+                    int q = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
                     CharEffDetachBySubId((void*)q, self->mField6F8[index]);
                 }
             }
@@ -1258,49 +1258,46 @@ void setPointEnabled__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int flag) {
 // (same scheme as CfObject_setMoveReadyFlag). Raises bit 21 of mFlags68 (or
 // clears bit 21 when the flag is 0), then walks the two +0x6F8 slots,
 // forwarding the flag to each whose +0x7A4 bit 1 differs.
-void CfObjectModel_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag) {
+void cf::CfObjectMove::CfObjectModel_setModelVisible(int flag) {
     if (flag != 0) {
-        self->mFlags68 |= 0x00200000;
+        this->mFlags68 |= 0x00200000;
     } else {
-        self->mFlags68 &= ~0x00200000;
+        this->mFlags68 &= ~0x00200000;
     }
     for (int i = 0; i < 2; i++) {
-        cf::CfObjectModelSub98* s = (cf::CfObjectModelSub98*)self->mField6F8[i];
+        cf::CfObjectModelSub98* s = (cf::CfObjectModelSub98*)this->mField6F8[i];
         if (s != 0 && (((s->field_7A4 >> 1) & 1) != flag)) {
             simSetFlag2OnTree(s, flag);
         }
     }
 }
 
-extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_unk48();
+void* cf::CfObjectMove::CfObjectModel_checkTargetNode(void* arg) {
+    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfResObj_unk48();
 }
 
 
-// Retail symbol is Fv but the body consumes r4 (forwarded to the vtable
-// +0x18C slot) - forced-name form carrying the hidden arg. Teardown/init
-// sequence: base model funcs 2 and 1 (vtable +0x17C/+0x178), then the
-// +0x1D0 slot (CfObjectMove_releaseSlotById) with flags 0 and 1, the
-// +0x90/+0x94 word pair is cleared, and the arg goes to the +0x18C slot
-// (CfObjectModel_checkTargetNode).
-void CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectMove90View* view = reinterpret_cast<cf::CfObjectMove90View*>(self);
-    self->CfObjectModel_releaseModelList();  // vtable +0x17C
-    self->CfObjectModel_releaseModelSub();  // vtable +0x178
-    self->CfObjectMove_releaseSlotById(0);
-    self->CfObjectMove_releaseSlotById(1);
+// Slot 0xE4. Teardown/init sequence: base model funcs 2 and 1 (vtable
+// +0x17C/+0x178), then the +0x1D0 slot (CfObjectMove_releaseSlotById) with
+// flags 0 and 1, the +0x90/+0x94 word pair is cleared, and the argument goes
+// to the +0x18C slot (CfObjectModel_checkTargetNode), whose result is returned.
+int cf::CfObjectMove::CfObject_UnkVirtualFunc37(u32 arg) {
+    cf::CfObjectMove90View* view = reinterpret_cast<cf::CfObjectMove90View*>(this);
+    CfObjectModel_releaseModelList();  // vtable +0x17C
+    CfObjectModel_releaseModelSub();  // vtable +0x178
+    CfObjectMove_releaseSlotById(0);
+    CfObjectMove_releaseSlotById(1);
     view->field_90 = 0;
     view->field_94 = 0;
-    self->CfObjectModel_checkTargetNode((void*)arg);  // vtable +0x18C
+    return (int)CfObjectModel_checkTargetNode((void*)arg);  // vtable +0x18C
 }
 
-// Retail symbol is Fv but the body reads r4 (forwarded to the +0xB0
-// sub-object's vtable slot +0x4C) - forced-name form. Also calls the vtable
-// slot +0x17C (CfObjectModel_releaseModelList) and clears the +0x94 word.
-void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    self->CfObjectModel_releaseModelList();
-    reinterpret_cast<cf::CfObjectMove90View*>(self)->field_94 = 0;
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk4C(arg);
+// Slot 0xE8: releases the model list (vtable +0x17C), clears the +0x94 word
+// and forwards the argument to the +0xB0 sub-object's vtable slot +0x4C.
+int cf::CfObjectMove::CfObject_UnkVirtualFunc38(u32 arg) {
+    CfObjectModel_releaseModelList();
+    reinterpret_cast<cf::CfObjectMove90View*>(this)->field_94 = 0;
+    return reinterpret_cast<cf::CfResObjImpl*>(mSubObjB0)->CfResObj_unk4C(arg);
 }
 
 
@@ -1319,17 +1316,17 @@ void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 // either clear the slot (vtable +0x1D0 with a 0/1 flag) or arm it (vtable
 // +0x144 with the bdat result) plus the +0xB0 sub-object's vtable +0x3C.
 // func_800BF7A0 uses slot 0 / flags 6,0; func_800BF980 slot 1 / flags 7,1.
-int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
+int cf::CfObjectMove::CfObject_armAnimSlot0(u32 arg1, u32 arg2) {
     int r = (int)cf::CfBdat::resolveWpnTok(arg1);
-    self->field_710[0] = (u16)arg1;
-    self->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
+    this->field_710[0] = (u16)arg1;
+    this->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
-        self->CfObjectMove_releaseSlotById(0);
+        this->CfObjectMove_releaseSlotById(0);
     } else {
-        self->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
-        self->CfObject_setAnimSlotEntry(6, (u32)r);
-        if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
+        this->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
+        this->CfObject_setAnimSlotEntry(6, (u32)r);
+        if (this->mSubObj98 != 0) {
+            reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
         }
     }
     return 1;
@@ -1341,36 +1338,36 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // (same scheme as CfObject_armAnimSlot0/42). Unlike the 39/42 pair the slot
 // index is first converted to a name (CfBdat::getBdatStringEntry) and the arm
 // path feeds that name back through lookupExwpTag. Slot 0 / flags 6,0.
-int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
+int cf::CfObjectMove::CfObject_armAnimSlot0N(u32 arg1, u32 arg2) {
     int r;
     u32 name;
     name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::resolveWpnTok(arg1);
-    self->field_710[0] = (u16)arg1;
-    self->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
+    this->field_710[0] = (u16)arg1;
+    this->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
-        self->CfObjectMove_releaseSlotById(0);
+        this->CfObjectMove_releaseSlotById(0);
     } else {
-        self->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(name);
-        self->CfObject_setAnimSlotEntry(6, (u32)r);
-        if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
+        this->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(name);
+        this->CfObject_setAnimSlotEntry(6, (u32)r);
+        if (this->mSubObj98 != 0) {
+            reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
         }
     }
     return 1;
 }
 
-int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
+int cf::CfObjectMove::CfObject_armAnimSlot1(u32 arg1, u32 arg2) {
     int r = (int)cf::CfBdat::resolveWpnTok(arg1);
-    self->field_710[1] = (u16)arg1;
-    self->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
+    this->field_710[1] = (u16)arg1;
+    this->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
-        self->CfObjectMove_releaseSlotById(1);
+        this->CfObjectMove_releaseSlotById(1);
     } else {
-        self->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
-        self->CfObject_setAnimSlotEntry(7, (u32)r);
-        if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
+        this->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
+        this->CfObject_setAnimSlotEntry(7, (u32)r);
+        if (this->mSubObj98 != 0) {
+            reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
         }
     }
     return 1;
@@ -1382,20 +1379,20 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // CfObject_UnkVirtualFunc40 but slot 1 / flags 7,1. r is declared first so
 // MWCC colours it into r31 (retail keeps r in r31, the func_801424A8
 // result in r30).
-int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
+int cf::CfObjectMove::CfObject_armAnimSlot1N(u32 arg1, u32 arg2) {
     int r;
     u32 name;
     name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::resolveWpnTok(arg1);
-    self->field_710[1] = (u16)arg1;
-    self->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
+    this->field_710[1] = (u16)arg1;
+    this->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
-        self->CfObjectMove_releaseSlotById(1);
+        this->CfObjectMove_releaseSlotById(1);
     } else {
-        self->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(name);
-        self->CfObject_setAnimSlotEntry(7, (u32)r);
-        if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
+        this->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(name);
+        this->CfObject_setAnimSlotEntry(7, (u32)r);
+        if (this->mSubObj98 != 0) {
+            reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
         }
     }
     return 1;
@@ -1410,17 +1407,17 @@ int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // reloads both sub-object pointers from memory after the call (no callee-saved
 // registers free), so the members are re-read at each use site. The id is
 // finally stored as a u16 in the +0x70C slot array.
-void CfObject_UnkVirtualFunc45__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 value, u32 index) {
+void cf::CfObjectMove::CfObject_rearmAnimSlot(u32 value, u32 index) {
     int result = ((int (*)(u32))lookupExwpTag)(value);
     if (result > 0) {
-        if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
-            if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
-                reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfuncC8(self->mField6F8[index]);
+        if (this->mSubObj98 != 0 && this->mField6F8[index] != 0) {
+            if (this->mSubObj98 != 0 && this->mField6F8[index] != 0) {
+                reinterpret_cast<CScnItemModel*>(this->mSubObj98)->vfuncC8(this->mField6F8[index]);
             }
-            reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfuncC4(self->mField6F8[index], value, 0);
+            reinterpret_cast<CScnItemModel*>(this->mSubObj98)->vfuncC4(this->mField6F8[index], value, 0);
         }
     }
-    self->field_70C[index] = (u16)result;
+    this->field_70C[index] = (u16)result;
 }
 
 
@@ -1481,12 +1478,12 @@ extern "C" void CfObjectMove_setFlag6C9Bit0(cf::CfObjectMove* self, unsigned lon
 // CfObject_setMoveHeadAngle/30). Base call first, then the usual +0x38
 // sub-object +0xE4 double-query; on success call the camera-time helper
 // with (query result, lbl_eu_80666A94 - value).
-void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
-    CfObjectModel_syncModelRate(self, value);
-    cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
+void cf::CfObjectMove::CfObject_syncModelRate(float value) {
+    CfObjectModel_syncModelRate(this, value);
+    cf::CfObject* sub = (cf::CfObject*)this->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
             CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - value);
         }
     }
@@ -1512,15 +1509,15 @@ extern "C" void CfObjectMove_relaySubB0Slot14(void* self) {
 // Wave-64: override of CfObject_syncMoveHead (+0xD0). Fv keeps Unk linker
 // name. Retail symbol is Fv but the body tail-calls vtable+0xC4 with a scaled
 // float argument - forced-name form (same as the CfObjectModel sibling).
-extern "C" void CfObject_UnkVirtualFunc32__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    self->CfObject_setMoveHeadAngle(f * ml::deg2rad);
+void cf::CfObjectMove::CfObject_syncMoveHead(float f) {
+    this->CfObject_setMoveHeadAngle(f * ml::deg2rad);
 }
 
 // Retail symbol is Fv but the body tail-calls vtable+0xC8 with a scaled
 // float argument (the +0xC8 slot consumes a float in retail despite the
 // base header's no-arg decl) - forced-name form.
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    self->CfObject_setMoveYaw(f * ml::deg2rad);
+void cf::CfObjectMove::CfObject_applyMoveYaw(float f) {
+    this->CfObject_setMoveYaw(f * ml::deg2rad);
 }
 
 extern "C" void CfResObj_noop24() {}
@@ -1705,8 +1702,8 @@ extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
     reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc48(v);
     cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
     if (sub != 0) {
-        if (sub->CfObject_getCharEffect() != 0) {
-            int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
+        if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
+            int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - v);
         }
     }
@@ -2266,3 +2263,182 @@ __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666ACC 
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD0 = 0.5f;
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD4 = 4.0f;
 __declspec(section ".sdata2") __attribute__((used, aligned(8))) const float lbl_eu_80666AD8[2] = {2.4f, 0.0f};
+
+// Hand-assembled vtable data for this unit (the class is still
+// __declspec(novtable)); retail keeps it in this TU's .data.
+extern "C" {
+u32 __RTTI__Q22cf12CfObjectMove[];
+void CObjectState_setStateBitMask__Q22cf12CObjectStateFUl();
+void CObjectState_checkStateFlags__Q22cf12CObjectStateFi();
+void CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl();
+void CObjectState_clearStateWord4__Q22cf12CObjectStateFv();
+void CObjectState_applyStateFlags__Q22cf12CObjectStateFi();
+void CObjectState_clearStateWord8__Q22cf12CObjectStateFv();
+void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi();
+void CObjectState_checkStateFlags8__Q22cf12CObjectStateFi();
+void CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi();
+void CObjectState_setStateBitMask0__Q22cf12CObjectStateFii();
+void CObjectState_getStateData__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
+void CObjectParam_setObjectName__Q22cf12CObjectParamFPCc();
+void CObjectParam_getParamPtr__Q22cf12CfObjectMoveFv();
+void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
+void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv();
+void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
+void CObjectParam_signalActionEnd__Q22cf12CObjectParamFi();
+void __dt__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv();
+void CfObject_updateMoveRate__Q22cf12CfObjectMoveFv();
+void CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv();
+void CfObject_notifyEventDone__Q22cf13CfObjectModelFv();
+void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv();
+void CfObject_forwardSubObject__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv();
+void CfObject_refreshSubB0__Q22cf12CfObjectMoveFv();
+void CfObject_queryTargetState__Q22cf12CfObjectMoveFv();
+void CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf();
+void CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv();
+void CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFf();
+void CfObject_readRefreshValue__Q22cf12CfObjectMoveFv();
+void CfObject_checkTargetState__Q22cf12CfObjectMoveFv();
+void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFPCQ22ml5CVec3();
+void CfObject_setPosXZ__Q22cf13CfObjectModelFff();
+void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv();
+void CfObject_syncMoveTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3();
+void CfObject_getPosVector__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv();
+void CfObject_snapMoveTarget__Q22cf12CfObjectMoveFPQ22ml5CVec3f();
+void CfObject_applyMoveOffset__Q22cf12CfObjectMoveFPCQ22ml5CVec3f();
+void CfObject_setRotVec__Q22cf12CfObjectMoveFPv();
+void CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv();
+void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf();
+void CfObject_setMoveYaw__Q22cf12CfObjectMoveFf();
+void CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv();
+void CfObject_syncMoveHead__Q22cf12CfObjectMoveFf();
+void CfObject_applyMoveYaw__Q22cf12CfObjectMoveFf();
+void CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFf();
+void CfObject_UnkVirtualFunc36__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFUl();
+void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFUl();
+void CfObject_armAnimSlot0__Q22cf12CfObjectMoveFUlUl();
+void CfObject_armAnimSlot0N__Q22cf12CfObjectMoveFUlUl();
+void CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv();
+void CfObject_armAnimSlot1__Q22cf12CfObjectMoveFUlUl();
+void CfObject_armAnimSlot1N__Q22cf12CfObjectMoveFUlUl();
+void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
+void CfObject_rearmAnimSlot__Q22cf12CfObjectMoveFUlUl();
+void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv();
+void CfObject_createMoveTarget__Q22cf12CfObjectMoveFi();
+void CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv();
+void CfObject_forwardNpcAction__Q22cf12CfObjectMoveFi();
+void CfObject_getNpcActionState__Q22cf12CfObjectMoveFv();
+void CfObject_getNpcTargetAction__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelCFPCc();
+void CfObject_getIndexedNodeMatrix__Q22cf13CfObjectModelCFUl();
+void CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelCFi();
+void CfObject_getHeightDiff__Q22cf13CfObjectModelCFv();
+void CfObject_UnkVirtualFunc57__Q22cf12CfObjectMoveFf();
+void CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv();
+void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFf();
+void CfObject_UnkVirtualFunc60__Q22cf12CfObjectMoveFv();
+void CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl();
+void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFUl();
+void CfObject_readKindFlagWord__Q22cf13CfObjectModelFv();
+void CfObject_setMoveBusyState__Q22cf12CfObjectMoveFi();
+void CfObject_setMoveReadyFlag__Q22cf12CfObjectMoveFi();
+void setPointEnabled__Q22cf12CfObjectMoveFi();
+void CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFi();
+void CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObject_UnkVirtualFunc69__Q22cf13CfObjectModelFv();
+void CfObject_syncModelRate__Q22cf12CfObjectMoveFf();
+void CfObject_getProgressLow__Q22cf13CfObjectModelFv();
+void CfObject_setProgressHigh__Q22cf13CfObjectModelFf();
+void CfObject_getProgressHigh__Q22cf13CfObjectModelFv();
+void CfObjectModel_releaseModelSub__Q22cf12CfObjectMoveFv();
+void CfObjectModel_releaseModelList__Q22cf12CfObjectMoveFv();
+void CfObjectModel_getModelName__Q22cf13CfObjectModelFv();
+void CfObjectModel_getAnimState__Q22cf12CfObjectMoveFv();
+void CfObjectModel_getAnimFlags__Q22cf12CfObjectMoveFv();
+void CfObjectModel_checkTargetNode__Q22cf12CfObjectMoveFPv();
+void CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f();
+void CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv();
+void CfObjectModel_getModelFloatA8__Q22cf13CfObjectModelFv();
+void CfObjectModel_setModelFloatA8__Q22cf13CfObjectModelFf();
+void CfObjectModel_getModelRate__Q22cf13CfObjectModelFv();
+void CfObjectModel_setModelRate__Q22cf13CfObjectModelFf();
+void CfObjectModel_aimAtPosition__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc();
+void CfObjectModel_snapToBone__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc();
+void CfObjectModel_setBoneRotate__Q22cf13CfObjectModelFi();
+void CfObjectModel_getBindSource__Q22cf13CfObjectModelFv();
+void CfObjectModel_detachEffectSlot__Q22cf12CfObjectMoveFPv();
+void CfObjectModel_setModelVisible__Q22cf12CfObjectMoveFi();
+void CfObjectModel_getModelVisible__Q22cf13CfObjectModelFv();
+void CfObjectMove_dropMoveRequest__Q22cf12CfObjectMoveFv();
+void CfObjectMove_detachModelList__Q22cf12CfObjectMoveFv();
+void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi();
+void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFf();
+void CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv();
+void CfObjectMove_setTargetC4Arg__Q22cf12CfObjectMoveFUl();
+void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFiiiPCQ22ml5CVec3d();
+void CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3fii();
+void CfObjectMove_queryNpcAdvance__Q22cf12CfObjectMoveFv();
+void CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf();
+void CfObjectMove_writeTargetField__Q22cf12CfObjectMoveFi();
+void CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3();
+void CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFi();
+void CfObjectMove_restartNpcTarget__Q22cf12CfObjectMoveFiii();
+void CfObjectMove_hasActorScale__Q22cf12CfObjectMoveFv();
+void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl();
+void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl();
+void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl();
+void CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl();
+void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl();
+void CfObjectMove_flushEffectSlots__Q22cf12CfObjectMoveFv();
+void CfObjectMove_setAllEffectBits__Q22cf12CfObjectMoveFv();
+void CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl();
+}
+
+void* lbl_eu_80529690[] = {
+    (void*)&__RTTI__Q22cf12CfObjectMove, 0, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFUl, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFi,
+    (void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl, (void*)CObjectState_clearStateWord4__Q22cf12CObjectStateFv, (void*)CObjectState_applyStateFlags__Q22cf12CObjectStateFi, (void*)CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
+    (void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFi, (void*)CObjectState_checkStateFlags8__Q22cf12CObjectStateFi, (void*)CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi, (void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFii,
+    (void*)CObjectState_getStateData__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv, (void*)CObjectParam_setObjectName__Q22cf12CObjectParamFPCc,
+    (void*)CObjectParam_getParamPtr__Q22cf12CfObjectMoveFv, (void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv, (void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv, (void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
+    (void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFi, (void*)__dt__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv, (void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
+    (void*)CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv, (void*)CfObject_updateMoveRate__Q22cf12CfObjectMoveFv, (void*)CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv,
+    (void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv, (void*)CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv, (void*)CfObject_forwardSubObject__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
+    (void*)CfObject_refreshSubB0__Q22cf12CfObjectMoveFv, (void*)CfObject_queryTargetState__Q22cf12CfObjectMoveFv, (void*)CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf, (void*)CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv,
+    (void*)CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFf, (void*)CfObject_readRefreshValue__Q22cf12CfObjectMoveFv, (void*)CfObject_checkTargetState__Q22cf12CfObjectMoveFv, (void*)CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFPCQ22ml5CVec3,
+    (void*)CfObject_setPosXZ__Q22cf13CfObjectModelFff, (void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv, (void*)CfObject_syncMoveTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3, (void*)CfObject_getPosVector__Q22cf12CfObjectMoveFv,
+    (void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv, (void*)CfObject_snapMoveTarget__Q22cf12CfObjectMoveFPQ22ml5CVec3f, (void*)CfObject_applyMoveOffset__Q22cf12CfObjectMoveFPCQ22ml5CVec3f, (void*)CfObject_setRotVec__Q22cf12CfObjectMoveFPv,
+    (void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv, (void*)CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf, (void*)CfObject_setMoveYaw__Q22cf12CfObjectMoveFf, (void*)CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv,
+    (void*)CfObject_syncMoveHead__Q22cf12CfObjectMoveFf, (void*)CfObject_applyMoveYaw__Q22cf12CfObjectMoveFf, (void*)CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv, (void*)CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFf,
+    (void*)CfObject_UnkVirtualFunc36__Q22cf13CfObjectModelFv, (void*)CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFUl, (void*)CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFUl, (void*)CfObject_armAnimSlot0__Q22cf12CfObjectMoveFUlUl,
+    (void*)CfObject_armAnimSlot0N__Q22cf12CfObjectMoveFUlUl, (void*)CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv, (void*)CfObject_armAnimSlot1__Q22cf12CfObjectMoveFUlUl, (void*)CfObject_armAnimSlot1N__Q22cf12CfObjectMoveFUlUl,
+    (void*)CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv, (void*)CfObject_rearmAnimSlot__Q22cf12CfObjectMoveFUlUl, (void*)CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv, (void*)CfObject_createMoveTarget__Q22cf12CfObjectMoveFi,
+    (void*)CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv, (void*)CfObject_forwardNpcAction__Q22cf12CfObjectMoveFi, (void*)CfObject_getNpcActionState__Q22cf12CfObjectMoveFv, (void*)CfObject_getNpcTargetAction__Q22cf12CfObjectMoveFv,
+    (void*)CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelCFPCc, (void*)CfObject_getIndexedNodeMatrix__Q22cf13CfObjectModelCFUl, (void*)CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv, (void*)CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelCFi,
+    (void*)CfObject_getHeightDiff__Q22cf13CfObjectModelCFv, (void*)CfObject_UnkVirtualFunc57__Q22cf12CfObjectMoveFf, (void*)CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFf,
+    (void*)CfObject_UnkVirtualFunc60__Q22cf12CfObjectMoveFv, (void*)CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl, (void*)CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFUl, (void*)CfObject_readKindFlagWord__Q22cf13CfObjectModelFv,
+    (void*)CfObject_setMoveBusyState__Q22cf12CfObjectMoveFi, (void*)CfObject_setMoveReadyFlag__Q22cf12CfObjectMoveFi, (void*)setPointEnabled__Q22cf12CfObjectMoveFi, (void*)CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFi,
+    (void*)CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3, (void*)CfObject_UnkVirtualFunc69__Q22cf13CfObjectModelFv, (void*)CfObject_syncModelRate__Q22cf12CfObjectMoveFf, (void*)CfObject_getProgressLow__Q22cf13CfObjectModelFv,
+    (void*)CfObject_setProgressHigh__Q22cf13CfObjectModelFf, (void*)CfObject_getProgressHigh__Q22cf13CfObjectModelFv, (void*)CfObjectModel_releaseModelSub__Q22cf12CfObjectMoveFv, (void*)CfObjectModel_releaseModelList__Q22cf12CfObjectMoveFv,
+    (void*)CfObjectModel_getModelName__Q22cf13CfObjectModelFv, (void*)CfObjectModel_getAnimState__Q22cf12CfObjectMoveFv, (void*)CfObjectModel_getAnimFlags__Q22cf12CfObjectMoveFv, (void*)CfObjectModel_checkTargetNode__Q22cf12CfObjectMoveFPv,
+    (void*)CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f, (void*)CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv, (void*)CfObjectModel_getModelFloatA8__Q22cf13CfObjectModelFv, (void*)CfObjectModel_setModelFloatA8__Q22cf13CfObjectModelFf,
+    (void*)CfObjectModel_getModelRate__Q22cf13CfObjectModelFv, (void*)CfObjectModel_setModelRate__Q22cf13CfObjectModelFf, (void*)CfObjectModel_aimAtPosition__Q22cf13CfObjectModelFPCQ22ml5CVec3, (void*)CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc,
+    (void*)CfObjectModel_snapToBone__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc, (void*)CfObjectModel_setBoneRotate__Q22cf13CfObjectModelFi, (void*)CfObjectModel_getBindSource__Q22cf13CfObjectModelFv, (void*)CfObjectModel_detachEffectSlot__Q22cf12CfObjectMoveFPv,
+    (void*)CfObjectModel_setModelVisible__Q22cf12CfObjectMoveFi, (void*)CfObjectModel_getModelVisible__Q22cf13CfObjectModelFv, (void*)CfObjectMove_dropMoveRequest__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_detachModelList__Q22cf12CfObjectMoveFv,
+    (void*)CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi, (void*)CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFf, (void*)CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_setTargetC4Arg__Q22cf12CfObjectMoveFUl,
+    (void*)CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFiiiPCQ22ml5CVec3d, (void*)CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3fii, (void*)CfObjectMove_queryNpcAdvance__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf,
+    (void*)CfObjectMove_writeTargetField__Q22cf12CfObjectMoveFi, (void*)CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3, (void*)CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFi, (void*)CfObjectMove_restartNpcTarget__Q22cf12CfObjectMoveFiii,
+    (void*)CfObjectMove_hasActorScale__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl, (void*)CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl, (void*)CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl,
+    (void*)CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl, (void*)CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl, (void*)CfObjectMove_flushEffectSlots__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_setAllEffectBits__Q22cf12CfObjectMoveFv,
+    (void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl, 0,
+};

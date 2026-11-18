@@ -134,13 +134,13 @@ void CMCCrystalData::collectByTarget(u8 target) {
     }
 }
 
-void CMCCrystalData::setFlag(int idx, u8 val) {
+void CMCCrystalData::setFlag(int idx, bool val) {
     u16 adj = (u16)(idx + current * 30);
     if (adj >= count) return;
     entries[adj].flag = val;
 }
 
-int CMCCrystalData::getFlag(u8 idx) {
+bool CMCCrystalData::getFlag(u8 idx) {
     u16 adj = (u16)(idx + current * 30);
     if (adj < count)
         return entries[adj].flag;
@@ -201,8 +201,9 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxName() {
     if (this->mSelTable.mCount == 0) {
         d->collectByTarget(this->field_14EC[(s8)this->field_14F2]);
     }
+    u8 limit = d->limit != 0 ? d->limit : 1;
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
-                  lbl_eu_8050888C + 0x12e, d->limit != 0 ? d->limit : 1);
+                  lbl_eu_8050888C + 0x12e, limit);
     updateCrystalBoxRows();
     setCrystalNameLabel();
     rebuildCrystalSortMenu();
@@ -259,8 +260,8 @@ char* CMCCrystalData::getItemName(int v) {
 // it MWCC inlines the body and the swapCrystalDataEntry reloc disappears.
 __declspec(noinline) void CMCCrystalData::swapEntry(CMCCrystalDataEntry* a, CMCCrystalDataEntry* b) {
     short b_lo;
-    unsigned char b_hi;
-    unsigned char a_hi;
+    bool b_hi;
+    bool a_hi;
     short a_lo;
     a_lo = a->id;
     a_hi = a->flag;
@@ -1095,7 +1096,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 u8 col;
                 for (col = 0; col < 30; col++) {
                     if (d->getItemObject(col) == sel) {
-                        d->setFlag(col, 0);
+                        d->setFlag(col, false);
                         this->unk2CD = col != 0 ? col / 10 : 0;
                         this->unk2CC = col != 0 ? col - this->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors();
@@ -1128,7 +1129,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 u8 col;
                 for (col = 0; col < 30; col++) {
                     if (d->getItemObject(col) == sel) {
-                        d->setFlag(col, 0);
+                        d->setFlag(col, false);
                         this->unk2CD = col != 0 ? col / 10 : 0;
                         this->unk2CC = col != 0 ? col - this->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors();
@@ -1432,16 +1433,16 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalPagePair(int dir) {
         sprintf(bufOther, lbl_eu_8050888C + 0x95, (s8)pair[(u8)i] + 1);
         // Both flags are initialised eagerly and re-assigned in each branch,
         // with the entry lookup between the two initialisers (retail order).
-        int flagA = 0;
+        bool flagA = false;
         s32 idx = (s8)pair[(u8)i];
-        int flagB = 0;
+        bool flagB = false;
         if (this->field_14EC[idx] != 0) {
             if (idx == (s8)this->field_14F2) {
-                flagA = 1;
-                flagB = 0;
+                flagA = true;
+                flagB = false;
             } else {
-                flagA = 0;
-                flagB = 1;
+                flagA = false;
+                flagB = true;
             }
         }
         // Retail reloads layout and the +0x10 sub-object per call (no CSE).
@@ -1460,8 +1461,6 @@ __declspec(noinline) void CMCCrystalBox::initCrystalPageLabels() {
     char bufA[0x20];
     char bufB[0x20];
     int val;
-    int selVis;
-    int otherVis;
     u8 idx;
     this->field_14EC[0] = 1;
     this->field_14EC[1] = 2;
@@ -1476,15 +1475,15 @@ __declspec(noinline) void CMCCrystalBox::initCrystalPageLabels() {
         sprintf(bufA, base + 0x86, val);
         sprintf(bufB, base + 0x95, val);
         idx = i;
-        int selVis = 0;
-        int otherVis = 0;
+        bool selVis = false;
+        bool otherVis = false;
         if (this->field_14EC[idx] != 0) {
             if (idx == (s8)this->field_14F2) {
-                selVis = 1;
-                otherVis = 0;
+                selVis = true;
+                otherVis = false;
             } else {
-                selVis = 0;
-                otherVis = 1;
+                selVis = false;
+                otherVis = true;
             }
         }
         // Retail reloads the layout and its +0x10 sub-object per call.
@@ -2136,9 +2135,9 @@ __declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
         // Grey out slots whose crystal is not among the currently held page
         // slots (field_14AA); the second state call returning 0 means the
         // slot is empty this page.
-        u8 found = 0;
-        int cnt2 = d->getFlag(i);
-        if (cnt2 == 0) {
+        bool found = false;
+        bool cnt2 = d->getFlag(i);
+        if (!cnt2) {
             u8 k = 0;
             while (k < this->mSelTable.mIdCount) {
                 u16 id2 =
@@ -2149,12 +2148,12 @@ __declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
                         CItemImplFacade2* inst =
                             (CItemImplFacade2*)CItem_initItemImplInstances(obj);
                         if (id2 == inst->GetName(obj, j)) {
-                            found = 1;
+                            found = true;
                             break;
                         }
                         j++;
                     } while (j < 4);
-                    if (found != 0) break;
+                    if (found) break;
                 }
                 k++;
             }

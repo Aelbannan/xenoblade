@@ -283,7 +283,7 @@ int Col6_ScanItemSlots_D310();
 void Col6_ReserveBoxSlot_D3A0();
 void UIWin_CreateCol6Check();
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-u32 CtrlObjectParam_GetCurrentRowKey();
+u32 CtrlObjectParam_GetCurrentRowKey(void*);
 int Counter_TestBit(void* data, u32 flag);
 u32 IdTable_SumValues(void* data, u32 flag);
 char* CItemBlock_getPtr20E8();

@@ -79,8 +79,8 @@ extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void updateBattleEffectState__Q22cf13CfGameManagerFv(u32 a, u32 b);
 
 // Typeinfo names for __dynamic_cast in the player-list loops.
-extern "C" const void* lbl_eu_806618E8;
-extern "C" const void* lbl_eu_806618F0;
+extern "C" const void* __RTTI__Q22cf13CfObjectModel;
+extern "C" const void* __RTTI__Q22cf8CfObject;
 
 extern "C" void aiRingPrepend(void* a, void* b);
 extern "C" int aiFetchAction(void* a, void* b);
@@ -120,7 +120,7 @@ extern u32 lbl_eu_80663E28;
 namespace cf { class CScn; }
 
 // Typeinfo name for __dynamic_cast in driveVisionFxUpdates's second list loop.
-extern "C" const void* lbl_eu_80661970;
+extern "C" const void* __RTTI__Q22cf11CfObjectEff;
 
 // Callback ptmf tables (12-byte triplets).
 // Callback triplet copied wholesale by gateVisionByFusionParam / forwardVisionShowRequests /

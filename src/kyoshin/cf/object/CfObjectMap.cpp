@@ -453,7 +453,7 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     // Retail forwarder at 0xD4 -> slot 0xD0 (CfObject_UnkVirtualFunc32). The float
     // in f1 is forwarded unchanged via bcctr; Model's 32 ignores it.
-    reinterpret_cast<cf::CfObject*>(self)->CfObject_syncMoveHead();
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_syncMoveHead(value);
 }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {

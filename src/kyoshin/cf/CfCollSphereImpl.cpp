@@ -38,28 +38,28 @@ extern char lbl_eu_80661C90[];
 extern char __RTTI__Q22cf16CfCollSphereImpl[];
 extern char __RTTI__Q22cf10CfCollImpl[];
 extern char lbl_eu_80661CB0[];
-extern char lbl_eu_806618F0[];
+extern char __RTTI__Q22cf8CfObject[];
 extern char __RTTI__Q22cf12CObjectParam[];
 extern char __RTTI__Q22cf12CObjectState[];
-extern void CObjectState_setStateBitMask__Q22cf12CObjectStateFv();
-extern void CObjectState_checkStateFlags__Q22cf12CObjectStateFv();
-extern void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv();
+extern void CObjectState_setStateBitMask__Q22cf12CObjectStateFUl();
+extern void CObjectState_checkStateFlags__Q22cf12CObjectStateFi();
+extern void CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl();
 extern void CObjectState_clearStateWord4__Q22cf12CObjectStateFv();
 extern void CObjectState_applyStateFlags__Q22cf12CObjectStateFi();
 extern void CObjectState_clearStateWord8__Q22cf12CObjectStateFv();
 extern void CObjectState_clearStateFlags8__Q22cf12CObjectStateFi();
-extern void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
-extern void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
-extern void CObjectState_setStateBitMask0__Q22cf12CObjectStateFv();
+extern void CObjectState_checkStateFlags8__Q22cf12CObjectStateFi();
+extern void CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi();
+extern void CObjectState_setStateBitMask0__Q22cf12CObjectStateFii();
 extern void CObjectState_getStateData__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
-extern void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
+extern void CObjectParam_setObjectName__Q22cf12CObjectParamFPCc();
 extern void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
 extern void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
 extern void loadPointData__Q22cf13CfObjectPointFv();
 extern void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
-extern void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv();
+extern void CObjectParam_signalActionEnd__Q22cf12CObjectParamFi();
 extern void __dt__Q22cf12CfObjectCollFv();
 extern void resetCollTimer__Q22cf12CfObjectCollFv();
 extern void enableCollision__Q22cf12CfObjectCollFv();
@@ -91,31 +91,31 @@ extern void CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv();
 extern void CfObject_setMoveHeadAngle__Q22cf8CfObjectFf();
 extern void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv();
 extern void CfObject_getMoveHeadAngle__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv();
+extern void CfObject_syncMoveHead__Q22cf8CfObjectFf();
 extern void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv();
+extern void CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl();
+extern void CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl();
+extern void CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl();
+extern void CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl();
 extern void CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv();
+extern void CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl();
+extern void CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl();
 extern void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
+extern void CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl();
 extern void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv();
-extern void CfObject_createMoveTarget__Q22cf8CfObjectFv();
+extern void CfObject_createMoveTarget__Q22cf8CfObjectFi();
 extern void CfObject_getCurrentTarget__Q22cf8CfObjectFv();
-extern void CfObject_forwardNpcAction__Q22cf8CfObjectFv();
+extern void CfObject_forwardNpcAction__Q22cf8CfObjectFi();
 extern void CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv();
+extern void CfObject_UnkVirtualFunc52__Q22cf8CfObjectCFPCc();
+extern void CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl();
 extern void CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv();
+extern void CfObject_UnkVirtualFunc55__Q22cf8CfObjectCFi();
+extern void CfObject_getHeightDiff__Q22cf8CfObjectCFv();
 extern void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv();
 extern void CfObject_getMoveRateScale__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv();
@@ -126,12 +126,12 @@ extern void CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv();
 extern void CfObject_setMoveBusyState__Q22cf8CfObjectFi();
 extern void CfObject_setMoveReadyFlag__Q22cf8CfObjectFv();
 extern void setPointEnabled__Q22cf13CfObjectPointFv();
-extern void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv();
+extern void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi();
 extern void isCollEnabled__Q22cf13CfObjectPointFv();
 extern void CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
+extern void CfObject_setProgressHigh__Q22cf8CfObjectFf();
 extern void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
 extern void CollCapsule_DrawDebugShape();
 extern void collCapsuleQueryOffset();
@@ -142,25 +142,25 @@ extern void CollAABB_RenderQuery();
 }
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data_CfCollSphereImpl[136] = {
     &__RTTI__Q22cf12CfObjectColl, (void*)0,
-    &CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
-    &CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
-    &CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
+    &CObjectState_setStateBitMask__Q22cf12CObjectStateFUl,
+    &CObjectState_checkStateFlags__Q22cf12CObjectStateFi,
+    &CObjectState_setStateBitFlag__Q22cf12CObjectStateFUl,
     &CObjectState_clearStateWord4__Q22cf12CObjectStateFv,
     &CObjectState_applyStateFlags__Q22cf12CObjectStateFi,
     &CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
     &CObjectState_clearStateFlags8__Q22cf12CObjectStateFi,
-    &CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
-    &CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
-    &CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
+    &CObjectState_checkStateFlags8__Q22cf12CObjectStateFi,
+    &CObjectState_checkStateFlagsC__Q22cf12CObjectStateFi,
+    &CObjectState_setStateBitMask0__Q22cf12CObjectStateFii,
     &CObjectState_getStateData__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
-    &CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
+    &CObjectParam_setObjectName__Q22cf12CObjectParamFPCc,
     &CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv,
     &CObjectParam_hasObjectName__Q22cf12CObjectParamFv,
     &loadPointData__Q22cf13CfObjectPointFv,
     &CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
-    &CObjectParam_signalActionEnd__Q22cf12CObjectParamFv,
+    &CObjectParam_signalActionEnd__Q22cf12CObjectParamFi,
     &__dt__Q22cf12CfObjectCollFv,
     &resetCollTimer__Q22cf12CfObjectCollFv,
     &enableCollision__Q22cf12CfObjectCollFv,
@@ -192,31 +192,31 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_setMoveHeadAngle__Q22cf8CfObjectFf,
     &CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv,
     &CfObject_getMoveHeadAngle__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv,
+    &CfObject_syncMoveHead__Q22cf8CfObjectFf,
     &CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv,
+    &CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl,
+    &CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl,
+    &CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl,
+    &CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl,
     &CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
+    &CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl,
+    &CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl,
     &CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
+    &CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl,
     &CfObject_setMoveTargetPtr__Q22cf8CfObjectFv,
-    &CfObject_createMoveTarget__Q22cf8CfObjectFv,
+    &CfObject_createMoveTarget__Q22cf8CfObjectFi,
     &CfObject_getCurrentTarget__Q22cf8CfObjectFv,
-    &CfObject_forwardNpcAction__Q22cf8CfObjectFv,
+    &CfObject_forwardNpcAction__Q22cf8CfObjectFi,
     &CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv,
+    &CfObject_UnkVirtualFunc52__Q22cf8CfObjectCFPCc,
+    &CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl,
     &CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv,
+    &CfObject_UnkVirtualFunc55__Q22cf8CfObjectCFi,
+    &CfObject_getHeightDiff__Q22cf8CfObjectCFv,
     &CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
     &CfObject_getMoveRateScale__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
@@ -227,16 +227,16 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_setMoveBusyState__Q22cf8CfObjectFi,
     &CfObject_setMoveReadyFlag__Q22cf8CfObjectFv,
     &setPointEnabled__Q22cf13CfObjectPointFv,
-    &CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv,
+    &CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi,
     &isCollEnabled__Q22cf13CfObjectPointFv,
     &CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv,
+    &CfObject_setProgressHigh__Q22cf8CfObjectFf,
     &CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv,
     &__RTTI__Q22cf12CObjectState, (void*)0,
     &__RTTI__Q22cf12CObjectParam, (void*)0,
-    &lbl_eu_806618F0, (void*)0,
+    &__RTTI__Q22cf8CfObject, (void*)0,
     &lbl_eu_80661CB0, (void*)0, (void*)0, (void*)0,
     &__RTTI__Q22cf17CfCollCapsuleImpl, (void*)0, &CollCapsule_DrawDebugShape, &collCapsuleQueryOffset,
     &__RTTI__Q22cf10CfCollImpl, (void*)0, (void*)0, (void*)0,

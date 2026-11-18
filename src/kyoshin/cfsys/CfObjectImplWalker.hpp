@@ -1069,7 +1069,7 @@ extern u32 lbl_eu_804FC670[3];  // .data table (player-slot effect ids)
 extern const void* lbl_eu_80661C08;
 extern const void* lbl_eu_80661C10;
 extern const void* lbl_eu_80661CB0;
-extern const void* lbl_eu_806618F0;
+extern const void* __RTTI__Q22cf8CfObject;
 extern char lbl_eu_80573E18;  // .data string/buffer
 
 // Random helper (C++ linkage; mangles to retail mtRand__Q22ml4mathFi).

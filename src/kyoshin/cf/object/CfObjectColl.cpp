@@ -587,7 +587,7 @@ extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { ((cf::CfObjectColl*)
 extern const float lbl_eu_80666914;
 extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
 
-extern "C" void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_setProgressHigh__Q22cf8CfObjectFf() {}
 
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
@@ -599,7 +599,7 @@ extern "C" int CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv(cf::CfObject* self) {
 // Retail symbol is Fv even though the body reads r4; defined at global scope
 // under the retail-mangled identifier with an explicit (self, flag) pair.
 // Set/clear bit 22 of the shared flag word at +0x68.
-void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
+void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFi(cf::CfObject* self, int flag) {
     if (flag != 0) {
         self->field_0x68 |= 0x00400000;
     } else {
@@ -629,23 +629,23 @@ extern "C" void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv() {}
 
 extern "C" int CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv(cf::CfObject* self) { return -1; }
 
-extern "C" void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl() {}
 
-extern "C" int CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
 
 extern "C" int CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
 
 extern "C" int CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
 
 extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(cf::CfObject* self) { return ((CfObjectDataView*)self)->f60; }
 

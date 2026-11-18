@@ -6,10 +6,10 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CItemBoxGrid.hpp"
 
 class CProcess;
 class CScn;
-class CItemBoxGrid;
 
 /*
  * Shop sell menu screen process (singleton, built by create()).
@@ -20,8 +20,8 @@ class CItemBoxGrid;
  *   0x5C: CScn* mScene -- owning scene (removeRenderCB target in Term)
  *   0x60: CBgTex mBgTex -- background layout widget (0x20 bytes)
  *   0x80: CTitleAHelp mTitleAHelp -- title/help bar (0x38 bytes)
- *   0xB8: CItemBoxGrid storage (raw; built and destroyed through its C-ABI ctor/dtor)
- *  0x4AC4: u8 mState -- phase/state indicator (MenuShopSellHandlePhase1)
+ *   0xB8: CItemBoxGrid mItemBoxGrid -- item-box grid widget
+ *  0x4AC4: u8 mState -- phase/state indicator (HandlePhase1)
  */
 class CMenuShopSell : public IUICf, public IScnRender {
 public:
@@ -35,18 +35,17 @@ public:
     static CMenuShopSell* create(CProcess* parent, CScn* scene);
     static CMenuShopSell* sInstance;
 
-    CItemBoxGrid* itemBoxGrid() { return reinterpret_cast<CItemBoxGrid*>(mItemBoxGrid); }
+    void HandlePhase0();
+    void HandlePhase1();
+    void HandlePhase2();
+    void HandlePhase3();
 
     CScn* mScene;                    // 0x5C
     CBgTex mBgTex;                   // 0x60
     CTitleAHelp mTitleAHelp;         // 0x80
-    u8 mItemBoxGrid[0x4AC4 - 0xB8];  // 0xB8: CItemBoxGrid storage
+    CItemBoxGrid mItemBoxGrid;       // 0xB8
     u8 mState;                       // 0x4AC4
 };
 
 extern "C" void MenuShopSellCopyData(void*, void*);
 extern "C" bool MenuShopSellIsCreated();
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self);
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self);
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* self);
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self);

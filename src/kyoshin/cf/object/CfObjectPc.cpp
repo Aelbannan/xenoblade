@@ -51,77 +51,27 @@ public:
 // TU-local views over the secondary sub-object anchors written by the
 // ctor and refreshed by setupActionTable (exact layout; names erased at
 // codegen, same addi offsets as the raw byte expressions they replace).
-struct PcCtorVtView {
-    u8 _p0[0x08];
-    void* v8;               // 0x08
-    u8 _q[0x3380 - 0x0C];
-    void* v3380;            // 0x3380
-    u8 _r[0x3E9C - 0x3384];
-    void* v3E9C;            // 0x3E9C
-};
 struct PcAiSubView {
     u8 _p[0x3380];
     u8 ai;                  // 0x3380 - CAIAction sub-object anchor
 };
-cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
-    // novtable class: write the four retail sub-vtable pointers manually
-    // (base labels 0x0 / +0xC / +0x36C / +0x37C at offsets 0x0 / 0x8 /
-    // 0x3380 / 0x3E9C).
-    *(void**)this = (void*)lbl_eu_80529DA0;
-    ((PcCtorVtView*)this)->v8 = (void*)(lbl_eu_80529DA0 + 0xC);
-    ((PcCtorVtView*)this)->v3380 = (void*)(lbl_eu_80529DA0 + 0x36C);
-    ((PcCtorVtView*)this)->v3E9C = (void*)(lbl_eu_80529DA0 + 0x37C);
 
-    // Allocate the 0x44-byte CfResPcImpl resource object and construct it in
-    // place, passing the player sub-object (this + 0x3E9C, null-checked). The
-    // ctor returns the object in r3, so no extra callee-saved register is
-    // needed for the final store.
+// Allocates the 0x44-byte CfResPcImpl resource object and constructs it in
+// place on the CfObjectMove subobject (the upcast carries the retail null
+// guard), then runs the enable hook.
+cf::CfObjectPc::CfObjectPc() {
     u8* res = (u8*)allocate__Q23mtl10MemManagerFUlUl(0x44, CfRes_getAllocHandle());
     if (res != NULL) {
-        // Player sub-object (this + 0x3E9C), null-checked like a secondary-
-        // base conversion; the declared base sizes are 8 bytes off retail.
-        u8* parent = (u8*)this;
-        if (this != NULL) {
-            parent += 0x3E9C;
-        }
-        res = (u8*)__ct__cf_CfResPcImpl(res, (cf::CfObjectMove*)parent);
+        res = (u8*)__ct__cf_CfResPcImpl(res, static_cast<cf::CfObjectMove*>(this));
     }
     ((CfObjectPcSubFields*)this)->mPtr3F4C = res;
-    this->enablePcFlag();
+    CfObject_UnkVirtualFunc3();
 }
 
-// Complete destructor (retail symbol __dt__Q22cf10CfObjectPcFv). Free-
-// function treatment like CfObjectEne: restores the four retail sub-vtable
-// pointers, runs the syncArtsEntry slot on the primary vtable, explicitly
-// destroys the CfObjectMove subobject, runs the inlined CAIAction block
-// cleanup, then frees when deleteFlag > 0.
-cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) {
-    if (self != 0) {
-        u8* v = (u8*)lbl_eu_80529DA0;
-        *(void**)self = (void*)v;
-        *(void**)((u8*)self + 0x8) = (void*)(v + 0xC);
-        *(void**)((u8*)self + 0x3380) = (void*)(v + 0x36C);
-        *(void**)((u8*)self + 0x3E9C) = (void*)(v + 0x37C);
-        self->syncArtsEntry();
-        // Retail re-checks self here (cmpwi/beq) before destroying the
-        // CfObjectMove subobject and running the CAIAction block cleanup.
-        if (self != 0) {
-            __dt__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((u8*)self + 0x3E9C), 0);
-            cf::CfPcCAISub* ai = (cf::CfPcCAISub*)((u8*)self + 0x3380);
-            if (ai != NULL) {
-                CfPcCAIBlock* blk = (CfPcCAIBlock*)&ai->field_4;
-                if (blk != NULL) {
-                    if (&blk->field_8 != NULL) {
-                        blk->field_210 = 0;
-                        blk->field_20C = 0;
-                    }
-                }
-            }
-        }
-        if (deleteFlag > 0)
-            operator delete(self);
-    }
-    return self;
+// Releases the move targets through the Pc override; the base destructors
+// follow inline.
+cf::CfObjectPc::~CfObjectPc() {
+    CfObject_releaseMoveTargets();
 }
 
 // Per-frame PC setup: refreshes the CfResPcImpl resource object and runs
@@ -183,7 +133,7 @@ void CfObjectPc_setupFrame(cf::CfObjectPc* obj) {
 // First call is a Class_-qualified direct bl to CfObjectModel's slot +0x58
 // impl (alias: CfObject_initEventState). Keep Class_ form: retail uses bl,
 // not virtual dispatch.
-int cf::CfObjectPc::initialize() {
+int cf::CfObjectPc::CfObject_UnkVirtualFunc2() {
     ((cf::CfObjectModel*)((u8*)this + 0x3E9C))->cf::CfObjectModel::CfObject_UnkVirtualFunc2();
     u8* self = (u8*)this;
     // Retail tests this with a record-form mask keeping only bit 0 (msb):
@@ -191,24 +141,20 @@ int cf::CfObjectPc::initialize() {
     if (!(((CfObjectPcSubFields*)self)->field_0x3F00 & 0x80000000)) {
         ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
-    this->pcMove()->setPointEnabled(1);
+    this->setPointEnabled(1);
     CfObjectMove_setModelDisplayFlag((char*)self + 0x3E9C, 1);
-    this->pcMove()->CfObjectModel_setModelVisible(1);
+    this->CfObjectModel_setModelVisible(1);
     dispatchItemLoad(self, 0x8000000);
     dispatchItemLoad(self, 0x10000000);
     CfObjectMove_setRegionAttached((u8*)((u32)self + 0x3E9C), 1);
     u8* region = self + 0x44A8;
     ColiSetMoveVec2(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
-    *(u16*)((u8*)this + 0x44A8 + 0xB2) = 100;
+    *(u16*)(region + 0xB2) = 100;
     return 1;
 }
 
-// Adjuster thunk (slot +0x68 on move sub-vtable): retarget -0x3E9C and
-// tail-call syncArtsEntry (qualified call suppresses virtual dispatch;
-// defined before syncArtsEntry so MWCC emits a tail-branch).
-void cf::CfObjectPc::CfObject_pcSyncArtsEntry() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::syncArtsEntry(); }
 
-void cf::CfObjectPc::syncArtsEntry() {
+void cf::CfObjectPc::CfObject_releaseMoveTargets() {
     CActorParam_setupActorState();
     CActorParam_refreshBattleStatus();
     CActorParam_initStatusCounter();
@@ -220,13 +166,10 @@ void cf::CfObjectPc::syncArtsEntry() {
 reinterpret_cast<cf::CActorParam*>(CActorParam_getCopyParam()));
 }
 
-// NOTE: enablePcFlag is defined as the extern "C" wrapper below (not as a
-// member): the adjuster thunks reference the global identifier, and the
-// wrapper also satisfies the vtable slot for the virtual member.
-extern "C" void enablePcFlag__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    ((CfObjectPcSubFields*)self)->field_0x4568 = 1;
-    dispatchItemLoad((u8*)self, 0x00100000);
-    ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
+void cf::CfObjectPc::CfObject_UnkVirtualFunc3() {
+    ((CfObjectPcSubFields*)this)->field_0x4568 = 1;
+    dispatchItemLoad((u8*)this, 0x00100000);
+    ((CfObjectPcSubFields*)this)->field_0x45C0 = lbl_eu_80666B14;
 }
 
 // vf0x5E4: refresh the arts data for this PC's row and reset the sub-object
@@ -234,23 +177,23 @@ extern "C" void enablePcFlag__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // NOTE: defined as the extern "C" wrapper (not as a member): the adjuster
 // thunks reference the global identifier, and the wrapper also satisfies the
 // vtable slot for the virtual member (same pattern as enablePcFlag).
-extern "C" void refreshArtsData__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+void cf::CfObjectPc::CObjectParam_UnkVirtualFunc4() {
     CfObjectPcArtsData* data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
-        ((CfObjectPcSubFields*)self)->field_0x3F28);
+        ((CfObjectPcSubFields*)this)->field_0x3F28);
     // Recomputed lookup: retail keeps both results live (the first feeds
     // CtrlObjectParam_RefreshCharEntry across the call, the second forms the +0x3534 pointer).
     CfObjectPcArtsData* data2 = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
-        ((CfObjectPcSubFields*)self)->field_0x3F28);
-    ((CfObjectPcSubFields*)self)->field_0x15E0 = (u32)data2 + 0x3534;
+        ((CfObjectPcSubFields*)this)->field_0x3F28);
+    ((CfObjectPcSubFields*)this)->field_0x15E0 = (u32)data2 + 0x3534;
     CtrlObjectParam_RefreshCharEntry(data, 0);
-    self->dispatchPlayerBranch();
+    this->dispatchPlayerBranch();
     // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
     // three calls below, but MWCC value-numbers the identical receiver
     // conversions into one callee-saved temp regardless of spelling (see
     // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
-    ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_setMoveValue(lbl_eu_80666B18);
-    ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_setMoveScale(lbl_eu_80666B1C);
-    reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectMove_recordMoveValue(lbl_eu_80666B20);
+    ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_setMoveValue(lbl_eu_80666B18);
+    ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_setMoveScale(lbl_eu_80666B1C);
+    reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObjectMove_recordMoveValue(lbl_eu_80666B20);
 }
 
 
@@ -261,18 +204,13 @@ extern "C" void refreshArtsData__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // even though the retail mangled name is arg-less. Small args delegate to the
 // base CfObjectMove implementation; larger ones forward a sub-object pointer
 // to ObjPc_ForwardVf0C_A42C.
-extern "C" void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(
-    cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e);
-
-void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
+void cf::CfObjectPc::CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e) {
     if ((int)a < 0x2c) {
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
         // r4-r8 stay live into the base Fv forced-name (retail arity Fv).
-        cf::CfObjectMove* subObj = self->pcMove();
-        CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(
-            subObj, a, b, c, d, e);
+        CfObjectMove::CfObjectMove_attachEffectSlot(a, b, c, d, e);
     } else {
-        u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
+        u8* obj = ((CfObjectPcSubFields*)this)->mPtr3ED4;
         if (obj != NULL) {
             ObjPc_ForwardVf0C_A42C(obj);
         }
@@ -308,24 +246,24 @@ void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* dest, s32 itemId) {
 }
 
 // Looks up the data object for the index at +0x3F28, then runs its ctor.
-void CActorParam_UnkVirtualFunc166__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    __ct__8009F8B8((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc166() {
+    __ct__8009F8B8((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)this)->field_0x3F28));
 }
 
-void CActorParam_UnkVirtualFunc167__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    CtrlObjectParam_InitArtsSlotSet((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc167() {
+    CtrlObjectParam_InitArtsSlotSet((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)this)->field_0x3F28));
 }
 
-void resetArtsState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    CtrlObjectParam_LearnArtsSlots((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
+int cf::CfObjectPc::resetArtsState() {
+    return CtrlObjectParam_LearnArtsSlots((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)this)->field_0x3F28));
 }
 
 // Adjuster-style override (retail mangled name is arg-less Fv but the vtable
 // caller supplies the parameter in r4): applies the arts data entry identified
 // by the index at +0x3F28, passing the extra value through.
-void applyArtsParam__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int param) {
+void cf::CfObjectPc::applyArtsParam(int param) {
     if (param == 0) return;
-    CtrlObjectParam_ClaimArtsSlotRow((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28), param);
+    CtrlObjectParam_ClaimArtsSlotRow((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)this)->field_0x3F28), param);
 }
 
 void cf::CfObjectPc::dispatchPlayerBranch() {
@@ -388,24 +326,24 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag);
 // Retail symbol is the arg-less Fv member; defined as a free function with
 // C linkage so the first gate probe reads the state pointer straight off
 // the incoming parameter register like retail (lwz r3, 0x4(r3)).
-extern "C" void updatePc__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
+void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
+    CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     // Two gate probes against the +0x4 sub-object state getter, written as
     // single expressions (CSuddenCommu idiom): the state word is copied into
     // a local through the pointer returned by slot 0x30.
     void* st1;
     void* st2;
     void* st3;
-    cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)self + 4);
-    int chk1 = testActorStatus(self, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
-    cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)self + 4);
-    int chk2 = testActorStatus(self, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
+    cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)this + 4);
+    int chk1 = testActorStatus(this, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
+    cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)this + 4);
+    int chk2 = testActorStatus(this, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
 
     int any = (chk1 | chk2) != 0;
-    int dd = CfObjectPc_refreshGauge(self, any);
+    int dd = CfObjectPc_refreshGauge(this, any);
     if ((any | dd) != 0) {
-        if (isBattleStatusActive((u8*)self + 8, 0x35)) {
-            reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
+        if (isBattleStatusActive((u8*)this + 8, 0x35)) {
+            reinterpret_cast<cf::CBattleState*>((u8*)this + 8)->CBattleState_clearStatusId(0x35);
         }
     } else {
         // Count entries in the battle-manager list at +0x48.
@@ -418,39 +356,39 @@ extern "C" void updatePc__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         }
         // Busy with any listed action -> clear action 0x35; idle -> install it.
         if (count != 0 ||
-            isBattleStatusActive((u8*)self + 8, 0x65) ||
-            isBattleStatusActive((u8*)self + 8, 0x66) ||
-            isBattleStatusActive((u8*)self + 8, 0x67) ||
-            isBattleStatusActive((u8*)self + 8, 0x67) ||
-            isBattleStatusActive((u8*)self + 8, 0x69) ||
-            isBattleStatusActive((u8*)self + 8, 0x6a) ||
-            isBattleStatusActive((u8*)self + 8, 0x6b) ||
-            isBattleStatusActive((u8*)self + 8, 0x6c) ||
-            isBattleStatusActive((u8*)self + 8, 0x6d)) {
-            if (isBattleStatusActive((u8*)self + 8, 0x35)) {
-                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
+            isBattleStatusActive((u8*)this + 8, 0x65) ||
+            isBattleStatusActive((u8*)this + 8, 0x66) ||
+            isBattleStatusActive((u8*)this + 8, 0x67) ||
+            isBattleStatusActive((u8*)this + 8, 0x67) ||
+            isBattleStatusActive((u8*)this + 8, 0x69) ||
+            isBattleStatusActive((u8*)this + 8, 0x6a) ||
+            isBattleStatusActive((u8*)this + 8, 0x6b) ||
+            isBattleStatusActive((u8*)this + 8, 0x6c) ||
+            isBattleStatusActive((u8*)this + 8, 0x6d)) {
+            if (isBattleStatusActive((u8*)this + 8, 0x35)) {
+                reinterpret_cast<cf::CBattleState*>((u8*)this + 8)->CBattleState_clearStatusId(0x35);
             }
         } else {
-            if (!isBattleStatusActive((u8*)self + 8, 0x35)) {
-                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_setBattleParam(0x35);
+            if (!isBattleStatusActive((u8*)this + 8, 0x35)) {
+                reinterpret_cast<cf::CBattleState*>((u8*)this + 8)->CBattleState_setBattleParam(0x35);
             }
         }
     }
 
     // Gauge scale: slot 0x8C value times the global scale factor.
-    float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_getMoveSpeedRate();
+    float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObject_getMoveSpeedRate();
     float scaled = Scn_GetFrameDelta(lbl_eu_80663E14) * gauge;
-    CActorParam_updateTick(self, scaled, 1);
+    CActorParam_updateTick(this, scaled, 1);
 
-    cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
-    int chkFlag = testActorStatus(self, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
+    cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)this + 4);
+    int chkFlag = testActorStatus(this, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
 
     // Player-only event handling (null-checked adjust to the move sub-object).
-    u8* moveSub = (u8*)self;
-    if (self != NULL) {
+    u8* moveSub = (u8*)this;
+    if (this != NULL) {
         moveSub += 0x3E9C;
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
@@ -458,32 +396,32 @@ extern "C" void updatePc__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         if (isGlobalCamFlagSet__Fi(0x100000)) {
             // Distinct fake types per +0x3E9C dispatch so MWCC re-materializes
             // addi r3, r31, 0x3E9C like retail instead of caching one temp.
-            if (chkFlag == 0 && self->pcMove()->CObjectState_checkStateFlags(1) == 0) {
+            if (chkFlag == 0 && this->CObjectState_checkStateFlags(1) == 0) {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
-                ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_refreshSubB0();
-                ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_updateMoveRate();
+                ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_refreshSubB0();
+                ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_updateMoveRate();
                 return;
             }
         } else {
             if (chkFlag != 0 && UIWin_HasPendingUpdate(1) == 0) {
-                dispatchItemLoad(self, 3);
-                self->pcMove()->CObjectParam_signalActionEnd(0);
-                reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectModel_bindModelTo(0,
+                dispatchItemLoad(this, 3);
+                this->CObjectParam_signalActionEnd(0);
+                reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObjectModel_bindModelTo(0,
                     (const char*)lbl_eu_804FC5EC + 0x2D);
             }
         }
     }
     // Retail: direct bl to CfObjectMove::UnkVirtualFunc4 (alias runMoveUpdate).
     // Class_ keeps the non-virtual bl; alias virtual-dispatch would grow size.
-    ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->cf::CfObjectMove::CfObject_UnkVirtualFunc4();
+    ((cf::CfObjectMove*)((u8*)this + 0x3E9C))->cf::CfObjectMove::CfObject_UnkVirtualFunc4();
 }
 
 // Gauge-scale refresh: runs the CActorParam base handler, then reads a text
 // literal through slot 0x308 and scales/divides +0x1824 by an indexed s16
 // from it, normalized by the three float constants.
-void cf::CfObjectPc::CActorParam_resetArtsStatus() {
+void cf::CfObjectPc::CActorParam_resetArtsStatus(void* arts) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     // Direct (non-virtual) call to the CActorParam base implementation.
     ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_resetArtsStatus(nullptr);
@@ -508,37 +446,36 @@ void cf::CfObjectPc::CActorParam_resetArtsStatus() {
     }
 }
 
-void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc173() {}
 
 // CActorParam virtual 0x354 override. The retail mangled name is arg-less
 // (Fv) but the dispatcher passes a float in f1; forward it to the base
 // implementation (same naming quirk) after touching the battle singleton.
-void CActorParam_UnkVirtualFunc176__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, float value) {
+void cf::CfObjectPc::CActorParam_decayArtsMatrix(float value) {
     getInstance__Q22cf14CBattleManagerFv();
-    CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(self, value);
+    CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(this, value);
 }
 
 // Retail symbol CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv (vtable slot
 // 0x1EC override). Written as a global with the mangled name: the base
 // CActorParam override returns u32 in retail but the base header declares it
 // void, so a real member override would fail to compile.
-u32 CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+int cf::CfObjectPc::CActorParam_getCurrencyBalance() {
     // Arts count from the param object (vtable 0xFC); the arts table index is
     // count+1, capped at 99 entries. Returns 1 when over the cap.
     void* bdat = lbl_eu_806640DC;
-    u32 idx = self->CActorParam_getArtsLevel() + 1;
+    u32 idx = this->CActorParam_getArtsLevel() + 1;
     if (idx > 0x63) return 1;
     u32 sval = getBdatStringColumnValue(bdat,
         (const char*)lbl_eu_804FC5EC + 0x34, idx);
-    return sval - self->CActorParam_getSpentCurrency();
+    return sval - this->CActorParam_getSpentCurrency();
 }
 
 // Vtable caller supplies three args despite the arg-less Fv retail name.
 // Adds arg1/arg2 to the two clamped counters (+0x1604/+0x1608), refreshes
 // state via slots 0x290/0x35C/0x5EC, then notifies the effect target.
-void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
-    cf::CfObjectPc* self, int arg1, int arg2, int arg3) {
-    CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc88(u32 arg1, u32 arg2, u32 arg3) {
+    CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     CfObjectPcArtsData* arts =
         (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
     // Clamp cap 0x5F5E0FF; keep the subtraction inline at each use so MWCC
@@ -553,11 +490,11 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     if (v1608 > 0x05F60000u - 0x1F01u) {
         f->field_0x1608 = 0x05F60000u - 0x1F01u;
     }
-    Obj89cField* obj = (Obj89cField*)self->CActorParam_getStatusTable();
+    Obj89cField* obj = (Obj89cField*)this->CActorParam_getStatusTable();
     Counter_AddClamped((u8*)obj, obj->field_0x89C, arg3);
     int acted = 0;
     // Drain the action queue through slot 0x35C.
-    while (self->CActorParam_consumeCurrencyStep() != 0) {
+    while (this->CActorParam_consumeCurrencyStep() != 0) {
         acted = 1;
         CtrlObjectParam_BumpArtsCounter((u8*)arts, 1);
     }
@@ -566,43 +503,36 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         fireLvUpMode4(f->field_0x3F10);
     }
     if (acted != 0) {
-        fireLvUpCombo(f->field_0x3F10,
-            (u32)self->CActorParam_getStatusTable());
-        BattleMgrRangeView* bm =
-            (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
-        int inBattle = 0;
+        fireLvUpCombo(f->field_0x3F10, this->resetArtsState());
         void* state;
-        if (bm->field_0x1AA < 1) goto bmCheck;
-        if (0x18 < bm->field_0x1AA) goto bmCheck;
-        inBattle = 1;
-    bmCheck:
-        if (inBattle != 0) goto actedDone;
-        if (bm->field_0x20C8 != 0) goto actedDone;
-        state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData();
-        if (testActorStatus(self, (int*)&state, 6) ||
-            ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData()),
-                testActorStatus(self, (int*)&state, 9))) {
-            CfObjectMove_setAnimModeArgs((u8*)self->pcMove(), 0x1B, 0, 6, 1);
+        void* state2;
+        if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->isInRange()) goto actedDone;
+        if (((BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv())->field_0x20C8 != 0) goto actedDone;
+        state = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->CObjectState_getStateData();
+        if (testActorStatus(this, (int*)&state, 6) ||
+            ((state2 = *(void**)(*(cf::CObjectState**)((u8*)this + 4))->CObjectState_getStateData()),
+                testActorStatus(this, (int*)&state2, 9))) {
+            CfObjectMove_setAnimModeArgs((u8*)this + 0x3E9C, 0x1B, 0, 6, 1);
         }
     actedDone:;
     }
     CtrlObjectParam_SyncParamFromActorEx((u8*)arts, 0);
-    releaseVisionSlot((u8*)self, 0);
+    releaseVisionSlot((u8*)this, 0);
 }
 
 // Global definition under the retail mangled name: the base CActorParam
 // declares this virtual returning void, so an int-returning member override
 // would not compile.
-int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
-    int spent = self->CActorParam_getCurrencyBalance();
+int cf::CfObjectPc::CActorParam_UnkVirtualFunc178() {
+    CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
+    int spent = this->CActorParam_getCurrencyBalance();
     if (spent <= 0) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
         CtrlObjectParam_RaiseArtsLevelBy((u8*)data, 1);
-        self->CActorParam_copyArtsBlock1650(
+        this->CActorParam_copyArtsBlock1650(
             (const void*)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
-        u32 gained = self->CActorParam_getSpentCurrency();
+        u32 gained = this->CActorParam_getSpentCurrency();
         u32 cur = f->field_0x1600;
         u32 total = (u32)spent + gained;
         // Best-of-N (19 formulations tried: inline chains x4 orders,
@@ -634,12 +564,12 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
     if (((CfObjectPcSubFields*)self)->mPtr3F60 != NULL) {
         if (((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100000) {
             // slot 0x210 false -> primary slot 0x608 cancel call
-            if (!self->pcMove()->CfObjectMove_isEffectSlotUsed(0x25)) {
-                self->handleMoveState(0x25, 0, -1, 0, 0);
+            if (!self->CfObjectMove_isEffectSlotUsed(0x25)) {
+                self->CfObjectMove_attachEffectSlot(0x25, 0, -1, 0, 0);
             }
         } else {
-            if (self->pcMove()->CfObjectMove_isEffectSlotUsed(0x25)) {
-                self->pcMove()->CfObjectMove_transferSlotBits(0x25);
+            if (self->CfObjectMove_isEffectSlotUsed(0x25)) {
+                self->CfObjectMove_transferSlotBits(0x25);
             }
         }
         if ((((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100) == 0 ||
@@ -675,7 +605,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             u32 vB = getBdatStringColumnValue(mgr, names + 0x45, i);
             if ((int)(u16)vB != channel) continue;
             u32 vC = getBdatStringColumnValue(mgr, names + 0x49, i);
-            float sv = reinterpret_cast<cf::CfObjectPc*>(self)->pcMoveRefB().CfObject_getMoveSpeedRate();
+            float sv = self->CfObject_getMoveSpeedRate();
             float newGauge = Scn_GetFrameDelta(lbl_eu_80663E14) * sv +
                 ((CfObjectPcSubFields*)self)->field_0x45C0;
             ((CfObjectPcSubFields*)self)->field_0x45C0 = newGauge;
@@ -717,25 +647,18 @@ resetGauge:
     return 0;
 }
 
-// this-adjust thunk: retarget to the +0x3E9C subobject and tail-branch into
-// refreshArtsData.
-void CObjectParam_callPcFunc800C0__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))refreshArtsData__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
-
-void CfObject_syncEnableState__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))enablePcFlag__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
-
-// Adjuster thunk (slot +0x58 on move sub-vtable): -0x3E9C then initialize.
-void cf::CfObjectPc::CfObject_pcInitEventStat() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::initialize(); }
-
-extern "C" void CfObjectMove_attachEffectSlot__Q22cf10CfObjectPcFv(void* self) {
-    // Tail into handleMoveState with this adjusted; r4-r8 stay live for the
-    // five hidden args (retail Fv thunk is 0x8 bytes).
-    ((void (*)(void*))handleMoveState__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c);
-}
 
 
-void CfObject_pcRunMoveUpdate__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))updatePc__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-void finalizePcCleanup__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+
+
+
+
+
+
+
+
+
 
 // Returns the object only when its flags word at +0x64 has bit 0x4000 set
 // (the "valid" mark); otherwise returns NULL. The C++ name mangles to the
@@ -754,9 +677,9 @@ int cf::CfObjectPoint::validatePointState() {
     return 1;
 }
 
-extern "C" void triggerActionRefreshA__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { self->dispatchPlayerBranch(); }
+void cf::CfObjectPc::triggerActionRefreshA() { this->dispatchPlayerBranch(); }
 
-extern "C" void triggerActionRefreshB__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { self->dispatchPlayerBranch(); }
+void cf::CfObjectPc::triggerActionRefreshB() { this->dispatchPlayerBranch(); }
 
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
 const char lbl_eu_804FC5EC[0x5C] = "tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0wpn_type\0JUhead\0level_exp\0mat_no\0map\0interval\0dmg";

@@ -1506,7 +1506,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     char* titleName =
         BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
     __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(titleTmp), titleName, 0x10);
-    ItemEx_CopyTitle(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
+    __as__11CTitleAHelpFRC11CTitleAHelp(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   reinterpret_cast<CTitleAHelp*>(titleTmp));
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(titleTmp), -1);
     reinterpret_cast<CTitleAHelp*>(&self->_pad18)->CTitleAHelp_load();

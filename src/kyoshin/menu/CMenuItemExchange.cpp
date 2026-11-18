@@ -14,7 +14,7 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
-extern "C" void __dt__9IUIWindowFv(void* self, int flags);
+extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
 
 /**
  * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
@@ -80,63 +80,32 @@ __ct__CMenuItemExchange(CMenuItemExchange* self, CScn* scene, u32 arg) {
     return self;
 }
 
-// extern "C" free-function form (CCol6CheckBat precedent): sub-object dtors in
-// retail order +0x70C (CItemBoxGrid), +0xD0 (CItemBoxLine), +0x98
-// (CTitleAHelp), +0x78 (CBgTex), then the +0x00 IUIWindow dtor (flags 0), then
-// the flags-based delete; stmw/lmw frame via optimize_for_size.
+// Destructor: members are destroyed in reverse order (grid, line, title,
+// bg), then the IUIWindow base dtor runs with flags 0; stmw/lmw frame via
+// optimize_for_size.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void* __dt__17CMenuItemExchangeFv(void* self, int flags) {
-    if (self != 0) {
-        __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>((u8*)self + 0x70C), -1);
-        __dt__12CItemBoxLineFv(&((CMenuItemExchange*)self)->mItemBoxLine, -1);
-        __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>((u8*)self + 0x98), -1);
-        __dt__6CBgTexFv(reinterpret_cast<CBgTex*>((u8*)self + 0x78), -1);
-        __dt__9IUIWindowFv(self, 0);
-        if (flags > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+CMenuItemExchange::~CMenuItemExchange() {}
 #pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuItemExchange::Init (us-801bf844)
-// Construct each embedded widget through a stack temporary (retail unmangled
-// ctor), copy its body into the member with the retail copy helper, then
-// destroy the temporary. Finishes by registering the OC render callback on
-// the owning scene.
+// Re-initialise each embedded widget by assignment from a temporary (the
+// compiler-generated operator= copies are emitted out of line right after
+// Init), then register the OC render callback on the owning scene.
 // ---------------------------------------------------------------------------
 void CMenuItemExchange::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
-    // Background layout widget: temp CBgTex -> copy -> destroy, then load.
-    u8 tmpBgRaw[0x20];
-    __ct__6CBgTexFUc(reinterpret_cast<CBgTex*>(tmpBgRaw), 0);
-    ItemEx_CopyBgTex(&mBgTex, reinterpret_cast<CBgTex*>(tmpBgRaw));
-    __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tmpBgRaw), -1);
-
+    mBgTex = CBgTex(0);
     BgTex_Acquire_3C14(&mBgTex);
 
-    // Title/help bar: temp CTitleAHelp (named from the locale string) ->
-    // copy -> destroy, then load.
-    u8 tmpTitleRaw[0x38];
-    __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw),
-                      BdatTouchStringCell(lbl_eu_80505324, lbl_eu_80505324 + 9, 0x1a), 0);
-    ItemEx_CopyTitle(&mTitleAHelp, reinterpret_cast<CTitleAHelp*>(tmpTitleRaw));
-    __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tmpTitleRaw), -1);
-
+    mTitleAHelp = CTitleAHelp(BdatTouchStringCell(lbl_eu_80505324, lbl_eu_80505324 + 9, 0x1a), 0);
     mTitleAHelp.CTitleAHelp_load();
 
-    // Item-box line: temp CItemBoxLine -> copy -> destroy, then register the
-    // tab entries (retail call order 2,4,5,6,7,8,0xb,3,0xa) and finish the
-    // line setup.
-    u8 tmpLineRaw[0x63C];
-    new (tmpLineRaw) CItemBoxLine((u16)mField74, 2);
-    ItemEx_CopyLine(&mItemBoxLine, reinterpret_cast<CItemBoxLine*>(tmpLineRaw));
-    __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(tmpLineRaw), -1);
-
+    // Item-box line: register the tab entries (retail call order
+    // 2,4,5,6,7,8,0xb,3,0xa) and finish the line setup.
+    mItemBoxLine = CItemBoxLine((u16)mField74, 2);
     mItemBoxLine.ResetTabBytes();
     mItemBoxLine.PushTabByte(2);
     mItemBoxLine.PushTabByte(4);
@@ -149,155 +118,17 @@ void CMenuItemExchange::Init() {
     mItemBoxLine.PushTabByte(0xa);
     mItemBoxLine.LoadFiles();
 
-    // Item-box grid: temp CItemBoxGrid -> copy -> destroy, then register the
-    // two tab lists.
-    u8 tmpGridRaw[0x4a0c];
-    __ct__12CItemBoxGridFUcUsUlUc(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), 2, (u16)mField74, 0, 0);
-    ItemEx_CopyGrid(&mItemBoxGrid, reinterpret_cast<CItemBoxGrid*>(tmpGridRaw));
-    __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tmpGridRaw), -1);
-
-    ((CItemBoxGrid*)(&mItemBoxGrid))->ClearListSlots();
-    ((CItemBoxGrid*)(&mItemBoxGrid))->PushToList(0xb);
-    ((CItemBoxGrid*)(&mItemBoxGrid))->PushToList(0xa);
+    // Item-box grid: register the two tab lists.
+    mItemBoxGrid = CItemBoxGrid(2, (u16)mField74, 0, 0);
+    mItemBoxGrid.ClearListSlots();
+    mItemBoxGrid.PushToList(0xb);
+    mItemBoxGrid.PushToList(0xa);
 
     // Register the OC render callback (adjusted-this idiom: null this stays
     // null, otherwise the +0x6c sub-object).
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mOCVt);
     mScene->addRenderCB(render, 0xd, 0);
-}
-
-/* Copy-construct a CBgTex field-by-field from src into dest (retail
- * ItemEx_CopyBgTex): the +0x4 mem region through the shared UnkClass_8011C974
- * helper, then the file-handle / layout pointers and the three status bytes.
- * Returns dest (copy-ctor idiom, retail restores r3 to dest before the tail). */
-extern "C" CBgTex* ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src) {
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->mMemRegion, &src->mMemRegion);
-    dest->mFileHandle = src->mFileHandle;
-    dest->mLayout = src->mLayout;
-    dest->mLayoutReady = src->mLayoutReady;
-    dest->mLoaded = src->mLoaded;
-    dest->mPtmMode = src->mPtmMode;
-    return dest;
-}
-
-/* Copy-construct a CTitleAHelp field-by-field from src into dest (retail
- * ItemEx_CopyTitle): the +0x4 mem region via UnkClass_8011C974, then the file
- * handle / layout / anim pointers and the trailing status bytes. */
-extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src) {
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->unk4, &src->unk4);
-    dest->mFileHandle = src->mFileHandle;
-    dest->mArcResourceAccessor = src->mArcResourceAccessor;
-    dest->mLayout = src->mLayout;
-    dest->mAnimTrans20 = src->mAnimTrans20;
-    dest->mAnimTrans24 = src->mAnimTrans24;
-    dest->unk28 = src->unk28;
-    dest->unk2c = src->unk2c;
-    dest->mName = src->mName;
-    dest->unk34 = src->unk34;
-    dest->unk35 = src->unk35;
-    dest->unk36 = src->unk36;
-    dest->unk37 = src->unk37;
-    return dest;
-}
-
-/* Copy-construct a CItemBoxLine body field-by-field from src into dest
- * (retail ItemEx_CopyLine), accessed through CItemBoxLineView (see header).
- * Layout regions go through the shared 0x10-byte region helper, scalars are
- * copied individually, the four embedded cursors and the info2 / num-select /
- * scroll-bar / sys-win sub-objects go through their copy helpers, and the two
- * tab-name strings via FixStr::operator= (strlen + strcpy). */
-// Stand-in for the compiler-generated CItemBoxLine::operator= (out of line
-// in retail, see MWCC_CASES "two rules"); inside it retail calls the nested
-// CBaseCur / CSysWin copies out of line. dont_inline reproduces those calls
-// until Init is written with real assignments.
-#pragma push
-#pragma dont_inline on
-extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CItemBoxLine* srcArg) {
-    CItemBoxLineView* dest = reinterpret_cast<CItemBoxLineView*>(destArg);
-    CItemBoxLineView* src = reinterpret_cast<CItemBoxLineView*>(srcArg);
-
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->region04[0], &src->region04[0]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->region14[0], &src->region14[0]);
-
-    // File handles / layout / anim pointers.
-    dest->field24 = src->field24;
-    dest->field28 = src->field28;
-    dest->field2C = src->field2C;
-    dest->field30 = src->field30;
-    dest->field34 = src->field34;
-    dest->field38 = src->field38;
-    dest->field3C = src->field3C;
-    dest->field40 = src->field40;
-    dest->field44 = src->field44;
-    dest->field48 = src->field48;
-    dest->field4C = src->field4C;
-    dest->field50 = src->field50;
-    dest->field54 = src->field54;
-    dest->field58 = src->field58;
-    dest->unk59 = src->unk59;
-
-    // Tab entry bytes + occupancy bytes (retail copies these as word pairs).
-    for (int i = 0; i < 9; i++) {
-        dest->tabEntries[i] = src->tabEntries[i];
-    }
-    dest->tabCount = src->tabCount;
-    for (int i = 0; i < 9; i++) {
-        dest->unk64[i] = src->unk64[i];
-    }
-    dest->field6D = src->field6D;
-
-    *reinterpret_cast<CBaseCur*>(&dest->cur70[0]) = *reinterpret_cast<const CBaseCur*>(&src->cur70[0]);
-    *reinterpret_cast<CBaseCur*>(&dest->cur88[0]) = *reinterpret_cast<const CBaseCur*>(&src->cur88[0]);
-    *reinterpret_cast<CBaseCur*>(&dest->curA0[0]) = *reinterpret_cast<const CBaseCur*>(&src->curA0[0]);
-    *reinterpret_cast<CBaseCur*>(&dest->curB8[0]) = *reinterpret_cast<const CBaseCur*>(&src->curB8[0]);
-
-    // Item-box-info2 state region: two typed sub-regions + raw body.
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->info2D0[0x4], &src->info2D0[0x4]);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&dest->info2D0[0x14], &src->info2D0[0x14]);
-    for (int i = 0x24; i < 0xB0; i++) {
-        dest->info2D0[i] = src->info2D0[i];
-    }
-    *reinterpret_cast<CItemBoxPage*>(&dest->info2D0[0xB0]) = *reinterpret_cast<const CItemBoxPage*>(&src->info2D0[0xB0]);
-
-    InfoCfCopyObjD4(&dest->numSel2DC[0], &src->numSel2DC[0]);
-    *reinterpret_cast<CScrollBar*>(&dest->scrollBar310[0]) = *reinterpret_cast<const CScrollBar*>(&src->scrollBar310[0]);
-    *reinterpret_cast<CSysWin*>(&dest->sysWin350[0]) = *reinterpret_cast<const CSysWin*>(&src->sysWin350[0]);
-
-    // Tab-page state block.
-    dest->unk38C = src->unk38C;
-    dest->unk38E = src->unk38E;
-    dest->field390 = src->field390;
-    dest->pad391 = src->pad391;
-    dest->field392 = src->field392;
-    dest->field394 = src->field394;
-    dest->field396 = src->field396;
-    dest->unk39E = src->unk39E;
-    dest->field39F = src->field39F;
-    dest->field3A0 = src->field3A0;
-    dest->field3A1 = src->field3A1;
-    dest->field3A2 = src->field3A2;
-    dest->field3A3 = src->field3A3;
-    for (int i = 0; i < 12; i++) {
-        dest->entries[i].f4 = src->entries[i].f4;
-        dest->entries[i].f0 = src->entries[i].f0;
-    }
-
-    dest->tabCount2 = src->tabCount2;
-    dest->field92 = src->field92;
-    dest->field93 = src->field93;
-
-    // Tab-name strings (FixStr::operator=: strlen into mLength + strcpy).
-    dest->str438 = src->str438;
-    dest->str45C = src->str45C;
-
-    *reinterpret_cast<CItemBoxPage*>(&dest->pageWords4E0[0]) = *reinterpret_cast<const CItemBoxPage*>(&src->pageWords4E0[0]);
-}
-#pragma pop
-
-extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src) {
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(dest) + 4, reinterpret_cast<u8*>(src) + 4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(reinterpret_cast<u8*>(dest) + 8, reinterpret_cast<u8*>(src) + 8);
 }
 
 extern "C" void waitForDrawDone__9CDeviceVIFv();
@@ -315,24 +146,15 @@ void CMenuItemExchange::Term() {
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
     mItemBoxLine.UnloadFiles();
-    ((CItemBoxGrid*)(&mItemBoxGrid))->UnloadItemBox();
+    mItemBoxGrid.UnloadItemBox();
     lbl_eu_80664428 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
-// Phase handlers used by Move()'s state dispatch (defined below).
-// Retail dispatches through the raw jump table jumptable_eu_80533B98
-// (9 entries, states 0..8); noinline keeps each handler out-of-line.
-__declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_GateFrom1(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_Phase2Idle(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_GateFrom5(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self);
-__declspec(noinline) void ItemEx_GateFrom8(CMenuItemExchange* self);
-typedef void (*CMenuExchangePhaseFn)(CMenuItemExchange*);
+// Phase handlers used by Move()'s state dispatch (retail jump table
+// jumptable_eu_80533B98, 9 entries, states 0..8) are members defined below.
+// Phase2Idle is still an empty stub of the undecompiled 0x3A4-byte retail
+// body; noinline keeps the stub from being folded into Move.
 
 /*
  * Per-frame update: skip while the task system is busy or the exchange screen
@@ -351,19 +173,19 @@ end:
     return;
 body:
     switch (field_5118) {
-    case 0: ItemEx_Phase0Load(this); break;
-    case 1: ItemEx_GateFrom1(this); break;
-    case 2: ItemEx_Phase2Idle(this); break;
-    case 3: ItemEx_GateFrom3(this); break;
-    case 4: ItemEx_Phase4Fade(this); break;
-    case 5: ItemEx_GateFrom5(this); break;
-    case 6: ItemEx_Phase6Input(this); break;
-    case 7: ItemEx_Phase7Entry(this); break;
-    case 8: ItemEx_GateFrom8(this); break;
+    case 0: Phase0Load(); break;
+    case 1: GateFrom1(); break;
+    case 2: Phase2Idle(); break;
+    case 3: GateFrom3(); break;
+    case 4: Phase4Fade(); break;
+    case 5: GateFrom5(); break;
+    case 6: Phase6Input(); break;
+    case 7: Phase7Entry(); break;
+    case 8: GateFrom8(); break;
     }
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxLine.UpdateStates();
-    ((CItemBoxGrid*)(&mItemBoxGrid))->UpdateItemBox();
+    mItemBoxGrid.UpdateItemBox();
     updateHelp(&mTitleAHelp);
 }
 
@@ -389,7 +211,7 @@ body:
         SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         mItemBoxLine.DrawLayout(&drawInfo);
-        ((CItemBoxGrid*)(&mItemBoxGrid))->DrawItemBoxGrid(&drawInfo);
+        mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
         drawHelp(&mTitleAHelp, &drawInfo);
     }
 }
@@ -423,54 +245,54 @@ u8 ItemEx_GetFlagByte() { return lbl_eu_8066442C; }
 /* Load-finish hook: once the background layout and item-box line are ready,
  * hide the title/help bar prompt, finish the line load, ready the grid and
  * advance to phase 1 (field_5118), then kick op 0x6d. */
-__declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
-    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
-        isInitialized(&self->mTitleAHelp) != 0 &&
-        self->mItemBoxLine.GetSelectReady() != 0) {
-        func_801C412C(&self->mTitleAHelp);
-        self->mItemBoxLine.OpenLine();
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->LoadItemBoxFiles();
-        self->field_5118 = 1;
+void CMenuItemExchange::Phase0Load() {
+    if (BgTex_IsLoaded_3E34(&mBgTex) != 0 &&
+        isInitialized(&mTitleAHelp) != 0 &&
+        mItemBoxLine.GetSelectReady() != 0) {
+        func_801C412C(&mTitleAHelp);
+        mItemBoxLine.OpenLine();
+        mItemBoxGrid.LoadItemBoxFiles();
+        field_5118 = 1;
         playUISound(0x6d);
     }
 }
 
 /* Exchange-menu phase gate: once the title/help bar is idle and the item-box
  * line is ready, advance the menu to phase 2 (field_5118). */
-__declspec(noinline) void ItemEx_GateFrom1(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        self->mItemBoxLine.IsReadyFlag() != 0) {
-        self->field_5118 = 2;
+void CMenuItemExchange::GateFrom1() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxLine.IsReadyFlag() != 0) {
+        field_5118 = 2;
     }
 }
 
-__declspec(noinline) void ItemEx_Phase2Idle(CMenuItemExchange* self){}
+__declspec(noinline) void CMenuItemExchange::Phase2Idle() {}
 
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 1 (field_5118). */
-__declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        self->mItemBoxLine.IsReadyFlag() != 0 &&
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
-        self->field_64 = 1;
+void CMenuItemExchange::GateFrom3() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxLine.IsReadyFlag() != 0 &&
+        mItemBoxGrid.GetField61() != 0) {
+        field_64 = 1;
     }
 }
 
 /* Phase 4: once help bar/line/grid are ready, run the fade-in timer; when it
  * leaves the initial value, apply the grid selection to help bar + line and
  * advance to phase 5, kicking menu-op 0x6d. */
-__declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        self->mItemBoxLine.IsReadyFlag() != 0 &&
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->IsItemBoxReady() != 0) {
-        self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
-        if (!(self->mFloat5120 <= lbl_eu_80667E7C)) {
-            self->mFloat5120 = lbl_eu_80667E78;
-            func_801C41E8(&self->mTitleAHelp, ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetPromptState());
-            ((CItemBoxGrid*)(&self->mItemBoxGrid))->SetInfoMsgId(self->mItemBoxLine.TouchTabEntryItem());
-            reopenFromClose(&self->mTitleAHelp);
-            ((CItemBoxGrid*)(&self->mItemBoxGrid))->InitItemDisplay();
-            self->field_5118 = 5;
+void CMenuItemExchange::Phase4Fade() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxLine.IsReadyFlag() != 0 &&
+        mItemBoxGrid.IsItemBoxReady() != 0) {
+        mFloat5120 = mFloat5120 + lbl_eu_80667E7C;
+        if (!(mFloat5120 <= lbl_eu_80667E7C)) {
+            mFloat5120 = lbl_eu_80667E78;
+            func_801C41E8(&mTitleAHelp, mItemBoxGrid.GetPromptState());
+            mItemBoxGrid.SetInfoMsgId(mItemBoxLine.TouchTabEntryItem());
+            reopenFromClose(&mTitleAHelp);
+            mItemBoxGrid.InitItemDisplay();
+            field_5118 = 5;
             playUISound(0x6d);
         }
     }
@@ -478,17 +300,17 @@ __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
 
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 6 (field_5118). */
-__declspec(noinline) void ItemEx_GateFrom5(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
-        self->field_5118 = 6;
+void CMenuItemExchange::GateFrom5() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxGrid.GetField61() != 0) {
+        field_5118 = 6;
     }
 }
 
 /* Phase 6 (main exchange input): decode turbo/pressed pad flags (the pressed
  * bit positions depend on the game-manager mode), dispatch one cursor/grid
  * action, then run the help-bar sync and the two phase transitions. */
-__declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
+void CMenuItemExchange::Phase6Input() {
     CMIExPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     int turboCancel = (pad->mTurboFlags & 0x8004) != 0;
     int pageTurn = (pad->mTurboFlags & 0x10010000) != 0;
@@ -508,64 +330,64 @@ __declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
     }
 
     if (up != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->func_801CCAF0();
+        mItemBoxGrid.func_801CCAF0();
     } else if (down != 0) {
-        if (((CItemBoxGrid*)(&self->mItemBoxGrid))->IsItemBoxActive() != 0) {
-            ((CItemBoxGrid*)(&self->mItemBoxGrid))->HandleCancelBtn(0);
-        } else if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetExchFlag52C() == 0 &&
-                   ((CItemBoxGrid*)(&self->mItemBoxGrid))->IsSubWinActive() == 0) {
-            markReplayClose(&self->mTitleAHelp);
-            ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
-            self->field_5118 = 7;
+        if (mItemBoxGrid.IsItemBoxActive() != 0) {
+            mItemBoxGrid.HandleCancelBtn(0);
+        } else if (mItemBoxGrid.GetExchFlag52C() == 0 &&
+                   mItemBoxGrid.IsSubWinActive() == 0) {
+            markReplayClose(&mTitleAHelp);
+            mItemBoxGrid.AdvanceBoxState();
+            field_5118 = 7;
         }
     } else if (turboCancel != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorLeft();
+        mItemBoxGrid.GridMoveCursorLeft();
     } else if (pageTurn != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorRight();
+        mItemBoxGrid.GridMoveCursorRight();
     } else if (cancel != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorDown();
+        mItemBoxGrid.GridMoveCursorDown();
     } else if (decide != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GridMoveCursorUp();
+        mItemBoxGrid.GridMoveCursorUp();
     } else if (leftTrigger != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->OpenSortMenu();
+        mItemBoxGrid.OpenSortMenu();
     } else if (yHeld != 0) {
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->SelectCatRow();
+        mItemBoxGrid.SelectCatRow();
     }
 
     // Help bar follows the grid's current mode.
-    func_801C41E8(&self->mTitleAHelp, ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetPromptState());
-    if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetExchFlag52C() != 0) {
-        lbl_eu_8066442C = ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField52D();
-        beginClose(&self->mTitleAHelp);
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
-        self->field_5118 = 3;
+    func_801C41E8(&mTitleAHelp, mItemBoxGrid.GetPromptState());
+    if (mItemBoxGrid.GetExchFlag52C() != 0) {
+        lbl_eu_8066442C = mItemBoxGrid.GetField52D();
+        beginClose(&mTitleAHelp);
+        mItemBoxGrid.AdvanceBoxState();
+        field_5118 = 3;
     }
-    if (((CItemBoxGrid*)(&self->mItemBoxGrid))->GetIdleFlag542() != 0) {
-        markReplayClose(&self->mTitleAHelp);
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->AdvanceBoxState();
-        self->field_5118 = 7;
+    if (mItemBoxGrid.GetIdleFlag542() != 0) {
+        markReplayClose(&mTitleAHelp);
+        mItemBoxGrid.AdvanceBoxState();
+        field_5118 = 7;
     }
 }
 
 /* Phase-8 entry: once the title/help bar is idle and the item-box grid is
  * ready, reset the help bar to mode 0, stop its animation, finish the line
  * load and advance the menu to phase 8 (field_5118). */
-__declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        ((CItemBoxGrid*)(&self->mItemBoxGrid))->GetField61() != 0) {
-        func_801C41E8(&self->mTitleAHelp, 0);
-        reopenFromClose(&self->mTitleAHelp);
-        self->mItemBoxLine.OpenLine();
-        self->field_5118 = 8;
+void CMenuItemExchange::Phase7Entry() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxGrid.GetField61() != 0) {
+        func_801C41E8(&mTitleAHelp, 0);
+        reopenFromClose(&mTitleAHelp);
+        mItemBoxLine.OpenLine();
+        field_5118 = 8;
     }
 }
 
-/* Exchange-menu phase gate: twin of ItemEx_GateFrom1 (idle help bar + ready
+/* Exchange-menu phase gate: twin of GateFrom1 (idle help bar + ready
  * item-box line) advancing the menu to phase 2. */
-__declspec(noinline) void ItemEx_GateFrom8(CMenuItemExchange* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        self->mItemBoxLine.IsReadyFlag() != 0) {
-        self->field_5118 = 2;
+void CMenuItemExchange::GateFrom8() {
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxLine.IsReadyFlag() != 0) {
+        field_5118 = 2;
     }
 }
 

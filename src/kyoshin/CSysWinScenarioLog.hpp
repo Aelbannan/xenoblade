@@ -895,7 +895,7 @@ extern "C" f32 lbl_eu_80668AE4;
 // Scenario-log unit imports (SysWinLog_ScanDeviceOwners / SysWinLog_CheckOpenGate / SysWinLog_BuildLayout /
 // SysWinLog_OpenContent / SysWinLog_SweepSlotPressure). Retail-unmangled C-ABI symbols.
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);            // character-data lookup
-extern "C" u32 CtrlObjectParam_GetCurrentRowKey();                       // character-data category
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);                       // character-data category
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-count lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the

@@ -24,46 +24,38 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdat
 #define lbl_eu_80666AF8 sdata2_tbl_CfObjectNpc[6]
 #define lbl_eu_80666AFC sdata2_tbl_CfObjectNpc[7]
 
-// 0x800BFD48 - CfObjectNpc constructor
-// See the hidden-parameter note on the header declaration: heapFlag selects
-// which resource-impl child is allocated into +0xB0 (0x44 bytes of
-// CfResPcImpl when spawning with full PC resources, 0x20 bytes of
-// CfResReloadImpl otherwise). Defined at global scope (outside namespace cf)
-// so MWCC emits the verbatim retail symbol.
-cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag) {
-    __ct__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)self);
-    *(void**)self = lbl_eu_805298B8;
+namespace cf {
 
+// 0x800BFD48
+// heapFlag selects which resource-impl child is allocated into +0xB0 (0x44
+// bytes of CfResPcImpl when spawning with full PC resources, 0x20 bytes of
+// CfResReloadImpl otherwise).
+CfObjectNpc::CfObjectNpc(int heapFlag) {
     if (heapFlag != 0) {
         void* mem = mtl::MemManager::allocate(0x44, CfRes_getAllocHandle());
         if (mem != NULL) {
-            mem = __ct__cf_CfResPcImpl((u8*)mem, (cf::CfObjectMove*)self);
+            mem = __ct__cf_CfResPcImpl((u8*)mem, this);
         }
-        self->mSubObjB0 = mem;
+        mSubObjB0 = mem;
     } else {
         void* mem = mtl::MemManager::allocate(0x20, CfRes_getAllocHandle());
         if (mem != NULL) {
-            mem = __ct__cf_CfResReloadImpl(mem, self);
+            mem = __ct__cf_CfResReloadImpl(mem, this);
         }
-        self->mSubObjB0 = mem;
+        mSubObjB0 = mem;
     }
 
-    // Shared locals (CfResReloadImpl ctor idiom): values are computed before
-    // the member stores. The 0x34 word is an unnamed CObjectParam gap word
-    // (cf. CfObjectModel ctor Gap34); the header's unk34 lands at +0x24, so
-    // it cannot be used here.
+    // The 0x34 word is an unnamed CObjectParam gap word (cf. CfObjectModel
+    // ctor Gap34); the header's unk34 lands at +0x24, so it cannot be used here.
     struct Gap34 { u8 _p00[0x34]; u32 w34; };   // 0x34 (unnamed gap word)
     f32 timerInit = lbl_eu_80666AE0;
     int zero = 0;
     s16 invalid = -1;
-    reinterpret_cast<Gap34*>(self)->w34 = (u32)zero;
-    self->mIconType = (u8)zero;
-    self->mRltMeet = invalid;
-    self->mTimer = timerInit;
-    return self;
+    reinterpret_cast<Gap34*>(this)->w34 = (u32)zero;
+    mIconType = (u8)zero;
+    mRltMeet = invalid;
+    mTimer = timerInit;
 }
-
-namespace cf {
 
 // 0x800BFE00
 CfObjectNpc::~CfObjectNpc() {
@@ -72,20 +64,20 @@ CfObjectNpc::~CfObjectNpc() {
 }
 
 // 0x800BFE74
-bool CfObjectNpc::initNpcFlags() {
+int CfObjectNpc::CfObject_UnkVirtualFunc2() {
     this->CfObjectModel::CfObjectModel_releaseModelList();
     mFlags68 |= 0x100000;
     CfObjectMove_setModelDisplayFlag(this, 1);
     CfObjectMove_setRegionAttached(this, 1);
     ColiSetMoveVec2(_60C_region, 0, lbl_eu_80666AE4, lbl_eu_80666AE8);
     *(u16*)&_60C_region[0xB2] = 0x15E;
-    return true;
+    return 1;
 }
 
 // 0x800BFEE4
 // Per-frame NPC update: decides whether to show the NPC's dialogue bubble
 // and advances the trigger timer.
-void CfObjectNpc::updateNpcDialog() {
+void CfObjectNpc::CfObject_UnkVirtualFunc4() {
     this->CObjectState_setStateBitMask3();
 
     bool resetTimer = true;
@@ -121,7 +113,7 @@ void CfObjectNpc::updateNpcDialog() {
             if (this->mTimer > lbl_eu_80666AEC) {
                 this->CObjectState_applyStateFlags(3);
                 static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);
-                static_cast<cf::CfObjectModel*>(this)->CfObjectModel_bindModelTo(nullptr, (const char*)lbl_eu_804FC580);
+                static_cast<cf::CfObjectModel*>(this)->CfObjectModel_bindModelTo(nullptr, "JUhead");
                 this->mTimer = lbl_eu_80666AE0;
             } else {
                 // Local forces the scene-pointer load before the slot call,
@@ -145,17 +137,17 @@ void CfObjectNpc::updateNpcDialog() {
 // the model through a series of virtual setters. Columns come from the shared
 // BDAT column-name table; numeric columns are converted with the classic
 // 0x4330 integer-to-double bias constant.
-void CfObjectNpc::loadNpcParams() {
+void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
     Bdat_GetTable_AA34();
     void* fp = getFP((const char*)this + 0x78);
 
     // Length-probe the name column: if it exceeds 0x1F chars, fall back to
     // the fixed string baked into the column-name table at +0xC.
     if (strlen((const char*)getBdatStringColumnValue(
-            fp, (const char*)&lbl_eu_804FC580[7], unk8C_3)) > 0x1F) {
-        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)&lbl_eu_804FC580[0xC]);
+            fp, "name", unk8C_3)) > 0x1F) {
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName("OVER");
     } else {
-        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)getBdatStringColumnValue(fp, "name", unk8C_3));
     }
 
     static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(lbl_eu_80666AF4);
@@ -166,14 +158,14 @@ void CfObjectNpc::loadNpcParams() {
     // conversion (TU-local @N pool constant - see MWCC_PATTERNS "magic
     // constant" note); retail's schedule keeps the raw result in a register.
     u32 col11 = getBdatStringColumnValue(
-        fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
+        fp, "move_speed", unk8C_3);
     f32 val1 = (f32)(u32)(u8)col11 /
         *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale();
     static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(val1);
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
     u32 col1c = getBdatStringColumnValue(
-        fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
+        fp, "scale", unk8C_3);
     f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
     static_cast<cf::CfObject*>(this)->CfObject_setObjScale(val2);
 
@@ -190,7 +182,7 @@ void CfObjectNpc::loadIconType() {
     void* fp = getFP((const char*)this + 0x78);
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
-    const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x22], row);
+    const char* v = (const char*)getBdatStringColumnValue(fp, "icon_type", row);
     mIconType = *(const u8*)&v;
 }
 
@@ -201,7 +193,7 @@ s16 CfObjectNpc::getRltMeet() {
         void* fp = getFP((const char*)this + 0x78);
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.
-        const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x2C], row);
+        const char* v = (const char*)getBdatStringColumnValue(fp, "rlt_meet", row);
         // Pointer's low halfword holds the rlt_meet id (deref form, not a
         // cast: MWCC emits the retail stw+lha memory round-trip; a (s16)
         // cast folds to a direct sth).
@@ -221,7 +213,4 @@ u8 CfObjectNpc::getIconType() {
 } // namespace cf
 
 // typed data sections -- source shape for retail bytes (replaces absorb blobs)
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC570[0x10] = "cf::CfObjectNpc";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC580[0x38] = "JUhead\0name\0OVER\0move_speed\0scale\0icon_type\0rlt_meet";
-
 __declspec(section ".sdata2") __attribute__((used)) const double lbl_eu_80666B00 = 4503599627370496.0;

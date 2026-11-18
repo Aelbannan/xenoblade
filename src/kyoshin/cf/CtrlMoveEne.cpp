@@ -18,7 +18,6 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // From CtrlNpc.cpp (do not include CtrlNpc.hpp here - its C-ABI decls
 // clash with CCtrlMoveEne.hpp on ColiSetAxisBlockInverse / scnImN4DynStart).
-extern "C" u32 getAnimModelId(u32 arg);
 // CfObjectActor UVF6 - forced-name call avoids including CfObjectActor.hpp
 // (that pulls CCtrlMoveEne.hpp and clashes with this TU's func_8004B9D4 decl).
 namespace cf { class CfObjectActor; }
@@ -670,7 +669,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                 if (testActorStatus(obj, &w, 0x10) != 0 ||
                     testActorStatus(obj, &w, 0xA) != 0 ||
                     testActorStatus(obj, &w, 0x9) != 0) {
-                    CfObjectMove_setAnimModeArgs(&obj->mSub2, 0x31, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(&obj->mSub2), 0x31, 0, -1, 1);
                 }
             }
             void* bm2 = getInstance__Q22cf14CBattleManagerFv();
@@ -1175,7 +1174,7 @@ __declspec(noinline) int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self) {
     cf::CfObj3F60View* f60 = obj->field_3F60;
     int keepMoving = 1;
     if ((view->field_0x17C & 0x8u) != 0 && f60 != 0) {
-        if (getAnimModelId((u32)f60) == 0x66) {
+        if (getAnimModelId((void*)f60) == 0x66) {
             keepMoving = 0;
         } else {
             view->field_0x17C &= ~0x8u;
@@ -1397,7 +1396,7 @@ void CtrlMoveEne_InitMoveHook(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = getEneBdatColumn(obj, lbl_eu_804FB9E8);
+    row.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8);
     u8 state = row.b;
     if (state >= 0xf) {
         state = state - 0xf;
@@ -1437,7 +1436,7 @@ void CtrlMoveEne_InitMoveHook(cf::CCtrlMoveEne* self) {
         u32 w;
         u16 h;
     } row2;
-    row2.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0xA);
+    row2.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0xA);
     u16 level = row2.h;
     if (level != 0) {
         self->field_0x5C = (f32)(u32)level;
@@ -1468,7 +1467,7 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
         u32 w;
         u16 h;
     } match;
-    match.w = getEneBdatColumn(obj, table + 0x13);
+    match.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(table + 0x13);
     u16 matchId = match.h;
     view->field_0x58 = 0;
     view->field_0x5A = 0;
@@ -1479,7 +1478,7 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = getEneBdatColumn(obj, table);
+    row.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(table);
     u8 state = row.b;
     if (state >= 0xF) {
         state = 0;
@@ -1504,13 +1503,13 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
             u32 w;
             u16 h;
         } c13;
-        c13.w = getEneBdatByIndex(obj, table + 0x13, i);
+        c13.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x13, i);
         if (c13.h == matchId && idx < 8) {
             union {
                 u32 w;
                 u16 h;
             } c1b;
-            c1b.w = getEneBdatByIndex(obj, table + 0x1b, i);
+            c1b.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x1b, i);
             u16 flags = c1b.h;
             if ((flags & 0x200u) != 0) {
                 // Flag row: direct target fields instead of a move-list entry.
@@ -1518,19 +1517,19 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = getEneBdatByIndex(obj, table + 0x22, i);
+                c22.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x22, i);
                 view->field_0x4C = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = getEneBdatByIndex(obj, table + 0x27, i);
+                c27.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x27, i);
                 view->field_0x50 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = getEneBdatByIndex(obj, table + 0x2c, i);
+                c2c.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x2c, i);
                 view->field_0x54 = (f32)c2c.h;
                 view->field_0x17C |= 0x2;
                 view->field_0x70 |= 0x8;
@@ -1547,19 +1546,19 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = getEneBdatByIndex(obj, table + 0x22, i);
+                c22.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x22, i);
                 entry->field_0x0 = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = getEneBdatByIndex(obj, table + 0x27, i);
+                c27.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x27, i);
                 entry->field_0x4 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = getEneBdatByIndex(obj, table + 0x2c, i);
+                c2c.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x2c, i);
                 entry->field_0x8 = (f32)c2c.h;
                 // Column +0x31 is a byte gate: any nonzero value marks the
                 // entry's flags halfword with bit 0x8000.
@@ -1567,7 +1566,7 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
                     u32 w;
                     u8 b;
                 } c31;
-                c31.w = getEneBdatByIndex(obj, table + 0x31, i);
+                c31.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x31, i);
                 if (c31.b != 0) {
                     entry->field_0xC |= 0x8000;
                 }
@@ -1575,19 +1574,19 @@ void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
                     u32 w;
                     u8 b;
                 } c3b;
-                c3b.w = getEneBdatByIndex(obj, table + 0x3b, i);
+                c3b.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x3b, i);
                 entry->field_0xE = c3b.b;
                 union {
                     u32 w;
                     u8 b;
                 } c45;
-                c45.w = getEneBdatByIndex(obj, table + 0x45, i);
+                c45.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x45, i);
                 entry->field_0xF = c45.b;
                 union {
                     u32 w;
                     u8 b;
                 } c4e;
-                c4e.w = getEneBdatByIndex(obj, table + 0x4e, i);
+                c4e.w = ((cf::CfObjectEne*)obj)->getEneBdatByIndex(table + 0x4e, i);
                 entry->field_0x10 = (f32)c4e.b;
                 idx++;
                 entry++;
@@ -1654,7 +1653,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row53;
-    row53.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x53);
+    row53.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x53);
     if (row53.b == 0) {
         self->field_0x180 |= 1;
     }
@@ -1670,7 +1669,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
                 u32 w;
                 u8 b;
             } row58;
-            row58.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x58);
+            row58.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x58);
             u8 v58 = row58.b;
             if ((v58 & 1) != 0) {
                 CtrlMoveEne_InitMoveHook(self);
@@ -1756,7 +1755,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
         u32 w;
         u8 b;
     } row61;
-    row61.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x61);
+    row61.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x61);
     u8 mode = row61.b;
     if ((obj->field_3374 & 0x100u) != 0) {
         self->field_0x180 |= 0x8;
@@ -1775,7 +1774,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv160;
-        conv160.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x27);
+        conv160.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x27);
         f32 f160 = (f32)conv160.h;
         view->field_0x160 = f160;
         if (mode == 1) view->field_0x160 = f160 * lbl_eu_806665F0;
@@ -1818,7 +1817,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
             u32 w;
             s16 h;
         } conv4;
-        conv4.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x27);
+        conv4.w = ((cf::CfObjectEne*)obj)->getEneBdatColumn(lbl_eu_804FB9E8 + 0x27);
         f32 f4 = (f32)conv4.h;
         *(f32*)&view->mPos0W.y = f4;
         if (mode == 1) *(f32*)&view->mPos0W.y = f4 * lbl_eu_806665F0;
@@ -1890,7 +1889,7 @@ check:
             cf::CFunc8008EF04Sub98* p98 = (cf::CFunc8008EF04Sub98*)sub->field_98;
             if (sub->field_C4 != 0 && p98 != 0 &&
                 (p98->field_7A4 & 0x10000u) == 0) {
-                CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
                 ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
                 self->field_0x17C |= 1;
             }
@@ -1903,7 +1902,7 @@ check:
                         ->field_C4 != 0) {
                 self->field_0x17C |= 0x10000;
                 if (mode == 2) {
-                    CfObjectMove_setAnimModeArgs(self->mpDataPtr->mPosObj, 1, 0, 0, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(self->mpDataPtr->mPosObj), 1, 0, 0, 1);
                     setSnapFlags(
                         ((cf::CFunc8008EF04Sub*)self->mpDataPtr->mPosObj)
                             ->field_C4,
@@ -1912,7 +1911,7 @@ check:
                         self->mpDataPtr->mPosObj->CfObject_setMoveBusyState(1);
                     }
                 } else if (mode == 3) {
-                    CfObjectMove_setAnimModeArgs(self->mpDataPtr->mPosObj, 1, 0, 1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(self->mpDataPtr->mPosObj), 1, 0, 1, 1);
                     setSnapFlags(
                         ((cf::CFunc8008EF04Sub*)self->mpDataPtr->mPosObj)
                             ->field_C4,
@@ -2152,7 +2151,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2183,7 +2182,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2211,7 +2210,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
              0x10000u) == 0) {
-            CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
             reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
             view->field_0x17C |= 1;
         }
@@ -2371,7 +2370,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
             &view->field_0x78[(s16)view->field_0x5A];
         if ((entry4->field_0xC & 0x8u) != 0) {
             if (sub->field_C4 != 0) {
-                CfObjectMove_setAnimModeArgs(sub, 0x66, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)(sub), 0x66, 0, -1, 1);
                 view->field_0x17C |= 0x8;
             }
         } else if ((entry4->field_0xC & 0x10u) != 0) {
@@ -2538,7 +2537,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
                 if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                      0x10000u) == 0) {
-                    CfObjectMove_setAnimModeArgs(sub2, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(sub2), 3, 0, -1, 1);
                     reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
@@ -2569,7 +2568,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
             if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                  0x10000u) == 0) {
-                CfObjectMove_setAnimModeArgs(sub2, 3, 0, -1, 1);
+                CfObjectMove_setAnimModeArgs((u8*)(sub2), 3, 0, -1, 1);
                 reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                 view->field_0x17C |= 1;
             }
@@ -2686,7 +2685,7 @@ void CtrlMoveEne_ScanGimmickTargets(cf::CCtrlMoveEne* self) {
             if ((v->field_0x70 & 0x10u) != 0) {
                 if (((cf::CFunc8008F9ECSub*)self->mpDataPtr->mPosObj)
                         ->field_C4 != 0) {
-                    CfObjectMove_setAnimModeArgs(self->mpDataPtr->mPosObj, 0x66, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(self->mpDataPtr->mPosObj), 0x66, 0, -1, 1);
                     v->field_0x17C |= 0x8;
                 }
             } else if ((v->field_0x70 & 0x20u) != 0) {
@@ -3156,7 +3155,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 & 0x10000) ==
                 0) {
-            CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
             ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
             self->field_0x17C |= 1;
         }
@@ -3324,7 +3323,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000) == 0) {
-                    CfObjectMove_setAnimModeArgs(sub, 3, 0, -1, 1);
+                    CfObjectMove_setAnimModeArgs((u8*)(sub), 3, 0, -1, 1);
                     ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
                     self->field_0x17C |= 1;
                 }
@@ -3629,7 +3628,7 @@ void CtrlMoveEne_CommitHeadAngle(cf::CCtrlMoveData* self, f32 f) {
     if (sub) {
         sub->CfObject_setMoveHeadAngle(f);
         if (self->mPosObj->CfObject_isMoveActiveNow() != 0) {
-            CfObjectMove_setAnimModeArgs(self->mPosObj, 3, 0, -1, 1);
+            CfObjectMove_setAnimModeArgs((u8*)(self->mPosObj), 3, 0, -1, 1);
         }
     }
 }

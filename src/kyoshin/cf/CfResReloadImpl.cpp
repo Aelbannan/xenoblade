@@ -5,6 +5,7 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // CfObjectMove_setAnimModeArgs (owner decl)
+#include "kyoshin/cf/object/CfObjectActor.hpp"  // CActorParam_getScale on the owning actor
 #include "kyoshin/cf/CfResReloadImpl.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // real owner of parent+0x98 (vfunc64/vfunc88)
 // IResInfo's Tok_FormatStr uses FixStr; this TU needs the u8* form - hide the
@@ -640,7 +641,7 @@ if (!((cf::CObjectParam*)*(void**)self)->CObjectParam_hasObjectName()) {
         if (((cf::CfObjectMove*)*(void**)self)->CfObjectMove_hasActorScale()) {
             void* b = *(void**)self;
             if (b) b = (u8*)b - 0x3e9c;
-            v = ((cf::CfObject*)b)->CfObject_getActorScale();
+            v = ((cf::CfObjectActor*)b)->CActorParam_getScale();
         } else {
 v = ((cf::CfObject*)*(void**)self)->CfObject_getObjScale();
         }

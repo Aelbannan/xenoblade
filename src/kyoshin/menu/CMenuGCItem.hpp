@@ -6,6 +6,7 @@
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CItemBoxGrid.hpp"
 
 // GC item menu screen.
 class CMenuGCItem : public IUICf, public IScnRender {
@@ -26,7 +27,7 @@ public:
     /* 0x5C */ CProcess* mParentRef;
     /* 0x60 */ CBgTex mBgTex;
     /* 0x80 */ CTitleAHelp mTitleAHelp;
-    /* 0xB8 */ u8 mItemBoxGrid[0x4AC4 - 0xB8]; // CItemBoxGrid storage (ctor takes 4 args, so not a complete C++ member yet)
+    /* 0xB8 */ CItemBoxGrid mItemBoxGrid;
     /* 0x4AC4 */ u8 mState;                    // phase/state indicator (0..3)
     /* 0x4AC5 */ u8 mArg;
 }; // size: 0x4AC6

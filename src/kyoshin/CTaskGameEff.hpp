@@ -114,9 +114,6 @@ extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
-// RTTI typeinfos for __dynamic_cast of effect objects.
-extern "C" const void* lbl_eu_80661970;
-extern "C" const void* lbl_eu_806618F0;
 
 #include "monolib/scn/CScn.hpp"
 

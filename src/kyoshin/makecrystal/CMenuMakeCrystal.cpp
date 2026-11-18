@@ -52,7 +52,10 @@ extern "C" void MakeCrystalInitWin(void* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
 void MakeCrystalCopyDispArea(void* dst, const void* src);            // big state copy
 void MakeCrystalCopyBox(void* dst, const void* src);            // big state copy
-void ItemEx_CopyTitle(void* dst, void* src);                  // win data post-ctor
+// Weak CTitleAHelp::operator= (emitted out of line in retail). Interim C spelling:
+// a real assignment inlines here until the sibling copies in Init are real
+// assignments too (MWCC_CASES inlining Rule B).
+extern "C" void __as__11CTitleAHelpFRC11CTitleAHelp(void* dst, void* src);
 void MakeCrystalCopyStateRecord(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
 int  CtrlRemote_TouchBitByArg(int id);
@@ -166,7 +169,7 @@ void CMenuMakeCrystal::Init() {
         u8 rec[0x32];
     } bufs;
 
-    ItemEx_CopyTitle(reinterpret_cast<u8*>(this) + 0x98, win.tail);
+    __as__11CTitleAHelpFRC11CTitleAHelp(reinterpret_cast<u8*>(this) + 0x98, win.tail);
     MakeCrystalCopyDispArea(reinterpret_cast<u8*>(this) + 0xD0, bufs.mid);
     MakeCrystalCopyBox(reinterpret_cast<u8*>(this) + 0x2EA8, bufs.upper);
     MakeCrystalCopyStateRecord(reinterpret_cast<u8*>(this) + 0x43B0, bufs.rec);

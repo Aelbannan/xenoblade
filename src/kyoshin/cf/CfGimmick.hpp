@@ -98,7 +98,7 @@ struct CfGimmickObject : public cf::CfObject {
     // CfObject base at 0x00 (vtable + fields to 0x70); tail holds gimmick flag
     u8 gap70[0x90 - 0x70];      // 0x70..0x8F
     u8 field_90;                // 0x90
-    void CfObject_UnkVirtualFunc2() override {}
+    int CfObject_UnkVirtualFunc2() override { return 1; }
     void CfObject_UnkVirtualFunc4() override {}
     void CfObject_UnkVirtualFunc7() override {}
     void CfObject_notifyEventDone() override {}

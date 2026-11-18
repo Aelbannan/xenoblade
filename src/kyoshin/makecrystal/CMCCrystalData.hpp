@@ -14,9 +14,9 @@ struct CMCCrystalItemObj {
 // the two named fields.
 struct CMCCrystalDataEntry {
     s16 id;     // +0x00
-    u8  flag;   // +0x02
+    bool flag;  // +0x02
 
-    CMCCrystalDataEntry() : id(-1), flag(0) {}
+    CMCCrystalDataEntry() : id(-1), flag(false) {}
     CMCCrystalDataEntry& operator=(const CMCCrystalDataEntry& other);
 };
 
@@ -29,8 +29,8 @@ public:
     ~CMCCrystalData();
 
     void collectByTarget(u8 target);
-    void setFlag(int idx, u8 val);
-    int getFlag(u8 idx);
+    void setFlag(int idx, bool val);
+    bool getFlag(u8 idx);
     int allFlagsSet();
     void nextPage();
     void prevPage();

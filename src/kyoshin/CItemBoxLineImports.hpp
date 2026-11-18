@@ -332,7 +332,7 @@ extern "C" u32 CItem_sumFamilyByte6(unsigned int);
 
 // ItemBoxLine_ProbeAvailability: string/kind-table helpers (C-ABI).
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
-extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
 extern "C" void SplitU32ToS16s(void*, u32);

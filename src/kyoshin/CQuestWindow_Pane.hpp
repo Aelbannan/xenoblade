@@ -14,10 +14,8 @@ class Pane;
 // "illegal function overloading" error). Retail name is unmangled.
 extern "C" {
 
-// Pane visibility: clears bit 0 of the pane flag byte (+0xBB) and ORs in
-// (u8)visible. Callers pass 0/1. `visible` is u32, not bool: retail callers
-// pass raw words (u8 params, `a < b` as (a-b)>>31, int getters) with no bool
-// normalisation, and the callee masks with clrlwi itself.
-void setPaneVisible(nw4r::lyt::Pane* pane, u32 visible);
+// Pane visibility: nw4r::lyt::Pane::SetVisible(bool). Callers pass genuine
+// bool values (bool locals/params, comparisons, bool-returning helpers).
+void setPaneVisible(nw4r::lyt::Pane* pane, bool visible);
 
 } // extern "C"

@@ -179,8 +179,8 @@ int pcTalk(VMThread* pThread) {
     int id = vmArgIntGet(2, arg);
     void* player = getPlayer__Q22cf13CfGameManagerFi(0);
     PcBattleTalkObj* obj =
-        (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
-                                         &lbl_eu_806618D8, 0);
+        (PcBattleTalkObj*)__dynamic_cast(player, 0, &__RTTI__Q22cf10CfObjectPc,
+                                         &__RTTI__Q22cf12CfObjectMove, 0);
     Walker_StepBattleArts(obj->field_3ED4, id, id == 8);
     return 0;
 }
@@ -192,8 +192,8 @@ int winTalkWait(VMThread* pThread) {
     } else {
         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
         PcBattleTalkObj* obj =
-            (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
-                                             &lbl_eu_806618D8, 0);
+            (PcBattleTalkObj*)__dynamic_cast(player, 0, &__RTTI__Q22cf10CfObjectPc,
+                                             &__RTTI__Q22cf12CfObjectMove, 0);
         // Probe vf40 (+0x40) on the +0x3ED4 walker sub-object: nonzero while busy.
         if (obj->field_3ED4->vf40(0x8000) != 0) {
             vmWaitModeSet(pThread);
@@ -362,8 +362,8 @@ int setTrust(VMThread* pThread) {
             CfEnumListItem* item =
                 (CfEnumListItem*)getEntryAt(holder.get(), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
-                                        (const void*)&lbl_eu_806618D8,
-                                        (const void*)&lbl_eu_806618F0, 0);
+                                        (const void*)&__RTTI__Q22cf12CfObjectMove,
+                                        (const void*)&__RTTI__Q22cf8CfObject, 0);
             bindIndexedEffect((u32)state, cast);
         }
         done++;
@@ -376,8 +376,8 @@ int setTrust(VMThread* pThread) {
             CfEnumListItem* item =
                 (CfEnumListItem*)getEntryAt(holder.get(), 0);
             void* cast = __dynamic_cast(item->field_04, 0,
-                                        (const void*)&lbl_eu_806618D8,
-                                        (const void*)&lbl_eu_806618F0, 0);
+                                        (const void*)&__RTTI__Q22cf12CfObjectMove,
+                                        (const void*)&__RTTI__Q22cf8CfObject, 0);
             bindIndexedEffect((u32)state, cast);
         }
         done++;

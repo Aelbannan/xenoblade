@@ -13,7 +13,6 @@ extern UNKTYPE* getValidObject(UNKTYPE* r3);
 extern void* lbl_eu_806640DC;   // .sbss bdat file pointer (arts list)
 extern void* lbl_eu_806640F4;   // .sbss bdat file pointer (arts list)
 extern const char lbl_eu_804FC5EC[];    // .rodata column-name string table
-extern u8 lbl_eu_80529DA0[];    // retail CfObjectPc vtable data (.data)
 
 // Old-style retail ctor symbol of the CfResPcImpl resource object
 // (CfResPcImpl.cpp). A real C++ member ctor would mangle to
@@ -46,7 +45,7 @@ struct UnkStruct_8009D7E4_Ret {
 // reloc symbols (CtrlObjectParam_GetCharEntry is declared in kyoshin/CArtsInfo.hpp).
 extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ctor)
 extern "C" void CtrlObjectParam_InitArtsSlotSet(u8* obj);    // CtrlObjectParam.cpp
-extern "C" void CtrlObjectParam_LearnArtsSlots(u8* obj);    // CtrlObjectParam.cpp
+extern "C" int CtrlObjectParam_LearnArtsSlots(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void ObjPc_ForwardVf0C_A42C(u8* obj);    // CfObjectImplPc.cpp
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
@@ -57,7 +56,6 @@ extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);     // C
 extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
-extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
 extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
@@ -86,7 +84,7 @@ extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void CtrlObjectParam_BumpArtsCounter(u8* obj, int flag);
 extern "C" int CtrlObjectParam_ReapplyArtsSet(u8* obj);
 extern "C" void fireLvUpMode4(u8* obj);
-extern "C" void fireLvUpCombo(u8* obj, u32 value);
+extern "C" void fireLvUpCombo(u8* obj, int learned);
 // .rodata literal copied onto the stack by UnkVirtualFunc4 (struct defined
 // below); bdat file ptr.
 extern void* lbl_eu_80664090;
@@ -172,6 +170,17 @@ struct BattleMgrRangeView {
     u8 field_0x1AA;
     u8 _1AB[0x20C8 - 0x1AB];
     s16 field_0x20C8;
+
+    bool isInRange() const {
+        u8 phase = field_0x1AA;
+        bool result = false;
+        if (phase < 1) {
+        } else if (phase > 0x18) {
+        } else {
+            result = true;
+        }
+        return result;
+    }
 };
 
 // Layout of the CfObjectPc region below the CfObjectActor bases (inside the
@@ -241,27 +250,38 @@ struct FlagsObj800C1228 {
 
 namespace cf {
     //size: 0x45C0
-    // __declspec(novtable): the retail vtable data lives at lbl_eu_80529DA0;
-    // the auto-generated __vt__Q22cf10CfObjectPc symbol would fail the reloc
-    // name match, so the ctor stores the retail label explicitly (see
-    // MWCC_CASES "Retail-owned vtable data" / COccCulling).
-    class __declspec(novtable) CfObjectPc : public CfObjectActor {
+    // Tail slots (0x5D4..0x608) are appended to the CfObjectMove vtable
+    // group in declaration order: overrides of CfObjectMove-chain slots get
+    // a direct tail slot plus an @16028@ thunk; the eight slots from
+    // scanArtsEntries on are CfObjectPc's own virtuals.
+    class CfObjectPc : public CfObjectActor {
     public:
-        virtual ~CfObjectPc();
-        __attribute__((never_inline)) virtual int initialize(); //0x5D4
-        virtual void enablePcFlag(); //0x5D8
-        virtual void updatePc(); //0x5DC
-        __attribute__((never_inline)) virtual void syncArtsEntry(); //0x5E0
-        virtual void refreshArtsData(); //0x5E4
-        virtual void scanArtsEntries(); //0x5E8
-        virtual void resetArtsState(); //0x5EC
-        virtual void applyArtsParam(); //0x5F0
-        virtual void dispatchPlayerBranch(); //0x5F4
-        virtual void resetActionTable(); //0x5F8
-        virtual void setupActionTable(); //0x5FC
-        virtual void triggerActionRefreshA(); //0x600
-        virtual void triggerActionRefreshB(); //0x604
-        virtual void handleMoveState(u32 a, u32 b, u32 c, u32 d, u32 e); //0x608
+        CfObjectPc();
+        virtual ~CfObjectPc();                        //0x5A0
+        virtual int CfObject_UnkVirtualFunc2();       //0x5D4 (CfObject slot 0x58: initialise)
+        virtual void CfObject_UnkVirtualFunc3();      //0x5D8 (CfObject slot 0x5C: enable hook)
+        virtual void CfObject_UnkVirtualFunc4();      //0x5DC (CfObject slot 0x60: per-frame update)
+        virtual void CfObject_releaseMoveTargets();   //0x5E0 (CfObject slot 0x68)
+        virtual void CObjectParam_UnkVirtualFunc4();  //0x5E4 (CObjectParam slot 0x48: refresh arts data)
+        virtual void scanArtsEntries();               //0x5E8
+        virtual int resetArtsState();                 //0x5EC
+        virtual void applyArtsParam(int param);       //0x5F0
+        virtual void dispatchPlayerBranch();          //0x5F4
+        virtual void resetActionTable();              //0x5F8
+        virtual void setupActionTable();              //0x5FC
+        virtual void triggerActionRefreshA();         //0x600
+        virtual void triggerActionRefreshB();         //0x604
+        virtual void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e); //0x608 (CfObjectMove slot 0x204)
+
+        // Overrides that reuse an existing offset-0 slot (CActorParam tail).
+        virtual void CActorParam_resetArtsStatus(void* arts);            //0xA4
+        virtual int CActorParam_getCurrencyBalance();                    //0x1EC
+        virtual void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);  //0x1F4
+        virtual void CActorParam_UnkVirtualFunc166();                    //0x32C
+        virtual void CActorParam_UnkVirtualFunc167();                    //0x330
+        virtual void CActorParam_UnkVirtualFunc173();                    //0x348
+        virtual void CActorParam_decayArtsMatrix(float f1);              //0x354
+        virtual int CActorParam_UnkVirtualFunc178();                     //0x35C
 
         inline UNKTYPE* unkInline1(){
             BOOL thing = CObjectParam_getSelfObjectId();
@@ -275,33 +295,7 @@ namespace cf {
             return getValidObject(idk2);
         }
 
-        //0x0: vtable
-        //0x0-45BC: CfObjectActor
-        //0x0: vtable
-        //0x0-45BC: CfObjectActor
-        u8 unk45BC[0x4];
-    CfObjectPc();
-    inline cf::CfObjectMove* pcMove() { struct View { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return &((View*)this)->m; }
-    inline const cf::CfObjectMove* pcMove() const { struct View { u8 pad[0x3E9C]; const cf::CfObjectMove m; }; return &((const View*)this)->m; }
-    inline cf::CfObjectMove& pcMoveRefA() { struct ViewA { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return ((ViewA*)this)->m; }
-    inline cf::CfObjectMove& pcMoveRefB() { struct ViewB { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return ((ViewB*)this)->m; }
-    void CActorParam_UnkVirtualFunc166();
-    void CActorParam_UnkVirtualFunc167();
-    void CActorParam_resetArtsStatus();
-    void CActorParam_decayArtsMatrix(float f1);
-    int CActorParam_getCurrencyBalance();
-    void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);
-    virtual void CActorParam_UnkVirtualFunc173();
-    virtual CActorParamStatusTable* CActorParam_getStatusTable();
-    virtual int CActorParam_UnkVirtualFunc178();
-    virtual int CActorParam_getStatusCount();
-    // Move-subobject this-adjuster thunks (hand vtable at +0x3E9C). Named
-    // apart from CfObject base virtuals so MWCC does not append shadow slots.
-    void CObjectParam_callPcFunc800C0();
-    void CfObject_pcInitEventStat();
-    void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e);
-    void CfObject_pcSyncArtsEntry();
-    void CfObject_pcRunMoveUpdate();
-    void finalizePcCleanup();
+
+        //0x0-45C0: CfObjectActor
     };
 }

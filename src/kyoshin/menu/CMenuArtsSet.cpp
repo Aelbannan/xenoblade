@@ -757,7 +757,7 @@ extern "C" __declspec(noinline) void ArtsDrawBox_draw(SArtsDrawBox* self, nw4r::
 
 // C-linkage + noinline: CMenuArtsSet_completeLayoutOut calls this and retail keeps a real
 // bl (not an inline).
-extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, u8 val) {
+extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val) {
     if (self->field_0x27 != 0) {
         setPaneVisible((nw4r::lyt::Pane*)((SArts080C*)(self->field_0x08))->field_0x10, val);
     } else {

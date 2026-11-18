@@ -4320,8 +4320,8 @@ extern "C" void cfCam_newFollowCam(void* self, void* arg2) {
     }
 }
 extern "C" int CfObject_getCurrentTarget__Q22cf8CfObjectFv() { return 0; }
-extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
-extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
+extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectCFi() { return 0; }
+extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectCFPCc() { return 0; }
 // cf::CfObject base virtuals (retail: li r3,0; blr / li r3,1; blr)
 extern "C" u32 CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv(void* self) { return 0; }
 extern "C" u32 CfObject_isMoveActiveNow__Q22cf8CfObjectFv(void* self) { return 1; }

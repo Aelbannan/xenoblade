@@ -672,7 +672,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
     if ((f64 & 0x4000) != 0 || (f64 & 0x8000) != 0) {
         cf::CfWalkCastFlags* cast = (cf::CfWalkCastFlags*)__dynamic_cast(
             actor, 0, (const void*)&lbl_eu_80661CB0,
-            (const void*)&lbl_eu_806618F0, 0);
+            (const void*)&__RTTI__Q22cf8CfObject, 0);
         if (cast->field_91 == 0xc) return;
         if (cast->field_90 != 0) {
             getUnk80664658()->field_0x218 = actor;

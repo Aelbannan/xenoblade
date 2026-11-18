@@ -122,8 +122,9 @@ public:
     virtual void CfResObj_noop40();           // 0x40
     virtual void CfResObj_noop44();           // 0x44
     virtual void CfResObj_unk48();           // 0x48
-    // Widened: Move UVF38 leaves r4 live into this slot.
-    virtual void CfResObj_unk4C(u32 arg);    // 0x4C
+    // One word in, one word out (the base body returns 0; CfObjectMove's
+    // slot 0xE8 forwards its argument here and returns the result).
+    virtual int CfResObj_unk4C(u32 arg);    // 0x4C
     virtual int ResObj_ZeroStubB_CD5C();            // 0x50
     virtual void ResObj_NotifySound_C888(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
     virtual void CfResObj_noop58();           // 0x58

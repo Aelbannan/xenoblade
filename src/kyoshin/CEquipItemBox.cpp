@@ -2849,16 +2849,16 @@ void CEquipItemBox::refreshEIBSortTabs() {
         char buf2[0x20];
         sprintf(buf1, &lbl_eu_8050EFDC[0x2df], i + 1);
         sprintf(buf2, &lbl_eu_8050EFDC[0x2ee], i + 1);
-        u32 flagA = 0;
-        u32 flagB = 0;
+        bool flagA = false;
+        bool flagB = false;
         u8 v = unk_36c[i];
         if (v != 0) {
             if (i == (s8)unk_373) {
-                flagA = 1;
-                flagB = 0;
+                flagA = true;
+                flagB = false;
             } else {
-                flagA = 0;
-                flagB = 1;
+                flagA = false;
+                flagB = true;
             }
             if ((u32)(v - 4) <= 4 || (int)v == 2 || (int)v == 0xb) {
                 PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
@@ -2935,25 +2935,21 @@ void CEquipItemBox::refreshEIBSortPages(int a) {
     } else if ((s8)buf[1] >= unk_372) {
         buf[1] = 0;
     }
-    u8 flagA = 0;
-    u8 flagB = 0;
-    u8 i;
-    for (i = 0; i < 2; i++) {
-        s8 b = (s8)buf[i];
+    for (u32 i = 0; i < 2; i++) {
         char name1[0x20];
         char name2[0x20];
-        s8 p = b + 1;
-        sprintf(name1, &lbl_eu_8050EFDC[0x2df], p);
-        sprintf(name2, &lbl_eu_8050EFDC[0x2ee], p);
-        flagA = 0;
-        flagB = 0;
+        sprintf(name1, &lbl_eu_8050EFDC[0x2df], (s8)buf[(u8)i] + 1);
+        sprintf(name2, &lbl_eu_8050EFDC[0x2ee], (s8)buf[(u8)i] + 1);
+        bool flagA = false;
+        s32 b = (s8)buf[(u8)i];
+        bool flagB = false;
         if (unk_36c[b] != 0) {
             if (b == (s8)unk_373) {
-                flagA = 1;
-                flagB = 0;
+                flagA = true;
+                flagB = false;
             } else {
-                flagA = 0;
-                flagB = 1;
+                flagA = false;
+                flagB = true;
             }
         }
         nw4r::lyt::Pane* pane = field_38->GetRootPane()->FindPaneByName(name1, true);
@@ -2962,7 +2958,7 @@ void CEquipItemBox::refreshEIBSortPages(int a) {
         setPaneVisible(pane, flagB);
     }
     u8 v2 = unk_36c[(s8)unk_373];
-    if ((u32)(v2 - 4) <= 4 || v2 == 2 || v2 == 0xb) {
+    if ((u32)(v2 - 4) <= 4 || (int)v2 == 2 || (int)v2 == 0xb) {
         PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
         PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
         PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);

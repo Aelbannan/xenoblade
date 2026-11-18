@@ -638,22 +638,17 @@ struct EffChainMgr {
 // header is read-only and the member cannot be redeclared with a return type).
 extern "C" EffChainMgr* clearGimmickFlags__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
 
-// Iterates the effect chain, dynamic-casting each node's object to the base
-// type at lbl_eu_806618F0 and poking its slot-0x198 method with `self`; the
-// call's side effects are the point (both branches advance to the same node).
+// Iterates the effect chain, downcasting each node's CfObject to CfObjectEff
+// and calling detachPrtnrA_ (slot 0x198) with `self`; the call's side effects
+// are the point (both branches advance to the same node).
 void notifyDetach_(u8* self) {
     cf::CfGameManager* gm = cf::CfGameManager::getInstance();
     EffChainMgr* mgr = clearGimmickFlags__Q22cf13CfGameManagerFv(gm);
     EffChainNode* node = mgr->sentinel->next;
     while (node != mgr->sentinel) {
         EffChainNode* next = node->next;
-        // The dynamic_cast target is the CfObject base (lbl_eu_806618F0) at
-        // offset 0, so the result pointer is the complete CfObjectEff*.
-        // Slot +0x198 is CfObjectEff's own appended virtual
-        // detachPrtnrA_ (+0x198) - call it directly on the derived type
-        // (composite offset via the primary vptr, unadjusted this).
-        void* obj = __dynamic_cast(node->object, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
-        if (static_cast<cf::CfObjectEff*>(obj)->detachPrtnrA_(self) != 0) {
+        cf::CfObjectEff* obj = dynamic_cast<cf::CfObjectEff*>(reinterpret_cast<cf::CfObject*>(node->object));
+        if (obj->detachPrtnrA_(self) != 0) {
             node = next;
         } else {
             node = node->next;
@@ -803,7 +798,7 @@ extern "C" void callVirt25_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
     self->CfObject_snapMoveTarget(pos, scale);
 }
 
-extern "C" void callVirt32_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_syncMoveHead(); }
+extern "C" void callVirt32_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float deg) { self->CfObject_syncMoveHead(deg); }
 
 extern "C" void callVirtC4_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) { self->CfObject_setMoveHeadAngle(value); }
 

@@ -548,10 +548,10 @@ void setLayoutTextBoxFont(
 }
 
 void setLayoutTextBoxNumber(
-    nw4r::lyt::Layout* layout, char* name, u8 value) {
+    nw4r::lyt::Layout* layout, char* name, int value) {
     char buf[512];
     extern const char lbl_eu_80500664[];
-    sprintf(buf, &lbl_eu_80500664[7], (int)value);
+    sprintf(buf, &lbl_eu_80500664[7], value);
     LayoutSetTextBoxText(layout, name, buf, 0);
 }
 
@@ -613,7 +613,7 @@ extern "C" void LayoutSetTextBoxFmtValue(
 
 extern "C" void LayoutSetTextBoxInt(nw4r::lyt::Layout* layout, u32 value) {
     char buf[512];
-    sprintf(buf, &lbl_eu_80500664[7], (int)value);
+    sprintf(buf, &lbl_eu_80500664[7], value);
     SetLayoutSelfText(layout, buf, 0);
 }
 

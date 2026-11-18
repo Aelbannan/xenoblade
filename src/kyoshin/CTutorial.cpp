@@ -6,10 +6,6 @@
 
 #include "kyoshin/CTutorial.hpp"
 
-// setLayoutTextBoxNumber and friends are declared in CTutorial.hpp; the shared
-// code_80135FDC.hpp declaration of setLayoutTextBoxNumber (u8 third parameter) is
-// deliberately NOT included here - retail's caller saw an int-width
-// parameter, which changes MWCC's argument-extension codegen.
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -26,13 +22,6 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-// KNOWN EXCEPTION to the single-declaration rule: retail calls
-// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc (u8 param, canonical
-// declaration in code_80135FDC_Lyt.hpp) but passes an extsb'd int with no u8
-// mask, which no call through the u8 prototype reproduces. Bind the same
-// retail symbol through an int-typed C-linkage alias until the caller-side
-// shape is understood.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
 // Tex palette binder (const char* pane name; code_80135FDC.hpp types it void*).
 
 // (Layout teardown goes through `delete`, whose deleting-dtor vcall
@@ -290,8 +279,8 @@ void CTutorial::Tutorial_ReloadTutorialData() {
 void CTutorial::Tutorial_RefreshPage() {
     char buf[0x20];
     // Sign-extend before increment: retail computes extsb(field_50)+1.
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, "txt_pg00", field_50 + 1);
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, "txt_pg01", field_51);
+    setLayoutTextBoxNumber(mpLayout, "txt_pg00", field_50 + 1);
+    setLayoutTextBoxNumber(mpLayout, "txt_pg01", field_51);
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sprintf(buf, "cttrl_i%03d_%02d.tpl", field_48, field_50 + 1);
     } else {

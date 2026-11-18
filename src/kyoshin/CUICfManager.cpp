@@ -653,10 +653,8 @@ u32 lbl_eu_80663E28;
 f32 lbl_eu_806672CC;
 
 
-void startEnumObjects(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* Scn_FindCamItem(void* obj, int index);
-void* getEntryAt(void* list, int index); // &slot -> has +0x4 object ptr
 void* getObjectIdAt(void* list, int index); // *slot -> object*
 int lookupWorkAtAddr(void*);
  // &mInitSlots[0].unk04

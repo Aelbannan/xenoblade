@@ -45,7 +45,7 @@ extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" void setItemBoxVtxColor(void*, u32, const void*);
 // 9-byte flag-record builder: (out, unused, data) - param2 is never read in
 // retail (callers pass the item-box pointer through it).
-extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 isItemBoxType9Flagged(void*);
 
@@ -188,7 +188,6 @@ struct LayoutRootPaneView {
     u8 _00[0x10];
     nw4r::lyt::Pane* rootPane10;
 };
-u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* findObjB28ById(u32);
@@ -392,7 +391,7 @@ nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
 }
 #pragma pop
 
-void CItemBoxInfo::SetResultPane(u32 visible) {
+void CItemBoxInfo::SetResultPane(bool visible) {
     if (mpLayout == 0) return;
     nw4r::lyt::Pane* child = ((LayoutRootPaneView*)mpLayout)->rootPane10;
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
@@ -759,7 +758,7 @@ __declspec(noinline) CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     u8 key = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x23f], v2);
     u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
-    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey();
+    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
     u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
     switch (rec.category) {
@@ -5174,7 +5173,7 @@ __declspec(noinline) CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     u8 key = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x23f], v2);
     u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
-    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey();
+    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
     u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
     switch (rec.category) {

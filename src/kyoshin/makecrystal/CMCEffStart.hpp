@@ -180,7 +180,7 @@ public:
     void startOut();
     void startChange();
     void startSpecial();
-    void setTraceVisible(u32);
+    void setTraceVisible(bool);
     void setCrystalInfo(u16, u8);
     void updateIn();
     void checkInDone();

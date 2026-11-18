@@ -376,7 +376,7 @@ void CArtsBookItem::Rebuild() {
         // Reuse the charId slot for the character-data pointer (retail
         // recycles its register); then add the party stride and sub offset.
         charId = (u32)CtrlObjectParam_GetCharEntry((u8)charId);
-        u8* cell = (u8*)charId + (u8)CtrlObjectParam_GetCurrentRowKey() * 0x49;
+        u8* cell = (u8*)charId + (u8)CtrlObjectParam_GetCurrentRowKey((void*)charId) * 0x49;
         cell = cell + (u8)sub * 2;
         switch ((u8)flag) {
         case 1:
@@ -412,7 +412,7 @@ CItemBoxGridFull::CItemBoxGridFull()
 }
 
 // Cell ctor (retail SetEntry9Bytes).
-__declspec(noinline) CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 d, u8 e, u8 f, u8 g, u8 h) {
+__declspec(noinline) CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 d, u8 e, u8 f, u8 g, bool h) {
     id = a;
     flags[0] = b;
     flags[1] = c;
@@ -420,7 +420,7 @@ __declspec(noinline) CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 
     flags[3] = e;
     flags[4] = f;
     flags[5] = g;
-    flags[6] = h;
+    mMarked = h;
 }
 
 // Copy a 9-byte entry from src to dst. noinline: retail callers emit `bl`
@@ -942,11 +942,11 @@ __declspec(noinline) u8 CItemBoxGridFull::GetCellByte7(u16 idx) {
     return 0;
 }
 
-__declspec(noinline) int CItemBoxGridFull::GetCellByte8(u16 idx) {
+__declspec(noinline) bool CItemBoxGridFull::GetCellByte8(u16 idx) {
     s32 tmp = (s8)this->field_2804 * 0x1e + idx;
     u32 offset = (u32)(u16)tmp;
     if (offset < 0x400) {
-        return this->entries[offset].flags[6];
+        return this->entries[offset].mMarked;
     }
     return 0;
 }
@@ -958,11 +958,11 @@ void CItemBoxGridFull::ToggleCellMark(u16 idx) {
     if (offset >= 0x400) return;
     u8 cap;
     CItemBoxGridEntry* entry = &this->entries[offset];
-    if (entry->flags[6] == 0) {
+    if (entry->mMarked == 0) {
         cap = (u8)((CItemBoxGridFull*)(this))->GetCategoryCap();
         if (((CItemBoxGridFull*)(this))->CountMarkedCells() >= cap) return;
     }
-    entry->flags[6] = (u8)((entry->flags[6] ^ 1) != 0);
+    entry->mMarked ^= 1;
 }
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
@@ -972,7 +972,7 @@ __declspec(noinline) u8 CItemBoxGridFull::CountMarkedCells() {
     u16 i;
     for (i = 0; i < count; i++) {
         CItemBoxGridEntry* entry = &this->entries[i];
-        if (entry->flags[6] != 0) {
+        if (entry->mMarked != 0) {
             result++;
         }
     }
@@ -1009,7 +1009,7 @@ void CItemBoxGridFull::InitGridItems() {
     u16 i;
     for (i = 0; i < this->field_2800; i++) {
         CItemBoxGridEntry* entry = &this->entries[i];
-        if (entry->flags[6] != 0) continue;
+        if (entry->mMarked != 0) continue;
         void* obj = CItem_kindPtr(this->field_2802, entry->id);
         if (!obj || !*(u32*)obj) continue;
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
@@ -4338,7 +4338,7 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
 
         if (isResourceFlagSet__Q22cf13CfGameManagerFv(nameIdx & 0xFF)) {
             u8* save = (u8*)CtrlObjectParam_GetCharEntry(nameIdx & 0xFF);
-            u32 cnt = CtrlObjectParam_GetCurrentRowKey() & 0xFF;
+            u32 cnt = CtrlObjectParam_GetCurrentRowKey(save) & 0xFF;
             // Per-(character, slot) record in the collection-save area.
             u8* rec = save + cnt * 0x49 + (tbl & 0xFF) * 2;
             u32 seenNew = 0;
@@ -4888,7 +4888,7 @@ void CItemBoxGrid::SetTabHeader(int cat, int idx) {
 }
 
 // Format text and set on layout pane.
-void CItemBoxGrid::SetCellMarkVis(u32 val, u32 idx) {
+void CItemBoxGrid::SetCellMarkVis(bool val, u32 idx) {
     u8* p = (u8*)this;
     char buf[32];
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x513], idx + 1);
@@ -4906,7 +4906,7 @@ void CItemBoxGrid::SetCellMarkVis(u32 val, u32 idx) {
 // i, isCurTab, string base, self).
 void CItemBoxGrid::RefreshCategoryTabs() {
     u8* p = (u8*)this;
-    int isCurTab;
+    bool isCurTab;
     u32 i;
     for (i = 0; i < 12; i++) {
         char buf1[32];
@@ -4914,15 +4914,15 @@ void CItemBoxGrid::RefreshCategoryTabs() {
         int tabNum = (u8)i + 1;
         sprintf(buf1, (const char*)&lbl_eu_8050566C[0x520], tabNum);
         sprintf(buf2, (const char*)&lbl_eu_8050566C[0x52f], tabNum);
-        isCurTab = 0;
-        int isOtherTab = 0;
+        isCurTab = false;
+        bool isOtherTab = false;
         u8 cat = p[(u8)i + 0x62];        if (cat != 0) {
             if ((u8)i == (s8)p[0x6f]) {
-                isCurTab = 1;
-                isOtherTab = 0;
+                isCurTab = true;
+                isOtherTab = false;
             } else {
-                isCurTab = 0;
-                isOtherTab = 1;
+                isCurTab = false;
+                isOtherTab = true;
             }
             if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xb) {
                 PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(void**)(p + 0x44)), buf1, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
@@ -5037,7 +5037,7 @@ void CItemBoxGrid::RebuildGridUI() {
         nw4r::lyt::Pane* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf, 1);
         if (ret) {
             u8 max = (u8)((CItemBoxGridFull*)((char*)sub))->LookupIndexedByte();
-            setPaneVisible(ret, ((u32)i - (u32)max) >> 31);
+            setPaneVisible(ret, i < max);
         }
     }
     u8 idx;
@@ -5053,7 +5053,7 @@ void CItemBoxGrid::RebuildGridUI() {
         u32 b4 = ((CItemBoxGridFull*)(sub))->GetCellFlag2(idx);
         u32 b2 = ((CItemBoxGridFull*)(sub))->GetCellFlag0(idx);
         ShowCellCount(b2 & 0xFF, (void*)b4, (void*)b5, idx);
-        u32 b7 = ((CItemBoxGridFull*)(sub))->GetCellByte8(idx);
+        bool b7 = ((CItemBoxGridFull*)(sub))->GetCellByte8(idx);
         SetCellMarkVis(b7, idx);
     }
 }
@@ -5123,78 +5123,64 @@ __declspec(noinline) void CItemBoxGrid::RefreshSelectedCellText() {
 void CItemBoxGrid::MoveTabPage(int val) {
     u8* p = (u8*)this;
     u8 buf[2];
-    u8 b = p[0x6f];
-    s32 n;
-    buf[0] = b;
-    n = (s8)b - 1;
-    if (val != 0) n = (s8)b + 1;
-    buf[1] = (u8)n;
-    if ((s8)(u8)n < 0) {
+    buf[0] = p[0x6f];
+    s8 v = (s8)p[0x6f];
+    buf[1] = (u8)((val != 0) ? v + 1 : v - 1);
+    if ((s8)buf[1] < 0) {
         buf[1] = p[0x6e] - 1;
-    } else {
-        if ((s8)(u8)n >= p[0x6e]) buf[1] = 0;
+    } else if ((s8)buf[1] >= p[0x6e]) {
+        buf[1] = 0;
     }
-    {
-        const char* strbase = lbl_eu_8050566C;
-        u8 i = 0;
-        do {
-            u8 idx = buf[i];
-            char pane1[32];
-            char pane2[32];
-            int tabNum = (s8)idx + 1;
-            sprintf(pane1, strbase + 0x520, tabNum);
-            sprintf(pane2, strbase + 0x52f, tabNum);
-            if (p[0x62 + (s8)idx] != 0) {
-                // Flags are first assigned only after idx's last use, so
-                // MWCC reuses the tabNum/idx registers for them.
-                int isCurTab;
-                int isOtherTab;
-                if ((s8)idx == (s8)p[0x6f]) {
-                    isCurTab = 1;
-                    isOtherTab = 0;
-                } else {
-                    isCurTab = 0;
-                    isOtherTab = 1;
-                }
-                setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane1, 1), isCurTab);
-                setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
+    for (u32 i = 0; i < 2; i++) {
+        char pane1[32];
+        char pane2[32];
+        sprintf(pane1, XB_K + 0x520, (s8)buf[(u8)i] + 1);
+        sprintf(pane2, XB_K + 0x52f, (s8)buf[(u8)i] + 1);
+        bool isCurTab = false;
+        s32 idx = (s8)buf[(u8)i];
+        bool isOtherTab = false;
+        if (p[0x62 + idx] != 0) {
+            if (idx == (s8)p[0x6f]) {
+                isCurTab = true;
+                isOtherTab = false;
+            } else {
+                isCurTab = false;
+                isOtherTab = true;
             }
-            i++;
-        } while (i < 2);
+        }
+        setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane1, 1), isCurTab);
+        setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
     }
     {
-        u8 cat = p[(s8)p[0x6f] + 0x62];
-        u32 diff = cat - 4;
-        if (diff <= 4 || cat == 2 || cat == 0xB) {
-            char* strbase = (char*)lbl_eu_8050566C;
+        u8 cat = ((CItemBoxGridHeadView*)p)->field_62[(s8)p[0x6f]];
+        if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xB) {
             // Layout pointer re-derived per call: PaneMatSetTevColorsByName clobbers
             // memory, so MWCC reloads *(p+0x44) before every call.
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5aa, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5b6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5c2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5ce, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5da, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5e6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5f2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5fe, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x60a, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x616, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x621, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x62c, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, (const GXColorS10*)&lbl_eu_806644A8, (const GXColorS10*)&lbl_eu_806644B0);
         } else {
-            char* strbase = (char*)lbl_eu_8050566C;
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5aa, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5b6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5c2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5ce, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5da, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5e6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5f2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x5fe, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x60a, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x616, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x621, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), strbase + 0x62c, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5aa, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5b6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5c2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5ce, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5da, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5e6, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5f2, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x5fe, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x60a, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x616, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x621, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)(*(u32*)(p + 0x44)), XB_K + 0x62c, (const GXColorS10*)&lbl_eu_80664498, (const GXColorS10*)&lbl_eu_806644A0);
         }
     }
 }
@@ -5434,7 +5420,7 @@ u32 CItemBoxGrid::IsItemTeachable(u32 kind) {
     u8 unk = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x11d], (u16)shortKind);
     v = BdatGetU8ByTableKey((const char*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk);
     void* charData = (void*)CtrlObjectParam_GetCharEntry(charId);
-    u8* ptr = (u8*)charData + (CtrlObjectParam_GetCurrentRowKey() & 0xFF) * 0x49 + (v << 1);
+    u8* ptr = (u8*)charData + (CtrlObjectParam_GetCurrentRowKey(charData) & 0xFF) * 0x49 + (v << 1);
     switch (flag) {
     case 1:
         if (ptr[0xe8]) return 0;

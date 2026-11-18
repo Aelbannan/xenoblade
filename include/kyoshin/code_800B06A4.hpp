@@ -1180,7 +1180,7 @@ struct B20B4Payload {
 extern "C" void* func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long heap);
 extern "C" void __ct__Q22cf13CfObjectModelFv(void* self);
-extern "C" void __ct__Q22cf11CfObjectNpcFv(void* self, int flag);
+extern "C" void __ct__Q22cf11CfObjectNpcFi(void* self, int flag);
 extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
 extern "C" void CfObjectMove_setSubB0FieldC(void* obj, u16 id);
 extern "C" void CfObjectMove_setSubB0FieldA(void* obj, s32 a);
@@ -1202,7 +1202,6 @@ extern u8 lbl_eu_805294E0[];
 extern void* lbl_eu_80529128[];
 extern void* lbl_eu_80528600[];
 // Flat constructors/dtor called from the spawner (retail symbol names).
-extern "C" void* __ct__cf_CfObjectEne(void* self);
 extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
 extern "C" void ObjObj_ReleaseModels_FAB0(void* obj, u32 w04, u32 w00);
@@ -1591,8 +1590,8 @@ extern "C" int getObjField620(void* list);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
                                 const void* dstType, void* src2dst);
 // RTTI typeinfo pair for the actor dynamic_cast.
-extern const void* lbl_eu_806618E8;
-extern const void* lbl_eu_806618F0;
+extern const void* __RTTI__Q22cf13CfObjectModel;
+extern const void* __RTTI__Q22cf8CfObject;
 extern "C" void* CPartsChange_FindActorByObj(void* a, void* b);
 extern "C" unsigned long CfRes_getAllocHandle();
 extern "C" void* copyIterFrom(void* a, void* b);

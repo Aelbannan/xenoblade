@@ -625,10 +625,6 @@ void BtlDmg_QueueEnqueue(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
 // Draw one queued damage number: find the first non-empty digit slot, write
 // its three digits into the layout panes, play the hit sound and clear it.
 // If every slot is empty, mark the queue idle.
-// KNOWN EXCEPTION (see CTutorial.cpp): retail passes the raw slot words to
-// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc with no u8 mask; bind the
-// retail symbol through a word-typed C-linkage alias.
-extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageSlot& s = self->mSlots[i];
@@ -636,14 +632,11 @@ extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
             continue;
         }
         self->mFlag = 1;
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
-                                                lbl_eu_804FD720 + 0xe1,
+        setLayoutTextBoxNumber(self->mLayout, lbl_eu_804FD720 + 0xe1,
                                                 s.mVal0);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
-                                                lbl_eu_804FD720 + 0xe9,
+        setLayoutTextBoxNumber(self->mLayout, lbl_eu_804FD720 + 0xe9,
                                                 s.mVal1);
-        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
-                                                lbl_eu_804FD720 + 0xf0,
+        setLayoutTextBoxNumber(self->mLayout, lbl_eu_804FD720 + 0xf0,
                                                 s.mVal2);
         s.mVal0 = 0;
         s.mVal1 = 0;

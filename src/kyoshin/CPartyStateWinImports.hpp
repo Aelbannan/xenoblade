@@ -498,7 +498,7 @@ struct PartyGaugeRecord {
 // Factory imports (retail unmangled names; the embedded sub-object headers
 // cannot be included here - see the forward-decl note at the top).
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
+extern "C" void __as__11CTitleAHelpFRC11CTitleAHelp(CTitleAHelp* dest, CTitleAHelp* src); // weak CTitleAHelp::operator= (interim until CPartyStateWin is a real class)
 extern "C" void ModelDispInitPoseSlots(CModelDisp* self);
 extern "C" void loadPartyLayoutArc(CPartyState* self);
 extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquipView* self);

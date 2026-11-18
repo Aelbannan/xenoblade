@@ -47,8 +47,8 @@ extern CfSlotTable lbl_eu_804FA9F0;
 // RTTI typeinfo pair for __dynamic_cast in setTrust.
 // Declared as complete scalar types so MWCC sdata-addresses them
 // (EMB_SDA21 `li rX, sym@sda21`) like retail.
-extern u32 lbl_eu_806618D8;
-extern const void* lbl_eu_806618F0;
+extern u32 __RTTI__Q22cf12CfObjectMove;
+extern const void* __RTTI__Q22cf8CfObject;
 
 // sdata2 constant for fadeOut_1 (fade alpha value).
 extern f32 lbl_eu_80665DB8;
@@ -66,7 +66,7 @@ extern const void* lbl_eu_80525D68[];
 // Player RTTI source type / pointer table entry used by the talk commands.
 // Complete scalar type so MWCC emits EMB_SDA21 addressing (retail `li @sda21`),
 // not lis/addi (incomplete array types are not SDA-eligible).
-extern u32 lbl_eu_806619A0;
+extern u32 __RTTI__Q22cf10CfObjectPc;
 
 // Shared BDAT character-name table pointer (.sbss); resolved by
 // BdatGetPtrDirect against lbl_eu_804FABF0 keys.

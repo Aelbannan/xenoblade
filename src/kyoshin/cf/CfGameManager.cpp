@@ -1035,8 +1035,8 @@ extern "C" void* dispatchObjectFunc52b__Q22cf13CfGameManagerFv(
     return self->field_0x4->CfObject_findNodeMatrix(name);
 }
 
-void cf::CfGameManager::dispatchObjectFunc53() {
-    field_0x4->CfObject_getIndexedNodeMatrix();
+void cf::CfGameManager::dispatchObjectFunc53(u32 idx) {
+    field_0x4->CfObject_getIndexedNodeMatrix(idx);
 }
 
 void cf::CfGameManager::dispatchObjectFunc48() {
@@ -1292,14 +1292,14 @@ void cf::CfGameManager::notifyObjectMapChange() {
 }
 
 void cf::CfObject::CfObject_applyMoveYaw(float amount) {
-    CfObject_syncMoveHead();
+    CfObject_syncMoveHead(amount);
 }
 
 // Retail Fv linker name kept for hand-built vtables (CfCollSphereImpl /
 // CfObjectModel). Member emits CfObject_applyMoveYaw__...Ff.
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv(
-    cf::CfObject* object) {
-    object->CfObject_syncMoveHead();
+    cf::CfObject* object, float amount) {
+    object->CfObject_syncMoveHead(amount);
 }
 
 #pragma dont_inline on
@@ -1345,7 +1345,7 @@ void cf::CfObject::CfObject_setMoveTargetPtr(void*) {}
 // hand vtables). Empty body: retail is a single blr.
 extern "C" void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv(
     cf::CfObject*) {}
-void cf::CfObject::CfObject_createMoveTarget() {}
+void cf::CfObject::CfObject_createMoveTarget(int) {}
 
 void cf::CfGameManager::stubEmptyB() {}
 void cf::CfGameManager::stubEmptyC() {}
@@ -1356,7 +1356,7 @@ extern "C" void* getNullPtrB__Q22cf13CfGameManagerFv() { return nullptr; }
 extern "C" void* getNullPtrC__Q22cf13CfGameManagerFv() { return nullptr; }
 // Slot +0x124 base: retail Fv returns nullptr. Forced-name keeps the Unk
 // linker spelling for hand-built vtables; virtual is CfObject_getIndexedNodeMatrix.
-extern "C" cf::CfObject* CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv(
+extern "C" cf::CfObject* CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl(
     cf::CfObject*) {
     return nullptr;
 }
@@ -1633,7 +1633,7 @@ void cf::CfGameManager::resetCameraManager() { Scn_GetUnk80Handle(lbl_eu_80663E1
 // Slot +0x130 base: retail Fv returns the shared float const. Forced-name
 // keeps the Unk linker spelling for hand-built vtables; virtual is
 // CfObject_getHeightDiff.
-extern "C" float CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv(cf::CfObject*) {
+extern "C" float CfObject_getHeightDiff__Q22cf8CfObjectCFv(cf::CfObject*) {
     return lbl_eu_80666498;
 }
 

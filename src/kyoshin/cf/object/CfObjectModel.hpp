@@ -194,7 +194,7 @@ namespace cf {
         u8 field_BC;          // 0xBC
         u8 field_BD;          // 0xBD
     CfObjectModel();
-    void CfObject_UnkVirtualFunc2();  // kept: CfObjectObj.cpp calls it qualified (links to the Fv free function)
+    int CfObject_UnkVirtualFunc2();  // kept: CfObjectObj.cpp calls it qualified (links to the Fv free function)
     // (17 vestigial Unk member decls deleted: those slot bodies are verbatim
     // Fv free functions referenced straight from the manual vtables below;
     // the member decls were undefined and uncallable, so this is a no-op.)
@@ -211,6 +211,23 @@ namespace cf {
     void setPointEnabled(int flag); //0x158 override (base renamed; keeps CfObjectModel non-abstract)
     int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr) override;
     float CfObject_getMoveHeadAngle();
+    // CfObject slot overrides (retail CfObjectModel symbols in the
+    // CfObjectActor / CfObjectMove vtables).
+    void CfObject_setPosXZ(float a, float b);           //0xA0
+    void* CfObject_UnkVirtualFunc24();                  //0xB0
+    void* CfObject_UnkVirtualFunc28();                  //0xC0
+    void CfObject_UnkVirtualFunc35(float value);        //0xDC
+    float CfObject_UnkVirtualFunc36();                  //0xE0
+    void* CfObject_UnkVirtualFunc52(const char* name) const;  //0x120
+    void* CfObject_getIndexedNodeMatrix(u32 idx) const;     //0x124
+    u32 CfObject_UnkVirtualFunc54();                    //0x128
+    void* CfObject_UnkVirtualFunc55(int arg) const;           //0x12C
+    float CfObject_getHeightDiff() const;                     //0x130
+    void CfObject_UnkVirtualFunc67(int flag);           //0x15C
+    u32 CfObject_UnkVirtualFunc69();                    //0x164
+    float CfObject_getProgressLow();                    //0x16C
+    void CfObject_setProgressHigh(float value);         //0x170
+    float CfObject_getProgressHigh();                   //0x174
     };
 }
 

@@ -32,6 +32,8 @@ extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
 // MWCC from inlining the body into kickoffKizunaWindow.
 extern "C" void checkKizunaGate(CMenuKizunaTalk* self);
 
+CMenuKizunaTalk* CMenuKizunaTalk::sInstance;
+
 // ---------------------------------------------------------------------------
 // Constructor (retail symbol is the unmangled __ct__CMenuKizunaTalk, so the
 // body is written as a C-linkage free function; the factory createKizunaTalkSingleton
@@ -62,7 +64,7 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
     static_cast<IScnRender*>(obj)->mVtable = renderVt;
     obj->mScene = scene;
 
-    __ct__17UnkClass_8045F564Fv((UnkClass_8045F564*)&obj->mMemRegion[0]);
+    new (&obj->mMemRegion) UnkClass_8045F564;
     obj->mFile1 = 0;
     obj->mFile2 = 0;
     obj->mArcAccessor = 0;
@@ -85,7 +87,6 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
 #pragma optimize_for_size on
 CMenuKizunaTalk::~CMenuKizunaTalk() {
     __dt__7CSysWinFv(&mSysWin[0], -1);
-    __dt__17UnkClass_8045F564Fv(&mMemRegion[0], -1);
 }
 #pragma optimize_for_size off
 
@@ -130,8 +131,8 @@ void CMenuKizunaTalk::Term() {
     mCur.cleanup();
 
     lbl_eu_80664424 = 0;
-    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
-    lbl_eu_80664420 = 0;
+    mMemRegion.deleteRegion();
+    CMenuKizunaTalk::sInstance = 0;
 }
 #pragma optimize_for_size off
 
@@ -146,7 +147,7 @@ void CMenuKizunaTalk::cbRenderBefore() {}
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
 CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* parent, CScn* scene, u32 charId) {
-    if (lbl_eu_80664420 != 0) {
+    if (CMenuKizunaTalk::sInstance != 0) {
         return 0;
     }
     mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
@@ -155,16 +156,16 @@ CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* parent, CScn* scene, u32 ch
     if (obj != 0) {
         obj = __ct__CMenuKizunaTalk(obj, scene, charId);
     }
-    lbl_eu_80664420 = obj;
+    CMenuKizunaTalk::sInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
-    return lbl_eu_80664420;
+    return CMenuKizunaTalk::sInstance;
 }
 #pragma optimize_for_size off
 
-// (lbl_eu_80664420 != 0) - needs the size-optimized subic/subfe form; the
+// (CMenuKizunaTalk::sInstance != 0) - needs the size-optimized subic/subfe form; the
 // preceding `#pragma optimize_for_size off` would revert to -O4,p codegen
 #pragma optimize_for_size on
-extern "C" bool isKizunaTalkActive() { return lbl_eu_80664420 != 0; }
+extern "C" bool isKizunaTalkActive() { return CMenuKizunaTalk::sInstance != 0; }
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
@@ -199,7 +200,7 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         }
         self->mFile1 =
             (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-                (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80505118[0x1c],
+                (u32)mtl::MemManager::getHandleMEM2(), &lbl_eu_80505118[0x1c],
                 evt, 0, 0);
         break;
     }
@@ -461,15 +462,15 @@ extern "C" __declspec(noinline) void checkKizunaGate(CMenuKizunaTalk* self) {
 int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
     CFileHandle* handle = evt->mFileHandle;
     if (self->mFile1 == handle) {
-        void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-        ((UnkClass_8045F564*)&self->mMemRegion[0])->createRegion(
+        mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
+        self->mMemRegion.createRegion(
             (int)(u32)mem2, 0x2000, &lbl_eu_80505118[0x6e], 0);
-        Class_8045F858 regionHandle((UnkClass_8045F564*)&self->mMemRegion[0]);
+        Class_8045F858 regionHandle(&self->mMemRegion);
         void* data = self->mFile1->getData();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         self->mArcAccessor = acc;
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(acc, data, &lbl_eu_80505118[0x7e]);
+        acc->Attach(data, &lbl_eu_80505118[0x7e]);
         buildLayout(&self->mLayout, acc, &lbl_eu_80505118[0x82]);
         bindLayoutAnimTransform(self->mLayout, &self->mAnim, acc, &lbl_eu_80505118[0x9b]);
 
@@ -572,7 +573,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         self->mAnim->SetFrame(lbl_eu_80667E6C);
         self->mLayout->Animate(0);
         self->mFile1 = 0;
-        ((UnkClass_8045F564*)&self->mMemRegion[0])->validateHeap();
+        self->mMemRegion.validateHeap();
         return 1;
     }
     if (self->mFile2 == handle) {

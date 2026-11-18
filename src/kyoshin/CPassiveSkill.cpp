@@ -321,7 +321,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     CPassiveSkillInit_init(&init, self->arg);
     CPassiveSkillInit_copy(&self->sub, &init);
     CPassiveSkillLayoutInit_init(reinterpret_cast<UI_PassiveSkillLayoutInit*>(&self->sub));
-    u8 flag = 0;
+    bool flag = false;
     u32 isZero = (CtrlRemote_TouchBitByArg(0x3372) == 0);
     if (isZero) {
         // flag stays 0
@@ -331,7 +331,7 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
             tmp = 1;
         }
         if (tmp == 0) {
-            flag = 1;
+            flag = true;
         }
     }
     nw4r::lyt::Pane* pane = self->field_8->GetRootPane()->FindPaneByName(
@@ -996,7 +996,7 @@ void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self, u8 index) {
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x11);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x356], text, 0);
     u16 id = BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], index);
-    if ((id & 0xFF) == 0) {
+    if (id == 0) {
         char* text2 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x145], text2, 0);
     } else {
@@ -2604,9 +2604,8 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_updateSkillTabs(UI::CPass
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(buf, true);
         sprintf(buf, &lbl_eu_8050DC20[0x59f], row + 1);
         nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(buf, true);
-        u32 isCur = (u32)(cur - (u32)row) == 0;
-        setPaneVisible(paneA, isCur);
-        setPaneVisible(paneB, isCur);
+        setPaneVisible(paneA, row == cur);
+        setPaneVisible(paneB, row == cur);
     }
     u32 gridBase = t16 * 25;
     for (u8 row = 0; row < 5; row++) {

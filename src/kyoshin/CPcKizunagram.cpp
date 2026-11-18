@@ -283,9 +283,9 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                 lb9 = 0;
                 lb8 = 0;
                 FetchRelatePair(&lb9, &lb8, rnd);
-                int visible = 0;
+                bool visible = false;
                 if (KizunagramCheckMappedRowValid(self, table, lb9) != 0 && KizunagramCheckMappedRowValid(self, table, lb8) != 0) {
-                    visible = 1;
+                    visible = true;
                 }
                 int id = (e8 & 0xff) + 1;
                 char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);

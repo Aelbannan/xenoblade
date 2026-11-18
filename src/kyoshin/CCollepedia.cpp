@@ -686,10 +686,10 @@ extern "C" __declspec(noinline) u8 clpGetCellCnt(u8* self, u32 arg2, u32 arg3) {
 }
 
 // Load a byte from offset 6 of the current sub-array entry
-extern "C" __declspec(noinline) u32 clpIsPageDone(u8* this_) {
+extern "C" __declspec(noinline) bool clpIsPageDone(u8* this_) {
     s8 idx = (s8)this_[1];
     u8* base = this_ + idx * 0x140;
-    return base[6];
+    return *(bool*)&base[6];
 }
 
 // us-802566d8
@@ -1657,7 +1657,7 @@ extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
         sprintf(buf, &lbl_eu_8050C6E8[0x2bb], num);
         nw4r::lyt::Pane* namePane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
-        setPaneVisible(namePane, (int)i < (int)(u8)count);
+        setPaneVisible(namePane, i < (u8)count);
 
         sprintf(buf, &lbl_eu_8050C6E8[0x2c8], num);
         nw4r::lyt::Pane* numPane =
@@ -1679,7 +1679,7 @@ extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
     }
 
     // Final pane visibility follows the page's completion flag.
-    u32 done = clpIsPageDone(&this_->field_E8);
+    bool done = clpIsPageDone(&this_->field_E8);
     nw4r::lyt::Pane* markPane = this_->field_38->GetRootPane()->FindPaneByName(
         &lbl_eu_8050C6E8[0x2d6], true);
     setPaneVisible(markPane, done);

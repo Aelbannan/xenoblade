@@ -83,7 +83,7 @@ public:
     void SetNamedText(int index, char* text);
     nw4r::math::VEC3 GetSlotPos(u32 index);
     void SetCounts(u8 arg2, u8 arg3);
-    void SetResultPane(u32 visible);
+    void SetResultPane(bool visible);
     void OpenPhase1();
     void OpenPhase2();
     void ClosePhase1();

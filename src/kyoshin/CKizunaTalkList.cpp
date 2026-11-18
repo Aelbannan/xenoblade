@@ -506,22 +506,19 @@ void CKizunaTalkList::renderTalkRows() {
         sprintf(buf, &lbl[0x9e], dispIdx);
         void* pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u8)i + this->mUnknown8A < this->mEntryArray.mCount);
         }
 
         sprintf(buf, &lbl[0xae], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u8)i + this->mUnknown8A < this->mEntryArray.mCount);
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u8)i + this->mUnknown8A < this->mEntryArray.mCount);
         }
 
         // Title / description text.
@@ -540,8 +537,7 @@ void CKizunaTalkList::renderTalkRows() {
         sprintf(buf, &lbl[0xff], dispIdx);
         pane = ((void* (*)(void*))(((void**)*(void**)((char*)this->mpLayout20 + 0x10))[0x3c / 4]))(*(void**)((char*)this->mpLayout20 + 0x10));
         if (pane) {
-            int z = (int)(this->mEntryArray.mCount ^ ((u8)i + base));
-            setPaneVisible((nw4r::lyt::Pane*)pane, (u32)(((z >> 1) - (z & this->mEntryArray.mCount)) >> 31));
+            setPaneVisible((nw4r::lyt::Pane*)pane, (u8)i + this->mUnknown8A < this->mEntryArray.mCount);
         }
 
         // Resolve the affinity-level animation string.
@@ -567,23 +563,23 @@ void CKizunaTalkList::renderTalkRows() {
         // Row highlight colour / visibility from the entry subtype.
         GXColorS10* c0;
         GXColorS10* c1;
-        int vis;
+        bool vis;
         if (entry->field_12 == 0) {
             c0 = (GXColorS10*)&lbl_eu_806648D0;
             c1 = (GXColorS10*)&lbl_eu_806648D8;
-            vis = 1;
+            vis = true;
         } else if (entry->field_12 == 1) {
             c0 = (GXColorS10*)&lbl_eu_806648D0;
             c1 = (GXColorS10*)&lbl_eu_806648D8;
-            vis = 0;
+            vis = false;
         } else if (entry->field_12 == 2) {
             c0 = (GXColorS10*)&lbl_eu_806648C0;
             c1 = (GXColorS10*)&lbl_eu_806648C8;
-            vis = 0;
+            vis = false;
         } else {   // == 3
             c0 = (GXColorS10*)&lbl_eu_806648C0;
             c1 = (GXColorS10*)&lbl_eu_806648C8;
-            vis = 0;
+            vis = false;
         }
 
         sprintf(buf, &lbl[0xbe], dispIdx);

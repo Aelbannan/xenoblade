@@ -26,9 +26,9 @@ extern "C" {
     void CfObjectMove_syncRegionToPos(void* obj);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
-    extern void* lbl_eu_806618D8;
-    extern void* lbl_eu_806618F0;
-    extern void* lbl_eu_806618E8;
+    extern void* __RTTI__Q22cf12CfObjectMove;
+    extern void* __RTTI__Q22cf8CfObject;
+    extern void* __RTTI__Q22cf13CfObjectModel;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
     void CfObjectMove_setRegionAttached(void* obj, int flag);
     void CfObjectMove_setMoveModeField(void* obj, int target);
@@ -278,7 +278,7 @@ int getUnitHp(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     // Cast to CfObjectActor; if it is one, read the float at vtable slot
     // 0x128 and return it truncated to int, else return 0.
-    void* actor = __dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&lbl_eu_806618F0, 0);
+    void* actor = __dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&__RTTI__Q22cf8CfObject, 0);
     VMArg retVal;
     if (actor) {
         retVal.type = 3;
@@ -388,9 +388,9 @@ int setObjName(VMThread* pThread, int handle) {
 
 // Retail linker name for slot 0x3C (hand-built tables). Virtual decl is
 // CObjectParam_setObjectName.
-extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, const char* str) {
-    static_cast<cf::CObjectParam*>(self)->field_30 = strlen(str);
-    strcpy((char*)&static_cast<cf::CObjectParam*>(self)->mPtr10, str);
+void cf::CObjectParam::CObjectParam_setObjectName(const char* str) {
+    static_cast<cf::CObjectParam*>(this)->field_30 = strlen(str);
+    strcpy((char*)&static_cast<cf::CObjectParam*>(this)->mPtr10, str);
 }
 
 bool isValid() { return false; }
@@ -491,8 +491,8 @@ int dispOff(VMThread* pThread, int handle) {
 
 // CObjectState_checkStateFlags8 body is the forced Unk Fv below (slot 0x24).
 
-int CObjectState_checkStateFlags__Q22cf12CObjectStateFv(void* self, int mask) {
-    return ((((cf::CObjectState*)self)->unk4 & (u32)mask) != 0) ? 1 : 0;
+int cf::CObjectState::CObjectState_checkStateFlags(int mask) {
+    return ((((cf::CObjectState*)this)->unk4 & (u32)mask) != 0) ? 1 : 0;
 }
 
 extern "C" int hideUnit(VMThread* pThread, int handle) {
@@ -520,7 +520,7 @@ extern "C" int setActorStatusSelect(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     // Cast the OC object to a CfObjectActor and forward the booleanized
     // flag to vtable slot 0x1C0.
-    cf::CActorParam* actor = (cf::CActorParam*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+    cf::CActorParam* actor = (cf::CActorParam*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf12CfObjectMove, (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         actor->CActorParam_setStatusSelect((int)((u32)(-b | b) >> 31));
     }
@@ -550,7 +550,7 @@ int execNpcAction(VMThread* pThread, int handle) {
     return 0;
 }
 
-void CfObject_forwardNpcAction__Q22cf8CfObjectFv(cf::CfObject* self, u32 value) { (void)self; (void)value; }
+void CfObject_forwardNpcAction__Q22cf8CfObjectFi(cf::CfObject* self, u32 value) { (void)self; (void)value; }
 
 extern "C" int getNpcAction(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
@@ -574,8 +574,8 @@ extern "C" int CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv(cf::CfObject* self) {
 // CfObjectMove.hpp by another wave, so the out-of-line cf::CfObjectMove::
 // defs no longer compile there; TU-local extern "C" wrappers emit the same
 // retail symbols without needing the class decls (field offsets from header).
-extern "C" int CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CE; }
-extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CF; }
+int cf::CfObjectMove::CfObject_getNpcActionState() { return this->field_6CE; }
+int cf::CfObjectMove::CfObject_getNpcTargetAction() { return this->field_6CF; }
 
 extern int isTalkBlocked(void* obj);
 extern "C" int canTalk(VMThread* pThread, int handle) {
@@ -836,26 +836,26 @@ int onEvent(VMThread* pThread, int handle) {
     return 1;
 }
 
-extern "C" int CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(cf::CObjectState* self, int mask, int flag) {
+int cf::CObjectState::CObjectState_setStateBitMask0(int mask, int flag) {
     int realArg = mask;
     // State query: slot 0x28 (checkStateFlagsC) is a gate check; slot 0x24
     // (checkStateFlags8) tests the requested state bit. flag selects polarity.
     s32 result;
     if (flag != 0) {
         result = 0;
-        if (self->CObjectState_checkStateFlagsC() != 0) {
+        if (this->CObjectState_checkStateFlagsC(realArg) != 0) {
             goto done;
         }
-        if (self->CObjectState_checkStateFlags8((int)realArg) == 0) {
+        if (this->CObjectState_checkStateFlags8((int)realArg) == 0) {
             goto done;
         }
         result = 1;
     } else {
         result = 0;
-        if (self->CObjectState_checkStateFlagsC() == 0) {
+        if (this->CObjectState_checkStateFlagsC(realArg) == 0) {
             goto done;
         }
-        if (self->CObjectState_checkStateFlags8((int)realArg) != 0) {
+        if (this->CObjectState_checkStateFlags8((int)realArg) != 0) {
             goto done;
         }
         result = 1;
@@ -866,22 +866,22 @@ done:
 
 // Retail linker name for slot 0x28 (hand-built tables). Virtual decl is
 // CObjectState_checkStateFlagsC.
-extern "C" int CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(void* self, int mask) {
+int cf::CObjectState::CObjectState_checkStateFlagsC(int mask) {
     if ((u32)mask < 0x3F) {
-        u32 f = static_cast<cf::CObjectState*>(self)->unkC & 0x3F;
+        u32 f = static_cast<cf::CObjectState*>(this)->unkC & 0x3F;
         return (u32)mask == f;
     }
-    return (static_cast<cf::CObjectState*>(self)->unkC & (u32)mask) != 0;
+    return (static_cast<cf::CObjectState*>(this)->unkC & (u32)mask) != 0;
 }
 
 // Retail linker name for slot 0x24 (hand-built tables). Virtual decl is
 // CObjectState_checkStateFlags8.
-extern "C" int CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(void* self, int mask) {
+int cf::CObjectState::CObjectState_checkStateFlags8(int mask) {
     if ((u32)mask < 0x3F) {
-        u32 f = static_cast<cf::CObjectState*>(self)->unk8 & 0x3F;
+        u32 f = static_cast<cf::CObjectState*>(this)->unk8 & 0x3F;
         return (u32)mask == f;
     }
-    return (static_cast<cf::CObjectState*>(self)->unk8 & (u32)mask) != 0;
+    return (static_cast<cf::CObjectState*>(this)->unk8 & (u32)mask) != 0;
 }
 
 // --- Batch 2 targets start here ---
@@ -1101,7 +1101,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     cf::CfObject* self = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), handle);
     if (targetOC != 0) {
         cf::CfObject* target = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)targetOC + 4));
-        cf::CfObject* actor = (cf::CfObject*)__dynamic_cast(target, 0, lbl_eu_806618E8, lbl_eu_806618F0, 0);
+        cf::CfObject* actor = (cf::CfObject*)__dynamic_cast(target, 0, __RTTI__Q22cf13CfObjectModel, __RTTI__Q22cf8CfObject, 0);
         if (actor == NULL) {
             // Target is not an actor: aim straight at its position vector.
             ml::CVec3* pos = target->CfObject_getPosVector();
@@ -1288,7 +1288,7 @@ extern "C" int invin(VMThread* pThread, int handle) {
     }
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         if (enable) {
             CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
@@ -1352,7 +1352,7 @@ extern "C" int sendBattleEvent(VMThread* pThread, int handle) {
     void* actor =
         (void*)__dynamic_cast(ArtsSelect_Lookup(ctx, handle), 0,
                                                (void*)&__RTTI__Q22cf13CfObjectActor,
-                                               (void*)&lbl_eu_806618F0, 0);
+                                               (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         BattleEventWork data;
         memset(&data, 0, sizeof(data));
@@ -1376,9 +1376,9 @@ extern "C" int delBuff(VMThread* pThread, int handle) {
     int index = vmArgIntGet(2, ptr);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    // Retail SDA reloc is __RTTI__Q22cf13CfObjectActor (not lbl_eu_806618D8).
+    // Retail SDA reloc is __RTTI__Q22cf13CfObjectActor (not __RTTI__Q22cf12CfObjectMove).
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor,
-                                        (void*)&lbl_eu_806618F0, 0);
+                                        (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
         CBattleMan_ClearActorStatus(battleMgr, actor, index);
@@ -1393,7 +1393,7 @@ extern "C" int setColi(VMThread* pThread, int handle) {
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf12CfObjectMove, (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         CfObjectMove_setRegionAttached(actor, enable ? 1 : 0);
     }
@@ -2035,8 +2035,8 @@ extern "C" void ocUnitRegist() {
     vmOCRegist(&area->e4);
 }
 
-void CObjectState_setStateBitMask__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
-    ((cf::CObjectState*)self)->unk4 |= bits;
+void cf::CObjectState::CObjectState_setStateBitMask(u32 bits) {
+    ((cf::CObjectState*)this)->unk4 |= bits;
 }
 
 // Trailing word of CObjectParam at +0x34 (signalActionEnd payload /
@@ -2045,13 +2045,13 @@ struct CObjectParamTail34 {
     u8 _pad00[0x34];
     u32 mWord34;
 };
-void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv(void* self, u32 val) { ((CObjectParamTail34*)self)->mWord34 = val; }
+void cf::CObjectParam::CObjectParam_signalActionEnd(int val) { ((CObjectParamTail34*)this)->mWord34 = val; }
 
-void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
-    ((cf::CObjectState*)self)->unk4 &= ~mask;
+void cf::CObjectState::CObjectState_setStateBitFlag(u32 mask) {
+    ((cf::CObjectState*)this)->unk4 &= ~mask;
 }
 
-void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { static_cast<cf::CfObjectModel*>(self)->field_BD = val; }
+void cf::CfObjectModel::CfObjectModel_setBoneRotate(int val) { static_cast<cf::CfObjectModel*>(this)->field_BD = val; }
 
 u32 CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv(void* self) { return ((CObjectParamTail34*)self)->mWord34; }
 

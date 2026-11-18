@@ -154,8 +154,10 @@ struct KizunaScratch {
  */
 class CMenuKizunaTalk : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
+    static CMenuKizunaTalk* sInstance;
+
     CScn* mScene;                        // 0x74
-    u8 mMemRegion[0x10];                 // 0x78 - UnkClass_8045F564 storage
+    UnkClass_8045F564 mMemRegion;        // 0x78
     CFileHandle* mFile1;                 // 0x88
     CFileHandle* mFile2;                 // 0x8C
     nw4r::lyt::ArcResourceAccessor* mArcAccessor;  // 0x90
@@ -180,8 +182,6 @@ public:
 // (the CSysWin / UnkClass_8045F564 dtors and the CDeviceVI / CProcess base
 // ctor); the rest come from CItemBoxGrid.hpp / functions.hpp.
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 
@@ -211,9 +211,7 @@ extern "C" void* Bdat_GetTable_AA34();
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void sysWinTermLayout(void*);
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__7CSysWinFUc(void*, int);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void sysWinSetKindContent(void*, u32, int);
@@ -225,8 +223,6 @@ extern "C" void Cur_SetVisible(void*, u8);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 //@@KIZUNA_DECLS@@
 
@@ -250,7 +246,6 @@ struct KizunaTextureView {
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505118[];            // shared-archive path string (.rodata)
-extern CMenuKizunaTalk* lbl_eu_80664420;  // singleton instance pointer (.sbss)
 extern u8* lbl_eu_80664424;               // BDAT character table pointer (.sbss)
 extern const f32 lbl_eu_80667E68;         // .sdata2 float (anim check)
 extern const f32 lbl_eu_80667E6C;         // .sdata2 float (anim frame reset 0.0f)

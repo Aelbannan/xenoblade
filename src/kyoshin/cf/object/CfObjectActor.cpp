@@ -511,9 +511,10 @@ void CfObjectActor::CfObjectMove_setTargetC4Arg(u32 id) {
 
 // .data table (retail 0xC) as a typed pointer table. Reloc sites read as
 // zero in the .o (relocs skipped when bytes match), so it stays MATCH.
-void func_801A4194();
+// ptmf constant {this-delta 0, non-virtual -1, CVision engage handler}.
+extern "C" void openVisionPairEngage(void* self);
 __declspec(section ".data") __attribute__((used))
-const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)func_801A4194 };
+const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)openVisionPairEngage };
 
 // .sdata2 pool (retail 0x44) as typed consts in retail declaration order.
 __declspec(section ".sdata2") __attribute__((used))

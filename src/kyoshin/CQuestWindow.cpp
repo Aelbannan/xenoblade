@@ -423,7 +423,7 @@ __attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
         for (int i = 1; i <= 8; i++) {
             void* obj = CtrlObjectParam_GetCharEntry((u16)i);
             if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) != 0 ||
-                (i == 4 && CtrlObjectParam_GetCurrentRowKey() != 0)) {
+                (i == 4 && CtrlObjectParam_GetCurrentRowKey(obj) != 0)) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
                 if (Counter_TestBit(p, 0x89) != 0) {
@@ -799,14 +799,8 @@ void refreshQuestContent(CQuestWindow* self) {
     self->mpScn->addRenderCB(render, 0x10, 0);
 }
 
-// Pane-flag toggle: clear bit 0 of the pane's +0xBB flag byte (nw4r
-// visible bit) and OR in the caller's flag byte (0/1 = hide/show).
-extern "C" void setPaneVisible(nw4r::lyt::Pane* pane, u32 visible) {
-    // TODO: retail is Pane::SetVisible(bool) (byte-identical with a bool
-    // parameter); callers must pass bool-typed values first, otherwise they
-    // normalise. Until then write the flag byte directly.
-    u8* flag = (u8*)pane + 0xBB;
-    *flag = (*flag & 0xFE) | (u8)visible;
+extern "C" void setPaneVisible(nw4r::lyt::Pane* pane, bool visible) {
+    pane->SetVisible(visible);
 }
 
 // retail: lfs f1,0(r4); lfs f0,4(r4); stfs f1,0x4c(r3); stfs f0,0x50(r3)

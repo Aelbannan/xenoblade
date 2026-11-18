@@ -39,10 +39,10 @@ CAIAction::CAIAction() {
     u8* end;
     void* slotBase;
 
-    p = slots;
-    end = (u8*)&this->unk20C;
+    p = ring.queue.slots;
+    end = (u8*)&this->ring.queue.buffer;
 
-    unk8 = 0;
+    ring.unk4 = 0;
 
     do {
         std::memset(p + 4, 0, 0xE);
@@ -50,13 +50,13 @@ CAIAction::CAIAction() {
         p += 0x20;
     } while (p < end);
 
-    slotBase = slots;
-    unk218 = 0x10;
+    slotBase = ring.queue.slots;
+    ring.queue.capacity = 0x10;
     q = this->entries;
     p = this->trailer;
     *(void**)end = slotBase;
-    unk214 = 0;
-    unk210 = 0;
+    ring.queue.count = 0;
+    ring.queue.head = 0;
 
     do {
         std::memset(q, 0, 0xE);
@@ -67,7 +67,7 @@ CAIAction::CAIAction() {
     std::memset(trailer, 0, 0x20);
 
     unkAFC = 1;
-    unk4 = 1;
+    ring.unk0 = 1;
     unkB00 = 0;
     unkB10 = 0;
     unkB14 = 0;
@@ -77,7 +77,7 @@ CAIAction::CAIAction() {
 } // namespace cf
 
 // Soft-cap ~96.02941%: MWCC fuses first dest store to stwux; retail is stwx+add
-// (src in r9, 8-then-4). slots[]/dstBytes identical; dual buffer aliases regress.
+// (src in r9, 8-then-4). ring.queue.slots[]/dstBytes identical; dual buffer aliases regress.
 // EQUIVALENT blocked by ring-loop bounds / Z3 timeout. No insn_patches/asm void.
 void cf::CAIAction::CAIAction_UnkVirtualFunc1(cf::CAIActionSlot* outA, cf::CAIActionExport* outB) {
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)this->trailer;
@@ -99,11 +99,11 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc1(cf::CAIActionSlot* outA, cf::CAIAc
     outB->unk208 = 0;
     outB->unk204 = 0;
 
-    for (u32 i = 0; i < this->unk214; i++) {
-        u32 ringIdx = (this->unk210 + i) % this->unk218;
+    for (u32 i = 0; i < this->ring.queue.count; i++) {
+        u32 ringIdx = (this->ring.queue.head + i) % this->ring.queue.capacity;
         int outIdx = (int)(outB->unk204 + outB->unk208) % (int)outB->unk20C;
         cf::CAIActionSlot* src =
-            (cf::CAIActionSlot*)((u8*)this->unk20C + (ringIdx << 5));
+            (cf::CAIActionSlot*)((u8*)this->ring.queue.buffer + (ringIdx << 5));
 
         cf::CAIActionSlot* dst =
             (cf::CAIActionSlot*)((u8*)outB->buffer + ((u32)outIdx << 5));
@@ -124,7 +124,7 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc1(cf::CAIActionSlot* outA, cf::CAIAc
 
 // Batch 2026-07-14g: aiaction-vfunc2 owns CAIAction_UnkVirtualFunc2 (Fv)
 // Inverse of UnkVirtualFunc1: imports trailer from inA, then drains ring
-// entries from inB into this->unk20C.
+// entries from inB into this->ring.queue.buffer.
 //
 // Codegen note: retail keeps the leading word as `stwx r0, base, off` and
 // materializes the slot pointer afterwards (`add`). A plain C pointer lets
@@ -136,9 +136,9 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIAct
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)this->trailer;
     u32 i;
 
-    this->unk214 = 0;
+    this->ring.queue.count = 0;
     i = 0;
-    this->unk210 = 0;
+    this->ring.queue.head = 0;
 
     trailer->unk00 = inA->unk00;
     {
@@ -155,12 +155,12 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIAct
     trailer->unk1C = inA->unk1C;
 
     while (i < inB->unk208) {
-        s32 dstIdx = (s32)(this->unk210 + this->unk214) % (s32)this->unk218;
+        s32 dstIdx = (s32)(this->ring.queue.head + this->ring.queue.count) % (s32)this->ring.queue.capacity;
         u32 srcIdx = (inB->unk204 + i) % inB->unk20C;
         cf::CAIActionSlot* src =
             (cf::CAIActionSlot*)((u8*)inB->buffer + (srcIdx << 5));
         // See function comment: volatile access path prevents the stwux fold.
-        volatile u8* dstBase = (volatile u8*)this->unk20C;
+        volatile u8* dstBase = (volatile u8*)this->ring.queue.buffer;
         u32 dstOff = (u32)dstIdx << 5;
         cf::CAIActionSlot* dst = (cf::CAIActionSlot*)((u8*)dstBase + dstOff);
         *(volatile u32*)(dstBase + dstOff) = src->unk00;
@@ -177,7 +177,7 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIAct
         dst->unk18 = src->unk18;
         dst->unk1C = src->unk1C;
 
-        this->unk214 = this->unk214 + 1;
+        this->ring.queue.count = this->ring.queue.count + 1;
         i = i + 1;
     }
 }
@@ -190,15 +190,15 @@ void cf::CAIAction::CAIAction_setOwner(u32 owner) {
 }
 
 // Appends a slot to the ring buffer, inserting before the current head
-// (decrementing unk210 with modulo wraparound). If an existing ring entry
+// (decrementing ring.queue.head with modulo wraparound). If an existing ring entry
 // already matches bytes [0x5..0xD] of `in`, returns 0 (duplicate); otherwise
-// stores the slot, increments unk214, sets bit 0x8 in the new slot's flags,
+// stores the slot, increments ring.queue.count, sets bit 0x8 in the new slot's flags,
 // and returns 1.
 extern "C" u32 aiRingPrepend(cf::CAIAction* self, const cf::CAIActionSlot* in) {
-    u32 count = self->unk214;
+    u32 count = self->ring.queue.count;
     for (u32 i = 0; i < count; i++) {
-        u32 ringIdx = (self->unk210 + i) % self->unk218;
-        const u8* sb = (const u8*)self->unk20C + (ringIdx << 5);
+        u32 ringIdx = (self->ring.queue.head + i) % self->ring.queue.capacity;
+        const u8* sb = (const u8*)self->ring.queue.buffer + (ringIdx << 5);
         const u8* ib = (const u8*)in;
         // Byte-wise duplicate test over [0x5..0xD]; retail materializes each
         // comparison into a "duplicate" flag via an if/else-if chain.
@@ -216,28 +216,28 @@ extern "C" u32 aiRingPrepend(cf::CAIAction* self, const cf::CAIActionSlot* in) {
             return 0;
     }
     // Decrement head with wraparound.
-    self->unk210 = self->unk210 - 1;
-    if ((s32)self->unk210 < 0)
-        self->unk210 = self->unk210 + self->unk218;
+    self->ring.queue.head = self->ring.queue.head - 1;
+    if ((s32)self->ring.queue.head < 0)
+        self->ring.queue.head = self->ring.queue.head + self->ring.queue.capacity;
     cf::CAIActionSlot* dst =
-        (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
+        (cf::CAIActionSlot*)((u8*)self->ring.queue.buffer + (self->ring.queue.head << 5));
     *dst = *in;
-    self->unk214 = self->unk214 + 1;
+    self->ring.queue.count = self->ring.queue.count + 1;
     // Re-resolve the new slot pointer and OR bit 0x8 into its flags.
     cf::CAIActionSlot* slot =
-        (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
+        (cf::CAIActionSlot*)((u8*)self->ring.queue.buffer + (self->ring.queue.head << 5));
     slot->unk10 = slot->unk10 | 0x8;
     return 1;
 }
 // Ring slot accessors: the scan uses unsigned modulo; the removal/compaction
 // paths use signed division (divw) like retail.
 static inline cf::CAIActionSlot* CAIRingGetU(cf::CAIAction* self, u32 i) {
-    return (cf::CAIActionSlot*)((u8*)self->unk20C +
-                                (((self->unk210 + i) % self->unk218) << 5));
+    return (cf::CAIActionSlot*)((u8*)self->ring.queue.buffer +
+                                (((self->ring.queue.head + i) % self->ring.queue.capacity) << 5));
 }
 static inline cf::CAIActionSlot* CAIRingGetS(cf::CAIAction* self, s32 pos) {
     return (cf::CAIActionSlot*)(
-        (u8*)self->unk20C + ((u32)(pos % (s32)self->unk218) << 5));
+        (u8*)self->ring.queue.buffer + ((u32)(pos % (s32)self->ring.queue.capacity) << 5));
 }
 
 // Copies all fields from src to dst in retail's load/store order.
@@ -261,10 +261,10 @@ static inline void CAIRingCopyTail(cf::CAIActionSlot* dst,
 // Removes the action slot found at ring offset i whose flag bit 0x8 (at
 // +0x10) is set: clears it out of the ring by compacting from whichever side
 // of the ring is closer (shift entries down and bump the head, or shift
-// entries up), decrementing unk214. The removed slot's float is read into a
+// entries up), decrementing ring.queue.count. The removed slot's float is read into a
 // scratch local first.
 void aiRingCompact(cf::CAIAction* self) {
-    for (u32 i = 0; i < self->unk214; i++) {
+    for (u32 i = 0; i < self->ring.queue.count; i++) {
         cf::CAIActionSlot* slot = CAIRingGetU(self, i);
         if ((slot->unk10 & 0x8) == 0)
             continue;
@@ -272,30 +272,30 @@ void aiRingCompact(cf::CAIAction* self) {
         // Volatile view defeats CSE of the ring fields here (retail reloads
         // them after the flag test).
         volatile cf::CAIAction* vs = self;
-        s32 pos = (s32)vs->unk210 + (s32)i;
-        u32 newCount = self->unk214 - 1;
+        s32 pos = (s32)vs->ring.queue.head + (s32)i;
+        u32 newCount = self->ring.queue.count - 1;
         s32 mid = (s32)newCount / 2;
         cf::CAIActionSlot* cur = (cf::CAIActionSlot*)(
-            (u8*)vs->unk20C +
-            ((u32)(pos % (s32)vs->unk218) << 5));
+            (u8*)vs->ring.queue.buffer +
+            ((u32)(pos % (s32)vs->ring.queue.capacity) << 5));
         // Scratch copy of the removed entry's float (kept in retail).
         volatile f32 removedValue = cur->unk14;
-        self->unk214 = newCount;
+        self->ring.queue.count = newCount;
 
         if ((s32)i >= mid) {
             // Near the head: move entries [0, i) one slot toward the tail,
             // then advance the ring head past the vacated front slot.
             for (s32 j = (s32)i - 1; j >= 0; j--) {
-                s32 base = (s32)self->unk210 + j;
+                s32 base = (s32)self->ring.queue.head + j;
                 CAIRingCopyTail(CAIRingGetS(self, base + 1),
                                 CAIRingGetS(self, base));
             }
-            self->unk210 = (u32)((((s32)self->unk210 + 1) % (s32)self->unk218));
+            self->ring.queue.head = (u32)((((s32)self->ring.queue.head + 1) % (s32)self->ring.queue.capacity));
         } else {
             // Near the tail: pull entries [i+1, count) one slot toward the
             // front, leaving the head in place.
-            for (u32 j = i; j < self->unk214; j++) {
-                s32 base = (s32)self->unk210 + (s32)j;
+            for (u32 j = i; j < self->ring.queue.count; j++) {
+                s32 base = (s32)self->ring.queue.head + (s32)j;
                 CAIRingCopyTail(CAIRingGetS(self, base),
                                 CAIRingGetS(self, base + 1));
             }
@@ -307,10 +307,10 @@ void aiRingCompact(cf::CAIAction* self) {
 }
 extern "C" int aiAppendToRing(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 i;
-    for (i = 0; i < self->unk214; i++) {
-        u32 pos = self->unk210 + i;
-        u32 cap = self->unk218;
-        const u8* sb = (const u8*)self->unk20C + ((pos % cap) << 5);
+    for (i = 0; i < self->ring.queue.count; i++) {
+        u32 pos = self->ring.queue.head + i;
+        u32 cap = self->ring.queue.capacity;
+        const u8* sb = (const u8*)self->ring.queue.buffer + ((pos % cap) << 5);
         // Byte-wise duplicate test over [0x5..0xD].
         u32 dup;
         if (sb[5] != ((const u8*)in)[5]) dup = 0;
@@ -327,13 +327,13 @@ extern "C" int aiAppendToRing(cf::CAIAction* self, const cf::CAIActionSlot* in) 
     }
     // Append at the tail of the ring; retail computes the index with signed
     // modulo here (divw) unlike the unsigned loop above.
-    s32 abs = (s32)(self->unk210 + self->unk214);
-    s32 capS = (s32)self->unk218;
+    s32 abs = (s32)(self->ring.queue.head + self->ring.queue.count);
+    s32 capS = (s32)self->ring.queue.capacity;
     s32 quot = abs / capS;
     cf::CAIActionSlot* dst =
-        (cf::CAIActionSlot*)((u8*)self->unk20C + ((abs - quot * capS) << 5));
+        (cf::CAIActionSlot*)((u8*)self->ring.queue.buffer + ((abs - quot * capS) << 5));
     *dst = *in;
-    self->unk214 = self->unk214 + 1;
+    self->ring.queue.count = self->ring.queue.count + 1;
     return 1;
 }
 void* aiActionClearBlockADC(void* p) {
@@ -403,24 +403,24 @@ struct CAIRemovedScratch {
 } // namespace
 
 // Consumes the AI action queued at ring offset `index`: a terminal id byte
-// (0x3F..0x48) latches `id-0x3E` into unk4/trailer and flushes the ring;
+// (0x3F..0x48) latches `id-0x3E` into ring.unk0/trailer and flushes the ring;
 // otherwise the entry is copied to the trailer and compacted out of the ring.
 void aiRingConsume(cf::CAIAction* self, u32 index) {
     // Ring entry at offset `index`; retail recomputes the modulo expression
     // (unsigned) at each use and reloads the ring fields from `self`.
     cf::CAIActionSlot* slot = (cf::CAIActionSlot*)(
-        (u8*)self->unk20C +
-        (((self->unk210 + index) % self->unk218) << 5));
+        (u8*)self->ring.queue.buffer +
+        (((self->ring.queue.head + index) % self->ring.queue.capacity) << 5));
 
     u8 tag = ((const u8*)slot)[0xD];
     if (tag >= 0x3F) {
         if (tag <= 0x48) {
         u32 v = tag - 0x3E;
-        self->unk4 = v;
-        self->unk8 = self->unk8 | 1;
+        self->ring.unk0 = v;
+        self->ring.unk4 = self->ring.unk4 | 1;
         self->unkAFC = v;
-        self->unk214 = 0;
-        self->unk210 = 0;
+        self->ring.queue.count = 0;
+        self->ring.queue.head = 0;
         return;
     }}
 
@@ -430,8 +430,8 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
 
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
     cf::CAIActionSlot* cur = (cf::CAIActionSlot*)(
-        (u8*)self->unk20C +
-        (((self->unk210 + index) % self->unk218) << 5));
+        (u8*)self->ring.queue.buffer +
+        (((self->ring.queue.head + index) % self->ring.queue.capacity) << 5));
 
     trailer->unk00 = cur->unk00;
     {
@@ -447,23 +447,23 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
     trailer->unk18 = cur->unk18;
     trailer->unk1C = cur->unk1C;
 
-    // If bit0 of unk8 was pending and the entry's payload byte matches the
+    // If bit0 of ring.unk4 was pending and the entry's payload byte matches the
     // cached unkAFC value, drop the pending flag.
-    if ((self->unk8 & 1) &&
+    if ((self->ring.unk4 & 1) &&
         self->unkAFC == (u32)((const u8*)trailer)[4])
-        self->unk8 = self->unk8 & 0x7FFF0000;
+        self->ring.unk4 = self->ring.unk4 & 0x7FFF0000;
 
     // Retail keeps `pos` live across the midpoint computation.
-    s32 spos = (s32)(self->unk210 + index);
-    u32 newCount = self->unk214 - 1;
+    s32 spos = (s32)(self->ring.queue.head + index);
+    u32 newCount = self->ring.queue.count - 1;
     s32 mid = (s32)(newCount - 1) / 2;
     bool tailSide = (s32)index >= mid;
 
     // Removal pass resolves the entry with a *signed* modulo (divw), unlike
     // the unsigned computations above.
     cur = (cf::CAIActionSlot*)(
-        (u8*)self->unk20C +
-        (((u32)(spos % (s32)self->unk218)) << 5));
+        (u8*)self->ring.queue.buffer +
+        (((u32)(spos % (s32)self->ring.queue.capacity)) << 5));
 
     // Scratch copy of the removed entry before the compaction overwrites it.
     // Retail batches every load ahead of the writes.
@@ -501,22 +501,22 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
     tmp.at19A = s12;
     tmp.at1BC = s14;
 
-    self->unk214 = newCount;
+    self->ring.queue.count = newCount;
 
     if (tailSide) {
         // Near the tail: pull later entries one slot toward the front.
-        for (u32 j = index; j < self->unk214; j++) {
-            s32 b = (s32)self->unk210 + (s32)j;
+        for (u32 j = index; j < self->ring.queue.count; j++) {
+            s32 b = (s32)self->ring.queue.head + (s32)j;
             CAIRingCopyTail(CAIRingGetS(self, b), CAIRingGetS(self, b + 1));
         }
     } else {
         // Near the head: push earlier entries one slot toward the tail,
         // then advance the head past the vacated front slot.
         for (s32 j = (s32)index - 1; j >= 0; j--) {
-            s32 b = (s32)self->unk210 + j;
+            s32 b = (s32)self->ring.queue.head + j;
             CAIRingCopyTail(CAIRingGetS(self, b + 1), CAIRingGetS(self, b));
         }
-        self->unk210 = (u32)(((s32)self->unk210 + 1) % (s32)self->unk218);
+        self->ring.queue.head = (u32)(((s32)self->ring.queue.head + 1) % (s32)self->ring.queue.capacity);
     }
 
     // Sink reads keep the (retail-dead) scratch stores alive.
@@ -547,7 +547,7 @@ struct AIEntryFlagsView {
 };
 extern "C" void aiActionStoreIndexedBytes(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; ((AIEntryFlagsView*)base)->flags = a13; if (a7 == 11 || a9 == 11) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 10 || a9 == 10) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 7 || a9 == 7) ((AIEntryFlagsView*)base)->flags |= 2; }
 void aiActionClearBits0006(void* self) {
-    static_cast<cf::CAIAction*>(self)->unk8 &= ~0x0006;
+    static_cast<cf::CAIAction*>(self)->ring.unk4 &= ~0x0006;
 }
 
 // Loads the AI config table pointer into lbl_eu_806641B0 and walks the
@@ -635,7 +635,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             break;
         }
         case 9:
-            if ((self->unk8 & 1) == 0)
+            if ((self->ring.unk4 & 1) == 0)
                 return 0;
             break;
         case 4: case 5: case 6: {
@@ -2649,7 +2649,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 // and returns the selected entry payload (findFirstCleanObjectId) or 0.
 // ---------------------------------------------------------------------------
 
-// Object view for indirect vtable calls (slots 0x00..0x328).
+// Object view for indirect vtable calls (ring.queue.slots 0x00..0x328).
 
 // CfObjEnumList fields accessed by this function.
 
@@ -2662,10 +2662,10 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 // current state via three tagged probes (3 / 0x1c / 0x805); if none hits,
 // queues action 0x31 and refreshes the battle-object handle.
 extern "C" void aiRebootAction(cf::CAIAction* self) {
-    // Reset the ring; retail computes unk8|4 between clearing unk214/unk210.
-    self->unk8 = self->unk8 | 4;
-    self->unk214 = 0;
-    self->unk210 = 0;
+    // Reset the ring; retail computes ring.unk4|4 between clearing ring.queue.count/ring.queue.head.
+    self->ring.unk4 = self->ring.unk4 | 4;
+    self->ring.queue.count = 0;
+    self->ring.queue.head = 0;
     std::memset(self->trailer, 0, 0x20);
 
     // Three tagged probes on the party's state sub-object (vt slot 0x30).

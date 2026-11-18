@@ -152,7 +152,7 @@ public:
     virtual void v84() = 0;
     virtual void v88() = 0;
     virtual void v8C() = 0;
-    virtual u8 vf90(CMenuGetItemMultiEntry*) = 0;            // +0x90 rank text value
+    virtual int vf90(CMenuGetItemMultiEntry*) = 0;           // +0x90 rank text value
 };
 
 // --- unit imports ---

@@ -210,7 +210,7 @@ extern "C" void CMenuArtsSet_returnFromInfo(CArtsList* self);
 extern "C" void ArtsLayoutPair_releaseSlots(SArts3066C* self);
 // SArtsSub8022FA58 cursor-store helper (CMenuArtsSet_completeLayoutOut). Same-TU definition;
 // noinline so callers emit a real bl (retail shape).
-extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, u8 val);
+extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val);
 // Same-TU release helpers kept out-of-line for retail bl parity.
 extern "C" __declspec(noinline) void ArtsLayoutPair_release(SArts2FDF4* self);
 extern "C" __declspec(noinline) void ArtsTableLayout_release(SArts3066C* self);

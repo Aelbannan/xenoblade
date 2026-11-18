@@ -729,7 +729,7 @@ void CMCEffCrystal::startSpecial() {
     }
 }
 
-void CMCEffCrystal::setTraceVisible(u32 arg1) {
+void CMCEffCrystal::setTraceVisible(bool arg1) {
     setPaneVisible(mLayoutC->GetRootPane()->FindPaneByName(&lbl_eu_805095EC[0x26a], true), arg1);
 }
 

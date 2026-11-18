@@ -41,7 +41,7 @@ struct ShopSellData {
     u16 mField804;                // +0x804
 };
 
-/* Local shim for cf::CfPadData - only the flag words MenuShopSellHandlePhase2 reads
+/* Local shim for cf::CfPadData - only the flag words HandlePhase2 reads
  * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
  * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
 struct ShopSellPadData {
@@ -51,11 +51,7 @@ struct ShopSellPadData {
     u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
 };
 
-// Item-grid C-ABI ctor/dtor (the retail 4-arg ctor is not the C++ default ctor).
-extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
-extern "C" void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
-
-// MenuShopSellHandlePhase2 pad/flag callees (retail unmangled names). IsItemBoxActive is
+// HandlePhase2 pad/flag callees (retail unmangled names). IsItemBoxActive is
 // declared int so the caller compares with cmpwi directly; GetPromptState is
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
 extern "C" int MenuTutorialIsCreated();
@@ -83,23 +79,15 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // Shop-sell render-gate mode bitfield (.sbss; bit 21 = busy).
 extern u32 lbl_eu_80663E28;
 
-/*
- * Constructor. The IUICf base and the IScnRender subobject are built by their
- * own ctors; the members with real C++ classes are initialised in the list, the
- * item-grid storage goes through its C-ABI ctor, and the state byte is set last.
- */
-CMenuShopSell::CMenuShopSell(CScn* scene) : mScene(scene), mBgTex(0), mTitleAHelp(0, 0) {
-    __ct__12CItemBoxGridFUcUsUlUc(itemBoxGrid(), 0, 0, 0, 1);
+/* Constructor: bases and members are built in layout order, then the state
+ * byte is cleared. */
+CMenuShopSell::CMenuShopSell(CScn* scene)
+    : mScene(scene), mBgTex(0), mTitleAHelp(0, 0), mItemBoxGrid(0, 0, 0, 1) {
     mState = 0;
 }
 
-/*
- * Destructor. The item grid is destroyed through its C-ABI dtor; the title bar,
- * background, IUICf base and storage are destroyed by the compiler.
- */
-CMenuShopSell::~CMenuShopSell() {
-    __dt__12CItemBoxGridFv(itemBoxGrid(), -1);
-}
+/* Destructor: members and bases are destroyed by the compiler. */
+CMenuShopSell::~CMenuShopSell() {}
 
 void CMenuShopSell::Init() {}
 
@@ -133,7 +121,7 @@ void CMenuShopSell::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    ((CItemBoxGrid*)(itemBoxGrid()))->UnloadItemBox();
+    mItemBoxGrid.UnloadItemBox();
 
     sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -148,23 +136,23 @@ void CMenuShopSell::Move() {
 
     switch (mState) {
     case 0:
-        MenuShopSellHandlePhase0(this);
+        HandlePhase0();
         break;
     case 1:
-        MenuShopSellHandlePhase1(this);
+        HandlePhase1();
         break;
     case 2:
-        MenuShopSellHandlePhase2(this);
+        HandlePhase2();
         break;
     case 3:
-        MenuShopSellHandlePhase3(this);
+        HandlePhase3();
         break;
     default:
         break;
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    ((CItemBoxGrid*)(itemBoxGrid()))->UpdateItemBox();
+    mItemBoxGrid.UpdateItemBox();
     updateHelp(&mTitleAHelp);
 }
 
@@ -181,7 +169,7 @@ void CMenuShopSell::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-    ((CItemBoxGrid*)(itemBoxGrid()))->DrawItemBoxGrid(&drawInfo);
+    mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
     drawHelp(&mTitleAHelp, &drawInfo);
 }
 
@@ -209,12 +197,12 @@ extern "C" bool MenuShopSellIsCreated() { return CMenuShopSell::sInstance != 0; 
 /* Phase 0 -> 1 (open): once the background, title bar and item grid are all
  * ready, run the open sequence (title bar + item grid) and play the open
  * sound, then advance the phase byte at 0x4AC4. */
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self) {
-    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
-        ((CItemBoxGrid*)(self->itemBoxGrid()))->IsItemBoxReady() != 0) {
-        func_801C412C(&self->mTitleAHelp);
-        ((CItemBoxGrid*)(self->itemBoxGrid()))->InitItemDisplay();
-        self->mState = 1;
+void CMenuShopSell::HandlePhase0() {
+    if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
+        mItemBoxGrid.IsItemBoxReady() != 0) {
+        func_801C412C(&mTitleAHelp);
+        mItemBoxGrid.InitItemDisplay();
+        mState = 1;
         playUISound(0x6d);
     }
 }
@@ -222,19 +210,19 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* sel
 // Phase transition: once the title bar is idle and the item grid is ready,
 // advance the state byte at 0x4AC4 to 2 (the CMenuGCItem::Move case-1 check,
 // kept as a separate helper here).
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self) {
+void CMenuShopSell::HandlePhase1() {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        ((CItemBoxGrid*)(self->itemBoxGrid()))->GetField61() != 0) {
-        self->mState = 2;
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxGrid.GetField61() != 0) {
+        mState = 2;
     }
 }
 
 // Phase 2 (interaction): poll the pad and drive the item-box grid. The two
 // branches differ only in the button-bit layout (pointer-input controller vs
 // plain pad); each handler ends by jumping to the shared focus refresh.
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* self) {
+void CMenuShopSell::HandlePhase2() {
     if (MenuTutorialIsCreated() != 0) return;
 
     ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -255,29 +243,29 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* sel
         u32 p400 = (pressed & 0x400) != 0;
 
         if (p200000) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->func_801CCAF0();
+            mItemBoxGrid.func_801CCAF0();
         } else if (p400000) {
-            if (((CItemBoxGrid*)(self->itemBoxGrid()))->IsItemBoxActive() != 0) {
-                ((CItemBoxGrid*)(self->itemBoxGrid()))->HandleCancelBtn(0);
+            if (mItemBoxGrid.IsItemBoxActive() != 0) {
+                mItemBoxGrid.HandleCancelBtn(0);
             } else {
-                beginClose(&self->mTitleAHelp);
-                ((CItemBoxGrid*)(self->itemBoxGrid()))->AdvanceBoxState();
-                self->mState = 3;
+                beginClose(&mTitleAHelp);
+                mItemBoxGrid.AdvanceBoxState();
+                mState = 3;
             }
         } else if (t8004) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorLeft();
+            mItemBoxGrid.GridMoveCursorLeft();
         } else if (t10008) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorRight();
+            mItemBoxGrid.GridMoveCursorRight();
         } else if (t2001) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorDown();
+            mItemBoxGrid.GridMoveCursorDown();
         } else if (t4002) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorUp();
+            mItemBoxGrid.GridMoveCursorUp();
         } else if (p1000000) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->OpenSortMenu();
+            mItemBoxGrid.OpenSortMenu();
         } else if (p200) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->TickItemBoxGrid();
+            mItemBoxGrid.TickItemBoxGrid();
         } else if (p400) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->SelectCatRow();
+            mItemBoxGrid.SelectCatRow();
         }
     } else {
         // Pointer input disabled: plain pad bits drive the flow.
@@ -294,43 +282,43 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* sel
         u32 p40 = (pressed & 0x40) != 0;
 
         if (p10) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->func_801CCAF0();
+            mItemBoxGrid.func_801CCAF0();
         } else if (p20) {
-            if (((CItemBoxGrid*)(self->itemBoxGrid()))->IsItemBoxActive() != 0) {
-                ((CItemBoxGrid*)(self->itemBoxGrid()))->HandleCancelBtn(0);
+            if (mItemBoxGrid.IsItemBoxActive() != 0) {
+                mItemBoxGrid.HandleCancelBtn(0);
             } else {
-                beginClose(&self->mTitleAHelp);
-                ((CItemBoxGrid*)(self->itemBoxGrid()))->AdvanceBoxState();
-                self->mState = 3;
+                beginClose(&mTitleAHelp);
+                mItemBoxGrid.AdvanceBoxState();
+                mState = 3;
             }
         } else if (t8004) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorLeft();
+            mItemBoxGrid.GridMoveCursorLeft();
         } else if (t10008) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorRight();
+            mItemBoxGrid.GridMoveCursorRight();
         } else if (t2001) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorDown();
+            mItemBoxGrid.GridMoveCursorDown();
         } else if (t4002) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->GridMoveCursorUp();
+            mItemBoxGrid.GridMoveCursorUp();
         } else if (p800) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->OpenSortMenu();
+            mItemBoxGrid.OpenSortMenu();
         } else if (p200) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->TickItemBoxGrid();
+            mItemBoxGrid.TickItemBoxGrid();
         } else if (p40) {
-            ((CItemBoxGrid*)(self->itemBoxGrid()))->SelectCatRow();
+            mItemBoxGrid.SelectCatRow();
         }
     }
 
-    func_801C41E8(&self->mTitleAHelp, (u8)((CItemBoxGrid*)(self->itemBoxGrid()))->GetPromptState());
+    func_801C41E8(&mTitleAHelp, (u8)mItemBoxGrid.GetPromptState());
 }
 
 // Phase transition: once the title bar is idle and the item grid is ready,
 // set the closing-state flag at 0x54 (the CMenuGCItem::Move case-3 check,
 // kept as a separate helper here).
-extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self) {
+void CMenuShopSell::HandlePhase3() {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (self->mTitleAHelp.isIdle() != 0 &&
-        ((CItemBoxGrid*)(self->itemBoxGrid()))->GetField61() != 0) {
-        self->mField54 = 1;
+    if (mTitleAHelp.isIdle() != 0 &&
+        mItemBoxGrid.GetField61() != 0) {
+        mField54 = 1;
     }
 }

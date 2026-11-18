@@ -5,6 +5,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/object/CfObjectEne.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -806,9 +807,7 @@ extern "C" void moveBaseChase(cf::CCtrlMoveEne* self, ml::CVec3* out,
 // helper (CfObjectImpl.cpp); testActorStatus queries an actor word (CfAct.cpp).
 extern "C" cf::CFunc8009156CList* getReslistB48();
 // Icon-display helper (CActParamAnim.cpp).
-extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 // bdat row-value reader (CfObjectEne.cpp): (obj, column, row) -> raw word.
-extern "C" u32 getEneBdatByIndex(void* self, const char* column, int row);
 // Move-data approach helper (CtrlMoveBase.cpp) and coli segment probe used by
 // CtrlMoveEne_TrackMoveTarget (retail C-ABI names).
 extern "C" int moveBaseRoute(cf::CCtrlMoveEne* self, ml::CVec3* pos, int flag);
@@ -881,7 +880,6 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void unregisterBattleActor(void* self, void* obj);
-extern "C" void CfObjectMove_setAnimModeArgs(void* obj, int a, int b, int c, int d);
 // CtrlMoveEne_UpdateBattleAI call site: game-flag query (C++ linkage mangles to the retail
 // isGlobalCamFlagSet__Fi).
 bool isGlobalCamFlagSet(int r3);
@@ -1024,7 +1022,6 @@ extern "C" void maskMoveBaseFlags(cf::CCtrlMoveEne* self);
 extern "C" void setSnapFlags(void* self, u32 a, u32 b, f32 value);
 extern "C" void* setAnimPosVec(void* out, const ml::CVec3* src);
 extern "C" void writeMoveSlotFloat(void* obj, f32 value);
-extern "C" u32 getEneBdatColumn(void* self, const char* column);
 extern "C" void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
 extern "C" void CtrlMoveEne_CheckActorState(cf::CCtrlMoveEne* self, void* obj, int arg2, u32 arg3);
 extern "C" void CtrlMoveEne_TrackMoveTarget(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1);

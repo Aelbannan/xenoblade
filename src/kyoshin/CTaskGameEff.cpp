@@ -10,6 +10,13 @@
 #include "monolib/core/CViewRoot.hpp"
 #include "monolib/core/CTaskManager.hpp"
 
+// RTTI typeinfos for the __dynamic_cast of effect objects (CfObject ->
+// CfObjectEff). Declared here rather than in the header: CfObjectEff.cpp
+// generates __RTTI__Q22cf8CfObject itself and MWCC rejects an extern of that
+// name there (10322).
+extern "C" const void* __RTTI__Q22cf11CfObjectEff;
+extern "C" const void* __RTTI__Q22cf8CfObject;
+
 extern u32 __ptmf_null[3];
 
 __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
@@ -315,7 +322,7 @@ void* bindIndexedEffect(int index, void* manager) {
         return nullptr;
     }
     void* eff = createNpcActor__Q22cf13CfGameManagerFv(index);
-    void* obj = __dynamic_cast(eff, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+    void* obj = __dynamic_cast(eff, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
     if (obj != nullptr && manager != nullptr) {
         bindPartnerO_(obj, manager, 0);
         void* data = static_cast<Mgr98View*>(manager)->sub98;

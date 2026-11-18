@@ -514,7 +514,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
                     ((UnkKizunaMid59344*)self->layout)->field10->target(
                         (int)nameBuf, 1);
                 setPaneVisible((nw4r::lyt::Pane*)pane,
-                              (prog - d * 2000) / 2000);
+                              prog - d * 2000 >= 2000);
             }
         }
     }

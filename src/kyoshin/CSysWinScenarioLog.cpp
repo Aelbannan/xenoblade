@@ -1003,8 +1003,7 @@ void SysWinLog_ScanDeviceOwners(CSysWinDevice* self) {
                 }
             }
         } else if (h == 4) {
-            CtrlObjectParam_GetCharEntry(4);
-            result = (CtrlObjectParam_GetCurrentRowKey() == 1);
+            result = (CtrlObjectParam_GetCurrentRowKey(CtrlObjectParam_GetCharEntry(4)) == 1);
         } else {
             result = 0;
         }

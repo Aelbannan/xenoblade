@@ -1002,7 +1002,7 @@ extern "C" void openVisionPairEngage(CVision* self) {
             u32 i = 0;
             while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
                 void* elem = getObjectAt(vdlist.get(), i);
-                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
                 if (obj == 0) {
                     self->vt_20(1);
                     return;
@@ -1195,7 +1195,7 @@ extern "C" void openVisionForPairs(CVision* self) {
             u32 i = 0;
             while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
                 void* elem = getObjectAt(vdlist.get(), i);
-                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
                 if (obj == 0) {
                     self->vt_20(1);
                     return;
@@ -1911,7 +1911,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
             u32 i = 0;
             while (i < *(u32*)((u8*)vdlist.get() + 0x620)) {
                 void* elem = getObjectAt(vdlist.get(), i);
-                void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
                 if (obj == 0) {
                     self->vt_20(1);
                     return;
@@ -2467,7 +2467,7 @@ extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
         startEnumObjects(vdlist.get(), 0x20, 0);
         for (u32 i = 0; i < ((CVisionEnumList*)vdlist.get())->count; i++) {
             void* elem = getObjectAt(vdlist.get(), i);
-            void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+            void* actor = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf8CfObject, 0);
             if (actor != obj && actor != obj2) {
                 CVisionActor3388* a = (CVisionActor3388*)actor;
                 a->field_3388 &= ~0x8u;
@@ -2626,7 +2626,7 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
         off = 0;
         for (; i < ((CVisionEnumList*)vdlist.get())->count; off += 0x4818, i++) {
             void* elem = getObjectAt(vdlist.get(), i);
-            void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+            void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf8CfObject, 0);
             if (obj == (void*)p1 || obj == (void*)p2) {
                 continue;
             }
@@ -2660,7 +2660,7 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
     startEnumObjects(vdlist2.get(), 0x80000, 0);
     for (u32 i = 0; i < ((CVisionEnumList*)vdlist2.get())->count; i++) {
         void* elem = getObjectAt(vdlist2.get(), i);
-        void* obj = __dynamic_cast(elem, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+        void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
         if (obj == 0) {
             self->vt_20(1);
             return;
@@ -2687,7 +2687,7 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     startEnumObjects(vdlist.get(), 0x328, 0);
     for (u32 i = 0; i < ((CVisionEnumList*)vdlist.get())->count; i++) {
         void* elem = getObjectAt(vdlist.get(), i);
-        void* obj = __dynamic_cast(elem, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+        void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
         if (obj == 0) {
             self->vt_20(1);
             return;
@@ -2721,7 +2721,7 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     startEnumObjects(vdlist.get(), 0x20, 0);
     for (u32 i = 0; i < *(u32*)((u8*)vdlist.get() + 0x620); i++) {
         void* elem = getObjectAt(vdlist.get(), i);
-        CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
+        CVisionFusion* actor = (CVisionFusion*)__dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf8CfObject, 0);
         actor->field_3388 &= 0xFFFD;
         actor->field_04->v20(0x4000);
     }
@@ -3316,8 +3316,8 @@ extern "C" u8 __RTTI__Q22cf11CActorParam[];
 extern "C" u8 __RTTI__Q22cf11CDebugState[];
 extern "C" u8 __RTTI__Q22cf11CActorState[];
 extern "C" u8 __RTTI__Q22cf12CBattleState[];
-extern "C" u8 lbl_eu_806618D8[];
-extern "C" u8 lbl_eu_806618E0[];
+extern "C" u8 __RTTI__Q22cf12CfObjectMove[];
+extern "C" u8 __RTTI__Q22cf9CAIAction[];
 extern "C" u8 __RTTI__Q22cf12CObjectParam[];
 extern "C" u8 __RTTI__Q22cf12CObjectState[];
 extern "C" u8 __RTTI__Q22cf7CVision[];
@@ -3350,7 +3350,7 @@ extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_8053320C
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533218[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533224[3] = {0, 0xFFFFFFFF, (u32)&manageVisionPlayerCallbacks};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533230[40] = {
-    0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 16028, (u32)__RTTI__Q22cf12CObjectParam, 16028, (u32)&lbl_eu_806618F0, 16028, (u32)&lbl_eu_806618E8, 16028, (u32)lbl_eu_806618D8, 16028, (u32)lbl_eu_806618E0, 13184, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, (u32)__RTTI__Q22cf11CActorParam, 0, 0};
+    0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 16028, (u32)__RTTI__Q22cf12CObjectParam, 16028, (u32)&__RTTI__Q22cf8CfObject, 16028, (u32)&__RTTI__Q22cf13CfObjectModel, 16028, (u32)__RTTI__Q22cf12CfObjectMove, 16028, (u32)__RTTI__Q22cf9CAIAction, 13184, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, (u32)__RTTI__Q22cf11CActorParam, 0, 0};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805332D0[14] = {
     (u32)__RTTI__Q22cf7CVision, 0, (u32)&__dt__Q22cf7CVisionFv, (u32)&releaseVisionEffect, (u32)&tryEngageVisionCutscene, (u32)&setupVisionEngagement, (u32)&driveVisionFxUpdates, (u32)&checkVisionCallbackState, (u32)&teardownVisionFx, (u32)&detachVisionEffect, (u32)&matchVisionModelCallback, (u32)&createVisionEffect, (u32)&clearVisionEffect, (u32)&clearAllVisionEffects};
 struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
@@ -3359,7 +3359,7 @@ struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
     u32 w70; u32 w74; u32 w78; u32 w7c; u32 w80; u32 w84; u32 w88; u32 w8c;
     u32 w90; u32 w94; u32 w98; u32 w9c[15]; };
 extern "C" __declspec(section ".data") __attribute__((used)) VisionBlk33308 lbl_eu_80533308 = {
-    (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, (u32)&__RTTI__Q22cf13CfObjectModel, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333E0[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333EC[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 

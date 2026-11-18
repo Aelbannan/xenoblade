@@ -111,7 +111,7 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 // `font` is a nw4r::ut::Font* passed as a word (retail symbol
 // setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl).
 void setLayoutTextBoxFont(nw4r::lyt::Layout* layout, char* name, u32 font);
-void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* name, u8 value);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* name, int value);
 
 extern "C" void LayoutBindAnimResource(nw4r::lyt::Layout* layout, void** ppAnimRes,
                                        nw4r::lyt::ArcResourceAccessor* accessor, char* name);

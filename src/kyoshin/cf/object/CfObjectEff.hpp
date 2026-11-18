@@ -31,13 +31,6 @@ extern "C" {
     int CfRes_getD80Flag();
 }
 
-// RTTI typeinfos + C-ABI cast helper for notifyDetach_ (same pair as
-// CTaskGameEff/CBattleManager: cast the chain object from the type at
-// lbl_eu_80661970 down to its base at lbl_eu_806618F0).
-extern "C" const void* lbl_eu_80661970;
-extern "C" const void* lbl_eu_806618F0;
-extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
-                                const void* dst_type, void* src2dst);
 // C-linkage validity check used by updateEffect_/teardownEff__ (returns the
 // object when it is still live, 0 when it has been released).
 extern "C" void* lookupWorkAtAddr(void* obj);

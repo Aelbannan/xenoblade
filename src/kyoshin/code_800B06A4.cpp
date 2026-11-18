@@ -2,6 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+// cf::CfObjectEne members (CfObjectEne.hpp cannot be included here yet: its
+// CfObjectActor/CfObjectMove chain clashes with this unit's loosely typed
+// extern "C" imports).
+extern "C" void* __ct__Q22cf11CfObjectEneFv(void* self);
+extern "C" u32 getEneBdatColumn__Q22cf11CfObjectEneFPCc(void* self, const char* column);
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/code_800B06A4.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
@@ -18,7 +23,6 @@ void UnkClass_800B0AD8::clearCounters() {
 DECOMP_DONT_INLINE UnkClass_805764CC* getInstance();
 #pragma inline
 u32 Tok_Pack08(u32 a, u32 b);
-extern "C" u32 getEneBdatColumn(void* self, const char* column);
 extern "C" void subVec3f(void* out, void* a, void* b);
 u32 KyoshinHeap_Reset38();
 void CfRes_initHighGrid();
@@ -1031,7 +1035,7 @@ u32 shift_u32_hi8_alt2(u32 val){return (val >> 16) & 0xFF;}
 void init_45A0(){}
 void init_47A8(){}
 void init_4A24(){}
-int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self){return 0;}
+int CfObjectMove_hasActorScale__Q22cf12CfObjectMoveFv(void* self){return 0;}
 // us-800b5408: flag cascade over field_0x15F0 - equivalent to (4 <= v <= 8)
 // but written as retail's chained guards so each stage short-circuits into
 // its own compare/branch pair.
@@ -2929,7 +2933,7 @@ void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
         }
         linkItemNode__Q22cf13CfGameManagerFv(&mid, &outer, 0);
         if (testObj68bit6((u8*)p + 0x3e9c) == 0) {
-            u8 matched = (u8)getEneBdatColumn(p, lbl_eu_804FC4D8 + 0x47);
+            u8 matched = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(p, lbl_eu_804FC4D8 + 0x47);
             if (matched != 0 && CPartsChange_CheckReloadGate(ctx) == 0 &&
                 cfCam_queryVoxArts(p, 0x802) != 0) {
                 CfObjectMove_setRegionAttached((u8*)p + 0x3e9c, 0);
@@ -4580,7 +4584,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         if (payload->h24 != 0) {
             void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
-                __ct__Q22cf11CfObjectNpcFv(mem, 1);
+                __ct__Q22cf11CfObjectNpcFi(mem, 1);
             }
             obj = mem;
         } else {
@@ -4713,14 +4717,14 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
         if ((u16)mask == 0x04) {
             void* mem = allocate__Q23mtl10MemManagerFUlUl(0x45d0, (unsigned long)CfRes_getHeapHandle());
             if (mem != 0) {
-                void* built = __ct__cf_CfObjectEne(mem);
+                void* built = __ct__Q22cf11CfObjectEneFv(mem);
                 obj = (built != 0) ? (u8*)built + 0x3e9c : built;
             }
         } else {
             void* mem = allocate__Q23mtl10MemManagerFUlUl(0x724, (unsigned long)CfRes_getHeapHandle());
             obj = mem;
             if (mem != 0) {
-                __ct__Q22cf11CfObjectNpcFv(mem, 0);
+                __ct__Q22cf11CfObjectNpcFi(mem, 0);
             }
         }
         if (obj == 0) {
@@ -5058,7 +5062,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 // Name-probe on the embedded controller view (obj-0x3e9c);
                 // bits 4/3/1 of the result select the per-object branches.
                 u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
-                u8 b18 = (u8)getEneBdatColumn(minus, lbl_eu_804FC4D8 + 0x3e);
+                u8 b18 = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(minus, lbl_eu_804FC4D8 + 0x3e);
                 if (resFlag10 == 0) {
                     f22 = f17;
                     if ((b18 & 0x10) != 0) {

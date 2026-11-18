@@ -176,7 +176,7 @@ void CNumSelect::CountDown() {
 
 #pragma push
 #pragma optimize_for_size on
-void CNumSelect::SetArrowVisible(u32 visible) {
+void CNumSelect::SetArrowVisible(bool visible) {
     if (mpLayout != NULL) {
         setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_up", true), visible);
         setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("pic_down", true), visible);

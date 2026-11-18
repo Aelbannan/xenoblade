@@ -69,7 +69,6 @@ extern void* lbl_eu_806640E0;
 extern const char* lbl_eu_80504238[4];
 extern const char* lbl_eu_80504248[4];
 }
-typedef void (*MenuVisionSetDamageText)(nw4r::lyt::Layout*, char*, int);
 
 struct VisionQuad {
     s16 values[4];
@@ -874,7 +873,7 @@ extern "C" void driveVisionUpdate(int flags) {
         } else {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
             if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt(battle) > 0) {
-                ((MenuVisionSetDamageText)setLayoutTextBoxNumber)(
+                setLayoutTextBoxNumber(
                     entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt(battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
@@ -1057,7 +1056,7 @@ extern "C" void driveVisionUpdate(int flags) {
         } else if (value < 0) {
             value = 0;
         }
-        ((MenuVisionSetDamageText)setLayoutTextBoxNumber)(
+        setLayoutTextBoxNumber(
             entry.mLayout, (char*)(lbl_eu_80504268 + 0x208), value);
         menuVisionBeginSilent(entry);
 

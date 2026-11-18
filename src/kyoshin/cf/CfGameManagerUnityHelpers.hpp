@@ -766,7 +766,7 @@ extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(UnkReset28Data* data)
     memset(data, 0, sizeof(*data));
 }
 
-extern "C" void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv(cf::CfObject* object,
+extern "C" void CfObject_syncMoveHead__Q22cf8CfObjectFf(cf::CfObject* object,
                                                              float value) {
     object->mField4C = value * ml::deg2rad;
 }

@@ -640,7 +640,7 @@ CBattleManager* CBattleManager::getInstance() {
         // Removed-object callback from the factory manager; obj->unk64 holds
         // the object's spawn-kind flags.
         if(obj->unk64 & 0x20){
-            this->CBattleMan_EmitVisionEvent(__dynamic_cast(obj, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0));
+            this->CBattleMan_EmitVisionEvent(__dynamic_cast(obj, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0));
             return;
         }
 
@@ -10847,7 +10847,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
             startEnumObjects(h1.get(), 0x408, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)h1.get())->count; i++) {
                 void* o = getObjectAt(h1.get(), i);
-                void* c = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                void* c = __dynamic_cast(o, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
                 ((cf::CfObject*)c)->CfObject_pushRefreshValue((float)value);
             }
         }
@@ -10857,11 +10857,11 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
             startEnumObjects(h2.get(), 0x80000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)h1.get())->count; i++) {
                 void* o = getObjectAt(h1.get(), i);
-                void* actorObj = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+                void* actorObj = __dynamic_cast(o, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
                 ((cf::CfObject*)actorObj)->CfObject_pushRefreshValue((float)value);
                 for (u32 j = 0; j < ((cf::CVisionEnumList*)h2.get())->count; j++) {
                     void* o2 = getObjectAt(h2.get(), j);
-                    void* typeObj = __dynamic_cast(o2, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                    void* typeObj = __dynamic_cast(o2, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
                     if (((E484_TypeObj*)typeObj)->field_9C == actorObj)
                         ((cf::CfObject*)typeObj)->CfObject_pushRefreshValue((float)value);
                     void* a = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)actorObj));
@@ -10886,7 +10886,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
             startEnumObjects(h1.get(), 0x80000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)h1.get())->count; i++) {
                 void* o = getObjectAt(h1.get(), i);
-                void* typeObj = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                void* typeObj = __dynamic_cast(o, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
                 // int local over the u16 field: retail emits a zero-extending
                 // lhz but signed cmpi chains.
                 int t = ((E484_TypeObj*)typeObj)->type8C;
@@ -10914,7 +10914,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
             startEnumObjects(h1.get(), 0x80000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)h1.get())->count; i++) {
                 void* o = getObjectAt(h1.get(), i);
-                void* typeObj = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                void* typeObj = __dynamic_cast(o, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
                 int t = ((E484_TypeObj*)typeObj)->type8C;
                 if ((u32)(t - 0xA1) <= 3 || (u32)(t - 0xC0) <= 2 || t == 0xB8)
                     ((cf::CfObject*)typeObj)->CfObject_pushRefreshValue((float)value);
@@ -10936,7 +10936,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
     ((cf::CfObjectActor*)ownerB)->CfObject_pushRefreshValue((float)value);
                 startEnumObjects(h2.get(), 0x80000, 0);
                 for (u32 i = 0; i < ((cf::CVisionEnumList*)h2.get())->count; i++) {
-                    void* typeObj = __dynamic_cast(getObjectAt(h2.get(), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                    void* typeObj = __dynamic_cast(getObjectAt(h2.get(), i), 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
                     // Match the cast object's +0x9C pointer against either vision
                     // actor (or its embedded move sub-object at +0x3E9C).
                     if (((E484_TypeObj*)typeObj)->field_9C == static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)ownerA) ||

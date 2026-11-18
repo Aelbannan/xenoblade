@@ -12033,3 +12033,67 @@ TU is not inlined anywhere.**
   10322 "illegal name overloading" as soon as the class emits the same symbol.
   For example, `plugin/pluginEve.cpp` has `extern u32 __RTTI__Q22cf11CActorState[]`,
   so an inline `CActorState::setObjStateBit3` cannot be emitted there.
+
+## cf leaf classes (Ene / Pc / Npc): emission order, RTTI externs, member dtors (2026-11-18)
+
+Verified while turning `CfObjectEne`, `CfObjectPc` and `CfObjectNpc` into real
+classes (compiler vtable, RTTI and `@16028@` thunks).
+
+- **Declaration order does not steer thunk or inline-body order.** Swapping
+  the in-class order of `CBattleState_getOwner` / `callOwnerObject` in the
+  derived class changed nothing. Functions that need a thunk are emitted before
+  the other vtable-referenced inlines, and thunks close the TU. Retail has the
+  two owner getters and their `@8@` thunks in the opposite order to ours (same
+  bytes, different slot-to-address mapping); the cause is still open.
+- **A virtual call to an inline virtual emits its weak body right after the
+  caller.** The remaining vtable-referenced inlines follow at TU end, per
+  class, in reverse definition order.
+- **Member destructors need real member classes.** With a real member
+  (`CAIActionRing` holding `CAIActionSlotQueue`) the inlined dtor addresses the
+  member from the base pointer register (`addic. r3,r0,4`); a cast of
+  `&this->field` folds to `this+const` and does not match. A user-declared
+  inline dtor that gets inlined into an emitted dtor is still emitted
+  out-of-line as a weak function (`~CAIActionSlotQueue`); an implicit one is
+  emitted and dead-stripped.
+- **`static_cast<Base*>(p)` as a function argument gets a null guard; a member
+  call through `p` does not** (`cmpwi; beq; addi 0x3E9C` versus a bare
+  `addi`/`lwzu`). Retail has no guard at these sites, so
+  `self->CfObjectMove_isEffectSlotUsed(...)` or a qualified
+  `CfObjectMove::CfObjectMove_attachEffectSlot(...)` is the source shape, not a
+  helper returning the base pointer. The guard also appears for
+  `static_cast<Base*>(this)` passed to a free function.
+- **An extern named like an RTTI object can break a TU that generates that
+  RTTI.** In `CfObjectEff.cpp` (emits the `CfObjectEff` vtable and RTTI,
+  direct base `CfObject`), `extern "C" const void* __RTTI__Q22cf8CfObject;`
+  gives 10322 at the point the compiler first needs the RTTI (end of
+  namespace, or a `dynamic_cast`), whether the extern comes before or after
+  the class definition. `CfObjectEne.cpp` saw the same extern and compiled, so
+  the trigger is narrower than "the TU generates this RTTI"; it was not
+  isolated further. Keep such externs out of shared headers
+  (`CTaskGameEff.hpp` reached `CfObjectEff.cpp` through `harness_catalog.hpp`).
+  Where the TU has the class, write the real `dynamic_cast` instead: in
+  `CfObjectEff.cpp` `dynamic_cast<cf::CfObjectEff*>(cfObject)` produces the
+  same bytes as the hand `__dynamic_cast(obj, 0, &dstRtti, &srcRtti, 0)` call
+  (argument 3 is the destination type, argument 4 the static source type).
+- **An extern "C" function named like a member of the TU's own class** also
+  gives 10322 once the class emits its vtable, so a hand vtable cannot live in
+  the TU that defines those members as real members.
+- **`-RTTI off` on a unit removes the RTTI word, the base list and the name
+  string**, which shifts `@stringBase0` by the name length; byte-identical
+  functions then fail the reloc-site check. `CfObjectNpc.cpp` still carries
+  that flag in `configure.py`; compiled with RTTI on, its vtable is 139/139
+  words identical to retail.
+- **String pool order is first use across the whole TU.** Replacing hand
+  offsets into a label (`&lbl[0x19A]`) with literals makes each offset depend
+  on every earlier function referencing the same strings. In CfObjectEne the
+  pool is 0x11 short until the unmatched functions reference `"elem_tol_dir"`
+  and `"str"`, so `initEnemyBdatParams` differs by one `addi` immediate.
+- **File-scope `char* p = "literal"`**: a literal of 8 bytes or less goes to
+  the `.sdata2` pool, a longer one to `.rodata` ahead of the RTTI name and the
+  pooled strings.
+- **Open: inline `1..0x18` range helper.** Retail tests the battle-manager
+  byte with two `cmplwi` (`< 1`, `> 0x18`) around `li r0,0` / `li r0,1`. Every
+  inline `bool` helper shape tried (`&&`, nested `if`, `else if` ladder, local
+  copy of the byte) folds to `addi -1; clrlwi; cmplwi 0x17`; only two separate
+  `if (...) goto` tests written directly in the caller keep both compares.
+  `CfObjectPc::CActorParam_UnkVirtualFunc88` stays at 95% on this.

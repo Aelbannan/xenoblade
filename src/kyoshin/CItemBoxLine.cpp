@@ -1669,16 +1669,16 @@ void CItemBoxLine::RebuildTabList() {
         char nameB[0x20];
         sprintf(nameA, &lbl_eu_805071B0[0x369], (u8)i + 1);
         sprintf(nameB, &lbl_eu_805071B0[0x378], (u8)i + 1);
-        u32 visA = 0;
-        u32 visB = 0;
+        bool visA = false;
+        bool visB = false;
         u8 entry = tabEntries[i];
         if (entry != 0) {
             if ((u8)i == (s8)field6D) {
-                visA = 1;
-                visB = 0;
+                visA = true;
+                visB = false;
             } else {
-                visA = 0;
-                visB = 1;
+                visA = false;
+                visB = true;
             }
         }
         setPaneVisible(field40->GetRootPane()->FindPaneByName(nameA, true), visA);
@@ -1827,15 +1827,15 @@ void CItemBoxLine::RefreshTabLabels(unsigned int) {
         char nameB[0x20];
         sprintf(nameA, &lbl_eu_805071B0[0x369], (u8)i + 1);
         sprintf(nameB, &lbl_eu_805071B0[0x378], (u8)i + 1);
-        u32 visA = 0;
-        u32 visB = 0;
+        bool visA = false;
+        bool visB = false;
         if (tabEntries[i] != 0) {
             if (i == (s8)field6D) {
-                visA = 1;
-                visB = 0;
+                visA = true;
+                visB = false;
             } else {
-                visA = 0;
-                visB = 1;
+                visA = false;
+                visB = true;
             }
         }
         setPaneVisible(field40->GetRootPane()->FindPaneByName(nameA, true), visA);
@@ -2264,7 +2264,7 @@ void CItemBoxLine::FormatKindDName(u32 itemData) {
     u8 vC = BdatGetU8Direct((const void*)owner, &lbl_eu_805071B0[0x622], cat);
     u8 defName = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], vC);
     void* tbl = CtrlObjectParam_GetCharEntry(vB);
-    u8 idx = (u8)CtrlObjectParam_GetCurrentRowKey();
+    u8 idx = (u8)CtrlObjectParam_GetCurrentRowKey(tbl);
     const u8* entry = (const u8*)tbl + idx * 73 + (defName << 1);
     char* str = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 44);
     switch (vA) {
@@ -2393,7 +2393,7 @@ int CItemBoxLine::ProbeAvailability(u32 key) {
     u8 c = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x622], v);
     u8 d = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], c);
     u8* base = (u8*)CtrlObjectParam_GetCharEntry(b);
-    u32 f = (u8)CtrlObjectParam_GetCurrentRowKey();
+    u32 f = (u8)CtrlObjectParam_GetCurrentRowKey(base);
     u32 d2 = (u32)d << 1;
     u32 prod = f * 0x49;
     u8* p = base + prod + d2;

@@ -311,10 +311,10 @@ extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // Cursor draw import (retail-unmangled name).
-extern "C" void Cur_DrawLayout(CBaseCur* cursor, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Cur_DrawLayout(void*, void*);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
-extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
+extern "C" void Cur_SetVisible(void*, u8);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
 
@@ -323,7 +323,7 @@ extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; see above).
-extern "C" void Cur_Update(CBaseCur* cursor);
+extern "C" void Cur_Update(void*);
 
 // Class_8045F858 scratch-region RAII guard used by OnFileEvent around the
 // layout build (retail C-linkage names; the class itself is declared in

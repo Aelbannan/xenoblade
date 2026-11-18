@@ -1,0 +1,29 @@
+# Task: make one list-widget class a real C++ class and use it properly from its owning menu
+
+Repo: /Users/ahmed/projects/xenoblade — private Wii byte-matching decompilation (MWCC). Your prompt names UNIT (the widget class, files `src/kyoshin/<UNIT>.cpp/.hpp`) and OWNER (the menu embedding it, files `src/kyoshin/menu/<OWNER>.cpp/.hpp`). The governing goal is source faithfulness ("match the original source shape; no hacks"). A lower match count is acceptable when the result is properly structured, but do not regress functions without a reason you can state.
+
+## Hard rules
+- NEVER run `git` (any subcommand). Never run raw `ninja`. Use `.venv/bin/python3`, never system python3.
+- Build/compare: `.venv/bin/python3 tools/coop/hexdiff.py <Unit> --all 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | grep -E '✗|✓|fully matched|^extab|rror' | cut -c1-140` (runs the build under the repo lock). Data: `.venv/bin/python3 tools/coop/run.py data diff <Unit>`. `.venv/bin/python3 tools/coop/run.py link-gate` must be exit 0 at the end.
+- Do not edit `*.ctx.c`, `configure.py`, or anything under `orig/`. You may edit `config/us/symbols.txt` to rename symbols to real mangled names (`.venv/bin/python3 tools/coop/faithful/rename_syms.py old=new ...`) and `config/us/splits.txt` when relocation evidence shows data belongs to another unit (explain in the report).
+- Edit only UNIT's and OWNER's files (and their `*Imports.hpp`). Shared widget headers (`CBgTex.hpp`, `CTitleAHelp.hpp`, `CBaseCur.hpp`, `CScrollBar.hpp`, `CSortMenu*`, `CSysWin*`, monolib headers) are READ-ONLY for this task because other agents are working concurrently; if one needs a change, describe the needed change in your report instead. Other files that merely call UNIT's functions may get the minimal edit needed to keep compiling.
+- Do not add `extern "C" lbl_eu_*` spellings. No scratch files in the repo; use /tmp/pp/work/ab/<UNIT>/ (create it) and back up every file there before its first edit.
+- Keep greps narrow (never grep `*.ctx.c`; pipe through `head`/`cut`).
+
+## Known facts
+- The class currently stores a hand-written vtable pointer field ("non-polymorphic view") and most member functions are pseudo-member C-linkage free functions with splitter names. Its real shape is a polymorphic class, very likely with an `IWorkEvent` base (see `OnFileEvent`; compare `CBgTex`/`CTitleAHelp` in src/kyoshin/, which declare `: public IWorkEvent` and `virtual bool OnFileEvent(CEventFile*)`).
+- Its members are real classes (`UnkClass_8045F564` in libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp, cursor classes derived from `CBaseCur`, `CScrollBar`, `CSortMenu`, …). Declare them as typed members instead of byte gaps with manual `__ct__`/`__dt__` calls, so the compiler generates construction and destruction.
+- VERIFIED compiler behaviour — read `docs/MWCC_CASES.md` sections "Vtable/RTTI ownership, thunks as TU terminators, and real locals for exception tables", "Widget re-init is assignment from a temporary" (plus its follow-up) and "Locals in destructors change the exception table, not the code". Key points: MWCC emits `[vtable][RTTI base list]` per class; blocks that build a stack temp, copy it field by field into a member (calling `__as__17UnkClass_8045F564FRC17UnkClass_8045F564` for region members) and destroy the temp with `-1` are assignments from a temporary in the original source (`mScrollBar = CScrollBar(1);`), and this only lines up with retail stack offsets when ALL such blocks in a function are real temporaries — convert a function's blocks together.
+- Evidence tool: `.venv/bin/python3 tools/coop/faithful/vt.py <obj path relative to build/us/obj> [.data]` dumps vtables/RTTI of a retail-split object with relocation targets.
+- Finished examples of this kind of conversion: `src/kyoshin/realtimeevt/CREvtLight.cpp/.hpp`, `src/kyoshin/realtimeevt/CREvtMem.cpp/.hpp`.
+
+## Steps
+1. Save before tables (hexdiff `--all` and `data diff`) for UNIT and OWNER in /tmp/pp/work/ab/<UNIT>/.
+2. Establish bases and virtuals from the retail vtable/RTTI. Declare the real class: typed members in layout order, real ctor with member-init list, real dtor, virtual overrides. Remove the hand vtable pointer field, any hand-written vtable/RTTI data, and `__declspec(section …)` placements that existed only for them. Rename retail symbols to the mangled names the real class emits (vtable, RTTI, ctor/dtor, virtuals).
+3. Convert ALL pseudo-member free functions (`Foo_Bar(X* self, ...)`, or free functions that only operate on the class's fields) into real member functions of the class — not only the ones in the vtable. An unmangled or splitter-style retail symbol name is NOT a reason to leave one as a free function: those names are placeholders, so rename the symbol in `config/us/symbols.txt` to the mangled member name the compiler emits and update every caller. Leave one as a free function only if you have positive evidence it is not a member (for example it is called with objects of an unrelated type), and state that evidence in the report.
+4. In UNIT's ctor and OWNER's `Init`/ctor/dtor, replace temp-copy blocks and manual member ctor/dtor calls with real members and assignments (all blocks of a function together).
+5. Fix vtable/RTTI split ownership so `data diff` is clean where possible.
+6. Rebuild UNIT, OWNER and every other unit you touched; compare with before; fix regressions you introduced or explain them. Run link-gate.
+
+## Report (final message)
+Matched before → after for UNIT and OWNER (and any other unit touched); data/extab status before → after; class hierarchy + evidence; symbols renamed; splits changed; which functions' temp-copy blocks became assignments with % before → after; what is left and why; anything reverted; shared-header changes you needed but did not make; final link-gate result; what you did not verify. Factual and concise.

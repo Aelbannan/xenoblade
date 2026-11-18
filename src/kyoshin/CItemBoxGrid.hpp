@@ -164,9 +164,10 @@ struct GridFilter24 {
 // construction calls it with the default arguments).
 struct CItemBoxGridEntry {
     s16 id;        // +0x00 item id (or -1 for an empty cell)
-    u8 flags[7];   // +0x02 per-cell flag bytes
+    u8 flags[6];   // +0x02 per-cell flag bytes
+    bool mMarked;  // +0x08 cell marked (toggled by ToggleCellMark)
 
-    CItemBoxGridEntry(s16 id = -1, u8 f0 = 0, u8 f1 = 0, u8 f2 = 0, u8 f3 = 0, u8 f4 = 0, u8 f5 = 0, u8 f6 = 0);
+    CItemBoxGridEntry(s16 id = -1, u8 f0 = 0, u8 f1 = 0, u8 f2 = 0, u8 f3 = 0, u8 f4 = 0, u8 f5 = 0, bool marked = false);
 };
 
 // Sort view over a fetched item object: the first word feeds the generic
@@ -201,7 +202,7 @@ public:
     u8 GetCellFlag3(u16 idx);
     int GetCellFlag1(u16 idx);  // int: retail callers test the full word (no clrlwi)
     u8 GetCellByte7(u16 idx);
-    int GetCellByte8(u16 idx);  // int: retail callers test the full word (no clrlwi)
+    bool GetCellByte8(u16 idx);
     void ToggleCellMark(u16 idx);
     u8 CountMarkedCells();
     u8 GetCategoryCap();
@@ -313,7 +314,7 @@ public:
     void SetCellCaption(s8 kind, void* item, u16 idx);
     void ShowCellCount(u32 kind, void* flag2, void* flag3, u32 idx);
     void SetTabHeader(int cat, int idx);
-    void SetCellMarkVis(u32 val, u32 idx);
+    void SetCellMarkVis(bool val, u32 idx);
     void RefreshCategoryTabs();
     void RebuildGridCat();
     void RebuildGridUI();
@@ -420,7 +421,7 @@ extern "C" u32 getPresentPath(void*);
 extern "C" void advancePresentState(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
-extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
+extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);

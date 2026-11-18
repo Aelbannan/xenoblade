@@ -243,7 +243,7 @@ void CCur11::initLayout() {
 // Cur_ShowTwoPanes: Set visibility of two named panes
 // ============================================================================
 // Same no-caching shape as Cur_SetTwoPanes09 (retail reloads root pane twice).
-extern "C" void Cur_ShowTwoPanes(CBaseCur* cur, u8 visible) {
+extern "C" void Cur_ShowTwoPanes(CBaseCur* cur, bool visible) {
     if (cur->mpLayout == nullptr) return;
     setPaneVisible(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x13d, true), visible);
     setPaneVisible(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x14d, true), visible);
@@ -361,9 +361,9 @@ void CCur22::initLayout() {
 extern "C" void Cur_HighlightPane(CBaseCur* cur, u8 index) {
     for (u8 i = 0; i < 4; i++) {
         // Branch form: retail emits li 0 / cmpl / bne / li 1, not select-arithmetic
-        u8 visible = 0;
+        bool visible = false;
         if (i == index) {
-            visible = 1;
+            visible = true;
         }
         nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80534828[i], true);
         setPaneVisible(pane, visible);
@@ -417,7 +417,7 @@ void CSubCur::initLayout() {
 // Cur_ShowTwoSubPanes: Set visibility of two named panes (subcur variant)
 // Retail reloads mpLayout + root pane for the second lookup (no caching).
 // ============================================================================
-extern "C" void Cur_ShowTwoSubPanes(CBaseCur* cur, u8 visible) {
+extern "C" void Cur_ShowTwoSubPanes(CBaseCur* cur, bool visible) {
     if (cur->mpLayout == nullptr) return;
     setPaneVisible(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true), visible);
     setPaneVisible(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true), visible);

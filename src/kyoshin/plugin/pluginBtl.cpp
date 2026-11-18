@@ -93,8 +93,8 @@ extern "C" {
 
     // RTTI type info for dynamic_cast (attack function).
     // Declared as u32 so MWCC sdata-addresses them (EMB_SDA21) like retail.
-    extern u32 lbl_eu_806618D8;
-    extern u32 lbl_eu_806619A0;
+    extern u32 __RTTI__Q22cf12CfObjectMove;
+    extern u32 __RTTI__Q22cf10CfObjectPc;
     void* __dynamic_cast(void*, long, const void*, const void*, void*);
     void* findObjectById__Fi(int);
 }
@@ -177,8 +177,8 @@ int attack(VMThread* pThread) {
     }
     for (int i = 0; i < 3; i++) {
         BtlActorLayout* actor = (BtlActorLayout*)__dynamic_cast(
-            cf::CfGameManager::getPlayer(i), 0, &lbl_eu_806619A0,
-            &lbl_eu_806618D8, 0);
+            cf::CfGameManager::getPlayer(i), 0, &__RTTI__Q22cf10CfObjectPc,
+            &__RTTI__Q22cf12CfObjectMove, 0);
         if (actor != 0) {
             // showArt set: player-side arts on / enemy-side off; cleared: swapped.
             if (showArt != 0) {

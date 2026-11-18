@@ -3575,40 +3575,6 @@ void CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv(cf::CActorParam* self) 
     }
 }
 
-// BattleState thunks: adjust `this` by -8 and tail-call CActorParam methods.
-// Retail is subi r3,r3,8 / b target (r4 passes through untouched), so each
-// thunk is spelled as a direct tail call with the real arity: no
-// function-pointer casts, no mismatched prototypes.
-
-// Hand-spelled with legal identifiers because the CActorParam vtable is
-// still a hand table (the compiler names these @8@<member>).
-// dont_inline: compiler-emitted thunks never inline their target.
-#pragma push
-#pragma dont_inline on
-extern "C" void thunk_8_CBattleState_getLinkedActorId__Q22cf11CActorParamFPQ22cf17CBattleStateEntry(void* self, cf::CBattleStateEntry* entry) {
-    reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_getLinkedActorId(entry);
-}
-
-// us-80180170
-extern "C" void thunk_8_CBattleState_notifyEntryUpdated__Q22cf11CActorParamFPQ22cf17CBattleStateEntry(void* self, cf::CBattleStateEntry* entry) {
-    reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_notifyEntryUpdated(entry);
-}
-
-// us-80180178
-extern "C" void* thunk_8_CObjectParam_getParamPtr__Q22cf11CActorParamFv(void* self) {
-    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CObjectParam_getParamPtr();
-}
-
-// us-80180180
-extern "C" void* thunk_8_CBattleState_getOwner__Q22cf11CActorParamFv(void* self) {
-    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_getOwner();
-}
-
-// us-80180188: target body lives in CArtsParam.cpp.
-extern "C" void* thunk_8_CBattleState_callOwnerObject__Q22cf11CActorParamFv(void* self) {
-    return reinterpret_cast<cf::CActorParam*>((char*)self - 8)->cf::CActorParam::CBattleState_callOwnerObject();
-}
-#pragma pop
 
 // us-8017e9xx family: thin float-forwarders onto owned gauge slots.
 extern "C" void CActorParam_applyStoredHp__Q22cf11CActorParamFv(cf::CActorParam* self) {

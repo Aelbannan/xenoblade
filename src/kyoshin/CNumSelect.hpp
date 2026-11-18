@@ -37,7 +37,7 @@ public:
     void Close();
     void CountUp();
     void CountDown();
-    void SetArrowVisible(u32 visible);
+    void SetArrowVisible(bool visible);
     void UpdateOpen();
     void UpdateClose();
     void UpdateCountUp();

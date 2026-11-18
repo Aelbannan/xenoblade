@@ -19,6 +19,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / isBattleStatusActive)
 #include "kyoshin/CTitleAHelpImports.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
@@ -179,12 +180,12 @@ struct SCopy_80192268 {
     vu32 f_27a4;
 };
 
-// Opaque blob copied by InfoCfCopyObjF80 inside Init()'s window-state copy
-// (0x41F4..0x4400 region of the CPartyStateWin overlay).
+// Opaque blob copied by CItemBoxInfo::operator= (weak, emitted in CMenuItem)
+// inside Init()'s window-state copy (0x41F4..0x4400 region of the
+// CPartyStateWin overlay).
 struct CMenuPTBlob41F4 {
     u8 data[0x20c];
 };
-extern "C" void InfoCfCopyObjF80(CMenuPTBlob41F4* dst, const CMenuPTBlob41F4* src);
 
 // CBgTex layout-load query called by Init (retail unmangled free-function
 // form; same convention as BgTex_Tick_3D54 below).
@@ -664,7 +665,7 @@ void CMenuPTState::Init() {
     d->opack41e8.v41e9 = s->opack41e8.v41e9;
     d->opack41e8.v41ea = s->opack41e8.v41ea;
     d->opack41e8.v41ee = s->opack41e8.v41ee;
-    InfoCfCopyObjF80(&d->f41f4, &s->f41f4);
+    reinterpret_cast<CItemBoxInfo&>(d->f41f4) = reinterpret_cast<const CItemBoxInfo&>(s->f41f4);
     CopyPTStateBlob(&d->blob4400, &s->blob4400);
     // Tail run (CSysWin flags + window timer float).
     d->v6bac = s->v6bac;

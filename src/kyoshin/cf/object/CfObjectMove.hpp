@@ -51,7 +51,7 @@ extern "C" void Coli_ListRemoveNode(void* manager, void* region);
 extern void* lbl_eu_80665958;   // region-library manager (sbss)
 // CfObjectMove vtable (data TU; the destructor stores it explicitly, same
 // scheme as CfGimmickLock.hpp's lbl_eu_80535900).
-extern u8 lbl_eu_80529690[];
+extern void* lbl_eu_80529690[];
 // Destructor-chain imports (defined in the region library, in
 // kyoshin/cf/CActParamAnimGame.cpp and in CfObjectModel.cpp). extern "C"
 // keeps the bl relocs at the unmangled retail names (same scheme as
@@ -309,12 +309,8 @@ extern "C" void CharEffRegisterSlot(void* self, u32 a, u32 b, s16 c, u32 d, u32 
 // CActParamAnim helpers (defined in kyoshin/action/CActParamAnim.cpp,
 // retail unmangled names). setTurnScale is the float-taking translation
 // helper. func_8004B9D4 is called at the retail CfObjectMove_setAnimModeArgs site with
-// only r3-r6 set (the incoming params); the canonical CModelDispEquip.hpp
-// 5-arg declaration conflicts with CfObjectModel.hpp, so a 4-arg form is
-// declared here to reproduce the call site exactly (same scheme as the
-// setAnimLastPos one-arg form above).
 extern "C" bool setTurnScale(void* self, float value);
-extern "C" void func_8004B9D4(void* self, u32 a, u32 b, u32 c);
+extern "C" void func_8004B9D4(void* self, int a, int b, int c, int d);
 // CActParamAnim-view helpers used by CfObjectMove_ensureAnimTargets (defined in
 // kyoshin/action/CActParamAnim.cpp / CActParamAnimGame.cpp, retail
 // unmangled names; the canonical CModelDispEquip.hpp declarations take
@@ -402,9 +398,7 @@ namespace cf {
         virtual void CfObjectMove_releaseSlotById(int arg);  //0x1D0
         virtual void CfObjectMove_recordMoveValue(float value);  //0x1D4
         virtual void CfObjectMove_getMovementRate();  //0x1D8
-        // Wave-61: Unk primary flipped to behavior spelling. Fv linker body
-        // CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv (CtrlNpc.cpp)
-        // and hand-built tables keep the Unk mangled name; Unk alias below.
+        // Base body is emitted in CtrlNpc.cpp (retail 0x800942FC).
         virtual void CfObjectMove_setTargetC4Arg(u32 arg);  //0x1DC
         // Retail ocUnit call sites leave args live into these bctrs (walkR
         // f1, CED0 mullw r4, CF48 stack vec r4, D060 r4-r7/f1, D570 r4,
@@ -430,9 +424,7 @@ namespace cf {
         virtual void CfObjectMove_advanceNpcTarget(const ml::CVec3* vec); //0x1F4
         virtual void CfObjectMove_commandNpcTarget(int arg); //0x1F8
         virtual void CfObjectMove_restartNpcTarget(int a, int b, int c); //0x1FC
-        // Wave-61: Unk primary flipped. Fv body
-        // CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv (code_800B06A4)
-        // keeps the Unk mangled name; Unk alias below.
+        // Base body (returns 0) is emitted in code_800B06A4.cpp (retail 0x800B5400).
         virtual int CfObjectMove_hasActorScale(); //0x200 (retail returns int: tested != 0 in syncReloadObjectNameScale)
         int CfObjectMove_UnkVirtualFunc15() { return CfObjectMove_hasActorScale(); } //0x200
         virtual void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
@@ -492,7 +484,7 @@ namespace cf {
     void CfObject_releaseMoveTargets();
     // Wave-61: CfObjectModel_UnkVirtualFunc2 override folded onto base
     // CfObjectModel_releaseModelList (+0x17C). Body remains the Fv free
-    // function CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv.
+    // function CfObjectModel_releaseModelList__Q22cf12CfObjectMoveFv.
     void CfObject_setMoveTargetPtr(void* arg);
     void CfObject_setMoveBusyState(int flag);
     ml::CVec3* CfObject_getPosVector();
@@ -500,7 +492,6 @@ namespace cf {
     void CfObject_setMoveYaw(float value);
     // Unk* below are non-colliding aliases onto base behavior names (base
     // still owns the Unk virtual / Fv linker symbol for these slots).
-    void CfObject_UnkVirtualFunc33(float amount) { CfObject_applyMoveYaw(amount); }
     int CfObject_queryTargetState();
     void CfObject_UnkVirtualFunc57(float value) { CfObject_setMoveValue(value); }
     void* CfObject_pushRefreshValue(float value);
@@ -508,6 +499,43 @@ namespace cf {
     bool CfObject_isMoveActiveNow();
     void CfObject_setAnimSlotEntry(u32 a, u32 b);
     void CfObject_refreshSubB0();
+    // CfObject / CfObjectModel slot overrides (retail CfObjectMove symbols in
+    // the CfObjectMove-derived vtables).
+    void CfObject_forwardSubObject();                       //0x78
+    void* CfObject_pushRefreshExtra(float value);           //0x90
+    float CfObject_readRefreshValue();                      //0x94
+    int CfObject_checkTargetState();                        //0x98
+    void CfObject_setMoveTargetVec(const ml::CVec3* vec);   //0x9C
+    void CfObject_syncMoveTarget(const ml::CVec3* vec);     //0xA8
+    void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); //0xB4
+    void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount); //0xB8
+    void CfObject_syncMoveHead(float deg);                  //0xD0
+    void CfObject_applyMoveYaw(float deg);                  //0xD4
+    int CfObject_UnkVirtualFunc37(u32 arg);                 //0xE4
+    int CfObject_UnkVirtualFunc38(u32 arg);                 //0xE8
+    int CfObject_armAnimSlot0(u32 id, u32 tag);             //0xEC
+    int CfObject_armAnimSlot0N(u32 id, u32 nameIdx);        //0xF0
+    int CfObject_armAnimSlot1(u32 id, u32 tag);             //0xF8
+    int CfObject_armAnimSlot1N(u32 id, u32 nameIdx);        //0xFC
+    void CfObject_rearmAnimSlot(u32 value, u32 index);      //0x104
+    void CfObject_createMoveTarget(int kind);               //0x10C
+    void* CfObject_getCurrentTarget();                      //0x110
+    void CfObject_forwardNpcAction(int action);             //0x114
+    int CfObject_getNpcActionState();                       //0x118
+    int CfObject_getNpcTargetAction();                      //0x11C
+    u32* CfObject_getMoveRateScale();                       //0x138
+    void CfObject_UnkVirtualFunc59(float value);            //0x13C
+    float CfObject_UnkVirtualFunc60();                      //0x140
+    u32 CfObject_UnkVirtualFunc62(u32 idx);                 //0x148
+    void CfObject_setMoveReadyFlag(int flag);               //0x154
+    void CfObject_syncModelRate(float value);               //0x168
+    void CfObjectModel_releaseModelSub();                   //0x178
+    void CfObjectModel_releaseModelList();                  //0x17C
+    void* CfObjectModel_getAnimState();                     //0x184
+    u32 CfObjectModel_getAnimFlags();                       //0x188
+    void* CfObjectModel_checkTargetNode(void* arg);         //0x18C
+    void CfObjectModel_detachEffectSlot(void* arg);         //0x1BC
+    void CfObjectModel_setModelVisible(int flag);           //0x1C0
     // Pure-virtual completions for CfObject base (W63 Model dropped these
     // as "vestigial"; Pc View embeds need Move non-abstract). Bodies are the
     // existing Fv free functions with matching mangled names.

@@ -52,7 +52,7 @@ extern void dispatchObjectFunc56__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc46__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc48__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc52b__Q22cf13CfGameManagerFv();
-extern void dispatchObjectFunc53__Q22cf13CfGameManagerFv();
+extern void dispatchObjectFunc53__Q22cf13CfGameManagerFUl();
 extern void Walker_SwitchTargetParty();
 extern void ObjPc_TickPlayer_A458(cf::CfObjectImplPc* self);
 extern void Walker_UpdatePartyBattle();
@@ -104,7 +104,7 @@ const void* lbl_eu_8052A558[66] = {
     (void*)toggleObjectMask8__Q22cf13CfGameManagerFv, (void*)clearObjectMask8__Q22cf13CfGameManagerFv, (void*)clearObjectFlagsAll__Q22cf13CfGameManagerFv, (void*)getObjectFlags__Q22cf13CfGameManagerFv, // +0x30
     (void*)hasAnyFlags, (void*)dispatchObjectFunc19__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc23__Q22cf13CfGameManagerFv, (void*)dispatchObjectFuncC4__Q22cf13CfGameManagerFv, // +0x40
     (void*)dispatchObjectFunc31__Q22cf13CfGameManagerFv, (void*)getObjectSub54Ptr__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc58__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc56__Q22cf13CfGameManagerFv, // +0x50
-    (void*)dispatchObjectFunc46__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc48__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc52b__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc53__Q22cf13CfGameManagerFv, // +0x60
+    (void*)dispatchObjectFunc46__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc48__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc52b__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc53__Q22cf13CfGameManagerFUl, // +0x60
 (void*)ObjPc_TickPlayer_A458,
     (void*)MoveImplResolveActorRef, (void*)ObjPc_StoreSubVal_A274, (void*)ObjPc_EventDispatch_9A20, (void*)ObjPc_ArtsCmdEventDispatch_9CEC, // +0x80
     (void*)MoveImplDispatch204, (void*)ObjPc_DispatchArtsTable_A104, (void*)ObjPc_DispatchArtsCmd_A084, (void*)Walker_ExitBattleSweep, // +0x90

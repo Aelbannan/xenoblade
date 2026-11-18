@@ -68,8 +68,32 @@ struct CAIPartyInfo {
     u16 artsId; // 0x3F28 - current arts id
 };
 
+// Fixed 16-slot queue embedded in CAIAction (+0xC): 0x200 bytes of slots, a
+// pointer to them, then head / count / capacity. Its destructor clears the
+// count and head words; retail keeps the out-of-line weak copy in
+// CfObjectEne.cpp (and CVision.cpp destroys another instance through it).
+struct CAIActionSlotQueue {
+    ~CAIActionSlotQueue() {
+        count = 0;
+        head = 0;
+    }
+
+    u8 slots[0x200]; // 0x000 (16 * 0x20)
+    void* buffer;    // 0x200 -> slots
+    u32 head;        // 0x204
+    u32 count;       // 0x208
+    u32 capacity;    // 0x20C (0x10)
+};
+
+// Ring header at CAIAction+4 that owns the slot queue (implicit destructor).
+struct CAIActionRing {
+    u32 unk0;                 // 0x0 
+    u16 unk4;                 // 0x4 
+    CAIActionSlotQueue queue; // 0x8
+};
+
 // Retail __vt__Q22cf9CAIAction (US symbols.txt: lbl_eu_8052F598, size 0x10,
-// in CItem TU .data): RTTI at +0x00 (lbl_eu_806618E0), 0 at +0x04, then
+// in CItem TU .data): RTTI at +0x00 (__RTTI__Q22cf9CAIAction), 0 at +0x04, then
 // the two virtuals. This TU emits no __vt__ (novtable); the ctor writes
 // the label explicitly, same pattern as CHelp / CToken.
 struct CAIActionVtbl {
@@ -97,14 +121,7 @@ public:
     void CAIAction_setOwner(u32 owner);
 
     // 0x0: vtable
-    u32 unk4;          // 0x4
-    u16 unk8;          // 0x8
-    u8 padA[2];        // 0xA
-    u8 slots[0x200];   // 0xC .. 0x20C (16 * 0x20)
-    void* unk20C;      // 0x20C - pointer to slots
-    u32 unk210;        // 0x210
-    u32 unk214;        // 0x214
-    u32 unk218;        // 0x218 - capacity (0x10)
+    CAIActionRing ring; // 0x4 .. 0x21C (slot queue at 0xC)
     u8 entries[0x8C0]; // 0x21C .. 0xADC (160 * 0xE)
     u8 trailer[0x20];  // 0xADC .. 0xAFC (CAIActionSlot)
     u32 unkAFC;        // 0xAFC
@@ -114,6 +131,11 @@ public:
     u32 unkB14;        // 0xB14
     u32 unkB18;        // 0xB18
 };
+
+// Inline in retail (weak copies in CfObjectEne.cpp and wherever else a
+// CAIAction owner is destroyed): the body is the inlined destruction of the
+// ring member and its slot queue.
+inline CAIAction::~CAIAction() {}
 
 } // namespace cf
 

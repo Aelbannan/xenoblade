@@ -21,7 +21,7 @@ extern "C" void awardQuestFlags();
 
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern u32 lbl_eu_806618D8; // RTTI typeinfo (src type) for actor dynamic_cast
+extern u32 __RTTI__Q22cf12CfObjectMove; // RTTI typeinfo (src type) for actor dynamic_cast
 // sdata2 head floats (defined at EOF in retail order 0.0, 1.0): the fade
 // color stores below use these instead of literals so no compiler pool
 // remains and the section lands byte-exact.
@@ -215,7 +215,7 @@ int onTalk(VMThread* pThread) {
     // (same (1|2, 1) shape as ocUnit::onEvent); packed void* 0x1000x was wrong.
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
         cf::CfGameManager::getPlayer(0), 0,
-        &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618D8,
+        &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf12CfObjectMove,
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
@@ -234,7 +234,7 @@ int onTalkEnd(VMThread* pThread) {
     // (arg2 = 0 in both dispatch calls).
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
         cf::CfGameManager::getPlayer(0), 0,
-        &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618D8,
+        &__RTTI__Q22cf13CfObjectActor, &__RTTI__Q22cf12CfObjectMove,
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
@@ -406,14 +406,14 @@ extern u32 __RTTI__Q22cf11CActorParam[];
 extern u32 __RTTI__Q22cf11CDebugState[];
 extern u32 __RTTI__Q22cf11CActorState[];
 extern u32 __RTTI__Q22cf12CBattleState[];
-extern u32 lbl_eu_806618E0[];
+extern u32 __RTTI__Q22cf9CAIAction[];
 extern u32 __RTTI__Q22cf12CObjectParam[];
 extern u32 __RTTI__Q22cf12CObjectState[];
 struct EveTypeRef { const void* type; u32 subobjOff; };
 __declspec(section ".data") __attribute__((used)) EveTypeRef lbl_eu_80525E98[12] = {
     { __RTTI__Q22cf12CObjectState, 0x3E9C }, { __RTTI__Q22cf12CObjectParam, 0x3E9C },
-    { &lbl_eu_806618F0, 0x3E9C }, { &lbl_eu_806618E8, 0x3E9C },
-    { &lbl_eu_806618D8, 0x3E9C }, { lbl_eu_806618E0, 0x3380 },
+    { &__RTTI__Q22cf8CfObject, 0x3E9C }, { &__RTTI__Q22cf13CfObjectModel, 0x3E9C },
+    { &__RTTI__Q22cf12CfObjectMove, 0x3E9C }, { __RTTI__Q22cf9CAIAction, 0x3380 },
     { __RTTI__Q22cf11CDebugState, 0x15DC }, { __RTTI__Q22cf12CBattleState, 0x08 },
     { __RTTI__Q22cf11CActorState, 0 }, { __RTTI__Q22cf11CActorParam, 0 },
     { &__RTTI__Q22cf13CfObjectActor, 0 }, { 0, 0 },

@@ -479,7 +479,7 @@ public:
     void updateVisionState();
     void dispatchObjectFunc52();
     void dispatchObjectFunc52b();
-    void dispatchObjectFunc53();
+    void dispatchObjectFunc53(u32 idx);
     void dispatchObjectFunc48();
     void dispatchObjectFunc46();
     void dispatchObjectFunc56();

@@ -143,7 +143,7 @@ extern s32 MWSST_GetStat(void* sst);
 // Retail calls this via bl from mwsfd_ExecSvrHndl; keep the auto-inliner
 // from outlining its body into that caller.
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: retail keeps mwsfd_ExecSvrHndl's bl to this; without it that fn drops 97.6%->3.1%
 void mwlSfdExecDecSvrPlaying(void* self) {
     void* sst = *(void**)((u8*)self + 0x58);
     if (*(s32*)((u8*)self + 0x678) == 0) {

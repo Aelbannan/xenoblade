@@ -25,7 +25,7 @@ extern "C" {
     extern void syncFieldData__Q22cf13CfGameManagerFv(u32 type, int flag);
 
     // Resource helpers
-    extern void* CfRes_tryResolveToken(u32 handle, int* outType);
+extern "C" void* CfRes_tryResolveToken(u32 handle, int* outType);
     extern void KyoshinHeap_Free78(void* p, int type);
     // Packed-token helpers (retail C-symbol names)
     extern char* Tok_FormatRes(u32 handle);

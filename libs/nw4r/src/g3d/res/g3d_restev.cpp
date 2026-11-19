@@ -328,7 +328,7 @@ void ResTev::GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel) {
 namespace nw4r {
 namespace g3d {
 
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: retail keeps bl GXSetTevOrder in SetNumTevStages (single-call-site fold); -ipa off and -inline noauto both lose other fns
 void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
                            GXTexMapID map, GXChannelID channel) {
     GXTexCoordID coord2;
@@ -357,7 +357,7 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
             ((n + 0x28) << GX_BP_OPCODE_SHIFT),
         (0x3FF << shift) | (0xFF << GX_BP_OPCODE_SHIFT));
 }
-#pragma dont_inline reset
+#pragma dont_inline reset  // noinline-ok: closes the block above
 
 } // namespace g3d
 } // namespace nw4r

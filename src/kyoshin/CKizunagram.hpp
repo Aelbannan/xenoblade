@@ -1031,16 +1031,16 @@ struct UnkKizunaSelf5949C {
 
 // Same-TU callees (retail links these unmangled).
 extern "C" bool kizAnimAtEnd(UnkKizunaSelf592D8* self);
-extern "C" __declspec(noinline) void tickLineState(UnkKizunaSelf58F9C* self);
+extern "C" void tickLineState(UnkKizunaSelf58F9C* self);
 // Same-TU callees used by tickLineState / the display-reset family.
-extern "C" __declspec(noinline) bool buildKizEntryPanes(UnkKizunaSelf59DE8* self);
+extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self);
 extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self);
-extern "C" __declspec(noinline) void lineStartSelect(void* self);
-extern "C" __declspec(noinline) void lineTickSelIn(UnkKizunaSelfAB* self);
-extern "C" __declspec(noinline) void lineTickSelOut(UnkKizunaSelfAB* self);
-extern "C" __declspec(noinline) void lineClearSelect(void* self);
-extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self);
-extern "C" __declspec(noinline) void lineCountDown(UnkKizunaSelf59D44* self);
+extern "C" void lineStartSelect(void* self);
+extern "C" void lineTickSelIn(UnkKizunaSelfAB* self);
+extern "C" void lineTickSelOut(UnkKizunaSelfAB* self);
+extern "C" void lineClearSelect(void* self);
+extern "C" void lineCountUp(UnkKizunaSelf59C5C* self);
+extern "C" void lineCountDown(UnkKizunaSelf59D44* self);
 extern "C" void tickCurAnim(UnkKizunaSelf57EE0* self);
 extern "C" void layoutKizLinePanes(UnkKizunaSelf57B6C* self);
 extern "C" void tryKizMode2(void* self);

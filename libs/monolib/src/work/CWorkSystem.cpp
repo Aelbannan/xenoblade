@@ -59,7 +59,7 @@ CWorkSystem::ExitFunc lbl_eu_80665618;
 CWorkSystem* lbl_eu_8066561C;
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: ctor must stay out of line (retail create() bls it); without it extabindex drifts (+0x1E)
 DECOMP_DONT_INLINE CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
     // novtable: write the retail vptr (0x8056B9F0) first so the stores land in
     // retail order (vptr, then the member inits).
@@ -235,10 +235,10 @@ bool CWorkSystem::wkStandbyLogout(){
 // duplicate beq and flips to parent=r31/name=r30/obj=r29. The remaining swap
 // is allocation-internal, unreachable from source shape.
 #pragma push
-#pragma auto_inline off
 // retail prologue/epilogue saves r29-r31 with a single stmw/lmw pair; MWCC
 // only merges consecutive saves into stmw under optimize-for-size.
 #pragma optimize_for_size on
+#pragma auto_inline off  // noinline-ok: create() bls the ctor / entryWork; -ipa off loses it and breaks extab
 CWorkSystem* CWorkSystem::create() {
     CWorkThread* parent = CWorkControl::getInstance();
     const char* pName = &lbl_eu_8052279C[0x6D]; // "CWorkSystem"
@@ -256,7 +256,7 @@ void CWorkSystem::setExitFunc(ExitFunc func){
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: keeps the callee bodies out of the exit path; without it extabindex drifts (+0x1E)
 void CWorkSystem::callExitFunc(){
     if(lbl_eu_80665618 != nullptr){
         lbl_eu_80665618();

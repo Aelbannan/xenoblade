@@ -17,6 +17,8 @@ struct CViewContextRingEntry {
     u8 pad;
 };
 
+class CSplitFrame;
+
 struct CView_UnkStruct1 {
     s16 unk0;
     s16 unk2;
@@ -48,27 +50,29 @@ struct CViewResList {
 };
 
 //size: 0x470
-class __declspec(novtable) CView : public CWorkThread, public CFontLayer {
+class CView : public CWorkThread, public CFontLayer {
 public:
     CView(const char* pName, CWorkThread* pParent);
     virtual ~CView();
     
     DECL_WORKTHREAD_CREATE(CView);
 
-    virtual void CView_UnkVirtualFunc0();
-    virtual void CView_UnkVirtualFunc1();
-    virtual void detachRenderWork(CWorkThread* pThread);
     virtual void wkUpdate();
-    virtual bool CView_UnkVirtualFunc3(IWorkEvent* event);
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    // Virtuals appended after the CWorkThread/IWorkEvent slots land in the
+    // CFontLayer secondary sub-vtable (retail: 0xAC..0xCC, see the retail
+    // vtable at .data:0x8056B5E0+0xA0).
+    virtual void CView_UnkVirtualFunc1();
+    virtual void CView_UnkVirtualFunc2(CWorkThread* pThread);
+    virtual bool detachRenderWork(CWorkThread* pThread);
     virtual bool CView_UnkVirtualFunc4(IWorkEvent* event);
     virtual bool CView_UnkVirtualFunc5();
     virtual bool CView_UnkVirtualFunc6();
     virtual void CView_UnkVirtualFunc7();
     virtual void CView_UnkVirtualFunc8();
     virtual void CView_UnkVirtualFunc9();
-
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
 
     static void setDefaultFrameColor(const ml::CCol4& color);
     static CView* getCurrentView();
@@ -144,7 +148,7 @@ public:
     ml::CVec4 unk444; //0x444
     u32 mGXCacheId; //0x454
     float mAlpha; //0x458
-    void* unk45C; //0x45C (CSplitFrame*, but CView.cpp writes (void*)zero - kept void*)
+    CSplitFrame* unk45C; //0x45C split-frame layout attached to this view
     u32 unk460; //0x460
     s16 unk464;
     s16 unk466;

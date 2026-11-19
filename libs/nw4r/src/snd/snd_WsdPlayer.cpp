@@ -28,62 +28,6 @@ struct WaveDataBlock {
 extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
     Channel* pChannel, const WaveDataBlock& rData, int length, u32 offset);
 
-// nw4r::snd::VoiceOutParam (6 floats, 0x18 bytes) - same shape as
-// StrmPlayer's VoiceOutParamRetail; the parameter of Voice::SetVoiceOutParam.
-struct VoiceOutParamRetail {
-    f32 volume;       // at 0x0
-    f32 pitch;        // at 0x4
-    f32 pan;          // at 0x8
-    f32 surroundPan;  // at 0xC
-    f32 lpfFreq;      // at 0x10
-    f32 remoteFilter; // at 0x14
-};                    // sizeof 0x18
-
-// Retail WsdPlayer::UpdateChannel reads BasicPlayer::mParam's biquad fields
-// (this+0x18/0x1C) and the voice-out-param table (this+0x70) directly, and
-// the Voice* out of its Channel (Channel+0xF0). mParam/mVoice are private,
-// so mirror the retail layout locally (same convention as WaveDataBlock
-// above and StrmPlayer's retail-layout views).
-struct BasicPlayerUpdateView {
-    u8 _pad0x00[0x18];                    // vtable + mVolume..mLpfFreq
-    f32 biquadValue;                      // at 0x18 (PlayerParamSet::mUnk0x14)
-    u8 biquadType;                        // at 0x1C (PlayerParamSet::mUnk0x18)
-    u8 remoteFilter;                      // at 0x1D (PlayerParamSet::mRemoteFilter)
-    u8 _pad0x1E[0x70 - 0x1E];             // ..mRemoteFxSend
-    VoiceOutParamRetail voiceOutParam[4]; // at 0x70 (PlayerParamSet::mUnk0x6C)
-};
-
-// Retail UpdateChannel reads the biquad/remote-filter fields through
-// out-of-line-shaped inline accessors (the locked BasicPlayer header
-// declares only GetRemoteFilter); mirror them as TU-local inline getters
-// so the inlined PCode matches retail's scheduling/coloring. The inline
-// boundary is load-bearing for the tails schedule (verified via .scratch
-// MWCC probes against retail asm).
-struct WsdPlayerGetterView : WsdPlayer {
-    int GetRemoteFilterView() const {
-        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
-            ->remoteFilter;
-    }
-    int GetBiquadFilterTypeView() const {
-        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
-            ->biquadType;
-    }
-    f32 GetBiquadFilterValueView() const {
-        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
-            ->biquadValue;
-    }
-};
-
-struct ChannelVoiceView {
-    u8 _pad0x00[0xF0];
-    Voice* voice; // at 0xF0 (Channel::mVoice)
-};
-
-// Retail Voice::SetVoiceOutParam entry point (same convention as
-// snd_StrmPlayer.cpp); the locked headers declare no VoiceOutParam type.
-extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
-    Voice* pVoice, int index, const VoiceOutParamRetail& rParam);
-
 WsdPlayer::WsdPlayer() : mActiveFlag(false) {}
 
 void WsdPlayer::InitParam(int voices, const WsdCallback* pCallback,
@@ -335,10 +279,7 @@ void WsdPlayer::UpdateChannel() {
         surroundPan += mWaveSoundInfo.surroundPan / 63.0f;
     }
 
-    const BasicPlayerUpdateView* pParamView =
-        reinterpret_cast<const BasicPlayerUpdateView*>(this);
-    biquadValue = reinterpret_cast<const WsdPlayerGetterView*>(this)
-        ->GetBiquadFilterValueView();
+    biquadValue = GetBiquadFilterValue();
 
     surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
     surroundPan += GetSurroundPan();
@@ -350,16 +291,14 @@ void WsdPlayer::UpdateChannel() {
     lpfFreq = 0.0f;
     lpfFreq += GetLpfFreq();
 
-    remoteFilter = reinterpret_cast<const WsdPlayerGetterView*>(this)
-        ->GetRemoteFilterView();
+    remoteFilter = GetRemoteFilter();
 
     u8 infoSend[AUX_BUS_NUM];
     infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
     infoSend[AUX_B] = mWaveSoundInfo.fxSendB;
     infoSend[AUX_C] = mWaveSoundInfo.fxSendC;
 
-    biquadType = reinterpret_cast<const WsdPlayerGetterView*>(this)
-        ->GetBiquadFilterTypeView();
+    biquadType = GetBiquadFilterType();
 
     f32 fxSend[AUX_BUS_NUM];
     for (int i = 0; i < AUX_BUS_NUM; i++) {
@@ -402,11 +341,7 @@ void WsdPlayer::UpdateChannel() {
     }
 
     for (int i = 0; i < GetVoiceOutCount(); i++) {
-        Voice* pVoice =
-            reinterpret_cast<const ChannelVoiceView*>(mChannel)->voice;
-        SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
-            pVoice, i,
-            reinterpret_cast<const BasicPlayerUpdateView*>(this)->voiceOutParam[i]);
+        mChannel->SetVoiceOutParam(i, GetVoiceOutParam(i));
     }
 
     mChannel->SetLfoParam(mLfoParam);

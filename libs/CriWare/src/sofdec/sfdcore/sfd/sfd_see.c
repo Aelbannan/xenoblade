@@ -64,7 +64,7 @@ void sfsee_ExecHeadAnaly(SfdHandle* self) {
 
     if (SFTRN_IsSetup(self, 3) != 0 && (s32)SFSET_GetCond(self, 6) == 1) {
         setup3_flag = 1;
-        if (avplay->vidSeek == 0)
+        if (avplay->adxtSync.seek == 0)
             ok1 = 1;
         else
             ok1 = 0;
@@ -76,7 +76,7 @@ void sfsee_ExecHeadAnaly(SfdHandle* self) {
 
     if (SFTRN_IsSetup(self, 2) != 0 && (s32)SFSET_GetCond(self, 5) == 1) {
         setup2_flag = 1;
-        if (avplay->audSeek == 0)
+        if (avplay->audHd.state == 0)
             ok2 = 1;
         else
             ok2 = 0;
@@ -115,11 +115,11 @@ void sfsee_ExecHeadAnaly(SfdHandle* self) {
         }
         r4 = avplay->mpsHd.timeUnit;
     } else if (setup2_flag) {
-        r3 = avplay->audByteRate;
-        r4 = avplay->audTimeUnit;
+        r3 = avplay->audHd.byteRate;
+        r4 = avplay->audHd.timeUnit;
     } else if (setup3_flag) {
-        r3 = avplay->vidByteRate;
-        r4 = avplay->vidTimeUnit;
+        r3 = avplay->adxtSync.byteRate;
+        r4 = avplay->adxtSync.timeUnit;
     } else {
         return;
     }

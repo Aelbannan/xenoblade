@@ -960,7 +960,6 @@ struct MpfsysRandState {
 extern "C" f32 Scn_GetFrameDelta(void* scene);
 
 #pragma push
-#pragma auto_inline off
 void mpfsys::UnkClass_80471EC8::updateLayers() {
     MpfsysResState* res = (MpfsysResState*)this;
     MpfsysRandState* st = (MpfsysRandState*)this;
@@ -1125,7 +1124,6 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
     GXLoadTexObj(&texObj, (GXTexMapID)texMap);
 }
 extern "C" {
-#pragma dont_inline on
 void setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, f32 f1) {
     // Layer-scale setter. The retail symbol is annotated Fv but the function
     // actually takes (self, f32) - see the caller in code_8047BB54.cpp.

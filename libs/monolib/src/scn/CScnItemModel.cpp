@@ -19,7 +19,7 @@ extern "C" void CScnItemPool_forEachClearNodeRefs(CScnItemPool* pool, CScnItemMo
 // tail call. noinline: retail makes a real tail call here (MWCC_CASES
 // MWCC_CASES 9135 - same-TU helpers get auto-inlined otherwise).
 extern "C" {
-__declspec(noinline) void simToggleWordBits(u8* self, u32 flags, u32 enable);
+void simToggleWordBits(u8* self, u32 flags, u32 enable);
 }
 
 // Same-TU chain-walk helpers (defined below in this TU); forward-declared
@@ -2598,7 +2598,7 @@ extern "C" void simMarkTree80000(CScnItemModel* self, u32 param) {
 
 // simToggleWordBits: set/clear the `flags` bits at self+0.
 extern "C" {
-__declspec(noinline) void simToggleWordBits(u8* self, u32 flags, u32 enable) {
+void simToggleWordBits(u8* self, u32 flags, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0) |= flags;
     } else {

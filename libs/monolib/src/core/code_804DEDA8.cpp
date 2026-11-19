@@ -412,7 +412,7 @@ extern "C" void* SchedRes_AllocEntries(u32 size, u32 count) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: local one-shot helpers; -ipa off / -inline noauto both shrink __dt__804DEDCC and break extab-gate
 extern "C" void SchedRes_ZeroEntry(CResEntry* pEntry) {
     pEntry->mField00 = 0;
     pEntry->mCount = 0;
@@ -480,7 +480,7 @@ extern "C" s32 SchedRes_FindOrClaim(u32 key) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: local one-shot helpers; -ipa off / -inline noauto both shrink __dt__804DEDCC and break extab-gate
 // Working view of the entry header used while walking the chain.
 struct DedccHdr {
     u8 b0;    // +0x00
@@ -637,7 +637,7 @@ extern "C" s32 SchedRes_ReleaseEntries(u32 key) {
 
 // Definition moved below SchedRes_ReleaseEntries (see prototype above).
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: local one-shot helpers; -ipa off / -inline noauto both shrink __dt__804DEDCC and break extab-gate
 extern "C" void __dt__804DF068(CSchedResMgr* obj) {
     if (obj->mField08 != 0) {
         delete[] (u8*)obj->mField08;

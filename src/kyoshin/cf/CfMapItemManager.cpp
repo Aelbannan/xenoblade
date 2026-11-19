@@ -112,7 +112,7 @@ void* CItem_thunkAllocRecord(int v);
 void CUICfManager_queueGetItemMenuNarrowed(int v);
 int UIWin_BuildFlagBuf(int a, int b, int c, int d);
 void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
-void CfRes_getD80Flag();
+extern "C" void CfRes_getD80Flag();
 void hikariInitRecordTimers(u32 h);
 u32 hikariAddRecord(u8* a, u32* b, int c);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);

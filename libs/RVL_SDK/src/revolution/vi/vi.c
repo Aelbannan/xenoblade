@@ -645,7 +645,6 @@ VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback callback) {
     return old;
 }
 
-#pragma dont_inline on
 timing_s* getTiming(VITVMode mode) {
     switch (mode) {
     case VI_TVMODE_NTSC_INT:
@@ -689,7 +688,6 @@ timing_s* getTiming(VITVMode mode) {
         return NULL;
     }
 }
-#pragma dont_inline reset
 
 void __VIInit(VITVMode mode) {
     timing_s* tm;

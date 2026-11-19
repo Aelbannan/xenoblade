@@ -1064,7 +1064,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
             CamEvtCalcAimPoint((ml::CVec3*)&in, v);
-            cfCam_applyBasis(&res, &in, scale, &p1);
+            cfCam_applyBasis(&res, &in, &p1, scale);
         } else {
             res.x = p1.x; res.y = p1.y; res.z = p1.z;
         }
@@ -1077,7 +1077,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
         ow->w[2] = rw->w[2];
     } else if (c1 == 3) {
         CamTripletLocals res; // retail 0x140
-        cfCam_applyBasis(&res, &aimA, scale, &p1);
+        cfCam_applyBasis(&res, &aimA, &p1, scale);
         CamEventVecWords* rw = (CamEventVecWords*)&res;
         CamEventVecWords* ow = (CamEventVecWords*)out1;
         u32 ry = rw->w[1];
@@ -1095,7 +1095,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
             CamEvtCalcAimPoint((ml::CVec3*)&in, v);
-            cfCam_applyBasis(&res, &in, scale, &p2);
+            cfCam_applyBasis(&res, &in, &p2, scale);
         } else {
             res.x = p2.x; res.y = p2.y; res.z = p2.z;
         }
@@ -1108,7 +1108,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
         ow->w[2] = rw->w[2];
     } else if (c2 == 3) {
         CamTripletLocals res; // retail 0x11C
-        cfCam_applyBasis(&res, &aimA, scale, &p2);
+        cfCam_applyBasis(&res, &aimA, &p2, scale);
         CamEventVecWords* rw = (CamEventVecWords*)&res;
         CamEventVecWords* ow = (CamEventVecWords*)out2;
         u32 ry = rw->w[1];

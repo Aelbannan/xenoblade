@@ -1819,7 +1819,6 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
 /*  btm_sec_execute_procedure -- execute the security procedure for    */
 /*  the specified device record.                                       */
 /* ------------------------------------------------------------------ */
-#pragma auto_inline off
 UINT8 btm_sec_execute_procedure(BtmSecDevRec *p_dev_rec)
 {
     UINT8 sec_state;

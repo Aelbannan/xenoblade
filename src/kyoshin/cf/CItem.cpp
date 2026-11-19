@@ -18,7 +18,7 @@ extern "C" void UIWin_CreateB4790Win(void* box, int flags);
 // probability/entry columns, weight-adjust them, then roll a weighted
 // random item index (3..1) for the box contents. Returns the rolled index
 // (0 when nothing is rolled).
-s32 CItem_rollBoxContents(u32 row, u32 flag) {
+extern "C" s32 CItem_rollBoxContents(u32 row, u32 flag) {
     s32 sum1 = 0;
     for (s32 i = 0; i < 3; i++) {
         if (updatePlayerCameraLink__Q22cf13CfGameManagerFv(i, 0x92) != 0) {
@@ -293,7 +293,7 @@ void setItemCategory(CItemData*, unsigned long* ptr, unsigned long val) {
 
 // Resolve the family BDAT handle for self's packed record and look up the
 // caller-supplied column for the record's row id (bits 16-26).
-u32 CItemData_lookupBdatCol(CItemData* self, const char* colName) {
+extern "C" u32 CItemData_lookupBdatCol(CItemData* self, const char* colName) {
     u16 kind, row;
     void* h = CItem_resolveFamilyBdat(self->field_00 >> 20, &kind, &row);
     return getBdatStringColumnValue(h, colName, (self->field_00 >> 5) & 0x7FF);
@@ -954,7 +954,7 @@ void* CItem_copyRecordByCat(void* dst, const void* src) {
 
 // Copy an item record to dst, sized by the category recorded in the source
 // word's bits 16-19 (CItem_catSize maps the category to the record stride).
-void* CItem_copyRecMasked(void* dst, const void* src) {
+extern "C" void* CItem_copyRecMasked(void* dst, const void* src) {
     u32 w = static_cast<const CItemData*>(src)->field_00;
     int size = CItem_catSize((w >> 16) & 0xF);
     memcpy(dst, src, size);
@@ -962,13 +962,13 @@ void* CItem_copyRecMasked(void* dst, const void* src) {
 }
 
 // Dispatch to the per-category impl's vf0C (slot 0x0C) with the passthrough arg.
-void CItemData_callVf0C(CItemData* self, u32 arg) {
+extern "C" void CItemData_callVf0C(CItemData* self, u32 arg) {
     CItem_initItemImplInstances(self)->vf0C(self, arg);
 }
 
 // Reset the global item block: free any previous allocation, then allocate
 // a fresh 0x12120-byte block from MEM2 and zero it.
-void __dt__801570F0() {
+extern "C" void __dt__801570F0() {
     if (lbl_eu_806641B8 != 0) {
         operator delete(lbl_eu_806641B8);
         lbl_eu_806641B8 = 0;
@@ -980,7 +980,7 @@ void __dt__801570F0() {
 }
 
 // Destructor of the global item block: frees lbl_eu_806641B8 and nulls it.
-void __dt__80157150() {
+extern "C" void __dt__80157150() {
     if (lbl_eu_806641B8 != 0) {
         operator delete(lbl_eu_806641B8);
         lbl_eu_806641B8 = 0;
@@ -988,7 +988,7 @@ void __dt__80157150() {
 }
 
 // Clamp the value to 999999999 and publish it as the item-count word.
-void CItemBlock_setCount(u32 value) {
+extern "C" void CItemBlock_setCount(u32 value) {
     u32 idx = 999999999u;
     if (value <= 999999999u) {
         idx = value;
@@ -1000,7 +1000,7 @@ void CItemBlock_setCount(u32 value) {
 // Add value to the shared item-count word, saturating at 999999999.
 // 64-bit arithmetic keeps the retail addc/addze + two-stage compare
 // (high-word subfe chain, then low-word cmplw).
-void CItem_AddBlockCountClamped(u32 value) {
+extern "C" void CItem_AddBlockCountClamped(u32 value) {
     CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
     u32* w = &blk->mCountE8;
     unsigned long long sum = (unsigned long long)*w + value;
@@ -1040,7 +1040,7 @@ void CItem_famFlag(u32 v, u32 set) {
 // 0x12118/0x1211A/0x1211C (kinds 4-8). Returns 1 when the operation changed
 // the flag's state (set path: the bit was clear; clear path: it was set),
 // 0 for an out-of-range kind or an invalid flag id.
-u32 CItemBlock_setKindFlag(u32 v, u32 set, u32 kind) {
+extern "C" u32 CItemBlock_setKindFlag(u32 v, u32 set, u32 kind) {
     u32 result = 0;
     u32 bit;
     // Mixed-form guards: keeps two separate cmplwi branches to the shared
@@ -1200,11 +1200,11 @@ extern "C" s32 CItem_slotCnt(u32 kind) {
     return count;
 }
 
-unsigned short CItemBlock_getFlag120EC(int index) {
+extern "C" unsigned short CItemBlock_getFlag120EC(int index) {
     return ((unsigned short*)(lbl_eu_806641B8 + 0x120EC))[index];
 }
 
-void CItemBlock_setFlag120EC(int index, short value) {
+extern "C" void CItemBlock_setFlag120EC(int index, short value) {
     ((unsigned short*)(lbl_eu_806641B8 + 0x120EC))[index] = value;
 }
 
@@ -1225,19 +1225,19 @@ extern "C" __declspec(noinline) void* CItemBlock_getKindSlot(s32 kind, u32 idx, 
 
 // Return a pointer into the per-slot u16 table at block+0x12038, indexed by
 // sub-slot b and slot a (byte offset (b + (a-1)*8)*2 from 0x10000+0x2038).
-char* CItemBlock_getSlotU16(u32 a, u32 b) {
+extern "C" char* CItemBlock_getSlotU16(u32 a, u32 b) {
     char* base = (char*)lbl_eu_806641B8;
     return base + 0x10000 + (b + (a - 1) * 8) * 2 + 0x2038;
 }
 
 // Increment the shared slot counter (block+0x12110) by x, then clamp it to 30.
-void CItemBlock_addSlotCount(u32 x) {
+extern "C" void CItemBlock_addSlotCount(u32 x) {
     ((CItemBlockCounters*)lbl_eu_806641B8)->mCount10 += x;
     u32 v = ((CItemBlockCounters*)lbl_eu_806641B8)->mCount10;
     ((CItemBlockCounters*)lbl_eu_806641B8)->mCount10 = v > 30 ? 30 : v;
 }
 
-void CItemBlock_clearSlotCnt() {
+extern "C" void CItemBlock_clearSlotCnt() {
     // Clear the two per-slot counters in the global item block
     // (lbl_eu_806641B8 + 0x12110 / 0x12108).
     ((CItemBlockCounters*)lbl_eu_806641B8)->mCount10 = 0;
@@ -1524,7 +1524,7 @@ u16 CItem_getKindFromFamily(int param) {
 // Arts-level lookup: resolve the family row's +0x4A column through the
 // item BDAT handle; returns 0 when the id is 0. The union keeps the call
 // result in a stack slot (retail stw + lhz round-trip).
-u16 CItem_getNameIdFromFam(u16 value) {
+extern "C" u16 CItem_getNameIdFromFam(u16 value) {
     // Retail loads the BDAT handle before the zero-check branch.
     void* handle = lbl_eu_806640EC;
     if (value != 0) {
@@ -1541,7 +1541,7 @@ u16 CItem_getNameIdFromFam(u16 value) {
 
 // Sum the +6 slot byte over every family-matching record in the item block
 // list returned by CItemBlock_getKindList (list of 52-byte CItemExt records).
-u32 CItem_sumFamilyByte6(u32 family) {
+extern "C" u32 CItem_sumFamilyByte6(u32 family) {
     u32 result = 0;
     if (family != 0) {
         s32 count, stride;
@@ -1644,7 +1644,7 @@ void CItem_initKind9Rec(CItemData* self, u32 id) {
 void CItem_noop4() {}
 
 // Enable the family flag: set low 2 bits of byte 7 (ItemByte7::b01).
-void CItemData_enableFamFlag(CItemData* self, u32 a) {
+extern "C" void CItemData_enableFamFlag(CItemData* self, u32 a) {
     CItemData_initFromFamily(self, a, 1);
     ((ItemByte7*)&self->field_07)->b01 = 1;
 }
@@ -1754,7 +1754,7 @@ void CItem_noop5() {}
 void CItem_noop6() {}
 
 // Thunk: forwards to CItem_findOrCreateRec with two stack out-params.
-void CItem_thunkAllocRecord(u32 a, u32 b) {
+extern "C" void CItem_thunkAllocRecord(u32 a, u32 b) {
     s16 local1;
     u32 local2;
     CItem_findOrCreateRec(a, &local1, b, &local2);
@@ -1786,7 +1786,7 @@ extern "C" CItemExt* CItemData_findFreeRec(CItemData* self, s32* pStride, s16* p
 // Look up the BDAT item-name id for the family, resolve the item-block list
 // via CItemBlock_getKindList, and return the first 52-byte record whose packed word
 // matches the family id (or 0 when nothing matches).
-CItemExt* CItem_findRecByFamily(u32 family) {
+extern "C" CItemExt* CItem_findRecByFamily(u32 family) {
     s32 count, stride;
     union {
         u32 v;
@@ -2164,7 +2164,7 @@ void CItem_sortMedian3(u32* a, u32* b, u32* c, int (**pCmp)(u32*, u32*)) {
 
 // Re-rank every kind (2..13) and return the smallest one-past-max rank.
 // Ranks are compared as u16 but kept full-width when stored (retail mr).
-void CItem_rerankAllKinds() {
+extern "C" void CItem_rerankAllKinds() {
     s32 best = 1;
     for (s32 i = 2; i < 14; i++) {
         s32 r = __dt__801589BC(i);
@@ -2431,7 +2431,7 @@ extern "C" CItemExt* CItemData_lookupOrAlloc(CItemData* self, s16* pOut) {
 // sub-slot record for (charId, sub), and when it is non-empty clear the
 // matching u16 entry in the shared slot table and append the record to the
 // item block (CItemData_lookupOrAlloc). Finally bumps the kind-impl state via vf10.
-s32 CItem_clearCharSubSlot(u32 charId, u32 sub, s16* pOut) {
+extern "C" s32 CItem_clearCharSubSlot(u32 charId, u32 sub, s16* pOut) {
     *pOut = -1;
     if (charId > 0xb) return 0;
     // Pointer into the shared per-character u16 slot table at block+0x12038
@@ -3291,7 +3291,7 @@ extern "C" void CItem_openAreaEventBox(s32 kind, u32 row) {
     }
 }
 
-void CItem_clearSharedBox() {
+extern "C" void CItem_clearSharedBox() {
     lbl_eu_80573EEC.mCount = 0;
 }
 

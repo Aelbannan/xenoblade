@@ -83,11 +83,11 @@ asm ui32 __TRK_get_MSR(){
     blr
 }
 
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: -inline noauto (breaks TRKPPCAccessFPRegister), -ipa off, -O4,s all tried
 void __TRK_set_MSR(ui32 val) {
     asm("mtmsr %0" : : "r"(val));
 }
-#pragma dont_inline reset
+#pragma dont_inline reset  // noinline-ok: closes the block above
 
 DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions readWriteable){
     DSError err = kInvalidMemory;

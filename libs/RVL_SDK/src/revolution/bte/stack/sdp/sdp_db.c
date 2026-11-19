@@ -124,7 +124,6 @@ tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq)
     return NULL;
 }
 
-#pragma dont_inline on
 
 BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_len, int nest_level) {
     UINT8 *p_end = p + seq_len;
@@ -153,7 +152,6 @@ BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_le
     return FALSE;
 }
 
-#pragma dont_inline off
 
 tSDP_RECORD *sdp_db_find_record(UINT32 handle) {
     tSDP_RECORD *p_rec;

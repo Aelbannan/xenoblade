@@ -1067,10 +1067,14 @@ kyoshin/makecrystal/CMCEffStart.cpp:
 	.text       start:0x80225B80 end:0x802280F8
 
 kyoshin/menu/CMenuQstCnt.cpp:
-	extab       start:0x800152AC end:0x800153A4
-	extabindex  start:0x8002E450 end:0x8002E510
-	.text       start:0x802280F8 end:0x80229584
+	extab       start:0x800152AC end:0x8001537C
+	extabindex  start:0x8002E450 end:0x8002E4D4
+	.text       start:0x802280F8 end:0x80228DE4
 
+kyoshin/menu/code_80228DE4.cpp:
+	extab       start:0x8001537C end:0x800153A4
+	extabindex  start:0x8002E4D4 end:0x8002E510
+	.text       start:0x80228DE4 end:0x80229584
 kyoshin/CQstLogList.cpp:
 	extab       start:0x800153A4 end:0x800155AC
 	extabindex  start:0x8002E510 end:0x8002E66C
@@ -1108,9 +1112,14 @@ kyoshin/makecrystal/CMCCrystalSupport.cpp:
 	.text       start:0x80230780 end:0x80231300
 
 kyoshin/menu/CMenuArtsSet.cpp:
-	extab       start:0x80015948 end:0x80015DC0
-	extabindex  start:0x8002EA44 end:0x8002EE34
-	.text       start:0x80231300 end:0x80237600
+	extab       start:0x80015948 end:0x800159A0
+	extabindex  start:0x8002EA44 end:0x8002EA5C
+	.text       start:0x80231300 end:0x80231950
+
+kyoshin/menu/code_80231950.cpp:
+	extab       start:0x800159A0 end:0x80015DC0
+	extabindex  start:0x8002EA5C end:0x8002EE34
+	.text       start:0x80231950 end:0x80237600
 
 kyoshin/CArtsInfo.cpp:
 	extab       start:0x80015DC0 end:0x8001608C
@@ -1212,9 +1221,14 @@ kyoshin/menu/CMenuBattleEnd.cpp:
 	.text       start:0x80271800 end:0x8027212C
 
 kyoshin/menu/CMenuPlayAward.cpp:
-	extab       start:0x80017F04 end:0x800181DC
-	extabindex  start:0x80030964 end:0x80030B44
-	.text       start:0x8027212C end:0x80274258
+	extab       start:0x80017F04 end:0x80018020
+	extabindex  start:0x80030964 end:0x800309E8
+	.text       start:0x8027212C end:0x80272AD8
+
+kyoshin/menu/code_80272AD8.cpp:
+	extab       start:0x80018020 end:0x800181DC
+	extabindex  start:0x800309E8 end:0x80030B44
+	.text       start:0x80272AD8 end:0x80274258
 
 kyoshin/menu/CMenuKizunaTalkList.cpp:
 	extab       start:0x800181DC end:0x800182F8
@@ -1278,10 +1292,14 @@ kyoshin/cf/chain/CChainTimer.cpp:
 	.text       start:0x8027F56C end:0x80280934
 
 kyoshin/CSysWinScenarioLog.cpp:
-	extab       start:0x80018B74 end:0x80018CF8
-	extabindex  start:0x80031390 end:0x80031504
-	.text       start:0x80280934 end:0x8028378C
+	extab       start:0x80018B74 end:0x80018C48
+	extabindex  start:0x80031390 end:0x800313FC
+	.text       start:0x80280934 end:0x8028130C
 
+kyoshin/code_8028130C.cpp:
+	extab       start:0x80018C48 end:0x80018CF8
+	extabindex  start:0x800313FC end:0x80031504
+	.text       start:0x8028130C end:0x8028378C
 kyoshin/cf/chain/CChainActorEne.cpp:
 	extab       start:0x80018CF8 end:0x80018D40
 	extabindex  start:0x80031504 end:0x80031570
@@ -1322,7 +1340,10 @@ kyoshin/cf/chain/CChainCombo.cpp:
 kyoshin/CSysWinSave.cpp:
 	extab       start:0x800199F8 end:0x80019B1C
 	extabindex  start:0x80031F30 end:0x80031F84
-	.text       start:0x802965B4 end:0x80296E70
+	.text       start:0x802965B4 end:0x80296E20
+
+kyoshin/code_80296E20.cpp:
+	.text       start:0x80296E20 end:0x80296E70
 
 kyoshin/realtimeevt/CREvtMovie.cpp:
 	extab       start:0x80019B1C end:0x80019B60

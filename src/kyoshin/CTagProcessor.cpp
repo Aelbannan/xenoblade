@@ -185,9 +185,8 @@ void* __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(void* self, int delet
 }
 
 // Reset a tag-param block to all zero (float field takes the sdata2 constant).
-// noinline + C linkage (declared in the header): the tag-proc ctors call it
 // via bl and the retail reloc name is the flat TagParamClear.
-__declspec(noinline) void TagParamClear(TagParam* p) {
+void TagParamClear(TagParam* p) {
     p->field_00 = 0;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -197,11 +196,8 @@ __declspec(noinline) void TagParamClear(TagParam* p) {
     p->field_08 = lbl_eu_806671F0;
 }
 
-// Init a tag-param block from a byte code and a u16 value. The tag-writer
-// family calls it via bl (retail kept it as a flat C-ABI symbol in a separate
-// TU), so the body must stay out of line - noinline + the header's extern
-// "C" declaration keep the symbol unmangled.
-__declspec(noinline) void initTagParam(u8* obj, unsigned char a, unsigned char b, float c) {
+// Init a tag-param block from a byte code and a u16 value.
+void initTagParam(u8* obj, unsigned char a, unsigned char b, float c) {
     unsigned char* base = (unsigned char*)obj;
     base[0] = a;
     base[1] = 0;
@@ -213,10 +209,7 @@ __declspec(noinline) void initTagParam(u8* obj, unsigned char a, unsigned char b
 }
 
 // Init a tag-param block with a byte code (field_00) and a u16 value (field_04).
-// extern "C" + __declspec(noinline): the tag-writer family calls it via bl with
-// the flat retail name TagParamInitCodeU16 - keep the symbol unmangled and the call
-// out of line so the reloc matches retail (same convention as TagParamInitCode).
-extern "C" __declspec(noinline) void TagParamInitCodeU16(TagParam* p, u8 a, u16 b) {
+extern "C" void TagParamInitCodeU16(TagParam* p, u8 a, u16 b) {
     p->field_00 = a;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -227,10 +220,7 @@ extern "C" __declspec(noinline) void TagParamInitCodeU16(TagParam* p, u8 a, u16 
 }
 
 // Init a tag-param block with a byte code (field_00) only.
-// extern "C" + __declspec(noinline): retail kept this helper as a flat
-// C-linkage symbol in a separate TU, so the tag-writer family calls it via
-// bl with the unmangled name - do not let MWCC mangle/inline it here.
-extern "C" __declspec(noinline) void TagParamInitCode(TagParam* p, u8 a) {
+extern "C" void TagParamInitCode(TagParam* p, u8 a) {
     p->field_00 = a;
     p->field_01 = 0;
     p->field_02 = 0;
@@ -266,10 +256,7 @@ CTagProcessorBase::CTagProcessorBase() {
 }
 
 // Copy a 12-byte tag-param block byte-by-byte.
-// extern "C" + __declspec(noinline): retail kept this helper as a flat
-// C-linkage symbol in a separate TU, so the tag-writer family calls it via
-// bl with the unmangled name - do not let MWCC mangle/inline it here.
-extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
+extern "C" void copyTagParam(u8* dst, const u8* src) {
     unsigned char* d = (unsigned char*)dst;
     const unsigned char* s = (const unsigned char*)src;
     d[0] = s[0];
@@ -283,12 +270,13 @@ extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
 
 // Deleting destructor for CTagProcessorBase (retail __dt__17CTagProcessorBaseFv):
 // genuine C++ member dtor of the derived class -- the compiler emits the nw4r
-// base-dtor call with flag 0 and the operator delete when the deleting flag
-// is set (the retail shape). optimize_for_size merges the r30/r31 saves into
-// stmw/lmw and fixes the copy order (TagWriterCode7 family pattern).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
-#pragma optimize_for_size off
+// base-dtor call with flag 0 and the operator delete when the deleting flag is set
+// (the retail shape). Derived-class dtors must keep a real `bl` to this (retail:
+// __dt__13CTagProcessorFv 0x80126BE8 and __dt__15CTagProcessorSEFv 0x80128A34 both
+// emit `li r4,0; bl` with no extra null guard). Definition order already matches
+// retail (this dtor sits above both), -O4,s / -ipa off do not stop the front end
+// folding the empty body, so the declspec is the only lever.
+__declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}  // noinline-ok: TU boundary ok (this split), definition order already retail, -O4,p/-O4,s/-ipa off tried; front end folds the empty member dtor
 
 // Tag-code dispatch for Process: walk the handler table; a null handler
 // falls back to the base TagProcessor, a matching tag dispatches to the
@@ -298,7 +286,6 @@ extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's Process override (vtable slot 3). The byte offset keeps
 // MWCC's base+offset induction shape (retail: add r8,r7,r6 / addi r6,r6,0xC).
-#pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
 nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchProcess(
     nw4r::ut::TagProcessorBase<wchar_t>* self, u16 tag,
     nw4r::ut::PrintContext<wchar_t>* ctx) {
@@ -314,14 +301,12 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchProcess(
         }
     }
 }
-#pragma optimize_for_size off
 
 
 
 // Tag-code dispatch for CalcRect: walk the handler table; a null handler
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's CalcRect override (vtable slot 4).
-#pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
 nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
     nw4r::ut::TagProcessorBase<wchar_t>* self, nw4r::ut::Rect* rect,
     u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
@@ -337,7 +322,6 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
         }
     }
 }
-#pragma optimize_for_size off
 
 extern "C" int defaultProcess(void* self) { return 0; }
 
@@ -402,33 +386,25 @@ u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f
     return self->mBuf;
 }
 
-// Text-position measurement for the tag-writer family: walk the message
-// buffer from the TextBox, accumulating the max line width (per-glyph font
-// width + the TextBox's per-char spacing at +0xF4) and the line height
-// (0xA and the row-advance inside tag 5 step by the fixed sdata2 constant).
-// Control tags advance the buffer by their operand lengths.
-// optimize_for_size: retail uses the -O4,s save shape (_savegpr_17) and the
-// mtctr/bdnz pairs loop.
-//
-// RESIDUAL (open item): sizes now MATCH exactly (900B); shapes align
-// through the prologue and all case blocks. What remains:
-// 1. Register-allocation permutation: retail colors &vals LAST (r21,
-//    lowest priority - the store loop even rematerializes r1+8), ours
-//    ranks it TOP (r31), shifting msg/out/buf/font/i down one slot each,
-//    permuting inner temps + the whole FPR map (lineH f30 vs f27 etc.).
-//    Proven inert levers: declaration order/position, int-vs-unsigned
-//    counters (retail is signed: srawi/addze ceil-div, cmpw loops),
-//    pointer temps, indexed writes, renames, explicit loop-top pointer.
-// 2. Conversion magic: retail references NAMED lbl_eu_80667200; implicit
-//    casts emit private pooled literals (@7188). An explicit TagConvTemp
-//    union (hi=0x43300000 seeded once, lo=w^0x80000000, then
-//    d - lbl_eu_80667200) names the reloc but perturbed scheduling (+8B)
-//    when tried standalone - revisit after (1) is solved.
-// 3. Jump table: ours anchors a local object 32B below retail's
-//    jumptable_eu_8052D5A4 despite equal size; likely follows from .data
-//    layout, may resolve once (1) is fixed.
-#pragma optimize_for_size on
-__declspec(noinline) void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
+// Text-position measurement for the tag-writer family: walk the message buffer from
+// the TextBox, accumulating the max line width (per-glyph font width + the TextBox's
+// per-char spacing at +0xF4) and the line height (0xA and the row-advance inside tag 5
+// step by the fixed sdata2 constant). Control tags advance the buffer by their operand
+// lengths. RESIDUAL (open item): sizes now MATCH exactly (900B); shapes align through
+// the prologue and all case blocks. What remains: 1. Register-allocation permutation:
+// retail colors &vals LAST (r21, lowest priority - the store loop even rematerializes
+// r1+8), ours ranks it TOP (r31), shifting msg/out/buf/font/i down one slot each,
+// permuting inner temps + the whole FPR map (lineH f30 vs f27 etc.). Proven inert
+// levers: declaration order/position, int-vs-unsigned counters (retail is signed:
+// srawi/addze ceil-div, cmpw loops), pointer temps, indexed writes, renames, explicit
+// loop-top pointer. 2. Conversion magic: retail references NAMED lbl_eu_80667200;
+// implicit casts emit private pooled literals (@7188). An explicit TagConvTemp union
+// (hi=0x43300000 seeded once, lo=w^0x80000000, then d - lbl_eu_80667200) names the
+// reloc but perturbed scheduling (+8B) when tried standalone - revisit after (1) is
+// solved. 3. Jump table: ours anchors a local object 32B below retail's
+// jumptable_eu_8052D5A4 despite equal size; likely follows from .data layout, may
+// resolve once (1) is fixed.
+void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
     u32 vals[16];
     nw4r::lyt::Font* font = ((nw4r::lyt::TextBox*)msg)->GetFont();
     f32 lineH = lbl_eu_806671F4;
@@ -545,7 +521,6 @@ __declspec(noinline) void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t
     out[0] = max;
     out[1] = lineH;
 }
-#pragma optimize_for_size off
 
 // Tag-proc constructor for the full processor: base-construct, then the
 // CTagProcessor-specific fields. The 0x838 block is zeroed via memset.
@@ -568,14 +543,11 @@ void* __ct__CTagProcessor(void* self) {
     return p;
 }
 
-// Deleting destructor for CTagProcessor (retail __dt__13CTagProcessorFv):
-// genuine C++ member dtor of the derived class -- the compiler emits the base
-// dtor call (__dt__17CTagProcessorBaseFv) with flag 0 and the operator delete
-// when the deleting flag is set (the retail shape). optimize_for_size merges
-// the r30/r31 saves into stmw/lmw + fixes the copy order (family pattern).
-#pragma optimize_for_size on
+// Deleting destructor for CTagProcessor (retail __dt__13CTagProcessorFv): genuine C++
+// member dtor of the derived class -- the compiler emits the base dtor call
+// (__dt__17CTagProcessorBaseFv) with flag 0 and the operator delete when the deleting
+// flag is set (the retail shape).
 CTagProcessor::~CTagProcessor() {}
-#pragma optimize_for_size off
 
 // Message-pump step: dispatch the next tag code at buf[field_810+2]. The
 // tag stream is the u16-encoded message written by the tag-writer family;
@@ -587,7 +559,7 @@ CTagProcessor::~CTagProcessor() {}
 // of the frame down (first declared = highest address), and the per-walk
 // ctx/pair/color temps follow the walk order - the declaration order below
 // mirrors the retail frame (0x8..0x480 locals, 0x480..0xC80 namebuf).
-__declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
+int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                                         nw4r::lyt::Pane* a,
                                         nw4r::lyt::Pane* b,
                                         nw4r::lyt::Pane* c) {
@@ -1305,17 +1277,15 @@ finish:
     return -1;
 }
 
-// noinline: TagProcCalcPageLayout keeps the bl copyVEC2 call in retail - a tiny
 // same-TU body like this would otherwise be folded into the call site.
-extern "C" __declspec(noinline) void copyVEC2(float *dst, const float *src) {
+extern "C" void copyVEC2(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
-// noinline: the retail name-display walks call the operator out-of-line
 // (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
 // the RHS color is materialized on the stack) - -ipa would otherwise fold
 // the 4-byte copy into the call sites and drop the color temps.
-__declspec(noinline) nw4r::ut::Color& nw4r::ut::Color::operator=(
+nw4r::ut::Color& nw4r::ut::Color::operator=(
     const nw4r::ut::Color& rhs) {
     comp.r = rhs.comp.r;
     comp.g = rhs.comp.g;
@@ -1324,7 +1294,6 @@ __declspec(noinline) nw4r::ut::Color& nw4r::ut::Color::operator=(
     return *this;
 }
 
-// noinline: the retail name-display walks call the operator out-of-line
 // (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
 // the RHS color is materialized on the stack) - -ipa would otherwise fold
 // the 4-byte copy into the call sites and drop the color temps.
@@ -1344,9 +1313,8 @@ extern "C" const wchar_t* getContextStr(u8* self) { return ((const TagContext*)s
 extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
 // Char-space accumulation helper (retail C-ABI symbol in this unit).
-// noinline: the tag-writer family (TagWriterCharSpacePP) calls it via bl in retail,
 // so the tiny body must not be folded into call sites.
-extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) {
+extern "C" void addToCharSpace(u8* self, float val) {
     TagContext* ctx = (TagContext*)self;
     ctx->charSpace = *(float*)&ctx->contextStr + val;
 }
@@ -1362,13 +1330,9 @@ void* TagCtxGetNodeHeader(void* self) {
 }
 
 // Compare the first u32 of two blocks (used as a tag-identity test).
-// Retail uses the -O4,s addic/subfe setnz idiom; optimize_for_size on
-// forces the -O4,s lowering even though the unit compiles at -O4,p.
-#pragma optimize_for_size on
 u32 TagProcCompareIds(const u32* a, const u32* b) {
     return *a != *b;
 }
-#pragma optimize_for_size off
 
 extern "C" void* TagCtxAdvanceHead(void* self, int a) {
     void* p = *(void**)self;
@@ -1379,7 +1343,6 @@ extern "C" void* TagCtxAdvanceHead(void* self, int a) {
 // Tag-processor message pump: check the next tag code at buf[field_810+2]; if
 // the message is exhausted return 3, otherwise keep running the text-processing
 // step TagProcStepMessage until it reports <= 4 (page/section done).
-#pragma optimize_for_size on
 int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
     CTagProcMsg* msg = (CTagProcMsg*)tag;
@@ -1392,17 +1355,15 @@ int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
     } while (r > 4);
     return (int)r;
 }
-#pragma optimize_for_size off
 
-// noinline: TagProcBuildOpenText keeps the bl TagCopyVec2f / copyVEC3 calls in
 // retail - the tiny same-TU bodies would otherwise be folded into the call
 // sites (same convention as copyVEC2 below).
-extern "C" __declspec(noinline) void TagCopyVec2f(float* dst, const float* src) {
+extern "C" void TagCopyVec2f(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
 
-extern "C" __declspec(noinline) void copyVEC3(float* dst, const float* src) {
+extern "C" void copyVEC3(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -1424,8 +1385,7 @@ extern "C" __declspec(noinline) void copyVEC3(float* dst, const float* src) {
 // (`pos2[0] < lbl`, current form, -1 insn) or two extra insns
 // (`!(x >= lbl)` / flipped-operand forms). Fix that one cror shape and the
 // whole tail should realign byte-for-byte.
-#pragma optimize_for_size on
-__declspec(noinline) void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
                    TalkPaneView* c, const wchar_t* text) {
     wchar_t buf[0x400];   // page scratch (+0x190)
     u32 counts[0x10];     // ruby per-entry char counts (+0x50)
@@ -1555,7 +1515,6 @@ __declspec(noinline) void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, T
         copyVEC3(c->vec_2C.v, &s.v[0]);
     }
 }
-#pragma optimize_for_size off
 
 // Tag-writer position clamp: copy the message string into a local buffer,
 // measure the text position (TagProcMeasureText), then y = c34*(y-cF4)+c30 with a
@@ -1626,17 +1585,13 @@ void TagWriterSetCursorPos(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float
     tw->cursorY = y;
 }
 
-// Tag-writer helper: measure a string's max line width and the font height.
-// The string is copied into a scratch buffer (memset + wcscpy), then the
-// ORIGINAL string is walked accumulating (font->GetCharWidth(c) + 2) into a
-// running sum; when the terminator is hit the running sum becomes the max.
-// The height getter (vtable +0x34) and each width+2 are converted with the
-// builtin 0x4330/xoris/lfd/fsubs magic idiom (magic hoisted once into f31,
-// shared by both sites).
-// optimize_for_size: retail saves r27-r31 + f28-f31 with _savegpr_27 (the
-// -O4,s save shape).
-#pragma optimize_for_size on
-void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
+// Tag-writer helper: measure a string's max line width and the font height. The string
+// is copied into a scratch buffer (memset + wcscpy), then the ORIGINAL string is
+// walked accumulating (font->GetCharWidth(c) + 2) into a running sum; when the
+// terminator is hit the running sum becomes the max. The height getter (vtable +0x34)
+// and each width+2 are converted with the builtin 0x4330/xoris/lfd/fsubs magic idiom
+// (magic hoisted once into f31, shared by both sites).
+void TagMeasureTextWidth(f32* out, void* unused,
                                         nw4r::lyt::TextBox* textbox,
                    const wchar_t* str) {
     wchar_t buf[0x400];
@@ -1669,14 +1624,11 @@ void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
     out[0] = max;
     out[1] = height;
 }
-#pragma optimize_for_size off
 
 // Message-pane text reset hook: free the old textbox string buffer, allocate
 // a fresh 1024-char one, advance the tag-proc write position, run the message
 // step (TagProcRenderPage) and clear the done flag. No explicit return: the
 // retail leaves r3 as whatever TagProcRenderPage left there.
-#pragma push
-#pragma optimize_for_size on
 void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)a;
@@ -1688,7 +1640,6 @@ void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   0);
     msg->field_820 = 0;
 }
-#pragma pop
 
 // Sound-effect variant of the tag processor (retail __ct__CTagProcessorSE):
 // base-construct, then the SE-specific fields (byte at +0x834, u32 at +0x838).
@@ -1707,14 +1658,10 @@ void* __ct__CTagProcessorSE(void* self) {
     return p;
 }
 
-// Deleting destructor for CTagProcessorSE (retail __dt__15CTagProcessorSEFv):
-// member dtor of the derived class -- base dtor call with flag 0, then
-// operator delete when the deleting flag is set. optimize_for_size merges
-// the r30/r31 saves into stmw/lmw; the base dtor is noinline so its guard
-// isn't inlined into the derived dtor (single null-check, family pattern).
-#pragma optimize_for_size on
+// Deleting destructor for CTagProcessorSE (retail __dt__15CTagProcessorSEFv): member
+// dtor of the derived class -- base dtor call with flag 0, then operator delete when
+// the deleting flag is set.
 CTagProcessorSE::~CTagProcessorSE() {}
-#pragma optimize_for_size off
 
 // SE message-pump step (CTagProcessorSE variant of TagProcStepMessage, no name
 // list): dispatch the next tag code at buf[field_810]. Handlers push tag
@@ -1723,7 +1670,7 @@ CTagProcessorSE::~CTagProcessorSE() {}
 // party-member emphasis. Frame layout: locals assigned from the top down
 // (first declared = highest address: 0x2F8 conv temp, 0xF8 outbuf,
 // 0x1C flag table, 0x10 vals, 0x8 hdr).
-__declspec(noinline) int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
+int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
                                        nw4r::lyt::Pane* paneArg) {
     CTagProcessorSE* msg = (CTagProcessorSE*)tag;
     SeTalkPane* pane = (SeTalkPane*)paneArg;
@@ -1958,8 +1905,7 @@ void TagProcPumpSEMessage(){}
 // buffer, allocate a fresh 1024-char one), advance the tag-proc write position,
 // run the message start step, and clear the done flag. No explicit return: the
 // retail leaves r3 as whatever TagProcBuildOpenText left there.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane) {
+extern "C" int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)pane;
     tb->v78();          // FreeStringBuffer()
     tb->v74(0x400);     // AllocStringBuffer(0x400)
@@ -1968,7 +1914,6 @@ extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt
     TagProcBuildOpenText((CTagProcessorBase*)tagProc, pane, 0);
     msg->field_820 = 0;
 }
-#pragma optimize_for_size off
 
 // Talk-open text setup: build the display string (either the caller's string
 // or a scan of the message buffer from field_810 that stops at a control
@@ -1976,8 +1921,7 @@ extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt
 // the pane's +0x7C setter, pick the message-speed constant from the newline
 // flag, measure the line position, and update the pane's position VEC3.
 // -O4,s save shape (_savegpr_28).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
+extern "C" void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
                    const wchar_t* str) {
     wchar_t buf2[0x400];
     f32 out[2];
@@ -2030,26 +1974,17 @@ extern "C" __declspec(noinline) void TagProcBuildOpenText(CTagProcessorBase* msg
     pv->v78();
     pv->v74(0x400);
 }
-#pragma optimize_for_size off
 
-// Tag-writer family (small variants): init a TagParam block with a tag code
-// NOTE: retail prologue is stwu; mflr; stw r0; stmw r30; or r30,r4,r4;
-// or r31,r6,r6 -- the optimize_for_size pragma merges the callee-saved saves
-// into stmw/lmw and fixes the copy order (MWCC_CASES CPartyState
-// drawPartyState pattern); plain -O4,p emits reversed stw pairs + moves.
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode7(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     TagParamInitCode(&p, 7);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 // Tag-writer variant with a numeric value: uppercase the value string, parse it
 // with wcstol, store tag-param code 6 plus the value, copy the block into the
 // output buffer, and thread the r4 arg through (same family as TagWriterCode7).
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode6Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
@@ -2059,21 +1994,17 @@ extern "C" void* TagWriterCode6Value(void* a, void* b, u16* str, u8* dst) {
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 // Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode5(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     TagParamInitCode(&p, 5);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 // Build a fresh tag-param (mode 8) on the stack, copy it onto the target,
 // set its +1 flag, and return the ret pointer (retail keeps a1/a3 phantom).
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 extern "C" void* TagWriterCode8Target(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
     TagParam tmp;
     TagParamInitCode(&tmp, 8);
@@ -2081,10 +2012,8 @@ extern "C" void* TagWriterCode8Target(u8* a1, TagParam* ret, u8 a3, TagParam* ta
     target->field_01 |= 1;
     return ret;
 }
-#pragma optimize_for_size off
 
 // Same as TagWriterCode6Value but with tag-param code 4.
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode4Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
@@ -2094,7 +2023,6 @@ extern "C" void* TagWriterCode4Value(void* a, void* b, u16* str, u8* dst) {
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 void* callInitTagProc(void* arg1, void* arg2) {
     extern void MenuStateSet6405A(void*);
@@ -2103,17 +2031,14 @@ void* callInitTagProc(void* arg1, void* arg2) {
 }
 
 // Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode3(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     TagParamInitCode(&p, 3);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 // Same as TagWriterCode6Value but with tag-param code 2.
-#pragma optimize_for_size on
 extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
     WcsToUpperInPlace(str);
     wchar_t* endptr = 0;
@@ -2123,21 +2048,17 @@ extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
-#pragma optimize_for_size off
 
 // Tag-param writer for a 1-value tag: split the arg string on ':' via
 // SplitWStringTrim, uppercase the first token and map it to a tag index via the
-// tag-string table (offsets +0x00/+0x08/+0x14 select 0..2), then init a
-// tag-param block: when a second token exists its decimal value is parsed
-// with wcstol and converted to float (builtin s32->f32, byte-identical to
-// retail's 0x4330/xoris/lfd/fsubs magic idiom - the magic pools to a TU-local
-// @N label; retail shares it as lbl_eu_80667200, see the inline note),
-// else the fixed f32 fallback constant is used. The block is copied into
-// dst and the r4 arg is returned (family idiom).
-// optimize_for_size: retail saves r26-r31 with stmw (the -O4,s save shape).
-// tokens[16]: retail's frame places the token array at +0x28 and the
+// tag-string table (offsets +0x00/+0x08/+0x14 select 0..2), then init a tag-param
+// block: when a second token exists its decimal value is parsed with wcstol and
+// converted to float (builtin s32->f32, byte-identical to retail's
+// 0x4330/xoris/lfd/fsubs magic idiom - the magic pools to a TU-local @N label; retail
+// shares it as lbl_eu_80667200, see the inline note), else the fixed f32 fallback
+// constant is used. The block is copied into dst and the r4 arg is returned (family
+// idiom). tokens[16]: retail's frame places the token array at +0x28 and the
 // conversion scratch at +0x68, which a 16-pointer array reproduces.
-#pragma optimize_for_size on
 void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     wchar_t* tokens[16];
     TagParam p;
@@ -2169,16 +2090,13 @@ void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* 
     }
     return ret;
 }
-#pragma optimize_for_size off
 
-// Color-tag writer: split the arg string on ':', copy the name/value tables
-// from ROM (220/224-byte struct assignments - MWCC's mtctr/bdnz copy loop),
-// match each token against the name table (max 0x40 entries, null-terminated)
-// storing the matching value into the 3-slot scratch (seeded with the sdata2
-// color defaults), then pack the scratch into a 3-u16 block <8, (b<<8)|r,
-// (a<<8)|0xff> and return the position after the block.
-// optimize_for_size: retail saves r21-r31 with stmw (the -O4,s save shape).
-#pragma optimize_for_size on
+// Color-tag writer: split the arg string on ':', copy the name/value tables from ROM
+// (220/224-byte struct assignments - MWCC's mtctr/bdnz copy loop), match each token
+// against the name table (max 0x40 entries, null-terminated) storing the matching
+// value into the 3-slot scratch (seeded with the sdata2 color defaults), then pack the
+// scratch into a 3-u16 block <8, (b<<8)|r, (a<<8)|0xff> and return the position after
+// the block.
 u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
     TagColorOut out;
     wchar_t* tokens[16];
@@ -2205,15 +2123,11 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
     dst[2] = (u16)(((u8)out.s[2] << 8) | 0xff);
     return dst + 3;
 }
-#pragma optimize_for_size off
 
-// Tag-code writer (code 7): split the arg string on '/', record each token's
-// length, write the 2-entry header (tag + token count), then a (count+1)/2
-// block of length pairs (each u16 packs two consecutive token lengths), then
-// copy every token into dst in order. Returns the end of the copied region.
-// optimize_for_size: retail saves r26-r31 with stmw (the -O4,s save shape);
-// the unsigned trip shift is what retail uses (rlwinm, not srawi).
-#pragma optimize_for_size on
+// Tag-code writer (code 7): split the arg string on '/', record each token's length,
+// write the 2-entry header (tag + token count), then a (count+1)/2 block of length
+// pairs (each u16 packs two consecutive token lengths), then copy every token into dst
+// in order. Returns the end of the copied region.
 u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
@@ -2235,10 +2149,8 @@ u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
     }
     return dst;
 }
-#pragma optimize_for_size off
 
 // Tag-code writer (code 6): same shape as TagWriterCode7List but with tag code 6.
-#pragma optimize_for_size on
 u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
@@ -2260,7 +2172,6 @@ u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
     }
     return dst;
 }
-#pragma optimize_for_size off
 
 extern "C" u16* writeTagCode0D(void* dummy, u16* buf) {
     *buf = 0xD;
@@ -2271,7 +2182,6 @@ extern "C" u16* writeTagCode0D(void* dummy, u16* buf) {
 // sizes the writer's font to the fixed sdata2 constant, measures the two-char
 // speed-up string "++" (tag table +0x1a), restores the previous font size,
 // and stores the result back into the char-space context. Returns 2.
-#pragma optimize_for_size on
 int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
                   TagWriterHolder* holder) {
     nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
@@ -2286,7 +2196,6 @@ int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
     addToCharSpace((u8*)ctx, tw->GetFontHeight());
     return 2;
 }
-#pragma optimize_for_size off
 
 // Tag-writer accessor: TextWriterBase::GetWidthLimit (+0x4C) with the nw4r
 // pointer validation used across the tag-writer family - the writer must live
@@ -2298,7 +2207,7 @@ int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
 // 0xFF000000 mask kept in a short-lived `hi` local (only the 0x80/0xC0 checks
 // use it - retail r11) while the other masks are recomputed from tw per check
 // so they die per-condition.
-__declspec(noinline) float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     // nw4r pointer validation: panic unless the writer lives in one of the
     // known memory regions. The cascading if-chain (each check gated on the
     // previous one failing) is the retail shape. Flags are declared in
@@ -2341,7 +2250,7 @@ __declspec(noinline) float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
 // Flags declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-__declspec(noinline) void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2375,7 +2284,7 @@ __declspec(noinline) void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_
 
 // Tag-writer accessor: add to CharWriter::mCursorPos.x (+0x2C) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-__declspec(noinline) void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2411,7 +2320,7 @@ __declspec(noinline) void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar
 // validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-__declspec(noinline) float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2518,7 +2427,7 @@ int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder
 // validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-__declspec(noinline) float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2554,7 +2463,7 @@ __declspec(noinline) float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>
 // pointer validation as TagWriterGetWidthLimit (different Panic site/strings). Flags
 // declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-__declspec(noinline) float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2588,7 +2497,7 @@ __declspec(noinline) float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>*
 
 // Tag-writer accessor: CharWriter scale-y (+0x28) with the same nw4r
 // pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-__declspec(noinline) float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2620,22 +2529,15 @@ __declspec(noinline) float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>*
     return tw->field_28;
 }
 
-// extern "C" + noinline: the tag-writer family (TagWriterMeasureStrings) calls it via
-// bl in retail; noinline keeps -ipa from folding the 0x68-byte struct copy
-// into the call site (the retail kept it as a real 0x104-byte call).
-extern "C" __declspec(noinline) void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
+extern "C" void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
     *dst = *src;
 }
 
-// Tag-writer accessor: store into TextWriterBase +0x5C (mFontSize.y region)
-// with the same nw4r pointer validation as TagWriterGetWidthLimit. This one keeps
-// both tw and value live across the Panic call, so MWCC saves r30/r31
-// (stmw prologue) instead of just r31.
-// optimize_for_size: retail saves r30/r31 with a single stmw/lmw (the -O4,s
-// save shape); under the unit's -O4,p they split into stw pairs with
-// reversed moves (same artifact as TagWriterCode7).
-#pragma optimize_for_size on
-__declspec(noinline) void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
+// Tag-writer accessor: store into TextWriterBase +0x5C (mFontSize.y region) with the
+// same nw4r pointer validation as TagWriterGetWidthLimit. This one keeps both tw and
+// value live across the Panic call, so MWCC saves r30/r31 (stmw prologue) instead of
+// just r31.
+void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2666,12 +2568,11 @@ __declspec(noinline) void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>
     }
     tw->field_5C = value;
 }
-#pragma optimize_for_size off
 
 // Tag-writer accessor: CharWriter scale set (+0x24/+0x28, mScale region)
 // with the same nw4r pointer validation as TagWriterGetWidthLimit (different Panic
 // site/strings).
-__declspec(noinline) void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
+void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2705,10 +2606,8 @@ __declspec(noinline) void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* t
 }
 
 // Tag-code writer (code 9): uppercase the arg string, compare it against the
-// tag-string table entries at +0x24 / +0x2a, write <9, value> into dst, and
-// return the position after the block. The r3 arg is unused (family idiom).
-// optimize_for_size: retail saves r28-r31 with stmw (the -O4,s save shape).
-#pragma optimize_for_size on
+// tag-string table entries at +0x24 / +0x2a, write <9, value> into dst, and return the
+// position after the block. The r3 arg is unused (family idiom).
 u16* TagWriterCode9Switch(void* a, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
@@ -2720,14 +2619,11 @@ u16* TagWriterCode9Switch(void* a, u16* dst, wchar_t* str) {
     dst[1] = (u16)v;
     return dst + 2;
 }
-#pragma optimize_for_size off
 
-// Tag-code writer (code 8, name selection): uppercase the arg string, map it
-// to a value 1..9 via the tag-string table, init a tag-param block with code
-// 8, copy it into dst, then tag the block with the selected value and the
-// "has value" bit. Returns the r4 arg.
-// optimize_for_size: retail saves r27-r31 with stmw (the -O4,s save shape).
-#pragma optimize_for_size on
+// Tag-code writer (code 8, name selection): uppercase the arg string, map it to a
+// value 1..9 via the tag-string table, init a tag-param block with code 8, copy it
+// into dst, then tag the block with the selected value and the "has value" bit.
+// Returns the r4 arg.
 void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
@@ -2756,13 +2652,11 @@ void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* ds
     dst->field_01 |= 0x2;
     return ret;
 }
-#pragma optimize_for_size off
 
 // Tag-code writer (code 8): uppercase the arg string, pick a value from the
 // tag-string table by comparison (offsets +0xb0/+0xb8/+0xc4/+0xcc select
 // 0..3), init a tag-param block with code 8, copy it into dst, then tag the
 // block with the selected value and the "has value" bit. Returns the r4 arg.
-#pragma optimize_for_size on
 void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
@@ -2781,18 +2675,14 @@ void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* ds
     dst->field_01 |= 0x4;
     return ret;
 }
-#pragma optimize_for_size off
 
-// Tag-code writer (code 0xB): split the arg string on ':', uppercase token 0
-// and map it to a 1..2 tag id via the tag-string table (+0xd8/+0xdc), parse
-// token 1 as the numeric value, then map token 2 through the 26-entry BDAT
-// lookup chain (each match yields BdatGetS16ByTableKey(lbl_eu_804FFC48,
-// &lbl_eu_804FFC48[0xc], n)) or a wcstol fallback. Tokens 3/4 (when present)
-// are decimal values. Writes <0xb, (tag1<<8)|0xff, val, tag2, tag3, tag4>
-// when the split produced >= 3 tokens and returns the position after the
-// block.
-// optimize_for_size: retail saves r23-r31 with stmw (the -O4,s save shape).
-#pragma optimize_for_size on
+// Tag-code writer (code 0xB): split the arg string on ':', uppercase token 0 and map
+// it to a 1..2 tag id via the tag-string table (+0xd8/+0xdc), parse token 1 as the
+// numeric value, then map token 2 through the 26-entry BDAT lookup chain (each match
+// yields BdatGetS16ByTableKey(lbl_eu_804FFC48, &lbl_eu_804FFC48[0xc], n)) or a wcstol
+// fallback. Tokens 3/4 (when present) are decimal values. Writes <0xb, (tag1<<8)|0xff,
+// val, tag2, tag3, tag4> when the split produced >= 3 tokens and returns the position
+// after the block.
 u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
@@ -2886,14 +2776,12 @@ u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
     }
     return out;
 }
-#pragma optimize_for_size off
 
 // Color-name tag writer: uppercase the arg string, map known color names
 // from the tag table to packed RGB values, else parse a '#'-prefixed digit
 // string (digits '1'..'?' accumulate value nibbles, 'A'..'F' are skipped,
 // alpha is forced to 0xFF), then write the <2, hi, lo> block.
 // -O4,s save shape (stmw r28).
-#pragma optimize_for_size on
 u16* TagParseColor(void* a, u16* out, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     u32 v = 0;
@@ -2963,7 +2851,6 @@ u16* TagParseColor(void* a, u16* out, wchar_t* str) {
     out[2] = (u16)v;
     return out + 3;
 }
-#pragma optimize_for_size off
 
 // Word view of the tag-writer cursor advanced by TagWriterAdvancePtr4:
 // the live pointer sits at +0x04 and steps by 4 bytes per call.
@@ -2980,7 +2867,6 @@ extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, TagWriterPtrView*
 // committed via the out-of-line Color::operator= and
 // CharWriter::UpdateVertexColor, then the source pointer advances.
 // -O4,s save shape (stmw r30).
-#pragma optimize_for_size on
 u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
     bool validRegs2 = true;
     bool validRegs = true;
@@ -3035,13 +2921,11 @@ u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
     arg->field_04++;
     return 0;
 }
-#pragma optimize_for_size off
 
 // Tag-code writer (code 1): split the arg string on '/' via SplitWStringTrim,
 // record each token's length, write a 2-entry header (count + combined first
 // two lengths), then copy every token into dst in order, advancing by each
 // token's stored length. Returns the end of the copied region.
-#pragma optimize_for_size on
 u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
@@ -3059,19 +2943,15 @@ u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
     }
     return dst;
 }
-#pragma optimize_for_size off
 
-// Tag-writer line layout: copy the active TextWriter into a local scratch
-// writer (no ctor - -ipa drops the dead __ct__ since TagWriterCopyBlock
-// overwrites every byte), zero its font-size field, scale it by the sdata2
-// factor, measure two adjacent strings from the tag buffer (lengths are the
-// low/high bytes of the u16 header; the second string starts 2*len2 bytes in),
-// add the max width (plus the writer's char space unless bit0 of field_10 is
-// set) to the real writer's cursor, write out->field_08, advance the buffer
-// pointer past both strings, destroy the scratch, and return 2.
-// optimize_for_size: retail saves r24-r31 + f30/f31 with _savegpr_24 (the
-// -O4,s save shape).
-#pragma optimize_for_size on
+// Tag-writer line layout: copy the active TextWriter into a local scratch writer (no
+// ctor - -ipa drops the dead __ct__ since TagWriterCopyBlock overwrites every byte),
+// zero its font-size field, scale it by the sdata2 factor, measure two adjacent
+// strings from the tag buffer (lengths are the low/high bytes of the u16 header; the
+// second string starts 2*len2 bytes in), add the max width (plus the writer's char
+// space unless bit0 of field_10 is set) to the real writer's cursor, write
+// out->field_08, advance the buffer pointer past both strings, destroy the scratch,
+// and return 2.
 int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
                   TagWriterHolder* holder) {
     const u8* buf = holder->field_04;
@@ -3110,11 +2990,10 @@ int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
     holder->field_04 = (const u8*)(s1 + lenLo);
     return 2;
 }
-#pragma optimize_for_size off
 
 // Tag-writer accessor: TextWriterBase::SetCharSpace (+0x50) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-__declspec(noinline) void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3148,7 +3027,7 @@ __declspec(noinline) void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t
 
 // Tag-writer accessor: TextWriterBase::GetCharSpace (+0x50) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-__declspec(noinline) float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3189,7 +3068,7 @@ __declspec(noinline) float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_
 // cursor (y lifted by ascent+descent), the excess is walked back off the
 // real writer's cursor twice (once per print), and the buffer pointer
 // advances past both strings. Returns 2.
-__declspec(noinline) int TagWriterJustifyPair(void* unused, void* unused2,
+int TagWriterJustifyPair(void* unused, void* unused2,
                                        TagWriterHolder* holder) {
     // Long-lived locals declared up front in MWCC's callee-saved priority
     // order (first declared -> highest register); assigned in statement order
@@ -3331,7 +3210,6 @@ __declspec(noinline) int TagWriterJustifyPair(void* unused, void* unused2,
 
 // Tag-code writer (code 4): same shape as TagWriterCode9Switch, but the first match
 // selects -1 and the second selects 0 (strings at +0x17e / +0x186).
-#pragma optimize_for_size on
 u16* TagWriterCode4Switch(void* a, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
@@ -3343,13 +3221,11 @@ u16* TagWriterCode4Switch(void* a, u16* dst, wchar_t* str) {
     dst[1] = (u16)v;
     return dst + 2;
 }
-#pragma optimize_for_size off
 
 // Tag-code writer (code 5): uppercase the arg string, then map it to a value
 // via the tag-string table (+0x190 -> -1, +0x198 -> -2, otherwise the
 // decimal parse of the string). Writes <5, value> into dst and returns the
 // position after the block. The r3 arg is unused (family idiom).
-#pragma optimize_for_size on
 u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     s32 v;
@@ -3365,7 +3241,6 @@ u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str) {
     dst[1] = (u16)v;
     return dst + 2;
 }
-#pragma optimize_for_size off
 
 extern "C" u16* writeTagCode03(void* unused, u16* buf) {
     *buf = 3;
@@ -3451,31 +3326,30 @@ extern u32 lbl_eu_8052D618[];
 // the 4-byte sbss singleton. The classes themselves are the anonymous-
 // namespace CTagCode subclasses whose deleting dtors are the
 // __dt___unnamed_CTagProcessor_cpp_CTagCode* stubs at the top of the file.
-// noinline: sinit_8012BA00 calls each via bl in retail - the tiny bodies
 // must not be folded into the sinit's call sites.
-__declspec(noinline) void __ct__CTagCodeCL(void* self) { *(void**)self = (void*)lbl_eu_8052D9E0; }
-__declspec(noinline) void __ct__CTagCodeCP(void* self) { *(void**)self = (void*)lbl_eu_8052D9B8; }
-__declspec(noinline) void __ct__CTagCodeWait(void* self) { *(void**)self = (void*)lbl_eu_8052D990; }
-__declspec(noinline) void __ct__CTagCodeDel(void* self) { *(void**)self = (void*)lbl_eu_8052D968; }
-__declspec(noinline) void __ct__CTagCodeRuby(void* self) { *(void**)self = (void*)lbl_eu_8052D940; }
-__declspec(noinline) void __ct__CTagCodeCol(void* self) { *(void**)self = (void*)lbl_eu_8052D918; }
-__declspec(noinline) void __ct__CTagCodeTrust(void* self) { *(void**)self = (void*)lbl_eu_8052D898; }
-__declspec(noinline) void __ct__CTagCodeType(void* self) { *(void**)self = (void*)lbl_eu_8052D870; }
-__declspec(noinline) void __ct__CTagCodePos(void* self) { *(void**)self = (void*)lbl_eu_8052D848; }
-__declspec(noinline) void __ct__CTagCodeMouth(void* self) { *(void**)self = (void*)lbl_eu_8052D820; }
-__declspec(noinline) void __ct__CTagCodeLine(void* self) { *(void**)self = (void*)lbl_eu_8052D7F8; }
-__declspec(noinline) void __ct__CTagCodeSelect(void* self) { *(void**)self = (void*)lbl_eu_8052D7D0; }
-__declspec(noinline) void __ct__CTagCodeSelect2(void* self) { *(void**)self = (void*)lbl_eu_8052D7A8; }
-__declspec(noinline) void __ct__CTagCodeAct(void* self) { *(void**)self = (void*)lbl_eu_8052D780; }
-__declspec(noinline) void __ct__CTagCodeFade(void* self) { *(void**)self = (void*)lbl_eu_8052D758; }
-__declspec(noinline) void __ct__CTagCodeQuest(void* self) { *(void**)self = (void*)lbl_eu_8052D730; }
-__declspec(noinline) void __ct__CTagCodeInvisible(void* self) { *(void**)self = (void*)lbl_eu_8052D708; }
-__declspec(noinline) void __ct__CTagCodeQstStart(void* self) { *(void**)self = (void*)lbl_eu_8052D6E0; }
-__declspec(noinline) void __ct__CTagCodePresent(void* self) { *(void**)self = (void*)lbl_eu_8052D6B8; }
-__declspec(noinline) void __ct__CTagCodeTailOff(void* self) { *(void**)self = (void*)lbl_eu_8052D690; }
-__declspec(noinline) void __ct__CTagCodeExchange(void* self) { *(void**)self = (void*)lbl_eu_8052D668; }
-__declspec(noinline) void __ct__CTagCodeShop(void* self) { *(void**)self = (void*)lbl_eu_8052D640; }
-__declspec(noinline) void __ct__CTagCodeMakeCrystal(void* self) { *(void**)self = (void*)lbl_eu_8052D618; }
+void __ct__CTagCodeCL(void* self) { *(void**)self = (void*)lbl_eu_8052D9E0; }
+void __ct__CTagCodeCP(void* self) { *(void**)self = (void*)lbl_eu_8052D9B8; }
+void __ct__CTagCodeWait(void* self) { *(void**)self = (void*)lbl_eu_8052D990; }
+void __ct__CTagCodeDel(void* self) { *(void**)self = (void*)lbl_eu_8052D968; }
+void __ct__CTagCodeRuby(void* self) { *(void**)self = (void*)lbl_eu_8052D940; }
+void __ct__CTagCodeCol(void* self) { *(void**)self = (void*)lbl_eu_8052D918; }
+void __ct__CTagCodeTrust(void* self) { *(void**)self = (void*)lbl_eu_8052D898; }
+void __ct__CTagCodeType(void* self) { *(void**)self = (void*)lbl_eu_8052D870; }
+void __ct__CTagCodePos(void* self) { *(void**)self = (void*)lbl_eu_8052D848; }
+void __ct__CTagCodeMouth(void* self) { *(void**)self = (void*)lbl_eu_8052D820; }
+void __ct__CTagCodeLine(void* self) { *(void**)self = (void*)lbl_eu_8052D7F8; }
+void __ct__CTagCodeSelect(void* self) { *(void**)self = (void*)lbl_eu_8052D7D0; }
+void __ct__CTagCodeSelect2(void* self) { *(void**)self = (void*)lbl_eu_8052D7A8; }
+void __ct__CTagCodeAct(void* self) { *(void**)self = (void*)lbl_eu_8052D780; }
+void __ct__CTagCodeFade(void* self) { *(void**)self = (void*)lbl_eu_8052D758; }
+void __ct__CTagCodeQuest(void* self) { *(void**)self = (void*)lbl_eu_8052D730; }
+void __ct__CTagCodeInvisible(void* self) { *(void**)self = (void*)lbl_eu_8052D708; }
+void __ct__CTagCodeQstStart(void* self) { *(void**)self = (void*)lbl_eu_8052D6E0; }
+void __ct__CTagCodePresent(void* self) { *(void**)self = (void*)lbl_eu_8052D6B8; }
+void __ct__CTagCodeTailOff(void* self) { *(void**)self = (void*)lbl_eu_8052D690; }
+void __ct__CTagCodeExchange(void* self) { *(void**)self = (void*)lbl_eu_8052D668; }
+void __ct__CTagCodeShop(void* self) { *(void**)self = (void*)lbl_eu_8052D640; }
+void __ct__CTagCodeMakeCrystal(void* self) { *(void**)self = (void*)lbl_eu_8052D618; }
 
 // Static initializer: construct the 23 tag-code singletons in tag order
 // (retail .ctors registration; retail C-ABI ctor names).

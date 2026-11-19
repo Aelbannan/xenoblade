@@ -194,12 +194,19 @@ Fix semantics/types first, then expression order with normal C++ (named locals/h
 - missing `-O4,s` or per-unit `extra_cflags` in `configure.py`; wrong virtual/adjusted-this call.
 - relocation target — declare globals via `extern "C"` retail linker names; access as normal objects.
 - ABI — real C++ params/structs; never fake `Fv`/`u32* r4` register params.
-- templates in headers — `#pragma auto_inline off` + explicit instantiation + `#pragma pop`;
-  check `Ui` vs `Ul` (`unsigned int` on PPC32). See `MWCC_CASES` §Template pitfalls.
+- templates in headers: use explicit instantiation; check `Ui` vs `Ul` (`unsigned int` on PPC32).
+  See `MWCC_CASES` §Template pitfalls. Wrapping the template in `#pragma auto_inline off` now counts
+  as a hard smell; out-of-class template members without `inline` aren't auto-inlined anyway.
 - unwanted inlining of a same-TU helper: `noinline` / `dont_inline` / `auto_inline off` are **hard
-  faithfulness smells**. Find why retail didn't inline: wrong TU boundary, definition order, or unit-wide
-  inline flags (MWCC_PATTERNS "-inline auto inlines same-TU helpers"). Keep one only with
-  `// noinline-ok: <what was tried>` on the same line.
+  faithfulness smells**. Find why retail didn't inline, checking unit flags first:
+  - wrong opt level: many retail kyoshin TUs are `-O4,s`, which doesn't auto-inline (per-function
+    `#pragma optimize_for_size` toggles are the tell);
+  - `-ipa file` folding helpers regardless of order (`-ipa off`);
+  - `-inline noauto`;
+  - definition order;
+  - wrong TU boundary.
+  Keep one only with `// noinline-ok: <what was tried>` on the same line. Wave c5 removed ~1,000 uses
+  this way with net ±0 ✓ (MWCC_CASES "kyoshin noinline smell removal batch").
 
 ## Declaration drift & the `extern "C"` rename shields
 

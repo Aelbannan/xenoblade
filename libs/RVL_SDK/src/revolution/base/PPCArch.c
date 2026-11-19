@@ -15,7 +15,6 @@ asm void PPCMtmsr(register u32 val) {
     // clang-format on
 }
 
-#pragma dont_inline on
 asm u32 PPCMfhid0(void) {
     // clang-format off
     nofralloc
@@ -31,7 +30,6 @@ asm void PPCMthid0(register u32 val) {
     blr
     // clang-format on
 }
-#pragma dont_inline off
 
 asm u32 PPCMfl2cr(void) {
     // clang-format off

@@ -489,7 +489,7 @@ s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
 void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
     void* tgt = self->picUsrTgt;
     if (tgt == NULL) {
@@ -1023,7 +1023,7 @@ void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
 /* Creates a full movie player in a free library slot: allocates the slot,
  * copies the user parameters in, then brings up the SFD core, ring buffers,
  * stream/sound handlers and tag/SFX layers. */

@@ -211,7 +211,6 @@ private:
     AnmObjMatClr* mpAnmObjMatClr; // at 0x12C
     AnmObjTexPat* mpAnmObjTexPat; // at 0x130
     AnmObjTexSrt* mpAnmObjTexSrt; // at 0x134
-    AnmObjShp* mpAnmObjShp;       // at 0x138
 
     NW4R_G3D_RTTI_DECL_DERIVED(ScnMdlSimple, ScnLeaf);
 };

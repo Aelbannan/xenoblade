@@ -335,7 +335,7 @@ struct CScn80496B0C {
 
 // In-unit helpers (bodies recovered later; noinline keeps the call sites as
 // real `bl` relocs).
-__declspec(noinline) void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
+void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
                                         ml::CVec3* outDelta, ml::CVec3* vecB,
                                         ml::CVec3* vecC, u32 arg);
 u32 scn80496CrossfadeStep(CScn80496B0C* self, CScnItemAnim* anim, int index,
@@ -345,14 +345,14 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate);
 // Scene lookup used by the blend-weight updates (retail free function).
 // Character-animation setup helper (retail keeps an unmangled linker name,
 // so it is declared and defined with C linkage).
-extern "C" __declspec(noinline) u32 scn80496SetupChrAnim(
+extern "C" u32 scn80496SetupChrAnim(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, int f);
 
 // Imports from other monolib TUs (retail free functions). C linkage keeps the
 // retail reloc names verbatim (MWCC would otherwise mangle them).
 extern "C" void* getScnRootSel47C(CScn* scn);
-extern "C" __declspec(noinline) void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag);
+extern "C" void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag);
 
 // Character-animation resource lookup by index (retail free function in
 // CScnItemAnim.cpp; C linkage keeps the plain global reloc name).
@@ -730,7 +730,7 @@ CScnChild80496B0C* __dt__80497FEC(CScnChild80496B0C* self, int flags) {
 // object, then shifts the remaining slots down and zeroes the tail. On a
 // match the cursor does NOT advance -- the shift pulls the next binding into
 // the current slot, so it is re-examined on the next pass.
-extern "C" __declspec(noinline) void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag) {
+extern "C" void scn80496RefreshChildTag(CScnChild80496B0C* child, u32 tag) {
     CScnChild80496B0C* walk;
     CScnNode80496B0C* node;
     u32 i;
@@ -1050,7 +1050,7 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
 // slots only accumulate y into vecC (nodes flagged +0x2 bit0) or the full
 // translate otherwise. Finally produces a delta against the stored position
 // when the first slot's node is flagged.
-__declspec(noinline) void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
+void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
                                         ml::CVec3* outDelta, ml::CVec3* vecB,
                                         ml::CVec3* vecC, u32 arg) {
     nw4r::g3d::ChrAnmResult result;
@@ -1283,7 +1283,7 @@ Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34n
 
 extern "C" { extern const double lbl_eu_8066AAD0; }
 
-extern "C" __declspec(noinline) u32 scn80496SetupChrAnim(
+extern "C" u32 scn80496SetupChrAnim(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, int f) {
     nw4r::g3d::ResMdl mdl(self->field_0x1D0);

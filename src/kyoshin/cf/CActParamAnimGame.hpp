@@ -296,8 +296,8 @@ extern "C" void setAnimCount(void* self, u32 param);
 
 // C-linkage imports from kyoshin/action/CActParamData.cpp: float getters on
 // the +0x10 child-data region, and a global state query (func_8005D2C4).
-extern "C" float getParamFloat0C(const void* data);
-extern "C" float getParamFloat08(const void* data);
+extern "C" float getParamFloat0C(CActParamData* self);
+extern "C" float getParamFloat08(CActParamData* self);
 extern "C" int ScnData_FwdBC9A0(void);
 
 // C-linkage imports from libs/monolib/src/scn/code_804BC9EC.cpp (sound

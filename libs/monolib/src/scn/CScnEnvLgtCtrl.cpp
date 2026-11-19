@@ -26,6 +26,7 @@
 #include <revolution/MTX.h>              // PSMTXConcat / PSMTXIdentity / PSVECNormalize
 #include "monolib/math/CVec3.hpp"        // ml::CVec3::zero
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
+#include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10 / Scn_GetFrameDelta queries
 #include "libs/monolib/src/scn/CScnFogMan.hpp"  // CScnFogMan::field_0x28 (scnLgtApplyFogByte)
 #include "monolib/math/CVec4.hpp"       // ml::CVec4 (scnLgtDispatchEnv slot/walk vecs)
@@ -111,7 +112,7 @@ static inline f32 s32ToF_2(s32 v) {
 }
 
 
-extern "C" void scnLgtSetBound(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
+extern "C" void scnLgtSetBound(CScnEnvLgtCtrl* self, u32 val) { self->alt7.field_0xA8 = (s32)val; }
 
 
 // scnLgtGatherLights (us-804c565c): reset the light-data blob, then walk the
@@ -523,7 +524,7 @@ extern "C" void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
 // fog manager / camera when flagged, runs the BE398 flash-request pipeline,
 // then walks the light-item ring accumulating two virtual-call results and
 // pushes the timeout word into the fog manager.
-extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* self) {
     // Declaration order pins MWCC's nonvolatile coloring: retail keeps flag
     // in r31, hitA r30, hitB r29 and the ring cursor r27.
     int flag;
@@ -535,9 +536,9 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
             ((CScnItemModelNw4rOwner*)self->field_0x04_ptr)->field_0x78, 2);
     }
     if (self->flags & 0x8) {
-        CScnEnvLgtCtrlCamWork* cam =
+        CScnCameraMan* cam =
             ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68;
-        CamMan_FindItemA_B158(cam, cam->mCamId);
+        cam->findItem(cam->mCamId);
     }
     flag = 0;
     if (self->flags & 0x80) {
@@ -619,8 +620,7 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
     if (self->flags & 0x400) {
         timeout = 0x1e;
     }
-    ((CScnEnvLgtFogManView*)(
-        (CScnItemModelNw4rOwner*)self->field_0x04_ptr)->field_0x78)
+    ((CScnFogMan*)((CScnItemModelNw4rOwner*)self->field_0x04_ptr)->field_0x78)
         ->field_0x24 = timeout;
     if (hitB == 0) {
         ((CScnEnvLgtResFront*)self->field_0x2C)->field_0x50 &= ~2;
@@ -639,13 +639,12 @@ extern "C" __declspec(noinline) void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* sel
 // every active item (vtable 0x64) receives the camera data at +0x10c of
 // the camera item through vtable slot 0x10.
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* self) {
-    CScnEnvLgtCtrlCamWork* cam = ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68;
-    CScnEnvLgtCtrlCamView* camView =
-        (CScnEnvLgtCtrlCamView*)CamMan_FindItemA_B158(cam, cam->mCamId);
+    CScnCameraMan* cam = ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68;
+    CScnCameraItem* camView = cam->findItem(cam->mCamId);
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
     while (node != self->field_0x0C) {
         if (node->mItem->v23()) {
-            node->mItem->v2(&camView->field_0x10C);
+            node->mItem->v2(&camView->mPos);
         }
         node = node->mNext;
     }
@@ -658,7 +657,7 @@ extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* self) {
 // pointers are re-read from self per statement (retail reloads 0x30(r3) /
 // 0x28(r26) / 0x2C(r26) between store groups), and the small int constants
 // stay live in nonvolatiles across both waves (retail r27..r31).
-extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtResetLightState(CScnEnvLgtCtrl* self) {
     if (!(self->flags & 0x8)) {
         return;
     }
@@ -755,7 +754,7 @@ extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self)
 extern "C" void scnLgtBuildHeader(CScnEnvLgtCtrlLgtHeader* dst,
                               const CScnEnvLgtCtrlLgtSrc* src, u32 base);
 
-extern "C" __declspec(noinline) CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
+extern "C" CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
     CScnEnvLgtCtrl* self, const u32* data, void* arg) {
     CScnEnvLgtCtrlCtorView* s = (CScnEnvLgtCtrlCtorView*)self;
     s->mVtable = (void*)lbl_eu_8056F9B8;
@@ -1035,10 +1034,10 @@ void scnLgtBuildHeader(CScnEnvLgtCtrlLgtHeader* dst,
 
 // Forward decls for the two per-frame light-update helpers called at the end
 // of scnLgtFrameStep (stubs below; separate targets). extern "C" keeps the flat
-// retail name on the call-site relocs; noinline keeps the calls out-of-line
-// so the retail `bl`s survive (inlining the empty stubs would drop the
-// FPR-save prologue and shrink the frame).
-extern "C" __declspec(noinline) void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f);
+// retail name on the call-site relocs; the unit's -inline noauto policy keeps
+// the calls out-of-line so the retail `bl`s survive (inlining the empty stubs
+// would drop them and the FPR-save prologue would shrink the frame).
+extern "C" void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f);
 // (memberized: scnLgtStepWorkBlob -> CScnEnvLgtCtrl::StepWorkBlob; declaration moved into class CScnEnvLgtCtrl)
 
 // scnLgtFrameStep (us-804c7244): one-frame step of the env-light controller.
@@ -1167,7 +1166,7 @@ extern "C" void scnLgtBlendCurveSlots(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrl
 // the resource sub-array A. Each layer (bit 1<<layer) accumulates the
 // entries whose id bit is clear and whose flags contain the layer bit;
 // entries flagged 0x8000/0x4000 pull precomputed rows instead.
-extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
                                                    CLightEnv* env) {
     const f32 zeroF = kLgtZeroShared;
     // Clear both slot-color quads unconditionally (before the count gate).
@@ -1450,7 +1449,7 @@ extern "C" int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* 
 // the CLight array. Each active slot entry either projects its position
 // onto the attenuation sphere around the ambient color or pushes the raw
 // position; accepted lights record a zero priority and bump the count.
-extern "C" __declspec(noinline) void scnLgtPushSlotLights(
+extern "C" void scnLgtPushSlotLights(
     CScnEnvLgtCtrl* self, CLight* lights, int flag) {
     f32 one = kLgtOneShared;
     f32 zero = kLgtZeroShared;
@@ -1570,7 +1569,7 @@ extern "C" int scnLgtFillLightVec4(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* 
 }
 
 
-extern "C" __declspec(noinline) void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f) {
+extern "C" void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f) {
     // Three shared loop locals: p = entry cursor, i = index / cached count /
     // slot index, j = the two unconditional counters, q = third-walk offset.
     // i/j are signed so the gate walk compares with `cmp` (the count compares
@@ -1671,11 +1670,11 @@ extern "C" __declspec(noinline) void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* s
 }
 
 // Work-blob builder (matched, defined below); extern "C" keeps the flat
-// retail name on the call-site reloc and noinline keeps the call out-of-line
-// (the retail bl must survive).
-extern "C" __declspec(noinline) void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
+// retail name on the call-site reloc and -inline noauto keeps the call
+// out-of-line (the retail bl must survive).
+extern "C" void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
                                                     float f, u32 c);
-extern "C" __declspec(noinline) void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry);
+extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry);
 
 // scnLgtStepWorkBlob (us-804c8404): frame-step the env-light controller when
 // +0x04 bit 0x80 is set: accumulate the delta into field_0xC8 and clamp it
@@ -1728,7 +1727,7 @@ void CScnEnvLgtCtrl::StepWorkBlob(float f) {
 // pulls a precomputed row pair from the table at self+0x50, applies the
 // +0xC0 fade factor against another 0x14-stride row picked by item->sel22
 // and folds the center triple into the controller's +0x90 vec3.
-extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self,
                                                    CScnEnvLgtCtrlFadeEntry* item) {
     // Phase-1 scan cursors (retail: best r5, prevBest r6, count r7, cur r10).
     CScnEnvLgtCtrlScanRow* best = NULL;
@@ -1938,7 +1937,7 @@ extern "C" void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32*
     out6[0] += prev[4] * f1;
 }
 
-extern "C" __declspec(noinline) void scnLgtWalkFogGateEntry(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtWalkFogGateEntry(CScnEnvLgtCtrl* self,
                                                    void* entry) {}
 
 // reslist<IScnEnvCtl> constructor (retail __ct__reslist_IScnEnvCtl, flat
@@ -2490,7 +2489,7 @@ extern "C" int scnLgtBindType3Entry(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarge
 // +0xC0 color to the shared .sdata2 constant. Then the +0xC0/+0xC4 color
 // pair is derived from f1 (B014/f1, or both set to B014 when f1 equals the
 // 1.0 constant).
-extern "C" __declspec(noinline) void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self);
+extern "C" void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self);
 
 extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int enable, int slot, float f1) {
     if (enable != 0) {
@@ -2755,7 +2754,7 @@ extern "C" void scnLgtCopyPrevRows(CScnEnvLgtCtrl* self);
 // copying 0x1C rows between the self+0x10 / self+0x1C arrays, and finally
 // calls scnLgtCopyPrevRows on every 0xD8 entry of the +0x14 array before storing
 // the shared constant into +0xC0.
-extern "C" __declspec(noinline) void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self) {
+extern "C" void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self) {
     // Field accesses go through self (retail colors self r31 and reloads
     // each field instead of caching the view pointer).
 #define LGT_VIEW ((CScnEnvLgtCtrlRowsView volatile*)self)
@@ -2876,7 +2875,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self
 #undef LGT_VIEW
 }
 
-extern "C" __declspec(noinline) u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* self,
+extern "C" u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* self,
                                                     CLight* light, u32 slot,
                                                     u32 reset) {
     return 0;  // stub - separate target (us-804ca604)
@@ -2887,7 +2886,7 @@ extern "C" __declspec(noinline) u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* sel
 // into the +0x110/+0x130/+0x150/+0x160 tables (bounded by the +0xAC cap,
 // replacing the lowest-priority entry once full), then walk the phase-2
 // vec4 rows and recurse into each row whose radius reaches it.
-extern "C" __declspec(noinline) void scnLgtRankGateLights(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtRankGateLights(CScnEnvLgtCtrl* self,
                                                    CScnEnvLgtCtrlLgtGate* gate) {
     u32 count1 = gate->mCount1;
     if (count1 != 0) {
@@ -3015,10 +3014,10 @@ extern "C" __declspec(noinline) void scnLgtRankGateLights(CScnEnvLgtCtrl* self,
 // Note: the -O4,p scheduler hoists the magic-check chain into the prologue
 // store shadow (retail keeps it after the arg saves); 6 structural + 2
 // reg_swap remain in the 8-instruction prologue window (schedule artifact).
-// noinline keeps the retail out-of-line `bl scnLgtFactoryCreate` from
+// -inline noauto keeps the retail out-of-line `bl scnLgtFactoryCreate` from
 // scnLgtCreateEnvController (the factory body would otherwise be inlined there).
 // extern "C" keeps the flat retail name on the call-site reloc.
-extern "C" __declspec(noinline) CScnEnvLgtCtrl* scnLgtFactoryCreate(u32 handle, const u32* data, void* arg) {
+extern "C" CScnEnvLgtCtrl* scnLgtFactoryCreate(u32 handle, const u32* data, void* arg) {
     CScnEnvLgtCtrl* obj;
     if (data[0] == 0x5354474C) {   // 'STGL'
         obj = (CScnEnvLgtCtrl*)mtl::MemManager::allocate(0x168, handle);
@@ -3223,7 +3222,7 @@ extern "C" void scnLgtBuildHeader(CScnEnvLgtCtrlLgtHeader* dst,
 // (entry + row*0x20 + 0x38, count = +0x12) into the dst row at +0xB8 with
 // the constant weight; a dst[3] above the .sdata2 sentinel still returns 0.
 // Finally copy dst[0..3] and dst[5..7] as u32 bit patterns to +0x38/+0x48.
-extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
+extern "C" int scnLgtFillTargetBack(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* out,
                                                     int row) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
@@ -3311,7 +3310,7 @@ extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
 // 1-2 of +0x14, then dst[0..3] go to +0x00 as u32 bit patterns, dst[5] to
 // +0x24 as a float, dst[6] to +0x21 as a byte (int-cast) and, when +0x02 is
 // 3, dst[7]/dst[8] to +0x11/+0x10 as bytes.
-extern "C" __declspec(noinline) int scnLgtFillTargetFront(u8* entry,
+extern "C" int scnLgtFillTargetFront(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* out,
                                                     int row) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
@@ -3406,7 +3405,7 @@ static inline CScnEnvLgtCtrlFadeRows* fadeRows(CScnEnvLgtCtrlFadeView* e,
 // overridden by the color-row tables at +0x24+idx*4+layer*8 when this call
 // started a fade, and finally cross-blended with the mirror rows (+0x78)
 // while the active bit 0x8000 is set.
-extern "C" __declspec(noinline) void scnLgtEvalSlotFade(u8* entryPtr, u32 time,
+extern "C" void scnLgtEvalSlotFade(u8* entryPtr, u32 time,
                                                    int idx, float val) {
     CScnEnvLgtCtrlFadeView* e = (CScnEnvLgtCtrlFadeView*)entryPtr;
     // Per-layer cursors mirroring the retail walk: counts/lists advance by
@@ -3510,9 +3509,9 @@ extern "C" __declspec(noinline) void scnLgtEvalSlotFade(u8* entryPtr, u32 time,
     }
 }
 
-// copy previous-frame light rows (0x38/0x58) to the current frame (0x78/0x98)
-// noinline keeps the retail out-of-line call sites intact.
-extern "C" __declspec(noinline) void scnLgtCopyPrevRows(CScnEnvLgtCtrl* self) {
+// copy previous-frame light rows (0x38/0x58) to the current frame (0x78/0x98);
+// -inline noauto keeps the retail out-of-line call sites intact.
+extern "C" void scnLgtCopyPrevRows(CScnEnvLgtCtrl* self) {
     for (int i = 0; i < self->field_0x12; i++) {
         self->field_0x38[0x10 + i] = self->field_0x38[i];
         self->field_0x38[0x18 + i] = self->field_0x38[0x08 + i];
@@ -3633,7 +3632,7 @@ extern "C" u32 scnLgtPtmf2StoreD0(u32 unused, void* obj, float val) { ((ScnLgtPt
 
 extern "C" u32 scnLgtPtmf2StoreD4(u32 unused, void* obj, float val) { ((ScnLgtPtmf2View*)obj)->fD4 = val; return unused; }
 
-extern "C" __declspec(noinline) void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
+extern "C" void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
                                                     float f, u32 c) {
     *(u32*)((u8*)self + 0x0) = a;
     *(u32*)((u8*)self + 0x4) = b;
@@ -3713,7 +3712,7 @@ extern "C" float scnLgtSampleGradColor(CScnEnvLgtCtrl* self, const CScnEnvLgtCtr
 // bit 0x10000 at +0x04 are dispatched: loops 1/2/4 through scnLgtSolveRowDirection
 // (loop 2 pre-copies its +0x30 vec3 into dst+0x0C), loop 3 writes its fields
 // directly before the dispatch.
-extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlob* blob,
+extern "C" void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlob* blob,
                                                    const CScnEnvLgtCtrlCtorCtl* data,
                                                    u8* dst) {
     // Retail stages loop-2/loop-4 vec3s through the blob's float slots at
@@ -3817,7 +3816,7 @@ extern "C" __declspec(noinline) void scnLgtPushControlRows(CScnEnvLgtCtrlWorkBlo
 // like retail instead of caching them in nonvolatile FPRs).
 #define kZero kLgtFadeZero
 #define kOne kLgtFadeOne
-extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
+extern "C" void scnLgtSolveRowDirection(
     CScnEnvLgtCtrlWorkBlob* blob, CScnEnvLgtCtrlWorkDst40* dst,
     const CScnEnvLgtCtrlWorkItemHead* item, float f) {
     // Word-copy the item's vec3 (+0x08..0x10) and weight (+0x14).
@@ -4002,7 +4001,7 @@ extern "C" __declspec(noinline) void scnLgtSolveRowDirection(
 // pointers (tables lbl_eu_8065FBD0 / lbl_eu_8065FAF8, indexed by the item's
 // +0x0C / +0x08 u16s) with the blob as `this`. Finally the +0xB8..+0xC4
 // float quartet decides whether to set the +0x14 bit 0.
-extern "C" __declspec(noinline) void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry) {
+extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
     if (e->field_0x14 & 0x8) {
         // Fresh read-modify-write: retail reloads +0x14 and clears bit 0
@@ -4333,8 +4332,8 @@ extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self) {
 // &camItem->field_0x10C) on active items.
 void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
     CScnEnvLgtCtrl* self = (CScnEnvLgtCtrl*)sub;
-    CScnEnvLgtCtrlCamView* camView = (CScnEnvLgtCtrlCamView*)CamMan_FindItemA_B158(
-        ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68,
+    CScnCameraItem* camView =
+        ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68->findItem(
         ((CScnEnvLgtCtrlOwnerLight*)self->field_0x04_ptr)->field_0x68->mCamId);
     ml::CVec4 v18;   // sp+0x18 ring-walk vec4 (declared first -> higher slot)
     ml::CVec4 v8;    // sp+0x8 slot color
@@ -4367,7 +4366,7 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
     node = self->field_0x0C->mPrev;
     while (node != self->field_0x0C) {
         if (node->mItem->v23()) {
-            node->mItem->v10(env, &camView->field_0x10C);
+            node->mItem->v10(env, &camView->mPos);
         }
         node = node->mPrev;
     }
@@ -4387,7 +4386,7 @@ extern "C" u32 lbl_eu_8056F96C;  // .data tail object (foreign)
 extern "C" u32 lbl_eu_8056FA58;  // .data tail object (foreign)
 extern "C" void __dt__14CScnEnvLgtCtrlFv();  // member dtor (this TU)
 // us-804c8f60: fog refresh (see body below; referenced by the vtable).
-extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
                                                     nw4r::g3d::ScnRoot* root,
                                                     u32 flag) {
     CScnEnvLgtCtrlRowsView* view = (CScnEnvLgtCtrlRowsView*)self;
@@ -4405,9 +4404,9 @@ extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         nw4r::g3d::Fog fog = root->GetFog((int) * (u16*)(entries + 0x38));
         CScnEnvLgtCtrlRow1C* row = &view->rows10[*(u16*)(entries + 0x10)];
         GXColor col;
-        col.r = (u8)(int)(scale * *(f32*)((u8*)row + 0x00));
-        col.g = (u8)(int)(scale * *(f32*)((u8*)row + 0x04));
-        col.b = (u8)(int)(scale * *(f32*)((u8*)row + 0x08));
+        col.r = (u8)(int)(scale * *(f32*)&row->field_0x00);
+        col.g = (u8)(int)(scale * *(f32*)&row->field_0x04);
+        col.b = (u8)(int)(scale * *(f32*)&row->field_0x08);
         col.a = 0xff;
         if (*(u32*)&col == 0) {
             nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
@@ -4415,7 +4414,7 @@ extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         if (fog.ptr() != NULL) {
             fog.ptr()->color = col;
         }
-        f32 endz = *(f32*)((u8*)row + 0x10);
+        f32 endz = row->field_0x10;
         f32 startz = row->field_0x0C;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
@@ -4427,10 +4426,10 @@ extern "C" __declspec(noinline) void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         if ((row->field_0x18 & 1) == 0) {
             GXFogType ty;
             fog.GetFog(&ty, NULL, NULL, NULL, NULL, NULL);
-            *(GXFogType*)((u8*)row + 0x14) = ty;
+            row->field_0x14 = (u32)ty;
             row->field_0x18 |= 1;
         } else {
-            void* saved = *(void**)((u8*)row + 0x14);
+            void* saved = (void*)row->field_0x14;
             if (fog.ptr() == NULL) {
                 nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
             }

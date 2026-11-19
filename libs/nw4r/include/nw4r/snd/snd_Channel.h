@@ -71,6 +71,10 @@ public:
         mLfoTarget = target;
     }
 
+    void SetVoiceOutParam(int voice, const VoiceOutParam& rParam) {
+        mVoice->SetVoiceOutParam(voice, rParam);
+    }
+
     void Pause(bool pause) {
         mPauseFlag = pause;
         mVoice->Pause(pause);
@@ -178,10 +182,10 @@ public:
     }
 
     Channel* GetNextTrackChannel() const {
-        return mNextLink;
+        return mNextTrackChannel;
     }
     void SetNextTrackChannel(Channel* pChannel) {
-        mNextLink = pChannel;
+        mNextTrackChannel = pChannel;
     }
 
     static Channel* AllocChannel(int channels, int voices, int priority,
@@ -254,10 +258,10 @@ private:
     ChannelCallback mCallback; // at 0xE0
     u32 mCallbackData;         // at 0xE4
 
-    Channel* mNextLink; // at 0xE8
-    u32 field_0xEC;     // at 0xEC
-    Voice* mVoice;      // at 0xF0
-    u32 field_0xF4;     // at 0xF4
+    Channel* mNextLink;         // at 0xE8
+    u32 field_0xEC;             // at 0xEC
+    Voice* mVoice;              // at 0xF0
+    Channel* mNextTrackChannel; // at 0xF4
 
 public:
     NW4R_UT_LINKLIST_NODE_DECL(); // at 0xF8

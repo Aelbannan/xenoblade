@@ -55,7 +55,7 @@ extern void* lbl_eu_806640F4;
 // Forward declarations for state machine functions (defined later in this TU).
 // CArtsInfo_RefreshLayout/CArtsInfo_UpdateCursor are extern "C": retail calls the C names (not
 // __FP9CArtsInfo).
-extern "C" __declspec(noinline) void CArtsInfo_BindAllPanes(CArtsInfo*);
+extern "C" void CArtsInfo_BindAllPanes(CArtsInfo*);
 extern "C" void CArtsInfo_RefreshLayout(CArtsInfo*);
 extern "C" void CArtsInfo_UpdateCursor(CArtsInfo*);
 extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo*, u8, u8);
@@ -63,25 +63,21 @@ extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo*, u8, u8);
 // (CArtsInfo_FmtRow05 / CArtsInfo_FmtRow04) emit bl to the unmangled retail names.
 extern "C" int CArtsInfo_CalcDmg52(CArtsInfo*);
 extern "C" int CArtsInfo_CalcDmg53(CArtsInfo*);
-// Stat-id helper: noinline + C linkage so CArtsInfo_FmtRow04 emits a bl to the
-// retail (unmangled) symbol instead of an inlined vtable dispatch. The
-// definition (later in this TU) inherits the linkage; its body is unchanged.
-extern "C" __declspec(noinline) int CArtsInfo_GetStatId1C(CArtsInfo*);
+// The definition (later in this TU) inherits the linkage; its body is unchanged.
+extern "C" int CArtsInfo_GetStatId1C(CArtsInfo*);
 
-// Forward declarations for animation state handlers. noinline: the dispatcher
-// CArtsInfo_UpdateAnims must emit bl's to them through the retail jump table;
-// inlining would erase the dispatch entirely. extern "C": retail reloc names
+// Forward declarations for animation state handlers. extern "C": retail reloc names
 // are the unmangled func_* symbols, not func_*__FP9CArtsInfo.
-extern "C" __declspec(noinline) void CArtsInfo_AnimState0(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState1(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState2(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState3(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState4(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState5(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState6(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState7(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState8(CArtsInfo*);
-extern "C" __declspec(noinline) void CArtsInfo_AnimState9(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState0(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState1(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState2(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState3(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState4(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState5(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState6(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState7(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState8(CArtsInfo*);
+extern "C" void CArtsInfo_AnimState9(CArtsInfo*);
 
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i): build
 // the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
@@ -152,15 +148,11 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
     return self;
 }
 
-// __dt__9CArtsInfoFv - destructor
-// .text:0xAC, size 0x60
-// Retail dtor is a plain function: destroys the +0x5C CCur18 cursor and the
-// +0x04 UnkClass_8045F564 member, then frees self when the delete flag is
-// positive. Written in the free-function form (CTitle pattern) because the
-// member-dtor shape would emit a vtable store for the virtual dtor that
-// retail does not have. optimize_for_size merges the r30/r31 saves into the
-// retail stmw r30 prologue.
-#pragma optimize_for_size on
+// __dt__9CArtsInfoFv - destructor .text:0xAC, size 0x60 Retail dtor is a plain
+// function: destroys the +0x5C CCur18 cursor and the +0x04 UnkClass_8045F564 member,
+// then frees self when the delete flag is positive. Written in the free-function form
+// (CTitle pattern) because the member-dtor shape would emit a vtable store for the
+// virtual dtor that retail does not have.
 extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
     if (self != 0) {
         __dt__6CCur18Fv(&self->mCursor, -1);
@@ -171,11 +163,9 @@ extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_LoadFiles - file loading
 // .text:0x10C, size 0x68
-#pragma optimize_for_size on
 void CArtsInfo_LoadFiles(CArtsInfo* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->field_0x14 = (int)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
@@ -186,7 +176,6 @@ void CArtsInfo_LoadFiles(CArtsInfo* self) {
             (u32)KyoshinHeap_GetField44(), (const char*)(lbl_eu_8050B00C + 0x15),
             (void*)self, 0, 0);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_UpdateAnims - state machine dispatch
 // .text:0x174, size 0xDC
@@ -225,10 +214,6 @@ void CArtsInfo_UpdateAnims(CArtsInfo* self) {
     self->mCursor.Update();
 }
 
-// CArtsInfo_Draw - draw
-// .text:0x250, size 0x74
-// optimize_for_size gives the retail stmw r30 prologue for the 2 saved regs.
-#pragma optimize_for_size on
 void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
     if (self->field_0x40 == 0) return;
 
@@ -240,11 +225,10 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
         self->mCursor.DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_Cleanup - cleanup
 // .text:0x2C4, size 0xC4
-__declspec(noinline) void CArtsInfo_Cleanup(CArtsInfo* self) {
+void CArtsInfo_Cleanup(CArtsInfo* self) {
     CBdat::getEntry(2);
 
     closeFileHandle((CFileHandle**)&self->field_0x14);
@@ -300,15 +284,9 @@ void CArtsInfo_ReqState4(CArtsInfo* self) {
     self->field_0x49 = 0;
 }
 
-// CArtsInfo_OpenDetail6 - large state machine (state==3 -> 6, layout animation setup)
-// .text:0x3D8, size 0x244
-// optimize_for_size gives the retail _savegpr_28/_restgpr_28 prologue; real
-// member calls give the retail r12 vtable dispatches (vtable+0x2C =
-// SetAnimationEnable, vtable+0x38 = Animate).
-// Frame view of nw4r::lyt::AnimTransform: the current frame sits at +0x10
-// (retail stores it directly; SetFrame would emit an out-of-line bl).
+// Frame view of nw4r::lyt::AnimTransform: the current frame sits at +0x10 (retail
+// stores it directly; SetFrame would emit an out-of-line bl).
 struct AnimTransFrameView { u8 _pad00[0x10]; f32 frame; };
-#pragma optimize_for_size on
 void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
 
@@ -364,7 +342,6 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
 
     playUISound(0x6D);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_ToStateA - state machine (state==9 -> 0xA)
 // .text:0x61C, size 0xB4
@@ -596,13 +573,9 @@ void CArtsInfo_AnimState9(CArtsInfo* self) {
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, true);
 }
 
-// CArtsInfo_BindAllPanes - large layout setup (bind all pane animations)
-// noinline + extern "C": CArtsInfo_RefreshIfReady (and OnFileEvent) tail-call the bare
-// retail symbol; inlining would balloon their bodies. optimize_for_size
-// merges the r30/r31 saves into the retail stmw r30 prologue (plain -O4,p
-// emits two separate stw's, +8 bytes).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CArtsInfo_BindAllPanes(CArtsInfo* self) {
+// CArtsInfo_BindAllPanes - large layout setup (bind all pane animations) retail
+// symbol; inlining would balloon their bodies.
+extern "C" void CArtsInfo_BindAllPanes(CArtsInfo* self) {
     // Bind animations for all named panes on layout 1
     LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x50, lbl_eu_8050B00C + 0x58, 0);
     LayoutSetTextBoxFmtValue(self->mpLayout1, lbl_eu_8050B00C + 0x59, lbl_eu_8050B00C + 0x58, 0);
@@ -667,18 +640,13 @@ extern "C" __declspec(noinline) void CArtsInfo_BindAllPanes(CArtsInfo* self) {
     PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x166, &lbl_eu_80664748, &lbl_eu_80664750);
     PaneMatSetTevColorsByName(self->mpLayout2, lbl_eu_8050B00C + 0x175, &lbl_eu_80664748, &lbl_eu_80664750);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_RefreshLayout - arts info full layout refresh. Formats the arts name/lv
-// strings and the colour/flag rows, then binds the row strings to the named
-// panes on both layouts. The trailing loop walks arts rows 1..10 (slot 0x1b2
-// names) and grows the arts list (CArtsInfo_UpdateArtsRow) for each row that has a
-// non-empty entry.
-// noinline: CArtsInfo_RefreshIfReady (FULL_MATCH) tail-calls the retail symbol; inlining
-// would balloon its body. optimize_for_size gives the retail stmw r25
-// prologue for the 7 saved GPRs.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
+// strings and the colour/flag rows, then binds the row strings to the named panes on
+// both layouts. The trailing loop walks arts rows 1..10 (slot 0x1b2 names) and grows
+// the arts list (CArtsInfo_UpdateArtsRow) for each row that has a non-empty entry.
+// would balloon its body.
+extern "C" void CArtsInfo_RefreshLayout(CArtsInfo* self) {
     char buf[32]; // sprintf at +0x8
     char* str1 = BdatTouchStringCell(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x18);
     sprintf(buf, lbl_eu_8050B00C + 0x42, self->field_0x58, str1);
@@ -745,18 +713,12 @@ extern "C" __declspec(noinline) void CArtsInfo_RefreshLayout(CArtsInfo* self) {
         i++;
     } while (i <= 0xA);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_UpdateCursor - cursor name display. Formats the current cursor slot name
-// (field_0x5A + 1) and binds it to the pane found by name on layout 1, then
-// sends the string to the cursor's message virtual. Early-exits when the
-// cursor slot is negative (cursor hidden).
-// noinline: the state handlers (CArtsInfo_CursorPrev/35F14/362D4) tail-call the
-// retail symbol; inlining would balloon their bodies.
-// optimize_for_size merges the r29/r30/r31 saves into the retail stmw r29
-// prologue.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CArtsInfo_UpdateCursor(CArtsInfo* self) {
+// (field_0x5A + 1) and binds it to the pane found by name on layout 1, then sends the
+// string to the cursor's message virtual. Early-exits when the cursor slot is negative
+// (cursor hidden). retail symbol; inlining would balloon their bodies.
+extern "C" void CArtsInfo_UpdateCursor(CArtsInfo* self) {
     char buf[0x20]; // sprintf at +0x18
     nw4r::math::VEC3 pos; // ScalePaneWorldPos output at +0x8
     s8 idx = self->field_0x5A;
@@ -768,7 +730,6 @@ extern "C" __declspec(noinline) void CArtsInfo_UpdateCursor(CArtsInfo* self) {
     ScalePaneWorldPos(&pos, pane1, pane2, self->mpLayout1->GetRootPane());
     self->mCursor.setRootPaneTranslate(&pos);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_GetStatId1C - fetch stat block via vtable[0x224] dispatch, return s16 id.
 // Declared int (not s16): the callee already sign-extends the s16 slot value
@@ -784,9 +745,8 @@ int CArtsInfo_GetStatId1C(CArtsInfo* self) {
 // result as a full-width int (callers use it without re-sign-extending:
 // CArtsInfo_FmtRow15 shifts it directly), so the return type is int.
 // .text:0x16E8, size 0x38
-// noinline + extern "C": the sprintf-family callers (CArtsInfo_FmtRow15) must emit
 // a bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
-extern "C" __declspec(noinline) int CArtsInfo_GetStatId20(CArtsInfo* self) {
+extern "C" int CArtsInfo_GetStatId20(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)CtrlObjectParam_GetCharEntry(self->field_0x54);
     CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return st->field_0x20;
@@ -794,22 +754,20 @@ extern "C" __declspec(noinline) int CArtsInfo_GetStatId20(CArtsInfo* self) {
 
 // CArtsInfo_GetStatF10 - same dispatch, return (int)float at +0x10
 // .text:0x1720, size 0x44
-// noinline + extern "C": the arts-level callers (CArtsInfo_FmtRow0A) must emit a
 // bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
-extern "C" __declspec(noinline) int CArtsInfo_GetStatF10(CArtsInfo* self) {
+extern "C" int CArtsInfo_GetStatF10(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)CtrlObjectParam_GetCharEntry(self->field_0x54);
     CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return (int)st->field_0x10;
 }
 
-// CArtsInfo_GetEquipValue - arts equipment/level lookup. Reads the character's six
-// s16 slots (weapon + five stat ids at +0x26/+0x1C..+0x24), and for each
-// slot type (a byte of the 0x80668688/0x8066868C flags) fetches the item
-// list entry; if the entry's slots contain the requested item id, the
-// matching slot's value accumulates into the result. Finally the result is
-// capped at the row value from the 0x1d4 table (signed compare).
-// extern "C" + noinline: retail callers emit bl to the unmangled symbol.
-extern "C" __declspec(noinline) int CArtsInfo_GetEquipValue(CArtsInfo* self, int arg2) {
+// CArtsInfo_GetEquipValue - arts equipment/level lookup. Reads the character's six s16
+// slots (weapon + five stat ids at +0x26/+0x1C..+0x24), and for each slot type (a byte
+// of the 0x80668688/0x8066868C flags) fetches the item list entry; if the entry's
+// slots contain the requested item id, the matching slot's value accumulates into the
+// result. Finally the result is capped at the row value from the 0x1d4 table (signed
+// compare).
+extern "C" int CArtsInfo_GetEquipValue(CArtsInfo* self, int arg2) {
     CArtsCharData* obj = (CArtsCharData*)CtrlObjectParam_GetCharEntry(self->field_0x54);
     s16 ids[6];
     CArtsSlotFlags flags;
@@ -855,16 +813,12 @@ extern "C" __declspec(noinline) int CArtsInfo_GetEquipValue(CArtsInfo* self, int
     return result;
 }
 
-// CArtsInfo_GetSkill5C - arts skill lookup (flag 0x5C)
-// .text:0x18E0, size 0x58
-// Walks the character-data +0x3534 object: Counter_TestBit tests whether the
-// skill is reachable, IdTable_SumValues returns its summed value (see
-// code_8025FB10.cpp).
-// extern "C" + noinline: retail callers (CArtsInfo_FmtRow00) emit a bl to the
-// unmangled out-of-line symbol; without both, MWCC mangles the call-site
-// reloc and -inline auto expands the body inline. int return: the caller's
-// (float) conversion uses the signed xoris magic (retail codegen).
-extern "C" __declspec(noinline) int CArtsInfo_GetSkill5C(CArtsInfo* self) {
+// CArtsInfo_GetSkill5C - arts skill lookup (flag 0x5C) .text:0x18E0, size 0x58 Walks
+// the character-data +0x3534 object: Counter_TestBit tests whether the skill is
+// reachable, IdTable_SumValues returns its summed value (see code_8025FB10.cpp). int
+// return: the caller's (float) conversion uses the signed xoris magic (retail
+// codegen).
+extern "C" int CArtsInfo_GetSkill5C(CArtsInfo* self) {
     u8* obj = (u8*)CtrlObjectParam_GetCharEntry(self->field_0x54) + 0x3534;
     if (Counter_TestBit(obj, 0x5C) != 0) {
         return IdTable_SumValues(obj, 0x5C);
@@ -872,11 +826,8 @@ extern "C" __declspec(noinline) int CArtsInfo_GetSkill5C(CArtsInfo* self) {
     return 0;
 }
 
-// CArtsInfo_GetSkill2D - arts skill lookup (flag 0x2D)
-// .text:0x1938, size 0x58
-// extern "C": the retail symbol is unmangled, and CArtsInfo_CalcDmg52 must emit a
-// bl to it (noinline + C linkage keeps the call-site reloc name retail-identical).
-extern "C" __declspec(noinline) u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
+// Skill id (0x2D) read from the character record.
+extern "C" u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
     u8* obj = (u8*)CtrlObjectParam_GetCharEntry(self->field_0x54) + 0x3534;
     if (Counter_TestBit(obj, 0x2D) != 0) {
         return IdTable_SumValues(obj, 0x2D);
@@ -884,36 +835,28 @@ extern "C" __declspec(noinline) u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
     return 0;
 }
 
-// CArtsInfo_GetGridA - arts list lookup: fetch two table entries keyed by arg3
-// (or field_0x55 when arg3 is 0) and combine them into a grid offset:
-// u16 first-entry + u8 second-entry * (arg2 - 1). The ternaries stay int so
-// the u8 mask is emitted at the call sites (retail: mr r0,r30 / clrlwi).
-#pragma optimize_for_size on
-// extern "C" + noinline: retail callers (CArtsInfo_FmtRow0C) emit a bl to the
-// unmangled out-of-line symbol; without both, MWCC mangles the call-site
-// reloc and -inline auto expands the body inline. u8 params: retail call
-// sites mask the level+1 argument (clrlwi 24) before the call.
-extern "C" __declspec(noinline) int CArtsInfo_GetGridA(CArtsInfo* self, u8 arg2, u8 arg3) {
+// CArtsInfo_GetGridA - arts list lookup: fetch two table entries keyed by arg3 (or
+// field_0x55 when arg3 is 0) and combine them into a grid offset: u16 first-entry + u8
+// second-entry * (arg2 - 1). The ternaries stay int so the u8 mask is emitted at the
+// call sites (retail: mr r0,r30 / clrlwi). u8 params: retail call sites mask the
+// level+1 argument (clrlwi 24) before the call.
+extern "C" int CArtsInfo_GetGridA(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
     u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1d8, v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
     u8 b = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1de, v2);
     return a + b * (arg2 - 1);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_GetGridB - arts list lookup: same shape as CArtsInfo_GetGridA but with
 // different string-table offsets (0x1e8/0x1ee).
-#pragma optimize_for_size on
-// extern "C" + noinline: see CArtsInfo_GetGridA (u8 params).
-extern "C" __declspec(noinline) int CArtsInfo_GetGridB(CArtsInfo* self, u8 arg2, u8 arg3) {
+extern "C" int CArtsInfo_GetGridB(CArtsInfo* self, u8 arg2, u8 arg3) {
     int v1 = (arg3 != 0) ? arg3 : self->field_0x55;
     u16 a = BdatGetU16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1e8, v1);
     int v2 = (arg3 != 0) ? arg3 : self->field_0x55;
     u8 b = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x1ee, v2);
     return a + b * (arg2 - 1);
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_CalcDmg52 - arts info damage/level helper. Reads the character's weapon
 // id (+0x26 of the CtrlObjectParam_GetCharEntry data), finds the entry whose first word's
@@ -983,8 +926,7 @@ fail:
 // byte index, which retail keeps in r5 from the clrlwi mask). Result lives
 // in a local so MWCC hoists `li r30, 0` before the call and returns it via
 // r30 (same shape as CArtsInfo_GetSkillStr).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32 arg2) {
+extern "C" char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32 arg2) {
     char* result = 0;
     u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x20C, arg2);
     if (r != 0) {
@@ -992,13 +934,11 @@ extern "C" __declspec(noinline) char* CArtsInfo_GetSkill20C(CArtsInfo* self, u32
     }
     return result;
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_GetSkillStr - arts skill string lookup (same shape as CArtsInfo_GetSkill20C,
 // different string-table offset 0x212). result lives in a local so MWCC
 // hoists `li r30, 0` before the call and returns it via r30.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
+extern "C" char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
     char* result = 0;
     u8 r = BdatGetU8Direct((const void*)self->field_0x50, lbl_eu_8050B00C + 0x212, arg2);
     if (r != 0) {
@@ -1006,61 +946,55 @@ extern "C" __declspec(noinline) char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32
     }
     return result;
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_UpdateArtsRow - arts list entry update. Formats the current arts-row name
-// (BdatGetPtrDirect row lookup for field_0x50 at table 0x1ab) and the level
-// string (arg3 + 2) into a buffer bound to the row pane on both layouts
-// (layout 2 only when field_0x56 < 0xA), then dispatches on the row id
-// (BdatGetU8Direct lookup at 0x225, masked to u8) through a 44-case jump table
-// to the per-arts text-update handlers.
-//
-// Dispatch-target forward declarations: C linkage so the jump-table calls
-// emit the bare retail reloc names, and noinline so -inline auto keeps the
-// bl's (the definitions below inherit the extern "C" linkage).
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow00(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow01(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow02(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow03(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow04(CArtsInfo*, u32, int, u8);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow05(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow06(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow07(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow08(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow09(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0A(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0B(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0C(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0D(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0E(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow0F(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow10(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow11(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow12(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow13(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow14(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow15(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow16(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow17(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow18(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow19(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1A(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1B(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1C(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1D(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1E(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow1F(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow20(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow21(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow22(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow23(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow24(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow25(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow26(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow27(CArtsInfo*, u32, int);
-extern "C" __declspec(noinline) void CArtsInfo_FmtRow2C(CArtsInfo*, u32, int);
+// (BdatGetPtrDirect row lookup for field_0x50 at table 0x1ab) and the level string
+// (arg3 + 2) into a buffer bound to the row pane on both layouts (layout 2 only when
+// field_0x56 < 0xA), then dispatches on the row id (BdatGetU8Direct lookup at 0x225,
+// masked to u8) through a 44-case jump table to the per-arts text-update handlers.
+extern "C" void CArtsInfo_FmtRow00(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow01(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow02(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow03(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow04(CArtsInfo*, u32, int, u8);
+extern "C" void CArtsInfo_FmtRow05(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow06(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow07(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow08(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow09(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0A(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0B(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0C(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0D(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0E(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow0F(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow10(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow11(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow12(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow13(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow14(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow15(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow16(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow17(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow18(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow19(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1A(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1B(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1C(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1D(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1E(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow1F(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow20(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow21(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow22(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow23(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow24(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow25(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow26(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow27(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow2C(CArtsInfo*, u32, int);
 
-extern "C" __declspec(noinline) void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
+extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
     char buf[32]; // sprintf at +0x8
     char* s = BdatGetPtrDirect((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
     sprintf(buf, lbl_eu_8050B00C + 0x218, arg3 + 2);
@@ -2057,7 +1991,6 @@ void CArtsInfo_FmtRow17(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow18 - arts info text update. Formats two strings (arts skill
 // names + level) and pushes them onto both layouts (layout 2 only when
 // field_0x56 < 0xA).
-#pragma optimize_for_size on
 // Shadowed locals keep the retail register mapping (arg2->r31, self->r28);
 // the residual 2-instruction reg swap is the entry param-save order
 // (retail copies r4->r31 before r3->r28; see CArtsInfo_FmtRow09). Witness-blocked
@@ -2073,7 +2006,6 @@ void CArtsInfo_FmtRow18(CArtsInfo* self, u32 arg2, int arg3) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow19 - arts info text update. Formats the skill name, a double
 // constant and the second skill string into buf1, post-processes it
@@ -2104,10 +2036,8 @@ void CArtsInfo_FmtRow19(CArtsInfo* self_, u32 arg2_, int arg3_) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow1A - same shape as CArtsInfo_FmtRow18 with level constant 0x19.
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow1A(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2120,12 +2050,10 @@ void CArtsInfo_FmtRow1A(CArtsInfo* self, u32 arg2, int arg3) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow1B - arts info text update with fixed level 25 (same shape as
 // CArtsInfo_FmtRow1A). Formats the arts skill name/level strings and pushes them
 // onto both layouts (layout 2 only when field_0x56 < 0xA).
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow1B(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2138,10 +2066,8 @@ void CArtsInfo_FmtRow1B(CArtsInfo* self, u32 arg2, int arg3) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow1C - same shape as CArtsInfo_FmtRow1B with level constant 50.
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow1C(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2154,10 +2080,8 @@ void CArtsInfo_FmtRow1C(CArtsInfo* self, u32 arg2, int arg3) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow1D - same shape as CArtsInfo_FmtRow1B with level constant 100.
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow1D(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2170,7 +2094,6 @@ void CArtsInfo_FmtRow1D(CArtsInfo* self, u32 arg2, int arg3) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow1E - arts info text update. Same shape as CArtsInfo_FmtRow19 with
 // a different format offset (0x2bb) and double constant (lbl_eu_806686C8).
@@ -2192,7 +2115,6 @@ void CArtsInfo_FmtRow1E(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow1F - same shape as CArtsInfo_FmtRow1B with level constant 50.
 // Entry param-save-order wall (see CArtsInfo_FmtRow09): retail saves arg2 (r31)
 // before self (r28); MWCC invariantly emits the param-1 copy first.
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow1F(CArtsInfo* self_, u32 arg2_, int arg3_) {
     u32 arg2 = arg2_;
     CArtsInfo* self = self_;
@@ -2208,14 +2130,12 @@ void CArtsInfo_FmtRow1F(CArtsInfo* self_, u32 arg2_, int arg3_) {
         LayoutSetTextBoxText(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // CArtsInfo_FmtRow20 - same shape as CArtsInfo_FmtRow1B with level constant 2.
 // Residual: retail spills arg2->r31 BEFORE self->r28; MWCC (size-mode, which
 // is required for the retail stmw r28 frame) always copies r3 first. This is
 // the documented param-save claim-order invariant (MWCC_CASES "VM-op/
 // saved-param claim order", OPEN) - not source-controllable.
-#pragma optimize_for_size on
 void CArtsInfo_FmtRow20(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2248,14 +2168,10 @@ void CArtsInfo_FmtRow22(CArtsInfo* self, u32 arg2, int arg3) {
 
 // CArtsInfo_FmtRow23 - arts info text update. Byte-identical body to
 // CArtsInfo_FmtRow08 / CArtsInfo_FmtRow0E (same lookups, same grid-offset formatting,
-// same level-up branch), kept as a separate retail symbol.
-// Entry param-save-order artifact (unit-wide, ~40 dispatch handlers): retail
-// copies arg2 (r4->r25) BEFORE self (r3->r31) at entry; our build invariantly
-// emits the param-1 copy first. Shadow-locals, early local copy of arg2, and
-// buf declaration reordering were all tried - none change the copy order
-// (copy-locals coalesce; decl reorder swaps frame offsets; optimize_for_size
-// is neutral here - unlike CTagProcessor TagWriterCode7). Same 2-op
-// reg_swap present in CArtsInfo_FmtRow08/39AA0/916C/9EFC/A55C.
+// same level-up branch), kept as a separate retail symbol. Entry param-save-order
+// artifact (unit-wide, ~40 dispatch handlers): retail copies arg2 (r4->r25) BEFORE
+// self (r3->r31) at entry; our build invariantly emits the param-1 copy first. Same
+// 2-op reg_swap present in CArtsInfo_FmtRow08/39AA0/916C/9EFC/A55C.
 void CArtsInfo_FmtRow23(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2397,14 +2313,12 @@ void CArtsInfo_FmtRow2C(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 
-// CArtsInfo_DotToCommaDE - German-language arts text post-processing. Only runs
-// when the system language is 5 (German) and the row id for field_0x50 in the
-// 0x20c table is 0x4f. Replaces '.' with ',' and skips the second byte of
-// double-byte (Shift-JIS) characters so byte counts stay aligned. C linkage
-// (retail symbol is unmangled; the extern "C" declaration is in the header).
-// optimize_for_size gives the retail stmw r29 prologue for the 3 saved params.
-#pragma optimize_for_size on
-__declspec(noinline) void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char* str) {
+// CArtsInfo_DotToCommaDE - German-language arts text post-processing. Only runs when
+// the system language is 5 (German) and the row id for field_0x50 in the 0x20c table
+// is 0x4f. Replaces '.' with ',' and skips the second byte of double-byte (Shift-JIS)
+// characters so byte counts stay aligned. C linkage (retail symbol is unmangled; the
+// extern "C" declaration is in the header).
+void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char* str) {
     u8 lang = getLanguage__9CDeviceSCFv();
     if (lang != 5) return;
 
@@ -2429,7 +2343,6 @@ __declspec(noinline) void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char
         str += 1;
     }
 }
-#pragma optimize_for_size off
 
 void CArtsInfo::setField54(u8 val) { field_0x54 = val; }
 
@@ -2460,7 +2373,6 @@ void CArtsInfo::initialize() {
 }
 
 // Retail OnFileEvent: layout-archive loader + state-2 message handler.
-//
 // Branch 1 (event handle == field_0x14, i.e. the arts arc finished loading):
 // creates the MEM2 region, attaches the arc to a fresh resource accessor,
 // builds layout1 (+4 anims) and layout2 (+2 anims), binds the device font
@@ -2469,7 +2381,6 @@ void CArtsInfo::initialize() {
 // snapshots the two colour pairs into the sbss globals, builds the embedded
 // cursor from a temp CCur18, runs the layout setup pass, then frees the
 // region and returns 1.
-//
 // Branch 2 (event handle == field_0x18, the message bdat file): routes the
 // loaded data into CBdat, resolves the two FP table entries named by the
 // string table, calls the split1 reset stub, clears field_0x18, returns 1.

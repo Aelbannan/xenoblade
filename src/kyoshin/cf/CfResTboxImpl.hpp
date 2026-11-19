@@ -60,5 +60,5 @@ extern float lbl_eu_806681D4;
 extern "C" void ResTbox_SetCellBit40(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* CfRes_getInstPtr29C();
-extern "C" u8* CfRes_lookupStrTable(char* key, int index, u32** out);
+extern "C" void* CfRes_lookupStrTable(char* self, int index, void** out);
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);

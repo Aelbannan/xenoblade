@@ -2,6 +2,11 @@
 #define CCUR18_MEMBER_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CPassiveSkill
 // Replace stubs with high-level C/C++ during decomp.
+//
+// Unit shape (verified): retail built this TU with -O4,s (optimize for size),
+// set once in configure.py. That is what keeps every same-TU helper out of line
+// (real `bl`s) and produces the retail stmw/lmw frames - no per-function
+// noinline/optimize_for_size pragmas are needed or wanted here.
 
 // ScalePaneWorldPos: CSysWin.hpp declares the sret spelling (void(VEC3*,...));
 // this TU needs the value-returning spelling (VEC3(Pane*,Pane*,Pane*)) so
@@ -48,8 +53,7 @@ extern const double lbl_eu_80668910 = 4503599627370496.0; // exact bits 0x433000
 // (placeholder).
 extern const f32 lbl_eu_80668930[] = { 0.0f, 0.0f };
 
-// Skill-info sub-struct initializer (defined later in this TU; noinline keeps
-// the __ct__UI_CPassiveSkillInfo `bl` a real call). C linkage so the call
+// Skill-info sub-struct initializer (defined later in this TU). C linkage so the call
 // reloc is the plain retail name.
 extern "C" void CPassiveSkillInit_init(UI_PassiveSkillInit* self, u32 arg);
 // Skill-info sub-struct copier / second-layout init (defined later in this
@@ -64,31 +68,30 @@ extern "C" void CPassiveSkillLayoutInit_init(UI_PassiveSkillLayoutInit* self);
 extern "C" void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self, u32 arg);
 extern "C" void* __ct__UI_CPassiveSkillCur(UI::CPassiveSkillCur* _this, nw4r::lyt::ArcResourceAccessor* accessor);
 
-// Skill-info update (defined later in this TU; C linkage so callers emit the
-// plain retail reloc, noinline keeps the retail `bl`).
+// Skill-info update for the embedded CPassiveSkillInfo.
 extern "C" void CPassiveSkillInfo_toggleNamePanes(UI::CPassiveSkillInfo* self);
 
-// Line update tail (defined later in this TU; noinline keeps the retail `bl`).
-// C linkage so the call relocs from CPassiveSkillLine_enterState14 / CPassiveSkillLine_stepState14 are the
-// plain retail name.
+// Line update tail (defined later in this TU). C linkage so the call relocs from
+// CPassiveSkillLine_enterState14 / CPassiveSkillLine_stepState14 are the plain retail
+// name.
 extern "C" void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self);
 
 // State-0xB line step (defined later in this TU). C linkage so the call reloc
 // from CPassiveSkillLine_stepStateB is the plain retail name.
 extern "C" void CPassiveSkillLine_enterStateB(UI::CPassiveSkillLine* self);
 
-// Cursor step helper (defined later in this TU; noinline keeps the retail `bl`).
+// Cursor step helper (defined later in this TU).
 extern "C" void CPassiveSkillCur_finishOpenAnim(UI::CPassiveSkillCur* self);
 
 void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_decCharIdx(UI::CPassiveSkillLine* self);
+extern "C" void CPassiveSkillLine_decCharIdx(UI::CPassiveSkillLine* self);
 void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self);
+extern "C" void CPassiveSkillLine_cursorUp(u8* self);
 void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self);
-__declspec(noinline) void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self);
-__declspec(noinline) void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* self);
+void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self);
+void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self);
+extern "C" void CPassiveSkillLine_handleInput(u8* self);
+extern "C" void CPassiveSkillLine_confirmAcquire(void* self);
 
 // State-step helpers defined later in this TU. C linkage so the call relocs
 // are the plain retail names (CPassiveSkillLine_enterState8 / CPassiveSkillLine_enterState3 / CPassiveSkillLine_updateSkillTabs).
@@ -98,9 +101,7 @@ extern "C" void CPassiveSkillLine_enterState3(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillRegion_syncSlotPanes(UI::UI_PassiveSkillRegion3C* self, u8 arg);
 
-// Cursor/skill-info step forward declarations (defined later in this TU). C
-// linkage so the call relocs from CPassiveSkillCur_dispatch are the plain retail names
-// (CPassiveSkillCur_stepToState2 etc.), noinline at the definitions keeps the retail `bl`s.
+// Cursor/skill-info step forward declarations (defined later in this TU).
 extern "C" void CPassiveSkillCur_stepToState2(UI::CPassiveSkillCur* self);
 extern "C" void CPassiveSkillCur_stepToState3(UI::CPassiveSkillCur* self);
 extern "C" void CPassiveSkillCur_stepToState5(UI::CPassiveSkillCur* self);
@@ -108,10 +109,9 @@ extern "C" void CPassiveSkillCur_stepToState0(UI::CPassiveSkillCur* self);
 extern "C" void CPassiveSkillInfo_stepToState3(UI_CPassiveSkillInfo* self);
 extern "C" void CPassiveSkillInfo_stepToState3Alt(UI_CPassiveSkillInfo* self);
 extern "C" void CPassiveSkillInit_step(UI_PassiveSkillInit* self);
-// Cursor/skill-menu step helpers called by the menu-close targets below. C
-// linkage so the call relocs are the plain retail names; the plain-C++
-// definitions later in this TU inherit the linkage. noinline is applied at
-// the definitions so retail keeps the `bl` at these call sites.
+// Cursor/skill-menu step helpers called by the menu-close targets below. C linkage so
+// the call relocs are the plain retail names; the plain-C++ definitions later in this
+// TU inherit the linkage.
 extern "C" void CPassiveSkillCur_bindAnim1(UI::CPassiveSkillCur* self);
 extern "C" void CPassiveSkillLine_enterState4(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_enterState9(UI::CPassiveSkillLine* self);
@@ -121,27 +121,24 @@ extern "C" void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLine* self);
 
-// +0x28 sub-object updates (defined later in this TU; noinline keeps the
-extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkillLine_syswinAdvance(UI::CPassiveSkillLine* self);
-// +0x28 sub-object update tail (retail CPassiveSkillLine_refreshLearnGrid, 0x944 bytes; stub kept
-// noinline so CPassiveSkillLine_enterState9 keeps the retail `bl`). C linkage so the call
-// reloc is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkill_markClosing(UI_CPassiveSkill* self);
-extern "C" __declspec(noinline) void CPassiveSkill_markClosed(UI_CPassiveSkill* self);
+// +0x28 sub-object updates (learned-close / enter-state-A / syswin advance).
+extern "C" void CPassiveSkillLine_learnedClose(u8* self);
+extern "C" void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* self);
+extern "C" void CPassiveSkillLine_syswinAdvance(UI::CPassiveSkillLine* self);
+// C linkage so the call reloc is the plain retail name.
+extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self);
+extern "C" void CPassiveSkill_markClosing(UI_CPassiveSkill* self);
+extern "C" void CPassiveSkill_markClosed(UI_CPassiveSkill* self);
 
 // this-adjusting thunk: forward to the sub-object at +0x28 (retail `UI_CPassiveSkill_thunk28_68594`).
 void UI_CPassiveSkill_thunk28_68594(u8* self) { CPassiveSkillLine_handleInput(self + 0x28); }
 
 
-// Cursor constructor: installs the vtable and inits the CBaseCur-compatible
-// layout (visible=1, everything else 0). Written as a global function so the
-// emitted symbol is exactly the retail `__ct__UI_CPassiveSkillCur` (MWCC does
-// not mangle global-scope names). noinline: the line ctor's member
-// construction must emit the retail `bl __ct__UI_CPassiveSkillCur`.
-__declspec(noinline) void* __ct__UI_CPassiveSkillCur(UI::CPassiveSkillCur* _this, nw4r::lyt::ArcResourceAccessor* accessor) {
+// Cursor constructor: installs the vtable and inits the CBaseCur-compatible layout
+// (visible=1, everything else 0). Written as a global function so the emitted symbol
+// is exactly the retail `__ct__UI_CPassiveSkillCur` (MWCC does not mangle global-scope
+// names).
+void* __ct__UI_CPassiveSkillCur(UI::CPassiveSkillCur* _this, nw4r::lyt::ArcResourceAccessor* accessor) {
     _this->mVtbl = (void*)lbl_eu_80537A14;
     _this->mArcResAcc = accessor;
     _this->mpLayout = 0;
@@ -155,11 +152,10 @@ __declspec(noinline) void* __ct__UI_CPassiveSkillCur(UI::CPassiveSkillCur* _this
 
 UI::CPassiveSkillCur::~CPassiveSkillCur() {}
 
-// Skill-info animation step: while the +0x18 active flag is set, dispatch on
-// the +0x1B mode byte (0 = CPassiveSkillInit_stepMode0 path, 1 = CPassiveSkillInit_stepMode1 path) and
-// then advance the +0x4 layout animation (vtbl 0x38, Animate(0)).
-// noinline: CPassiveSkillCur_dispatch keeps the retail `bl` to this 0x70-byte body.
-__declspec(noinline) void CPassiveSkillInit_step(UI_PassiveSkillInit* self) {
+// Skill-info animation step: while the +0x18 active flag is set, dispatch on the +0x1B
+// mode byte (0 = CPassiveSkillInit_stepMode0 path, 1 = CPassiveSkillInit_stepMode1
+// path) and then advance the +0x4 layout animation (vtbl 0x38, Animate(0)).
+void CPassiveSkillInit_step(UI_PassiveSkillInit* self) {
     if (self->field_18 == 0) {
         return;
     }
@@ -174,11 +170,9 @@ __declspec(noinline) void CPassiveSkillInit_step(UI_PassiveSkillInit* self) {
     self->field_4->Animate(0);
 }
 
-// Animation trigger: when the init flag is 1, rewind the anim transform,
-// mark the sub-state active and show the skill pane. C linkage so the call
-// reloc from CPassiveSkillLine_incCharIdx is the plain retail name; noinline keeps the
-// retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillInit_triggerPane14(UI_PassiveSkillInit* self) {
+// Animation trigger: when the init flag is 1, rewind the anim transform, mark the
+// sub-state active and show the skill pane.
+extern "C" void CPassiveSkillInit_triggerPane14(UI_PassiveSkillInit* self) {
     // Animation trigger: when the init flag is 1, rewind the anim transform,
     // mark the sub-state active and show the skill pane.
     if (self->field_1B == 1) {
@@ -193,8 +187,7 @@ extern "C" __declspec(noinline) void CPassiveSkillInit_triggerPane14(UI_PassiveS
 }
 
 // Same trigger as CPassiveSkillInit_triggerPane14 but drives the other pane (+0x10).
-// noinline: CPassiveSkillLine_decCharIdx keeps the retail `bl`.
-__declspec(noinline) void CPassiveSkillInit_triggerPane10(UI_PassiveSkillInit* self) {
+void CPassiveSkillInit_triggerPane10(UI_PassiveSkillInit* self) {
     // Same trigger as CPassiveSkillInit_triggerPane14 but drives the other pane (+0x10).
     if (self->field_1B == 1) {
         self->field_C->SetFrame(lbl_eu_80668904);
@@ -211,7 +204,7 @@ __declspec(noinline) void CPassiveSkillInit_triggerPane10(UI_PassiveSkillInit* s
 // flag is clear, run the frame-check on the +0x8 anim transform (result
 // discarded), then disable the +0x8 transform, enable and rewind the +0xC one,
 // set the mode byte, and show the +0x14/+0x10 pane depending on the +0x1A flag.
-__declspec(noinline) void CPassiveSkillInit_stepMode0(UI_PassiveSkillInit* self) {
+void CPassiveSkillInit_stepMode0(UI_PassiveSkillInit* self) {
     advanceAnimTransform(self->field_8, lbl_eu_80668900);
     if (self->field_19 != 0) {
         return;
@@ -231,7 +224,7 @@ __declspec(noinline) void CPassiveSkillInit_stepMode0(UI_PassiveSkillInit* self)
 // transform's frame check succeeds, disable it, enable and rewind the +0x8
 // transform, clear the mode byte, set the active flag, then hide the
 // +0x10/+0x14 panes.
-__declspec(noinline) void CPassiveSkillInit_stepMode1(UI_PassiveSkillInit* self) {
+void CPassiveSkillInit_stepMode1(UI_PassiveSkillInit* self) {
     if (advanceAnimTransform(self->field_C, lbl_eu_80668900) != 0) {
         self->field_4->SetAnimationEnable(self->field_C, 0);
         self->field_4->SetAnimationEnable(self->field_8, 1);
@@ -243,11 +236,10 @@ __declspec(noinline) void CPassiveSkillInit_stepMode1(UI_PassiveSkillInit* self)
     }
 }
 
-// Skill-info constructor: installs the vtable, stores the caller arg, zeroes
-// the word fields, sets the byte flags (+0x19..0x1B = 1) and frame float, then
-// inits the +0x20 sub-struct (with a null caller arg). noinline: the line
-// ctor's member construction must emit the retail `bl __ct__UI_CPassiveSkillInfo`.
-__declspec(noinline) void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self, u32 arg) {
+// Skill-info constructor: installs the vtable, stores the caller arg, zeroes the word
+// fields, sets the byte flags (+0x19.0x1B = 1) and frame float, then inits the +0x20
+// sub-struct (with a null caller arg).
+void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self, u32 arg) {
     self->arg = arg;
     self->vptr = (void*)lbl_eu_80537A08;
     self->field_8 = 0;
@@ -263,9 +255,12 @@ __declspec(noinline) void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self
     return self;
 }
 
-// noinline: the CPassiveSkillLine dtor's member destruction must emit the
-// retail `bl __dt__Q22UI17CPassiveSkillInfoFv` call, not inline this body.
-__declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}
+// Member destruction of CPassiveSkillLine::mInfo must stay a real `bl` to this
+// empty body (retail keeps a __dt__ reloc at +0x34 of the Line dtor); MWCC's
+// front end folds an empty member dtor into the containing dtor regardless of
+// -O4,p/-O4,s, -ipa on/off, -inline noauto, or definition order (Info dtor moved
+// below the Line dtor: no change), so the declspec is the only lever left.
+__declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}  // noinline-ok: TU boundary ok (both in this split), definition-order move tried (no effect), unit flags -O4,p/-O4,s/-ipa off/-inline noauto tried; front end folds the empty member dtor
 
 // u16 -> f32 via the 2^52 magic double: the union stores the value + 0x4330
 // prefix and subtracts the named .sdata2 magic so the pool reloc stays
@@ -274,13 +269,11 @@ __declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}
 // area (sp+0x30/0x38), matching the retail frame.
 
 // Skill-info init (retail CPassiveSkillInfo_init): create the main layout, bind the
-// three animation transforms, attach the font, push the name text into the
-// six skill panes, configure the animation states, build the +0x20 second
-// layout sub-struct, then set the skill-name pane flag and text, attach the
-// character name texture and size its pane from the texture dimensions, and
-// hide the party-count panes when the party has at most one member. The
-// r29-r31 _savegpr_29 frame retail uses needs optimize_for_size.
-#pragma optimize_for_size on
+// three animation transforms, attach the font, push the name text into the six skill
+// panes, configure the animation states, build the +0x20 second layout sub-struct,
+// then set the skill-name pane flag and text, attach the character name texture and
+// size its pane from the texture dimensions, and hide the party-count panes when the
+// party has at most one member.
 extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
     buildLayout(&self->field_8,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
@@ -375,11 +368,9 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
         setPaneVisible(paneB, 0);
     }
 }
-#pragma optimize_for_size off
 
-// Copy the 0x1C-byte init struct (6 words + 4 byte flags). noinline: retail
-// keeps the `bl CPassiveSkillInit_copy` call from CPassiveSkillInfo_init / CPassiveSkillInfo_copy.
-__declspec(noinline) void CPassiveSkillInit_copy(UI_PassiveSkillInit* dst, const UI_PassiveSkillInit* src) {
+// Copy the 0x1C-byte init struct (6 words + 4 byte flags).
+void CPassiveSkillInit_copy(UI_PassiveSkillInit* dst, const UI_PassiveSkillInit* src) {
     dst->field_0 = src->field_0;
     dst->field_4 = src->field_4;
     dst->field_8 = src->field_8;
@@ -424,14 +415,11 @@ extern "C" void CPassiveSkillCur_dispatch(UI::CPassiveSkillCur* self) {
     CPassiveSkillInit_step(reinterpret_cast<UI_PassiveSkillInit*>(&self->_pad20));
 }
 
-// Draw the skill-info cursor: early-return shape per retail -- bail before
-// drawing anything when the main layout at +0x8 is null; otherwise draw it,
-// then require both gate flags (+0x1B and +0x38) via separate early returns
-// before drawing the +0x24 second layout.
-// extern "C": CPassiveSkillLine_draw's call reloc must be the plain retail name;
-// noinline keeps the retail `bl CPassiveSkillInfo_draw`.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillInfo_draw(UI::CPassiveSkillInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
+// Draw the skill-info cursor: early-return shape per retail -- bail before drawing
+// anything when the main layout at +0x8 is null; otherwise draw it, then require both
+// gate flags (+0x1B and +0x38) via separate early returns before drawing the +0x24
+// second layout.
+extern "C" void CPassiveSkillInfo_draw(UI::CPassiveSkillInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mpLayout == 0) {
         return;
     }
@@ -444,13 +432,11 @@ extern "C" __declspec(noinline) void CPassiveSkillInfo_draw(UI::CPassiveSkillInf
     }
     drawLayout(self->field_24, drawInfo, 0, 1);
 }
-#pragma optimize_for_size off
 
-// Release both cursor layouts: drop the primary layout at +0x8 through its
-// vtable delete slot, then release the second-layout holder at +0x20 via the
-// +0x4 release helper (CPassiveSkillLayoutRef_release). noinline: CPassiveSkillLine_teardown keeps the
-// retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillCur_releaseBoth(UI::CPassiveSkillCur* self) {
+// Release both cursor layouts: drop the primary layout at +0x8 through its vtable
+// delete slot, then release the second-layout holder at +0x20 via the +0x4 release
+// helper (CPassiveSkillLayoutRef_release).
+extern "C" void CPassiveSkillCur_releaseBoth(UI::CPassiveSkillCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
         self->mpLayout = 0;
@@ -460,7 +446,7 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_releaseBoth(UI::CPassiveSk
 
 // Cursor step: set the state byte to 1, clear the +0x19/+0x1A flags, then
 // bind and enable the +0xC animation transform on the layout at +0x8.
-extern "C" __declspec(noinline) void CPassiveSkillCur_bindAnim0(UI::CPassiveSkillCur* self) {
+extern "C" void CPassiveSkillCur_bindAnim0(UI::CPassiveSkillCur* self) {
     self->field_18 = 1;
     self->field_19 = 0;
     self->field_1A = 0;
@@ -469,8 +455,8 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_bindAnim0(UI::CPassiveSkil
 }
 
 // Cursor step: same as CPassiveSkillCur_bindAnim0 but with state 4 and the +0x10
-// animation transform. noinline: CPassiveSkillLine_startClose keeps the retail `bl`.
-__declspec(noinline) void CPassiveSkillCur_bindAnim1(UI::CPassiveSkillCur* self) {
+// animation transform.
+void CPassiveSkillCur_bindAnim1(UI::CPassiveSkillCur* self) {
     self->field_18 = 4;
     self->field_19 = 0;
     self->field_1A = 0;
@@ -478,37 +464,30 @@ __declspec(noinline) void CPassiveSkillCur_bindAnim1(UI::CPassiveSkillCur* self)
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, 1);
 }
 
-// Cursor step: set the state byte to 6, clear the +0x19 flag, then bind and
-// enable the +0x14 animation transform on the layout at +0x8. C linkage so
-// CPassiveSkillLine_enterStateA's call reloc is the plain retail `CPassiveSkillStep_bindState6`; noinline
-// keeps the retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillStep_bindState6(UI_PassiveSkillStep* self) {
+// Cursor step: set the state byte to 6, clear the +0x19 flag, then bind and enable the
+// +0x14 animation transform on the layout at +0x8.
+extern "C" void CPassiveSkillStep_bindState6(UI_PassiveSkillStep* self) {
     self->field_18 = 6;
     self->field_19 = 0;
     self->mpLayout->BindAnimation(self->field_14);
     self->mpLayout->SetAnimationEnable(self->field_14, 1);
 }
 
-// Cursor step: same as CPassiveSkillStep_bindState6 but with state 7. C linkage so callers
-// (CPassiveSkillLine_enterState3 / CPassiveSkillLine_enterStateD) emit the plain retail reloc `CPassiveSkillStep_bindState7`;
-// noinline keeps the retail `bl` at those call sites.
-extern "C" __declspec(noinline) void CPassiveSkillStep_bindState7(UI_PassiveSkillStep* self) {
+// Cursor step: same as CPassiveSkillStep_bindState6 but with state 7.
+extern "C" void CPassiveSkillStep_bindState7(UI_PassiveSkillStep* self) {
     self->field_18 = 7;
     self->field_19 = 0;
     self->mpLayout->BindAnimation(self->field_14);
     self->mpLayout->SetAnimationEnable(self->field_14, 1);
 }
 
-// Set the skill-name textures for the embedded info object's two slots: look
-// up the message ids for the two character ids in the shared BDAT table,
-// resolve each to its 'timg' texture resource and attach it to the info
-// layout's two named panes (pool+0x1f1 / pool+0x1fc) when found. The five
-// callee-saved registers (r27-r31) need the stmw/lmw frame retail uses, which
-// -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
-// C linkage so CPassiveSkillLine_refreshNameTex's call reloc is the plain retail
+// Set the skill-name textures for the embedded info object's two slots: look up the
+// message ids for the two character ids in the shared BDAT table, resolve each to its
+// 'timg' texture resource and attach it to the info layout's two named panes
+// (pool+0x1f1 / pool+0x1fc) when found. C linkage so
+// CPassiveSkillLine_refreshNameTex's call reloc is the plain retail
 // `CPassiveSkillInfo_setNameTex` (retail has no C++ mangled callee here).
-extern "C" __declspec(noinline) void CPassiveSkillInfo_setNameTex(UI::CPassiveSkillInfo* self, u8 id1, u8 id2) {
+extern "C" void CPassiveSkillInfo_setNameTex(UI::CPassiveSkillInfo* self, u8 id1, u8 id2) {
     if (id1 == 0 || id2 == 0) {
         return;
     }
@@ -526,7 +505,6 @@ extern "C" __declspec(noinline) void CPassiveSkillInfo_setNameTex(UI::CPassiveSk
         PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050DC20[0x1fc], (TPLPalette*)res2);
     }
 }
-#pragma optimize_for_size off
 
 // Forward declarations for the skill-pane setters called by CPassiveSkillLine_refreshSkillCell
 // (defined later in this TU).
@@ -761,13 +739,9 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     }
 }
 
-// Skill-info update for the embedded CPassiveSkillInfo (retail CPassiveSkillInfo_toggleNamePanes).
-// C linkage so callers (CPassiveSkillLine_enterStateB / CPassiveSkillLine_enterState14) emit the plain retail
-// reloc; noinline keeps the retail `bl`. The three callee-saved registers
-// (r29-r31) need the stmw/lmw frame retail uses, which -O4,p only emits under
-// optimize_for_size.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillInfo_toggleNamePanes(UI::CPassiveSkillInfo* self) {
+// Skill-info update for the embedded CPassiveSkillInfo (retail
+// CPassiveSkillInfo_toggleNamePanes).
+extern "C" void CPassiveSkillInfo_toggleNamePanes(UI::CPassiveSkillInfo* self) {
     // Toggle both skill-name panes: find them by name in the main layout's
     // root pane, then flip each pane's visibility to its current inverse,
     // and finally toggle the +0x1B mode byte.
@@ -780,38 +754,25 @@ extern "C" __declspec(noinline) void CPassiveSkillInfo_toggleNamePanes(UI::CPass
     // Retail flips the byte with the `!= 1` idiom (xori/addic/subfe).
     self->field_1B = (u8)((self->field_1B ^ 1) != 0);
 }
-#pragma optimize_for_size off
 
-// Set the cursor's skill-name pane text: look up message 135 from the shared
-// string table, then push it into the layout pane named at pool+0x1a9.
-// noinline: CPassiveSkillLine_enterState4 keeps the retail `bl` to this 0x54-byte body.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-__declspec(noinline) void CPassiveSkillCur_setNameMsg135(UI::CPassiveSkillCur* self) {
+// Set the cursor's skill-name pane text: look up message 135 from the shared string
+// table, then push it into the layout pane named at pool+0x1a9.
+void CPassiveSkillCur_setNameMsg135(UI::CPassiveSkillCur* self) {
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 135);
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050DC20[0x1a9], text, 0);
 }
-#pragma optimize_for_size off
 
-// Set the cursor's skill-name pane text using message 136 from the shared
-// string table (variant of CPassiveSkillCur_setNameMsg135's 135 lookup). The two callee-saved
-// registers (r30/r31) need the stmw/lmw frame retail uses, which -O4,p only
-// emits under optimize_for_size.
-#pragma optimize_for_size on
-// extern "C": the retail symbol is the plain `CPassiveSkillCur_setNameMsg136` (the call reloc
-// from CPassiveSkillLine_enterState9 must match); noinline: CPassiveSkillLine_enterState9 keeps the `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillCur_setNameMsg136(UI::CPassiveSkillCur* self) {
+// Set the cursor's skill-name pane text using message 136 from the shared string table
+// (variant of CPassiveSkillCur_setNameMsg135's 135 lookup).
+extern "C" void CPassiveSkillCur_setNameMsg136(UI::CPassiveSkillCur* self) {
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 0x88);
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050DC20[0x1a9], text, 0);
 }
-#pragma optimize_for_size off
 
-// Drive the cursor's second layout root pane with a translation. Retail takes
-// the translation by value and re-materializes it into a frame local before
-// handing the address to the layout translate helper. extern "C": the retail
-// symbol is the plain `CPassiveSkillCur_setRootPos` (call reloc from CPassiveSkillLine_stepOpenTo5 must be
-// the unmangled name); noinline keeps CPassiveSkillLine_stepOpenTo5's retail `bl` (MWCC would
-// otherwise inline this body and grow the caller's frame).
-extern "C" __declspec(noinline) void CPassiveSkillCur_setRootPos(UI::CPassiveSkillCur* self, nw4r::math::VEC3 pos) {
+// Drive the cursor's second layout root pane with a translation. Retail takes the
+// translation by value and re-materializes it into a frame local before handing the
+// address to the layout translate helper.
+extern "C" void CPassiveSkillCur_setRootPos(UI::CPassiveSkillCur* self, nw4r::math::VEC3 pos) {
     nw4r::math::VEC3 local = pos;
     CBaseCur::SetPaneTranslate(self->field_24->GetRootPane(), &local);
 }
@@ -820,7 +781,7 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_setRootPos(UI::CPassiveSki
 // succeeds, set the step state to 2, clear the +0x1A flag, advance the layout
 // animation, bind the first anim transform, then unbind and re-enable the
 // second one.
-__declspec(noinline) void CPassiveSkillCur_stepToState2(UI::CPassiveSkillCur* self) {
+void CPassiveSkillCur_stepToState2(UI::CPassiveSkillCur* self) {
     if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_80668900) != 0) {
         self->field_18 = 2;
         self->field_1A = 1;
@@ -833,7 +794,7 @@ __declspec(noinline) void CPassiveSkillCur_stepToState2(UI::CPassiveSkillCur* se
 
 // Cursor step: when the second anim transform's frame check succeeds, set the
 // step state to 3, advance the layout animation, and unbind the transform.
-__declspec(noinline) void CPassiveSkillCur_stepToState3(UI::CPassiveSkillCur* self) {
+void CPassiveSkillCur_stepToState3(UI::CPassiveSkillCur* self) {
     if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
         self->field_18 = 3;
         self->field_19 = 1;
@@ -846,7 +807,7 @@ __declspec(noinline) void CPassiveSkillCur_stepToState3(UI::CPassiveSkillCur* se
 // succeeds, set the step state to 5, clear the +0x1A flag, advance the layout
 // animation, then unbind the second transform and bind/re-enable the first
 // one (mirror of CPassiveSkillCur_stepToState2).
-__declspec(noinline) void CPassiveSkillCur_stepToState5(UI::CPassiveSkillCur* self) {
+void CPassiveSkillCur_stepToState5(UI::CPassiveSkillCur* self) {
     if (AnimRewindFrame(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
         self->field_18 = 5;
         self->field_1A = 1;
@@ -859,7 +820,7 @@ __declspec(noinline) void CPassiveSkillCur_stepToState5(UI::CPassiveSkillCur* se
 
 // Cursor step: when the first anim transform's frame check succeeds, set the
 // step state to 0, advance the layout animation, and unbind the transform.
-__declspec(noinline) void CPassiveSkillCur_stepToState0(UI::CPassiveSkillCur* self) {
+void CPassiveSkillCur_stepToState0(UI::CPassiveSkillCur* self) {
     if (AnimRewindFrame(self->mpAnimTrans0, lbl_eu_80668900) != 0) {
         self->field_18 = 0;
         self->field_19 = 1;
@@ -871,7 +832,7 @@ __declspec(noinline) void CPassiveSkillCur_stepToState0(UI::CPassiveSkillCur* se
 // Skill-info step: when the +0x14 anim transform's frame check succeeds, set
 // the step state to 3, advance the layout animation and unbind the transform;
 // then copy the anim transform's current frame into the +0x1C float.
-__declspec(noinline) void CPassiveSkillInfo_stepToState3(UI_CPassiveSkillInfo* self) {
+void CPassiveSkillInfo_stepToState3(UI_CPassiveSkillInfo* self) {
     if (advanceAnimTransform(self->field_14, lbl_eu_80668900) != 0) {
         self->field_18 = 3;
         self->field_19 = 1;
@@ -883,7 +844,7 @@ __declspec(noinline) void CPassiveSkillInfo_stepToState3(UI_CPassiveSkillInfo* s
 
 // Skill-info step: same as CPassiveSkillInfo_stepToState3 but using the other frame-check
 // helper (AnimRewindFrame).
-__declspec(noinline) void CPassiveSkillInfo_stepToState3Alt(UI_CPassiveSkillInfo* self) {
+void CPassiveSkillInfo_stepToState3Alt(UI_CPassiveSkillInfo* self) {
     if (AnimRewindFrame(self->field_14, lbl_eu_80668900) != 0) {
         self->field_18 = 3;
         self->field_19 = 1;
@@ -893,13 +854,11 @@ __declspec(noinline) void CPassiveSkillInfo_stepToState3Alt(UI_CPassiveSkillInfo
     self->field_1C = self->field_14->GetFrame();
 }
 
-// Skill-points summary (retail CPassiveSkillLine_refreshSP): sum the message ids of the
-// character's learned secondary-record slots, format the remaining/total SP
-// into the +0x12d pane via sprintf, then set the +0x328/+0x332 panes to the
-// 0x10/0xF messages. The seven callee-saved registers (r25-r31) need the
-// stmw/lmw frame retail uses, which -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillLine_refreshSP(UI::CPassiveSkillLine* self, int id) {
+// Skill-points summary (retail CPassiveSkillLine_refreshSP): sum the message ids of
+// the character's learned secondary-record slots, format the remaining/total SP into
+// the +0x12d pane via sprintf, then set the +0x328/+0x332 panes to the 0x10/0xF
+// messages.
+extern "C" void CPassiveSkillLine_refreshSP(UI::CPassiveSkillLine* self, int id) {
     // Declared at the top so the retail allocator keeps its web across the
     // loop (spill-list coloring) and reuses the dead blob register (r30) for
     // the post-loop total load; declaring it after the loop colors it last
@@ -927,16 +886,13 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_refreshSP(UI::CPassiveSki
     char* text3 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0xf);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x332], text3, 0);
 }
-#pragma optimize_for_size off
 
-// Skill-learn slot display (retail CPassiveSkillLine_setCellMessage): when the character's
-// (row, slot) record cell is occupied or the character id is null, show the
-// generic error message; otherwise compute the grid index for the slot,
-// look up its message and SP cost, and push the formatted text into the
-// +0x139 pane. Always refresh the three summary panes. The stmw r25 frame
-// retail uses needs optimize_for_size (seven callee-saved registers).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, int charId, int row, int slot) {
+// Skill-learn slot display (retail CPassiveSkillLine_setCellMessage): when the
+// character's (row, slot) record cell is occupied or the character id is null, show
+// the generic error message; otherwise compute the grid index for the slot, look up
+// its message and SP cost, and push the formatted text into the +0x139 pane. Always
+// refresh the three summary panes.
+extern "C" void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, int charId, int row, int slot) {
     UI::CPSkillBlobCost* blob = reinterpret_cast<UI::CPSkillBlobCost*>(
         (u8*)CtrlObjectParam_GetCharEntry(charId) + 0x3534);
     UI::CPSkillRecord* rec = &blob->records[row];
@@ -969,33 +925,25 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_setCellMessage(UI::CPassi
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x145], &lbl_eu_8050DC20[0x182], 0);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x35f], &lbl_eu_8050DC20[0x182], 0);
 }
-#pragma optimize_for_size off
 
-// Skill-name pane setter for the +0x28 line (retail CPassiveSkillLine_setSlotNamePanes): the
-// layout it drives is the line's +0x8 field. C linkage so the definition
-// symbol and CPassiveSkill_linearizeGridSlot's call reloc are the plain retail name.
-// noinline: -ipa would otherwise fold the body into CPassiveSkill_linearizeGridSlot's call
-// site (retail keeps the pure 0x20 tail call).
-extern "C" __declspec(noinline) void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self,
+// Skill-name pane setter for the +0x28 line (retail
+// CPassiveSkillLine_setSlotNamePanes): the layout it drives is the line's +0x8 field.
+// C linkage so the definition symbol and CPassiveSkill_linearizeGridSlot's call reloc
+// are the plain retail name.
+extern "C" void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self,
                                                    u8 index);
 
 // Linearize a 5x5 skill grid into a slot index: (row-1)*25 + col*5 + slot + 1.
-// optimize_for_size on: retail keeps mulli for col*5 (the -O4,s lowering;
-// -O4,p strength-reduces to rlwinm+add).
-#pragma optimize_for_size on
 void CPassiveSkill_linearizeGridSlot(UI_CPassiveSkill* self, u8 row, u8 col, u8 slot) {
     return CPassiveSkillLine_setSlotNamePanes(reinterpret_cast<UI::CPassiveSkillLine*>(self),
                          (u8)(1 + slot + col * 5 + (row - 1) * 25));
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
-// Skill-name pane setter (retail CPassiveSkillLine_setSlotNamePanes): for the given grid slot,
-// set the +0x356 pane to message 0x11's text; look up the slot's table id and
-// either push the id text into the +0x145 pane or set the pane's text from
-// message 0x19; then set the +0x35f pane to message 0x10's text and the
-// +0x139 pane to the fixed +0x182 string. The stmw r29 frame retail uses
-// needs optimize_for_size (three callee-saved registers).
+// Skill-name pane setter (retail CPassiveSkillLine_setSlotNamePanes): for the given
+// grid slot, set the +0x356 pane to message 0x11's text; look up the slot's table id
+// and either push the id text into the +0x145 pane or set the pane's text from message
+// 0x19; then set the +0x35f pane to message 0x10's text and the +0x139 pane to the
+// fixed +0x182 string.
 void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self, u8 index) {
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x11);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x356], text, 0);
@@ -1010,15 +958,12 @@ void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self, u8 index) {
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x35f], text3, 0);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x139], &lbl_eu_8050DC20[0x182], 0);
 }
-#pragma optimize_for_size off
 
-// Line sub-object constructor (retail symbol __ct__UI_CPassiveSkillLine).
-// C linkage so __ct__UI_CPassiveSkill's `bl` binds to the plain name; noinline
-// keeps the retail `bl`. Installs the vtable, stores the caller arg, zero/one-
-// inits the state fields (+0xE9 starts at 1), seeds the +0x100 frame float,
-// then constructs the embedded info (+0x120), its +0x3C cursor, the +0x178
-// CCur18, and finally memsets the +0x20..0xE7 region.
-extern "C" __declspec(noinline) void* __ct__UI_CPassiveSkillLine(UI::CPassiveSkillLine* self, nw4r::lyt::ArcResourceAccessor* accessor) {
+// Line sub-object constructor (retail symbol __ct__UI_CPassiveSkillLine). Installs the
+// vtable, stores the caller arg, zero/one- inits the state fields (+0xE9 starts at 1),
+// seeds the +0x100 frame float, then constructs the embedded info (+0x120), its +0x3C
+// cursor, the +0x178 CCur18, and finally memsets the +0x20.0xE7 region.
+extern "C" void* __ct__UI_CPassiveSkillLine(UI::CPassiveSkillLine* self, nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mArg = accessor;
     self->mVtbl = (void*)lbl_eu_805379FC;
     self->field_8 = 0;
@@ -1052,16 +997,11 @@ extern "C" __declspec(noinline) void* __ct__UI_CPassiveSkillLine(UI::CPassiveSki
     return self;
 }
 
-// CPassiveSkillLine destructor (retail __dt__Q22UI17CPassiveSkillLineFv): the
-// body is empty, so MWCC auto-generates the member destruction (CCur18 at
-// +0x178 first, then the CPassiveSkillInfo at +0x120, both with the -1
-// embedded-member flag), the this-null guard and the flags>0 operator-delete
-// tail. The r30/r31 stmw/lmw frame needs optimize_for_size.
-#pragma optimize_for_size on
-// noinline: the CPassiveSkill dtor's member destruction must emit the retail
-// `bl __dt__Q22UI17CPassiveSkillLineFv` call, not inline this body.
-__declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
-#pragma optimize_for_size off
+// CPassiveSkillLine destructor (retail __dt__Q22UI17CPassiveSkillLineFv): the body is
+// empty, so MWCC auto-generates the member destruction (CCur18 at +0x178 first, then
+// the CPassiveSkillInfo at +0x120, both with the -1 embedded-member flag), the
+// this-null guard and the flags>0 operator-delete tail.
+UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 
 // Line-subobject rebuild (retail CPassiveSkillLine_rebuildLayouts): called from OnFileEvent after
 // the skill-data read. Creates the main layout (+0x8) and three anim
@@ -1071,11 +1011,10 @@ __declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 // resources and seeds the category table by character id.
 void CPassiveSkillLine_rebuildLayouts(UI::CPassiveSkillLine* self){}
 
-// Copy a UI_CPassiveSkillInfo's non-vtable state (words +0x4..+0x14, bytes
-// +0x18..+0x1B, float +0x1C) and the +0x20 sub-struct via CPassiveSkillInit_copy,
-// returning the destination.
-// noinline: retail keeps the `bl` from OnFileEvent's load path.
-__declspec(noinline) UI_CPassiveSkillInfo* CPassiveSkillInfo_copy(UI_CPassiveSkillInfo* dst,
+// Copy a UI_CPassiveSkillInfo's non-vtable state (words +0x4.+0x14, bytes +0x18.+0x1B,
+// float +0x1C) and the +0x20 sub-struct via CPassiveSkillInit_copy, returning the
+// destination.
+UI_CPassiveSkillInfo* CPassiveSkillInfo_copy(UI_CPassiveSkillInfo* dst,
                                     const UI_CPassiveSkillInfo* src) {
     // Volatile-sourced accesses: retail emits strict load/store interleaving
     // through one scratch register per member (conservative aliasing); with
@@ -1098,8 +1037,8 @@ __declspec(noinline) UI_CPassiveSkillInfo* CPassiveSkillInfo_copy(UI_CPassiveSki
     CPassiveSkillInit_copy(&dst->sub, &src->sub);
     return dst;
 }
-// noinline: retail keeps the `bl` from OnFileEvent's load path.
-__declspec(noinline) void CPassiveSkillCur_copyFrom(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
+// Copy a cursor's non-vtable state (full and lite variants).
+void CPassiveSkillCur_copyFrom(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
     dst->mArcResAcc = src->mArcResAcc;
     dst->mpLayout = src->mpLayout;
     dst->mpAnimTrans0 = src->mpAnimTrans0;
@@ -1109,8 +1048,8 @@ __declspec(noinline) void CPassiveSkillCur_copyFrom(UI::CPassiveSkillCur* dst, c
     dst->field_16 = src->field_16;
 }
 
-// noinline: retail keeps the `bl` from OnFileEvent's load path.
-__declspec(noinline) void CPassiveSkillCur_copyLite(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
+// Copy a cursor's non-vtable state (full and lite variants).
+void CPassiveSkillCur_copyLite(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
     dst->mArcResAcc = src->mArcResAcc;
     dst->mpLayout = src->mpLayout;
     dst->mpAnimTrans0 = src->mpAnimTrans0;
@@ -1136,13 +1075,13 @@ extern "C" void CPassiveSkillLine_stepState9(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_stepStateB(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_stepStateC(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_closeMoveCur(UI::CPassiveSkillLine* self);
-extern "C" __declspec(noinline) void CPassiveSkillCur_stepAnim(UI::CPassiveSkillCur* self);
+extern "C" void CPassiveSkillCur_stepAnim(UI::CPassiveSkillCur* self);
 
 // +0x28 sub-object update (retail CPassiveSkillLine_update): dispatch on the +0xE8 menu
 // state byte (jump table over 0..0x10; state 0xD falls through), then always
 // advance the primary/secondary layouts, the embedded info cursor at +0x120
 // and the +0x3C region cursor, and finally the +0x178 CCur18.
-extern "C" __declspec(noinline) void CPassiveSkillLine_update(u8* selfRaw) {
+extern "C" void CPassiveSkillLine_update(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->field_8 == 0) {
         return;
@@ -1212,15 +1151,11 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_update(u8* selfRaw) {
 done:;
 }
 
-// Skill-menu draw (retail CPassiveSkillLine_draw): draw the primary/secondary
-// layouts, then the 5x5 skill grid when the menu state is in {1,2,4..8},
-// then the embedded info sub-object, an extra region layout when the window
-// is closed, and finally the syswin + cursor. The five callee-saved
-// registers (r27-r31) need the stmw/lmw frame retail uses, which -O4,p only
-// emits under optimize_for_size. extern "C" keeps the plain retail symbol;
-// noinline stops -ipa folding the body into CPassiveSkill_draw's call site.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillLine_draw(UI::CPassiveSkillLine* self,
+// Skill-menu draw (retail CPassiveSkillLine_draw): draw the primary/secondary layouts,
+// then the 5x5 skill grid when the menu state is in {1,2,4.8}, then the embedded info
+// sub-object, an extra region layout when the window is closed, and finally the syswin
+// + cursor.
+extern "C" void CPassiveSkillLine_draw(UI::CPassiveSkillLine* self,
                                                    nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_8 == 0) {
         return;
@@ -1249,17 +1184,12 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_draw(UI::CPassiveSkillLin
         }
     }
 }
-#pragma optimize_for_size off
 
 // Line teardown (retail CPassiveSkillLine_teardown): delete every layout in the 5x5
-// skill grid (through its virtual dtor), then the +0x18 secondary and +0x8
-// primary layouts, release the embedded info layouts (+0x120 cursor pair /
-// +0x15C region) and run the embedded CCur18 cursor's +0xC teardown
-// virtual. The 6 callee-saved registers (r26-r31) need the stmw/lmw frame
-// retail uses, which -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
-// noinline: retail keeps the `bl` from CPassiveSkill_teardown's teardown.
-__declspec(noinline) void CPassiveSkillLine_teardown(UI::CPassiveSkillLine* self) {
+// skill grid (through its virtual dtor), then the +0x18 secondary and +0x8 primary
+// layouts, release the embedded info layouts (+0x120 cursor pair / +0x15C region) and
+// run the embedded CCur18 cursor's +0xC teardown virtual.
+void CPassiveSkillLine_teardown(UI::CPassiveSkillLine* self) {
     for (u8 row = 0; row < 5; row++) {
         for (u8 col = 0; col < 5; col++) {
             if (self->cells[row][col].mpLayout != 0) {
@@ -1280,13 +1210,9 @@ __declspec(noinline) void CPassiveSkillLine_teardown(UI::CPassiveSkillLine* self
     CPassiveSkillCur_releaseLayout(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo.field_3C));
     self->mCur.cleanup();
 }
-#pragma optimize_for_size off
 
-// Retail symbol is the unmangled `CPassiveSkillLine_isBusy`; C linkage so call sites
-// (CPassiveSkill_getActiveIfBusy) emit the plain reloc name instead of a C++ mangling, and
-// noinline so the 0x1C-byte body is not inlined into them (retail keeps the
-// `bl` -- the callee lives in a separate retail TU).
-extern "C" __declspec(noinline) u32 CPassiveSkillLine_isBusy(UI_CPassiveSkill* self) {
+// Busy probe forwarded to the +0x28 line sub-object.
+extern "C" u32 CPassiveSkillLine_isBusy(UI_CPassiveSkill* self) {
     if (self->field_139 != 0) {
         return self->field_E9;
     }
@@ -1294,15 +1220,11 @@ extern "C" __declspec(noinline) u32 CPassiveSkillLine_isBusy(UI_CPassiveSkill* s
 }
 
 // +0x28 sub-object update (retail func_80269B68, 0x410 bytes): skill-menu open
-// refresh. Sets the menu state to 1, binds the line layout's +0xC animation,
-// steps the embedded info cursor (+0x120) and the line state machines, then
-// redraws every description pane for the currently selected grid cell
-// (mirrors CPassiveSkillLine_refreshSkillCell's state-0 arm) and refreshes the SP summary.
-// noinline so CPassiveSkill_open's tail call stays a `b` instead of being inlined;
-// C linkage so the definition symbol and call relocs stay the plain retail
-// name `CPassiveSkillLine_openRefresh`.
-#pragma optimize_for_size on  // retail stmw r23 frame needs -O4,s
-extern "C" __declspec(noinline) void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self) {
+// refresh. Sets the menu state to 1, binds the line layout's +0xC animation, steps the
+// embedded info cursor (+0x120) and the line state machines, then redraws every
+// description pane for the currently selected grid cell (mirrors
+// CPassiveSkillLine_refreshSkillCell's state-0 arm) and refreshes the SP summary.
+extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self) {
     self->field_E8 = 1;
     self->field_E9 = 0;
     self->field_8->BindAnimation(self->field_C);
@@ -1386,14 +1308,13 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_openRefresh(UI::CPassiveS
     CPassiveSkillLine_refreshSP(reinterpret_cast<UI::CPassiveSkillLine*>(&self->mInfo), (u8)chId);
     CPassiveSkillLine_setCellMessage(reinterpret_cast<UI::CPassiveSkillLine*>(&self->mInfo), 0, row, 0);
 }
-#pragma optimize_for_size off
 
 // +0x28 sub-object update used by the menu-close path (retail CPassiveSkillLine_startClose):
 // set the menu state to 6, rebind the +0x8 layout's animation from the +0x14
 // transform to the +0xC one, then step the embedded info cursor at +0x120 and
 // push 0xff into the +0x3C info region. C linkage so the call reloc from
 // CPassiveSkill_close is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_startClose(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_startClose(UI::CPassiveSkillLine* self) {
     self->field_E8 = 6;
     self->field_E9 = 0;
     self->field_8->UnbindAnimation(self->field_14);
@@ -1403,15 +1324,11 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_startClose(UI::CPassiveSk
     CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0xff);
 }
 
-#pragma optimize_for_size on
-// Menu-close line update (retail CPassiveSkillLine_incCharIdx): when the menu state is not
-// the closed marker (15), refresh the +0xF3 countdown byte from the shared
-// byte (increment, wrapping to 0 past the fresh value), trigger the info pane
-// animation, clear the +0xF5/+0xF6 and +0xFD/+0xFE flags and run the line
-// update steps. The stmw r30 frame retail uses needs optimize_for_size (same
-// as the other stmw-frame helpers in this TU). noinline keeps the thunk's
-// retail `b CPassiveSkillLine_incCharIdx` tail call.
-__declspec(noinline) void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* self) {
+// Menu-close line update (retail CPassiveSkillLine_incCharIdx): when the menu state is
+// not the closed marker (15), refresh the +0xF3 countdown byte from the shared byte
+// (increment, wrapping to 0 past the fresh value), trigger the info pane animation,
+// clear the +0xF5/+0xF6 and +0xFD/+0xFE flags and run the line update steps.
+void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* self) {
     if (self->field_E8 == 0xF) {
         return;
     }
@@ -1432,17 +1349,13 @@ __declspec(noinline) void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* se
     CPassiveSkillLine_updateStatePanes(self);
     playUISound(0xA);
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
-// +0x28 sub-object update (retail CPassiveSkillLine_decCharIdx): when the menu state is not
-// the closed marker (15), count down the +0xF3 timer byte (refreshing it from
-// the shared byte when it wraps below zero), trigger the info pane animation,
-// clear the +0xF5/+0xF6 and +0xFD/+0xFE flags and run the line update steps.
-// The stmw r30 frame retail uses needs optimize_for_size (same as the other
-// stmw-frame helpers in this TU). C linkage so the call reloc from the +0x28
-// thunk is plain.
-extern "C" __declspec(noinline) void CPassiveSkillLine_decCharIdx(UI::CPassiveSkillLine* self) {
+// +0x28 sub-object update (retail CPassiveSkillLine_decCharIdx): when the menu state
+// is not the closed marker (15), count down the +0xF3 timer byte (refreshing it from
+// the shared byte when it wraps below zero), trigger the info pane animation, clear
+// the +0xF5/+0xF6 and +0xFD/+0xFE flags and run the line update steps. C linkage so
+// the call reloc from the +0x28 thunk is plain.
+extern "C" void CPassiveSkillLine_decCharIdx(UI::CPassiveSkillLine* self) {
     if (self->field_E8 == 0xF) {
         return;
     }
@@ -1463,7 +1376,6 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_decCharIdx(UI::CPassiveSk
     CPassiveSkillLine_updateStatePanes(self);
     playUISound(0xA);
 }
-#pragma optimize_for_size off
 
 // Menu-cursor down (retail CPassiveSkillLine_cursorDown): when the embedded syswin is armed
 // and active, move the cursor to the previous slot (wrapping to 1); otherwise
@@ -1512,7 +1424,7 @@ void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self) {
 // Menu-cursor up (retail CPassiveSkillLine_cursorUp): mirror of CPassiveSkillLine_cursorDown with
 // incrementing counters; the +0x11D cursor selector wraps to 0 past 1, the
 // state-5 counter past 5, and the 0xC/0xF counters past 4.
-extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self) {
+extern "C" void CPassiveSkillLine_cursorUp(u8* self) {
     UI::CPassiveSkillLine* line = reinterpret_cast<UI::CPassiveSkillLine*>(self);
     if (line->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(line->mInfo.field_54)->isOpened() != 0) {
         if (reinterpret_cast<CSysWin*>(line->mInfo.field_54)->isActive() != 0) {
@@ -1670,7 +1582,7 @@ void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self) {
 // down against the +0xF2 count, state 0xF moves the +0xF7 selector via the
 // +0xFB/+0xFC flags; the line update tail runs per state and the UI SFX 1
 // plays on every path except the syswin-armed early return.
-__declspec(noinline) void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
     if (syswin != 0 && reinterpret_cast<CSysWin*>(syswin)->isOpened() != 0) {
         return;
@@ -1778,7 +1690,7 @@ __declspec(noinline) void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* se
 // is armed (non-null and active) the caller already handled the close, so
 // return early; otherwise pick the state-5 (CPassiveSkillLine_enterState8) or state-0xC
 // (CPassiveSkillLine_enterState3) close path and play the shared UI SFX 109 on either.
-__declspec(noinline) void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
     if (syswin != 0 && reinterpret_cast<CSysWin*>(syswin)->isOpened() != 0) {
         return;
@@ -1821,7 +1733,7 @@ extern "C" void SysWinLog_ScanSegmentSlots(u8* self);
 //   12 - learn-check dispatch (CPassiveSkillLine_isLearned/CD44 -> confirm handler),
 //   15 - confirm on the selected grid cell: push the acquisition messages
 //        (item-category 0x85/0x84 variants) or mark the skill learned.
-extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) {
+extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
         if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
@@ -1980,13 +1892,12 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
     return;
 }
 
-// +0x28 sub-object update used by CPassiveSkill_confirm's learned-skill path.
-// Two entry conditions: with a lazily-attached syswin present and its +0x34
-// query nonzero, an active window plays the close sound, quiets the embedded
-// cursor and tears the syswin down; otherwise a menu in state 15 runs the
-// state-15 helper and plays the same sound. extern C keeps the plain retail
-// symbol; noinline keeps the retail `bl` from CPassiveSkill_confirm.
-extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw) {
+// +0x28 sub-object update used by CPassiveSkill_confirm's learned-skill path. Two
+// entry conditions: with a lazily-attached syswin present and its +0x34 query nonzero,
+// an active window plays the close sound, quiets the embedded cursor and tears the
+// syswin down; otherwise a menu in state 15 runs the state-15 helper and plays the
+// same sound.
+extern "C" void CPassiveSkillLine_learnedClose(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
         if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
@@ -2027,8 +1938,7 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 // Learned entries with SP cost: set state 16, push three messages, open the
 // syswin close sequence and quiet the cursor (two message-set variants by
 // item category 0x85/0x84). Unlearned or free: play a sound, run the state-15
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
+extern "C" void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
     UI::CPassiveSkillLine* self = static_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->mInfo.field_54 != 0) {
         if (reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isOpened() != 0) {
@@ -2102,12 +2012,10 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* self
         break;
     }
 }
-#pragma optimize_for_size off
 // +0x28 sub-object update used by CPassiveSkill_confirm's fallback path: when the
-// lazily-attached CSysWin (mInfo.field_54) is armed and active, play the open
-// SFX, quiet the embedded cursor, and advance the system window. noinline:
-// retail keeps the `bl` (the body lives at 0x80268F7C).
-extern "C" __declspec(noinline) void CPassiveSkillLine_syswinAdvance(UI::CPassiveSkillLine* self) {
+// lazily-attached CSysWin (mInfo.field_54) is armed and active, play the open SFX,
+// quiet the embedded cursor, and advance the system window.
+extern "C" void CPassiveSkillLine_syswinAdvance(UI::CPassiveSkillLine* self) {
     if (self->mInfo.field_54 == 0) {
         return;
     }
@@ -2122,22 +2030,19 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_syswinAdvance(UI::CPassiv
     reinterpret_cast<CSysWin*>(self->mInfo.field_54)->advancePhase3();
 }
 
-extern "C" __declspec(noinline) void CPassiveSkillLine_maybeEnterState2(void* self){
+extern "C" void CPassiveSkillLine_maybeEnterState2(void* self){
     if (*(u8*)((u8*)self + 0x13A) != 0) {
         *(u8*)((u8*)self + 0xE8) = 2;
     }
 }
 
-// Menu-open line step (retail CPassiveSkillLine_stepOpenTo5): when the +0xC anim transform's
-// frame check succeeds, move the menu to state 5, animate the +0x8 layout and
-// swap its bound transform from +0xC to +0x14, run the line-close tail, then
-// find two panes by name in the primary layout root, compute the position
-// between them via ScalePaneWorldPos and drive the embedded cursor's second
-// layout root pane with it; the layout animation always advances and the
-// +0x28 update tail runs. The _savegpr_29 helper frame retail uses needs
-// optimize_for_size (3 callee-saved registers; -O4,p would emit individual
-// stw pairs).
-// Root-space position of `pane` relative to `scale` (by value).
+// Menu-open line step (retail CPassiveSkillLine_stepOpenTo5): when the +0xC anim
+// transform's frame check succeeds, move the menu to state 5, animate the +0x8 layout
+// and swap its bound transform from +0xC to +0x14, run the line-close tail, then find
+// two panes by name in the primary layout root, compute the position between them via
+// ScalePaneWorldPos and drive the embedded cursor's second layout root pane with it;
+// the layout animation always advances and the +0x28 update tail runs. Root-space
+// position of `pane` relative to `scale` (by value).
 static inline nw4r::math::VEC3 scaledPanePos(nw4r::lyt::Pane* pane, nw4r::lyt::Pane* scale,
                                              nw4r::lyt::Pane* root) {
     nw4r::math::VEC3 pos;
@@ -2145,8 +2050,7 @@ static inline nw4r::math::VEC3 scaledPanePos(nw4r::lyt::Pane* pane, nw4r::lyt::P
     return pos;
 }
 
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepOpenTo5(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepOpenTo5(UI::CPassiveSkillLine* self) {
     if (advanceAnimTransform(self->field_C, lbl_eu_80668900) != 0) {
         self->field_E8 = 5;
         self->field_E9 = 1;
@@ -2165,13 +2069,12 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepOpenTo5(UI::CPassiveS
     self->field_8->Animate(0);
     CPassiveSkillLine_refreshGridPositions(self);
 }
-#pragma optimize_for_size off
 
 // +0x28 sub-object update (retail CPassiveSkillLine_stepToState7): when the +0xC anim
 // transform's frame check succeeds, set the menu state to 7, animate and
 // unbind it; then always animate the +0x8 layout and run the line tail.
 // C linkage so the emitted symbol is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepToState7(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepToState7(UI::CPassiveSkillLine* self) {
     if (AnimRewindFrame(self->field_C, lbl_eu_80668900) != 0) {
         self->field_E8 = 7;
         self->field_8->Animate(0);
@@ -2181,7 +2084,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepToState7(UI::CPassive
     CPassiveSkillLine_refreshGridPositions(self);
 }
 
-extern "C" __declspec(noinline) void CPassiveSkillLine_resetToState0(UI_CPassiveSkill* self) {
+extern "C" void CPassiveSkillLine_resetToState0(UI_CPassiveSkill* self) {
     if (self->field_139 == 0) {
         return;
     }
@@ -2195,7 +2098,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_resetToState0(UI_CPassive
 // check succeeds and the embedded info's active flag is set, animate and
 // unbind the +0x8 layout's transform, then run the state-9 line step; the
 // layout animation always advances and the update tail runs.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState8(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState8(UI::CPassiveSkillLine* self) {
     f32 frame = self->mInfo.field_1C;
     if (lbl_eu_80668918 == frame) {
         CPassiveSkillLine_updateStatePanes(self);
@@ -2218,7 +2121,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState8(UI::CPassiveSk
 // set, move the menu to state 0xC, animate and unbind the +0x18 layout's
 // transform, then run the line update tail. C linkage so the emitted symbol
 // is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState6(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState6(UI::CPassiveSkillLine* self) {
     if (advanceAnimTransform(self->field_1C, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_E8 = 0xC;
@@ -2236,7 +2139,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState6(UI::CPassiveSk
 // succeeds and the info's active flag is set, animate/unbind and run the
 // skill-menu state step. C linkage so the emitted symbol is the plain retail
 // name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState4(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState4(UI::CPassiveSkillLine* self) {
     f32 frame = self->mInfo.field_1C;
     if (lbl_eu_80668918 == frame) {
         CPassiveSkillLine_updateStatePanes(self);
@@ -2256,7 +2159,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState4(UI::CPassiveSk
 // set, move the menu to state 5, animate the +0x8 layout, unbind the +0x10
 // transform, bind/enable the +0x14 one, then run the line-close tail; the
 // layout animation always advances and the update tail runs.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState3(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState3(UI::CPassiveSkillLine* self) {
     if (AnimRewindFrame(self->field_10, lbl_eu_80668900) != 0 && self->mInfo.field_19 != 0) {
         self->field_E8 = 5;
         self->field_E9 = 1;
@@ -2276,7 +2179,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState3(UI::CPassiveSk
 // +0x1C anim transform's frame check succeeds and the embedded info's active
 // flag is set, animate and unbind the +0x18 layout's transform, then run the
 // state-14 line step.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState14(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState14(UI::CPassiveSkillLine* self) {
     f32 frame = self->mInfo.field_1C;
     if (frame >= lbl_eu_8066891C && frame <= lbl_eu_80668920) {
         self->field_F7 = 0;
@@ -2299,7 +2202,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState14(UI::CPassiveS
 // embedded info's active flag is set, move the menu to state 0xF, animate and
 // unbind the +0x8 primary layout's transform, then run the line update tail.
 // C linkage so the emitted symbol is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepState9(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepState9(UI::CPassiveSkillLine* self) {
     if (AnimRewindFrame(self->field_10, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_E8 = 0xF;
@@ -2316,7 +2219,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepState9(UI::CPassiveSk
 // region; when the +0x10 anim transform's frame check succeeds and the
 // embedded info's active flag is set, animate the +0x8 layout, bind the
 // +0x10 transform, and run the state-0xB line step.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepStateB(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepStateB(UI::CPassiveSkillLine* self) {
     f32 frame = self->mInfo.field_1C;
     if (lbl_eu_80668918 == frame) {
         CPassiveSkillLine_updateStatePanes(self);
@@ -2336,7 +2239,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepStateB(UI::CPassiveSk
 // set, move the menu to state 0xC, animate and unbind the +0x18 layout's
 // transform, then run the line update tail. C linkage so the emitted symbol
 // is the plain retail name.
-extern "C" __declspec(noinline) void CPassiveSkillLine_stepStateC(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_stepStateC(UI::CPassiveSkillLine* self) {
     if (advanceAnimTransform(self->field_1C, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_E8 = 0xC;
@@ -2352,7 +2255,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_stepStateC(UI::CPassiveSk
 // (mInfo.field_54) is active, pick the close state from the +0x11E selector
 // byte, mark +0x11D, build the cursor target position from the syswin and
 // move the embedded CCur18 cursor there, then quiet the cursor.
-extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_closeMoveCur(UI::CPassiveSkillLine* self) {
     if (self->mInfo.field_54 != 0 && reinterpret_cast<CSysWin*>(self->mInfo.field_54)->isActive() != 0) {
         if (self->field_11E == 1) {
             self->field_E8 = 0xC;
@@ -2367,16 +2270,12 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassive
     }
 }
 
-// Menu-close state-5 helper (called by CPassiveSkillLine_closeDispatch). C linkage so the call
-// reloc is the plain retail `CPassiveSkillLine_enterState8`; noinline keeps the retail `bl`
-// (the real body lives at 0x80269808, not yet matched).
-// Menu-close state-8 helper (called by CPassiveSkillLine_closeDispatch's state-5 dispatch and
-// the +0x28 state machine): set the menu state to 8, clear +0xE9, animate the
-// +0x8 layout, then unbind the +0x14 transform and bind/enable the +0x10 one;
-// step the embedded skill-info cursor at +0x120 and push 0xff into the +0x3C
-// info region. C linkage so the call relocs from CPassiveSkillLine_closeDispatch are the plain
-// retail `CPassiveSkillLine_enterState8`; noinline keeps the retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillLine_enterState8(UI::CPassiveSkillLine* self) {
+// Menu-close state-5 helper (called by CPassiveSkillLine_closeDispatch). Menu-close
+// state-8 helper (called by CPassiveSkillLine_closeDispatch's state-5 dispatch and the
+// +0x28 state machine): set the menu state to 8, clear +0xE9, animate the +0x8 layout,
+// then unbind the +0x14 transform and bind/enable the +0x10 one; step the embedded
+// skill-info cursor at +0x120 and push 0xff into the +0x3C info region.
+extern "C" void CPassiveSkillLine_enterState8(UI::CPassiveSkillLine* self) {
     self->field_E8 = 8;
     self->field_E9 = 0;
     self->field_8->Animate(0);
@@ -2387,25 +2286,22 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_enterState8(UI::CPassiveS
     CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0xff);
 }
 
-// Skill-menu state step: set the +0xE8 menu-state byte to 4, bind and enable
-// the +0x10 animation transform on the +0x8 layout, then refresh the skill
-// name text on the embedded cursor at +0x120 (layout-compatible with
-// CPassiveSkillCur: Layout* at +0x8). noinline: CPassiveSkillLine_stepState4 keeps the
-// retail `bl`.
-__declspec(noinline) void CPassiveSkillLine_enterState4(UI::CPassiveSkillLine* self) {
+// Skill-menu state step: set the +0xE8 menu-state byte to 4, bind and enable the +0x10
+// animation transform on the +0x8 layout, then refresh the skill name text on the
+// embedded cursor at +0x120 (layout-compatible with CPassiveSkillCur: Layout* at
+// +0x8).
+void CPassiveSkillLine_enterState4(UI::CPassiveSkillLine* self) {
     self->field_E8 = 4;
     self->field_8->BindAnimation(self->field_10);
     self->field_8->SetAnimationEnable(self->field_10, 1);
     CPassiveSkillCur_setNameMsg135(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo));
 }
 
-// Skill-menu state step: set the +0xE8 menu-state byte to 3, clear +0xE9,
-// bind/enable the +0x1C animation transform on the +0x18 layout, then step
-// the embedded skill-info cursor at +0x120 (UI_PassiveSkillStep view) and push
-// 0xff into the +0x3C info region via CPassiveSkillRegion_syncSlotPanes. C linkage so
-// CPassiveSkillLine_closeDispatch's `bl CPassiveSkillLine_enterState3` binds to the plain retail name; noinline
-// keeps that `bl` (MWCC would otherwise inline this body into CPassiveSkillLine_closeDispatch).
-extern "C" __declspec(noinline) void CPassiveSkillLine_enterState3(UI::CPassiveSkillLine* self) {
+// Skill-menu state step: set the +0xE8 menu-state byte to 3, clear +0xE9, bind/enable
+// the +0x1C animation transform on the +0x18 layout, then step the embedded skill-info
+// cursor at +0x120 (UI_PassiveSkillStep view) and push 0xff into the +0x3C info region
+// via CPassiveSkillRegion_syncSlotPanes.
+extern "C" void CPassiveSkillLine_enterState3(UI::CPassiveSkillLine* self) {
     self->field_E8 = 3;
     self->field_E9 = 0;
     self->field_18->BindAnimation(self->field_1C);
@@ -2414,11 +2310,10 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_enterState3(UI::CPassiveS
     CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0xff);
 }
 
-// Line state step: set the +0xE8 menu-state byte to 9, bind and enable the
-// +0x1C animation transform on the +0x18 layout, refresh the skill-name pane
-// on the embedded cursor at +0x120, then run the line update tail. noinline:
-// CPassiveSkillLine_stepState8 keeps the retail `bl`.
-__declspec(noinline) void CPassiveSkillLine_enterState9(UI::CPassiveSkillLine* self) {
+// Line state step: set the +0xE8 menu-state byte to 9, bind and enable the +0x1C
+// animation transform on the +0x18 layout, refresh the skill-name pane on the embedded
+// cursor at +0x120, then run the line update tail.
+void CPassiveSkillLine_enterState9(UI::CPassiveSkillLine* self) {
     self->field_E8 = 9;
     self->field_18->BindAnimation(self->field_1C);
     self->field_18->SetAnimationEnable(self->field_1C, 1);
@@ -2427,7 +2322,7 @@ __declspec(noinline) void CPassiveSkillLine_enterState9(UI::CPassiveSkillLine* s
 }
 
 // Skill-menu state step: same shape as CPassiveSkillLine_enterState3 but with menu state 0xD.
-__declspec(noinline) void CPassiveSkillLine_enterStateD(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_enterStateD(UI::CPassiveSkillLine* self) {
     self->field_E8 = 0xD;
     self->field_E9 = 0;
     self->field_18->BindAnimation(self->field_1C);
@@ -2436,12 +2331,10 @@ __declspec(noinline) void CPassiveSkillLine_enterStateD(UI::CPassiveSkillLine* s
     CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0xff);
 }
 
-// Skill-menu state step: set the +0xE8 menu-state byte to 0xB, bind/enable
-// the +0x1C animation transform on the +0x18 layout, then run the skill-info
-// update, the state-0xB helper and the line update tail. C linkage so the
-// call reloc from CPassiveSkillLine_stepStateB is the plain retail name; noinline keeps the
-// retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillLine_enterStateB(UI::CPassiveSkillLine* self) {
+// Skill-menu state step: set the +0xE8 menu-state byte to 0xB, bind/enable the +0x1C
+// animation transform on the +0x18 layout, then run the skill-info update, the
+// state-0xB helper and the line update tail.
+extern "C" void CPassiveSkillLine_enterStateB(UI::CPassiveSkillLine* self) {
     self->field_E8 = 0xB;
     self->field_18->BindAnimation(self->field_1C);
     self->field_18->SetAnimationEnable(self->field_1C, 1);
@@ -2451,11 +2344,10 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_enterStateB(UI::CPassiveS
 }
 
 // Skill-menu state step: set the +0xE8 menu-state byte to 0xA, clear +0xE9,
-// bind/enable the +0x10 animation transform on the +0x8 layout, then step the
-// embedded skill-info cursor at +0x120 (state-6 step) and push 0xff into the
-// +0x3C info region via CPassiveSkillRegion_syncSlotPanes.
-// noinline: retail keeps the `bl` from CPassiveSkillLine_learnedClose (state-15 path).
-__declspec(noinline) void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* self) {
+// bind/enable the +0x10 animation transform on the +0x8 layout, then step the embedded
+// skill-info cursor at +0x120 (state-6 step) and push 0xff into the +0x3C info region
+// via CPassiveSkillRegion_syncSlotPanes.
+void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* self) {
     self->field_E8 = 0xA;
     self->field_E9 = 0;
     self->field_8->BindAnimation(self->field_10);
@@ -2464,11 +2356,10 @@ __declspec(noinline) void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* s
     CPassiveSkillRegion_syncSlotPanes(&self->mInfo.field_3C, 0xff);
 }
 
-// Skill-menu state step: set the +0xE8 menu-state byte to 14, bind and enable
-// the +0x10 animation transform on the +0x8 layout, then run the skill-info
-// update and the line update tail. noinline: CPassiveSkillLine_stepState14 keeps the retail
-// `bl` (the body is byte-matched but must stay a separate function).
-__declspec(noinline) void CPassiveSkillLine_enterState14(UI::CPassiveSkillLine* self) {
+// Skill-menu state step: set the +0xE8 menu-state byte to 14, bind and enable the
+// +0x10 animation transform on the +0x8 layout, then run the skill-info update and the
+// line update tail.
+void CPassiveSkillLine_enterState14(UI::CPassiveSkillLine* self) {
     self->field_E8 = 14;
     self->field_8->BindAnimation(self->field_10);
     self->field_8->SetAnimationEnable(self->field_10, 1);
@@ -2476,15 +2367,12 @@ __declspec(noinline) void CPassiveSkillLine_enterState14(UI::CPassiveSkillLine* 
     CPassiveSkillLine_updateLearnGrid(self);
 }
 
-// Line update step (retail CPassiveSkillLine_refreshNameTex): refresh the skill-name textures.
-// Walk the +0xF3 counter to its two neighbouring grid slots (clamping at the
-// shared byte's bounds), resolve the current character's name texture from the
-// BDAT table and attach it to the +0x4bf/+0x4cb primary and +0x4d7 secondary
-// layout panes, then update the embedded info's two skill-name panes. The five
-// callee-saved registers (r27-r31) need the stmw/lmw frame retail uses, which
-// -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
-__declspec(noinline) void CPassiveSkillLine_refreshNameTex(UI::CPassiveSkillLine* self) {
+// Line update step (retail CPassiveSkillLine_refreshNameTex): refresh the skill-name
+// textures. Walk the +0xF3 counter to its two neighbouring grid slots (clamping at the
+// shared byte's bounds), resolve the current character's name texture from the BDAT
+// table and attach it to the +0x4bf/+0x4cb primary and +0x4d7 secondary layout panes,
+// then update the embedded info's two skill-name panes.
+void CPassiveSkillLine_refreshNameTex(UI::CPassiveSkillLine* self) {
     u8 v = self->field_F3;
     s8 up = (s8)(v + 1);
     s8 down = (s8)(v - 1);
@@ -2509,17 +2397,14 @@ __declspec(noinline) void CPassiveSkillLine_refreshNameTex(UI::CPassiveSkillLine
     }
     CPassiveSkillInfo_setNameTex(&self->mInfo, idUp, idDown);
 }
-#pragma optimize_for_size off
 
-// State-0xB line helper (called by CPassiveSkillLine_enterStateB). C linkage so the call reloc
-// is the plain retail `CPassiveSkillLine_updateSkillTabs`; noinline keeps the retail `bl` (the
-// real body lives at 0x80269D20, not yet matched).
-// Skill-grid tab update (retail CPassiveSkillLine_updateSkillTabs): show/hide the two skill-row
-// tabs and their pane slots, set the row-availability flags from the two
-// BDAT lookups, then for each grid cell pick the icon/name textures by the
-// slot category ladder, drive the cell layout animation frame from the SP
-// cost ratio, and show the pane matching the category.
-extern "C" __declspec(noinline) void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
+// State-0xB line helper (called by CPassiveSkillLine_enterStateB). Skill-grid tab
+// update (retail CPassiveSkillLine_updateSkillTabs): show/hide the two skill-row tabs
+// and their pane slots, set the row-availability flags from the two BDAT lookups, then
+// for each grid cell pick the icon/name textures by the slot category ladder, drive
+// the cell layout animation frame from the SP cost ratio, and show the pane matching
+// the category.
+extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
     // Shared 0x4330-magic conversion slots: declared first so MWCC hoists
     // the 0x43300000 high-word stores into the prologue (retail emits the
     // lis between the first self->field_8 load and the self spill).
@@ -2736,7 +2621,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_updateSkillTabs(UI::CPass
 // and the five tab slots, set the row-availability flags, then for each grid
 // cell attach the category icon/name textures and drive the pane visibility
 // from the learned state and the remaining-SP affordability check.
-__declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
     setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 1);
     setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 0);
     // Buffer size/order and statement order matter: MWCC lays the two 0x20
@@ -3004,7 +2889,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
 // slot category ladder (unlearned / learned-empty / learned-type1 /
 // learned-type2), set the slot colours from the pane animation vectors, and
 // finally position the slot pane by the learned-slot count.
-extern "C" __declspec(noinline) void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) {
+extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)id) + 0x3534);
@@ -3132,11 +3017,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_refreshLearnGrid(UI::CPas
     }
 }
 
-// Line update tail (retail CPassiveSkillLine_updateStatePanes); body lives at 0x8026C4A4, not yet
-// matched. C linkage inherited from the file-top declaration keeps the call
-// relocs from CPassiveSkillLine_stepStateC/CPassiveSkillLine_decCharIdx/CPassiveSkillLine_stepState4 plain; noinline keeps
-// the retail `bl`.
-__declspec(noinline) void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
+// Line update tail (retail CPassiveSkillLine_updateStatePanes); body lives at
+// 0x8026C4A4, not yet matched.
+void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
     char buf[0x50];
 
     if (self->field_E8 <= 5) {
@@ -3271,30 +3154,21 @@ CPassiveSkillLine_refreshSkillCell(self, 2, 0, GetCollectedFlagByte((s8)self->fi
               (s8)self->field_F7, (s8)self->field_F8);
         return;
 }
-#pragma optimize_for_size off
 
 
-// Skill-grid cell flag lookup: the cell byte at +0x104 for the signed
-// row/col cursor (row*5 + col). Pointer-arithmetic form keeps MWCC's
-// accumulation on self (retail add r3,r3,r4/add r3,r3,r0), and
-// optimize_for_size on fixes the -O4,p extsb scheduling bug (extsb would
-// read the uninitialised r4) and keeps mulli for the *5.
-#pragma optimize_for_size on
-__declspec(noinline) u8 CPassiveSkill_getCellFlag(UI_CPassiveSkill* self) {
+// Skill-grid cell flag lookup: the cell byte at +0x104 for the signed row/col cursor
+// (row*5 + col).
+u8 CPassiveSkill_getCellFlag(UI_CPassiveSkill* self) {
     return *(u8*)((u8*)self + 0x104 + self->field_F7 * 5 + self->field_F8);
 }
-#pragma optimize_for_size off
 
 // Skill-learn check (retail CPassiveSkillLine_isLearned): scan the line's grid column
-// entries; for each entry that is not the current skill id, when the slot
-// counter reaches the +0xFD row marker, look up the record row in the
-// character skill table and test the learned-flag bit at the row's slot
-// (bit 0 of the byte at +0x14 of the (fe+1)th 0x20-byte slot of record
-// row+5). Returns 1 on the first learned row, 0 when the slot counter
-// exhausts 6 non-matching entries or the grid ends. The stmw r30 frame
-// retail uses needs optimize_for_size.
-#pragma optimize_for_size on
-__declspec(noinline) u8 CPassiveSkillLine_isLearned(UI::CPassiveSkillLine* self) {
+// entries; for each entry that is not the current skill id, when the slot counter
+// reaches the +0xFD row marker, look up the record row in the character skill table
+// and test the learned-flag bit at the row's slot (bit 0 of the byte at +0x14 of the
+// (fe+1)th 0x20-byte slot of record row+5). Returns 1 on the first learned row, 0 when
+// the slot counter exhausts 6 non-matching entries or the grid ends.
+u8 CPassiveSkillLine_isLearned(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(id) + 0x3534);
@@ -3322,13 +3196,11 @@ __declspec(noinline) u8 CPassiveSkillLine_isLearned(UI::CPassiveSkillLine* self)
     }
     return 0;
 }
-#pragma optimize_for_size off
 
-// Skill-learn check (retail CPassiveSkillLine_isOccupied): same shape as CPassiveSkillLine_isLearned
-// but tests the slot word at +0x0 of the row's slot instead of the flag
-// byte's bit 0. The stmw r30 frame retail uses needs optimize_for_size.
-#pragma optimize_for_size on
-__declspec(noinline) u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self) {
+// Skill-learn check (retail CPassiveSkillLine_isOccupied): same shape as
+// CPassiveSkillLine_isLearned but tests the slot word at +0x0 of the row's slot
+// instead of the flag byte's bit 0.
+u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(id) + 0x3534);
@@ -3356,18 +3228,14 @@ __declspec(noinline) u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // Equipment-state sync (retail CPassiveSkillLine_syncEquipState): for each of the five
-// category/equipment pairs read from the character data, when the equipped
-// item exists and its item category matches the character's +0x11F state
-// marker, clear the equipped slot through the per-category setter; then wake
-// the character bdat row, and for the first three grid rows rebuild the
-// scene's enemy list from the shared scene-name table and clear the first
-// matching CfObjectMove. The stmw r24 frame retail uses needs
-// optimize_for_size (eight callee-saved registers).
-#pragma optimize_for_size on
-__declspec(noinline) void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
+// category/equipment pairs read from the character data, when the equipped item exists
+// and its item category matches the character's +0x11F state marker, clear the
+// equipped slot through the per-category setter; then wake the character bdat row, and
+// for the first three grid rows rebuild the scene's enemy list from the shared
+// scene-name table and clear the first matching CfObjectMove.
+void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
     u8 charId = GetCollectedFlagByte(self->field_F3);
     CPSkillCharData* data =
         reinterpret_cast<CPSkillCharData*>(CtrlObjectParam_GetCharEntry(charId));
@@ -3439,14 +3307,13 @@ __declspec(noinline) void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine
         }
     }
 }
-#pragma optimize_for_size off
 
 // Skill-grid position refresh (retail CPassiveSkillLine_refreshGridPositions): for each of the 25
 // skill-grid cells, format the cell pane name into a local buffer, find that
 // pane in the primary layout root, compute its translated position via
 // AccumPaneWorldPosB, then translate the five name panes of the cell layout to
 // that position and advance the cell layout animation.
-__declspec(noinline) void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSkillLine* self) {
     char buf[0x28];
     UI::CPSkillGridCell* cellRow;
     u8 row;
@@ -3491,7 +3358,7 @@ __declspec(noinline) void CPassiveSkillLine_refreshGridPositions(UI::CPassiveSki
 // it to a step function at 0, scale and truncate to a byte, then write that
 // byte into the five name panes of every skill-grid cell layout and advance
 // each cell animation.
-__declspec(noinline) void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLine* self) {
+void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLine* self) {
     u8 v = self->field_8->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050DC20[0x9d5], true)
                 ->GetAlpha();
@@ -3535,12 +3402,10 @@ __declspec(noinline) void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLi
     }
 }
 
-// Skill-count helper (retail CPassiveSkillLine_countSkillId): count how many slot cells in
-// the character skill blob's primary (rows 0-4) and secondary (rows 5-10)
-// record areas hold the given skill id (a non-zero word with a matching
-// halfword id at +4). Retail keeps the inner loops as counted mtctr/bdnz
-// loops, which -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
+// Skill-count helper (retail CPassiveSkillLine_countSkillId): count how many slot
+// cells in the character skill blob's primary (rows 0-4) and secondary (rows 5-10)
+// record areas hold the given skill id (a non-zero word with a matching halfword id at
+// +4).
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id) {
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte(self->field_F3)) + 0x3534);
@@ -3570,7 +3435,6 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id) {
     }
     return count;
 }
-#pragma optimize_for_size off
 
 // UI::CPassiveSkill constructor (retail symbol __ct__UI_CPassiveSkill, plain
 // name). extern "C" so the emitted symbol is exactly `__ct__UI_CPassiveSkill`
@@ -3593,14 +3457,10 @@ extern "C" void* __ct__UI_CPassiveSkill(UI::CPassiveSkill* self) {
     return self;
 }
 
-// UI::CPassiveSkill destructor: empty body; MWCC auto-generates the member
-// destruction (CSysWin at +0x1B8, CPassiveSkillLine at +0x28, UnkClass at
-// +0x8, in reverse declaration order) plus the this-null guard and the
-// flags>0 operator-delete tail. The r30/r31 stmw/lmw frame needs
-// optimize_for_size (same as the CPassiveSkillLine dtor).
-#pragma optimize_for_size on
+// UI::CPassiveSkill destructor: empty body; MWCC auto-generates the member destruction
+// (CSysWin at +0x1B8, CPassiveSkillLine at +0x28, UnkClass at +0x8, in reverse
+// declaration order) plus the this-null guard and the flags>0 operator-delete tail.
 UI::CPassiveSkill::~CPassiveSkill() {}
-#pragma optimize_for_size off
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp for their TUs).
@@ -3615,7 +3475,6 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 // through a temp-construct/copy/destroy cycle, then for characters 0x29..0x3D
 // split each grid entry via FetchRelatePair and set the learned bit of the
 // entry's 32 per-slot records in the char-data learn table at +0x3534.
-#pragma optimize_for_size on
 extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
     self->field_18 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050DC20[2525],
@@ -3717,7 +3576,6 @@ extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
         }
     }
 }
-#pragma optimize_for_size off
 
 void CPassiveSkill_update(UI_CPassiveSkill* self) {
     // Visibility-gated update: while the menu is open (both gates set), drive
@@ -3762,7 +3620,6 @@ extern "C" void CPassiveSkill_draw(UI_CPassiveSkill* self, u8* arg2) {
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
-#pragma optimize_for_size on
 // UI::CPassiveSkill teardown (retail CPassiveSkill_teardown): close the shared bdat
 // reader, release the two file handles and the arc resource accessor, tear
 // down the embedded line sub-object and syswin, release the mem-region
@@ -3781,7 +3638,6 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
         CtrlObjectParam_SyncParamFromActorEx(CtrlObjectParam_GetCharEntry(i), 1);
     }
 }
-#pragma optimize_for_size off
 // Return the +0x26 visibility byte once the +0x1B8 system window is ready.
 u8 CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self) {
     if (reinterpret_cast<CSysWin*>(self->field_1B8)->isReady() != 0) {
@@ -3798,13 +3654,10 @@ u8 CPassiveSkill_getActiveIfBusy(UI_CPassiveSkill* self) {
     return 0;
 }
 
-// returns 1 when the byte at +0x110 is >= 8 (retail subfc/subfze carry
-// idiom -- optimize_for_size on forces the -O4,s lowering in this -O4,p unit).
-#pragma optimize_for_size on
+// Flag helper: 1 when the byte at +0x110 is >= 8.
 u32 CPassiveSkill_cellAtLeast8(u8* self) {
     return (u32)self[0x110] >= 8;
 }
-#pragma optimize_for_size off
 
 // Open the skill menu: lazily attach the +0x1B8 CSysWin sub-object pointer at
 // +0x19C, mark visible, then tail-call the +0x28 sub-object's update.
@@ -3860,14 +3713,11 @@ void UI_CPassiveSkill_thunk28_67C44(u8* self) { CPassiveSkillLine_decCharIdx(rei
 void UI_CPassiveSkill_thunk28_68518(u8* self) { CPassiveSkillLine_closeDispatch(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
 // Pick the skill-menu open state (retail CPassiveSkill_pickOpenState): when the +0x1B8
-// system window is armed or the +0x180 byte is set, return the closed marker
-// 0/0x5f; otherwise key the +0x110 skill cell against the learned marker and
-// the party-size flag ((shared byte > 1) via the subfic/srwi carry idiom) to
-// pick one of the eight open-state ids, split by whether the menu-open
-// configuration (0x3372/0x3508/0x20 BDAT values) is satisfied. The two
-// callee-saved registers (r30/r31) need the stmw/lmw frame retail uses, which
-// -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
+// system window is armed or the +0x180 byte is set, return the closed marker 0/0x5f;
+// otherwise key the +0x110 skill cell against the learned marker and the party-size
+// flag ((shared byte > 1) via the subfic/srwi carry idiom) to pick one of the eight
+// open-state ids, split by whether the menu-open configuration (0x3372/0x3508/0x20
+// BDAT values) is satisfied.
 s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
     if (reinterpret_cast<CSysWin*>(&self->field_1B8)->isOpened() != 0) {
         return 0;
@@ -3903,7 +3753,6 @@ s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
         return flag != 0 ? 0x5a : 0x5d;
     }
 }
-#pragma optimize_for_size off
 
 struct PsByte180View { u8 _pad[0x180]; u8 b180; };
 extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 val) { ((PsByte180View*)self)->b180 = val; }
@@ -3919,34 +3768,33 @@ s32 CPassiveSkill_isSyswinOrLearned(UI_CPassiveSkill* self) {
     return (self->field_104[12] == 15) ? 1 : 0;
 }
 
-extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { return reinterpret_cast<CSysWin*>(self->field_1B8)->isOpened(); }
+// This +0x1B8 this-adjusting thunk is a linker symbol in retail (0x8 bytes: load
+// the sub-object and tail-branch), so every call must stay a real `bl`;
+// -ipa file folds the 1-line body into its callers otherwise.
+extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { return reinterpret_cast<CSysWin*>(self->field_1B8)->isOpened(); }  // noinline-ok: order already retail (caller above); header decl attribute dropped; -O4,s unit flag set; -ipa off/on is the only remaining lever and costs CPassiveSkillLine_stepOpenTo5
 
-// noinline: retail keeps the `bl` from CPassiveSkill_update.
-extern "C" __declspec(noinline) void CPassiveSkill_markClosing(UI_CPassiveSkill* self) {
+// Mark the window closing (menu busy) / closed.
+extern "C" void CPassiveSkill_markClosing(UI_CPassiveSkill* self) {
     if ((s32)CPassiveSkillLine_isBusy(reinterpret_cast<UI_CPassiveSkill*>(self->_pad28)) != 0) {
         self->field_25 = 2;
         self->field_27 = 1;
     }
 }
 
-// noinline: retail keeps the `bl` from CPassiveSkill_update.
-extern "C" __declspec(noinline) void CPassiveSkill_markClosed(UI_CPassiveSkill* self) {
+// Mark the window closing (menu busy) / closed.
+extern "C" void CPassiveSkill_markClosed(UI_CPassiveSkill* self) {
     if ((s32)CPassiveSkillLine_isBusy(reinterpret_cast<UI_CPassiveSkill*>(self->_pad28)) != 0) {
         self->field_25 = 0;
         self->field_27 = 1;
     }
 }
 
-// Learn-all-skills init (retail CPassiveSkill_learnAllSkills): when the menu is not yet
-// initialised (field_20 set, field_1C clear), mark the open gates and walk
-// grid slots 0x29..0x3D, splitting each slot into (character, entry) via
-// FetchRelatePair and setting the learned bit of both the character's entry and
-// the entry's character in the char-data learn table at +0x393C. The four
-// callee-saved registers (r28-r31) need the stmw/lmw frame retail uses, which
-// -O4,p only emits under optimize_for_size.
-#pragma optimize_for_size on
-// noinline: retail keeps the `bl` from OnFileEvent's two call sites.
-__declspec(noinline) void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) {
+// Learn-all-skills init (retail CPassiveSkill_learnAllSkills): when the menu is not
+// yet initialised (field_20 set, field_1C clear), mark the open gates and walk grid
+// slots 0x29.0x3D, splitting each slot into (character, entry) via FetchRelatePair and
+// setting the learned bit of both the character's entry and the entry's character in
+// the char-data learn table at +0x393C.
+void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) {
     if (self->field_20 == 0 || self->field_1C != 0) {
         return;
     }
@@ -3976,15 +3824,12 @@ __declspec(noinline) void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) 
             }
     }
 }
-#pragma optimize_for_size off
 
 void CPassiveSkill::OnFileEvent() {}
 
-// Cursor layout init: create the layout from the shared arc resource accessor,
-// bind the two animation transforms, then start with the second transform
-// disabled and the first enabled before animating once. The r30/r31 stmw/lmw
-// frame retail uses needs optimize_for_size.
-#pragma optimize_for_size on
+// Cursor layout init: create the layout from the shared arc resource accessor, bind
+// the two animation transforms, then start with the second transform disabled and the
+// first enabled before animating once.
 void CPassiveSkillCur_initLayout(UI::CPassiveSkillCur* self) {
     buildLayout(&self->mpLayout, self->mArcResAcc, lbl_eu_8050DC20);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x18]);
@@ -3993,11 +3838,9 @@ void CPassiveSkillCur_initLayout(UI::CPassiveSkillCur* self) {
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, 1);
     self->mpLayout->Animate(0);
 }
-#pragma optimize_for_size off
-// Cursor animation step: skip when no layout; dispatch on mActive as a real
-// switch (retail lowers the two-case byte test to a cmpi/beq compare chain;
-// sequential ifs produce inverted bne-over bodies).
-// noinline: retail keeps the `bl` from CPassiveSkillLine_update's common tail.
+// Cursor animation step: skip when no layout; dispatch on mActive as a real switch
+// (retail lowers the two-case byte test to a cmpi/beq compare chain; sequential ifs
+// produce inverted bne-over bodies).
 void CPassiveSkillCur_stepAnim(UI::CPassiveSkillCur* self) {
     if (self->mpLayout == 0) {
         return;
@@ -4012,27 +3855,19 @@ void CPassiveSkillCur_stepAnim(UI::CPassiveSkillCur* self) {
     }
     self->mpLayout->Animate(0);
 }
-// Release the cursor's primary layout: drop it through the layout vtable's
-// delete slot (index 0 at vtable+0x8 with flag 1) and null the pointer.
-// noinline: CPassiveSkillLine_teardown keeps the retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillCur_releaseLayout(UI::CPassiveSkillCur* self) {
+// Release the cursor's primary layout: drop it through the layout vtable's delete slot
+// (index 0 at vtable+0x8 with flag 1) and null the pointer.
+extern "C" void CPassiveSkillCur_releaseLayout(UI::CPassiveSkillCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
         self->mpLayout = 0;
     }
 }
 
-// Pane/region helper (retail CPassiveSkillRegion_syncSlotPanes): for each of the two pane-name
-// pointers (lbl_eu_80668908 / lbl_eu_8066890C), look the pane up in the region
-// layout's root pane and show it only when arg matches the slot index. C
-// linkage so call relocs are the plain retail name; noinline keeps the retail
-// `bl` from CPassiveSkillLine_enterState3 / CPassiveSkillLine_enterStateD / CPassiveSkillLine_enterStateA.
-// NB: no optimize_for_size here - retail's stmw r28 frame comes from
-// -use_lmw_stmw on plain -O4,p, whose scheduler keeps the two SDA pointer
-// loads after the register setup (the size pragma hoists them above it).
-// NB: optimize_for_size required for the stmw/lmw r28-r31 frame.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void CPassiveSkillRegion_syncSlotPanes(UI::UI_PassiveSkillRegion3C* self, u8 arg) {
+// Pane/region helper (retail CPassiveSkillRegion_syncSlotPanes): for each of the two
+// pane-name pointers (lbl_eu_80668908 / lbl_eu_8066890C), look the pane up in the
+// region layout's root pane and show it only when arg matches the slot index.
+extern "C" void CPassiveSkillRegion_syncSlotPanes(UI::UI_PassiveSkillRegion3C* self, u8 arg) {
     const char* names[2];
     names[0] = lbl_eu_80668908;
     names[1] = lbl_eu_8066890C;
@@ -4042,12 +3877,10 @@ extern "C" __declspec(noinline) void CPassiveSkillRegion_syncSlotPanes(UI::UI_Pa
         setPaneVisible(pane, i == arg);
     }
 }
-#pragma optimize_for_size off
-// Cursor step helper (retail CPassiveSkillCur_finishOpenAnim):
-// frame check succeeds, deactivate/hide the cursor, swap the enabled transform
-// back to mpAnimTrans0 and rewind its frame. extern C so CPassiveSkillCur_stepAnim's call
-// reloc is the plain retail name; noinline keeps the retail `bl`.
-extern "C" __declspec(noinline) void CPassiveSkillCur_finishOpenAnim(UI::CPassiveSkillCur* self) {
+// Cursor step helper (retail CPassiveSkillCur_finishOpenAnim): frame check succeeds,
+// deactivate/hide the cursor, swap the enabled transform back to mpAnimTrans0 and
+// rewind its frame.
+extern "C" void CPassiveSkillCur_finishOpenAnim(UI::CPassiveSkillCur* self) {
     if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
         self->mActive = 0;
         self->mVisible = 1;
@@ -4056,10 +3889,9 @@ extern "C" __declspec(noinline) void CPassiveSkillCur_finishOpenAnim(UI::CPassiv
         self->mpAnimTrans0->SetFrame(lbl_eu_80668904);
     }
 }
-// Init a 0x1C-byte structure: caller pointer at +0x0, zeroed words, byte flags
-// with the active flag (+0x19) starting at 1. noinline: the skill-info ctor
-// keeps the retail `bl` (MWCC would otherwise inline this body).
-__declspec(noinline) void CPassiveSkillInit_init(UI_PassiveSkillInit* self, u32 arg) {
+// Init a 0x1C-byte structure: caller pointer at +0x0, zeroed words, byte flags with
+// the active flag (+0x19) starting at 1.
+void CPassiveSkillInit_init(UI_PassiveSkillInit* self, u32 arg) {
     self->field_0 = arg;
     self->field_4 = 0;
     self->field_8 = 0;
@@ -4071,14 +3903,11 @@ __declspec(noinline) void CPassiveSkillInit_init(UI_PassiveSkillInit* self, u32 
     self->field_1A = 0;
     self->field_1B = 0;
 }
-// Cursor layout init (retail CPassiveSkillLayoutInit_init): create the main layout from the
-// accessor, bind the two animation transforms (second disabled, first
-// enabled), animate once, then find the three panes (hiding the first) and
-// store the other two finders at +0x10/+0x14. The r30/r31 stmw/lmw frame
-// retail uses needs optimize_for_size. noinline: retail keeps the `bl
-// CPassiveSkillLayoutInit_init` call from CPassiveSkillInfo_init.
-#pragma optimize_for_size on
-__declspec(noinline) void CPassiveSkillLayoutInit_init(UI_PassiveSkillLayoutInit* self) {
+// Cursor layout init (retail CPassiveSkillLayoutInit_init): create the main layout
+// from the accessor, bind the two animation transforms (second disabled, first
+// enabled), animate once, then find the three panes (hiding the first) and store the
+// other two finders at +0x10/+0x14.
+void CPassiveSkillLayoutInit_init(UI_PassiveSkillLayoutInit* self) {
     buildLayout(&self->mpLayout, self->mArcResAcc, &lbl_eu_8050DC20[0x50]);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x68]);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x85]);
@@ -4095,11 +3924,9 @@ __declspec(noinline) void CPassiveSkillLayoutInit_init(UI_PassiveSkillLayoutInit
     setPaneVisible(self->field_10, 0);
     setPaneVisible(self->field_14, 0);
 }
-#pragma optimize_for_size off
 // Release the layout pointer at +0x4 of the second-layout holder (aliases
-// CPassiveSkillCur.field_24 when called on the +0x20 region). noinline: retail
-// keeps the `bl` from CPassiveSkillCur_releaseBoth.
-extern "C" __declspec(noinline) void CPassiveSkillLayoutRef_release(UI_PassiveSkillLayoutRef* self) {
+// CPassiveSkillCur.field_24 when called on the +0x20 region).
+extern "C" void CPassiveSkillLayoutRef_release(UI_PassiveSkillLayoutRef* self) {
     if (self->field_4 != 0) {
         delete self->field_4;
         self->field_4 = 0;
@@ -4128,7 +3955,6 @@ class CEventFile;
 //   +0x28 sub-object, run its three fixups, then learn-all init.
 // - field_1C (archive read): close the bdat reader and refresh the six
 //   per-category BDAT table pointers, then learn-all init.
-#pragma optimize_for_size on
 extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* self,
                                                           CEventFile* ev) {
     u32 handle = (u32)*(void**)((u8*)ev + 4);
@@ -4242,4 +4068,3 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         return 1;
     }
 }
-#pragma optimize_for_size off

@@ -882,10 +882,8 @@ void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 // tag index, and init/copy a 1-tag-param block (numeric value when a second
 // token exists, else the fixed f32 fallback). Returns the r4 arg.
 void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst);
-// Text-position measurement for the tag-writer position clamp
-// (TagProcCalcPageLayout): out = (x, y) computed from the message context + string.
-// noinline: the retail kept this as a real call (0x384-byte body); the local
-// stub body must not be folded into TagProcCalcPageLayout's call site.
+// Text-position measurement for the tag-writer position clamp (TagProcCalcPageLayout):
+// out = (x, y) computed from the message context + string.
 void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf);
 // Tag-writer position clamp: copy the message into a local buffer, measure
 // it, clamp/snap the y position to the fixed step table, and write the
@@ -899,7 +897,7 @@ void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* ds
 void TagWriterSetCursorPos(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y);
 // Tag-writer helper: max line width + font height of a string (uses the
 // TextBox's font height getter and char-width getter).
-void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
+void TagMeasureTextWidth(f32* out, void* unused,
                                         nw4r::lyt::TextBox* textbox,
                    const wchar_t* str);
 // Color-tag writer: match tokens against the copied name table and pack the
@@ -931,10 +929,8 @@ u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str);
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
 u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f32 b,
                    u32 c);
-// Talk-open text setup (TagProcStartMessage's callee): build the display string
-// from the message buffer (or the caller's string) and lay out the pane.
-// Tag-writer scratch-writer copy (retail 0x104-byte call; noinline keeps
-// -ipa from folding it into the call sites).
+// Talk-open text setup (TagProcStartMessage's callee): build the display string from
+// the message buffer (or the caller's string) and lay out the pane.
 void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src);
 // Color-name tag writer: map the uppercased string to a packed RGB value.
 u16* TagParseColor(void* unused, u16* out, wchar_t* str);

@@ -1,0 +1,1283 @@
+// kyoshin/code_8028130C - the scenario-log polling helpers.
+//
+// MWCC emits a TU's generated code - the static initialiser and the MI
+// adjusting thunks - at the END of its .text, so retail's CSysWinScenarioLog
+// .text stops right after [@108@OnFileEvent / @108@__dt__ / @112@cbRenderBefore
+// / @112@__dt__] at 0x8028130C. The 28 SysWinLog_* polling/scan helpers that
+// follow (0x8028130C..0x8028378C) are this TU; they own the unit's .rodata
+// string pool, the .sdata2 pool and the .sbss state words.
+
+// Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
+
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
+#include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp"
+#include <types.h>
+
+#include "kyoshin/CSysWinScenarioLog.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+
+#include <revolution/gx/GXPixel.h>
+#include <nw4r/lyt/lyt_layout.h>
+#include <nw4r/lyt/lyt_arcResourceAccessor.h>
+#include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/code_80135FDC_Lyt.hpp"
+
+
+// True when the pause flag is clear (game not frozen by a subwindow).
+static inline bool isSceneActive() {
+    return lbl_eu_80664772 == 0;
+}
+
+// Bump the scenario counter `id` by one (clamped to 0xFFFF) while the scene is
+// active; returns the (possibly bumped) value for later gate checks. Early
+// return on the paused path makes MWCC materialize the result copy before the
+// compare, giving retail's `lhz / mr / cmpi / beq / b` ladder.
+static inline u32 scenarioBump(u32 id) {
+    u32 n = getEventValue40__Q22cf13CfGameManagerFv(id);
+    if (lbl_eu_80664772 != 0) {
+        return n;
+    }
+    n = n + 1;
+    if (n >= 0xFFFF) {
+        n = 0xFFFF;
+    }
+    setEventManagerValue__Q22cf13CfGameManagerFv(id, n);
+    return n;
+}
+
+static inline void scenarioClose(u32 id) {
+    bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+    if (!booting && isSceneActive()) {
+        queueEventId__Q22cf13CfGameManagerFv(id);
+    }
+}
+
+// Bump the scenario counter `id` by one while the scene is active, then close
+// the sequence once the counter passes 100 (0x64). Used by SysWinLog_AdvanceOwnerLadder's
+// 1..7 ladder (ids 0x3F..0x45).
+static inline void scenarioLadder(u32 id) {
+    u32 w = scenarioBump(id);
+    if (w >= 0x64) {
+        scenarioClose(id);
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_PollBattleStart (us-8028153c)
+// When the battle list holds members and the scene is ready, force the
+// scenario-sequence close for a fixed id, then mark the window as shown.
+// ---------------------------------------------------------------------------
+struct CBattleListNode {
+    struct CBattleListNode* next;   // 0x0
+};
+
+
+struct CBattleListOwner {
+    u8 _0[0x28];
+    CBattleListNode* list;          // 0x28
+};
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_TickCounter0B (us-80282c88)
+// Object that owns a state-flags dword at +0x3F00.
+// ---------------------------------------------------------------------------
+struct CScenarioFlagObj {
+    u8 _0[0x3F00];
+    u32 field_0x3F00;   // flags
+};
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_ResetState (us-80281524)
+// Clears the "scenario log open / state" globals to their closed values.
+// ---------------------------------------------------------------------------
+void SysWinLog_ResetState() {
+    lbl_eu_80664910 = 0;
+    lbl_eu_80664911 = 0;
+    lbl_eu_80664912 = 0;
+    lbl_eu_80664914 = 0;
+}
+
+
+void SysWinLog_PollBattleStart() {
+    CBattleListNode* p;
+    s32 count;
+    CBattleListNode* head =
+        ((CBattleListOwner*)getInstance__Q22cf14CBattleManagerFv())->list;
+    count = 0;
+    p = head->next;
+    while (p != head) {
+        p = p->next;
+        ++count;
+    }
+    if (count > 0) {
+        if (lbl_eu_80664912 != 0) {
+            bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+            if (!booting && isSceneActive()) {
+                queueEventId__Q22cf13CfGameManagerFv(0x3A);
+            }
+        }
+        lbl_eu_80664910 = 1;
+    }
+}
+
+
+// Bump sequence counter 0xB once (while not paused), then close it once the
+// counter passes 100. Written as a two-arm if/else so MWCC emits retail's
+// `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
+void SysWinLog_TickCounter0B(CScenarioFlagObj* self) {
+    if ((self->field_0x3F00 & 0x2) != 0) {
+        u32 n;
+        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0xB);
+        u16 pauseFlag = lbl_eu_80664772;
+        if (pauseFlag != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
+            n = cur;
+        } else {
+            n = cur + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            setEventManagerValue__Q22cf13CfGameManagerFv(0xB, n);
+        }
+        if (n >= 0x64) {
+            bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+            if (!booting && lbl_eu_80664772 == 0) {
+                queueEventId__Q22cf13CfGameManagerFv(0xB);
+            }
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// Remaining unmatched func_8027* stubs in this unit (non-target).
+// ---------------------------------------------------------------------------
+// (the +0x6C/+0x70 offset thunks are compiler-emitted for the IWorkEvent and
+// IScnRender sub-vtables)
+
+void SysWinLog_PollBattleEnd() {
+    if (lbl_eu_80664910 != 0) {
+        // Walk the battle-manager ring until we're back at the sentinel and
+        // count how many active battle entries there are. (Declaration order
+        // mirrors the matched SysWinLog_PollBattleStart loop so MWCC colors the node r3 /
+        // sentinel r5 like retail.)
+        CSysWinListNode* node;
+        s32 count;
+        CSysWinListNode* sentinel =
+            ((CSysWinBattleMgrView*)getInstance__Q22cf14CBattleManagerFv())->mListSentinel;
+        count = 0;
+        node = sentinel->next;
+        while (node != sentinel) {
+            node = node->next;
+            ++count;
+        }
+        if (count <= 0) {
+            if (lbl_eu_80664911 == 0) {
+                bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+                if (!booting && isSceneActive()) {
+                    queueEventId__Q22cf13CfGameManagerFv(0xC);
+                }
+            }
+            // Player voice/action range check: both sides call the same virtual.
+            bool inRange;
+            cf::CfObject* obj = (cf::CfObject*)MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0));
+            if (obj != 0) {
+                inRange = false;
+                if (lbl_eu_80668AE0 < obj->CfObject_getHeightDiff() &&
+                    obj->CfObject_getHeightDiff() < lbl_eu_80668AE4) {
+                    inRange = true;
+                }
+            } else {
+                inRange = false;
+            }
+            if (inRange) {
+                bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+                if (!booting && isSceneActive()) {
+                    queueEventId__Q22cf13CfGameManagerFv(0x3B);
+                }
+            }
+        }
+    }
+    lbl_eu_80664910 = 0;
+    lbl_eu_80664912 = 0;
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_CheckOpenGate (us-802815cc)
+// Scenario-log open gate: every actor in the manager list must report its
+// device usable (vtable 0x2bc) and pass the arts-state gate
+// (testActorStatus with the +0x4 sub-object's slot-0x30 state, mode 0x1d);
+// when all pass, bump/close the 0x3c counter (100-threshold close) and the
+// 0x57 counter (50-threshold close).
+// ---------------------------------------------------------------------------
+void SysWinLog_CheckOpenGate() {
+    int result;
+    u32 n;
+    CSysWinActorList* list = getListB28();
+    // Declaration order drives MWCC callee-saved coloring (retail colors the
+    // walk pointer r29 and the adjusted device base r30).
+    u8* base;
+    CSysWinActorListNode* node = list->sentinel->next;
+    while (node != list->sentinel) {
+        // First usable-gate call takes the base pointer as a pure argument
+        // expression (retail keeps it in the caller-temp r3, not a
+        // callee-saved); only the arts-state half below materializes it.
+        if (((CSysWinDevView*)(node->object != 0 ? node->object - 0x3E9C
+                                                 : node->object))
+                ->mAt2BC() == 0) {
+            result = 0;
+            goto done;
+        }
+        base = node->object;
+        if (base != 0) {
+            base -= 0x3E9C;
+        }
+        u32 x = ((CSysWinSubObjView*)((CSysWinOwnerSubView*)base)->field_0x4)
+                    ->mAt30()->field_0;
+        if (testActorStatus(base, &x, 0x1d) != 0) {
+            result = 0;
+            goto done;
+        }
+        node = node->next;
+    }
+    // All actors passed the gates: result = 1 on the loop fall-through only
+    // (the failure paths jump past this, matching retail's volatile r0).
+    result = 1;
+done:
+    if (result != 0) {
+        // Inline bump (scenarioBump shape hoists the keep-copy wrong here):
+        // the two-arm if/else makes MWCC hoist the phi copy above the branch,
+        // matching retail's lhz/mr/cmpi schedule.
+        // Two-arm keep-first bump (best known shape; MWCC sinks the phi
+        // copy after the branch - same residual 3 as siblings 80280804/
+        // 802809C8/80280BF0, scheduling-swap class per MWCC_CASES).
+        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x3c);
+        if (lbl_eu_80664772 != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
+            n = cur;
+        } else {
+            n = cur + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            setEventManagerValue__Q22cf13CfGameManagerFv(0x3c, n);
+        }
+        if (n >= 1) {
+            scenarioClose(0x3c);
+        }
+        if (n >= 0x32) {
+            scenarioClose(0x57);
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_AdvanceOwnerLadder (us-80281760)
+// Advance scenario-log counters based on the owner's sub-state. Guards against
+// two condition shapes (base==1 with sub value 7, base==5 with sub value in
+// [7,14]) that force an early return, bumps/closes the 0x3d/0x3e counters,
+// then, when the embedded player matches, runs a 1..7 ladder (0x3F..0x45) and
+// marks the shown flag.
+// ---------------------------------------------------------------------------
+void SysWinLog_AdvanceOwnerLadder(CScenarioLogOwner* self) {
+    if ((self->field_0x3F00 & 0x2) == 0) {
+        return;
+    }
+    // Guard 1: base==1 with the sub-state value exactly 7 forces an early
+    // return. The test is computed into a result (retail's cntlzw boolean),
+    // with the else-branches written first so MWCC keeps retail's layout.
+    {
+        u16 h = self->field_0x3F28;
+        int base = (h == 0x8) ? 3 : h;
+        int result;
+        if (base != 1) {
+            result = 0;
+        } else {
+            CScenarioLogSub* p = (CScenarioLogSub*)self->field_0x3F60;
+            if (p == 0) {
+                result = 0;
+            } else {
+                result = (p->field_0x8->field_0x18 == 7);
+            }
+        }
+        if (result != 0) {
+            return;
+        }
+    }
+    // Guard 2: base==5 with the sub-state value in [7,14] forces an early
+    // return.
+    {
+        u16 h = self->field_0x3F28;
+        int base = (h == 0x8) ? 3 : h;
+        int result;
+        if (base != 5) {
+            result = 0;
+        } else {
+            CScenarioLogSub* p = (CScenarioLogSub*)self->field_0x3F60;
+            if (p == 0) {
+                result = 0;
+            } else {
+                // Switch lowering keeps both compares intact (retail emits
+                // cmpi 7 / blt + cmpi 0xe / ble without range fusion).
+                s32 val = (s32)p->field_0x8->field_0x18;
+                switch (val) {
+                case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 14:
+                    result = 1;
+                    break;
+                default:
+                    result = 0;
+                    break;
+                }
+            }
+        }
+        if (result != 0) {
+            return;
+        }
+    }
+    // Bump 0x3d then close the 0x3d / 0x3e gates past their thresholds.
+    u32 v = scenarioBump(0x3d);
+    if (v >= 0x3E8) {
+        scenarioClose(0x3d);
+    }
+    if (v >= 0x2710) {
+        scenarioClose(0x3e);
+    }
+    // Player check: continue with the ladder only for the first player slot or
+    // when force-flagged.
+    const u8* p0 = (const u8*)self;
+    if (self != 0) {
+        p0 = (const u8*)self + 0x3E9C;
+    }
+    if (p0 == (const u8*)cf::CfGameManager::getPlayer(0) ||
+        (self->field_0x3E6C & 0x1000)) {
+        u16 h3 = self->field_0x3F28;
+        int base3 = (h3 == 0x8) ? 3 : h3;
+        if (base3 == 1) {
+            if (scenarioBump(0x3F) >= 0x64) {
+                scenarioClose(0x3F);
+            }
+        }
+        if (base3 == 2) {
+            if (scenarioBump(0x40) >= 0x64) {
+                scenarioClose(0x40);
+            }
+        }
+        if (base3 == 3) {
+            if (scenarioBump(0x41) >= 0x64) {
+                scenarioClose(0x41);
+            }
+        }
+        if (base3 == 4) {
+            if (scenarioBump(0x42) >= 0x64) {
+                scenarioClose(0x42);
+            }
+        }
+        if (base3 == 5) {
+            if (scenarioBump(0x43) >= 0x64) {
+                scenarioClose(0x43);
+            }
+        }
+        if (base3 == 6) {
+            if (scenarioBump(0x44) >= 0x64) {
+                scenarioClose(0x44);
+            }
+        }
+        if (base3 == 7) {
+            if (scenarioBump(0x45) >= 0x64) {
+                scenarioClose(0x45);
+            }
+        }
+        lbl_eu_80664911 = 1;
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_PollSequenceProgress (us-80281ccc)
+// Scenario-log sequence progress. Guarded by the owner flag word bit 1. Emits
+// one-shot sequence-close calls at several time/event gates, bumps and closes
+// the 0x26/0x38 counters, then marks the global flags and increments the
+// open-window counter.
+// ---------------------------------------------------------------------------
+void SysWinLog_PollSequenceProgress(CScenarioLogOwner* arg0, s32 arg1, CScenarioLogArg2* arg2) {
+    if (arg0->field_0x3F00 & 0x2) {
+        if (arg1 >= 0xBB8) {
+            scenarioClose(0x1);
+        }
+        if (arg1 >= 0x61A8) {
+            scenarioClose(0x2);
+        }
+        if (arg1 >= 0x10000 - 0x3CB0) {
+            scenarioClose(0x3);
+        }
+        if (arg1 == 0x29A) {
+            scenarioClose(0x5F);
+        }
+        if (arg1 == 0x309) {
+            scenarioClose(0x60);
+        }
+        if (arg2->field_0x74 & 0x100) {
+            u32 v26 = scenarioBump(0x26);
+            if (v26 >= 0x32) {
+                scenarioClose(0x26);
+            }
+            if (v26 >= 0x5DC) {
+                scenarioClose(0x27);
+            }
+            if (v26 >= 0x1388) {
+                scenarioClose(0x28);
+            }
+        }
+
+        // Player check: enter the 0x38 ladder when the embedded player matches
+        // the first player slot, or the forced-player flag is set.
+        const u8* p0 = (const u8*)arg0;
+        if (arg0 != 0) {
+            p0 = (const u8*)arg0 + 0x3E9C;
+        }
+        if (p0 == (const u8*)cf::CfGameManager::getPlayer(0) ||
+            (arg0->field_0x3E6C & 0x1000)) {
+            if (arg2->field_0x78 & 0x2) {
+                u32 v38 = scenarioBump(0x38);
+                if (v38 >= 1) {
+                    scenarioClose(0x38);
+                }
+                if (v38 >= 0x32) {
+                    scenarioClose(0x39);
+                }
+                if ((s32)lbl_eu_80664914 <= 0) {
+                    lbl_eu_80664912 = 1;
+                }
+            }
+        }
+
+        // Second player check: advance arg0 to the embedded player marker in
+        // place (retail's addi writes r29), then gate the shown flag.
+        if (arg0 != 0) {
+            arg0 = (CScenarioLogOwner*)((u8*)arg0 + 0x3E9C);
+        }
+        if ((const u8*)arg0 == (const u8*)cf::CfGameManager::getPlayer(0)) {
+            if (arg1 > 0) {
+                lbl_eu_80664911 = 1;
+            }
+        }
+        lbl_eu_80664914 += 1;
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_DrivePair (us-80282088)
+// When both the owner (bit 2) and the peer window (bit 1) gates are set,
+// resolve both device objects via their vtable-0x28c virtual and drive the
+// scenario-log counters for the pair.
+// ---------------------------------------------------------------------------
+// SysWinLog_DriveCounters has an unmangled retail name, so it is defined with C linkage
+// (same convention as the SysWinLog_BumpEventValue/SysWinLog_QueueEvent helpers) to keep the
+// call-site relocs named SysWinLog_DriveCounters.
+extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1);
+
+
+void SysWinLog_DrivePair(CScenarioLogOwner* self, CScenarioLogOwner* other) {
+    if ((self->field_0x3F00 & 4) != 0 && (other->field_0x3F00 & 2) != 0) {
+        CSysWinDevice* devOther = csysWinCall28C(other);
+        SysWinLog_DriveCounters(csysWinCall28C(self), devOther);
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_DriveCounters (us-80282104)
+// Drive the scenario-log counters for a given device/window pair: bump 0x4
+// with its 50/200/1000/5000 gate ladder, then, unless the game mode is 0x16,
+// run state-dependent ladders: window state 1/2 bumps 0xd (and sets a guard
+// that suppresses the remaining flag-driven ladders), the clear-flag case
+// bumps 0x10, the 0x100-flag case bumps 0x13, fixed window states 6/7/9 bump
+// 0x16/0x18/0x1a, and the 0x8000-flag case bumps 0x1c. Finally, when arg1's
+// embedded player matches the first slot, compare progress values (vtable
+// 0x224) and close 0x5d/0x5e once arg1 trails arg0 by 5 / 10.
+// ---------------------------------------------------------------------------
+extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1) {
+    u32 dev = csysWinCallE0(arg0);
+    u32 guard = 0;
+
+    u32 v4 = scenarioBump(0x4);
+    if (v4 >= 0x32) {
+        scenarioClose(0x4);
+    }
+    if (v4 >= 0xC8) {
+        scenarioClose(0x5);
+    }
+    if (v4 >= 0x3E8) {
+        scenarioClose(0x6);
+    }
+    if (v4 >= 0x1388) {
+        scenarioClose(0x7);
+    }
+
+    if (lbl_eu_80663E42 != 0x16) {
+        if ((u32)(dev - 1) <= 1) {
+            u32 vd = scenarioBump(0xD);
+            if (vd >= 0x1E) {
+                scenarioClose(0xD);
+            }
+            if (vd >= 0x64) {
+                scenarioClose(0xE);
+            }
+            if (vd >= 0xFA) {
+                scenarioClose(0xF);
+            }
+            guard = 1;
+        }
+        if (guard == 0) {
+            // Bool-materialized gate (retail emits li r3,0 / two bit tests /
+            // li r3,1 / cmpi): enter the ladder only when neither flag is set.
+            u32 flags = arg0->field_0x3374;
+            int ok = 0;
+            if ((flags & 0x100) == 0) {
+                if ((flags & 0x10000) == 0) {
+                    ok = 1;
+                }
+            }
+            if (ok != 0) {
+                u32 v10 = scenarioBump(0x10);
+                if (v10 >= 0x1E) {
+                    scenarioClose(0x10);
+                }
+                if (v10 >= 0x64) {
+                    scenarioClose(0x11);
+                }
+                if (v10 >= 0xFA) {
+                    scenarioClose(0x12);
+                }
+            }
+        }
+        if (guard == 0) {
+            if (arg0->field_0x3374 & 0x100) {
+                u32 v13 = scenarioBump(0x13);
+                if (v13 >= 0x1E) {
+                    scenarioClose(0x13);
+                }
+                if (v13 >= 0x64) {
+                    scenarioClose(0x14);
+                }
+                if (v13 >= 0xFA) {
+                    scenarioClose(0x15);
+                }
+            }
+        }
+        if ((s32)dev == 6) {
+            u32 v16 = scenarioBump(0x16);
+            if (v16 >= 0x1E) {
+                scenarioClose(0x16);
+            }
+            if (v16 >= 0x64) {
+                scenarioClose(0x17);
+            }
+        }
+        if ((s32)dev == 7) {
+            u32 v18 = scenarioBump(0x18);
+            if (v18 >= 0x1E) {
+                scenarioClose(0x18);
+            }
+            if (v18 >= 0x64) {
+                scenarioClose(0x19);
+            }
+        }
+        if ((s32)dev == 9) {
+            u32 v1a = scenarioBump(0x1A);
+            if (v1a >= 0x1E) {
+                scenarioClose(0x1A);
+            }
+            if (v1a >= 0x64) {
+                scenarioClose(0x1B);
+            }
+        }
+        if (guard == 0) {
+            if (arg0->field_0x3374 & 0x10000) {
+                u32 v1c = scenarioBump(0x1C);
+                if (v1c >= 0x1E) {
+                    scenarioClose(0x1C);
+                }
+            }
+        }
+    }
+
+    if (arg1 != 0) {
+        CScenarioLogOwner* p = csysWinCall9C(arg1);
+        const u8* pp = (const u8*)p;
+        if (p != 0) {
+            pp += 0x3E9C;
+        }
+        if (pp == (const u8*)cf::CfGameManager::getPlayer(0)) {
+            u32 a0 = csysWinCall224(arg0)->field_0;
+            u32 b0 = csysWinCall224(arg1)->field_0;
+            if (b0 + 5 <= a0) {
+                scenarioClose(0x5D);
+            }
+            a0 = csysWinCall224(arg0)->field_0;
+            b0 = csysWinCall224(arg1)->field_0;
+            if (b0 + 10 <= a0) {
+                scenarioClose(0x5E);
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// SysWinLog_LatchOneShot (us-8028297c)
+// Device-side one-shot latch: when the device's owner has scenario flag bit 2
+// live, store the device's usable result (vtable 0x2bc) into the one-shot
+// byte lbl_eu_80664918.
+// ---------------------------------------------------------------------------
+void SysWinLog_LatchOneShot(CSysWinDevice* self) {
+    int flag = 0;
+    if (((CSysWinDevView*)self)->mAt9C() != 0 &&
+        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
+        flag = 1;
+    }
+    if (flag != 0) {
+        lbl_eu_80664918 = (u8)((CSysWinDevView*)self)->mAt2BC();
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_GateDevice (us-80282a0c)
+// Device-side scenario-log gate: when the device's owner is set and its flag
+// word bit 1 is live, and the one-shot byte is still clear, ask the device
+// (vtable 0x2bc) whether it is usable; if so, drive the pair's counters via
+// SysWinLog_DriveCounters and latch the one-shot byte.
+// ---------------------------------------------------------------------------
+void SysWinLog_GateDevice(CSysWinDevice* self) {
+    bool flag = false;
+    if (((CSysWinDevView*)self)->mAt9C() != 0 &&
+        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 0x4)) {
+        flag = true;
+    }
+    // Branch-over-branch (MWCC_CASES uusb_ppc pattern): exit label BEFORE
+    // body label plus explicit returns keeps retail's `bne walk; b done`.
+    if (flag == false) {
+        goto gate_done;
+    }
+    if (lbl_eu_80664918 != 0) {
+        goto gate_done;
+    }
+    if (((CSysWinDevView*)self)->mAt2BC() != 0) {
+        goto walk;
+    }
+    goto gate_done;
+gate_done:
+    return;
+walk:
+    SysWinLog_DriveCounters(self, 0);
+    lbl_eu_80664918 = 1;
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_ScanDeviceOwners (us-80282ac4)
+// Device-side scenario-log gate (variant of SysWinLog_GateDevice): when the device's
+// owner is set with flag bit 2 live and the one-shot byte is clear, ask the
+// device (vtable 0x2bc) whether it is usable; if so, scan the actor list for
+// the first owner that passes a state gate (sub-state 1: flag bits 14/15;
+// sub-state 4: the character category is 1) and drive the pair's counters
+// with that owner, then latch the one-shot byte.
+// NOTE: all three guards are one || chain so MWCC keeps retail's layout:
+// the flag recheck survives mid-chain, and the final usable test renders as
+// the branch-over-branch (bne body; b epilogue).
+// RESIDUAL (10 pure reg-swaps, Chaitin ceiling): retail colors the walk as
+// node=r29 / owner+found=r30; every source lever tried (declaration order,
+// block scoping, early dead inits, inline helpers, for/while forms) leaves
+// node=r30 / owner=r29. Same class as menu-bps-move party-fill permutation.
+// ---------------------------------------------------------------------------
+
+void SysWinLog_ScanDeviceOwners(CSysWinDevice* self) {
+    int flag = 0;
+    if (((CSysWinDevView*)self)->mAt9C() != 0 &&
+        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
+        flag = 1;
+    }
+    // One || chain for all three guards: the flag recheck stays (mid-chain
+    // disjuncts can't be folded past the lbl byte read) and the final test
+    // renders as retail's branch-over-branch (bne body; b epilogue).
+    if (flag == 0 || lbl_eu_80664918 != 0 ||
+        ((CSysWinDevView*)self)->mAt2BC() == 0) {
+        return;
+    }
+    CSysWinActorList* list = getListB28();
+    CSysWinActorListNode* node = list->sentinel->next;
+    CScenarioLogOwner* found;
+    while (node != list->sentinel) {
+        CScenarioLogOwner* owner =
+            (CScenarioLogOwner*)(node->object != 0 ? node->object - 0x3E9C
+                                                   : node->object);
+        int result;
+        u16 h = owner->field_0x3F28;
+        if (h == 1) {
+            u32 flags = owner->field_0x3374;
+            result = 1;
+            if ((flags & 0x4000) == 0) {
+                if ((flags & 0x8000) == 0) {
+                    result = 0;
+                }
+            }
+        } else if (h == 4) {
+            result = (CtrlObjectParam_GetCurrentRowKey(CtrlObjectParam_GetCharEntry(4)) == 1);
+        } else {
+            result = 0;
+        }
+        if (result != 0) {
+            found = owner;
+            goto emit;
+        }
+        node = node->next;
+    }
+    // Loop fell through with no matching owner: pass null. (The
+    // found-owner path jumps past this default, matching retail.)
+    found = 0;
+emit:
+    SysWinLog_DriveCounters(self, found);
+    lbl_eu_80664918 = 1;
+}
+
+// ---------------------------------------------------------------------------
+// SysWinLog_GateOwner (us-80282c24)
+// When the owner's scenario gate (flag bit 2) is set and the owner is a
+// member of the battle manager's list, resolve the owner's device object via
+// its vtable and drive the scenario-log counters for that device.
+// ---------------------------------------------------------------------------
+void SysWinLog_GateOwner(CScenarioLogOwner* self) {
+    if ((self->field_0x3F00 & 4) != 0) {
+        if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), self) != 0) {
+            SysWinLog_DriveCounters(csysWinCall28C(self), 0);
+        }
+    }
+}
+
+void SysWinLog_TickCounter2C(s32 self) {
+    if (self < 4) {
+        return;
+    }
+    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x2C);
+    // Two-arm phi merge reproduces retail's `beq bump; b after` pair.
+    // RESIDUAL (3 structural): MWCC sinks the keep-path copy (`mr r31,r3`)
+    // after the cmpi/beq; retail hoists it between the lhz and cmpi.
+    // Ruled out: goto dispatch (direct + negated), empty-then/else,
+    // do-while break, switch equality chain, ternary+comma merge (adds a
+    // temp), pre-assigned keep value (+duplicated arm), flag-read-first
+    // order (hoists lhz above the bl into r31), arms swapped. Same
+    // scheduling-swap class as rfc_FlowReq (MWCC_CASES ~line 703).
+    {
+        u16 pauseFlag = lbl_eu_80664772;
+        u32 n;
+        if (pauseFlag != 0) {
+            // Scene frozen by a subwindow: keep the un-bumped value.
+            n = seq;
+        } else {
+            n = seq + 1;
+            if (n >= 0xFFFF) {
+                n = 0xFFFF;
+            }
+            setEventManagerValue__Q22cf13CfGameManagerFv(0x2C, n);
+        }
+        seq = n;
+    }
+after:
+    if (seq >= 0x1) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x2C);
+        }
+    }
+    if (seq >= 0x32) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x2D);
+        }
+    }
+    if (seq >= 0xC8) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x2E);
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_TickCounter23 (us-80282e4c)
+// Bump/close the scenario-log sequence counters at three gates (10 / 100 /
+// 500). Retails only clamps once per open window and only closes each gate
+// when the scene is not booting and no subwindow is freezing the game.
+// ---------------------------------------------------------------------------
+void SysWinLog_TickCounter23() {
+    u32 n;
+    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x23);
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
+    if (lbl_eu_80664772 != 0) {
+        // Scene frozen by a subwindow: keep the un-bumped value.
+        n = cur;
+    } else {
+        n = cur + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
+        }
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x23, n);
+    }
+after:
+    ;
+    if (n >= 0xA) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x23);
+        }
+    }
+    if (n >= 0x64) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x24);
+        }
+    }
+    if (n >= 0x1F4) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x25);
+        }
+    }
+}
+
+
+void SysWinLog_TickCounter29() {
+    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x29);
+    u32 n;
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` pair (same shape as SysWinLog_TickCounter5A).
+    if (lbl_eu_80664772 == 0) {
+        n = seq + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
+        }
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x29, n);
+    } else {
+        n = seq;
+    }
+    if (n >= 0x1) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x29);
+        }
+    }
+    if (n >= 0x64) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x2A);
+        }
+    }
+    if (n >= 0x3E8) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x2B);
+        }
+    }
+}
+
+
+// Bump sequence counter 0x5A once while the scene is active, then fire
+// one-shot closes at the 1 / 300 / 2000 thresholds. All three gates read the
+// post-bump value (retail keeps it live in r31 across every gate).
+void SysWinLog_TickCounter5A() {
+    u32 n;
+    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x5A);
+    // Two-arm if/else assigning n on both sides reproduces retail's
+    // `beq bump; b after` guard pair (same shape as SysWinLog_TickCounter23).
+    if (lbl_eu_80664772 != 0) {
+        // Scene frozen by a subwindow: keep the un-bumped value.
+        n = cur;
+    } else {
+        n = cur + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
+        }
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x5A, n);
+    }
+    if (n >= 0x1) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x5A);
+        }
+    }
+    if (n >= 0x12C) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x5B);
+        }
+    }
+    if (n >= 0x7D0) {
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            queueEventId__Q22cf13CfGameManagerFv(0x5C);
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_AdvanceTiers (us-80283188)
+// Progress the scenario-log sequence through its tiers. Each gate closes an
+// earlier tier before later tiers can advance (1 / 100 / 1000, then, once
+// self reaches 5, a nested 1 / 20 / 50 ladder).
+// ---------------------------------------------------------------------------
+void SysWinLog_AdvanceTiers(s32 self) {
+    u32 v = SysWinLog_BumpEventValue(0x1D, self);
+    if (v >= 1) {
+        SysWinLog_QueueEvent(0x1D);
+    }
+    if (v >= 0x64) {
+        SysWinLog_QueueEvent(0x1E);
+    }
+    if (v >= 0x3E8) {
+        SysWinLog_QueueEvent(0x1F);
+    }
+    if (self >= 5) {
+        u32 w = SysWinLog_BumpEventValue(0x20, 1);
+        if (w >= 1) {
+            SysWinLog_QueueEvent(0x20);
+        }
+        if (w >= 0x14) {
+            SysWinLog_QueueEvent(0x21);
+        }
+        if (w >= 0x32) {
+            SysWinLog_QueueEvent(0x22);
+        }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_ScanGrid (us-80283240)
+// Scan a 2x2 grid of 8 u8 samples (stride 2) for values exceeding thresholds
+// and notify the scenario log at ascending severities; count how many entries
+// are >= 10 and emit a summary gate at 5 / 10 / 16.
+// ---------------------------------------------------------------------------
+void SysWinLog_ScanGrid(u8* self) {
+    // Declaration order drives MWCC callee-saved coloring (first -> r31);
+    // this order reproduces retail's register assignment.
+    u8 val;
+    // Alias keeps the parameter in the declaration stream so MWCC colors it
+    // r30 like retail (params otherwise color last).
+    u8* p = self;
+    u8* p1;
+    u8* p2;
+    int count;
+    int o;
+    int m;
+    int i;
+    count = 0;
+    for (o = 0; o < 2; o++) {
+        p1 = p;
+        for (m = 0; m < 2; m++) {
+            p2 = p1;
+            for (i = 0; i < 8; i++) {
+                val = p2[0];
+                if (val >= 2) {
+                    SysWinLog_QueueEvent(0x48);
+                }
+                if (val >= 5) {
+                    SysWinLog_QueueEvent(0x49);
+                }
+                if (val >= 10) {
+                    SysWinLog_QueueEvent(0x4A);
+                }
+                if (val >= 10) {
+                    count++;
+                }
+                p2 += 2;
+            }
+            p1 += 0x10;
+        }
+        p += 0x49;
+    }
+    if (count >= 5) {
+        SysWinLog_QueueEvent(0x4B);
+    }
+    if (count >= 10) {
+        SysWinLog_QueueEvent(0x4C);
+    }
+    if (count >= 0x10) {
+        SysWinLog_QueueEvent(0x4D);
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_ScanSegmentSlots (us-80283320)
+// Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for any
+// taken slot at +0x24. Returns early when a whole run is free; otherwise
+// closes the sequence for 0x4E once all segments have at least one taken
+// slot. The three run-scans are written out inline (retail unrolls them),
+// and the segment stride is +0x24C (3 * 0xC4).
+// ---------------------------------------------------------------------------
+void SysWinLog_ScanSegmentSlots(u8* self) {
+    u8* r;
+    u8* s;
+    int seg;
+    int i;
+    int run;
+    u8* p = self + 0x3D4;
+    for (seg = 0; seg < 4; seg += 2) {
+        // Three identical run-scans (written as a 3-trip run loop; each scan
+        // walks 5 slots of stride 0x20 looking for a taken u16 at +0x24; a
+        // fully-free run makes the whole function return early).
+        r = p;
+        for (run = 0; run < 3; run++) {
+            s = r;
+            for (i = 0;; i++) {
+                if (i >= 5)
+                    return;
+                if (*(u16*)(s + 0x24) != 0)
+                    break;
+                s += 0x20;
+            }
+            r += 0xC4;
+        }
+        p = r;
+    }
+    // seg == 4 at loop exit. Keeping this live-out use of seg is what makes
+    // MWCC retain retail's segment-counter update inside the bdnz loop.
+    SysWinLog_QueueEvent(0x4A + seg);
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_SweepSlotPressure (us-802833c8)
+// Character-slot pressure sweep: for each character id 1..7 count how many of
+// the 5 party-slot entries are fully occupied, emit sequence gates at 1 / 3
+// (per-id 0x50..0x56 ladder) / 5 occupied entries, and close with a summary
+// gate once 7 characters reached the >= 5 threshold.
+// ---------------------------------------------------------------------------
+void SysWinLog_SweepSlotPressure() {
+    // Trip-count holders: constant-propagated to `li 5` and hoisted by LICM to
+    // the function entry, where each colors into a callee-saved register that
+    // feeds `mtctr` at every inner-loop entry (retail r31/r30/r29).
+    int n8 = 5;
+    int n3 = 5;
+    int nN = 5;
+    // Declaration order drives callee-saved coloring (first -> r31):
+    // n8/n3/nN -> r31/r30/r29, c3 -> r28, count -> r27, total -> r26, i -> r25.
+    int c3;
+    int count;
+    int total = 0;
+    int i;
+    for (i = 1; i <= 7; i++) {
+        if (i != 3) {
+            u8* p = (u8*)CtrlObjectParam_GetCharEntry((u16)i) + 0x3534;
+            count = 0;
+            for (int k = nN; k > 0; k--) {
+                CSysWinCharSlot* e = (CSysWinCharSlot*)p;
+                int slot;
+                if (e->sub0 == 0) {
+                    slot = 0;
+                } else if (e->sub1 == 0) {
+                    slot = 1;
+                } else if (e->sub2 == 0) {
+                    slot = 2;
+                } else if (e->sub3 == 0) {
+                    slot = 3;
+                } else if (e->sub4 == 0) {
+                    slot = 4;
+                } else {
+                    slot = -1;
+                }
+                if (slot == -1) {
+                    count++;
+                }
+                p += 0xC4;
+            }
+        } else {
+            u8* p3 = (u8*)CtrlObjectParam_GetCharEntry(3) + 0x3534;
+            c3 = 0;
+            for (int k = n3; k > 0; k--) {
+                CSysWinCharSlot* e = (CSysWinCharSlot*)p3;
+                int slot;
+                if (e->sub0 == 0) {
+                    slot = 0;
+                } else if (e->sub1 == 0) {
+                    slot = 1;
+                } else if (e->sub2 == 0) {
+                    slot = 2;
+                } else if (e->sub3 == 0) {
+                    slot = 3;
+                } else if (e->sub4 == 0) {
+                    slot = 4;
+                } else {
+                    slot = -1;
+                }
+                if (slot == -1) {
+                    c3++;
+                }
+                p3 += 0xC4;
+            }
+            u8* p8 = (u8*)CtrlObjectParam_GetCharEntry(8) + 0x3534;
+            count = 0;
+            for (int k = n8; k > 0; k--) {
+                CSysWinCharSlot* e = (CSysWinCharSlot*)p8;
+                int slot;
+                if (e->sub0 == 0) {
+                    slot = 0;
+                } else if (e->sub1 == 0) {
+                    slot = 1;
+                } else if (e->sub2 == 0) {
+                    slot = 2;
+                } else if (e->sub3 == 0) {
+                    slot = 3;
+                } else if (e->sub4 == 0) {
+                    slot = 4;
+                } else {
+                    slot = -1;
+                }
+                if (slot == -1) {
+                    count++;
+                }
+                p8 += 0xC4;
+            }
+            if (count < c3) {
+                count = c3;
+            }
+        }
+        if (count >= 1) {
+            SysWinLog_QueueEvent(0x4f);
+        }
+        if (count >= 3) {
+            if (i == 1) {
+                SysWinLog_QueueEvent(0x50);
+            }
+            if (i == 2) {
+                SysWinLog_QueueEvent(0x51);
+            }
+            if (i == 3) {
+                SysWinLog_QueueEvent(0x52);
+            }
+            if (i == 4) {
+                SysWinLog_QueueEvent(0x53);
+            }
+            if (i == 5) {
+                SysWinLog_QueueEvent(0x54);
+            }
+            if (i == 6) {
+                SysWinLog_QueueEvent(0x55);
+            }
+            if (i == 7) {
+                SysWinLog_QueueEvent(0x56);
+            }
+        }
+        if (count >= 5) {
+            SysWinLog_QueueEvent(0x58);
+            total++;
+        }
+    }
+    if (total >= 7) {
+        SysWinLog_QueueEvent(0x59);
+    }
+}
+
+
+extern "C" void ScnLog_ClearStateWords(u8* self){
+    reinterpret_cast<CSysWinSlotTable*>(self)->mIdxA = 0;
+    reinterpret_cast<CSysWinSlotTable*>(self)->mIdxB = 0;
+}
+
+
+// ---------------------------------------------------------------------------
+// SysWinLog_AllocFreeSlot (us-80283690)
+// Find a free slot in one of the two round-robin slot tables (selected by the
+// owner's flag word: bit 1 -> table A at +0x00, bit 2 -> table B at +0x180),
+// bump the table's index (wrapping at 3 / 0x38), call the free slot's vtable
+// slot-3 method, and return the slot pointer. Returns null when neither bit is
+// set.
+// ---------------------------------------------------------------------------
+void* SysWinLog_AllocFreeSlot(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
+    void* result;
+    u32 flags = arg0->field_0x3F00;
+    if ((flags & 0x2) != 0) {
+        int idx = 0;
+        while (self->mEntriesA[self->mIdxA].mUsed != 0) {
+            self->mIdxA += 1;
+            if (self->mIdxA >= 3) {
+                self->mIdxA = idx;
+            }
+        }
+        csysWinSlotCall3(&self->mEntriesA[self->mIdxA]);
+        result = &self->mEntriesA[self->mIdxA];
+        return result;
+    }
+    if ((flags & 0x4) != 0) {
+        int idx = 0;
+        while (self->mEntriesB[self->mIdxB].mUsed != 0) {
+            self->mIdxB += 1;
+            if (self->mIdxB >= 0x38) {
+                self->mIdxB = idx;
+            }
+        }
+        csysWinSlotCall3(&self->mEntriesB[self->mIdxB]);
+        result = &self->mEntriesB[self->mIdxB];
+        return result;
+    }
+    result = 0;
+    return result;
+}
+
+
+// ---------------------------------------------------------------------------
+// Target-only helper definitions (moved below their callers to block inline).
+// ---------------------------------------------------------------------------
+extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self) {
+    bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
+    if (!booting && lbl_eu_80664772 == 0) {
+        queueEventId__Q22cf13CfGameManagerFv(self);
+    }
+}
+
+
+extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg) {
+    u32 v = getEventValue40__Q22cf13CfGameManagerFv(self);
+    if (lbl_eu_80664772 != 0) {
+        // Scene frozen by a subwindow: return the un-bumped value.
+        return v;
+    }
+    u32 sum = v + arg;
+    if (sum >= 0xFFFF) {
+        sum = 0xFFFF;
+    }
+    setEventManagerValue__Q22cf13CfGameManagerFv(self, sum);
+    return sum;
+}

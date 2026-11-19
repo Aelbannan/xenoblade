@@ -90,10 +90,14 @@ u32 lbl_eu_8056E9FC[3] = {
     (u32)&__RTTI__10CScnFilter, 0x00000000, 0x00000000,
 };
 
-// [.rodata] 0x805240A0-0x805240AC (12B): "CScnBlend"
+// [.rodata] 0x805240A0-0x805240B8 (24B): RTTI class-name strings. This TU
+// emits CScnBlend's own name plus its CScnFilter base's name (the base vtable
+// lives in the CScnFilter TU, whose weak copy of this string is dead-stripped
+// in favour of this one at link).
 extern "C" const u32 lbl_eu_805240A0[3] = {
     0x4353636E, 0x426C656E, 0x64000000,
 };
+extern "C" __declspec(align(4)) const char CScnFilterName[0xB] = { 0x43, 0x53, 0x63, 0x6E, 0x46, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x00 };
 
 // Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
 // CScnBlend vtable, fills the default blend rect/tint region and the

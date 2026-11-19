@@ -172,6 +172,7 @@ private:
     u32 mFlagVisBuffer;                 // at 0x13C
     u32* mpMatBufferDirtyFlag;          // at 0x140
     DrawResMdlReplacement mReplacement; // at 0x144
+    u32 mFlagRestoreVtx;                // at 0x184
 
     NW4R_G3D_RTTI_DECL_DERIVED(ScnMdl, ScnMdlSimple);
 };

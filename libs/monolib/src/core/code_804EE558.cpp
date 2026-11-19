@@ -447,7 +447,7 @@ extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos,
 }
 
 // clampMarkerFan: clamp the fan to the screen; returns the scale factor.
-extern "C" __declspec(noinline) float clampMarkerFan(ml::CVec3* verts) {
+extern "C" float clampMarkerFan(ml::CVec3* verts) {
     float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
     float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 

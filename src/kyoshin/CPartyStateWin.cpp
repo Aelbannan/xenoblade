@@ -36,20 +36,16 @@ extern "C" u32 PartyStateWin_GetSharedWinObj(void) {
 }
 
 
-extern "C" __declspec(noinline) u32 PartyStateWin_GetGameProc(u8* self) { return *(u32*)(self + 0x6C); }
+extern "C" u32 PartyStateWin_GetGameProc(u8* self) { return *(u32*)(self + 0x6C); }
 
-extern "C" __declspec(noinline) u32 PartyStateWin_GetGameWorkThread(u8* self) { return *(u32*)(self + 0x70); }
+extern "C" u32 PartyStateWin_GetGameWorkThread(u8* self) { return *(u32*)(self + 0x70); }
 
 
-// Memory-decommit callback: returns the alloc handle of the region the size
-// belongs to (the last getHandle* result; the caller passes it to
-// create__8CScnNw4rFv), and shrinks the corresponding free counter by the
-// released size plus the 0x80 block header. The 0x10000 / 0x80000
-// thresholds pick which region the size belongs to.
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape;
-// plain -O4,p emits two stw's + reversed copy order - MWCC_CASES).
-#pragma optimize_for_size on
-__declspec(noinline) mtl::ALLOC_HANDLE PartyStateWin_PickAllocHandle(CPartyStateWinMem* self, s32 size) {
+// Memory-decommit callback: returns the alloc handle of the region the size belongs to
+// (the last getHandle* result; the caller passes it to create__8CScnNw4rFv), and
+// shrinks the corresponding free counter by the released size plus the 0x80 block
+// header. The 0x10000 / 0x80000 thresholds pick which region the size belongs to.
+mtl::ALLOC_HANDLE PartyStateWin_PickAllocHandle(CPartyStateWinMem* self, s32 size) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     if (size < self->field_0x0 - 0x10000) {
         handle = mtl::MemManager::getHandleMEM1();
@@ -60,14 +56,13 @@ __declspec(noinline) mtl::ALLOC_HANDLE PartyStateWin_PickAllocHandle(CPartyState
     }
     return handle;
 }
-#pragma optimize_for_size off
 
 // Copies the three 0xFF0-byte blocks and trailing scalars of a
 // CPartyStateWinCopy blob; returns dst (retail keeps `this` in r3). src is
 // intentionally non-const: MWCC would otherwise hoist the trailing loads
 // above the stores (const implies non-aliasing) and batch them, while the
 // retail interleaves each load with its store.
-__declspec(noinline) CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWinCopy* dst,
+CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWinCopy* dst,
                                    CPartyStateWinCopy* src) {
     dst->field_0x4 = src->field_0x4;
     PartyStateWin_CopyBlockFF0(dst->block0, src->block0);
@@ -81,14 +76,11 @@ __declspec(noinline) CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWi
 }
 
 // Copies a 0xFF0-byte block from src to dst (retail shape: three u32 + one
-// SCopy_80191C88 blob, two u32, two more blobs, then a 4x2-word loop) and
-// returns dst (retail ends with mr r3,r30). src is intentionally non-const:
-// MWCC would otherwise hoist the trailing loads above the stores and batch
-// them, while the retail interleaves each load with its store.
-// extern "C" keeps the retail unmangled symbol; noinline keeps the call
-// sites in PartyStateWin_CopyWinBlob real branches.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src) {
+// SCopy_80191C88 blob, two u32, two more blobs, then a 4x2-word loop) and returns dst
+// (retail ends with mr r3,r30). src is intentionally non-const: MWCC would otherwise
+// hoist the trailing loads above the stores and batch them, while the retail
+// interleaves each load with its store.
+extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src) {
     CPartyStateWinBlock* d = reinterpret_cast<CPartyStateWinBlock*>(dst);
     CPartyStateWinBlock* s = reinterpret_cast<CPartyStateWinBlock*>(src);
     d->field_0x0 = s->field_0x0;
@@ -126,25 +118,17 @@ extern "C" __declspec(noinline) u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src)
     }
     return dst;
 }
-#pragma optimize_for_size off
 
-// Copy helper (retail C-linkage): copy-constructs a 0x58-byte menu-state blob
-// from src into dst. The 4-word mem region at +0x04 goes through the
-// __as__17UnkClass_8045F564FRC17UnkClass_8045F564 helper, scalar fields +0x14..+0x31 are copied
-// field-by-field, the cursor sub-object at +0x34 through MenuShopSellCopyCursor, then
-// the packed tail +0x4C..+0x57. Returns dst (retail keeps `this` in r3). src
-// is intentionally non-const: MWCC would otherwise hoist the field loads above
-// the stores and batch them, while the retail interleaves each load with its
-// store.
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape;
-// plain -O4,p emits two stw's - same fix as PartyStateWin_PickAllocHandle).
-#pragma optimize_for_size on
-// Stand-in for a compiler-generated operator= of a class that is not real
-// yet. In retail the nested CBaseCur copies are out-of-line calls of the weak
-// __as__8CBaseCurFRC8CBaseCur (MWCC_CASES "two rules", rule B inside the
-// generated copy); dont_inline reproduces that until the owner class is real.
-#pragma dont_inline on
-__declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
+// Copy helper (retail C-linkage): copy-constructs a 0x58-byte menu-state blob from src
+// into dst. The 4-word mem region at +0x04 goes through the
+// __as__17UnkClass_8045F564FRC17UnkClass_8045F564 helper, scalar fields +0x14..+0x31
+// are copied field-by-field, the cursor sub-object at +0x34 through
+// MenuShopSellCopyCursor, then the packed tail +0x4C..+0x57. Returns dst (retail keeps
+// `this` in r3). src is intentionally non-const: MWCC would otherwise hoist the field
+// loads above the stores and batch them, while the retail interleaves each load with
+// its store. Stand-in for a compiler-generated operator= of a class that is not real
+// yet.
+CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                      CPartyStateWinBlob58* src) {
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->field_0x4[0], &src->field_0x4[0]);
     self->field_0x14 = src->field_0x14;
@@ -167,22 +151,16 @@ __declspec(noinline) CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyS
     self->field_0x57 = src->field_0x57;
     return self;
 }
-#pragma dont_inline reset
-#pragma optimize_for_size off
 
-// Copy helper (retail C-linkage): copies a 0x10C0-byte state blob from src
-// into dst: the scalar head, three 0x53C SCopy_80191C88 regions, the fused
-// word pairs, two counted 8-byte pair loops and the trailing scalars.
-// Returns dst (retail keeps `this` in r3). src is intentionally non-const
-// (the scalar fields must copy load-store interleaved, not batched - same
-// scheme as PartyStateWin_CopyStateBlob58). The pair runs use the u32 pointer-walk form so
-// MWCC keeps them as counted loops at -O4,p (the indexed .lo/.hi form
-// unrolls - MWCC_CASES wall #9); the fused word pairs are 8-byte struct
-// assignments for the 2-load/2-reverse-store shape (CInfoCfPair pattern).
-// optimize_for_size: retail keeps the two pair loops rolled (mtctr/bdnz)
-// and merges the saves into stmw - plain -O4,p unrolls (MWCC_CASES wall #6).
-#pragma optimize_for_size on
-__declspec(noinline) CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartyStateWinBlob10C0* self,
+// Copy helper (retail C-linkage): copies a 0x10C0-byte state blob from src into dst:
+// the scalar head, three 0x53C SCopy_80191C88 regions, the fused word pairs, two
+// counted 8-byte pair loops and the trailing scalars. Returns dst (retail keeps `this`
+// in r3). src is intentionally non-const (the scalar fields must copy load-store
+// interleaved, not batched - same scheme as PartyStateWin_CopyStateBlob58). The pair
+// runs use the u32 pointer-walk form so MWCC keeps them as counted loops at -O4,p (the
+// indexed .lo/.hi form unrolls - MWCC_CASES wall #9); the fused word pairs are 8-byte
+// struct assignments for the 2-load/2-reverse-store shape (CInfoCfPair pattern).
+CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartyStateWinBlob10C0* self,
                                        CPartyStateWinBlob10C0* src) {
     self->field_0xC = src->field_0xC;
     self->field_0x10 = src->field_0x10;
@@ -239,24 +217,10 @@ __declspec(noinline) CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartySt
     self->field_0x10bc = src->field_0x10bc;
     return self;
 }
-#pragma optimize_for_size off
 
-// optimize_for_size keeps the three 8-byte record loops rolled (retail
-// mtctr/bdnz shape); the retail _savegpr_29 prologue remains a known
-// residual under this flag (MWCC_CASES wall #6/#13).
-#pragma optimize_for_size on
-// Stand-in for a compiler-generated operator= of a class that is not real
-// yet. In retail the nested CBaseCur copies are out-of-line calls of the weak
-// __as__8CBaseCurFRC8CBaseCur (MWCC_CASES "two rules", rule B inside the
-// generated copy); dont_inline reproduces that until the owner class is real.
-#pragma dont_inline on
-extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
+// Stand-in for a compiler-generated operator= of a class that is not real yet.
+extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dstP,
                                                     CEquipChange* srcP) {
-    // Full copy of the embedded CEquipChange state (retail size 0x2A58):
-    // sub-blobs go through the shared copy helpers, scalars are copied
-    // load-store interleaved (src is non-const on purpose - same scheme as
-    // PartyStateWin_CopyWinBlob), and the three 8-byte record runs use the rolled
-    // pointer-walk loops (optimize_for_size keeps them mtctr/bdnz).
     CEquipChangeCopyView* self = reinterpret_cast<CEquipChangeCopyView*>(dstP);
     CEquipChangeCopyView* src = reinterpret_cast<CEquipChangeCopyView*>(srcP);
     __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&self->f04[0], &src->f04[0]);
@@ -393,20 +357,14 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
     }
     self->f2a54 = src->f2a54;
 }
-#pragma dont_inline reset
-#pragma optimize_for_size off
 
 // PartyStateWin_CopySlotRec is the weak implicit CEIBCur::operator=, emitted
 // here after its first use in PartyStateWin_CopyEquipChange.
 
-// us-801fbf10 | PartyStateWin_TeardownWindow
-// Window teardown: wait for the draw callback, switch the mem allocator off
-// the optimal path, unregister the owning scene's render callback, destroy
-// the six embedded sub-objects, flag the scene bytes and detach the child
-// work thread's view, then clear both owning pointers.
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape;
-// plain -O4,p emits two stw's - same fix as PartyStateWin_PickAllocHandle).
-#pragma optimize_for_size on
+// us-801fbf10 | PartyStateWin_TeardownWindow Window teardown: wait for the draw
+// callback, switch the mem allocator off the optimal path, unregister the owning
+// scene's render callback, destroy the six embedded sub-objects, flag the scene bytes
+// and detach the child work thread's view, then clear both owning pointers.
 void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
     CDeviceVI::waitForDrawDone();
     mtl::MemManager::setOptimalAlloc(false);
@@ -450,42 +408,36 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
         self->mWork14 = 0;
     }
 }
-#pragma optimize_for_size off
 
-// us-801fbff4 | PartyStateWin_FrameStep
-// Party-window frame step: dispatch on the window state byte (0..0x14) and
-// run the per-state handler, then update every embedded sub-object (the
-// equip-change update is skipped while the equip display is active, state
-// 0x12) and refresh the child view's client rect from the shared window
-// object's stored s16 pair.
-// extern "C" keeps the retail unmangled symbol; the per-state handlers are
-// declared above.
-// Forward decls for the per-state handlers (defined later in this TU). The
-// retail symbols are unmangled (global C-linkage), so the handlers are
-// extern "C" (same scheme as PartyStateWin_RefreshTitleHelp); noinline keeps the retail
-// `bl func_801FAxxx` calls in the dispatch below real branches.
-extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StatePartyInput(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateGateReopen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipNext(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipPrev(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipExit(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipDisplay(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipMenuOpen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StateMarkEquipActive(CPartyStateWin* self);
+// us-801fbff4 | PartyStateWin_FrameStep Party-window frame step: dispatch on the
+// window state byte (0..0x14) and run the per-state handler, then update every
+// embedded sub-object (the equip-change update is skipped while the equip display is
+// active, state 0x12) and refresh the child view's client rect from the shared window
+// object's stored s16 pair. extern "C" keeps the retail unmangled symbol; the
+// per-state handlers are declared above. Forward decls for the per-state handlers
+// (defined later in this TU).
+extern "C" void PartyStateWin_StateOpen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateGateOpen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StatePartyInput(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateSettle(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateRefresh(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateGateEquip(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipInput(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateRebuild(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateGateReopen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipNext(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipPrev(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipRefresh(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateShortcutOpen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipExit(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipDisplay(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateEquipMenuOpen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateMarkEquipActive(CPartyStateWin* self);
 extern "C" void setActive(void* self, u32 a);
 
 // When the equip model display (+0x3090) is active, mark the +0x6BE4 state
 // byte 7 and run the +0x18 sub-object init.
-extern "C" __declspec(noinline) void PartyStateWin_StateMarkEquipActive(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateMarkEquipActive(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip) != 0) {
         self->field_6BE4 = 7;
         setActive(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 1);
@@ -586,7 +538,7 @@ int PartyStateWin_QueryMenuClose(CPartyStateWin* self) {
 // us-801fc258 | PartyStateWin_StateOpen
 // Party-menu open: once the title help and party state settle, update all
 // sub-objects, arm the window (state 0x1) and play the open sound.
-extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateOpen(CPartyStateWin* self) {
     if (isInitialized(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
         isPartySettled(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
         func_801C412C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
@@ -601,7 +553,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* sel
 // us-801fc2d0 | PartyStateWin_StateGateOpen
 // Menu-open gate: when the title help is idle, the party state is settled and
 // the model display is ready, arm the window (state 0x2).
-extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateGateOpen(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
@@ -609,18 +561,14 @@ extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin*
     }
 }
 
-// us-801fc330 | PartyStateWin_StatePartyInput
-// Party-menu pad input step: map the turbo/pressed flags to the A/B/Y
-// buttons (classic vs Wii layout) and the four directions, then run the
-// party-state sub-step for whichever input is active. A/B act on the
-// party-state selection; the directions move the selection cursor; Y opens
-// the sort dialog when the party is in the multi-member config. The flag
-// decoding is duplicated per controller layout (retail shape: each branch
-// reloads turbo/pressed and re-decodes).
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape;
-// plain -O4,p emits two stw's - same fix as PartyStateWin_PickAllocHandle).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_StatePartyInput(CPartyStateWin* self) {
+// us-801fc330 | PartyStateWin_StatePartyInput Party-menu pad input step: map the
+// turbo/pressed flags to the A/B/Y buttons (classic vs Wii layout) and the four
+// directions, then run the party-state sub-step for whichever input is active. A/B act
+// on the party-state selection; the directions move the selection cursor; Y opens the
+// sort dialog when the party is in the multi-member config. The flag decoding is
+// duplicated per controller layout (retail shape: each branch reloads turbo/pressed
+// and re-decodes).
+extern "C" void PartyStateWin_StatePartyInput(CPartyStateWin* self) {
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     bool up, down, left, right;
     u32 a, b, y;
@@ -685,12 +633,11 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePartyInput(CPartyStateWi
         }
     }
 }
-#pragma optimize_for_size off
 
 // Party menu per-frame settle: once the title help, party state and model
 // display are all idle, run the party-state sub-step (with the announce
 // sound when it advances) and latch the 0x6BE5 flag.
-extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateSettle(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
@@ -709,7 +656,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* s
 // string-pool name, stamp it into the title help, set the title-help byte,
 // refresh the equip display slot and the equip-change category) and arm
 // state 0x5.
-extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateRefresh(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50)) &&
@@ -733,7 +680,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
 
 // Gate: when the help sub-object is idle and the +0x4150 window accepts
 // input, raise the +0x6BE4 state byte to 7.
-extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() && reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag())
         self->field_6BE4 = 7;
 }
@@ -748,7 +695,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin
 // display state (0x8/0xA/0xB/0xC/0x10), or plays a sound (playUISound).
 // The shared tail refreshes the title help from the sys-win state or the
 // equip-change result.
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipInput(CPartyStateWin* self) {
     self->field_6BE8 += lbl_eu_806681DC;
     if (self->field_6BE8 > lbl_eu_806681E0) {
         self->field_6BE8 = lbl_eu_806681E0;
@@ -1083,7 +1030,7 @@ tail:
 // Party-window refresh: once the title help is idle and the equip display /
 // equip-change states are settled, rebuild the window (reload the string
 // pool names, refresh all sub-objects) and arm state 0x9.
-extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateRebuild(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         ModelDispEquip_GetState20(&self->mModelDispEquip) &&
         reinterpret_cast<CEquipChange*>(&self->_pad4150)->IsActiveFlag()) {
@@ -1099,7 +1046,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* 
 }
 
 // us-801fd2c8 | PartyStateWin_StateGateReopen (same body as PartyStateWin_StateGateOpen)
-extern "C" __declspec(noinline) void PartyStateWin_StateGateReopen(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateGateReopen(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
@@ -1110,7 +1057,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateGateReopen(CPartyStateWi
 // us-801fd328 | PartyStateWin_StateEquipNext
 // Equip display enter: once state20 clears, restart the display, hand the
 // current equip-slot category to CEquipChange and arm the window (state 0x7).
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipNext(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipNext(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         ModelDispEquip_NextEquipSlot(&self->mModelDispEquip);
         u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
@@ -1123,7 +1070,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipNext(CPartyStateWin
 // Equip display enter (restart variant): once state20 clears, restart the
 // display, hand the current equip-slot category to CEquipChange and arm the
 // window (state 0x7).
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipPrev(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipPrev(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         ModelDispEquip_PrevEquipSlot(&self->mModelDispEquip);
         u32 equipSlot = ModelDispEquip_GetEquipSlot(&self->mModelDispEquip);
@@ -1132,15 +1079,11 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipPrev(CPartyStateWin
     }
 }
 
-// us-801fd3e8 | PartyStateWin_StateEquipRefresh
-// Equip display refresh: once the display settles, reset its slot, hand the
-// current slot to CEquipChange, and when the party has fewer than 3 members
-// filter the party list by the slot's name-table entry and detach the
-// matching member's object. Arms state 0x7.
-// optimize_for_size merges the r29-r31 saves into stmw (retail shape;
-// plain -O4,p emits three stw's - same fix as PartyStateWin_PickAllocHandle).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyStateWin* self) {
+// us-801fd3e8 | PartyStateWin_StateEquipRefresh Equip display refresh: once the
+// display settles, reset its slot, hand the current slot to CEquipChange, and when the
+// party has fewer than 3 members filter the party list by the slot's name-table entry
+// and detach the matching member's object. Arms state 0x7.
+extern "C" void PartyStateWin_StateEquipRefresh(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         ModelDispEquip_SetEquipSlot(&self->mModelDispEquip, -1);
         // The slot value goes through a local so the mask lands after the
@@ -1173,16 +1116,13 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipRefresh(CPartyState
         self->field_6BE4 = 0x7;
     }
 }
-#pragma optimize_for_size off
 
 // us-801fd4f0 | PartyStateWin_StateShortcutOpen
 // Shortcut-open: when the mode-appropriate button combo is pressed (classic
 // mode vs not), arm the window (state 0xF) and open the system window.
-extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyStateWin* self);
+extern "C" void PartyStateWin_StateShortcutOpen(CPartyStateWin* self);
 
-// (subic/subfe setnz + stmw are optimize_for_size shapes - MWCC_CASES)
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateShortcutOpen(CPartyStateWin* self) {
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cond;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
@@ -1195,12 +1135,11 @@ extern "C" __declspec(noinline) void PartyStateWin_StateShortcutOpen(CPartyState
         reinterpret_cast<CSysWin*>(&self->_pad6BA8)->advancePhase3();
     }
 }
-#pragma optimize_for_size off
 
 // us-801fd56c | PartyStateWin_StateEquipExit
 // Equip display exit: once state20 clears, arm the window (state 0x11),
 // restart the display and repaint it.
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipExit(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipExit(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x11;
         ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
@@ -1208,7 +1147,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipExit(CPartyStateWin
     }
 }
 
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipDisplay(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipDisplay(CPartyStateWin* self) {
     // Equip-display input step (state 0x12): decode the mode-appropriate
     // held/pressed flag set, then walk a fixed dispatch chain over the equip
     // display. The flag decoding is duplicated per controller layout (retail
@@ -1313,7 +1252,7 @@ armBlock:
 // us-801fd89c | PartyStateWin_StateEquipMenuOpen
 // Menu-open for the equip window: once state20 clears, arm the window
 // (state 0x14), restart the display and repaint it.
-extern "C" __declspec(noinline) void PartyStateWin_StateEquipMenuOpen(CPartyStateWin* self) {
+extern "C" void PartyStateWin_StateEquipMenuOpen(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x14;
         ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
@@ -1322,12 +1261,10 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipMenuOpen(CPartyStat
 }
 
 // Window-row styling for the party state: pick one of the four bytes of the
-// lbl_eu_806681E4 window-state word by the party-state selection value, and
-// apply it to the title help. In the default (3+ member / normal config)
-// cases the selection is forced to 3.
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_RefreshTitleHelp(CPartyStateWin* self) {
+// lbl_eu_806681E4 window-state word by the party-state selection value, and apply it
+// to the title help. In the default (3+ member / normal config) cases the selection is
+// forced to 3.
+extern "C" void PartyStateWin_RefreshTitleHelp(CPartyStateWin* self) {
     CPartyStateWinWord local;
     local.word = lbl_eu_806681E4;
     u8 val = func_801FD5C4(reinterpret_cast<CPartyState*>(&self->_pad3038));
@@ -1340,7 +1277,6 @@ extern "C" __declspec(noinline) void PartyStateWin_RefreshTitleHelp(CPartyStateW
     func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   local.bytes[val]);
 }
-#pragma optimize_for_size off
 
 // us-801faf94 | ctor (retail symbol __ct__14CPartyStateWinFUlUl)
 // Constructs the composite vtables, stores the two ctor args, then builds
@@ -1365,9 +1301,8 @@ CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
     field_6BE8 = lbl_eu_806681D8;
 }
 
-// noinline keeps PartyStateWin_ThunkRenderBefore's forwarder a real tail branch (the retail
 // cbRenderBefore is a large out-of-line function, 0xBC bytes).
-__declspec(noinline) void CPartyStateWin::cbRenderBefore() {
+void CPartyStateWin::cbRenderBefore() {
     CTaskGame::getInstance();
     // Gate: when the task game is not ready or the global mode bit (0x200000)
     // is set, skip the render. The if-&&-goto body / goto end / end: return
@@ -1399,16 +1334,10 @@ body:
                   &drawInfo);
 }
 
-// Destroys the embedded sub-objects in reverse construction order (CSysWin at
-// the highest offset down to CTitleAHelp). MWCC supplies the null check and
-// the delete-this guard (r4 flag) from the dtor shape itself; each embedded
-// dtor is invoked with the -1 "delete" flag like the retail calls.
-// optimize_for_size merges the r30/r31 saves into stmw (retail shape);
-// dont_inline keeps PartyStateWin_ThunkDtor's forwarder a real tail branch (the retail
-// dtor is out-of-line).
-#pragma push
-#pragma optimize_for_size on
-#pragma dont_inline on
+// Destroys the embedded sub-objects in reverse construction order (CSysWin at the
+// highest offset down to CTitleAHelp). MWCC supplies the null check and the
+// delete-this guard (r4 flag) from the dtor shape itself; each embedded dtor is
+// invoked with the -1 "delete" flag like the retail calls.
 CPartyStateWin::~CPartyStateWin() {
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&_pad6BA8), -1);
     reinterpret_cast<CEquipChange*>(&_pad4150)->CEquipChange::~CEquipChange();
@@ -1417,7 +1346,6 @@ CPartyStateWin::~CPartyStateWin() {
     __dt__10CModelDispFv(reinterpret_cast<CModelDisp*>(&_pad50), -1);
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&_pad18), -1);
 }
-#pragma pop
 
 void PartyStateWin_ThunkRenderBefore(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->cbRenderBefore(); }
 
@@ -1536,8 +1464,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
 // quad.
 // Cached frame reference lets MWCC hoist the second content load above the
 // first store (retail interleave).
-// noinline keeps the factory call site in PartyStateWin_OpenWindow a real branch.
-extern "C" __declspec(noinline) void PartyStateWin_BuildRectQuad(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj) {
+extern "C" void PartyStateWin_BuildRectQuad(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj) {
     ml::CRect16 local;
     getFrame2ViewOffset(local, &obj->mFrame1DC);
     // Cached frame reference: lets MWCC hoist the second content load above
@@ -1556,12 +1483,10 @@ extern "C" __declspec(noinline) void PartyStateWin_BuildRectQuad(CPartyStateS16Q
 }
 
 // Copies two s16 pairs (e.g. a rect) into a 4x s16 quad. Retail: 4x lha + 4x sth.
-// extern "C" keeps the retail unmangled symbol name for the call site in
-// PartyStateWin_BuildRectQuad; noinline keeps that call site a real branch. Returns dst
-// (which stays in r3 throughout the body, so the return adds no instructions -
-// byte-identical to the matched void form) so PartyStateWin_FrameStep can feed the quad
-// straight into setRect via the call result (retail: mr r4, r3).
-extern "C" __declspec(noinline) CPartyStateS16Quad* PartyStateWin_BuildS16Quad(CPartyStateS16Quad* dst, const CPartyStateS16Pair* srcA,
+// Returns dst (which stays in r3 throughout the body, so the return adds no
+// instructions - byte-identical to the matched void form) so PartyStateWin_FrameStep
+// can feed the quad straight into setRect via the call result (retail: mr r4, r3).
+extern "C" CPartyStateS16Quad* PartyStateWin_BuildS16Quad(CPartyStateS16Quad* dst, const CPartyStateS16Pair* srcA,
                                                    const CPartyStateS16Pair* srcB) {
     dst->x = srcA->x;
     dst->y = srcA->y;
@@ -1571,7 +1496,7 @@ extern "C" __declspec(noinline) CPartyStateS16Quad* PartyStateWin_BuildS16Quad(C
 }
 
 // Copies 4 u32 from src into the object's 0x444 region. Retail: 4x lwz + 4x stw.
-extern "C" __declspec(noinline) void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src) {
+extern "C" void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src) {
     self->mQuad444[0] = src[0];
     self->mQuad444[1] = src[1];
     self->mQuad444[2] = src[2];
@@ -1647,20 +1572,15 @@ extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag)
 // Pre-fills the two memory-accounting counters of a CPartyStateWinMem with
 // the largest allocatable size of the MEM1 handle and of the scene-alloc
 // handle; returns self (retail keeps `this` in r31 and returns it).
-__declspec(noinline) CPartyStateWinMem* PartyStateWin_InitMemCounters(CPartyStateWinMem* self) {
+CPartyStateWinMem* PartyStateWin_InitMemCounters(CPartyStateWinMem* self) {
     self->field_0x0 = mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
     self->field_0x4 = mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle());
     return self;
 }
 
-// us-801fb520 | PartyStateWin_InitGaugeRecord (0x30)
-// Records a 6-argument party-window payload into a PartyGaugeRecord (layout
-// in CPartyStateWin.hpp). The array fill is a constant-trip countdown loop;
-// optimize_for_size keeps it ROLLED (retail 0x30 body; plain -O4,p fully
-// unrolls the 10 stores).
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_InitGaugeRecord(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
+// us-801fb520 | PartyStateWin_InitGaugeRecord (0x30) Records a 6-argument party-window
+// payload into a PartyGaugeRecord (layout in CPartyStateWin.hpp).
+extern "C" void PartyStateWin_InitGaugeRecord(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
                               u16 d) {
     rec->field_0 = a;
     rec->field_8 = f;
@@ -1670,4 +1590,3 @@ extern "C" __declspec(noinline) void PartyStateWin_InitGaugeRecord(PartyGaugeRec
         rec->gauge[i] = c;
     }
 }
-#pragma pop

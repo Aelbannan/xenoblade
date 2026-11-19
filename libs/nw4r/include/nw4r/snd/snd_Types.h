@@ -42,6 +42,17 @@ struct SoundParam {
     int priority;    // at 0x1C
 };
 
+// Per-output-voice parameters of a player (BasicPlayer) that are handed down
+// to the Voice of each allocated Channel.
+struct VoiceOutParam {
+    f32 volume;      // at 0x0
+    f32 pitch;       // at 0x4
+    f32 pan;         // at 0x8
+    f32 surroundPan; // at 0xC
+    f32 fxSend;      // at 0x10
+    f32 lpfFreq;     // at 0x14
+};
+
 // US retail mangles these as nw4r::snd::PanMode / PanCurve (not detail::).
 enum PanMode {
     PAN_MODE_DUAL,

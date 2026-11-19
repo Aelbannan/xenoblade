@@ -408,8 +408,7 @@ extern CGXCache* cacheInstance__9CDeviceGX;
 
 // Ring command dispatcher (defined below); forward-declared here because the
 // ring cache-update functions above use it before its definition.
-// noinline lives on the DEFINITION below (MWCC 10176 rejects
-// extern "C" + __declspec(noinline) on a pure prototype).
+// The unit's -ipa off policy keeps every ring setter's `bl` to it.
 extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 
 // Retail .sdata2 magic doubles
@@ -785,13 +784,14 @@ extern u32 lbl_eu_80663648;
 extern "C" f32 getWidthScale__9CDeviceVIFv(void);
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
 
-// Ring search helper (inlined at every call site by -inline auto). The
-// inlined `return i` / `return -1` reproduce retail's `bne skip; b found`
+// Ring search helper: the explicit `inline` keyword is what makes -ipa off
+// expand the loop at every call site (retail expands it). The inlined
+// `return i` / `return -1` reproduce retail's `bne skip; b found`
 // two-branch search loop; a plain goto-found loop compiles to a merged
 // `beq found` that is 4 bytes shorter and cannot match the retail bytes
 // (docs/MWCC_CASES.md BD-address search loops).
 template <u32 CMD>
-static u32 ringFindIndex(CGXCache* self) {
+static inline u32 ringFindIndex(CGXCache* self) {
     for (u32 i = 0; i < self->unk4.mSize; i++) {
         u32 idx = self->unk4.mFront + i;
         u32 slot = idx % self->unk4.mCapacity;
@@ -803,7 +803,7 @@ static u32 ringFindIndex(CGXCache* self) {
 // Signed-command variant (setBlendState): retail tests the command word with
 // a signed `cmpwi` against 0 instead of the unsigned `cmplwi`.
 template <s32 CMD>
-static u32 ringFindIndexS(CGXCache* self) {
+static inline u32 ringFindIndexS(CGXCache* self) {
     for (u32 i = 0; i < self->unk4.mSize; i++) {
         u32 idx = self->unk4.mFront + i;
         u32 slot = idx % self->unk4.mCapacity;
@@ -947,7 +947,6 @@ end:
 // lbl_eu_80663644) the entry is re-stamped (unk23 = 3, wid =
 // lbl_eu_80663644) and command 9 is dispatched; the color is then scaled to
 // 0-255 and pushed as TEVREG0.
-//
 // The color is built through an inlined helper (not a named local) so MWCC
 // allocates the value-assembly slot below the outgoing arg area, matching
 // retail's stb/pack at sp+8 / arg copy at sp+0xc.
@@ -1684,10 +1683,8 @@ public:
 
 // Ring command dispatcher: finds the entry with command == cmd and
 // tail-calls the object at ring+0x498 through vtable slot 3 with the payload.
-// noinline: retail emits a bl to the dispatcher from every ring setter; IPA
-// must not inline it into them.
-#pragma push
-#pragma auto_inline off
+// retail emits a bl to the dispatcher from every ring setter; the unit's
+// -ipa off policy keeps it out-of-line.
 // Inlined-helper form: the `return i` inside the loop is what makes MWCC
 // emit the two-branch exit (`bne next; b found`) of the retail search loop.
 static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
@@ -1700,7 +1697,7 @@ static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
     return 0xFFFFFFFF;
 }
 
-extern "C" __declspec(noinline) void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd) {
+extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = gxCacheFindCmd(ring, cmd);
     // Statement order reproduces retail's schedule; the virtual-call syntax
@@ -1711,10 +1708,7 @@ extern "C" __declspec(noinline) void dispatchCmdGX__8CGXCacheFv(void* self, u32 
     MsgParam32Entry* entry = &ring->mArrayPtr[slot2];
     static_cast<CGxMessageTarget*>(obj)->dispatch(cmd, &entry->wid);
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = msgRingFind(ring, cmd);
@@ -1722,9 +1716,6 @@ extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd) {
     u32 slot = idx % ring->mCapacity;
     return &ring->mArrayPtr[slot].wid;
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
 // Find the ring entry whose command == id and return a pointer to its payload
 // word (wid). If not found, the slot is computed with i = -1 (wraps to the
 // last ring slot), mirroring retail's fallthrough li r8, -1.
@@ -1735,7 +1726,6 @@ extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ringp, u32 id) {
     u32 slot = idx % ring->mCapacity;
     return &ring->mArrayPtr[slot].wid;
 }
-#pragma pop
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CMsgParam<32> ring. Layout mirrors the shared CMsgParam.hpp (vtable at 0x0,
@@ -2093,7 +2083,7 @@ stamp:
 // the retail stb/lwz pack (a shift-based expression would use rlwinm/or).
 // OPEN ITEM: retail sinks stwu sp,-48 below the 9 lead FPU ops (scheduler
 // fingerprint); every source shape tried so far pins it at entry.
-u32 __declspec(noinline) packColorU32(ml::CCol4& c) {
+u32 packColorU32(ml::CCol4& c) {
     const f32 scale = lbl_eu_8066A37C;
     u8 out[4];
     out[0] = (u8)(s32)(scale * c.r);
@@ -2211,9 +2201,7 @@ CGXCache::CGXCache() {
 // ---- tiny ctor helpers (defined after __ct__8CGXCacheFv so they are not
 // inlined; retail emits a bl to each) ----
 
-#pragma push
-#pragma auto_inline off
-extern "C" __declspec(noinline) void __ct__CMsgParam_32(void* self, u32 param) {
+extern "C" void __ct__CMsgParam_32(void* self, u32 param) {
     u8* s = (u8*)self;
     *(void**)s = lbl_eu_8056BFE4;
     *(u32*)(s + 0x490) = 32;
@@ -2224,7 +2212,7 @@ extern "C" __declspec(noinline) void __ct__CMsgParam_32(void* self, u32 param) {
     *(u32*)(s + 0x498) = param;
 }
 
-extern "C" __declspec(noinline) void* __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d) {
+extern "C" void* __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d) {
     u8* s = (u8*)self;
     *(u16*)(s + 0) = a;
     *(u16*)(s + 2) = b;
@@ -2234,17 +2222,13 @@ extern "C" __declspec(noinline) void* __ct__80449534(void* self, s16 a, s16 b, s
 }
 
 // No-op helpers called with an address in r3 (retail `addi r3,..; bl`).
-__declspec(noinline) void clearStackTmp(void* self) { (void)self; }
-__declspec(noinline) void __ct__80449548(void* self) { (void)self; }
-#pragma pop
+void clearStackTmp(void* self) { (void)self; }
+void __ct__80449548(void* self) { (void)self; }
 
 // IStateCache ctor: vtable store (retail data label). char[] avoids SDA21.
-#pragma push
-#pragma auto_inline off
-extern "C" __declspec(noinline) void __ct__IStateCache(void* self) {
+extern "C" void __ct__IStateCache(void* self) {
     *(void**)self = lbl_eu_8056BFF0;
 }
-#pragma pop
 
 // ==== .data dissolved (retail bytes/relocs from build/us/asm/monolib/src/device/CGXCache.s) ====
 // .data 0x8056BF90 0x38 jumptable + 0x8056BFC8 0x10 CGXCache vtable + 0x8056BFD8 0xC + 0x8056BFE4 0xC + 0x8056BFF0 0x10

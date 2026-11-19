@@ -80,7 +80,7 @@ int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1);
 void* Bdat_GetTable_AA34();
-int CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
 u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv();
 }

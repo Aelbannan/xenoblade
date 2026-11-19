@@ -798,9 +798,9 @@ VMArg* vmStackNextGet(VMThread* pThread){
 //optimize_for_size is scoped to THIS function only: the vmc read loops below
 //must stay -O4 so MWCC auto-unrolls them to match retail.
 #pragma optimize_for_size on
-//noinline: retail vmLink calls this via bl (MWCC would otherwise inline the
-//whole scramble loop into every caller).
-void __declspec(noinline) encodeScrambleSub(u8* pData, int length) {
+//retail vmLink calls this via bl (MWCC would otherwise inline the whole
+//scramble loop into every caller).
+__declspec(noinline) void encodeScrambleSub(u8* pData, int length) {  // noinline-ok: -ipa off / -inline noauto lose 5-30 fns
     //Rotate each group of 32 bits by 2 to the right
     //aaaaaaaa bbbbbbbb cccccccc dddddddd -> ddaaaaaa aabbbbbb bbcccccc ccdddddd
     for(int i = 0; i < length; i += 4){
@@ -2589,8 +2589,8 @@ int vmc_bp(VMThread* pThread, u8 code){
     return VMC_RESULT_1;
 }
 
+#pragma dont_inline on  // noinline-ok: retail keeps vmHalt/vmArgErr out of line; -ipa off loses 5 fns + extab, -inline noauto loses 30
 //Necessary to prevent inlining
-#pragma dont_inline on
 /* This function is meant to print various information on the current state of the VM,
 then halt. However, all of this is stubbed for release, so this function does nothing. */
 void vmHalt(){
@@ -2634,7 +2634,7 @@ void vmArgErr(){
 
     vmExceptionProc(thread);
 }
-#pragma dont_inline off
+#pragma dont_inline off  // noinline-ok: closes the block above
 
 /* TODO: this is placed here b/c the opcode functions are static and having a bunch
 of forward declarations isn't ideal, but having all of this down here also isn't the best. Maybe

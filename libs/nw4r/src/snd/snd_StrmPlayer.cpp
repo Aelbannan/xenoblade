@@ -82,17 +82,6 @@ struct StrmInfoRetailLayout {
     u32 adpcmDataSize;           // at 0x3C
 };                               // sizeof 0x40
 
-// nw4r::snd::VoiceOutParam (6 floats, 0x18 bytes). The stale BasicPlayer
-// header stores these as an anonymous mUnk0x6C[24] float array at +0x70.
-struct VoiceOutParamRetail {
-    f32 volume;       // at 0x0
-    f32 pitch;        // at 0x4
-    f32 pan;          // at 0x8
-    f32 surroundPan;  // at 0xC
-    f32 lpfFreq;      // at 0x10
-    f32 remoteFilter; // at 0x14
-};                    // sizeof 0x18
-
 // AdpcmParam + AdpcmLoopParam as one 0x2E-byte block; both StrmChannel and
 // the stream WaveInfo channel params carry it and it is copied in one piece
 // (see Start()).
@@ -231,7 +220,7 @@ struct StrmPlayerRetailLayout {
     f32 mMainOutVolume;                    // at 0x024
     f32 mMainSend;                         // at 0x028
     u8 _pad0x2C[0x70 - 0x2C];              // 0x02C..0x070
-    VoiceOutParamRetail mVoiceOutParam[4]; // at 0x070 (4 * 0x18)
+    nw4r::snd::VoiceOutParam mVoiceOutParam[4]; // at 0x070 (4 * 0x18)
     u8 _pad0xD0[0xE0 - 0xD0];              // 0x0D0..0x0E0
     StrmInfoRetailLayout mStrmInfo;        // at 0x0E0 (0x40)
     bool mSetupFlag;                       // at 0x120
@@ -326,8 +315,6 @@ extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
 extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(Voice* pVoice,
                                                              int type,
                                                              f32 value);
-extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
-    Voice* pVoice, int index, const VoiceOutParamRetail& rParam);
 
 // Defined later in this TU (retail-mangled member emitted as a free function).
 extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(
@@ -2080,11 +2067,9 @@ extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6d
             pVoice->SetRemoteFxSend(i, remoteFxSend[i]);
         }
 
-        const nw4r::snd::detail::VoiceOutParamRetail* pOutParam =
-            self->mVoiceOutParam;
+        const nw4r::snd::VoiceOutParam* pOutParam = self->mVoiceOutParam;
         for (int i = 0; i < self->mVoiceOutCount; i++) {
-            SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
-                pVoice, i, *pOutParam);
+            pVoice->SetVoiceOutParam(i, *pOutParam);
             pOutParam++;
         }
     }
@@ -2097,5 +2082,4 @@ extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { ret
 extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsStarted(); }
 extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsActive(); }
 unsigned char absorb_pad_snd_StrmPlayer_sbss_4[4];
-
 

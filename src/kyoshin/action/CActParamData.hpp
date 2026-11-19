@@ -234,8 +234,8 @@ extern "C" void initActParamData(CActParamData* self, void* entry, void* obj, vo
 extern ActParamGlobalTable* lbl_eu_80663D50;
 
 void* getNonNullPtr(void* param);
-int hasParamSubObjB(CActParamData* self);
-void saveParamShadow(CActParamData* self);
+extern "C" int hasParamSubObjB(CActParamData* self);
+extern "C" void saveParamShadow(CActParamData* self);
 int findParamEntry(struct ActParamCallView* self, void* unused, u32 index);
 int copyFltByte28(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src);
 int copyS16To7C(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src);
@@ -347,7 +347,7 @@ struct ActParamStrRec {
 };
 extern "C" int linkParamNameRec(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRec* rec);
 int findParamWide(ActParamCallView* self, void* unused, u32 index);
-bool hasParamByteVal(CActParamByteList* list, u8 value);
+extern "C" bool hasParamByteVal(CActParamByteList* list, u8 value);
 int bindParamNode(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src);
 void linkParamSlots(CActParamLinkTable* table, CActParamRecStream* stream);
 int appendParamByte(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src);
@@ -524,9 +524,9 @@ extern "C" int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
 extern "C" __declspec(noinline) int registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int copyParamNameRec(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
-float getParamFloat08(CActParamData* self);  // mPtr18 entry float getter
-float getParamFloat0C(CActParamData* self);
-void resetParamSubB(CActParamData* self);
+extern "C" float getParamFloat08(CActParamData* self);  // mPtr18 entry float getter
+extern "C" float getParamFloat0C(CActParamData* self);
+extern "C" void resetParamSubB(CActParamData* self);
 void resetParamShorts(CActParamData* self);
 void walkParamType9(ActParamWalkHost* host);
 
@@ -741,7 +741,7 @@ struct ActParamT1Host {
     u32 mField25C;
 };
 extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
-__declspec(noinline) void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
+extern "C" __declspec(noinline) void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
 void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
 // Retail no-op stubs (blr only)
 extern "C" void actParamNop0();

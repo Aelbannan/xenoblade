@@ -244,7 +244,7 @@ struct CErrMesWinCtorView {
 // C-ABI imports used by the error-window state machine (retail-unmangled
 // names; C linkage stops MWCC appending a __F<argtypes> suffix).
 extern "C" {
-int CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 void* Scn_FindCamItem(void* scene, int index);
 void* MapFx_ResolveOwner(void* source);
 int HpVoice_MapSubState(void* handle);

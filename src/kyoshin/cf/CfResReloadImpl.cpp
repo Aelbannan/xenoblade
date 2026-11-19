@@ -62,7 +62,7 @@ int isReloadInUse(const cf::CfResReloadImpl* self) {
     cf::CfResReloadParent* p = self->field_00;
     if ((p->field_64 & 0x4) && self->field_04 > lbl_eu_80667698 &&
         self->field_08 == 1 && (p->field_6C & 0x20)) {
-        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0((s16)self->field_0A);
+        cf::CfResLookupEntry* e = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0((s16)self->field_0A);
         cf::CfResReloadParent* q = self->field_00;
         if (e->field_04 == q->field_70) {
             // slot +0x40 takes the owning entry as r4 (same convention as
@@ -137,7 +137,7 @@ extern "C" void playReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3, f
     if (v < 0) {
         id = -1;
     } else {
-        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
+        cf::CfResLookupEntry* e = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             id = e->field_32 + 5;
         }
@@ -160,7 +160,7 @@ extern "C" void stopReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3) {
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
+        cf::CfResLookupEntry* e = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -178,7 +178,7 @@ extern "C" void pauseReloadSound(cf::CfResReloadImpl* self, int arg2, int arg3, 
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
+        cf::CfResLookupEntry* e = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -200,7 +200,7 @@ extern "C" int getReloadAttrId(const cf::CfResReloadImpl* self) {
     if (v < 0) {
         r = -1;
     } else {
-        cf::CfResLookupEntry* e = CfRes_getEntryPtrCol0(v);
+        cf::CfResLookupEntry* e = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0(v);
         if (e->field_00 & 0x800) {
             r = e->field_32 + 5;
         }
@@ -400,7 +400,7 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
 // (r29) is also reused for the +0x68 flag extracted near the end.
 extern "C" void advanceReload(cf::CfResReloadImpl* self) {
     // retail signs the index (lha) when passing it straight through
-    cf::CfResLookupEntry* entry = CfRes_getEntryPtrCol0((s16)self->field_0A);
+    cf::CfResLookupEntry* entry = (cf::CfResLookupEntry*)CfRes_getEntryPtrCol0((s16)self->field_0A);
     int ok = 1;
     u32 f6c = self->field_00->field_6C;
     if ((f6c & 0x2) != 0) {

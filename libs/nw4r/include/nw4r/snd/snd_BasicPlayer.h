@@ -37,8 +37,8 @@ struct PlayerParamSet {
     f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x3C (BasicPlayer+0x40)
     f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x4C (BasicPlayer+0x50)
     f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x5C (BasicPlayer+0x60)
-    // Xenoblade extension: 4× (1,1,0,0,0,0) float groups through +0xC8.
-    f32 mUnk0x6C[24]; // at 0x6C
+    // Xenoblade extension: 4 per-voice groups through +0xC8.
+    VoiceOutParam mVoiceOutParam[VOICE_OUT_NUM]; // at 0x6C
 };
 
 class BasicPlayer {
@@ -97,6 +97,13 @@ public:
         mParam.mLpfFreq = freq;
     }
 
+    f32 GetBiquadFilterValue() const {
+        return mParam.mBiquadFreq;
+    }
+    int GetBiquadFilterType() const {
+        return mParam.mBiquadType;
+    }
+
     int GetOutputLine() const {
         return mParam.mOutputLine;
     }
@@ -134,11 +141,11 @@ public:
 
     void SetBiquadFilter(int filter, f32 value);
 
-    void SetVoiceOutParam(int voice, const f32* pParam) {
-        f32* pDst = &mParam.mUnk0x6C[voice * PlayerParamSet::VOICE_OUT_PARAM_NUM];
-        for (int i = 0; i < PlayerParamSet::VOICE_OUT_PARAM_NUM; i++) {
-            pDst[i] = pParam[i];
-        }
+    void SetVoiceOutParam(int voice, const VoiceOutParam& rParam) {
+        mParam.mVoiceOutParam[voice] = rParam;
+    }
+    const VoiceOutParam& GetVoiceOutParam(int voice) const {
+        return mParam.mVoiceOutParam[voice];
     }
 
     PanMode GetPanMode() const {

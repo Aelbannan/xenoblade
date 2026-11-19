@@ -475,7 +475,7 @@ extern "C" void Scn_GetCamWorkInt(CScn* scn, CWorkThread* work, u32 flag);
 // Scene factory (defined in monolib with the flat retail symbol).
 extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
                                          u32 arg1, u32 handle, void* param);
-extern "C" void CfRes_setD80Flag(void* scene);
+extern "C" u32 CfRes_setD80Flag(u32 val);
 // Global actor-param work-buffer builder (defined in CtrlObjectParam.cpp).
 extern "C" void __ct__8009D604();
 // Effect-task factory (defined in CTaskGameEff.cpp with the flat name).

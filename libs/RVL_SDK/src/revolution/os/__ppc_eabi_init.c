@@ -52,13 +52,11 @@ _loop:
     // clang-format on
 }
 
-// Must not inline __init_cpp into __init_user (retail keeps a 0x20 trampoline).
 #pragma push
 #pragma optimization_level 4
 #pragma scheduling on
 #pragma peephole on
 #pragma global_optimizer on
-#pragma dont_inline on
 void __init_cpp(void) {
     funcptr_t* ctor;
 
@@ -66,7 +64,6 @@ void __init_cpp(void) {
         (*ctor)();
     }
 }
-#pragma dont_inline off
 
 // Retail inlines the dtor walk + PPCHalt into exit (no separate
 // __fini_cpp / _ExitProcess symbols in this unit's .text).
@@ -80,11 +77,14 @@ void exit(void) {
 }
 #pragma pop
 
-// __init_user (0x20 retail) is a full-frame `bl __init_cpp` trampoline.  The
-// tail-call fold that collapses `{ __init_cpp(); }` into a bare `b` is keyed to
-// the GLOBAL -opt level (>= -O2); per-function pragmas cannot undo it while the
-// unit's global level is -O4,p.  The unit is therefore compiled at -O1,p (see
-// configure.py) and the two sibling functions are re-raised to -O4 with the
+// __init_cpp must stay out of line: __init_user (0x20 retail) is a full-frame
+// `bl __init_cpp` trampoline.  With the unit's global level at -O1,p MWCC still
+// auto-inlines the -O4 re-raised __init_cpp body, so the unit is compiled with
+// -inline noauto (configure.py) - a unit-wide setting, not a per-function one.
+// The tail-call fold that collapses `{ __init_cpp(); }` into a bare `b` is keyed
+// to the GLOBAL -opt level (>= -O2); per-function pragmas cannot undo it while
+// the unit's global level is -O4,p.  The unit is therefore compiled at -O1,p
+// (see configure.py) and the two sibling functions are re-raised to -O4 with the
 // scheduling/peephole/global-optimizer bundle above, giving ALL THREE functions
 // byte-identical retail codegen (verified 2026-08, Wii/1.1).
 void __init_user(void) {

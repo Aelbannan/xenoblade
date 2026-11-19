@@ -13,7 +13,8 @@ A unit is **faithful** when all of these are zero:
                 (member functions written as C free functions)
   section       ``__declspec(section ...)`` hand-placed data
   offset_cast   ``(u8*)p + 0x..`` raw offset arithmetic
-  view_struct   offset "view" structs (``...View``, ``...At3E9C``, ``...Off``)
+  view_struct   offset "view" structs (``...View``, ``...At3E9C``, ``...Off``);
+                classes retail names via a ctor/dtor/vtable symbol (``CView``) are exempt
   rule          the unit has a tools/postprocess_reloc_names.py UNIT_RULES entry
   rtti_off      configure.py compiles the unit with ``-RTTI off`` (retail has
                 RTTI; the flag exists to make room for hand-built typeinfo)
@@ -41,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
 import json
 import re
 import sys
@@ -82,9 +84,33 @@ def exempt_justified_noinline(text: str) -> str:
         for line in text.split("\n"))
 
 
+_REAL_CLASS_SYM = re.compile(r"^__(?:ct|dt|vt)__(\d+)([A-Za-z_]\w*)", re.M)
+
+
+@functools.lru_cache(maxsize=None)
+def real_classes(region: str = "us") -> frozenset[str]:
+    """Class names that retail itself names via a ctor/dtor/vtable symbol.
+
+    A pointer to such a class (``CView*``) is a real type, not an offset view,
+    even though its name matches the ``view_struct`` pattern."""
+    path = ROOT / "config" / region / "symbols.txt"
+    if not path.exists():
+        return frozenset()
+    return frozenset(m.group(2)[:int(m.group(1))]
+                     for m in _REAL_CLASS_SYM.finditer(path.read_text(errors="replace")))
+
+
+def _count(key: str, pat: re.Pattern, code: str) -> int:
+    if key != "view_struct":
+        return len(pat.findall(code))
+    real = real_classes()
+    return sum(1 for m in pat.finditer(code)
+               if m.group(0).rstrip("* \t\n") not in real)
+
+
 def count_smells(text: str) -> tuple[dict[str, int], dict[str, int]]:
     code = strip_comments(exempt_justified_noinline(text))
-    return ({k: len(p.findall(code)) for k, p in HARD.items()},
+    return ({k: _count(k, p, code) for k, p in HARD.items()},
             {k: len(p.findall(code)) for k, p in SOFT.items()})
 
 

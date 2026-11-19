@@ -5,6 +5,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/scn/CScnRootNw4r.hpp"           // extern "C" __dt__12CScnRootNw4rFv
 #include "libs/monolib/src/scn/CScnRootNw4r.hpp"  // CScnRootNw4r class + fields
+#include "libs/monolib/src/scn/CScnCameraMan.hpp"  // mCamWork->refreshCurrentCamera
 #include "monolib/util/MemManager.hpp"            // mtl::MemManager
 #include "libs/monolib/src/scn/CScnBloom.hpp"
 
@@ -371,7 +372,7 @@ extern "C" void RootNw4r_DrawFrame(CScnRootNw4r* self) {
         return;
     }
 
-    CamMan_RefreshCurrentCamera(self->field_0x4->mCamWork);
+    self->field_0x4->mCamWork->refreshCurrentCamera();
 
     // Scissor validity gate: computed into a flag local, matching retail's
     // li/set-branch sequence.

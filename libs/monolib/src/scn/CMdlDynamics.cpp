@@ -202,7 +202,7 @@ CMdlDynamics::~CMdlDynamics() {}
 
 // MdlDyn_GetResMdlData (inline getter at 0x804E9FC8) defined once - all harness stubs
 // mapping to the same symbol reference it rather than redefining.
-extern "C" __declspec(noinline) u32 MdlDyn_GetResMdlData(u8* self) { return *(u32*)((u8*)self + 0x146c); }
+extern "C" u32 MdlDyn_GetResMdlData(u8* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to MdlDyn_GetResMdlData above)
 
@@ -220,9 +220,9 @@ extern "C" __declspec(noinline) u32 MdlDyn_GetResMdlData(u8* self) { return *(u3
 
 // (mapped to MdlDyn_GetResMdlData above)
 
-extern "C" __declspec(noinline) void MdlDyn_StoreResRef(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+extern "C" void MdlDyn_StoreResRef(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-extern "C" __declspec(noinline) u32 MdlDyn_GetListCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
+extern "C" u32 MdlDyn_GetListCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
 
 // (mapped to MdlDyn_GetResMdlData above)
 
@@ -267,9 +267,9 @@ void* __dt__804EA1D0(CMdlDynBuffer* self, s32 freeIt) {
     return self;
 }
 
-extern "C" __declspec(noinline) u32 MdlDyn_GetListBase(u8* self) { return (u32)((CMdlDynBuffer*)self)->field_0x0; }
+extern "C" u32 MdlDyn_GetListBase(u8* self) { return (u32)((CMdlDynBuffer*)self)->field_0x0; }
 
-extern "C" __declspec(noinline) void* MdlDyn_GetListEnd(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
+extern "C" void* MdlDyn_GetListEnd(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
 
 // Model resource root; the ResMdl data word used for node lookups sits at 0x146C.
 struct MdlResRoot {
@@ -294,7 +294,7 @@ struct CMdlDynHolder {
     CMdlDynSub* field_0x0; // 0x0
 };
 
-extern "C" __declspec(noinline) u32 MdlDyn_HasDictEntry(void* self) { return *(u32*)self != 0; }
+extern "C" u32 MdlDyn_HasDictEntry(void* self) { return *(u32*)self != 0; }
 
 // 0x98-stride dynamic-model element driven by MdlDyn_SolveElem.
 struct CMdlDynElem98 {
@@ -590,26 +590,23 @@ extern "C" void MdlDyn_ScanShapes(CMdlDynamics* self) {
 }
 
 // Thin wrappers over the SDK matrix functions (header-declared via <revolution/MTX.h>).
-// Thin SDK wrapper; noinline keeps the retail `bl MdlDyn_InvertMatrix` call sites
-// under -ipa file.
-extern "C" __declspec(noinline) void MdlDyn_InvertMatrix(const Mtx a, Mtx b) {
+// Thin SDK wrapper; the retail `bl MdlDyn_InvertMatrix` call sites stay
+// out-of-line under -ipa file.
+extern "C" void MdlDyn_InvertMatrix(const Mtx a, Mtx b) {
     PSMTXInverse(a, b);
 }
 
-extern "C" __declspec(noinline) void MdlDyn_NoopChrResult(void*) {}
+extern "C" void MdlDyn_NoopChrResult(void*) {}
 
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsDictPresent(u8* self) { return *(u32*)self != 0; }
-
-// Stores a value at self+0 and asserts it is 4-byte aligned (retail panics
-// with the same file/line/message as the nw4r ResDic alignment checks).
-extern "C" __declspec(noinline) u8* MdlDyn_InitDictHolder(u8* self, u32 arg) {
-    *(u32*)self = arg;
-    if ((arg & 3) != 0) {
-        nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
-    }
-    return self;
-}
+// Model object whose +0x4 points at the loaded model resource root.
+struct MdlDynObj {
+    u8 field_0x0[0x4]; // 0x0
+    u8* field_0x4;     // 0x4 resource root
+    u8 field_0x8[0x10];
+    u8* elems18;       // 0x18 base of the 0x98-stride element array
+    u32 elems18Count;  // 0x1C element count
+};
 
 // 0xB0-byte element of a dynamic-model array (same stride as MdlDyn_GetDynElem).
 struct CMdlDynElem {
@@ -634,20 +631,6 @@ struct CMdlDynElem {
     CMdlDynBuffer bufA0;         // 0xA0..0xAF (embedded buffer 2)
 };
 
-// us-804ee5a4: deleting destructor of the 0xB0 dynamic-model element.
-// Destroys the entry buffer (0xA0) then the id buffer (0x90) - reverse
-// declaration order - and frees the element when the delete flag is set.
-__declspec(noinline) void* __dt__804EA0E8(CMdlDynElem* self, s32 freeIt) {
-    if (self != 0) {
-        self->bufA0.~CMdlDynBuffer();
-        self->buf90.~CMdlDynBuffer();
-        if (freeIt > 0) {
-            ::operator delete(self);
-        }
-    }
-    return self;
-}
-
 // Dynamic-model list: base pointer of the 0xB0-stride array + element count.
 struct CMdlDynList {
     CMdlDynElem* field_0x0; // 0x0 base of the 0xB0-stride element array
@@ -663,432 +646,35 @@ struct CMdlDynSet {
     u32 field_0xC;           // 0xC
 };
 
-
-
-// Looks up a named entry in the sub-object's embedded resource dictionary
-// (ResDic at sub+4) and returns the resolved data pointer (4-aligned).
-extern "C" __declspec(noinline) u8* MdlDyn_FindDictEntry(const CMdlDynHolder* self, const char* name) {
-    if (!self->field_0x0) {
-        nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC, lbl_eu_80530CF0,
-                        lbl_eu_80663CC0);
-    }
-    u8* pDic = (u8*)self->field_0x0 + 4;
-    nw4r::g3d::ResDic dic(pDic);
-    if (((u32)pDic & 3) != 0) {
-        nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
-    }
-    u8* res = (u8*)dic[name];
-    if (((u32)res & 3) != 0) {
-        nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
-    }
-    return res;
-}
-
-// Resolves the sub-object's embedded data pointer: asserts the dictionary is
-// present (two checks) and that its kind is not zero, then resolves the
-// offset at field_0x4 (same shape as MdlDyn_GetEntryData but the kind check is
-// `!= 0` with a different file/line/message).
-extern "C" __declspec(noinline) u8* MdlDyn_GetEntryDataUnchecked(CMdlDynHolder* self) {
-    if (self->field_0x0 == 0) {
-        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
-                        lbl_eu_80663CC8);
-    }
-    if (self->field_0x0->field_0xC != 0) {
-        nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
-    }
-    if (self->field_0x0 == 0) {
-        nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, lbl_eu_80530D68,
-                        lbl_eu_80663CC4);
-    }
-    CMdlDynSub* sub = self->field_0x0;
-    u32 off = sub->field_0x4;
-    if (off != 0) {
-        return (u8*)sub + off;
-    }
-    return 0;
-}
-
-// Returns the sub-object's embedded data pointer: asserts the dictionary
-// kind (field_0xC == 1) and resolves the offset at field_0x4.
-extern "C" __declspec(noinline) u8* MdlDyn_GetEntryData(CMdlDynHolder* self) {
-    if (self->field_0x0 == 0) {
-        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
-                        lbl_eu_80663CC8);
-    }
-    // retail compares the kind as signed (cmpi) here despite the u32 storage
-    if ((s32)self->field_0x0->field_0xC != 1) {
-        nw4r::db::Panic(lbl_eu_80530E74, 0x3d, lbl_eu_80530E30);
-    }
-    if (self->field_0x0 == 0) {
-        nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, lbl_eu_80530D68,
-                        lbl_eu_80663CC4);
-    }
-    CMdlDynSub* sub = self->field_0x0;
-    u32 off = sub->field_0x4;
-    if (off != 0) {
-        return (u8*)sub + off;
-    }
-    return 0;
-}
-
-extern "C" __declspec(noinline) u32 MdlDyn_GetEntryCount(const CMdlDynHolder* self) {
-    CMdlDynSub* sub = self->field_0x0;
-    if (sub == 0) {
-        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
-                        lbl_eu_80663CC8);
-    }
-    return self->field_0x0->field_0x8;
-}
-
-extern "C" __declspec(noinline) void MdlDyn_StoreDictHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
-
-extern "C" __declspec(noinline) void MdlDyn_ClearElemBuffers(u8* self) {
-    u8* s = (u8*)self;
-    *(u32*)(s + 0x8C) = 0;
-    *(u32*)(s + 0x90) = 0;
-    *(u32*)(s + 0x94) = 0;
-    *(u32*)(s + 0x9C) = -1;
-    *(u32*)(s + 0xA0) = 0;
-    *(u32*)(s + 0xA4) = 0;
-    *(u32*)(s + 0xAC) = -1;
-}
-
-extern "C" __declspec(noinline) void MdlDyn_StoreEntryPtr(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
-
-// Raw 0xB0-byte element view used by the append-copy MdlDyn_AppendElem (retail
-// copies the head word + four floats, then the remaining 39 words raw).
-struct CMdlDynElemRaw {
-    u32 field_0x0;      // 0x0
-    f32 field_0x4[4];   // 0x4..0x14
-    u32 field_0x14[39]; // 0x14..0xB0
-};
-
-// Appends a copy of the 0xB0-byte source element to the dynamic list and
-// bumps the element count. Field copies are written explicitly (rather than
-// a struct assignment, which MWCC would copy word-by-word) so the head
-// floats use lfs/stfs like retail.
-extern "C" __declspec(noinline) void MdlDyn_AppendElem(CMdlDynList* self, const CMdlDynElemRaw* src) {
-    u32 idx = self->field_0x4;
-    u32 base = (u32)self->field_0x0;
-    u32 off = idx * 0xB0;
-    self->field_0x4 = idx + 1;
-    CMdlDynElemRaw* dst = (CMdlDynElemRaw*)(base + off);
-    dst->field_0x0 = src->field_0x0;
-    dst->field_0x4[0] = src->field_0x4[0];
-    dst->field_0x4[1] = src->field_0x4[1];
-    dst->field_0x4[2] = src->field_0x4[2];
-    dst->field_0x4[3] = src->field_0x4[3];
-    dst->field_0x14[0] = src->field_0x14[0];
-    dst->field_0x14[1] = src->field_0x14[1];
-    dst->field_0x14[2] = src->field_0x14[2];
-    dst->field_0x14[3] = src->field_0x14[3];
-    dst->field_0x14[4] = src->field_0x14[4];
-    dst->field_0x14[5] = src->field_0x14[5];
-    dst->field_0x14[6] = src->field_0x14[6];
-    dst->field_0x14[7] = src->field_0x14[7];
-    dst->field_0x14[8] = src->field_0x14[8];
-    dst->field_0x14[9] = src->field_0x14[9];
-    dst->field_0x14[10] = src->field_0x14[10];
-    dst->field_0x14[11] = src->field_0x14[11];
-    dst->field_0x14[12] = src->field_0x14[12];
-    dst->field_0x14[13] = src->field_0x14[13];
-    dst->field_0x14[14] = src->field_0x14[14];
-    dst->field_0x14[15] = src->field_0x14[15];
-    dst->field_0x14[16] = src->field_0x14[16];
-    dst->field_0x14[17] = src->field_0x14[17];
-    dst->field_0x14[18] = src->field_0x14[18];
-    dst->field_0x14[19] = src->field_0x14[19];
-    dst->field_0x14[20] = src->field_0x14[20];
-    dst->field_0x14[21] = src->field_0x14[21];
-    dst->field_0x14[22] = src->field_0x14[22];
-    dst->field_0x14[23] = src->field_0x14[23];
-    dst->field_0x14[24] = src->field_0x14[24];
-    dst->field_0x14[25] = src->field_0x14[25];
-    dst->field_0x14[26] = src->field_0x14[26];
-    dst->field_0x14[27] = src->field_0x14[27];
-    dst->field_0x14[28] = src->field_0x14[28];
-    dst->field_0x14[29] = src->field_0x14[29];
-    dst->field_0x14[30] = src->field_0x14[30];
-    dst->field_0x14[31] = src->field_0x14[31];
-    dst->field_0x14[32] = src->field_0x14[32];
-    dst->field_0x14[33] = src->field_0x14[33];
-    dst->field_0x14[34] = src->field_0x14[34];
-    dst->field_0x14[35] = src->field_0x14[35];
-    dst->field_0x14[36] = src->field_0x14[36];
-    dst->field_0x14[37] = src->field_0x14[37];
-    dst->field_0x14[38] = src->field_0x14[38];
-}
-
-// Returns a pointer to element idx of a 0x98-byte-stride array stored at self+0.
-extern "C" __declspec(noinline) u8* MdlDyn_GetAnchorElem(u8* self, u32 idx) {
-    return *(u8**)self + idx * 0x98;
-}
-
-extern "C" __declspec(noinline) u32 MdlDyn_GetAnchorCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
-
-// Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
-extern "C" __declspec(noinline) u8* MdlDyn_GetDynElem(u8* self, u32 idx) {
-    return *(u8**)self + idx * 0xB0;
-}
-
-extern "C" __declspec(noinline) u32 MdlDyn_InitIdBuffer(u8* self, u32 a, u32 b) {
-    *(u32*)((u8*)self + 0) = a;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = b;
-    return b << 2;
-}
-
-extern "C" __declspec(noinline) void MdlDyn_AppendWord(u8* self, const void* src) {
-    u32 idx = *(u32*)((u8*)self + 4);
-    *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
-    *(u32*)((u8*)self + 4) = idx + 1;
-}
-
-extern "C" __declspec(noinline) u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b) {
-    *(u32*)((u8*)self + 0) = a;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = b;
-    return b * 12;
-}
-
-extern "C" __declspec(noinline) void MdlDyn_StoreLensHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
-
-__declspec(noinline) void MdlDyn_AppendRec(void *pRec, void *pSrc) {
-    int *p = (int *)pRec;
-    int *src = (int *)pSrc;
-    const int off = p[1] * 12;
-    int idx = p[1];
-    int base = p[0];
-    p[1] = idx + 1;
-    *(int *)((u8 *)base + off) = *src;
-    int *dst = (int *)(base + off);
-    float *fdst = (float *)dst;
-    float *fsrc = (float *)src;
-    fdst[1] = fsrc[1];
-    dst[2] = src[2];
-}
-
-// Sets the dynamic flag (0x40) on every element of every list.
-void MdlDyn_MarkAllDynamic(CMdlDynSet* self) {
-    CMdlDynList** it = self->field_0x8;
-    while (it != self->field_0x8 + self->field_0xC) {
-        u32 i = 0;
-        while (i != (*it)->field_0x4) {
-            (*it)->field_0x0[i++].field_0x8C |= 0x40;
-        }
-        it++;
-    }
-}
-
-// Adds the given vector to the three embedded vectors (0x5C/0x68/0x80) of
-// every element of every list owned by the set (dynamic-model update).
-// Uses the nw4r VEC3Add kernel so the adds lower to retail's paired-single
-// sequence instead of scalar lfs/fadds.
-void MdlDyn_AddVecAll(CMdlDynSet* self, const nw4r::math::VEC3* src) {
-    // Volatile re-reads stop MWCC from hoisting the end pointer into a
-    // register; retail reloads both fields from self every iteration.
-    volatile CMdlDynSet* vself = self;
-    CMdlDynList** it = vself->field_0x8;
-    while (it != vself->field_0x8 + vself->field_0xC) {
-        u32 i = 0;
-        u32 off = 0;
-        // Reloaded every inner iteration like retail: the element stores
-        // may alias the list slot, so the list pointer dies after the
-        // element address is formed and is re-fetched for the bound check.
-        CMdlDynList* lst = *it;
-        do {
-            u8* base = (u8*)lst->field_0x0;
-            i++;
-            CMdlDynElem* e = (CMdlDynElem*)(base + off);
-            off += sizeof(CMdlDynElem);
-            nw4r::math::VEC3Add(&e->field_0x5C, &e->field_0x5C,
-                                (nw4r::math::VEC3*)src);
-            nw4r::math::VEC3Add(&e->field_0x68, &e->field_0x68,
-                                (nw4r::math::VEC3*)src);
-            nw4r::math::VEC3Add(&e->field_0x80, &e->field_0x80,
-                                (nw4r::math::VEC3*)src);
-            lst = (CMdlDynList*)*(volatile CMdlDynList**)it;
-        } while (i != lst->field_0x4);
-        it++;
-    }
-}
-
-// us-804efd5c: full teardown of the dynamic-model holder: releases every
-// element buffer of every list (loop 1 walks elements by pointer without
-// null checks, loop 2 re-walks by running byte offset with null-guarded
-// resets), then releases the list-pointer array and the element-kind array.
-// The zero/sentinel constants are kept in locals so MWCC pins them to
-// registers across the deallocate calls, matching retail.
-void MdlDyn_FreeAll(CMdlDynamics* self) {
-    CMdlDynList* lst;
-    if (self->buf08.field_0x4 != 0) {
-        CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
-        u32 zero = 0;
-        u32 sent = (u32)-1;
-        while (
-            it != (CMdlDynList**)self->buf08.field_0x0 + self->buf08.field_0x4) {
-            u32 idx;
-            CMdlDynElem* e;
-            u32 off;
-            CMdlDynElem* elem = (*it)->field_0x0;
-            // Pass 1: raw pointer walk; the list pointer is re-read (into
-            // lst) in the test each iteration.
-            while (elem !=
-                   (CMdlDynElem*)((u8*)(lst = *it)->field_0x0 +
-                                  lst->field_0x4 * sizeof(CMdlDynElem))) {
-                elem->buf90.field_0x4 = zero;
-                if (elem->buf90.field_0xC != sent) {
-                    if (elem->buf90.field_0x0 != 0) {
-                        mtl::MemManager::deallocate(elem->buf90.field_0x0);
-                        elem->buf90.field_0x0 = (u8*)zero;
-                    }
-                }
-                elem->buf90.field_0x0 = (u8*)zero;
-                elem->buf90.field_0x8 = zero;
-                elem->buf90.field_0xC = sent;
-                elem->bufA0.field_0x4 = zero;
-                if (elem->bufA0.field_0xC != sent) {
-                    if (elem->bufA0.field_0x0 != 0) {
-                        mtl::MemManager::deallocate(elem->bufA0.field_0x0);
-                        elem->bufA0.field_0x0 = (u8*)zero;
-                    }
-                }
-                elem->bufA0.field_0x0 = (u8*)zero;
-                elem->bufA0.field_0x8 = zero;
-                elem->bufA0.field_0xC = sent;
-                elem++;
-            }
-            // Pass 2: index walk with a running byte offset; each element is
-            // re-derived from a freshly loaded base (deallocate may alias).
-            idx = 0;
-            off = 0;
-            while (idx < lst->field_0x4) {
-                e = (CMdlDynElem*)((u8*)lst->field_0x0 + off);
-                if (e != 0) {
-                    if (&e->bufA0 != 0) {
-                        e->bufA0.field_0x4 = zero;
-                        if (e->bufA0.field_0xC != sent) {
-                            if (e->bufA0.field_0x0 != 0) {
-                                mtl::MemManager::deallocate(e->bufA0.field_0x0);
-                                e->bufA0.field_0x0 = (u8*)zero;
-                            }
-                        }
-                        e->bufA0.field_0x0 = (u8*)zero;
-                        e->bufA0.field_0x8 = zero;
-                        e->bufA0.field_0xC = sent;
-                    }
-                    if (&e->buf90 != 0) {
-                        e->buf90.field_0x4 = zero;
-                        if (e->buf90.field_0xC != sent) {
-                            if (e->buf90.field_0x0 != 0) {
-                                mtl::MemManager::deallocate(e->buf90.field_0x0);
-                                e->buf90.field_0x0 = (u8*)zero;
-                            }
-                        }
-                        e->buf90.field_0x0 = (u8*)zero;
-                        e->buf90.field_0x8 = zero;
-                        e->buf90.field_0xC = sent;
-                    }
-                }
-                off += sizeof(CMdlDynElem);
-                idx += 1;
-            }
-            lst->field_0x4 = zero;
-            if (lst->field_0xC != sent) {
-                if (lst->field_0x0 != 0) {
-                    mtl::MemManager::deallocate(lst->field_0x0);
-                    lst->field_0x0 = (CMdlDynElem*)zero;
-                }
-            }
-            lst->field_0x0 = (CMdlDynElem*)zero;
-            lst->field_0x8 = zero;
-            lst->field_0xC = sent;
-            it++;
-        }
-        self->buf08.field_0x4 = zero;
-        if (self->buf08.field_0xC != sent) {
-            if (self->buf08.field_0x0 != 0) {
-                mtl::MemManager::deallocate(self->buf08.field_0x0);
-                self->buf08.field_0x0 = (u8*)zero;
-            }
-        }
-        self->buf08.field_0x0 = (u8*)zero;
-        self->buf08.field_0x8 = zero;
-        self->buf08.field_0xC = sent;
-    }
-    self->buf18.field_0x4 = 0;
-    if (self->buf18.field_0xC != 0xFFFFFFFFu) {
-        if (self->buf18.field_0x0 != 0) {
-            mtl::MemManager::deallocate(self->buf18.field_0x0);
-            self->buf18.field_0x0 = 0;
-        }
-    }
-    self->buf18.field_0x0 = 0;
-    self->buf18.field_0x8 = 0;
-    self->buf18.field_0xC = 0xFFFFFFFFu;
-}
-
-// Holder with a CScnItemModel reference at +4 (MdlDyn_UpdateAnimSpeed).
-struct CMdlDynModelRef {
-    u8 field_0x0[0x4];        // 0x0
-    CScnItemModel* field_0x4; // 0x4
-};
-
 // .sdata2 float constants (retail names; values live in retail .sdata2).
-extern const float lbl_eu_8066B3D0; // 0.0f - scaled frame-delta zero check
-// 1.0f - scale override used when the model's anim-hold flags (0x4/0x8) are set
-extern const float lbl_eu_8066B3D4;
+extern const float lbl_eu_8066B3D0; // 0.0f
+extern const float lbl_eu_8066B3D4; // 1.0f
 
-// Chain-tail distance query (retail C-ABI, defined in CScnItemModel.cpp).
-// Local declaration only - CScnItemModel.hpp is outside this session's
-// writable scope; move it there when headers become writable.
-extern "C" float simGetLeafDist7B0(CScnItemModel* self);
-
-// us-804effa4: anim-speed update. Reads the chain-tail distance (scale) of
-// the referenced model, forces scale to 1 when either model flag bit
-// (0x4/0x8) is set, multiplies by the frame delta, and flips model flag
-// 0x20000 when the scaled delta is zero and the 0x7E8 counter is 1; clears
-// model flag 0x8 afterwards.
-void MdlDyn_UpdateAnimSpeed(CMdlDynModelRef* self) {
-    if (self->field_0x4 == 0) {
-        return;
-    }
-    f32 scale = simGetLeafDist7B0(self->field_0x4);
-    if ((self->field_0x4->flags7A8 & 0x4) != 0 || (self->field_0x4->flags7A8 & 0x8) != 0) {
-        scale = lbl_eu_8066B3D4;
-    }
-    s32 flag = 0;
-    f32 t = scale * Scn_GetFrameDelta(self->field_0x4->field_04);
-    // retail compares the counter as signed (cmpi) here
-    if (t == lbl_eu_8066B3D0 && (s32)self->field_0x4->value7E8 == 1) {
-        flag = 1;
-    }
-    // one dominant base load feeding both arms (retail +88)
-    u32* flags7A4p = &self->field_0x4->flags7A4;
-    if (flag != 0) {
-        *flags7A4p |= 0x20000;
-    } else {
-        *flags7A4p &= ~0x20000;
-    }
-    self->field_0x4->flags7A8 &= ~0x8;
-}
-
-extern "C" __declspec(noinline) u32 MdlDyn_GetFrameCount(u8* self) { return *(u32*)((u8*)self + 0x7e8); }
-
-// --- Types shared by the dynamic-model collision helpers (targets 4/5) ---
-
-// Model object whose +0x4 points at the loaded model resource root.
-struct MdlDynObj {
-    u8 field_0x0[0x4]; // 0x0
-    u8* field_0x4;     // 0x4 resource root
-    u8 field_0x8[0x10];
-    u8* elems18;       // 0x18 base of the 0x98-stride element array
-    u32 elems18Count;  // 0x1C element count
-};
+struct CMdlDynElemRaw;
 
 // Resolved dictionary-entry scratch wrapper used while reading the shape
-// user-data dictionaries (entry pointer + typed accessors below).
+// user-data dictionaries (entry pointer + typed accessors).
 u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
+extern "C" u32 MdlDyn_IsDictPresent(u8* self);
+extern "C" u8* MdlDyn_InitDictHolder(u8* self, u32 arg);
+extern "C" u8* MdlDyn_FindDictEntry(const CMdlDynHolder* self, const char* name);
+extern "C" u8* MdlDyn_GetEntryData(CMdlDynHolder* self);
+extern "C" u8* MdlDyn_GetEntryDataUnchecked(CMdlDynHolder* self);
+extern "C" u32 MdlDyn_GetEntryCount(const CMdlDynHolder* self);
+extern "C" void MdlDyn_StoreDictHolder(u8* self, const void* src);
+extern "C" void MdlDyn_ClearElemBuffers(u8* self);
+extern "C" void MdlDyn_StoreEntryPtr(u8* self, const void* src);
+extern "C" u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self);
+extern "C" void MdlDyn_AppendElem(CMdlDynList* self, const CMdlDynElemRaw* src);
+extern "C" u8* MdlDyn_GetAnchorElem(u8* self, u32 idx);
+extern "C" u32 MdlDyn_GetAnchorCount(u8* self);
+extern "C" u8* MdlDyn_GetDynElem(u8* self, u32 idx);
+extern "C" u32 MdlDyn_InitIdBuffer(u8* self, u32 a, u32 b);
+extern "C" void MdlDyn_AppendWord(u8* self, const void* src);
+extern "C" u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b);
+extern "C" void MdlDyn_StoreLensHolder(u8* self, const void* src);
+extern "C" void MdlDyn_AppendRec(void* pRec, void* pSrc);
+void* __dt__804EA0E8(CMdlDynElem* self, s32 freeIt);
 
 // us-804eeed4: builds one 0xB0 dynamic-model element from the shape node's
 // user-data dictionaries and appends it to the list.
@@ -1344,6 +930,442 @@ void MdlDyn_BuildElem(MdlDynObj* model, CMdlDynList* list, u32 index) {
 
     __dt__804EA0E8(&elem, -1);
 }
+
+extern "C" u32 MdlDyn_IsDictPresent(u8* self) { return *(u32*)self != 0; }
+
+// Stores a value at self+0 and asserts it is 4-byte aligned (retail panics
+// with the same file/line/message as the nw4r ResDic alignment checks).
+extern "C" u8* MdlDyn_InitDictHolder(u8* self, u32 arg) {
+    *(u32*)self = arg;
+    if ((arg & 3) != 0) {
+        nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
+    }
+    return self;
+}
+
+// us-804ee5a4: deleting destructor of the 0xB0 dynamic-model element.
+// Destroys the entry buffer (0xA0) then the id buffer (0x90) - reverse
+// declaration order - and frees the element when the delete flag is set.
+void* __dt__804EA0E8(CMdlDynElem* self, s32 freeIt) {
+    if (self != 0) {
+        self->bufA0.~CMdlDynBuffer();
+        self->buf90.~CMdlDynBuffer();
+        if (freeIt > 0) {
+            ::operator delete(self);
+        }
+    }
+    return self;
+}
+
+
+
+// Looks up a named entry in the sub-object's embedded resource dictionary
+// (ResDic at sub+4) and returns the resolved data pointer (4-aligned).
+extern "C" u8* MdlDyn_FindDictEntry(const CMdlDynHolder* self, const char* name) {
+    if (!self->field_0x0) {
+        nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC, lbl_eu_80530CF0,
+                        lbl_eu_80663CC0);
+    }
+    u8* pDic = (u8*)self->field_0x0 + 4;
+    nw4r::g3d::ResDic dic(pDic);
+    if (((u32)pDic & 3) != 0) {
+        nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
+    }
+    u8* res = (u8*)dic[name];
+    if (((u32)res & 3) != 0) {
+        nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
+    }
+    return res;
+}
+
+// Resolves the sub-object's embedded data pointer: asserts the dictionary is
+// present (two checks) and that its kind is not zero, then resolves the
+// offset at field_0x4 (same shape as MdlDyn_GetEntryData but the kind check is
+// `!= 0` with a different file/line/message).
+extern "C" u8* MdlDyn_GetEntryDataUnchecked(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
+                        lbl_eu_80663CC8);
+    }
+    if (self->field_0x0->field_0xC != 0) {
+        nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
+    }
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, lbl_eu_80530D68,
+                        lbl_eu_80663CC4);
+    }
+    CMdlDynSub* sub = self->field_0x0;
+    u32 off = sub->field_0x4;
+    if (off != 0) {
+        return (u8*)sub + off;
+    }
+    return 0;
+}
+
+// Returns the sub-object's embedded data pointer: asserts the dictionary
+// kind (field_0xC == 1) and resolves the offset at field_0x4.
+extern "C" u8* MdlDyn_GetEntryData(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
+                        lbl_eu_80663CC8);
+    }
+    // retail compares the kind as signed (cmpi) here despite the u32 storage
+    if ((s32)self->field_0x0->field_0xC != 1) {
+        nw4r::db::Panic(lbl_eu_80530E74, 0x3d, lbl_eu_80530E30);
+    }
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, lbl_eu_80530D68,
+                        lbl_eu_80663CC4);
+    }
+    CMdlDynSub* sub = self->field_0x0;
+    u32 off = sub->field_0x4;
+    if (off != 0) {
+        return (u8*)sub + off;
+    }
+    return 0;
+}
+
+extern "C" u32 MdlDyn_GetEntryCount(const CMdlDynHolder* self) {
+    CMdlDynSub* sub = self->field_0x0;
+    if (sub == 0) {
+        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
+                        lbl_eu_80663CC8);
+    }
+    return self->field_0x0->field_0x8;
+}
+
+extern "C" void MdlDyn_StoreDictHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+
+extern "C" void MdlDyn_ClearElemBuffers(u8* self) {
+    u8* s = (u8*)self;
+    *(u32*)(s + 0x8C) = 0;
+    *(u32*)(s + 0x90) = 0;
+    *(u32*)(s + 0x94) = 0;
+    *(u32*)(s + 0x9C) = -1;
+    *(u32*)(s + 0xA0) = 0;
+    *(u32*)(s + 0xA4) = 0;
+    *(u32*)(s + 0xAC) = -1;
+}
+
+extern "C" void MdlDyn_StoreEntryPtr(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+
+// Raw 0xB0-byte element view used by the append-copy MdlDyn_AppendElem (retail
+// copies the head word + four floats, then the remaining 39 words raw).
+struct CMdlDynElemRaw {
+    u32 field_0x0;      // 0x0
+    f32 field_0x4[4];   // 0x4..0x14
+    u32 field_0x14[39]; // 0x14..0xB0
+};
+
+// Appends a copy of the 0xB0-byte source element to the dynamic list and
+// bumps the element count. Field copies are written explicitly (rather than
+// a struct assignment, which MWCC would copy word-by-word) so the head
+// floats use lfs/stfs like retail.
+extern "C" void MdlDyn_AppendElem(CMdlDynList* self, const CMdlDynElemRaw* src) {
+    u32 idx = self->field_0x4;
+    u32 base = (u32)self->field_0x0;
+    u32 off = idx * 0xB0;
+    self->field_0x4 = idx + 1;
+    CMdlDynElemRaw* dst = (CMdlDynElemRaw*)(base + off);
+    dst->field_0x0 = src->field_0x0;
+    dst->field_0x4[0] = src->field_0x4[0];
+    dst->field_0x4[1] = src->field_0x4[1];
+    dst->field_0x4[2] = src->field_0x4[2];
+    dst->field_0x4[3] = src->field_0x4[3];
+    dst->field_0x14[0] = src->field_0x14[0];
+    dst->field_0x14[1] = src->field_0x14[1];
+    dst->field_0x14[2] = src->field_0x14[2];
+    dst->field_0x14[3] = src->field_0x14[3];
+    dst->field_0x14[4] = src->field_0x14[4];
+    dst->field_0x14[5] = src->field_0x14[5];
+    dst->field_0x14[6] = src->field_0x14[6];
+    dst->field_0x14[7] = src->field_0x14[7];
+    dst->field_0x14[8] = src->field_0x14[8];
+    dst->field_0x14[9] = src->field_0x14[9];
+    dst->field_0x14[10] = src->field_0x14[10];
+    dst->field_0x14[11] = src->field_0x14[11];
+    dst->field_0x14[12] = src->field_0x14[12];
+    dst->field_0x14[13] = src->field_0x14[13];
+    dst->field_0x14[14] = src->field_0x14[14];
+    dst->field_0x14[15] = src->field_0x14[15];
+    dst->field_0x14[16] = src->field_0x14[16];
+    dst->field_0x14[17] = src->field_0x14[17];
+    dst->field_0x14[18] = src->field_0x14[18];
+    dst->field_0x14[19] = src->field_0x14[19];
+    dst->field_0x14[20] = src->field_0x14[20];
+    dst->field_0x14[21] = src->field_0x14[21];
+    dst->field_0x14[22] = src->field_0x14[22];
+    dst->field_0x14[23] = src->field_0x14[23];
+    dst->field_0x14[24] = src->field_0x14[24];
+    dst->field_0x14[25] = src->field_0x14[25];
+    dst->field_0x14[26] = src->field_0x14[26];
+    dst->field_0x14[27] = src->field_0x14[27];
+    dst->field_0x14[28] = src->field_0x14[28];
+    dst->field_0x14[29] = src->field_0x14[29];
+    dst->field_0x14[30] = src->field_0x14[30];
+    dst->field_0x14[31] = src->field_0x14[31];
+    dst->field_0x14[32] = src->field_0x14[32];
+    dst->field_0x14[33] = src->field_0x14[33];
+    dst->field_0x14[34] = src->field_0x14[34];
+    dst->field_0x14[35] = src->field_0x14[35];
+    dst->field_0x14[36] = src->field_0x14[36];
+    dst->field_0x14[37] = src->field_0x14[37];
+    dst->field_0x14[38] = src->field_0x14[38];
+}
+
+// Returns a pointer to element idx of a 0x98-byte-stride array stored at self+0.
+extern "C" u8* MdlDyn_GetAnchorElem(u8* self, u32 idx) {
+    return *(u8**)self + idx * 0x98;
+}
+
+extern "C" u32 MdlDyn_GetAnchorCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
+
+// Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
+extern "C" u8* MdlDyn_GetDynElem(u8* self, u32 idx) {
+    return *(u8**)self + idx * 0xB0;
+}
+
+extern "C" u32 MdlDyn_InitIdBuffer(u8* self, u32 a, u32 b) {
+    *(u32*)((u8*)self + 0) = a;
+    *(u32*)((u8*)self + 4) = 0;
+    *(u32*)((u8*)self + 8) = b;
+    return b << 2;
+}
+
+extern "C" void MdlDyn_AppendWord(u8* self, const void* src) {
+    u32 idx = *(u32*)((u8*)self + 4);
+    *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
+    *(u32*)((u8*)self + 4) = idx + 1;
+}
+
+extern "C" u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b) {
+    *(u32*)((u8*)self + 0) = a;
+    *(u32*)((u8*)self + 4) = 0;
+    *(u32*)((u8*)self + 8) = b;
+    return b * 12;
+}
+
+extern "C" void MdlDyn_StoreLensHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
+
+void MdlDyn_AppendRec(void *pRec, void *pSrc) {
+    int *p = (int *)pRec;
+    int *src = (int *)pSrc;
+    const int off = p[1] * 12;
+    int idx = p[1];
+    int base = p[0];
+    p[1] = idx + 1;
+    *(int *)((u8 *)base + off) = *src;
+    int *dst = (int *)(base + off);
+    float *fdst = (float *)dst;
+    float *fsrc = (float *)src;
+    fdst[1] = fsrc[1];
+    dst[2] = src[2];
+}
+
+// Sets the dynamic flag (0x40) on every element of every list.
+void MdlDyn_MarkAllDynamic(CMdlDynSet* self) {
+    CMdlDynList** it = self->field_0x8;
+    while (it != self->field_0x8 + self->field_0xC) {
+        u32 i = 0;
+        while (i != (*it)->field_0x4) {
+            (*it)->field_0x0[i++].field_0x8C |= 0x40;
+        }
+        it++;
+    }
+}
+
+// Adds the given vector to the three embedded vectors (0x5C/0x68/0x80) of
+// every element of every list owned by the set (dynamic-model update).
+// Uses the nw4r VEC3Add kernel so the adds lower to retail's paired-single
+// sequence instead of scalar lfs/fadds. The list slot is re-read through the
+// iterator in the inner bound test, exactly as retail reloads it every
+// iteration (the element stores may alias the list array).
+void MdlDyn_AddVecAll(CMdlDynSet* self, const nw4r::math::VEC3* src) {
+    CMdlDynList** it = self->field_0x8;
+    while (it != self->field_0x8 + self->field_0xC) {
+        u32 i = 0;
+        do {
+            CMdlDynElem* e = &(*it)->field_0x0[i];
+            i++;
+            nw4r::math::VEC3Add(&e->field_0x5C, &e->field_0x5C,
+                                (nw4r::math::VEC3*)src);
+            nw4r::math::VEC3Add(&e->field_0x68, &e->field_0x68,
+                                (nw4r::math::VEC3*)src);
+            nw4r::math::VEC3Add(&e->field_0x80, &e->field_0x80,
+                                (nw4r::math::VEC3*)src);
+        } while (i != (*it)->field_0x4);
+        it++;
+    }
+}
+
+// us-804efd5c: full teardown of the dynamic-model holder: releases every
+// element buffer of every list (loop 1 walks elements by pointer without
+// null checks, loop 2 re-walks by running byte offset with null-guarded
+// resets), then releases the list-pointer array and the element-kind array.
+// The zero/sentinel constants are kept in locals so MWCC pins them to
+// registers across the deallocate calls, matching retail.
+void MdlDyn_FreeAll(CMdlDynamics* self) {
+    CMdlDynList* lst;
+    if (self->buf08.field_0x4 != 0) {
+        CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
+        u32 zero = 0;
+        u32 sent = (u32)-1;
+        while (
+            it != (CMdlDynList**)self->buf08.field_0x0 + self->buf08.field_0x4) {
+            u32 idx;
+            CMdlDynElem* e;
+            u32 off;
+            CMdlDynElem* elem = (*it)->field_0x0;
+            // Pass 1: raw pointer walk; the list pointer is re-read (into
+            // lst) in the test each iteration.
+            while (elem !=
+                   (CMdlDynElem*)((u8*)(lst = *it)->field_0x0 +
+                                  lst->field_0x4 * sizeof(CMdlDynElem))) {
+                elem->buf90.field_0x4 = zero;
+                if (elem->buf90.field_0xC != sent) {
+                    if (elem->buf90.field_0x0 != 0) {
+                        mtl::MemManager::deallocate(elem->buf90.field_0x0);
+                        elem->buf90.field_0x0 = (u8*)zero;
+                    }
+                }
+                elem->buf90.field_0x0 = (u8*)zero;
+                elem->buf90.field_0x8 = zero;
+                elem->buf90.field_0xC = sent;
+                elem->bufA0.field_0x4 = zero;
+                if (elem->bufA0.field_0xC != sent) {
+                    if (elem->bufA0.field_0x0 != 0) {
+                        mtl::MemManager::deallocate(elem->bufA0.field_0x0);
+                        elem->bufA0.field_0x0 = (u8*)zero;
+                    }
+                }
+                elem->bufA0.field_0x0 = (u8*)zero;
+                elem->bufA0.field_0x8 = zero;
+                elem->bufA0.field_0xC = sent;
+                elem++;
+            }
+            // Pass 2: index walk with a running byte offset; each element is
+            // re-derived from a freshly loaded base (deallocate may alias).
+            idx = 0;
+            off = 0;
+            while (idx < lst->field_0x4) {
+                e = (CMdlDynElem*)((u8*)lst->field_0x0 + off);
+                if (e != 0) {
+                    if (&e->bufA0 != 0) {
+                        e->bufA0.field_0x4 = zero;
+                        if (e->bufA0.field_0xC != sent) {
+                            if (e->bufA0.field_0x0 != 0) {
+                                mtl::MemManager::deallocate(e->bufA0.field_0x0);
+                                e->bufA0.field_0x0 = (u8*)zero;
+                            }
+                        }
+                        e->bufA0.field_0x0 = (u8*)zero;
+                        e->bufA0.field_0x8 = zero;
+                        e->bufA0.field_0xC = sent;
+                    }
+                    if (&e->buf90 != 0) {
+                        e->buf90.field_0x4 = zero;
+                        if (e->buf90.field_0xC != sent) {
+                            if (e->buf90.field_0x0 != 0) {
+                                mtl::MemManager::deallocate(e->buf90.field_0x0);
+                                e->buf90.field_0x0 = (u8*)zero;
+                            }
+                        }
+                        e->buf90.field_0x0 = (u8*)zero;
+                        e->buf90.field_0x8 = zero;
+                        e->buf90.field_0xC = sent;
+                    }
+                }
+                off += sizeof(CMdlDynElem);
+                idx += 1;
+            }
+            lst->field_0x4 = zero;
+            if (lst->field_0xC != sent) {
+                if (lst->field_0x0 != 0) {
+                    mtl::MemManager::deallocate(lst->field_0x0);
+                    lst->field_0x0 = (CMdlDynElem*)zero;
+                }
+            }
+            lst->field_0x0 = (CMdlDynElem*)zero;
+            lst->field_0x8 = zero;
+            lst->field_0xC = sent;
+            it++;
+        }
+        self->buf08.field_0x4 = zero;
+        if (self->buf08.field_0xC != sent) {
+            if (self->buf08.field_0x0 != 0) {
+                mtl::MemManager::deallocate(self->buf08.field_0x0);
+                self->buf08.field_0x0 = (u8*)zero;
+            }
+        }
+        self->buf08.field_0x0 = (u8*)zero;
+        self->buf08.field_0x8 = zero;
+        self->buf08.field_0xC = sent;
+    }
+    self->buf18.field_0x4 = 0;
+    if (self->buf18.field_0xC != 0xFFFFFFFFu) {
+        if (self->buf18.field_0x0 != 0) {
+            mtl::MemManager::deallocate(self->buf18.field_0x0);
+            self->buf18.field_0x0 = 0;
+        }
+    }
+    self->buf18.field_0x0 = 0;
+    self->buf18.field_0x8 = 0;
+    self->buf18.field_0xC = 0xFFFFFFFFu;
+}
+
+// Holder with a CScnItemModel reference at +4 (MdlDyn_UpdateAnimSpeed).
+struct CMdlDynModelRef {
+    u8 field_0x0[0x4];        // 0x0
+    CScnItemModel* field_0x4; // 0x4
+};
+
+// .sdata2 float constants (retail names; values live in retail .sdata2).
+extern const float lbl_eu_8066B3D0; // 0.0f - scaled frame-delta zero check
+// 1.0f - scale override used when the model's anim-hold flags (0x4/0x8) are set
+extern const float lbl_eu_8066B3D4;
+
+// Chain-tail distance query (retail C-ABI, defined in CScnItemModel.cpp).
+// Local declaration only - CScnItemModel.hpp is outside this session's
+// writable scope; move it there when headers become writable.
+extern "C" float simGetLeafDist7B0(CScnItemModel* self);
+
+// us-804effa4: anim-speed update. Reads the chain-tail distance (scale) of
+// the referenced model, forces scale to 1 when either model flag bit
+// (0x4/0x8) is set, multiplies by the frame delta, and flips model flag
+// 0x20000 when the scaled delta is zero and the 0x7E8 counter is 1; clears
+// model flag 0x8 afterwards.
+void MdlDyn_UpdateAnimSpeed(CMdlDynModelRef* self) {
+    if (self->field_0x4 == 0) {
+        return;
+    }
+    f32 scale = simGetLeafDist7B0(self->field_0x4);
+    if ((self->field_0x4->flags7A8 & 0x4) != 0 || (self->field_0x4->flags7A8 & 0x8) != 0) {
+        scale = lbl_eu_8066B3D4;
+    }
+    s32 flag = 0;
+    f32 t = scale * Scn_GetFrameDelta(self->field_0x4->field_04);
+    // retail compares the counter as signed (cmpi) here
+    if (t == lbl_eu_8066B3D0 && (s32)self->field_0x4->value7E8 == 1) {
+        flag = 1;
+    }
+    // one dominant base load feeding both arms (retail +88)
+    u32* flags7A4p = &self->field_0x4->flags7A4;
+    if (flag != 0) {
+        *flags7A4p |= 0x20000;
+    } else {
+        *flags7A4p &= ~0x20000;
+    }
+    self->field_0x4->flags7A8 &= ~0x8;
+}
+
+extern "C" u32 MdlDyn_GetFrameCount(u8* self) { return *(u32*)((u8*)self + 0x7e8); }
+
+// --- Types shared by the dynamic-model collision helpers (targets 4/5) ---
+
+// Resolved dictionary-entry scratch wrapper used while reading the shape
+// user-data dictionaries (entry pointer + typed accessors below).
+u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
+
 
 
 // Raw g3d ResNode fields read by the helpers: entry count at 0x10 (used to
@@ -1637,11 +1659,11 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     simSetValue7E8((void*)self->field_0x4, 1);
 }
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsEnabled(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
+extern "C" u32 MdlDyn_IsEnabled(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsSuspended(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
+extern "C" u32 MdlDyn_IsSuspended(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
 
-__declspec(noinline) u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self) {
+u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == 0) {
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
@@ -1649,13 +1671,13 @@ __declspec(noinline) u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self) {
     return self->field_0x0 != 0 ? self->field_0x0->field_0x10 : 0;
 }
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsAnimHeldA(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
+extern "C" u32 MdlDyn_IsAnimHeldA(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsAnimHeldB(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
+extern "C" u32 MdlDyn_IsAnimHeldB(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
 
-extern "C" __declspec(noinline) u32 MdlDyn_IsPoseFrozen(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
+extern "C" u32 MdlDyn_IsPoseFrozen(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
-extern "C" __declspec(noinline) void MdlDyn_FetchVec3(u8* self, void* out) {
+extern "C" void MdlDyn_FetchVec3(u8* self, void* out) {
     // Declared x/y/z ascending so the FPR colours are f0/f1/f2; the
     // assignments run z,y,x to reproduce retail's load-descending order.
     float a, b, c;
@@ -1667,19 +1689,19 @@ extern "C" __declspec(noinline) void MdlDyn_FetchVec3(u8* self, void* out) {
     *(float*)((u8*)out + 8) = c;
 }
 
-extern "C" __declspec(noinline) void MdlDyn_SetVec3(u8* self, float a, float b, float c) {
+extern "C" void MdlDyn_SetVec3(u8* self, float a, float b, float c) {
     *(float*)((u8*)self + 0) = a;
     *(float*)((u8*)self + 4) = b;
     *(float*)((u8*)self + 8) = c;
 }
 
-extern "C" __declspec(noinline) void MdlDyn_CopyVec3(u8* self, const void* src) {
+extern "C" void MdlDyn_CopyVec3(u8* self, const void* src) {
     *(float*)((u8*)self + 0) = *(float*)((u8*)src + 0);
     *(float*)((u8*)self + 4) = *(float*)((u8*)src + 4);
     *(float*)((u8*)self + 8) = *(float*)((u8*)src + 8);
 }
 
-extern "C" __declspec(noinline) u8* MdlDyn_GetShapeOffset(const CMdlDynHolder* self) {
+extern "C" u8* MdlDyn_GetShapeOffset(const CMdlDynHolder* self) {
     // Load the pointer before the assert so the check uses the pre-call value;
     // the result re-reads the field like retail.
     CMdlDynSub* sub = self->field_0x0;
@@ -1690,13 +1712,13 @@ extern "C" __declspec(noinline) u8* MdlDyn_GetShapeOffset(const CMdlDynHolder* s
     return (u8*)self->field_0x0 + 0x38;
 }
 
-extern "C" __declspec(noinline) void MdlDyn_QuatToMatrix(Mtx a, const Quaternion* b) {
+extern "C" void MdlDyn_QuatToMatrix(Mtx a, const Quaternion* b) {
     PSMTXQuat(a, b);
 }
 
 // us-804f0938: out = a * b. PSMTXConcat writes into a stack temp, then the
 // 48-byte result is copied to *out (retail reads the copy back from r1+8).
-extern "C" __declspec(noinline) void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+extern "C" void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                               const nw4r::math::MTX34* b) {
     nw4r::math::MTX34 tmp;
     PSMTXConcat(a->mtx, b->mtx, tmp.mtx);
@@ -1706,7 +1728,7 @@ extern "C" __declspec(noinline) void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out,
 // us-804f09d0: quaternion-to-Euler conversion with a pitch singularity split
 // at +/- ml::halfpi. out->y takes the asin pitch, out->x/out->z the two
 // Atan2FIdx angles. Returns 1 on the regular branch, 0 at the singularity.
-extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
+extern "C" s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     f32 x2 = q->x + q->x;
     f32 y2 = q->y + q->y;
     f32 z2 = q->z + q->z;
@@ -1777,7 +1799,7 @@ extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r
 // rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0,
 // owned by the CGXCache .sdata2 pool). Referenced through the named extern so
 // this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
-extern "C" __declspec(noinline) nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v) {
+extern "C" nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v) {
     extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
     // k is born first (f0) but loaded after z: declare it first, assign it
     // after z's load, so the SDA21 scale-factor load lands on slot 1 like
@@ -1794,7 +1816,7 @@ extern "C" __declspec(noinline) nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::
 
 // us-804f0c48: out = a + b (nw4r MTX34Add into a stack temp, then copy out
 // via the returned pointer - retail reads the copy back from r3).
-extern "C" __declspec(noinline) void MdlDyn_AddMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+extern "C" void MdlDyn_AddMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                               const nw4r::math::MTX34* b) {
     nw4r::math::MTX34 tmp;
     *out = *nw4r::math::MTX34Add(&tmp, a, b);
@@ -1802,7 +1824,7 @@ extern "C" __declspec(noinline) void MdlDyn_AddMatrix(nw4r::math::MTX34* out, co
 
 // us-804f0cd8: out = a * factor (nw4r MTX34Mult scalar-factor kernel, copy
 // via the returned pointer).
-extern "C" __declspec(noinline) void MdlDyn_ScaleMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
+extern "C" void MdlDyn_ScaleMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                               f32 f) {
     nw4r::math::MTX34 tmp;
     *out = *nw4r::math::MTX34Mult(&tmp, a, f);
@@ -1837,9 +1859,9 @@ extern "C" void MdlDyn_NormalizeMtx(nw4r::math::MTX34* m) {
     }
 }
 
-__declspec(noinline) u32 MdlDyn_GetAnchorBase(u8* self) { return *(u32*)((u8*)self + 0x0); }
+u32 MdlDyn_GetAnchorBase(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" __declspec(noinline) void* MdlDyn_GetAnchorEnd(u8* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
+extern "C" void* MdlDyn_GetAnchorEnd(u8* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
 
 // Clamps the vector into the element's AABB; each axis is clamped only
 // when its flag bit is set in field_0x8C (bit0=minX, bit1=maxX, bit2=minY,
@@ -2433,7 +2455,7 @@ struct CMdlDynLink {
 // opens a new list whose elements are collected from the following run of
 // matching sub-nodes. Kept lists are registered in the owner's list array,
 // cross-links are resolved, and a final pass flags every live element.
-extern "C" __declspec(noinline) void MdlDyn_BuildLists(CMdlDynamics* self,
+extern "C" void MdlDyn_BuildLists(CMdlDynamics* self,
                                                    DynModelRoot* root) {
     self->field_0x4 = (u32)root;
     MdlDyn_ScanShapes(self);
@@ -2705,7 +2727,7 @@ extern "C" __declspec(noinline) void MdlDyn_BuildLists(CMdlDynamics* self,
         }
     }
 }
-extern "C" __declspec(noinline) u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self) {
+extern "C" u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
     if (sub == NULL) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -2714,7 +2736,7 @@ extern "C" __declspec(noinline) u32 MdlDyn_GetShapeKind(const CMdlDynHolder* sel
 }
 // Returns the sub-object's embedded data pointer: reads an offset at 0x5C on
 // the sub-object and resolves it against the base (asserted 4-aligned).
-__declspec(noinline) u8* MdlDyn_ResolveSubData(CMdlDynHolder* self) {
+u8* MdlDyn_ResolveSubData(CMdlDynHolder* self) {
     if (self->field_0x0 == 0) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834, lbl_eu_80663910,
                         lbl_eu_80663CB8);

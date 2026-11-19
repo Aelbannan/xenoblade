@@ -451,7 +451,7 @@ void CfResPcImpl_cleanupStateCounters(cf::CfResPcImpl* self) {
         if (self->field_00->field_64 & 0x10000) {
             continue;
         }
-        cf::CfResPcEntry38* obj = CfRes_getEntryPtrCol0(state);
+        cf::CfResPcEntry38* obj = (cf::CfResPcEntry38*)CfRes_getEntryPtrCol0(state);
         if (obj == 0) {
             continue;
         }
@@ -561,9 +561,9 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         if (inst != 0) {
             int ret;
             if (cond != 0) {
-                ret = CfRes_tryDelegateLoad1((u8*)v034_0, 4);
+                ret = CfRes_tryDelegateLoad1(v034_0, 4);
             } else {
-                ret = CfRes_tryDelegateLoad0(v034_0);
+                ret = CfRes_tryDelegateLoad0(v034_0, 4);
             }
             runSync = 0;
             if (ret != 0) {
@@ -686,7 +686,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
             self->field_34 = (u32)res;
             self->field_3C = -1;
             self->field_00->field_6C |= 0x20000;
-        } else if (CfRes_tryDelegateLoad1((u8*)token, 4) != 0) {
+        } else if (CfRes_tryDelegateLoad1((int)token, 4) != 0) {
             u32 spC;
             u32 sp8;
             cf::CfResPcFindEntry* found = findResEntry(inst, (u32)token, &spC, &sp8);
@@ -715,9 +715,9 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
     }
     u16 slot = self->field_00->field_8C;
     cf::CfResPcTableEntry* a = CfRes_getPcGridEntry(state, 0);
-    cf::CfResPcLookupEntry* b = CfRes_getArrayElem12Idx(state);
-    cf::CfResPcLookupEntry* c = CfRes_getArrayElem22Idx(state);
-    cf::CfResPcLookupEntry* f = CfRes_getArrayElem20Idx(state);
+    cf::CfResPcLookupEntry* b = (cf::CfResPcLookupEntry*)CfRes_getArrayElem12Idx(state);
+    cf::CfResPcLookupEntry* c = (cf::CfResPcLookupEntry*)CfRes_getArrayElem22Idx(state);
+    cf::CfResPcLookupEntry* f = (cf::CfResPcLookupEntry*)CfRes_getArrayElem20Idx(state);
     if ((self->field_00->field_64 & 0x80000000) != 0) {
         b = (cf::CfResPcLookupEntry*)CfRes_getEntryPtrCol0(self->field_38);
         c = 0;
@@ -908,12 +908,12 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
 // handler index field_08.
 void CfResPcImpl_detachResources(cf::CfResPcImpl* self) {
     s16 state = self->field_0A;
-    cf::CfResPcLookupEntry* a = CfRes_getArrayElem12Idx(state);
-    cf::CfResPcLookupEntry* b = CfRes_getArrayElem22Idx(state);
-    cf::CfResPcLookupEntry* c = CfRes_getArrayElem21Idx(state);
-    cf::CfResPcLookupEntry* d = CfRes_getArrayElem18Idx(state);
-    cf::CfResPcLookupEntry* e = CfRes_getArrayElem19Idx(state);
-    cf::CfResPcLookupEntry* f = CfRes_getArrayElem20Idx(state);
+    cf::CfResPcLookupEntry* a = (cf::CfResPcLookupEntry*)CfRes_getArrayElem12Idx(state);
+    cf::CfResPcLookupEntry* b = (cf::CfResPcLookupEntry*)CfRes_getArrayElem22Idx(state);
+    cf::CfResPcLookupEntry* c = (cf::CfResPcLookupEntry*)CfRes_getArrayElem21Idx(state);
+    cf::CfResPcLookupEntry* d = (cf::CfResPcLookupEntry*)CfRes_getArrayElem18Idx(state);
+    cf::CfResPcLookupEntry* e = (cf::CfResPcLookupEntry*)CfRes_getArrayElem19Idx(state);
+    cf::CfResPcLookupEntry* f = (cf::CfResPcLookupEntry*)CfRes_getArrayElem20Idx(state);
     if (self->field_00->field_6C & 0x40000) {
         CfRes_cancelPendingRead(b->field_2C, b);
         CfRes_releaseCachedBase(b, true);
@@ -955,9 +955,9 @@ void CfResPcImpl_open(cf::CfResPcImpl* self) {
     int ok;
     slot = self->field_00->field_8C;
     state = self->field_0A;
-    entry_c = CfRes_getArrayElem21Idx(state);
-    entry_d = CfRes_getArrayElem18Idx(state);
-    entry_e = CfRes_getArrayElem19Idx(state);
+    entry_c = (cf::CfResPcLookupEntry*)CfRes_getArrayElem21Idx(state);
+    entry_d = (cf::CfResPcLookupEntry*)CfRes_getArrayElem18Idx(state);
+    entry_e = (cf::CfResPcLookupEntry*)CfRes_getArrayElem19Idx(state);
     ok = 1;
     if (self->field_00->field_64 & 0x80000000) {
         if (self->field_00->field_6C & 0x20000) {
@@ -1187,7 +1187,7 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
         if (((v24 & 0x2000000) | (v24 & 0x400)) == 0 &&
             ((v24b & 0x40000) | (v24b & 0x8000)) == 0) {
             CfRes_runUpdatePipeline();
-            if (CfRes_resolveSelfPacked((int)arg3, 5) != 0) {
+            if (CfRes_resolveSelfPacked((void*)arg3, 5) != 0) {
                 lbl_eu_80663E28 &= ~0x10000;
             } else {
                 pushBackwards((u32)self, 0x26, 0, arg3, 0, 0);
@@ -1202,7 +1202,7 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
 // runs the 0x26 event with (arg2+1, arg3) and reports success.
 int CfResPcImpl_requestResourceLoad(cf::CfResPcImpl* self, int arg2, int arg3) {
     int result = 0;
-    if (CfRes_resolveSelfPacked(arg3, 5) != 0) {
+    if (CfRes_resolveSelfPacked((void*)arg3, 5) != 0) {
         lbl_eu_80663E28 &= ~0x10000;
     } else {
         pushBackwards((u32)self, 0x26, (u16)(arg2 + 1), (u32)arg3, 0, 0);
@@ -1272,19 +1272,19 @@ extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlotTable2(void* self,
         for (int i = 0; i < tab->field_618; i++) {
             u8* handle = tab->field_000[i].field_00;
             if (handle != 0) {
-                CfRes_tryDelegateLoad1(handle, 4);
+                CfRes_tryDelegateLoad1((int)handle, 4);
             }
         }
         for (int i = 0; i < tab->field_61A; i++) {
             u8* handle = tab->field_100[i].field_00;
             if (handle != 0) {
-                CfRes_tryDelegateLoad1(handle, 4);
+                CfRes_tryDelegateLoad1((int)handle, 4);
             }
         }
         for (int i = 0; i < tab->field_61C; i++) {
             u8* handle = tab->field_200[i].field_00;
             if (handle != 0) {
-                CfRes_tryDelegateLoad1(handle, 4);
+                CfRes_tryDelegateLoad1((int)handle, 4);
             }
         }
     }
@@ -1311,7 +1311,7 @@ extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlots(void* self) {
                 if (KyoshinHeap_GetField34() == 0) {
                     KyoshinHeap_AllocFld34(0x200000);
                 }
-                CfRes_tryRefreshSlot16C(obj, 4);
+                CfRes_tryRefreshSlot16C((int)obj, 4);
             }
         }
     }
@@ -1372,11 +1372,11 @@ __declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
     CamEvtSearchStateVal(0);
     loadLayoutScales();
     if (lbl_eu_80663E24 & 0x80000) {
-CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)4);
+CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (int)4);
         CfRes_pushRec((u32)self, 0x1b, 0,
                       ((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 0, 0);
     } else {
-CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)5);
+CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (int)5);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
         CfScript_FlagSlot0();

@@ -641,14 +641,11 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
 }
 
 // Retail shape: bounds-checks against pEnd, then carves the heap off
-// *ppBuffer and advances it. noinline keeps retail's out-of-line call from
-// SetupSoundPlayer (-inline auto would otherwise fold this small body in).
-// Retail shape: bounds-checks against pEnd, then carves the heap off
 // *ppBuffer and advances it.
 // Keep retail's out-of-line call shape: with -inline auto/-ipa file MWCC folds
 // this single-call-site helper into SetupSoundPlayer.
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: retail keeps bl CreatePlayerHeap in SetupSoundPlayer; -ipa off loses Update/detail_SetupSoundImpl, -inline noauto loses 3 more
 detail::PlayerHeap* SoundArchivePlayer::CreatePlayerHeap(
     void** ppBuffer, void* pEnd, u32 bufferSize) {
     void* pHeapBuffer = *ppBuffer;

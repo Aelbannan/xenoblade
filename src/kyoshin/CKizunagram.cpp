@@ -53,9 +53,8 @@ extern char lbl_eu_8050CB20[];
 // Forward declarations for callees used in tickKizMove
 // publishKizScaledVals is target 5 (takes the display self); the tail calls pass the
 // same self pointer. slideKizDown / tickCurByFlag are still-unknown stubs.
-// noinline: -ipa would fold the empty stub into tickKizMove's case-1 tail
 // call, turning the retail `b slideKizDown` into a bare return.
-extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self);
+extern "C" void slideKizDown(UnkKizunaSelfCE78* self);
 extern "C" void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a);
 
 // TU-local view of tickCurByFlag's object: ready flag at +0x8C with the
@@ -67,7 +66,7 @@ struct TickCurByFlagSelf {
     u8 _8D[0xAC - 0x8D];
     UnkKizunaSelf57D90 subAC;  // +0xAC
 };
-extern "C" __declspec(noinline) void tickCurByFlag(void* self) {
+extern "C" void tickCurByFlag(void* self) {
     TickCurByFlagSelf* v = (TickCurByFlagSelf*)self;
     if (v->field8C != 0) {
         setCurPanePhase(&v->subAC, 1);
@@ -104,7 +103,7 @@ extern "C" void kizOpenWinNop() {}
 // Toggle both pane entries each frame: walk the +0x08 child to its +0x10
 // sub-object, pull its slot-15 layout pane for each id in a 2-word table, and
 // repaint the pane matching the given phase byte.
-extern "C" __declspec(noinline) void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a) {
+extern "C" void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a) {
     u32 paneIds[2] = { lbl_eu_80668838, lbl_eu_8066883C };
     for (u8 i = 0; i < 2; i++) {
         UnkKizunaRes59344* res =
@@ -115,9 +114,8 @@ extern "C" __declspec(noinline) void setCurPanePhase(UnkKizunaSelf57D90* self, u
 
 // ctor: retail __ct__CKizunaRadar (unmangled). Stores the manual vtable
 // label, the r4 arg, then zero/float fields.
-// noinline: keeps -O4,s IPA from folding these small ctors into callers like
 // CKizunagram::OnFileEvent (retail calls them out-of-line).
-extern "C" __declspec(noinline) void __ct__CKizunaRadar(CKizunaRadar* self, void* arg) {
+extern "C" void __ct__CKizunaRadar(CKizunaRadar* self, void* arg) {
     f32 idle = lbl_eu_80668828;
     *(void**)self = (void*)lbl_eu_80537608;
     self->mArg = arg;
@@ -132,9 +130,8 @@ CKizunaRadar::~CKizunaRadar() {}
 
 CKizunaCur::~CKizunaCur() {}
 
-// noinline keeps -O4,s IPA from folding this into same-TU callers
 // (rebuildKizLine calls it out-of-line in retail).
-extern "C" __declspec(noinline) void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D) {
+extern "C" void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D) {
     f32 idle = lbl_eu_80668828;
     self->mVtable = lbl_eu_805375F0;
     self->field4 = arg4;
@@ -160,11 +157,9 @@ extern "C" __declspec(noinline) void __ct__CKizunaLine(CKizunaLine* self, u32 ar
 
 CKizunaLine::~CKizunaLine() {}
 
-// Release/null a +0x08 child object: if non-null, finalize it (vtable slot 2)
-// with a 1 flag, then clear the pointer.
-// extern "C" + noinline keeps same-TU callers emitting an unmangled `bl
-// releaseRadarChild` (retail links this symbol unmangled) instead of inlining.
-extern "C" __declspec(noinline) void releaseRadarChild(UnkKizunaSelf57D90* self) {
+// Release/null a +0x08 child object: if non-null, finalize it (vtable slot 2) with a 1
+// flag, then clear the pointer.
+extern "C" void releaseRadarChild(UnkKizunaSelf57D90* self) {
     // Retail re-tests field8 inside the guard: the duplicated condition CSEs to
     // one cmpwi with two beq's (dead second branch -- the btm_sec pattern).
     if (self->field8 != 0) {
@@ -176,7 +171,7 @@ extern "C" __declspec(noinline) void releaseRadarChild(UnkKizunaSelf57D90* self)
 }
 
 // Same shape as releaseRadarChild (sibling release/null helper).
-extern "C" __declspec(noinline) void releaseCurChild(UnkKizunaSelf57D90* self) {
+extern "C" void releaseCurChild(UnkKizunaSelf57D90* self) {
     // Same retail shape as releaseRadarChild: duplicated guard test CSEs to one
     // cmpwi with two beq's; zeroing inside the outer if.
     if (self->field8 != 0) {
@@ -190,7 +185,7 @@ extern "C" __declspec(noinline) void releaseCurChild(UnkKizunaSelf57D90* self) {
 // Build the current-line layout (+0x08) from the shared arc string at +0x27,
 // attach its anim transform at +0x0C, then publish both via the layout's
 // vtable slots 11 / 14.
-extern "C" __declspec(noinline) void buildCurLayout(UnkKizunaSelf57E58* self) {
+extern "C" void buildCurLayout(UnkKizunaSelf57E58* self) {
     buildLayout((nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
     bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0x3f);
     self->field8->slot11((u32)self->field0C, 1);
@@ -201,7 +196,7 @@ extern "C" __declspec(noinline) void buildCurLayout(UnkKizunaSelf57E58* self) {
 // arc resource, bind its animation and the device font, then either populate
 // the current-kizuna display (id != 0) or publish the idle cursor position,
 // and finally refresh every label/texture pane from the BDAT tables.
-extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self) {
+extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     char nameBuf[0x20];
     char* str = lbl_eu_8050CB20;
 
@@ -570,7 +565,7 @@ extern "C" void kizScaleVec3(float* dst, const float* src, float scale) {
 }
 #endif
 
-extern "C" __declspec(noinline) void tickLineState(UnkKizunaSelf58F9C* self) {
+extern "C" void tickLineState(UnkKizunaSelf58F9C* self) {
     if (self->field0C != 0) {
         if (buildKizEntryPanes(reinterpret_cast<UnkKizunaSelf59DE8*>(self))) {
             if (revealKizEntries(reinterpret_cast<UnkKizunaSelfA11C*>(self))) {
@@ -610,7 +605,7 @@ extern "C" __declspec(noinline) void tickLineState(UnkKizunaSelf58F9C* self) {
 // Retail walks a context-string list: separate condition-temp locals (the
 // while-test copies cur/getContextStrPtr into fresh slots each pass) drive
 // TagProcCompareIds; the body splits off the next token and frees its pane.
-extern "C" __declspec(noinline) void freeLinePanes(UnkKizunaSelf59B18* self) {
+extern "C" void freeLinePanes(UnkKizunaSelf59B18* self) {
     if (self->field0C == 0) return;
     // declare ctx first: MWCC assigns it r31 (retail), res gets r30
     u8* ctx;
@@ -658,7 +653,7 @@ extern "C" __declspec(noinline) void freeLinePanes(UnkKizunaSelf59B18* self) {
 
 // Set an anim child state flag (1), publish it to the object at +0x0C's
 // vtable slot 8, then write the shared "idle" float constant at +0x40.
-extern "C" __declspec(noinline) void lineEnterMode1(UnkKizunaSelf59228* self) {
+extern "C" void lineEnterMode1(UnkKizunaSelf59228* self) {
     self->field14 = 1;
     self->field15 = 0;
     self->field0C->target8(self->field10);
@@ -666,7 +661,7 @@ extern "C" __declspec(noinline) void lineEnterMode1(UnkKizunaSelf59228* self) {
 }
 
 // Same shape as lineEnterMode1 but with state flag 3 and a different idle float.
-extern "C" __declspec(noinline) void lineEnterMode3(UnkKizunaSelf59228* self) {
+extern "C" void lineEnterMode3(UnkKizunaSelf59228* self) {
     self->field14 = 3;
     self->field15 = 0;
     self->field0C->target8(self->field10);
@@ -674,16 +669,13 @@ extern "C" __declspec(noinline) void lineEnterMode3(UnkKizunaSelf59228* self) {
 }
 
 // True when the anim's current frame has reached (its frame count - 1).
-__declspec(noinline) bool kizAnimAtEnd(UnkKizunaSelf592D8* self) {
+bool kizAnimAtEnd(UnkKizunaSelf592D8* self) {
     return self->field10->GetFrame() >= (f32)(self->field10->GetFrameSize() - 1);
 }
 
-// Dispatch: walk +0x0C -> +0x10, call vtable slot 15 with (0x8B, 1), then
-// return a 2-word struct built from the result's +0x44 / +0x48 words.
-// extern "C" + noinline keeps callers (kizCursorHoldA/CB50) emitting real
-// unmangled bl branches (retail links getLinePanePair unmangled) without
-// inlining - the CKizunaTalkList pattern for same-TU callees.
-extern "C" __declspec(noinline) UnkKizunaPair getLinePanePair(UnkKizunaSelf59344* self) {
+// Dispatch: walk +0x0C -> +0x10, call vtable slot 15 with (0x8B, 1), then return a
+// 2-word struct built from the result's +0x44 / +0x48 words.
+extern "C" UnkKizunaPair getLinePanePair(UnkKizunaSelf59344* self) {
     UnkKizunaRes59344* res = self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x8b), 1);
     UnkKizunaPair out = *(UnkKizunaPair*)((u8*)res + 0x44);
     return out;
@@ -695,7 +687,7 @@ extern "C" __declspec(noinline) UnkKizunaPair getLinePanePair(UnkKizunaSelf59344
 // selecting it via findKizByName when well inside), play the confirm sound
 // once, and return. After the list is exhausted, ease toward the registered
 // pane position instead.
-extern "C" __declspec(noinline) int tickKizMarker(UnkKizunaSelf5949C* self) {
+extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
     self->field24 = 0;
     self->field26 = 0;
     // retail reloads field0C per access (no cached child pointer)
@@ -800,9 +792,9 @@ extern "C" __declspec(noinline) int tickKizMarker(UnkKizunaSelf5949C* self) {
 // row's five text tags from the per-state formatted strings.
 // Same-TU callee defined below (retail links both unmangled).
 extern "C" void resetKizPaneTags(UnkKizunaSelf59B18* self);
-extern "C" __declspec(noinline) void copyKizName3(char* dest, const char* src);
+extern "C" void copyKizName3(char* dest, const char* src);
 
-__declspec(noinline) void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
+void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
     resetKizPaneTags(reinterpret_cast<UnkKizunaSelf59B18*>(self));
     if (self->field26 == 0) {
         return;
@@ -872,13 +864,12 @@ __declspec(noinline) void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
     }
 }
 
-extern "C" __declspec(noinline) void copyKizName3(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+extern "C" void copyKizName3(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
 // us-8025bd54 (0x8025BD54): if the shared arc layout's named root pane is
 // visible, hide it and re-apply the 5 kizuna pane-name groups for indices
 // 1..0x11 to the layout.
-// noinline: retail callers (refreshKizEntryPanes) branch to it out-of-line.
-extern "C" __declspec(noinline) void resetKizPaneTags(UnkKizunaSelf59B18* self) {
+extern "C" void resetKizPaneTags(UnkKizunaSelf59B18* self) {
     // retail buffer is 0x1c bytes; size drives MWCC frame allocation
     char buf[0x1C];
     nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
@@ -903,7 +894,7 @@ extern "C" __declspec(noinline) void resetKizPaneTags(UnkKizunaSelf59B18* self) 
 // Countdown advance: tick the +0x40 timer; when it reaches the limit switch to
 // mode 2 and publish via the mid object's slots 7/11. Then scale the remaining
 // time into the "line" pane result's byte at +0xB8 and mark it visible.
-extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self) {
+extern "C" void lineCountUp(UnkKizunaSelf59C5C* self) {
     self->field40 = self->field40 + lbl_eu_80668834;
     if (self->field40 >= lbl_eu_80668848) {
         self->field14 = 2;
@@ -922,7 +913,7 @@ extern "C" __declspec(noinline) void lineCountUp(UnkKizunaSelf59C5C* self) {
 // Place the kizuna marker: fetch the "line" pane result, copy its position
 // and size, add the requested offset, clamp into the scaled pane bounds, and
 // write the clamped position back.
-extern "C" __declspec(noinline) void placeKizMarker(UnkKizunaSelf59394* self,
+extern "C" void placeKizMarker(UnkKizunaSelf59394* self,
                                                    UnkKizunaVec3* arg) {
     UnkKizunaRes59344* res =
         self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
@@ -949,11 +940,9 @@ extern "C" __declspec(noinline) void placeKizMarker(UnkKizunaSelf59394* self,
 }
 
 
-// Build the line layout from the shared arc string(+0x4C), then copy the
-// animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
-// extern "C" + noinline keeps same-TU callers (CKizunagram::OnFileEvent)
-// emitting retail's unmangled `bl` without inlining.
-extern "C" __declspec(noinline) void buildRadarLayout(UnkKizunaSelfAFC* self) {
+// Build the line layout from the shared arc string(+0x4C), then copy the animated
+// position at +0x4C of the slot-15 result into the +0x14 Vec2.
+extern "C" void buildRadarLayout(UnkKizunaSelfAFC* self) {
     buildLayout(&self->field8, self->field4, lbl_eu_8050CB20);
     UnkKizunaLCBRes57AFC* res =
         ((UnkKizunaLayoutSub57AFC*)self->field8)->field10->slot15(lbl_eu_8050CB20 + 0x13, 1);
@@ -965,7 +954,7 @@ extern "C" __declspec(noinline) void buildRadarLayout(UnkKizunaSelfAFC* self) {
 // entry, build a textured Picture pane (0xf0-byte allocation from the layout
 // heap), position/name it, attach it to the current-line parent pane, and
 // tint it when appropriate. Returns true once the cursor passes the row limit.
-extern "C" __declspec(noinline) bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
+extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     u16 limit = (u16)(Bdat_GetMaxRow_B1EC(mgr) - 0x64);
     // Unsigned 64-bit subtract; its high word gates the legacy tint below.
@@ -1050,7 +1039,7 @@ extern "C" __declspec(noinline) bool buildKizEntryPanes(UnkKizunaSelf59DE8* self
 
 // Update pass: while the +0x08 child is live, advance the anim at +0x0C unless
 // the +0x10 byte suppresses it, then notify the child via vtable slot 14.
-__declspec(noinline) void tickCurAnim(UnkKizunaSelf57EE0* self) {
+void tickCurAnim(UnkKizunaSelf57EE0* self) {
     if (self->field8) {
         if (self->field10 == 0) {
             advanceAnimTransform(self->field0C, lbl_eu_80668834);
@@ -1059,7 +1048,7 @@ __declspec(noinline) void tickCurAnim(UnkKizunaSelf57EE0* self) {
     }
 }
 
-extern "C" __declspec(noinline) void __ct__CKizunaCur(CKizunaCur* self,
+extern "C" void __ct__CKizunaCur(CKizunaCur* self,
                                  nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mVtable = lbl_eu_805375FC;
     self->mArcResAcc = accessor;
@@ -1073,7 +1062,7 @@ extern "C" __declspec(noinline) void __ct__CKizunaCur(CKizunaCur* self,
 // Selects the kizuna entry matching the given context-item name (the item's
 // +0xBC string): walk all BDAT rows, compare each row's name against it, and
 // return the first row id whose unlock progress flag (row value + 0xa20) is set.
-extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
+extern "C" u16 findKizByName(UnkKizunaSelf5949C* self,
                                                   const char* name) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     u16 count = (u16)Bdat_GetMaxRow_B1EC(mgr);
@@ -1091,7 +1080,7 @@ extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
 // retail: if (field26) { field34=1; field36=field26; field38=const }
 // (same UnkKizunaSelfAB object the tickLineState dispatch passes to the
 // SelIn/SelOut siblings - see the reinterpret_casts at the call sites.)
-extern "C" __declspec(noinline) void lineStartSelect(void* self) {
+extern "C" void lineStartSelect(void* self) {
     UnkKizunaSelfAB* sel = (UnkKizunaSelfAB*)self;
     u16 v = sel->field26;
     if (v != 0) {
@@ -1101,7 +1090,7 @@ extern "C" __declspec(noinline) void lineStartSelect(void* self) {
     }
 }
 
-extern "C" __declspec(noinline) void lineTickSelIn(UnkKizunaSelfAB* self) {
+extern "C" void lineTickSelIn(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668860) {
@@ -1115,7 +1104,7 @@ extern "C" __declspec(noinline) void lineTickSelIn(UnkKizunaSelfAB* self) {
     }
 }
 
-extern "C" __declspec(noinline) void lineTickSelOut(UnkKizunaSelfAB* self) {
+extern "C" void lineTickSelOut(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668864) {
@@ -1140,7 +1129,7 @@ void CKizunagram_resetFields(u8* self){
 // row whose display name matches the current selection's name (or its
 // region-shifted +3 variant), formatting the per-state string for the row's
 // progress state and binding the 'timg' texture onto the resulting pane.
-__declspec(noinline) void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
+void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
     if (self->field36 == 0) {
         return;
     }
@@ -1282,7 +1271,7 @@ void copyKizTag3(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-extern "C" __declspec(noinline) void __ct__CKizunaInfo(CKizunaInfo* self,
+extern "C" void __ct__CKizunaInfo(CKizunaInfo* self,
                                   nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mArcResAcc = accessor;
     self->mVtable = lbl_eu_805375E4;
@@ -1297,11 +1286,10 @@ extern "C" __declspec(noinline) void __ct__CKizunaInfo(CKizunaInfo* self,
 
 CKizunaInfo::~CKizunaInfo() {}
 
-// us-8025d8ac (0x8025B670): build the kizuna line layout + two anim
-// transforms, bind the font to the root pane, publish the 4 font-format
-// values and 6 localized labels, then reset the +0x18 counter.
-// extern "C" + noinline for OnFileEvent's unmangled call shape (see buildRadarLayout).
-extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
+// us-8025d8ac (0x8025B670): build the kizuna line layout + two anim transforms, bind
+// the font to the root pane, publish the 4 font-format values and 6 localized labels,
+// then reset the +0x18 counter.
+extern "C" void buildInfoLayout(UnkKizunaSelfB670* self) {
     buildLayout(&self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
     bindLayoutAnimTransform(self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
     bindLayoutAnimTransform(self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
@@ -1334,7 +1322,7 @@ extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
 // Per-frame display dispatch: while the current-line child (+0x08) is live,
 // run the mode-specific handler for the +0x14 mode byte, then notify the
 // child via vtable slot 14 (retail: cmpwi chain over modes 1/2/4/5).
-extern "C" __declspec(noinline) void tickInfoMode(UnkKizunaSelfC21C* self) {
+extern "C" void tickInfoMode(UnkKizunaSelfC21C* self) {
     if (self->field8) {
         switch (self->field14) {
         case 1:
@@ -1358,7 +1346,7 @@ extern "C" __declspec(noinline) void tickInfoMode(UnkKizunaSelfC21C* self) {
 // slot 2) with a 1 flag, then clear the pointer.
 // The nested identical guards reproduce retail's duplicated test: both beqs
 // share the single loaded pointer (MWCC CSEs the load).
-extern "C" __declspec(noinline) void releaseInfoChild(UnkKizunaSelf57D90* self) {
+extern "C" void releaseInfoChild(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
         if (self->field8 != 0) {
             self->field8->target2(1);
@@ -1369,7 +1357,7 @@ extern "C" __declspec(noinline) void releaseInfoChild(UnkKizunaSelf57D90* self) 
 
 // Set display mode 1 for the current-line child: publish the frame value via
 // vtable slots 7/11 of the child at +0x08, and clear the animation flags.
-extern "C" __declspec(noinline) void infoEnterMode1(UnkKizunaSelfB958* self) {
+extern "C" void infoEnterMode1(UnkKizunaSelfB958* self) {
     self->field14 = 1;
     self->field15 = 0;
     self->field16 = 0;
@@ -1378,7 +1366,7 @@ extern "C" __declspec(noinline) void infoEnterMode1(UnkKizunaSelfB958* self) {
 }
 
 // Same shape as infoEnterMode1 but display mode 4 and value from +0x10.
-extern "C" __declspec(noinline) void infoEnterMode4(UnkKizunaSelfB958* self) {
+extern "C" void infoEnterMode4(UnkKizunaSelfB958* self) {
     self->field14 = 4;
     self->field15 = 0;
     self->field16 = 0;
@@ -1389,7 +1377,7 @@ extern "C" __declspec(noinline) void infoEnterMode4(UnkKizunaSelfB958* self) {
 // Kizuna-line display refresh for a selected kizuna id. Guards on the cached
 // id at +0x18, then either resets all text panes to blanks/zero (v == 0) or
 // rebinds every pane from the BDAT progress tables (name/color/heart counts).
-extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
+extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
                                                     u16 v) {
     // Callers hand us embedded sub-objects typed as UnkKizunaSelf57D90; the
     // real layout also carries the cached-id u16 at +0x18.
@@ -1553,7 +1541,7 @@ extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* s
 // switch the mode byte to 2, set the +0x16 flag, and publish state through
 // the child at +0x08 (slots 14/8 with the transform id, slots 7/11 with
 // the +0x10 transform and a 1 flag).
-extern "C" __declspec(noinline) void infoAnimToMode2(UnkKizunaSelfC21C* self) {
+extern "C" void infoAnimToMode2(UnkKizunaSelfC21C* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
         self->field14 = 2;
         self->field16 = 1;
@@ -1564,7 +1552,7 @@ extern "C" __declspec(noinline) void infoAnimToMode2(UnkKizunaSelfC21C* self) {
     }
 }
 
-extern "C" __declspec(noinline) void infoAnimToMode3(UnkKizunaSelfC21C* self) {
+extern "C" void infoAnimToMode3(UnkKizunaSelfC21C* self) {
     if (advanceAnimTransform(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 3, publish via the child.
         self->field14 = 3;
@@ -1576,7 +1564,7 @@ extern "C" __declspec(noinline) void infoAnimToMode3(UnkKizunaSelfC21C* self) {
 
 // Mode-4 update: same shape as infoAnimToMode2 but mode byte 5 and the
 // +0x10 transform published through slots 8/7/11.
-extern "C" __declspec(noinline) void infoAnimToMode5(UnkKizunaSelfC21C* self) {
+extern "C" void infoAnimToMode5(UnkKizunaSelfC21C* self) {
     if (AnimRewindFrame(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 5, publish via the child.
         self->field14 = 5;
@@ -1594,7 +1582,7 @@ extern "C" __declspec(noinline) void infoAnimToMode5(UnkKizunaSelfC21C* self) {
 // "no split symbols" blocker is stale); on non-zero return: field14=0,
 // field15=1, then [self+8] virtual slot 56 (target14) twice with arg 0,
 // then slot 32 (target8) with arg [self+0xC].
-extern "C" __declspec(noinline) void infoAnimToMode0(UnkKizunaSelfC21C* self) {
+extern "C" void infoAnimToMode0(UnkKizunaSelfC21C* self) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
         self->field14 = 0;
         self->field15 = 1;
@@ -1738,7 +1726,7 @@ void kizCloseChart(UnkKizunaSelfC7FC* self, int arg4) {
 // animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
 // Each display reset: place a fixed color into the +0x68 sub-object, clear
 // its state byte, reset the two line panes, and step the sub-anim.
-extern "C" __declspec(noinline) void kizCursorDir1(UnkKizunaSelfC874* self) {
+extern "C" void kizCursorDir1(UnkKizunaSelfC874* self) {
     // Array member forces a block copy on assignment (retail's interleaved
     // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
     struct VecA { u32 a[3]; };
@@ -1758,7 +1746,7 @@ extern "C" __declspec(noinline) void kizCursorDir1(UnkKizunaSelfC874* self) {
 }
 
 // Same display reset as kizCursorDir1 but with the second color constant.
-extern "C" __declspec(noinline) void kizCursorDir2(UnkKizunaSelfC874* self) {
+extern "C" void kizCursorDir2(UnkKizunaSelfC874* self) {
     // Array member forces a block copy on assignment (retail's interleaved
     // lwz/stw shape); last-declared tmp sits at sp+8, v spans sp+0x14+.
     struct VecA { u32 a[3]; };
@@ -1780,7 +1768,7 @@ extern "C" __declspec(noinline) void kizCursorDir2(UnkKizunaSelfC874* self) {
 // Same display reset as kizCursorDir1 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
-extern "C" __declspec(noinline) void kizCursorDir3(UnkKizunaSelfC874* self) {
+extern "C" void kizCursorDir3(UnkKizunaSelfC874* self) {
     // u32-array view forces retail's word-copy shape; declaring v first puts
     // it at sp+0x14 and the setVec3 temp at sp+8, matching retail's layout.
     struct VecW { u32 w[3]; };
@@ -1804,7 +1792,7 @@ void kizCursorDir4(){}
 // Same display reset as kizCursorDir1 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
 // shared constant in y/z).
-extern "C" __declspec(noinline) void kizCursorDir4(UnkKizunaSelfC874* self) {
+extern "C" void kizCursorDir4(UnkKizunaSelfC874* self) {
     // u32-array view forces retail's word-copy shape (lwz/stw, not lfs/stfs);
     // declaring v first puts it at sp+0x14 and the setVec3 temp at sp+8
     // (matches retail's slot assignment; see kizCursorDir3)
@@ -1865,7 +1853,7 @@ extern "C" u8 kizHasSelFlag(CKizunagramState* self) {
 
 
 // retail: lfs f0,const; li r0,0; stb 0x34; sth 0x36; stfs 0x38
-extern "C" __declspec(noinline) void lineClearSelect(void* self) {
+extern "C" void lineClearSelect(void* self) {
     UnkKizunaSelfAB* sel = (UnkKizunaSelfAB*)self;
     sel->field34 = 0;
     sel->field36 = 0;
@@ -1878,9 +1866,8 @@ extern "C" void kizToggleHelp(void* self) {
 }
 
 // retail: if (field_62) { field_39 = 2; tail lineEnterMode1(self+0x68) }
-// noinline: retail keeps these dispatch handlers out-of-line; without the
 // attribute MWCC folds their bodies into tickKizMain's switch arms.
-extern "C" __declspec(noinline) void tryKizMode2(void* self) {
+extern "C" void tryKizMode2(void* self) {
     if (*(u8*)((char*)self + 0x62) != 0) {
         *(u8*)((char*)self + 0x39) = 2;
         lineEnterMode1((UnkKizunaSelf59228*)((char*)self + 0x68));
@@ -1889,7 +1876,7 @@ extern "C" __declspec(noinline) void tryKizMode2(void* self) {
 
 // Gate: when both the +0x61 and +0x7D bytes are set, raise the +0x39/+0x3C
 // state and tail-call the +0xAC sub-object with the +0x8C flag.
-extern "C" __declspec(noinline) void tryKizMode3(void* self) {
+extern "C" void tryKizMode3(void* self) {
     if (*(u8*)((u8*)self + 0x61) == 0)
         return;
     if (*(u8*)((u8*)self + 0x7D) == 0)
@@ -1916,13 +1903,13 @@ void tryKizIdle(u8* b) {
     b[0x38] = 0;
 }
 
-__declspec(noinline) void tickKizLine(void* self) {}
+void tickKizLine(void* self) {}
 
 // If the sub-state at +0x68 reports active, scale the stored int bit patterns
 // at +0x80..0x88 down by the constant and publish the results. The u32 words
 // are routed through a stack array so MWCC emits the retail lwz/stw/lfs
 // bit-cast round-trips for +0x88 without consuming its result.
-extern "C" __declspec(noinline) void publishKizScaledVals(UnkKizunaSelfCE00* self) {
+extern "C" void publishKizScaledVals(UnkKizunaSelfCE00* self) {
     if (tickKizMarker(reinterpret_cast<UnkKizunaSelf5949C*>(&self->sub68)) != 0) {
         u32 raw[3];
         raw[0] = self->field80;
@@ -1941,7 +1928,7 @@ extern "C" __declspec(noinline) void publishKizScaledVals(UnkKizunaSelfCE00* sel
 
 // Move the line target down by the +0x48 step; once it reaches the floor,
 // latch state 2 and refresh the info/line displays.
-extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self) {
+extern "C" void slideKizDown(UnkKizunaSelfCE78* self) {
     // u32 words force retail's lwz/stw struct copy of the setVec3 result
     // (see kizCursorDir4); v lands at sp+0x14 and the setVec3 temp at sp+8.
     struct VecW { u32 w[3]; };
@@ -1964,12 +1951,11 @@ extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self) {
 
 void tickCurByFlag(){}
 
-// us-8025f08c (0x8025CF40): when both +0x30/+0x34 pointers are present, build a
-// fresh CKizunaLine, copy it into the +0x68 line state (field-by-field,
-// including the +0x18..+0x20 pad words the ctor leaves uninitialized), then
-// rebuild the line display and re-fetch the two cur/line panes via slot 15.
-// extern "C" + noinline for OnFileEvent's unmangled call shape (see buildRadarLayout).
-extern "C" __declspec(noinline) void rebuildKizLine(UnkKizunaSelfCF40* self) {
+// us-8025f08c (0x8025CF40): when both +0x30/+0x34 pointers are present, build a fresh
+// CKizunaLine, copy it into the +0x68 line state (field-by-field, including the
+// +0x18..+0x20 pad words the ctor leaves uninitialized), then rebuild the line display
+// and re-fetch the two cur/line panes via slot 15.
+extern "C" void rebuildKizLine(UnkKizunaSelfCF40* self) {
 // explicit == 0 early-return reproduces retail's beq / bne-b branch pair
     if (self->field30 == 0 || self->field34 == 0)
         return;
@@ -2009,15 +1995,12 @@ extern "C" __declspec(noinline) void rebuildKizLine(UnkKizunaSelfCF40* self) {
                 (int)(lbl_eu_8050CB20 + 0x8b), 1);
 }
 
-// File-load completion callback for the kizuna chart: whichever bind file
-// finished (line-data handle at +0x28 or current-kizuna handle at +0x2C) gets
-// its buffer detached and re-attached into a fresh ArcResourceAccessor built
-// under a scratch MEM2 region (RAII Class_8045F858 guard), then the matching
-// sub-display is rebuilt. Sub-objects are constructed into stack temps and
-// copied member-wise into place (the manual vtable word is not part of the
-// copy). Retail builds this with the block stmw/lmw save, so the function is
-// compiled under optimize_for_size like COption::OnFileEvent.
-#pragma optimize_for_size on
+// File-load completion callback for the kizuna chart: whichever bind file finished
+// (line-data handle at +0x28 or current-kizuna handle at +0x2C) gets its buffer
+// detached and re-attached into a fresh ArcResourceAccessor built under a scratch MEM2
+// region (RAII Class_8045F858 guard), then the matching sub-display is rebuilt.
+// Sub-objects are constructed into stack temps and copied member-wise into place (the
+// manual vtable word is not part of the copy).
 
 // Word-wise view of the radar build temp: retail moves the float members as
 // integer bits (lwz/stw), so the copy aliases them through u32 fields.
@@ -2116,7 +2099,6 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
-#pragma optimize_for_size off
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // sinit_8025D304: init the 14-color kizuna line palette via setGXColorS10.
@@ -2141,7 +2123,7 @@ void sinit_8025D304() {
 // pane's scale) into the "line" pane's size, then scale the +0x0C pane's
 // translate by the ratio of the two reference-pane size deltas into the line
 // pane's translate. Finally pulse the layout anim.
-__declspec(noinline) void layoutKizLinePanes(UnkKizunaSelf57B6C* self) {
+void layoutKizLinePanes(UnkKizunaSelf57B6C* self) {
     if (self->field8 != 0) {
         if (self->field10 != 0) {
             nw4r::math::VEC2 sc = self->field10->GetScale();
@@ -2190,7 +2172,7 @@ __declspec(noinline) void layoutKizLinePanes(UnkKizunaSelf57B6C* self) {
 // toggle its visibility per unlock state; unlocked rows get their texture tag
 // rewritten from per-state string tables, then the texture is bound to the
 // pane. Returns true once the cursor passes the table row count.
-extern "C" __declspec(noinline) bool revealKizEntries(UnkKizunaSelfA11C* self) {
+extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
     // declaration/statement order mirrors retail's register assignment
     // (self=r28, str=r26, fp=r31, count=r30, i=r29, tag-const=r27)
     char buf[0x24];
@@ -2378,7 +2360,7 @@ void tickKizMain(UnkKizunaSelfC580* self) {
 
 // Countdown timer at +0x40: decrement; when it hits zero reset the state
 // bytes, then publish the remaining scaled count into the slot-15 pane result.
-extern "C" __declspec(noinline) void lineCountDown(UnkKizunaSelf59D44* self) {
+extern "C" void lineCountDown(UnkKizunaSelf59D44* self) {
     self->field40 = self->field40 - lbl_eu_80668834;
     if (self->field40 <= lbl_eu_80668828) {
         self->field14 = 4;

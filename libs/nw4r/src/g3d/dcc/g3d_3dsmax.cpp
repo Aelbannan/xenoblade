@@ -8,7 +8,6 @@ namespace detail {
 namespace dcc {
 namespace {
 
-#pragma dont_inline on
 // Open item: FPR coloring plateau -- retail colors su/sv/g8/g4/g0 as
 // f5/f1/f0/f3/f4, MWCC always f2/f3/f0/f4/f5 (15 pure FPR reg_swaps, 0
 // structural; both mw_versions, decl-order variants invariant). Witness
@@ -302,7 +301,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][2] = suc * m02 + sus * m12;
     pMtx->m[1][2] = nsvs * m02 + svc * m12;
 }
-#pragma dont_inline reset
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 

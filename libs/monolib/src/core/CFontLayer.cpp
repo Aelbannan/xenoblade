@@ -36,8 +36,9 @@ extern "C" u32 lbl_eu_80663598;
 extern "C" u32 lbl_eu_8056BF80[];
 
 // The retail ctor symbol is the un-mangled `__ct__CFontLayer` (not the C++
-// member mangling); hand-writing it as an extern "C" free function also
-// suppresses the local vtable emission (no key function defined in this TU).
+// member mangling), so it is written as an extern "C" free function; CView's
+// compiler-emitted base-ctor call names the mangled symbol and the frozen
+// CView.o UNIT_RULES entry retargets that reference onto this retail name.
 extern "C" void* __ct__CFontLayer(CFontLayer* self) {
     *(void**)self = (void*)lbl_eu_8056BF80;
     func_804525F0__11CDeviceFontFv((CDeviceFont*)self);

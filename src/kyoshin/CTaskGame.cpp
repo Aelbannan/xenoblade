@@ -203,7 +203,7 @@ void CTaskGame::Init(){
         CTaskManager::GetRootProcScn(), lbl_eu_80661908, 0x440000, mem1,
         &param));
     Scn_GetCamWorkInt(unk74, unk70, 0);
-    CfRes_setD80Flag(unk74);
+    CfRes_setD80Flag((u32)unk74);
     __ct__8009D604();
     createGameEffTask(this, unk74);
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();

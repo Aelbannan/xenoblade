@@ -665,9 +665,9 @@ void EffRender_PassFirst(EffectRoot* self) {
 
 // EffRender_PassBase: bind-linked render pass. Runs only when both CLytBind links
 // resolve and flags1 has bits 5, 10 and 11 all clear. Kept outlined
-// (__declspec(noinline)): retail calls it via bl (different original TU), but
+// (): retail calls it via bl (different original TU), but
 // -ipa file would inline this same-cpp body into EffRender_PassFirst.
-void __declspec(noinline) EffRender_PassBase(EffectRoot* self) {
+void EffRender_PassBase(EffectRoot* self) {
     if (lytBindCanResolveTarget(self->link0) == 0) return;
     if (lytBindCanResolveTarget(self->link1) == 0) return;
     u16 flags = self->flags1;
@@ -715,9 +715,9 @@ void EffRender_PassSecond(EffectRoot* self) {
 }
 
 // EffRender_PassFlag5: bind-linked render pass. Runs when both links resolve and
-// flags1 has bit 5 set and bit 10 clear. Kept outlined (__declspec(noinline))
+// flags1 has bit 5 set and bit 10 clear. Kept outlined ()
 // like EffRender_PassBase - retail calls it via bl.
-void __declspec(noinline) EffRender_PassFlag5(EffectRoot* self) {
+void EffRender_PassFlag5(EffectRoot* self) {
     if (lytBindCanResolveTarget(self->link0) == 0) return;
     if (lytBindCanResolveTarget(self->link1) == 0) return;
     u16 flags = self->flags1;
@@ -750,7 +750,7 @@ extern "C" void EffSys_Thunk8688(void) { EffCtl_EmptyStub88(); }
 // EffRender_SetupGX: set up the GX vertex formats, TEV stage 1, channel/alpha
 // state and ambient color used by the effect render passes. noinline keeps
 // callers emitting a real bl (retail calls it) instead of inlining.
-void __declspec(noinline) EffRender_SetupGX() {
+void EffRender_SetupGX() {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S8, 1);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);

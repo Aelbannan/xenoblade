@@ -6,6 +6,7 @@
 #include <revolution/MTX.h>
 #include <revolution/mtx/vec.h>
 #include "monolib/lod/UnkClass_8046A530.hpp"  // LOD::UnkClass_8046A530 definition
+#include "monolib/lod/UnkClass_8046D144.hpp"  // enclosing LOD manager
 #include "monolib/lod/LODMemMan.hpp"   // provides full LOD::LODMemMan definition
 #include "monolib/core/code_804E36DC.hpp"  // declares operator delete(C ABI)
 #include "monolib/math/CVec3.hpp"      // ml::CVec3 + nw4r math inlines (VEC3*, FrSqrt, Warning)
@@ -101,15 +102,13 @@ LOD::LODMemMan& LOD::UnkClass_8046A530::GetMemMan() {
 }
 
 /**
- * Virtual thunk: adjust 'this' to point to the LODMemMan sub-object
- * embedded at offset 0xa44, then forward to LODMemMan::func_80471834().
- *
- * Equivalent to:
- *   addi r3, r3, 0xa44
- *   b initElementBuffers__Q23LOD9LODMemManFv
+ * Forwarder tail call into the embedded LODMemMan's buffer init (retail:
+ * `addi r3, r3, 0xa44; b LODMemMan::initElementBuffers`).  Called from the
+ * CTaskLOD factory with (handle, size); the LODMemMan is a member of the
+ * enclosing manager, so this is a method of that class.
  */
-void LOD::UnkClass_8046A530::getLodVisState() {
-    GetMemMan().initElementBuffers();
+void LOD::UnkClass_8046D144::initElementBuffers(u32 handle, u32 size) {
+    mMemMan.initElementBuffers(handle, size);
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +321,7 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: retail keeps the updateLod* walk helpers out of line; -ipa off / -inline noauto both lose all 4 fns
 extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int flags, f32 scale) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     f32 step = l->field_0x120C * scale;

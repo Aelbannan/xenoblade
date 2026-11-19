@@ -116,6 +116,7 @@ public:
 
     void SetLpfFreq(f32 freq);
     void SetRemoteFilter(int filter);
+    void SetVoiceOutParam(int voice, const VoiceOutParam& rParam);
     void SetOutputLine(int flag);
 
     void SetMainOutVolume(f32 volume);
@@ -165,8 +166,7 @@ private:
 
 private:
     AxVoice* mAxVoice[CHANNEL_MAX][VOICES_MAX]; // at 0xC (2x4 ptrs = 0x20)
-    // retail mVoiceOutParam is 6 f32 per slot (not SoundParam's 8-field 0x20)
-    f32 mVoiceOutParam[VOICES_MAX][6];          // at 0x2C (4x0x18 = 0x60)
+    VoiceOutParam mVoiceOutParam[VOICES_MAX];    // at 0x2C (4x0x18 = 0x60)
     int mChannelCount;                          // at 0x8C
     int mVoiceOutCount;                         // at 0x90
 

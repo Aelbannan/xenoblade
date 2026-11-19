@@ -978,7 +978,6 @@ int adxf_read_sj32(void *adxf, int n, void *sj) {
     return r;
 }
 #pragma push
-#pragma auto_inline off
 /* adxf_ReadNw32 - queue a non-waiting sector read. Allocates an SJRBF ring
  * buffer over the caller's memory, binds it as the sector cache, and kicks
  * off adxf_read_sj32 under lock. Note the request is enqueued before the
@@ -1117,7 +1116,6 @@ int ADXF_Stop(void *adxf) {
 /* adxf_Stop - stop a stream: enqueue a stop request, flush the sector cache
  * callback if present, and return the position where playback stopped. */
 #pragma push
-#pragma auto_inline off
 int adxf_Stop(void *adxf) {
     s32 idx;
     u16 seq;
@@ -1186,7 +1184,6 @@ int adxf_Stop(void *adxf) {
  * bookkeeping while reading (status==2), and rearm after a finished
  * sequential read (b3 set once the last block was queued). */
 #pragma push
-#pragma auto_inline off
 void adxf_ExecOne(struct AdxFsWork *work) {
     struct AdxFsCb *cb;
     s32 base;
@@ -1288,7 +1285,6 @@ int ADXF_Seek(void *adxf, int offset, int origin) {
 
 int adxf_Seek(void *a, int b, int c);
 #pragma push
-#pragma auto_inline off
 /* adxf_Seek - enqueue a seek request and update the cached position.
  * Resolves an unknown file length (0xFFFFF) once by querying the stream,
  * then applies the seek relative to the requested origin and clamps to

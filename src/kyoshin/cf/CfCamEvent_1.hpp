@@ -1408,7 +1408,7 @@ extern "C" void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
 extern "C" int VecMath_IsTurnLeftXZ(void* dst, void* b, void* c);
 // Pose-solver helper called by CamEvtSolveAimPair.
-extern "C" void cfCam_applyBasis(void* out, void* in, f32 f, void* vec);
+extern "C" void cfCam_applyBasis(void* out, void* in, void* vec, f32 f);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 extern "C" void* Selector_GetInstance(void);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);

@@ -600,7 +600,7 @@ extern "C" {
 // Resource-table function slots (all defined in the linked CfRes.o /
 // IResInfo.o retail objects under these bare names; signatures are opaque
 // to the tables, so plain void(void) declarations carry the relocs).
-void CfRes_getLazyField50(void);
+extern "C" void CfRes_getLazyField50(void);
 void CfRes_getLimit512b(void);
 void isResFlag1(void);
 void resNoop(void);
@@ -621,22 +621,22 @@ void isResFlag0(void);
 void CfRes_dispatchTypeA(void);
 void CfRes_getLimit512c(void);
 void CfRes_dispatchTypeB(void);
-void CfRes_cacheSoundBase(void);
-void CfRes_getLazyFieldAC(void);
+extern "C" void CfRes_cacheSoundBase(void);
+extern "C" void CfRes_getLazyFieldAC(void);
 void CfRes_getLimit32(void);
 void CfRes_getField24(void);
 void CfRes_stub_65D8C(void);
-void CfRes_cacheEffectBase(void);
-void CfRes_getLazyField18(void);
+extern "C" void CfRes_cacheEffectBase(void);
+extern "C" void CfRes_getLazyField18(void);
 void CfRes_getLimit512d(void);
-void CfRes_getLazyField20b(void);
+extern "C" void CfRes_getLazyField20b(void);
 void CfRes_getLimit512e(void);
-void CfRes_getLazyDeviceBuf(void);
+extern "C" void CfRes_getLazyDeviceBuf(void);
 void CfRes_getLimit512f(void);
 void CfRes_stub_65D78(void);
 void CfRes_stub_65D7C(void);
-void CfRes_getLazyField10b(void);
-void CfRes_checkEntryReady(void);
+extern "C" void CfRes_getLazyField10b(void);
+extern "C" void CfRes_checkEntryReady(void);
 void CfRes_vcall16(void);
 void getResMaxCount(void);
 // CfScript vtable slots owned by other TUs (defined in linked CGame.o).

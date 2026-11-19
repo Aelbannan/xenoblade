@@ -22,7 +22,7 @@ class CScn;
 
 // C-ABI imports shared by the menu map-select FX helpers
 extern "C" {
-int CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 }
 
 // Imports used by the landmark FX initializer

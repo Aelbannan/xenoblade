@@ -105,18 +105,18 @@ extern "C" {
     void* getHandleMEM1__Q23mtl10MemManagerFv();
 
     // ---- CfRes helpers ----
-    u32 CfRes_getNameRecCount();
-    void* CfRes_extType(void* r3, s16 r4, void* r5, void* r6, void* r7);
-    void* CfRes_tryResolveLink(u32 a, u32 b, u32 c);
-    void CfRes_tryResolveSlotF4(u32 a, u32 b, u32 c);
-    u32 CfRes_tryResolveSlot130(u32 a, u32 b, u32 c, u32 d);
-    UnkRes866A0* CfRes_getInstPtr80();
+extern "C" u32 CfRes_getNameRecCount();
+extern "C" void* CfRes_extType(void* r3, s16 r4, void* r5, void* r6, void* r7);
+extern "C" void* CfRes_tryResolveLink(u32 a, u32 b, u32 c);
+extern "C" void CfRes_tryResolveSlotF4(u32 a, u32 b, u32 c);
+extern "C" u32 CfRes_tryResolveSlot130(u32 a, u32 b, u32 c, u32 d);
+extern "C" UnkRes866A0* CfRes_getInstPtr80();
     UnkRes866A0* CfRes_getInstPtrBC();
-    UnkRes866A0* CfRes_getInstPtrF8();
-    UnkRes866A0* CfRes_getInstPtr134();
+extern "C" UnkRes866A0* CfRes_getInstPtrF8();
+extern "C" UnkRes866A0* CfRes_getInstPtr134();
     void CfRes_cancelPendingRead(void* child, void* parent);
-    void* CfRes_getLazyField20(void* r3, void* r4);
-    void* CfRes_getLazyField10(void* r3, void* r4);
+extern "C" void* CfRes_getLazyField20(void* r3, void* r4);
+extern "C" void* CfRes_getLazyField10(void* r3, void* r4);
     void* KyoshinHeap_GetField18();
     void* KyoshinHeap_GetField1C();
     void* KyoshinHeap_AllocFld10(void* r3);
@@ -124,7 +124,7 @@ extern "C" {
     void* KyoshinHeap_AllocFld18(u32 size);
     void* KyoshinHeap_AllocFld34(void* r3);
     void* KyoshinHeap_GetField40();
-    void CfRes_tryUpdateSlot16C(void* r3);
+extern "C" void CfRes_tryUpdateSlot16C(void* r3);
     u32 Tok_Pack08(u32 a, u32 b);
     int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);

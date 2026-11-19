@@ -5,7 +5,7 @@ using namespace ml;
 namespace cf {
 
 extern "C" {
-    void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, ml::CVec3 const* dir, f32 unk284);
+    extern "C" void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, ml::CVec3 const* dir, f32 unk284);
     // Default Z value for the camera direction vector, reset on setPos/setLookat.
     extern const f32 lbl_eu_80666268;
 

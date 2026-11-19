@@ -737,7 +737,7 @@ void MoveImplUpdateState(void* self);
 void MoveImplNoopA(void* self);
 void MoveImplSyncEffectState(void* self, int flag);
 void updatePosition(void* self);
-void* CfRes_getInstPtr224();
+extern "C" void* CfRes_getInstPtr224();
 void* CfRes_findEntryById(void* self, u32 id);
 extern u32 lbl_eu_8065FC18[];
 extern "C" void* EffRoot_AddSchedReq(void* mgr, void* bdat, void* global, int r6, int r7, int r8);

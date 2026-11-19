@@ -533,11 +533,11 @@ config.libs = [
             Object(Matching, "kyoshin/menu/CMenuQuestLog.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/CMenuSymbolMark.cpp"),
-            Object(NonMatching, "kyoshin/CQuestWindow.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CQuestWindow.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/CSystemWindow.cpp"),
             # Demoted 2026-10-23: per-function bytes match but raw .text symbol order differs from retail.
             Object(NonMatching, "kyoshin/CSysWinSelect.cpp"),
-            Object(NonMatching, "kyoshin/CTagProcessor.cpp"),
+            Object(NonMatching, "kyoshin/CTagProcessor.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size)
             Object(NonMatching, "kyoshin/CTalkWindow.cpp"),
             Object(NonMatching, "kyoshin/CUIBattleManager.cpp"),
             Object(NonMatching, "kyoshin/CUICfManager.cpp"),
@@ -584,8 +584,8 @@ config.libs = [
             # C name __ct__CCur18; retail calls CCur18::CCur18(ArcResourceAccessor*). Re-promote once
             # CMenuSelectShop has a real constructor.
             Object(NonMatching, "kyoshin/menu/CMenuSelectShop.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuShopSell.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuShopBuy.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuShopSell.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuShopBuy.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/code_8018C5FC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResPcImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/code_8018F8D8.cpp"),
@@ -607,8 +607,8 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CPcEffect07.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuGetItemMulti.cpp"),
             Object(NonMatching, "kyoshin/cf/CSuddenCommu.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuKizunaTalk.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuItemExchange.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuKizunaTalk.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuItemExchange.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/CfSoundMan.cpp"),
             Object(NonMatching, "kyoshin/cf/CfPadTask.cpp"),
             Object(NonMatching, "kyoshin/cf/code_801C2C14.cpp"),
@@ -639,27 +639,27 @@ config.libs = [
                 },
             ),
             Object(NonMatching, "kyoshin/CTitleAHelp.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "kyoshin/CItemBoxGrid.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CItemBoxGrid.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/CCur.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSortMenu.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-O4,p", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size): no auto-inline, so the same-TU helpers stay out of line without noinline/pragma scaffolding
             # Demoted 2026-10-23: per-function bytes match but raw .text symbol order differs from retail.
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
-            Object(NonMatching, "kyoshin/CItemBoxLine.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CItemBoxLine.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             # Demoted 2026-10-23: per-function bytes match but raw .text symbol order differs from retail.
             Object(NonMatching, "kyoshin/CScrollBar.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/code_801F3BE0.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickObject.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectTbox.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResTboxImpl.cpp"),
-            Object(NonMatching, "kyoshin/CPartyStateWin.cpp"),
+            Object(NonMatching, "kyoshin/CPartyStateWin.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size): no auto-inline, so the same-TU helpers stay out of line without noinline/pragma scaffolding
             Object(NonMatching, "kyoshin/CModelDisp.cpp"),
-            Object(NonMatching, "kyoshin/CPartyState.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CPartyState.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/plugin/pluginUnit.cpp"),
-            Object(NonMatching, "kyoshin/menu/parts/CModelDispEquip.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CEquipChange.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/parts/CModelDispEquip.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CEquipChange.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/CfMapMineManager.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxGridSubMenu.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmick.cpp"),
@@ -668,45 +668,56 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfGimmickWarp.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickJump.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickItem.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CMenuMakeCrystal.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/makecrystal/CMenuMakeCrystal.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/makecrystal/CMakeCrystalWin.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CMCCrystalBox.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/makecrystal/CMCCrystalBox.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalInfo.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/makecrystal/CModelDispMakeCrystal.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/makecrystal/CMCCylinderGauge.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalList.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCEffStart.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/menu/CMenuQstCnt.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuQstCnt.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # -func_align 4 after -O4,s: retail tiles this unit's functions at 4 bytes (-O4,s alone re-aligns them to 16 and costs the split 0x60)
+            # Retail CMenuQstCnt .text ends after its MI adjusting thunks at
+            # 0x80228DE4; the QstData members that follow are the next TU.
+            Object(NonMatching, "kyoshin/menu/code_80228DE4.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CQstLogList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CQstLogInfo.cpp"),
-            Object(NonMatching, "kyoshin/CSysWin.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CSysWin.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSelShopWin.cpp"),
             Object(NonMatching, "kyoshin/CExchangeWin.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CPresentWin.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCCrystalSupport.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuArtsSet.cpp"),
-            Object(NonMatching, "kyoshin/CArtsInfo.cpp"),
+            # Retail CMenuArtsSet .text ends after its @88@ MI adjusting thunks
+            # at 0x80231950; the 109 CArtsList/SArts helper bodies that follow
+            # are the next TU.
+            Object(NonMatching, "kyoshin/menu/code_80231950.cpp"),
+            Object(NonMatching, "kyoshin/CArtsInfo.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size): no auto-inline, so the same-TU helpers stay out of line without noinline/pragma scaffolding
             Object(NonMatching, "kyoshin/cf/CfNandManager.cpp"),
             Object(NonMatching, "kyoshin/code_802405F4.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuMapSelect.cpp"),
             Object(NonMatching, "kyoshin/CMapSel.cpp"),
             Object(Matching, "kyoshin/CFade.cpp"),
             Object(NonMatching, "kyoshin/CFloorMap.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuMapSelectSC.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuMapSelectSC.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/menu/CMenuPause.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuCollepedia.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CCollepedia.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuKizunagram.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CKizunagram.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CPcKizunagram.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuCollepedia.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CCollepedia.cpp", extra_cflags=["-O4,s", "-func_align 4", "-ipa off"]),  # -ipa off: -ipa file folds the cursor/category-page helpers into their callers; retail keeps real `bl`s
+            Object(NonMatching, "kyoshin/menu/CMenuKizunagram.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CKizunagram.cpp", extra_cflags=["-O4,s", "-func_align 4", "-ipa off"]),  # -ipa off: -ipa file folds the same-TU helpers regardless of -O4,s / definition order; retail keeps real `bl`s
+            Object(NonMatching, "kyoshin/CPcKizunagram.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/code_8025FB10.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuPassiveSkill.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CPassiveSkill.cpp"),
+            Object(NonMatching, "kyoshin/menu/CMenuPassiveSkill.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CPassiveSkill.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail TU is -O4,s (size): no auto-inline, so the same-TU helpers stay out of line without any noinline/pragma scaffolding
             Object(NonMatching, "kyoshin/cf/CfGimmickEne.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuBattleEnd.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuPlayAward.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuKizunaTalkList.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CKizunaTalkList.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuPlayAward.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # -func_align 4 after -O4,s: retail tiles this unit's functions at 4 bytes (-O4,s alone re-aligns them to 16)
+            # Retail CMenuPlayAward .text ends after its @88@ MI adjusting thunks
+            # at 0x80272AD8; the CPlayAwardEntry/EntryArray/List widget that
+            # follows is the next TU.
+            Object(NonMatching, "kyoshin/menu/code_80272AD8.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuKizunaTalkList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CKizunaTalkList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSysWinBuff.cpp"),
             Object(NonMatching, "kyoshin/cf/ICamControlRemote.cpp"),
             Object(NonMatching, "kyoshin/cf/ICamControlGc.cpp"),
@@ -718,14 +729,22 @@ config.libs = [
             Object(Matching, "kyoshin/cf/chain/CChainTime.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainTimer.cpp"),
             Object(NonMatching, "kyoshin/CSysWinScenarioLog.cpp"),
+            # Retail CSysWinScenarioLog .text ends after its @108@/@112@ MI
+            # adjusting thunks at 0x8028130C; the SysWinLog_* polling/scan
+            # helpers that follow are the next TU.
+            Object(NonMatching, "kyoshin/code_8028130C.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainActorEne.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainActorPc.cpp"),
-            Object(NonMatching, "kyoshin/CEquipItemBox.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuSave.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CSaveLoad.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuPTChangeNotice.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CEquipItemBox.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuSave.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/CSaveLoad.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuPTChangeNotice.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/chain/CChainCombo.cpp"),
             Object(NonMatching, "kyoshin/CSysWinSave.cpp"),
+            # Retail CSysWinSave .text ends after its @108@/@112@ MI adjusting
+            # thunks at 0x80296E20; the three chain-gauge helpers that follow
+            # are the next TU (and own the whole .sdata2 pool).
+            Object(NonMatching, "kyoshin/code_80296E20.cpp"),
             # TU-final: 7/7 FULL_MATCH (hexdiff --all), split 0x440 exact fit.
             # objdiff's section metric shows data 0.0% from the retail
             # compiler-generated dtor .extab/@etb blobs; the authoritative
@@ -734,16 +753,16 @@ config.libs = [
             # kyoshin/realtimeevt/CREvtLight).
             Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
             Object(MatchingCodeOnly, "kyoshin/CTaskGamePic.cpp", extra_cflags=["-RTTI off", "-O4,s", "-func_align 4"]),  # retail has no __RTTI__/type-name pools in this TU (manual lbl_eu_ vtables ship from split-asm); -RTTI off drops the dead local RTTI so the stripped sections stop emitting @61xx pool UNDEFs
-            Object(Matching, "kyoshin/CTaskGameEvt.cpp", extra_cflags=["-O4,s"]),
+            Object(Matching, "kyoshin/CTaskGameEvt.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(Matching, "kyoshin/code_80296898.cpp"),
-            Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s"]),
-            Object(Matching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(Matching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/COption.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/CSkipTimer.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/chain/CChainEffect.cpp"),
             Object(Matching, "kyoshin/cf/voice/CCharVoice.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/CCharVoiceMan.cpp"),
@@ -755,7 +774,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-O4,s"]),  # retail: GC/3.0a5.2 two-compare range checks; -O4,s keeps the loop store as stwx rD,rBase,rOff with separate count/offset induction (O4,p folds to pointer walk)
+            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-O4,s", "-func_align 4"]),  # retail: GC/3.0a5.2 two-compare range checks; -O4,s keeps the loop store as stwx rD,rBase,rOff with separate count/offset induction (O4,p folds to pointer walk)
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp"),
@@ -766,7 +785,7 @@ config.libs = [
             Object(Matching, "kyoshin/menu/code_802ADB08.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CTutorialList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/CLoad.cpp"),
             Object(Matching, "kyoshin/CNandData.cpp"),
@@ -1201,7 +1220,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/gx/GXFrameBuf.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXLight.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/gx/GXTexture.c"),
-            Object(Matching, "RVL_SDK/src/revolution/gx/GXBump.c", mw_version = "Wii/1.0"),
+            Object(Matching, "RVL_SDK/src/revolution/gx/GXBump.c", mw_version = "Wii/1.0", extra_cflags=["-inline noauto"]),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXTev.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXPixel.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXDisplayList.c"),
@@ -1279,7 +1298,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/synpitch.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synsample.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synvoice.c"),
-            Object(Matching, "RVL_SDK/src/revolution/hbm/seq.c", link_transform={
+            Object(Matching, "RVL_SDK/src/revolution/hbm/seq.c", extra_cflags=["-inline noauto"], link_transform={
                 # See HBMAxSound.cpp: link-only rename of the HBMSEQ* symbols
                 # (definitions here, references in HBMAxSound.o) to dodge the
                 # mwldeppc symbol-hash collision in the full link.
@@ -1342,10 +1361,10 @@ config.libs = [
         "nand",
         [
             Object(Matching, "RVL_SDK/src/revolution/nand/nand.c"),
-            Object(Matching, "RVL_SDK/src/revolution/nand/NANDOpenClose.c"),
+            Object(Matching, "RVL_SDK/src/revolution/nand/NANDOpenClose.c", extra_cflags=["-inline noauto"]),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCore.c"),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCheck.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDLogging.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDLogging.c", extra_cflags=["-inline noauto"]),
         ],
     ),
     DolphinLib(
@@ -1384,7 +1403,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/os/OSPlayTime.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSCrc.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSLaunch.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/__ppc_eabi_init.c", extra_cflags=["-O1,p"]),  # __init_user tail-call fold is keyed to the global -opt level; -O1,p keeps its 0x20 frame while the sibling pragmas (source) re-raise __init_cpp/exit to -O4 codegen (MWCC_CASES __init_user entry)
+            Object(NonMatching, "RVL_SDK/src/revolution/os/__ppc_eabi_init.c", extra_cflags=["-O1,p", "-inline noauto"]),  # -inline noauto: keeps the -O4 re-raised __init_cpp out of line (retail keeps a 0x20 bl trampoline in __init_user); unit is -O1,p so __init_user tail-call fold is keyed to the global -opt level; -O1,p keeps its 0x20 frame while the sibling pragmas (source) re-raise __init_cpp/exit to -O4 codegen (MWCC_CASES __init_user entry)
         ],
     ),
     DolphinLib(
@@ -1449,7 +1468,7 @@ config.libs = [
         "wud",
         [
             Object(NonMatching, "RVL_SDK/src/revolution/wud/WUD.c",
-                   extra_cflags=["-O4,p", "-inline on", "-func_align 4"]),
+                   extra_cflags=["-O4,p", "-inline auto", "-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/wud/WUDHidHost.c"),
             Object(Matching, "RVL_SDK/src/revolution/wud/debug_msg.c"),
         ],
@@ -1846,8 +1865,8 @@ config.libs = [
             Object(Matching, "monolib/src/work/CWorkUtil.cpp", extra_cflags=["-func_align 4"]),
             Object(Matching, "monolib/src/core/CProc.cpp", extra_cflags=["-RTTI off"]),  # manual RTTI base lists clash with MWCC auto-RTTI (10322)
             Object(Matching, "monolib/src/core/CProcRoot.cpp", extra_cflags=["-RTTI off"]),  # __RTTI__10IWorkEvent/11CWorkThread conflict with CDeviceBase.hpp inline ctor (10322)
-            Object(Matching, "monolib/src/core/CRsrc.cpp"),
-            Object(Matching, "monolib/src/core/CRsrcData.cpp"),
+            Object(Matching, "monolib/src/core/CRsrc.cpp", extra_cflags=["-ipa off"]),
+            Object(Matching, "monolib/src/core/CRsrcData.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/core/CScriptCode.cpp"),
             Object(NonMatching, "monolib/src/core/CToken.cpp"),
             Object(Matching, "monolib/src/work/CEvent1.cpp"),
@@ -1898,7 +1917,7 @@ config.libs = [
             }),
 			Object(Matching, "monolib/src/device/CDeviceVICb.cpp"),
             Object(Matching, "monolib/src/core/CFontLayer.cpp"),
-            Object(NonMatching, "monolib/src/device/CGXCache.cpp"),
+            Object(NonMatching, "monolib/src/device/CGXCache.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/device/CDevice.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceClock.cpp", link_transform={
                 "renames": [
@@ -1907,7 +1926,7 @@ config.libs = [
                 ],
             }),
             Object(NonMatching, "monolib/src/device/CDeviceFile.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceFileCri.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI/vtable data in this TU (blob lbl_eu_8056C354/408 are hand-built); -RTTI off kills MWCC __RTTI__/typeinfo names
+            Object(NonMatching, "monolib/src/device/CDeviceFileCri.cpp", extra_cflags=["-RTTI off", "-inline noauto"]),  # retail has NO RTTI/vtable data in this TU (blob lbl_eu_8056C354/408 are hand-built); -RTTI off kills MWCC __RTTI__/typeinfo names
             Object(NonMatching, "monolib/src/device/CDeviceFileDvd.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileJob.cpp"),  # vtable + __RTTI__14CDeviceFileJob emitted natively from the real virtual members
             Object(NonMatching, "monolib/src/device/CDeviceFileJobReadDvd.cpp"),
@@ -1925,7 +1944,7 @@ config.libs = [
             Object(Matching, "monolib/src/core/CViewRectDataCore.cpp"),
             Object(MatchingCodeOnly, "monolib/src/lib/CLib.cpp", extra_cflags=["-RTTI off"]),
             Object(Matching, "monolib/src/lib/CLibCri.cpp"),
-            Object(Matching, "monolib/src/lib/CLibCriMoviePlay.cpp"),
+            Object(Matching, "monolib/src/lib/CLibCriMoviePlay.cpp", extra_cflags=["-inline noauto"]),
             Object(Matching, "monolib/src/lib/CLibCriStreamingPlay.cpp"),
             # TU-final 2026: 6/6 FULL_MATCH (hexdiff byte-identical, data
             # 100%, split 0x204 exact). Vtable symbol renamed in symbols.txt
@@ -1960,23 +1979,23 @@ config.libs = [
             Object(NonMatching, "monolib/src/mpfsys/MPFDrawBillLayTex.cpp"),
             Object(NonMatching, "monolib/src/mpfsys/code_8047BB54.cpp"),
             Object(NonMatching, "monolib/src/mpfsys/code_8047CA88.cpp"),
-            Object(Matching, "monolib/src/scn/UnkClass_8047CD0C.cpp"),
+            Object(Matching, "monolib/src/scn/UnkClass_8047CD0C.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/scn/code_8047D2AC.cpp"),
             Object(NonMatching, "monolib/src/scn/UnkClass_8047E110.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp", extra_cflags=["-RTTI off"]),
             Object(NonMatching, "monolib/src/scn/CScnItemId.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemLight.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnItemLight.cpp", extra_cflags=["-ipa off"]),
             Object(Matching, "monolib/src/scn/CScnItemLightNw4r.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemModel.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnItemModel.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/scn/CScnItemModelNw4r.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemPool.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnItemPool.cpp", extra_cflags=["-inline noauto"]),
             Object(Matching, "monolib/src/scn/CScnLightMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnMaruShadowNw4r.cpp"),  # NOT GC/3.0a5.2 (tested 2026: EA48/EA74 regress 100->90, ctor unchanged 75); ctor open item = source-shape scheduling
             Object(NonMatching, "monolib/src/scn/CScnMem.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnRoot.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnRootNw4r.cpp", extra_cflags=["-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0x40 strings, .sdata 0); -RTTI off kills duplicate type name + __RTTI__ copy
             Object(NonMatching, "monolib/src/scn/CScnTexWorkMan.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnVirtualLight.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnVirtualLight.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/scn/code_8049431C.cpp"),
             Object(Matching, "monolib/src/scn/CVirtualLightAmb.cpp"),
             Object(NonMatching, "monolib/src/scn/CVirtualLightDir.cpp"),
@@ -1984,12 +2003,12 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScn.cpp"),  # -O4,p (default): Draw needs separate r29-r31 spills; -O4,s emits stmw
             Object(NonMatching, "monolib/src/scn/CScn_80496B0C.cpp"),
             Object(Matching, "monolib/src/scn/CScnBlend.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnBloom.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnBloom.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/scn/CScnCameraMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnEffectActNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnFadeMan.cpp"),
             Object(Matching, "monolib/src/scn/CScnFilter.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnFilterMan.cpp", extra_cflags=["-ipa off"]),  # retail update() chains D564's opaque return (or r5,r3,r3) - Wii/1.1 -ipa file value-propagates the in-TU dst address away
+            Object(NonMatching, "monolib/src/scn/CScnFilterMan.cpp", extra_cflags=["-ipa off", "-inline noauto"]),  # retail update() chains D564's opaque return (or r5,r3,r3) - Wii/1.1 -ipa file value-propagates the in-TU dst address away
             Object(Matching, "monolib/src/scn/CScnFogMan.cpp"),
             Object(Matching, "monolib/src/scn/CScnFrame.cpp"),
             Object(Matching, "monolib/src/scn/CScnIdMan.cpp"),
@@ -1997,20 +2016,20 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnItemCamera.cpp"),
             Object(NonMatching, "monolib/src/vm/yvm2.c", extra_cflags=["-lang=c99"]),
             Object(Matching, "monolib/src/vm/yvm_debug.c", extra_cflags=["-lang=c99"]),
-            Object(NonMatching, "monolib/src/coli/code_804A6C60.cpp"),
+            Object(NonMatching, "monolib/src/coli/code_804A6C60.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/coli/CColiProcBase.cpp"),
             Object(NonMatching, "monolib/src/coli/CColiProc.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B2FF0.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804BAE10.cpp"),
             Object(NonMatching, "monolib/src/scn/code_804BC9EC.cpp"),
-            Object(NonMatching, "monolib/src/scn/code_804BD8E8.cpp"),
+            Object(NonMatching, "monolib/src/scn/code_804BD8E8.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/scn/code_804BF59C.cpp"),
             Object(NonMatching, "monolib/src/scn/CLight.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/effect/Unknown1.cpp"),
             Object(Matching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail EffCtl_StoreFlagAndParams pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
-            Object(NonMatching, "monolib/src/effect/code_804C8718.cpp"),
+            Object(NonMatching, "monolib/src/effect/code_804C8718.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp"),
             Object(NonMatching, "monolib/src/effect/CETrail.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804D854C.cpp"),
@@ -2026,7 +2045,7 @@ config.libs = [
             Object(Matching, "monolib/src/nand/CNReqtaskCheck.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/effect/CERand.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804DB938.cpp"),
-            Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
+            Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0xC "CPackItem", .sdata 0x8 pair); -RTTI off kills MWCC duplicate type names + __RTTI__ copies
             Object(NonMatching, "monolib/src/core/CArcItem.cpp"),
             Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp"),  # Wii/1.1 (default): 7 functions (AllocPool x2, FindEntryValue, PickRandom, AdvanceVec28/B, BlendFrameU16) are byte-identical only under Wii/1.1; the GC/3.0a5.2 pin only served the three *_ReleaseHandle duplicate-blt guards (open: find their Wii/1.1 source shape). NOTE: -ipa off tested for SchedRes_ReleaseEntries path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
@@ -2037,8 +2056,8 @@ config.libs = [
             Object(Matching, "monolib/src/scn/CMdlMouth.cpp"),
             Object(NonMatching, "monolib/src/scn/CMdlAnmUV.cpp"),
             Object(Matching, "monolib/src/scn/CMdlAnmEye.cpp"),
-            Object(NonMatching, "monolib/src/scn/CMdlLook.cpp"),
-            Object(NonMatching, "monolib/src/scn/CMdlDynamics.cpp"),
+            Object(NonMatching, "monolib/src/scn/CMdlLook.cpp", extra_cflags=["-ipa off"]),
+            Object(NonMatching, "monolib/src/scn/CMdlDynamics.cpp", extra_cflags=["-ipa off"]),
             Object(Matching, "monolib/src/util/CErrorWii.cpp", extra_cflags=["-func_align 4"]),  # retail packed (fn sizes sum exactly to the 0x504 slice); align 16 inserted ori r0,r0,0 loop-head pads in removeCallback + inter-fn padding; IErrorWii dtor lives in CDeviceVI.o, not here
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),

@@ -13,6 +13,7 @@ struct CScnEnvLgtCtrlLgtGate;
 // Cross-TU light types referenced by the CScnEnvLgtCtrl vtable interface and
 // the scnLgtDispatchEnv light-env dispatch (full definitions in their headers).
 class CScnVirtualLight;      // CScnVirtualLight.hpp
+class CScnCameraMan;         // CScnCameraMan.hpp (+0x68 camera work / findItem)
 class CLightEnv;             // CVirtualLightObj.hpp
 struct CScnVirtualLightSub;  // CScnVirtualLight.hpp
 namespace ml { struct CVec3; struct CVec4; }  // monolib/math
@@ -482,6 +483,14 @@ struct CScnEnvLgtCtrlCtorCopy {
     u32 field_0xA4;  // +0xA4
 };
 
+// Layout recovery state (see docs/MWCC_CASES.md "CScnEnvLgtCtrl layout"):
+// +0x04 is the scene-view owner object (CScnItemModelNw4rOwner / OwnerLight
+// views) that holds the camera work at +0x68, the virtual-light manager at
+// +0x5C, the light manager at +0x64 and the fog manager at +0x78; those four
+// are now reached through their real classes (CScnCameraMan, CScnVirtualLight,
+// CScnLightMan, CScnFogMan). Still views here: the +0x38..+0xB8 light-row block,
+// the light-slot / 0xD8-stride entry work structs, and the ptmf target blob
+// (owning class unidentified; the scnLgtPtmf* adapters set its words).
 class CScnEnvLgtCtrl {
 public:
     CScnEnvLgtCtrl();
@@ -684,7 +693,10 @@ extern u8 lbl_eu_8056F960[];
 // View of the CLightEnv light-bank layout read/written by scnLgtApplyAmbColor:
 // per-slot CLight pointers (+0x1140) and the parallel u32 slot fields
 // (+0x1160) refreshed by scnLgtRecomputeSlotField. Mirrors CLightEnv in
-// CVirtualLightObj.hpp.
+// CVirtualLightObj.hpp, which this TU cannot include yet: its
+// LightCtlSetAttnMode(u8*,int) declaration clashes with the
+// LightCtlSetAttnMode(CScnEnvLgtLightView*,u32) import below (four different
+// spellings across the tree).
 struct CScnEnvLgtCtrlLightEnvView {
     u8 _00[0x1140];          // +0x00
     CLight* mSlotPtrs[4];    // +0x1140
@@ -692,22 +704,13 @@ struct CScnEnvLgtCtrlLightEnvView {
     u32 mSlotFields[4];      // +0x1160
 };
 
-// Camera-item view for scnLgtBindCamera: the active light items receive a
-// pointer to the camera item's +0x10C data block (vtable slot 0x10).
-// Address-of-member form keeps MWCC from hoisting the +0x10C computation
-// out of the ring-walk loop (cf. DecEscSj struct-member-address recompute).
-struct CScnEnvLgtCtrlCamView {
-    u8 _00[0x10C];      // +0x00
-    u32 field_0x10C;    // +0x10C
-};
+// scnLgtBindCamera / scnLgtDispatchEnv hand the active light items a pointer to
+// the camera item's +0x10C data block (vtable slot 0x10), i.e. the real
+// CScnCameraItem::mPos (libs/monolib/src/scn/CScnCameraMan.hpp).
 
-// Camera-work blob at the scene view +0x68 (the CScn mCamWork slot);
-// scnLgtBindCamera resolves the active camera through it: the id at +0x34 is
-// passed to CamMan_FindItemA_B158 together with the blob.
-struct CScnEnvLgtCtrlCamWork {
-    u8 _00[0x34];   // +0x00
-    s32 mCamId;     // +0x34
-};
+// The scene view +0x68 (the CScn mCamWork slot) is the real CScnCameraMan
+// (libs/monolib/src/scn/CScnCameraMan.hpp); scnLgtBindCamera resolves the active
+// camera item through mParam->mPool and the camera id at +0x34.
 
 // Owner view for scnLgtDispatchEnv: the +0x5C virtual-light manager handed to
 // scnVlApplyDir4C / scnVlApplyDir6C and the +0x68 camera-work blob.
@@ -715,7 +718,7 @@ struct CScnEnvLgtCtrlOwnerLight {
     u8 _00[0x5C];                      // +0x00
     CScnVirtualLight* field_0x5C;      // +0x5C
     u8 _60[0x08];                      // +0x60
-    CScnEnvLgtCtrlCamWork* field_0x68; // +0x68
+    CScnCameraMan* field_0x68;         // +0x68
     u8 _70[0x08];                      // +0x70
     void* field_0x78;                  // +0x78 (fog manager)
 };
@@ -1220,11 +1223,8 @@ struct CScnEnvLgtMgrView {
     f32 field_0x10C[3];  // +0x10C color triple
 };
 
-// Fog-manager view (owner +0x78): timeout word at +0x24 (scnLgtUpdateSceneLights).
-struct CScnEnvLgtFogManView {
-    u8 _00[0x24];
-    u32 field_0x24;
-};
+// Owner +0x78 is the real CScnFogMan (CScnFogMan.hpp); scnLgtUpdateSceneLights
+// stores its +0x24 timeout word.
 
 // Resource-blob front word poked by scnLgtUpdateSceneLights.
 struct CScnEnvLgtResFront {
@@ -1267,19 +1267,19 @@ extern char lbl_eu_80526300[];
 
 // Same-TU helpers (definitions below).
 extern "C" void scnLgtRankGateLights(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtGate* gate);
-extern "C" __declspec(noinline) void scnLgtPushSlotLights(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtPushSlotLights(CScnEnvLgtCtrl* self,
                                                    CLight* lights, int flag);
-extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
+extern "C" void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
                                                    CLightEnv* env);
 extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* self);
 
-// Camera-item lookup (defined in CScnCameraMan.cpp under the retail flat
-// name CamMan_FindItemA_B158). CScn.hpp only declares a 1-arg stub; the retail call
-// site in scnLgtBindCamera passes the (camera-work blob, id) pair, so the full
-// signature is declared here. extern "C" keeps the flat retail name
-// (typed-param globals get C++-mangled; cf. CScnVirtualLight.hpp).
-struct CScnCameraItem;  // CScnCameraMan.hpp
-extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnEnvLgtCtrlCamWork* cam, s32 id);
+// Camera-item lookup is the CScnCameraMan member findItem(s32) (see
+// CScnCameraMan.hpp). The retail call sites in scnLgtBindCamera /
+// scnLgtDispatchEnv / scnLgtUpdateSceneLights resolve it through the camera-work
+// blob at owner+0x68 (the CScn mCamWork slot) with the camera id at +0x34;
+// this header keeps only the opaque item forward declaration, and the TU casts
+// the blob to CScnCameraMan*.
+struct CScnCameraItem;  // CScnCameraMan.hpp (call sites: CScnEnvLgtCtrl.cpp)
 
 // Cross-TU light-env helpers used by scnLgtDispatchEnv. The full declarations
 // live in CScnVirtualLight.hpp, which cannot be included here (its
@@ -1304,9 +1304,9 @@ extern "C" int scnLgtFillLightVec4(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* 
 // Light-slot refresh (same-TU function, retail flat name): recomputes one
 // CLightEnv slot field. Signature from the scnLgtApplyAmbColor call site
 // (self, light, slot index, reset flag) -> new slot field value. extern "C"
-// keeps the flat retail name (typed-param globals get C++-mangled); noinline
-// keeps the call out-of-line (the stub body would otherwise be inlined).
-extern "C" __declspec(noinline) u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* self,
+// keeps the flat retail name (typed-param globals get C++-mangled); -inline
+// noauto keeps the call out-of-line (the stub body would otherwise be inlined).
+extern "C" u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* self,
                                                    CLight* light, u32 slot,
                                                    u32 reset);
 
@@ -1330,16 +1330,16 @@ extern "C" void Blend_SetFlag2(u8* self, u32 enable);
 
 // Same-TU entry-walkers dispatched by the type-scan functions (separate
 // targets). extern "C" keeps the flat retail name on the call-site reloc
-// (typed-param globals would get C++-mangled); noinline keeps the stub calls
+// (typed-param globals would get C++-mangled); -inline noauto keeps the stub calls
 // out-of-line (the stub bodies would otherwise be inlined, collapsing the
 // retail `bl`). `row` selects the source row (0x20-stride from +0x38). The
 // type-scan callers do not pass it (retail emits a 2-arg call, leaving r5
 // undefined), so there is deliberately no default argument - callers pass a
 // value already resident in the row-argument register instead.
-extern "C" __declspec(noinline) int scnLgtFillTargetBack(u8* entry,
+extern "C" int scnLgtFillTargetBack(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* arg,
                                                     int row);
-extern "C" __declspec(noinline) int scnLgtFillTargetFront(u8* entry,
+extern "C" int scnLgtFillTargetFront(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* arg,
                                                     int row);
 
@@ -1419,25 +1419,25 @@ extern char sLgtAssertMsg[];
 
 // CScnEnvLgtCtrl constructor (retail symbol is the unmangled short form).
 // Builds the controller from an 'STGL' resource header plus an opaque arg.
-// noinline matches the retail out-of-line call from scnLgtFactoryCreate.
-extern "C" __declspec(noinline) CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
+// -inline noauto matches the retail out-of-line call from scnLgtFactoryCreate.
+extern "C" CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
     CScnEnvLgtCtrl* self, const u32* data, void* arg);
 
 // 'STGL' env-light factory (defined in this TU; separate target
 // us-804cabcc): validates the magic word, allocates the 0x168-byte object
 // and runs the constructor. extern "C" keeps the flat retail name on the
-// call-site reloc in scnLgtCreateEnvController; noinline keeps the retail out-of-line
+// call-site reloc in scnLgtCreateEnvController; -inline noauto keeps the retail out-of-line
 // `bl scnLgtFactoryCreate` there (the factory body would otherwise be inlined).
-extern "C" __declspec(noinline) CScnEnvLgtCtrl* scnLgtFactoryCreate(u32 handle,
+extern "C" CScnEnvLgtCtrl* scnLgtFactoryCreate(u32 handle,
                                                                const u32* data,
                                                                void* arg);
 
 // --- scnLgtSetBlendBloom / scnLgtRemoveLgtItem cross-TU imports (retail flat names) ---
 
 // Same-TU scene-root helper (stub defined in this TU). extern "C" keeps the
-// flat retail name on the call reloc; noinline prevents the empty stub body
+// flat retail name on the call reloc; -inline noauto prevents the empty stub body
 // from folding into the call sites.
-extern "C" __declspec(noinline) void scnLgtResetLightState(CScnEnvLgtCtrl* self);
+extern "C" void scnLgtResetLightState(CScnEnvLgtCtrl* self);
 
 // The blend/bloom ctors are owned by their own TUs (CScnBlend.cpp /
 // CScnBloom.cpp, NonMatching); scnLgtSetBlendBloom only emits the ctor calls with
@@ -1661,12 +1661,12 @@ struct CScnEnvLgtCtrlRow14 {
 
 // Typed view of the 0x1C-byte rows installed at self+0x10 / self+0x1C.
 struct CScnEnvLgtCtrlRow1C {
-    u32 field_0x00;   // +0x00
-    u32 field_0x04;
-    u32 field_0x08;
-    f32 field_0x0C;   // +0x0C (copied as float)
-    f32 field_0x10;   // +0x10 (copied as float)
-    u16 field_0x18;
+    u32 field_0x00;   // +0x00 fog color red (word-copied; float-read by the fog push)
+    u32 field_0x04; u32 field_0x08;   // +0x04/+0x08 green/blue
+    f32 field_0x0C;   // +0x0C fog start
+    f32 field_0x10;   // +0x10 fog end
+    u32 field_0x14;   // +0x14 saved GXFogType word (read back as a pointer)
+    u16 field_0x18;   // +0x18 flags (bit 0 = fog type saved)
 };
 
 // Runtime item-array view of CScnEnvLgtCtrl used by scnLgtRefreshLightRows: the ctor

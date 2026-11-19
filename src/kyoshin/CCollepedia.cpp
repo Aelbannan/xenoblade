@@ -28,15 +28,15 @@ int sprintf(char*, const char*, ...);
 extern "C" void clpPrevPageIx(u8*);
 extern "C" u8 clpGetPageCat(u8*);
 extern "C" u32 func_80254144(u8*);
-extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia*);
-extern "C" __declspec(noinline) void clpSetPageVis();
+extern "C" void clpRefreshPage(CCollepedia*);
+extern "C" void clpSetPageVis();
 extern "C" void clpSetSelTxt(CCollepedia*);
 extern "C" void clpRefreshCur(CCollepedia*);
 extern "C" void clpNextCatPg(CCollepedia*);
 extern "C" void clpPrevCatPg(CCollepedia*);
 // Forward declarations for functions defined before target callers
-extern "C" __declspec(noinline) void clpPgOpenDone(CCollepedia*);
-extern "C" __declspec(noinline) void clpPgCloseEnd(CCollepedia*);
+extern "C" void clpPgOpenDone(CCollepedia*);
+extern "C" void clpPgCloseEnd(CCollepedia*);
 extern "C" void clpRebindAnim(CCollepedia*);
 extern "C" u16 func_80254204(u8*, u32, u32);
 extern "C" u8 clpGetCellCnt(u8*, u32, u32);
@@ -55,8 +55,7 @@ extern "C" void clpPlayTblSe(CCollepedia*);
 // (provided by code_80135FDC.hpp in the current tree)
 
 // CCLPCur constructor - sets vtable, stores accessor, zeros everything
-// noinline: retail callers invoke this out-of-line.
-extern "C" __declspec(noinline) void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::ArcResourceAccessor* pAccessor) {
+extern "C" void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::ArcResourceAccessor* pAccessor) {
     self->vtbl() = lbl_eu_80537474;
     self->mArcResAcc = pAccessor;
     self->mpLayout = nullptr;
@@ -108,7 +107,7 @@ void clpInitLayout(CCollepedia* this_) {
     clpRebindAnim(this_);
 }
 
-extern "C" __declspec(noinline) void clpCurAnimate(CBaseCur* this_) {
+extern "C" void clpCurAnimate(CBaseCur* this_) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mVisible == 0) {
         advanceAnimTransform(this_->mpAnimTrans0, lbl_eu_80668800);
@@ -118,7 +117,7 @@ extern "C" __declspec(noinline) void clpCurAnimate(CBaseCur* this_) {
 
 // us-80257984
 // Check if animation at field_3C is done, then disable/enable animations and set state
-extern "C" __declspec(noinline) void clpWaitIntro(CCollepedia* this_) {
+extern "C" void clpWaitIntro(CCollepedia* this_) {
     if (advanceAnimTransform(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_38->SetAnimationEnable(this_->field_44, false);
         this_->field_38->SetAnimationEnable(this_->field_3C, false);
@@ -128,14 +127,13 @@ extern "C" __declspec(noinline) void clpWaitIntro(CCollepedia* this_) {
 }
 
 // Render layout if active and non-null
-extern "C" __declspec(noinline) void clpCurDrawLyt(CBaseCur* this_, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void clpCurDrawLyt(CBaseCur* this_, nw4r::lyt::DrawInfo* drawInfo) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mActive == 0) return;
     drawLayout(this_->mpLayout, drawInfo, 0, 1);
 }
 
-// noinline: retail callers (clpFreeAllRes) invoke this out-of-line
-extern "C" __declspec(noinline) void clpCurCleanup(CBaseCur* this_) {
+extern "C" void clpCurCleanup(CBaseCur* this_) {
     this_->mActive = 0;
     this_->mpAnimTrans0 = nullptr;
     this_->mpAnimTrans1 = nullptr;
@@ -147,7 +145,7 @@ extern "C" __declspec(noinline) void clpCurCleanup(CBaseCur* this_) {
 
 // us-80255630
 // Unbind animation, bind new animation, enable animation, set frame to 0, animate
-extern "C" __declspec(noinline) void clpRebindAnim(CCollepedia* this_) {
+extern "C" void clpRebindAnim(CCollepedia* this_) {
     this_->field_8->UnbindAnimation(this_->field_10_ptr);
     this_->field_8->BindAnimation(this_->field_c_ptr);
     this_->field_8->SetAnimationEnable(this_->field_c_ptr, true);
@@ -246,7 +244,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
 }
 
 // Delete the layout at field_4 if present, then clear the pointer
-extern "C" __declspec(noinline) void clpDelPageLyt(CCollepedia* this_) {
+extern "C" void clpDelPageLyt(CCollepedia* this_) {
     if (this_->field_4 != nullptr) {
         delete this_->field_4;
         this_->field_4 = nullptr;
@@ -254,7 +252,7 @@ extern "C" __declspec(noinline) void clpDelPageLyt(CCollepedia* this_) {
 }
 
 // If layout is loaded, handle state machine and animate
-extern "C" __declspec(noinline) void clpUpdPgState(CCollepedia* this_) {
+extern "C" void clpUpdPgState(CCollepedia* this_) {
     if (this_->field_4 == nullptr) {
         return;
     }
@@ -270,8 +268,7 @@ extern "C" __declspec(noinline) void clpUpdPgState(CCollepedia* this_) {
     this_->field_4->Animate(0);
 }
 
-// noinline: retail callers call this out-of-line.
-extern "C" __declspec(noinline) void clpOpenDetail(CCollepedia* this_) {
+extern "C" void clpOpenDetail(CCollepedia* this_) {
     u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
     if (stateBytes[0] != 0) return;
     stateBytes[0] = 1;
@@ -281,23 +278,21 @@ extern "C" __declspec(noinline) void clpOpenDetail(CCollepedia* this_) {
 }
 
 // Return byte at +0xD from a sub-array entry (indexed by arg)
-// noinline: retail callers invoke this out-of-line.
-extern "C" __declspec(noinline) u32 clpGetRowDone(u8* obj, u32 index) {
+extern "C" u32 clpGetRowDone(u8* obj, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)obj[1];
     return obj[idx * 0x140 + index * 0x34 + 0xD];
 }
 
 // Return byte at +0xC from a sub-array entry (indexed by arg)
-extern "C" __declspec(noinline) u8 clpGetRowSubc(u8* obj, u32 index) {
+extern "C" u8 clpGetRowSubc(u8* obj, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)obj[1];
     return obj[idx * 0x140 + index * 0x34 + 0xC];
 }
 
 // If field_c is 2, set it to 3, clear field_d, and schedule event 0xE
-// noinline: retail callers call this out-of-line.
-extern "C" __declspec(noinline) void clpCloseDetPg(CCollepedia* this_) {
+extern "C" void clpCloseDetPg(CCollepedia* this_) {
     u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
     if (stateBytes[0] != 2) return;
     stateBytes[0] = 3;
@@ -306,16 +301,11 @@ extern "C" __declspec(noinline) void clpCloseDetPg(CCollepedia* this_) {
 }
 
 // Set two named panes (0x82, 0x92) on the layout at field_4
-#pragma push
-#pragma dont_inline on
 extern "C" void clpSetPageNum(CCollepedia* this_, unsigned char arg) {
     setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
     setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x92], arg);
 }
-#pragma pop
 
-#pragma push
-#pragma dont_inline on
 extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
     if (arg2 != NULL) {
         PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x138], (TPLPalette*)arg2);
@@ -324,10 +314,7 @@ extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
         PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x144], (TPLPalette*)arg3);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma dont_inline on
 // us-80255bac
 // Format a pane name, find two panes by name, and call ScalePaneWorldPos to copy text
 // Retail saves r28-r31 with stmw and uses a 0x40-byte stack frame
@@ -339,11 +326,10 @@ extern "C" void clpCalcCurPos(CCollepedia* this_, LayoutContainer* container, in
     nw4r::lyt::Pane* pane2 = ((CLPLytRootView*)container->mpLayout)->rootPane->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
     ScalePaneWorldPos((nw4r::math::VEC3*)this_, pane1, pane2, ((CLPLytRootView*)container->mpLayout)->rootPane);
 }
-#pragma pop
 
 // Check if anim transform is finished; if so, set state to 2
 // field_8 is a Layout* but used as AnimTransform* in this context
-extern "C" __declspec(noinline) void clpPgOpenDone(CCollepedia* self) {
+extern "C" void clpPgOpenDone(CCollepedia* self) {
     if (advanceAnimTransform(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_8), lbl_eu_80668800) != 0) {
         u8* stateBytes = reinterpret_cast<u8*>(&self->field_c_ptr);
         stateBytes[0] = 2;
@@ -354,7 +340,7 @@ extern "C" __declspec(noinline) void clpPgOpenDone(CCollepedia* self) {
 
 // If the anim transform at field_8 is not finished, reset the state flags
 // field_8 is a Layout* but used as AnimTransform* in this context
-extern "C" __declspec(noinline) void clpPgCloseEnd(CCollepedia* this_) {
+extern "C" void clpPgCloseEnd(CCollepedia* this_) {
     if (AnimRewindFrame(reinterpret_cast<nw4r::lyt::AnimTransform*>(this_->field_8), lbl_eu_80668800) != 0) {
         u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
         stateBytes[0] = 0;
@@ -364,8 +350,7 @@ extern "C" __declspec(noinline) void clpPgCloseEnd(CCollepedia* this_) {
 }
 
 // Init the sub-array header (count=0, index=-1) and zero the entry storage
-// noinline: retail callers invoke this out-of-line.
-extern "C" __declspec(noinline) s8* clpInitEStore(s8* this_) {
+extern "C" s8* clpInitEStore(s8* this_) {
     this_[0] = 0;
     this_[1] = -1;
     memset(this_ + 4, 0, 0x2800);
@@ -389,7 +374,7 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
 //  4. select the default category page and append a sentinel page (0x1a),
 //  5. distribute every collected item into the pages' 6x5 grids, starting a
 //     new row whenever the item sub-category changes.
-extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
+extern "C" void clpBuildPages(u8* self_) {
     extern void clpFillEntry(u8* self, int a, int b, int c, int itemId);
 
     u16 n = 0;
@@ -501,9 +486,7 @@ extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
     clpUpdateProg(self_);
 }
 
-// noinline: retail callers tail-branch to this symbol.
-// noinline: retail callers invoke this out-of-line.
-extern "C" __declspec(noinline) bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2) {
+extern "C" bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return false;
     if (arg2 >= 5) return false;
     s8 idx = (s8)this_[1];
@@ -519,7 +502,7 @@ extern "C" __declspec(noinline) bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2
 // Residual (16 mm / 3 structural): MWCC associates the pointer sum as
 // (self+row)+idx while retail folds self+idx first; scheduler-invariant
 // across every source shape tried (flat/subscript/cast/chained-&/locals).
-extern "C" __declspec(noinline) void clpSelectItem(u8* self, u32 row, u32 col) {
+extern "C" void clpSelectItem(u8* self, u32 row, u32 col) {
     if (row >= 6) return;
     if (col >= 5) return;
 
@@ -546,7 +529,7 @@ extern "C" __declspec(noinline) void clpSelectItem(u8* self, u32 row, u32 col) {
 }
 
 // Increment sub-array counter, wrap to 0 at max
-extern "C" __declspec(noinline) void clpNextPageIx(u8* obj) {
+extern "C" void clpNextPageIx(u8* obj) {
     obj[1]++;
     if ((s8)obj[1] >= (s32)obj[0]) {
         obj[1] = 0;
@@ -564,7 +547,7 @@ void CCollepedia_decrementWrap(unsigned char* obj) {
     clpPrevPageIx(obj);
 }
 
-extern "C" __declspec(noinline) char* clpGetPageNam(u8* self) {
+extern "C" char* clpGetPageNam(u8* self) {
     s8 idx = (s8)self[1];
     u8* base = self + idx * 0x140;
     u8 val = base[4];
@@ -582,7 +565,7 @@ unsigned char CCollepedia_getFieldAtIdx(u8* thisPtr) {
 }
 
 // Return a formatted string for the entry at `index` if its byte at +0xC is set
-extern "C" __declspec(noinline) char* clpGetRowName(u8* self, u32 index) {
+extern "C" char* clpGetRowName(u8* self, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)self[1];
     u8 val = self[idx * 0x140 + index * 0x34 + 0xC];
@@ -599,7 +582,7 @@ unsigned char CCollepedia_getFieldOffset(const unsigned char* ptr) {
 
 // Return byte at +0x16 from a sub-sub-array entry (indexed by arg2, arg3)
 // Computes arg2*0x34 first to match retail register order
-extern "C" __declspec(noinline) u8 clpGetCelStat(u8* self, u32 arg2, u32 arg3) {
+extern "C" u8 clpGetCelStat(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)self[1];
@@ -617,7 +600,7 @@ u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
     return reinterpret_cast<CCollepediaEntry*>(ptr)[1].field_08;
 }
 
-extern "C" __declspec(noinline) u16 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3) {
+extern "C" u16 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)this_[1];
@@ -630,7 +613,7 @@ extern "C" __declspec(noinline) u16 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3)
 }
 
 // Load a float from offset 8 of the current sub-array entry
-extern "C" __declspec(noinline) float clpGetPagePrg(u8* this_) {
+extern "C" float clpGetPagePrg(u8* this_) {
     s8 idx = (s8)this_[1];
     return *(float*)(this_ + idx * 0x140 + 8);
 }
@@ -638,7 +621,7 @@ extern "C" __declspec(noinline) float clpGetPagePrg(u8* this_) {
 // us-8025650c
 // Look up an entry in the sub-array, check +0x10 u16 and +0x16 byte.
 // If byte != 1, resolve string via BdatGetPtrDirect.
-extern "C" __declspec(noinline) char* clpGetEntryStr(u8* self, u32 arg1, u32 arg2) {
+extern "C" char* clpGetEntryStr(u8* self, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return nullptr;
     if (arg2 >= 5) return nullptr;
     // Fold the whole entry address into one expression to match retail dataflow
@@ -675,7 +658,7 @@ extern "C" char* clpGetItemName(u8* self, u32 arg2, u32 arg3) {
 // Read u16 at offset 0xE within the indexed sub-array entry
 // If non-zero, resolve via CItem_sumFamilyByte6 and return as u8
 // The sub-array is indexed by: (s8)self[1] * 0x140 + arg2 * 0x34 + arg3 * 0xA + 0xE
-extern "C" __declspec(noinline) u8 clpGetCellCnt(u8* self, u32 arg2, u32 arg3) {
+extern "C" u8 clpGetCellCnt(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)self[1];
@@ -689,7 +672,7 @@ extern "C" __declspec(noinline) u8 clpGetCellCnt(u8* self, u32 arg2, u32 arg3) {
 }
 
 // Load a byte from offset 6 of the current sub-array entry
-extern "C" __declspec(noinline) bool clpIsPageDone(u8* this_) {
+extern "C" bool clpIsPageDone(u8* this_) {
     s8 idx = (s8)this_[1];
     u8* base = this_ + idx * 0x140;
     return *(bool*)&base[6];
@@ -741,7 +724,7 @@ extern "C" void clpFillEntry(u8* self, int a, int b, int c, u16 itemId) {
 // columns all have unlock-state 3 (collected); a page is complete when all
 // its rows are complete. The per-page progress float at +8 is either 1.0
 // (complete page) or collected-count / seen-count.
-extern "C" __declspec(noinline) void clpUpdateProg(u8* self) {
+extern "C" void clpUpdateProg(u8* self) {
     u8* group;
     u8* row;
     u8 i;
@@ -1070,8 +1053,6 @@ void clpReqCloseVw(CCollepedia* this_) {
     playUISound(6);
 }
 
-#pragma push
-#pragma dont_inline on
 // us-802570a0
 // Decrement timer counters (field_DA or field_D9) with wrapping, update display, schedule event
 void clpCursorLeft(CCollepedia* this_) {
@@ -1100,10 +1081,7 @@ void clpCursorLeft(CCollepedia* this_) {
 
     playUISound(1);
 }
-#pragma pop
 
-#pragma push
-#pragma dont_inline on
 // us-80257168
 // Increment timer-based navigation: increment field_DA with wrap, or advance field_D9 and update display
 void clpCursorRght(CCollepedia* this_) {
@@ -1130,7 +1108,6 @@ void clpCursorRght(CCollepedia* this_) {
 
     playUISound(1);
 }
-#pragma pop
 
 // Timer-based countdown that calls clpPrevCatPg when field_D8 reaches 0
 void clpCursorUp(CCollepedia* this_) {
@@ -1182,8 +1159,6 @@ void clpCursorDown(CCollepedia* this_) {
     playUISound(1);
 }
 
-#pragma push
-#pragma dont_inline on
 // us-802573a8
 // Decrement field_D9 with wrapping, update display, and schedule next event
 extern "C" void clpNextCatPg(CCollepedia* this_) {
@@ -1204,10 +1179,7 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
     clpSetSelTxt(this_);
     playUISound(10);
 }
-#pragma pop
 
-#pragma push
-#pragma dont_inline on
 // us-8025744c
 // Decrement field_D9 with wrapping (calls clpPrevPageIx instead of clpNextPageIx)
 extern "C" void clpPrevCatPg(CCollepedia* this_) {
@@ -1226,7 +1198,6 @@ extern "C" void clpPrevCatPg(CCollepedia* this_) {
     clpSetSelTxt(this_);
     playUISound(10);
 }
-#pragma pop
 
 // us-802574f0
 // Handle CCollepedia navigation: check state and dispatch actions.
@@ -1381,7 +1352,6 @@ extern "C" u32 clpIsBusy(CCollepedia* this_) {
 
 // us-80257a1c
 // Check if animation at field_40 is done; if so, set state, init sub-object, switch animations
-__declspec(noinline)
 void clpEnterBrows(CCollepedia* this_) {
     if (advanceAnimTransform(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_49 = 3;
@@ -1398,7 +1368,7 @@ void clpEnterBrows(CCollepedia* this_) {
 
 // us-80257ad0
 // Check if animation at field_40 is still playing; if so, disable field_40 and field_44, enable field_3C, set state to 5
-__declspec(noinline) void clpWaitOutro(CCollepedia* this_) {
+void clpWaitOutro(CCollepedia* this_) {
     if (AnimRewindFrame(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_38->SetAnimationEnable(this_->field_40, false);
         this_->field_38->SetAnimationEnable(this_->field_44, false);
@@ -1408,7 +1378,7 @@ __declspec(noinline) void clpWaitOutro(CCollepedia* this_) {
 }
 
 // Check if animation at field_3C is done, then set state and init sub-object
-extern "C" __declspec(noinline) void clpEnterIdle(CCollepedia* this_) {
+extern "C" void clpEnterIdle(CCollepedia* this_) {
     if (AnimRewindFrame(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_51 = 1;
         this_->field_49 = 0;
@@ -1416,7 +1386,7 @@ extern "C" __declspec(noinline) void clpEnterIdle(CCollepedia* this_) {
     }
 }
 
-extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
+extern "C" void clpEnabDetCur(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
     this_->field_49 = 7;
     this_->field_51 = 1;
@@ -1424,11 +1394,9 @@ extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
     clpRefreshCur(this_);
 }
 
-#pragma push
-#pragma dont_inline on
 // us-80257c18
 // Open the collepedia detail view: set state, enable sub-object, update display, load file
-__declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
+void clpEnterDetail(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
 
     this_->field_49 = 3;
@@ -1450,13 +1418,10 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
     MenuSnd_GetMasterVol_95EC();
     CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
 }
-#pragma pop
 
-#pragma push
-#pragma dont_inline on
 // us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call UIWin_CreateItemMulti
-extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this_) {
+extern "C" void collepediaCreateItemMulti(CCollepedia* this_) {
     if (!reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) return;
 
     this_->field_49 = 12;
@@ -1473,13 +1438,10 @@ extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this
     u32 zero = 0;
     UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, zero);
 }
-#pragma pop
 
 // us-80257d9c
-#pragma push
-#pragma dont_inline on
 // Initialize collepedia display: check condition, set up CSysWin with text, play sounds, load file
-__declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
+void clpOpenComplete(CCollepedia* this_) {
     if (GetItemMulti_IsActiveFlag()) return;
 
     this_->field_49 = 3;
@@ -1500,11 +1462,10 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
     MenuSnd_GetMasterVol_95EC();
     CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
 }
-#pragma pop
 
 // us-80257e64
 // If CSysWin is active, do a table lookup and format a sound/effect call
-__declspec(noinline) void clpPlayTblSe(CCollepedia* this_) {
+void clpPlayTblSe(CCollepedia* this_) {
     if (!reinterpret_cast<CSysWin*>(&this_->field_9C)->isActive()) return;
 
     this_->field_49 = 0x10;
@@ -1532,8 +1493,7 @@ void clpTryShow(CCollepedia* this_) {
 // us-80257f78
 // Load the texture resource for the detail pane selected by `mode` and show it.
 // -O4,s gives the retail stmw/lmw block-save frame.
-// noinline: retail callers (clpRefreshPage) invoke this out-of-line.
-__declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, int mode) {
+void clpSetSlotTex(CCollepedia* this_, const char* name, int mode) {
     void* res = NULL;
     // Mode 3 intentionally shares mode 2's resource and falls through without break.
     switch (mode) {
@@ -1560,8 +1520,7 @@ __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, in
 // us-802580cc
 // Like clpSetSlotTex but mode 3 resolves the resource name from an item id.
 // -O4,s gives the retail stmw/lmw block-save frame (three call sites total).
-// noinline: retail caller clpRefreshPage invokes this out-of-line.
-__declspec(noinline) void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
+void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
     void* tex;
     if (mode == 3) {
         if (id != 0)
@@ -1601,11 +1560,11 @@ void clpSetPageVis(CCollepedia* this_) {
 }
 
 // Stubs for functions called by targets
-extern "C" __declspec(noinline) u8 clpGetPageCat(u8* self) {
+extern "C" u8 clpGetPageCat(u8* self) {
     s8 idx = (s8)self[1];
     return *(u8*)(self + idx * 0x140 + 4);
 }
-extern "C" __declspec(noinline) u32 func_80254144(u8*){ return 0; }
+extern "C" u32 func_80254144(u8*){ return 0; }
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i idiom,
 // see CArtsInfo ConvS32ToF64): build the 0x4330000080000000 bit pattern and
 // subtract the shared sdata2 magic so the lfd references lbl_eu_80668818
@@ -1625,7 +1584,7 @@ static double clpConvS32ToF64(s32 x) {
 // Refresh the detail page: show/hide panes, move the cursor, description
 // text, collected-count label, per-entry rows and texture slots.
 // Retail frame is 0x70 with _savegpr_25: only r25-r31 stay live across calls.
-extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
+extern "C" void clpRefreshPage(CCollepedia* this_) {
     char buf[0x18];
     u8 idx = (u8)(this_->_E9[0] + 1); // retail reads the index byte unsigned
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
@@ -1688,21 +1647,15 @@ extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
     setPaneVisible(markPane, done);
 }
 // Set two pane names on the layout using the current sub-array entry
-#pragma push
-#pragma dont_inline on
-extern "C" __declspec(noinline) void clpSetSelTxt(CCollepedia* this_) {
+extern "C" void clpSetSelTxt(CCollepedia* this_) {
     char* str1 = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2e2], str1, 0);
     char* str2 = clpGetItemName(&this_->field_E8, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
 }
-#pragma pop
-// us-80258550
-// Refresh the collepedia display: detail view routes through the shared
+// us-80258550 Refresh the collepedia display: detail view routes through the shared
 // formatter, list view formats the current entry name and moves the cursor.
-// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
-// body into its earlier callers (late-definition inlining defeats auto_inline off).
-extern "C" __declspec(noinline) void clpRefreshCur(CCollepedia* this_) {
+extern "C" void clpRefreshCur(CCollepedia* this_) {
     // Scratch block: detail-path pane-name buffer at +0x00, cursor
     // position VEC3 at +0x0C, list-path page-name buffer at +0x18.
     u8 work[0x38];

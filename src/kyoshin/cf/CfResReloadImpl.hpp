@@ -227,8 +227,8 @@ namespace cf { class CfObjectMove; }
 // name (same convention as CfObjectModel.hpp).
 // C-ABI imports used by runReloadDrive (defined in CfRes.cpp / IResInfo.cpp /
 // code_800B06A4.cpp / object/CfObjectModel.cpp).
-extern "C" int CfRes_tryDelegateLoad1(u32 handle, u32 state);
-extern "C" int CfRes_tryDelegateLoad0(int handle, int state);
+extern "C" int CfRes_tryDelegateLoad1(int a, int b);
+extern "C" int CfRes_tryDelegateLoad0(int a, int b);
 extern "C" cf::ResReloadFindEntry* findResEntry(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" cf::ResReloadFindEntry* CfRes_findLowEntryOrMark(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" int evtTypeSlot7E(cf::CfResReloadParent* parent);
@@ -256,9 +256,9 @@ extern float lbl_eu_806676A0;
 extern float lbl_eu_806676CC;
 extern const double lbl_eu_806676D0;
 
-extern "C" cf::CfResLookupEntry* CfRes_getEntryPtrCol0(int);
-extern "C" int CfRes_tryResolveType0(int, int, int);
-extern "C" void CfRes_tryReregisterSlot(int, u8*);
+extern "C" char* CfRes_getEntryPtrCol0(int arg);
+extern "C" int CfRes_tryResolveType0(int a, int b, int c);
+extern "C" void CfRes_tryReregisterSlot(int index, u8* ptr);
 extern "C" void CfModel_ReleaseAll(cf::CfResReloadParent*);
 // More C-ABI imports (defined in CfSoundMan.cpp / CfRes.cpp /
 // code_801A929C.cpp); same extern "C" convention as above.

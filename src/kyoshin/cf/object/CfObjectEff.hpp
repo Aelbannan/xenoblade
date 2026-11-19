@@ -22,13 +22,13 @@ extern const float lbl_eu_8066695C;  // default mFloat60 fill (CfObjectEff ctor)
 // reloc. isGlobalCamFlagSet__Fi is declared in kyoshin/cf/code_800F42AC.hpp
 // (extern "C") and included by the cpp.
 extern "C" {
-    void* CfRes_getInstPtr224();
-    void* CfRes_getInstPtr170();
+extern "C" void* CfRes_getInstPtr224();
+extern "C" void* CfRes_getInstPtr170();
     void* CfRes_findEntryById(void* self, u32 id);
     void* CfRes_findKypEntryA(void* self);
     void* CfModel_GetEffOwner(void* obj);
     void* schedFindEntryByKey(void* effect);
-    int CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 }
 
 // C-linkage validity check used by updateEffect_/teardownEff__ (returns the

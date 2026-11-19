@@ -1,6 +1,5 @@
 #include <revolution/GX.h>
 
-#pragma dont_inline on
 void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
                       GXIndTexFormat texFmt, GXIndTexBiasSel biasSel,
                       GXIndTexMtxID mtxId, GXIndTexWrap wrapS,
@@ -20,7 +19,6 @@ void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
     GX_BP_LOAD_REG(cmd);
     gxdt->lastWriteWasXF = FALSE;
 }
-#pragma dont_inline off
 
 void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp) {
     u32 index;

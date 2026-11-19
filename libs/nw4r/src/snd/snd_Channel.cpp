@@ -95,7 +95,7 @@ Channel::Channel()
 Channel::~Channel() {}
 
 void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
-    field_0xF4 = 0;
+    mNextTrackChannel = NULL;
 
     mCallback = pCallback;
     mCallbackData = callbackArg;

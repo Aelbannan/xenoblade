@@ -24,7 +24,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param);
 // it to __ct__CScnRoot__FP8CScnRootPv, which no longer pairs with retail.
 // extern "C" pairs with the retail C-linkage symbol __ct__CScnRoot
 // (MWCC would otherwise remangle); noinline keeps the bl out-of-line.
-extern "C" __declspec(noinline) void __ct__CScnRoot(CScnRoot* root, void* mgr) {
+extern "C" void __ct__CScnRoot(CScnRoot* root, void* mgr) {
     CScnRootLayout* s = (CScnRootLayout*)root;
     s->vtable = (void*)lbl_eu_8056E730;
     s->mpMgr = mgr;

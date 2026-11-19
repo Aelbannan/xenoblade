@@ -211,7 +211,7 @@ extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
         u32 handle1 = ths->ResObj_GetWork_CCBC(1);
         ths->field_00->field_90 = CfRes_findEntryById(entry, handle1);
         ths->field_00->field_90 =
-            CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (u32**)&outC);
+            (u8*)CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (void**)&outC);
         float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
         CfModel_InstallSub(ths->field_00, obj);
@@ -226,7 +226,7 @@ extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
             u32 handle1 = ths->ResObj_GetWork_CCBC(1);
             ths->field_00->field_94 = CfRes_findEntryById(entry, handle1);
             ths->field_00->field_94 =
-                CfRes_lookupStrTable((char*)ths->field_00->field_94, 1, (u32**)&out8);
+                (u8*)CfRes_lookupStrTable((char*)ths->field_00->field_94, 1, (void**)&out8);
             ths->field_00->field_9C = (u8*)initMcaFile(
                 (u32)CfRes_getD80Flag(), (u32)ths->field_00->field_94, (const char*)buf64);
         }

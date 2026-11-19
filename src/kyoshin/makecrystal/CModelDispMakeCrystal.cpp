@@ -212,8 +212,8 @@ void startEnumObjects(void*, unsigned int, unsigned int);
 void* getEntryAt(void*, unsigned int); // &slot -> +0x4 holds the move ptr
 void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
 void* CfRes_getPcGridEntry(short, int);
-int CfRes_isGridLoadIdle();
-void* CfRes_tryResolveToken(u32, void*);
+extern "C" int CfRes_isGridLoadIdle();
+extern "C" void* CfRes_tryResolveToken(u32, void*);
 short CfObjectMove_getSubB0FieldA(void*);
 void CtrlObjectParam_GetSlotTableBase();
 u32 bdatPcPartsRes(u32, s16, u32, u32);

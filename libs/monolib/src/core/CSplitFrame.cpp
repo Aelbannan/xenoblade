@@ -8,21 +8,21 @@
 // us-8043df30: apply() -- push the split rects to both child views. view1 gets
 // the full pane (split line replaces the size along the split axis), view2 gets
 // the remaining pane beyond the border. Runs only while both views exist.
-extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
-    CView* view1 = CViewRoot::getView(self->mView1);
-    CView* view2 = CViewRoot::getView(self->mView2);
+void CSplitFrame::apply() {
+    CView* view1 = CViewRoot::getView(mView1);
+    CView* view2 = CViewRoot::getView(mView2);
 
     if (view1 != nullptr) {
-        CView* parent = self->mParent;
+        CView* parent = mParent;
         ml::CRect16 rect;
         rect.mPos.x = 0;
         rect.mPos.y = 0;
         rect.mSize.x = parent->mRectData.mBoundsSize.x;
         rect.mSize.y = parent->mRectData.mBoundsSize.y;
-        if (self->mVertical != 0) {
-            rect.mSize.y = self->mSplitY;
+        if (mVertical != 0) {
+            rect.mSize.y = mSplitY;
         } else {
-            rect.mSize.x = self->mSplitX;
+            rect.mSize.x = mSplitX;
         }
         view1->setRect(rect);
     }
@@ -34,7 +34,7 @@ extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
         s16 boundsY;
         s16 boundsX;
         CView* parent;
-        parent = self->mParent;
+        parent = mParent;
         ml::CRect16 rect;
         rect.mPos.x = 0;
         rect.mPos.y = 0;
@@ -42,29 +42,29 @@ extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
         rect.mSize.x = boundsX;
         boundsY = parent->mRectData.mBoundsSize.y;
         rect.mSize.y = boundsY;
-        if (self->mVertical != 0) {
-            rect.mPos.y = (s16)(self->mSplitY + parent->mFrame.mBorder);
-            rect.mSize.y = (s16)(boundsY - (s16)(self->mSplitY + parent->mFrame.mBorder));
+        if (mVertical != 0) {
+            rect.mPos.y = (s16)(mSplitY + parent->mFrame.mBorder);
+            rect.mSize.y = (s16)(boundsY - (s16)(mSplitY + parent->mFrame.mBorder));
         } else {
-            rect.mPos.x = (s16)(self->mSplitX + parent->mFrame.mBorder);
-            rect.mSize.x = (s16)(boundsX - (s16)(self->mSplitX + parent->mFrame.mBorder));
+            rect.mPos.x = (s16)(mSplitX + parent->mFrame.mBorder);
+            rect.mSize.x = (s16)(boundsX - (s16)(mSplitX + parent->mFrame.mBorder));
         }
         view2->setRect(rect);
     }
 }
 
 
-extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView1);
+CView* CSplitFrame::getView1() {
+    return CViewRoot::getView(mView1);
 }
 
-extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView2);
+CView* CSplitFrame::getView2() {
+    return CViewRoot::getView(mView2);
 }
 
-extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
-    CView* view1 = CViewRoot::getView(self->mView1);
-    CView* view2 = CViewRoot::getView(self->mView2);
+bool CSplitFrame::isActive() {
+    CView* view1 = CViewRoot::getView(mView1);
+    CView* view2 = CViewRoot::getView(mView2);
     return view1 != nullptr || view2 != nullptr;
 }
 
@@ -230,23 +230,23 @@ void CSplitFrame::getScissorRect2(ml::CRect16& out, const CSplitFrame* self) {
     out.mSize.y = (s16)(y1 - y0);
 }
 
-extern "C" s16 getSplitLine__11CSplitFrameFv(u8* self) {
-    if (*(u8*)((u8*)self + 8) != 0) return *(s16*)((u8*)self + 0xC);
-    return *(s16*)((u8*)self + 0xA);
+s16 CSplitFrame::getSplitLine() {
+    if (mVertical != 0) return mSplitY;
+    return mSplitX;
 }
 
 
 // us-8043e0ec: setSplitLine() -- store the split line, clamp it against the
 // parent viewport (lower: 0 / -border, upper: viewSize + border / viewSize),
 // then re-apply the split rects to both child views like apply().
-extern "C" void setSplitLine__11CSplitFrameFs(CSplitFrame* self, s16 line) {
-    if (self->mVertical != 0) {
-        self->mSplitY = line;
+void CSplitFrame::setSplitLine(s16 line) {
+    if (mVertical != 0) {
+        mSplitY = line;
     } else {
-        self->mSplitX = line;
+        mSplitX = line;
     }
 
-    CView* parent = self->mParent;
+    CView* parent = mParent;
     ml::CRect16 rect2;
     ml::CRect16 rect1;
     ml::CRect16 offset;
@@ -255,42 +255,42 @@ extern "C" void setSplitLine__11CSplitFrameFs(CSplitFrame* self, s16 line) {
     s16 viewSizeX = parent->mRectData.mViewSize.x;
     s16 viewSizeY = parent->mRectData.mViewSize.y;
 
-    if (self->mSplitX < 0) {
-        self->mSplitX = 0;
+    if (mSplitX < 0) {
+        mSplitX = 0;
     }
 
     {
-        s32 maxX = (s32)viewSizeX + self->mParent->mFrame.mBorder;
-        if (self->mSplitX > (s16)maxX) {
-            self->mSplitX = (s16)maxX;
+        s32 maxX = (s32)viewSizeX + mParent->mFrame.mBorder;
+        if (mSplitX > (s16)maxX) {
+            mSplitX = (s16)maxX;
         }
     }
 
     {
-        s32 minY = -(s32)self->mParent->mFrame.mBorder;
-        if (self->mSplitY < (s16)minY) {
-            self->mSplitY = (s16)minY;
+        s32 minY = -(s32)mParent->mFrame.mBorder;
+        if (mSplitY < (s16)minY) {
+            mSplitY = (s16)minY;
         }
     }
 
-    if (self->mSplitY > viewSizeY) {
-        self->mSplitY = viewSizeY;
+    if (mSplitY > viewSizeY) {
+        mSplitY = viewSizeY;
     }
 
     // rect1: full pane for view1 (split line replaces size along the axis).
     {
-        CView* parent = self->mParent;
+        CView* parent = mParent;
         rect1.mPos.x = 0;
         rect1.mPos.y = 0;
         rect1.mSize.x = parent->mRectData.mBoundsSize.x;
         rect1.mSize.y = parent->mRectData.mBoundsSize.y;
-        if (self->mVertical != 0) {
-            rect1.mSize.y = self->mSplitY;
+        if (mVertical != 0) {
+            rect1.mSize.y = mSplitY;
         } else {
-            rect1.mSize.x = self->mSplitX;
+            rect1.mSize.x = mSplitX;
         }
     }
-    CView* view1 = CViewRoot::getView(self->mView1);
+    CView* view1 = CViewRoot::getView(mView1);
     view1->setRect(rect1);
 
     // rect2: remaining pane beyond the border for view2.
@@ -300,21 +300,21 @@ extern "C" void setSplitLine__11CSplitFrameFs(CSplitFrame* self, s16 line) {
         s16 boundsY;
         s16 boundsX;
         CView* parent;
-        parent = self->mParent;
+        parent = mParent;
         rect2.mPos.x = 0;
         rect2.mPos.y = 0;
         boundsX = parent->mRectData.mBoundsSize.x;
         rect2.mSize.x = boundsX;
         boundsY = parent->mRectData.mBoundsSize.y;
         rect2.mSize.y = boundsY;
-        if (self->mVertical != 0) {
-            rect2.mPos.y = (s16)(self->mSplitY + parent->mFrame.mBorder);
-            rect2.mSize.y = (s16)(boundsY - (s16)(self->mSplitY + parent->mFrame.mBorder));
+        if (mVertical != 0) {
+            rect2.mPos.y = (s16)(mSplitY + parent->mFrame.mBorder);
+            rect2.mSize.y = (s16)(boundsY - (s16)(mSplitY + parent->mFrame.mBorder));
         } else {
-            rect2.mPos.x = (s16)(self->mSplitX + parent->mFrame.mBorder);
-            rect2.mSize.x = (s16)(boundsX - (s16)(self->mSplitX + parent->mFrame.mBorder));
+            rect2.mPos.x = (s16)(mSplitX + parent->mFrame.mBorder);
+            rect2.mSize.x = (s16)(boundsX - (s16)(mSplitX + parent->mFrame.mBorder));
         }
     }
-    CView* view2 = CViewRoot::getView(self->mView2);
+    CView* view2 = CViewRoot::getView(mView2);
     view2->setRect(rect2);
 }

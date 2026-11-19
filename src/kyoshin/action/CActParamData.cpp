@@ -15,9 +15,8 @@ extern "C" {
 extern char lbl_eu_80526338[];
 }
 
-// Retail (unmangled) stream-reset entry; distinct from the TU-local
-// C++-linkage unlinkParamRecs.
-extern "C" int unlinkParamRecs(void* table, void* flag, void* stream);
+// Stream-reset entry: one canonical C-linkage declaration in
+// kyoshin/action/CActParamData.hpp (no TU-local duplicate).
 
 // ============================================================
 // Constructor
@@ -314,7 +313,7 @@ void iterLinkedList(){}
 
 void actParamNop0() {}
 
-int getParamByteSel(CActParamData* self, u32 sel) {
+extern "C" int getParamByteSel(CActParamData* self, u32 sel) {
     if (sel != 0) {
         return self->mByte344;
     }
@@ -620,7 +619,7 @@ void resetParamShorts(CActParamData* self) {
     }
 }
 // True when any inline byte entry equals `value`.
-bool hasParamByteVal(CActParamByteList* list, u8 value) {
+extern "C" bool hasParamByteVal(CActParamByteList* list, u8 value) {
     int count = list->mCount2C;
     for (int i = 0; i < count; i++) {
         if (value == list->mEntries[i]) {
@@ -662,7 +661,7 @@ bool hasParamByteVal(CActParamByteList* list, u8 value) {
 void updateParamFloats(CActParamData* self, float arg1, float arg2);
 extern "C" int evalParamChain(CActParamData* data, u32* out,
                                ActParamT1Src* rec, u8 initFlag, u32 gate);
-u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
+extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
                   u32 gate) {
     if (data->mByte216 == 0) {
         data->mByte216 = initFlag;
@@ -1014,7 +1013,8 @@ void updateParamFloats(CActParamData* self, float arg1, float arg2) {
 void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA,
                    void* nodeB) {
     self->mEntry04 = entry;
-    unlinkParamRecs(self, nodeA, nodeB);
+    unlinkParamRecs(reinterpret_cast<CActParamLinkTable*>(self), (int)nodeA,
+                    reinterpret_cast<CActParamRecStream*>(nodeB));
 
     // Sub-object A defaults
     self->mA260 = 0;
@@ -1463,7 +1463,7 @@ check:
     goto advance;
 }
 // walkParamBlkB: r4 = this+0x2E0, tail-branch to walkParamRecords (retail addi r4,r3,0x2e0; b)
-void walkParamBlkB(void* self) {
+extern "C" void walkParamBlkB(void* self) {
     CActParamData* data = static_cast<CActParamData*>(self);
     // Tail-branch to walkParamRecords with the B reset block (retail addi).
     walkParamRecords(data,
@@ -1647,7 +1647,7 @@ call:
 }
 // Clear the stream's record chain: unlink each linkable record from its table
 // slot and stop after the terminator record.
-__declspec(noinline) void
+extern "C" __declspec(noinline) void
 unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream) {
     if (flag == 0) return;
     if (stream->mFlag14 == 0) return;
@@ -1886,7 +1886,7 @@ splice:
 }
 // Float getter: read the float at +0x08 of the optional mPtr18 entry,
 // falling back to the default sdata2 constant when no entry is set.
-float getParamFloat08(CActParamData* self) {
+extern "C" float getParamFloat08(CActParamData* self) {
     CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
@@ -1894,7 +1894,7 @@ float getParamFloat08(CActParamData* self) {
     return entry->mFloat08;
 }
 // Same shape as getParamFloat08 but reads the +0x0C float.
-float getParamFloat0C(CActParamData* self) {
+extern "C" float getParamFloat0C(CActParamData* self) {
     CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
@@ -1904,7 +1904,7 @@ float getParamFloat0C(CActParamData* self) {
 
 // Reset the SubObjB block: snapshot the tag word, wipe all fields to their
 // defaults (three sdata2 float constants), then restore the saved tag.
-void resetParamSubB(CActParamData* self) {
+extern "C" void resetParamSubB(CActParamData* self) {
     u32 tag = self->mField2EC;
     if (self->mField2E8 == 2) tag = self->mField2E8;
     self->mField2E0 = 0;
@@ -1953,7 +1953,7 @@ extern "C" void clearParamShadow(void* data) {
 }
 extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x12); }
 // Save the SubObjA flag/float and SubObjB tag/float into their shadow slots.
-void saveParamShadow(CActParamData* self) {
+extern "C" void saveParamShadow(CActParamData* self) {
     self->mField2CC = self->mField274;
     self->mFloat2D0 = self->mFloat2B4;
     self->mField34C = (u32)self->mPtr2F4;
@@ -1961,7 +1961,7 @@ void saveParamShadow(CActParamData* self) {
 }
 
 // True when SubObjB has a tag pointer, or its fallback word at +0x2F8 is set.
-int hasParamSubObjB(CActParamData* self) {
+extern "C" int hasParamSubObjB(CActParamData* self) {
     int result = 0;
     if (self->mPtr2F4 != 0 || self->mField2F8 != 0)
         result = 1;

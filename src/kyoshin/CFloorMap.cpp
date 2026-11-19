@@ -62,7 +62,7 @@ void* memset(void*, int, unsigned long);
 
 void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
 
-u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
+extern "C" u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
 // Move the map cursor down one row on the current page, wrapping through
@@ -3176,7 +3176,7 @@ void FloorMap_Teardown(CFloorMapFull* p) {
     }
 }
 
-u8 FloorMap_GetField42Gated(void* self) {
+extern "C" u8 FloorMap_GetField42Gated(void* self) {
     if (reinterpret_cast<CScrollBar*>((u8*)self + 0x60)->isVisible()) {
         return *(u8*)((u8*)self + 0x42);
     }
@@ -4214,7 +4214,7 @@ extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)-
 
 u8 CFloorMap::GetActiveFlag58() { return cursor_active_58; }
 
-void FloorMap_ConfirmSelect(void* self) {
+extern "C" void FloorMap_ConfirmSelect(void* self) {
     extern void playUISound(unsigned long);
     u8* p = (u8*)self;
     if (p[0x58] && reinterpret_cast<CSysWin*>(p + 0xB8)->isActive()) {
@@ -4273,7 +4273,7 @@ void FloorMap_LoadMapFiles(void* self) {
 #pragma optimize_for_size off
 
 
-void FloorMap_SetPaneFlag(void* self, u32 arg2) {
+extern "C" void FloorMap_SetPaneFlag(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
@@ -4297,7 +4297,7 @@ void FloorMap_Log2Field208(void* self) {
     p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
 }
 
-u8 FloorMap_GetField208Gated(void* self) {
+extern "C" u8 FloorMap_GetField208Gated(void* self) {
     CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
     if (full->field_58) return 0;
     return full->field_208;
@@ -4305,7 +4305,7 @@ u8 FloorMap_GetField208Gated(void* self) {
 
 extern "C" u8 FloorMap_GetField208Plain(CFloorMapFull* self) { return self->field_208; }
 
-u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
+extern "C" u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
     // Row id -1 (no selection) reads as "not visited".
     u16 val;
     if ((s8)p->field_206 < 0) {
@@ -4325,7 +4325,7 @@ void FloorMap_Log2Field333C(void* self) {
     p[0x333C] = (u32)__cntlzw(p[0x333C]) >> 5;
 }
 
-u32 FloorMap_IsSysWinBusy(void* self) {
+extern "C" u32 FloorMap_IsSysWinBusy(void* self) {
     u8* p = (u8*)self;
     if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return 1;
     return reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened();

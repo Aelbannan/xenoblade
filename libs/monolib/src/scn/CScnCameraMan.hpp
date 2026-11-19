@@ -5,20 +5,8 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/core/CViewRoot.hpp"
+#include "monolib/core/CView.hpp"
 #include "monolib/work/CWorkThread.hpp"
-
-// Minimal CView surface for this TU. The read-only CView header declares
-// enqueueContextMsg arg-less (retail signature is unsigned long), so the members
-// used here are declared with their true retail signatures; the head layout
-// mirrors retail CView (vptr + CWorkThread base, mWorkID at +0x4C).
-class CView {
-public:
-    static CView* getCurrentView();   // getCurrentView__5CViewFv
-    void enqueueContextMsg(u32 arg);      // enqueueContextMsg__5CViewFUl
-
-    u8 _00[0x4C];   // +0x00
-    u32 mWorkID;    // +0x4C
-};
 
 // Camera item in the scene pool's camera list (pool kind 4 via CScnItemPool_lookupSubPool).
 // Head layout mirrors CScnItemCamera: vtable at +0x00, mIndex (camera id) at +0x0C.
@@ -26,7 +14,7 @@ struct CScnCameraItem {
     virtual void vf0() = 0;   // vtable slot 0 (+0x04)
     virtual void vf1() = 0;   // vtable slot 1 (+0x0C)
     virtual void vf2() = 0;   // vtable slot 2 (+0x10)
-    virtual void vf3() = 0;   // vtable slot 3 (+0x14) - invoked by CamMan_RefreshCurrentCamera
+    virtual void vf3() = 0;   // vtable slot 3 (+0x14) - invoked by refreshCurrentCamera()
 
     u32 mParent;   // +0x04
     u16 mType;     // +0x08
@@ -104,74 +92,29 @@ struct CScnCameraEvent {
 };
 
 // C-ABI scene-item-pool accessor (defined with C linkage in CScnItemPool.cpp):
-// returns the pool slot (list) for the given item kind (4 = cameras).
-extern "C" CScnCameraList* CScnItemPool_lookupSubPool(u8* pool, int kind);
-
-// CView primary-vtable mirror: 32 IWorkEvent + 7 CWorkThread + 11 CView virtual
-// slots. MWCC vtables carry an 8-byte RTTI header, so the virtual declared at
-// index N is loaded at vtable+8+4*N; the retail call in this TU targets
-// vtable+0xB8 (= declared index 44, CView_UnkVirtualFunc4). The read-only CView
-// header declares that slot arg-less, so this abstract mirror (never
-// instantiated) expresses the retail call shape with its real argument.
-class CViewVt46 {
-public:
-    virtual void v00() = 0;   // IWorkEvent slots 0..31
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;   // CWorkThread slots 32..38
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;   // CView slots 39..44
-    virtual void v40() = 0;
-    virtual void v41() = 0;
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual void vfB8(void* arg) = 0;  // vtable+0xB8 (CView_UnkVirtualFunc4)
-};
+// returns the pool slot (list) for the given item kind (4 = cameras). The
+// definition returns void*; call sites apply the CScnCameraList view.
+extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
 
 // Scene camera manager: keeps a camera-id -> view-id table and resolves the
-// current camera through the scene pool's camera item list. The retail vtable
-// is a plain data symbol (lbl_eu_8056EA40), so the class is __declspec(novtable)
-// and the destructor re-points the vptr manually (same pattern as CScnLightMan).
-class __declspec(novtable) CScnCameraMan : public IWorkEvent {
+// current camera through the scene pool's camera item list.
+class CScnCameraMan : public IWorkEvent {
 public:
     CScnCameraMan(CScnCameraParam* param);
     virtual ~CScnCameraMan();
     virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
     virtual bool WorkEvent3(UNKTYPE* r4);
+
+    // View registration / lookup helpers (out of line; retail keeps one copy
+    // of each in this TU).
+    void swapViewParam(CView* view, u32 idx);
+    bool syncCameraToView();
+    void refreshCurrentCamera();
+    CWorkThread* getViewThread(s32 id);
+    CScnCameraItem* findItem(s32 id);
+    CScnCameraItem* getItem(s32 id);
+    CScnCameraItem* findViewItem(CScnCameraParam* param);
+    CScnCameraItem* getViewItem(CScnCameraParam* param);
 
     // +0x00: vtable (compiler-managed)
     CScnCameraParam* mParam;   // +0x04
@@ -191,8 +134,6 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int idx);
 // name but the function takes (self, pData, dataSize) - CScriptCode.cpp defines
 // it with C linkage and the exact name, so the call site must too.
 extern "C" void parseLines__11CScriptCodeFv(void* self, u8* pData, u32 dataSize);
-// Retail CScnCameraMan vtable data symbol (stored manually - class is novtable).
-extern "C" u32 lbl_eu_8056EA40[];
 
 // .sdata2 constants shared by the free camera-item functions in this TU.
 // The retail values live in the retail data blob; referencing them by name

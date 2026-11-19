@@ -11,7 +11,6 @@ namespace dcc {
 
 namespace {
 
-#pragma dont_inline on
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = rSrt.Su;
     pMtx->m[0][1] = lbl_eu_80669C98;
@@ -363,7 +362,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][2] = t_s + t_q;
     pMtx->m[0][3] = t_t + (t_k + t_l);
 }
-#pragma dont_inline reset
 
 } // namespace
 

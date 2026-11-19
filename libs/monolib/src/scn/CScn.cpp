@@ -20,6 +20,7 @@ struct VTarget {
 #define IWORK_EVENT_INLINE_DTOR
 #include "monolib/work.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
+#include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -211,9 +212,9 @@ void CScn::removeRenderCB(IScnRender* cb) {
 void CScn::Init() {}
 
 void CScn::Draw() {
-    if (CamMan_SyncCameraToView(mCamWork) != 0) {
-        UnkScn68* cam = mCamWork;
-        CView* view = CamMan_GetViewThread(cam, (s16)cam->unk34);
+    if (((CScnCameraMan*)mCamWork)->syncCameraToView() != 0) {
+        CView* view = (CView*)((CScnCameraMan*)mCamWork)->getViewThread(
+            (s16)((CScnCameraMan*)mCamWork)->mCamId);
         if (view == CView::getCurrentView()) {
             if (unk_3E4 == 0) {
                 lbl_eu_80665908 = this;
@@ -333,8 +334,8 @@ extern "C" bool Scn_IsScaleAtLeastOne(u8* self) {
 extern "C" void* Scn_GetUnk80Resource(u8* self) {
     return isFadeSettled(((CScnMoveView*)self)->fadeMan);
 }
-extern "C" int Scn_GetCamWorkInt(void* _this) {
-    return CamMan_SwapViewParam_AED4((int)((CScn*)_this)->mCamWork);
+extern "C" void Scn_GetCamWorkInt(CScn* self, CView* view, u32 idx) {
+    ((CScnCameraMan*)self->mCamWork)->swapViewParam(view, idx);
 }
 // Fetches the camera item for `id` and copies its +0x194 projection matrix
 // (MTX44, 16 words) into dest. Per-slot coloring recipe (MWCC_CASES.md
@@ -342,10 +343,9 @@ extern "C" int Scn_GetCamWorkInt(void* _this) {
 // retail) while reads/stores run lo-word first (pins emission order); each
 // slot uses a fresh declaration pair so slots 1..7 keep the same colors.
 extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
-    // Two-arg camera lookup (the TU-wide decl above is the 1-arg form kept
-    // for the already-matched single-arg callers).
-    extern ScnCamItemView* CamMan_FindItemA_B158(void* camWork, s32 id);
-    ScnCamItemView* item = CamMan_FindItemA_B158(self->mCamWork, id);
+    // Camera-item lookup by camera id (CScnCameraMan::findItem).
+    ScnCamItemView* item =
+        (ScnCamItemView*)((CScnCameraMan*)self->mCamWork)->findItem(id);
     // Decl order colors the temps (hi -> r0, lo -> r4 like retail); the
     // read/store order below pins the emission order (lo word first).
     u32 w1;
@@ -403,7 +403,7 @@ extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
         dest->w[14] = l7;
     }
 }
-// Payload view of the camera item handed out by CamMan_FindItemB_B1CC:
+// Payload view of the camera item handed out by CScnCameraMan::getItem:
 // Scn_GetCamItem9C/CC return the +0x9C/+0xCC words as untyped payloads.
 struct ScnCamItemPayloadView {
     u8 _00[0x9C];         // 0x00..0x9C
@@ -413,31 +413,30 @@ struct ScnCamItemPayloadView {
 };
 // Get the camera item handle, lazily creating id -1 when missing; returns
 // the item payload +0x9C (the sibling +0xCC variant mirrors it).
-extern "C" void* CamMan_FindItemB_B1CC(void*);
-extern "C" void* Scn_GetCamItem9C(void* self) {
-    void* r = CamMan_FindItemB_B1CC(((CScn*)self)->mCamWork);
+extern "C" void* Scn_GetCamItem9C(void* self, s32 id) {
+    void* r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(id);
     if (!r)
-        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(((CScn*)self)->mCamWork, -1);
+        r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(-1);
     return (void*)&((ScnCamItemPayloadView*)r)->item9C;
 }
 
 // Sibling with the +0xCC payload offset.
-extern "C" void* Scn_GetCamItemCC(void* self) {
-    void* r = CamMan_FindItemB_B1CC(((CScn*)self)->mCamWork);
+extern "C" void* Scn_GetCamItemCC(void* self, s32 id) {
+    void* r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(id);
     if (!r)
-        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(((CScn*)self)->mCamWork, -1);
+        r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(-1);
     return (void*)&((ScnCamItemPayloadView*)r)->itemCC;
 }
-extern "C" int Scn_FindCamItem(void* _this) {
-    return CamMan_FindItemA_B158((int)((CScn*)_this)->mCamWork);
+extern "C" void* Scn_FindCamItem(void* _this, s32 id) {
+    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->findItem(id);
 }
-extern "C" bool Scn_HasCamItem(void* _this) {
-    return CamMan_FindViewItemA((int)((CScn*)_this)->mCamWork);
+extern "C" void* Scn_HasCamItem(void* _this, CScnCameraParam* view) {
+    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->findViewItem(view);
 }
-extern "C" void* Scn_GetCamList(void* _this) {
-    return CamMan_FindViewItemB(((CScn*)_this)->mCamWork);
+extern "C" void* Scn_GetCamList(void* _this, CScnCameraParam* view) {
+    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->getViewItem(view);
 }
-extern "C" void Scn_SetCamIndex(u8* self, int arg) { CamMan_GetViewThread(((CScn*)self)->mCamWork, (short)arg); }
+extern "C" void Scn_SetCamIndex(u8* self, int arg) { ((CScnCameraMan*)((CScn*)self)->mCamWork)->getViewThread((short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
 float Scn_GetFrameDelta(void* self_) {
     CScn* self = (CScn*)self_;

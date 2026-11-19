@@ -24,17 +24,21 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 4 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 5 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,290 / 19,310 (74.0%) — checkpoint 3 was 13,811 (+479; 462 better, 26 worse) |
-| Units complete (linked) | 618 / 1,193 |
-| Matched code / data bytes | 42.6% / 52.5% |
-| Unmatched functions by area | kyoshin 3,366 · monolib 889 · CriWare 340 · nw4r 231 · RVL_SDK 192 · MSL 2 |
-| Faithful hard counts | label 46,370 · mangled_c 2,772 · section 1,415 · offset_cast 5,147 · view_struct 3,187 · noinline 2,358 · rule 276 · rtti_off 19 · foreign_data 581 |
-| Faithful soft counts | field_0x 28,093 · unk_name 1,129 · addr_func 1,013 |
+| Functions at 100% | 14,418 / 19,310 (74.7%); checkpoint 4 was 14,290 (+128; 224 better, 64 worse) |
+| Units complete (linked) | 618 / 1,199 |
+| Matched code / data bytes | 42.9% / 52.5% |
+| Unmatched functions by area | kyoshin 3,239 · monolib 888 · CriWare 340 · nw4r 231 · RVL_SDK 192 · PowerPC_EABI_Support 2 |
+| Faithful hard counts | label 46,332 · mangled_c 2,693 · section 1,414 · offset_cast 4,230 · view_struct 2,905 · noinline 1,321 · rule 276 · rtti_off 19 · foreign_data 589 |
+| Faithful soft counts | field_0x 28,272 · unk_name 1,119 · addr_func 1,013 |
 | UNIT_RULES baseline | 269 (shrink-only) |
+
+Since checkpoint 4: noinline went from 2,358 to 1,321 and offset_cast from 5,147 to 4,230. Nearly all the noinline removals
+came from unit flags (`-O4,s`, `-ipa off`, `-inline noauto`) rather than code changes. About 60 survivors carry
+`// noinline-ok:`.
 
 **noinline is now a hard smell** (since checkpoint 4): `__declspec(noinline)`, `#pragma dont_inline`
 and `#pragma auto_inline off` all count, unless the line carries `// noinline-ok: <what was tried>`.
@@ -42,14 +46,10 @@ The baseline was migrated by adding each unit's current count (+2,358 over 171 u
 The count is higher than the old soft 1,870 because the pragmas now count too. Removing them means
 checking in order: wrong TU boundary → definition order → unit-wide flags (MWCC_PATTERNS).
 
-Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 137/253,
-`cf/CfRes` 67/224, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144,
-`cf/CfCam` 59/181, `cf/CItem` 57/169, `CUICfManager` 56/89, `CFloorMap` 54/75,
-`cf/CtrlObjectParam` 47/109, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84.
+Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 118/253, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109, `CFloorMap` 47/75, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84, `cf/CfCam` 43/181, `code_80135FDC` 43/124, `cf/CfNandManager` 43/48.
 
-Gate state at checkpoint 4: link OK (missing 43), extab OK (27, ratcheted; CMenuBattleChain 3→1),
-text-order OK (11), frozen rules OK (269), registry OK, faithful OK (ratcheted, 21 units).
-Report: `/tmp/xb_ckpt/report_c4.json` (c3: `/tmp/xb_ckpt/report_c3.json`).
+Gate state at checkpoint 5: link OK (missing 43), extab OK (27), text-order OK (11), frozen rules OK (269),
+registry OK, faithful OK (ratcheted, 106 units). Report: `/tmp/xb_ckpt/report_c5.json` (c4: `report_c4.json`).
 NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
 
 ## 3. What this session established (do not re-derive)
@@ -170,14 +170,48 @@ status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
 
+0. **Checkpoint 5 debts (2026-11-19).**
+   - Report losses vs c4, all accepted with causes:
+     - CItemBoxInfo's two ctors: `-ipa file` folds the empty `CItemBoxPage::Reset`, and `-ipa off` costs net −11.
+     - CCollepedia `clpSetupDetPg`: the `-ipa off` flag needed for the noinline removal.
+     - CMenuArtsSet `cbRenderBefore`: 99.88% after the re-cut.
+   - CItemBoxInfo keeps one `#pragma optimize_for_size off` on `setItemBoxVtxColor`. Retail compiled that one function in
+     speed mode inside a size TU; no flag or compiler version reproduces it, so it is probably a real source pragma.
+   - CView: compiler-emitted vtables now, but the generated .data/.rodata order differs from retail. The next step is
+     real `reslist<>`/`CMsgParam<10>` members, so `FORCEKEEP_CView_templates` can go. The ctor dropped from 36.8% to
+     20.9% (it was not matched before). CFontLayer is still novtable because of the frozen CView.o `exact_renames` rule.
+   - mono-vtables re-cut CScnBlend/CScnBloom/CScnCameraMan/CScnEffectActNw4r/CScnFadeMan/CScnFilter .rodata in US only.
+     EU/JP got symbol renames only. Check the EU/JP splits.
+   - LODMemMan identities are settled: the 0x78 `LOD::LODMemMan` sits at +0xA44 inside the 0x1CE0 manager
+     `UnkClass_8046D144`. Its 26 offset_casts and 49 view_structs can now be converted. CMsgParam's vptr at 0x80 is real,
+     so CException's 10 casts need a different approach.
+   - CriWare: `adx_tlk` .bss starts 4 mod 8, which blocks the adx_fs recipe. `mwsfdlib`'s 0x3720 `MWSFDGlobal` is a
+     view over 7 retail .bss symbols and must be decomposed first. `sfd_mpv`'s remaining ✗ functions are incomplete
+     logic (missing dispatch arms), not type problems.
+   - nw4r: the SeqTrack header contradicts retail offsets (offset map in MWCC_CASES). snd_Voice's `VoiceLayout`
+     mirror is now redundant (~100 sites).
+   - code_80231950: `-ipa off` fixes `artsStepState` but loses `__dt__9CArtsListFv`. This supports the theory that
+     the range holds several TUs, but no boundary evidence has turned up yet.
+   - Agents ran `git status` 3 times this wave despite the rule (read-only, nothing changed).
+
 0. **Checkpoint 4 debts (2026-11-19).**
-   - Identity-sweep-2 left 139 byte-identical but unpaired kyoshin helpers (CfRes 52, code_800B06A4 24,
-     CfCam 23, CItem 22, CActParamData 11, CFloorMap 7). `extern "C"` on the definition is blocked by
-     conflicting C-linkage declarations with different parameter types (e.g. `CfRes_tryResolveByBits`,
-     `CItemBlock_getSlotU16`, `cfCam_pitchFromVec`, `FloorMap_*`). Each needs one canonical declaration.
-     First step: make `CfRes_getD80Flag` (code_801A929C.cpp:209) and `CfRes_tryRefreshByBits`
-     (CfGameManager.hpp:660) `extern "C"`. Membership-proven candidates (`cf::IFactoryEvent::FactoryEvent{1,3,4}`,
-     the `cfCam_*` follow/yaw helpers, `getParamFloat08/0C`, …) need real member conversion, not renames.
+   - ✅ MOSTLY DONE (2026-11-19, agent `canon-decl-ky`): 126 of the 139 are now paired
+     (CfRes 52/52, CItem 22/22, CFloorMap 7/7, code_800B06A4 20/24, CActParamData 10/11, CfCam 16/23;
+     report functions +126, unpaired 2,188 → 2,060). Method and the two negative results are in
+     `MWCC_CASES` "kyoshin identity sweep-2": canonical declaration = the definition's signature, then
+     `extern "C"` on the definition, then one cast per non-converting call site. **Do not retry** the
+     remaining 13 without a splits decision:
+     · 6 `cfCam_*` + `pushParamNode` keep the split declaration because unifying it lets MWCC `-ipa file`
+       inline the small body into accepted callers (measured 145→135 ✓ in CfCam). Needs the retail TU
+       boundary for that helper cluster (they are interleaved with their callers, so it is a *multi-split*
+       question, not one cut).
+     · `cf::IFactoryEvent::FactoryEvent{1,3,4}` + `cf::CfObjectMove::CfObjectMove_hasActorScale` are
+       mangled member names emitted by free functions with pre-mangled names; converting them needs the
+       hand-built `.data` function-pointer tables (CfObjectMove.cpp:2441, CfResTboxImpl.cpp:343,
+       CCharVoiceMan) replaced by compiler-emitted vtables.
+     Still-membership-proven-but-flat-named (`getParamFloat08/0C`, `resetParamSubB`,
+     `CItemBlock_*`, `CfResBuf_popRecord`) are now `extern "C"` and paired; memberizing them is a
+     symbol-rename + `rename_syms.py` job for the class-recovery phase.
    - The handoff's `xargs -n 50 nm -u --format=posix` census recipe is broken (the `file:` prefix drops names);
      run `nm` once per object.
    - nw4r snd: BasicSound has 4 functions at 100% instructions that still fail on the frozen
@@ -187,6 +221,31 @@ status.
    - Report WORSE entries are section re-cut side effects (CMenuBattleChain/CMenuBattleEnd/CTalkWindow
      `.rodata`/`extabindex`, CSysWinSave). Re-check them after the sibling TU-tail re-cuts.
    - SKILL.md's template advice (`#pragma auto_inline off`) now counts as a hard smell; reconcile it.
+   - smell-mono (wave c5): CScnCameraMan member conversion is blocked. `CamMan_FindItemA_B158` is called from
+     CScnEnvLgtCtrl and CScnVirtualLight, and CScnCameraMan.hpp declares a local minimal `class CView` that
+     contradicts the real CView.hpp. CView's last 2 offset_casts are the `novtable` + hand-vtable debt: let MWCC
+     emit the vtable/RTTI/thunks, with the template vtables in retail order. code_804DEDA8's tex views are Monolith's
+     own texture record, not `nw4r::g3d::ResTex`. Dead duplicates: `include/monolib/core/CSplitFrame.hpp`
+     (unused) and `libs/monolib/src/core/CView.hpp` (stale stub the faithful tool picks as CView's header).
+   - tu-tail-ky (wave c5) made 5 TU re-cuts: code_80296E20, menu/code_80228DE4, menu/code_80272AD8,
+     menu/code_80231950 and code_8028130C. Their faithful baselines were added at current scores (each split
+     is neutral or better).
+     - The moved units' data is sliced but still uses `extern lbl_eu_*` (rodata/sdata2/sbss).
+     - code_80231950 overflows its split by 0x224: `artsStepState` should be a cmpwi chain with one `bl`
+       per case, and there are 71 noinline uses, so the range may hold several TUs.
+     - CSysWinBuff and CMenuGameClear: their trailing bodies are the head of the next unit, so the
+       neighbour's start needs to move back.
+     - CSysWinSave.hpp has 2 dead `lbl_eu_80668BA0*` declarations.
+     - `-O4,s` overrides an earlier `-func_align 4`; add `-func_align 4` after it (MWCC_PATTERNS §16).
+   - canon-decl-ky (wave c5) paired 127 of the 139 helpers (+128 report). It typed the unified flat helpers'
+     parameters from their definitions (`int`), which forced ~22 caller casts such as `(int)ptr` and `(u32)ptr`.
+     Integer and pointer parameters compile identically, so the casts point to the original types being pointers.
+     Recover the pointer types and drop the casts. Membership-proven helpers that are now `extern "C"`
+     (`getParamFloat08/0C`, `resetParamSubB`, `CItemBlock_*`, `CfResBuf_popRecord`) still need memberizing.
+   - CTagProcessor: the 23 flat `__ct__CTagCode*(void*)` stubs write vtable labels by hand. They should be real
+     `CTagCode*` classes with compiler-emitted ctors and vtables.
+   - faithful.py's `view_struct` now exempts classes that retail names via a ctor/dtor/vtable symbol
+     (only `CView` today). Lower the baseline at the next checkpoint.
 
 0a. **Checkpoint 3 debts.**
    - Post-checkpoint-3 debts (2026-11-19):

@@ -57,7 +57,7 @@ void __OSInitNet(void) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: the NWC24 shutdown chain must stay out of line; -ipa off drops 4 fns from 100% to <10%
 
 NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     s32 result;
@@ -155,7 +155,7 @@ s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
 
 #pragma pop
 
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: retail keeps the shutdown request out of its callers; -ipa off drops 4 fns from 100% to <10%
 NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
     static s32 shtBuffer[8] ALIGN(32);
     static s32 shtResult[8] ALIGN(32);
@@ -179,7 +179,7 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
     NWC24iIsRequestPending = TRUE;
     return 0;
 }
-#pragma dont_inline off
+#pragma dont_inline off  // noinline-ok: closes the block above
 
 static BOOL NWC24iIsAsyncRequestPending_();
 

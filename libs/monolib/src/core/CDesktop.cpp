@@ -84,9 +84,10 @@ CDesktop* CDesktop::getInstance(){
     return lbl_eu_806656AC;
 }
 
-// noinline: retail wkStandbyLogin calls getView out-of-line (bl getView__8CDesktopFv)
-// rather than inlining the singleton read.
-__declspec(noinline) CView* CDesktop::getView(){
+// retail wkStandbyLogin calls getView out-of-line (bl getView__8CDesktopFv)
+// rather than inlining the singleton read; -ipa file / -inline auto fold it in,
+// -ipa off and -inline noauto both lose more elsewhere.
+__declspec(noinline) CView* CDesktop::getView(){  // noinline-ok: -ipa off / -inline noauto lose 2-4 fns
     CDesktop* desktop = lbl_eu_806656AC;
     if(desktop == nullptr){
         return nullptr; 
@@ -239,7 +240,7 @@ bool CDesktop::wkStandbyLogout(){
 // the retail body, hence the free-function form).
 // optimize_for_size on: retail saves r30+r31 via stmw, not stw.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) CProc* getCurrentProc__8CDesktopFv(){
+extern "C" __declspec(noinline) CProc* getCurrentProc__8CDesktopFv(){  // noinline-ok: retail OnFileEvent keeps bl to it; see getView
     CView* view = CViewRoot::getCurrent();
     if(view == nullptr){
         return nullptr;

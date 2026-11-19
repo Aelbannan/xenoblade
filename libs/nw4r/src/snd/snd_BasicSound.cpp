@@ -391,27 +391,24 @@ void BasicSound::Update() {
 
         u32 priority = 0;
 
-        f32 voiceOutParam[PlayerParamSet::VOICE_OUT_NUM]
-                          [PlayerParamSet::VOICE_OUT_PARAM_NUM];
+        VoiceOutParam voiceOutParam[PlayerParamSet::VOICE_OUT_NUM];
 
-        voiceOutParam[0][0] = 1.0f;
-        voiceOutParam[0][1] = 1.0f;
-        voiceOutParam[0][2] = 0.0f;
-        voiceOutParam[0][3] = 0.0f;
-        voiceOutParam[0][4] = 0.0f;
-        voiceOutParam[0][5] = 0.0f;
+        voiceOutParam[0].volume = 1.0f;
+        voiceOutParam[0].pitch = 1.0f;
+        voiceOutParam[0].pan = 0.0f;
+        voiceOutParam[0].surroundPan = 0.0f;
+        voiceOutParam[0].fxSend = 0.0f;
+        voiceOutParam[0].lpfFreq = 0.0f;
 
-        f32(*pParam)[PlayerParamSet::VOICE_OUT_PARAM_NUM] =
-            &voiceOutParam[1];
-        f32(*pEnd)[PlayerParamSet::VOICE_OUT_PARAM_NUM] =
-            &voiceOutParam[PlayerParamSet::VOICE_OUT_NUM];
+        VoiceOutParam* pParam = &voiceOutParam[1];
+        VoiceOutParam* pEnd = &voiceOutParam[PlayerParamSet::VOICE_OUT_NUM];
         while (pParam < pEnd) {
-            (*pParam)[0] = 1.0f;
-            (*pParam)[1] = 1.0f;
-            (*pParam)[2] = 0.0f;
-            (*pParam)[3] = 0.0f;
-            (*pParam)[4] = 0.0f;
-            (*pParam)[5] = 0.0f;
+            pParam->volume = 1.0f;
+            pParam->pitch = 1.0f;
+            pParam->pan = 0.0f;
+            pParam->surroundPan = 0.0f;
+            pParam->fxSend = 0.0f;
+            pParam->lpfFreq = 0.0f;
             pParam++;
         }
 

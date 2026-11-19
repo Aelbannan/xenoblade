@@ -234,7 +234,6 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
 }
 
 #pragma push
-#pragma auto_inline off
 void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
 {
     UINT16 raw;

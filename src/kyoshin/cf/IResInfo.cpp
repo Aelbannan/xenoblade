@@ -52,7 +52,7 @@ extern "C" {
     int KyoshinHeap_GetBlk94(int);
     int KyoshinHeap_GetBlk98(int);
     int KyoshinHeap_GetPtrTblA(int, int, int);
-    u32 CfRes_lookupNameTable(u32*, int, u32*);
+extern "C" u32 CfRes_lookupNameTable(u32*, int, u32*);
     int Tok_GetPrefix(void*);
     bool KyoshinHeap_HasActive54(void*);
     bool KyoshinHeap_Contains38(void*);

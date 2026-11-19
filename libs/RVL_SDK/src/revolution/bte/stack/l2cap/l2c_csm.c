@@ -187,7 +187,6 @@ void l2c_csm_w4_l2ca_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 /* Forward data packets to the upper layer (L2CAP data path helper). */
 void forward_peer_data(tL2C_CCB *p_ccb, BT_HDR *p_buf);
 
-#pragma auto_inline off
 
 /* Forward queued upper-layer data to the peer: prepend the HCI ACL header
  * (handle + start flag) and the L2CAP header (length + remote CID) in the

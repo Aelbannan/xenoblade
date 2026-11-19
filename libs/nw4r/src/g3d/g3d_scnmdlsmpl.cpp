@@ -733,7 +733,6 @@ ScnMdlSimple::ScnMdlSimple(MEMAllocator* pAllocator, ResMdl mdl,
     mpAnmObjMatClr = NULL;
     mpAnmObjTexPat = NULL;
     mpAnmObjTexSrt = NULL;
-    mpAnmObjShp = NULL;
 
     // Record which bytecode streams are missing so later passes can skip them.
     if (mpByteCodeCalc == NULL) {

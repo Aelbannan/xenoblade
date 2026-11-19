@@ -24,7 +24,7 @@ struct VoiceNodeLayout {
 struct VoiceLayout {
     u8 _pad0[0xC];                                 // 0x0
     AxVoice* mAxVoice[CHANNEL_MAX][4];            // 0xC  (VOICES_MAX=4)
-    float mVoiceOutParam[4][6];                   // 0x2C  (VOICES_MAX=4, 6 f32/elt)
+    VoiceOutParam mVoiceOutParam[4];               // 0x2C  (VOICES_MAX=4)
     int mChannelCount;                             // 0x8C
     int mVoiceOutCount;                            // 0x90
     void* mCallback;                               // 0x94
@@ -88,22 +88,22 @@ Voice::Voice() {
     // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest
     // with a runtime-counted loop (MWCC emits the div-by-24 count machinery
     // only for the pointer-loop form, not for a constant index loop).
-    v.mVoiceOutParam[0][0] = lbl_eu_8066A098;
-    v.mVoiceOutParam[0][1] = lbl_eu_8066A098;
-    v.mVoiceOutParam[0][2] = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0][3] = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0][4] = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0][5] = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0].volume = lbl_eu_8066A098;
+    v.mVoiceOutParam[0].pitch = lbl_eu_8066A098;
+    v.mVoiceOutParam[0].pan = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0].surroundPan = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0].fxSend = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0].lpfFreq = lbl_eu_8066A09C;
 
-    float(*pParam)[6] = &v.mVoiceOutParam[1];
-    float(*pEnd)[6] = &v.mVoiceOutParam[VOICES_MAX];
+    VoiceOutParam* pParam = &v.mVoiceOutParam[1];
+    VoiceOutParam* pEnd = &v.mVoiceOutParam[VOICES_MAX];
     while (pParam < pEnd) {
-        (*pParam)[0] = lbl_eu_8066A098;
-        (*pParam)[1] = lbl_eu_8066A098;
-        (*pParam)[2] = lbl_eu_8066A09C;
-        (*pParam)[3] = lbl_eu_8066A09C;
-        (*pParam)[4] = lbl_eu_8066A09C;
-        (*pParam)[5] = lbl_eu_8066A09C;
+        pParam->volume = lbl_eu_8066A098;
+        pParam->pitch = lbl_eu_8066A098;
+        pParam->pan = lbl_eu_8066A09C;
+        pParam->surroundPan = lbl_eu_8066A09C;
+        pParam->fxSend = lbl_eu_8066A09C;
+        pParam->lpfFreq = lbl_eu_8066A09C;
         pParam++;
     }
 
@@ -209,7 +209,7 @@ void Voice::Calc() {
         for (int i = 0; i < mVoiceOutCount; i++) {
             f32 pitch = mPitch;
             if (field_0xA1 == 0) {
-                pitch *= mVoiceOutParam[i][1];
+                pitch *= mVoiceOutParam[i].pitch;
             }
             for (int j = 0; j < mChannelCount; j++) {
                 if (mAxVoice[j][i] != NULL) {
@@ -235,7 +235,7 @@ void Voice::Calc() {
         // CalcAxLpf(): per-voice LPF cutoff scaled by voiceOutParam.lpf.
         for (int i = 0; i < mVoiceOutCount; i++) {
             u16 freq = static_cast<u16>(
-                Util::CalcLpfFreq(mLpfFreq + mVoiceOutParam[i][5]));
+                Util::CalcLpfFreq(mLpfFreq + mVoiceOutParam[i].lpfFreq));
             for (int j = 0; j < mChannelCount; j++) {
                 if (mAxVoice[j][i] != NULL) {
                     mAxVoice[j][i]->SetLpf(freq);
@@ -289,7 +289,7 @@ void Voice::Update() {
         for (int i = 0; i < v.mVoiceOutCount; i++) {
             f32 pitch = v.mPitch;
             if (v.field_0xA1 == 0) {
-                pitch *= v.mVoiceOutParam[i][1];
+                pitch *= v.mVoiceOutParam[i].pitch;
             }
             for (int j = 0; j < v.mChannelCount; j++) {
                 if (v.mAxVoice[j][i] != NULL) {
@@ -507,12 +507,12 @@ void Voice::Setup(const WaveData& rData, u32 offset) {
     }
 
     for (int i = 0; i < mVoiceOutCount; i++) {
-        mVoiceOutParam[i][0] = 1.0f;
-        mVoiceOutParam[i][1] = 1.0f;
-        mVoiceOutParam[i][2] = 0.0f;
-        mVoiceOutParam[i][3] = 0.0f;
-        mVoiceOutParam[i][4] = 0.0f;
-        mVoiceOutParam[i][5] = 0.0f;
+        mVoiceOutParam[i].volume = 1.0f;
+        mVoiceOutParam[i].pitch = 1.0f;
+        mVoiceOutParam[i].pan = 0.0f;
+        mVoiceOutParam[i].surroundPan = 0.0f;
+        mVoiceOutParam[i].fxSend = 0.0f;
+        mVoiceOutParam[i].lpfFreq = 0.0f;
     }
 
     mIsPause = false;
@@ -855,7 +855,7 @@ void Voice::CalcAxVe() {
     baseVolume *= AxManager::GetInstance().GetOutputVolume();
 
     for (int i = 0; i < mVoiceOutCount; i++) {
-        f32 volume = baseVolume * mVoiceOutParam[i][0];
+        f32 volume = baseVolume * mVoiceOutParam[i].volume;
         f32 target = volume * mVeTargetVolume;
         f32 init = volume * mVeInitVolume;
 
@@ -1015,7 +1015,7 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         mainVolume = v.mMainOutVolume;
         mainSend = v.mMainSend;
 
-        fxSendA = ut::Clamp(v.mFxSend[AUX_A] + v.mVoiceOutParam[voice][4],
+        fxSendA = ut::Clamp(v.mFxSend[AUX_A] + v.mVoiceOutParam[voice].fxSend,
                             lbl_eu_8066A09C, lbl_eu_8066A098);
         fxSendB = v.mFxSend[AUX_B];
         fxSendC = v.mFxSend[AUX_C];
@@ -1103,8 +1103,8 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
     }
 
     if (v.mChannelCount > 1 && v.field_0x114 == PAN_MODE_BALANCE) {
-        f32 pan = v.mPan + v.mVoiceOutParam[voice][2];
-        f32 surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice][3];
+        f32 pan = v.mPan + v.mVoiceOutParam[voice].pan;
+        f32 surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan;
 
         if (channel == 0) {
             left = Util::CalcPanRatio(pan, panInfo);
@@ -1133,8 +1133,8 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         case OUTPUT_MODE_DPL2: {
             TransformDpl2Pan(
                 &pan, &surroundPan,
-                v.mPan + voicePan + v.mVoiceOutParam[voice][2],
-                v.mSurroundPan + v.mVoiceOutParam[voice][3]);
+                v.mPan + voicePan + v.mVoiceOutParam[voice].pan,
+                v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan);
             break;
         }
 
@@ -1142,8 +1142,8 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         case OUTPUT_MODE_SURROUND:
         case OUTPUT_MODE_MONO:
         default: {
-            pan = v.mPan + voicePan + v.mVoiceOutParam[voice][2];
-            surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice][3];
+            pan = v.mPan + voicePan + v.mVoiceOutParam[voice].pan;
+            surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan;
             break;
         }
         }
@@ -1357,14 +1357,17 @@ void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(nw4r::snd::detail::Voice* self
         v.mSyncFlag |= nw4r::snd::detail::Voice::SYNC_AX_BIQUAD;
     }
 }
-extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(unsigned char* self, int index, const float* param) {
-    float* dst = reinterpret_cast<float*>(self + index * 0x18 + 0x2c);
-    dst[0] = param[0];
-    dst[1] = param[1];
-    dst[2] = param[2];
-    dst[3] = param[3];
-    dst[4] = param[4];
-    dst[5] = param[5];
-    *reinterpret_cast<unsigned short*>(self + 0xa2) |= 0x003c;
+void nw4r::snd::detail::Voice::SetVoiceOutParam(
+    int voice, const nw4r::snd::VoiceOutParam& rParam) {
+    VoiceOutParam& rDst = mVoiceOutParam[voice];
+
+    rDst.volume = rParam.volume;
+    rDst.pitch = rParam.pitch;
+    rDst.pan = rParam.pan;
+    rDst.surroundPan = rParam.surroundPan;
+    rDst.fxSend = rParam.fxSend;
+    rDst.lpfFreq = rParam.lpfFreq;
+
+    mSyncFlag |= SYNC_AX_SRC | SYNC_AX_VE | SYNC_AX_MIX | SYNC_AX_LPF;
 }
 extern "C" void InvalidateData__Q44nw4r3snd6detail5VoiceFPCvPCv() {}

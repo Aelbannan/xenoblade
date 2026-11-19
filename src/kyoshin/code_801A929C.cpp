@@ -206,7 +206,7 @@ union SndConv {
 };
 
 extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
-int CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 D80VolObj* Scn_QueryUnk80State();
 extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);

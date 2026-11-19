@@ -7,7 +7,6 @@ namespace detail {
 namespace dcc {
 namespace {
 
-#pragma dont_inline on
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = rSrt.Su;
     pMtx->m[0][1] = lbl_eu_80669CB0;
@@ -351,7 +350,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][2] = suCos * m02 - suSin * m12;
     pMtx->m[1][2] = svSin * m02 + svCos * m12;
 }
-#pragma dont_inline reset
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 

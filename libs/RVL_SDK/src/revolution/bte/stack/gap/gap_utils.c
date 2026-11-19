@@ -287,7 +287,6 @@ void gap_btm_cback0(void *p_msg)
 /* BTM event dispatcher: index selects the GAP control block (0 or 1),
  * p_msg is the BTM event message. gap_btm_cback0/1 tail-call into it. */
 #pragma push
-#pragma auto_inline off
 /* Retail keeps 2 dead strings (bdaddr/COD logging from the original inq results
    callback) at .data 0xF0/0x134. They are pinned from a same-position anchor
    function so the -ipa off pool layout matches retail: file-scope arrays land

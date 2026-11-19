@@ -21,8 +21,17 @@ struct CRect16;
 //   0x0E  u16      mPaddingE    - alignment padding
 //   0x10  WORK_ID  mView1       - first child view work ID
 //   0x14  WORK_ID  mView2       - second child view work ID
-struct CSplitFrame {
-    void* mVtable; // 0x0
+class CSplitFrame {
+public:
+    virtual ~CSplitFrame();
+
+    CView* getView1();
+    CView* getView2();
+    bool isActive();
+    s16 getSplitLine();
+    void apply();
+    void setSplitLine(s16 line);
+
     CView* mParent; // 0x4
     u8 mVertical; // 0x8  nonzero = vertical split
     u8 mPadding9;

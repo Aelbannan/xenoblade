@@ -1018,7 +1018,6 @@ stop:
     // into the handleViBeginFrame thunk; dont_inline keeps the retail tail
     // branch (`subi r3,r3,0x1C4; b onMovieViBegin`) from being folded away.
 #pragma push
-#pragma dont_inline on
     void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Empty
     }
@@ -1049,7 +1048,6 @@ extern "C" void thunk_452_dt(void* self, int flag) {
     __dt__16CLibCriMoviePlayFv((char*)self - 0x1C4, flag);
 }
 
-#pragma auto_inline off
 extern "C" void handleViBeginFrame__16CLibCriMoviePlayFv(void* self) {
     onMovieViBegin__16CLibCriMoviePlayFv((CLibCriMoviePlay*)((char*)self - 0x1C4));
 }

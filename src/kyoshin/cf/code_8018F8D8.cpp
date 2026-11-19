@@ -51,7 +51,7 @@ extern "C" {
     int*  CtrlObjectParam_GetSlotTableBase();
     void CfSoundMan_StopAllModes(int mode);
     void* NandPartySnap();
-    void CfRes_tryRefreshSlot298(u32 a, u32 b);
+extern "C" void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
     bool isGlobalCamFlagSet__Fi(int mask);
@@ -76,7 +76,7 @@ extern "C" {
     int  CfRes_lookupLocalIndex(s32 arg);
     int  CCharVoiceMan_IsNodeActive(u32 value);
     void func_8009EB2C(int a, int b, u8* c);
-    int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
+extern "C" int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
     bool CfRes_markKey(UnkClass_80085334* obj, u32 mode);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();

@@ -98,7 +98,6 @@ CRsrcData::~CRsrcData() {
 #pragma optimize_for_size reset
 
 // Load-bearing: retail wkUpdate calls destruct out of line; -ipa file would inline it.
-#pragma dont_inline on
 void CRsrcData::destruct(int arg) {
     if (mRefCount != 0) {
         mRefCount--;
@@ -114,7 +113,6 @@ void CRsrcData::destruct(int arg) {
 
     wkSetEvent(EVT_NONE);
 }
-#pragma dont_inline off
 
 bool CRsrcData::releaseCache(const void* data) {
     if (mCacheData == data) {

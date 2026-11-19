@@ -1499,43 +1499,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         # PLAN.md section 17.6; behaviour:proc-pss-create-view covers semantics.
     ),
     "CView.o": UnitRules(
-        # Post-2025-08-25 rework state (data_vtables.hpp dropped; template
-        # typeinfo emitted by MWCC itself). Raw layout vs retail:
-        # .data  [vtable+B6B0][jumptable@EC(0x20)][rlvt@10C][rlb-blk@118]
-        #        [rbvt@124][mpvt@130]
-        # retail [vtable+B6B0][mpvt@EC][rlvt@F8][rlb-blk@104][rbvt@110] (0x120)
-        #   -> swap M into R's slot, then R into NB's slot (symbols ride with
-        #      their blocks so the lbl_eu_8056B6CC/D8/F0 renames land on the
-        #      right offsets), drop the jumptable, pad to 0x120.
-        # .sdata raw [A2D8][B6B0][22624][_][reslist-nm][B6E4][rlb-nm][_][CMsg-nm]
-        # retail [A2D8][B6B0][CMsg-nm][_][reslist-nm][B6E4][rlb-nm][22624](0x24)
-        #   -> one word swap + retargets onto the retail name strings.
-        # .rodata raw [CF][SJIS][RL][RB][MP] -> retail [MP][RL][RB][CF][SJIS]:
-        #   block swaps home each string (pure bytes, no relocs), zero the
-        #   leftover junk, tail-trim to the retail 0x70.
-        # NOTE: several of these transforms are not idempotent -- hexdiff
-        # re-applies rules to build/us/src on every invocation. Touch this
-        # unit's cpp / force a fresh build before evaluating the gate.
-        swap_data_blocks=(
-            (".sdata", 0x08, 0x20, 0x4),
-            (".data", 0x10C, 0x130, 0xC),   # rlvt <-> mpvt
-            (".data", 0x118, 0x130, 0xC),   # r <-> rlb-blk
-            (".data", 0x124, 0x130, 0xC),   # rbvt <-> rlb-blk
-            # .rodata: SJIS home first (frees RL's slot), then RL, RB head
-            # (mid already lands at 0x30), MP, CF, and the SJIS tail-word fix.
-            (".rodata", 0x10, 0x50, 0x14),
-            (".rodata", 0x10, 0x30, 0x16),
-            (".rodata", 0x28, 0x48, 0x08),
-            (".rodata", 0x00, 0x64, 0x0E),
-            (".rodata", 0x44, 0x64, 0x0B),
-            (".rodata", 0x26, 0x66, 0x02),
-        ),
+        # CView is a normal polymorphic class again, so __vt__5CView, its
+        # class-info, the @452@__dt__ thunk, the RTTI locators and the template
+        # weak vtables are all compiler-emitted (the old hand table and its
+        # block-swap postprocessing are gone). Only the template vtable/RTTI
+        # SYMBOL NAMES stay retargeted onto the retail in-split labels, because
+        # the constructor/destructor reference them by those names.
         exact_renames=(
             ("__RTTI__13CMsgParam<10>", "lbl_eu_80663580"),
             ("__RTTI__22reslist<P10IWorkEvent>", "lbl_eu_80663588"),
             ("__RTTI__28_reslist_base<P10IWorkEvent>", "lbl_eu_80663590"),
-            # Template vtables land at the retail offsets via the swaps above;
-            # rename the defined symbols onto the retail in-split labels.
             ("__vt__13CMsgParam<10>", "lbl_eu_8056B6CC"),
             ("__vt__22reslist<P10IWorkEvent>", "lbl_eu_8056B6D8"),
             ("__vt__28_reslist_base<P10IWorkEvent>", "lbl_eu_8056B6F0"),

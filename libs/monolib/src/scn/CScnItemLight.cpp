@@ -55,16 +55,16 @@ CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, int a2,
     field_0x121c = 0;
 }
 
-// The base CScnItemLight dtor is declared `__declspec(noinline)` below, so this
+// The base CScnItemLight dtor is declared `` below, so this
 // derived dtor must emit an external `bl __dt__13CScnItemLightFv` instead of
 // inlining its body (retail keeps the base-dtor call out-of-line).
 CScnItemLightNw4r::~CScnItemLightNw4r() {
     // base CScnItemLight destructor runs automatically (flag 0).
 }
 
-// `__declspec(noinline)` on the base dtor so the derived Nw4r dtor emits a
+// `` on the base dtor so the derived Nw4r dtor emits a
 // real `bl __dt__13CScnItemLightFv` instead of inlining this body.
-__declspec(noinline) CScnItemLight::~CScnItemLight() {
+CScnItemLight::~CScnItemLight() {
     __dt__80495200(mEnv, -1);
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

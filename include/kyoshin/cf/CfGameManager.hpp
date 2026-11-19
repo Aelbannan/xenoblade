@@ -657,7 +657,7 @@ extern "C" void func_800C1E9C(UnkGameManagerCallback callback, s32 value);
 extern "C" void func_800627FC(u32 value, u32 mode);
 extern "C" void func_80062860(u32 value, u32 mode);
 int CfRes_tryRefreshSlot220(int a, int b);
-int CfRes_tryRefreshByBits(int a, int b);
+extern "C" int CfRes_tryRefreshByBits(int a, int b);
 extern "C" void func_80068A20(s32 value);
 extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* current,
                                                         u32 size);

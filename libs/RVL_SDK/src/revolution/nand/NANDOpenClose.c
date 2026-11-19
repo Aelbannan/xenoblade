@@ -6,7 +6,6 @@ void nandOpenCallback(s32 result, void* arg);
 void nandCloseCallback(s32 result, void* arg);
 
 /* Retail keeps nandOpen outlined; -ipa file would otherwise inline it. */
-#pragma dont_inline on
 s32 nandOpen(const char* path, u8 mode, NANDCommandBlock* block,
                     BOOL async, BOOL priv) {
     IPCOpenMode ipcMode;
@@ -38,7 +37,6 @@ s32 nandOpen(const char* path, u8 mode, NANDCommandBlock* block,
         return ISFS_Open(absPath, ipcMode);
     }
 }
-#pragma dont_inline off
 
 s32 NANDOpen(const char* path, NANDFileInfo* info, u8 mode) {
     s32 result;

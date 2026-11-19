@@ -422,7 +422,7 @@ extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);
 // +0x1B8 sub-object state query (retail UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34).
 // Defined as an extern "C" global so call sites emit the plain retail reloc
 // name (the C++ member mangling would drift at the reloc gate).
-extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self);
+extern "C" int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self);
 
 // Shared string table (split .rodata) used by CPassiveSkillCur_setNameMsg135's pane-text lookup.
 extern char lbl_eu_8050DC20[];

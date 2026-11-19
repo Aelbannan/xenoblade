@@ -1,6 +1,12 @@
 #define IWORK_EVENT_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CItemBoxInfo
 // Replace stubs with high-level C/C++ during decomp.
+//
+// Unit shape (verified): retail built this TU with -O4,s (optimize for size),
+// set once in configure.py - that is what keeps the same-TU helpers out of line
+// (real `bl`s) and produces the retail stmw/lmw frames. No noinline scaffolding
+// is needed or wanted here; the single optimize_for_size pair below marks the
+// one function retail demonstrably compiled in speed mode (see its comment).
 
 // harness_catalog dropped: this TU uses none of its VM/script-helper
 // headers, and it drags in the stale void*/void* CItem_initItemImplInstances
@@ -181,9 +187,7 @@ namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransfo
 void func_80127BD8(void*, float*);
 u32 func_801392C0();
 
-// Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10). Spelled through
-// this view rather than GetRootPane(): the auto_inline-off regions would
-// emit an out-of-line call for the accessor.
+// Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10).
 struct LayoutRootPaneView {
     u8 _00[0x10];
     nw4r::lyt::Pane* rootPane10;
@@ -225,8 +229,7 @@ void CItemBoxInfo::Close() {
     }
 }
 
-#pragma push
-__declspec(noinline) void CItemBoxInfo::Activate() {
+void CItemBoxInfo::Activate() {
     // Goto-gate (PLAN 17.6), same shape as activateItemBox2.
     if (mpLayout != 0 && mTexArcResAcc != 0) {
         goto body;
@@ -236,10 +239,8 @@ body:
     mCurrent = 1;
     mActive = 1;
 }
-#pragma pop
 
-#pragma push
-__declspec(noinline) u32 isItemBoxType9Flagged(void* arg) {
+u32 isItemBoxType9Flagged(void* arg) {
     u32 v = ((CItemData*)arg)->field_00;
     u32 result = 0;
     if (((v >> 16) & 0xF) == 9) {
@@ -250,26 +251,19 @@ __declspec(noinline) u32 isItemBoxType9Flagged(void* arg) {
     }
     return result;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxInfo::SetNamedText(int index, char* text) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x151], index);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text, 0);
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxInfo::SetCounts(u8 arg2, u8 arg3) {
     if (mpLayout != 0) {
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x17d], arg2);
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x188], arg3);
     }
 }
-#pragma pop
 
 // --- Remaining CItemBoxInfo stubs ---
 
@@ -278,7 +272,6 @@ void CItemBoxInfo::Open() {
     if (mState != 0) return;
     mState = 1;
     mVisible = 0;
-    // Retail tail-calls stampItemBoxSlotTex (b, not bl) - dont_inline pragma keeps it a call.
     StampSlotTex();
 }
 
@@ -308,9 +301,7 @@ struct CItemBoxCharEntryView {
     u8 counterArea[0x8A0]; // +0x3534 counter/arts storage
 };
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxPage::Clear() {
+void CItemBoxPage::Clear() {
     float f = 0.0f;
     for (u8 i = 0; i < 12; i++) {
         ((CItemBoxVecTable*)this)->ids[i] = 0;
@@ -318,13 +309,9 @@ __declspec(noinline) void CItemBoxPage::Clear() {
         copyVEC3(((CItemBoxVecTable*)this)->vecs[i], temp);
     }
 }
-#pragma pop
 
 
-// Retail loadItemBoxFiles uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge). The setHandleFlag1 call reuses the readFile result in r3.
-#pragma push
-#pragma optimize_for_size on
+// The setHandleFlag1 call reuses the readFile result in r3.
 void CItemBoxInfo::LoadFiles() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     CFileHandle* fh1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(this), 0, 0);
@@ -335,12 +322,7 @@ void CItemBoxInfo::LoadFiles() {
     mFileHandle2 = fh2;
     CDeviceFile::setHandleFlag1(fh2);
 }
-#pragma pop
-// Retail closeItemBox1 uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge): r30 holds `this` and r31 the zero constant for the four
-// post-call pointer clears, so both survive the closeFileHandle/80139124 calls.
-#pragma push
-#pragma optimize_for_size on
+
 void CItemBoxInfo::UnloadFiles() {
     closeFileHandle(&mFileHandle1);
     closeFileHandle(&mFileHandle2);
@@ -364,14 +346,8 @@ void CItemBoxInfo::UnloadFiles() {
     mRegion1.deleteRegion();
     mRegion2.deleteRegion();
 }
-#pragma pop
 
 
-
-// Retail calcItemBoxPaneVec uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge) for arg0/child/first-result in r29/r30/r31.
-#pragma push
-#pragma optimize_for_size on
 nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
     char buf[0x20];
     // Declare `first` before `child`: low-degree webs color in reverse birth
@@ -389,7 +365,6 @@ nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
     ScalePaneWorldPos(&pos, second, first, child);
     return pos;
 }
-#pragma pop
 
 void CItemBoxInfo::SetResultPane(bool visible) {
     if (mpLayout == 0) return;
@@ -398,8 +373,6 @@ void CItemBoxInfo::SetResultPane(bool visible) {
     setPaneVisible(result, visible);
 }
 
-#pragma push
-#pragma auto_inline off
 void CItemBoxInfo::OpenPhase1() {
     float arg = 1.0f;
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)mAnimIn, arg) != 0) {
@@ -430,17 +403,11 @@ void CItemBoxInfo::ClosePhase2() {
         mState = 0;
     }
 }
-#pragma pop
 
-// Retail buildItemBoxCmpRecord uses the _savegpr_20 + f29/f30/f31 frame (MWCC
-// optimize_for_size prologue merge) and keeps the mtctr copy loop for the
-// 0x34-byte record copy (li r0,6 + 4-byte tail). Per-slot banks: +0x16 holds
-// a name-resolved flag (forced for slot 0xB when cat == 0x4C), +0x1D/+0x24/
-// +0x2B hold {1,2,0} comparisons of the looked-up item's table values against
-// the candidate item's.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
+// Per-slot banks: +0x16 holds a name-resolved flag (forced for slot 0xB when cat ==
+// 0x4C), +0x1D/+0x24/ +0x2B hold {1,2,0} comparisons of the looked-up item's table
+// values against the candidate item's.
+CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
     // Scratch doubles for MWCC's int->float magic (2^52 unsigned repair,
     // 2^63 sign-repair); retail materializes both high words up front.
     CItemBoxCompRecord rec;
@@ -504,15 +471,10 @@ __declspec(noinline) CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3)
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,6 + 4-byte tail).
     return rec;
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-// Retail keeps the stmw/lmw frame (optimize_for_size prologue merge) and the
-// mtctr pair-copy loop for the 0x1C-byte record (li r0,3 + 4-byte tail). The
-// null path memsets the record, copies, and returns early; the filled path
-// falls through to its own copy of the same loop. Per-slot flag banks are
-// addressed through one walked pointer (&flags[i], +0/+7/+14).
-__declspec(noinline) CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
+// The null path memsets the record, copies, and returns early; the filled path falls
+// through to its own copy of the same loop. Per-slot flag banks are addressed through
+// one walked pointer (&flags[i], +0/+7/+14).
+CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
     CItemBoxSlotFlags rec;
     if (item == 0) {
         memset(&rec, 0, 0x1C);
@@ -565,18 +527,12 @@ __declspec(noinline) CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
     }
     return rec;
 }
-#pragma pop
-// Retail buildItemBoxNameRec uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge) and keeps the mtctr copy loop for the 0xA4-byte record
-// copy (li r0,0x14 + 4-byte tail). The name/category tables are resolved
-// through the item vtable (arg3) or the raw data pointers (arg3 == NULL);
-// the text buffer is then scanned for '$' markers ('$1' switches on the
-// equip-state byte, '$2' copies the static label-pointer table at
+// The name/category tables are resolved through the item vtable (arg3) or the raw data
+// pointers (arg3 == NULL); the text buffer is then scanned for '$' markers ('$1'
+// switches on the equip-state byte, '$2' copies the static label-pointer table at
 // lbl_eu_8050634C and formats the count-indexed label); other bytes advance
 // Shift-JIS-aware.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
+CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
     u32 cat;
     u32 count;
     void* item = arg3 != NULL ? arg3 : NULL;
@@ -707,15 +663,10 @@ __declspec(noinline) CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, v
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,0x14 + 4-byte tail).
     return rec;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-// Retail keeps the lookup-table pointer live in r29 across all calls and
-// spills the four results to stack slots, reloading them for the final four
-// output-word stores. dont_inline keeps IPA from folding this body into
-// renderItemBoxLabels/renderItemBox2Labels, which lets them keep both stack arrays.
-__declspec(noinline) CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
+// Retail keeps the lookup-table pointer live in r29 across all calls and spills the
+// four results to stack slots, reloading them for the final four output-word stores.
+CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     BdatGetItemType(item);
@@ -738,11 +689,8 @@ __declspec(noinline) CItemBoxLabelRec CItemBoxInfo::GetLabelRec(u32 item) {
     // record as four lwz/stw pairs.
     return r;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
+CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     void* global = lbl_eu_80664110;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
@@ -768,10 +716,7 @@ __declspec(noinline) CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     }
     return rec;
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxSlotRecord1 CItemBoxInfo::BuildSlotRec(u32 item, void* arg3) {
+CItemBoxSlotRecord1 CItemBoxInfo::BuildSlotRec(u32 item, void* arg3) {
     void* p;
     if (arg3 != NULL)
         p = arg3;
@@ -802,14 +747,11 @@ __declspec(noinline) CItemBoxSlotRecord1 CItemBoxInfo::BuildSlotRec(u32 item, vo
     // the retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
     return rec;
 }
-#pragma pop
 // Retail renderItemBoxKind2: item-box renderer for selection kind 2. Builds the
 // 0x34 comparison record (buildItemBoxCmpRecord), formats three stat panes from it
 // through an ml::FixStr<32>, resets the highlight panes, then per visible
 // slot colours the row pane and stamps the candidate-item texture.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
+void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
     SetupSlotPanes();
     // Declaration order follows the retail frame layout (high -> low):
     // staged colour temps > copied record > FixStr storage > source record >
@@ -953,14 +895,22 @@ __declspec(noinline) void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 ar
     }
     RenderTripleRows(arg2, arg3);
 }
-#pragma pop
 
-void __declspec(noinline) setItemBoxVtxColor(void* arr, u32 index, const void* color) {
+// Retail compiles this one helper in speed mode: it saves r31/r30/r29 with
+// separate stw (each move scheduled between the saves) while every other
+// function in this size-mode TU keeps the stmw/lmw block frame. Measured and
+// ruled out as flag-level causes: 10 mw_versions (all give stmw under -O4,s),
+// whole-TU -O4,p (34/110) and -O4,s + -inline auto/all, -use_lmw_stmw off
+// (38/110, and it still does not produce retail's 0x78 frame).
+#pragma push
+#pragma optimize_for_size off
+void setItemBoxVtxColor(void* arr, u32 index, const void* color) {
     if (index >= 3) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
+#pragma pop
 
 void CItemBoxInfo::UpdateAnims() {
     if (mActive != 0) {
@@ -990,7 +940,7 @@ void CItemBoxInfo2::UpdateAnims() {
 // record for the candidate item (buildItemBoxSlotFlags), lays out the label/stat
 // panes, then per-slot colours the row panes and stamps the item name onto
 // the slot whose record matches the candidate.
-__declspec(noinline) void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
+void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
     // Locals are declared in retail stack-slot order (low -> high addresses):
     // colour pair, vertex-colour pair, comparison record, pane-name buffers,
     // record copy, per-colour word temporaries.
@@ -1120,14 +1070,10 @@ __declspec(noinline) void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u
     RenderTripleRows(itemId, record);
 }
 // Retail renderItemBoxTripleRows: item-box slot renderer. With a candidate record it
-// walks the three slot panes showing per-slot item info (regular items via
-// the item table, equipped gear via the sub-record); with no record it shows
-// the plain item-name list. Ends by stamping the per-slot data into info.
-// Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge) with
-// same-TU helpers kept as real bl calls.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
+// walks the three slot panes showing per-slot item info (regular items via the item
+// table, equipped gear via the sub-record); with no record it shows the plain
+// item-name list. Ends by stamping the per-slot data into info.
+void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
     ml::FixStr<32> text(true);
     ClearTripleRows();
     char* base = lbl_eu_805063BC;
@@ -1336,22 +1282,14 @@ __declspec(noinline) void CItemBoxInfo::RenderTripleRows(u32 itemId, void* recor
             }
         }
     }
-#pragma pop
 }
 
-#pragma push
-__declspec(noinline) void CItemBoxPage::SetValue(unsigned char index, short value) {
+void CItemBoxPage::SetValue(unsigned char index, short value) {
     if (index >= 12) return;
     mValues[index] = value;
 }
-#pragma pop
 
-// Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge) and
-// keeps the same-TU helpers as real bl calls (dont_inline blocks IPA from
-// folding applyItemBoxSelColors/resetItemBoxRowPanes/buildItemBoxSelRec into this body).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
+void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
     ApplySelColors();
     ResetRowPanes();
     char buf[0x20];
@@ -1389,15 +1327,12 @@ __declspec(noinline) void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
 // Retail renderItemBoxKind3 (kind-3 detail renderer): rebuild the detail record
 // (buildItemBoxNameRec), print the description/caption text, position the cursor
 // row from the layout panes, stash the equip summary at info+0xB0.., then per
 // player slot recolor the row panes and stamp the owning player's name onto
 // equipment entries that resolve back to the selected item.
-__declspec(noinline) void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
+void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
     ClearQuadTexts();
     ResetRowPanes();
     CItemBoxNameRecord rec = BuildNameRec((void*)(u32)arg2, arg3);
@@ -1544,26 +1479,20 @@ __declspec(noinline) void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 ar
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
 
-__declspec(noinline) void CItemBoxInfo::RenderLabels(u32 arg2) {
+void CItemBoxInfo::RenderLabels(u32 arg2) {
     ClearPairTexts();
     ResetRowPanes();
     CItemBoxLabelRec rec = GetLabelRec(arg2);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
-#pragma pop
 
 // Retail renderItemBoxSlotList: item-box slot-list renderer. Rebuilds the per-slot
 // record (buildItemBoxSlotRec), stamps the header pane with the formatted item
 // string, then per filled pair sets the row-name pane text and (unless mode
 // 0x9A==4) measures the row position and caches value/count/pos per slot.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::RenderSlotList(u16 arg2, void* arg3) {
+void CItemBoxInfo::RenderSlotList(u16 arg2, void* arg3) {
     // Frame layout (descending): cur > text > call temp > buf > pos > tmp.
     // The 9 constant claims r31 first (Rule A).
     u8 slotState = 9;
@@ -1602,10 +1531,7 @@ __declspec(noinline) void CItemBoxInfo::RenderSlotList(u16 arg2, void* arg3) {
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text.c_str(), 0);
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::SetupSlotPanes() {
+void CItemBoxInfo::SetupSlotPanes() {
     // No local base pointer: MWCC CSEs the repeated symbol offsets into one
     // register, splitting the address into a pre-stmw volatile lis plus a
     // post-stmw callee-saved addi exactly like retail.
@@ -1667,10 +1593,7 @@ __declspec(noinline) void CItemBoxInfo::SetupSlotPanes() {
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ResetRowPanes() {
+void CItemBoxInfo::ResetRowPanes() {
     u32 i;
     char* base = (char*)&lbl_eu_805063BC;
     u32 idx;
@@ -1725,13 +1648,8 @@ __declspec(noinline) void CItemBoxInfo::ResetRowPanes() {
         }
     }
 }
-#pragma pop
-// Retail clearItemBoxTripleRows uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge): info in r28, loop counter in r29, index in r30,
-// string-pool base in r31.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ClearTripleRows() {
+
+void CItemBoxInfo::ClearTripleRows() {
     char buf[0x20];
     // Declaration order fixes the r29/r30 coloring: retail claims index (r30)
     // before the loop counter i (r29) - saved regs go high->low by birth order.
@@ -1748,14 +1666,11 @@ __declspec(noinline) void CItemBoxInfo::ClearTripleRows() {
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
-#pragma pop
 // Retail applyItemBoxSelColors: label every slot pane, then build two 8-byte
 // selection colours (from the s16s at +0xA2/+0xAA), format the pane name,
 // look the pane up, and push both colours into its
 // vertex buffer via setItemBoxVtxColor. layout is reloaded per use (lwz 0x34).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ApplySelColors() {
+void CItemBoxInfo::ApplySelColors() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
     u32 idx;
@@ -1792,12 +1707,8 @@ __declspec(noinline) void CItemBoxInfo::ApplySelColors() {
         }
     }
 }
-#pragma pop
-// Retail clearItemBoxQuadTexts uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge); the first call's arg4 zero is hoisted into the prologue.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ClearQuadTexts() {
+
+void CItemBoxInfo::ClearQuadTexts() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -1811,13 +1722,8 @@ __declspec(noinline) void CItemBoxInfo::ClearQuadTexts() {
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
-#pragma pop
 
-// Retail clearItemBoxSlotTexts uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge): info in r29, loop counter in r30, string-pool base in r31.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ClearSlotTexts() {
+void CItemBoxInfo::ClearSlotTexts() {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x4a7],
@@ -1831,11 +1737,8 @@ __declspec(noinline) void CItemBoxInfo::ClearSlotTexts() {
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::ClearPairTexts() {
+void CItemBoxInfo::ClearPairTexts() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -1843,16 +1746,13 @@ __declspec(noinline) void CItemBoxInfo::ClearPairTexts() {
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
-#pragma pop
 
 // Retail stampItemBoxSlotTex: per-slot item-box1 renderer. Loops 7 slots; for slots
-// below the active count it resolves the item name via CUICfManager_getArcResourceAccessor/vtable[3]
-// and colors the pane; slots at/above the count get a plain label pane. Uses
-// the stmw/lmw frame (optimize_for_size prologue merge). The two sprintf
-// buffers stay separate locals (retail sp+0x48 / sp+0x28).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo::StampSlotTex() {
+// below the active count it resolves the item name via
+// CUICfManager_getArcResourceAccessor/vtable[3] and colors the pane; slots at/above
+// the count get a plain label pane. The two sprintf buffers stay separate locals
+// (retail sp+0x48 / sp+0x28).
+void CItemBoxInfo::StampSlotTex() {
     // Shape mirrors the proven stampItemBox2SlotTex (ItemBox2 twin): if/else instead
     // of continue-guards, hoisted i/idx, direct lbl refs, typed name lookup.
     u32 i;
@@ -1902,7 +1802,6 @@ __declspec(noinline) void CItemBoxInfo::StampSlotTex() {
         }
     }
 }
-#pragma pop
 // Local data shapes used by the ItemBox1 comparison renderer.
 struct D8EQuad {
     s16 r, g, b, a;
@@ -2081,11 +1980,9 @@ extern const u32 lbl_eu_80506368[6];
 #define _10 words[4]
 #define w14 halfWords[10]
 
-#pragma push
-#pragma optimize_for_size on
 // Prefer labeled SDA symbols over float literals / parent+offset member decays
 // so bar formulas emit retail lfs relocs (0.01f/100.0f).
-__declspec(noinline) void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
+void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     // Packed selection: retail emits slot (rlwinm.->r26/CR0), then member
     // (r18), then type (r27). Declaring member before type matches that
     // emission order; type stays longest-lived for r27.
@@ -2179,9 +2076,8 @@ __declspec(noinline) void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 ar
 
     // ---- stat bars (display formula) ----
     s32 effect = GetEffect(member, 0x21, NULL);
-    // volatile keeps early bars in distinct slots (non-volatile CSE'd ~0x10C
-    // of body away under optimize_for_size). Float literals here match the
-    // ~7% HighFrame baseline; SDA 68040/44 names elsewhere still open.
+// Float literals here match the ~7% HighFrame baseline; SDA 68040/44 names elsewhere
+// still open.
     volatile s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
     effect = GetEffect(member, 0x1, NULL);
     volatile s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
@@ -3868,7 +3764,6 @@ __declspec(noinline) void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 ar
         }
     }
 }
-#pragma pop
 
 
 #undef w04
@@ -3876,8 +3771,6 @@ __declspec(noinline) void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 ar
 #undef _10
 #undef w14
 
-#pragma push
-#pragma auto_inline off
 void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
     dst->itemId = src->itemId;
     dst->value = src->value;
@@ -4010,13 +3903,10 @@ u32 CItemBoxInfo::GetEffect(u16 lookup_key, u32 category, void* arg3) {
     return result;
 }
 
-// Retail sumItemBoxGemBonus uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge). The slot argument maps 1..3 to type 2 with a sub-index,
-// and 4..8 to direct types; the candidate pointer is nulled out by the first
-// pass when one of its gems matches, so the sum pass treats it as unequipped.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, void* candidate, s32 slot) {
+// The slot argument maps 1..3 to type 2 with a sub-index, and 4..8 to direct types;
+// the candidate pointer is nulled out by the first pass when one of its gems matches,
+// so the sum pass treats it as unequipped.
+u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, void* candidate, s32 slot) {
     (void)this;
     u32 type = 0;
     u32 index = 0;
@@ -4119,12 +4009,7 @@ __declspec(noinline) u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, v
     if (max < sum) sum = max;
     return (u32)sum;
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) u32 CItemBoxInfo::GetCondStat(void* b, u32 arg2) {
-    // Retail keeps obj in r31 and result in r30 (obj declared first gets the
-    // highest saved register); stmw/lmw frame from optimize_for_size.
+u32 CItemBoxInfo::GetCondStat(void* b, u32 arg2) {
     void* obj;
     u32 result = 0;
     obj = (u8*)CtrlObjectParam_GetCharEntry((u32)b) + 0x3534;
@@ -4133,11 +4018,8 @@ __declspec(noinline) u32 CItemBoxInfo::GetCondStat(void* b, u32 arg2) {
     }
     return result;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
+u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
     // Retail keeps obj in r31 and result in r30 (obj declared first gets the
     // highest saved register); the result=0 init lands before the call.
     void* obj;
@@ -4148,7 +4030,6 @@ __declspec(noinline) u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
     }
     return result;
 }
-#pragma pop
 
 u32 CItemBoxInfo2::GetCondStat2D(void* arg1) {
     void* obj = (u8*)CtrlObjectParam_GetCharEntry((u8)(u32)arg1) + 0x3534;
@@ -4159,9 +4040,7 @@ u32 CItemBoxInfo2::GetCondStat2D(void* arg1) {
 }
 
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) u32 CItemBoxInfo::TestBdatFlag(u32 arg1, void* arg2) {
+u32 CItemBoxInfo::TestBdatFlag(u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -4169,7 +4048,6 @@ __declspec(noinline) u32 CItemBoxInfo::TestBdatFlag(u32 arg1, void* arg2) {
     u8 result = BdatGetU8Direct((const void*)g, (const char*)buf, (u16)BdatGetItemId(((CItemData*)arg2)->field_00 >> 20));
     return result != 0;
 }
-#pragma pop
 u32 CItemBoxInfo::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
@@ -4265,10 +4143,7 @@ u32 CItemBoxInfo::CheckGemChain(u16 lookup_key, void* arg3, void* unused2) {
     }
     return 1;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 // Retail CItemBoxInfo::OnFileEvent: two file-load branches. The line-arc
 // branch builds the whole layout (0x14000 scratch region), seeds every label
 // textbox with the shared text object, then runs the item-box1 reset pass:
@@ -4529,14 +4404,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     }
     return false;
 }
-#pragma pop
 
-// Retail __ct__CItemBoxInfo uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge) with arg2/arg3 saved in r30/r31; plain -O4,p splits the
-// saves into separate stw's. The trailing resetCItemBox__Fv call is a real
-// bl (the callee is __declspec(noinline)).
-#pragma push
-#pragma optimize_for_size on
 CItemBoxInfo::CItemBoxInfo(u8 kind, u16 mode)
     : mFileHandle1(NULL), mFileHandle2(NULL), mArcResAcc(NULL), mTexArcResAcc(NULL), mpLayout(NULL),
       mAnimIn(NULL), mAnimInfoIn(NULL),
@@ -4549,20 +4417,12 @@ CItemBoxInfo::CItemBoxInfo(u8 kind, u16 mode)
     mPage.Reset();
 }
 
-__declspec(noinline) void CItemBoxPage::Reset() {}
-#pragma pop
+void CItemBoxPage::Reset() {}
 
-#pragma push
-#pragma optimize_for_size on
 CItemBoxInfo::~CItemBoxInfo() {}
-#pragma pop
 
-// Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame
-// prologue merge) with arg2/arg3 saved in r30/r31; plain -O4,p splits the
-// saves into separate stw's. The trailing resetCItemBox__Fv call is a real
-// bl (the callee is __declspec(noinline)).
-#pragma push
-#pragma optimize_for_size on
+// Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame prologue merge) with arg2/arg3
+// saved in r30/r31; plain -O4,p splits the saves into separate stw's.
 CItemBoxInfo2::CItemBoxInfo2(u8 kind, u16 mode)
     : mFileHandle1(NULL), mFileHandle2(NULL), mArcResAcc(NULL), mTexArcResAcc(NULL), mpLayout(NULL),
       mAnimIn(NULL), mAnimInfoIn(NULL),
@@ -4574,27 +4434,16 @@ CItemBoxInfo2::CItemBoxInfo2(u8 kind, u16 mode)
       mKind(kind), mMode(mode) {
     mPage.Reset();
 }
-#pragma pop
 
-// Retail __dt__13CItemBoxInfo2Fv uses the stmw/lmw frame (MWCC
-// optimize_for_size prologue merge); plain -O4,p splits the r30/r31 saves
-// into separate stw's. Same pattern as the matched kyoshin dtors.
-#pragma push
-#pragma optimize_for_size on
+// Same pattern as the matched kyoshin dtors.
 CItemBoxInfo2::~CItemBoxInfo2() {}
-#pragma pop
 
-// Retail loadItemBox2Files uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge) like the sibling ItemBox1/2 dtors.
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxInfo2::LoadFiles() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     mFileHandle1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(this), 0, 0);
     handle = mtl::MemManager::getHandleMEM2();
     mFileHandle2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(this), 0, 0);
 }
-#pragma pop
 
 
 void CItemBoxInfo2::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
@@ -4603,10 +4452,6 @@ void CItemBoxInfo2::DrawLayout(nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-// Retail closeItemBox2 (CItemBoxInfo2 teardown) keeps a plain single-save
-// frame (only r31 = `this` survives the calls; zeros are re-loaded per store),
-// so unlike closeItemBox1 it must NOT use optimize_for_size, and it does not
-// clear the 0x2C/0x30 accessor/resource pointers after releasing them.
 void CItemBoxInfo2::UnloadFiles() {
     closeFileHandle(&mFileHandle1);
     closeFileHandle(&mFileHandle2);
@@ -4626,15 +4471,12 @@ void CItemBoxInfo2::UnloadFiles() {
 }
 
 
-#pragma push
-#pragma auto_inline off
 void CItemBoxInfo2::Open() {
     if (mState != 0) return;
     mState = 1;
     mVisible = 0;
     StampSlotTex();
 }
-#pragma pop
 
 void CItemBoxInfo2::Close() {
     if (mState == 3) {
@@ -4645,11 +4487,8 @@ void CItemBoxInfo2::Close() {
 
 // Retail renderItemBox2ByKind: ItemBox2 info dispatch. Zeroes the slot VEC3 block,
 // renders the base panel, derives the item id (or the candidate's own), then
-// dispatches on the item category to the per-category renderers. Ends by
-// formatting a header string into a FixStr and pushing it to the layout.
-// stmw/lmw frame (optimize_for_size prologue merge).
-#pragma push
-#pragma optimize_for_size on
+// dispatches on the item category to the per-category renderers. Ends by formatting a
+// header string into a FixStr and pushing it to the layout.
 void CItemBoxInfo::SetItem(u16 arg2, void* arg3, u16 arg4) {
     mPage.Clear();
     if (mKind == 4) {
@@ -4696,17 +4535,15 @@ void CItemBoxInfo::SetItem(u16 arg2, void* arg3, u16 arg4) {
         break;
     }
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
-    // The bool ctor clears inline (mString[0]=0 / mLength=0) exactly like the
-    // retail stb/stw pair; the default ctor would emit a __ct__ call instead.
-    ml::FixStr<32> text(true);
+    // Default ctor clears inline (mString[0]=0 / mLength=0) — MWCC outlines the
+    // FixStr(bool) ctor once it has 2+ call sites in a TU, the default one it
+    // always inlines.
+    ml::FixStr<32> text;
     text.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(), label);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
                   text.c_str(), NULL);
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxInfo2::SetItem(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     mPage.Clear();
     SetupDetail(arg2, arg3, arg4, arg5);
@@ -4751,23 +4588,17 @@ void CItemBoxInfo2::SetItem(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     char* s = BdatTouchStringCell((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 3);
     // Not named textBuffer: the textBuffer raw-storage macro from
     // setupItemBoxDetail is still in scope until its #undef below.
-    ml::FixStr<32> caption(true);
+    ml::FixStr<32> caption;
     caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(), s);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143], caption.c_str(), 0);
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxInfo2::SetNamedText(int index, char* text) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x151], index);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, text, 0);
 }
-#pragma pop
 
 // Retail calcItemBox2PaneVec (CItemBoxInfo2 variant) uses the same stmw/lmw frame.
-#pragma push
-#pragma optimize_for_size on
 nw4r::math::VEC3 CItemBoxInfo2::GetSlotPos(u32 arg2) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
@@ -4784,9 +4615,6 @@ nw4r::math::VEC3 CItemBoxInfo2::GetSlotPos(u32 arg2) {
     ScalePaneWorldPos(&pos, second, first, child);
     return pos;
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
 void CItemBoxInfo2::OpenPhase1() {
     if (advanceAnimTransform(mAnimIn, 1.0f) != 0) {
         (mpLayout)->SetAnimationEnable(mAnimIn, false);
@@ -4815,16 +4643,11 @@ void CItemBoxInfo2::ClosePhase2() {
         mState = 0;
     }
 }
-#pragma pop
 
-// Retail buildItemBox2CmpRecord uses the _savegpr_20 + f29/f30/f31 frame (MWCC
-// optimize_for_size prologue merge). On a null item it zeroes the 0x34-byte
-// record and copies it out; otherwise it builds the record like buildItemBoxCmpRecord
-// (same lookup chain, clamp and per-slot flag banks) and copies it out.
-#pragma push
-#pragma optimize_for_size on
-#pragma auto_inline off
-__declspec(noinline) CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
+// On a null item it zeroes the 0x34-byte record and copies it out; otherwise it builds
+// the record like buildItemBoxCmpRecord (same lookup chain, clamp and per-slot flag
+// banks) and copies it out.
+CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
     CItemBoxCompRecord rec;
     // 0x43300000 integer->double conversion scratch; retail stores both high
     // words before the null-item branch.
@@ -4902,22 +4725,15 @@ __declspec(noinline) CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,6 + 4-byte tail).
     return rec;
 }
-#pragma pop
 // Retail buildItemBox2SlotFlags builds the 0x1C-byte comparison record like
-// buildItemBoxSlotFlags, with two differences: the per-slot flag is the boolean
-// (name resolved ? 1 : 0) via subic/subfe, and when the category check
-// (0x85/0x84) SUCCEEDS the value-switch path still runs (the switch body is
-// shared through the else-block fall-through, so it is emitted once).
-// buildItemBoxSlotFlags, with two differences: the per-slot flag is the boolean
-// (name resolved ? 1 : 0) via subic/subfe, and when the category check
-// (0x85/0x84) SUCCEEDS the value-switch path still runs (the switch body is
-// shared through the else-block fall-through, so it is emitted once).
-// Retail uses the stmw/lmw frame and keeps the mtctr copy loops (the whole
-// retail unit is size-optimized), so the function is wrapped in
-// optimize_for_size like the other matched stmw-frame functions here.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
+// buildItemBoxSlotFlags, with two differences: the per-slot flag is the boolean (name
+// resolved ? 1 : 0) via subic/subfe, and when the category check (0x85/0x84) SUCCEEDS
+// the value-switch path still runs (the switch body is shared through the else-block
+// fall-through, so it is emitted once). buildItemBoxSlotFlags, with two differences:
+// the per-slot flag is the boolean (name resolved ? 1 : 0) via subic/subfe, and when
+// the category check (0x85/0x84) SUCCEEDS the value-switch path still runs (the switch
+// body is shared through the else-block fall-through, so it is emitted once).
+CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
     CItemBoxSlotFlags rec;
     if (item == 0) {
         memset(&rec, 0, 0x1C);
@@ -4970,16 +4786,12 @@ __declspec(noinline) CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
     }
     return rec;
 }
-#pragma pop
-// Retail buildItemBox2NameRec (ItemBox2 twin of buildItemBoxNameRec): builds the 0xA4-byte
-// item-name record (count byte at +0, label string pointer, name buffer, two
-// state bytes, equip colour, text buffer) then copies it out. Uses the
-// stmw/lmw frame (optimize_for_size prologue merge). The label table lives
-// in a 0x34-byte stack region that is later copied into the record tail, so
-// the 6-pair mtctr copy loop reads it directly.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
+// Retail buildItemBox2NameRec (ItemBox2 twin of buildItemBoxNameRec): builds the
+// 0xA4-byte item-name record (count byte at +0, label string pointer, name buffer, two
+// state bytes, equip colour, text buffer) then copies it out. The label table lives in
+// a 0x34-byte stack region that is later copied into the record tail, so the 6-pair
+// mtctr copy loop reads it directly.
+CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     void* item = arg3 != NULL ? arg3 : NULL;
     // Retail hoists this global into a register (r26) across all the calls;
     // a local copy reproduces the single sda21 load in the prologue.
@@ -5120,13 +4932,9 @@ __declspec(noinline) CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, 
     // mtctr lwzu/stwu 8-byte-pair loop (li r0,0x14 + 4-byte tail).
     return rec;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-// Twin of getItemBoxLabelRec (see comment there). dont_inline keeps IPA from
-// folding this body into renderItemBox2Labels.
-__declspec(noinline) CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
+// Twin of getItemBoxLabelRec (see comment there).
+CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     BdatGetItemType(item);
@@ -5149,15 +4957,11 @@ __declspec(noinline) CItemBoxLabelRec CItemBoxInfo2::GetLabelRec(u32 item) {
     // record as four lwz/stw pairs.
     return r;
 }
-#pragma pop
 
-// Retail buildItemBox2SelTable (ItemBox2 variant of buildItemBoxSelRec): fills the 8-byte
-// slot table (flag byte + per-slot selected flags) and a flag2 result from the
-// item-table lookup, then writes all three to the info block. Retail uses the
-// stmw/lmw frame (optimize_for_size prologue merge).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
+// Retail buildItemBox2SelTable (ItemBox2 variant of buildItemBoxSelRec): fills the
+// 8-byte slot table (flag byte + per-slot selected flags) and a flag2 result from the
+// item-table lookup, then writes all three to the info block.
+CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     void* global = lbl_eu_80664110;
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
@@ -5183,14 +4987,11 @@ __declspec(noinline) CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     }
     return rec;
 }
-#pragma pop
 // Retail buildItemBox2SlotRec fills a 0x24-byte slot record (count byte, string ptr,
 // per-item text ptrs at +8, per-item values at +0x1C, counter at +0x21) then
 // copies it out. The BdatGetItemType/80139358 results are discarded (dead calls
 // kept because MWCC never elides calls). Param 2 (info) is unused in retail.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) CItemBoxSlotRecord CItemBoxInfo2::BuildSlotRec(u32 item, void* arg4) {
+CItemBoxSlotRecord CItemBoxInfo2::BuildSlotRec(u32 item, void* arg4) {
     CItemBoxSlotRecord rec;
     void* p = arg4 != 0 ? arg4 : 0;
     BdatGetItemType(item);
@@ -5212,16 +5013,11 @@ __declspec(noinline) CItemBoxSlotRecord CItemBoxInfo2::BuildSlotRec(u32 item, vo
     // the retail mtctr 8-byte-pair loop (li r0,4 + 4-byte tail).
     return rec;
 }
-#pragma pop
 
-// Render the item-box slot info (equip-category 2 items): for each slot
-// (count from the slot-table byte getter) set up a labelled layout pane,
-// per-slot vertex colours, and (when a selection applies) a texture/name tag.
-// Retail keeps the stmw/lmw frame (optimize_for_size prologue merge) and the
-// mtctr copy loop for the 0x34-byte comparison record.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
+// Render the item-box slot info (equip-category 2 items): for each slot (count from
+// the slot-table byte getter) set up a labelled layout pane, per-slot vertex colours,
+// and (when a selection applies) a texture/name tag.
+void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
     SetupSlotPanes();
     // Declaration order follows the retail frame layout (high -> low):
     // copied record, pane-name/label buffers, source record, colour defaults.
@@ -5282,21 +5078,8 @@ __declspec(noinline) void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 a
         }
     }
 }
-#pragma pop
-// Retail renderItemBox2Detail uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge) and keeps the mtctr copy loop for the 0x1C-byte record
-// copy, so it is wrapped in optimize_for_size like the other stmw-frame
-// functions in this unit.
-// dont_inline: retail keeps this out-of-line; MWCC would otherwise inline it
-// into renderItemBox2ByKind (forward declaration makes the body visible).
-// dont_inline is NOT used here: retail emits the record copy and colour
-// staging as inline sequences, and renderItemBox2ByKind's auto_inline-off region
-// already keeps this body out of its caller.
-#pragma push
-#pragma optimize_for_size on
-// dont_inline: retail keeps this out-of-line; MWCC would otherwise inline it
-// into renderItemBox2ByKind (forward declaration makes the body visible).
-__declspec(noinline) void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
+
+void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
     ResetRowPanes();
     // Frame-slot order: record > buf > bufName > local > args > cols >
     // selB/selA (the staged colour temps; retail keeps its copies above the
@@ -5369,17 +5152,14 @@ __declspec(noinline) void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 
         }
     }
 }
-#pragma pop
 // end renderItemBox2Detail
-#pragma push
-#pragma optimize_for_size on
 // Retail refreshItemBox2SlotRows: refresh the item-box slot rows. Fetches the per-slot
 // selection table via buildItemBox2SelTable into a stack record, sets the row label to
 // the category name (length 0x2c vs 0x2b depending on flag2), then for each
 // visible slot colours the pane (white when selected) and pushes two vertex
 // colours - the item-specific pair from info+0x9c when selected, otherwise
 // alpha-only defaults built from info+0xa2/0xaa - through setItemBoxVtxColor.
-__declspec(noinline) void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
+void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
     ApplySelColors();
     ResetRowPanes();
     // Selection-colour staging: the aggregate ternaries below force MWCC to
@@ -5428,17 +5208,13 @@ __declspec(noinline) void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
         }
     }
 }
-#pragma pop
-// Retail renderItemBox2Kind3 uses the stmw/lmw 0x200 frame (optimize_for_size
-// prologue merge). Pipeline: two layout preps, then buildItemBox2NameRec fills a
-// 0xA0-byte label record that is struct-copied to a local (20-pair mtctr
-// loop) and stamped onto the fixed panes; the candidate item's name/category
-// labels follow. The per-slot loop colours each row (red when unselected,
-// white + the info-block vertex colours when selected) and, for slots whose
-// six equip values resolve to the candidate item, stamps its texture.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
+// Pipeline: two layout preps, then buildItemBox2NameRec fills a 0xA0-byte label record
+// that is struct-copied to a local (20-pair mtctr loop) and stamped onto the fixed
+// panes; the candidate item's name/category labels follow. The per-slot loop colours
+// each row (red when unselected, white + the info-block vertex colours when selected)
+// and, for slots whose six equip values resolve to the candidate item, stamps its
+// texture.
+void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
     ClearQuadTexts();
     ResetRowPanes();
     CItemBoxNameRecord vals = BuildNameRec((void*)(u32)arg2, arg3);
@@ -5550,24 +5326,17 @@ __declspec(noinline) void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 a
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::RenderLabels(u32 arg2) {
+void CItemBoxInfo2::RenderLabels(u32 arg2) {
     ClearPairTexts();
     ResetRowPanes();
     CItemBoxLabelRec rec = GetLabelRec(arg2);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
-#pragma pop
 // Retail renderItemBox2SlotList: run the two layout preps, build a 0x24-byte slot
 // record via buildItemBox2SlotRec, struct-copy it to a local (retail mtctr 8-byte
 // pair loop), then label every slot: a count-driven loop of pane-name
 // sprintf + per-item text/value colour labels (inlined FixStr<32> ctor).
-#pragma push
-#pragma optimize_for_size on
-#pragma auto_inline off
 // Word-array view: assigning the union copies the whole object as one block
 // (reproduces the retail mtctr lwzu/stwu pair loop) instead of expanding
 // field-by-field.
@@ -5575,7 +5344,7 @@ union CItemBoxSlotRecAny {
     CItemBoxSlotRecord rec;
     u32 w[9];
 };
-__declspec(noinline) void CItemBoxInfo2::RenderSlotList(void* arg1, void* arg2) {
+void CItemBoxInfo2::RenderSlotList(void* arg1, void* arg2) {
     // Retail runs the two layout preps before the FixStr ctor bl.
     char paneName[0x20];
     ClearSlotTexts();
@@ -5594,13 +5363,8 @@ __declspec(noinline) void CItemBoxInfo2::RenderSlotList(void* arg1, void* arg2) 
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, paneName, text.c_str(), 0);
     }
 }
-#pragma auto_inline reset
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-// dont_inline keeps IPA from folding this body into its callers
-// (renderItemBox2ByKind etc.) - retail always calls it.
-__declspec(noinline) void CItemBoxInfo2::SetupSlotPanes() {
+
+void CItemBoxInfo2::SetupSlotPanes() {
     // i declared first: retail claims r31 for the loop counter before any
     // other saved local (register_mapping.md Rule A).
     // No named base local: retail holds &lbl_eu_805063BC purely as a compiler
@@ -5658,12 +5422,8 @@ __declspec(noinline) void CItemBoxInfo2::SetupSlotPanes() {
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-// dont_inline keeps IPA from folding this body into its callers
-// (renderItemBox2Labels etc.) - retail always calls it.
-__declspec(noinline) void CItemBoxInfo2::ResetRowPanes() {
+
+void CItemBoxInfo2::ResetRowPanes() {
     // No named base local: retail holds &lbl_eu_805063BC purely as a
     // compiler CSE temporary (lis into a scratch register during prologue
     // argument prep), which fixes both its schedule and its register.
@@ -5719,10 +5479,7 @@ __declspec(noinline) void CItemBoxInfo2::ResetRowPanes() {
         }
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::ClearTripleRows() {
+void CItemBoxInfo2::ClearTripleRows() {
     char buf[0x20];
     // Declaration order fixes r29/r30: retail claims index (r30) before i (r29).
     u32 index;
@@ -5738,10 +5495,7 @@ __declspec(noinline) void CItemBoxInfo2::ClearTripleRows() {
         LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::ApplySelColors() {
+void CItemBoxInfo2::ApplySelColors() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
     u32 idx;
@@ -5778,12 +5532,8 @@ __declspec(noinline) void CItemBoxInfo2::ApplySelColors() {
         }
     }
 }
-#pragma pop
-// Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge);
-// the first call's arg4 zero and the string base are hoisted into the prologue.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::ClearQuadTexts() {
+
+void CItemBoxInfo2::ClearQuadTexts() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -5797,11 +5547,8 @@ __declspec(noinline) void CItemBoxInfo2::ClearQuadTexts() {
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::ClearPairTexts() {
+void CItemBoxInfo2::ClearPairTexts() {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -5809,14 +5556,8 @@ __declspec(noinline) void CItemBoxInfo2::ClearPairTexts() {
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
-#pragma pop
-// Retail clearItemBox2SlotTexts uses the stmw/lmw frame (MWCC optimize_for_size
-// prologue merge): info in r29, loop counter in r30, string-pool base in r31.
-// dont_inline keeps IPA from folding this body into its callers
-// (renderItemBox2SlotList etc.) - retail always calls it.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::ClearSlotTexts() {
+
+void CItemBoxInfo2::ClearSlotTexts() {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout,
                   &lbl_eu_805063BC[0x4a7],
@@ -5830,16 +5571,13 @@ __declspec(noinline) void CItemBoxInfo2::ClearSlotTexts() {
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
-#pragma pop
 
 // Retail stampItemBox2SlotTex: ItemBox2 variant of stampItemBoxSlotTex (same body, same
 // stmw r22 frame). Loops 7 slots; below the active count it resolves the item
 // name via CUICfManager_getArcResourceAccessor/vtable+0x0C and colors the pane; otherwise a plain
 // label pane. The two alpha-only vertex colours are packed into a 4-word block
 // shared by sprintf and the per-vertex setItemBoxVtxColor loop.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CItemBoxInfo2::StampSlotTex() {
+void CItemBoxInfo2::StampSlotTex() {
     u32 i;
     char bufElse[0x20];
     char buf[0x20];
@@ -5890,13 +5628,11 @@ __declspec(noinline) void CItemBoxInfo2::StampSlotTex() {
         }
     }
 }
-#pragma pop
-#pragma push
 // Activates the panel: once both the layout (+0x34) and its resource
 // accessor (+0x30) are present, set the current/active bytes. Goto-gate
 // layout matches retail's branch-over-branch shape (bne over a blr with
 // the body placed after the return - see CTitle CTitleLogo_draw family).
-__declspec(noinline) void CItemBoxInfo2::Activate() {
+void CItemBoxInfo2::Activate() {
     if (mpLayout != 0 && mTexArcResAcc != 0) {
         goto body;
     }
@@ -5905,7 +5641,6 @@ body:
     mCurrent = 1;
     mActive = 1;
 }
-#pragma pop
 // ============================================================================
 // setupItemBox2Detail - ItemBox2 info-panel render (retail 0x801E5FB8, 0x4DA8 bytes)
 // Reconstructed from retail disassembly (build/us/asm/kyoshin/CItemBoxInfo.s).
@@ -5967,21 +5702,17 @@ struct ItemBoxInfoCopy {
     unsigned int value;
     unsigned char state;
 };
-#pragma push
-__declspec(noinline) void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
+void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
     dst->itemId = src->itemId;
     dst->value = src->value;
     dst->state = src->state;
 }
-#pragma pop
 
-#pragma push
-__declspec(noinline) void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
+void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
     self->itemId = a;
     self->value = b;
     self->state = c;
 }
-#pragma pop
 
 void CItemBoxInfo2::SetupDetail(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     // ---- type (main switch key) ----
@@ -7167,8 +6898,6 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
 
 
 
-#pragma push
-#pragma auto_inline off
 s32 CItemBoxInfo2::CalcBonus1(u16 b, s32 arg2, void* d) {
     // Single-expression sum; builtin s32->f32 cast emits MWCC's
     // 0x4330/xoris double-trick.
@@ -7176,19 +6905,13 @@ s32 CItemBoxInfo2::CalcBonus1(u16 b, s32 arg2, void* d) {
     s32 prod = arg2 * (s32)(GetEffect(b, 0x52, d) + GetCondStat2D((void*)(u32)b) + 0x64);
     return (s32)(0.01f * (f32)prod);
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 s32 CItemBoxInfo2::CalcBonus2(u16 b, s32 arg2, void* d) {
     // Standalone SDA (not sdata2_ItemBox members) so lfd/lfs use r0@sda21
     // instead of li r3,0 / lfs 56(r3); u16 b gives retail or r28,r4 first.
     s32 prod = (s32)(GetEffect(b, 0x53, d) + GetCondStat2D((void*)(u32)b) + 0x64) * arg2;
     return (s32)(0.01f * (f32)prod);
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
 // Retail getItemBox2Effect: the ItemBox2 variant of getItemBoxEffect. Six slots are
 // scanned via the lookup table (s16 ids at +0x26/+0x1C..0x24, 6-byte slot
 // table from .sdata2). When the slot's byte equals the candidate's equip id
@@ -7284,20 +7007,13 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
     if ((s16)cap < (s32)result) result = cap;
     return result;
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
-#pragma optimize_for_size on
-__declspec(noinline) u32 CItemBoxInfo2::TestBdatFlag(u32 arg1, u32 arg2) {
+u32 CItemBoxInfo2::TestBdatFlag(u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
     u32 g = (u32)lbl_eu_806640F8;
     return (u8)BdatGetU8Direct((const void*)g, (const char*)buf, (u16)BdatGetItemId(arg2)) != 0;
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
 u32 CItemBoxInfo2::SumTypeCounts(u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
@@ -7329,10 +7045,7 @@ u32 CItemBoxInfo2::SumTypeCounts(u16 arg2, void* arg3) {
     }
     return result;
 }
-#pragma pop
-#pragma push
-#pragma auto_inline off
-__declspec(noinline) bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
+bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
     // Validates every equip slot against candidate item c before an exchange:
     // for each of the six slots either the indexed item names must still
     // resolve (when the slot holds the equipped item) or no indexed entry may
@@ -7396,14 +7109,11 @@ __declspec(noinline) bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
     }
     return true;
 }
-#pragma pop
 
 // Retail CItemBoxInfo2::OnFileEvent: two file-load branches. The line-arc
 // branch (fileHandle1) builds the whole layout in a 0x18000 scratch region;
 // the common-arc branch (fileHandle2) only re-attaches its accessor into a
 // 0x100 scratch region and refreshes via activateItemBox2.
-#pragma push
-#pragma optimize_for_size on
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
     if (mFileHandle1 == file->mFileHandle) {
         mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x18000,
@@ -7650,7 +7360,6 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
     }
     return false;
 }
-#pragma pop
 
 
 void sinit_801EABC4() {
@@ -7686,8 +7395,6 @@ void sinit_801EABC4() {
 // the category entry text. Both insertions re-splice the tail via the
 // three-sprintf sequence (tail backup, insert, tail restore). Retail uses
 // the stmw frame and keeps the mtctr table-copy loop (size-optimized).
-#pragma push
-#pragma optimize_for_size on
 char* CItemBoxPage::GetItemName(u8 index) {
     if (index >= 12) return NULL;
     u16 item_id = mItemIds[index];
@@ -7766,17 +7473,12 @@ char* CItemBoxPage::GetItemName(u8 index) {
     }
     return out;
 }
-#pragma pop
 
-// Retail hideItemBoxPanes:
-// the layout child) and clears it, then re-labels panes according to the
-// item-box state byte (info+0x9A) and the equip byte (info+0xAE) and the
-// category index arg2: 2/4-8 -> two panes, 3 -> one, 9/0xA/0xD -> one each.
-// The switch is emitted twice (both the state==4/byte!=0 and the state!=4
-// paths run the identical category dispatch). Uses the stmw/lmw frame
-// (optimize_for_size prologue merge).
-#pragma push
-#pragma optimize_for_size on
+// Retail hideItemBoxPanes: the layout child) and clears it, then re-labels panes
+// according to the item-box state byte (info+0x9A) and the equip byte (info+0xAE) and
+// the category index arg2: 2/4-8 -> two panes, 3 -> one, 9/0xA/0xD -> one each. The
+// switch is emitted twice (both the state==4/byte!=0 and the state!=4 paths run the
+// identical category dispatch).
 void CItemBoxInfo::HidePanes(u16 arg2) {
     char* base = (char*)&lbl_eu_805063BC;
 #define SET_PANE(_off, _val) \
@@ -7854,7 +7556,6 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
     }
 #undef SET_PANE
 }
-#pragma pop
 
 
 u8 func_801E13D8(CItemBoxInfo2* info) {
@@ -7867,8 +7568,7 @@ u8 func_801E13D8(CItemBoxInfo2* info) {
 struct GXColorS10Copy {
     s16 r, g, b, a;
 };
-#pragma push
-extern "C" __declspec(noinline) void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
+extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
     s16* d = (s16*)dst;
     const s16* s = (const s16*)src;
     d[0] = s[0];
@@ -7876,6 +7576,5 @@ extern "C" __declspec(noinline) void __as__11_GXColorS10FRC11_GXColorS10(void* d
     d[2] = s[2];
     d[3] = s[3];
 }
-#pragma pop
 
 

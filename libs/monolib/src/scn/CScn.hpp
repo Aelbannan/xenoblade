@@ -47,8 +47,8 @@ struct IScnRenderDraw {
 
 class CView;
 
-extern "C" s32 CamMan_SyncCameraToView(UnkScn68* cam);
-extern "C" CView* CamMan_GetViewThread(UnkScn68* cam, s16 idx);
+// CamMan_SyncCameraToView / CamMan_GetViewThread are CScnCameraMan members
+// (libs/monolib/src/scn/CScnCameraMan.hpp); CScn.cpp casts mCamWork to call them.
 extern "C" void* simFwdAnimSetup102(void*, void*, void*, void*, int);
 extern "C" int simFwdAnimReset(int, int, int);
 extern "C" void __ct__8049E710();
@@ -56,10 +56,10 @@ extern "C" void __ct__804820F8();
 extern "C" void startFade(int);
 extern "C" void* isFadeIdle(void*);
 extern "C" void* isFadeSettled(void*);
-extern "C" int CamMan_SwapViewParam_AED4(int);
-extern "C" int CamMan_FindItemA_B158(int);
-extern "C" bool CamMan_FindViewItemA(int);
-extern "C" void* CamMan_FindViewItemB(void*);
+// The former flat imports CamMan_SwapViewParam_AED4, CamMan_FindItemA_B158,
+// CamMan_FindViewItemA and CamMan_FindViewItemB are real CScnCameraMan members
+// (libs/monolib/src/scn/CScnCameraMan.hpp); the scene-API wrappers in CScn.cpp
+// cast mCamWork and call the members directly.
 
 // Camera-item payload block copied by Scn_CopyCamProjMatrix: the 64-byte projection
 // matrix (MTX44) at item+0x194.

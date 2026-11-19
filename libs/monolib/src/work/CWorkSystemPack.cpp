@@ -445,7 +445,7 @@ extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
 // codegen signature; the default -O4,p emits neg/or/rlwinm instead.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
+extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
                    u32* outEntryId, u32* outIndex, u32* outFileId) {
     const char* pFile = ml::CPathUtil::getFilePtrFromPath(pPath);
     PackItemListNode* sentinel;
@@ -494,9 +494,9 @@ s32 findPackFileId(const char* pName, const char* pPath) {
 // Static lookup: walk the singleton's circular pack-item list (head at
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
 // item's findFileEntry when the list is non-empty.
-// __declspec(noinline) keeps retail's out-of-line bl - without it -inline auto
+// keeps retail's out-of-line bl - without it -inline auto
 // folds this small helper into findPackFileId below.
-__declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
+bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* first = *(u8**)head;

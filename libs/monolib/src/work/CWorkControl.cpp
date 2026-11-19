@@ -65,13 +65,13 @@ RttiBaseList2 lbl_eu_8056B868 = {
 // sbss singleton lbl_eu_806655D8 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 CWorkControl* lbl_eu_806655D8[2];
 
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: keeps the ctor out of create()'s inline set; without it extabindex drifts (+0x4F)
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
     *(IWorkEventVtbl**)this = &lbl_eu_8056B7C8;
     lbl_eu_806655D8[0] = this;
     mType = THREAD_CWORKCONTROL;
 }
-#pragma dont_inline off
+#pragma dont_inline off  // noinline-ok: closes the block above
 
 #pragma optimize_for_size on
 CWorkControl::~CWorkControl(){

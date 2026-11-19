@@ -577,7 +577,6 @@ int AXRNA_GetNumRoom(AXRNA *rna) {
     return (unsigned int)SJ_VT(obj)->getAvail(obj, 0) >> 1;
 }
 
-#pragma auto_inline off
 void axrna_update_play(void* self) {
     s32 i;
     s32 delta;

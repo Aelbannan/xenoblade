@@ -78,7 +78,6 @@ typedef struct _HBMMIDICHUNK {
 extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state);
 
 #pragma push
-#pragma auto_inline off
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
 {
     HBMSEQTRACK* track = &seq->tracks[0];

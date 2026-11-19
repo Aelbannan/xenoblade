@@ -11,11 +11,15 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScnItemCamera.hpp"
 
-// Installs the retail vtable (novtable class), stores the camera parameter
-// block, fills every view slot with the "no view" sentinel, then creates the
-// ten default cameras (0..9) in the scene pool.
+// [.rodata] 0x805240D8: camera-select script command format string. Retail
+// keeps a pointer to it in .sdata (lbl_eu_80663A08); the shipped code never
+// dereferences that pointer, but the file-scope string object survives.
+extern "C" __declspec(align(4)) const char camSetCmdFormat[0x1E] =
+    "camset %d %v3 %v3 %f %f %f %f";
+
+// Stores the camera parameter block, fills every view slot with the "no view"
+// sentinel, then creates the ten default cameras (0..9) in the scene pool.
 CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
-    *(void**)this = (void*)lbl_eu_8056EA40;
     mParam = param;
     mCamId = 0;
     // The sentinel is read through a pointer that may alias the view table /
@@ -39,7 +43,6 @@ CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
 }
 
 CScnCameraMan::~CScnCameraMan() {
-    *(void**)this = (void*)lbl_eu_8056EA40;
     // Release every view this camera manager had registered (vtable+0xB8 with
     // the param block), then free the object when the deleting flag is set.
     for (s16 i = 0; i < mCount; i++) {
@@ -49,7 +52,7 @@ CScnCameraMan::~CScnCameraMan() {
             if (param != NULL) {
                 param = (CScnCameraParam*)&param->field_0x54;
             }
-            ((CViewVt46*)view)->vfB8(param);
+            view->CView_UnkVirtualFunc4((IWorkEvent*)param);
         }
     }
 }
@@ -57,24 +60,24 @@ CScnCameraMan::~CScnCameraMan() {
 // Registers `view` at mViews[idx]: first releases the previously registered
 // view (vtable+0xB8 with the param block) when it is still valid and differs
 // from the new one, then hands the new view the param block and stores its id.
-extern "C" void CamMan_SwapViewParam_AED4(CScnCameraMan* cam, CView* view, u32 idx) {
-    u32 vid = cam->mViews[idx];
+void CScnCameraMan::swapViewParam(CView* view, u32 idx) {
+    u32 vid = mViews[idx];
     if (vid != 0xFFFFFFFF && vid != view->mWorkID) {
         CView* v = CViewRoot::getView(vid);
         if (v != NULL) {
-            CScnCameraParam* param = cam->mParam;
+            CScnCameraParam* param = mParam;
             if (param != NULL) {
                 param = (CScnCameraParam*)&param->field_0x54;
             }
-            ((CViewVt46*)v)->vfB8(param);
+            v->CView_UnkVirtualFunc4((IWorkEvent*)param);
         }
     }
-    CScnCameraParam* param = cam->mParam;
+    CScnCameraParam* param = mParam;
     if (param != NULL) {
         param = (CScnCameraParam*)&param->field_0x54;
     }
     view->enqueueContextMsg((u32)param);
-    cam->mViews[idx] = view->mWorkID;
+    mViews[idx] = view->mWorkID;
 }
 
 // Finds the camera item whose view id matches the current view's work id.
@@ -85,7 +88,8 @@ static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
     CScnCameraParam* p = cam->mParam;
     u8* pool = p->mPool;
     CScnCameraNode* node;
-    CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
+    CScnCameraNode* sentinel =
+        ((CScnCameraList*)CScnItemPool_lookupSubPool(pool, 4))->sentinel;
     node = sentinel->next;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
@@ -99,13 +103,13 @@ static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
 }
 
 // Records the camera item matching the current view as the current camera.
-extern "C" bool CamMan_SyncCameraToView(CScnCameraMan* cam) {
+bool CScnCameraMan::syncCameraToView() {
     CView* view = CView::getCurrentView();
-    CScnCameraItem* item = findCamByViewId(cam, view);
+    CScnCameraItem* item = findCamByViewId(this, view);
     if (item == NULL) {
         return false;
     }
-    cam->mCamId = item->mIndex;
+    mCamId = item->mIndex;
     return true;
 }
 
@@ -141,13 +145,14 @@ static CScnCameraItem* findCamById2(s32 id, CScnCameraList* list) {
 
 // Looks up the camera item whose camera id equals the current camera id and
 // refreshes it through its vtable+0x14 slot.
-extern "C" void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
-    s32 id = cam->mCamId;
+void CScnCameraMan::refreshCurrentCamera() {
+    s32 id = mCamId;
     if (id < 0) {
-        id = cam->mCamId;
+        id = mCamId;
     }
 
-    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
+    CScnCameraList* list =
+        (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnCameraItem* item = findCamById(list->sentinel, id);
     item->vf3();
 }
@@ -166,18 +171,19 @@ extern "C" void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
 // NOTE (byte-matching): the second comparison must be COMMUTED (constant on
 // the left); writing `type < THREAD_CVIEW_MAX` lets MWCC fuse the pair into
 // subi/cmpli, which retail does not do.
-extern "C" CWorkThread* CamMan_GetViewThread(CScnCameraMan* cam, s32 id) {
+CWorkThread* CScnCameraMan::getViewThread(s32 id) {
     if (id < 0) {
-        id = (s16)cam->mCamId;
+        id = (s16)mCamId;
     }
 
-    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
+    CScnCameraList* list =
+        (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnCameraNode* node;
     CScnCameraNode* sentinel = list->sentinel;
     node = sentinel->next;
     CWorkThread* thread;
     while (node != sentinel) {
-        u32 viewId = cam->mViews[id];
+        u32 viewId = mViews[id];
         if (viewId != 0xFFFFFFFF) {
             // Every path through the getWorkThread call exits the function,
             // so the loop only iterates on unregistered views.
@@ -202,12 +208,13 @@ keep:
 
 // Searches the scene pool's camera list for the item whose camera id equals
 // `id` (falling back to the current camera id when `id` is negative).
-extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
+CScnCameraItem* CScnCameraMan::findItem(s32 id) {
     if (id < 0) {
-        id = cam->mCamId;
+        id = mCamId;
     }
 
-    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
+    CScnCameraList* list =
+        (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnCameraNode* sentinel = list->sentinel;
     CScnCameraNode* node = sentinel->next;
     while (node != sentinel) {
@@ -220,13 +227,14 @@ extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id) {
     return NULL;
 }
 
-// Same camera-id lookup as CamMan_FindItemA_B158.
-extern "C" CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
+// Second copy of the camera-id lookup (retail keeps two out-of-line copies).
+CScnCameraItem* CScnCameraMan::getItem(s32 id) {
     if (id < 0) {
-        id = cam->mCamId;
+        id = mCamId;
     }
 
-    CScnCameraList* list = CScnItemPool_lookupSubPool(cam->mParam->mPool, 4);
+    CScnCameraList* list =
+        (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnCameraNode* node;
     CScnCameraNode* sentinel = list->sentinel;
     node = sentinel->next;
@@ -246,14 +254,15 @@ extern "C" CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
 // table read must be a named local compared against param->mViewId in that
 // order, and sentinel must be declared before node, or sentinel/node land in
 // r6/r7 instead of the retail r5/r6.
-extern "C" CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraParam* param) {
-    CScnCameraParam* p = cam->mParam;
+CScnCameraItem* CScnCameraMan::findViewItem(CScnCameraParam* param) {
+    CScnCameraParam* p = mParam;
     u8* pool = p->mPool;
-    CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
+    CScnCameraNode* sentinel =
+        ((CScnCameraList*)CScnItemPool_lookupSubPool(pool, 4))->sentinel;
     CScnCameraNode* node = sentinel->next;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
-        u32 viewId = cam->mViews[item->mIndex];
+        u32 viewId = mViews[item->mIndex];
         if (viewId == param->mViewId) {
             return item;
         }
@@ -262,20 +271,20 @@ extern "C" CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraPa
     return NULL;
 }
 
-// Same view-id camera lookup as CamMan_FindViewItemA.
+// Same view-id camera lookup as findViewItem.
 // NOTE (byte-matching): residual vs retail is purely MWCC register coloring:
 // retail colors node=r5/sentinel=r6 with the mParam load hoisted ahead of the
 // callee-saves; every tried declaration/body shape yields either
 // sentinel=r5/node=r6 (this form, fewest mismatches) or sentinel=r6/node=r7.
 // Instruction sequence, control flow, size and relocs match exactly.
-extern "C" CScnCameraItem* CamMan_FindViewItemB(CScnCameraMan* cam, CScnCameraParam* param) {
-    CScnCameraParam* p = cam->mParam;
-    CScnCameraList* list = CScnItemPool_lookupSubPool(p->mPool, 4);
+CScnCameraItem* CScnCameraMan::getViewItem(CScnCameraParam* param) {
+    CScnCameraParam* p = mParam;
+    CScnCameraList* list = (CScnCameraList*)CScnItemPool_lookupSubPool(p->mPool, 4);
     CScnCameraNode* node = list->sentinel->next;
     CScnCameraNode* sentinel = list->sentinel;
     while (node != sentinel) {
         CScnCameraItem* item = node->item;
-        u32 viewId = cam->mViews[item->mIndex];
+        u32 viewId = mViews[item->mIndex];
         if (viewId == param->mViewId) {
             return item;
         }
@@ -297,7 +306,8 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* event) {
             camId = mCamId;
         }
 
-        CScnCameraItem* item = findCamById2(camId, CScnItemPool_lookupSubPool(mParam->mPool, 4));
+        CScnCameraItem* item = findCamById2(
+            camId, (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4));
         if (item != NULL) {
             parseLines__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
             return true;
@@ -331,7 +341,8 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* cmd) {
 
     s32 camId = mCamId;
 
-    CScnCameraList* list = CScnItemPool_lookupSubPool(mParam->mPool, 4);
+    CScnCameraList* list =
+        (CScnCameraList*)CScnItemPool_lookupSubPool(mParam->mPool, 4);
     CScnItemCamera* item = NULL;
     for (CScnCameraNode* node = list->sentinel->next; node != list->sentinel;
          node = node->next) {
@@ -517,79 +528,3 @@ extern "C" void CamMan_ComputeViewFalloff(f32* outDirX, f32* outFall, CScnCamera
     }
     *outDirX = dir.x;
 }
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056EA40-0x8056EAD8 (0x98 = 152B): CScnCameraMan vtable.
-namespace CScnCameraManBlob {
-extern "C" void* __dt__13CScnCameraManFv();
-extern "C" void WorkEvent1__13CScnCameraManFPvPCc();
-extern "C" void WorkEvent3__13CScnCameraManFPv();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" u32 __RTTI__10IWorkEvent;
-}
-extern "C" u32 __RTTI__13CScnCameraMan[2];  // RTTI locator (owned by CScnItemCamera.cpp)
-extern "C" u32 lbl_eu_8056EA40[38] = {
-    (u32)&__RTTI__13CScnCameraMan, 0x00000000,
-    (u32)&CScnCameraManBlob::__dt__13CScnCameraManFv,
-    (u32)&CScnCameraManBlob::WorkEvent1__13CScnCameraManFPvPCc,
-    (u32)&CScnCameraManBlob::OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&CScnCameraManBlob::WorkEvent3__13CScnCameraManFPv,
-    (u32)&CScnCameraManBlob::WorkEvent4__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::OnPauseTrigger__10IWorkEventFb,
-    (u32)&CScnCameraManBlob::WorkEvent6__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent7__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent8__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent9__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent10__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent11__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent12__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent13__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent14__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent15__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent16__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent17__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent18__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent19__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent20__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent21__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent22__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent23__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent24__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent25__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent26__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent27__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent28__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent29__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent30__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::WorkEvent31__10IWorkEventFv,
-    (u32)&CScnCameraManBlob::__RTTI__10IWorkEvent,
-    0x00000000, 0x00000000, 0x00000000,
-};

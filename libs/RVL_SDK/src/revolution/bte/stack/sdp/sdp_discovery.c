@@ -146,7 +146,6 @@ extern void btu_start_timer(TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout);
    service-search-then-attribute path (classic two-step discovery). The two
    branches are tail calls so the parent returns straight into the helper. */
 
-#pragma dont_inline on
 
 /* sdp_cb.max_attr_list_size: 16-bit field at sdp_cb+0x462C (big-endian). */
 #define SDP_CB_MAX_ATTR_LIST_SIZE (*(UINT16 *)(sdp_cb + 0x462C))
@@ -853,4 +852,3 @@ UINT8 *sdpu_build_uuid_seq(UINT8 *p_out, UINT16 num_uuids, tSDP_UUID *p_uuid_lis
 
     return p_out;
 }
-#pragma dont_inline off

@@ -383,7 +383,7 @@ void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
 /* btm_remove_sco_links calls BTM_RemoveSco; -ipa file must not inline the
    body or the caller's bl call site disappears (same pattern as
    BTM_ChangeEScoLinkParms above). */
-#pragma auto_inline off
+#pragma auto_inline off  // noinline-ok: -ipa off loses 6 fns, -inline noauto loses btm_sco_chk_pend_unpark (needs inlining)
 tBTM_STATUS BTM_RemoveSco(UINT16 sco_inx)
 {
     tSCO_CONN *p = &SCO_CB->sco_db[sco_inx];
@@ -477,7 +477,6 @@ void btm_sco_acl_removed(BD_ADDR bda)
 /* Retail keeps a real bl BTM_ChangeEScoLinkParms at the btm_sco_connected
    call site; -ipa file must not inline the body or the call disappears
    (same pattern as btm_sec_execute_procedure in btm_sec.c). */
-#pragma auto_inline off
 /* Retail .data string pool: BTM_ChangeEScoLinkParms trace strings (the
    function reaches them as trace_pool + 0x248 / +0x28C). */
 char btm_sco_pool_ces[] = "BTM_ChangeEScoLinkParms -> SCO Link for handle 0x%04x, pkt 0x%04x";

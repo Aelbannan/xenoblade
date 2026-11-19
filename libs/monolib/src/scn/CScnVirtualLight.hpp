@@ -117,10 +117,10 @@ struct CScnVirtualLightValueSrc {
 
 class CScnCameraMan;
 
-// Camera-item lookup (defined in CScnCameraMan.cpp under the retail flat
-// symbol). CScn.hpp only declares the 1-arg stub; this TU's scnVlGetCamId
-// passes the real (cam, id) ABI pair, so the full signature is declared here.
-extern "C" int CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id);
+// Camera-item lookup is the CScnCameraMan member findItem(s32) (declared in
+// libs/monolib/src/scn/CScnCameraMan.hpp); this TU's scnVlGetCamId calls it
+// through the camera-work object. CScnCameraMan is only forward-declared here
+// because the full class is not needed by this header.
 
 // Light reset (defined in CLight.cpp): writes `value` to the light's +0x2C
 // field. Flat-name import; declared here (CScnVirtualLight.hpp) because the

@@ -55,7 +55,6 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
                         const T* pStr, int len, f32 width);
 
 #pragma push
-#pragma auto_inline off
 
 template <typename T>
 int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,

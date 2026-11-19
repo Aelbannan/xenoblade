@@ -27,7 +27,6 @@ static char s_lineFmt[] =
 
 void asyncRoutine(s32 result, void* ctxt);
 
-#pragma dont_inline on
 BOOL reserveFileDescriptor(void) {
     BOOL enabled;
     BOOL busy;
@@ -44,7 +43,6 @@ BOOL reserveFileDescriptor(void) {
     OSRestoreInterrupts(enabled);
     return busy ? FALSE : TRUE;
 }
-#pragma dont_inline off
 
 BOOL NANDLoggingAddMessageAsync(NANDLoggingCallback cb, const char* fmt, ...) {
     va_list ap;

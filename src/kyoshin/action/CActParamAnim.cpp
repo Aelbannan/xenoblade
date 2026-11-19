@@ -579,7 +579,7 @@ extern "C" void startAnimDual(CActParamAnim* self, u32 param) {
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
                 switchSubAnim(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -703,10 +703,10 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     } else {
         if (getSubObjPlus14(view->mChildData10) == NULL) view->field4BD = 1;
         if (view->field4BD != 0 || (view->field270 & 0x800) == 0) {
-            if (hasParamSubObjB(view->mChildData10) != 0) {
+            if (hasParamSubObjB((CActParamData*)view->mChildData10) != 0) {
                 // Reset the child data blocks before the fresh anim start.
-                walkParamBlkB(view->mChildData10);
-                resetParamSubB(view->mChildData10);
+                walkParamBlkB((CActParamData*)view->mChildData10);
+                resetParamSubB((CActParamData*)view->mChildData10);
             }
         }
         s32 frameS = static_cast<s32>(blendFrames);
@@ -1132,7 +1132,7 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         }
     }
     blendAnimHeading(self);
-    saveParamShadow(view->mChildData10);
+    saveParamShadow((CActParamData*)view->mChildData10);
     checkParamBlks(view->mChildData10);
     clearParamShadow(view->mChildData10);
     updateLeafDist(self);
@@ -1190,7 +1190,7 @@ extern "C" int dispatchAnimSlot__13CActParamAnimFv(CActParamAnim* self, u32 para
     // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
     // proceed unless BOTH the virtual call and the child reset return 0.
     if (reinterpret_cast<CActParamAnimVt80*>(self)->dispatch80(arg2) != 0 ||
-        getParamByteSel(view->mChildData10, 0) != 0) {
+        getParamByteSel((CActParamData*)view->mChildData10, 0) != 0) {
         if (view->field30 >= 0) {
             view->field374 = view->field30;
         }
@@ -1211,7 +1211,7 @@ extern "C" int dispatchAnimSlot__13CActParamAnimFv(CActParamAnim* self, u32 para
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                 switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -1269,7 +1269,7 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
             switchSubAnim(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -1343,7 +1343,7 @@ extern "C" int startFinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 par
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
             switchSubAnim(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -1397,7 +1397,7 @@ int fireAnimParam__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             u32 m = view->field270;
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
-                        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+                        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
                         switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
@@ -1447,7 +1447,7 @@ extern "C" int startOwnerFlag8Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1515,7 +1515,7 @@ extern "C" int startOwnerFlag2Anim__13CActParamAnimFv(CActParamAnim* self, u32 p
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                 switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -1659,7 +1659,7 @@ extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 par
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
                     switchSubAnim(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1724,7 +1724,7 @@ int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
                     switchSubAnim(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1789,7 +1789,7 @@ int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
                     switchSubAnim(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1854,7 +1854,7 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
                     switchSubAnim(self, local, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1926,7 +1926,7 @@ int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             flag = 1;
                         }
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, p, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, p, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1982,7 +1982,7 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2034,7 +2034,7 @@ int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
             switchSubAnim(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -2125,7 +2125,7 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     flag2 = 1;
                 }
                 u8 b = sview->field4BD;
-                u32 ret = evalParamBySlot(sview->mChildData10, &localSmall,
+                u32 ret = evalParamBySlot((CActParamData*)sview->mChildData10, &localSmall,
                                         param, b, flag2);
                 switchSubAnim(self, localSmall, ret, sview->field2A4, 0);
                 sview->field0C &= ~0x200;
@@ -2237,7 +2237,7 @@ int fireCountGate__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                 flag = 1;
             }
         }
-        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
         switchSubAnim(self, localSmall, ret, view->field2A4, 0);
         view->field0C &= ~0x200;
     } else {
@@ -2281,7 +2281,7 @@ int fireWord378Gt__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         model = view->field270;
                         if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2327,7 +2327,7 @@ int fireTwinCount__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2378,7 +2378,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
                     if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot(data, &local, animId, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
                 switchSubAnim(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2418,7 +2418,7 @@ extern "C" int fireOwnerIdGt__13CActParamAnimFv(CActParamAnim* self,
                 if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
             }
             u32 local;
-            u32 ret = evalParamBySlot(data, &local, animId, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)data, &local, animId, b, flag);
             switchSubAnim(self, local, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -2464,7 +2464,7 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(view->mChildData10, &local, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &local, param, b, flag);
                 switchSubAnim(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2542,7 +2542,7 @@ int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
                         u32 localSmall;
-                        u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                        u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
                         switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
                     }
@@ -2586,7 +2586,7 @@ int fireBlendCust__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, view->field4BD, flag);
                 switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -2765,7 +2765,7 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2809,7 +2809,7 @@ int startIfActive__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;                    \
         }                                                                       \
         u32 startRet =                                                          \
-            evalParamBySlot(view->mChildData10, &outLocal, param, b, flag);        \
+            evalParamBySlot((CActParamData*)view->mChildData10, &outLocal, param, b, flag);        \
         switchSubAnim(self, outLocal, startRet, view->field2A4, 0);              \
         view->field0C &= ~0x200u;                                               \
     } while (0)
@@ -2927,7 +2927,7 @@ int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2978,7 +2978,7 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
             switchSubAnim(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -3063,7 +3063,7 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3114,7 +3114,7 @@ int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 ret = evalParamBySlot(view->mChildData10, &localSmall, param, b, flag);
+            u32 ret = evalParamBySlot((CActParamData*)view->mChildData10, &localSmall, param, b, flag);
             switchSubAnim(self, localSmall, ret, view->field2A4, 0);
             view->field0C &= ~0x200;
         }
@@ -3164,7 +3164,7 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3237,7 +3237,7 @@ int fireOpenGate1__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
                 switchSubAnim(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3278,7 +3278,7 @@ int fireOpenGate2__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
                 u32 local;
-                u32 ret = evalParamBySlot(data, &local, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &local, param, b, flag);
                 switchSubAnim(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3321,7 +3321,7 @@ int fireOpenGate3__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                 switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -3365,7 +3365,7 @@ int fireFlag4D4Gt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -3411,7 +3411,7 @@ int fire4D4ZeroGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = evalParamBySlot(data, &localSmall, param, b, flag);
+                    u32 ret = evalParamBySlot((CActParamData*)data, &localSmall, param, b, flag);
                     switchSubAnim(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }

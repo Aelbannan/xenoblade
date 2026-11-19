@@ -693,7 +693,6 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 }
 
 #pragma push
-#pragma auto_inline off
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'mask', and store the following table record's byte at 'offset' into *dst.
 extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset) {
@@ -710,7 +709,6 @@ extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offs
 #pragma pop
 
 #pragma push
-#pragma auto_inline off
 // Scan every active resource entry; report 1 when any entry's info selects a
 // mask bit enabled by 'flags'.
 extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
@@ -732,7 +730,6 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
 #pragma pop
 
 #pragma push
-#pragma auto_inline off
 // Report whether resource entry [index]'s info selects a mask bit enabled by
 // 'flags' (result shifted left by one like retail).
 extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
@@ -914,7 +911,6 @@ s32 ScnRes_RecordCrossing(s32 index) {
 }
 
 #pragma push
-#pragma auto_inline off
 // Install the active crossing-record callback (ScnRes_ValidateCrossing when enabled,
 // ScnRes_RecordCrossing otherwise) and its enabled flag.
 extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {

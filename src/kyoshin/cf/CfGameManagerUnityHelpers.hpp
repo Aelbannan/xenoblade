@@ -1627,7 +1627,7 @@ nextDestination:
 
 extern "C" void* CfRes_getInstanceField();
 extern "C" s32 CfRes_lookupLocalIndex(u32 handle);
-extern "C" void CfRes_tryDelegateLoad1(u32 handle, u32 state);
+extern "C" int CfRes_tryDelegateLoad1(int a, int b);
 extern "C" void* CfRes_getField18(CfResStackObject* resource);
 extern "C" u32 CfRes_extractBits20_7(void* field);
 extern "C" u32 CfRes_extractBits10_10(void* field);
@@ -2018,7 +2018,7 @@ extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value) {
 
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" s32 CfRes_acquireSlot(s32 value, u32 second, u32 third);
-extern "C" void CfRes_tryResolveByBits(s32 destination, const void* source, u32 size);
+extern "C" int CfRes_tryResolveByBits(int a, int b, int c);
 extern "C" const void* resolveWpnTok__Q22cf6CfBdatFUl(u32 textId);
 extern "C" void cfResNopValueSink(u32 value);
 extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* current,
@@ -2029,23 +2029,23 @@ extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* curren
         s32 destination = CfRes_acquireSlot(value, 0, 0);
         if (destination >= 0 && destination != *current) {
             func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0);
-            CfRes_tryResolveByBits(destination,
-                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0),
-                          size);
-            CfRes_tryResolveByBits(destination,
-                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 1),
-                          size);
-            CfRes_tryResolveByBits(destination,
-                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 2),
-                          size);
-            CfRes_tryResolveByBits(destination,
-                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 3),
-                          size);
-            CfRes_tryResolveByBits(destination,
-                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 4),
-                          size);
-            CfRes_tryResolveByBits(destination,
-                          resolveWpnTok__Q22cf6CfBdatFUl(data->textId_0x18), size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0),
+                          (int)size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 1),
+                          (int)size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 2),
+                          (int)size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 3),
+                          (int)size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 4),
+                          (int)size);
+            CfRes_tryResolveByBits((int)destination,
+                          (int)resolveWpnTok__Q22cf6CfBdatFUl(data->textId_0x18), (int)size);
             *current = destination;
             changed = true;
         } else if (destination >= 0 && destination == *current) {

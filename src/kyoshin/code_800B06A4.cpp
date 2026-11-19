@@ -324,7 +324,7 @@ extern "C" int reslistCount(void* self);
 extern float lbl_eu_80663EDC;
 #pragma push
 #pragma auto_inline off
-void resetSubManagers(UnkClass_805764CC* self) {
+extern "C" void resetSubManagers(UnkClass_805764CC* self) {
     // const decl lets MWCC hoist the sdata2 load above the frame stores.
     extern const float lbl_eu_806669D8;
     lbl_eu_80663EDC = lbl_eu_806669D8;
@@ -379,7 +379,7 @@ void* reslistFirstItem(void* self) {
 // way step the iterator back and rebind the removed entry via unlinkListNode.
 #pragma push
 #pragma auto_inline off
-void evictTboxOverflow() {
+extern "C" void evictTboxOverflow() {
     UnkClass_805764CC* ctx = getInstance();
     if ((u32)reslistCount(&ctx->field_0xC48) < 0x14) {
         return;
@@ -1325,7 +1325,7 @@ extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
 }
 #pragma pop
 
-void insertReslistB68(cf::CfObject* obj) {
+extern "C" void insertReslistB68(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
     ::reslistFindObj(&ctx->field_0xB68, obj);
 }
@@ -1354,19 +1354,19 @@ extern "C" void* nextReslistBE8(cf::CfObject* obj) {
 #pragma pop
 
 // us-800b8218 - Add CfObject to reslist at field_0xBC8
-void insertReslistBC8(cf::CfObject* obj) {
+extern "C" void insertReslistBC8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
     ::reslistFindObj(&ctx->field_0xBC8, obj);
 }
 
 // us-800b8250 - Add CfObject to reslist at field_0xBA8
-void insertReslistBA8(cf::CfObject* obj) {
+extern "C" void insertReslistBA8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
     ::reslistFindObj(&ctx->field_0xBA8, obj);
 }
 
 // us-800b8288 - Add CfObject to reslist at field_0xC08
-void insertReslistC08(cf::CfObject* obj) {
+extern "C" void insertReslistC08(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
     ::reslistFindObj(&ctx->field_0xC08, obj);
 }
@@ -1378,7 +1378,7 @@ extern "C" void* firstReslistBE8();
 // us-800b82c0: while the game manager is active, iterate the object chain
 // starting at firstReslistBE8(), invoking virtual slot 0x67 (vtable + 0x19C)
 // with the singleton as argument; nextReslistBE8 yields the next entry.
-void walkReslistBE8vt(UnkClass_805764CC* self) {
+extern "C" void walkReslistBE8vt(UnkClass_805764CC* self) {
     if (getResetDataPtr__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
@@ -1400,7 +1400,7 @@ void init_8804(){}
 // Remove nodes matching a given ID from a linked list at offset 0xC84.
 // `next` is declared before `node` so MWCC colors node=r7/next=r6 like
 // retail (the reverse declaration order swaps the registers).
-void unlinkFactoryById(u8* self, u32 targetId) {
+extern "C" void unlinkFactoryById(u8* self, u32 targetId) {
     CFactoryEventPoolNode* head = (CFactoryEventPoolNode*)((UnkClass_805764CC*)self)->field_0xC80.mStartNodePtr;
     CFactoryEventPoolNode* sentinel = head;
     CFactoryEventPoolNode* next;
@@ -1715,7 +1715,7 @@ extern "C" void* lookupCA0BySelf(void* self) {
 extern "C" void* firstReslistB28();
 extern "C" void* firstReslistB48();
 
-void* findObjB28ById(s32 id) {
+extern "C" void* findObjB28ById(s32 id) {
     if (id == 0) {
         return 0;
     }
@@ -1739,7 +1739,7 @@ void* findObjB28ById(s32 id) {
     return 0;
 }
 
-void* findObjB48ById(s32 id) {
+extern "C" void* findObjB48ById(s32 id) {
     if (id == 0) {
         return 0;
     }
@@ -1865,7 +1865,7 @@ extern "C" void* mapKindToSpawn(void* self, void* value);
 // us-800ba178: build a scratch Unk812Data record on the stack, seed it from
 // the three arguments via the CfGameManager setters, then hand it to
 // mapKindToSpawn.
-void spawnFromRecord(void* argA, void* argB, void* argC) {
+extern "C" void spawnFromRecord(void* argA, void* argB, void* argC) {
     u8 buf[0x28];
     clearResourceStack__Q22cf13CfGameManagerFv(buf);
     setResourceField04__Q22cf13CfGameManagerFv(buf, argA);
@@ -2045,7 +2045,7 @@ void selectSortEntries(SortEntry* start, SortEntry* end, SortEntryCompare compar
 // Walks the item-manager list via the CfGameManager iterator primitives; for
 // every node whose type id matches arg1, raises CfObjectPc_setupFrame with the node's
 // container base (the raw node pointer sits at +0x3E9C inside the container).
-void walkListByItemId(u32 arg1, u32 arg2) {
+extern "C" void walkListByItemId(u32 arg1, u32 arg2) {
     getGlobalU32_40F4();
     // node declared first so its vreg is born earliest (retail colors it
     // r31); source follows and lands in r30.
@@ -2280,8 +2280,8 @@ extern "C" void sinit_800B9A40() {
 // us-800b1da0 - deref field at +0x0 and add 8
 #pragma push
 #pragma auto_inline off
-u32 factoryIterItem(u8* self) {
-    return *(u32*)self + 8;
+extern "C" void** factoryIterItem(void* self) {
+    return (void**)(*(u32*)self + 8);
 }
 #pragma pop
 // us-800b1dc8 - compare two u32 for inequality (dual-subf/or/srwi idiom)
@@ -2444,15 +2444,15 @@ extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
     return result;
 }
 // us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
-void setObj6Cbit1(u8* self) {
+extern "C" void setObj6Cbit1(void* self) {
     ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~1u) | 2u;
 }
 // us-800b588c - clear bit 1 and set bit 0 of the field at +0x6C
-void setObj6Cbit0(u8* self) {
+extern "C" void setObj6Cbit0(void* self) {
     ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~2u) | 1u;
 }
 // us-800b58a0 - accessor returning field at +0x70
-u32 getObjField70(u8* self) {
+extern "C" u32 getObjField70(void* self) {
     return ((Obj6CView*)self)->field_70;
 }
 // us-800b6dd8 - return pointer field at +0x98
@@ -2880,12 +2880,12 @@ extern "C" void registerFactoryEvent__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC
 }
 // us-800b9d54 - gmWalkByMask
 // Fetch the singleton and forward (singleton, arg) to walkReslistByMask.
-void gmWalkByMask(void* arg) {
+extern "C" void gmWalkByMask(void* arg) {
     ::walkReslistByMask(getInstance(), (u32)arg);
 }
 // us-800b9d88 - gmWalkByType
 // Fetch the singleton and forward (singleton, arg) to walkReslistByType.
-void gmWalkByType(void* arg) {
+extern "C" void gmWalkByType(void* arg) {
     walkReslistByType(getInstance(), (u32)arg);
 }
 // us-800b9dbc - gmWalkByName
@@ -2895,7 +2895,7 @@ extern "C" void gmWalkByName(const char* name) {
 }
 // us-800b9e64 - gmSpawnMask8000
 // Fetch the singleton and forward (singleton, 0x8000, 0, 0) to spawnMaskedObject.
-void gmSpawnMask8000() {
+extern "C" void gmSpawnMask8000() {
     spawnMaskedObject(getInstance(), 0x8000, 0, 0);
 }
 // us-800b9ff4 - setter storing val at +0x720
@@ -3224,7 +3224,7 @@ static bool listReady45A0(void* list) {
 // Validity check across four object lists (the B28-family heads): every
 // entry whose +0x64 flag word has bit 16 set must report ready through its
 // slot-0x1D callback. Any failure aborts with false.
-bool probeReadyLists() {
+extern "C" bool probeReadyLists() {
     if (!lbl_eu_80663EE8) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);

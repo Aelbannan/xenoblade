@@ -83,17 +83,14 @@ extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweep
 // their vtables here (retail .data 0x8056F380/0x8056F3A8) together with the
 // RTTI base lists, the .sdata locators and the .rodata type-name strings
 // "CColiObjCall" / "CColiResCall" (0x80524408 / 0x80524418):
-//
 //     class CColiProc;                     // base, 1 virtual slot (ColiNoop)
 //     class CColiObjCall : public CColiProc;// slot0 ColiAccumScaledVec
 //     class CColiResCall : public CColiProc;// slot0 ColiMoverUpdate
-//
 // Each class has exactly one virtual function (3-word vtable {RTTI,
 // offset-to-top, slot0}); CColiObjCall's slot 0 is the last function of this
 // TU, which reads only members inside the 0x48-byte static instance.
 // CColiProc's own table is {RTTI, 0, ColiNoop} followed by 4 alignment bytes
 // before the next vtable; __ct__CColiProc (CColiProc.cpp) installs it.
-//
 // The two static instances the .ctors entries initialise are
 // lbl_eu_8065D0A0 (CColiObjCall, .bss 0x48, built here) and g_coliResCall
 // (CColiResCall, .bss 0x50, built in the CColiProc unit); each one runs the
@@ -172,15 +169,12 @@ static inline f32 f32FromS32_ae48(s32 v) {
 
 // Non-inlined twin for call sites where retail emits a real bl to the
 // converter instead of expanding it inline.
-#pragma push
-#pragma auto_inline off
 static f32 f32FromS32_ae48_bl(s32 v) {
     ConvF64_AE48 c;
     c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
     return (f32)(c.d - lbl_eu_8066AE48);
 }
-#pragma pop
 extern const float lbl_eu_8066AE70;  // upper t bound init (ColiCastRayAabb)
 extern const float lbl_eu_8066AE74;  // lower t bound init (ColiCastRayAabb)
 extern const float lbl_eu_8066AE64;  // triangle half-space gate (ColiSweepTriangle)
@@ -878,7 +872,6 @@ typedef CColiWork CColiProcLocal;
 // Local proc seeded by ColiProc_InitQuad and classified by ColiProc_CheckEntries (both
 // defined in the sibling CColiProc TU; same-TU stubs are declared below).
 // (memberized: ColiProc_InitQuad -> CColiProc::InitQuad; declaration moved into class CColiProc)
-//
 extern "C" int ColiProc_CheckEntries(CColiProcLocal* proc, CColiObject* obj);
 // Local-proc classifier used by ColiProcessSegmentPair / ColiProcessSegmentSelect (sibling
 // CColiProc TU): classifies the linked object against the seeded proc.
@@ -887,7 +880,6 @@ extern "C" int ColiProc_ProcessSegments(CColiProcLocal* proc, CColiObject* obj);
 // local proc (ColiProc_InitTriple, ColiProc_ClassifyEntries) and query its result bits
 // (ColiProc_IsTargetFlagged, ColiProc_TestBit18State).
 // (memberized: ColiProc_InitTriple -> CColiProc::InitTriple; declaration moved into class CColiProc)
-//
 extern "C" int ColiProc_ClassifyEntries(CColiProcLocal* work, u16* outIndex,
                              void** outBuf, void* arg4);
 // (memberized: ColiProc_IsTargetFlagged -> CColiProc::IsTargetFlagged; declaration moved into class CColiProc)
@@ -937,12 +929,10 @@ struct CColiCtor804A7878 {
 // embedded CColiProc base ctor at +0x04, copy the 3-word segment point into
 // the +0x44 slot, seed the +0x5c scalar and clear the state fields. The
 // +0x3c partner slot points at the caller-supplied index or at the embedded
-// proc itself. auto_inline off: retail calls this via `bl`.
+// proc itself. The unit's -inline noauto policy keeps retail's `bl` here.
 // C-linkage forward decl so the definition emits the unmangled retail name
 // (retail callers, including the sibling coli unit, link it as extern "C").
 extern "C" CColiObject* ColiInitPointRadius(CColiObject* out, const VEC3* in, f32 d, u32 idx);
-#pragma push
-#pragma auto_inline off
 CColiObject* ColiInitPointRadius(CColiObject* out, const VEC3* in, f32 d, u32 idx) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)out;
     __ct__9CColiProcFv((CColiProc*)&s->field_0x04);
@@ -963,7 +953,6 @@ CColiObject* ColiInitPointRadius(CColiObject* out, const VEC3* in, f32 d, u32 id
     s->field_0x314 = 0;
     return out;
 }
-#pragma pop
 
 // 3-word sub-object spec copied raw into the +0x44 point.
 struct CColiSubSpec804A7878 {
@@ -977,12 +966,10 @@ struct CColiSubSpec804A7878 {
 // flags (= 0xf) and clear +0x8c/+0x314; the +0x3c partner slot points at
 // the caller-supplied parent object or at the embedded proc itself.
 // C-linkage forward decl so the definition emits the unmangled retail name;
-// auto_inline off keeps retail callers (ColiQuerySpecDispatch) emitting a real `bl`.
+// -inline noauto keeps retail callers (ColiQuerySpecDispatch) emitting a real `bl`.
 extern "C" CColiObject* ColiInitPointSpec(CColiObject* self,
                                        const CColiSubSpec804A7878* spec,
                                        CColiObject* parent);
-#pragma push
-#pragma auto_inline off
 CColiObject* ColiInitPointSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                            CColiObject* parent) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
@@ -1000,15 +987,12 @@ CColiObject* ColiInitPointSpec(CColiObject* self, const CColiSubSpec804A7878* sp
     s->field_0x314 = 0;
     return self;
 }
-#pragma pop
 
 // CColiObject initialiser: run the embedded CColiProc base ctor at +0x04,
 // copy the 3-word vector into the +0x44 point, then seed the +0x5c scalar,
 // the +0x40 sub-object offset (= 0x14) and the cleared state fields.
 // C-linkage so callers emit the unmangled retail symbol (bl ColiInitPointScalar14).
-// auto_inline off: retail callers (ColiCheckMoveGate) call via `bl`.
-#pragma push
-#pragma auto_inline off
+// -inline noauto: retail callers (ColiCheckMoveGate) call via `bl`.
 extern "C" CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f);
 CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f) {
     __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
@@ -1026,16 +1010,13 @@ CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f) {
     self->field_0x314 = 0;
     return self;
 }
-#pragma pop
 
 // Constructor sibling of ColiInitPointRadius / ColiInitPointSpec: run the embedded
 // CColiProc base ctor at +0x04, copy the 3-word sub-spec into the +0x44
 // point, then seed the +0x5c/+0x60/+0x64 scalars (0x60 = sdata2 const *
 // f2) and the +0x40 sub-object offset (= 0x19). Returns self.
-// C linkage (retail symbol is unmangled) + auto_inline off: retail calls
-// this via `bl` (separate TU in the original source).
-#pragma push
-#pragma auto_inline off
+// C linkage (retail symbol is unmangled); -inline noauto keeps retail's
+// `bl` here (separate TU in the original source).
 extern "C" CColiObject* ColiInitScaledSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                             f32 f1, f32 f2, f32 f3) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
@@ -1050,15 +1031,12 @@ extern "C" CColiObject* ColiInitScaledSpec(CColiObject* self, const CColiSubSpec
     s->field_0x8c = 0;
     return self;
 }
-#pragma pop
 
 // Local-object constructor: run the embedded CColiProc base ctor at +0x04,
 // copy the two 3-word points into the +0x44/+0x50 slots, then write the
 // horizontal segment diff (b - a with y forced to zero) at +0x68 and its
 // squared horizontal length at +0x308 (inverted to 1/length^2 when non-zero).
-// auto_inline off: retail calls this via `bl` from ColiCheckStateGate.
-#pragma push
-#pragma auto_inline off
+// -inline noauto: retail calls this via `bl` from ColiCheckStateGate.
 extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
                                        const VEC3* b, f32 f) {
     __ct__9CColiProcFv((CColiProc*)&self->field_0x04);
@@ -1086,7 +1064,6 @@ extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
     self->field_0x8c = 0;
     return self;
 }
-#pragma pop
 
 // Register the collision object and its sub-objects with the global
 // collision state (sbss 0x65910..0x65930). The first parameter is unused
@@ -3257,8 +3234,6 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
 
 extern "C" void ColiVisitGroupMember(CColiObject* self, u16 id) {}
 
-#pragma push
-#pragma auto_inline off
 // Classify the partner point against self's half-extent block (retail
 // ColiSweepPointBox): transform self's point (+0x44) by the matrix m, clamp it
 // into the [-a, a] box and either (all three axes already inside) pick the
@@ -3396,7 +3371,6 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
     proc->vtbl->field_0x08(proc, self->field_0x314);
     return 1;
 }
-#pragma pop
 
 // Segment-sphere contact: cast self's segment (+0x50 point, +0x5c radius)
 // against the sphere described by a (centre) and b (radius at b->x, y-band
@@ -3713,10 +3687,8 @@ extern "C" int ColiProc_RunCollideScan(CColiProcLocal* proc, const VEC3* v,
 // Clip/classify helpers reached via `bl` from ColiProcessSegmentPair / ColiProcessSegmentSelect
 // (retail bodies still to be decompiled; the signatures match the call
 // shapes: partner object, work vector, then the two angle scalars or the
-// +0x30/+0x3c/+0x6c axis block). auto_inline off keeps the call sites
+// +0x30/+0x3c/+0x6c axis block). -inline noauto keeps the call sites
 // emitting real `bl`s.
-#pragma push
-#pragma auto_inline off
 // Sphere-vs-vertical-segment sweep (retail func_804AE388): test the sphere
 // at self->field_0x44 (radius field_0x5c) against the vertical segment
 // [vec, vec + (0, y, 0)] of radius x. The contact normal at +0x18 is
@@ -4037,17 +4009,14 @@ extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
                            self->field_0x314);
     return 1;
 }
-#pragma pop
 
-// Stub body (not yet decompiled): auto_inline off keeps callers emitting a
+// Stub body (not yet decompiled): -inline noauto keeps callers emitting a
 // real `bl` instead of inlining the empty body.
-#pragma push
-#pragma auto_inline off
 // Clip helper for the contact object (retail body): accept when the squared
 // distance from self's point (+0x44) or (+0x50) to v is within f^2, else
 // project the horizontal offset onto the segment direction ((+0x68.x,
 // +0x68.z) over +0x308), extend the point along it and test the enlarged
-// squared distance against (f + +0x5c)^2. auto_inline off: retail callers
+// squared distance against (f + +0x5c)^2. -inline noauto: retail callers
 // (ColiClipClampedSegment / ColiClipSampledRows) call via `bl`.
 extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f) {
     CColiObject* o = (CColiObject*)self;
@@ -4070,15 +4039,12 @@ extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f)
     if (r * r >= VEC3LenSq(&w)) return 1;
     return 0;
 }
-#pragma pop
 
 // Cylinder test: the offset of self's point (+0x44) from other is within a
 // vertical cylinder of radius a and height b around other's point (y in
 // [0, b], horizontal squared distance <= a^2). The VEC3Sub + component
 // reads reproduce the retail paired-single sequence.
-// auto_inline off: retail calls this via `bl` (ColiQueryNodePoint).
-#pragma push
-#pragma auto_inline off
+// -inline noauto: retail calls this via `bl` (ColiQueryNodePoint).
 extern "C" bool ColiTestPointColumn(CColiObject* self, const VEC3* other, f32 a, f32 b) {
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, other);
@@ -4088,15 +4054,12 @@ extern "C" bool ColiTestPointColumn(CColiObject* self, const VEC3* other, f32 a,
     }
     return false;
 }
-#pragma pop
 
 // Point-in-box + half-extent gate used by ColiQueryNodePoint: when the object's
 // point (+0x44) lies inside the box spanned by (boxA, boxB) - checked in
 // x, z, y order to mirror the retail compare sequence - transform it by m
 // and verify each axis of the result is within the half-extent vector.
-// auto_inline off: retail calls this via `bl` (ColiQueryNodePoint).
-#pragma push
-#pragma auto_inline off
+// -inline noauto: retail calls this via `bl` (ColiQueryNodePoint).
 extern "C" int ColiTestPointInBoxHalf(CColiObject* self, const VEC3* half, const Mtx m,
                   const VEC3* boxA, const VEC3* boxB) {
     Vec out;
@@ -4111,7 +4074,6 @@ extern "C" int ColiTestPointInBoxHalf(CColiObject* self, const VEC3* half, const
     }
     return 0;
 }
-#pragma pop
 
 // Componentwise vector helpers for ColiClipSegmentStrip: retail expands every
 // operation inline (paired singles). Inputs stay non-const on purpose -
@@ -4431,10 +4393,8 @@ extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
 }
 
 // Write the segment (in - d, in + d) as the embedded AABB corner pair.
-// auto_inline off: retail calls this via `bl` (separate TU in the original
+// -inline noauto: retail calls this via `bl` (separate TU in the original
 // source), so callers must not inline the body.
-#pragma push
-#pragma auto_inline off
 extern "C" void ColiMakeAabbRadius(CColiObject* self, const VEC3* in, f32 d) {
     self->field_0x00[0].x = in->x + d;
     self->field_0x00[0].y = in->y + d;
@@ -4443,7 +4403,6 @@ extern "C" void ColiMakeAabbRadius(CColiObject* self, const VEC3* in, f32 d) {
     self->field_0x00[1].y = in->y - d;
     self->field_0x00[1].z = in->z - d;
 }
-#pragma pop
 
 extern "C" void ColiMakeAabbAsym(CColiObject* self, const VEC3* in, f32 a, f32 b, f32 c) {
     // Asymmetric AABB corner pair around in (half-extents a/b/c mixed axes).
@@ -4490,10 +4449,8 @@ extern "C" void ColiCopyPointPair(CColiObject* dst, const void* src) {
 // AABB-containment test: true when b's box (min corner at field_0x00[1],
 // max corner at field_0x00[2]) lies inside a's box (min at field_0x00[1],
 // max at field_0x00[0]). Component pairs are compared in x, z, y order to
-// mirror the retail branch sequence. auto_inline off: retail calls this via
+// mirror the retail branch sequence. -inline noauto: retail calls this via
 // `bl` (separate TU in the original source).
-#pragma push
-#pragma auto_inline off
 extern "C" bool ColiTestAabbContains(const CColiObject* a, const CColiObject* b) {
     if (b->field_0x00[1].x >= a->field_0x00[1].x &&
         b->field_0x00[2].x <= a->field_0x00[0].x &&
@@ -4505,7 +4462,6 @@ extern "C" bool ColiTestAabbContains(const CColiObject* a, const CColiObject* b)
     }
     return false;
 }
-#pragma pop
 
 // Move the embedded AABB corner pair (two 3-float rows) along v: components
 // above the sdata2 threshold extend the max corner (row 0), the rest drag the
@@ -4845,13 +4801,11 @@ extern "C" void ColiNodeResortKeyed(CColiNode804B09C8* self) {
     }
 }
 
-#pragma push
-#pragma auto_inline off
 // AABB refresh (retail body): when behaviour bits 0xd0 are set, grow the
 // embedded corner pair (field_0x00[1] max, field_0x00[2] min) to enclose the
 // segment [pos - move, pos + move] (the y-min side only encloses pos); when
 // bit 5 is set, transform the +0x30 vector by the +0x3c matrix and grow the
-// box by its magnitude the same way. auto_inline off: retail callers
+// box by its magnitude the same way. -inline noauto: retail callers
 // (ColiSetAxisBlockInverse / ColiSetAxisBlockRotInverse / ColiNodeRefreshAxes) call via `bl`.
 extern "C" void ColiGrowMoveAabb(CColiObject* self) {
     if (self->field_0xa8 & 0xd0) {
@@ -4903,16 +4857,13 @@ extern "C" void ColiGrowMoveAabb(CColiObject* self) {
         }
     }
 }
-#pragma pop
 
 // Collision-node refresh: when the +0x00/+0x08 words are set, free the owned
 // +0x04 buffer, clear the +0xa8 status bits, then rebuild the local proc and
 // classify the node (ColiProc_ClassifyEntries writes the selection index into +0xb0 and
 // the new buffer into +0x04). The status bits are set from the classification
-// result. auto_inline off: retail callers (ColiNodeSetWord0Rebuild/804B0A74) call via
+// result. -inline noauto: retail callers (ColiNodeSetWord0Rebuild/804B0A74) call via
 // `b`.
-#pragma push
-#pragma auto_inline off
 extern "C" void ColiNodeRebuildClassify(void* self) {
     CColiNode804B09C8* node = (CColiNode804B09C8*)self;
     if (node->field_0x08 != 0 && node->field_0x00 != 0) {
@@ -4943,11 +4894,10 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
         }
     }
 }
-#pragma pop
 
 // retail: build a {f,f,f} local vec from the SDA2 float and forward the
 // caller's r3-r5 to ColiResolveNodeMove with the vec in r6 (passthrough wrapper).
-extern "C" bool __declspec(noinline) ColiResolveNodeMove(CColiNode804B09C8* a, VEC3* b, const VEC3* c, const VEC3* v);  // defined below
+extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* a, VEC3* b, const VEC3* c, const VEC3* v);  // defined below
 extern "C" void ColiResolveMoveDefault(void* a, void* b, u32 c) {
     f32 v[3] = { lbl_eu_8066AE88, lbl_eu_8066AE88, lbl_eu_8066AE88 };
     ColiResolveNodeMove((CColiNode804B09C8*)a, (VEC3*)b, (const VEC3*)c, (const VEC3*)v);
@@ -4977,10 +4927,8 @@ struct CColiNodeKey1164 {
 // the query box. Push vectors from those contacts (ColiDispatchMoveSegment) are summed;
 // if the accumulated push on `out` is non-parallel to the contact normal it
 // is projected back onto the unit sphere, otherwise it is added directly.
-// auto_inline off: retail callers (ColiResolveMoveDefault and external TUs) call via
+// -inline noauto: retail callers (ColiResolveMoveDefault and external TUs) call via
 // `bl`.
-#pragma push
-#pragma auto_inline off
 extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VEC3* pos,
                               const VEC3* move) {
     out->x = lbl_eu_8066AE88;
@@ -5220,7 +5168,6 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
     }
     return result;
 }
-#pragma pop
 
 // Segment AABB handed to ColiMakeAabbRadius / ColiTestAabbContains: two corner VEC3s.
 struct CColiSeg804B192C {
@@ -5592,14 +5539,12 @@ extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
 
 // Segment-processing helper (retail body still to be decompiled); returns
 // a status code that ColiCheckMoveRadius forwards to its caller.
-// auto_inline off: retail calls this via `bl`.
-#pragma push
-#pragma auto_inline off
+// -inline noauto: retail calls this via `bl`.
 // Segment-processing helper (sibling of ColiProcessSegmentSelect): the shared flag gate
 // (bits 1/2/4 vs 8) and the proc-seed block run first; when the caller flag
 // is non-zero, behaviour bit 0x50 dispatches to the 2-point clip
 // (func_804AE388) and bit 0x20 to the axis-frame clip (ColiFrameSweepClassify).
-// auto_inline off: retail callers (ColiCheckMoveRadius) call via `bl`.
+// -inline noauto: retail callers (ColiCheckMoveRadius) call via `bl`.
 extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 flag) {
     CColiProcLocal proc;
     int t = 1;
@@ -5641,7 +5586,6 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
     }
     return result;
 }
-#pragma pop
 
 // Segment-processing helper (sibling of ColiProcessSegmentPair): same gate and
 // proc-seed block; behaviour bit 10 selects the capsule clip pair

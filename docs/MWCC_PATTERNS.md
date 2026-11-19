@@ -352,6 +352,23 @@ wrapper symbol, breaking an otherwise-100% function.
   already seen, so define the helper after its callers; (3) **unit-wide flags** (`-inline noauto`/`off`,
   optimisation level), set once in configure.py. Only if all three fail, keep it with
   `// noinline-ok: <what was tried>` on the same line.
+- **`-inline noauto` recipe (repo_proven on 4 monolib TUs, 2026-11-19):** stripping every
+  `noinline`/`#pragma auto_inline off` under the default `-inline auto` and adding
+  `extra_cflags=["-inline noauto"]` reproduced the annotated build's **entire** `hexdiff --all`
+  table byte for byte (CScnFilterMan 73/75, CScnVirtualLight 85/89, CScnEnvLgtCtrl 94/127,
+  code_804A6C60 57/108) — that empty diff is the evidence that noauto *is* the retail policy.
+  Two follow-up rules: (a) `-O4,s` does **not** disable auto-inlining under Wii/1.1 (probed:
+  73 → 40 ✓), so it is not a substitute; (b) noauto means "only `inline`-declared bodies inline",
+  so an *out-of-class* template member definition stops inlining and any caller that retail
+  expands loses bytes — put the `inline` keyword back on exactly those definitions
+  (`template <typename T> inline reslist<T>::reslist()`; `static inline u32 ringFindIndex<CMD>`).
+  Conversely, if the helper is an out-of-class template member **without** `inline`, `noinline`
+  on it is dead weight — strip-only suffices (CWorkRoot, 15/15 redundant).
+  `-ipa file` (the project default) defeats rule (2) entirely (whole-TU IPA ignores definition
+  order): CMdlDynamics needed `-ipa off` *plus* restoring retail order (BuildElem 0x804EEED4
+  above the 0x804EF680..0x804EFA14 helper family), which also turned split FAIL(+0x48) into
+  PASS(0x64 spare). CGXCache likewise needed `-ipa off` for the ring setters (30/30 vs 20/30).
+  See `MWCC_CASES.md` "monolib noinline-smell removal batch".
 - Result:    func_80084F50 96.7% -> 100% FULL_MATCH (drift was self-inflicted by an unprotected definition)
 - Confidence: repo_proven (Wii/1.1 -O4,p)
 - Applies to/a.k.a.: any single-call wrapper/thunk added to a matched TU; also explains "caller regressed after I added a helper" reports
@@ -2031,6 +2048,42 @@ Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp",
 3×`stw`/`lwz`; `-O4,s`+`-func_align 4` generated 72 bytes with `stmw`/`lmw`,
 matching retail exactly.
 
+**Ordering matters (2026-11-19, CMenuQstCnt/CMenuPlayAward):** the global flag
+list already carries `-func_align 4`, but `extra_cflags=["-O4,s"]` is appended
+*after* it and re-selects 16-byte function alignment — later flag wins. A unit
+with `-O4,s` alone therefore pads every function to the next 16-byte boundary
+while retail tiles them at 4 (retail's per-function sizes chain exactly), which
+shows up as a split overage that no single function explains:
+
+- detection: dump the object's function offsets (`elf_symbols.list_code_functions`)
+  and look for `prev_end != next_start` gaps — CMenuQstCnt carried 0x60 of
+  inter-function padding, exactly its split overage minus the size deltas;
+- fix: repeat the flag in the same `extra_cflags` list *after* `-O4,s`
+  (`extra_cflags=["-O4,s", "-func_align 4"]`) — same per-function bytes, 0x60
+  smaller `.text`; CMenuQstCnt split went FAIL +0x5C → PASS 0xCEC/0xCE8,
+  CMenuPlayAward FAIL → PASS 0x9AC/0x9AC (0 spare).
+- `-O4,s` is still the right flag for those units (dropping it lost 3 accepted
+  functions in CMenuQstCnt and grew `.text`), so do not "fix" the padding by
+  removing `-O4,s`.
+
+**Sweep (2026-11-19, kyoshin): every `-O4,s` unit needs it.** All 38 kyoshin
+`Object`s whose `extra_cflags` carried `-O4,s` without a trailing `-func_align 4`
+were measured against retail's function tiling (retail function starts taken from
+`config/us/symbols.txt` inside each unit's `splits.txt` `.text` range): every one
+of them has many starts at `≡4/8/C mod 16` (e.g. CTagProcessor 83/127,
+CItemBoxGrid 112/144, CArtsInfo 73/93 — a 16-byte-aligned unit would show `mod16={0:n}`
+only) and their split `.text` *ends* are unaligned too, i.e. retail tiles at 4.
+Adding `-func_align 4` after `-O4,s`: **0 functions changed state in either
+direction, 0 extab changes, and every unit's `.text` shrank to exactly the
+un-padded size** — 21 of the 38 flipped split FAIL → PASS (CQuestWindow +0xC0→PASS,
+CSysWin +0x84→PASS, CSaveLoad +0x16C→PASS, CTutorial +0x7C→PASS, CMCGetItemBox
++0xFC→PASS, CEquipChange +0x128→PASS, CPcKizunagram +0x74→PASS, CPartyState
++0x60→PASS, …), the rest kept only their genuine code-size delta (CArtsInfo
++0x2E8→+0x60, CCollepedia +0x3A0→+0xA4, CModelDispEquip +0x270→+0x38).
+Recipe: flag order is the whole story — treat `-O4,s` without a following
+`-func_align` as a **defect**, and check the unit's retail `.text` end alignment
+(`end % 16 != 0` ⇒ retail is 4-aligned) before adding it.
+
 ### 17. Defeating s16-index strength reduction for FULL_MATCH
 
 `CSchedule::Sched_RebuildHandles` (0xC8): retail recomputes `&mHandles[count]` per
@@ -2053,6 +2106,41 @@ form and the `extsh`-based address recomputation:
 - Increment order matters: `count++;` must precede `entry++;` in source to
   match retail scheduling (MWCC emits them in source order here).
 - Result: 41/50 mismatches → 0/50, FULL_MATCH, byte-identical.
+
+### 16c. In-class constructor vs ordinary inline member: `-O4,s` outlines the ctor at 2+ sites
+
+MWCC (every Wii/GC version tested: Wii/1.0…1.7, GC/3.0a5.2) treats a
+**user-defined constructor** differently from an ordinary in-class member in
+size mode:
+
+- a ctor (e.g. `ml::FixStr<N>::FixStr(bool)`) used at **exactly one** site in the
+  TU is inlined; at **2 or more** sites MWCC emits one out-of-line copy
+  (`__ct__…`) and calls it at *every* site — no flag can override it
+  (`-inline auto`/`-inline all` after `-O4,s`, `inline`/`__inline` on the ctor,
+  `#pragma inline_max_size/inline_max_total_size`, `-ipa off`, `-O4,p`+file-level
+  `#pragma optimize_for_size on` all reproduce the call);
+- an ordinary in-class member (`clear()`, a 2-store `void` function) is inlined at
+  **every** site, and so is the *default* ctor `FixStr<N>::FixStr()` —
+  apparently because the ctor body's stores can be merged with the following
+  explicit call, after which it is no longer "a constructor call".
+
+**Symptom:** a function matches except for one `bl __ct__…` where retail has the
+inlined `li/stb`+`stw` pair (and the unit carries an extra out-of-line ctor copy).
+
+**Fix:** spell the construction in the shape that inlines — replace
+`T x(true)`/`T x(false)` with the *default* ctor `T x;` when the retail bytes are
+just the 2 stores the default ctor performs (`mString[0]=0; mLength=0`).
+Verified on `CItemBoxInfo` (both `SetItem`s: 4 mismatched instructions →
+FULL_MATCH, unit 76→78/110) without touching the shared header.
+
+**Do not** chase this with `#pragma optimize_for_size off` at the call site: that
+switches the whole function to speed mode (speed-scheduled frame, aggressive
+inlining) and changes far more than the ctor.
+
+**Corollary — a `bool` ctor may be an invention:** if retail's object contains no
+`__ct__…Fb` call *and* no out-of-line `Fb` copy anywhere in the TU, retail never
+called that ctor; every site used the default ctor (or the value-carrying
+construction is a decomp guess).
 
 ### 16b. Forcing retail's per-iteration global reload in shift loops (opaque byte-offset arithmetic)
 
@@ -2265,6 +2353,11 @@ The equivalence probe resolves the decomp side **by symbol name only** (`_resolv
   already seen, so define the helper after its callers; (3) **unit-wide flags** (`-inline noauto`/`off`,
   optimisation level), set once in configure.py. Only if all three fail, keep it with
   `// noinline-ok: <what was tried>` on the same line.
+- **`-inline noauto` recipe:** see the identically-titled record above — strip-all + noauto reproduces
+  the annotated `hexdiff --all` table byte for byte on 4 monolib TUs; `-O4,s` is not a substitute;
+  re-add the `inline` keyword to any out-of-class template member definition that retail expands;
+  out-of-class template members *without* `inline` never fold, so their `noinline` is dead weight;
+  `-ipa file` defeats definition order, so CMdlDynamics/CGXCache needed `-ipa off`.
 
 ---
 
@@ -6206,3 +6299,21 @@ decisions. The width lever above was found this way after nine if/goto/helper sh
   memberized vs 6→8 with `extern "C"`).
 - Applies to/a.k.a.: `__dt__…`/`__ct__…` free-function scaffolds, "100% but unpaired", "report says 0,
   hexdiff says 100", `…__FPv`/`…__FPvi` self-appended suffixes.
+
+## Unifying a "view" declaration with its definition re-enables `-ipa file` inlining (Wii/1.1 `-O4,s/-O4,p`)
+- Symptom:   after replacing a deliberately-mismatched C-linkage view declaration with the definition's
+  own signature, previously byte-identical *callers* grow and lose their match (sizes jump by the size of
+  the callee, e.g. 0xD8→0x17C, 0xCC→0x168) while the callee itself is unchanged.
+- Cause:     the fork has TUs where a small helper is declared `extern "C"` with a *different* signature
+  than its C++-linkage definition (e.g. `cfCam_yawFromVec(const void*)` in the header vs
+  `cfCam_yawFromVec(const ml::CVec3*)` at the definition). Callers then emit the flat retail `bl` and the
+  compiler cannot see a body for it, so it never inlines. Making the definition `extern "C"` with the same
+  signature collapses the two entities and MWCC inlines the tiny body into every caller in the TU.
+- Fix:       do NOT unify such helpers to gain symbol pairing. Either keep the split declaration (the
+  helper stays unpaired — record it) or prove the retail TU boundary so the body really is cross-TU.
+  `__declspec(noinline)` reproduces the bytes but is a hard `noinline` smell, so it is not an answer here.
+- Confidence: repo_proven (CfCam: 145→135 hexdiff ✓ with all 23 unified; 145 ✓ with 16 paired after
+  re-splitting six; MWCC_CASES "kyoshin identity sweep-2").
+- Applies to/a.k.a.: `-ipa file` visibility, "caller grew by the callee's size", 0xD8→0x17C style size
+  deltas, MWCC_CASES inlining Rule A/B, the `const void*` trick (MWCC converts any `T*`→`const void*` but
+  never `T*`→`void*`, which is why the views use `const void*`).

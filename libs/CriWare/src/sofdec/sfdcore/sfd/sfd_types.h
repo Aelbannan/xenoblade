@@ -45,12 +45,20 @@ typedef struct SfdTimTtu {
  * one of these to the caller of the movie API and SFMPVF_AddRead() gets the
  * same pointer back (sfmpv_SetFrmInf() fills in the picture fields). */
 typedef struct SfdFrmInfo {
-    u8  field_0x00[0x14];  /* 0x00 picture information */
+    u32 field_0x00;        /* 0x00 picture width */
+    u32 field_0x04;        /* 0x04 picture height */
+    u32 field_0x08;        /* 0x08 */
+    u32 field_0x0c;        /* 0x0c */
+    u32 field_0x10;        /* 0x10 picture type */
     s32 time;              /* 0x14 frame time */
     s32 timeUnit;          /* 0x18 frame time unit */
     s32 codecId;           /* 0x1c handle+0x40 */
-    u8  field_0x20[0x14];  /* 0x20 */
-    u8  field_0x34[0x04];  /* 0x34 */
+    u32 field_0x20;        /* 0x20 picture buffer */
+    s32 field_0x24;        /* 0x24 */
+    s32 field_0x28;        /* 0x28 */
+    s32 field_0x2c;        /* 0x2c picture order */
+    s32 field_0x30;        /* 0x30 */
+    s32 field_0x34;        /* 0x34 */
     s32 field_0x38;        /* 0x38 */
     s32 field_0x3c;        /* 0x3c */
     s32 field_0x40;        /* 0x40 */
@@ -84,6 +92,62 @@ typedef struct SfdFrmInfo {
     u16 field_0x7e;        /* 0x7e */
 } SfdFrmInfo;              /* 0x80 */
 
+/* ------------------------------------------------------------------------- */
+/* MPV picture attribute record                                              */
+/* ------------------------------------------------------------------------- */
+
+/* The 0x80-byte "picture attribute" block the MPV decoder maintains per
+ * picture.  Two places hold a copy: the decode session keeps the attributes of
+ * the picture being decoded (SfdMpvSession::picAtr, filled by MPV_GetPicAtr())
+ * and every frame record keeps the block the decoder wrote for it
+ * (SfdFrame::picAtr, copied by MPV_DecodeFrmSj()).  Retail's
+ * mpvlib_InitPicAtr() seeds the block one field at a time, which is where the
+ * field widths below come from. */
+typedef struct SfdMpvPicAtr {
+    u32 width;             /* 0x00 picture width in pixels */
+    u32 height;            /* 0x04 picture height in lines */
+    u32 field_0x08;        /* 0x08 */
+    u32 field_0x0c;        /* 0x0c */
+    s32 rateIndex;         /* 0x10 index into the picture-rate table */
+    s32 time;              /* 0x14 frame time */
+    s32 type;              /* 0x18 picture type, 1 = I, 2 = P, 3 = B */
+    s32 field_0x1c;        /* 0x1c */
+    s32 field_0x20;        /* 0x20 */
+    s32 field_0x24;        /* 0x24 */
+    s32 field_0x28;        /* 0x28 */
+    s32 field_0x2c;        /* 0x2c */
+    s32 field_0x30;        /* 0x30 */
+    s32 field_0x34;        /* 0x34 */
+    s32 field_0x38;        /* 0x38 */
+    s32 field_0x3c;        /* 0x3c */
+    s32 field_0x40;        /* 0x40 */
+    s32 field_0x44;        /* 0x44 */
+    s32 field_0x48;        /* 0x48 */
+    s32 field_0x4c;        /* 0x4c */
+    s16 field_0x50;        /* 0x50 */
+    s16 field_0x52;        /* 0x52 */
+    s8  field_0x54;        /* 0x54 field id of the picture */
+    s8  field_0x55;        /* 0x55 */
+    s8  field_0x56;        /* 0x56 */
+    s8  field_0x57;        /* 0x57 */
+    s8  field_0x58;        /* 0x58 */
+    u8  field_0x59;        /* 0x59 */
+    u8  field_0x5a;        /* 0x5a */
+    u8  field_0x5b;        /* 0x5b */
+    u8  field_0x5c;        /* 0x5c */
+    u8  field_0x5d;        /* 0x5d */
+    s8  field_0x5e;        /* 0x5e */
+    s8  field_0x5f;        /* 0x5f */
+    s8  field_0x60;        /* 0x60 */
+    u8  field_0x61;        /* 0x61 */
+    u8  field_0x62;        /* 0x62 */
+    u8  field_0x63;        /* 0x63 */
+    u8  field_0x64;        /* 0x64 */
+    u8  field_0x65[0x03];  /* 0x65 */
+    s32 field_0x68;        /* 0x68 */
+    u8  field_0x6c[0x14];  /* 0x6c */
+} SfdMpvPicAtr;            /* 0x80 */
+
 /* One entry of the 16-slot video frame (VFRM) queue that pairs every decoder
  * frame record with the picture information handed to the application.  The
  * queue is allocated/cleared by sfbuf_InitVfrmBuf(). */
@@ -109,53 +173,11 @@ typedef struct SfdFrame {
     s32 field_0x4c;        /* 0x4c */
     s32 field_0x50;        /* 0x50 */
     s32 order;             /* 0x54 decode order */
-    u8  field_0x58;        /* 0x58 */
-    u8  field_0x59;        /* 0x59 */
-    u8  field_0x5a;        /* 0x5a */
-    s8  field_0x5b;        /* 0x5b */
+    s32 field_0x58;        /* 0x58 */
     s32 field_0x5c;        /* 0x5c */
-    s32 field_0x60;        /* 0x60 */
+    s32 field_0x60;        /* 0x60 address of this record's picUsr band pair */
     s32 dispId;            /* 0x64 display counter, -1 = not displayed yet */
-    s32 field_0x68;        /* 0x68 */
-    s32 field_0x6c;        /* 0x6c */
-    s32 field_0x70;        /* 0x70 */
-    s32 field_0x74;        /* 0x74 */
-    s32 field_0x78;        /* 0x78 */
-    s32 field_0x7c;        /* 0x7c */
-    s32 field_0x80;        /* 0x80 */
-    s32 field_0x84;        /* 0x84 */
-    s32 field_0x88;        /* 0x88 */
-    s32 field_0x8c;        /* 0x8c */
-    s32 field_0x90;        /* 0x90 */
-    s32 field_0x94;        /* 0x94 */
-    s32 field_0x98;        /* 0x98 */
-    s32 field_0x9c;        /* 0x9c */
-    s32 field_0xa0;        /* 0xa0 */
-    s32 field_0xa4;        /* 0xa4 */
-    s32 field_0xa8;        /* 0xa8 */
-    s32 field_0xac;        /* 0xac */
-    s32 field_0xb0;        /* 0xb0 */
-    s32 field_0xb4;        /* 0xb4 */
-    s16 field_0xb8;        /* 0xb8 */
-    s16 field_0xba;        /* 0xba */
-    u8  field_0xbc;        /* 0xbc */
-    u8  field_0xbd;        /* 0xbd */
-    u8  field_0xbe;        /* 0xbe */
-    u8  field_0xbf;        /* 0xbf */
-    u8  field_0xc0;        /* 0xc0 */
-    u8  field_0xc1;        /* 0xc1 */
-    u8  field_0xc2;        /* 0xc2 */
-    u8  field_0xc3;        /* 0xc3 */
-    u8  field_0xc4;        /* 0xc4 */
-    u8  field_0xc5;        /* 0xc5 */
-    u8  field_0xc6;        /* 0xc6 */
-    u8  field_0xc7;        /* 0xc7 */
-    u8  field_0xc8;        /* 0xc8 */
-    u8  field_0xc9;        /* 0xc9 */
-    u8  field_0xca;        /* 0xca */
-    u8  field_0xcb;        /* 0xcb */
-    u8  field_0xcc;        /* 0xcc */
-    u8  field_0xcd[0x1b];  /* 0xcd */
+    SfdMpvPicAtr picAtr;   /* 0x68 picture attributes of the decoded picture */
     s64 field_0xe8;        /* 0xe8 */
     s32 field_0xF0;        /* 0xf0 */
     s32 field_0xF4;        /* 0xf4 */
@@ -164,6 +186,70 @@ typedef struct SfdFrame {
     u16 field_0x100;       /* 0x100 */
     u8  field_0x102[0x0e]; /* 0x102 */
 } SfdFrame;                /* 0x110 */
+
+/* ------------------------------------------------------------------------- */
+/* MPV decode session                                                        */
+/* ------------------------------------------------------------------------- */
+
+/* Picture-plane descriptor the frame-parameter block is built from: three
+ * plane addresses plus the 32-line luma/chroma line sizes the decoder works
+ * in.  SfdMpvSession keeps the two the current frame layout produces and
+ * sfmpv_SetFrmPara() hands them to MPV_DecodeFrmSj() as-is unless the stream
+ * carries two reference frames. */
+typedef struct SfdMpvPlane {
+    u32 field_0x00;        /* 0x00 plane base + luma bytes */
+    u32 field_0x04;        /* 0x04 plane base + luma + chroma bytes */
+    u32 base;              /* 0x08 picture plane base */
+    s16 uvLineSiz;         /* 0x0c chroma line size, 32-line aligned */
+    s16 lineSiz;           /* 0x0e luma line size, 32-line aligned */
+} SfdMpvPlane;             /* 0x10 */
+
+/* Frame-parameter block MPV_DecodeFrmSj() takes: the two plane descriptors,
+ * the destination buffers and the byte-accounting outputs the caller adds to
+ * the handle's DCT counters. */
+typedef struct SfdMpvFrmPara {
+    SfdMpvPlane plane[2];  /* 0x00 decoded plane geometry */
+    u32 field_0x20[4];     /* 0x20 */
+    u32 picBuf;            /* 0x30 decoder destination buffer */
+    u32 picAtr;            /* 0x34 picture attribute destination */
+    u32 decoded;           /* 0x38 bytes the decoder consumed */
+    u32 field_0x3c;        /* 0x3c */
+    s16 field_0x40;        /* 0x40 */
+    u8  field_0x42[0x02];  /* 0x42 */
+} SfdMpvFrmPara;           /* 0x44 */
+
+/* Per-handle MPV decode session; SFMPV_Create() points transport 2's hdr
+ * field at handle+0x2450 and every sfmpv_* module works through it. */
+typedef struct SfdMpvSession {
+    void* mpv;             /* 0x000 MPV decoder handle */
+    s32 state;             /* 0x004 5 = idle, 2 = seeked, 3 = decoding */
+    s32 pattern;           /* 0x008 delimiter pattern accepted next */
+    s32 field_0x00c;       /* 0x00c */
+    s32 frmSeq;            /* 0x010 frames handed out so far */
+    SfdMpvPicAtr picAtr;   /* 0x014 attributes of the picture being decoded */
+    s32 pts;               /* 0x094 presentation stamp of the last picture */
+    s32 repFld;            /* 0x098 repeat-field flag of the last picture */
+    s32 vbvLimit;          /* 0x09c bytes the VBV may hold */
+    u32 ptsBase[2];        /* 0x0a0 stamp the picture run is measured from */
+    u32 field_0x0a8;       /* 0x0a8 */
+    u32 field_0x0ac;       /* 0x0ac */
+    s32 field_0x0b0;       /* 0x0b0 */
+    s32 field_0x0b4;       /* 0x0b4 */
+    u32 field_0x0b8;       /* 0x0b8 */
+    s32 field_0x0bc;       /* 0x0bc */
+    s32 planeSelA;         /* 0x0c0 plane used for the top field */
+    s32 planeSelB;         /* 0x0c4 plane used for the bottom field */
+    SfdMpvPlane plane[2];  /* 0x0c8 plane geometry of the current layout */
+    SfdFrame* refTerm;     /* 0x0e8 reference frame to release */
+    SfdFrame* refPrev;     /* 0x0ec previous reference frame */
+    SfdFrame* cur;         /* 0x0f0 frame the decoder is filling */
+    s32 field_0x0f4;       /* 0x0f4 */
+    s32 field_0x0f8;       /* 0x0f8 */
+    s32 field_0x0fc;       /* 0x0fc */
+    s32 ptsHi;             /* 0x100 stamp saved by the picture-attribute path */
+    s32 ptsLo;             /* 0x104 */
+    u8  field_0x108[0x68]; /* 0x108 */
+} SfdMpvSession;           /* 0x170 */
 
 /* ------------------------------------------------------------------------- */
 /* MPV picture parameter table                                               */
@@ -458,7 +544,7 @@ typedef struct SfdTim {
     void* extClockArg;     /* 0x2f8 */
     u8  field_0x2fc[0x04]; /* 0x2fc */
     SfdTst tst;            /* 0x300 test/debug control block */
-    u8  table[0x100];      /* 0x4d0 s16 tables used by the repeat-field code */
+    s16 table[0x80];       /* 0x4d0 s16 tables used by the repeat-field code */
     u8  ptsBlk0[0x0c];     /* 0x5d0 time block handed to the pts callback */
     u8  ptsBlk1[0x0c];     /* 0x5dc time block handed to the pts callback */
     s32 field_0x5e8;       /* 0x5e8 */
@@ -512,7 +598,7 @@ typedef struct SfdAdxtInf {
     u32 field_0x0c;        /* 0x0c */
     void* pool;            /* 0x10 stream memory */
     void* sjPool;          /* 0x14 ring buffer memory */
-    u8  field_0x18[0x04];  /* 0x18 */
+    u32 field_0x18;        /* 0x18 */
     u32 field_0x1c;        /* 0x1c */
     void* field_0x20;      /* 0x20 */
     s32 time;              /* 0x24 decoded sample position */
@@ -595,6 +681,32 @@ typedef struct SfdMpsHd {
     s32 sysSize;           /* 0x194 bytes stored in sysHdr */
 } SfdMpsHd;                 /* 0x198 */
 
+/* Header/sync information of the ADX transport: the head-analysis state and
+ * byte rate the seek/head analysis publishes, plus the decoder parameters
+ * sfadxt_SetAdxtHd() records once the stream is running. */
+typedef struct SfdAdxtSync {
+    s32 seek;              /* 0x00 0 = not analysed yet */
+    s32 byteRate;          /* 0x04 */
+    s32 timeUnit;          /* 0x08 */
+    s32 numChan;           /* 0x0c decoder channel count */
+    s32 sfreq;             /* 0x10 decoder sample rate */
+    s32 numSmpl;           /* 0x14 decoder sample count */
+    u8  field_0x18[0x84];  /* 0x18 */
+} SfdAdxtSync;             /* 0x9c */
+
+/* Snapshot of the picture-header analysis the AV-playback object keeps at
+ * +0xad0: sfmpv_SetMpvHd() records the raw header image plus the header
+ * fields of the first decoded picture, and sfmpv_ReprocessShc() replays them
+ * through MPV_DecodePicAtr() after a seek. */
+typedef struct SfdAvpHdCopy {
+    s32 state;             /* 0x000 1 = snapshot filled */
+    s32 byteRate;          /* 0x004 byte rate the header carried * 50 */
+    s32 timeUnit;          /* 0x008 its unit */
+    SfdMpvHdInfo hdInfo;   /* 0x00c header fields at snapshot time */
+    u8  image[0x200];      /* 0x038 raw header image */
+    s32 size;              /* 0x238 bytes stored in image */
+} SfdAvpHdCopy;            /* 0x23c */
+
 /* Per-handle AV-playback object (SfdSee::avplay), created by the host.  The
  * current header image is mirrored at +0x000c and the recalculated byte rate
  * the time conversion uses lives at +0x0da8. */
@@ -611,14 +723,8 @@ typedef struct SfdAvp {
     u8  field_0x044[0x85c];/* 0x044 */
     SfdMpsHd mpsHd;        /* 0x8a0 */
     u8  field_0xa38[0x98]; /* 0xa38 */
-    s32 audSeek;           /* 0xad0 head-analysis state of the audio stream */
-    s32 audByteRate;       /* 0xad4 */
-    s32 audTimeUnit;       /* 0xad8 */
-    u8  field_0xadc[0x230];/* 0xadc */
-    s32 vidSeek;           /* 0xd0c head-analysis state of the video stream */
-    s32 vidByteRate;       /* 0xd10 */
-    s32 vidTimeUnit;       /* 0xd14 */
-    u8  field_0xd18[0x90]; /* 0xd18 */
+    SfdAvpHdCopy audHd;    /* 0xad0 audio header analysis snapshot */
+    SfdAdxtSync adxtSync;  /* 0xd0c ADX transport header/sync information */
     s32 eByteRate;         /* 0xda8 effective byte rate */
     s32 finTime;           /* 0xdac fin-analysis time */
     s32 finSize;           /* 0xdb0 fin-analysis size */
@@ -777,7 +883,16 @@ typedef struct SfdHandle {
     u64 field_0x09b0;       /* 0x09b0 flow counter block ("supplied") */
     s64 field_0x09b8;       /* 0x09b8 consumed bytes */
     u64 field_0x09c0;       /* 0x09c0 "discarded" */
-    u8  field_0x09c8[0x40]; /* 0x09c8 */
+    u32 flowVidAHi;         /* 0x09c8 video ring flow counter, high half */
+    u32 flowVidALo;         /* 0x09cc */
+    u32 flowVidBHi;         /* 0x09d0 second video ring half */
+    u32 flowVidBLo;         /* 0x09d4 */
+    s64 flowSkip;           /* 0x09d8 samples excluded by the seek/skip path */
+    u32 flowAudAHi;         /* 0x09e0 audio ring flow counter, high half */
+    u32 flowAudALo;         /* 0x09e4 */
+    u32 flowAudBHi;         /* 0x09e8 second audio ring half */
+    u32 flowAudBLo;         /* 0x09ec */
+    u8  field_0x09f0[0x18]; /* 0x09f0 */
     void (*errFn)(u32 arg, u32 code); /* 0x0a08 per-handle error callback */
     u32 errFnArg;           /* 0x0a0c */
     u32 errCode;            /* 0x0a10 first error code reported */
@@ -812,7 +927,7 @@ typedef struct SfdHandle {
     SfdTrn trn[9];          /* 0x1fd8 transport slots */
     u8  field_0x223c[0x04]; /* 0x223c */
     SfdMps mps;             /* 0x2240 SFMPS demux work area */
-    u8  field_0x2450[0x170];/* 0x2450 SFMPV decode session */
+    SfdMpvSession mpvSession;/* 0x2450 SFMPV decode session */
     SfdAdxtInf adxtInf;     /* 0x25c0 ADX transport stream info */
     SfdAoapIf aoapIf;       /* 0x261c audio-out implementation */
     SfdSee see;             /* 0x2670 seek/head-analysis control block */

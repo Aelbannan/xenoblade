@@ -18,26 +18,6 @@
 #include <cstring>
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
-struct CExceptionMsgParamView {
-    void* vtable;
-    CMsgParamEntry entries[8];
-    CMsgParamEntry* array;
-    u32 front;
-    u32 size;
-    u32 capacity;
-    u32 field6;
-    u32 field7;
-};
-
-static CExceptionMsgParamView* msgParam(CWorkThread* thread) {
-    return (CExceptionMsgParamView*)((u8*)thread + 0x80);
-}
-
-static CMsgParamEntry* msgLast(CWorkThread* thread) {
-    CExceptionMsgParamView* queue = msgParam(thread);
-    return &queue->array[(queue->front + queue->field6) % queue->capacity];
-}
-
 // Message ring header embedded in CWorkThread at +0x84 (the getMessageQueueSlot
 // helper indexes array/front/capacity at +0x120/+0x124/+0x12C from here).
 struct CWorkThreadMsgQueue {
@@ -301,11 +281,8 @@ void CException::wkRender() {
         }
     }
 
-    CView* currentView = CView::getCurrentView();
-    CView* view = currentView;
-    if (view != nullptr) {
-        view = (CView*)((u8*)view + 0x1C4);
-    }
+    // The CFontLayer subobject of the current view (implicit base upcast).
+    CFontLayer* view = CView::getCurrentView();
     int width = 0;
     int height = 0;
     GXRenderModeObj* mode = CDeviceVI::getRenderModeObj();
@@ -340,14 +317,12 @@ void CException::wkRender() {
 }
 
 // Main exception text renderer.
-#pragma dont_inline on
 extern "C" void drawExceptionText__10CExceptionFv(const void* message) {
     u8* writer = (u8*)findFontByDevice__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     setWriterCursor__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
     printExceptionMessage__10CExceptionFv(writer, (const wchar_t*)message);
 }
-#pragma dont_inline reset
 
 // Set the nw4r TextWriter font pointer.
 extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {

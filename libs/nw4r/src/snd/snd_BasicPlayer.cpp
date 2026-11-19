@@ -11,19 +11,19 @@ namespace snd {
 namespace detail {
 
 BasicPlayer::BasicPlayer() {
-    // Fill the remote voice-out groups via a bounded walk (retail keeps
-    // a rolled fill loop with runtime trip counts; the head peels).
-    f32* it = &mParam.mUnk0x6C[0];
+    // Fill the per-voice output groups via a bounded walk (retail keeps a
+    // rolled fill loop with runtime trip counts; the head peels).
+    VoiceOutParam* it = &mParam.mVoiceOutParam[0];
 
     do {
-        it[0] = lbl_eu_80669EE0;
-        it[1] = lbl_eu_80669EE0;
-        it[2] = lbl_eu_80669EE4;
-        it[3] = lbl_eu_80669EE4;
-        it[4] = lbl_eu_80669EE4;
-        it[5] = lbl_eu_80669EE4;
-        it += 6;
-    } while (it < &mParam.mUnk0x6C[WPAD_MAX_CONTROLLERS * 6]);
+        it->volume = lbl_eu_80669EE0;
+        it->pitch = lbl_eu_80669EE0;
+        it->pan = lbl_eu_80669EE4;
+        it->surroundPan = lbl_eu_80669EE4;
+        it->fxSend = lbl_eu_80669EE4;
+        it->lpfFreq = lbl_eu_80669EE4;
+        it++;
+    } while (it < &mParam.mVoiceOutParam[WPAD_MAX_CONTROLLERS]);
 
     mParam.Init();
 
@@ -63,13 +63,12 @@ void PlayerParamSet::Init() {
     }
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        int base = i * 6;
-        mUnk0x6C[base + 0] = one;
-        mUnk0x6C[base + 1] = one;
-        mUnk0x6C[base + 2] = zero;
-        mUnk0x6C[base + 3] = zero;
-        mUnk0x6C[base + 4] = zero;
-        mUnk0x6C[base + 5] = zero;
+        mVoiceOutParam[i].volume = one;
+        mVoiceOutParam[i].pitch = one;
+        mVoiceOutParam[i].pan = zero;
+        mVoiceOutParam[i].surroundPan = zero;
+        mVoiceOutParam[i].fxSend = zero;
+        mVoiceOutParam[i].lpfFreq = zero;
     }
 }
 

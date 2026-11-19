@@ -112,7 +112,7 @@ void syncMdlLookSlots(CMdlLook* look, u8* unk, u32 idx1, u32 idx2) {
 // reloc names; noinline keeps MWCC from folding them into syncMdlLookSlots.
 extern "C" void scnImN4AddFrameId(u8* model);
 
-extern "C" __declspec(noinline) void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b) {
+extern "C" void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b) {
     scnImN4AddFrameId(unk);
 }
 
@@ -120,7 +120,7 @@ extern "C" __declspec(noinline) void markMdlLookFrame(CMdlLook* look, u8* unk, u
 // local-space aim vector, blends per-axis angles toward it while accumulating
 // quaternion deltas, converts back to euler angles, then writes
 // (rotation * base) into the output matrix.
-extern "C" __declspec(noinline) void aimMdlLook(CMdlLook* look, u8* unkBytes,
+extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                                                   u32 arg2, u32 arg3) {
     MdlLookWork* unk = reinterpret_cast<MdlLookWork*>(unkBytes);
     Mtx* outMtx = *reinterpret_cast<Mtx**>(arg3);

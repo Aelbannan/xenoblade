@@ -1718,7 +1718,7 @@ void __wudSyncFlushCallback(SCStatus status) {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: single-call-site fold into __wudSyncHandler; -ipa off / -inline noauto lose 2 handlers
 u8 __wudSyncPrepareSearch(void) {
     BOOL enabled;
     WUDCB* p = &_wcb;
@@ -1977,7 +1977,7 @@ u8 __wudSyncVirginStandard(void) {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: single-call-site fold into __wudSyncHandler (70.3%->2.4%); -ipa off / -inline noauto lose 2 handlers
 u8 __wudSyncStoredDevInfoToNand(void) {
     extern char lbl_805625AC[];
     extern char lbl_80562544[];
@@ -2701,7 +2701,9 @@ void __wudDeleteFlushCallback(SCStatus status) {
 }
 
 #pragma push
-#pragma dont_inline on
+// -ipa file / -O4,p auto-inline folds this single-call-site helper's body into
+// __wudDeleteHandler (retail keeps a bl); -ipa off and -inline noauto both lose the caller.
+#pragma dont_inline on  // noinline-ok: -ipa off loses __wudDeleteHandler, -inline noauto loses __wudStackHandler
 u8 __wudDeleteDisconnectAll(void) {
     WUDDevInfo* pDev;
     int i;
@@ -2996,7 +2998,8 @@ u16 _WUDGetNotAckedSize(s8 handle) {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
+// Same single-call-site fold as __wudDeleteDisconnectAll -> __wudStackHandler.
+#pragma dont_inline on  // noinline-ok: -ipa off loses __wudDeleteHandler, -inline noauto loses __wudStackHandler
 u8 __wudStackCheckDeviceInfo(void) {
     WUDDevInfo* pInfo;
     WUDDevInfo* pDev;

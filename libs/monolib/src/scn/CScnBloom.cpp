@@ -19,7 +19,7 @@ extern "C" void __ct__CScnFilter(void*);
 extern "C" {
 // Deleting destructor (retail __dt__804997D0): free self when mode > 0,
 // return self.
-extern "C" __declspec(noinline) void* __dt__804997D0(void* self, int mode) {
+extern "C" void* __dt__804997D0(void* self, int mode) {
     if (self != 0 && mode > 0) {
         operator delete(self);
     }
@@ -122,12 +122,10 @@ extern "C" void CScnBloom_destroyAdj48(CScnBloom* self, s32 flags) {
 // dont_inline: retail callers (__ct__CScnBloom, CScnBloom_InitWithView) issue a real
 // `bl CScnBloom_InitBase`; -inline auto would fold this wrapper into the call site.
 // ============================================================================
-#pragma dont_inline on
 extern "C" CScnBloom* CScnBloom_InitBase(CScnBloom* self) {
     CScnBloom_InitParams(self);
     return self;
 }
-#pragma dont_inline off
 
 // ============================================================================
 // CScnBloom_InitParams (0x8049D7FC) - initialize the CScnBloomBase params.
@@ -811,3 +809,9 @@ extern "C" void* __dt__9CScnBloomFv(CScnBloom* self, s32 flags) {
     }
     return self;
 }
+
+// [.rodata] 0x805240B8-0x805240D8: RTTI class-name strings for this TU's
+// classes (CScnBloom and its CScnBloomBase base); referenced by the weak
+// typeinfo locators.
+extern "C" __declspec(align(4)) const char CScnBloomName[0xA] = { 0x43, 0x53, 0x63, 0x6E, 0x42, 0x6C, 0x6F, 0x6F, 0x6D, 0x00 };
+extern "C" __declspec(align(4)) const char CScnBloomBaseName[0x14] = { 0x43, 0x53, 0x63, 0x6E, 0x42, 0x6C, 0x6F, 0x6F, 0x6D, 0x42, 0x61, 0x73, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };  // +6B tail pad (retail gap)

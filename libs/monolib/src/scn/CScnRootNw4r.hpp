@@ -54,7 +54,7 @@ struct CScnMgrLayout {
     u8 pad_0x0[0x60];                 // +0x00
     CScnItemPool* mItemPool;          // +0x60 (arg of CScnItemPool_forEachCallVfunc14)
     CScnLightMan* mLightMan;          // +0x64 (arg of LightManInvokeLightV3)
-    CScnCameraMan* mCamWork;          // +0x68 (arg of CamMan_RefreshCurrentCamera)
+    CScnCameraMan* mCamWork;          // +0x68 (camera work; refreshCurrentCamera())
     u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
     CScnFogMan* mFogMan;              // +0x78 (arg of FogManIsFogEnabled)
     CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of scnLgtBindCamera / 22F0 / 19B8)
@@ -116,7 +116,7 @@ extern "C" void Scn_SetCurrentScene(u32 value);
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
-extern "C" void CamMan_RefreshCurrentCamera(CScnCameraMan* cam);
+// (CamMan_RefreshCurrentCamera is the CScnCameraMan member refreshCurrentCamera)
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);
 extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);

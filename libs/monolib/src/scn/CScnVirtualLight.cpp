@@ -10,15 +10,15 @@
 #include "monolib/math/CVec4.hpp"
 #include "functions.hpp"
 
-extern "C" __declspec(noinline) void scnVlInitVec4(void* self) {}
+extern "C" void scnVlInitVec4(void* self) {}
 
 // _reslist_base<CVirtualLightObjPtr> ctor (retail __ct__804920B0): installs
 // the base vtable, zeroes the storage fields and links the sentinel node
-// onto itself. noinline keeps the bl from the derived ctor __ct__80492074
-// (retail keeps the base init out-of-line, cf. CScnFilterMan). extern "C"
-// keeps the bl reloc flat-named (C++ linkage would mangle the __ct__ name
-// with the arg types).
-extern "C" __declspec(noinline) void __ct__804920B0(CScnVirtualLightReslist* obj) {
+// onto itself. The unit's -inline noauto policy keeps the bl from the derived
+// ctor __ct__80492074 (retail keeps the base init out-of-line, cf.
+// CScnFilterMan). extern "C" keeps the bl reloc flat-named (C++ linkage would
+// mangle the __ct__ name with the arg types).
+extern "C" void __ct__804920B0(CScnVirtualLightReslist* obj) {
     obj->mVtable = (void*)lbl_eu_80526448;
     obj->mList = nullptr;
     obj->mCapacity = 0;
@@ -32,7 +32,7 @@ extern "C" __declspec(noinline) void __ct__804920B0(CScnVirtualLightReslist* obj
 // install the derived vtable (flattened-name pattern, cf. CScnFilterMan).
 // extern "C" keeps the emitted symbol flat-named so the exact-name match
 // (unit sweep) resolves it; the bl to the base ctor stays flat too.
-extern "C" __declspec(noinline) CScnVirtualLightReslist* __ct__80492074(CScnVirtualLightReslist* obj) {
+extern "C" CScnVirtualLightReslist* __ct__80492074(CScnVirtualLightReslist* obj) {
     __ct__804920B0(obj);
     obj->mVtable = (void*)lbl_eu_80526430;
     return obj;
@@ -91,28 +91,28 @@ CLight::~CLight() {}
 // Empty deleting destructor (retail keeps the delete-if-flag epilogue).
 CVirtualLightObj::~CVirtualLightObj() {}
 
-// Item-destroy hook for the reslist clear walk (retail body is just blr).
-// noinline keeps the bl from scnVlClearList's clear loop out-of-line.
-extern "C" __declspec(noinline) void scnVlItemNop(CVirtualLightObj** item) {}
+// Item-destroy hook for the reslist clear walk (retail body is just blr);
+// the bl from scnVlClearList's clear loop stays out-of-line.
+extern "C" void scnVlItemNop(CVirtualLightObj** item) {}
 
 // Reset a node's mNext to null after its item is destroyed (retail
-// scnVlZeroNext: li r0,0; stw r0,0(r4); blr). noinline keeps the bl from
-// scnVlClearList's clear loop out-of-line (the trivial body would otherwise
-// be inlined, dropping the retail call-site reloc).
-extern "C" __declspec(noinline) void scnVlZeroNext(void* self, void* out) { *(u32*)out = 0; }
+// scnVlZeroNext: li r0,0; stw r0,0(r4); blr). The bl from scnVlClearList's
+// clear loop stays out-of-line (the trivial body would otherwise be inlined,
+// dropping the retail call-site reloc; see -inline noauto).
+extern "C" void scnVlZeroNext(void* self, void* out) { *(u32*)out = 0; }
 
 // (memberized: scnVlAllocNodes -> CScnVirtualLightReslist::VlAllocNodes; declaration moved into class CScnVirtualLightReslist)
-extern "C" __declspec(noinline) void scnVlReserve(void* self, u32 handle, int capacity) {
+extern "C" void scnVlReserve(void* self, u32 handle, int capacity) {
     ((CScnVirtualLightReslist*)self)->VlAllocNodes(handle, capacity);
 }
 
 
-// Base reslist teardown helper (retail scnVlClearList; defined at the bottom
-// of this TU under #pragma auto_inline off).
+// Base reslist teardown helper (retail scnVlClearList; the unit's
+// -inline noauto policy keeps it out-of-line).
 // (memberized: scnVlClearList -> CScnVirtualLightReslist::VlClearList; declaration moved into class CScnVirtualLightReslist)
 
 extern "C" void __dt__804923A0(CScnVirtualLightReslist* obj);
-extern "C" __declspec(noinline) void scnVlDtorList(CScnVirtualLightReslist* self) {
+extern "C" void scnVlDtorList(CScnVirtualLightReslist* self) {
     __dt__804923A0(self);
 }
 
@@ -148,9 +148,9 @@ CScnVirtualLight::~CScnVirtualLight() {
 
 // destroyList for the virtual-light reslist (retail __dt__804923A0): run the
 // base list teardown, free the node array unless it is externally owned
-// (field_0x1C), and reset the capacity. noinline keeps the tail-call
-// `b __dt__804923A0` from scnVlDtorList (retail keeps it out-of-line).
-extern "C" __declspec(noinline) void __dt__804923A0(CScnVirtualLightReslist* obj) {
+// (field_0x1C), and reset the capacity. The tail call `b __dt__804923A0`
+// from scnVlDtorList stays out-of-line (-inline noauto).
+extern "C" void __dt__804923A0(CScnVirtualLightReslist* obj) {
     obj->VlClearList();
     if (obj->field_0x1C == false && obj->mList != nullptr) {
         delete[] obj->mList;
@@ -168,7 +168,7 @@ extern "C" __declspec(noinline) void __dt__804923A0(CScnVirtualLightReslist* obj
 // into `a` (retail scnVlFindNode). The body/check/end labels mirror the
 // retail loop rotation (body below the head with an initial jump over); the
 // `cur` local keeps MWCC's cmplw operand order (rA = the call-derived value).
-extern "C" __declspec(noinline) void scnVlFindNode(int* a, u32* b, const u32* c, const u32* d) {
+extern "C" void scnVlFindNode(int* a, u32* b, const u32* c, const u32* d) {
     goto check;
 body:
     scnVlAdvance(b);
@@ -185,30 +185,30 @@ end:
     scnVlCopyWord(a, (int*)b);
 }
 
-extern "C" __declspec(noinline) void scnVlSetValue(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
+extern "C" void scnVlSetValue(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
 
-__declspec(noinline) void scnVlLoadValue(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src) {
+void scnVlLoadValue(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src) {
     scnVlSetValue(self, *src->mValue);
 }
 
-extern "C" __declspec(noinline) u32* scnVlNodeItem(void* self){ return (u32*)((char*)*(void**)self + 8); }
+extern "C" u32* scnVlNodeItem(void* self){ return (u32*)((char*)*(void**)self + 8); }
 
-extern "C" __declspec(noinline) void scnVlAdvance(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" void scnVlAdvance(u32* self) { *self = *(u32*)(*(u32**)self); }
 
-// retail: lwz r4,0x4(r4); b scnVlSetValue (r3 passes through). noinline
-// keeps the bl from scnVlInsertItem out-of-line (retail calls it).
-extern "C" __declspec(noinline) void scnVlCopyValue(void* self, void* src) { scnVlSetValue(self, *(u32*)((char*)src + 4)); }
+// retail: lwz r4,0x4(r4); b scnVlSetValue (r3 passes through). The bl from
+// scnVlInsertItem stays out-of-line (retail calls it).
+extern "C" void scnVlCopyValue(void* self, void* src) { scnVlSetValue(self, *(u32*)((char*)src + 4)); }
 
-// Word-compare helper (retail scnVlWordsNe): returns *a != *b. noinline
-// keeps the bl from scnVlFindNode out-of-line (retail calls it).
-__declspec(noinline) u32 scnVlWordsNe(const u32* a, const u32* b) {
+// Word-compare helper (retail scnVlWordsNe): returns *a != *b. The bl from
+// scnVlFindNode stays out-of-line (retail calls it).
+u32 scnVlWordsNe(const u32* a, const u32* b) {
     return *a != *b;
 }
 
 // (memberized: scnVlClearList -> CScnVirtualLightReslist::VlClearList; declaration moved into class CScnVirtualLightReslist)
-extern "C" __declspec(noinline) void scnVlClearThunk(void* self) { ((CScnVirtualLightReslist*)self)->VlClearList(); }
+extern "C" void scnVlClearThunk(void* self) { ((CScnVirtualLightReslist*)self)->VlClearList(); }
 
-extern "C" __declspec(noinline) int* scnVlCopyWord(int* dst, int* src){
+extern "C" int* scnVlCopyWord(int* dst, int* src){
     *dst = *src;
     return dst;
 }
@@ -217,7 +217,7 @@ extern "C" __declspec(noinline) int* scnVlCopyWord(int* dst, int* src){
 // item (scnVlItemNop), reset it (scnVlZeroNext) and write the following
 // node to *out via scnVlSetValue (retail scnVlUnlinkNode). The *in re-reads
 // mirror the retail aliasing reloads around the two calls.
-extern "C" __declspec(noinline) void scnVlUnlinkNode(CScnVirtualLightData* out, CScnVirtualLightReslist* list,
+extern "C" void scnVlUnlinkNode(CScnVirtualLightData* out, CScnVirtualLightReslist* list,
                               CScnVirtualLightNode** in) {
     CScnVirtualLightNode* node = *in;
     CScnVirtualLightNode* prev = node->mPrev;
@@ -229,7 +229,7 @@ extern "C" __declspec(noinline) void scnVlUnlinkNode(CScnVirtualLightData* out, 
     scnVlSetValue(out, (u32)next);
 }
 
-extern "C" __declspec(noinline) void scnVlStoreWord(int* dst, int* src){
+extern "C" void scnVlStoreWord(int* dst, int* src){
     *dst = *src;
 }
 
@@ -320,7 +320,7 @@ extern "C" void scnVlInitLights(CScnVirtualLight* self) {
 // from `data` (4 words) and `val`, returning the new light. Wrapper family:
 // scnVlMakeAmb0C/DD4/DE0/DFC. extern "C" keeps the caller relocs (and the
 // emitted symbol) flat; taking &ptr pins the light to the frame like retail.
-extern "C" __declspec(noinline) CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLightData* self, u8* field,
+extern "C" CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLightData* self, u8* field,
                               const CTaskGame_setVec4_tmp* data, f32 val) {
     CVirtualLightAmb* ptr;
     ptr = new (self->value08) CVirtualLightAmb;
@@ -337,7 +337,7 @@ extern "C" __declspec(noinline) CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLigh
 // as t2 = mulSda(atan2(-y, len)). Passing z/len explicitly is what makes
 // MWCC hoist the z load (f2) up front and keep the fmr f2,f1 of the sqrt
 // result like retail.
-extern "C" __declspec(noinline) void scnVlDirFromVec(CScnVirtualLightData* self, u8* field,
+extern "C" void scnVlDirFromVec(CScnVirtualLightData* self, u8* field,
                               const CTaskGame_setVec4_tmp* data, const CTaskGame_setVec4_tmp* val,
                               f32 value) {
     f32 t1 = cfCam_mulSda2Const(-atan2AnimFIdx(-val->unk00[0], val->unk00[2]));
@@ -346,31 +346,31 @@ extern "C" __declspec(noinline) void scnVlDirFromVec(CScnVirtualLightData* self,
     scnVlCreateDir(self, field, data, value, t1, t2);
 }
 
-__declspec(noinline) void scnVlMakeAmb0C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
+void scnVlMakeAmb0C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
     scnVlCreateAmb(self, &self->_0C[0], arg, val);
 }
 
 // scnVlDirFromVec variant: also passes a 3-float `val` (direction) in r6, and an
 // f32 scalar in f1 (see scnVlDirFromVec's own body for how it consumes them).
-__declspec(noinline) void scnVlMakeDir0C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
+void scnVlMakeDir0C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
                    const CTaskGame_setVec4_tmp* val, f32 value) {
     scnVlDirFromVec(self, &self->_0C[0], arg, val, value);
 }
 
-__declspec(noinline) void scnVlMakeAmb4C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
+void scnVlMakeAmb4C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
     scnVlCreateAmb(self, (u8*)&self->value4C, arg, val);
 }
 
-__declspec(noinline) void scnVlMakeAmb2C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
+void scnVlMakeAmb2C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
     scnVlCreateAmb(self, (u8*)&self->value2C, arg, val);
 }
 
-__declspec(noinline) void scnVlMakeDir2C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
+void scnVlMakeDir2C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
                    const CTaskGame_setVec4_tmp* val, f32 value) {
     scnVlDirFromVec(self, (u8*)&self->value2C, arg, val, value);
 }
 
-__declspec(noinline) void scnVlMakeAmb6C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
+void scnVlMakeAmb6C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
     scnVlCreateAmb(self, &self->_6C[0], arg, val);
 }
 
@@ -463,25 +463,25 @@ extern "C" void scnVlInitLights2(CScnVirtualLight* self) {
     self->field_0xBC = lbl_eu_8066AA24;
 }
 
-// Retail scnVlSetIntens: store `val` into the light's +0x14 field. noinline
-// keeps the bl from scnVlCreateAmb out-of-line (retail calls it; the trivial
-// store body would otherwise be inlined, dropping the call-site reloc).
-__declspec(noinline) void scnVlSetIntens(void* self, float val) { ((CScnVirtualLightData*)self)->value14 = val; }
+// Retail scnVlSetIntens: store `val` into the light's +0x14 field. The bl from
+// scnVlCreateAmb stays out-of-line (retail calls it; the trivial store body
+// would otherwise be inlined, dropping the call-site reloc).
+void scnVlSetIntens(void* self, float val) { ((CScnVirtualLightData*)self)->value14 = val; }
 
 // Forward decls for the reslist item-insert helpers (defined below; the
 // scnVlCopyValue / scnVlInsertItem wrappers reference them).
-extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlAllocNode(CScnVirtualLightReslist* list, u32 val);
-extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlFindFree(CScnVirtualLightReslist* list);
-extern "C" __declspec(noinline) void scnVlSetItem(CVirtualLightObj** item, u32 val);
-extern "C" __declspec(noinline) void scnVlLinkNode(u32* out, CScnVirtualLightData* self,
+extern "C" CScnVirtualLightNode* scnVlAllocNode(CScnVirtualLightReslist* list, u32 val);
+extern "C" CScnVirtualLightNode* scnVlFindFree(CScnVirtualLightReslist* list);
+extern "C" void scnVlSetItem(CVirtualLightObj** item, u32 val);
+extern "C" void scnVlLinkNode(u32* out, CScnVirtualLightData* self,
                                                    u32* in, u32 arg2);
 
 // Copy the light-data value at self+4 into *inValue, then hand off to the
 // reslist insert helper (retail scnVlInsertItem). outValue is declared first so
 // MWCC gives it the higher stack slot (sp+0xC) and inValue sp+0x8 (retail
 // order: first call writes sp+8, second call reads sp+8 / writes sp+0xC).
-// noinline keeps the bl from scnVlCreateAmb out-of-line (retail calls it).
-__declspec(noinline) void scnVlInsertItem(CScnVirtualLightData* self, u32 arg2) {
+// The bl from scnVlCreateAmb stays out-of-line (retail calls it).
+void scnVlInsertItem(CScnVirtualLightData* self, u32 arg2) {
     u32 outValue;
     u32 inValue;
     scnVlCopyValue(&inValue, self);
@@ -493,7 +493,7 @@ __declspec(noinline) void scnVlInsertItem(CScnVirtualLightData* self, u32 arg2) 
 // push_back shape) and write the new node to *out via scnVlSetValue. The
 // repeated *in loads mirror the retail aliasing reloads (non-const in keeps
 // MWCC from caching the pointee across the node stores).
-extern "C" __declspec(noinline) void scnVlLinkNode(u32* out, CScnVirtualLightData* self,
+extern "C" void scnVlLinkNode(u32* out, CScnVirtualLightData* self,
                                                    u32* in, u32 arg2) {
     CScnVirtualLightNode* node = scnVlAllocNode((CScnVirtualLightReslist*)self, arg2);
     node->mNext = (CScnVirtualLightNode*)*in;
@@ -515,7 +515,7 @@ CScnVirtualLightNode* scnVlAllocNode(CScnVirtualLightReslist* list, u32 val) {
 // CVirtualLightObj* cell at *item via the placement-new operator
 // (scnVlPlaceNew) and copy *val into it. try/catch is the retail setItem
 // shape (forces MWCC's frame-pointer prologue).
-extern "C" __declspec(noinline) void scnVlSetItem(CVirtualLightObj** item, u32 val) {
+extern "C" void scnVlSetItem(CVirtualLightObj** item, u32 val) {
     CVirtualLightObj** p = (CVirtualLightObj**)scnVlPlaceNew((u8*)4, (u8*)item);
     if (p != NULL) {
         try {
@@ -526,16 +526,16 @@ extern "C" __declspec(noinline) void scnVlSetItem(CVirtualLightObj** item, u32 v
     }
 }
 
-// Placement-new operator (retail: mr r3,r4; blr). noinline keeps the `bl
+// Placement-new operator (retail: mr r3,r4; blr). The `bl
 // scnVlPlaceNew` at the setItem call sites out-of-line (a trivial body here
 // would be inlined by MWCC, dropping the reloc the retail call sites have).
-extern "C" __declspec(noinline) void* scnVlPlaceNew(void* self, void* param){ return param; }
+extern "C" void* scnVlPlaceNew(void* self, void* param){ return param; }
 
 // Find the first free slot (mNext == 0) in the node array and return its
 // address (retail scnVlFindFree). Retail uses the counted-loop form
 // (mtctr/bdnz) with a byte-offset induction variable plus the index for the
-// final mulli; noinline keeps the bl from scnVlAllocNode out-of-line.
-extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlFindFree(CScnVirtualLightReslist* list) {
+// final mulli; the bl from scnVlAllocNode stays out-of-line.
+extern "C" CScnVirtualLightNode* scnVlFindFree(CScnVirtualLightReslist* list) {
     int capacity = list->mCapacity;
     int i;
     for (i = 0; i < capacity; i++) {
@@ -549,9 +549,9 @@ extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlFindFree(CScnVirtualL
 // Creates a CVirtualLightDir for the given light-data field and initializes it
 // from `data` (4 words), `val1` and the two direction floats, returning the
 // new light. Sibling of scnVlCreateAmb (amb variant); the if/else phi shape
-// pins the store to the merge point like retail. noinline keeps the bl from
+// pins the store to the merge point like retail. The bl from
 // scnVlDirFromVec out-of-line (retail calls it).
-__declspec(noinline) CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field, const CTaskGame_setVec4_tmp* data,
+CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field, const CTaskGame_setVec4_tmp* data,
                    f32 val1, f32 val2, f32 val3) {
     CVirtualLightDir* ptr;
     ptr = new (self->value08) CVirtualLightDir;
@@ -586,18 +586,18 @@ extern "C" void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f3
     copyWord4((u32*)&self->field_0xAC, (const u32*)&self->field_0x8C);
 }
 
-__declspec(noinline) s32 scnVlGetType(void* self) { return ((CScnVirtualLightData*)self)->value2C; }
+s32 scnVlGetType(void* self) { return ((CScnVirtualLightData*)self)->value2C; }
 
-extern "C" __declspec(noinline) int* scnVlCopyInt(int* dst, int* src){
+extern "C" int* scnVlCopyInt(int* dst, int* src){
     *dst = *src;
     return dst;
 }
 
-extern "C" __declspec(noinline) void* scnVlIterItem(void* self){ return (void*)((char*)*(void**)self + 8); }
+extern "C" void* scnVlIterItem(void* self){ return (void*)((char*)*(void**)self + 8); }
 
-extern "C" __declspec(noinline) void scnVlIterNext(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" void scnVlIterNext(u32* self) { *self = *(u32*)(*(u32**)self); }
 
-__declspec(noinline) s32 scnVlIterNe(const u32* a, const u32* b) {
+s32 scnVlIterNe(const u32* a, const u32* b) {
     return *a != *b;
 }
 
@@ -780,27 +780,27 @@ extern "C" void scnVlPushFrame(CScnVirtualLight* self, CLightEnv* env) {
     }
 }
 
-// Item-destroy helper family used by scnVlPushFrame / scnVlUpdate. noinline
-// keeps the retail `bl` at the scnVlPushFrame call sites out-of-line (the
+// Item-destroy helper family used by scnVlPushFrame / scnVlUpdate. The retail
+// `bl` at the scnVlPushFrame call sites stays out-of-line (-inline noauto; the
 // trivial load bodies would otherwise be inlined, dropping the retail call
 // relocs).
-__declspec(noinline) int scnVlGetCamId(CScnCameraMan* cam) {
-    return CamMan_FindItemA_B158(cam, cam->mCamId);
+int scnVlGetCamId(CScnCameraMan* cam) {
+    return (int)cam->findItem(cam->mCamId);
 }
 
-__declspec(noinline) u32 scnVlGetVal68(void* self) { return ((CScnVirtualLightData*)self)->value68; }
+u32 scnVlGetVal68(void* self) { return ((CScnVirtualLightData*)self)->value68; }
 
-extern "C" __declspec(noinline) u32 scnVlGetSlotFld(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1160); }
+extern "C" u32 scnVlGetSlotFld(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1160); }
 
-extern "C" __declspec(noinline) u32 scnVlGetSlotCnt(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1150); }
+extern "C" u32 scnVlGetSlotCnt(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1150); }
 
-extern "C" __declspec(noinline) u32 scnVlGetSlotPtr(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1140); }
+extern "C" u32 scnVlGetSlotPtr(void* self, u32 idx) { return *(u32*)((u8*)self + idx*4 + 0x1140); }
 
-__declspec(noinline) s32 scnVlTestArmed(CScnVirtualLightData* self) {
+s32 scnVlTestArmed(CScnVirtualLightData* self) {
     return testFlagMask(&self->value30, 0x10000);
 }
 
-__declspec(noinline) s32 scnVlTestFlags(CScnVirtualLightData* self, u32 flags) {
+s32 scnVlTestFlags(CScnVirtualLightData* self, u32 flags) {
     return testFlagMask(&self->value30, flags);
 }
 
@@ -810,7 +810,7 @@ __declspec(noinline) s32 scnVlTestFlags(CScnVirtualLightData* self, u32 flags) {
 // The scalar body below is the PC/NONMATCHING fallback.
 #include "monolib/scn/CScnVirtualLight_ps.inl"
 
-__declspec(noinline) void* scnVlGetPad04(void* self) { return &((CScnVirtualLightData*)self)->_04; }
+void* scnVlGetPad04(void* self) { return &((CScnVirtualLightData*)self)->_04; }
 
 // Retail: addi r3,r3,0x54; b .+4; addi r3,r3,0xB8; blr. The b .+4 scheduler
 // barrier is the documented unreproducible MWCC artifact (MWCC_CASES sec. 4;
@@ -821,17 +821,17 @@ __declspec(noinline) void* scnVlGetPad04(void* self) { return &((CScnVirtualLigh
 // Retail scnVlGetOff10C is a tail-call thunk: `addi r3,r3,0x54; b func_80493C10`
 // into the adjacent getter (the retail annotation originally merged the two
 // 0x8-byte bodies into one 0x10 symbol).  MWCC emits the tail call `b` only
-// when the getter is a separate noinline leaf placed immediately after.
-extern "C" __declspec(noinline) void* func_80493C10(void* self) {
+// when the getter is a separate non-inlined leaf placed immediately after.
+extern "C" void* func_80493C10(void* self) {
     return (void*)((u8*)self + 0xB8);
 }
-extern "C" __declspec(noinline) void* scnVlGetOff10C(void* self) {
+extern "C" void* scnVlGetOff10C(void* self) {
     return func_80493C10((void*)((u8*)self + 0x54));
 }
 
-__declspec(noinline) float scnVlGetRange(void* self) { return ((CScnVirtualLightData*)self)->value3C; }
+float scnVlGetRange(void* self) { return ((CScnVirtualLightData*)self)->value3C; }
 
-extern "C" __declspec(noinline) void scnVlSetSlotFld(void* self, u32 val, u32 idx) { *(u32*)((u8*)self + idx*4 + 0x1160) = val; }
+extern "C" void scnVlSetSlotFld(void* self, u32 val, u32 idx) { *(u32*)((u8*)self + idx*4 + 0x1160) = val; }
 
 // Retail scnVlUpdate: per-frame virtual-light update. Applies the pooled
 // light data (`data`) with the given position/fade inputs, then - when the
@@ -916,25 +916,25 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
     scnVlUpdateColor(data);
 }
 
-__declspec(noinline) float scnVlGetFade(void* self) { return ((CScnVirtualLightData*)self)->valueD4; }
+float scnVlGetFade(void* self) { return ((CScnVirtualLightData*)self)->valueD4; }
 
-__declspec(noinline) u32 scnVlGetEnabled(void* self) {
+u32 scnVlGetEnabled(void* self) {
     return ((CScnVirtualLightData*)self)->enabled;
 }
 
-__declspec(noinline) void* scnVlPtrVal14(void* self) { return &((CScnVirtualLightData*)self)->value14; }
+void* scnVlPtrVal14(void* self) { return &((CScnVirtualLightData*)self)->value14; }
 
-__declspec(noinline) u32 scnVlGetHandle(void* self) { return ((CScnVirtualLightData*)self)->value08; }
+u32 scnVlGetHandle(void* self) { return ((CScnVirtualLightData*)self)->value08; }
 
-__declspec(noinline) u32 scnVlGetVal64(void* self) { return ((CScnVirtualLightData*)self)->value64; }
+u32 scnVlGetVal64(void* self) { return ((CScnVirtualLightData*)self)->value64; }
 
-__declspec(noinline) s32 scnVlTestBit0(CScnVirtualLightData* self) {
+s32 scnVlTestBit0(CScnVirtualLightData* self) {
     return testFlagMask(&self->value484, 1);
 }
 
-__declspec(noinline) u32 scnVlGetCount(void* self) { return ((CScnVirtualLightData*)self)->value480; }
+u32 scnVlGetCount(void* self) { return ((CScnVirtualLightData*)self)->value480; }
 
-extern "C" __declspec(noinline) void* scnVlSlotAt(void* self, u32 idx){ return (void*)((char*)self + idx * 64); }
+extern "C" void* scnVlSlotAt(void* self, u32 idx){ return (void*)((char*)self + idx * 64); }
 
 // Retail scnVlDispatchNode: dispatch a light-environment slot setup on the type
 // of the light object at *scnVlNodeItem(node) (+0x2C). The light's position
@@ -992,9 +992,9 @@ extern "C" void scnVlDispatchNode(void* unused, CLightEnv* env,
     }
 }
 
-__declspec(noinline) float scnVlGetAngleX(void* self) { return ((CScnVirtualLightData*)self)->value34; }
+float scnVlGetAngleX(void* self) { return ((CScnVirtualLightData*)self)->value34; }
 
-__declspec(noinline) float scnVlGetAngleY(void* self) { return ((CScnVirtualLightData*)self)->value38; }
+float scnVlGetAngleY(void* self) { return ((CScnVirtualLightData*)self)->value38; }
 
 extern "C" void* scnVlPtrDir(void* self) { return (void*)((u8*)self + 0x34); }
 
@@ -1080,10 +1080,10 @@ extern "C" void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
     scnVlVec4Add((f32*)&self->field_0xAC, (const f32*)&v8);
 }
 
-// Retail scnVlVec4Add: vec4 += (a[i] += b[i]). noinline keeps the bl from
+// Retail scnVlVec4Add: vec4 += (a[i] += b[i]). The bl from
 // scnVlBlendStep out-of-line (retail calls it; the trivial body would otherwise
 // be inlined, dropping the call-site reloc).
-__declspec(noinline) void scnVlVec4Add(f32* a, const f32* b) {
+void scnVlVec4Add(f32* a, const f32* b) {
     a[0] += b[0];
     a[1] += b[1];
     a[2] += b[2];
@@ -1098,8 +1098,6 @@ extern "C" void sinit_80494300() {
                   lbl_eu_8066AA14, lbl_eu_8066AA18);
 }
 
-#pragma push
-#pragma auto_inline off
 // clearList for the virtual-light reslist (retail scnVlClearList): walk the
 // ring from the first node, destroy each node's item (scnVlItemNop) and
 // reset its mNext (scnVlZeroNext), then relink the sentinel onto itself
@@ -1126,7 +1124,6 @@ void CScnVirtualLightReslist::VlAllocNodes(u32 handle, int capacity) {
     }
     this->mCapacity = capacity;
 }
-#pragma pop
 // Retail scnVlResetMgr: scene-light reset. arg == 0 destroys every light
 // object held by the four reslists (virtual deleting-dtor dispatch at vtable
 // +0x8), clears each ring, zeroes the pool bound count and the 128-slot

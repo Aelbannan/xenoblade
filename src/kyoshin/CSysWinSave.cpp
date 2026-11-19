@@ -7,10 +7,7 @@
 #include "kyoshin/CSysWinSave.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
-// sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
-// (forward decl for kChainGaugeTwo, defined below after the pooling functions).
-extern const volatile f64 kChainGaugeTwo;
-// cf::CChainCombo's 0xC-byte vtable, its weak RTTI record and the
+// cf::CChainCombo's
 // "cf::CChainCombo" type-name string belong to CChainCombo.o (retail .data
 // 0x80538994 / .sdata 0x80662B08 / .rodata 0x8050FD50): the class is
 // polymorphic with an inline dtor, so MWCC emits that weak vtable block next to
@@ -26,60 +23,8 @@ extern const volatile f64 kChainGaugeTwo;
 #include <new>
 #include <revolution/gx/GXPixel.h>
 
-// C++ linkage: retail's symbols are the C++ mangled initChainGauge__FPv /
-// resetChainGauge__FPv (both take the gauge as void*).
-void initChainGauge(void* p) {
-    float* self = (float*)p;
-    float v = 0.0f;
-    self[0] = v;
-    self[1] = v;
-}
-
-void resetChainGauge(void* p) {
-    float* self = (float*)p;
-    float v = 0.0f;
-    self[0] = v;
-    self[1] = v;
-}
-
 // ---------------------------------------------------------------------------
-// Target 1: setChainGauge (us-80296e40)
-// Write a base value to [out+0] and [out+4]. If the incoming parameter is
-// below the threshold A, additionally store a corrected value:
-//   corrected = C * (param - A) - A
-// to both slots (the whole point: clamp/recentre toward a target).
-// ---------------------------------------------------------------------------
-extern "C" void setChainGauge(float* self, float param) {
-    // Birth order b,a (Rule A: first-declared volatile takes the lowest
-    // FPR, so b lands f0 and a lands f2); assignment order keeps retail's
-    // load sequence (BA4 into f2 before BA0 into f0).
-    float b, a;
-    a = 1.0f;
-    b = 0.0f;
-    self[0] = b;
-    self[1] = b;
-    if (a < param) {
-        param -= a;
-        // 8-byte 2.0 pooled via the file-scope const volatile below (lands
-        // last like retail's third slot); reading its low word emits a
-        // plain lfs with no conversion code. Volatile blocks MWCC folding
-        // the known constant through the pointer read (which would collapse
-        // it to a 4-byte pool entry).
-        float c = *(const f32*)&kChainGaugeTwo;
-        float r = (c * param) - a;
-        self[1] = r;
-        self[0] = r;
-    }
-}
-
-// 8-byte 2.0 constant for setChainGauge above. File-scope const volatile
-// (global linkage so the earlier use compiles; volatile blocks const-
-// folding) placed after the literal-pooling functions so it emits last,
-// matching retail's third sdata2 slot.
-const volatile f64 kChainGaugeTwo = 2.0;
-
-// ---------------------------------------------------------------------------
-// Producers of the save-window singleton. Kept as scaffold stubs (not matching
+// Producers of the save-window singleton.
 // targets in this batch); must still emit their retail symbols.
 // ---------------------------------------------------------------------------
 extern "C" unsigned long SysWinSaveIsCreated() {

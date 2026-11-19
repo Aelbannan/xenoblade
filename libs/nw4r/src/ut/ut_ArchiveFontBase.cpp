@@ -147,11 +147,9 @@ private:
 // dont_inline: retail's PackedFont ctor CALLS this base ctor (bl
 // __ct__ArchiveFontBase) rather than letting -ipa inline+DSE it away when the
 // derived vptr overwrites (CScnBloom.cpp pattern).
-#pragma dont_inline on
 ArchiveFontBase::ArchiveFontBase() : mWidth(NULL) {
     *(void**)this = (void*)lbl_eu_8056AFF0;
 }
-#pragma dont_inline reset
 
 ArchiveFontBase::~ArchiveFontBase() {}
 

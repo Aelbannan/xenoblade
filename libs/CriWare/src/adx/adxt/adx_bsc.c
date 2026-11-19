@@ -1,7 +1,8 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_bsc
-// Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/adx/adxt/adx_bsc.h"
+#include "libs/CriWare/src/adx/adxt/adx_xpnd.h"
 
 u32 lbl_eu_805E5348;
 u32 lbl_eu_805E534C;
@@ -72,8 +73,8 @@ extern void ADXERR_CallErrFunc2_(const char* msg, const char* detail);
 
 
 /* Forward declarations */
-int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3);
-s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding);
+int adxb_get_key(ADXB* adxb, void* data, void* out_key1, void* out_key2, void* out_key3);
+s32 ADXB_DecodeHeaderAdx(ADXB* adxb, void* data, void* out_encoding);
 
 static s16 SKG_GenerateKey(u8* data, s16 len, s16* key1, s16* key2, s16* key3) {
     s16 x1;
@@ -143,107 +144,107 @@ void ADXB_Init(void) {
     *(u32*)(p + 0x18) = 0;
 }
 
-u32 adxb_DefGetWr(void* self, u32* out1, u32* out2, u32* out3) {
-    *out1 = *(u32*)((u8*)self + 0x8C);
-    *out2 = *(u32*)((u8*)self + 0x40) - *(u32*)((u8*)self + 0x8C);
-    *out3 = *(u32*)((u8*)self + 0x18) - *(u32*)((u8*)self + 0x88);
-    return *(u32*)((u8*)self + 0x3C);
+u32 adxb_DefGetWr(ADXB* self, u32* out1, u32* out2, u32* out3) {
+    *out1 = self->decPos;
+    *out2 = (u32)self->workBuf - self->decPos;
+    *out3 = self->totalSmpl - self->readSmpl;
+    return (u32)self->pcmBuf;
 }
 
-void adxb_DefAddWr(void* self, u32 unused, u32 addend) {
-    *(u32*)((u8*)self + 0x8c) += addend;
-    *(u32*)((u8*)self + 0x88) += addend;
+void adxb_DefAddWr(ADXB* self, u32 unused, u32 addend) {
+    self->decPos += addend;
+    self->readSmpl += addend;
 }
 
 void* ADXB_Create(void* arg0, void* pcmBuf, void* workBuf, void* workSize) {
     int i;
-    u8* slot;
-    u8* p;
+    ADXB* slot;
+    ADXB* p;
 
-    p = (u8*)lbl_eu_805E5378;
+    p = (ADXB*)lbl_eu_805E5378;
     for (i = 0; i < 16; i++) {
-        if (*(s16*)p == 0) break;
-        p += 0x100;
+        if (p->state == 0) break;
+        p++;
     }
     if (i == 16) return NULL;
 
-    slot = (u8*)lbl_eu_805E5378 + i * 0x100;
+    slot = (ADXB*)lbl_eu_805E5378 + i;
     memset(slot, 0, 0x100);
-    *(u16*)(slot + 0x00) = 1;
+    slot->state = 1;
 
     {
         void* pd = ADXPD_Create();
-        *(void**)(slot + 0x08) = pd;
+        slot->pd = pd;
         if (pd == NULL) {
             if (slot != NULL) {
-                *(void**)(slot + 0x08) = NULL;
+                slot->pd = NULL;
                 ADXPD_Destroy(pd);
                 memset(slot, 0, 0x100);
-                *(u16*)(slot + 0x00) = 0;
+                slot->state = 0;
             }
             return NULL;
         }
     }
 
-    *(void**)(slot + 0x38) = arg0;
-    *(void**)(slot + 0x3C) = pcmBuf;
-    *(void**)(slot + 0x40) = workBuf;
-    *(void**)(slot + 0x44) = workSize;
-    *(void**)(slot + 0x78) = (void*)adxb_DefGetWr;
-    *(void**)(slot + 0x7C) = slot;
-    *(void**)(slot + 0x80) = (void*)adxb_DefAddWr;
-    *(void**)(slot + 0x84) = slot;
-    *(u32*)(slot + 0xC4) = 0;
-    *(s16*)(slot + 0xD8) = 0;
-    *(s16*)(slot + 0xDA) = -0x80;
-    *(s16*)(slot + 0xDC) = -0x80;
-    memset(slot + 0xC8, 0, 0x10);
+    slot->ctx = arg0;
+    slot->pcmBuf = pcmBuf;
+    slot->workBuf = workBuf;
+    slot->workSize = (u32)workSize;
+    slot->getWr = (void*)adxb_DefGetWr;
+    slot->getWrCtx = slot;
+    slot->endCb = (void*)adxb_DefAddWr;
+    slot->endCbCtx = slot;
+    slot->ainfLen = 0;
+    slot->defOutVol = 0;
+    slot->defPan[0] = -0x80;
+    slot->defPan[1] = -0x80;
+    memset(&slot->loopTbl[0], 0, 0x10);
     return slot;
 }
 
-void ADXB_Destroy(void* self) {
+void ADXB_Destroy(ADXB* self) {
     void* pd;
     if (self == NULL) return;
-    pd = *(void**)((u8*)self + 0x08);
-    *(void**)((u8*)self + 0x08) = NULL;
+    pd = self->pd;
+    self->pd = NULL;
     ADXPD_Destroy(pd);
     memset(self, 0, 0x100);
-    *(u16*)((u8*)self + 0x00) = 0;
+    self->state = 0;
 }
 
-int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3) {
-    u8* p = (u8*)adxb;
+int adxb_get_key(ADXB* adxb, void* data, void* out_key1, void* out_key2, void* out_key3) {
+    ADXB* p = (ADXB*)adxb;
     s16* k3 = (s16*)out_key3;
     s16* k2 = (s16*)out_key2;
     s16* k1 = (s16*)out_key1;
     s16* defKeys = (s16*)((u8*)&lbl_eu_805E5358 + 0x10);
 
     if (lbl_eu_80560048[0] == 0) {
-        if (p[0xEC] < 4) {
+        if (p->version < 4) {
             *k1 = 0;
             *k2 = 0;
             *k3 = 0;
-        } else if (p[0xED] >= 0x10) {
+        } else if (p->flags >= 0x10) {
             char buf[16];
             CRICRW_Sprintf(buf, 16, lbl_eu_80517330 + 0xA7, data);
             SKG_GenerateKey((u8*)buf, 8, k1, k2, k3);
-        } else if (p[0xED] >= 8) {
-            if (*(s16*)(p + 0xA0) == 0 && *(s16*)(p + 0xA2) == 0 && *(s16*)(p + 0xA4) == 0) {
-                *(s16*)(p + 0xA0) = defKeys[0];
-                *(s16*)(p + 0xA2) = defKeys[1];
-                *(s16*)(p + 0xA4) = defKeys[2];
+        } else if (p->flags >= 8) {
+            if (p->key[0] == 0 && p->key[1] == 0 && p->key[2] == 0) {
+                p->key[0] = defKeys[0];
+                p->key[1] = defKeys[1];
+                p->key[2] = defKeys[2];
             }
-            *k1 = *(s16*)(p + 0xA0);
-            *k2 = *(s16*)(p + 0xA2);
-            *k3 = *(s16*)(p + 0xA4);
+            *k1 = p->key[0];
+            *k2 = p->key[1];
+            *k3 = p->key[2];
         } else {
             *k1 = 0;
             *k2 = 0;
             *k3 = 0;
         }
     } else {
-        if (p[0xEC] < 4) {
-            if (*(s16*)(p + 0xA0) == 0 && *(s16*)(p + 0xA2) == 0 && *(s16*)(p + 0xA4) == 0 &&
+        if (p->version < 4) {
+            if (p->key[0] == 0 && p->key[1] == 0 && p->key[2] == 0 &&
                 defKeys[0] == 0 && defKeys[1] == 0 && defKeys[2] == 0) {
                 *k1 = 0;
                 *k2 = 0;
@@ -256,14 +257,14 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
             ADXERR_CallErrFunc1_(lbl_eu_80517330 + 0xAC);
             return -1;
         } else {
-            if (*(s16*)(p + 0xA0) == 0 && *(s16*)(p + 0xA2) == 0 && *(s16*)(p + 0xA4) == 0) {
-                *(s16*)(p + 0xA0) = defKeys[0];
-                *(s16*)(p + 0xA2) = defKeys[1];
-                *(s16*)(p + 0xA4) = defKeys[2];
+            if (p->key[0] == 0 && p->key[1] == 0 && p->key[2] == 0) {
+                p->key[0] = defKeys[0];
+                p->key[1] = defKeys[1];
+                p->key[2] = defKeys[2];
             }
-            *k1 = *(s16*)(p + 0xA0);
-            *k2 = *(s16*)(p + 0xA2);
-            *k3 = *(s16*)(p + 0xA4);
+            *k1 = p->key[0];
+            *k2 = p->key[1];
+            *k3 = p->key[2];
         }
     }
     return 0;
@@ -273,8 +274,8 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
  * (small scalars backward first, then aggregates/words backward); this
  * order reproduces the retail frame exactly. key[0] is the zero-init
  * scratch passed to the 0x805E535C callback; key[1..3] take the keys. */
-s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding) {
-    u8* p = (u8*)adxb;
+s32 ADXB_DecodeHeaderAdx(ADXB* adxb, void* data, void* out_encoding) {
+    ADXB* p = (ADXB*)adxb;
     s16 key[4];
     u32 dly1;
     u32 dly2;
@@ -288,59 +289,59 @@ s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding) {
         return -1;
     }
 
-    *(u16*)(p + 0x02) = 1;
+    p->field_0x02 = 1;
 
     if (ADX_DecodeInfo(data, (s32)out_encoding, &hp,
-            p + 0x0C, p + 0x0D, p + 0x0F, p + 0x0E,
-            p + 0x14, p + 0x18, p + 0x10) < 0) {
+            &p->encoding, &p->bitPerSmpl, &p->blkByte, &p->numChan,
+            &p->sfreq, &p->totalSmpl, &p->blkSmpl) < 0) {
         return 0;
     }
 
-    if ((s8)p[0x0C] > 4) {
-        if (*(u32*)(p + 0xB8) == 0) {
+    if (p->encoding > 4) {
+        if (p->ainf == NULL) {
             ADXERR_CallErrFunc2_(lbl_eu_80517330 + 0x3E, lbl_eu_80517330 + 0x5E);
             return -1;
         }
 
-        p[0x0D] = 8;
-        p[0x0F] = p[0x0E] * 192;
-        *(u32*)(p + 0x10) = 96;
-        *(s16*)(p + 0x98) = 10;
-        *(s16*)(p + 0x1C) = 0;
-        *(s16*)(p + 0x24) = 0;
-        *(s16*)(p + 0x26) = 0;
-        *(u32*)(p + 0x20) = 0;
-        *(u32*)(p + 0x28) = 0;
-        *(u32*)(p + 0x2C) = 0;
-        *(u32*)(p + 0x30) = 0;
-        *(u32*)(p + 0x34) = 0;
-        *(u32*)(p + 0x88) = 0;
+        p->bitPerSmpl = 8;
+        p->blkByte = p->numChan * 192;
+        p->blkSmpl = 96;
+        p->fmt = 10;
+        p->coefPos = 0;
+        p->numLoop = 0;
+        p->field_0x26 = 0;
+        p->field_0x20 = 0;
+        p->lpStartPos = 0;
+        p->lpStartOfst = 0;
+        p->lpEndPos = 0;
+        p->lpEndOfst = 0;
+        p->readSmpl = 0;
 
-        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, p + 0xEC, p + 0xED) < 0) {
+        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, &p->version, &p->flags) < 0) {
             return 0;
         }
 
         key[0] = 0;
 
-        if (adxb_get_key(adxb, *(void**)(p + 0x18), &key[1], &key[2], &key[3]) < 0) {
+        if (adxb_get_key(adxb, (void*)p->totalSmpl, &key[1], &key[2], &key[3]) < 0) {
             return -1;
         }
 
         if (lbl_eu_805E535C != NULL) {
-            lbl_eu_805E535C(*(void**)(p + 0xB8), &key[0]);
+            lbl_eu_805E535C(p->ainf, &key[0]);
         }
     } else {
-        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, p + 0xEC, p + 0xED) < 0) {
+        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, &p->version, &p->flags) < 0) {
             return 0;
         }
 
-        if (adxb_get_key(adxb, *(void**)(p + 0x18), &l1, &l2, &l3) < 0) {
+        if (adxb_get_key(adxb, (void*)p->totalSmpl, &l1, &l2, &l3) < 0) {
             return -1;
         }
 
-        ADXPD_SetExtPrm(*(void**)(p + 0x08), l1, l2, l3);
+        ADXPD_SetExtPrm(p->pd, l1, l2, l3);
 
-        if (ADX_DecodeInfoExADPCM2(data, (s32)out_encoding, p + 0x1C) < 0) {
+        if (ADX_DecodeInfoExADPCM2(data, (s32)out_encoding, &p->coefPos) < 0) {
             return 0;
         }
 
@@ -348,78 +349,78 @@ s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding) {
             return 0;
         }
 
-        ADXPD_SetCoef(*(void**)(p + 0x08), *(u32*)(p + 0x14), *(s16*)(p + 0x1C));
-        ADXPD_SetDly(*(void**)(p + 0x08), &dly1, &dly2);
+        ADXPD_SetCoef(p->pd, p->sfreq, p->coefPos);
+        ADXPD_SetDly(p->pd, &dly1, &dly2);
         /* Loop/ainf header info results are intentionally unchecked. */
         ADX_DecodeInfoExLoop(data, (s32)out_encoding,
-            p + 0x20, p + 0x24, p + 0x26, p + 0x28,
-            p + 0x2C, p + 0x30, p + 0x34);
+            &p->field_0x20, &p->numLoop, &p->field_0x26, &p->lpStartPos,
+            &p->lpStartOfst, &p->lpEndPos, &p->lpEndOfst);
         ADX_DecodeInfoAinf(data, (s32)out_encoding,
-            p + 0xC4, p + 0xC8, p + 0xD8, p + 0xDA);
-        *(s16*)(p + 0x98) = 0;
+            &p->ainfLen, &p->loopTbl[0], &p->defOutVol, &p->defPan[0]);
+        p->fmt = 0;
     }
 
-    *(s32*)(p + 0x50) = (s8)p[0x0E];
-    *(s32*)(p + 0x54) = (s8)p[0x0F];
-    *(s32*)(p + 0x58) = *(u32*)(p + 0x10);
-    *(s32*)(p + 0x5C) = *(u32*)(p + 0x3C);
-    *(s32*)(p + 0x60) = *(u32*)(p + 0x40);
-    *(s32*)(p + 0x64) = *(u32*)(p + 0x44);
-    *(u32*)(p + 0x8C) = 0;
+    p->blkSmplW = p->numChan;
+    p->blkSmplP = p->blkByte;
+    p->blkByteW = p->blkSmpl;
+    p->pcmBase = (u32)p->pcmBuf;
+    p->pcmBufSize = (u32)p->workBuf;
+    p->chByte = p->workSize;
+    p->decPos = 0;
 
     return hp;
 }
 
-void ADXB_SetDefFmt(void* self) {
-    *(s16*)((u8*)self + 0x98) = 0;
+void ADXB_SetDefFmt(ADXB* self) {
+    self->fmt = 0;
 }
 
-void ADXB_SetDefPrm(void* self);
-void criware_eu_8038A864(void* self) {
-    *(s16*)((u8*)self + 0x98) = *(s16*)((u8*)self + 0x9a);
+void ADXB_SetDefPrm(ADXB* self);
+void criware_eu_8038A864(ADXB* self) {
+    self->fmt = self->defFmt;
     ADXB_SetDefPrm(self);
 }
 
-void ADXB_SetDefPrm(void* self) {
-    u8* p = (u8*)self;
+void ADXB_SetDefPrm(ADXB* self) {
+    ADXB* p = (ADXB*)self;
 
-    *(u16*)(p + 0x02) = 1;
-    *(u32*)(p + 0x14) = 48000;
-    *(u8*)(p + 0x0e) = 2;
-    *(u8*)(p + 0x0d) = 16;
-    *(u32*)(p + 0x18) = 0x7fffffff;
-    *(u8*)(p + 0x0f) = 0x7f;
-    *(u32*)(p + 0x10) = 0x400;
-    *(u32*)(p + 0x50) = 2;
-    *(u32*)(p + 0x54) = 0x7f;
-    *(u32*)(p + 0x58) = 0x400;
-    *(u32*)(p + 0x5c) = *(u32*)(p + 0x3c);
-    *(u32*)(p + 0x60) = *(u32*)(p + 0x40);
-    *(u32*)(p + 0x64) = *(u32*)(p + 0x44);
-    *(u32*)(p + 0x8c) = 0;
-    *(u16*)(p + 0x1c) = 0;
-    *(u16*)(p + 0x24) = 0;
-    *(u16*)(p + 0x26) = 0;
-    *(u32*)(p + 0x20) = 0;
-    *(u32*)(p + 0x28) = 0;
-    *(u32*)(p + 0x2c) = 0;
-    *(u32*)(p + 0x30) = 0;
-    *(u32*)(p + 0x34) = 0;
-    *(u32*)(p + 0x88) = 0;
-    *(u8*)(p + 0xec) = 0;
-    *(u8*)(p + 0xed) = 0;
+    p->field_0x02 = 1;
+    p->sfreq = 48000;
+    p->numChan = 2;
+    p->bitPerSmpl = 16;
+    p->totalSmpl = 0x7fffffff;
+    p->blkByte = 0x7f;
+    p->blkSmpl = 0x400;
+    p->blkSmplW = 2;
+    p->blkSmplP = 0x7f;
+    p->blkByteW = 0x400;
+    p->pcmBase = (u32)p->pcmBuf;
+    p->pcmBufSize = (u32)p->workBuf;
+    p->chByte = p->workSize;
+    p->decPos = 0;
+    p->coefPos = 0;
+    p->numLoop = 0;
+    p->field_0x26 = 0;
+    p->field_0x20 = 0;
+    p->lpStartPos = 0;
+    p->lpStartOfst = 0;
+    p->lpEndPos = 0;
+    p->lpEndOfst = 0;
+    p->readSmpl = 0;
+    p->version = 0;
+    p->flags = 0;
 }
 
-s32 ADXB_DecodeHeader(void* adxb, void* data, void* out_encoding) {
-    u8* p = (u8*)adxb;
+s32 ADXB_DecodeHeader(ADXB* adxb, void* data, void* out_encoding) {
+    ADXB* p = (ADXB*)adxb;
     u8* d = (u8*)data;
     u16 magic;
 
-    *(u32*)(p + 0xC4) = 0;
-    *(s16*)(p + 0xD8) = 0;
-    *(s16*)(p + 0xDA) = -128;
-    *(s16*)(p + 0xDC) = -128;
-    memset(p + 0xC8, 0, 16);
+    p->ainfLen = 0;
+    p->defOutVol = 0;
+    p->defPan[0] = -128;
+    p->defPan[1] = -128;
+    memset(&p->loopTbl[0], 0, 16);
 
     magic = (u16)((d[0] << 8) | d[1]);
 
@@ -441,20 +442,20 @@ s32 ADXB_DecodeHeader(void* adxb, void* data, void* out_encoding) {
     return -1;
 }
 
-void ADXB_EntryGetWrFunc(void* self, void* func, void* ctx) {
-    *(void**)((u8*)self + 0x78) = func;
-    *(void**)((u8*)self + 0x7c) = ctx;
+void ADXB_EntryGetWrFunc(ADXB* self, void* func, void* ctx) {
+    self->getWr = func;
+    self->getWrCtx = ctx;
 }
 
-u32 ADXB_GetPcmBuf(void* self) { return *(u32*)((u8*)self + 0x3c); }
+u32 ADXB_GetPcmBuf(ADXB* self) { return (u32)self->pcmBuf; }
 
-s16 ADXB_GetFormat(void* self) { return *(s16*)((u8*)self + 0x98); }
+s16 ADXB_GetFormat(ADXB* self) { return self->fmt; }
 
-u32 ADXB_GetSfreq(void* self) { return *(u32*)((u8*)self + 0x14); }
+u32 ADXB_GetSfreq(ADXB* self) { return self->sfreq; }
 
-s32 ADXB_GetNumChan(void* self) {
-    int ch = *(u8*)((u8*)self + 0x0E);
-    if (ch == 1 && *(u32*)((u8*)self + 0xE0) != 0)
+s32 ADXB_GetNumChan(ADXB* self) {
+    int ch = (u8)self->numChan;
+    if (ch == 1 && self->field_0xe0 != 0)
         return 2;
     if (self == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_80517330 + 0x81);
@@ -463,133 +464,133 @@ s32 ADXB_GetNumChan(void* self) {
     return (s8)ch;
 }
 
-s16 ADXB_GetFmtBps(void* self) {
-    return *(s8*)((u8*)self + 0x0D);
+s16 ADXB_GetFmtBps(ADXB* self) {
+    return self->bitPerSmpl;
 }
 
-s32 ADXB_GetOutBps(void* self) {
-    s16 val = *(s16*)((u8*)self + 0x98);
+s32 ADXB_GetOutBps(ADXB* self) {
+    s16 val = self->fmt;
     if (val == 0) return 0x10;
     if (val == 2) {
-        s16 sub = *(s16*)((u8*)self + 0x9c);
+        s16 sub = self->fmtSub;
         if (sub == 2) return 4;
         if (sub == 1) return 8;
         return 0x10;
     }
     if (val == 1) {
-        s16 sub = *(s16*)((u8*)self + 0x9c);
+        s16 sub = self->fmtSub;
         if (sub == 2) return 4;
         return 0x10;
     }
     return 0x10;
 }
 
-u32 ADXB_GetBlkSmpl(void* self) { return *(u32*)((u8*)self + 0x10); }
+u32 ADXB_GetBlkSmpl(ADXB* self) { return self->blkSmpl; }
 
-u32 ADXB_GetTotalNumSmpl(void* self) { return *(u32*)((u8*)self + 0x18); }
+u32 ADXB_GetTotalNumSmpl(ADXB* self) { return self->totalSmpl; }
 
-s16 ADXB_GetNumLoop(void* self) { return *(s16*)((u8*)self + 0x24); }
+s16 ADXB_GetNumLoop(ADXB* self) { return self->numLoop; }
 
-u32 ADXB_GetLpStartPos(void* self) { return *(u32*)((u8*)self + 0x28); }
+u32 ADXB_GetLpStartPos(ADXB* self) { return self->lpStartPos; }
 
-u32 ADXB_GetLpStartOfst(void* self) {
+u32 ADXB_GetLpStartOfst(ADXB* self) {
     if (self == NULL) return 0;
-    return *(u32*)((u8*)self + 0x2c);
+    return self->lpStartOfst;
 }
 
-u32 ADXB_GetLpEndPos(void* self) { return *(u32*)((u8*)self + 0x30); }
+u32 ADXB_GetLpEndPos(ADXB* self) { return self->lpEndPos; }
 
-u32 ADXB_GetLpEndOfst(void* self) { return *(u32*)((u8*)self + 0x34); }
+u32 ADXB_GetLpEndOfst(ADXB* self) { return self->lpEndOfst; }
 
-u32 ADXB_GetAinfLen(void* self) { return *(u32*)((u8*)self + 0xc4); }
+u32 ADXB_GetAinfLen(ADXB* self) { return self->ainfLen; }
 
-s16 ADXB_GetDefOutVol(void* self) { return *(s16*)((u8*)self + 0xd8); }
+s16 ADXB_GetDefOutVol(ADXB* self) { return self->defOutVol; }
 
-s16 ADXB_GetDefPan(void* self, u32 idx) {
-    return *(s16*)((u8*)self + 0xda + idx * 2);
+s16 ADXB_GetDefPan(ADXB* self, u32 idx) {
+    return self->defPan[idx];
 }
 
-void ADXB_TakeSnapshot(void* self) {
-    ADXPD_GetDly(*(void**)((u8*)self + 0x08), (u8*)self + 0xb0, (u8*)self + 0xb4);
-    ADXPD_GetExtPrm(*(void**)((u8*)self + 0x08), (u8*)self + 0xa6, (u8*)self + 0xa8, (u8*)self + 0xaa);
+void ADXB_TakeSnapshot(ADXB* self) {
+    ADXPD_GetDly(self->pd, &self->dly[0], &self->dly2[0]);
+    ADXPD_GetExtPrm(self->pd, &self->extPrm[0], &self->extPrm[1], &self->extPrm[2]);
 }
 
-void ADXB_RestoreSnapshot(void* self) {
-    ADXPD_SetDly(*(void**)((u8*)self + 0x08), (u32*)((u8*)self + 0xB0), (u32*)((u8*)self + 0xB4));
-    ADXPD_SetExtPrm(*(void**)((u8*)self + 0x08),
-        *(s16*)((u8*)self + 0xA6),
-        *(s16*)((u8*)self + 0xA8),
-        *(s16*)((u8*)self + 0xAA));
+void ADXB_RestoreSnapshot(ADXB* self) {
+    ADXPD_SetDly(self->pd, (u32*)&self->dly[0], (u32*)&self->dly2[0]);
+    ADXPD_SetExtPrm(self->pd,
+        self->extPrm[0],
+        self->extPrm[1],
+        self->extPrm[2]);
 }
 
-void ADXB_SetLnkSw(void* self, int val) {
+void ADXB_SetLnkSw(ADXB* self, int val) {
     if (val == 0) {
-        *(u32*)((u8*)self + 0xAC) = 0;
+        self->lnkSw = 0;
     } else {
-        *(u32*)((u8*)self + 0xAC) = 1;
+        self->lnkSw = 1;
     }
 }
 
-u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
+u32 ADXB_GetStat(ADXB* self) { return self->stat; }
 
-void ADXB_EntryData(void* self, void* data, int size) {
-    u8* p = (u8*)self;
-    if (*(s16*)(p + 0x98) == 0) {
+void ADXB_EntryData(ADXB* self, void* data, int size) {
+    ADXB* p = (ADXB*)self;
+    if (p->fmt == 0) {
         s32 q;
-        *(void**)(p + 0x48) = data;
-        q = size / *(s8*)(p + 0x0F);
-        *(u32*)(p + 0x74) = 0;
-        *(u32*)(p + 0x4C) = q;
+        p->data = data;
+        q = size / p->blkByte;
+        p->field_0x74 = 0;
+        p->maxBlks = q;
     } else {
-        s32 t = *(s8*)(p + 0x0D);
-        s32 ch = *(s8*)(p + 0x0E);
+        s32 t = p->bitPerSmpl;
+        s32 ch = p->numChan;
         s32 q = size / ((t / 8) * ch);
-        *(void**)(p + 0x48) = data;
-        *(u32*)(p + 0x74) = 0;
-        *(u32*)(p + 0x4C) = q;
+        p->data = data;
+        p->field_0x74 = 0;
+        p->maxBlks = q;
     }
-    *(u32*)(p + 0x90) = 0;
-    *(u32*)(p + 0x94) = 0;
-    *(u32*)(p + 0xF4) = 0;
-    *(u32*)(p + 0xF0) = 0;
+    p->decNumSmpl = 0;
+    p->decDtLen = 0;
+    p->field_0xf4 = 0;
+    p->prevDecDtLen = 0;
 }
 
-void ADXB_Start(void* self) {
-    if (*(u32*)((u8*)self + 0x04) != 0) return;
-    *(u32*)((u8*)self + 0x04) = 1;
+void ADXB_Start(ADXB* self) {
+    if (self->stat != 0) return;
+    self->stat = 1;
 }
 
-void ADXB_Stop(void* self) {
-    if (*(u32*)((u8*)self + 0xE0) != 0) {
+void ADXB_Stop(ADXB* self) {
+    if (self->field_0xe0 != 0) {
         lbl_eu_805E5364(self);
     }
-    ADXPD_Stop(*(void**)((u8*)self + 0x08));
-    *(u32*)((u8*)self + 0x04) = 0;
+    ADXPD_Stop(self->pd);
+    self->stat = 0;
 }
 
-void ADXB_Reset(void* self) {
-    if (*(int*)((u8*)self + 0x04) == 3) {
-        ADXPD_Reset(*(void**)((u8*)self + 0x08));
-        *(u32*)((u8*)self + 0x8C) = 0;
-        *(u32*)((u8*)self + 0x04) = 0;
+void ADXB_Reset(ADXB* self) {
+    if ((int)self->stat == 3) {
+        ADXPD_Reset(self->pd);
+        self->decPos = 0;
+        self->stat = 0;
     }
 }
 
-u32 ADXB_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x94); }
+u32 ADXB_GetDecDtLen(ADXB* self) { return self->decDtLen; }
 
-u32 ADXB_GetDecNumSmpl(void* self) { return *(u32*)((u8*)self + 0x90); }
+u32 ADXB_GetDecNumSmpl(ADXB* self) { return self->decNumSmpl; }
 
-void ADXB_EvokeDecode(void* adxb) {
+void ADXB_EvokeDecode(ADXB* adxb) {
     s32 blkSize, wrPos, pcmOfst, pcmBufSize, blkSmpl, maxBlks, availWrPos;
     s32 tmp, numBlks, endAdj, decodeEnd, deSize, availBlks;
 
-    blkSize = *(s32*)((u8*)adxb + 0x58);
-    wrPos = *(s32*)((u8*)adxb + 0x70);
-    pcmOfst = *(s32*)((u8*)adxb + 0x68);
-    pcmBufSize = *(s32*)((u8*)adxb + 0x60);
-    blkSmpl = *(s32*)((u8*)adxb + 0x50);
-    maxBlks = *(s32*)((u8*)adxb + 0x4C);
-    availWrPos = *(s32*)((u8*)adxb + 0x6C);
+    blkSize = adxb->blkByteW;
+    wrPos = adxb->wrPos;
+    pcmOfst = adxb->pcmOfst;
+    pcmBufSize = adxb->pcmBufSize;
+    blkSmpl = adxb->blkSmplW;
+    maxBlks = (s32)adxb->maxBlks;
+    availWrPos = adxb->maxWrPos;
     numBlks = (wrPos + blkSize - 1) / blkSize;
     endAdj = (blkSize - 1) - ((wrPos + blkSize - 1) % blkSize);
     decodeEnd = (pcmBufSize - pcmOfst + blkSize - 1) / blkSize;
@@ -610,28 +611,28 @@ void ADXB_EvokeDecode(void* adxb) {
     if (maxBlks > decodeEnd) maxBlks = decodeEnd;
 
     if (blkSmpl == 2) {
-        void* pd = *(void**)((u8*)adxb + 0x08);
-        ADXPD_EntrySte(pd, *(void**)((u8*)adxb + 0x48), maxBlks << 1,
-            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
-            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1) + (*(u32*)((u8*)adxb + 0x64) << 1)));
+        void* pd = adxb->pd;
+        ADXPD_EntrySte(pd, adxb->data, maxBlks << 1,
+            (void*)(adxb->pcmBase + (adxb->pcmOfst << 1)),
+            (void*)(adxb->pcmBase + (adxb->pcmOfst << 1) + (adxb->chByte << 1)));
         ADXPD_Start(pd);
-    } else if (*(s32*)((u8*)adxb + 0xE0) != 0) {
-        void* pd = *(void**)((u8*)adxb + 0x08);
-        ADXPD_EntryPl2(pd, *(void**)((u8*)adxb + 0x48), maxBlks,
-            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
-            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1) + (*(u32*)((u8*)adxb + 0x64) << 1)));
+    } else if ((s32)adxb->field_0xe0 != 0) {
+        void* pd = adxb->pd;
+        ADXPD_EntryPl2(pd, adxb->data, maxBlks,
+            (void*)(adxb->pcmBase + (adxb->pcmOfst << 1)),
+            (void*)(adxb->pcmBase + (adxb->pcmOfst << 1) + (adxb->chByte << 1)));
         ADXPD_Start(pd);
     } else {
-        void* pd = *(void**)((u8*)adxb + 0x08);
-        ADXPD_EntryMono(pd, *(void**)((u8*)adxb + 0x48),
-            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
+        void* pd = adxb->pd;
+        ADXPD_EntryMono(pd, adxb->data,
+            (void*)(adxb->pcmBase + (adxb->pcmOfst << 1)),
             NULL);
         ADXPD_Start(pd);
     }
 }
 
-void ADXB_EndDecode(void* adxb) {
-    u8* p;
+void ADXB_EndDecode(ADXB* adxb) {
+    ADXB* p;
     s32 blkSize, wrPos, numBlkSmpl;
     u32 pcmOfst, pcmBase;
     s32 pcmBufSize;
@@ -639,35 +640,35 @@ void ADXB_EndDecode(void* adxb) {
     s32 tmp, endAdj2, numBlks, numBlkPD, decSmpl, decDtLen, pcmEnd, samplesLeft;
     int i;
 
-    p = (u8*)adxb;
-    blkSize = *(s32*)(p + 0x58);
-    wrPos = *(s32*)(p + 0x70);
-    numBlkSmpl = *(s32*)(p + 0x54);
-    pcmOfst = *(u32*)(p + 0x68);
-    pcmBase = *(u32*)(p + 0x5C);
-    pcmBufSize = *(s32*)(p + 0x40);
-    workBufSize = *(u32*)(p + 0x44);
+    p = adxb;
+    blkSize = p->blkByteW;
+    wrPos = p->wrPos;
+    numBlkSmpl = p->blkSmplP;
+    pcmOfst = (u32)p->pcmOfst;
+    pcmBase = p->pcmBase;
+    pcmBufSize = (s32)p->workBuf;
+    workBufSize = p->workSize;
 
     tmp = wrPos + blkSize - 1;
     endAdj2 = (blkSize - 1) - (tmp % blkSize);
     numBlks = tmp / blkSize;
 
-    numBlkPD = ADXPD_GetNumBlk(*(void**)(p + 0x08));
+    numBlkPD = ADXPD_GetNumBlk(p->pd);
     decSmpl = (numBlkPD * blkSize) / numBlkSmpl;
-    if (numBlks * (s32)(*(u32*)(p + 0x50)) <= numBlkPD) {
+    if (numBlks * (s32)(u32)p->blkSmplW <= numBlkPD) {
         decSmpl -= endAdj2;
     }
     decDtLen = numBlkPD * numBlkSmpl;
 
-    *(u32*)(p + 0x90) = (u32)decSmpl;
-    *(u32*)(p + 0x94) = (u32)decDtLen;
+    p->decNumSmpl = (u32)decSmpl;
+    p->decDtLen = (u32)decDtLen;
 
     pcmEnd = pcmOfst + decSmpl;
     if (pcmEnd < pcmBufSize) return;
 
     samplesLeft = pcmEnd - pcmBufSize;
 
-    if (*(s32*)(p + 0x50) == 2 || *(s32*)(p + 0xE0) != 0) {
+    if (p->blkSmplW == 2 || (s32)p->field_0xe0 != 0) {
         {
             s16* d = (s16*)pcmBase;
             const s16* s = (const s16*)(pcmBase + (pcmBufSize << 1));
@@ -694,55 +695,55 @@ void ADXB_EndDecode(void* adxb) {
     }
 }
 
-void ADXB_ExecOneAdx(void* adxb) {
-    u8* p = (u8*)adxb;
+void ADXB_ExecOneAdx(ADXB* adxb) {
+    ADXB* p = (ADXB*)adxb;
 
-    if (*(int*)(p + 0x04) == 1) {
-        if (ADXPD_GetStat(*(void**)(p + 0x08)) == 0) {
+    if ((int)p->stat == 1) {
+        if (ADXPD_GetStat(p->pd) == 0) {
             void (*getWr)(void*, u32*, u32*, u32*);
             void* ctx;
 
-            getWr = *(void (**)(void*, u32*, u32*, u32*))(p + 0x78);
-            ctx = *(void**)(p + 0x7C);
-            getWr(ctx, (u32*)(p + 0x68), (u32*)(p + 0x6C), (u32*)(p + 0x70));
+            getWr = (void (*)(void*, u32*, u32*, u32*))p->getWr;
+            ctx = p->getWrCtx;
+            getWr(ctx, (u32*)&p->pcmOfst, (u32*)&p->maxWrPos, (u32*)&p->wrPos);
             ADXB_EvokeDecode(adxb);
-            *(int*)(p + 0x04) = 2;
+            p->stat = 2;
         }
     }
 
-    if (*(int*)(p + 0x04) == 2) {
-        ADXPD_ExecHndl(*(void**)(p + 0x08));
-        if (ADXPD_GetStat(*(void**)(p + 0x08)) == 3) {
-            if (*(int*)(p + 0xE0) != 0) {
+    if ((int)p->stat == 2) {
+        ADXPD_ExecHndl(p->pd);
+        if (ADXPD_GetStat(p->pd) == 3) {
+            if ((int)p->field_0xe0 != 0) {
                 int i;
-                void* pd2 = *(void**)(p + 0x08);
+                ADXPD* pd2 = p->pd;
                 ADXCRS_Lock();
-                for (i = 0; i < (int)(*(u32*)((u8*)pd2 + 0x10) << 5); i++) {
-                    void* buf1 = *(void**)((u8*)pd2 + 0x20);
-                    void* buf2 = *(void**)((u8*)pd2 + 0x24);
+                for (i = 0; i < (int)(pd2->numBlk << 5); i++) {
+                    s16* buf1 = pd2->out1;
+                    s16* buf2 = pd2->out2;
                     lbl_eu_805E5360(adxb,
-                        *(s16*)((u8*)buf1 + (i << 1)),
+                        buf1[i],
                         (u8*)buf1 + (i << 1), (u8*)buf2 + (i << 1));
                 }
                 ADXCRS_Unlock();
             }
             ADXB_EndDecode(adxb);
-            ADXPD_Reset(*(void**)(p + 0x08));
+            ADXPD_Reset(p->pd);
             {
                 void (*eosCb)(void*, u32, u32);
                 void* eosCtx;
-                eosCb = *(void (**)(void*, u32, u32))(p + 0x80);
-                eosCtx = *(void**)(p + 0x84);
-                eosCb(eosCtx, *(u32*)(p + 0x94), *(u32*)(p + 0x90));
+                eosCb = (void (*)(void*, u32, u32))p->endCb;
+                eosCtx = p->endCbCtx;
+                eosCb(eosCtx, p->decDtLen, p->decNumSmpl);
             }
-            *(int*)(p + 0x04) = 3;
+            p->stat = 3;
         }
     }
 }
 
-void ADXB_ExecHndl(void* adxb) {
-    u8* p = (u8*)adxb;
-    s16 fmt = *(s16*)(p + 0x98);
+void ADXB_ExecHndl(ADXB* adxb) {
+    ADXB* p = (ADXB*)adxb;
+    s16 fmt = p->fmt;
 
     if (fmt == 0) {
         ADXB_ExecOneAdx(adxb);
@@ -760,18 +761,18 @@ void ADXB_ExecHndl(void* adxb) {
 
     {
         void (*wrCb)(void*, s32, s32);
-        wrCb = *(void (**)(void*, s32, s32))(p + 0xF8);
+        wrCb = (void (*)(void*, s32, s32))p->wrCb;
         if (wrCb != NULL) {
             s32 decodedSmpl, dataLen, prevLen, diff;
-            prevLen = *(s32*)(p + 0xF0);
-            dataLen = *(s32*)(p + 0x94);
-            decodedSmpl = *(s32*)(p + 0x90);
+            prevLen = (s32)p->prevDecDtLen;
+            dataLen = (s32)p->decDtLen;
+            decodedSmpl = (s32)p->decNumSmpl;
             diff = dataLen - prevLen;
             if (diff < 0) {
                 diff = (0x7FFFFFFF - prevLen) + dataLen;
             }
-            wrCb(*(void**)(p + 0xFC), diff, (*(s8*)(p + 0x0E)) * (decodedSmpl << 1));
-            *(u32*)(p + 0xF0) = *(u32*)(p + 0x94);
+            wrCb(p->wrCbCtx, diff, p->numChan * (decodedSmpl << 1));
+            p->prevDecDtLen = p->decDtLen;
         }
     }
 }

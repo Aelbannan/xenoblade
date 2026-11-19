@@ -80,13 +80,6 @@ struct SeqTrackParamView {
     Channel* channelList;        // 0xC4
 };
 
-// Per-channel retail link slot: the track-list next pointer lives at
-// Channel+0xF4 (NOT Channel::mNextLink at +0xE8), so the list walks below
-// address it through this view instead of the class accessor.
-struct SeqChannelLinkView {
-    u8 _00[0xF4];
-    Channel* nextTrackChannel;  // 0xF4
-};
 SeqTrack::SeqTrack() {
     mOpenFlag = false;
 
@@ -218,9 +211,9 @@ void SeqTrack::UpdateChannelLength() {
         return;
     }
 
-    // Track channel list at +0xC4; per-channel next link at +0xF4.
+    // Track channel list at +0xC4.
     for (Channel* pIt = ((SeqTrackParamView*)this)->channelList; pIt != NULL;
-         pIt = ((SeqChannelLinkView*)pIt)->nextTrackChannel) {
+         pIt = pIt->GetNextTrackChannel()) {
 
         if (pIt->GetLength() > 0) {
             pIt->SetLength(pIt->GetLength() - 1);
@@ -339,7 +332,7 @@ void SeqTrack::ReleaseAllChannel(int release) {
 
     Channel* channelList = ((SeqTrackParamView*)this)->channelList;
     for (Channel* pIt = channelList; pIt != NULL;
-         pIt = ((SeqChannelLinkView*)pIt)->nextTrackChannel) {
+         pIt = pIt->GetNextTrackChannel()) {
 
         if (pIt->IsActive()) {
             if (release >= 0) {
@@ -356,7 +349,7 @@ void SeqTrack::PauseAllChannel(bool flag) {
 
     Channel* channelList = ((SeqTrackParamView*)this)->channelList;
     for (Channel* pIt = channelList; pIt != NULL;
-         pIt = ((SeqChannelLinkView*)pIt)->nextTrackChannel) {
+         pIt = pIt->GetNextTrackChannel()) {
 
         if (pIt->IsActive() && flag != pIt->IsPause()) {
             pIt->Pause(flag);
@@ -478,7 +471,7 @@ void SeqTrack::FreeAllChannel() {
 
     Channel** channelList = &((SeqTrackParamView*)this)->channelList;
     for (Channel* pIt = *channelList; pIt != NULL;
-         pIt = ((SeqChannelLinkView*)pIt)->nextTrackChannel) {
+         pIt = pIt->GetNextTrackChannel()) {
 
         Channel::FreeChannel(pIt);
     }
@@ -511,17 +504,16 @@ void SeqTrack::ChannelCallbackFunc(Channel* pDropChannel,
 
     Channel** channelList = &((SeqTrackParamView*)p)->channelList;
     if (*channelList == pDropChannel) {
-        *channelList = ((SeqChannelLinkView*)pDropChannel)->nextTrackChannel;
+        *channelList = pDropChannel->GetNextTrackChannel();
         return;
     }
 
     for (Channel* pIt = *channelList;
-         ((SeqChannelLinkView*)pIt)->nextTrackChannel != NULL;
-         pIt = ((SeqChannelLinkView*)pIt)->nextTrackChannel) {
+         pIt->GetNextTrackChannel() != NULL;
+         pIt = pIt->GetNextTrackChannel()) {
 
-        if (((SeqChannelLinkView*)pIt)->nextTrackChannel == pDropChannel) {
-            ((SeqChannelLinkView*)pIt)->nextTrackChannel =
-                ((SeqChannelLinkView*)pDropChannel)->nextTrackChannel;
+        if (pIt->GetNextTrackChannel() == pDropChannel) {
+            pIt->SetNextTrackChannel(pDropChannel->GetNextTrackChannel());
             return;
         }
     }

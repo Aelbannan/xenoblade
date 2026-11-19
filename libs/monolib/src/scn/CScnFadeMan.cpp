@@ -163,3 +163,6 @@ u32 isFadeSettled(CScnFadeMan* self) {
     return (lbl_eu_8066AB80 == self->mCurrentColor.a && self->mCurrentFrame == 0) ||
            (lbl_eu_8066AB80 == self->mDestColor.a && self->mCurrentFrame != 0);
 }
+// [.rodata] 0x80524128-0x80524138: RTTI class-name string (referenced by the
+// weak typeinfo locator in .sdata).
+extern "C" __declspec(align(4)) const char CScnFadeManName[0xC] = { 0x43,0x53,0x63,0x6E,0x46,0x61,0x64,0x65,0x4D,0x61,0x6E,0x00 };

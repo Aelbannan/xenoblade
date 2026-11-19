@@ -634,7 +634,6 @@ u32 GXGetTexObjTlut(GXTexObj* tex_obj) {
     return t->tlutName;
 }
 
-#pragma dont_inline on
 void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
     volatile void* pipe;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
@@ -729,7 +728,6 @@ void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
         gx->lastWriteWasXF = 0;
     }
 }
-#pragma dont_inline off
 
 void GXLoadTexObj(const GXTexObj* obj, GXTexMapID id) {
     GXTexRegion* r;
@@ -874,7 +872,6 @@ void GXSetTexCoordScaleManually(GXTexCoordID coord, GXBool enable, u16 ss, u16 t
     }
 }
 
-#pragma dont_inline on
 void __SetSURegs(u32 tmap, u32 tcoord) {
     u32 mode0;
     u32 suTs0;
@@ -916,7 +913,6 @@ void __SetSURegs(u32 tmap, u32 tcoord) {
     GX_BP_LOAD_REG(gxdt->suTs1[tcoord]);
     gxdt->lastWriteWasXF = FALSE;
 }
-#pragma dont_inline off
 
 void __GXSetSUTexRegs(void) {
     u32 nStages, nIndStages, i, map, tmap, coord;

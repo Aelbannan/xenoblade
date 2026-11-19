@@ -4,7 +4,6 @@
 
 #include <revolution/BASE.h>
 
-
 // MWCC's <algorithm> doesn't declare std::sort. The retail nw4r build
 // instantiated the MSL implementation in this TU (sort<...> and the
 // __sort132 median-of-3 helper), so define the templates here to get the
@@ -422,33 +421,10 @@ bool BackToFront(const detail::workmem::MdlZ& rA,
     return false;
 }
 
-// Retail DrawResMdlReplacement has a leading u32 flag (bit0 = "drop vtx
-// tables") before visArray; g3d_draw.h is missing it, so mirror the retail
-// layout here to get the correct field offsets.
-struct DrawResMdlReplacementLayout {
-    u32 flag;                                    // at 0x0
-    u8* visArray;                                // at 0x4
-    ResTexObjData* texObjDataArray;              // at 0x8
-    ResTlutObjData* tlutObjDataArray;            // at 0xC
-    ResTexSrtData* texSrtDataArray;              // at 0x10
-    ResChanData* chanDataArray;                  // at 0x14
-    ResGenModeData* genModeDataArray;            // at 0x18
-    ResMatMiscData* matMiscDataArray;            // at 0x1C
-    ResPixDL* pixDLArray;                        // at 0x20
-    ResTevColorDL* tevColorDLArray;              // at 0x24
-    ResIndMtxAndScaleDL* indMtxAndScaleDLArray;  // at 0x28
-    ResTexCoordGenDL* texCoordGenDLArray;        // at 0x2C
-    ResTevData* tevDataArray;                    // at 0x30
-    ResVtxPosData** vtxPosTable;                 // at 0x34
-    ResVtxNrmData** vtxNrmTable;                 // at 0x38
-    ResVtxClrData** vtxClrTable;                 // at 0x3C
-};
-
-// Retail accesses the replacement through its true layout (leading u32
-// flag) directly via the parameter; use a macro so MWCC allocates no extra
-// register for a cast copy.
-#define pRepl \
-    reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement)
+// The replacement block is read through the parameter's own type; the pRepl
+// alias keeps the member accesses spelled as they are in the loop bodies
+// below without MWCC allocating a register for a cast copy.
+#define pRepl pReplacement
 
 void SetupDraw1Mat1ShpSwap(Draw1Mat1ShpSwap* pSwap,
                            DrawResMdlReplacement* pReplacement, u32 id) {

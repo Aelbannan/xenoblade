@@ -269,7 +269,7 @@ public:
 // size: 0x20
 
 template <typename T>
-__declspec(noinline) void _reslist_base<T>::clearList(){
+void _reslist_base<T>::clearList(){
     _reslist_node<T>* cur = mStartNodePtr->mNext;
     
     while (cur != mStartNodePtr) {
@@ -284,17 +284,17 @@ __declspec(noinline) void _reslist_base<T>::clearList(){
 }
 
 template <typename T>
-__declspec(noinline) _reslist_base<T>::~_reslist_base(){
+_reslist_base<T>::~_reslist_base(){
     clearList();
 
     if (unk1C == false) DELETE_ARRAY(mList);
 }
 
 template <typename T>
-__declspec(noinline) reslist<T>::reslist() : _reslist_base<T>() {}
+reslist<T>::reslist() : _reslist_base<T>() {}
 
 template <typename T>
-__declspec(noinline) void reslist<T>::reserve(mtl::ALLOC_HANDLE handle, int capacity) {
+void reslist<T>::reserve(mtl::ALLOC_HANDLE handle, int capacity) {
     /* Retail: allocate_array(capacity * 0xC, handle) - a raw node-array alloc
     with NO new[] cookie/overflow guard - then zeroes only each node's mNext.
     Spelling it as placement new[] made MWCC emit the count-overflow guard and
@@ -312,7 +312,7 @@ __declspec(noinline) void reslist<T>::reserve(mtl::ALLOC_HANDLE handle, int capa
 }
 
 template <typename T>
-__declspec(noinline) void reslist<T>::pop_front(){
+void reslist<T>::pop_front(){
     _reslist_node<T>* prevNode;
     _reslist_node<T>* nextNode;
     _reslist_node<T>* frontNode;
@@ -342,8 +342,8 @@ __declspec(noinline) void reslist<T>::pop_front(){
 // declarations this TU needs for its manual RTTI base list (MWCC "illegal
 // name overloading").
 
-// Out-of-line isEvent3: retail calls mMsgQueue.find (noinline chain) rather
-// than inlining it; the header body would fold the find loop into callers.
+// Out-of-line isEvent3: retail calls mMsgQueue.find rather than inlining it;
+// the header body would fold the find loop into callers.
 // Hand-written stand-in keeps an out-of-line bl; reloc-map equates the
 // ILi8E spelling to retail find__12CMsgParam<8>CFUl (angle brackets are not
 // legal C identifiers -- see MWCC_PATTERNS.md).
@@ -361,7 +361,7 @@ bool CWorkThread::isEvent3() const {
 // (find__12CMsgParam<8>CFUl) that callers bl to; the header body would
 // inline it under -ipa.
 template <int N>
-__declspec(noinline) int CMsgParam<N>::find(u32 msg) const {
+int CMsgParam<N>::find(u32 msg) const {
     for (int i = 0; i < mSize; i++) {
         if (mArrayPtr[(mFront + i) % mCapacity].command == msg) {
             return i;
@@ -403,14 +403,11 @@ extern "C" void wkStandbyLogin__11CWorkThreadFv();
 extern "C" void __dt__Q217CWorkRootThreadNS15CWorkRootThreadFv();
 extern "C" bool wkStandbyLogout__Q217CWorkRootThreadNS15CWorkRootThreadFv();
 
-#pragma push
-#pragma auto_inline off
 // Emit the standalone reslist<CWorkThread*> constructor for the retail symbol
-// __ct__23reslist<P11CWorkThread>Fv. With -inline auto MWCC else folds the
-// template default-ctor into every call site and never emits a global body;
-// instantiate BEFORE any use so the out-of-line copy is authoritative.
+// __ct__23reslist<P11CWorkThread>Fv. MWCC else folds the template default-ctor
+// into every call site and never emits a global body; instantiate BEFORE any
+// use so the out-of-line copy is authoritative.
 template reslist<CWorkThread*>::reslist();
-#pragma pop
 // CWorkRootThread is kept in a named namespace (retail mangles it as
 // @unnamed@CWorkRoot_cpp@) because MWCC cannot spell a destructor address for
 // an anonymous-namespace class in a manual vtable initializer; the coordinator
@@ -546,7 +543,6 @@ CErrorWii CWorkRoot::sErrorWii;
 
 // -O4,s: gives initialize the retail stmw/lmw r30 save/restore
 // prologue-epilogue style.
-//
 // OPEN ITEM (mirrors CWorkControl::create, same fixed-codegen shape): the
 // body reaches structural 0 / size-exact / clean relocs, but retail colors
 // the early string-pool pointer r31 and the new-expression result r30 while
@@ -556,7 +552,7 @@ CErrorWii CWorkRoot::sErrorWii;
 // pointer placement-new (extra EH null-path branch). Per the CWorkControl
 // investigation, MWCC rematerializes the constant name web so its callee-
 // saved color cannot be forced from source; needs witness-era EQUIVALENT_MATCH.
-__declspec(noinline) void CWorkRoot::initialize(){
+void CWorkRoot::initialize(){
     lbl_eu_8066560C = EXIT_PROG_END;
     //Initialize the math library
     ml::math::initialize();
@@ -570,7 +566,7 @@ __declspec(noinline) void CWorkRoot::initialize(){
     CWorkRootThread::spInstance = thread;
 }
 
-__declspec(noinline) void CWorkRoot::destroy(){
+void CWorkRoot::destroy(){
     VISetPreRetraceCallback(nullptr);
     if(CWorkRootThread::spInstance != nullptr){
         delete CWorkRootThread::spInstance;
@@ -593,7 +589,7 @@ bool CWorkRoot::dummy1(CWorkThread* pThread){
     return pThread->isRunning();
 }
 
-__declspec(noinline) void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
+void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     reslist<CWorkThread*>* children = &pThread->mChildren;
     
     //Something is sus here
@@ -639,7 +635,7 @@ __declspec(noinline) void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1
 // Uses the out-of-line extern forms of isEvent3/isRunning (like standbyWork):
 // the header/TU bodies would fold under -ipa instead of emitting retail's bl.
 // -O4,s: reproduces the retail stmw/lmw r29 save/restore style.
-__declspec(noinline) void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
+void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     // Early-return form: makes MWCC emit retail's xor./bne exit test.
     if(arg1 ^ isEvent3__11CWorkThreadCFv(pThread)){
         return;
@@ -660,7 +656,7 @@ __declspec(noinline) void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1)
     }
 }
 
-__declspec(noinline) void CWorkRoot::standbyWork(){
+void CWorkRoot::standbyWork(){
     CWorkRootThread* thread = CWorkRootThread::getInstance();
     _reslist_node<CWorkThread*>* iter;
     int count;
@@ -704,7 +700,7 @@ check:
     standbyWork(CWorkRootThread::getInstance(), false);
 }
 
-__declspec(noinline) void CWorkRoot::renderWork(){
+void CWorkRoot::renderWork(){
     if(getInstance__9CDeviceGXFv() != nullptr){
         onRenderWork__9CDeviceGXFv();
     }
@@ -726,7 +722,7 @@ bool CWorkRoot::isShutdownAll(){
     return hasChild(CWorkRootThread::spInstance) ? false : true;
 }
 
-__declspec(noinline) bool CWorkRoot::runSingle(){
+bool CWorkRoot::runSingle(){
     //Trigger the start frame event in CDeviceClock
     if(getInstance__12CDeviceClockFv() != nullptr){
         onStartFrame__12CDeviceClockFv();
@@ -748,7 +744,7 @@ __declspec(noinline) bool CWorkRoot::runSingle(){
     return isShutdownAll() ? false : true;
 }
 
-__declspec(noinline) void CWorkRoot::exit(){
+void CWorkRoot::exit(){
     //Check the current exit mode to determine how to handle the program stopping
     if(lbl_eu_8066560C == EXIT_WII_MENU){
         //Exit to Wii menu

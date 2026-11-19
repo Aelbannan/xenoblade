@@ -453,43 +453,43 @@ extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
 extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
-extern "C" int CfRes_tryResolveByBits(int destination, int source, int size);
-extern "C" int CfRes_tryResolveType0(int first, int second, int third);
+extern "C" int CfRes_tryResolveByBits(int a, int b, int c);
+extern "C" int CfRes_tryResolveType0(int a, int b, int c);
 extern "C" int CfSoundMan_CloseRecord(int index);
 extern "C" int KyoshinHeap_GetField34();
 extern "C" void KyoshinHeap_AllocFld34(int index);
-extern "C" void CfRes_tryRefreshSlot16C(u8* obj, int arg);
+extern "C" int CfRes_tryRefreshSlot16C(int a, int b);
 extern "C" void runMgrTeardownSeq();
 extern "C" void notifyObjectMapChange__Q22cf13CfGameManagerFv(cf::CfResPcMgrView* manager);
 extern "C" void CfModel_ReattachTrg(cf::CfResPcParent* parent);
 extern "C" void CfObjectMove_resetAnimModeArgs(cf::CfResPcParent* parent);
 extern "C" void CfResPcImpl_refreshMapAreaEvents(void* self);
-extern "C" cf::CfResPcEntry38* CfRes_getEntryPtrCol0(int index);
+extern "C" char* CfRes_getEntryPtrCol0(int arg);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 
 // C-ABI imports used by CfResPcImpl_cleanupMgrSlotTable2 (slot reset) and CfResPcImpl_setResourceOpen /
 // CfResPcImpl_detachResources (resource lookup / notify helpers, defined in CfRes.cpp).
-extern "C" int CfRes_tryDelegateLoad1(u8* handle, u32 state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem12Idx(int state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem22Idx(int state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem21Idx(int state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem18Idx(int state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem19Idx(int state);
-extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem20Idx(int state);
-extern "C" void CfRes_decTblRefByIdx(int state);
+extern "C" int CfRes_tryDelegateLoad1(int a, int b);
+extern "C" void* CfRes_getArrayElem12Idx(int arg);
+extern "C" void* CfRes_getArrayElem22Idx(int arg);
+extern "C" void* CfRes_getArrayElem21Idx(int arg);
+extern "C" void* CfRes_getArrayElem18Idx(int arg);
+extern "C" void* CfRes_getArrayElem19Idx(int arg);
+extern "C" void* CfRes_getArrayElem20Idx(int arg);
+extern "C" void CfRes_decTblRefByIdx(int idx);
 extern "C" void CfRes_setTblHandle(int a, int b);
 extern "C" cf::CfResPcSoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" void CfModel_ReleaseAll(cf::CfResPcParent* parent);
-extern "C" void* CfRes_getInstPtr170();
+extern "C" char* CfRes_getInstPtr170();
 
 // C-ABI imports used by CfResPcImpl_euReregisterOnFlag / CfResPcImpl_notifyReloadSimple / CfResPcImpl_requestResourceLoad /
 // CfResPcImpl_loadPlayerOrEvent2 (defined in CfRes.cpp / CfSoundMan.cpp /
 // CfGameManagerUnityHelpers.hpp). extern "C" keeps the call-site relocs at
 // the plain retail names.
 extern "C" u8* CfRes_getInstanceField();
-extern "C" void CfRes_tryReregisterSlot(int a, u8* b);
+extern "C" void CfRes_tryReregisterSlot(int index, u8* ptr);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
-extern "C" int CfRes_resolveSelfPacked(int a, int b);
+extern "C" int CfRes_resolveSelfPacked(void* self, int arg2);
 extern "C" int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second);
 
@@ -527,7 +527,7 @@ extern "C" void CfRes_runUpdatePipeline();
 extern "C" u32 CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" int CamEvtSearchStateVal(int val);
 extern "C" void loadLayoutScales();
-extern "C" void CfRes_tryRefreshByBits(u32 a, u32 b);
+extern "C" int CfRes_tryRefreshByBits(int a, int b);
 extern "C" void CfScript_FlagSlot0();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void updateReloadTypeState(u32 a, u32 b);
@@ -556,7 +556,7 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" u32 scnImN4SetShadowNd(void* obj, u32 bdat, u32 arg);
 extern "C" void scnImN4StampShadNd(void* obj, u32 bdat, f32 f1, f32 f2);
-extern "C" int CfRes_tryDelegateLoad0(int handle);
+extern "C" int CfRes_tryDelegateLoad0(int a, int b);
 extern "C" cf::CfResPcFindEntry* findResEntry(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" void* CfRes_findMidEntry(u8* self, u32 id, u32* outIdx);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);

@@ -180,7 +180,6 @@ BOOL nandIsInitialized(void) {
 typedef void (*NANDLoggingCallback)(BOOL result);
 BOOL NANDLoggingAddMessageAsync(NANDLoggingCallback cb, const char* fmt, ...);
 
-#pragma dont_inline on
 s32 nandConvertErrorCode(s32 result) {
     char* strBase = __NANDVersion;
     int i;
@@ -270,7 +269,6 @@ s32 nandConvertErrorCode(s32 result) {
         return mapped;
     }
 }
-#pragma dont_inline off
 
 void nandGenerateAbsPath(char* abs, const char* rel) {
     s32 len;

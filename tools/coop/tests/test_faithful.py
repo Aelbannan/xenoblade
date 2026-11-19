@@ -25,6 +25,12 @@ class SmellCounts(unittest.TestCase):
         self.assertEqual(hard, {"label": 1, "mangled_c": 1, "section": 1, "offset_cast": 1, "view_struct": 1,
                                "noinline": 0})
 
+    def test_view_struct_ignores_real_retail_classes(self):
+        src = "CView* v = getView();\nActParamCallView* a = (ActParamCallView*)p;\n"
+        hard, _ = faithful.count_smells(src)
+        self.assertIn("CView", faithful.real_classes())
+        self.assertEqual(hard["view_struct"], 2)
+
     def test_noinline_is_hard_unless_justified(self):
         src = (
             "__declspec(noinline) void a();\n"

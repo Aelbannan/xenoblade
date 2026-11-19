@@ -303,15 +303,15 @@ extern "C" int scn80496HasChild2Node(u8* object);
 extern "C" float simGetLeafAnimDist4(u8* object);
 extern "C" int simRefreshFadeDist(u8* object);
 extern "C" int simRefreshFadeDist2(u8* object, u32 param);
-extern "C" u32 evalParamBySlot(u8* data, u32* out, u32 param, u32 byte, u32 flag);
+extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag, u32 gate);
 extern "C" u32 evalParamChain(u8* data, u32* out, u32 param, u32 flag, u32 zero);
-extern "C" int getParamByteSel(u8* data, u32 param);
-extern "C" void saveParamShadow(void* data);
+extern "C" int getParamByteSel(CActParamData* self, u32 sel);
+extern "C" void saveParamShadow(CActParamData* self);
 // Declared here with C linkage so call-site relocs keep the retail names
 // verbatim (CActParamData.hpp's plain decls mangle).
 extern "C" void clearParamTags(void* self);
 extern "C" void resetParamShorts(void* self);
-extern "C" int hasParamSubObjB(void* self);
+extern "C" int hasParamSubObjB(CActParamData* self);
 extern "C" void checkParamBlks(void* data);
 extern "C" void clearParamShadow(void* data);
 extern "C" void blendAnimHeading(CActParamAnim* self);
@@ -469,9 +469,9 @@ extern "C" void simBindChrAnim(void* obj, u32 resId, u32 animIdx, u16 frame, u32
                               s16 half);
 extern "C" int scn80496ChildIdsDiffer(u8* obj);
 extern "C" int scn80496IsComplete(u8* obj);
-extern "C" void walkParamBlkB(void* data);
+extern "C" void walkParamBlkB(void* self);
 extern "C" void* getSubObjPlus14(void* param);
-extern "C" void resetParamSubB(void* data);
+extern "C" void resetParamSubB(CActParamData* self);
 extern "C" void flushParamPair(void* data, u32 flag);
 extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
 extern "C" void switchSubAnim(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);

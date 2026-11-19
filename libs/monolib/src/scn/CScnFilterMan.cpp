@@ -9,10 +9,9 @@
 #include "monolib/device/CGXCache.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
-// Setter helpers are declared here but defined at the BOTTOM of this file
-// (after every caller) so MWCC's -inline auto cannot fold them into the
-// tail-call wrappers below; retail keeps them as separate functions (same
-// pattern as CGXCache.cpp resetGXStateA).
+// Setter helpers are declared here but defined at the BOTTOM of this file;
+// the unit builds with -inline noauto so retail keeps them as separate
+// functions instead of folding them into the tail-call wrappers below.
 extern "C" void ScnFilterListIter_setNode(CScnFilterListIter* self, u32 val);
 extern "C" void ScnFilterIterListIter_setNode(CScnFilterListIter* self, u32 val);
 extern "C" void ScnFilterIterList_clear(CScnFilterIteratorReslist* self);
@@ -23,8 +22,8 @@ extern "C" void* ScnFilterNode_store(void* self, u32 val);
 extern "C" void ScnFilterIterListIter_copy(int* dst, int* src);
 extern "C" void ScnFilterIterListIter_advance(u32* self);
 extern "C" void ScnFilterList_clear(CScnFilterReslist* self);
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_getSentinel(CScnFilterList* list);
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_getFirst(CScnFilterList* list);
+extern "C" CScnFilterListNode* ScnFilterList_getSentinel(CScnFilterList* list);
+extern "C" CScnFilterListNode* ScnFilterList_getFirst(CScnFilterList* list);
 extern "C" void ScnFilterList_countNodes(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out);
 
 // CGXCache helpers reached by their flat retail symbols (the member decls in
@@ -42,29 +41,26 @@ extern "C" void ScnFilterMan_sortByState(CScnFilterMan* self);
 void __ct___reslist_base_CScnFilter(CScnFilterReslist* obj);
 extern "C" void* __ct__8049CC10(CScnFilterReslist* obj);
 extern "C" void* __dt___reslist_base_CScnFilter(CScnFilterReslist* self, int mode);
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_findFreeSlot(CScnFilterReslist* list);
-extern "C" __declspec(noinline) void ScnFilterList_setItem(CScnFilter** item, u32 val);
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterIterList_findFreeSlot(CScnFilterReslist* list);
-extern "C" __declspec(noinline) void ScnFilterIterList_setItem(CScnFilter** item, u32 val);
+extern "C" CScnFilterListNode* ScnFilterList_findFreeSlot(CScnFilterReslist* list);
+extern "C" void ScnFilterList_setItem(CScnFilter** item, u32 val);
+extern "C" CScnFilterListNode* ScnFilterIterList_findFreeSlot(CScnFilterReslist* list);
+extern "C" void ScnFilterIterList_setItem(CScnFilter** item, u32 val);
 
 // reslist<CScnFilter*> ctor (retail __ct__reslist_CScnFilter): base init,
 // then install the derived vtable. The flattened retail name cannot be
 // produced by a template instantiation under Wii/1.1 (symbolic mangling),
 // so it is spelled out (MWCC_CASES "flattened constructor" pattern).
-#pragma push
-#pragma auto_inline off
 extern "C" CScnFilterReslist* __ct__reslist_CScnFilter(CScnFilterReslist* obj) {
     __ct___reslist_base_CScnFilter(obj);
     obj->mVtable = lbl_eu_8056EBAC;
     return obj;
 }
-#pragma pop
 
 // flattened base ctor for the iterator reslist (retail __ct__8049CC10):
 // zero the vptr slot, run the no-op member init helper at +8, then set up
 // the empty ring (mList/capacity/flag cleared, sentinel linked to itself).
 extern "C" CScnFilterMan* ScnFilterMan_initFilterList(CScnFilterMan* self);
-extern "C" __declspec(noinline) void* __ct__8049CC10(CScnFilterReslist* obj) {
+extern "C" void* __ct__8049CC10(CScnFilterReslist* obj) {
     obj->mVtable = (u32*)lbl_eu_8056EBA0;
     ScnFilterMan_initFilterList((CScnFilterMan*)((char*)obj + 8));
     obj->mList = NULL;
@@ -79,21 +75,18 @@ extern "C" __declspec(noinline) void* __ct__8049CC10(CScnFilterReslist* obj) {
 // Unknown-class ctor (retail __ct__8049CBD4): init via __ct__8049CC10, then
 // install the derived vtable. The object has a reslist-shaped layout
 // (vtable@0, sentinel@8, mList@0x14, mCapacity@0x18, flag@0x1C).
-#pragma push
-#pragma auto_inline off
 extern "C" CScnFilterReslist* __ct__8049CBD4(CScnFilterReslist* obj) {
     __ct__8049CC10(obj);
     obj->mVtable = lbl_eu_8056EB88;
     return obj;
 }
-#pragma pop
 
 // _reslist_base<CScnFilter*> ctor (retail __ct___reslist_base_CScnFilter):
 // zeroes the storage fields and links the sentinel node onto itself. The
 // flattened retail name cannot be produced by a template instantiation under
 // Wii/1.1 (symbolic mangling), so it is spelled out (MWCC_CASES
 // "flattened constructor" pattern, cf. CVirtualLightAmb).
-__declspec(noinline) void __ct___reslist_base_CScnFilter(CScnFilterReslist* obj) {
+void __ct___reslist_base_CScnFilter(CScnFilterReslist* obj) {
     obj->mVtable = lbl_eu_8056EBC4;
     obj->mList = nullptr;
     obj->mCapacity = 0;
@@ -119,7 +112,7 @@ CScnFilterReslist* __dt__reslist_CScnFilter(CScnFilterReslist* obj, int mode) {
 // __dt___reslist_base_CScnFilter): clear the ring, free the node array
 // unless it is externally owned (field_0x1C), then free the object when
 // deleting > 0. Kept extern "C" so the derived dtor's bl stays flat-named.
-extern "C" __declspec(noinline) void* __dt___reslist_base_CScnFilter(CScnFilterReslist* self, int deleting) {
+extern "C" void* __dt___reslist_base_CScnFilter(CScnFilterReslist* self, int deleting) {
     if (self != NULL) {
         self->mVtable = lbl_eu_8056EBC4;
         ScnFilterList_clear(self);
@@ -137,27 +130,19 @@ extern "C" __declspec(noinline) void* __dt___reslist_base_CScnFilter(CScnFilterR
 }
 
 
-// destroy a node's item (no-op in retail). Flat symbol + noinline so the
-// bl at every call site stays emitted (MWCC -inline auto would fold it).
-extern "C" __declspec(noinline) void ScnFilterList_destroyItem(CScnFilter** item) {}
+// destroy a node's item (no-op in retail). Flat symbol so the bl at every
+// call site stays emitted (this unit builds with -inline noauto).
+extern "C" void ScnFilterList_destroyItem(CScnFilter** item) {}
 
-#pragma push
-#pragma auto_inline off
-extern "C" __declspec(noinline) void ScnFilterZeroWord(void* self) { *(u32*)self = 0; }
-#pragma pop
+extern "C" void ScnFilterZeroWord(void* self) { *(u32*)self = 0; }
 
 
-// reset a node's mNext after removal (no-op-ish free marker). noinline keeps
-// the call emitted at the clearList/erase call sites.
-extern "C" __declspec(noinline) void ScnFilterList_freeNode(void* self, void* out) { *(u32*)out = 0; }
+// reset a node's mNext after removal (no-op-ish free marker); the call is
+// still emitted at the clearList/erase call sites.
+extern "C" void ScnFilterList_freeNode(void* self, void* out) { *(u32*)out = 0; }
 
 
-// Guard the no-op stub so the call sites survive (MWCC_CASES
-// empty-stub pattern: -ipa file inlines the empty body and drops the bl).
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterList_initNoop(CScnFilterReslist* list) {}
-#pragma pop
 
 // (re)initialise the filter list member at self+8 and return self. The
 // callee ScnFilterList_initNoop is a no-op in retail; the call is still emitted
@@ -174,7 +159,7 @@ extern "C" CScnFilterMan* ScnFilterMan_initFilterList(CScnFilterMan* self) {
 // trivial so delete[] skips the per-element dtor loop) unless externally
 // owned, then free the object when deleting > 0. Kept extern "C" so the
 // derived dtor's bl stays flat-named.
-extern "C" __declspec(noinline) void* __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterIteratorReslist* self, int deleting) {
+extern "C" void* __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterIteratorReslist* self, int deleting) {
     if (self != NULL) {
         self->mVtable = lbl_eu_8056EBA0;
         ScnFilterIterList_clear(self);
@@ -195,9 +180,7 @@ extern "C" __declspec(noinline) void* __dt___reslist_base__reslist_iterator_CScn
 // destroy each node's item (ScnFilterIterList_destroyItem) and reset its mNext
 // (ScnFilterIterList_freeNode), then relink the sentinel onto itself. Same shape as
 // ScnFilterList_clear (reslist.hpp clearList).
-#pragma push
-#pragma auto_inline off
-extern "C" __declspec(noinline) void ScnFilterIterList_clear(CScnFilterIteratorReslist* self) {
+extern "C" void ScnFilterIterList_clear(CScnFilterIteratorReslist* self) {
     CScnFilterIterNode* node = self->mStartNodePtr->mNext;
     while (node != self->mStartNodePtr) {
         CScnFilterIterNode* cur = node;
@@ -208,20 +191,19 @@ extern "C" __declspec(noinline) void ScnFilterIterList_clear(CScnFilterIteratorR
     self->mStartNodePtr->mNext = self->mStartNodePtr;
     self->mStartNodePtr->mPrev = self->mStartNodePtr;
 }
-#pragma pop
 
-// destroy an iterator item (no-op in retail). Flat symbol + noinline so the
-// bl at the clearList call site stays emitted.
-extern "C" __declspec(noinline) void ScnFilterIterList_destroyItem(CScnFilterIterator* item) {}
+// destroy an iterator item (no-op in retail). Flat symbol so the bl at the
+// clearList call site stays emitted.
+extern "C" void ScnFilterIterList_destroyItem(CScnFilterIterator* item) {}
 
-extern "C" __declspec(noinline) void ScnFilterIterList_freeNode(void* unused, void* out) { *(u32*)out = 0; }
+extern "C" void ScnFilterIterList_freeNode(void* unused, void* out) { *(u32*)out = 0; }
 
 // reslist<CScnFilter*>::iterator deleting destructor (retail
 // __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter): destroy
 // the (empty) iterator base, then free the object when mode > 0. Same shape
 // as __dt__reslist_CScnFilter. Kept extern "C" - retail callers (the man
 // dtor) and the blob vtable both use the flat name.
-extern "C" __declspec(noinline) CScnFilterListIter* __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterListIter* self, int mode) {
+extern "C" CScnFilterListIter* __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterListIter* self, int mode) {
     if (self != NULL) {
         __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter((CScnFilterIteratorReslist*)self, 0);
         if (mode > 0) {
@@ -237,13 +219,8 @@ extern "C" __declspec(noinline) CScnFilterListIter* __dt__reslist__reslist_itera
 // mNext of every node (MWCC auto-unrolls the fill loop 8x with overflow
 // guards), then store the capacity.
 extern "C" void ScnFilterList_allocate(CScnFilterReslist* list, u32 handle, int capacity);
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterList_reserve(CScnFilterReslist* list, u32 handle, int capacity) { ScnFilterList_allocate(list, handle, capacity); }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterList_allocate(CScnFilterReslist* list, u32 handle, int capacity) {
     list->mList = (CScnFilterListNode*)mtl::MemManager::allocate_array((u32)capacity * 0xC, handle);
     for (int i = 0; i < capacity; i++) {
@@ -251,21 +228,15 @@ extern "C" void ScnFilterList_allocate(CScnFilterReslist* list, u32 handle, int 
     }
     list->mCapacity = capacity;
 }
-#pragma pop
 
 extern "C" void ScnFilterIterList_allocate(CScnFilterIteratorReslist* list, u32 handle, int capacity);
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterIterList_reserve(CScnFilterIteratorReslist* list, u32 handle, int capacity) { ScnFilterIterList_allocate(list, handle, capacity); }
-#pragma pop
 
 // reserve for the iterator reslist: the node item (CScnFilterIterator) has a
 // user-declared default ctor, so the node array carries MWCC's 0x10 cookie
 // (alloc size = capacity*0xC + 0x10) and element construction goes through
 // __construct_new_array with the flat init helper ScnFilterMan_initFilterList as the
 // per-element ctor. Afterwards clear every node's mNext.
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterIterList_allocate(CScnFilterIteratorReslist* list, u32 handle, int capacity) {
     list->mList = (CScnFilterIterNode*)__construct_new_array(
         mtl::MemManager::allocate_array((u32)capacity * 0xC + 0x10, handle),
@@ -275,7 +246,6 @@ extern "C" void ScnFilterIterList_allocate(CScnFilterIteratorReslist* list, u32 
     }
     list->mCapacity = capacity;
 }
-#pragma pop
 
 // ~CScnFilterMan: deregister from the scene render-callback list, flush
 // both reslists, then run member/base destructors. MWCC auto-generates the
@@ -323,14 +293,11 @@ CScnFilterMan::~CScnFilterMan() {
 }
 
 extern "C" void __dt__8049D130(CScnFilterReslist* self);
-#pragma push
-#pragma auto_inline off
 extern "C" void ScnFilterList_destroy(void* self) { __dt__8049D130((CScnFilterReslist*)self); }
-#pragma pop
 
 // destroyList for the filter reslist member: clear the ring, free the node
 // array unless it is externally owned (field_0x1C), and reset the capacity.
-extern "C" __declspec(noinline) void __dt__8049D130(CScnFilterReslist* self) {
+extern "C" void __dt__8049D130(CScnFilterReslist* self) {
     ScnFilterList_clear(self);
     if (self->field_0x1C == false) {
         if (self->mList != NULL) {
@@ -342,17 +309,12 @@ extern "C" __declspec(noinline) void __dt__8049D130(CScnFilterReslist* self) {
 }
 
 extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self);
-#pragma push
-#pragma auto_inline off
 void CScnFilterIteratorReslist::IterList_destroy() { __dt__8049D18C(this); }
-#pragma pop
 
 
 // reslist-base dtor: clear the node array and ownership flag. The mList
 // backing block (allocated 16 bytes before the array) is freed when the
 // ownership flag is clear and the array is non-null.
-#pragma push
-#pragma auto_inline off
 extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self) {
     ScnFilterIterList_clear(self);
     if (self->field_0x1C != 0)
@@ -365,7 +327,6 @@ extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self) {
 done:
     self->mCapacity = 0;
 }
-#pragma pop
 
 // Forward (self, val) to ScnFilterList_pushBack as (reslist member at self+8, &val).
 extern "C" void ScnFilterMan_appendFilter(CScnFilterMan* self, u32 val) {
@@ -373,16 +334,16 @@ extern "C" void ScnFilterMan_appendFilter(CScnFilterMan* self, u32 val) {
 }
 
 // iter = list end sentinel (retail: lwz r4,0x4(r4); b ScnFilterListIter_setNode)
-extern "C" __declspec(noinline) void ScnFilterList_getEnd(CScnFilterListIter* self, CScnFilterList* list) {
+extern "C" void ScnFilterList_getEnd(CScnFilterListIter* self, CScnFilterList* list) {
     ScnFilterListIter_setNode(self, (u32)list->mStartNodePtr);
 }
 
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_allocNode(
+extern "C" CScnFilterListNode* ScnFilterList_allocNode(
     CScnFilterReslist* list, u32 val);
 
 // Allocate a node for `val`, link it into the list before `iter`'s node, and
 // point the output iterator at it.
-extern "C" __declspec(noinline) void ScnFilterList_insert(CScnFilterListIter* self, CScnFilterReslist* list,
+extern "C" void ScnFilterList_insert(CScnFilterListIter* self, CScnFilterReslist* list,
                    CScnFilterListIter* iter, u32* val) {
     CScnFilterListNode* node = ScnFilterList_allocNode(list, (u32)val);
     node->mNext = iter->mNode;
@@ -394,7 +355,7 @@ extern "C" __declspec(noinline) void ScnFilterList_insert(CScnFilterListIter* se
 
 // Insert `val` at the end of the filter list (retail: end-iterator then
 // insert via the D26C/D27C pair).
-extern "C" __declspec(noinline) void ScnFilterList_pushBack(CScnFilterReslist* list, u32* val) {
+extern "C" void ScnFilterList_pushBack(CScnFilterReslist* list, u32* val) {
     CScnFilterListIter iter2;
     CScnFilterListIter iter;
     ScnFilterList_getEnd(&iter, (CScnFilterList*)list);
@@ -403,7 +364,7 @@ extern "C" __declspec(noinline) void ScnFilterList_pushBack(CScnFilterReslist* l
 
 // Get a free node slot from the node array and install `val` into its item
 // slot, returning the node (retail: free-slot search then item setter).
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_allocNode(
+extern "C" CScnFilterListNode* ScnFilterList_allocNode(
     CScnFilterReslist* list, u32 val) {
     CScnFilterListNode* node = ScnFilterList_findFreeSlot(list);
     ScnFilterList_setItem(&node->mItem, val);
@@ -413,7 +374,7 @@ extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_allocNode(
 // setItem for the filter reslist: construct a CScnFilter* cell at *item via
 // the placement-new operator (scnVlPlaceNew), then copy *val into it. The
 // try/catch is the retail setItem shape (forces MWCC's frame-pointer prologue).
-extern "C" __declspec(noinline) void ScnFilterList_setItem(CScnFilter** item, u32 val) {
+extern "C" void ScnFilterList_setItem(CScnFilter** item, u32 val) {
     CScnFilter** p = (CScnFilter**)scnVlPlaceNew((void*)4, (void*)item);
     if (p != NULL) {
         try {
@@ -427,7 +388,7 @@ extern "C" __declspec(noinline) void ScnFilterList_setItem(CScnFilter** item, u3
 // Find the first free slot (mNext == 0) in the node array and return its
 // address. Retail uses the counted-loop form (mtctr/bdnz) with a byte
 // offset induction variable plus the index for the final mulli.
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_findFreeSlot(CScnFilterReslist* list) {
+extern "C" CScnFilterListNode* ScnFilterList_findFreeSlot(CScnFilterReslist* list) {
     int capacity = list->mCapacity;
     int i;
     for (i = 0; i < capacity; i++) {
@@ -473,21 +434,19 @@ extern "C" void ScnFilterMan_toggleFilter(CScnFilterMan* man, u32 val) {
     }
 }
 
-// noinline keeps the bl from ScnFilterListIter_copyAdvance's advance out-of-line (retail
-// emits the call; -ipa file would inline this small body and drop it).
-extern "C" __declspec(noinline) void ScnFilterListIter_advance(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" void ScnFilterListIter_advance(u32* self) { *self = *(u32*)(*(u32**)self); }
 
-extern "C" __declspec(noinline) void* ScnFilterListIter_getItem(void* self){ return (void*)((char*)*(void**)self + 8); }
+extern "C" void* ScnFilterListIter_getItem(void* self){ return (void*)((char*)*(void**)self + 8); }
 
 // iter = first node (retail: lwz r4,0x4(r4); lwz r4,0x0(r4); b ScnFilterListIter_setNode)
-extern "C" __declspec(noinline) void ScnFilterList_getBegin(CScnFilterListIter* self, CScnFilterList* list) {
+extern "C" void ScnFilterList_getBegin(CScnFilterListIter* self, CScnFilterList* list) {
     ScnFilterListIter_setNode(self, (u32)list->mStartNodePtr->mNext);
 }
 
-extern "C" __declspec(noinline) u32 ScnFilterListIter_notEqual(u32* a, u32* b) { return *a != *b; }
+extern "C" u32 ScnFilterListIter_notEqual(u32* a, u32* b) { return *a != *b; }
 
 
-extern "C" __declspec(noinline) int* ScnFilterListIter_copy(int* dst, int* src){
+extern "C" int* ScnFilterListIter_copy(int* dst, int* src){
     *dst = *src;
     return dst;   // retail callers chain the returned dst pointer
 }
@@ -506,7 +465,7 @@ void ScnFilterList_find(int* out, CScnFilterListIter* first, u32* last, u32* val
 // Remove `it`'s node from the ring (unlink prev/next), destroy its item and
 // free the node, then set self->mNode to the next node (retail
 // ScnFilterList_erase; node read back through it->mNode at each step).
-extern "C" __declspec(noinline) void ScnFilterList_erase(CScnFilterListIter* self, CScnFilterReslist* list, CScnFilterListIter* it) {
+extern "C" void ScnFilterList_erase(CScnFilterListIter* self, CScnFilterReslist* list, CScnFilterListIter* it) {
     CScnFilterListNode* node = it->mNode;
     CScnFilterListNode* prev = node->mPrev;
     CScnFilterListNode* next = node->mNext;
@@ -518,17 +477,17 @@ extern "C" __declspec(noinline) void ScnFilterList_erase(CScnFilterListIter* sel
 }
 
 // iter = list end sentinel via the D64C setter
-extern "C" __declspec(noinline) void ScnFilterIterList_getEnd(CScnFilterListIter* self, CScnFilterList* list) {
+extern "C" void ScnFilterIterList_getEnd(CScnFilterListIter* self, CScnFilterList* list) {
     ScnFilterIterListIter_setNode(self, (u32)list->mStartNodePtr);
 }
 
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterIterList_allocNode(
+extern "C" CScnFilterListNode* ScnFilterIterList_allocNode(
     CScnFilterReslist* list, u32 val);
 extern "C" void ScnFilterIterListIter_setNode(CScnFilterListIter* self, u32 val);
 
 // Allocate a node for `val`, link it into the list before `iter`'s node, and
 // point the output iterator at it (same shape as ScnFilterList_insert).
-extern "C" __declspec(noinline) void ScnFilterIterList_insert(CScnFilterListIter* self, CScnFilterReslist* list,
+extern "C" void ScnFilterIterList_insert(CScnFilterListIter* self, CScnFilterReslist* list,
                    CScnFilterListIter* iter, u32* val) {
     CScnFilterListNode* node = ScnFilterIterList_allocNode(list, (u32)val);
     node->mNext = iter->mNode;
@@ -557,7 +516,7 @@ CScnFilterListNode* ScnFilterIterList_allocNode(CScnFilterReslist* list, u32 val
 
 // setItem for the second filter list: same placement-new shape as
 // ScnFilterList_setItem, but the value copy goes through ScnFilterListIter_copy.
-extern "C" __declspec(noinline) void ScnFilterIterList_setItem(CScnFilter** item, u32 val) {
+extern "C" void ScnFilterIterList_setItem(CScnFilter** item, u32 val) {
     CScnFilter** p = (CScnFilter**)scnVlPlaceNew((void*)4, (void*)item);
     if (p != NULL) {
         try {
@@ -569,7 +528,7 @@ extern "C" __declspec(noinline) void ScnFilterIterList_setItem(CScnFilter** item
 }
 
 // Same free-slot search as ScnFilterList_findFreeSlot (retail bodies are identical).
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterIterList_findFreeSlot(CScnFilterReslist* list) {
+extern "C" CScnFilterListNode* ScnFilterIterList_findFreeSlot(CScnFilterReslist* list) {
     int capacity = list->mCapacity;
     int i;
     for (i = 0; i < capacity; i++) {
@@ -595,8 +554,8 @@ struct Slot {
 extern "C" void clearFlagMask(u32* self, u32 val);
 extern "C" void ScnFilterMan_setFlags(u32* self, u32 flags);
 extern "C" void* ScnFilterIterListIter_getItem(void* self);
-extern "C" __declspec(noinline) void ScnFilterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused);
-extern "C" __declspec(noinline) void ScnFilterIterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused);
+extern "C" void ScnFilterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused);
+extern "C" void ScnFilterIterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused);
 extern "C" u32 ScnFilterIterListIter_notEqual(const u32* a, const u32* b);
 extern "C" void ScnFilterIterList_flush(CScnFilterIteratorReslist* self);
 extern "C" s32 ScnFilter_isUpdateEnabled(CScnFilter* filter);
@@ -636,48 +595,46 @@ void CScnFilterMan::update() {
     ScnFilterIterList_flush(&field_28);
 }
 
-extern "C" __declspec(noinline) void ScnFilterMan_setFlags(u32* self, u32 flags) { *self |= flags; }
+extern "C" void ScnFilterMan_setFlags(u32* self, u32 flags) { *self |= flags; }
 
 // True when the filter's mFlags bit 0 is clear (retail: flag-test helper
 // call, result inverted via the cntlzw/srwi "== 0" idiom).
-extern "C" __declspec(noinline) s32 ScnFilter_isUpdateEnabled(CScnFilter* filter) {
+extern "C" s32 ScnFilter_isUpdateEnabled(CScnFilter* filter) {
     return testFlagMask(&filter->mFlags, 1) == 0;
 }
 
 // Copy src into dst, then advance src by one node (retail: *dst = *src via
 // ScnFilterListIter_copy, then src->mNode = src->mNode->mNext via ScnFilterListIter_advance).
-extern "C" __declspec(noinline) void ScnFilterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused) {
+extern "C" void ScnFilterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused) {
     ScnFilterListIter_copy((int*)dst, (int*)src);
     ScnFilterListIter_advance((u32*)src);
 }
 
 // iter = first node via the D64C setter
-extern "C" __declspec(noinline) void ScnFilterIterList_getBegin(CScnFilterListIter* self, CScnFilterList* list) {
+extern "C" void ScnFilterIterList_getBegin(CScnFilterListIter* self, CScnFilterList* list) {
     ScnFilterIterListIter_setNode(self, (u32)list->mStartNodePtr->mNext);
 }
 
-extern "C" __declspec(noinline) void* ScnFilterIterListIter_getItem(void* self){ return (void*)((char*)*(void**)self + 8); }
+extern "C" void* ScnFilterIterListIter_getItem(void* self){ return (void*)((char*)*(void**)self + 8); }
 
 // Copy src into dst, then advance src by one node (ScnFilterIterListIter_copy copy +
 // ScnFilterIterListIter_advance advance pair).
-extern "C" __declspec(noinline) void ScnFilterIterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused) {
+extern "C" void ScnFilterIterListIter_copyAdvance(CScnFilterListIter* dst, CScnFilterListIter* src, int unused) {
     ScnFilterIterListIter_copy((int*)dst, (int*)src);
     ScnFilterIterListIter_advance((u32*)src);
 }
 
-// noinline keeps the bl calls from ScnFilterIterListIter_copyAdvance out-of-line (retail emits
-// the calls; -ipa file would inline these small bodies and drop them).
-extern "C" __declspec(noinline) void ScnFilterIterListIter_copy(int* dst, int* src){
+extern "C" void ScnFilterIterListIter_copy(int* dst, int* src){
     *dst = *src;
 }
 
-extern "C" __declspec(noinline) void ScnFilterIterListIter_advance(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" void ScnFilterIterListIter_advance(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 // != on the u32 values at the two pointers (MWCC dual-subf idiom).
-extern "C" __declspec(noinline) u32 ScnFilterIterListIter_notEqual(const u32* a, const u32* b) { return *a != *b; }
+extern "C" u32 ScnFilterIterListIter_notEqual(const u32* a, const u32* b) { return *a != *b; }
 
 extern "C" void ScnFilterIterList_clear(CScnFilterIteratorReslist* self);
-extern "C" __declspec(noinline) void ScnFilterIterList_flush(CScnFilterIteratorReslist* self) { ScnFilterIterList_clear(self); }
+extern "C" void ScnFilterIterList_flush(CScnFilterIteratorReslist* self) { ScnFilterIterList_clear(self); }
 
 extern "C" u8 ScnFilter_getState(void* self);
 extern "C" s32 ScnFilterListIter_equal(CScnFilterListIter* a, CScnFilterListIter* b);
@@ -686,9 +643,7 @@ extern "C" s32 ScnFilterListIter_equal(CScnFilterListIter* a, CScnFilterListIter
 // repeatedly walk the list swapping adjacent out-of-order items until a
 // full pass makes no swap. Slot layout follows retail (cur=0x1c ..
 // end2=0x8); declaration order drives MWCC's reverse allocation.
-#pragma push
-#pragma auto_inline off
-extern "C" __declspec(noinline) void ScnFilterMan_sortByState(CScnFilterMan* self) {
+extern "C" void ScnFilterMan_sortByState(CScnFilterMan* self) {
     bool swapped;
     CScnFilterListIter itCur;   // 0x1c
     CScnFilterListIter itAdj;   // 0x18
@@ -722,7 +677,6 @@ extern "C" __declspec(noinline) void ScnFilterMan_sortByState(CScnFilterMan* sel
         }
     } while (swapped);
 }
-#pragma pop
 
 struct CScnFilterState {
     u8 _00[4];
@@ -741,7 +695,7 @@ extern "C" s32 ScnFilterListIter_equal(CScnFilterListIter* a, CScnFilterListIter
 // Pre-render callback: bail out when the filter list is empty, reset the GX
 // cache state twice (retail re-fetches the instance between calls), notify
 // each enabled filter via its vtable+0x10 slot, advancing as we walk.
-extern "C" __declspec(noinline) void ScnFilterMan_preRender(CScnFilterMan* self) {
+extern "C" void ScnFilterMan_preRender(CScnFilterMan* self) {
     if (ScnFilterList_size(&self->field_08) == 0) {
         return;
     }
@@ -768,7 +722,7 @@ extern "C" __declspec(noinline) void ScnFilterMan_preRender(CScnFilterMan* self)
 // Retail refs the CDeviceGX static (extern; defined in retail data object)
 // by its mangled name cacheInstance__9CDeviceGX via SDA21.
 extern "C" { extern void* cacheInstance__9CDeviceGX; }
-extern "C" __declspec(noinline) CGXCache* ScnFilterMan_getGXCache(void) { return (CGXCache*)cacheInstance__9CDeviceGX; }
+extern "C" CGXCache* ScnFilterMan_getGXCache(void) { return (CGXCache*)cacheInstance__9CDeviceGX; }
 
 // True when the filter's mFlags has bit 1 set (flag-test helper tail call).
 extern "C" s32 ScnFilter_isRenderEnabled(CScnFilter* filter) {
@@ -790,30 +744,30 @@ extern "C" u32 ScnFilterList_size(CScnFilterReslist* list) {
 extern "C" u32 ScnFilterNode_notEqual(const u32* a, const u32* b);
 extern "C" void ScnFilterNode_advance(u32* self);
 
-extern "C" __declspec(noinline) void ScnFilterList_countNodes(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out) {
+extern "C" void ScnFilterList_countNodes(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out) {
     while (ScnFilterNode_notEqual((const u32*)cur, (const u32*)end) != 0) {
         ScnFilterNode_advance((u32*)cur);
         (*out)++;
     }
 }
 
-extern "C" __declspec(noinline) void ScnFilterNode_advance(u32* self) {
+extern "C" void ScnFilterNode_advance(u32* self) {
     *self = *(u32*)(*(u32**)self);
 }
 
-extern "C" __declspec(noinline) u32 ScnFilterNode_notEqual(const u32* a, const u32* b) {
+extern "C" u32 ScnFilterNode_notEqual(const u32* a, const u32* b) {
     return *a != *b;
 }
 
 // Round-trip the first node's mNext through a stack slot via ScnFilterNode_store
 // and return it (one more deref than ScnFilterList_getSentinel): the retail derefs the
 // callee's preserved r3 (the local's address), not the stack slot.
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_getFirst(CScnFilterList* list) {
+extern "C" CScnFilterListNode* ScnFilterList_getFirst(CScnFilterList* list) {
     CScnFilterListNode* node;
     return *(CScnFilterListNode**)ScnFilterNode_store(&node, (u32)list->mStartNodePtr->mNext);
 }
 
-extern "C" __declspec(noinline) void* ScnFilterNode_store(void* self, u32 val) {
+extern "C" void* ScnFilterNode_store(void* self, u32 val) {
     *(u32*)((u8*)self + 0x0) = val;
     return self;
 }
@@ -821,7 +775,7 @@ extern "C" __declspec(noinline) void* ScnFilterNode_store(void* self, u32 val) {
 // Getter that round-trips the list's sentinel pointer through the node
 // setter: retail reads the pointer at self+4, stores it via ScnFilterNode_store
 // into a local, and returns that local (deref of the callee's preserved r3).
-extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_getSentinel(CScnFilterList* list) {
+extern "C" CScnFilterListNode* ScnFilterList_getSentinel(CScnFilterList* list) {
     CScnFilterListNode* node;
     return *(CScnFilterListNode**)ScnFilterNode_store(&node, (u32)list->mStartNodePtr);
 }
@@ -837,7 +791,7 @@ void CScnFilterMan::cbRenderBefore() {
 // destroy each node's item (ScnFilterList_destroyItem) and reset its mNext
 // (ScnFilterList_freeNode), then relink the sentinel onto itself (reslist.hpp
 // clearList shape, retail ScnFilterList_clear).
-extern "C" __declspec(noinline) void ScnFilterList_clear(CScnFilterReslist* self) {
+extern "C" void ScnFilterList_clear(CScnFilterReslist* self) {
     CScnFilterListNode* node = self->mStartNodePtr->mNext;
     while (node != self->mStartNodePtr) {
         CScnFilterListNode* cur = node;
@@ -851,15 +805,13 @@ extern "C" __declspec(noinline) void ScnFilterList_clear(CScnFilterReslist* self
 
 
 // Iterator node setters (retail flat symbols): store the node pointer into
-// the iterator. Defined here at the bottom of the file (after every caller)
-// so MWCC's -inline auto cannot fold them into the tail-call wrappers above;
-// noinline keeps the b/bl at each call site emitted (same pattern as the
-// CGXCache resetGXStateA helpers).
-extern "C" __declspec(noinline) void ScnFilterListIter_setNode(CScnFilterListIter* self, u32 val) {
+// the iterator. The b/bl at each call site stays emitted because this unit
+// builds with -inline noauto (auto-inlining off).
+extern "C" void ScnFilterListIter_setNode(CScnFilterListIter* self, u32 val) {
     self->mNode = (CScnFilterListNode*)val;
 }
 
-extern "C" __declspec(noinline) void ScnFilterIterListIter_setNode(CScnFilterListIter* self, u32 val) {
+extern "C" void ScnFilterIterListIter_setNode(CScnFilterListIter* self, u32 val) {
     self->mNode = (CScnFilterListNode*)val;
 }
 

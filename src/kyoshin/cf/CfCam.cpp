@@ -59,7 +59,7 @@ int isGlobalCamFlagSet(int gate);
 // ScnRes_VertRayForward_E398's retail ABI passes two FP args after the four GPR args
 // (same shape as CtrlMoveBase.hpp / CfCamEvent.hpp).
 extern "C" int ScnRes_VertRayForward_E398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
-extern "C" int cfCam_isVecNear0(void* pos);
+extern "C" int cfCam_isVecNear0(void* v);
 // C++ free function; MWCC mangles it to the retail getFP__FPCc.
 void* getFP(const char* name);
 // In-TU definitions further down this file.
@@ -78,15 +78,15 @@ void cfCam_advanceFollowCam(cf::CfCamFollow* self, ml::CVec3* arg2);
 void cfCam_syncSelFlags(cf::CfCamFollow* self);
 void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg);
 void cfCam_updateFollowCam(cf::CfCamFollow* self, void* arg);
-void cfCam_copyBlock48(CfCamWordBlock48* dst, const CfCamWordBlock48* src);
+extern "C" void cfCam_copyBlock48(void* dst, const void* src);
 void cfCam_nop2194(cf::CfCamFollow* self, void* arg);
 // extern "C": retail symbol is flat cfCam_pickFollowAim (CfCamEvent.hpp declares
 // it with C linkage; keep this TU's decl/def consistent so call relocs and
 // the definition use the unmangled name).
 extern "C" void cfCam_pickFollowAim(ml::CVec3* out, cf::CfObject* src, ml::CVec3* pos, int sel);
-void cfCam_applyBasis(nw4r::math::VEC3* a, nw4r::math::VEC3* b, nw4r::math::VEC3* c, float f);
+extern "C" void cfCam_applyBasis(void* a, void* b, void* c, float f);
 // In-TU definitions further down this file.
-__declspec(noinline) void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed);
+extern "C" __declspec(noinline) void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed);
 extern "C" __declspec(noinline) void cfCam_buildDirFrame(ml::CMat33* out, const ml::CVec3* dir);
 
 // cf::CfCam base ctor, C linkage so the retail symbol name is emitted verbatim.
@@ -530,13 +530,13 @@ extern "C" bool cfCam_getTrue() { return true; }
 // within the shared 0x8066A208 epsilon. Two-stage boolean structure mirrors
 // retail (|x|,|y| checked first, then |z| behind a temp flag).
 // noinline keeps the retail `bl cfCam_isVecNear0` inside cfCam_pickFollowAim.
-__declspec(noinline) int cfCam_isVecNear0(const ml::CVec3* v) {
+extern "C" __declspec(noinline) int cfCam_isVecNear0(void* v) {
     int result = 0;
     int temp = 0;
-    if (ml::math::abs(v->x) <= ml::epsilon && ml::math::abs(v->y) <= ml::epsilon) {
+    if (ml::math::abs(((const ml::CVec3*)v)->x) <= ml::epsilon && ml::math::abs(((const ml::CVec3*)v)->y) <= ml::epsilon) {
         temp = 1;
     }
-    if (temp != 0 && ml::math::abs(v->z) <= ml::epsilon) {
+    if (temp != 0 && ml::math::abs(((const ml::CVec3*)v)->z) <= ml::epsilon) {
         result = 1;
     }
     return result;
@@ -746,8 +746,8 @@ extern "C" int cfCam_getBit9_Arg1(unsigned int* arg0) {
     return (arg0[1] >> 9) & 1;
 }
 // cfCam_copyBlock48: whole-block copy of the 48-byte (12-word) camera data block.
-__declspec(noinline) void cfCam_copyBlock48(CfCamWordBlock48* dst, const CfCamWordBlock48* src) {
-    *dst = *src;
+extern "C" __declspec(noinline) void cfCam_copyBlock48(void* dst, const void* src) {
+    *(CfCamWordBlock48*)dst = *(const CfCamWordBlock48*)src;
 }
 // cfCam_testGlobalE24: flag-bit probe on lbl_eu_80663E24 with a fixed mask.
 // Branchless idiom: r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
@@ -1230,7 +1230,7 @@ void resetCamConsts(cf::CfCamFollow* self) {
 // cfCam_setFollowTg: stash the parent handle at +0x164, then - when a handle is
 // present and the sibling check cfCam_bit1At0x64 accepts it - run the global
 // 0x80661BA4 state routine.
-void cfCam_setFollowTg(cf::CfCamFollow* self, void* arg) {
+extern "C" void cfCam_setFollowTg(cf::CfCamFollow* self, void* arg) {
     self->unk164 = static_cast<cf::CfObject*>(arg);
     if (arg != 0 && cfCam_bit1At0x64(arg) != 0) {
         cfCam_reloadDefaults(lbl_eu_80661BA4, 0);
@@ -1399,7 +1399,7 @@ __declspec(noinline) void cfCam_copyHalf(void* dst, void* src) { *static_cast<un
 // result is fanned out to the +0x28/+0x34/+0x1C vec3 slots (copyVec3Words
 // returns its dst, feeding the next copy), and the +0x20 heading float
 // accumulates the +0x1DC follow distance.
-void cfCam_updFollowPos(cf::CfCamFollow* self, void* arg2, float f1) {
+extern "C" void cfCam_updFollowPos(cf::CfCamFollow* self, void* arg2, float f1) {
     if (self->unk164 != 0) {
         if (self->unk164->CfObject_isMoveActiveNow() == 0) {
             cfCam_setClear04(self, 0x40, 1);
@@ -1511,7 +1511,7 @@ void cfCam_prepFollowVec(void* arg1, cf::CfCamFollow* self, void* arg3, void* ar
     writeVec3f(local, s, f, lbl_eu_806662DC);
     cfCam_offsetFromDir(arg1, self, arg3, local, lbl_eu_80661B60);
 }
-void cfCam_seedFollowD() {
+extern "C" void cfCam_seedFollowD() {
     lbl_eu_80663DE8 = lbl_eu_80661B60;
     lbl_eu_80663DE4 = lbl_eu_80661B60;
     f32 s = scaleByGlobal(lbl_eu_80661B4C);
@@ -1719,7 +1719,7 @@ float cfCam_yawFromVec(const ml::CVec3* v) {
 // cfCam_acosF32: acos wrapper; retail converts the double result back to f32.
 // Defined with a float param; callers go through the body-less double overload
 // below so MWCC keeps the retail bl instead of inlining.
-float cfCam_acosF32(float x) {
+extern "C" float cfCam_acosF32(float x) {
     return (float)acos(x);
 }
 // cfCam_recomputeEyeTarget: follow-camera state recompute from a new eye/target pair.
@@ -1806,12 +1806,12 @@ void cfCam_recomputeEyeTarget(cf::CfCamFollow* self, void* argA, void* argB, voi
 }
 // cfCam_multMtxVec: transform src by mtx into a stack temp, then copy the result
 // out component-wise (lfs/stfs triple, f0 reused).
-void cfCam_multMtxVec(Vec* dst, const Mtx mtx, const Vec* src) {
+extern "C" void cfCam_multMtxVec(void* dst, const Mtx mtx, const void* src) {
     Vec tmp;
-    PSMTXMultVec(mtx, src, &tmp);
-    dst->x = tmp.x;
-    dst->y = tmp.y;
-    dst->z = tmp.z;
+    PSMTXMultVec(mtx, (const Vec*)src, &tmp);
+    ((Vec*)dst)->x = tmp.x;
+    ((Vec*)dst)->y = tmp.y;
+    ((Vec*)dst)->z = tmp.z;
 }
 // cfCam_padAbsent: remote-pad availability query; forwards the controller id to
 // the pad-state check and returns whether it reported "not present" (== 0).
@@ -2062,12 +2062,12 @@ __declspec(noinline) void cfCam_updateFollowCam(cf::CfCamFollow* self, void* arg
 // sin-dist product (atan2AnimFIdx of 8.0 * SinFIdx(lbl_eu_80663DC8) with the
 // distance float); out2 gets pi + yaw(tmp2) - or pi + yaw(tmp2) - yaw(tmp1)
 // when flag == 0 - offset by lbl_eu_80663DCC and wrapped by wrapAnglePi.
-__declspec(noinline) void cfCam_updateHead(cf::CfCamFollow* self, const ml::CVec3* arg2, float* out1,
+extern "C" __declspec(noinline) void cfCam_updateHead(void* self, const void* arg2, float* out1,
                    float* out2, int flag, float dist) {
     ml::CVec3 tmp1;
     ml::CVec3 tmp2;
-    subVec3f(&tmp1.x, &arg2->x, reinterpret_cast<const f32*>(&self->unk1C[12]));
-    subVec3f(&tmp2.x, &arg2->x, reinterpret_cast<const f32*>(self->unk10));
+    subVec3f(&tmp1.x, &((const ml::CVec3*)arg2)->x, reinterpret_cast<const f32*>(&((cf::CfCamFollow*)self)->unk1C[12]));
+    subVec3f(&tmp2.x, &((const ml::CVec3*)arg2)->x, reinterpret_cast<const f32*>(((cf::CfCamFollow*)self)->unk10));
     *out1 = atan2AnimFIdx(lbl_eu_806662B8 * sinAnimFIdx(lbl_eu_80663DC8), dist);
     if (flag != 0) {
         *out2 = ml::pi + cfCam_yawFromVec(static_cast<const void*>(&tmp2));
@@ -2082,13 +2082,13 @@ __declspec(noinline) void cfCam_updateHead(cf::CfCamFollow* self, const ml::CVec
 // derived (arg2 minus the +0x28 / +0x10 positions); out1 gets the +0x1F8
 // distance; out2 gets pi plus the yaw of v1 (or pi + yaw(v1) - yaw(v2) when
 // flag == 0), wrapped into [-pi, pi) by wrapAnglePi.
-void cfCam_updateYaw(cf::CfCamFollow* self, const ml::CVec3* arg2, float* out1,
+extern "C" void cfCam_updateYaw(void* self, const void* arg2, float* out1,
                    float* out2, int flag) {
     ml::CVec3 v2;
     ml::CVec3 v1;
-    subVec3f(&v2.x, &arg2->x, reinterpret_cast<const f32*>(&self->unk1C[12]));
-    subVec3f(&v1.x, &arg2->x, reinterpret_cast<const f32*>(&self->unk10[0]));
-    *out1 = self->unk1F8;
+    subVec3f(&v2.x, &((const ml::CVec3*)arg2)->x, reinterpret_cast<const f32*>(&((cf::CfCamFollow*)self)->unk1C[12]));
+    subVec3f(&v1.x, &((const ml::CVec3*)arg2)->x, reinterpret_cast<const f32*>(((cf::CfCamFollow*)self)->unk10));
+    *out1 = ((cf::CfCamFollow*)self)->unk1F8;
     if (flag != 0) {
         *out2 = ml::pi + cfCam_yawFromVec(static_cast<const void*>(&v1));
     } else {
@@ -3363,9 +3363,9 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
 // cfCam_normQuat: normalize a quaternion in place and hand the pointer back.
 // noinline: retail callers keep the `bl cfCam_normQuat` instead of an inlined
 // PSQUATNormalize.
-__declspec(noinline) Quaternion* cfCam_normQuat(Quaternion* q) {
-    PSQUATNormalize(q, q);
-    return q;
+extern "C" __declspec(noinline) Quaternion* cfCam_normQuat(void* q) {
+    PSQUATNormalize((Quaternion*)q, (Quaternion*)q);
+    return (Quaternion*)q;
 }
 // Tiny helpers MWCC inlines into cfCam_quatSlerp; their by-value Quaternion
 // returns keep retail's aggregate-return temporaries (word copy + memberwise
@@ -3989,7 +3989,7 @@ void propagateFollowParam(cf::CfCamFollow* self, int cond) {
 // on success, copy its state block (positions + the 0x1E0 float) into the
 // follow camera. The final copy reuses the +0x40 vector as the source for
 // self's +0x10 slot.
-void cfCam_copyCamState(cf::CfCamFollow* self, cf::CfObject* src) {
+extern "C" void cfCam_copyCamState(cf::CfCamFollow* self, cf::CfObject* src) {
     cf::CfCamStateView* state = reinterpret_cast<cf::CfCamStateView*>(
         __dynamic_cast(src, 0, &__RTTI__Q22cf11CfCamFollow, &lbl_eu_80661B30, 0));
     if (state != NULL) {
@@ -4078,13 +4078,13 @@ float cfCam_xzLength(const ml::CVec3* v) {
 // by the float arg via Env_BuildRotY, derive the follow offset with
 // Env_MtxMulVec, then hand the result to cfCam_psAddVec3 (PS kernel in the .inl).
 // noinline keeps the retail `bl cfCam_applyBasis` inside cfCam_pickFollowAim.
-__declspec(noinline) void cfCam_applyBasis(nw4r::math::VEC3* a, nw4r::math::VEC3* b, nw4r::math::VEC3* c, float f) {
+extern "C" __declspec(noinline) void cfCam_applyBasis(void* a, void* b, void* c, float f) {
     nw4r::math::VEC3 tmp2;
     nw4r::math::MTX33 tmp1; // larger stack slot - retail reserves extra frame space here
     nopFunc(&tmp1);
     Env_BuildRotY(&tmp1, f);
-    Env_MtxMulVec(&tmp2, &tmp1, c);
-    cfCam_psAddVec3(a, b, &tmp2);
+    Env_MtxMulVec(&tmp2, &tmp1, (nw4r::math::VEC3*)c);
+    cfCam_psAddVec3((nw4r::math::VEC3*)a, (const nw4r::math::VEC3*)b, &tmp2);
 }
 // cfCam_makeYRotMtx: build a Y-rotation 3x4 matrix scaled by the angle argument.
 // The lbl_eu_806662E4 factor converts the angle to the fixed-point index
@@ -4136,7 +4136,7 @@ void cfCam_xformAimPairInv(cf::CfObject* src, ml::CVec3* dst1, ml::CVec3* dst2) 
 // parameter against the .sdata threshold (floor: lbl_eu_80661B60), packs a
 // (0, 0, speed) offset via writeVec3f, transforms it into world space
 // (Env_MtxMulVec) and adds it to the lookat point (cfCam_psAddVec3).
-__declspec(noinline) void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed) {
+extern "C" __declspec(noinline) void cfCam_posFromLookat(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed) {
     ml::CMat33 dirFrame;
     ml::CVec3 scaled;
     ml::CVec3 offset;
@@ -4225,7 +4225,7 @@ extern "C" __declspec(noinline) void cfCam_buildDirFrame(ml::CMat33* out, const 
 }
 // cfCam_posMinusOff: like cfCam_posFromLookat, but subtracts the transformed offset
 // from `pos` (out = pos - R*offset) instead of adding it to a lookat point.
-void cfCam_posMinusOff(ml::CVec3* out, ml::CVec3* pos, const ml::CVec3* dir, f32 speed) {
+extern "C" void cfCam_posMinusOff(ml::CVec3* out, ml::CVec3* pos, const ml::CVec3* dir, f32 speed) {
     ml::CMat33 dirFrame;
     ml::CVec3 scaled;
     ml::CVec3 offset;
@@ -4245,7 +4245,7 @@ void cfCam_posMinusOff(ml::CVec3* out, ml::CVec3* pos, const ml::CVec3* dir, f32
 // cfCam_vecToAngles: direction vector from `from` to `to` (tmp = to - from); the
 // tmp length is returned, and the caller's vec gets a pitch/yaw pair via the
 // sin-wrapper atan2AnimFIdx (out[1] negated).
-float cfCam_vecToAngles(const ml::CVec3* from, const ml::CVec3* to, float* out) {
+extern "C" float cfCam_vecToAngles(const ml::CVec3* from, const ml::CVec3* to, float* out) {
     ml::CVec3 tmp;
     subVec3f(&tmp.x, &to->x, &from->x);
     float dist = cfCam_vecLength(&tmp);
@@ -4256,7 +4256,7 @@ float cfCam_vecToAngles(const ml::CVec3* from, const ml::CVec3* to, float* out) 
 }
 // cfCam_getActivePad: pick the active pad source - the remote GC pad when the
 // 0x8000000 availability bit is set, otherwise the CfGameManager pad.
-CPad* cfCam_getActivePad(int controllerId) {
+extern "C" CPad* cfCam_getActivePad(int controllerId) {
     if (cfCam_testUnk04M(controllerId, 0x8000000) != 0) {
         return CDeviceRemotePad::getMainGCPad();
     }

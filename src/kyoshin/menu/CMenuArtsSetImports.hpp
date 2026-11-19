@@ -331,3 +331,29 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void CMenuArtsSet_setArmedFlag(CArtsList* self, u8 val);
 extern "C" u32 CMenuArtsSet_isSlotWindowEmpty(CArtsList* self);
 extern "C" u32 CMenuArtsSet_isArtsInfoActive(CArtsList* self);
+
+// ---------------------------------------------------------------------------
+// Declarations shared by the two TUs the retail link keeps for this unit:
+// CMenuArtsSet.cpp (the menu class) and code_80231950.cpp (the CArtsList /
+// SArts* helper bodies). Kept here so neither .cpp duplicates them.
+// ---------------------------------------------------------------------------
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+extern u32 lbl_eu_80663E28; // mode bitfield (bit 21 = realtime event busy)
+extern "C" void artsMenuInput(CMenuArtsSet* self);
+u8 CArtsList_isReady(CArtsList* self);
+void CArtsList_startLoad(CArtsList* self);
+void artsStepState(CArtsList* self);
+void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info);
+void CMenuArtsSet_teardown(CArtsList* self);
+void CMenuArtsSet_beginOpen(CArtsList* self);
+extern const float lbl_eu_8066863C;     // 0x364 timer increment (.sdata2)
+extern const float lbl_eu_80668640;     // 0x364 timer cap (.sdata2)
+extern const float lbl_eu_8066865C;     // arts-list gauge scale (.sdata2)
+extern const float lbl_eu_80668660;     // default pane offset x (.sdata2)
+extern const float lbl_eu_80668664;     // alt pane offset x (row flag 0x34)
+extern const float lbl_eu_80668668;     // alt pane offset x (row flag 0x35)
+extern const double lbl_eu_80668670;    // int->double conversion bias (.sdata2)

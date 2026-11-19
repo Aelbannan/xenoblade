@@ -123,7 +123,7 @@ extern "C" void blendSlotAmbient(CLightEnv* self, const f32 color[3]) {
 // into the LightSetting's LightObj array: each LightObj is cleared and bound
 // to the slot's CLight, and the slot's ambient light is selected.
 // ---------------------------------------------------------------------------
-extern "C" __declspec(noinline) void initLightEnv(CLightEnv* self) {
+extern "C" void initLightEnv(CLightEnv* self) {
     self->mField1180 = 0;
     for (int i = 0; i < 4; i++) {
         self->mSlotColors[i].x = lbl_eu_8066AAA8;
